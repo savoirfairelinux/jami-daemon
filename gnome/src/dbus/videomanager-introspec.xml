@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <node name="/videomanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
-    <interface name="org.sflphone.SFLphone.VideoManager">
+    <interface name="cx.ring.Ring.VideoManager">
         <!-- Video device methods -->
 
         <method name="getDeviceList" tp:name-for-bindings="getDeviceList">

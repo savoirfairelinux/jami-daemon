@@ -38,12 +38,12 @@
 #include <vector>
 #include <string>
 
-#include "sflphone.h"
+#include "ring.h"
 
 class PresenceManager
 {
     public:
-        void registerEvHandlers(struct sflph_pres_ev_handlers* evHandlers);
+        void registerEvHandlers(struct ring_pres_ev_handlers* evHandlers);
 
     // Methods
     public:
@@ -65,7 +65,7 @@ class PresenceManager
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        sflph_pres_ev_handlers evHandlers_{};
+        ring_pres_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

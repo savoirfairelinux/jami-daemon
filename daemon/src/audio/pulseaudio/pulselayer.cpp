@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
@@ -49,7 +49,7 @@
 #include <cstdlib>
 #include <fstream>
 
-namespace sfl {
+namespace ring {
 
 static void
 playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)

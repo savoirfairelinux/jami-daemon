@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -50,7 +50,7 @@
 #include <string>
 #include <stdexcept>
 
-namespace sfl {
+namespace ring {
 class AudioCodec;
 }
 
@@ -266,14 +266,14 @@ class Sdp {
         void setMediaTransportInfoFromRemoteSdp();
 
         std::string getSessionVideoCodec() const;
-        std::vector<sfl::AudioCodec*> getSessionAudioMedia() const;
+        std::vector<ring::AudioCodec*> getSessionAudioMedia() const;
         // Sets @param settings with appropriate values and returns true if
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
         bool getOutgoingAudioSettings(std::map<std::string, std::string> &settings) const;
 
-        void addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs);
-        sfl::IceTransport::Attribute getIceAttributes() const;
+        void addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs);
+        ring::IceTransport::Attribute getIceAttributes() const;
 
         void addIceCandidates(unsigned media_index,
                               const std::vector<std::string>& cands);
@@ -331,14 +331,14 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<sfl::AudioCodec *> audio_codec_list_;
+        std::vector<ring::AudioCodec *> audio_codec_list_;
         std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<sfl::AudioCodec *> sessionAudioMediaLocal_;
-        std::vector<sfl::AudioCodec *> sessionAudioMediaRemote_;
+        std::vector<ring::AudioCodec *> sessionAudioMediaLocal_;
+        std::vector<ring::AudioCodec *> sessionAudioMediaRemote_;
         std::vector<std::string> sessionVideoMedia_;
 
         std::string publishedIpAddr_;

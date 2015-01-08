@@ -44,11 +44,11 @@ class AVStream;
 class AVFormatContext;
 class AVCodec;
 
-namespace sfl {
+namespace ring {
     class AudioBuffer;
 }
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoEncoderException : public std::runtime_error {
     public:
@@ -68,7 +68,7 @@ public:
                    const char *filename, const char *mime_type, bool is_video);
     void startIO();
     int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
-    int encode_audio(const sfl::AudioBuffer &input);
+    int encode_audio(const ring::AudioBuffer &input);
     int flush();
     void print_sdp(std::string &sdp_);
 
@@ -106,6 +106,6 @@ protected:
     AVDictionary *options_ = nullptr;
 };
 
-}
+}}
 
 #endif // __VIDEO_ENCODER_H__

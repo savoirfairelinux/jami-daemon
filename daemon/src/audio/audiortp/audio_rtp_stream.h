@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
@@ -48,7 +48,7 @@
 #include <atomic>
 #include <cstddef>
 
-namespace sfl {
+namespace ring {
 
 class Resampler;
 class DSP;
@@ -145,12 +145,12 @@ class AudioRtpStream {
         std::shared_ptr<RingBuffer> ringbuffer_{};
 
         void deleteCodecs();
-        sfl::AudioCodec* getCurrentEncoder() const;
-        sfl::AudioCodec* getCurrentDecoder() const;
+        ring::AudioCodec* getCurrentEncoder() const;
+        ring::AudioCodec* getCurrentDecoder() const;
 
         // Decoder-specific methods
         bool tryToSwitchDecoder(int newPt);
-        void resetDecoderPLC(const sfl::AudioCodec *);
+        void resetDecoderPLC(const ring::AudioCodec *);
 
         std::vector<AudioCodec*> audioCodecs_;
         std::mutex codecEncMutex_;

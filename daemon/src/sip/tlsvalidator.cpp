@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *          Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
@@ -61,7 +61,7 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-const sfl::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
+const ring::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
     /* CheckValues        Name     */
     /* PASSED      */ "PASSED"      ,
     /* FAILED      */ "FAILED"      ,
@@ -71,7 +71,7 @@ const sfl::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNa
     /* CUSTOM      */ "DATE"        ,
 }};
 
-const sfl::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
+const ring::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
     /*      CertificateCheck                       Callback                            */
     /*HAS_PRIVATE_KEY                  */ &TlsValidator::hasPrivateKey                  ,
     /*EXPIRED                          */ &TlsValidator::notExpired                     ,
@@ -98,7 +98,7 @@ const sfl::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsVal
 }};
 
 
-const sfl::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
+const ring::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
     /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
     /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate         ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword ,
@@ -118,7 +118,7 @@ const sfl::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsV
     /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
 }};
 
-const sfl::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
+const ring::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
     /*      CertificateCheck                    Callback        */
     /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN ,
     /*EXPIRED                          */ CheckValuesType::BOOLEAN ,
@@ -147,7 +147,7 @@ const sfl::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesTyp
     /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN ,
 }};
 
-const sfl::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
+const ring::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
     /*      CertificateCheck                       Name                 */
     /*HAS_PRIVATE_KEY                  */ "HAS_PRIVATE_KEY"                ,
     /*EXPIRED                          */ "EXPIRED"                        ,
@@ -176,7 +176,7 @@ const sfl::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::Certific
     /*NOT_ACTIVATED                    */ "NOT_ACTIVATED"                  ,
 }};
 
-const sfl::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
+const ring::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
     /* EXPIRATION_DATE              */ "EXPIRATION_DATE"              ,
     /* ACTIVATION_DATE              */ "ACTIVATION_DATE"              ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */ "REQUIRE_PRIVATE_KEY_PASSWORD" ,
@@ -196,7 +196,7 @@ const sfl::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certif
     /* NEXT_EXPECTED_UPDATE_DATE    */ "NEXT_EXPECTED_UPDATE_DATE"    ,
 }};
 
-const sfl::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
+const ring::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
     /*   Type        Name    */
     /* BOOLEAN  */ "BOOLEAN"  ,
     /* ISO_DATE */ "ISO_DATE" ,
@@ -204,7 +204,7 @@ const sfl::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::Che
     /* NUMBER   */ "NUMBER"   ,
 }};
 
-const sfl::Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
+const ring::Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
     /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
     /* BOOLEAN  */  {{  true   ,  true  ,    true     ,  false    ,  false   ,false }},
     /* ISO_DATE */  {{  false  ,  false ,    true     ,  true     ,  false  , false }},
@@ -277,7 +277,7 @@ std::string TlsValidator::getStringValue(const TlsValidator::CertificateCheck ch
  */
 bool TlsValidator::isValid(bool verbose)
 {
-    for (const CertificateCheck check : sfl::Matrix0D<CertificateCheck>()) {
+    for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>()) {
         if (enforcedCheckType[check] == CheckValuesType::BOOLEAN) {
             if (((this->*(checkCallback[check]))()).first == CheckValues::FAILED) {
                 if (verbose)
@@ -301,7 +301,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedChecks()
             = getStringValue(CertificateCheck::EXIST, exist());
     }
     else {
-        for (const CertificateCheck check : sfl::Matrix0D<CertificateCheck>())
+        for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>())
             ret[CertificateCheckNames[check]] = getStringValue(check,(this->*(checkCallback[check]))());
     }
 
@@ -315,7 +315,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedDetails()
 {
     std::map<std::string,std::string> ret;
     if (certificateFound_) {
-        for (const CertificateDetails det : sfl::Matrix0D<CertificateDetails>()) {
+        for (const CertificateDetails det : ring::Matrix0D<CertificateDetails>()) {
             const CheckResult r = (this->*(getterCallback[det]))();
             std::string val;
             // TODO move this to a fuction

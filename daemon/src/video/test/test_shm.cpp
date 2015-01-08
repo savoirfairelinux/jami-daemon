@@ -52,7 +52,7 @@ static const char test_data[] = "abcdefghijklmnopqrstuvwxyz";
 static void
 sink_thread()
 {
-    sfl_video::SHMSink sink("bob");;
+    ring::video::SHMSink sink("bob");;
     if (!sink.start())
         return;
     std::vector<unsigned char> test_vec(test_data, test_data + sizeof(test_data) / sizeof(test_data[0]));

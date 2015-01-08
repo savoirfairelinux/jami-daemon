@@ -43,31 +43,31 @@
 #include "manager.h"
 #include <sstream>
 
-namespace sfl {
-using sfl_video::SocketPair;
-using sfl_video::VideoEncoder;
-using sfl_video::VideoIOHandle;
-using sfl_video::VideoEncoderException;
+namespace ring {
+using ring::video::SocketPair;
+using ring::video::VideoEncoder;
+using ring::video::VideoIOHandle;
+using ring::video::VideoEncoderException;
 
 class AudioSender {
     public:
         AudioSender(const std::string& id,
                     std::map<std::string, std::string> txArgs,
-                    sfl_video::SocketPair& socketPair);
+                    ring::video::SocketPair& socketPair);
         ~AudioSender();
 
     private:
         NON_COPYABLE(AudioSender);
 
         bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
-        bool setup(sfl_video::SocketPair& socketPair);
+        bool setup(ring::video::SocketPair& socketPair);
 
         std::string id_;
         std::map<std::string, std::string> args_;
         const AudioFormat format_;
-        std::unique_ptr<sfl_video::VideoEncoder> audioEncoder_;
-        std::unique_ptr<sfl_video::VideoIOHandle> muxContext_;
-        std::unique_ptr<sfl::Resampler> resampler_;
+        std::unique_ptr<ring::video::VideoEncoder> audioEncoder_;
+        std::unique_ptr<ring::video::VideoIOHandle> muxContext_;
+        std::unique_ptr<ring::Resampler> resampler_;
         const double secondsPerPacket_ {0.02}; // 20 ms
 
         ThreadLoop loop_;
@@ -190,7 +190,7 @@ class AudioReceiveThread
     public:
         AudioReceiveThread(const std::string &id, const std::string &sdp);
         ~AudioReceiveThread();
-        void addIOContext(sfl_video::SocketPair &socketPair);
+        void addIOContext(ring::video::SocketPair &socketPair);
         void startLoop();
 
     private:
@@ -211,10 +211,10 @@ class AudioReceiveThread
         /*-----------------------------------------------------------------*/
         const std::string id_;
         std::istringstream stream_;
-        std::unique_ptr<sfl_video::VideoDecoder> audioDecoder_;
-        std::unique_ptr<sfl_video::VideoIOHandle> sdpContext_;
-        std::unique_ptr<sfl_video::VideoIOHandle> demuxContext_;
-        std::shared_ptr<sfl::RingBuffer> ringbuffer_;
+        std::unique_ptr<ring::video::VideoDecoder> audioDecoder_;
+        std::unique_ptr<ring::video::VideoIOHandle> sdpContext_;
+        std::unique_ptr<ring::video::VideoIOHandle> demuxContext_;
+        std::shared_ptr<ring::RingBuffer> ringbuffer_;
 
         ThreadLoop loop_;
         bool setup();
@@ -240,7 +240,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    audioDecoder_.reset(new sfl_video::VideoDecoder());
+    audioDecoder_.reset(new ring::video::VideoDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
     args_["sdp_flags"] = "custom_io";
@@ -262,17 +262,17 @@ AudioReceiveThread::setup()
 void
 AudioReceiveThread::process()
 {
-    sfl::AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    ring::AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     std::unique_ptr<AVFrame, void(*)(AVFrame*)> decodedFrame(av_frame_alloc(), [](AVFrame*p){av_frame_free(&p);});
 
     switch (audioDecoder_->decode_audio(decodedFrame.get())) {
 
-        case sfl_video::VideoDecoder::Status::FrameFinished:
+        case ring::video::VideoDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame.get(), *ringbuffer_,
                                              mainBuffFormat);
             return;
 
-        case sfl_video::VideoDecoder::Status::DecodeError:
+        case ring::video::VideoDecoder::Status::DecodeError:
             SFL_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
                 SFL_ERR("fatal error, rx thread re-setup failed");
@@ -286,7 +286,7 @@ AudioReceiveThread::process()
             }
             break;
 
-        case sfl_video::VideoDecoder::Status::ReadError:
+        case ring::video::VideoDecoder::Status::ReadError:
             SFL_ERR("fatal error, read failed");
             loop_.stop();
             break;
@@ -502,4 +502,4 @@ AVFormatRtpSession::stop()
     socketPair_.reset();
 }
 
-} // end namespace sfl
+} // end namespace ring

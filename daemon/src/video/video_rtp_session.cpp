@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
@@ -45,7 +45,7 @@
 #include <map>
 #include <string>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::map;
 using std::string;
@@ -198,8 +198,8 @@ void VideoRtpSession::start(int localPort)
     }
 }
 
-void VideoRtpSession::start(std::unique_ptr<sfl::IceSocket> rtp_sock,
-                            std::unique_ptr<sfl::IceSocket> rtcp_sock)
+void VideoRtpSession::start(std::unique_ptr<ring::IceSocket> rtp_sock,
+                            std::unique_ptr<ring::IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -312,4 +312,4 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

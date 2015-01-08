@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -231,11 +231,11 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<sfl::AudioCodec *> audioCodecs;
+    std::vector<ring::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2009 Rémi Denis-Courmont
  *
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -54,7 +54,7 @@ extern "C" {
 #include <sys/types.h>
 }
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::vector;
 using std::string;
@@ -259,4 +259,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-} // namespace sfl_video
+}}

@@ -34,7 +34,7 @@
 #include "video_base.h"
 #include "logger.h"
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 /*=== VideoPacket  ===========================================================*/
 
@@ -207,4 +207,4 @@ std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
     return lastFrame_;
 }
 
-}
+}}

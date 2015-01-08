@@ -41,7 +41,7 @@
 
 static const double FRAME_DURATION = 1/30.;
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 VideoMixer::VideoMixer(const std::string &id) :
     VideoGenerator::VideoGenerator()
@@ -214,4 +214,4 @@ int VideoMixer::getHeight() const
 int VideoMixer::getPixelFormat() const
 { return VIDEO_PIXFMT_YUV420P; }
 
-} // end namespace sfl_video
+}} //namespace ring //namespace video

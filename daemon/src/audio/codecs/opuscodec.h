@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
@@ -38,7 +38,7 @@
 
 #include <opus.h>
 
-class Opus : public sfl::AudioCodec {
+class Opus : public ring::AudioCodec {
 public:
    Opus();
    ~Opus();
@@ -50,7 +50,7 @@ public:
    }
 
 private:
-   sfl::AudioCodec * clone();
+   ring::AudioCodec * clone();
 
    virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *data, size_t len);
    virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm);

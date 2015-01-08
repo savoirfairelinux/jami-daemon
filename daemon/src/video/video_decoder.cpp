@@ -40,7 +40,7 @@
 #include <iostream>
 #include <unistd.h>
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -417,24 +417,24 @@ int VideoDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
 void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
-                                     sfl::RingBuffer& rb,
-                                     const sfl::AudioFormat outFormat)
+                                     ring::RingBuffer& rb,
+                                     const ring::AudioFormat outFormat)
 {
-    const sfl::AudioFormat decoderFormat = {
+    const ring::AudioFormat decoderFormat = {
         (unsigned) decoded_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
 
-    sfl::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
+    ring::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
     out.deinterleave(reinterpret_cast<const SFLAudioSample*>(decoded_frame->data[0]),
                      decoded_frame->nb_samples, decoderCtx_->channels);
     if ((unsigned)decoded_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
             SFL_DBG("Creating audio resampler");
-            resampler_.reset(new sfl::Resampler(outFormat));
+            resampler_.reset(new ring::Resampler(outFormat));
         }
-        sfl::AudioBuffer resampledData(decoded_frame->nb_samples,
+        ring::AudioBuffer resampledData(decoded_frame->nb_samples,
                                        {(unsigned) outFormat.sample_rate,
                                         (unsigned) decoderCtx_->channels});
         resampler_->resample(out, resampledData);
@@ -444,4 +444,4 @@ void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
     }
 }
 
-}
+}}

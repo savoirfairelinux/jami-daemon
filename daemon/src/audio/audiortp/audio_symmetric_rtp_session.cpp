@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -38,7 +38,7 @@
 #include "manager.h"
 #include "client/callmanager.h"
 
-namespace sfl {
+namespace ring {
 
 AudioSymmetricRtpSession::AudioSymmetricRtpSession(SIPCall &call) :
     ost::SymmetricRTPSession(static_cast<ost::IPV4Host>(call.getLocalIp()), call.getLocalAudioPort())

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *
@@ -46,7 +46,7 @@ using std::ptrdiff_t;
 class SIPCall;
 class AudioCodec;
 
-namespace sfl {
+namespace ring {
 
 class ZrtpZidException : public std::runtime_error {
     public:

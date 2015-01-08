@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -38,7 +38,7 @@
 #include <utility> // for std::pair
 #include <cstring>
 
-namespace sfl {
+namespace ring {
 
 const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";
 

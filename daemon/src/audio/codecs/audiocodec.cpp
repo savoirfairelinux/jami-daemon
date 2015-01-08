@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author:  Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  Mostly borrowed from asterisk's sources (Steve Underwood <steveu@coppice.org>)
@@ -34,7 +34,7 @@
 #include <cassert>
 using std::ptrdiff_t;
 
-namespace sfl {
+namespace ring {
 
 AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName, uint32_t clockRate, unsigned frameSize, uint8_t channels) :
     codecName_(codecName),
@@ -149,4 +149,4 @@ AudioCodec::getSDPChannels() const
     return "";
 }
 
-} // end namespace sfl
+} // end namespace ring

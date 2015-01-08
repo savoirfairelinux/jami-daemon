@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -41,7 +41,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace sfl {
+namespace ring {
 
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;

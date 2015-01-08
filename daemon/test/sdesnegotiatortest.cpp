@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -56,7 +56,7 @@ void SdesNegotiatorTest::testTagPattern()
     TITLE();
     std::string subject = "a=crypto:4";
 
-    sfl::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})", false);
+    ring::Pattern pattern("^a=crypto:(?P<tag>[0-9]{1,9})", false);
     pattern.updateSubject(subject);
 
     CPPUNIT_ASSERT(pattern.matches());
@@ -69,7 +69,7 @@ void SdesNegotiatorTest::testCryptoSuitePattern()
     TITLE();
     std::string subject = "AES_CM_128_HMAC_SHA1_80";
 
-    sfl::Pattern pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
+    ring::Pattern pattern("(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
                                "AES_CM_128_HMAC_SHA1_32|"		\
                                "F8_128_HMAC_SHA1_80|"			\
                                "[A-Za-z0-9_]+)", false);
@@ -86,7 +86,7 @@ void SdesNegotiatorTest::testKeyParamsPattern()
 
     std::string subject = "inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj|2^20|1:32";
 
-    sfl::Pattern pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+    ring::Pattern pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)\\|" \
                                "(2\\^(?P<lifetime>[0-9]+)\\|"		\
                                "(?P<mkiValue>[0-9]+)\\:"		\
@@ -110,7 +110,7 @@ void SdesNegotiatorTest::testKeyParamsPatternWithoutMKI()
 
     std::string subject("inline:d0RmdmcmVCspeEc3QGZiNWpVLFJhQX1cfHAwJSoj");
 
-    sfl::Pattern pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
+    ring::Pattern pattern("(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
                                "(?P<srtpKeyInfo>[A-Za-z0-9\x2B\x2F\x3D]+)" \
                                "(\\|2\\^(?P<lifetime>[0-9]+)\\|"                \
                                "(?P<mkiValue>[0-9]+)\\:"                \
@@ -138,12 +138,12 @@ void SdesNegotiatorTest::testNegotiation()
     remoteOffer.push_back("a=crypto:2 AES_CM_128_HMAC_SHA1_32 inline:NzB4d1BINUAvLEw6UzF3WSJ+PSdFcGdUJShpX1Zj|2^20|1:32");
 
     // Register the local capabilities.
-    std::vector<sfl::CryptoSuiteDefinition> localCapabilities;
+    std::vector<ring::CryptoSuiteDefinition> localCapabilities;
 
     for (int i = 0; i < 3; ++i)
-        localCapabilities.push_back(sfl::CryptoSuites[i]);
+        localCapabilities.push_back(ring::CryptoSuites[i]);
 
-    sfl::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
+    ring::SdesNegotiator sdesnego(localCapabilities, remoteOffer);
 
     CPPUNIT_ASSERT(sdesnego.negotiate());
 }
@@ -156,18 +156,18 @@ void SdesNegotiatorTest::testComponent()
     TITLE();
 
     // Register the local capabilities.
-    std::vector<sfl::CryptoSuiteDefinition> capabilities;
+    std::vector<ring::CryptoSuiteDefinition> capabilities;
 
     // Support all the CryptoSuites
     for (int i = 0; i < 3; i++)
-        capabilities.push_back(sfl::CryptoSuites[i]);
+        capabilities.push_back(ring::CryptoSuites[i]);
 
     // Make sure that if a component is missing, negotiate will fail
     std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:|2^20|1:32");
     std::vector<std::string> cryptoOffer;
     cryptoOffer.push_back(cryptoLine);
 
-    sfl::SdesNegotiator negotiator(capabilities, cryptoOffer);
+    ring::SdesNegotiator negotiator(capabilities, cryptoOffer);
     CPPUNIT_ASSERT(!negotiator.negotiate());
 }
 
@@ -179,18 +179,18 @@ void SdesNegotiatorTest::testMostSimpleCase()
     TITLE();
 
     // Register the local capabilities.
-    std::vector<sfl::CryptoSuiteDefinition> capabilities;
+    std::vector<ring::CryptoSuiteDefinition> capabilities;
 
     // Support all the CryptoSuites
     for (int i = 0; i < 3; i++)
-        capabilities.push_back(sfl::CryptoSuites[i]);
+        capabilities.push_back(ring::CryptoSuites[i]);
 
     // Make sure taht this case works (since it's default for most application)
     std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_80 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
     std::vector<std::string> cryptoOffer;
     cryptoOffer.push_back(cryptoLine);
 
-    sfl::SdesNegotiator negotiator(capabilities, cryptoOffer);
+    ring::SdesNegotiator negotiator(capabilities, cryptoOffer);
 
     CPPUNIT_ASSERT(negotiator.negotiate());
 
@@ -209,17 +209,17 @@ void SdesNegotiatorTest::test32ByteKeyLength()
     TITLE();
 
     // Register the local capabilities.
-    std::vector<sfl::CryptoSuiteDefinition> capabilities;
+    std::vector<ring::CryptoSuiteDefinition> capabilities;
 
     //Support all the CryptoSuites
     for (int i = 0; i < 3; i++)
-        capabilities.push_back(sfl::CryptoSuites[i]);
+        capabilities.push_back(ring::CryptoSuites[i]);
 
     std::string cryptoLine("a=crypto:1 AES_CM_128_HMAC_SHA1_32 inline:AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwd");
     std::vector<std::string> cryptoOffer;
     cryptoOffer.push_back(cryptoLine);
 
-    sfl::SdesNegotiator negotiator(capabilities, cryptoOffer);
+    ring::SdesNegotiator negotiator(capabilities, cryptoOffer);
 
     CPPUNIT_ASSERT(negotiator.negotiate());
 

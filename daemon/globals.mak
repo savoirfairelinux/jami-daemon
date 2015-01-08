@@ -1,7 +1,7 @@
 # Global variables
 
 src=$(abs_top_srcdir)
-sfllibdir=$(DESTDIR)$(libdir)/sflphone
+sfllibdir=$(DESTDIR)$(libdir)/ring
 sflcodecdir=$(sfllibdir)/codecs
 sflplugindir=$(sfllibdir)/plugins
 
@@ -27,7 +27,7 @@ AM_CPPFLAGS = \
 	-I$(src)/test \
 	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
-	-DPROGSHAREDIR=\"${datadir}/sflphone\" \
+	-DPROGSHAREDIR=\"${datadir}/ring\" \
 	-DCODECS_DIR=\""$(sflcodecdir)"\" \
 	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \

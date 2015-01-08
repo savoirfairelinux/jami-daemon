@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
@@ -85,7 +85,7 @@
 #include <istream>
 #include <algorithm>
 
-using namespace sfl;
+using namespace ring;
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -351,14 +351,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
             CryptoOffer crypto_offer;
             crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
 
-            const size_t size = SFL_ARRAYSIZE(sfl::CryptoSuites);
-            std::vector<sfl::CryptoSuiteDefinition> localCapabilities(size);
+            const size_t size = SFL_ARRAYSIZE(ring::CryptoSuites);
+            std::vector<ring::CryptoSuiteDefinition> localCapabilities(size);
 
-            std::copy(sfl::CryptoSuites, sfl::CryptoSuites + size,
+            std::copy(ring::CryptoSuites, ring::CryptoSuites + size,
                       localCapabilities.begin());
 
 #if HAVE_SDES
-            sfl::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+            ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
             if (sdesnego.negotiate()) {
                 try {
@@ -382,14 +382,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
     call->setupLocalSDPFromIce();
 
-    sfl::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
         SFL_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<sfl::AudioCodec *> audioCodecs;
+    std::vector<ring::AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 #if USE_CCRTP
     call->getAudioRtp().start(audioCodecs);
@@ -1184,7 +1184,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
     std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
 
-    using namespace sfl::InstantMessaging;
+    using namespace ring::InstantMessaging;
 
     try {
         // retreive the recipient-list of this message
@@ -1212,7 +1212,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         // Respond with a 200/OK
         sendOK(inv->dlg, r_data, tsx);
 
-    } catch (const sfl::InstantMessageException &except) {
+    } catch (const ring::InstantMessageException &except) {
         SFL_ERR("%s", except.what());
     }
 #endif
@@ -1267,7 +1267,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
     };
 
-    auto token = std::hash<std::string>()(name + sfl::to_string(type));
+    auto token = std::hash<std::string>()(name + ring::to_string(type));
     {
         std::lock_guard<std::mutex> lock(resolveMutex_);
         resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {

@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -97,7 +97,7 @@ Sdp::~Sdp()
 }
 
 static bool
-hasPayload(const std::vector<sfl::AudioCodec*> &codecs, int pt)
+hasPayload(const std::vector<ring::AudioCodec*> &codecs, int pt)
 {
     for (const auto &i : codecs)
         if (i and i->getPayloadType() == pt)
@@ -123,7 +123,7 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
     return os.str();
 }
 
-static sfl::AudioCodec *
+static ring::AudioCodec *
 findCodecByName(const std::string &codec)
 {
     // try finding by name
@@ -245,10 +245,10 @@ string Sdp::getSessionVideoCodec() const
     return sessionVideoMedia_[0];
 }
 
-std::vector<sfl::AudioCodec*>
+std::vector<ring::AudioCodec*>
 Sdp::getSessionAudioMedia() const
 {
-    vector<sfl::AudioCodec*> codecs;
+    vector<ring::AudioCodec*> codecs;
 
     // Common codecs first
     for (auto c : sessionAudioMediaLocal_) {
@@ -295,7 +295,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         const char *channels = "";
 
         if (audio) {
-            sfl::AudioCodec *codec = audio_codec_list_[i];
+            ring::AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getSDPClockRate();
@@ -975,7 +975,7 @@ Sdp::getIceCandidates(unsigned media_index) const
 }
 
 void
-Sdp::addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs)
+Sdp::addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs)
 {
     pj_str_t value;
     pjmedia_sdp_attr *attr;
@@ -993,10 +993,10 @@ Sdp::addIceAttributes(const sfl::IceTransport::Attribute&& ice_attrs)
         throw SdpException("Could not add ICE.pwd attribute to local SDP");
 }
 
-sfl::IceTransport::Attribute
+ring::IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
-    sfl::IceTransport::Attribute ice_attrs;
+    ring::IceTransport::Attribute ice_attrs;
     auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
     assert(session);
 

@@ -39,7 +39,7 @@
 #include <sstream>
 #endif
 
-namespace sfl {
+namespace ring {
 
 #ifdef __ANDROID__
 

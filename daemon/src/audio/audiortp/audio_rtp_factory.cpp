@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -44,7 +44,7 @@
 #include "sip/sipaccount.h"
 #include "logger.h"
 
-namespace sfl {
+namespace ring {
 
 AudioRtpFactory::AudioRtpFactory(SIPCall *ca) : rtpSession_(),
     audioRtpThreadMutex_(), srtpEnabled_(false), helloHashEnabled_(false),

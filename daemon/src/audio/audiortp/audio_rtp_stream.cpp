@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Adrien Beraud <adrien.beraud@wisdomvibes.com>
  *
@@ -50,7 +50,7 @@
 #include <algorithm>
 #include <cassert>
 
-namespace sfl {
+namespace ring {
 
 AudioRtpStream::AudioRtpStream(const std::string &id) :
     id_(id)
@@ -93,7 +93,7 @@ bool AudioRtpStream::isDead()
     return dead_;
 }
 
-sfl::AudioCodec *
+ring::AudioCodec *
 AudioRtpStream::getCurrentEncoder() const
 {
     if (audioCodecs_.empty() or currentEncoderIndex_ >= audioCodecs_.size()) {
@@ -104,7 +104,7 @@ AudioRtpStream::getCurrentEncoder() const
     return audioCodecs_[currentEncoderIndex_];
 }
 
-sfl::AudioCodec *
+ring::AudioCodec *
 AudioRtpStream::getCurrentDecoder() const
 {
     if (audioCodecs_.empty() or currentDecoderIndex_ >= audioCodecs_.size()) {
@@ -148,7 +148,7 @@ bool AudioRtpStream::tryToSwitchDecoder(int newPt)
     return false;
 }
 
-void AudioRtpStream::resetDecoderPLC(const sfl::AudioCodec * codec)
+void AudioRtpStream::resetDecoderPLC(const ring::AudioCodec * codec)
 {
     if (!plcPool_) return;
     pj_pool_reset(plcPool_);

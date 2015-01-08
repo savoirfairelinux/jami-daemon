@@ -39,10 +39,10 @@ logger.addHandler(ch)
 #------------------      Initialise DBUS          ------------------------------
 dbus.mainloop.glib.DBusGMainLoop(set_as_default=True)
 bus = dbus.SessionBus()
-presenceManagerBus          = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/PresenceManager')
-presenceManager             = dbus.Interface(presenceManagerBus, dbus_interface='org.sflphone.SFLphone.PresenceManager')
-configurationManagerBus = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/ConfigurationManager')
-configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='org.sflphone.SFLphone.ConfigurationManager')
+presenceManagerBus          = bus.get_object('cx.ring.Ring', '/cx/ring/Ring/PresenceManager')
+presenceManager             = dbus.Interface(presenceManagerBus, dbus_interface='cx.ring.Ring.PresenceManager')
+configurationManagerBus = bus.get_object('cx.ring.Ring', '/cx/ring/Ring/ConfigurationManager')
+configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='cx.ring.Ring.ConfigurationManager')
 
 
 #-------------------------    General purpose functions     ----------------------------
@@ -201,10 +201,10 @@ if __name__ == '__main__':
 
     try:
         # dbus signal monitor
-        presenceManagerBus.connect_to_signal("newBuddyNotification", newPresSubCientNotificationHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
-        presenceManagerBus.connect_to_signal("newServerSubscriptionRequest", newPresSubServerRequestHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
-        presenceManagerBus.connect_to_signal("subcriptionStateChanged", subcriptionStateChangedHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
-        presenceManagerBus.connect_to_signal("serverError", serverErrorHandler, dbus_interface='org.sflphone.SFLphone.PresenceManager')
+        presenceManagerBus.connect_to_signal("newBuddyNotification", newPresSubCientNotificationHandler, dbus_interface='cx.ring.Ring.PresenceManager')
+        presenceManagerBus.connect_to_signal("newServerSubscriptionRequest", newPresSubServerRequestHandler, dbus_interface='cx.ring.Ring.PresenceManager')
+        presenceManagerBus.connect_to_signal("subcriptionStateChanged", subcriptionStateChangedHandler, dbus_interface='cx.ring.Ring.PresenceManager')
+        presenceManagerBus.connect_to_signal("serverError", serverErrorHandler, dbus_interface='cx.ring.Ring.PresenceManager')
 
         start_time = time.time()
         task_N = len(task_list)

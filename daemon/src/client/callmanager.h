@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -40,7 +40,7 @@
 #include <vector>
 #include <string>
 
-#include "sflphone.h"
+#include "ring.h"
 
 class CallManagerException: public std::runtime_error {
     public:
@@ -48,14 +48,14 @@ class CallManagerException: public std::runtime_error {
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
-namespace sfl {
+namespace ring {
 class AudioZrtpSession;
 }
 
 class CallManager
 {
     public:
-        void registerEvHandlers(struct sflph_call_ev_handlers* evHandlers);
+        void registerEvHandlers(struct ring_call_ev_handlers* evHandlers);
 
     // Methods
     public:
@@ -157,13 +157,13 @@ class CallManager
     private:
 
 #if USE_CCRTP && HAVE_ZRTP
-        sfl::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
+        ring::AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
 #endif
 
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        sflph_call_ev_handlers evHandlers_{};
+        ring_call_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

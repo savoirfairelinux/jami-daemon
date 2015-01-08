@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -37,7 +37,7 @@
 // Application import
 #include "noncopyable.h"
 
-namespace sfl {
+namespace ring {
 
 class History;
 
@@ -88,7 +88,7 @@ class HistoryTest : public CppUnit::TestCase {
 
     private:
         NON_COPYABLE(HistoryTest);
-        sfl::History *history_;
+        ring::History *history_;
 };
 
 /* Register our test module */

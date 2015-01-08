@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -59,7 +59,7 @@ class Sdp;
 class SIPAccountBase;
 class SipTransport;
 
-namespace sfl {
+namespace ring {
 class AVFormatRtpSession;
 }
 
@@ -98,7 +98,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AudioRtp object
          */
-        sfl::AudioRtpFactory& getAudioRtp() {
+        ring::AudioRtpFactory& getAudioRtp() {
             return audiortp_;
         }
 #else
@@ -106,7 +106,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AVFormatRtpSession object
          */
-        sfl::AVFormatRtpSession& getAVFormatRTP() const {
+        ring::AVFormatRtpSession& getAVFormatRTP() const {
             return *avformatrtp_;
         }
 #endif
@@ -115,7 +115,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the VideoRtp object
          */
-        sfl_video::VideoRtpSession& getVideoRtp () {
+        ring::video::VideoRtpSession& getVideoRtp () {
             return videortp_;
         }
 #endif
@@ -209,22 +209,22 @@ class SIPCall : public Call
 
         int SIPSessionReinvite();
 
-        std::vector<sfl::IceCandidate> getAllRemoteCandidates();
+        std::vector<ring::IceCandidate> getAllRemoteCandidates();
 
 #if USE_CCRTP
         /**
          * Audio Rtp Session factory
          */
-        sfl::AudioRtpFactory audiortp_;
+        ring::AudioRtpFactory audiortp_;
 #else
-        std::unique_ptr<sfl::AVFormatRtpSession> avformatrtp_;
+        std::unique_ptr<ring::AVFormatRtpSession> avformatrtp_;
 #endif
 
 #ifdef SFL_VIDEO
         /**
          * Video Rtp Session factory
          */
-        sfl_video::VideoRtpSession videortp_;
+        ring::video::VideoRtpSession videortp_;
 #endif
 
         /**

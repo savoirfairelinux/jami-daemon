@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author : Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *
@@ -34,7 +34,7 @@
 
 #include "dtmf.h"
 
-namespace sfl {
+namespace ring {
 
 DTMF::DTMF(unsigned int sampleRate)
     : currentTone_(0), newTone_(0), dtmfgenerator_(sampleRate)

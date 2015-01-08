@@ -81,12 +81,12 @@ def stop_daemon():
 def reInit():
 	try:
 		global callManagerBus,callManager,configurationManagerBus,configurationManager,instanceManagerBus,instanceManager
-		callManagerBus          = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/CallManager')
-		callManager             = dbus.Interface(callManagerBus, dbus_interface='org.sflphone.SFLphone.CallManager')
-		configurationManagerBus = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/ConfigurationManager')
-		configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='org.sflphone.SFLphone.ConfigurationManager')
-		instanceManagerBus      = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/Instance')
-		instanceManager         = dbus.Interface(instanceManagerBus     , dbus_interface='org.sflphone.SFLphone.Instance')
+		callManagerBus          = bus.get_object('cx.ring.Ring', '/cx/ring/Ring/CallManager')
+		callManager             = dbus.Interface(callManagerBus, dbus_interface='cx.ring.Ring.CallManager')
+		configurationManagerBus = bus.get_object('cx.ring.Ring', '/cx/ring/Ring/ConfigurationManager')
+		configurationManager    = dbus.Interface(configurationManagerBus, dbus_interface='cx.ring.Ring.ConfigurationManager')
+		instanceManagerBus      = bus.get_object('cx.ring.Ring', '/cx/ring/Ring/Instance')
+		instanceManager         = dbus.Interface(instanceManagerBus     , dbus_interface='cx.ring.Ring.Instance')
 		instanceManager.Register(123,"doombot")
 		global first_account,first_iax_account,first_account_number
 		first_account = get_first_account()

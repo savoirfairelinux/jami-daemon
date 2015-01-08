@@ -12,9 +12,11 @@ Wiki: https://projects.savoirfairelinux.com/projects/sflphone/wiki/BuildInstruct
 
     # Go to the root of the application core directory
     cd daemon
-    # Compile pjsip
-    cd libs
-    ./compile_pjsip.sh
+    # Compile contrib
+    cd contrib
+    mkdir native && cd native
+    ../bootstrap
+    make
     # Go back to the root
     cd ../..
     ./autogen.sh
@@ -36,8 +38,8 @@ Wiki: https://projects.savoirfairelinux.com/projects/sflphone/wiki/BuildInstruct
 
     You are done with the gnome client !
 
-Then, to start SFLphone, simply go in Applications > Internet > SFLphone VoIP Client.
+Then, to start Ring, simply go in Applications > Internet > Ring VoIP Client.
 
     Thanks You
 
-    SFLphone Team
+    Ring Team

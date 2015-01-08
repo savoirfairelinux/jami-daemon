@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
@@ -55,7 +55,7 @@
 
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
-void ConfigurationManager::registerEvHandlers(struct sflph_config_ev_handlers* evHandlers)
+void ConfigurationManager::registerEvHandlers(struct ring_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
@@ -282,17 +282,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::PLAYBACK);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::CAPTURE);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, sfl::DeviceType::RINGTONE);
+    return Manager::instance().setAudioDevice(index, ring::DeviceType::RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()

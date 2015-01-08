@@ -55,7 +55,7 @@ extern "C" {
 
 #define ZEROVAR(x) memset(&(x), 0, sizeof(x))
 
-namespace sfl_video {
+namespace ring { namespace video {
 
 class VideoV4l2Size {
     public:
@@ -582,4 +582,4 @@ VideoDevice::getCapabilities() const
 VideoDevice::~VideoDevice()
 {}
 
-} // namespace sfl_video
+}} // namespace ring // namespace video
