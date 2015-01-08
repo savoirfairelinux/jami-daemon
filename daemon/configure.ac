@@ -394,7 +394,7 @@ dnl Check for libzrtpcpp, a ccRTP extension providing zrtp key exchange
 AC_ARG_WITH([zrtp],
     [AS_HELP_STRING([--without-zrtp], [disable support for zrtp])],
     [],
-    [with_zrtp=yes])
+    [with_zrtp=no])
 AS_IF([test "x$with_zrtp" = "xyes"], [
        PKG_CHECK_MODULES([ZRTPCPP], libzrtpcpp >= 2.3.0, [with_zrtp_configure=yes],
            dnl Fallback to older version
