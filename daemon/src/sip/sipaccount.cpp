@@ -184,7 +184,6 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         ipv6 = IpAddr::isIpv6(toUrl);
 #endif
         to = ipv6 ? IpAddr(toUrl).toString(false, true) : toUrl;
-        toUri = getToUri(to);
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
@@ -200,14 +199,6 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     }
     else {
         to = toUrl;
-
-        // If toUrl is not a well formatted sip URI, use account information to process it
-        if (toUrl.find("sip:") != std::string::npos or
-            toUrl.find("sips:") != std::string::npos)
-            toUri = toUrl;
-        else
-            toUri = getToUri(to);
-
         call->setTransport(transport_);
         // FIXME : for now, use the same address family as the SIP transport
         family = pjsip_transport_type_get_af(getTransportType());
@@ -215,6 +206,12 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         RING_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
+    // If toUrl is not a well formatted sip URI, use account information to process it
+    if (toUrl.find("sip:") != std::string::npos or
+        toUrl.find("sips:") != std::string::npos)
+        toUri = toUrl;
+    else
+        toUri = getToUri(to);
     call->initIceTransport(true);
 
     call->setIPToIP(isIP2IP());
