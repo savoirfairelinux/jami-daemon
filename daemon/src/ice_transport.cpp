@@ -127,6 +127,7 @@ void
 IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                          pj_status_t status)
 {
+    std::unique_lock<std::mutex> lk(iceMutex_);
     const char *opname =
         op == PJ_ICE_STRANS_OP_INIT? "initialization" :
         op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
@@ -147,6 +148,7 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
     } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_) {
         on_negodone_cb_(*this, done);
     }
+    iceCV_.notify_all();
 }
 
 void
@@ -520,6 +522,32 @@ IceTransport::getNextPacketSize(int comp_id)
         return 0;
     }
     return io.queue.front().datalen;
+}
+
+int
+IceTransport::waitForInitialization(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return isInitialized(); })) {
+        RING_WARN("waitForIceInitialization: timeout");
+        return -1;
+    }
+    RING_DBG("waitForInitialization: %u", isInitialized());
+    return isInitialized();
+}
+
+int
+IceTransport::waitForNegotiation(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return isCompleted(); })) {
+        RING_WARN("waitForIceNegotiation: timeout");
+        return -1;
+    }
+    RING_DBG("waitForNegotiation: %u", isCompleted());
+    return isCompleted();
 }
 
 ssize_t
