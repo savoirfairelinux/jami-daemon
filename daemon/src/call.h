@@ -374,9 +374,9 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
         time_t timestamp_stop_ {0};
 
         /** ICE support */
-        std::condition_variable iceCV_ {};
+        /*std::condition_variable iceCV_ {};
         bool iceTransportInitDone_ {false};
-        bool iceTransportNegoDone_ {false};
+        bool iceTransportNegoDone_ {false};*/
 };
 
 #endif // __CALL_H__
