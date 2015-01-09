@@ -119,14 +119,14 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     pa_proplist *pl = pa_proplist_new();
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "phone");
 
-    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), "SFLphone", pl);
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME, pl);
 
     if (pl)
         pa_proplist_free(pl);
 
 #else
     setenv("PULSE_PROP_media.role", "phone", 1);
-    context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_), "SFLphone");
+    context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME);
 #endif
 
     if (!context_) {
@@ -375,7 +375,7 @@ void PulseLayer::createStreams(pa_context* c)
              playbackDevice.c_str(), dev_infos->name.c_str());
     }
 
-    playback_ = new AudioStream(c, mainloop_, "SFLphone playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos);
+    playback_ = new AudioStream(c, mainloop_, "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos);
 
     pa_stream_set_write_callback(playback_->pulseStream(), playback_callback, this);
     pa_stream_set_moved_callback(playback_->pulseStream(), stream_moved_callback, this);
@@ -389,7 +389,7 @@ void PulseLayer::createStreams(pa_context* c)
              captureDevice.c_str(), dev_infos->name.c_str());
     }
 
-    record_ = new AudioStream(c, mainloop_, "SFLphone capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos);
+    record_ = new AudioStream(c, mainloop_, "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos);
 
     pa_stream_set_read_callback(record_->pulseStream() , capture_callback, this);
     pa_stream_set_moved_callback(record_->pulseStream(), stream_moved_callback, this);
@@ -403,7 +403,7 @@ void PulseLayer::createStreams(pa_context* c)
              ringtoneDevice.c_str(), dev_infos->name.c_str());
     }
 
-    ringtone_ = new AudioStream(c, mainloop_, "SFLphone ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos);
+    ringtone_ = new AudioStream(c, mainloop_, "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos);
 
     pa_stream_set_write_callback(ringtone_->pulseStream(), ringtone_callback, this);
     pa_stream_set_moved_callback(ringtone_->pulseStream(), stream_moved_callback, this);
