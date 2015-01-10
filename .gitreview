@@ -1,0 +1,6 @@
+[gerrit]
+host=gerrit-sflphone.savoirfairelinux.com
+port=29420
+project=sflphone.git
+defaultremote=origin
+defaultbranch=master
