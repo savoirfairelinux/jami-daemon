@@ -21,4 +21,4 @@ CODEC_GSM:
 
 REFERENCES: http://tldp.org/HOWTO/Program-Library-HOWTO/shared-libraries.html
 
-The shared library should be installed in $(libdir)/sflphone/codecs where libdir=$(PREFIX)/lib.
+The shared library should be installed in $(libdir)/ring/codecs where libdir=$(PREFIX)/lib.
