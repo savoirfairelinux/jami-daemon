@@ -31,7 +31,7 @@
 #ifndef __DBUSCLIENT_H__
 #define __DBUSCLIENT_H__
 
-#include "ring.h"
+#include "public/ring.h"
 #include "noncopyable.h"
 
 class DBusConfigurationManager;

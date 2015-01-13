@@ -42,7 +42,7 @@
 #include <map>
 #include <string>
 
-#include "ring.h"
+#include "public/ring.h"
 
 class ConfigurationManager
 {

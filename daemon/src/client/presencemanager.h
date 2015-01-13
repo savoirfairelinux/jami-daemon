@@ -38,7 +38,7 @@
 #include <vector>
 #include <string>
 
-#include "ring.h"
+#include "public/ring.h"
 
 class PresenceManager
 {

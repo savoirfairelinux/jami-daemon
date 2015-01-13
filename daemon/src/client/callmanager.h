@@ -40,7 +40,7 @@
 #include <vector>
 #include <string>
 
-#include "ring.h"
+#include "public/ring.h"
 
 class CallManagerException: public std::runtime_error {
     public:

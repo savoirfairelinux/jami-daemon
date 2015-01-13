@@ -31,7 +31,7 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "ring.h"
+#include "public/ring.h"
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
