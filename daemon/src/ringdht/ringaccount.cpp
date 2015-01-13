@@ -494,6 +494,8 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
+    if (hostname_ == "")
+        hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, CONFIG_DHT_PORT, dhtPort_);
     if (dhtPort_ == 0)
         dhtPort_ = DHT_DEFAULT_PORT;
