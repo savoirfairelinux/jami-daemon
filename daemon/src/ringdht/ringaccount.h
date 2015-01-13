@@ -71,6 +71,7 @@ class RingAccount : public SIPAccountBase {
     public:
         constexpr static const char * const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
+        const std::string DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
 
         const char* getAccountType() const {
             return ACCOUNT_TYPE;
