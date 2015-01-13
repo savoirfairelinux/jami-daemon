@@ -181,14 +181,14 @@ def run():
 			start_daemon()
 			sys.stdout.write("   ["+str(i+1)+"/"+str(len(suits[k]))+"] Testing \""+v['test_name']+"\": ")
 			sys.stdout.flush()
-
+			
 			#Run the test
 			retval = meta_test(v['test_func'])
 			if not k in results:
 				results[k] = 0
 			if retval > 0:
 				results[k]= results[k] + 1
-
+			
 			#Stop SFLphone
 			stop_daemon()
 			time.sleep(15)
@@ -200,7 +200,7 @@ def run():
 			except IOError:
 				print 'Report not found'
 		counter = counter + 1
-
+	
 	#Print the test summary
 	print "\n\n\033[1mSummary:\033[0m"
 	totaltests   = 0
