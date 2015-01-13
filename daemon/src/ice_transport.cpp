@@ -136,17 +136,25 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
 
     const bool done = status == PJ_SUCCESS;
 
-    if (!done) {
-        char errmsg[PJ_ERR_MSG_SIZE];
-        pj_strerror(status, errmsg, sizeof(errmsg));
-        RING_ERR("ICE %s failed: %s", opname, errmsg);
+    {
+        std::unique_lock<std::mutex> lk(iceMutex_);
+        if (!done) {
+            char errmsg[PJ_ERR_MSG_SIZE];
+            pj_strerror(status, errmsg, sizeof(errmsg));
+            RING_ERR("ICE %s failed: %s", opname, errmsg);
+        }
+        RING_DBG("ICE %s with %s", opname, done?"success":"error");
+        if (op == PJ_ICE_STRANS_OP_INIT) {
+            iceTransportInitDone_ = done;
+            if (on_initdone_cb_)
+                on_initdone_cb_(*this, done);
+        } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
+            iceTransportNegoDone_ = done;
+            if (on_negodone_cb_)
+                on_negodone_cb_(*this, done);
+        }
     }
-    RING_DBG("ICE %s with %s", opname, done?"success":"error");
-    if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_) {
-        on_initdone_cb_(*this, done);
-    } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_) {
-        on_negodone_cb_(*this, done);
-    }
+    iceCV_.notify_all();
 }
 
 void
@@ -520,6 +528,32 @@ IceTransport::getNextPacketSize(int comp_id)
         return 0;
     }
     return io.queue.front().datalen;
+}
+
+int
+IceTransport::waitForInitialization(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return iceTransportInitDone_; })) {
+        RING_WARN("waitForInitialization: timeout");
+        return -1;
+    }
+    RING_DBG("waitForInitialization: %u", iceTransportInitDone_);
+    return iceTransportInitDone_;
+}
+
+int
+IceTransport::waitForNegotiation(unsigned timeout)
+{
+    std::unique_lock<std::mutex> lk(iceMutex_);
+    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+                         [this]{ return iceTransportNegoDone_; })) {
+        RING_WARN("waitForIceNegotiation: timeout");
+        return -1;
+    }
+    RING_DBG("waitForNegotiation: %u", iceTransportNegoDone_);
+    return iceTransportNegoDone_;
 }
 
 ssize_t

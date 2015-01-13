@@ -640,10 +640,10 @@ SIPVoIPLink::~SIPVoIPLink()
         RING_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
-    // destroy SIP transport before endpoint
-    sipTransport.reset();
-
     pjsip_endpt_destroy(endpt_);
+
+    // destroy SIP transport after endpoint
+    sipTransport.reset();
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
