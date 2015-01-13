@@ -202,6 +202,22 @@ static void show_widget_for_sip(GtkComboBox *combo_box, gpointer widget)
     g_free(type);
 }
 
+/* change the default hostname (or bootstrap), depending on account type */
+static void change_default_hostname(GtkComboBox *combo_box, gpointer widget)
+{
+    if (is_account_new) {
+        GtkEntry *entry = GTK_ENTRY(widget);
+        gchar *type = gtk_combo_box_text_get_active_text(GTK_COMBO_BOX_TEXT(combo_box));
+        if (utf8_case_equal(type, "RING")) {
+            gtk_entry_set_text(entry, "bootstrap.ring.cx");
+        } else {
+            /* for all other account types should be empty */
+            gtk_entry_set_text(entry, "");
+        }
+        g_free(type);
+    }
+}
+
 /* Signal to type_combo 'changed' */
 static void change_type_cb(GtkComboBox *combo_box, gpointer data)
 {
@@ -408,6 +424,9 @@ create_parameters_frame(account_t *account, GtkWidget* account_combo)
     entry_hostname = gtk_entry_new();
     gtk_label_set_mnemonic_widget(GTK_LABEL(label), entry_hostname);
     const gchar *hostname = account_lookup(account, CONFIG_ACCOUNT_HOSTNAME);
+    /* change the default hostname (or bootstrap), depending on account type */
+    g_signal_connect(G_OBJECT(account_combo), "changed",
+                     G_CALLBACK(change_default_hostname), entry_hostname);
     gtk_entry_set_text(GTK_ENTRY(entry_hostname), hostname);
     gtk_grid_attach(GTK_GRID(grid), entry_hostname, 1, row, 1, 1);
     /* hide (the label) for DHT account */
