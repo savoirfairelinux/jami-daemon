@@ -13,7 +13,6 @@ Needs to be implemented
 * DTMF over RTP
 * RTP + STUN
 * Rename Video{Encoder,Decoder} to AV{Encoder,Decoder}
-* Drop CCRTP and its dependencies and its dependents for real
 
 Needs to be fixed:
 ------------------

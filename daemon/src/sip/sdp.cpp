@@ -1138,7 +1138,6 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
     return false;
 }
 
-#ifndef USE_CCRTP
 bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
 {
     string codec(getOutgoingAudioCodec());
@@ -1180,4 +1179,3 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
     }
     return false;
 }
-#endif

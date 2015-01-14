@@ -4,7 +4,6 @@ noinst_LTLIBRARIES = libcodecdescriptor.la
 
 libcodecdescriptor_la_SOURCES = audiocodecfactory.cpp audiocodec.cpp audiocodec.h audiocodecfactory.h
 libcodecdescriptor_la_CXXFLAGS = -fPIC
-libcodecdescriptor_la_LIBADD = $(CCRTP_LIBS)
 
 if BUILD_GSM
 GSM_LIB = libcodec_gsm.so

@@ -366,13 +366,7 @@ AS_IF([test "x$enable_video" != "xno"],
     ],
     [
      AM_CONDITIONAL(RING_VIDEO, false)
-     AC_DEFINE_UNQUOTED([USE_CCRTP], 1, [Use ccrtp instead of libavformat])
      ]);
-
-LIBCCRTP_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
-                   PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development files]))
-        ])
 
 dnl TLS support is enabled if it's installed and up to date
 AC_ARG_WITH([tls],
