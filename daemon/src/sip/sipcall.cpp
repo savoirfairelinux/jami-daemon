@@ -45,12 +45,8 @@
 
 using namespace ring;
 
-#if USE_CCRTP
-#include "audio/audiortp/audio_rtp_factory.h" // for AudioRtpFactoryException
-#else
 
 #include "audio/audiortp/avformat_rtp_session.h"
-#endif
 #include "client/callmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
@@ -124,11 +120,8 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
-#if USE_CCRTP
-    , audiortp_(this)
-#else
-    , avformatrtp_(new ring::AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
-#endif
+    //, avformatrtp_(new ring::AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
+    , avformatrtp_(new ring::AVFormatRtpSession(id))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getSettings())
@@ -377,11 +370,7 @@ SIPCall::refuse()
     if (!isIncoming() or getConnectionState() == Call::CONNECTED or !inv)
         return;
 
-#if USE_CCRTP
-    getAudioRtp().stop();
-#else
     avformatrtp_->stop();
-#endif
 
     pjsip_tx_data *tdata;
 
@@ -575,12 +564,7 @@ SIPCall::onhold()
     if (not setState(Call::HOLD))
         return;
 
-#if USE_CCRTP
-    audiortp_.saveLocalContext();
-    audiortp_.stop();
-#else
     avformatrtp_->stop();
-#endif
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
@@ -821,15 +805,6 @@ void
 SIPCall::startAllMedia()
 {
     auto& remoteIP = sdp_->getRemoteIP();
-#if USE_CCRTP
-    try {
-        audiortp_.updateDestinationIpAddress();
-    } catch (const AudioRtpFactoryException &e) {
-        RING_ERR("%s", e.what());
-    }
-
-    audiortp_.setDtmfPayloadType(sdp_->getTelephoneEventType());
-#else
     avformatrtp_->updateSDP(*sdp_);
     avformatrtp_->updateDestination(remoteIP, sdp_->getRemoteAudioPort());
     if (isIceRunning()) {
@@ -840,7 +815,6 @@ SIPCall::startAllMedia()
         const auto localAudioPort = sdp_->getLocalAudioPort();
         avformatrtp_->start(localAudioPort ? localAudioPort : sdp_->getRemoteAudioPort());
     }
-#endif
 
 #ifdef RING_VIDEO
     auto remoteVideoPort = sdp_->getRemoteVideoPort();
@@ -956,11 +930,7 @@ void
 SIPCall::stopAllMedias()
 {
     RING_DBG("SIPCall %s: stopping all medias", getCallId().c_str());
-#if USE_CCRTP
-    audiortp_.stop();
-#else
     avformatrtp_->stop();
-#endif
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif

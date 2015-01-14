@@ -24,6 +24,7 @@ endif
 AM_CPPFLAGS = \
 	-I$(src)/src \
 	-I$(src)/src/config \
+    -I$(src)/src/media \
 	-I$(src)/test \
 	-I$(src)/src/public \
 	$(SIP_CFLAGS) \

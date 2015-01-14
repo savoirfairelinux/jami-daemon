@@ -343,6 +343,18 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, false));
 
 
+dnl Check for libav
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
+LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
+
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 54.20.3,, AC_MSG_ERROR([Missing libavformat development files]))
+
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
+
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
+
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.0.0,, AC_MSG_ERROR([Missing libavutil development files]))
+
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
@@ -350,29 +362,11 @@ AS_IF([test "x$enable_video" != "xno"],
       [
         AC_DEFINE(RING_VIDEO, [], [Video support enabled])
         AM_CONDITIONAL(RING_VIDEO, true)
-
-        PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
-        LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
-
-        PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 54.20.3,, AC_MSG_ERROR([Missing libavformat development files]))
-
-        PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
-
-        PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
-
-        PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.0.0,, AC_MSG_ERROR([Missing libavutil development files]))
-
         PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
     ],
     [
      AM_CONDITIONAL(RING_VIDEO, false)
-     AC_DEFINE_UNQUOTED([USE_CCRTP], 1, [Use ccrtp instead of libavformat])
      ]);
-
-LIBCCRTP_MIN_VERSION=1.3.0
-PKG_CHECK_MODULES([CCRTP], [libccrtp] >= ${LIBCCRTP_MIN_VERSION},, [
-                   PKG_CHECK_MODULES([CCRTP], [libccrtp1] >= ${LIBCCRTP_MIN_VERSION},, AC_MSG_ERROR([Missing ccrtp development files]))
-        ])
 
 dnl TLS support is enabled if it's installed and up to date
 AC_ARG_WITH([tls],
@@ -598,22 +592,23 @@ AC_CONFIG_FILES([Makefile \
                  src/im/Makefile \
                  src/iax/Makefile \
                  src/ringdht/Makefile \
-                 src/audio/Makefile \
-                 src/audio/audiortp/Makefile \
-                 src/audio/pulseaudio/Makefile \
-                 src/audio/alsa/Makefile \
-                 src/audio/opensl/Makefile \
-                 src/audio/jack/Makefile \
-                 src/audio/coreaudio/Makefile \
-                 src/audio/sound/Makefile \
-                 src/audio/codecs/Makefile \
+                 src/media/Makefile \
+                 src/media/audio/Makefile \
+                 src/media/audio/audiortp/Makefile \
+                 src/media/audio/pulseaudio/Makefile \
+                 src/media/audio/alsa/Makefile \
+                 src/media/audio/opensl/Makefile \
+                 src/media/audio/jack/Makefile \
+                 src/media/audio/coreaudio/Makefile \
+                 src/media/audio/sound/Makefile \
+                 src/media/audio/codecs/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
                  src/hooks/Makefile \
                  src/history/Makefile \
-                 src/video/Makefile \
-                 src/video/v4l2/Makefile \
-                 src/video/test/Makefile \
+                 src/media/video/Makefile \
+                 src/media/video/v4l2/Makefile \
+                 src/media/video/test/Makefile \
                  test/Makefile \
                  ringtones/Makefile \
                  man/Makefile \
