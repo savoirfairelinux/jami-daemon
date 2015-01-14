@@ -55,9 +55,7 @@
 #include "im/instant_messaging.h"
 #endif
 
-#ifndef USE_CCRTP
 #include "audio/audiortp/avformat_rtp_session.h"
-#endif
 
 #ifdef RING_VIDEO
 #include "video/video_rtp_session.h"
