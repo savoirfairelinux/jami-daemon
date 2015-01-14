@@ -289,7 +289,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Incomming DHT calls that are not yet actual SIP calls.
          */
-        std::vector<std::shared_ptr<SIPCall>> pendingCalls_ {};
+        std::list<std::shared_ptr<SIPCall>> pendingCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
 
         std::string cacertPath_ {};

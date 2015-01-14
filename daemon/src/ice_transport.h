@@ -65,8 +65,8 @@ class IceTransport {
          * Constructor
          */
         IceTransport(const char* name, int component_count,
-                     IceTransportCompleteCb on_initdone_cb,
-                     IceTransportCompleteCb on_negodone_cb);
+                     IceTransportCompleteCb on_initdone_cb={},
+                     IceTransportCompleteCb on_negodone_cb={});
 
         /**
          * Set/change transport role as initiator.
@@ -137,6 +137,10 @@ class IceTransport {
 
         ssize_t getNextPacketSize(int comp_id);
 
+        int waitForInitialization(unsigned timeout);
+
+        int waitForNegotiation(unsigned timeout);
+
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
     private:
@@ -179,12 +183,16 @@ class IceTransport {
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         IceTransportCompleteCb on_initdone_cb_;
         IceTransportCompleteCb on_negodone_cb_;
+        bool iceTransportInitDone_ {false};
+        bool iceTransportNegoDone_ {false};
         std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
         unsigned component_count_;
         pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
         std::string local_ufrag_;
         std::string local_pwd_;
         pj_sockaddr remoteAddr_;
+        std::condition_variable iceCV_ {};
+        mutable std::mutex iceMutex_ {};
 
         struct Packet {
                 Packet(void *pkt, pj_size_t size);
@@ -207,8 +215,8 @@ class IceTransportFactory {
 
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
-                                                      IceTransportCompleteCb&& on_initdone_cb,
-                                                      IceTransportCompleteCb&& on_negodone_cb);
+                                                      IceTransportCompleteCb&& on_initdone_cb={},
+                                                      IceTransportCompleteCb&& on_negodone_cb={});
 
         int processThread();
 

@@ -380,7 +380,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         RING_DBG("Initializing ICE transport");
         call->initIceTransport(false);
     }
-    call->setupLocalSDPFromIce();
+
+    //call->setupLocalSDPFromIce();
 
     ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
@@ -640,10 +641,10 @@ SIPVoIPLink::~SIPVoIPLink()
         RING_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
-    // destroy SIP transport before endpoint
-    sipTransport.reset();
-
     pjsip_endpt_destroy(endpt_);
+
+    // destroy SIP transport after endpoint
+    sipTransport.reset();
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
