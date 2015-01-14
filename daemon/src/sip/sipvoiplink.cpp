@@ -1005,6 +1005,8 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     if (!inv)
         return;
 
+    RING_WARN("sdp_media_update_cb %d", status);
+
     auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     if (!call_ptr) {
         RING_DBG("Call declined by peer, SDP negotiation stopped");

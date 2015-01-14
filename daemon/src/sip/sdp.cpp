@@ -943,6 +943,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
 
     for (const auto &item : cands) {
         pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
+        RING_DBG("Sdp::addIceCandidates %.*s", val.slen, val.ptr);
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "candidate", &val);
 
         if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
