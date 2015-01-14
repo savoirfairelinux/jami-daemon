@@ -31,7 +31,7 @@
  */
 
 #include "videomanager.h"
-#include "video/libav_utils.h"
+#include "libav_utils.h"
 #include "video/video_input.h"
 #include "video/video_device_monitor.h"
 #include "account.h"
