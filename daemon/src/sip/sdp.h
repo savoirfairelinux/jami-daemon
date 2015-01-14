@@ -62,6 +62,9 @@ class SdpException : public std::runtime_error {
 
 typedef std::vector<std::string> CryptoOffer;
 
+void
+printSession(const pjmedia_sdp_session *session);
+
 class Sdp {
     public:
 
@@ -80,6 +83,7 @@ class Sdp {
          *  @return The structure that describes a SDP session
          */
         pjmedia_sdp_session *getLocalSdpSession() {
+            printSession(localSession_);
             return localSession_;
         }
 

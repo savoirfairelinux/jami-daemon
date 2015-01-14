@@ -571,7 +571,7 @@ void RingAccount::doRegister()
             }
         });
 
-#if 0
+#if 1
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },

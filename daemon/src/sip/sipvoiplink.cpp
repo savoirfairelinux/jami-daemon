@@ -412,7 +412,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     pjsip_inv_session* inv = nullptr;
-    pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), 0, &inv);
+    pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), PJSIP_INV_SUPPORT_ICE, &inv);
 
     if (!inv) {
         RING_ERR("Call invite is not initialized");
@@ -1004,6 +1004,8 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 {
     if (!inv)
         return;
+
+    RING_WARN("sdp_media_update_cb %d", status);
 
     auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
     if (!call_ptr) {
