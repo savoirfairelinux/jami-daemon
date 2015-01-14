@@ -37,10 +37,6 @@
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
 #include "audio/audiolayer.h"
-#include "audio/audiortp/audio_rtp_factory.h"
-#if HAVE_ZRTP
-#include "audio/audiortp/audio_zrtp_session.h"
-#endif
 
 #include "logger.h"
 #include "manager.h"
@@ -303,76 +299,31 @@ CallManager::getAudioZrtpSession(const std::string& callID)
 void
 CallManager::setSASVerified(const std::string& callID)
 {
-#if USE_CCRTP && HAVE_ZRTP
-    try {
-        ring::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->SASVerified();
-    } catch (...) {
-    }
-#else
     RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
-#endif
 }
 
 void
 CallManager::resetSASVerified(const std::string& callID)
 {
-#if USE_CCRTP && HAVE_ZRTP
-    try {
-        ring::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->resetSASVerified();
-    } catch (...) {
-    }
-#else
     RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
-#endif
 }
 
 void
 CallManager::setConfirmGoClear(const std::string& callID)
 {
-#if USE_CCRTP && HAVE_ZRTP
-    try {
-        ring::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->goClearOk();
-    } catch (...) {
-    }
-#else
     RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
-#endif
 }
 
 void
 CallManager::requestGoClear(const std::string& callID)
 {
-#if USE_CCRTP && HAVE_ZRTP
-    try {
-        ring::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->requestGoClear();
-    } catch (...) {
-    }
-#else
     RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
-#endif
 }
 
 void
 CallManager::acceptEnrollment(const std::string& callID, bool accepted)
 {
-#if USE_CCRTP && HAVE_ZRTP
-    try {
-        ring::AudioZrtpSession * zSession;
-        zSession = getAudioZrtpSession(callID);
-        zSession->acceptEnrollment(accepted);
-    } catch (...) {
-    }
-#else
     RING_ERR("No zrtp support for %s, please recompile SFLphone with zrtp", callID.c_str());
-#endif
 }
 
 void CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
