@@ -1,9 +1,8 @@
 include ../globals.mak
 
 if RING_VIDEO
-RING_VIDEO_SUBDIR = video
-RING_VIDEO_LIBS=./video/libvideo.la \
-			   ./video/v4l2/libv4l2.la
+RING_VIDEO_LIBS=./media/video/libvideo.la \
+			   ./media/video/v4l2/libv4l2.la
 endif
 
 if BUILD_INSTANT_MESSAGING
@@ -35,7 +34,7 @@ TLS_LIB = @GNUTLS_LIBS@
 TLS_CFLAGS = @GNUTLS_CFLAGS@
 endif
 
-SUBDIRS = client audio config hooks history sip $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks history sip $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -43,7 +42,7 @@ lib_LTLIBRARIES = libring.la
 
 libring_la_LIBADD = \
 	./sip/libsiplink.la \
-	./audio/libaudio.la \
+	./media/libmedia.la \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
@@ -54,9 +53,7 @@ libring_la_LIBADD = \
 	$(RING_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \
-		@ZRTPCPP_LIBS@ \
 		@PJPROJECT_LIBS@ \
-		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
@@ -72,10 +69,13 @@ if USE_DHT
 libring_la_LDFLAGS += $(OPENDHT_LIBS)
 endif
 
+if HAVE_OSX
+#FIXME necessary for -lintl
+libring_la_LDFLAGS += -L/usr/local/lib
+endif
+
 libring_la_CFLAGS = \
-		@ZRTPCPP_CFLAGS@ \
 		@PJPROJECT_CFLAGS@ \
-		@CCRTP_CFLAGS@ \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \

@@ -33,7 +33,7 @@
 #include "sipvoiplink.h"
 
 #ifdef RING_VIDEO
-#include "video/libav_utils.h"
+#include "libav_utils.h"
 #endif
 
 #include "account_schema.h"
