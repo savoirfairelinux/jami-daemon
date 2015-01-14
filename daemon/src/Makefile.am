@@ -54,9 +54,7 @@ libring_la_LIBADD = \
 	$(RING_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \
-		@ZRTPCPP_LIBS@ \
 		@PJPROJECT_LIBS@ \
-		@CCRTP_LIBS@ \
 		@ALSA_LIBS@ \
 		@PULSEAUDIO_LIBS@ \
 		@SAMPLERATE_LIBS@ \
@@ -73,9 +71,7 @@ libring_la_LDFLAGS += $(OPENDHT_LIBS)
 endif
 
 libring_la_CFLAGS = \
-		@ZRTPCPP_CFLAGS@ \
 		@PJPROJECT_CFLAGS@ \
-		@CCRTP_CFLAGS@ \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
