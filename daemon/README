@@ -157,9 +157,6 @@ interaction between daemon and client will not work; for each platform where
 dbus is not available the client should implement all the methods in the
 *_stub.cpp files.
 
-Note that you need a recent version of ucommon (>= 6.0.0) and of ccrtp
-compiled against it to use clang.
-
 SIP/IAx2 accounts
 ---------------------
 
