@@ -59,7 +59,7 @@ typedef struct AudioFormat {
 
     inline std::string toString() const {
         std::stringstream ss;
-        ss << "{" << nb_channels << " channels, " << sample_rate << "kHz}";
+        ss << "{" << nb_channels << " channels, " << sample_rate << "Hz}";
         return ss.str();
     }
 
