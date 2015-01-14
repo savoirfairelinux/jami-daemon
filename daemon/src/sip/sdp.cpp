@@ -40,10 +40,7 @@
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "logger.h"
-
-#ifdef RING_VIDEO
-#include "video/libav_utils.h"
-#endif
+#include "libav_utils.h"
 
 #include <algorithm>
 #include <cassert>
@@ -1138,7 +1135,6 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
     return false;
 }
 
-#ifndef USE_CCRTP
 bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
 {
     string codec(getOutgoingAudioCodec());
@@ -1180,4 +1176,3 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
     }
     return false;
 }
-#endif
