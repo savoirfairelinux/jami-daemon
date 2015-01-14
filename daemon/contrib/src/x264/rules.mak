@@ -35,6 +35,7 @@ x264: x264-git.tar.gz .sum-x264
 	rm -Rf $@-git
 	mkdir -p $@-git
 	$(ZCAT) "$<" | (cd $@-git && tar xv --strip-components=1)
+	$(APPLY) $(SRC)/x264/remove-align.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
