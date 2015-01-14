@@ -722,7 +722,7 @@ void SIPAccount::mapPortUPnP()
          * it may already be open, thats OK
          */
         RING_DBG("Mapping SIP port %u to %u", publishedPort_, localPort_);
-        upnp_->addRedirection(publishedPort_, localPort_);
+        upnp_.addRedirection(publishedPort_, localPort_);
     }
 }
 

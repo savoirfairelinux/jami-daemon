@@ -131,14 +131,9 @@ class UPnP {
 
 public:
     /* constructor */
-    UPnP();
+    UPnP(bool enabled = false);
     /* destructor */
     ~UPnP();
-
-    /**
-     * returns if a default IGD is defined
-     */
-    bool hasDefaultIGD(void) const;
 
     /**
      * tries to add redirection
@@ -184,13 +179,14 @@ public:
 
 protected:
     /**
-     * tracks if UPnP is enabled
+     * tracks if UPnP is enabled in this instance
      */
+    bool enabled_ {false};
 
     /**
      * In general, we want to use the same IGD with all instances
      */
-    static UPnPIGD * defaultIGD_;
+    static UPnPIGD defaultIGD_;
 
     /**
      * selects the default IGD to use

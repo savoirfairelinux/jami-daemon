@@ -332,11 +332,11 @@ SIPAccountBase::generateVideoPort() const
 
 void
 SIPAccountBase::setUseUPnP(bool useUPnP) {
+    if (useUPnP == useUPnP_)
+        return;
+
     useUPnP_ = useUPnP;
-    if (useUPnP_) {
-        upnp_ = new upnp::UPnP();
-        upnpIp_ = upnp_->getExternalIP();
-    } else {
-        delete upnp_;
-    }
+    upnp_ = upnp::UPnP(useUPnP_);
+    if (useUPnP_)
+        upnpIp_ = upnp_.getExternalIP();
 }

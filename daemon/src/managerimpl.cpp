@@ -247,7 +247,7 @@ ManagerImpl::init(const std::string &config_file)
 
     if (preferences.getUseUPnP()) {
         RING_DBG("Remove any old UPnP entries for RING mapped to this IP");
-        upnp::UPnP().removeEntriesByLocalIPAndDescription();
+        upnp::UPnP(true).removeEntriesByLocalIPAndDescription();
     }
 
     registerAccounts();
@@ -299,7 +299,7 @@ ManagerImpl::finish()
 
     if (preferences.getUseUPnP()) {
         RING_DBG("Remove any remaning ports mapped to this client for RING");
-        upnp::UPnP().removeEntriesByLocalIPAndDescription();
+        upnp::UPnP(true).removeEntriesByLocalIPAndDescription();
     }
 }
 

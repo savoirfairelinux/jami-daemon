@@ -527,7 +527,7 @@ void RingAccount::mapPortUPnP()
          * it may already be open, thats OK
          */
         RING_DBG("RING account mapping DHT port %u to %u", dhtPort_, dhtPort_);
-        upnp_->addRedirection(dhtPort_, dhtPort_);
+        upnp_.addRedirection(dhtPort_, dhtPort_);
     }
 }
 

@@ -56,7 +56,6 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
 Call::~Call()
 {
     /* destroying the upnp object will remove any port mappings it added */
-    if (upnp_) delete upnp_;
     account_.detachCall(id_);
 }
 
@@ -311,8 +310,7 @@ Call::selectUPnPIceCandidates(ring::IceTransport& iceTransport)
 {
     // use upnp to open ports and add the proper candidates
     if ( account_.getUseUPnP() ) {
-        if (not upnp_)
-            upnp_ = new upnp::UPnP();
+        upnp_ = upnp::UPnP(true);
         /* for every component, get the candidate(s)
          * try to open that port
          * add candidate with the same port, but public IP
@@ -326,8 +324,8 @@ Call::selectUPnPIceCandidates(ring::IceTransport& iceTransport)
             std::vector<IpAddr> candidates = iceTransport.getLocalCandidatesAddr(comp_id);
             for(IpAddr addr : candidates) {
                 uint16_t port = addr.getPort();
-                upnp_->addRedirection(port, port);
-                IpAddr publicIP = upnp_->getExternalIP();
+                upnp_.addRedirection(port, port);
+                IpAddr publicIP = upnp_.getExternalIP();
                 publicIP.setPort(port);
                 iceTransport.addCandidate(comp_id, publicIP);
             }

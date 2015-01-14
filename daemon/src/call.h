@@ -326,7 +326,7 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
 
         std::shared_ptr<ring::IceTransport> iceTransport_ {};
 
-        upnp::UPnP * upnp_ {nullptr};
+        upnp::UPnP upnp_;
 
         void selectUPnPIceCandidates(ring::IceTransport& iceTransport);
 

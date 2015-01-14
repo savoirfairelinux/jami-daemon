@@ -51,7 +51,7 @@
 
 namespace upnp {
 
-UPnPIGD *UPnP::defaultIGD_ = new UPnPIGD();
+UPnPIGD UPnP::defaultIGD_ = UPnPIGD();
 
 #if HAVE_UPNP
 UPnPIGD::UPnPIGD(const UPnPIGD &igdSource)
@@ -119,16 +119,22 @@ UPnPIGD::isEmpty() const
 #endif
 }
 
-UPnP::UPnP(void)
+UPnP::UPnP(bool enabled)
+    : enabled_(enabled)
 {
-    if (defaultIGD_ == nullptr or defaultIGD_->isEmpty())
+#if HAVE_UPNP
+    if (enabled_ and defaultIGD_.isEmpty())
         chooseDefaultIGD();
+#else
+    enabled_ = false;
+#endif
 }
 
 UPnP::~UPnP()
 {
     /* remove all entries */
-    removeEntries();
+    if (enabled_)
+        removeEntries();
 }
 
 /**
@@ -139,6 +145,11 @@ bool
 UPnP::chooseDefaultIGD(void)
 {
 #if HAVE_UPNP
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return false;
+    }
+
     struct UPNPDev * devlist = nullptr;
     struct UPNPDev * dev = nullptr;
     int upnp_status = 0;
@@ -194,8 +205,7 @@ UPnP::chooseDefaultIGD(void)
         if (upnp_status > 0)
             RING_DBG("UPnP : local IP address reported as: %s", lanaddr);
 
-        delete defaultIGD_;
-        defaultIGD_ = new UPnPIGD(newIGDDatas, newIGDURLs);
+        defaultIGD_ = UPnPIGD(newIGDDatas, newIGDURLs);
 
         freeUPNPDevlist(devlist);
         devlist = nullptr;
@@ -212,15 +222,6 @@ UPnP::chooseDefaultIGD(void)
 }
 
 /**
- * returns if a default IGD is defined
- */
-bool
-UPnP::hasDefaultIGD(void) const
-{
-    return not ( defaultIGD_ == nullptr or defaultIGD_->isEmpty() );
-}
-
-/**
  * tries to add redirection
  */
 bool
@@ -230,7 +231,12 @@ UPnP::addRedirection(uint16_t port_external, uint16_t port_internal, PortType ty
     if (upnp_error)
         *upnp_error = -1; /* UPNPCOMMAND_UNKNOWN_ERROR */
 #if HAVE_UPNP
-    if (not hasDefaultIGD()) {
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return false;
+    }
+
+    if (defaultIGD_.isEmpty()) {
         RING_WARN("UPnP : cannot perform command as the IGD has either not been chosen or is not available.");
         return false;
     }
@@ -243,7 +249,7 @@ UPnP::addRedirection(uint16_t port_external, uint16_t port_internal, PortType ty
         return false;
     }
 
-    UPnPRedirection redir = UPnPRedirection(*defaultIGD_, local_ip, port_external, port_internal);
+    UPnPRedirection redir = UPnPRedirection(defaultIGD_, local_ip, port_external, port_internal);
 
     RING_DBG("UPnP : adding port mapping : %s", redir.toString().c_str());
 
@@ -287,6 +293,11 @@ bool
 UPnP::addAnyRedirection(uint16_t port_desired, PortType type, bool unique, uint16_t *port_used)
 {
 #if HAVE_UPNP
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return false;
+    }
+
     int upnp_error;
     if (unique) {
         /* check that port is not already used by the client */
@@ -315,7 +326,12 @@ bool
 UPnP::removeRedirection(uint16_t port_external, PortType type, bool existing)
 {
 #if HAVE_UPNP
-    if (not existing and not hasDefaultIGD()) {
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return false;
+    }
+
+    if (not existing and defaultIGD_.isEmpty()) {
         RING_WARN("UPnP : cannot perform command as the IGD has either not been chosen or is not available.");
         return false;
     }
@@ -344,7 +360,7 @@ UPnP::removeRedirection(uint16_t port_external, PortType type, bool existing)
         }
 
         /* we only care about the external port, since we're removing the entry */
-        UPnPRedirection redir = UPnPRedirection(*defaultIGD_, local_ip, port_external, port_external);
+        UPnPRedirection redir = UPnPRedirection(defaultIGD_, local_ip, port_external, port_external);
         redir_ptr = &redir;
     }
 
@@ -378,6 +394,12 @@ UPnP::removeRedirection(uint16_t port_external, PortType type, bool existing)
 
 void
 UPnP::removeEntries(PortType type) {
+#if HAVE_UPNP
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return;
+    }
+
     auto *mappings = type == PortType::UDP ? &udpInstanceMappings_ : &tcpInstanceMappings_;
     for (auto iterator = mappings->begin(); iterator != mappings->end(); ){
         auto redir = iterator->second;
@@ -398,6 +420,7 @@ UPnP::removeEntries(PortType type) {
             iterator = mappings->erase(iterator);
         }
     }
+#endif
 }
 
 /**
@@ -406,8 +429,14 @@ UPnP::removeEntries(PortType type) {
 void
 UPnP::removeEntries()
 {
+#if HAVE_UPNP
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return;
+    }
     removeEntries(PortType::UDP);
     removeEntries(PortType::TCP);
+#endif
 }
 
 /**
@@ -419,7 +448,12 @@ void
 UPnP::removeEntriesByDescription(const std::string& description)
 {
 #if HAVE_UPNP
-    if (not hasDefaultIGD()) {
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return;
+    }
+
+    if (defaultIGD_.isEmpty()) {
         RING_WARN("UPnP : cannot perform command as the IGD has either not been chosen or is not available.");
         return;
     }
@@ -447,8 +481,8 @@ UPnP::removeEntriesByDescription(const std::string& description)
         extPort[0] = '\0';
         intPort[0] = '\0';
         intClient[0] = '\0';
-        upnp_status = UPNP_GetGenericPortMappingEntry(defaultIGD_->urls.controlURL,
-                                                      defaultIGD_->datas.first.servicetype,
+        upnp_status = UPNP_GetGenericPortMappingEntry(defaultIGD_.urls.controlURL,
+                                                      defaultIGD_.datas.first.servicetype,
                                                       index,
                                                       extPort, intClient, intPort,
                                                       protocol, desc, enabled,
@@ -462,7 +496,7 @@ UPnP::removeEntriesByDescription(const std::string& description)
                 RING_DBG("UPnP : found entry with matching description:\n\t%s %5s->%s:%-5s '%s'",
                          protocol, extPort, intClient, intPort, desc);
                 int delete_err = 0;
-                delete_err = UPNP_DeletePortMapping(defaultIGD_->urls.controlURL, defaultIGD_->datas.first.servicetype, extPort, protocol, NULL);
+                delete_err = UPNP_DeletePortMapping(defaultIGD_.urls.controlURL, defaultIGD_.datas.first.servicetype, extPort, protocol, NULL);
                 if(delete_err != UPNPCOMMAND_SUCCESS) {
                     RING_DBG("UPnP : UPNP_DeletePortMapping() failed with error code %d : %s", delete_err, strupnperror(delete_err));
                 } else {
@@ -491,7 +525,12 @@ void
 UPnP::removeEntriesByLocalIPAndDescription(const std::string& description)
 {
 #if HAVE_UPNP
-    if (not hasDefaultIGD()) {
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return;
+    }
+
+    if (defaultIGD_.isEmpty()) {
         RING_WARN("UPnP : cannot perform command as the IGD has either not been chosen or is not available.");
         return;
     }
@@ -527,8 +566,8 @@ UPnP::removeEntriesByLocalIPAndDescription(const std::string& description)
         extPort[0] = '\0';
         intPort[0] = '\0';
         intClient[0] = '\0';
-        upnp_status = UPNP_GetGenericPortMappingEntry(defaultIGD_->urls.controlURL,
-                                                      defaultIGD_->datas.first.servicetype,
+        upnp_status = UPNP_GetGenericPortMappingEntry(defaultIGD_.urls.controlURL,
+                                                      defaultIGD_.datas.first.servicetype,
                                                       index,
                                                       extPort, intClient, intPort,
                                                       protocol, desc, enabled,
@@ -542,7 +581,7 @@ UPnP::removeEntriesByLocalIPAndDescription(const std::string& description)
                 RING_DBG("UPnP : found entry with matching description and ip:\n\t%s %5s->%s:%-5s '%s'",
                          protocol, extPort, intClient, intPort, desc);
                 int delete_err = 0;
-                delete_err = UPNP_DeletePortMapping(defaultIGD_->urls.controlURL, defaultIGD_->datas.first.servicetype, extPort, protocol, NULL);
+                delete_err = UPNP_DeletePortMapping(defaultIGD_.urls.controlURL, defaultIGD_.datas.first.servicetype, extPort, protocol, NULL);
                 if(delete_err != UPNPCOMMAND_SUCCESS) {
                     RING_DBG("UPnP : UPNP_DeletePortMapping() failed with error code %d : %s", delete_err, strupnperror(delete_err));
                 } else {
@@ -571,7 +610,12 @@ IpAddr
 UPnP::getExternalIP()
 {
 #if HAVE_UPNP
-    if (not hasDefaultIGD()) {
+    if (not enabled_) {
+        RING_DBG("UPnP : UPnP is not enabled");
+        return false;
+    }
+
+    if (defaultIGD_.isEmpty()) {
         RING_WARN("UPnP : cannot perform command as the IGD has either not been chosen or is not available.");
         return IpAddr();
     }
@@ -581,8 +625,8 @@ UPnP::getExternalIP()
 
     RING_DBG("UPnP : getting external IP");
 
-    upnp_status = UPNP_GetExternalIPAddress(defaultIGD_->urls.controlURL,
-                                            defaultIGD_->datas.first.servicetype,
+    upnp_status = UPNP_GetExternalIPAddress(defaultIGD_.urls.controlURL,
+                                            defaultIGD_.datas.first.servicetype,
                                             externalIPAddress);
     if(upnp_status != UPNPCOMMAND_SUCCESS) {
         RING_DBG("UPnP : GetExternalIPAddress failed with error code %d : %s", upnp_status, strupnperror(upnp_status));

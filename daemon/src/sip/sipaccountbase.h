@@ -114,7 +114,6 @@ public:
     SIPAccountBase(const std::string& accountID);
 
     virtual ~SIPAccountBase() {
-        delete upnp_;
         setTransport();
     }
 
@@ -402,7 +401,7 @@ protected:
      * used only if use UPnP is set to true
      */
     IpAddr upnpIp_ {};
-    upnp::UPnP * upnp_ {nullptr};
+    upnp::UPnP upnp_;
 
 private:
     NON_COPYABLE(SIPAccountBase);
