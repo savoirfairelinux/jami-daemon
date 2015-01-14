@@ -25,6 +25,7 @@ AM_CPPFLAGS = \
 	-I$(src)/src \
 	-I$(src)/src/config \
 	-I$(src)/test \
+	-I$(src)/src/public \
 	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/ring\" \

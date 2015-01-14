@@ -48,7 +48,8 @@ libclient_dbus_la_SOURCES += dbusvideomanager.cpp dbusvideomanager.h
 endif
 
 libclient_dbus_la_CXXFLAGS = -I../ \
-							 -I$(top_srcdir)/src \
+            -I$(top_srcdir)/src \
+            -I$(top_srcdir)/src/public \
             -DPREFIX=\"$(prefix)\" \
             -DPROGSHAREDIR=\"${datadir}/ring\" \
             $(DBUSCPP_CFLAGS)
