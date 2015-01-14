@@ -80,6 +80,7 @@ class Sdp {
          *  @return The structure that describes a SDP session
          */
         pjmedia_sdp_session *getLocalSdpSession() {
+            printSession(localSession_);
             return localSession_;
         }
 
