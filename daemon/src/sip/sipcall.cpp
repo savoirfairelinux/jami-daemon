@@ -356,7 +356,7 @@ SIPCall::hangup(int reason)
         return;
 
     // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account.getContactHeader());
+    const pj_str_t contactStr(account.getContactHeader(transport_ ? transport_->get() : nullptr));
     sip_utils::addContactHeader(&contactStr, tdata);
 
     if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
