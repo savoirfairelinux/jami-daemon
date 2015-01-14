@@ -54,7 +54,7 @@
 #include "manager.h"
 
 #ifdef RING_VIDEO
-#include "video/libav_utils.h"
+#include "libav_utils.h"
 #endif
 #include "fileutils.h"
 
@@ -589,7 +589,7 @@ void RingAccount::doRegister()
 
         username_ = dht_.getId().toString();
 
-        Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&dht::DhtRunner::loop, &dht_));
+        Manager::instance().registerEventHandler((uintptr_t)this, [this](){ dht_.loop(); });
         setRegistrationState(RegistrationState::TRYING);
 
         dht_.bootstrap(loadNodes());
