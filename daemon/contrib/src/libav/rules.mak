@@ -1,6 +1,8 @@
 HASH=HEAD
 LIBAV_SNAPURL := http://git.libav.org/?p=libav.git;a=snapshot;h=$(HASH);sf=tgz
 
+PKGS += libav
+
 LIBAVCONF = \
         --cc="$(CC)"                 \
         --pkg-config="$(PKG_CONFIG)" \
@@ -102,13 +104,6 @@ endif
 
 else # !Windows
 LIBAVCONF += --enable-pthreads
-endif
-
-# Only build on Linux for now, since no one else has implemented video
-ifdef HAVE_LINUX
-ifndef HAVE_ANDROID
-PKGS += libav
-endif
 endif
 
 ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 54.20.3 libswscale libavdevice >= 53.0.0 libavutil >= 51.0.0"),)
