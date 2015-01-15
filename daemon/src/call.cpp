@@ -313,66 +313,33 @@ Call::initIceTransport(bool master, unsigned channel_num)
             else
                 iceTransport.setSlaveSession();
         }
-
-        {
-            std::unique_lock<std::mutex> lk(callMutex_);
-            iceTransportInitDone_ = done;
-        }
-
-        iceCV_.notify_one();
     };
-    const auto& on_negodone = [this, master](ring::IceTransport& /*iceTransport*/, bool done) {
-        {
-            std::unique_lock<std::mutex> lk(callMutex_);
-            iceTransportNegoDone_ = done;
-        }
-
-        iceCV_.notify_one();
-    };
-
     iceTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), channel_num,
-                                                        on_initdone,
-                                                        on_negodone);
+                                                        on_initdone);
 }
 
 int
 Call::waitForIceInitialization(unsigned timeout)
 {
-    std::unique_lock<std::mutex> lk(callMutex_);
-    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
-                         [this]{ return iceTransportInitDone_; })) {
-        RING_WARN("waitForIceInitialization: timeout");
-        return -1;
-    }
-    RING_DBG("waitForIceInitialization: %u", iceTransportInitDone_);
-    return iceTransportInitDone_;
+    return iceTransport_->waitForInitialization(timeout);
 }
 
 int
 Call::waitForIceNegotiation(unsigned timeout)
 {
-    std::unique_lock<std::mutex> lk(callMutex_);
-    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
-                         [this]{ return iceTransportNegoDone_; })) {
-        RING_WARN("waitForIceNegotiation: timeout");
-        return -1;
-    }
-    RING_DBG("waitForIceNegotiation: %u", iceTransportNegoDone_);
-    return iceTransportNegoDone_;
+    return iceTransport_->waitForNegotiation(timeout);
 }
 
 bool
 Call::isIceUsed() const
 {
-    std::unique_lock<std::mutex> lk(callMutex_);
-    return iceTransportInitDone_;
+    return iceTransport_->isInitialized();
 }
 
 bool
 Call::isIceRunning() const
 {
-    std::unique_lock<std::mutex> lk(callMutex_);
-    return iceTransportNegoDone_;
+    return iceTransport_->isCompleted();
 }
 
 ring::IceSocket*
