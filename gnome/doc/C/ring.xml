@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook V4.1//EN" "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd"  [
-    <!ENTITY app "SFLphone">
+    <!ENTITY app "Ring">
     <!ENTITY appversion "0.9.8~rc1">
     <!ENTITY docversion "1.0">
 ]>
@@ -10,7 +10,7 @@
 <!-- please do not change the id; for translations, change lang to -->
 <!-- appropriate code -->
   <articleinfo>
-    <title>SFLphone Manual v&docversion;</title>
+    <title>Ring Manual v&docversion;</title>
 
     <copyright>
       <year>2006</year>
@@ -26,7 +26,7 @@
    -->
     <abstract role="description">
       <para>
-    SFLphone is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license.
+    Ring is an enterprise-class SIP/IAX2 compatible softphone for GNU/Linux, published under the GPLv3 license.
         </para>
     </abstract>
 
@@ -75,61 +75,61 @@
 
 <revhistory>
         <revision>
-            <revnumber>SFLphone Manual v1.0.1</revnumber>
+            <revnumber>Ring Manual v1.0.1</revnumber>
             <date>March 2010</date>
             <revdescription>
-                <para role="author">SFLphone team</para>
+                <para role="author">Ring team</para>
                 <para role="publisher">Savoir-faire Linux</para>
                 <para>Minor changes</para>
             </revdescription>
       </revision>
 
       <revision>
-            <revnumber>SFLphone Manual v1.0</revnumber>
+            <revnumber>Ring Manual v1.0</revnumber>
             <date>September 2009</date>
             <revdescription>
-                <para role="author">SFLphone team</para>
+                <para role="author">Ring team</para>
                 <para role="publisher">Savoir-faire Linux</para>
             </revdescription>
       </revision>
 </revhistory>
 
-<releaseinfo>This manual describes SFLphone version &appversion;.</releaseinfo>
+<releaseinfo>This manual describes Ring version &appversion;.</releaseinfo>
 
 </articleinfo>
 
 <indexterm>
-    <primary>SFLphone</primary>
+    <primary>Ring</primary>
  </indexterm>
 
 <sect1 id="introduction">
     <title>Introduction</title>
     <para>
-        <application>SFLphone</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
+        <application>Ring</application> is a SIP/IAX2 softphone and VoIP client for GNU/Linux. It aims at being a robust enterprise-class desktop phone and has been designed with a hundred-calls-a-day receptionist in mind.
     </para>
     <para>
-        <application>SFLphone</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
+        <application>Ring</application> is a free software and is distributed under the GNU General Public License version 3. It is developed by Savoir-Faire Linux, a Canadian Linux consulting company, in partnership with the global community.
     </para>
     <para>
         Among the many features we developed for you, we could
         highlight the high definition sound (wide-band audio
         codecs - speex, G722, Celt), multiple conference call,
         audio recording, voicemail notification, and call history.
-        More than a simple softphone, <application>SFLphone</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option.
+        More than a simple softphone, <application>Ring</application> supports advanced enterprise-class call features: unlimited number of calls, call transfer, and on/off hold option.
     </para>
     <para>
         This release also provides advanced security features (secure RTP and TLS).
     </para>
 
     <para>
-        Besides the native ALSA interface, <application>SFLphone</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
+        Besides the native ALSA interface, <application>Ring</application> now fully supports PulseAudio sound server so you could experience the great possibilities it offers (sound mixing, per application volume control, ...).
     </para>
 </sect1>
 
 <sect1 id="getting-started">
     <title>Getting started</title>
     <para>
-        The first time you start up SFLphone, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
+        The first time you start up Ring, you will be ask to complete a wizard to set up your(s) account(s). This account configuration manager offers you two possibilities:
         <itemizedlist>
             <listitem>
                 <para><guilabel>Create a free SIP/IAX2 account on sflphone.org</guilabel></para>
@@ -139,8 +139,8 @@
             </listitem>
             <listitem>
                 <para><guilabel>Register an existing SIP or IAX2 account</guilabel></para>
-                <para>Click there if you already have an account and you want to use it with SFLphone.
-                You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>SFLphone</application> will then try to register it so you could start using it.</para>
+                <para>Click there if you already have an account and you want to use it with Ring.
+                You will be prompted to select the account type (SIP or IAX2) and to fill out your account information. <application>Ring</application> will then try to register it so you could start using it.</para>
             </listitem>
         </itemizedlist>
     </para>
@@ -152,7 +152,7 @@
 <sect1 id="accounts">
     <title>Managing your accounts</title>
     <para>
-        <application>SFLphone</application> supports both IAX2
+        <application>Ring</application> supports both IAX2
         and SIP accounts.
     </para>
 
@@ -222,7 +222,7 @@
             <orderedlist>
                 <listitem><para>Choose <menuchoice><guimenu>Edit</guimenu><guimenuitem>Manage accounts</guimenuitem></menuchoice> to access the accounts list.</para></listitem>
                 <listitem>
-                    <para>The first account in the account in list will be used as the default account to make calls with. If it is not registered, SFLphone will try to use the second in the list, if still not registered, the third, and so one ...</para>
+                    <para>The first account in the account in list will be used as the default account to make calls with. If it is not registered, Ring will try to use the second in the list, if still not registered, the third, and so one ...</para>
                     <para>To reorder the accounts as you wish, select an account and click on the <menuchoice><guimenu>Up</guimenu></menuchoice> or  <menuchoice><guimenu>Down</guimenu></menuchoice> button.</para>
                 </listitem>
              </orderedlist>
@@ -270,7 +270,7 @@
                         <listitem>
                         <itemizedlist>
                             <listitem><para>Using STUN</para>
-                            <para>If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>SFLphone</application>.</para></listitem>
+                            <para>If enabled, the core will try to initialize an UDP transport on the mapped address/port number that the NAT (Network Address Translator) has allocated to <application>Ring</application>.</para></listitem>
                             <listitem><para>Same as local parameters</para>
                             </listitem>
                             <listitem><para>Manually</para>
@@ -300,7 +300,7 @@
 
         <sect3 id="realms">
             <title>Credentials</title>
-            <para>SFLphone supports multiple realms.</para>
+            <para>Ring supports multiple realms.</para>
         </sect3>
 
         <sect3 id="security_frame">
@@ -540,7 +540,7 @@
     </sect2>
 
     <sect2 id="conferencecall"><title>Conference calls</title>
-    <para>SFLphone now supports conference call hosting
+    <para>Ring now supports conference call hosting
         integrating server like features in a simple GUI.
         </para>
         <para>
@@ -580,7 +580,7 @@
             <listitem>
           <para><guilabel>Leave a conference</guilabel></para>
               <para>
-            SFLphone conference model let you leave a conference that
+            Ring conference model let you leave a conference that
             you are currently hosting to answer any other incoming
             communication or even initiate new ones. The conference is
             not interrupted, double clicking the conference icon
@@ -614,7 +614,7 @@
             <listitem>
           <para><guilabel>Multiple conference</guilabel></para>
               <para>
-            SFLphone supports multiple conferences running
+            Ring supports multiple conferences running
             simultaneously. Two conferences can be joined the same way
             they are created, dragging one on the
             other.
@@ -645,11 +645,11 @@
                        <para>RTP is the underlying protocol that is used in pair with the widely used SIP protocol to carry voice data. RTP alone does not provide any security features.</para>
                         <para>Details for implementing Secure RTP (SRTP) were described independently in a separate document (RFC). However, in this paper, one aspect was deliberately left unspecified: how should the encryption keys be exchanged between the two parties involved in a secure RTP session ?</para>
 
-                        <para>Multiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, SFLphone integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
+                        <para>Multiple solutions were proposed to fill in that blank. Among them, are SDES (RFC4568) and ZRTP which are probably the most popular today. For the 0.9.7 release, Ring integrates support for Secure RTP through the ZRTP protocol, and SDES is expected to be implemented in the very few next releases.</para>
 
                         <para>As of today, blueprints for ZRTP are still laid out and are recognized under the name "zrtp-draftzimmerman" in the RFC machine. The author of ZRTP is Phil Zimmermann, that same person who brought us PGP. Therefore, it is not surprising that he designed ZRTP as an anti-PKI solution for key exchange.</para>
 
-                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the user's point of view. Indeed under SFLphone no special configuration is needed, apart from  enabling the option itself.</para>
+                        <para>ZRTP makes possible for two parties to automatically establish a shared secret in a very simple way from the user's point of view. Indeed under Ring no special configuration is needed, apart from  enabling the option itself.</para>
 
                         <para>If you want to use ZRTP, please take note that if you are connecting to a PBX, this one must have been configured to support ZRTP. Unfortunately, security for VoIP communications is still young and chances are that your PBX software won't support it.</para>
 
@@ -705,7 +705,7 @@
                                 <varlistentry>
                                     <term><guilabel>Send Hello Hash in SDP</guilabel></term>
                                         <listitem><para>Selecting this option will cause the program to compute an hash function over the "Hello" packet and send it as an SDP field "zrtp-hash:". The remote end might be interested in getting this value to add an additional layer of protection based on another communication channel. Upon receiving this value, the remote point can compute the hash function on the received hello packet and compare it.</para>
-                                        <para>Take note that for 0.9.7, SFLphone does not perform the comparison on its side.</para></listitem>
+                                        <para>Take note that for 0.9.7, Ring does not perform the comparison on its side.</para></listitem>
                                 </varlistentry>
 
                                 <varlistentry>
@@ -714,7 +714,7 @@
 
                                     <para>Disabling this option will stop the program from prompting the user with the SAS.</para>
 
-                                    <para>Such an option was motivated to be developed at that time by the the state of the libzrtpcpp library that SFLphone was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
+                                    <para>Such an option was motivated to be developed at that time by the the state of the libzrtpcpp library that Ring was making use of. It is only from version x.x that this library can cache results of SAS computation between two peers.</para>
                                     </listitem>
                                 </varlistentry>
 
@@ -759,7 +759,7 @@
 
 <sect1 id="codecs_overview">
     <title>Codecs overview</title>
-    <para>SFLphone supports several widely used audio codecs:</para>
+    <para>Ring supports several widely used audio codecs:</para>
         <para>
           <itemizedlist>
             <listitem>
@@ -821,7 +821,7 @@
             <para>Check the <guilabel>Use Evolution address books</guilabel> box.</para>
         </listitem>
     </orderedlist>
-    <para>Every address books you configured in Evolution will be now available in <application>SFLphone</application>. Please be sure you selected at least one address book.</para>
+    <para>Every address books you configured in Evolution will be now available in <application>Ring</application>. Please be sure you selected at least one address book.</para>
     </sect2>
 
     <sect2 id="adressbook_options">
@@ -962,19 +962,19 @@
             <varlistentry>
                 <term><guilabel>Popup main window on incoming call</guilabel></term>
                 <listitem><para>
-                If SFLphone is closed on the system tray, pops the main window up on foreground when receiving an incoming call.
+                If Ring is closed on the system tray, pops the main window up on foreground when receiving an incoming call.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
                 <term><guilabel>Never popup main window</guilabel></term>
                 <listitem><para>
-                If SFLphone is closed on the system tray, never pops the main window up on foreground when receiving an incoming call.
+                If Ring is closed on the system tray, never pops the main window up on foreground when receiving an incoming call.
                 </para></listitem>
             </varlistentry>
             <varlistentry>
-                <term><guilabel>Hide SFLphone window on startup</guilabel></term>
+                <term><guilabel>Hide Ring window on startup</guilabel></term>
                 <listitem><para>
-                On startup, SFLphone will go directly on the system tray.
+                On startup, Ring will go directly on the system tray.
                 </para></listitem>
             </varlistentry>
 

@@ -1,4 +1,4 @@
-DOC_MODULE = sflphone
+DOC_MODULE = ring
 DOC_ENTITIES = legal.xml
 DOC_INCLUDES =
 DOC_FIGURES =	figures/addressbook-button.png \
