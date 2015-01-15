@@ -1,6 +1,6 @@
 AC_PREREQ([2.64])
 
-AC_INIT([Ring],[1.4.2],[sflphoneteam@savoirfairelinux.com],[ring-client-gnome])
+AC_INIT([Ring],[1.4.2],[ring@lists.savoirfairelinux.com],[ring-client-gnome])
 
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS([config.h])
