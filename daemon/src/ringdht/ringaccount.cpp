@@ -67,8 +67,8 @@
 #include <sstream>
 #include <cctype>
 
-static constexpr int ICE_COMPONENTS {5};
-static constexpr int ICE_COMP_SIP_TRANSPORT {4};
+static constexpr int ICE_COMPONENTS {1};
+static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
 static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 
@@ -109,10 +109,13 @@ RingAccount::~RingAccount()
 std::shared_ptr<SIPCall>
 RingAccount::newIncomingCall(const std::string& from)
 {
-    for (auto& c : pendingCalls_) {
-        if (c->getPeerNumber() == from) {
+    auto call = pendingCalls_.begin();
+    while (call != pendingCalls_.end()) {
+        if ((*call)->getPeerNumber() == from) {
+            std::shared_ptr<SIPCall> ret = *call;
+            pendingCalls_.erase(call);
             RING_WARN("Found matching call for %s", from.c_str());
-            return c;
+            return ret;
         }
     }
     RING_ERR("Can't find matching call for %s", from.c_str());
@@ -140,14 +143,24 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
     call->setIPToIP(true);
-    call->initIceTransport(true, ICE_COMPONENTS);
-    call->waitForIceInitialization(ICE_INIT_TIMEOUT);
-    auto ice = call->getIceTransport();
-    if (not ice or not ice->isInitialized()) {
+
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    auto ice = iceTransportFactory.createTransport(
+        ("sip:"+call->getCallId()).c_str(),
+        ICE_COMPONENTS,
+        [](ring::IceTransport& /*iceTransport*/, bool done) {
+            RING_DBG("ICE init callback %d", done);
+        },
+        [](ring::IceTransport& /*iceTransport*/, bool done) {
+            RING_DBG("ICE nego callback %d", done);
+        }
+    );
+    if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         call->setConnectionState(Call::DISCONNECTED);
         call->setState(Call::MERROR);
         return call;
     }
+    ice->setInitiatorSession();
 
     call->setState(Call::INACTIVE);
     call->setConnectionState(Call::TRYING);
@@ -178,8 +191,8 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     dht_.listen(
         callkey,
         [shared, call, callkey, ice, toUri, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
-            RING_WARN("Got a DHT reply from %s !", toUri.c_str());
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
+            RING_DBG("Outcall listen callback (%d values)", vals.size());
             for (const auto& v : vals) {
                 if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
                     RING_WARN("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
@@ -189,15 +202,17 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
                     RING_WARN("Ignoring value ID %llx (expected %llx)", v->id, replyvid);
                     continue;
                 }
+                RING_WARN("Got a DHT reply from %s !", toUri.c_str());
                 RING_WARN("Performing ICE negotiation.");
                 ice->start(v->data);
-                if (call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
+                if (ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                     call->setConnectionState(Call::DISCONNECTED);
                     Manager::instance().callFailure(*call);
                     return false;
                 }
+                call->setTransport(this_.link_->sipTransport->getIceTransport(ice, ICE_COMP_SIP_TRANSPORT));
                 call->setConnectionState(Call::PROGRESSING);
-                this_.createOutgoingCall(call, toUri, ice->getRemoteAddress(0));
+                this_.createOutgoingCall(call, toUri, ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 return false;
             }
             return true;
@@ -211,9 +226,7 @@ void
 RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target)
 {
     RING_WARN("RingAccount::createOutgoingCall to: %s target: %s tlsListener: %d", to_id.c_str(), target.toString(true).c_str(), tlsListener_?1:0);
-    auto t = link_->sipTransport->getIceTransport(call->getIceTransport(), ICE_COMP_SIP_TRANSPORT);
-    setTransport(t);
-    call->setTransport(t);
+    call->initIceTransport(true);
     call->setIPToIP(true);
     call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
     call->initRecFilename(to_id);
@@ -274,6 +287,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 bool
 RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 {
+    call->setupLocalSDPFromIce();
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
@@ -633,36 +647,46 @@ void RingAccount::doRegister()
                         auto reply_vid = from_vid+1;
                         RING_WARN("Received incomming DHT call request from %s (vid %llx) !!", from.c_str(), from_vid);
                         auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(this_, Manager::instance().getNewCallID(), Call::INCOMING);
-                        call->initIceTransport(false, ICE_COMPONENTS);
-                        if (call->waitForIceInitialization(ICE_INIT_TIMEOUT) <= 0)
+                        auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+                        auto ice = iceTransportFactory.createTransport(
+                            ("sip:"+call->getCallId()).c_str(),
+                            1,
+                            [](ring::IceTransport& iceTransport, bool done) {
+                                RING_DBG("ICE init callback %d", done);
+                            },
+                            [](ring::IceTransport& /*iceTransport*/, bool done) {
+                                RING_DBG("ICE nego callback %d", done);
+                            }
+                        );
+                        if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
                             throw std::runtime_error("Can't initialize ICE..");
+                        ice->setSlaveSession();
+
                         this_.dht_.putEncrypted(
                             listenKey,
                             v->owner.getId(),
                             dht::Value {
                                 this_.ICE_ANNOUCEMENT_TYPE.id,
-                                call->getIceTransport()->getLocalAttributesAndCandidates(),
+                                ice->getLocalAttributesAndCandidates(),
                                 reply_vid
                             },
-                            [call,shared,listenKey,reply_vid](bool ok) {
+                            [call,ice,shared,listenKey,reply_vid](bool ok) {
                                 RING_WARN("ICE exchange put %d", ok);
                                 auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
                                 this_.dht_.cancelPut(listenKey, reply_vid);
                                 RING_WARN("waitForIceNegociation");
-                                if (!ok || call->waitForIceNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
+                                if (!ok || ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
                                     RING_WARN("nego failed");
                                     call->setConnectionState(Call::DISCONNECTED);
                                     Manager::instance().callFailure(*call);
                                 } else {
                                     RING_WARN("nego succeeded");
                                     call->setConnectionState(Call::PROGRESSING);
-                                    auto t = this_.link_->sipTransport->getIceTransport(call->getIceTransport(), ICE_COMP_SIP_TRANSPORT);
-                                    this_.setTransport(t);
-                                    call->setTransport(t);
+                                    call->setTransport(this_.link_->sipTransport->getIceTransport(ice, ICE_COMP_SIP_TRANSPORT));
                                 }
                             }
                         );
-                        call->getIceTransport()->start(v->data);
+                        ice->start(v->data);
                         call->setPeerNumber(from);
                         call->initRecFilename(from);
                         this_.pendingCalls_.push_back(call);
