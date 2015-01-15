@@ -291,14 +291,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    // FIXME : for now, use the same address family as the SIP transport
-    auto family = pjsip_transport_type_get_af(account->getTransportType());
-    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
-
-    // May use the published address as well
-    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
-                    ? account->getPublishedIpAddress() : addrToUse;
-
     char tmp[PJSIP_MAX_URL_SIZE];
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, length);
@@ -321,6 +313,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
     call->setTransport(transport);
+
+    // FIXME : for now, use the same address family as the SIP transport
+    auto family = pjsip_transport_type_get_af(pjsip_transport_get_type_from_flag(transport->get()->flag));
+    IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
+
+    // May use the published address as well
+    IpAddr addrSdp = account->isStunEnabled() or (not account->getPublishedSameasLocal())
+                    ? account->getPublishedIpAddress() : addrToUse;
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
@@ -380,6 +380,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         RING_DBG("Initializing ICE transport");
         call->initIceTransport(false);
     }
+
     call->setupLocalSDPFromIce();
 
     ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
@@ -411,7 +412,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     pjsip_inv_session* inv = nullptr;
-    pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), 0, &inv);
+    pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), PJSIP_INV_SUPPORT_ICE, &inv);
 
     if (!inv) {
         RING_ERR("Call invite is not initialized");
@@ -640,10 +641,10 @@ SIPVoIPLink::~SIPVoIPLink()
         RING_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
-    // destroy SIP transport before endpoint
-    sipTransport.reset();
-
     pjsip_endpt_destroy(endpt_);
+
+    // destroy SIP transport after endpoint
+    sipTransport.reset();
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
