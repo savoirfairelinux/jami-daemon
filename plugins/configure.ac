@@ -1,4 +1,4 @@
-AC_INIT([Ring],[2.0.0],[sflphoneteam@savoirfairelinux.com],[ring-plugins])
+AC_INIT([Ring],[2.0.0],[ring@lists.savoirfairelinux.com],[ring-plugins])
 AC_CONFIG_HEADERS([config.h])
 
 AC_CONFIG_AUX_DIR([build-aux])
