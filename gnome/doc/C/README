@@ -1,1 +1,1 @@
-xml2po -o sflphone-usermanual.pot sflphone.xml
+xml2po -o ring-usermanual.pot ring.xml
