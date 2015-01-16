@@ -65,6 +65,7 @@ class IceTransport {
          * Constructor
          */
         IceTransport(const char* name, int component_count,
+                     bool master,
                      IceTransportCompleteCb on_initdone_cb={},
                      IceTransportCompleteCb on_negodone_cb={});
 
@@ -209,6 +210,8 @@ class IceTransport {
                 IceRecvCb cb;
         };
         std::vector<ComponentIO> compIO_;
+
+        bool initiator_session_ {true};
 };
 
 class IceTransportFactory {
@@ -218,6 +221,7 @@ class IceTransportFactory {
 
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
+                                                      bool master,
                                                       IceTransportCompleteCb&& on_initdone_cb={},
                                                       IceTransportCompleteCb&& on_negodone_cb={});
 
