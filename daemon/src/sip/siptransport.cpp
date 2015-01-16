@@ -270,6 +270,17 @@ SipTransportBroker::findTransport(pjsip_transport* t)
 }
 
 void
+SipTransportBroker::shutdown()
+{
+    std::unique_lock<std::mutex> lock(transportMapMutex_);
+    for (auto& t : transports_) {
+        if (auto transport = t.second.lock()) {
+            pjsip_transport_shutdown(transport->get());
+        }
+    }
+}
+
+void
 SipTransportBroker::waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb)
 {
     std::vector<std::pair<SipTransportDescr, pjsip_transport*>> to_destroy_all;
