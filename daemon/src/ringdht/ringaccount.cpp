@@ -151,14 +151,14 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     auto ice = iceTransportFactory.createTransport(
         ("sip:"+call->getCallId()).c_str(),
-        ICE_COMPONENTS
+        ICE_COMPONENTS,
+        true
     );
     if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         call->setConnectionState(Call::DISCONNECTED);
         call->setState(Call::MERROR);
         return call;
     }
-    ice->setInitiatorSession();
 
     call->setState(Call::INACTIVE);
     call->setConnectionState(Call::TRYING);
@@ -676,11 +676,11 @@ void RingAccount::doRegister()
                         auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
                         auto ice = iceTransportFactory.createTransport(
                             ("sip:"+call->getCallId()).c_str(),
-                            ICE_COMPONENTS
+                            ICE_COMPONENTS,
+                            false
                         );
                         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
                             throw std::runtime_error("Can't initialize ICE..");
-                        ice->setSlaveSession();
 
                         this_.dht_.putEncrypted(
                             listenKey,
