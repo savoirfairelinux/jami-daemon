@@ -198,6 +198,11 @@ public:
      */
     void waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb);
 
+    /**
+     * Start gracefull shutdown procedure for all transports
+     */
+    void shutdown();
+
 private:
     NON_COPYABLE(SipTransportBroker);
 

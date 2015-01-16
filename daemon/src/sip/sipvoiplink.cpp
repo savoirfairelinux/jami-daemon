@@ -627,10 +627,10 @@ SIPVoIPLink::~SIPVoIPLink()
 
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
+    sipTransport->shutdown();
+
     for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
         sleep(1);
-
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     const pj_time_val tv = {0, 10};
     pjsip_endpt_handle_events(endpt_, &tv);
@@ -639,11 +639,12 @@ SIPVoIPLink::~SIPVoIPLink()
         RING_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
-    pjsip_endpt_destroy(endpt_);
-
-    // destroy SIP transport after endpoint
+    // destroy SIP transport before endpoint
     sipTransport.reset();
 
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
+
+    pjsip_endpt_destroy(endpt_);
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
 
