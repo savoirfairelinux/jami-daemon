@@ -94,6 +94,7 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
 }
 
 IceTransport::IceTransport(const char* name, int component_count,
+                           bool master,
                            IceTransportCompleteCb on_initdone_cb,
                            IceTransportCompleteCb on_negodone_cb)
     : pool_(nullptr, pj_pool_release)
@@ -101,6 +102,7 @@ IceTransport::IceTransport(const char* name, int component_count,
     , on_negodone_cb_(on_negodone_cb)
     , component_count_(component_count)
     , compIO_(component_count)
+    , initiator_session_(master)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
 
@@ -146,6 +148,12 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
         RING_DBG("ICE %s with %s", opname, done?"success":"error");
         if (op == PJ_ICE_STRANS_OP_INIT) {
             iceTransportInitDone_ = done;
+            if (iceTransportInitDone_) {
+                if (initiator_session_)
+                    setInitiatorSession();
+                else
+                    setSlaveSession();
+            }
             if (on_initdone_cb_)
                 on_initdone_cb_(*this, done);
         } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
@@ -192,6 +200,7 @@ bool
 IceTransport::setInitiatorSession()
 {
     RING_DBG("ICE as master");
+    initiator_session_ = true;
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
@@ -208,6 +217,7 @@ bool
 IceTransport::setSlaveSession()
 {
     RING_DBG("ICE as slave");
+    initiator_session_ = false;
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
@@ -684,10 +694,11 @@ IceTransportFactory::handleEvents(unsigned max_msec, unsigned *p_count)
 std::shared_ptr<IceTransport>
 IceTransportFactory::createTransport(const char* name,
                                      int component_count,
+                                     bool master,
                                      IceTransportCompleteCb&& on_initdone_cb,
                                      IceTransportCompleteCb&& on_negodone_cb)
 {
-    return std::make_shared<IceTransport>(name, component_count,
+    return std::make_shared<IceTransport>(name, component_count, master,
                                           std::forward<IceTransportCompleteCb>(on_initdone_cb),
                                           std::forward<IceTransportCompleteCb>(on_negodone_cb));
 }
