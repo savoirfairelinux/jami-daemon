@@ -328,6 +328,18 @@ IceTransport::isCompleted() const
     return pj_ice_strans_sess_is_complete(icest_.get());
 }
 
+bool
+IceTransport::isRunning() const
+{
+    return pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_RUNNING;
+}
+
+bool
+IceTransport::isFailed() const
+{
+    return pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_FAILED;
+}
+
 IpAddr
 IceTransport::getLocalAddress(unsigned comp_id) const
 {
