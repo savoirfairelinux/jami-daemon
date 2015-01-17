@@ -339,7 +339,7 @@ Call::isIceUsed() const
 bool
 Call::isIceRunning() const
 {
-    return iceTransport_->isCompleted();
+    return iceTransport_->isRunning();
 }
 
 ring::IceSocket*
