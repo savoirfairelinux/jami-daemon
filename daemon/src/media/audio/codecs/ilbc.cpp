@@ -29,7 +29,7 @@
  */
 
 #include "audiocodec.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include <algorithm>
 
 extern "C" {
@@ -56,13 +56,13 @@ class Ilbc: public ring::AudioCodec {
         }
 
         // iLBC expects floating point data, so we have to convert
-        int decode(SFLAudioSample *pcm, unsigned char *data, size_t) {
+        int decode(ring::AudioSample *pcm, unsigned char *data, size_t) {
             const int NORMAL_MODE = 1;
             iLBC_decode(pcm, reinterpret_cast<WebRtc_UWord16*>(data), &ilbc_dec_, NORMAL_MODE);
             return frameSize_;
         }
 
-        int encode(unsigned char *data, SFLAudioSample *pcm, size_t) {
+        int encode(unsigned char *data, ring::AudioSample *pcm, size_t) {
             iLBC_encode(reinterpret_cast<WebRtc_UWord16*>(data), pcm, &ilbc_enc_);
             return frameSize_;
         }

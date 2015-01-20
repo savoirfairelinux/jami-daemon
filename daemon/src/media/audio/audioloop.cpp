@@ -37,12 +37,9 @@
 #endif
 
 #include "audioloop.h"
-
-#include <cmath>
-#include <numeric>
-#include <cstring>
-#include <cassert>
 #include "logger.h"
+
+#include <algorithm> // std::min
 
 namespace ring {
 

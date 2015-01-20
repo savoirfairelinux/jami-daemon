@@ -31,7 +31,7 @@
 
 
 #include "audiocodec.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "noncopyable.h"
 #include "ring_plugin.h"
 
@@ -73,7 +73,7 @@ private:
             return new Gsm;
         }
 
-        int decode(SFLAudioSample *pcm, unsigned char *data, size_t)
+        int decode(ring::AudioSample *pcm, unsigned char *data, size_t)
         {
             if (gsm_decode(decode_gsmhandle_, (gsm_byte*) data, (gsm_signal*) pcm) < 0)
                 throw std::runtime_error("Error in gsm_decode\n");
@@ -81,7 +81,7 @@ private:
             return frameSize_;
         }
 
-        int encode(unsigned char *data, SFLAudioSample *pcm, size_t)
+        int encode(unsigned char *data, ring::AudioSample *pcm, size_t)
         {
             gsm_encode(encode_gsmhandle_, (gsm_signal*) pcm, (gsm_byte*) data);
             return sizeof(gsm_frame);

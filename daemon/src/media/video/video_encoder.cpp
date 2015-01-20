@@ -329,11 +329,11 @@ int VideoEncoder::encode_audio(const ring::AudioBuffer &buffer)
         return -1;
     }
 
-    SFLAudioSample *sample_data = reinterpret_cast<SFLAudioSample*>(av_malloc(needed_bytes));
+    ring::AudioSample *sample_data = reinterpret_cast<ring::AudioSample*>(av_malloc(needed_bytes));
     if (!sample_data)
         return -1;
 
-    SFLAudioSample *offset_ptr = sample_data;
+    ring::AudioSample *offset_ptr = sample_data;
     int nb_frames = buffer.frames();
 
     buffer.interleave(sample_data);
