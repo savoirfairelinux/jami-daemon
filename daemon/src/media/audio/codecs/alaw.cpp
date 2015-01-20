@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "audiocodec.h"
 #include "ring_plugin.h"
 #include "g711.h"
@@ -50,7 +50,7 @@ class Alaw : public ring::AudioCodec {
             return new Alaw;
         }
 
-        int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
+        int decode(ring::AudioSample *pcm, unsigned char *data, size_t len)
         {
             for (unsigned char* end = data + len; data < end; ++data, ++pcm)
                 *pcm = ALawDecode(*data);
@@ -58,7 +58,7 @@ class Alaw : public ring::AudioCodec {
             return len;
         }
 
-        int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes)
+        int encode(unsigned char *data, ring::AudioSample *pcm, size_t max_data_bytes)
         {
             unsigned char *end = std::min(data + frameSize_, data + max_data_bytes);
             unsigned char *tmp = data;
@@ -69,11 +69,11 @@ class Alaw : public ring::AudioCodec {
             return end - data;
         }
 
-        static SFLAudioSample ALawDecode(unsigned char alaw) {
+        static ring::AudioSample ALawDecode(unsigned char alaw) {
             return alaw_to_linear(alaw);
         }
 
-        static unsigned char ALawEncode(SFLAudioSample pcm16) {
+        static unsigned char ALawEncode(ring::AudioSample pcm16) {
             return linear_to_alaw(pcm16);
         }
 };

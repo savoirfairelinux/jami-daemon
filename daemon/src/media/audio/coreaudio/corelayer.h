@@ -171,8 +171,8 @@ class CoreLayer : public AudioLayer {
         ::AudioBufferList* captureBuff_; // CoreAudio buffer.
 
         /** Interleaved buffer */
-        std::vector<SFLAudioSample> playbackIBuff_;
-        std::vector<SFLAudioSample> captureIBuff_;
+        std::vector<ring::AudioSample> playbackIBuff_;
+        std::vector<ring::AudioSample> captureIBuff_;
 
         AudioUnit outputUnit_;
         AudioUnit inputUnit_;

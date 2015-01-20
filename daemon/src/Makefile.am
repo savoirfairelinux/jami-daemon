@@ -122,7 +122,7 @@ libring_la_SOURCES = conference.cpp \
 		fileutils.h \
 		noncopyable.h \
 		utf8_utils.h \
-		sfl_types.h \
+		ring_types.h \
 		intrin.h \
 		array_size.h \
 		account_schema.h \

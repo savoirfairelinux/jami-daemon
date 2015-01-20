@@ -41,7 +41,7 @@
 #include "config.h"
 #endif
 
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "siptransport.h"
 #include "ip_utils.h"
 

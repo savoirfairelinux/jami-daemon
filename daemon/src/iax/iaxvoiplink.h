@@ -39,7 +39,7 @@
 
 #include "audio/audiobuffer.h"
 #include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
-#include "sfl_types.h"
+#include "ring_types.h"
 
 #include <iax/iax-client.h>
 

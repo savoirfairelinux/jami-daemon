@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "audiocodec.h"
 #include "noncopyable.h"
 #include "array_size.h"
@@ -90,13 +90,13 @@ private:
 
         NON_COPYABLE(Speex);
 
-        virtual int decode(SFLAudioSample *pcm, unsigned char *data, size_t len) {
+        virtual int decode(ring::AudioSample *pcm, unsigned char *data, size_t len) {
             speex_bits_read_from(&speex_dec_bits_, (char*) data, len);
             speex_decode_int(speex_dec_state_, &speex_dec_bits_, pcm);
             return frameSize_;
         }
 
-        virtual int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes) {
+        virtual int encode(unsigned char *data, ring::AudioSample *pcm, size_t max_data_bytes) {
             speex_bits_reset(&speex_enc_bits_);
             speex_encode_int(speex_enc_state_, pcm, &speex_enc_bits_);
             return speex_bits_write(&speex_enc_bits_, (char*) data,
