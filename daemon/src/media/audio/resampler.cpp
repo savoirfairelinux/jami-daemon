@@ -30,7 +30,7 @@
 
 #include "resampler.h"
 #include "logger.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 
 #include <samplerate.h>
 

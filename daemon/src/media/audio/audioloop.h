@@ -33,7 +33,7 @@
 #ifndef __AUDIOLOOP_H__
 #define __AUDIOLOOP_H__
 
-#include "sfl_types.h"
+#include "ring_types.h"
 #include <cstring>
 #include "noncopyable.h"
 #include "audiobuffer.h"

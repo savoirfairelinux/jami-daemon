@@ -36,8 +36,9 @@
 #include <type_traits>
 #include <memory>
 
-typedef int16_t SFLAudioSample;
-#define RING_DATA_FORMAT_MAX SHRT_MAX
+namespace ring {
+typedef int16_t AudioSample;
+}
 
 static const size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
 

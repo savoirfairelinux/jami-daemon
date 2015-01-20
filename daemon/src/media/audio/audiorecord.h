@@ -32,7 +32,6 @@
 #define _AUDIO_RECORD_H
 
 #include "audiobuffer.h"
-#include "sfl_types.h"
 #include "noncopyable.h"
 
 #include <memory>

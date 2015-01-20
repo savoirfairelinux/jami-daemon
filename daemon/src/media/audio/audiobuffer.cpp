@@ -41,13 +41,13 @@ std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {
 AudioBuffer::AudioBuffer(size_t sample_num, AudioFormat format)
     :  sampleRate_(format.sample_rate),
        samples_(std::max(1U, format.nb_channels),
-                std::vector<SFLAudioSample>(sample_num, 0))
+                std::vector<ring::AudioSample>(sample_num, 0))
 {
 }
 
-AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioFormat format)
+AudioBuffer::AudioBuffer(const ring::AudioSample* in, size_t sample_num, AudioFormat format)
     :  sampleRate_(format.sample_rate),
-       samples_((std::max(1U, format.nb_channels)), std::vector<SFLAudioSample>(sample_num, 0))
+       samples_((std::max(1U, format.nb_channels)), std::vector<ring::AudioSample>(sample_num, 0))
 {
     deinterleave(in, sample_num, format.nb_channels);
 }
@@ -55,7 +55,7 @@ AudioBuffer::AudioBuffer(const SFLAudioSample* in, size_t sample_num, AudioForma
 AudioBuffer::AudioBuffer(const AudioBuffer& other, bool copy_content /* = false */)
     :  sampleRate_(other.sampleRate_),
        samples_(copy_content ? other.samples_ :
-                std::vector<std::vector<SFLAudioSample> >(other.samples_.size(), std::vector<SFLAudioSample>(other.frames())))
+                std::vector<std::vector<ring::AudioSample> >(other.samples_.size(), std::vector<ring::AudioSample>(other.frames())))
 {}
 
 AudioBuffer& AudioBuffer::operator=(const AudioBuffer& other) {
@@ -92,14 +92,14 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
         if (n < c)
             samples_.resize(n);
         else
-            samples_.resize(n, std::vector<SFLAudioSample>(frames(), 0));
+            samples_.resize(n, std::vector<ring::AudioSample>(frames(), 0));
         return;
     }
 
     // 2ch->1ch
     if (n == 1) {
-        std::vector<SFLAudioSample>& chan1 = samples_[0];
-        std::vector<SFLAudioSample>& chan2 = samples_[1];
+        std::vector<ring::AudioSample>& chan1 = samples_[0];
+        std::vector<ring::AudioSample>& chan2 = samples_[1];
         for (unsigned i = 0, f = frames(); i < f; i++)
             chan1[i] = chan1[i] / 2 + chan2[i] / 2;
         samples_.resize(1);
@@ -132,7 +132,7 @@ void AudioBuffer::resize(size_t sample_num)
         s.resize(sample_num, 0);
 }
 
-std::vector<SFLAudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
+std::vector<ring::AudioSample> * AudioBuffer::getChannel(unsigned chan /* = 0 */)
 {
     if (chan < samples_.size())
         return &samples_[chan];
@@ -163,7 +163,7 @@ size_t AudioBuffer::channelToFloat(float* out, const int& channel) const
     return frames() * samples_.size();
 }
 
-size_t AudioBuffer::interleave(SFLAudioSample* out) const
+size_t AudioBuffer::interleave(ring::AudioSample* out) const
 {
     for (unsigned i=0, f=frames(), c=channels(); i < f; ++i)
         for (unsigned j = 0; j < c; ++j)
@@ -172,15 +172,15 @@ size_t AudioBuffer::interleave(SFLAudioSample* out) const
     return frames() * channels();
 }
 
-size_t AudioBuffer::interleave(std::vector<SFLAudioSample>& out) const
+size_t AudioBuffer::interleave(std::vector<ring::AudioSample>& out) const
 {
     out.resize(capacity());
     return interleave(out.data());
 }
 
-std::vector<SFLAudioSample> AudioBuffer::interleave() const
+std::vector<ring::AudioSample> AudioBuffer::interleave() const
 {
-    std::vector<SFLAudioSample> data(capacity());
+    std::vector<ring::AudioSample> data(capacity());
     interleave(data.data());
     return data;
 }
@@ -194,7 +194,7 @@ size_t AudioBuffer::interleaveFloat(float* out) const
     return frames() * samples_.size();
 }
 
-void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t frame_num, unsigned nb_channels)
+void AudioBuffer::deinterleave(const ring::AudioSample* in, size_t frame_num, unsigned nb_channels)
 {
     if (in == nullptr)
         return;
@@ -208,7 +208,7 @@ void AudioBuffer::deinterleave(const SFLAudioSample* in, size_t frame_num, unsig
             samples_[j][i] = *in++;
 }
 
-void AudioBuffer::deinterleave(const std::vector<SFLAudioSample>& in, AudioFormat format)
+void AudioBuffer::deinterleave(const std::vector<ring::AudioSample>& in, AudioFormat format)
 {
     sampleRate_ = format.sample_rate;
     deinterleave(in.data(), in.size()/format.nb_channels, format.nb_channels);
@@ -255,7 +255,7 @@ size_t AudioBuffer::copy(AudioBuffer& in, int sample_num /* = -1 */, size_t pos_
     return to_copy;
 }
 
-size_t AudioBuffer::copy(SFLAudioSample* in, size_t sample_num, size_t pos_out /* = 0 */)
+size_t AudioBuffer::copy(ring::AudioSample* in, size_t sample_num, size_t pos_out /* = 0 */)
 {
     if (in == nullptr || sample_num == 0) return 0;
 

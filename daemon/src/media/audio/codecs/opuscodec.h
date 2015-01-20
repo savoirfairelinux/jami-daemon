@@ -34,7 +34,7 @@
 #include "audiocodec.h"
 
 #include "noncopyable.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 
 #include <opus.h>
 
@@ -52,10 +52,10 @@ public:
 private:
    ring::AudioCodec * clone();
 
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *data, size_t len);
-   virtual int decode(std::vector<std::vector<SFLAudioSample> > &pcm);
+   virtual int decode(std::vector<std::vector<ring::AudioSample> > &pcm, const uint8_t *data, size_t len);
+   virtual int decode(std::vector<std::vector<ring::AudioSample> > &pcm);
 
-   virtual size_t encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len);
+   virtual size_t encode(const std::vector<std::vector<ring::AudioSample> > &pcm, uint8_t *data, size_t len);
 
    virtual uint32_t getSDPClockRate() const;
    virtual const char *getSDPChannels() const;

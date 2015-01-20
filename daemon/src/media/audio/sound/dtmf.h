@@ -59,9 +59,9 @@ class DTMF {
 
         /**
          * Copy the sound inside the sampling* buffer
-         * @param buffer : a vector of SFLAudioSample
+         * @param buffer : a vector of ring::AudioSample
          */
-        bool generateDTMF(std::vector<SFLAudioSample> &buffer);
+        bool generateDTMF(std::vector<ring::AudioSample> &buffer);
 
     private:
         char currentTone_;
