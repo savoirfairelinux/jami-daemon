@@ -289,6 +289,12 @@ class AudioBuffer {
         void deinterleave(const std::vector<ring::AudioSample>& in, AudioFormat format);
 
         /**
+         * convert float planar data to signed 16
+         */
+        void convertFloatPlanarToSigned16(uint8_t** extended_data, size_t frame_num, unsigned nb_channels = 1);
+
+
+        /**
          * In-place gain transformation.
          *
          * @param gain: 0.0 -> 1.0 scale
