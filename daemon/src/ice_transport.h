@@ -103,6 +103,9 @@ class IceTransport {
 
         bool isCompleted() const;
 
+        bool isRunning() const;
+        bool isFailed() const;
+
         IpAddr getLocalAddress(unsigned comp_id) const;
 
         IpAddr getRemoteAddress(unsigned comp_id) const;
