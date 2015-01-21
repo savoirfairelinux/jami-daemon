@@ -40,7 +40,7 @@ void AudioBufferTest::testAudioBufferConstructors()
 {
     TITLE();
 
-    SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17};
+    ring::AudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17};
 
     AudioBuffer empty_buf(0, AudioFormat::MONO());
     CPPUNIT_ASSERT(empty_buf.frames() == 0);
@@ -64,8 +64,8 @@ void AudioBufferTest::testAudioBufferMix()
 {
     TITLE();
 
-    SFLAudioSample test_samples1[] = {18, 19, 20, 21, 22, 23, 24, 25};
-    SFLAudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17, 18};
+    ring::AudioSample test_samples1[] = {18, 19, 20, 21, 22, 23, 24, 25};
+    ring::AudioSample test_samples2[] = {10, 11, 12, 13, 14, 15, 16, 17, 18};
 
     AudioBuffer test_buf1(test_samples1, 4, AudioFormat::STEREO());
     CPPUNIT_ASSERT(test_buf1.channels() == 2);
@@ -86,7 +86,7 @@ void AudioBufferTest::testAudioBufferMix()
     CPPUNIT_ASSERT((*test_buf2.getChannel(2))[0] == test_samples2[2]);
     CPPUNIT_ASSERT(test_buf2.capacity() == 9);
 
-    SFLAudioSample *output = new SFLAudioSample[test_buf2.capacity()];
+    ring::AudioSample *output = new ring::AudioSample[test_buf2.capacity()];
     test_buf2.interleave(output);
     CPPUNIT_ASSERT(std::equal(test_samples2, test_samples2 + sizeof test_samples2 / sizeof *test_samples2, output));
     //CPPUNIT_ASSERT(std::equal(std::begin(test_samples2), std::end(test_samples2), std::begin(output))); C++11

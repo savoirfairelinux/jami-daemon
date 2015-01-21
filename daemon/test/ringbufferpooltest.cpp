@@ -90,8 +90,8 @@ void RingBufferPoolTest::testGetPutData()
 
     rbPool_->bindCallID(test_id, RingBufferPool::DEFAULT_ID);
 
-    SFLAudioSample test_sample1 = 12;
-    SFLAudioSample test_sample2 = 13;
+    ring::AudioSample test_sample1 = 12;
+    ring::AudioSample test_sample2 = 13;
 
     AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
     AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO());
@@ -127,8 +127,8 @@ void RingBufferPoolTest::testGetAvailableData()
 
     rbPool_->bindCallID(test_id, RingBufferPool::DEFAULT_ID);
 
-    SFLAudioSample test_sample1 = 12;
-    SFLAudioSample test_sample2 = 13;
+    ring::AudioSample test_sample1 = 12;
+    ring::AudioSample test_sample2 = 13;
 
     AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
     AudioBuffer test_input2(&test_sample2, 1, AudioFormat::MONO());
@@ -170,7 +170,7 @@ void RingBufferPoolTest::testDiscardFlush()
 
     rbPool_->bindCallID(test_id, RingBufferPool::DEFAULT_ID);
 
-    SFLAudioSample test_sample1 = 12;
+    ring::AudioSample test_sample1 = 12;
     AudioBuffer test_input1(&test_sample1, 1, AudioFormat::MONO());
 
     testRingBuffer->put(test_input1);
@@ -205,7 +205,7 @@ void RingBufferPoolTest::testConference()
     // test bind Participant A with Participant B
     rbPool_->bindCallID(test_id1, test_id2);
 
-    SFLAudioSample testint = 12;
+    ring::AudioSample testint = 12;
     AudioBuffer testbuf(&testint, 1, AudioFormat::MONO());
 
     // put data test ring buffers

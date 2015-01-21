@@ -31,7 +31,7 @@
 
 #include "ringbufferpool.h"
 #include "ringbuffer.h"
-#include "sfl_types.h" // for SIZEBUF
+#include "ring_types.h" // for SIZEBUF
 #include "logger.h"
 
 #include <limits>

@@ -37,7 +37,6 @@
 #include <cstddef>
 #include <stdio.h>
 #include <sstream>
-#include <ccrtp/rtp.h>
 
 #include <vector>
 

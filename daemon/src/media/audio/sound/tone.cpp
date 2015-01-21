@@ -36,7 +36,7 @@
  */
 #include "tone.h"
 #include "logger.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include <cmath>
 #include <cassert>
 #include <cstdlib>
@@ -61,7 +61,7 @@ Tone::genBuffer(const std::string& definition)
     size_t size = 0;
     const int sampleRate = buffer_->getSampleRate();
 
-    std::vector<SFLAudioSample> buffer(SIZEBUF);
+    std::vector<ring::AudioSample> buffer(SIZEBUF);
     size_t bufferPos(0);
 
     // Number of format sections
@@ -155,7 +155,7 @@ Tone::interpolate(double x) const
 }
 
 void
-Tone::genSin(SFLAudioSample* buffer, int lowFrequency, int highFrequency, int nb)
+Tone::genSin(ring::AudioSample* buffer, int lowFrequency, int highFrequency, int nb)
 {
     xhigher_ = 0.0;
     xlower_ = 0.0;
