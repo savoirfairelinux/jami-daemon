@@ -31,7 +31,6 @@
  */
 
 #include "libav_deps.h"
-
 #include "video_receive_thread.h"
 #include "socket_pair.h"
 #include "manager.h"
@@ -78,7 +77,7 @@ VideoReceiveThread::startLoop()
 // main thread to block while this executes, so it happens in the video thread.
 bool VideoReceiveThread::setup()
 {
-    videoDecoder_ = new VideoDecoder();
+    videoDecoder_ = new MediaDecoder();
 
     dstWidth_ = atoi(args_["width"].c_str());
     dstHeight_ = atoi(args_["height"].c_str());
@@ -174,7 +173,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
     return is.gcount();
 }
 
-void VideoReceiveThread::addIOContext(SocketPair &socketPair)
+void VideoReceiveThread::addIOContext(ring::SocketPair &socketPair)
 {
     demuxContext_ = socketPair.createIOContext();
 }
@@ -185,11 +184,11 @@ bool VideoReceiveThread::decodeFrame()
     const auto ret = videoDecoder_->decode(getNewFrame(), pkt);
 
     switch (ret) {
-        case VideoDecoder::Status::FrameFinished:
+        case MediaDecoder::Status::FrameFinished:
             publishFrame();
             return true;
 
-        case VideoDecoder::Status::DecodeError:
+        case MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");
             delete videoDecoder_;
             if (!setup()) {
@@ -206,7 +205,7 @@ bool VideoReceiveThread::decodeFrame()
                 requestKeyFrameCallback_(id_);
             break;
 
-        case VideoDecoder::Status::ReadError:
+        case MediaDecoder::Status::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
 

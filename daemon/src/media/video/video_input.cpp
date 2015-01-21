@@ -29,9 +29,12 @@
  *  as that of the covered work.
  */
 
-#include "video_input.h"
-#include "video_decoder.h"
 
+#ifdef RING_VIDEO
+#include "video_input.h"
+#endif // RING_VIDEO
+
+#include "media_decoder.h"
 #include "manager.h"
 #include "client/videomanager.h"
 #include "logger.h"
@@ -116,18 +119,18 @@ bool VideoInput::captureFrame()
     const auto ret = decoder_->decode(getNewFrame(), pkt);
 
     switch (ret) {
-        case VideoDecoder::Status::FrameFinished:
+        case MediaDecoder::Status::FrameFinished:
             break;
 
-        case VideoDecoder::Status::ReadError:
-        case VideoDecoder::Status::DecodeError:
+        case MediaDecoder::Status::ReadError:
+        case MediaDecoder::Status::DecodeError:
             loop_.stop();
             // fallthrough
-        case VideoDecoder::Status::Success:
+        case MediaDecoder::Status::Success:
             return false;
 
             // Play in loop
-        case VideoDecoder::Status::EOFError:
+        case MediaDecoder::Status::EOFError:
             deleteDecoder();
             createDecoder();
             return false;
@@ -143,7 +146,7 @@ VideoInput::createDecoder()
     if (input_.empty())
         return;
 
-    decoder_ = new VideoDecoder();
+    decoder_ = new ring::MediaDecoder();
 
     decoder_->setOptions(decOpts_);
     if (emulateRate_)
@@ -244,7 +247,7 @@ VideoInput::initFile(std::string path)
     } else {
         RING_WARN("Guessing file type for %s", path.c_str());
         // FIXME: proper parsing of FPS etc. should be done in
-        // VideoDecoder, not here.
+        // MediaDecoder, not here.
         decOpts_["framerate"] = "25";
     }
 

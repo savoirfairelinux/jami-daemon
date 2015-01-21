@@ -47,7 +47,7 @@ using std::string;
 VideoSender::VideoSender(std::map<string, string> args,
                          SocketPair& socketPair) :
     muxContext_(socketPair.createIOContext()),
-    videoEncoder_(new VideoEncoder)
+    videoEncoder_(new MediaEncoder)
 {
     const char *enc_name = args["codec"].c_str();
     const char *dest = args["destination"].c_str();

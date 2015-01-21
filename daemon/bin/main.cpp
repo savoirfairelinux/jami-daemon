@@ -173,7 +173,7 @@ int main(int argc, char *argv [])
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))
-        setenv("CODECS_PATH", TOP_BUILDDIR "/src/audio/codecs", 1);
+        setenv("CODECS_PATH", TOP_BUILDDIR "/src/media/audio/codecs", 1);
 #endif
 
     print_title();

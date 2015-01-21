@@ -32,11 +32,16 @@
 #include "logger.h"
 #include "noncopyable.h"
 #include "sip/sdp.h"
-#include "video/socket_pair.h"
+
+#ifdef RING_VIDEO
 #include "video/video_base.h"
-#include "video/video_encoder.h"
-#include "video/video_decoder.h"
+#endif //RING_VIDEO
+
+#include "socket_pair.h"
 #include "libav_deps.h"
+#include "media_encoder.h"
+#include "media_decoder.h"
+#include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
@@ -44,29 +49,32 @@
 #include <sstream>
 
 namespace ring {
-using ring::video::SocketPair;
-using ring::video::VideoEncoder;
-using ring::video::VideoIOHandle;
-using ring::video::VideoEncoderException;
+
+using ring::MediaEncoder;
+using ring::MediaDecoder;
+using ring::MediaEncoderException;
+using ring::MediaIOHandle;
 
 class AudioSender {
     public:
         AudioSender(const std::string& id,
                     std::map<std::string, std::string> txArgs,
-                    ring::video::SocketPair& socketPair);
+                    SocketPair& socketPair);
         ~AudioSender();
 
     private:
         NON_COPYABLE(AudioSender);
 
         bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
-        bool setup(ring::video::SocketPair& socketPair);
+        bool setup(SocketPair& socketPair);
 
         std::string id_;
         std::map<std::string, std::string> args_;
         const AudioFormat format_;
-        std::unique_ptr<ring::video::VideoEncoder> audioEncoder_;
-        std::unique_ptr<ring::video::VideoIOHandle> muxContext_;
+        std::unique_ptr<ring::MediaEncoder> audioEncoder_;
+#ifdef RING_VIDEO
+        std::unique_ptr<ring::MediaIOHandle> muxContext_;
+#endif
         std::unique_ptr<ring::Resampler> resampler_;
         const double secondsPerPacket_ {0.02}; // 20 ms
 
@@ -101,16 +109,20 @@ AudioSender::setup(SocketPair& socketPair)
     auto enc_name = args_["codec"].c_str();
     auto dest = args_["destination"].c_str();
 
-    audioEncoder_.reset(new VideoEncoder);
+    audioEncoder_.reset(new MediaEncoder);
+#ifdef RING_VIDEO
     muxContext_.reset(socketPair.createIOContext());
+#endif // RING_VIDEO
 
     try {
         /* Encoder setup */
         audioEncoder_->setOptions(args_);
         audioEncoder_->openOutput(enc_name, "rtp", dest, NULL, false);
+#ifdef RING_VIDEO
         audioEncoder_->setIOContext(muxContext_);
+#endif // RING_VIDEO
         audioEncoder_->startIO();
-    } catch (const VideoEncoderException &e) {
+    } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         return false;
     }
@@ -126,7 +138,9 @@ void
 AudioSender::cleanup()
 {
     audioEncoder_.reset();
+#ifdef RING_VIDEO
     muxContext_.reset();
+#endif // RING_VIDEO
 }
 
 void
@@ -190,7 +204,7 @@ class AudioReceiveThread
     public:
         AudioReceiveThread(const std::string &id, const std::string &sdp);
         ~AudioReceiveThread();
-        void addIOContext(ring::video::SocketPair &socketPair);
+        void addIOContext(SocketPair &socketPair);
         void startLoop();
 
     private:
@@ -211,9 +225,10 @@ class AudioReceiveThread
         /*-----------------------------------------------------------------*/
         const std::string id_;
         std::istringstream stream_;
-        std::unique_ptr<ring::video::VideoDecoder> audioDecoder_;
-        std::unique_ptr<ring::video::VideoIOHandle> sdpContext_;
-        std::unique_ptr<ring::video::VideoIOHandle> demuxContext_;
+        std::unique_ptr<ring::MediaDecoder> audioDecoder_;
+        std::unique_ptr<ring::MediaIOHandle> sdpContext_;
+        std::unique_ptr<ring::MediaIOHandle> demuxContext_;
+
         std::shared_ptr<ring::RingBuffer> ringbuffer_;
 
         ThreadLoop loop_;
@@ -225,7 +240,7 @@ class AudioReceiveThread
 AudioReceiveThread::AudioReceiveThread(const std::string& id, const std::string& sdp)
     : id_(id)
     , stream_(sdp)
-    , sdpContext_(new VideoIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
+    , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
             std::bind(&AudioReceiveThread::cleanup, this))
@@ -240,7 +255,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
-    audioDecoder_.reset(new ring::video::VideoDecoder());
+    audioDecoder_.reset(new ring::MediaDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
     args_["sdp_flags"] = "custom_io";
@@ -267,12 +282,12 @@ AudioReceiveThread::process()
 
     switch (audioDecoder_->decode_audio(decodedFrame.get())) {
 
-        case ring::video::VideoDecoder::Status::FrameFinished:
+        case ring::MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame.get(), *ringbuffer_,
                                              mainBuffFormat);
             return;
 
-        case ring::video::VideoDecoder::Status::DecodeError:
+        case ring::MediaDecoder::Status::DecodeError:
             RING_WARN("decoding failure, trying to reset decoder...");
             if (not setup()) {
                 RING_ERR("fatal error, rx thread re-setup failed");
@@ -286,7 +301,7 @@ AudioReceiveThread::process()
             }
             break;
 
-        case ring::video::VideoDecoder::Status::ReadError:
+        case ring::MediaDecoder::Status::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
             break;
@@ -430,7 +445,7 @@ AVFormatRtpSession::startSender()
 
     try {
         sender_.reset(new AudioSender(id_, txArgs_, *socketPair_));
-    } catch (const VideoEncoderException &e) {
+    } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         sending_ = false;
     }

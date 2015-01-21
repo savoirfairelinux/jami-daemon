@@ -31,7 +31,8 @@
 
 // libav_deps.h must be included first
 #include "libav_deps.h"
-#include "video_decoder.h"
+#include "media_decoder.h"
+#include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
@@ -40,18 +41,18 @@
 #include <iostream>
 #include <unistd.h>
 
-namespace ring { namespace video {
+namespace ring {
 
 using std::string;
 
-VideoDecoder::VideoDecoder() :
+MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE),
     lastDts_(AV_NOPTS_VALUE)
 {
 }
 
-VideoDecoder::~VideoDecoder()
+MediaDecoder::~MediaDecoder()
 {
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
@@ -66,7 +67,7 @@ VideoDecoder::~VideoDecoder()
 }
 
 void
-VideoDecoder::extract(const std::map<std::string, std::string>& map, const std::string& key)
+MediaDecoder::extract(const std::map<std::string, std::string>& map, const std::string& key)
 {
     auto iter = map.find(key);
 
@@ -75,7 +76,7 @@ VideoDecoder::extract(const std::map<std::string, std::string>& map, const std::
 }
 
 void
-VideoDecoder::setOptions(const std::map<std::string, std::string>& options)
+MediaDecoder::setOptions(const std::map<std::string, std::string>& options)
 {
     extract(options, "framerate");
     extract(options, "video_size");
@@ -84,7 +85,7 @@ VideoDecoder::setOptions(const std::map<std::string, std::string>& options)
     extract(options, "sdp_flags");
 }
 
-int VideoDecoder::openInput(const std::string &source_str,
+int MediaDecoder::openInput(const std::string &source_str,
                             const std::string &format_str)
 {
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
@@ -106,7 +107,7 @@ int VideoDecoder::openInput(const std::string &source_str,
     return ret;
 }
 
-void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 {
     if (cb) {
         inputCtx_->interrupt_callback.callback = cb;
@@ -116,10 +117,10 @@ void VideoDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
     }
 }
 
-void VideoDecoder::setIOContext(VideoIOHandle *ioctx)
+void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
 
-int VideoDecoder::setupFromAudioData()
+int MediaDecoder::setupFromAudioData()
 {
     int ret;
 
@@ -197,7 +198,8 @@ int VideoDecoder::setupFromAudioData()
     return 0;
 }
 
-int VideoDecoder::setupFromVideoData()
+#ifdef RING_VIDEO
+int MediaDecoder::setupFromVideoData()
 {
     int ret;
 
@@ -277,8 +279,8 @@ int VideoDecoder::setupFromVideoData()
     return 0;
 }
 
-VideoDecoder::Status
-VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
+MediaDecoder::Status
+MediaDecoder::decode(ring::video::VideoFrame& result, ring::video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -328,9 +330,10 @@ VideoDecoder::decode(VideoFrame& result, VideoPacket& video_packet)
 
     return Status::Success;
 }
+#endif // RING_VIDEO
 
-VideoDecoder::Status
-VideoDecoder::decode_audio(AVFrame *decoded_frame)
+MediaDecoder::Status
+MediaDecoder::decode_audio(AVFrame *decoded_frame)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -386,8 +389,9 @@ VideoDecoder::decode_audio(AVFrame *decoded_frame)
     return Status::Success;
 }
 
-VideoDecoder::Status
-VideoDecoder::flush(VideoFrame& result)
+#ifdef RING_VIDEO
+MediaDecoder::Status
+MediaDecoder::flush(ring::video::VideoFrame& result)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -406,17 +410,18 @@ VideoDecoder::flush(VideoFrame& result)
 
     return Status::Success;
 }
+#endif // RING_VIDEO
 
-int VideoDecoder::getWidth() const
+int MediaDecoder::getWidth() const
 { return decoderCtx_->width; }
 
-int VideoDecoder::getHeight() const
+int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
-int VideoDecoder::getPixelFormat() const
+int MediaDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
-void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
+void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
                                      ring::RingBuffer& rb,
                                      const ring::AudioFormat outFormat)
 {
@@ -444,4 +449,4 @@ void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
     }
 }
 
-}}
+}

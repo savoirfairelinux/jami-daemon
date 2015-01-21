@@ -29,33 +29,47 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_DECODER_H__
-#define __VIDEO_DECODER_H__
+#ifndef __MEDIA_DECODER_H__
+#define __MEDIA_DECODER_H__
 
-#include "video_base.h"
-#include "video_scaler.h"
+#include "config.h"
+
+#ifdef RING_VIDEO
+#include "video/video_base.h"
+#include "video/video_scaler.h"
+#endif // RING_VIDEO
+
 #include "noncopyable.h"
 
 #include <map>
 #include <string>
 #include <memory>
+#include <chrono>
+
+class AVCodecContext;
+class AVStream;
+class AVFrame;
+class AVDictionary;
+class AVFormatContext;
+class AVCodec;
+
+#ifdef RING_VIDEO
+namespace ring { namespace video {
+    class VideoFrame;
+    class VideoPacket;
+}}
+#endif // RING_VIDEO
 
 namespace ring {
     class AudioBuffer;
     class AudioFormat;
     class RingBuffer;
     class Resampler;
-}
+    class MediaIOHandle;
 
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVCodec;
+    class MediaDecoder {
 
-namespace ring { namespace video {
-
-    class VideoDecoder {
-    public:
+public:
         enum class Status {
             Success,
             FrameFinished,
@@ -64,21 +78,25 @@ namespace ring { namespace video {
             DecodeError
         };
 
-        VideoDecoder();
-        ~VideoDecoder();
+        MediaDecoder();
+        ~MediaDecoder();
 
         void emulateRate() { emulateRate_ = true; }
         void setInterruptCallback(int (*cb)(void*), void *opaque);
-        void setIOContext(VideoIOHandle *ioctx);
         int openInput(const std::string &source_str,
                       const std::string &format_str);
+
+        void setIOContext(MediaIOHandle *ioctx);
+#ifdef RING_VIDEO
         int setupFromVideoData();
+        Status decode(ring::video::VideoFrame&, ring::video::VideoPacket&);
+        Status flush(ring::video::VideoFrame&);
+ #endif // RING_VIDEO
+
         int setupFromAudioData();
-        Status decode(VideoFrame&, VideoPacket&);
         Status decode_audio(AVFrame* frame);
         void writeToRingBuffer(AVFrame* frame, ring::RingBuffer& rb,
                                const ring::AudioFormat outFormat);
-        Status flush(VideoFrame&);
 
         int getWidth() const;
         int getHeight() const;
@@ -87,7 +105,7 @@ namespace ring { namespace video {
         void setOptions(const std::map<std::string, std::string>& options);
 
     private:
-        NON_COPYABLE(VideoDecoder);
+        NON_COPYABLE(MediaDecoder);
 
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
@@ -104,6 +122,6 @@ namespace ring { namespace video {
     protected:
         AVDictionary *options_ = nullptr;
     };
-}}
+}
 
-#endif // __VIDEO_DECODER_H__
+#endif // __MEDIA_DECODER_H__

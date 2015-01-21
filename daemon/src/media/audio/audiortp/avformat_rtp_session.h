@@ -40,16 +40,13 @@
 #include <memory>
 #include <mutex>
 
-namespace ring { namespace video {
-class SocketPair;
-class VideoEncoder;
-}}
-
 class Sdp;
 class ThreadLoop;
+class MediaEncoder;
 
 namespace ring {
 
+class SocketPair;
 class RingBuffer;
 class Resampler;
 class AudioSender;
@@ -78,7 +75,7 @@ class AVFormatRtpSession {
         std::string id_;
         std::map<std::string, std::string> txArgs_;
         std::string receivingSDP_;
-        std::unique_ptr<ring::video::SocketPair> socketPair_;
+        std::unique_ptr<ring::SocketPair> socketPair_;
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
         std::shared_ptr<ring::RingBuffer> ringbuffer_;

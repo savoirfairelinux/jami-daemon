@@ -30,7 +30,8 @@
  */
 
 #include "libav_deps.h"
-#include "video_encoder.h"
+#include "media_encoder.h"
+#include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "logger.h"
 
@@ -39,17 +40,19 @@
 #include <algorithm>
 
 
-namespace ring { namespace video {
+namespace ring {
 
 using std::string;
 
-VideoEncoder::VideoEncoder() :
-    outputCtx_(avformat_alloc_context()),
+MediaEncoder::MediaEncoder() :
+#ifdef RING_VIDEO
     scaler_(),
-    scaledFrame_()
+    scaledFrame_(),
+#endif // RING_VIDEO
+    outputCtx_(avformat_alloc_context())
 {}
 
-VideoEncoder::~VideoEncoder()
+MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_ and outputCtx_->priv_data)
         av_write_trailer(outputCtx_);
@@ -75,7 +78,7 @@ extract(const std::map<std::string, std::string>& map, const std::string& key)
     return iter->second.c_str();
 }
 
-void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
+void MediaEncoder::setOptions(const std::map<std::string, std::string>& options)
 {
     const char *value;
 
@@ -117,14 +120,14 @@ void VideoEncoder::setOptions(const std::map<std::string, std::string>& options)
 }
 
 void
-VideoEncoder::openOutput(const char *enc_name, const char *short_name,
+MediaEncoder::openOutput(const char *enc_name, const char *short_name,
                          const char *filename, const char *mime_type, bool is_video)
 {
     AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
 
     if (!oformat) {
         RING_ERR("Unable to find a suitable output format for %s", filename);
-        throw VideoEncoderException("No output format");
+        throw MediaEncoderException("No output format");
     }
 
     outputCtx_->oformat = oformat;
@@ -136,7 +139,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
     if (!outputEncoder_) {
         RING_ERR("Encoder \"%s\" not found!", enc_name);
-        throw VideoEncoderException("No output encoder");
+        throw MediaEncoderException("No output encoder");
     }
 
     prepareEncoderContext(is_video);
@@ -161,7 +164,7 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     ret = avcodec_open2(encoderCtx_, outputEncoder_, NULL);
 #endif
     if (ret)
-        throw VideoEncoderException("Could not open encoder");
+        throw MediaEncoderException("Could not open encoder");
 
     // add video stream to outputformat context
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
@@ -170,10 +173,10 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
     stream_ = avformat_new_stream(outputCtx_, 0);
 #endif
     if (!stream_)
-        throw VideoEncoderException("Could not allocate stream");
+        throw MediaEncoderException("Could not allocate stream");
 
     stream_->codec = encoderCtx_;
-
+#ifdef RING_VIDEO
     if (is_video) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx_->width;
@@ -181,24 +184,25 @@ VideoEncoder::openOutput(const char *enc_name, const char *short_name,
         const int format = libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt);
         scaledFrameBufferSize_ = scaledFrame_.getSize(width, height, format);
         if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
-            throw VideoEncoderException("buffer too small");
+            throw MediaEncoderException("buffer too small");
 
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
         encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
         encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
         if (!encoderBuffer_)
-            throw VideoEncoderException("Could not allocate encoder buffer");
+            throw MediaEncoderException("Could not allocate encoder buffer");
 #endif
 
         scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
         if (!scaledFrameBuffer_)
-            throw VideoEncoderException("Could not allocate scaled frame buffer");
+            throw MediaEncoderException("Could not allocate scaled frame buffer");
 
         scaledFrame_.setDestination(scaledFrameBuffer_, width, height, format);
     }
+#endif // RING_VIDEO
 }
 
-void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
+void MediaEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 {
     if (cb) {
         outputCtx_->interrupt_callback.callback = cb;
@@ -208,18 +212,18 @@ void VideoEncoder::setInterruptCallback(int (*cb)(void*), void *opaque)
     }
 }
 
-void VideoEncoder::setIOContext(const std::unique_ptr<VideoIOHandle> &ioctx)
+void MediaEncoder::setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx)
 {
     outputCtx_->pb = ioctx->getContext();
     outputCtx_->packet_size = outputCtx_->pb->buffer_size;
 }
 
 void
-VideoEncoder::startIO()
+MediaEncoder::startIO()
 {
     if (avformat_write_header(outputCtx_, options_ ? &options_ : NULL)) {
         RING_ERR("Could not write header for output file... check codec parameters");
-        throw VideoEncoderException("Failed to write output file header");
+        throw MediaEncoderException("Failed to write output file header");
     }
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
@@ -233,7 +237,8 @@ print_averror(const char *funcname, int err)
     RING_ERR("%s failed: %s", funcname, errbuf);
 }
 
-int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_number)
+#ifdef RING_VIDEO
+int MediaEncoder::encode(ring::video::VideoFrame &input, bool is_keyframe, int64_t frame_number)
 {
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
@@ -320,8 +325,9 @@ int VideoEncoder::encode(VideoFrame &input, bool is_keyframe, int64_t frame_numb
 
     return ret;
 }
+#endif // RING_VIDEO
 
-int VideoEncoder::encode_audio(const ring::AudioBuffer &buffer)
+int MediaEncoder::encode_audio(const ring::AudioBuffer &buffer)
 {
     const int needed_bytes = av_samples_get_buffer_size(NULL, buffer.channels(), buffer.frames(), AV_SAMPLE_FMT_S16, 0);
     if (needed_bytes < 0) {
@@ -411,7 +417,7 @@ int VideoEncoder::encode_audio(const ring::AudioBuffer &buffer)
     return 0;
 }
 
-int VideoEncoder::flush()
+int MediaEncoder::flush()
 {
     AVPacket pkt;
     memset(&pkt, 0, sizeof(pkt));
@@ -457,7 +463,7 @@ int VideoEncoder::flush()
     return ret;
 }
 
-void VideoEncoder::print_sdp(std::string &sdp_)
+void MediaEncoder::print_sdp(std::string &sdp_)
 {
     /* theora sdp can be huge */
     const size_t sdp_size = outputCtx_->streams[0]->codec->extradata_size \
@@ -475,7 +481,7 @@ void VideoEncoder::print_sdp(std::string &sdp_)
     RING_DBG("Sending SDP: \n%s", sdp_.c_str());
 }
 
-void VideoEncoder::prepareEncoderContext(bool is_video)
+void MediaEncoder::prepareEncoderContext(bool is_video)
 {
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
     encoderCtx_ = avcodec_alloc_context();
@@ -549,7 +555,7 @@ void VideoEncoder::prepareEncoderContext(bool is_video)
     }
 }
 
-void VideoEncoder::forcePresetX264()
+void MediaEncoder::forcePresetX264()
 {
     const char *speedPreset = "ultrafast";
     if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
@@ -559,7 +565,7 @@ void VideoEncoder::forcePresetX264()
         RING_WARN("Failed to set x264 tune '%s'", tune);
 }
 
-void VideoEncoder::extractProfileLevelID(const std::string &parameters,
+void MediaEncoder::extractProfileLevelID(const std::string &parameters,
                                          AVCodecContext *ctx)
 {
     // From RFC3984:
@@ -607,4 +613,4 @@ void VideoEncoder::extractProfileLevelID(const std::string &parameters,
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
-}}
+}

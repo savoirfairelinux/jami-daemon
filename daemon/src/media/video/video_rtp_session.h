@@ -48,7 +48,8 @@ class Sdp;
 class Conference;
 
 namespace ring {
-class IceSocket;
+    class IceSocket;
+    class SocketPair;
 };
 
 namespace ring { namespace video {
@@ -82,7 +83,7 @@ private:
     // all public methods must be locked internally before use
     std::recursive_mutex mutex_ = {};
 
-    std::unique_ptr<SocketPair> socketPair_ = nullptr;
+    std::unique_ptr<ring::SocketPair> socketPair_ = nullptr;
     std::unique_ptr<VideoSender> sender_ = nullptr;
     std::unique_ptr<VideoReceiveThread> receiveThread_ = nullptr;
     std::map<std::string, std::string> txArgs_;

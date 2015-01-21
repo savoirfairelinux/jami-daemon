@@ -59,10 +59,6 @@ template <typename T> class Observer;
 template <typename T> class Observable;
 class VideoFrame;
 
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
-
 /*=== Observable =============================================================*/
 
 template <typename T>
@@ -136,26 +132,6 @@ public:
 private:
     NON_COPYABLE(VideoPacket);
     AVPacket *packet_;
-};
-
-/*=== VideoIOHandle  =========================================================*/
-
-class VideoIOHandle {
-public:
-    VideoIOHandle(ssize_t buffer_size,
-                  bool writeable,
-                  io_readcallback read_cb,
-                  io_writecallback write_cb,
-                  io_seekcallback seek_cb,
-                  void *opaque);
-    ~VideoIOHandle();
-
-    AVIOContext* getContext() { return ctx_; }
-
-private:
-    NON_COPYABLE(VideoIOHandle);
-    AVIOContext *ctx_;
-    unsigned char *buf_;
 };
 
 /*=== VideoFrame =============================================================*/

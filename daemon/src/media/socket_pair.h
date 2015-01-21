@@ -32,27 +32,28 @@
 #ifndef SOCKET_PAIR_H_
 #define SOCKET_PAIR_H_
 
-#include "video_base.h"
+#include "media_io_handle.h"
 
 #include <sys/socket.h>
 #include <mutex>
 #include <stdint.h>
+#include <memory>
 
 namespace ring {
-class IceSocket;
-};
 
-namespace ring { namespace video {
+class IceSocket;
 
 class SocketPair {
     public:
         SocketPair(const char *uri, int localPort);
-        SocketPair(std::unique_ptr<ring::IceSocket> rtp_sock,
-                   std::unique_ptr<ring::IceSocket> rtcp_sock);
+        SocketPair(std::unique_ptr<IceSocket> rtp_sock,
+                   std::unique_ptr<IceSocket> rtcp_sock);
         ~SocketPair();
 
         void interrupt();
-        VideoIOHandle* createIOContext();
+
+        MediaIOHandle* createIOContext();
+
         void openSockets(const char *uri, int localPort);
         void closeSockets();
 
@@ -68,8 +69,8 @@ class SocketPair {
         int writeRtpData(void *buf, int buf_size);
         int writeRtcpData(void *buf, int buf_size);
 
-        std::unique_ptr<ring::IceSocket> rtp_sock_;
-        std::unique_ptr<ring::IceSocket> rtcp_sock_;
+        std::unique_ptr<IceSocket> rtp_sock_;
+        std::unique_ptr<IceSocket> rtcp_sock_;
 
         std::mutex rtcpWriteMutex_;
 
@@ -82,6 +83,6 @@ class SocketPair {
         bool interrupted_ {false};
 };
 
-}}
+}
 
 #endif  // SOCKET_PAIR_H_

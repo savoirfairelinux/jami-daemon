@@ -47,6 +47,7 @@
 
 namespace ring { namespace video {
 
+using ring::SocketPair;
 using std::map;
 using std::string;
 
@@ -142,7 +143,7 @@ void VideoRtpSession::startSender()
 
         try {
             sender_.reset(new VideoSender(txArgs_, *socketPair_));
-        } catch (const VideoEncoderException &e) {
+        } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
             sending_ = false;
         }

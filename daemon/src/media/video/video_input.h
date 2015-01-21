@@ -36,14 +36,18 @@
 
 #include "noncopyable.h"
 #include "shm_sink.h"
-#include "video_decoder.h"
 #include "threadloop.h"
 
 #include <map>
 #include <atomic>
 #include <string>
 
+namespace ring {
+    class MediaDecoder;
+}
+
 namespace ring { namespace video {
+
 
 class VideoInput : public VideoGenerator
 {
@@ -63,7 +67,7 @@ private:
 
     std::string sinkID_     = "local";
 
-    VideoDecoder *decoder_  = nullptr;
+    ring::MediaDecoder *decoder_  = nullptr;
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 

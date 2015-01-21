@@ -45,24 +45,6 @@ VideoPacket::VideoPacket() : packet_(static_cast<AVPacket *>(av_mallocz(sizeof(A
 
 VideoPacket::~VideoPacket() { av_free_packet(packet_); av_free(packet_); }
 
-/*=== VideoIOHandle  =========================================================*/
-
-VideoIOHandle::VideoIOHandle(ssize_t buffer_size,
-                             bool writeable,
-                             io_readcallback read_cb,
-                             io_writecallback write_cb,
-                             io_seekcallback seek_cb,
-                             void *opaque) : ctx_(0), buf_(0)
-
-{
-    buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-    ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
-                              write_cb, seek_cb);
-    ctx_->max_packet_size = buffer_size;
-}
-
-VideoIOHandle::~VideoIOHandle() { av_free(ctx_); av_free(buf_); }
-
 /*=== VideoFrame =============================================================*/
 
 VideoFrame::VideoFrame()

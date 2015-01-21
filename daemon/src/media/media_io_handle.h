@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,52 +29,39 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_SENDER_H__
-#define __VIDEO_SENDER_H__
+#ifndef __MEDIA_IO_HANDLE_H__
+#define __MEDIA_IO_HANDLE_H__
 
 #include "noncopyable.h"
-#include "media_encoder.h"
-#include "media_io_handle.h"
-#include "video_mixer.h"
 
-#include <map>
-#include <string>
-#include <memory>
-#include <atomic>
+#ifndef AVFORMAT_AVIO_H
+class AVIOContext;
+#endif
+
+typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
+typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
 
 namespace ring {
-    class SocketPair;
-}
 
-namespace ring { namespace video {
-
-class VideoSender : public VideoFramePassiveReader
-{
+class MediaIOHandle {
 public:
-    VideoSender(std::map<std::string, std::string> args,
-                SocketPair& socketPair);
+    MediaIOHandle(ssize_t buffer_size,
+                  bool writeable,
+                  io_readcallback read_cb,
+                  io_writecallback write_cb,
+                  io_seekcallback seek_cb,
+                  void *opaque);
+    ~MediaIOHandle();
 
-    std::string getSDP() const { return sdp_; }
-    void forceKeyFrame();
-
-    // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* obs,
-                std::shared_ptr<VideoFrame> &);
+    AVIOContext* getContext() { return ctx_; }
 
 private:
-    NON_COPYABLE(VideoSender);
-
-    void encodeAndSendVideo(VideoFrame&);
-
-    // encoder MUST be deleted before muxContext
-    std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
-    std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
-
-    std::atomic<int> forceKeyFrame_ = { 0 };
-    int64_t frameNumber_ = 0;
-    std::string sdp_ = "";
+    NON_COPYABLE(MediaIOHandle);
+    AVIOContext *ctx_;
+    unsigned char *buf_;
 };
 
-}}
+}
 
-#endif // __VIDEO_SENDER_H__
+#endif // __MEDIA_DECODER_H__

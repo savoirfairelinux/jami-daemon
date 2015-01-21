@@ -31,7 +31,8 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include "video_decoder.h"
+#include "media_decoder.h"
+#include "media_io_handle.h"
 #include "shm_sink.h"
 #include "threadloop.h"
 #include "noncopyable.h"
@@ -42,9 +43,11 @@
 #include <sstream>
 #include <memory>
 
-namespace ring { namespace video {
+namespace ring {
 
 class SocketPair;
+
+    namespace video {
 
 class VideoReceiveThread : public VideoGenerator {
 public:
@@ -71,13 +74,13 @@ private:
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
-    VideoDecoder *videoDecoder_;
+    MediaDecoder *videoDecoder_;
     int dstWidth_;
     int dstHeight_;
     const std::string id_;
     std::istringstream stream_;
-    VideoIOHandle sdpContext_;
-    VideoIOHandle *demuxContext_;
+    MediaIOHandle sdpContext_;
+    MediaIOHandle *demuxContext_;
     SHMSink sink_;
 
     void (*requestKeyFrameCallback_)(const std::string &);

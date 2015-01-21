@@ -133,8 +133,9 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     return udp_fd;
 }
 
-namespace ring { namespace video {
+namespace ring {
 
+using std::string;
 static const int RTP_BUFFER_SIZE = 1472;
 
 SocketPair::SocketPair(const char *uri, int localPort)
@@ -210,9 +211,9 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
              local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
 }
 
-VideoIOHandle* SocketPair::createIOContext()
+MediaIOHandle* SocketPair::createIOContext()
 {
-    return new VideoIOHandle(RTP_BUFFER_SIZE, true,
+    return new MediaIOHandle(RTP_BUFFER_SIZE, true,
                              &readCallback, &writeCallback, 0,
                              reinterpret_cast<void*>(this));
 }
@@ -384,4 +385,4 @@ retry:
     return ret < 0 ? errno : ret;
 }
 
-}}
+}
