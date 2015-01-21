@@ -289,16 +289,19 @@ class RingAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        struct PendingCall {
+            std::chrono::steady_clock::time_point start;
+            std::shared_ptr<ring::IceTransport> ice;
+            std::shared_ptr<SIPCall> call;
+            dht::InfoHash id;
+        };
         /**
-         * Incomming DHT calls that are not yet actual SIP calls.
+         * DHT calls waiting for negotiation
          */
-        using PendingCall = std::tuple<
-            std::chrono::steady_clock::time_point,
-            std::shared_ptr<ring::IceTransport>,
-            std::shared_ptr<SIPCall>,
-            dht::InfoHash
-        >;
         std::list<PendingCall> pendingCalls_ {};
+        /**
+         * Incoming DHT calls that are not yet actual SIP calls.
+         */
         std::list<PendingCall> pendingSipCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};

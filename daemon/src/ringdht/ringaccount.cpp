@@ -112,8 +112,8 @@ RingAccount::newIncomingCall(const std::string& from)
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
-        if (std::get<2>(*call_it)->getPeerNumber() == from) {
-            auto call = std::get<2>(*call_it);
+        if (call_it->call->getPeerNumber() == from) {
+            auto call = call_it->call;
             pendingSipCalls_.erase(call_it);
             RING_WARN("Found matching call for %s", from.c_str());
             return call;
@@ -208,7 +208,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     );
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(std::chrono::steady_clock::now(), ice, call, toH);
+        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, toH});
     }
     return call;
 }
@@ -530,23 +530,23 @@ RingAccount::handleEvents()
     auto now = std::chrono::steady_clock::now();
     auto c = pendingCalls_.begin();
     while (c != pendingCalls_.end()) {
-        auto ice = std::get<1>(*c);
-        auto call = std::get<2>(*c);
+        auto ice = c->ice.get();//std::get<1>(*c);
+        auto call = c->call.get();//std::get<2>(*c);
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransport->getIceTransport(ice, ICE_COMP_SIP_TRANSPORT));
+            call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
             call->setConnectionState(Call::PROGRESSING);
-            auto id = std::get<3>(*c);
-            if (id == dht::InfoHash()) {
+            //auto id = std::get<3>(*c);
+            if (c->id == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
                 auto in = c;
                 ++c;
                 pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
             } else {
                 RING_WARN("ICE succeeded : removing pending outgoing call");
-                createOutgoingCall(call, id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                createOutgoingCall(c->call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 c = pendingCalls_.erase(c);
             }
-        } else if (ice->isFailed() || now - std::get<0>(*c) > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
+        } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
             RING_WARN("ICE timeout : removing pending outgoing call");
             call->setConnectionState(Call::DISCONNECTED);
             Manager::instance().callFailure(*call);
@@ -706,7 +706,7 @@ void RingAccount::doRegister()
                         call->initRecFilename(from);
                         {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(std::chrono::steady_clock::now(), ice, call, dht::InfoHash());
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, dht::InfoHash()});
                         }
                         return true;
                     } catch (const std::exception& e) {
