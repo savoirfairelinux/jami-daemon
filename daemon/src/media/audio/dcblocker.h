@@ -32,7 +32,7 @@
 #ifndef DCBLOCKER_H
 #define DCBLOCKER_H
 
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "audiobuffer.h"
 
 namespace ring {
@@ -42,7 +42,7 @@ class DcBlocker {
         DcBlocker(unsigned channels = 1);
         void reset();
 
-        void process(SFLAudioSample *out, SFLAudioSample *in, int samples);
+        void process(ring::AudioSample *out, ring::AudioSample *in, int samples);
 
         /**
          * In-place processing of all samples in buf (each channel treated independently)
@@ -51,10 +51,10 @@ class DcBlocker {
 
     private:
         struct StreamState {
-            SFLAudioSample y_, x_, xm1_, ym1_;
+            ring::AudioSample y_, x_, xm1_, ym1_;
         };
 
-        void doProcess(SFLAudioSample *out, SFLAudioSample *in, unsigned samples, struct StreamState * state);
+        void doProcess(ring::AudioSample *out, ring::AudioSample *in, unsigned samples, struct StreamState * state);
 
         std::vector<StreamState> states;
 };

@@ -57,7 +57,7 @@ namespace {
     {
 #ifdef VERBOSE
         std::copy(buffer.begin(), buffer.end(),
-                std::ostream_iterator<SFLAudioSample>(std::cout, ", "));
+                std::ostream_iterator<ring::AudioSample>(std::cout, ", "));
         std::cout << std::endl;
 #endif
     }
@@ -193,23 +193,23 @@ void ResamplerTest::testDownsamplingSine()
 
 void ResamplerTest::generateRamp()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
+    std::vector<ring::AudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
         (*buf)[i] = i;
 }
 
 void ResamplerTest::generateTriangularSignal()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
+    std::vector<ring::AudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
         (*buf)[i] = i * 10;
 }
 
 void ResamplerTest::generateSineSignal()
 {
-    std::vector<SFLAudioSample>* buf = inputBuffer.getChannel(0);
+    std::vector<ring::AudioSample>* buf = inputBuffer.getChannel(0);
     for (size_t i = 0; i < buf->size(); ++i)
-        (*buf)[i] = (SFLAudioSample) (1000.0 * sin(i));
+        (*buf)[i] = (ring::AudioSample) (1000.0 * sin(i));
 }
 
 void ResamplerTest::performUpsampling(Resampler &resampler)

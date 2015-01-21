@@ -46,7 +46,7 @@
 #include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 
 using namespace ring;
 

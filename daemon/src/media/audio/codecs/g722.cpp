@@ -32,7 +32,7 @@
  */
 
 #include "audiocodec.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "ring_plugin.h"
 #include "g722.h"
 
@@ -59,12 +59,12 @@ class G722 : public ring::AudioCodec {
             return new G722;
         }
 
-        int decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
+        int decode(ring::AudioSample *pcm, unsigned char *data, size_t len)
         {
             return g722_decode(pcm, data, len);
         }
 
-        int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes)
+        int encode(unsigned char *data, ring::AudioSample *pcm, size_t max_data_bytes)
         {
             int out = g722_encode(data, pcm, std::min<size_t>(frameSize_, max_data_bytes));
             return out;
@@ -94,12 +94,12 @@ class G722 : public ring::AudioCodec {
             state.out_bits = 0;
         }
 
-        SFLAudioSample saturate(int32_t amp)
+        ring::AudioSample saturate(int32_t amp)
         {
-            SFLAudioSample amp16 = 0;
+            ring::AudioSample amp16 = 0;
 
             /* Hopefully this is optimised for the common case - not clipping */
-            amp16 = (SFLAudioSample) amp;
+            amp16 = (ring::AudioSample) amp;
 
             if (amp == amp16)
                 return amp16;
@@ -319,7 +319,7 @@ class G722 : public ring::AudioCodec {
             decode_state_.band[band].s = saturate(decode_state_.band[band].sp + decode_state_.band[band].sz);
         }
 
-        int g722_decode(SFLAudioSample amp[], const uint8_t g722_data[], int len)
+        int g722_decode(ring::AudioSample amp[], const uint8_t g722_data[], int len)
         {
             static const int wl[8] = {-60, -30, 58, 172, 334, 538, 1198, 3042 };
             static const int rl42[16] = {0, 7, 6, 5, 4, 3, 2, 1, 7, 6, 5, 4, 3,  2, 1, 0 };
@@ -514,11 +514,11 @@ class G722 : public ring::AudioCodec {
                 }
 
                 if (decode_state_.itu_test_mode) {
-                    amp[outlen++] = (SFLAudioSample)(rlow << 1);
-                    amp[outlen++] = (SFLAudioSample)(rhigh << 1);
+                    amp[outlen++] = (ring::AudioSample)(rlow << 1);
+                    amp[outlen++] = (ring::AudioSample)(rhigh << 1);
                 } else {
                     if (decode_state_.eight_k) {
-                        amp[outlen++] = (SFLAudioSample) (rlow << 1);
+                        amp[outlen++] = (ring::AudioSample) (rlow << 1);
                     } else {
                         /* Apply the receive QMF */
                         for (i = 0;  i < 22;  i++)
@@ -537,9 +537,9 @@ class G722 : public ring::AudioCodec {
                             xout1 += decode_state_.x[2*i + 1]*qmf_coeffs[11 - i];
                         }
 
-                        amp[outlen++] = (SFLAudioSample)(xout1 >> 11);
+                        amp[outlen++] = (ring::AudioSample)(xout1 >> 11);
 
-                        amp[outlen++] = (SFLAudioSample)(xout2 >> 11);
+                        amp[outlen++] = (ring::AudioSample)(xout2 >> 11);
                     }
                 }
             }
@@ -547,7 +547,7 @@ class G722 : public ring::AudioCodec {
             return outlen;
         }
 
-        int g722_encode(uint8_t g722_data[], const SFLAudioSample amp[], int len)
+        int g722_encode(uint8_t g722_data[], const ring::AudioSample amp[], int len)
         {
             static const int q6[32] = {
                 0,   35,   72,  110,  150,  190,  233,  276,

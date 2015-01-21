@@ -36,7 +36,7 @@
 #include <memory>
 
 #include "audiobuffer.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "noncopyable.h"
 
 namespace ring {
@@ -77,7 +77,7 @@ class Resampler {
         /* temporary buffers */
         std::vector<float> floatBufferIn_;
         std::vector<float> floatBufferOut_;
-        std::vector<SFLAudioSample> scratchBuffer_;
+        std::vector<ring::AudioSample> scratchBuffer_;
 
         size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency

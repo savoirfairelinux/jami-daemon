@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 #include "opuscodec.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "ring_plugin.h"
 
 #include <stdexcept>
@@ -108,7 +108,7 @@ Opus::getSDPChannels() const
     return "2";
 }
 
-int Opus::decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *data, size_t len)
+int Opus::decode(std::vector<std::vector<ring::AudioSample> > &pcm, const uint8_t *data, size_t len)
 {
     if (data == nullptr) return 0;
 
@@ -116,7 +116,7 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *
     if (channelsCur_ == 1) {
         ret = opus_decode(decoder_, data, len, pcm[0].data(), MAX_PACKET_SIZE, 0);
     } else {
-        std::array<SFLAudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
+        std::array<ring::AudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
         ret = opus_decode(decoder_, data, len, ibuf.data(), MAX_PACKET_SIZE, 0);
         for (int i = 0; i < ret; i++) {
             pcm[0][i] = ibuf[2 * i];
@@ -129,14 +129,14 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t *
     return ret;
 }
 
-int Opus::decode(std::vector<std::vector<SFLAudioSample> > &pcm)
+int Opus::decode(std::vector<std::vector<ring::AudioSample> > &pcm)
 {
     if (!lastDecodedFrameSize_) return 0;
     int ret;
     if (channelsCur_ == 1) {
         ret = opus_decode(decoder_, nullptr, 0, pcm[0].data(), lastDecodedFrameSize_, 0);
     } else {
-        std::array<SFLAudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
+        std::array<ring::AudioSample, 2 * MAX_PACKET_SIZE> ibuf; // deinterleave on stack, 11.25KiB used.
         ret = opus_decode(decoder_, nullptr, 0, ibuf.data(), lastDecodedFrameSize_, 0);
         for (int i = 0; i < ret; i++) {
             pcm[0][i] = ibuf[2 * i];
@@ -148,14 +148,14 @@ int Opus::decode(std::vector<std::vector<SFLAudioSample> > &pcm)
     return ret;
 }
 
-size_t Opus::encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len)
+size_t Opus::encode(const std::vector<std::vector<ring::AudioSample> > &pcm, uint8_t *data, size_t len)
 {
     if (data == nullptr) return 0;
     int ret;
     if (channelsCur_ == 1) {
         ret = opus_encode(encoder_, pcm[0].data(), FRAME_SIZE, data, len);
     } else {
-        std::array<SFLAudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
+        std::array<ring::AudioSample, 2 * FRAME_SIZE> ibuf; // interleave on stack, 1.875KiB used;
         for (unsigned i = 0; i < FRAME_SIZE; i++) {
             ibuf[2 * i] = pcm[0][i];
             ibuf[2 * i + 1] = pcm[1][i];

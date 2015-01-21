@@ -31,7 +31,7 @@
 #define G729_H_
 
 #include <cstdlib>
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "noncopyable.h"
 
 #include "audiocodec.h"
@@ -45,8 +45,8 @@ public:
    ~G729();
 private:
    AudioCodec * clone();
-   virtual int decode(SFLAudioSample *pcm, unsigned char *data, size_t len);
-   virtual int encode(unsigned char *data, SFLAudioSample *pcm, size_t max_data_bytes);
+   virtual int decode(ring::AudioSample *pcm, unsigned char *data, size_t len);
+   virtual int encode(unsigned char *data, ring::AudioSample *pcm, size_t max_data_bytes);
 
    NON_COPYABLE(G729);
    //Attributes
@@ -55,8 +55,8 @@ private:
    void* handler_;
 
    //Extern functions
-   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, SFLAudioSample inputFrame[], uint8_t bitStream[]);
-   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, SFLAudioSample signal[]);
+   void (*encoder_) (bcg729EncoderChannelContextStruct *encoderChannelContext, ring::AudioSample inputFrame[], uint8_t bitStream[]);
+   void (*decoder_) (bcg729DecoderChannelContextStruct *decoderChannelContext, uint8_t bitStream[], uint8_t frameErasureFlag, ring::AudioSample signal[]);
 
    static void loadError(const char *error);
 };
