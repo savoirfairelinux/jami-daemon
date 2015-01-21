@@ -254,7 +254,11 @@ class RingAccount : public SIPAccountBase {
     private:
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
-        const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(15)};
+        const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
+
+        NON_COPYABLE(RingAccount);
+
+        void handleEvents();
 
         void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
 
@@ -263,8 +267,6 @@ class RingAccount : public SIPAccountBase {
          * @param The map containing the account information.
          */
         virtual void setAccountDetails(const std::map<std::string, std::string> &details);
-
-        NON_COPYABLE(RingAccount);
 
         /**
          * Start a SIP Call
@@ -286,11 +288,22 @@ class RingAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        struct PendingCall {
+            std::chrono::steady_clock::time_point start;
+            std::shared_ptr<ring::IceTransport> ice;
+            std::shared_ptr<SIPCall> call;
+            dht::InfoHash id;
+        };
         /**
-         * Incomming DHT calls that are not yet actual SIP calls.
+         * DHT calls waiting for negotiation
          */
-        std::list<std::shared_ptr<SIPCall>> pendingCalls_ {};
+        std::list<PendingCall> pendingCalls_ {};
+        /**
+         * Incoming DHT calls that are not yet actual SIP calls.
+         */
+        std::list<PendingCall> pendingSipCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
+        mutable std::mutex callsMutex_ {};
 
         std::string cacertPath_ {};
         std::string privkeyPath_ {};
