@@ -178,6 +178,8 @@ class SIPCall : public Call
 
         void startAllMedia();
 
+        void onMediaUpdate();
+
     private:
         NON_COPYABLE(SIPCall);
 
@@ -185,7 +187,7 @@ class SIPCall : public Call
         std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        void stopAllMedias();
+        void stopAllMedia();
 
         /**
          * Transfer method used for both type of transfer
