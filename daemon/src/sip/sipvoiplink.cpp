@@ -565,7 +565,7 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_replaces_init_module(endpt_)); // See the Replaces specification in RFC 3891
     TRY(pjsip_100rel_init_module(endpt_));
 
-    // Initialize and register sflphone module
+    // Initialize and register ring module
     mod_ua_.name = pj_str((char*) PACKAGE);
     mod_ua_.id = -1;
     mod_ua_.priority = PJSIP_MOD_PRIORITY_APPLICATION;

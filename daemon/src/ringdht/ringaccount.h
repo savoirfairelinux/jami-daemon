@@ -39,7 +39,7 @@
 #include "sip/sipaccountbase.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
-#include "sfl_types.h" // enable_if_base_of
+#include "ring_types.h" // enable_if_base_of
 
 #include <opendht/dhtrunner.h>
 

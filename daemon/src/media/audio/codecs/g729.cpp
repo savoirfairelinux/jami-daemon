@@ -28,15 +28,15 @@
  *  as that of the covered work.
  */
 #include "g729.h"
-#include "sfl_types.h"
+#include "ring_types.h"
 #include "ring_plugin.h"
 
 #include <iostream>
 #include <dlfcn.h>
 #include <stdexcept>
 
-#define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, SFLAudioSample[], uint8_t[]))
-#define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, SFLAudioSample[]))
+#define G729_TYPE_ENCODER        (void (*)(bcg729EncoderChannelContextStruct*, ring::AudioSample[], uint8_t[]))
+#define G729_TYPE_DECODER        (void (*)(bcg729DecoderChannelContextStruct*, uint8_t[], uint8_t, ring::AudioSample[]))
 
 #define G729_TYPE_DECODER_INIT   (bcg729DecoderChannelContextStruct*(*)())
 #define G729_TYPE_ENCODER_INIT   (bcg729EncoderChannelContextStruct*(*)())
@@ -81,14 +81,14 @@ G729::clone()
     return new G729;
 }
 
-int G729::decode(SFLAudioSample *pcm, unsigned char *data, size_t len)
+int G729::decode(ring::AudioSample *pcm, unsigned char *data, size_t len)
 {
     decoder_(decoderContext_, data, false, pcm);
     decoder_(decoderContext_, data + (len / 2), false, pcm + 80);
     return 160;
 }
 
-int G729::encode(unsigned char *data, SFLAudioSample *pcm, size_t)
+int G729::encode(unsigned char *data, ring::AudioSample *pcm, size_t)
 {
     encoder_(encoderContext_, pcm, data);
     encoder_(encoderContext_, pcm + (frameSize_ / 2), data + 10);

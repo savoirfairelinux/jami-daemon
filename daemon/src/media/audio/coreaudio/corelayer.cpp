@@ -499,7 +499,7 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     for (int i = 0; i < info.mChannelsPerFrame; ++i) {
         Float32* data = (Float32*)captureBuff_->mBuffers[i].mData;
         for (int j = 0; j < inNumberFrames; ++j) {
-            (*inBuff.getChannel(i))[j] = (SFLAudioSample)((data)[j] / .000030517578125f);
+            (*inBuff.getChannel(i))[j] = (ring::AudioSample)((data)[j] / .000030517578125f);
         }
     }
 

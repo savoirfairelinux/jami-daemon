@@ -427,7 +427,7 @@ void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
 
     ring::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
-    out.deinterleave(reinterpret_cast<const SFLAudioSample*>(decoded_frame->data[0]),
+    out.deinterleave(reinterpret_cast<const ring::AudioSample*>(decoded_frame->data[0]),
                      decoded_frame->nb_samples, decoderCtx_->channels);
     if ((unsigned)decoded_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {

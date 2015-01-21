@@ -35,7 +35,7 @@
 
 #include "account.h"
 #include "iaxvoiplink.h"
-#include "sfl_types.h" // enable_if_base_of
+#include "ring_types.h" // enable_if_base_of
 
 namespace YAML {
     class Emitter;

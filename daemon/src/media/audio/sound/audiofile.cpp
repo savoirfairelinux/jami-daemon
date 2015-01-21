@@ -115,7 +115,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
 
     const sf_count_t nbFrames = hasHeader ? fileHandle.frames() : fileSize / fileHandle.channels();
 
-    SFLAudioSample * interleaved = new SFLAudioSample[nbFrames * fileHandle.channels()];
+    ring::AudioSample * interleaved = new ring::AudioSample[nbFrames * fileHandle.channels()];
 
     // get n "items", aka samples (not frames)
     fileHandle.read(interleaved, nbFrames * fileHandle.channels());

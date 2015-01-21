@@ -60,14 +60,14 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
-int AudioCodec::decode(SFLAudioSample *, unsigned char *, size_t)
+int AudioCodec::decode(ring::AudioSample *, unsigned char *, size_t)
 {
     // Unimplemented!
     assert(false);
     return 0;
 }
 
-int AudioCodec::encode(unsigned char *, SFLAudioSample *, size_t)
+int AudioCodec::encode(unsigned char *, ring::AudioSample *, size_t)
 {
     // Unimplemented!
     assert(false);
@@ -76,18 +76,18 @@ int AudioCodec::encode(unsigned char *, SFLAudioSample *, size_t)
 
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &pcm, const uint8_t* data, size_t len)
+int AudioCodec::decode(std::vector<std::vector<ring::AudioSample> > &pcm, const uint8_t* data, size_t len)
 {
     return decode(pcm[0].data(), const_cast<uint8_t*>(data), len);
 }
 
 // Mono only, subclasses must implement multichannel support
-size_t AudioCodec::encode(const std::vector<std::vector<SFLAudioSample> > &pcm, uint8_t *data, size_t len)
+size_t AudioCodec::encode(const std::vector<std::vector<ring::AudioSample> > &pcm, uint8_t *data, size_t len)
 {
-    return encode(data, const_cast<SFLAudioSample*>(pcm[0].data()), len);
+    return encode(data, const_cast<ring::AudioSample*>(pcm[0].data()), len);
 }
 
-int AudioCodec::decode(std::vector<std::vector<SFLAudioSample> > &pcm)
+int AudioCodec::decode(std::vector<std::vector<ring::AudioSample> > &pcm)
 {
     pcm.clear();
     return frameSize_;
