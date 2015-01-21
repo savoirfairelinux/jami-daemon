@@ -297,7 +297,7 @@ void
 SIPCall::hangup(int reason)
 {
     // Stop all RTP streams
-    stopAllMedias();
+    stopAllMedia();
 
     if (not inv or not inv->dlg)
         throw VoipLinkException("No invite session for this call");
@@ -637,7 +637,7 @@ void
 SIPCall::peerHungup()
 {
     // Stop all RTP streams
-    stopAllMedias();
+    stopAllMedia();
 
     if (not inv)
         throw VoipLinkException("No invite session for this call");
@@ -753,8 +753,10 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
-    if (iceTransport_->isStarted() || iceTransport_->isCompleted())
+    if (iceTransport_->isStarted() || iceTransport_->isCompleted()) {
+        RING_DBG("ICE already started");
         return true;
+    }
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         RING_ERR("ICE empty attributes");
@@ -770,8 +772,8 @@ SIPCall::startAllMedia()
     avformatrtp_->updateSDP(*sdp_);
     avformatrtp_->updateDestination(remoteIP, sdp_->getRemoteAudioPort());
     if (isIceRunning()) {
-        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(0));
-        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(1));
+        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(ICE_AUDIO_RTP_COMPID));
+        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(ICE_AUDIO_RTCP_COMPID));
         avformatrtp_->start(std::move(sockRTP), std::move(sockRTCP));
     } else {
         const auto localAudioPort = sdp_->getLocalAudioPort();
@@ -783,8 +785,8 @@ SIPCall::startAllMedia()
     videortp_.updateSDP(*sdp_);
     videortp_.updateDestination(remoteIP, remoteVideoPort);
     if (isIceRunning()) {
-        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(2));
-        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(3));
+        std::unique_ptr<ring::IceSocket> sockRTP(newIceSocket(ICE_VIDEO_RTP_COMPID));
+        std::unique_ptr<ring::IceSocket> sockRTCP(newIceSocket(ICE_VIDEO_RTCP_COMPID));
         try {
             videortp_.start(std::move(sockRTP), std::move(sockRTCP));
         } catch (const std::runtime_error &e) {
@@ -838,11 +840,26 @@ SIPCall::startAllMedia()
 }
 
 void
-SIPCall::stopAllMedias()
+SIPCall::stopAllMedia()
 {
     RING_DBG("SIPCall %s: stopping all medias", getCallId().c_str());
     avformatrtp_->stop();
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
+}
+
+void
+SIPCall::onMediaUpdate()
+{
+    // Handle possible ICE transport
+    if (!startIce())
+        RING_WARN("ICE not started");
+
+    if (getState() == ACTIVE) {
+        // TODO apply changes without restarting everything
+        RING_WARN("Restarting media");
+        stopAllMedia();
+        startAllMedia();
+    }
 }
