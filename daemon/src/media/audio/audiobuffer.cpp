@@ -214,6 +214,26 @@ void AudioBuffer::deinterleave(const std::vector<ring::AudioSample>& in, AudioFo
     deinterleave(in.data(), in.size()/format.nb_channels, format.nb_channels);
 }
 
+void AudioBuffer::convertFloatPlanarToSigned16(uint8_t** extended_data, size_t frame_num, unsigned nb_channels)
+{
+    if (extended_data == nullptr)
+        return;
+
+    // Resize buffer
+    setChannelNum(nb_channels);
+    resize(frame_num);
+
+    for (unsigned j = 0, c = channels(); j < c; j++){
+        float* inputChannel = (float*)extended_data[j];
+        for (unsigned i=0, f=frames(); i < f; i++){
+            float inputChannelVal = *inputChannel++;
+            // avoid saturation
+            if ((inputChannelVal)<-1.0f) (inputChannelVal)=-1.0f; else if ((inputChannelVal)>1.0f) (inputChannelVal)=1.0f;
+            samples_[j][i] = (int16_t) (inputChannelVal * 32768.0f);
+        }
+    }
+}
+
 size_t AudioBuffer::mix(const AudioBuffer& other, bool up /* = true */)
 {
     const bool upmix = up && (other.samples_.size() < samples_.size());
