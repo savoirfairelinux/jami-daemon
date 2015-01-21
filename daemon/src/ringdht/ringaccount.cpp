@@ -109,11 +109,12 @@ RingAccount::~RingAccount()
 std::shared_ptr<SIPCall>
 RingAccount::newIncomingCall(const std::string& from)
 {
-    auto call_it = pendingCalls_.begin();
-    while (call_it != pendingCalls_.end()) {
-        if ((*call_it)->getPeerNumber() == from) {
-            std::shared_ptr<SIPCall> call = *call_it;
-            pendingCalls_.erase(call_it);
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    auto call_it = pendingSipCalls_.begin();
+    while (call_it != pendingSipCalls_.end()) {
+        if (call_it->call->getPeerNumber() == from) {
+            auto call = call_it->call;
+            pendingSipCalls_.erase(call_it);
             RING_WARN("Found matching call for %s", from.c_str());
             return call;
         } else {
@@ -142,6 +143,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         throw std::invalid_argument("id must be a ring infohash");
 
     RING_DBG("Calling DHT peer %s", toUri.c_str());
+    auto toH = dht::InfoHash(toUri);
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
     call->setIPToIP(true);
@@ -168,13 +170,13 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     const dht::Value::Id replyvid = callvid+1;
     dht_.putEncrypted(
         callkey,
-        dht::InfoHash(toUri),
+        toH,
         dht::Value {
             ICE_ANNOUCEMENT_TYPE.id,
             ice->getLocalAttributesAndCandidates(),
             callvid
         },
-        [callkey, callvid, call, shared](bool ok){
+        [callkey, callvid, call, shared](bool ok) {
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             if (!ok) {
                 call->setConnectionState(Call::DISCONNECTED);
@@ -186,35 +188,28 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     dht_.listen(
         callkey,
-        [shared, call, callkey, ice, toUri, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
+        [shared, call, callkey, ice, toH, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             RING_DBG("Outcall listen callback (%d values)", vals.size());
             for (const auto& v : vals) {
                 if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
-                    RING_WARN("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
+                    RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                     continue;
                 }
-                if (v->id != replyvid) {
-                    RING_WARN("Ignoring value ID %llx (expected %llx)", v->id, replyvid);
+                if (v->id != replyvid)
                     continue;
-                }
-                RING_WARN("Got a DHT reply from %s !", toUri.c_str());
+                RING_WARN("Got a DHT reply from %s !", toH.toString().c_str());
                 RING_WARN("Performing ICE negotiation.");
                 ice->start(v->data);
-                if (ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
-                    call->setConnectionState(Call::DISCONNECTED);
-                    Manager::instance().callFailure(*call);
-                    return false;
-                }
-                call->setTransport(this_.link_->sipTransport->getIceTransport(ice, ICE_COMP_SIP_TRANSPORT));
-                call->setConnectionState(Call::PROGRESSING);
-                this_.createOutgoingCall(call, toUri, ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 return false;
             }
             return true;
         }
     );
-
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, toH});
+    }
     return call;
 }
 
@@ -526,6 +521,41 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
     return a;
 }
 
+void
+RingAccount::handleEvents()
+{
+    dht_.loop();
+
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    auto now = std::chrono::steady_clock::now();
+    auto c = pendingCalls_.begin();
+    while (c != pendingCalls_.end()) {
+        auto ice = c->ice.get();//std::get<1>(*c);
+        auto call = c->call.get();//std::get<2>(*c);
+        if (ice->isRunning()) {
+            call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            call->setConnectionState(Call::PROGRESSING);
+            //auto id = std::get<3>(*c);
+            if (c->id == dht::InfoHash()) {
+                RING_WARN("ICE succeeded : moving incomming call to pending sip call");
+                auto in = c;
+                ++c;
+                pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
+            } else {
+                RING_WARN("ICE succeeded : removing pending outgoing call");
+                createOutgoingCall(c->call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                c = pendingCalls_.erase(c);
+            }
+        } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
+            RING_WARN("ICE timeout : removing pending outgoing call");
+            call->setConnectionState(Call::DISCONNECTED);
+            Manager::instance().callFailure(*call);
+            c = pendingCalls_.erase(c);
+        } else
+            ++c;
+    }
+}
+
 void RingAccount::doRegister()
 {
     if (not isEnabled()) {
@@ -589,7 +619,7 @@ void RingAccount::doRegister()
 
         username_ = dht_.getId().toString();
 
-        Manager::instance().registerEventHandler((uintptr_t)this, [this](){ dht_.loop(); });
+        Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
 
         dht_.bootstrap(loadNodes());
@@ -662,25 +692,22 @@ void RingAccount::doRegister()
                                 reply_vid
                             },
                             [call,ice,shared,listenKey,reply_vid](bool ok) {
-                                RING_WARN("ICE exchange put %d", ok);
                                 auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
                                 this_.dht_.cancelPut(listenKey, reply_vid);
-                                RING_WARN("waitForIceNegociation");
-                                if (!ok || ice->waitForNegotiation(ICE_NEGOTIATION_TIMEOUT) <= 0) {
-                                    RING_WARN("SIP ICE negotiation failed");
+                                if (!ok) {
+                                    RING_ERR("ICE exchange failed");
                                     call->setConnectionState(Call::DISCONNECTED);
                                     Manager::instance().callFailure(*call);
-                                } else {
-                                    RING_DBG("SIP ICE negotiation succeeded");
-                                    call->setConnectionState(Call::PROGRESSING);
-                                    call->setTransport(this_.link_->sipTransport->getIceTransport(ice, ICE_COMP_SIP_TRANSPORT));
                                 }
                             }
                         );
                         ice->start(v->data);
                         call->setPeerNumber(from);
                         call->initRecFilename(from);
-                        this_.pendingCalls_.push_back(call);
+                        {
+                            std::lock_guard<std::mutex> lock(this_.callsMutex_);
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, dht::InfoHash()});
+                        }
                         return true;
                     } catch (const std::exception& e) {
                         RING_ERR("ICE/DHT error: %s", e.what());
@@ -704,7 +731,11 @@ void RingAccount::doRegister()
 
 void RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    pendingCalls_.clear();
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pendingCalls_.clear();
+        pendingSipCalls_.clear();
+    }
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());

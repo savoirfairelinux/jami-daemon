@@ -66,8 +66,8 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
     , comp_id_(comp_id)
     , destroy_cb_(destroy_cb)
 {
-    if (not ice or not ice->isCompleted())
-        throw std::logic_error("ice transport must exist and negociation completed");
+    if (not ice or not ice->isRunning())
+        throw std::logic_error("ice transport must exist and negotiation completed");
 
     RING_DBG("Creating SipIceTransport");
 
