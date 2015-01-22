@@ -227,8 +227,8 @@ void AudioBuffer::convertFloatPlanarToSigned16(uint8_t** extended_data, size_t f
         float* inputChannel = (float*)extended_data[j];
         for (unsigned i=0, f=frames(); i < f; i++){
             float inputChannelVal = *inputChannel++;
-            // avoid saturation
-            if ((inputChannelVal)<-1.0f) (inputChannelVal)=-1.0f; else if ((inputChannelVal)>1.0f) (inputChannelVal)=1.0f;
+            // avoid saturation: limit val between -1 and 1
+            inputChannelVal = std::max(-1.0f, std::min(inputChannelVal, 1.0f));
             samples_[j][i] = (int16_t) (inputChannelVal * 32768.0f);
         }
     }

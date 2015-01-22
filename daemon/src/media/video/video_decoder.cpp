@@ -427,10 +427,10 @@ void VideoDecoder::writeToRingBuffer(AVFrame* decoded_frame,
 
     ring::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
-    if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ){
+    if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
         out.convertFloatPlanarToSigned16(decoded_frame->extended_data,
                          decoded_frame->nb_samples, decoderCtx_->channels);
-    }else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16) {
+    } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
         out.deinterleave(reinterpret_cast<const ring::AudioSample*>(decoded_frame->data[0]),
                          decoded_frame->nb_samples, decoderCtx_->channels);
     }
