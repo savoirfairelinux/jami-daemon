@@ -44,9 +44,14 @@
 #include <sys/socket.h>
 #include <netdb.h>
 
-#if defined(__ANDROID__) && !defined(SOCK_NONBLOCK)
+#ifdef __ANDROID__
 #include <asm-generic/fcntl.h>
-# define SOCK_NONBLOCK O_NONBLOCK
+#define SOCK_NONBLOCK O_NONBLOCK
+#endif
+
+#ifdef __APPLE__
+#include <fcntl.h>
+#define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
 static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
