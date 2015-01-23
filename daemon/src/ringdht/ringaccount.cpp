@@ -40,7 +40,7 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-#include "sip_transport_ice.h"
+#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
 #include <opendht/securedht.h>
@@ -186,7 +186,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         }
     );
 
-    dht_.listen(
+    auto lk = dht_.listen(
         callkey,
         [shared, call, callkey, ice, toH, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
@@ -208,7 +208,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     );
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, toH});
+        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, std::move(lk), callkey, toH});
     }
     return call;
 }
@@ -518,7 +518,12 @@ RingAccount::handleEvents()
         auto ice = c->ice.get();
         auto call = c->call.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            regenerateCAList();
+            auto id = loadIdentity();
+            call->setTransport(link_->sipTransport->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, TlsParams {
+                .ca_list = caListPath_,
+                .id = id.second
+            }));
             call->setConnectionState(Call::PROGRESSING);
             if (c->id == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
@@ -528,10 +533,13 @@ RingAccount::handleEvents()
             } else {
                 RING_WARN("ICE succeeded : removing pending outgoing call");
                 createOutgoingCall(c->call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                dht_.cancelListen(c->call_key, c->listen_key.get());
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
             RING_WARN("ICE timeout : removing pending outgoing call");
+            if (c->id != dht::InfoHash())
+                dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
             Manager::instance().callFailure(*call);
             c = pendingCalls_.erase(c);
@@ -581,7 +589,7 @@ void RingAccount::doRegister()
             }
         });
 
-#if 0
+#if 1
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
@@ -690,7 +698,7 @@ void RingAccount::doRegister()
                         call->initRecFilename(from);
                         {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, dht::InfoHash()});
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, {}, {}, {}});
                         }
                         return true;
                     } catch (const std::exception& e) {
@@ -948,7 +956,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
         return contact_;
     }
 
-    auto ice = reinterpret_cast<SipIceTransport*>(t);
+    auto ice = reinterpret_cast<SipsIceTransport*>(t);
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;
