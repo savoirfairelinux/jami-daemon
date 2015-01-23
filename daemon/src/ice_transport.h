@@ -82,6 +82,11 @@ class IceTransport {
         bool setSlaveSession();
 
         /**
+         * Get current state
+         */
+        bool isInitiator() const;
+
+        /**
          * Start tranport negociation between local candidates and given remote
          * to find the right candidate pair.
          * This function doesn't block, the callback on_negodone_cb will be called
