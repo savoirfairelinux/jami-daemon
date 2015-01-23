@@ -300,8 +300,11 @@ class RingAccount : public SIPAccountBase {
             std::chrono::steady_clock::time_point start;
             std::shared_ptr<IceTransport> ice;
             std::shared_ptr<SIPCall> call;
+            std::future<size_t> listen_key;
+            dht::InfoHash call_key;
             dht::InfoHash id;
         };
+
         /**
          * DHT calls waiting for negotiation
          */
