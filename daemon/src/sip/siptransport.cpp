@@ -35,6 +35,7 @@
 #include "ip_utils.h"
 
 #include "ringdht/sip_transport_ice.h"
+#include "ringdht/sips_transport_ice.h"
 
 #include "manager.h"
 #include "client/configurationmanager.h"
@@ -448,6 +449,30 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<ring::IceTransport> ic
         return PJ_ENOTFOUND;
     });
     auto& sip_ice_tr = iceTransports_.front();
+    auto ret = std::make_shared<SipTransport>(&sip_ice_tr.base);
+    {
+        std::unique_lock<std::mutex> lock(transportMapMutex_);
+        transports_[ret->get()] = ret;
+    }
+    return ret;
+}
+
+std::shared_ptr<SipTransport>
+SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport> ice, unsigned comp_id)
+{
+    std::unique_lock<std::mutex> lock(iceMutex_);
+    tlsIceTransports_.emplace_front(endpt_, pool_, TlsParams{}, ice, comp_id, [=]() -> int {
+        std::unique_lock<std::mutex> lock(iceMutex_);
+        const auto ice_transport_key = std::find_if(tlsIceTransports_.begin(), tlsIceTransports_.end(), [&](const SipsIceTransport& i) {
+            return i.getIceTransport() == ice;
+        });
+        if (ice_transport_key != tlsIceTransports_.end()) {
+            tlsIceTransports_.erase(ice_transport_key);
+            return PJ_SUCCESS;
+        }
+        return PJ_ENOTFOUND;
+    });
+    auto& sip_ice_tr = tlsIceTransports_.front();
     auto ret = std::make_shared<SipTransport>(&sip_ice_tr.base);
     {
         std::unique_lock<std::mutex> lock(transportMapMutex_);
