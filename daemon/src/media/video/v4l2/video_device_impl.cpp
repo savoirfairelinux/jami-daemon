@@ -130,6 +130,8 @@ class VideoDeviceImpl {
         float rate_;
 };
 
+}} // namespace ring::video
+
 static const unsigned pixelformats_supported[] = {
     /* pixel format        depth  description   */
 
@@ -207,6 +209,9 @@ static unsigned int pixelformat_score(unsigned pixelformat)
 
     return UINT_MAX - 1;
 }
+
+using namespace ring;
+using namespace ring::video;
 
 using std::vector;
 using std::string;
@@ -581,5 +586,3 @@ VideoDevice::getCapabilities() const
 
 VideoDevice::~VideoDevice()
 {}
-
-}} // namespace ring // namespace video

@@ -32,7 +32,7 @@
  */
 #include "tonelist.h"
 
-namespace ring {
+using namespace ring;
 
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
     {
@@ -133,6 +133,4 @@ TelephoneTone::getCurrentTone()
         return NULL;
 
     return tone_[currentTone_];
-}
-
 }

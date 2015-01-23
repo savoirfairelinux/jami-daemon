@@ -38,6 +38,8 @@
 #include "dbus/dbusclient.h"
 #include "fileutils.h"
 
+using namespace ring;
+
 static int ringFlags = 0;
 static std::unique_ptr<DBusClient> dbusClient;
 

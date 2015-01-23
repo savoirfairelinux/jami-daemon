@@ -46,6 +46,8 @@
 
 #include <stdexcept>
 
+using namespace ring;
+
 const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 AccountFactory::AccountFactory()

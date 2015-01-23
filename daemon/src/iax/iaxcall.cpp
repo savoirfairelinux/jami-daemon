@@ -48,6 +48,8 @@
 #include "im/instant_messaging.h"
 #endif
 
+using namespace ring;
+
 const char* const IAXCall::LINK_TYPE = IAXAccount::ACCOUNT_TYPE;
 
 static int
@@ -239,12 +241,12 @@ void
 IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    ring::InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
+    InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
 #endif
 
 void
-IAXCall::putAudioData(ring::AudioBuffer& buf)
+IAXCall::putAudioData(AudioBuffer& buf)
 {
     ringbuffer_->put(buf);
 }

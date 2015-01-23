@@ -31,7 +31,7 @@
 #include <sstream>
 #include <cstdio>
 
-namespace ring {
+using namespace ring;
 
 Pattern::Pattern(const std::string& pattern, bool matchGlobally) :
     pattern_(pattern),
@@ -158,5 +158,4 @@ std::vector<std::string> Pattern::split()
     substringSplitted.push_back(subject_.substr(tokenEnd + 1,
                                                 tokenStart - tokenEnd - 1));
     return substringSplitted;
-}
 }

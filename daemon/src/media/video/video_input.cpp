@@ -44,7 +44,8 @@
 #include <cassert>
 #include <unistd.h>
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
@@ -146,7 +147,7 @@ VideoInput::createDecoder()
     if (input_.empty())
         return;
 
-    decoder_ = new ring::MediaDecoder();
+    decoder_ = new MediaDecoder();
 
     decoder_->setOptions(decOpts_);
     if (emulateRate_)
@@ -319,5 +320,3 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
-
-}} //namespace ring //namespace video

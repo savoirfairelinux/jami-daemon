@@ -42,6 +42,8 @@
 #include "map_utils.h"
 #include "call_factory.h"
 
+using namespace ring;
+
 Call::Call(Account& account, const std::string& id, Call::CallType type)
     : id_(id)
     , type_(type)
@@ -199,17 +201,17 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    ring::RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
+    RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
     std::string process_id = Recordable::recorder_.getRecorderID();
 
     if (startRecording) {
         rbPool.bindHalfDuplexOut(process_id, id_);
-        rbPool.bindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         rbPool.unBindHalfDuplexOut(process_id, id_);
-        rbPool.unBindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;
@@ -245,6 +247,7 @@ timestamp_to_string(const time_t &timestamp)
 std::map<std::string, std::string> Call::createHistoryEntry() const
 {
     using ring::HistoryItem;
+
     std::map<std::string, std::string> result;
 
     result[HistoryItem::ACCOUNT_ID_KEY] = getAccountId();
@@ -334,8 +337,8 @@ Call::isIceRunning() const
     return iceTransport_->isRunning();
 }
 
-ring::IceSocket*
+IceSocket*
 Call::newIceSocket(unsigned compId) const
 {
-    return new ring::IceSocket(iceTransport_, compId);
+    return new IceSocket(iceTransport_, compId);
 }

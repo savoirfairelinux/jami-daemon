@@ -41,7 +41,8 @@
 #include "logger.h"
 #include "video_device_monitor.h"
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 constexpr const char * const VideoDeviceMonitor::CONFIG_LABEL;
 
@@ -283,7 +284,8 @@ VideoDeviceMonitor::serialize(YAML::Emitter &out)
 void
 VideoDeviceMonitor::unserialize(const YAML::Node &in)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
+
     const auto &node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */
@@ -308,5 +310,3 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
     else
         defaultDevice_ = first;
 }
-
-}} //namespace ring //namespace video

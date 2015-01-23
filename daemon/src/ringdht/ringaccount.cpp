@@ -67,6 +67,9 @@
 #include <sstream>
 #include <cctype>
 
+using namespace ring;
+using namespace ring::Conf;
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
@@ -124,6 +127,8 @@ RingAccount::newIncomingCall(const std::string& from)
     RING_ERR("Can't find matching call for %s", from.c_str());
     return nullptr;
 }
+
+namespace ring {
 
 template <>
 std::shared_ptr<SIPCall>
@@ -213,6 +218,8 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     return call;
 }
 
+} // namespace ring
+
 void
 RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target)
 {
@@ -232,11 +239,11 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -359,7 +366,7 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
 void RingAccount::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);

@@ -51,7 +51,8 @@
 #include <cerrno>
 #include <cstring>
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 SHMSink::SHMSink(const std::string &shm_name) :
     shm_name_(shm_name)
@@ -260,5 +261,3 @@ void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::sha
     auto f = frame_p; // keep a local reference during rendering
     render_frame(*f.get());
 }
-
-}}

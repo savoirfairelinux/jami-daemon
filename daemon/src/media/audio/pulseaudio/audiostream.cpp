@@ -33,7 +33,7 @@
 #include "logger.h"
 #include <stdexcept>
 
-namespace ring {
+using namespace ring;
 
 AudioStream::AudioStream(pa_context *c,
                          pa_threaded_mainloop *m,
@@ -151,6 +151,4 @@ bool AudioStream::isReady()
         return false;
 
     return pa_stream_get_state(audiostream_) == PA_STREAM_READY;
-}
-
 }

@@ -70,6 +70,8 @@
 #include <sstream>
 #include <cstdlib>
 
+using namespace ring;
+
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -168,6 +170,8 @@ SIPAccount::newIncomingCall(const std::string&)
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::INCOMING);
 }
 
+namespace ring {
+
 template <>
 std::shared_ptr<SIPCall>
 SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
@@ -228,11 +232,11 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -265,6 +269,8 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     return call;
 }
+
+} // namespace ring
 
 std::shared_ptr<Call>
 SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
@@ -362,7 +368,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
 void SIPAccount::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
 
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
@@ -437,7 +443,7 @@ validate(std::string &member, const std::string &param, const T& valid)
 
 void SIPAccount::unserialize(const YAML::Node &node)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
     using namespace yaml_utils;
 
     SIPAccountBase::unserialize(node);
@@ -527,6 +533,8 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    using namespace ring::Conf;
+
     SIPAccountBase::setAccountDetails(details);
 
     // SIP specific account settings
@@ -596,6 +604,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
 static std::string retrievePassword(const std::map<std::string, std::string>& map, const std::string &username)
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string>::const_iterator map_iter_username;
     std::map<std::string, std::string>::const_iterator map_iter_password;
     map_iter_username = map.find(CONFIG_ACCOUNT_USERNAME);
@@ -615,6 +625,8 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
 
 std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
 
     a[CONFIG_ACCOUNT_PASSWORD] = "";
@@ -687,6 +699,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
 std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
     std::stringstream codestream;
     codestream << registrationStateDetailed_.first;
@@ -1522,6 +1536,8 @@ SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
+    using namespace ring::Conf;
+
     // we can not authenticate without credentials
     if (creds.empty()) {
         RING_ERR("Cannot authenticate with empty credentials list");
@@ -1605,6 +1621,8 @@ std::string SIPAccount::getUserAgentName() const
 
 std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
+    using namespace ring::Conf;
+
     assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
     ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
@@ -1628,6 +1646,8 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 
 std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 {
+    using namespace ring::Conf;
+
     assert(isIP2IP());
     std::map<std::string, std::string> tlsSettings;
 
@@ -1679,6 +1699,8 @@ set_opt(const std::map<std::string, std::string> &details, const char *key, pj_u
 
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {
+    using namespace ring::Conf;
+
     assert(isIP2IP());
     set_opt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     set_opt(details, CONFIG_TLS_ENABLE, tlsEnable_);

@@ -38,7 +38,7 @@
 
 #include <ctime>
 
-namespace ring {
+using namespace ring;
 
 AudioLayer::AudioLayer(const AudioPreference &pref)
     : isCaptureMuted_(pref.getCaptureMuted())
@@ -120,6 +120,4 @@ void AudioLayer::notifyIncomingCall()
     /* Put the data in the urgent ring buffer */
     flushUrgent();
     putUrgent(buf);
-}
-
 }

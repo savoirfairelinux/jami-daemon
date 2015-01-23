@@ -45,9 +45,9 @@
 #include <map>
 #include <string>
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
-using ring::SocketPair;
 using std::map;
 using std::string;
 
@@ -199,8 +199,8 @@ void VideoRtpSession::start(int localPort)
     }
 }
 
-void VideoRtpSession::start(std::unique_ptr<ring::IceSocket> rtp_sock,
-                            std::unique_ptr<ring::IceSocket> rtcp_sock)
+void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
+                            std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -312,5 +312,3 @@ void VideoRtpSession::exitConference()
 
     conference_ = nullptr;
 }
-
-}} //namespace ring //namespace video

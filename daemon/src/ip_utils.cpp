@@ -44,6 +44,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+using namespace ring;
+
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 {

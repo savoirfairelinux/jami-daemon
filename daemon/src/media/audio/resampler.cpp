@@ -34,9 +34,9 @@
 
 #include <samplerate.h>
 
-namespace ring {
+using namespace ring;
 
-class SrcState {
+class ring::SrcState {
     public:
         SrcState(int nb_channels)
         {
@@ -131,6 +131,4 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
     */
     src_float_to_short_array(floatBufferOut_.data(), scratchBuffer_.data(), outSamples);
     dataOut.deinterleave(scratchBuffer_.data(), src_data.output_frames, nbChans);
-}
-
 }

@@ -30,7 +30,7 @@
 
 #include "audiodevice.h"
 
-namespace ring {
+using namespace ring;
 
 AudioDevice::AudioDevice(AudioDeviceID devid, bool isInput)
 {
@@ -175,6 +175,4 @@ std::string AudioDevice::getName() const
                         &maxlen,
                         buf));
     return buf;
-}
-
 }

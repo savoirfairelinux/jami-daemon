@@ -43,7 +43,7 @@
 #include <cstdio>
 #include <unistd.h>
 
-namespace ring {
+using namespace ring;
 
 static std::string
 createFilename()
@@ -236,6 +236,4 @@ void AudioRecord::recData(AudioBuffer& buffer)
     } else {
         fileHandle_->writeSync();
     }
-}
-
 }

@@ -72,7 +72,7 @@ class DTMFGenerator {
         /** State of the DTMF generator */
         struct DTMFState {
             unsigned int offset;   /** Offset in the sample currently being played */
-            ring::AudioSample* sample;         /** Currently generated code */
+            AudioSample* sample;         /** Currently generated code */
         };
 
         /** State of the DTMF generator */
@@ -82,7 +82,7 @@ class DTMFGenerator {
         static const DTMFTone tones_[NUM_TONES];
 
         /** Generated samples for each tone */
-        ring::AudioSample* toneBuffers_[NUM_TONES];
+        AudioSample* toneBuffers_[NUM_TONES];
 
         /** Sampling rate of generated dtmf */
         int sampleRate_;
@@ -104,26 +104,26 @@ class DTMFGenerator {
 
         /*
          * Get n samples of the signal of code code
-         * @param buffer a ring::AudioSample vector
+         * @param buffer a AudioSample vector
          * @param code   dtmf code to get sound
          */
-        void getSamples(std::vector<ring::AudioSample> &buffer, unsigned char code);
+        void getSamples(std::vector<AudioSample> &buffer, unsigned char code);
 
         /*
          * Get next n samples (continues where previous call to
          * genSample or genNextSamples stopped
-         * @param buffer a ring::AudioSample vector
+         * @param buffer a AudioSample vector
          */
-        void getNextSamples(std::vector<ring::AudioSample> &buffer);
+        void getNextSamples(std::vector<AudioSample> &buffer);
 
     private:
 
         /**
          * Fill tone buffer for a given index of the array of tones.
          * @param index of the tone in the array tones_
-         * @return ring::AudioSample* The generated data
+         * @return AudioSample* The generated data
          */
-        ring::AudioSample* fillToneBuffer(int index);
+        AudioSample* fillToneBuffer(int index);
 };
 
 }

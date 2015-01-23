@@ -32,6 +32,8 @@
 #include "threadloop.h"
 #include "logger.h"
 
+using namespace ring;
+
 void ThreadLoop::mainloop()
 {
     try {

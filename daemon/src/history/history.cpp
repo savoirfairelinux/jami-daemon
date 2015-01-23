@@ -41,7 +41,7 @@
 #include "logger.h"
 #include "call.h"
 
-namespace ring {
+using namespace ring;
 
 History::History() : historyItemsMutex_(), items_(), path_() {}
 
@@ -167,6 +167,4 @@ History::getNameFromHistory(const std::string &number,
     if (it2 == map.cend())
         return "";
     return it2->second;
-}
-
 }

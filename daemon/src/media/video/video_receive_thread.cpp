@@ -40,7 +40,8 @@
 #include <unistd.h>
 #include <map>
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 using std::string;
 
@@ -173,7 +174,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
     return is.gcount();
 }
 
-void VideoReceiveThread::addIOContext(ring::SocketPair &socketPair)
+void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
     demuxContext_ = socketPair.createIOContext();
 }
@@ -254,5 +255,3 @@ int VideoReceiveThread::getHeight() const
 
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
-
-}} //namespace ring //namespace video

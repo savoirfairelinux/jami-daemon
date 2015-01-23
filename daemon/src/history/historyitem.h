@@ -81,6 +81,6 @@ class HistoryItem {
 
 std::ostream& operator << (std::ostream& o, const HistoryItem& item);
 
-}
+} // namespace ring
 
 #endif // HISTORY_ITEM

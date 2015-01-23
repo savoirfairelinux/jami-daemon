@@ -32,7 +32,7 @@
 #include "libav_deps.h"
 #include "media_io_handle.h"
 
-namespace ring {
+using namespace ring;
 
 MediaIOHandle::MediaIOHandle(ssize_t buffer_size,
                              bool writeable,
@@ -49,5 +49,3 @@ MediaIOHandle::MediaIOHandle(ssize_t buffer_size,
 }
 
 MediaIOHandle::~MediaIOHandle() { av_free(ctx_); av_free(buf_); }
-
-}

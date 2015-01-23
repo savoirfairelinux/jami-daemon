@@ -34,6 +34,8 @@
 
 #include <utility>
 
+using namespace ring;
+
 PluginManager::PluginManager()
 {
     pluginApi_.context = reinterpret_cast<void*>(this);

@@ -35,7 +35,7 @@
 #include <cstdlib>
 #include <istream>
 
-namespace ring {
+using namespace ring;
 
 const char * const HistoryItem::ACCOUNT_ID_KEY =        "accountid";
 const char * const HistoryItem::CALLID_KEY =            "callid";
@@ -115,10 +115,13 @@ void HistoryItem::print(std::ostream &o) const
     }
 }
 
+namespace ring {
+
 std::ostream& operator << (std::ostream& o, const HistoryItem& item)
 {
     item.print(o);
     return o;
-}
 
 }
+
+} // namespace ring

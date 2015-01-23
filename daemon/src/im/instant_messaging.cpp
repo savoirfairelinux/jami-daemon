@@ -33,25 +33,26 @@
 #include "logger.h"
 #include <expat.h>
 
+using namespace ring;
+
 static void XMLCALL
 startElementCallback(void *userData, const char *name, const char **atts)
 {
     if (strcmp(name, "entry"))
         return;
 
-    ring::InstantMessaging::UriEntry entry = ring::InstantMessaging::UriEntry();
+    InstantMessaging::UriEntry entry = InstantMessaging::UriEntry();
 
     for (const char **att = atts; *att; att += 2)
         entry.insert(std::pair<std::string, std::string> (*att, *(att+1)));
 
-    static_cast<ring::InstantMessaging::UriList *>(userData)->push_back(entry);
+    static_cast<InstantMessaging::UriList *>(userData)->push_back(entry);
 }
 
 static void XMLCALL
 endElementCallback(void * /*userData*/, const char * /*name*/)
 {}
 
-namespace ring {
 bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
 {
     std::ofstream File;
@@ -135,7 +136,7 @@ std::string InstantMessaging::generateXmlUriList(UriList &list)
                                   "<list>";
 
     for (auto &item : list)
-        xmlbuffer += "<entry uri=" + item[ring::IM_XML_URI] + " cp:copyControl=\"to\" />";
+        xmlbuffer += "<entry uri=" + item[IM_XML_URI] + " cp:copyControl=\"to\" />";
 
     return xmlbuffer + "</list></resource-lists>";
 }
@@ -209,7 +210,4 @@ std::string InstantMessaging::findTextMessage(const std::string &text)
         throw InstantMessageException("Could not find end of text \"boundary\" while parsing sip message for text");
 
     return text.substr(begin, end - begin);
-}
-
-
 }

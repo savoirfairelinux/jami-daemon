@@ -37,7 +37,7 @@
 #include <sstream>
 #include <unistd.h>
 
-namespace ring {
+using namespace ring;
 
 int AudioRecorder::count_ = 0;
 
@@ -99,6 +99,4 @@ void AudioRecorder::run()
 
         std::this_thread::sleep_for(SLEEP_TIME);
     }
-}
-
 }

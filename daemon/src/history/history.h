@@ -37,9 +37,9 @@
 #include <mutex>
 #include <vector>
 
-class Call;
-
 namespace ring {
+
+class Call;
 
 class History {
 

@@ -47,6 +47,8 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
+using namespace ring;
+
 constexpr const char * const IAXAccount::ACCOUNT_TYPE;
 
 IAXAccount::IAXAccount(const std::string& accountID)
@@ -55,7 +57,7 @@ IAXAccount::IAXAccount(const std::string& accountID)
 
 void IAXAccount::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
 
     out << YAML::BeginMap;
     Account::serialize(out);
@@ -66,12 +68,15 @@ void IAXAccount::serialize(YAML::Emitter &out)
 void IAXAccount::unserialize(const YAML::Node &node)
 {
     using namespace yaml_utils;
+
     Account::unserialize(node);
     parseValue(node, PASSWORD_KEY, password_);
 }
 
 void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    using namespace ring::Conf;
+
     // Account setting common to SIP and IAX
     Account::setAccountDetails(details);
     parseString(details, CONFIG_ACCOUNT_PASSWORD, password_);
@@ -79,6 +84,8 @@ void IAXAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
 std::map<std::string, std::string> IAXAccount::getAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a = Account::getAccountDetails();
     a[CONFIG_ACCOUNT_PASSWORD] = password_;
     return a;
@@ -123,6 +130,8 @@ IAXAccount::loadConfig()
 #endif
 }
 
+namespace ring {
+
 template <>
 std::shared_ptr<IAXCall>
 IAXAccount::newIncomingCall(const std::string& id)
@@ -146,6 +155,8 @@ IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     return call;
 }
+
+} // namespace ring
 
 std::shared_ptr<Call>
 IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)

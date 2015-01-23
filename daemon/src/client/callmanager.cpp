@@ -41,6 +41,8 @@
 #include "logger.h"
 #include "manager.h"
 
+using namespace ring;
+
 void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
@@ -279,7 +281,7 @@ CallManager::startTone(int32_t start, int32_t type)
 // the right pointer for the given
 // callID.
 #if USE_CCRTP && HAVE_ZRTP
-ring::AudioZrtpSession *
+AudioZrtpSession *
 CallManager::getAudioZrtpSession(const std::string& callID)
 {
     // TODO: remove SIP dependency
@@ -287,7 +289,7 @@ CallManager::getAudioZrtpSession(const std::string& callID)
     if (!call)
         throw CallManagerException("Call id " + callID + " is not valid");
 
-    ring::AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
+    AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
 
     if (!zSession)
         throw CallManagerException("Failed to get AudioZrtpSession");

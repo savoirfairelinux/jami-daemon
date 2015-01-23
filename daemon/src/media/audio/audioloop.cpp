@@ -41,7 +41,7 @@
 
 #include <algorithm> // std::min
 
-namespace ring {
+using namespace ring;
 
 AudioLoop::AudioLoop(unsigned int sampleRate) :
     buffer_(new AudioBuffer(0, AudioFormat(sampleRate, 1))), pos_(0)
@@ -98,5 +98,3 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
 }
 
 void AudioLoop::onBufferFinish() {}
-
-}

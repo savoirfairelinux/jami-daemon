@@ -50,7 +50,7 @@ TODO
 * auto connect optional
 #endif
 
-namespace ring {
+using namespace ring;
 
 namespace
 {
@@ -173,7 +173,7 @@ JackLayer::capture()
 }
 
 static void
-convertToFloat(const std::vector<ring::AudioSample> &src, std::vector<float> &dest)
+convertToFloat(const std::vector<AudioSample> &src, std::vector<float> &dest)
 {
     static const float INV_SHORT_MAX = 1 / (float) SHRT_MAX;
     if (dest.size() != src.size()) {
@@ -185,7 +185,7 @@ convertToFloat(const std::vector<ring::AudioSample> &src, std::vector<float> &de
 }
 
 static void
-convertFromFloat(std::vector<float> &src, std::vector<ring::AudioSample> &dest)
+convertFromFloat(std::vector<float> &src, std::vector<AudioSample> &dest)
 {
     if (dest.size() != src.size()) {
         RING_ERR("MISMATCH");
@@ -533,6 +533,4 @@ JackLayer::stopStream()
 
     flushMain();
     flushUrgent();
-}
-
 }

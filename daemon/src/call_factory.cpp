@@ -32,6 +32,8 @@
 
 #include <stdexcept>
 
+using namespace ring;
+
 void
 CallFactory::forbid()
 {

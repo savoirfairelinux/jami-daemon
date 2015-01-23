@@ -164,6 +164,6 @@ class RingBufferPool {
         std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
 
-}
+} // namespace ring
 
 #endif  // RING_BUFFER_POOL_H_

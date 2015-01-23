@@ -41,7 +41,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace ring {
+using namespace ring;
 
 // corresponds to 160 ms (about 5 rtp packets)
 static const size_t MIN_BUFFER_SIZE = 1024;
@@ -311,6 +311,4 @@ RingBuffer::discard(size_t toDiscard)
         }
     }
     return toDiscard;
-}
-
 }

@@ -32,7 +32,7 @@
 #include "dsp.h"
 #include "audiobuffer.h"
 
-namespace ring {
+using namespace ring;
 
 void
 DSP::speexStateDeleter(SpeexPreprocessState *state)
@@ -99,6 +99,4 @@ void DSP::process(AudioBuffer& buff, int samples)
             speex_preprocess_run(dspStates_[index].get(), c.data());
         ++index;
     }
-}
-
 }

@@ -42,9 +42,9 @@
 #include <thread>
 #include <atomic>
 
-namespace ring {
+using namespace ring;
 
-class AlsaThread {
+class ring::AlsaThread {
     public:
         AlsaThread(AlsaLayer *alsa);
         ~AlsaThread();
@@ -412,7 +412,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
 // TODO first frame causes broken pipe (underrun) because not enough data is sent
 // we should wait until the handle is ready
 void
-AlsaLayer::write(ring::AudioSample* buffer, int frames, snd_pcm_t * handle)
+AlsaLayer::write(AudioSample* buffer, int frames, snd_pcm_t * handle)
 {
     // Skip empty buffers
     if (!frames)
@@ -473,7 +473,7 @@ AlsaLayer::write(ring::AudioSample* buffer, int frames, snd_pcm_t * handle)
 }
 
 int
-AlsaLayer::read(ring::AudioSample* buffer, int frames)
+AlsaLayer::read(AudioSample* buffer, int frames)
 {
     if (snd_pcm_state(captureHandle_) == SND_PCM_STATE_XRUN) {
         prepareCaptureStream();
@@ -849,6 +849,4 @@ void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceT
         default:
             break;
     }
-}
-
 }

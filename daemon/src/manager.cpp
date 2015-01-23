@@ -31,6 +31,9 @@
 #include "manager.h"
 #include "logger.h"
 
+using namespace ring;
+using namespace ring::Manager;
+
 ManagerImpl& Manager::instance()
 {
     // Meyers singleton

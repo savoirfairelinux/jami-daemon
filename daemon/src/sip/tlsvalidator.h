@@ -31,6 +31,8 @@
 #include <string>
 #include <vector>
 
+namespace ring {
+
 class TlsValidatorException : public std::runtime_error {
     public:
         TlsValidatorException(const std::string& str) : std::runtime_error(str) {};
@@ -197,30 +199,30 @@ public:
 private:
 
     // Enum class names
-    static const ring::EnumClassNames<CertificateCheck> CertificateCheckNames;
+    static const EnumClassNames<CertificateCheck> CertificateCheckNames;
 
-    static const ring::EnumClassNames<CertificateDetails> CertificateDetailsNames;
+    static const EnumClassNames<CertificateDetails> CertificateDetailsNames;
 
-    static const ring::EnumClassNames<const CheckValuesType> CheckValuesTypeNames;
+    static const EnumClassNames<const CheckValuesType> CheckValuesTypeNames;
 
-    static const ring::EnumClassNames<CheckValues> CheckValuesNames;
+    static const EnumClassNames<CheckValues> CheckValuesNames;
 
     /**
      * Map check to their check method
      */
-    static const ring::CallbackMatrix1D<CertificateCheck, TlsValidator, CheckResult> checkCallback;
+    static const CallbackMatrix1D<CertificateCheck, TlsValidator, CheckResult> checkCallback;
 
     /**
      * Map check to their getter method
      */
-    static const ring::CallbackMatrix1D<CertificateDetails, TlsValidator, CheckResult> getterCallback;
+    static const CallbackMatrix1D<CertificateDetails, TlsValidator, CheckResult> getterCallback;
 
     /**
      * Valid values for each categories
      */
-    static const ring::Matrix2D<CheckValuesType , CheckValues , bool> acceptedCheckValuesResult;
+    static const Matrix2D<CheckValuesType , CheckValues , bool> acceptedCheckValuesResult;
 
-    static const ring::Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
+    static const Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
     std::string certificatePath_;
     std::string privateKeyPath_;
@@ -259,5 +261,7 @@ public:
 
 
 }; // TlsValidator
+
+} // namespace ring
 
 #endif

@@ -49,7 +49,7 @@
 #include <cstdlib>
 #include <fstream>
 
-namespace ring {
+using namespace ring;
 
 static void
 playback_callback(pa_stream * /*s*/, size_t /*bytes*/, void* userdata)
@@ -490,7 +490,7 @@ void PulseLayer::writeToSpeaker()
         urgentBytes = urgentSamples * sample_size;
     }
 
-    ring::AudioSample *data = 0;
+    AudioSample *data = 0;
 
     if (urgentBytes) {
         AudioBuffer linearbuff(urgentSamples, format);
@@ -585,7 +585,7 @@ void PulseLayer::readFromMic()
     const size_t samples = bytes / sample_size / format.nb_channels;
 
     AudioBuffer in(samples, format);
-    in.deinterleave((ring::AudioSample*)data, samples, format.nb_channels);
+    in.deinterleave((AudioSample*)data, samples, format.nb_channels);
 
     unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
     bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
@@ -635,7 +635,7 @@ void PulseLayer::ringtoneToSpeaker()
         const unsigned samples = (bytes / sample_size) / ringtone_->channels();
         AudioBuffer tmp(samples, ringtone_->getFormat());
         fileToPlay->getNext(tmp, playbackGain_);
-        tmp.interleave((ring::AudioSample*) data);
+        tmp.interleave((AudioSample*) data);
     } else {
         memset(data, 0, bytes);
     }
@@ -845,6 +845,4 @@ int PulseLayer::getIndexPlayback() const
 int PulseLayer::getIndexRingtone() const
 {
     return getAudioDeviceIndexByName(preference_.getPulseDeviceRingtone(), DeviceType::RINGTONE);
-}
-
 }

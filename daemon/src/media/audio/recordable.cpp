@@ -31,7 +31,7 @@
 #include "manager.h"
 #include "logger.h"
 
-namespace ring {
+using namespace ring;
 
 Recordable::Recordable() : recAudio_(), recorder_(&recAudio_, Manager::instance().getRingBufferPool())
 {
@@ -58,6 +58,4 @@ std::string Recordable::getFilename() const
 void Recordable::setRecordingFormat(AudioFormat format)
 {
     recAudio_.setSndFormat(format);
-}
-
 }

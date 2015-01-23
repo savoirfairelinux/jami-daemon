@@ -178,7 +178,7 @@ IAXVoIPLink::sendAudioFromMic()
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
         int outSamples;
-        ring::AudioBuffer *in;
+        AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
@@ -350,7 +350,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
         size = max;
 
     audioCodec->decode(rawBuffer_.getData(), data , size);
-    ring::AudioBuffer *out = &rawBuffer_;
+    AudioBuffer *out = &rawBuffer_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {

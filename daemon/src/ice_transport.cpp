@@ -43,7 +43,7 @@
             throw std::runtime_error(#ret " failed");      \
     } while (0)
 
-namespace ring {
+using namespace ring;
 
 static void
 register_thread()
@@ -752,6 +752,4 @@ IceSocket::waitForData(unsigned int timeout)
         return -1;
 
     return ice_transport_->waitForData(compId_, timeout);
-}
-
 }

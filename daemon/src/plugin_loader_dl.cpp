@@ -33,6 +33,10 @@
 #include <dlfcn.h>
 #include <memory>
 
+using namespace ring;
+
+namespace ring {
+
 class DLPlugin : public Plugin
 {
     public:
@@ -42,6 +46,8 @@ class DLPlugin : public Plugin
     private:
         std::unique_ptr<void, int(*)(void*)> handle_;
 };
+
+} // namespace ring
 
 void*
 DLPlugin::getSymbol(const char* name) const

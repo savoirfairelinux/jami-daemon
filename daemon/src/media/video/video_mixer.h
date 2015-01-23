@@ -45,6 +45,8 @@
 
 namespace ring { namespace video {
 
+using namespace ring;
+
     struct VideoMixerSource {
         Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
         std::unique_ptr<VideoFrame> update_frame = nullptr;
@@ -90,7 +92,7 @@ private:
     int width_ = 0;
     int height_ = 0;
     std::list<VideoMixerSource *> sources_ = {};
-    ring::rw_mutex rwMutex_ = {};
+    rw_mutex rwMutex_ = {};
     SHMSink sink_;
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
@@ -98,6 +100,6 @@ private:
     VideoScaler scaler_ = {};
 };
 
-}}
+}} // namespace ring::Video
 
 #endif // __VIDEO_MIXER_H__

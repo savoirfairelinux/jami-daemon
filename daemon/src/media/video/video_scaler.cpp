@@ -35,7 +35,8 @@
 
 #include <cassert>
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR), tmp_data_() {}
 
@@ -157,5 +158,3 @@ void VideoScaler::reset()
         ctx_ = nullptr;
     }
 }
-
-}}

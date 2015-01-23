@@ -55,6 +55,8 @@
 
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
+using namespace ring;
+
 void ConfigurationManager::registerEvHandlers(struct ring_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
@@ -89,6 +91,8 @@ std::map<std::string, std::string> ConfigurationManager::getVolatileAccountDetai
 std::map<std::string, std::string>
 ConfigurationManager::getTlsSettingsDefault()
 {
+    using namespace ring::Conf;
+
     std::stringstream portstr;
     portstr << DEFAULT_SIP_TLS_PORT;
 
@@ -282,17 +286,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::PLAYBACK);
+    return Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::CAPTURE);
+    return Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::RINGTONE);
+    return Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()

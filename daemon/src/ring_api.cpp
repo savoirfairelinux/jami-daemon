@@ -48,6 +48,8 @@
 #include "client/videomanager.h"
 #endif // RING_VIDEO
 
+using namespace ring;
+
 static CallManager* getCallManager()
 {
     return Manager::instance().getClient()->getCallManager();

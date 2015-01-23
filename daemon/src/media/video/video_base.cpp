@@ -34,7 +34,8 @@
 #include "video_base.h"
 #include "logger.h"
 
-namespace ring { namespace video {
+using namespace ring;
+using namespace ring::video;
 
 /*=== VideoPacket  ===========================================================*/
 
@@ -188,5 +189,3 @@ std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
     std::lock_guard<std::mutex> lk(mutex_);
     return lastFrame_;
 }
-
-}}

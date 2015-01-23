@@ -45,6 +45,8 @@
 #include <algorithm>
 #include <cassert>
 
+using namespace ring;
+
 using std::string;
 using std::map;
 using std::vector;
@@ -94,7 +96,7 @@ Sdp::~Sdp()
 }
 
 static bool
-hasPayload(const std::vector<ring::AudioCodec*> &codecs, int pt)
+hasPayload(const std::vector<AudioCodec*> &codecs, int pt)
 {
     for (const auto &i : codecs)
         if (i and i->getPayloadType() == pt)
@@ -120,7 +122,7 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
     return os.str();
 }
 
-static ring::AudioCodec *
+static AudioCodec *
 findCodecByName(const std::string &codec)
 {
     // try finding by name
@@ -242,10 +244,10 @@ string Sdp::getSessionVideoCodec() const
     return sessionVideoMedia_[0];
 }
 
-std::vector<ring::AudioCodec*>
+std::vector<AudioCodec*>
 Sdp::getSessionAudioMedia() const
 {
-    vector<ring::AudioCodec*> codecs;
+    vector<AudioCodec*> codecs;
 
     // Common codecs first
     for (auto c : sessionAudioMediaLocal_) {
@@ -292,7 +294,7 @@ Sdp::setMediaDescriptorLines(bool audio)
         const char *channels = "";
 
         if (audio) {
-            ring::AudioCodec *codec = audio_codec_list_[i];
+            AudioCodec *codec = audio_codec_list_[i];
             payload = codec->getPayloadType();
             enc_name = codec->getMimeSubtype();
             clock_rate = codec->getSDPClockRate();
@@ -972,7 +974,7 @@ Sdp::getIceCandidates(unsigned media_index) const
 }
 
 void
-Sdp::addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs)
+Sdp::addIceAttributes(const IceTransport::Attribute&& ice_attrs)
 {
     pj_str_t value;
     pjmedia_sdp_attr *attr;
@@ -990,10 +992,10 @@ Sdp::addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs)
         throw SdpException("Could not add ICE.pwd attribute to local SDP");
 }
 
-ring::IceTransport::Attribute
+IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
-    ring::IceTransport::Attribute ice_attrs;
+    IceTransport::Attribute ice_attrs;
     auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
     assert(session);
 

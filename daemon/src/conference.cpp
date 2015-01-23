@@ -46,6 +46,7 @@
 
 #include "logger.h"
 
+using namespace ring;
 
 Conference::Conference()
     : id_(Manager::instance().getNewCallID())
@@ -108,8 +109,8 @@ void Conference::bindParticipant(const std::string &participant_id)
         rbPool.flush(item);
     }
 
-    rbPool.bindCallID(participant_id, ring::RingBufferPool::DEFAULT_ID);
-    rbPool.flush(ring::RingBufferPool::DEFAULT_ID);
+    rbPool.bindCallID(participant_id, RingBufferPool::DEFAULT_ID);
+    rbPool.flush(RingBufferPool::DEFAULT_ID);
 }
 
 std::string Conference::getStateStr() const
@@ -162,14 +163,14 @@ bool Conference::toggleRecording()
         for (const auto &item : participants_)
             rbPool.bindHalfDuplexOut(process_id, item);
 
-        rbPool.bindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
+        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
 
         Recordable::recorder_.start();
     } else {
         for (const auto &item : participants_)
             rbPool.unBindHalfDuplexOut(process_id, item);
 
-        rbPool.unBindHalfDuplexOut(process_id, ring::RingBufferPool::DEFAULT_ID);
+        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
     }
 
     return startRecording;
@@ -180,10 +181,10 @@ std::string Conference::getConfID() const {
 }
 
 #ifdef RING_VIDEO
-std::shared_ptr<ring::video::VideoMixer> Conference::getVideoMixer()
+std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
 {
     if (!videoMixer_)
-        videoMixer_.reset(new ring::video::VideoMixer(id_));
+        videoMixer_.reset(new video::VideoMixer(id_));
     return videoMixer_;
 }
 #endif
