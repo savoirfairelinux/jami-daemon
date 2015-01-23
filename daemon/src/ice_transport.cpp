@@ -231,6 +231,12 @@ IceTransport::setSlaveSession()
 }
 
 bool
+IceTransport::isInitiator() const
+{
+    return isInitialized() ? (pj_ice_strans_get_role(icest_.get()) == PJ_ICE_SESS_ROLE_CONTROLLING) : initiator_session_;
+}
+
+bool
 IceTransport::start(const Attribute& rem_attrs,
                     const std::vector<IceCandidate>& rem_candidates)
 {
