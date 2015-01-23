@@ -72,9 +72,7 @@ class AudioSender {
         std::map<std::string, std::string> args_;
         const AudioFormat format_;
         std::unique_ptr<ring::MediaEncoder> audioEncoder_;
-#ifdef RING_VIDEO
         std::unique_ptr<ring::MediaIOHandle> muxContext_;
-#endif
         std::unique_ptr<ring::Resampler> resampler_;
         const double secondsPerPacket_ {0.02}; // 20 ms
 
@@ -110,17 +108,13 @@ AudioSender::setup(SocketPair& socketPair)
     auto dest = args_["destination"].c_str();
 
     audioEncoder_.reset(new MediaEncoder);
-#ifdef RING_VIDEO
     muxContext_.reset(socketPair.createIOContext());
-#endif // RING_VIDEO
 
     try {
         /* Encoder setup */
         audioEncoder_->setOptions(args_);
         audioEncoder_->openOutput(enc_name, "rtp", dest, NULL, false);
-#ifdef RING_VIDEO
         audioEncoder_->setIOContext(muxContext_);
-#endif // RING_VIDEO
         audioEncoder_->startIO();
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
@@ -138,9 +132,7 @@ void
 AudioSender::cleanup()
 {
     audioEncoder_.reset();
-#ifdef RING_VIDEO
     muxContext_.reset();
-#endif // RING_VIDEO
 }
 
 void

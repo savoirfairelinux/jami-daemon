@@ -61,7 +61,6 @@ class VideoManager
         ring::video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
-        VideoManager();
         void registerEvHandlers(struct ring_video_ev_handlers* evHandlers);
         ring::video::VideoDeviceMonitor& getVideoDeviceMonitor();
 

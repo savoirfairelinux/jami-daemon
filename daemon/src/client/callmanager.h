@@ -55,6 +55,7 @@ class AudioZrtpSession;
 class CallManager
 {
     public:
+        CallManager();
         void registerEvHandlers(struct ring_call_ev_handlers* evHandlers);
 
     // Methods
