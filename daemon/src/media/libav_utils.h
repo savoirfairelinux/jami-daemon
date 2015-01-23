@@ -46,7 +46,9 @@ namespace libav_utils {
 
     std::vector<std::string> getVideoCodecList();
 
-    std::vector<std::map <std::string, std::string> > getDefaultCodecs();
+#ifdef RING_VIDEO
+    std::vector<std::map <std::string, std::string> > getDefaultVideoCodecs();
+#endif // RING_VIDEO
 
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";

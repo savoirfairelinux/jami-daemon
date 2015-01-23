@@ -166,7 +166,7 @@ void Account::loadDefaultCodecs()
     setActiveAudioCodecs(result);
 #ifdef RING_VIDEO
     // we don't need to validate via setVideoCodecs, since these are defaults
-    videoCodecList_ = libav_utils::getDefaultCodecs();
+    videoCodecList_ = libav_utils::getDefaultVideoCodecs();
 #endif
 }
 
@@ -314,7 +314,7 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
 static bool
 isCodecListValid(const vector<map<string, string> > &list)
 {
-    const auto defaults(libav_utils::getDefaultCodecs());
+    const auto defaults(libav_utils::getDefaultVideoCodecs());
     if (list.size() != defaults.size()) {
         RING_ERR("New codec list has a different length than the list of supported codecs");
         return false;

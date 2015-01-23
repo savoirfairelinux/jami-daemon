@@ -133,7 +133,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     if (tmp.empty()) {
         // Video codecs are an empty list
         RING_WARN("Loading default video codecs");
-        tmp = libav_utils::getDefaultCodecs();
+        tmp = libav_utils::getDefaultVideoCodecs();
     }
 #endif
     // validate it

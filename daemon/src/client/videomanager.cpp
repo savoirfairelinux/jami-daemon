@@ -38,11 +38,6 @@
 #include "logger.h"
 #include "manager.h"
 
-VideoManager::VideoManager()
-{
-    libav_utils::sfl_avcodec_init();
-}
-
 void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
