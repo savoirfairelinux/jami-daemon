@@ -40,7 +40,7 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-#include "sip_transport_ice.h"
+#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
 #include <opendht/securedht.h>
@@ -533,7 +533,15 @@ RingAccount::handleEvents()
         auto ice = c->ice.get();
         auto call = c->call.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            regenerateCAList();
+            auto id = loadIdentity();
+            call->setTransport(link_->sipTransport->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, TlsParams {
+                .ca_list = caListPath_,
+                .id = id.second
+                /*.cert = certPath_,
+                .privkey = privkeyPath_,
+                .privkey_pass = ""*/
+            }));
             call->setConnectionState(Call::PROGRESSING);
             if (c->id == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
@@ -963,7 +971,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
         return contact_;
     }
 
-    auto ice = reinterpret_cast<SipIceTransport*>(t);
+    auto ice = reinterpret_cast<SipsIceTransport*>(t);
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;
