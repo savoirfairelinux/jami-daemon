@@ -32,6 +32,7 @@
 #include <cstring>
 
 #include "callmanager.h"
+#include "libav_utils.h"
 #include "call_factory.h"
 
 #include "sip/sipcall.h"
@@ -40,6 +41,11 @@
 
 #include "logger.h"
 #include "manager.h"
+
+CallManager::CallManager()
+{
+    libav_utils::sfl_avcodec_init();
+}
 
 void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
 {
