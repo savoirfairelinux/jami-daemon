@@ -30,6 +30,7 @@
  *  as that of the covered work.
  */
 
+#include "config.h"
 #include "libav_deps.h"
 #include "video/video_base.h"
 #include "logger.h"
@@ -43,6 +44,8 @@
 #include <exception>
 
 std::map<std::string, std::string> encoders_;
+
+#ifdef RING_VIDEO
 std::vector<std::string> installed_video_codecs_;
 
 static void
@@ -61,15 +64,18 @@ findInstalledVideoCodecs()
             RING_ERR("Didn't find \"%s\" encoder", it.second.c_str());
     }
 }
+#endif // RING_VIDEO
 
 namespace libav_utils {
 
+#ifdef RING_VIDEO
 std::vector<std::string> getVideoCodecList()
 {
     if (installed_video_codecs_.empty())
         findInstalledVideoCodecs();
     return installed_video_codecs_;
 }
+#endif // RING_VIDEO
 
 // protect libav/ffmpeg access
 static int
@@ -145,8 +151,9 @@ static void init_once()
 
     // ffmpeg doesn't know RTP format for H263 (payload type = 34)
     //encoders["H263"]          = "h263";
-
+#ifdef RING_VIDEO
     findInstalledVideoCodecs();
+#endif // RING_VIDEO
 }
 
 static std::once_flag already_called;
@@ -156,8 +163,9 @@ void sfl_avcodec_init()
     std::call_once(already_called, init_once);
 }
 
+#ifdef RING_VIDEO
 std::vector<std::map<std::string, std::string> >
-getDefaultCodecs()
+getDefaultVideoCodecs()
 {
     const char * const DEFAULT_BITRATE = "400";
     sfl_avcodec_init();
@@ -175,6 +183,7 @@ getDefaultCodecs()
     }
     return result;
 }
+#endif // RING_VIDEO
 
 int libav_pixel_format(int fmt)
 {

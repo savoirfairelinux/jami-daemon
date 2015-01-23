@@ -429,12 +429,10 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
         playbackBuff_.resize(inNumberFrames);
 
         if (tone) {
-            RING_WARN("TONE");
             tone->getNext(playbackBuff_, playbackGain_);
 
         }
         else if (file_tone) {
-            RING_WARN("FILE TONE");
             file_tone->getNext(playbackBuff_, playbackGain_);
         }
         else {

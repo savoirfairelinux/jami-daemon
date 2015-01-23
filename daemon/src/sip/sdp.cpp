@@ -1115,7 +1115,7 @@ bool Sdp::getOutgoingVideoSettings(map<string, string> &args) const
     if (not codec.empty()) {
         const string encoder(libav_utils::encodersMap()[codec]);
         if (encoder.empty()) {
-            RING_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find video encoder for \"%s\"\n", codec.c_str());
             return false;
         } else {
             args["codec"] = encoder;
@@ -1141,7 +1141,7 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
     if (not codec.empty()) {
         const string encoder(libav_utils::encodersMap()[codec]);
         if (encoder.empty()) {
-            RING_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
+            RING_DBG("Couldn't find audio encoder for \"%s\"\n", codec.c_str());
             return false;
         } else {
             args["codec"] = encoder;
