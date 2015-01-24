@@ -552,7 +552,7 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
         AC_PATH_PROG(DOT, dot, , $PATH)
         test x$DOT = x -a "x$enable_dot" = xyes && AC_MSG_ERROR([could not find dot])
     fi
-    AM_CONDITIONAL(ENABLE_DOXYGEN, test x$DOXYGEN = xyes)
+    AM_CONDITIONAL(ENABLE_DOXYGEN, test "x$DOXYGEN" != "x")
 ])
 
 # Actually perform the doxygen check
