@@ -101,4 +101,4 @@ void AudioRecorder::run()
     }
 }
 
-}
+} // namespace ring

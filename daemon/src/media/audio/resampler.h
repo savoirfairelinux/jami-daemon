@@ -77,7 +77,7 @@ class Resampler {
         /* temporary buffers */
         std::vector<float> floatBufferIn_;
         std::vector<float> floatBufferOut_;
-        std::vector<ring::AudioSample> scratchBuffer_;
+        std::vector<AudioSample> scratchBuffer_;
 
         size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
@@ -85,6 +85,6 @@ class Resampler {
         std::unique_ptr<SrcState> src_state_;
 };
 
-}
+} // namespace ring
 
 #endif //_SAMPLE_RATE_H

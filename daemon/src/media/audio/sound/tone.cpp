@@ -61,7 +61,7 @@ Tone::genBuffer(const std::string& definition)
     size_t size = 0;
     const int sampleRate = buffer_->getSampleRate();
 
-    std::vector<ring::AudioSample> buffer(SIZEBUF);
+    std::vector<AudioSample> buffer(SIZEBUF);
     size_t bufferPos(0);
 
     // Number of format sections
@@ -155,7 +155,7 @@ Tone::interpolate(double x) const
 }
 
 void
-Tone::genSin(ring::AudioSample* buffer, int lowFrequency, int highFrequency, int nb)
+Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, int nb)
 {
     xhigher_ = 0.0;
     xlower_ = 0.0;
@@ -188,4 +188,4 @@ Tone::genSin(ring::AudioSample* buffer, int lowFrequency, int highFrequency, int
     xlower_ = x_l;
 }
 
-}
+} // namespace ring

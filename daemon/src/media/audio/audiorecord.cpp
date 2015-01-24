@@ -238,4 +238,4 @@ void AudioRecord::recData(AudioBuffer& buffer)
     }
 }
 
-}
+} // namespace ring

@@ -41,7 +41,7 @@
 #include <iostream>
 #include <unistd.h>
 
-namespace ring {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -280,7 +280,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(ring::video::VideoFrame& result, ring::video::VideoPacket& video_packet)
+MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -391,7 +391,7 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
 
 #ifdef RING_VIDEO
 MediaDecoder::Status
-MediaDecoder::flush(ring::video::VideoFrame& result)
+MediaDecoder::flush(video::VideoFrame& result)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -422,29 +422,29 @@ int MediaDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
 void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
-                                     ring::RingBuffer& rb,
-                                     const ring::AudioFormat outFormat)
+                                     RingBuffer& rb,
+                                     const AudioFormat outFormat)
 {
-    const ring::AudioFormat decoderFormat = {
+    const AudioFormat decoderFormat = {
         (unsigned) decoded_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
 
-    ring::AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
+    AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
     if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
         out.convertFloatPlanarToSigned16(decoded_frame->extended_data,
-                         decoded_frame->nb_samples, decoderCtx_->channels);
+                                         decoded_frame->nb_samples, decoderCtx_->channels);
     } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
-        out.deinterleave(reinterpret_cast<const ring::AudioSample*>(decoded_frame->data[0]),
+        out.deinterleave(reinterpret_cast<const AudioSample*>(decoded_frame->data[0]),
                          decoded_frame->nb_samples, decoderCtx_->channels);
     }
     if ((unsigned)decoded_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
             RING_DBG("Creating audio resampler");
-            resampler_.reset(new ring::Resampler(outFormat));
+            resampler_.reset(new Resampler(outFormat));
         }
-        ring::AudioBuffer resampledData(decoded_frame->nb_samples,
+        AudioBuffer resampledData(decoded_frame->nb_samples,
                                        {(unsigned) outFormat.sample_rate,
                                         (unsigned) decoderCtx_->channels});
         resampler_->resample(out, resampledData);
@@ -454,4 +454,4 @@ void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
     }
 }
 
-}
+}} // namespace ring::video

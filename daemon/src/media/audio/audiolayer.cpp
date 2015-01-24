@@ -122,4 +122,4 @@ void AudioLayer::notifyIncomingCall()
     putUrgent(buf);
 }
 
-}
+} // namespace ring

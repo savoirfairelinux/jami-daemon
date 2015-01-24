@@ -55,13 +55,12 @@
 struct pjsip_evsub;
 struct pjsip_inv_session;
 
+namespace ring {
+
 class Sdp;
 class SIPAccountBase;
 class SipTransport;
-
-namespace ring {
 class AVFormatRtpSession;
-}
 
 /**
  * @file sipcall.h
@@ -98,7 +97,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AudioRtp object
          */
-        ring::AudioRtpFactory& getAudioRtp() {
+        AudioRtpFactory& getAudioRtp() {
             return audiortp_;
         }
 #else
@@ -106,7 +105,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AVFormatRtpSession object
          */
-        ring::AVFormatRtpSession& getAVFormatRTP() const {
+        AVFormatRtpSession& getAVFormatRTP() const {
             return *avformatrtp_;
         }
 #endif
@@ -115,7 +114,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the VideoRtp object
          */
-        ring::video::VideoRtpSession& getVideoRtp () {
+        video::VideoRtpSession& getVideoRtp () {
             return videortp_;
         }
 #endif
@@ -209,22 +208,22 @@ class SIPCall : public Call
 
         int SIPSessionReinvite();
 
-        std::vector<ring::IceCandidate> getAllRemoteCandidates();
+        std::vector<IceCandidate> getAllRemoteCandidates();
 
 #if USE_CCRTP
         /**
          * Audio Rtp Session factory
          */
-        ring::AudioRtpFactory audiortp_;
+        AudioRtpFactory audiortp_;
 #else
-        std::unique_ptr<ring::AVFormatRtpSession> avformatrtp_;
+        std::unique_ptr<AVFormatRtpSession> avformatrtp_;
 #endif
 
 #ifdef RING_VIDEO
         /**
          * Video Rtp Session factory
          */
-        ring::video::VideoRtpSession videortp_;
+        video::VideoRtpSession videortp_;
 #endif
 
         /**
@@ -242,5 +241,7 @@ class SIPCall : public Call
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
 };
+
+} // namespace ring
 
 #endif // __SIPCALL_H__

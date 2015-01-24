@@ -582,4 +582,4 @@ VideoDevice::getCapabilities() const
 VideoDevice::~VideoDevice()
 {}
 
-}} // namespace ring // namespace video
+}} // namespace ring::video

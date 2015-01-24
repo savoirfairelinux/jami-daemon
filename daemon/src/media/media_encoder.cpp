@@ -39,8 +39,7 @@
 #include <sstream>
 #include <algorithm>
 
-
-namespace ring {
+namespace ring { namespace video {
 
 using std::string;
 
@@ -238,7 +237,7 @@ print_averror(const char *funcname, int err)
 }
 
 #ifdef RING_VIDEO
-int MediaEncoder::encode(ring::video::VideoFrame &input, bool is_keyframe, int64_t frame_number)
+int MediaEncoder::encode(video::VideoFrame &input, bool is_keyframe, int64_t frame_number)
 {
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
@@ -327,7 +326,7 @@ int MediaEncoder::encode(ring::video::VideoFrame &input, bool is_keyframe, int64
 }
 #endif // RING_VIDEO
 
-int MediaEncoder::encode_audio(const ring::AudioBuffer &buffer)
+int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 {
     const int needed_bytes = av_samples_get_buffer_size(NULL, buffer.channels(), buffer.frames(), AV_SAMPLE_FMT_S16, 0);
     if (needed_bytes < 0) {
@@ -335,11 +334,11 @@ int MediaEncoder::encode_audio(const ring::AudioBuffer &buffer)
         return -1;
     }
 
-    ring::AudioSample *sample_data = reinterpret_cast<ring::AudioSample*>(av_malloc(needed_bytes));
+    AudioSample *sample_data = reinterpret_cast<AudioSample*>(av_malloc(needed_bytes));
     if (!sample_data)
         return -1;
 
-    ring::AudioSample *offset_ptr = sample_data;
+    AudioSample *offset_ptr = sample_data;
     int nb_frames = buffer.frames();
 
     buffer.interleave(sample_data);
@@ -613,4 +612,4 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
 }
 
-}
+}} // namespace ring::video

@@ -83,7 +83,7 @@
 #include <istream>
 #include <algorithm>
 
-using namespace ring;
+namespace ring {
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -109,7 +109,7 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
+decltype(getGlobalInstance<SIPVoIPLink>)& ring::getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
 
 /**
  * Helper function to process refer function on call transfer
@@ -349,14 +349,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
             CryptoOffer crypto_offer;
             crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
 
-            const size_t size = RING_ARRAYSIZE(ring::CryptoSuites);
-            std::vector<ring::CryptoSuiteDefinition> localCapabilities(size);
+            const size_t size = RING_ARRAYSIZE(CryptoSuites);
+            std::vector<CryptoSuiteDefinition> localCapabilities(size);
 
-            std::copy(ring::CryptoSuites, ring::CryptoSuites + size,
+            std::copy(CryptoSuites, CryptoSuites + size,
                       localCapabilities.begin());
 
 #if HAVE_SDES
-            ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+            SdesNegotiator sdesnego(localCapabilities, crypto_offer);
 
             if (sdesnego.negotiate()) {
                 try {
@@ -381,14 +381,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
         RING_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 #if USE_CCRTP
     call->getAudioRtp().start(audioCodecs);
@@ -1211,7 +1211,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         // Respond with a 200/OK
         sendOK(inv->dlg, r_data, tsx);
 
-    } catch (const ring::InstantMessageException &except) {
+    } catch (const InstantMessageException &except) {
         RING_ERR("%s", except.what());
     }
 #endif
@@ -1266,7 +1266,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
     };
 
-    auto token = std::hash<std::string>()(name + ring::to_string(type));
+    auto token = std::hash<std::string>()(name + to_string(type));
     {
         std::lock_guard<std::mutex> lock(resolveMutex_);
         resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
@@ -1305,3 +1305,5 @@ SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjs
         }
     }
 }
+
+} // namespace ring

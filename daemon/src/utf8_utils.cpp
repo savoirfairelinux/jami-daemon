@@ -70,6 +70,8 @@
   val <<= 6;                                        \
   val |= (*(unsigned char *)p) & 0x3f;
 
+namespace ring {
+
 static const char *
 fast_validate(const char *str)
 {
@@ -302,3 +304,5 @@ utf8_make_valid(const std::string & name)
 
     return answer;
 }
+
+} // namespace ring

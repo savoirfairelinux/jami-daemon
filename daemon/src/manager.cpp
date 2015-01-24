@@ -31,7 +31,9 @@
 #include "manager.h"
 #include "logger.h"
 
-ManagerImpl& Manager::instance()
+namespace ring { namespace Manager {
+
+ManagerImpl& instance()
 {
     // Meyers singleton
     static ManagerImpl instance_;
@@ -43,3 +45,5 @@ ManagerImpl& Manager::instance()
 
     return instance_;
 }
+
+}} // namespace ring::Manager

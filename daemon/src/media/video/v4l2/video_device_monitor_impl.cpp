@@ -54,12 +54,14 @@ extern "C" {
 #include <sys/types.h>
 }
 
-namespace ring { namespace video {
+namespace ring {
+
+using namespace ring::video;
 
 using std::vector;
 using std::string;
 
-class VideoDeviceMonitorImpl {
+class ring::video::VideoDeviceMonitorImpl {
     public:
         /*
          * This is the only restriction to the pImpl design:
@@ -259,4 +261,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}}
+}} // namespace ring::video

@@ -63,22 +63,18 @@
 #include "history/history.h"
 #include "noncopyable.h"
 
-namespace Conf {
-    class YamlParser;
-    class YamlEmitter;
-}
-
-namespace ring {
-    class AudioFile;
-    class AudioLayer;
-    class RingBufferPool;
-    class DTMF;
-    class TelephoneTone;
-    class IceTransportFactory;
-}
-
 class PluginManager;
 
+namespace ring {
+
+namespace Conf {
+class YamlParser;
+class YamlEmitter;
+}
+
+class AudioFile;
+class DTMF;
+class TelephoneTone;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -148,7 +144,7 @@ class ManagerImpl {
          * it's multi-thread and use mutex internally
          * @return AudioLayer*  The audio layer object
          */
-        std::shared_ptr<ring::AudioLayer> getAudioDriver();
+        std::shared_ptr<AudioLayer> getAudioDriver();
 
         void startAudioDriverStream();
 
@@ -513,7 +509,7 @@ class ManagerImpl {
              * @param index The index of the soundcard
              * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
              */
-        void setAudioDevice(int index, ring::DeviceType streamType);
+        void setAudioDevice(int index, DeviceType streamType);
 
         /**
          * Get list of supported audio output device
@@ -657,14 +653,14 @@ class ManagerImpl {
          * Callback called when the audio layer initialised with its
          * preferred format.
          */
-        void hardwareAudioFormatChanged(ring::AudioFormat format);
+        void hardwareAudioFormatChanged(AudioFormat format);
 
         /**
          * Should be called by any component dealing with an external
          * audio source, indicating the format used so the mixer format
          * can be eventually adapted.
          */
-        void audioFormatUsed(ring::AudioFormat format);
+        void audioFormatUsed(AudioFormat format);
 
         /**
          * Handle audio sounds heard by a caller while they wait for their
@@ -702,13 +698,13 @@ class ManagerImpl {
          * Retrieve the current telephone tone
          * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function)
          */
-        ring::AudioLoop* getTelephoneTone();
+        AudioLoop* getTelephoneTone();
 
         /**
          * Retrieve the current telephone file
          * @return AudioLoop* The audio file or 0 if the wav is stopped
          */
-        ring::AudioLoop* getTelephoneFile();
+        AudioLoop* getTelephoneFile();
 
         /**
          * @return true is there is one or many incoming call waiting
@@ -786,7 +782,7 @@ class ManagerImpl {
          * Play one tone
          * @return false if the driver is uninitialize
          */
-        void playATone(ring::Tone::TONEID toneId);
+        void playATone(Tone::TONEID toneId);
 
         Client client_;
 
@@ -797,20 +793,20 @@ class ManagerImpl {
         std::mutex currentCallMutex_;
 
         /** Audio layer */
-        std::shared_ptr<ring::AudioLayer> audiodriver_{nullptr};
+        std::shared_ptr<AudioLayer> audiodriver_{nullptr};
 
         // Main thread
-        std::unique_ptr<ring::DTMF> dtmfKey_;
+        std::unique_ptr<DTMF> dtmfKey_;
 
         /** Buffer to generate DTMF */
-        ring::AudioBuffer dtmfBuf_;
+        AudioBuffer dtmfBuf_;
 
         /////////////////////
         // Protected by Mutex
         /////////////////////
         std::mutex toneMutex_;
-        std::unique_ptr<ring::TelephoneTone> telephoneTone_;
-        std::unique_ptr<ring::AudioFile> audiofile_;
+        std::unique_ptr<TelephoneTone> telephoneTone_;
+        std::unique_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
@@ -861,14 +857,14 @@ class ManagerImpl {
          * Audio instances must be registered into the RingBufferMananger and bound together via the ManagerImpl.
          *
          */
-        std::unique_ptr<ring::RingBufferPool> ringbufferpool_;
+        std::unique_ptr<RingBufferPool> ringbufferpool_;
 
     public:
 
         /**
          * Return a pointer to the instance of the RingBufferPool
          */
-        ring::RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
+        RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
 
         /**
          * Tell if there is a current call processed
@@ -967,7 +963,7 @@ class ManagerImpl {
          */
         void unregisterEventHandler(uintptr_t handlerId);
 
-        ring::IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
+        IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
 
     private:
         NON_COPYABLE(ManagerImpl);
@@ -995,7 +991,7 @@ class ManagerImpl {
          * To handle the persistent history
          * TODO: move this to ConfigurationManager
          */
-        ring::History history_;
+        History history_;
         bool finished_;
 
         AccountFactory accountFactory_;
@@ -1008,7 +1004,9 @@ class ManagerImpl {
                          const std::string &accountOrder);
 
         /* ICE support */
-        std::unique_ptr<ring::IceTransportFactory> ice_tf_;
+        std::unique_ptr<IceTransportFactory> ice_tf_;
 };
+
+} // namespace ring
 
 #endif // MANAGER_IMPL_H_

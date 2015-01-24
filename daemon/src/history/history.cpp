@@ -169,4 +169,4 @@ History::getNameFromHistory(const std::string &number,
     return it2->second;
 }
 
-}
+} // namespace ring

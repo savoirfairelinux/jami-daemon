@@ -189,4 +189,4 @@ std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
     return lastFrame_;
 }
 
-}}
+}} // namespace ring::video

@@ -52,6 +52,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+namespace ring {
+
 const char * const Account::AUDIO_CODECS_KEY            = "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY            = "videoCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED         = "enabled";
@@ -173,7 +175,7 @@ void Account::loadDefaultCodecs()
 
 void Account::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
 
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
@@ -204,7 +206,7 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(ring::split_string(audioCodecStr_, '/'));
+    setActiveAudioCodecs(split_string(audioCodecStr_, '/'));
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -216,6 +218,8 @@ void Account::unserialize(const YAML::Node &node)
 
 void Account::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    using namespace ring::Conf;
+
     // Account setting common to SIP and IAX
     parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
     parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
@@ -235,6 +239,8 @@ void Account::setAccountDetails(const std::map<std::string, std::string> &detail
 
 std::map<std::string, std::string> Account::getAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a;
 
     a[CONFIG_ACCOUNT_ALIAS] = alias_;
@@ -260,6 +266,8 @@ std::map<std::string, std::string> Account::getAccountDetails() const
 
 std::map<std::string, std::string> Account::getVolatileAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a;
 
     a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(registrationState_);
@@ -452,3 +460,5 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
 }
 
 #undef find_iter
+
+} // namespace ring

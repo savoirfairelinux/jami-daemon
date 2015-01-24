@@ -40,6 +40,8 @@
 #include "logger.h"
 #include "pres_sub_server.h"
 
+namespace ring {
+
 /* Callback called when *server* subscription state has changed. */
 void
 PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
@@ -346,3 +348,5 @@ void PresSubServer::notify()
         }
     }
 }
+
+} // namespace ring

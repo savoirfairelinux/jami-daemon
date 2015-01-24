@@ -283,7 +283,8 @@ VideoDeviceMonitor::serialize(YAML::Emitter &out)
 void
 VideoDeviceMonitor::unserialize(const YAML::Node &in)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
+
     const auto &node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */
@@ -309,4 +310,4 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
         defaultDevice_ = first;
 }
 
-}} //namespace ring //namespace video
+}} // namespace ring::video
