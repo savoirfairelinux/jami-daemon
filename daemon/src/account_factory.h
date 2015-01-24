@@ -38,6 +38,8 @@
 #include <mutex>
 #include <utility>
 
+namespace ring {
+
 class Account;
 class AccountGeneratorBase;
 
@@ -168,5 +170,7 @@ AccountFactory::empty() const;
 template <>
 std::size_t
 AccountFactory::accountCount() const;
+
+} // namespace ring
 
 #endif // ACCOUNT_FACTORY_H

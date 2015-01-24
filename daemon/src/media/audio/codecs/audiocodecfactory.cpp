@@ -51,6 +51,8 @@
 #include <stdexcept>
 #include <sstream>
 
+namespace ring {
+
 AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
     : pluginManager_(pluginManager)
 {
@@ -58,7 +60,7 @@ AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
      * with our C++ binding by providing 'this' access.
      */
     const auto callback = [this](void* data) {
-        if (auto codec = reinterpret_cast<ring::AudioCodec*>(data)) {
+        if (auto codec = reinterpret_cast<AudioCodec*>(data)) {
             this->registerAudioCodec(codec);
             return 0;
         }
@@ -78,9 +80,9 @@ AudioCodecFactory::~AudioCodecFactory()
 }
 
 void
-AudioCodecFactory::registerAudioCodec(ring::AudioCodec* codec)
+AudioCodecFactory::registerAudioCodec(AudioCodec* codec)
 {
-    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<ring::AudioCodec>(codec);
+    codecsMap_[(int) codec->getPayloadType()] = std::shared_ptr<AudioCodec>(codec);
     RING_DBG("Loaded codec %s" , codec->getMimeSubtype().c_str());
 }
 
@@ -114,7 +116,7 @@ AudioCodecFactory::getCodecList() const
     return list;
 }
 
-std::shared_ptr<ring::AudioCodec>
+std::shared_ptr<AudioCodec>
 AudioCodecFactory::getCodec(int payload) const
 {
     const auto iter = codecsMap_.find(payload);
@@ -124,7 +126,7 @@ AudioCodecFactory::getCodec(int payload) const
     return nullptr;
 }
 
-std::shared_ptr<ring::AudioCodec>
+std::shared_ptr<AudioCodec>
 AudioCodecFactory::getCodec(const std::string &name) const
 {
     for (const auto& item : codecsMap_) {
@@ -236,7 +238,7 @@ AudioCodecFactory::scanCodecDirectory()
     }
 }
 
-ring::AudioCodec*
+AudioCodec*
 AudioCodecFactory::instantiateCodec(int payload) const
 {
     for (const auto& item : codecsMap_) {
@@ -332,3 +334,5 @@ AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 
     return v;
 }
+
+} // namespace ring

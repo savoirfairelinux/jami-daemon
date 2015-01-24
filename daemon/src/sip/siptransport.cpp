@@ -57,6 +57,8 @@
 
 #define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { RING_ERR(M, ##__VA_ARGS__); return (VAL); }
 
+namespace ring {
+
 // FIXME: remove this when pjsip_tp_state_callback gives us enough info
 static SipTransportBroker* instance = nullptr;
 
@@ -433,7 +435,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 
 #if HAVE_DHT
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<ring::IceTransport> ice, unsigned comp_id)
+SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice, unsigned comp_id)
 {
     std::unique_lock<std::mutex> lock(iceMutex_);
     iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice, comp_id, [=]() -> int {
@@ -564,3 +566,5 @@ SipTransportBroker::findLocalAddressFromSTUN(pjsip_transport *transport,
 }
 
 #undef RETURN_IF_NULL
+
+} // namespace ring

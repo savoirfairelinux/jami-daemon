@@ -52,6 +52,8 @@
 
 #include <yaml-cpp/yaml.h>
 
+namespace ring {
+
 const char * const Account::AUDIO_CODECS_KEY            = "audioCodecs";  // 0/9/110/111/112/
 const char * const Account::VIDEO_CODECS_KEY            = "videoCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED         = "enabled";
@@ -173,8 +175,6 @@ void Account::loadDefaultCodecs()
 
 void Account::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
-
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
@@ -204,7 +204,7 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(ring::split_string(audioCodecStr_, '/'));
+    setActiveAudioCodecs(split_string(audioCodecStr_, '/'));
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -217,18 +217,18 @@ void Account::unserialize(const YAML::Node &node)
 void Account::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
-    parseString(details, CONFIG_ACCOUNT_ALIAS, alias_);
-    parseBool(details, CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseString(details, CONFIG_ACCOUNT_USERNAME, username_);
-    parseString(details, CONFIG_ACCOUNT_HOSTNAME, hostname_);
-    parseString(details, CONFIG_ACCOUNT_MAILBOX, mailBox_);
-    parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
-    parseBool(details, CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
-    parseBool(details, CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
-    parseString(details, CONFIG_RINGTONE_PATH, ringtonePath_);
-    parseBool(details, CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
+    parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
+    parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
+    parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
+    parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
+    parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
+    parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
+    parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
     if (hasCustomUserAgent_)
-        parseString(details, CONFIG_ACCOUNT_USERAGENT, userAgent_);
+        parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     else
         userAgent_ = DEFAULT_USER_AGENT;
 }
@@ -237,23 +237,23 @@ std::map<std::string, std::string> Account::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[CONFIG_ACCOUNT_ALIAS] = alias_;
-    a[CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
-    a[CONFIG_ACCOUNT_TYPE] = getAccountType();
-    a[CONFIG_ACCOUNT_HOSTNAME] = hostname_;
-    a[CONFIG_ACCOUNT_USERNAME] = username_;
-    a[CONFIG_ACCOUNT_MAILBOX] = mailBox_;
+    a[Conf::CONFIG_ACCOUNT_ALIAS] = alias_;
+    a[Conf::CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
+    a[Conf::CONFIG_ACCOUNT_TYPE] = getAccountType();
+    a[Conf::CONFIG_ACCOUNT_HOSTNAME] = hostname_;
+    a[Conf::CONFIG_ACCOUNT_USERNAME] = username_;
+    a[Conf::CONFIG_ACCOUNT_MAILBOX] = mailBox_;
 
     RegistrationState state(registrationState_);
 
     // This method should only stores user-settable fields
     // For legacy reasons, the STATUS will be kept for some time
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
-    a[CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
-    a[CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_RINGTONE_PATH] = ringtonePath_;
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
+    a[Conf::CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
+    a[Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_RINGTONE_PATH] = ringtonePath_;
 
     return a;
 }
@@ -262,7 +262,7 @@ std::map<std::string, std::string> Account::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(registrationState_);
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(registrationState_);
     return a;
 }
 
@@ -452,3 +452,5 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
 }
 
 #undef find_iter
+
+} // namespace ring

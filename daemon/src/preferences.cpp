@@ -60,6 +60,8 @@
 #include <algorithm>
 #include "fileutils.h"
 
+namespace ring {
+
 constexpr const char * const Preferences::CONFIG_LABEL;
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -328,26 +330,26 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, ring::DeviceType type)
+checkSoundCard(int &card, DeviceType type)
 {
-    if (not ring::AlsaLayer::soundCardIndexExists(card, type)) {
+    if (not AlsaLayer::soundCardIndexExists(card, type)) {
         RING_WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
 #endif
 
-ring::AudioLayer* AudioPreference::createAudioLayer()
+AudioLayer* AudioPreference::createAudioLayer()
 {
 #if HAVE_OPENSL
-    return new ring::OpenSLLayer(*this);
+    return new OpenSLLayer(*this);
 #else
 
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
         if (system("jack_lsp > /dev/null") == 0) {
             try {
-                return new ring::JackLayer(*this);
+                return new JackLayer(*this);
             } catch (const std::runtime_error &e) {
                 RING_ERR("%s", e.what());
 #if HAVE_PULSE
@@ -369,7 +371,7 @@ ring::AudioLayer* AudioPreference::createAudioLayer()
 
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
-            return new ring::PulseLayer(*this);
+            return new PulseLayer(*this);
         } catch (const std::runtime_error &e) {
             RING_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
@@ -380,17 +382,17 @@ ring::AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, ring::DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, ring::DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, ring::DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
 
-    return new ring::AlsaLayer(*this);
+    return new AlsaLayer(*this);
 #endif
 
 #if HAVE_COREAUDIO
     audioApi_ = COREAUDIO_API_STR;
     try {
-        return new ring::CoreLayer(*this);
+        return new CoreLayer(*this);
     } catch (const std::runtime_error &e) {
         RING_WARN("Could not create coreaudio layer. There will be no sound.");
     }
@@ -531,3 +533,4 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
+} // namespace ring

@@ -41,6 +41,7 @@
  * @file dtmf.h
  * @brief DMTF library to generate a dtmf sample
  */
+
 namespace ring {
 
 class DTMF {
@@ -59,9 +60,9 @@ class DTMF {
 
         /**
          * Copy the sound inside the sampling* buffer
-         * @param buffer : a vector of ring::AudioSample
+         * @param buffer : a vector of AudioSample
          */
-        bool generateDTMF(std::vector<ring::AudioSample> &buffer);
+        bool generateDTMF(std::vector<AudioSample> &buffer);
 
     private:
         char currentTone_;
@@ -70,6 +71,6 @@ class DTMF {
         DTMFGenerator dtmfgenerator_;
 };
 
-}
+} // namespace ring
 
 #endif // __KEY_DTMF_H_

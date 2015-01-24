@@ -43,6 +43,8 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
+namespace ring {
+
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -94,34 +96,30 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 
 void SIPAccountBase::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
-
     Account::serialize(out);
 
-    out << YAML::Key << AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange_.second;
-    out << YAML::Key << AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
-    out << YAML::Key << DTMF_TYPE_KEY << YAML::Value << dtmfType_;
-    out << YAML::Key << INTERFACE_KEY << YAML::Value << interface_;
-    out << YAML::Key << PORT_KEY << YAML::Value << localPort_;
-    out << YAML::Key << PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
-    out << YAML::Key << PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
-    out << YAML::Key << SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
+    out << YAML::Key << Conf::AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange_.second;
+    out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
+    out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType_;
+    out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface_;
+    out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
+    out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
+    out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
+    out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
     out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
-    out << YAML::Key << VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
-    out << YAML::Key << VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
+    out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
+    out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
 }
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
 {
-    using namespace Conf;
-    out << YAML::Key << TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
+    out << YAML::Key << Conf::TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
 }
 
 void SIPAccountBase::unserialize(const YAML::Node &node)
 {
-    using namespace Conf;
     using namespace yaml_utils;
 
     Account::unserialize(node);
@@ -139,29 +137,29 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     // validate it
     setVideoCodecs(tmp);
 
-    parseValue(node, INTERFACE_KEY, interface_);
+    parseValue(node, Conf::INTERFACE_KEY, interface_);
     int port = DEFAULT_SIP_PORT;
-    parseValue(node, PORT_KEY, port);
+    parseValue(node, Conf::PORT_KEY, port);
     localPort_ = port;
 
-    parseValue(node, SAME_AS_LOCAL_KEY, publishedSameasLocal_);
+    parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
     std::string publishedIpAddress;
-    parseValue(node, PUBLISH_ADDR_KEY, publishedIpAddress);
+    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
     IpAddr publishedIp = publishedIpAddress;
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);
 
-    parseValue(node, PUBLISH_PORT_KEY, port);
+    parseValue(node, Conf::PUBLISH_PORT_KEY, port);
     publishedPort_ = port;
 
-    parseValue(node, DTMF_TYPE_KEY, dtmfType_);
+    parseValue(node, Conf::DTMF_TYPE_KEY, dtmfType_);
 
     // get tls submap
-    const auto &tlsMap = node[TLS_KEY];
-    parseValue(tlsMap, TLS_PORT_KEY, tlsListenerPort_);
+    const auto &tlsMap = node[Conf::TLS_KEY];
+    parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
 
-    unserializeRange(node, AUDIO_PORT_MIN_KEY, AUDIO_PORT_MAX_KEY, audioPortRange_);
-    unserializeRange(node, VIDEO_PORT_MIN_KEY, VIDEO_PORT_MAX_KEY, videoPortRange_);
+    unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
+    unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
 }
 
 
@@ -169,32 +167,32 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
 {
     Account::setAccountDetails(details);
 
-    parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
+    parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled_);
 
     // general sip settings
-    parseString(details, CONFIG_LOCAL_INTERFACE, interface_);
-    parseBool(details, CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, CONFIG_LOCAL_PORT, localPort_);
-    parseInt(details, CONFIG_PUBLISHED_PORT, publishedPort_);
+    parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
+    parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
+    parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
+    parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+    parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
 
-    parseString(details, CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
+    parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
 
     int tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
+    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
     int tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
+    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
 #ifdef RING_VIDEO
     tmpMin = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
+    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
     tmpMax = -1;
-    parseInt(details, CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
+    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
     // TLS
-    parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
 }
 
 std::map<std::string, std::string>
@@ -203,31 +201,31 @@ SIPAccountBase::getAccountDetails() const
     std::map<std::string, std::string> a = Account::getAccountDetails();
 
     // note: The IP2IP profile will always have IP2IP as an alias
-    a[CONFIG_VIDEO_ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    a[Conf::CONFIG_VIDEO_ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
 
     // Add sip specific details
 
-    addRangeToDetails(a, CONFIG_ACCOUNT_AUDIO_PORT_MIN, CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
+    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
 #ifdef RING_VIDEO
-    addRangeToDetails(a, CONFIG_ACCOUNT_VIDEO_PORT_MIN, CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
+    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
 #endif
 
-    a[CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
-    a[CONFIG_LOCAL_INTERFACE] = interface_;
-    a[CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
+    a[Conf::CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
+    a[Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
     localport << localPort_;
-    a[CONFIG_LOCAL_PORT] = localport.str();
+    a[Conf::CONFIG_LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
     publishedport << publishedPort_;
-    a[CONFIG_PUBLISHED_PORT] = publishedport.str();
+    a[Conf::CONFIG_PUBLISHED_PORT] = publishedport.str();
 
     std::stringstream tlslistenerport;
     tlslistenerport << tlsListenerPort_;
-    a[CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
+    a[Conf::CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
     return a;
 }
 
@@ -235,11 +233,11 @@ std::map<std::string, std::string>
 SIPAccountBase::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
-    a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
     std::stringstream codestream;
     codestream << transportStatus_;
-    a[CONFIG_TRANSPORT_STATE_CODE] = codestream.str();
-    a[CONFIG_TRANSPORT_STATE_DESC] = transportError_ ;
+    a[Conf::CONFIG_TRANSPORT_STATE_CODE] = codestream.str();
+    a[Conf::CONFIG_TRANSPORT_STATE_DESC] = transportError_ ;
 
     return a;
 }
@@ -328,3 +326,5 @@ SIPAccountBase::generateVideoPort() const
     return getRandomEvenNumber(videoPortRange_);
 }
 #endif
+
+} // namespace ring

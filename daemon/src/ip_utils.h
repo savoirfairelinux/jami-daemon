@@ -45,6 +45,7 @@
 #define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
 #endif /* IN_IS_ADDR_UNSPECIFIED */
 
+namespace ring {
 
 class IpAddr {
 public:
@@ -256,5 +257,7 @@ namespace ip_utils {
 
     std::vector<IpAddr> getLocalNameservers();
 }
+
+} // namespace ring
 
 #endif // IP_UTILS_H_

@@ -33,7 +33,10 @@
 
 #include <string>
 
-namespace UrlHook {
+namespace ring { namespace UrlHook {
+
 int runAction(const std::string &command, const std::string &arg);
-}
+
+}} // namespace ring::UrlHook
+
 #endif // URL_HOOK_H

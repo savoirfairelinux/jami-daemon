@@ -313,4 +313,4 @@ RingBuffer::discard(size_t toDiscard)
     return toDiscard;
 }
 
-}
+} // namespace ring

@@ -33,6 +33,8 @@
 #include <dlfcn.h>
 #include <memory>
 
+namespace ring {
+
 class DLPlugin : public Plugin
 {
     public:
@@ -75,3 +77,5 @@ Plugin::load(const std::string& path, std::string& error)
 
     return new DLPlugin(handle);
 }
+
+} // namespace ring

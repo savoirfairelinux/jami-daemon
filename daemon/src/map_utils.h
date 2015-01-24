@@ -34,7 +34,7 @@
 #include <vector>
 #include <map>
 
-namespace map_utils {
+namespace ring { namespace map_utils {
 
 template <typename M, typename V>
 void vectorFromMapKeys(const M &m, V &v)
@@ -59,6 +59,6 @@ findByValue(const M &m, V &v) {
     return m.cend();
 }
 
-}
+}} // namespace ring::map_utils
 
 #endif  // MAP_UTILS_H_
