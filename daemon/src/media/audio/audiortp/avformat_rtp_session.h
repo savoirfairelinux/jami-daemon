@@ -40,12 +40,11 @@
 #include <memory>
 #include <mutex>
 
+namespace ring {
+
 class Sdp;
 class ThreadLoop;
 class MediaEncoder;
-
-namespace ring {
-
 class SocketPair;
 class RingBuffer;
 class Resampler;
@@ -75,15 +74,15 @@ class AVFormatRtpSession {
         std::string id_;
         std::map<std::string, std::string> txArgs_;
         std::string receivingSDP_;
-        std::unique_ptr<ring::SocketPair> socketPair_;
+        std::unique_ptr<SocketPair> socketPair_;
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<ring::RingBuffer> ringbuffer_;
+        std::shared_ptr<RingBuffer> ringbuffer_;
         std::recursive_mutex mutex_;
         bool sending_;
         bool receiving_;
 };
 
-}
+} // namespace ring
 
 #endif // __AVFORMAT_RTP_SESSION_H__

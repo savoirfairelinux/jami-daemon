@@ -51,8 +51,10 @@
 #include <vector>
 #include <algorithm>
 
+namespace ring { namespace sip_utils {
+
 std::string
-sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
+fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 {
     pj_str_t name = pj_str((char*) field.c_str());
     pjsip_generic_string_hdr *hdr = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &name, NULL));
@@ -71,7 +73,7 @@ sip_utils::fetchHeaderValue(pjsip_msg *msg, const std::string &field)
 }
 
 pjsip_route_hdr *
-sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
+createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 {
     pjsip_route_hdr *route_set = pjsip_route_hdr_create(hdr_pool);
 
@@ -99,7 +101,7 @@ sip_utils::createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
 
 // FIXME: replace with regex
 std::string
-sip_utils::parseDisplayName(const char * buffer)
+parseDisplayName(const char * buffer)
 {
     // Start in From: in short and long form
     const char* from_header = strstr(buffer, "\nFrom: ");
@@ -150,7 +152,7 @@ sip_utils::parseDisplayName(const char * buffer)
 }
 
 void
-sip_utils::stripSipUriPrefix(std::string& sipUri)
+stripSipUriPrefix(std::string& sipUri)
 {
     // Remove sip: prefix
     static const char SIP_PREFIX[] = "sip:";
@@ -175,7 +177,7 @@ sip_utils::stripSipUriPrefix(std::string& sipUri)
 }
 
 std::string
-sip_utils::getHostFromUri(const std::string& sipUri)
+getHostFromUri(const std::string& sipUri)
 {
     std::string hostname(sipUri);
     size_t found = hostname.find("@");
@@ -190,7 +192,7 @@ sip_utils::getHostFromUri(const std::string& sipUri)
 }
 
 void
-sip_utils::addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
+addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
 {
     pjsip_contact_hdr *contact = pjsip_contact_hdr_create(tdata->pool);
     contact->uri = pjsip_parse_uri(tdata->pool, contact_str->ptr,
@@ -202,9 +204,11 @@ sip_utils::addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
 
 
 void
-sip_utils::sip_strerror(pj_status_t code)
+sip_strerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
     RING_ERR("%d: %s", code, err_msg);
 }
+
+}} // namespace ring::sip_utils

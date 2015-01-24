@@ -52,11 +52,9 @@ class AVDictionary;
 class AVCodec;
 
 namespace ring {
-    class AudioBuffer;
-    class MediaIOHandle;
-}
 
-namespace ring {
+class AudioBuffer;
+class MediaIOHandle;
 
 class MediaEncoderException : public std::runtime_error {
     public:
@@ -77,10 +75,10 @@ public:
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
 #ifdef RING_VIDEO
-    int encode(ring::video::VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int encode(video::VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO
 
-    int encode_audio(const ring::AudioBuffer &input);
+    int encode_audio(const AudioBuffer &input);
     int flush();
     void print_sdp(std::string &sdp_);
 
@@ -103,8 +101,8 @@ private:
     AVStream *stream_ = nullptr;
 
 #ifdef RING_VIDEO
-    ring::video::VideoScaler scaler_;
-    ring::video::VideoFrame scaledFrame_;
+    video::VideoScaler scaler_;
+    video::VideoFrame scaledFrame_;
 #endif // RING_VIDEO
 
     uint8_t *scaledFrameBuffer_ = nullptr;
@@ -121,6 +119,6 @@ protected:
     AVDictionary *options_ = nullptr;
 };
 
-}
+} // namespace ring
 
 #endif // __MEDIA_ENCODER_H__

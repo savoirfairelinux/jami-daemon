@@ -83,6 +83,6 @@ class SocketPair {
         bool interrupted_ {false};
 };
 
-}
+} // namespace ring
 
 #endif  // SOCKET_PAIR_H_

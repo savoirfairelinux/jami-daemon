@@ -32,6 +32,8 @@
 #include "threadloop.h"
 #include "logger.h"
 
+namespace ring {
+
 void ThreadLoop::mainloop()
 {
     try {
@@ -95,3 +97,5 @@ bool ThreadLoop::isRunning() const
 {
     return running_;
 }
+
+} // namespace ring

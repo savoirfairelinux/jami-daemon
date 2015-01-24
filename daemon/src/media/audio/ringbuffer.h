@@ -180,6 +180,6 @@ class RingBuffer {
         ReadOffset readoffsets_;
 };
 
-}
+} // namespace ring
 
 #endif /*  __RING_BUFFER__ */

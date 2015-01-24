@@ -32,6 +32,8 @@
 
 #include <stdexcept>
 
+namespace ring {
+
 void
 CallFactory::forbid()
 {
@@ -156,3 +158,5 @@ CallFactory::callCount<Call>()
 
     return count;
 }
+
+} // namespace ring

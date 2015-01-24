@@ -38,12 +38,14 @@
 #include "logger.h"
 #include "manager.h"
 
+namespace ring {
+
 void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
 
-ring::video::VideoDeviceMonitor &
+video::VideoDeviceMonitor &
 VideoManager::getVideoDeviceMonitor()
 {
     return videoDeviceMonitor_;
@@ -74,7 +76,7 @@ VideoManager::getDeviceList()
     return videoDeviceMonitor_.getDeviceList();
 }
 
-ring::video::VideoCapabilities
+video::VideoCapabilities
 VideoManager::getCapabilities(const std::string& name)
 {
     return videoDeviceMonitor_.getCapabilities(name);
@@ -137,13 +139,13 @@ VideoManager::switchToCamera()
     return switchInput("v4l2://" + videoDeviceMonitor_.getDefaultDevice());
 }
 
-std::shared_ptr<ring::video::VideoFrameActiveWriter>
+std::shared_ptr<video::VideoFrameActiveWriter>
 VideoManager::getVideoCamera()
 {
     auto input = videoInput_.lock();
     if (!input) {
         started_ = false;
-        input.reset(new ring::video::VideoInput());
+        input.reset(new video::VideoInput());
         videoInput_ = input;
     }
     return input;
@@ -181,3 +183,5 @@ void VideoManager::stoppedDecoding(const std::string &id, const std::string& shm
         evHandlers_.on_stop_decoding(id, shmPath, isMixer);
     }
 }
+
+} // namespace ring

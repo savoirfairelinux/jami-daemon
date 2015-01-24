@@ -47,4 +47,4 @@ split_string(const std::string &s, char delim)
     return result;
 }
 
-}
+} // namespace ring

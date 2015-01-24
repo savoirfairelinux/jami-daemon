@@ -70,6 +70,8 @@
 #include <sstream>
 #include <cstdlib>
 
+namespace ring {
+
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
@@ -228,11 +230,11 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -362,55 +364,53 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
 void SIPAccount::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
-
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
 
     // each credential is a map, and we can have multiple credentials
-    out << YAML::Key << CRED_KEY << YAML::Value << credentials_;
-    out << YAML::Key << KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
+    out << YAML::Key << Conf::CRED_KEY << YAML::Value << credentials_;
+    out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
 
     out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << (presence_ and presence_->isEnabled());
-    out << YAML::Key << PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH));
-    out << YAML::Key << PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE));
+    out << YAML::Key << Conf::PRESENCE_PUBLISH_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH));
+    out << YAML::Key << Conf::PRESENCE_SUBSCRIBE_SUPPORTED_KEY << YAML::Value << (presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE));
 
     out << YAML::Key << Preferences::REGISTRATION_EXPIRE_KEY << YAML::Value << registrationExpire_;
-    out << YAML::Key << SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
+    out << YAML::Key << Conf::SERVICE_ROUTE_KEY << YAML::Value << serviceRoute_;
 
-    out << YAML::Key << STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
-    out << YAML::Key << STUN_SERVER_KEY << YAML::Value << stunServer_;
+    out << YAML::Key << Conf::STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
+    out << YAML::Key << Conf::STUN_SERVER_KEY << YAML::Value << stunServer_;
 
     // tls submap
-    out << YAML::Key << TLS_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
     SIPAccountBase::serializeTls(out);
-    out << YAML::Key << TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
-    out << YAML::Key << VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
-    out << YAML::Key << VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
-    out << YAML::Key << REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
-    out << YAML::Key << TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
-    out << YAML::Key << CALIST_KEY << YAML::Value << tlsCaListFile_;
-    out << YAML::Key << CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
-    out << YAML::Key << CIPHERS_KEY << YAML::Value << tlsCiphers_;
-    out << YAML::Key << METHOD_KEY << YAML::Value << tlsMethod_;
-    out << YAML::Key << TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
-    out << YAML::Key << PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
-    out << YAML::Key << SERVER_KEY << YAML::Value << tlsServerName_;
+    out << YAML::Key << Conf::TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
+    out << YAML::Key << Conf::VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
+    out << YAML::Key << Conf::VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
+    out << YAML::Key << Conf::REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
+    out << YAML::Key << Conf::TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
+    out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
+    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
+    out << YAML::Key << Conf::CIPHERS_KEY << YAML::Value << tlsCiphers_;
+    out << YAML::Key << Conf::METHOD_KEY << YAML::Value << tlsMethod_;
+    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
+    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
+    out << YAML::Key << Conf::SERVER_KEY << YAML::Value << tlsServerName_;
     out << YAML::EndMap;
 
     // srtp submap
-    out << YAML::Key << SRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
-    out << YAML::Key << KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
-    out << YAML::Key << RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
+    out << YAML::Key << Conf::SRTP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << Conf::SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
+    out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
+    out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
     out << YAML::EndMap;
 
     // zrtp submap
-    out << YAML::Key << ZRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << DISPLAY_SAS_KEY << YAML::Value << zrtpDisplaySas_;
-    out << YAML::Key << DISPLAY_SAS_ONCE_KEY << YAML::Value << zrtpDisplaySasOnce_;
-    out << YAML::Key << HELLO_HASH_ENABLED_KEY << YAML::Value << zrtpHelloHash_;
-    out << YAML::Key << NOT_SUPP_WARNING_KEY << YAML::Value << zrtpNotSuppWarning_;
+    out << YAML::Key << Conf::ZRTP_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << Conf::DISPLAY_SAS_KEY << YAML::Value << zrtpDisplaySas_;
+    out << YAML::Key << Conf::DISPLAY_SAS_ONCE_KEY << YAML::Value << zrtpDisplaySasOnce_;
+    out << YAML::Key << Conf::HELLO_HASH_ENABLED_KEY << YAML::Value << zrtpHelloHash_;
+    out << YAML::Key << Conf::NOT_SUPP_WARNING_KEY << YAML::Value << zrtpNotSuppWarning_;
     out << YAML::EndMap;
 
     out << YAML::EndMap;
@@ -437,7 +437,6 @@ validate(std::string &member, const std::string &param, const T& valid)
 
 void SIPAccount::unserialize(const YAML::Node &node)
 {
-    using namespace Conf;
     using namespace yaml_utils;
 
     SIPAccountBase::unserialize(node);
@@ -446,71 +445,71 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
 
-    if (not isIP2IP()) parseValue(node, KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    if (not isIP2IP()) parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
 
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
     enablePresence(presEnabled);
     bool publishSupported = false;
-    parseValue(node, PRESENCE_PUBLISH_SUPPORTED_KEY, publishSupported);
+    parseValue(node, Conf::PRESENCE_PUBLISH_SUPPORTED_KEY, publishSupported);
     bool subscribeSupported = false;
-    parseValue(node, PRESENCE_SUBSCRIBE_SUPPORTED_KEY, subscribeSupported);
+    parseValue(node, Conf::PRESENCE_SUBSCRIBE_SUPPORTED_KEY, subscribeSupported);
     if (presence_) {
         presence_->support(PRESENCE_FUNCTION_PUBLISH, publishSupported);
         presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, subscribeSupported);
     }
 
-    if (not isIP2IP()) parseValue(node, SERVICE_ROUTE_KEY, serviceRoute_);
+    if (not isIP2IP()) parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
 
     // stun enabled
-    if (not isIP2IP()) parseValue(node, STUN_ENABLED_KEY, stunEnabled_);
-    if (not isIP2IP()) parseValue(node, STUN_SERVER_KEY, stunServer_);
+    if (not isIP2IP()) parseValue(node, Conf::STUN_ENABLED_KEY, stunEnabled_);
+    if (not isIP2IP()) parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
-    const auto &credsNode = node[CRED_KEY];
-    const auto creds = parseVectorMap(credsNode, {CONFIG_ACCOUNT_PASSWORD,
-            CONFIG_ACCOUNT_REALM, CONFIG_ACCOUNT_USERNAME});
+    const auto &credsNode = node[Conf::CRED_KEY];
+    const auto creds = parseVectorMap(credsNode, {Conf::CONFIG_ACCOUNT_PASSWORD,
+            Conf::CONFIG_ACCOUNT_REALM, Conf::CONFIG_ACCOUNT_USERNAME});
     setCredentials(creds);
 
     // get zrtp submap
-    const auto &zrtpMap = node[ZRTP_KEY];
+    const auto &zrtpMap = node[Conf::ZRTP_KEY];
 
-    parseValue(zrtpMap, DISPLAY_SAS_KEY, zrtpDisplaySas_);
-    parseValue(zrtpMap, DISPLAY_SAS_ONCE_KEY, zrtpDisplaySasOnce_);
-    parseValue(zrtpMap, HELLO_HASH_ENABLED_KEY, zrtpHelloHash_);
-    parseValue(zrtpMap, NOT_SUPP_WARNING_KEY, zrtpNotSuppWarning_);
+    parseValue(zrtpMap, Conf::DISPLAY_SAS_KEY, zrtpDisplaySas_);
+    parseValue(zrtpMap, Conf::DISPLAY_SAS_ONCE_KEY, zrtpDisplaySasOnce_);
+    parseValue(zrtpMap, Conf::HELLO_HASH_ENABLED_KEY, zrtpHelloHash_);
+    parseValue(zrtpMap, Conf::NOT_SUPP_WARNING_KEY, zrtpNotSuppWarning_);
 
     // get tls submap
-    const auto &tlsMap = node[TLS_KEY];
+    const auto &tlsMap = node[Conf::TLS_KEY];
 
-    parseValue(tlsMap, TLS_ENABLE_KEY, tlsEnable_);
-    parseValue(tlsMap, CERTIFICATE_KEY, tlsCertificateFile_);
-    parseValue(tlsMap, CALIST_KEY, tlsCaListFile_);
-    parseValue(tlsMap, CIPHERS_KEY, tlsCiphers_);
+    parseValue(tlsMap, Conf::TLS_ENABLE_KEY, tlsEnable_);
+    parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
+    parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
+    parseValue(tlsMap, Conf::CIPHERS_KEY, tlsCiphers_);
 
     std::string tmpMethod(tlsMethod_);
-    parseValue(tlsMap, METHOD_KEY, tmpMethod);
+    parseValue(tlsMap, Conf::METHOD_KEY, tmpMethod);
     validate(tlsMethod_, tmpMethod, VALID_TLS_METHODS);
 
-    parseValue(tlsMap, TLS_PASSWORD_KEY, tlsPassword_);
-    parseValue(tlsMap, PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
-    parseValue(tlsMap, SERVER_KEY, tlsServerName_);
-    parseValue(tlsMap, REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
-    parseValue(tlsMap, VERIFY_CLIENT_KEY, tlsVerifyClient_);
-    parseValue(tlsMap, VERIFY_SERVER_KEY, tlsVerifyServer_);
+    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
+    parseValue(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
+    parseValue(tlsMap, Conf::SERVER_KEY, tlsServerName_);
+    parseValue(tlsMap, Conf::REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
+    parseValue(tlsMap, Conf::VERIFY_CLIENT_KEY, tlsVerifyClient_);
+    parseValue(tlsMap, Conf::VERIFY_SERVER_KEY, tlsVerifyServer_);
     // FIXME
-    parseValue(tlsMap, TIMEOUT_KEY, tlsNegotiationTimeoutSec_);
+    parseValue(tlsMap, Conf::TIMEOUT_KEY, tlsNegotiationTimeoutSec_);
 
     // get srtp submap
-    const auto &srtpMap = node[SRTP_KEY];
-    parseValue(srtpMap, SRTP_ENABLE_KEY, srtpEnabled_);
+    const auto &srtpMap = node[Conf::SRTP_KEY];
+    parseValue(srtpMap, Conf::SRTP_ENABLE_KEY, srtpEnabled_);
 
     std::string tmpKey;
-    parseValue(srtpMap, KEY_EXCHANGE_KEY, tmpKey);
+    parseValue(srtpMap, Conf::KEY_EXCHANGE_KEY, tmpKey);
     validate(srtpKeyExchange_, tmpKey, VALID_SRTP_KEY_EXCHANGES);
-    parseValue(srtpMap, RTP_FALLBACK_KEY, srtpFallback_);
+    parseValue(srtpMap, Conf::RTP_FALLBACK_KEY, srtpFallback_);
 }
 
 template <typename T>
@@ -530,55 +529,55 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     SIPAccountBase::setAccountDetails(details);
 
     // SIP specific account settings
-    parseString(details, CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
+    parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
 
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
-    parseString(details, CONFIG_STUN_SERVER, stunServer_);
-    parseBool(details, CONFIG_STUN_ENABLE, stunEnabled_);
-    parseInt(details, CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
+    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
+    parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
+    parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
 
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
         registrationExpire_ = MIN_REGISTRATION_TIME;
 
-    parseBool(details, CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    parseBool(details, Conf::CONFIG_KEEP_ALIVE_ENABLED, keepAliveEnabled_);
     bool presenceEnabled = false;
-    parseBool(details, CONFIG_PRESENCE_ENABLED, presenceEnabled);
+    parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     enablePresence(presenceEnabled);
 
     // srtp settings
-    parseBool(details, CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
-    parseBool(details, CONFIG_ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce_);
-    parseBool(details, CONFIG_ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning_);
-    parseBool(details, CONFIG_ZRTP_HELLO_HASH, zrtpHelloHash_);
+    parseBool(details, Conf::CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
+    parseBool(details, Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce_);
+    parseBool(details, Conf::CONFIG_ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning_);
+    parseBool(details, Conf::CONFIG_ZRTP_HELLO_HASH, zrtpHelloHash_);
 
     // TLS settings
-    parseBool(details, CONFIG_TLS_ENABLE, tlsEnable_);
-    parseInt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
-    parseString(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    parseString(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
+    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
 
-    parseString(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    parseString(details, CONFIG_TLS_PASSWORD, tlsPassword_);
-    auto iter = details.find(CONFIG_TLS_METHOD);
+    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+    auto iter = details.find(Conf::CONFIG_TLS_METHOD);
     if (iter != details.end())
         validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
-    parseString(details, CONFIG_TLS_CIPHERS, tlsCiphers_);
-    parseString(details, CONFIG_TLS_SERVER_NAME, tlsServerName_);
-    parseBool(details, CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
-    parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-    parseBool(details, CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
-    parseBool(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    parseBool(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    parseString(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    parseString(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
+    parseString(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
+    parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
+    parseBool(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    parseBool(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
 
     // srtp settings
-    parseBool(details, CONFIG_SRTP_ENABLE, srtpEnabled_);
-    parseBool(details, CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
-    iter = details.find(CONFIG_SRTP_KEY_EXCHANGE);
+    parseBool(details, Conf::CONFIG_SRTP_ENABLE, srtpEnabled_);
+    parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
+    iter = details.find(Conf::CONFIG_SRTP_KEY_EXCHANGE);
     if (iter != details.end())
         validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
 
@@ -586,9 +585,9 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         RING_WARN("No credentials set, inferring them...");
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
-        map[CONFIG_ACCOUNT_USERNAME] = username_;
-        parseString(details, CONFIG_ACCOUNT_PASSWORD, map[CONFIG_ACCOUNT_PASSWORD]);
-        map[CONFIG_ACCOUNT_REALM] = "*";
+        map[Conf::CONFIG_ACCOUNT_USERNAME] = username_;
+        parseString(details, Conf::CONFIG_ACCOUNT_PASSWORD, map[Conf::CONFIG_ACCOUNT_PASSWORD]);
+        map[Conf::CONFIG_ACCOUNT_REALM] = "*";
         v.push_back(map);
         setCredentials(v);
     }
@@ -598,11 +597,11 @@ static std::string retrievePassword(const std::map<std::string, std::string>& ma
 {
     std::map<std::string, std::string>::const_iterator map_iter_username;
     std::map<std::string, std::string>::const_iterator map_iter_password;
-    map_iter_username = map.find(CONFIG_ACCOUNT_USERNAME);
+    map_iter_username = map.find(Conf::CONFIG_ACCOUNT_USERNAME);
 
     if (map_iter_username != map.end()) {
         if (map_iter_username->second == username) {
-            map_iter_password = map.find(CONFIG_ACCOUNT_PASSWORD);
+            map_iter_password = map.find(Conf::CONFIG_ACCOUNT_PASSWORD);
 
             if (map_iter_password != map.end()) {
                 return map_iter_password->second;
@@ -617,13 +616,13 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
 
-    a[CONFIG_ACCOUNT_PASSWORD] = "";
+    a[Conf::CONFIG_ACCOUNT_PASSWORD] = "";
     if (hasCredentials()) {
         for (const auto &vect_item : credentials_) {
             const std::string password = retrievePassword(vect_item, username_);
 
             if (not password.empty())
-                a[CONFIG_ACCOUNT_PASSWORD] = password;
+                a[Conf::CONFIG_ACCOUNT_PASSWORD] = password;
         }
     }
 
@@ -638,49 +637,49 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
         registrationStateCode = out.str();
         registrationStateDescription = registrationStateDetailed_.second;
     }
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
-    a[CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
-    a[CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
-    a[CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR;
     // initialize status values
-    a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
-    a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
+    a[Conf::CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
 
     // Add sip specific details
-    a[CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
+    a[Conf::CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
 
     std::stringstream registrationExpireStr;
     registrationExpireStr << registrationExpire_;
-    a[CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
 
-    a[CONFIG_STUN_ENABLE] = stunEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_STUN_SERVER] = stunServer_;
-    a[CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_STUN_ENABLE] = stunEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_STUN_SERVER] = stunServer_;
+    a[Conf::CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
-    a[CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
-    a[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    a[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    a[CONFIG_TLS_PASSWORD] = tlsPassword_;
-    a[CONFIG_TLS_METHOD] = tlsMethod_;
-    a[CONFIG_TLS_CIPHERS] = tlsCiphers_;
-    a[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    a[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    a[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
+    a[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    a[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    a[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
+    a[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
+    a[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
+    a[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;
+    a[Conf::CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
 
-    a[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    a[Conf::CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
 
-    a[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
-    a[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
 
     return a;
 }
@@ -690,12 +689,12 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
     std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
     std::stringstream codestream;
     codestream << registrationStateDetailed_.first;
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = codestream.str();
-    a[CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDetailed_.second;
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = codestream.str();
+    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDetailed_.second;
 
     if (presence_) {
-        a[CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
-        a[CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
+        a[Conf::CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
+        a[Conf::CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
     }
 
 #if HAVE_TLS
@@ -1538,11 +1537,11 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
 
     /* md5 hashing */
     for (auto &it : credentials_) {
-        map<string, string>::const_iterator val = it.find(CONFIG_ACCOUNT_USERNAME);
+        map<string, string>::const_iterator val = it.find(Conf::CONFIG_ACCOUNT_USERNAME);
         const std::string username = val != it.end() ? val->second : "";
-        val = it.find(CONFIG_ACCOUNT_REALM);
+        val = it.find(Conf::CONFIG_ACCOUNT_REALM);
         const std::string realm(val != it.end() ? val->second : "");
-        val = it.find(CONFIG_ACCOUNT_PASSWORD);
+        val = it.find(Conf::CONFIG_ACCOUNT_PASSWORD);
         const std::string password(val != it.end() ? val->second : "");
 
         if (md5HashingEnabled) {
@@ -1556,7 +1555,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
             // re-hash a hashed password.
 
             if (password.length() != 32)
-                it[CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
+                it[Conf::CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
         }
     }
 
@@ -1566,20 +1565,20 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     size_t i = 0;
 
     for (const auto &item : credentials_) {
-        map<string, string>::const_iterator val = item.find(CONFIG_ACCOUNT_PASSWORD);
+        map<string, string>::const_iterator val = item.find(Conf::CONFIG_ACCOUNT_PASSWORD);
         const std::string password = val != item.end() ? val->second : "";
         int dataType = (md5HashingEnabled and password.length() == 32)
                        ? PJSIP_CRED_DATA_DIGEST
                        : PJSIP_CRED_DATA_PLAIN_PASSWD;
 
-        val = item.find(CONFIG_ACCOUNT_USERNAME);
+        val = item.find(Conf::CONFIG_ACCOUNT_USERNAME);
 
         if (val != item.end())
             cred_[i].username = pj_str((char*) val->second.c_str());
 
         cred_[i].data = pj_str((char*) password.c_str());
 
-        val = item.find(CONFIG_ACCOUNT_REALM);
+        val = item.find(Conf::CONFIG_ACCOUNT_REALM);
 
         if (val != item.end())
             cred_[i].realm = pj_str((char*) val->second.c_str());
@@ -1607,17 +1606,17 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
     assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
-    ip2ipAccountDetails[CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    ip2ipAccountDetails[CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[CONFIG_LOCAL_INTERFACE] = interface_;
+    ip2ipAccountDetails[Conf::CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
+    ip2ipAccountDetails[Conf::CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
     std::stringstream portstr;
     portstr << localPort_;
-    ip2ipAccountDetails[CONFIG_LOCAL_PORT] = portstr.str();
+    ip2ipAccountDetails[Conf::CONFIG_LOCAL_PORT] = portstr.str();
 
     std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
@@ -1633,19 +1632,19 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
 
     std::stringstream portstr;
     portstr << tlsListenerPort_;
-    tlsSettings[CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettings[CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
-    tlsSettings[CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    tlsSettings[CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    tlsSettings[CONFIG_TLS_PASSWORD] = tlsPassword_;
-    tlsSettings[CONFIG_TLS_METHOD] = tlsMethod_;
-    tlsSettings[CONFIG_TLS_CIPHERS] = tlsCiphers_;
-    tlsSettings[CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    tlsSettings[CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
+    tlsSettings[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
+    tlsSettings[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    tlsSettings[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    tlsSettings[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
+    tlsSettings[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
+    tlsSettings[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
+    tlsSettings[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;
+    tlsSettings[Conf::CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[Conf::CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
+    tlsSettings[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
 
     return tlsSettings;
 }
@@ -1680,18 +1679,18 @@ set_opt(const std::map<std::string, std::string> &details, const char *key, pj_u
 void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
 {
     assert(isIP2IP());
-    set_opt(details, CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
-    set_opt(details, CONFIG_TLS_ENABLE, tlsEnable_);
-    set_opt(details, CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    set_opt(details, CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    set_opt(details, CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    set_opt(details, CONFIG_TLS_PASSWORD, tlsPassword_);
-    set_opt(details, CONFIG_TLS_METHOD, tlsMethod_);
-    set_opt(details, CONFIG_TLS_CIPHERS, tlsCiphers_);
-    set_opt(details, CONFIG_TLS_SERVER_NAME, tlsServerName_);
-    set_opt(details, CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    set_opt(details, CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    set_opt(details, CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
+    set_opt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    set_opt(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
+    set_opt(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    set_opt(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    set_opt(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    set_opt(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+    set_opt(details, Conf::CONFIG_TLS_METHOD, tlsMethod_);
+    set_opt(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
+    set_opt(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
+    set_opt(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
+    set_opt(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
+    set_opt(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
 }
 
 bool SIPAccount::isIP2IP() const
@@ -2065,3 +2064,5 @@ void SIPAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
     if (allowViaRewrite_ && via_addr_.host.slen > 0)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
+
+} // namespace ring

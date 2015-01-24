@@ -33,7 +33,8 @@
 
 #include <yaml-cpp/yaml.h>
 
-namespace yaml_utils {
+namespace ring { namespace yaml_utils {
+
 // set T to the value stored at key, or leaves T unchanged
 // if no value is stored.
 template <typename T>
@@ -44,6 +45,7 @@ void parseValue(const YAML::Node &node, const char *key, T &value)
 
 std::vector<std::map<std::string, std::string>>
 parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
-}
+
+}} // namespace ring::yaml_utils
 
 #endif

@@ -47,7 +47,8 @@
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
 #define DIR_SEPARATOR_CH  '/'  // Directory separator string
 
-namespace fileutils {
+namespace ring { namespace fileutils {
+
     std::string get_data_dir();
     std::string get_home_dir();
     std::string get_cache_dir();
@@ -75,6 +76,7 @@ namespace fileutils {
         ~FileHandle();
     };
     FileHandle create_pidfile();
-}
+
+}} // namespace ring::fileutils
 
 #endif	// FILEUTILS_H_

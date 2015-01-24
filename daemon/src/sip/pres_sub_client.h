@@ -42,6 +42,8 @@
 #include <pjsip/sip_transport.h>
 #include "noncopyable.h"
 
+namespace ring {
+
 class SIPPresence;
 
 class PresSubClient {
@@ -181,5 +183,7 @@ class PresSubClient {
         int lock_flag_;
         static int modId_; // used to extract data structure from event_subscription
 };
+
+} // namespace ring
 
 #endif    /*  PRES_SUB_CLIENT_H */
