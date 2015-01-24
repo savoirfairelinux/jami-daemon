@@ -87,6 +87,6 @@ class Recordable {
         AudioRecorder recorder_;
 };
 
-}
+} // namespace ring
 
 #endif

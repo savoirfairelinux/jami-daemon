@@ -43,6 +43,8 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
+namespace ring {
+
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
@@ -94,7 +96,7 @@ parseInt(const std::map<std::string, std::string> &details, const char *key, T &
 
 void SIPAccountBase::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
 
     Account::serialize(out);
 
@@ -115,13 +117,13 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
     out << YAML::Key << TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
 }
 
 void SIPAccountBase::unserialize(const YAML::Node &node)
 {
-    using namespace Conf;
+    using namespace ring::Conf;
     using namespace yaml_utils;
 
     Account::unserialize(node);
@@ -167,6 +169,8 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
 void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    using namespace ring::Conf;
+
     Account::setAccountDetails(details);
 
     parseBool(details, CONFIG_VIDEO_ENABLED, videoEnabled_);
@@ -200,6 +204,8 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
 std::map<std::string, std::string>
 SIPAccountBase::getAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a = Account::getAccountDetails();
 
     // note: The IP2IP profile will always have IP2IP as an alias
@@ -234,6 +240,8 @@ SIPAccountBase::getAccountDetails() const
 std::map<std::string, std::string>
 SIPAccountBase::getVolatileAccountDetails() const
 {
+    using namespace ring::Conf;
+
     std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
     a[CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
     std::stringstream codestream;
@@ -328,3 +336,5 @@ SIPAccountBase::generateVideoPort() const
     return getRandomEvenNumber(videoPortRange_);
 }
 #endif
+
+} // namespace ring

@@ -159,4 +159,5 @@ std::vector<std::string> Pattern::split()
                                                 tokenStart - tokenEnd - 1));
     return substringSplitted;
 }
-}
+
+} // namespace ring

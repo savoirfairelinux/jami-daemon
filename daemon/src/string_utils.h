@@ -65,6 +65,6 @@ std::string to_string(T &&value)
 std::vector<std::string>
 split_string(const std::string& s, char sep);
 
-}
+} // namespace ring
 
 #endif

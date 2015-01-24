@@ -32,9 +32,10 @@
 
 #include "audiocodec.h"
 #include <cassert>
-using std::ptrdiff_t;
 
 namespace ring {
+
+using std::ptrdiff_t;
 
 AudioCodec::AudioCodec(uint8_t payload, const std::string &codecName, uint32_t clockRate, unsigned frameSize, uint8_t channels) :
     codecName_(codecName),
@@ -60,14 +61,14 @@ AudioCodec::AudioCodec(const AudioCodec& c) :
     hasDynamicPayload_(c.hasDynamicPayload_)
 {}
 
-int AudioCodec::decode(ring::AudioSample *, unsigned char *, size_t)
+int AudioCodec::decode(AudioSample *, unsigned char *, size_t)
 {
     // Unimplemented!
     assert(false);
     return 0;
 }
 
-int AudioCodec::encode(unsigned char *, ring::AudioSample *, size_t)
+int AudioCodec::encode(unsigned char *, AudioSample *, size_t)
 {
     // Unimplemented!
     assert(false);
@@ -76,18 +77,18 @@ int AudioCodec::encode(unsigned char *, ring::AudioSample *, size_t)
 
 
 // Mono only, subclasses must implement multichannel support
-int AudioCodec::decode(std::vector<std::vector<ring::AudioSample> > &pcm, const uint8_t* data, size_t len)
+int AudioCodec::decode(std::vector<std::vector<AudioSample> > &pcm, const uint8_t* data, size_t len)
 {
     return decode(pcm[0].data(), const_cast<uint8_t*>(data), len);
 }
 
 // Mono only, subclasses must implement multichannel support
-size_t AudioCodec::encode(const std::vector<std::vector<ring::AudioSample> > &pcm, uint8_t *data, size_t len)
+size_t AudioCodec::encode(const std::vector<std::vector<AudioSample> > &pcm, uint8_t *data, size_t len)
 {
-    return encode(data, const_cast<ring::AudioSample*>(pcm[0].data()), len);
+    return encode(data, const_cast<AudioSample*>(pcm[0].data()), len);
 }
 
-int AudioCodec::decode(std::vector<std::vector<ring::AudioSample> > &pcm)
+int AudioCodec::decode(std::vector<std::vector<AudioSample> > &pcm)
 {
     pcm.clear();
     return frameSize_;
@@ -149,4 +150,4 @@ AudioCodec::getSDPChannels() const
     return "";
 }
 
-} // end namespace ring
+} // namespace ring

@@ -45,10 +45,9 @@
 
 #include <memory>
 
-class AudioPreference;
-
 namespace ring {
 
+class AudioPreference;
 class AudioStream;
 class RingBuffer;
 
@@ -230,6 +229,6 @@ class PulseLayer : public AudioLayer {
         friend class AudioLayerTest;
 };
 
-}
+} // namespace ring
 
 #endif // PULSE_LAYER_H_

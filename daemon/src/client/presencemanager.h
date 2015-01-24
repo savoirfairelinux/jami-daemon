@@ -40,6 +40,8 @@
 
 #include "ring.h"
 
+namespace ring {
+
 class PresenceManager
 {
     public:
@@ -68,5 +70,7 @@ class PresenceManager
         ring_pres_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
+
+} // namespace ring
 
 #endif //PRESENCEINT_H

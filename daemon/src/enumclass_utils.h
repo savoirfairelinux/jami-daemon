@@ -97,7 +97,7 @@ private:
  * This is useful to use enum class in C++11 foreach loops
  *
  * @usage
- *   for (const MyEnum& value : ring::Matrix0D<MyEnum>()) {
+ *   for (const MyEnum& value : Matrix0D<MyEnum>()) {
  *       std::cout << "Name: " << MyEnumNames[value] << std::endl;
  *   }
  */
@@ -210,7 +210,7 @@ template <class E, class T, class A> std::map<A,E> Matrix1D<E,T,A>::reverseMappi
 template<class Row, typename Value, typename Accessor>
 void Matrix1D<Row,Value,Accessor>::setReverseMapping(Matrix1D<Row,const char*> names)
 {
-    for ( const Row row : ring::Matrix0D<Row>() )
+    for ( const Row row : Matrix0D<Row>() )
         reverseMapping_[names[row]] = row;
 }
 
@@ -291,6 +291,6 @@ typename Matrix1D<Row,Value,Accessor>::EnumClassIter Matrix1D<Row,Value,Accessor
     return Matrix1D<Row,Value,Accessor>::EnumClassIter( this, enum_class_size<Row>() );
 }
 
-}; //sfl
+} // namespace ring
 
 #endif //ENUM_CLASS_UTILS_H

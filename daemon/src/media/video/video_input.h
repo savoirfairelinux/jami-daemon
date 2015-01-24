@@ -67,7 +67,7 @@ private:
 
     std::string sinkID_     = "local";
 
-    ring::MediaDecoder *decoder_  = nullptr;
+    MediaDecoder *decoder_  = nullptr;
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 
