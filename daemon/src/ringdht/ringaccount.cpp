@@ -67,6 +67,8 @@
 #include <sstream>
 #include <cctype>
 
+namespace ring {
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
@@ -232,11 +234,11 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP
@@ -359,17 +361,15 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
 void RingAccount::serialize(YAML::Emitter &out)
 {
-    using namespace Conf;
-
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
-    out << YAML::Key << DHT_PORT_KEY << YAML::Value << dhtPort_;
-    out << YAML::Key << DHT_PRIVKEY_PATH_KEY << YAML::Value << privkeyPath_;
-    out << YAML::Key << DHT_CERT_PATH_KEY << YAML::Value << certPath_;
-    out << YAML::Key << DHT_CA_CERT_PATH_KEY << YAML::Value << cacertPath_;
+    out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
+    out << YAML::Key << Conf::DHT_PRIVKEY_PATH_KEY << YAML::Value << privkeyPath_;
+    out << YAML::Key << Conf::DHT_CERT_PATH_KEY << YAML::Value << certPath_;
+    out << YAML::Key << Conf::DHT_CA_CERT_PATH_KEY << YAML::Value << cacertPath_;
 
     // tls submap
-    out << YAML::Key << TLS_KEY << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
     SIPAccountBase::serializeTls(out);
     out << YAML::EndMap;
 
@@ -378,7 +378,8 @@ void RingAccount::serialize(YAML::Emitter &out)
 
 void RingAccount::unserialize(const YAML::Node &node)
 {
-    using namespace yaml_utils;
+    using yaml_utils::parseValue;
+
     SIPAccountBase::unserialize(node);
     in_port_t port {DHT_DEFAULT_PORT};
     parseValue(node, Conf::DHT_PORT_KEY, port);
@@ -501,11 +502,11 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     SIPAccountBase::setAccountDetails(details);
     if (hostname_ == "")
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
-    parseInt(details, CONFIG_DHT_PORT, dhtPort_);
+    parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     if (dhtPort_ == 0)
         dhtPort_ = DHT_DEFAULT_PORT;
-    parseString(details, CONFIG_DHT_PRIVKEY_PATH, privkeyPath_);
-    parseString(details, CONFIG_DHT_CERT_PATH, certPath_);
+    parseString(details, Conf::CONFIG_DHT_PRIVKEY_PATH, privkeyPath_);
+    parseString(details, Conf::CONFIG_DHT_CERT_PATH, certPath_);
     checkIdentityPath();
 }
 
@@ -515,9 +516,9 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
 
     std::stringstream dhtport;
     dhtport << dhtPort_;
-    a[CONFIG_DHT_PORT] = dhtport.str();
-    a[CONFIG_DHT_PRIVKEY_PATH] = privkeyPath_;
-    a[CONFIG_DHT_CERT_PATH] = certPath_;
+    a[Conf::CONFIG_DHT_PORT] = dhtport.str();
+    a[Conf::CONFIG_DHT_PRIVKEY_PATH] = privkeyPath_;
+    a[Conf::CONFIG_DHT_CERT_PATH] = certPath_;
     return a;
 }
 
@@ -1032,3 +1033,5 @@ void RingAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
 */
+
+} // namespace ring

@@ -37,6 +37,8 @@
 #include <cstdlib>
 #include <string>
 
+namespace ring {
+
 /**
  * utf8_validate:
  *
@@ -65,5 +67,7 @@ utf8_validate(const std::string & str);
  */
 std::string
 utf8_make_valid(const std::string & name);
+
+} // namespace ring
 
 #endif // H_UTF8_UTILS

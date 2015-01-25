@@ -31,6 +31,8 @@
 #include "hooktest.h"
 #include "hooks/urlhook.h"
 
+namespace ring { namespace test {
+
 void HookTest::RunHookWithNoArgs()
 {
     CPPUNIT_ASSERT(!UrlHook::runAction("ls", ""));
@@ -40,3 +42,5 @@ void HookTest::RunHookWithArgs()
 {
     CPPUNIT_ASSERT(!UrlHook::runAction("ls", "-l"));
 }
+
+}} // namespace ring::test

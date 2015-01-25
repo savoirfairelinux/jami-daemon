@@ -34,6 +34,8 @@
 
 #include <utility>
 
+namespace ring {
+
 PluginManager::PluginManager()
 {
     pluginApi_.context = reinterpret_cast<void*>(this);
@@ -258,3 +260,5 @@ PluginManager::invokeService_(const RING_PluginAPI* api, const char* name,
 
     return manager->invokeService(name, data);
 }
+
+} // namespace ring

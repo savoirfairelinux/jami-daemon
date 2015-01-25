@@ -39,6 +39,8 @@
 
 #include <algorithm>
 
+namespace ring {
+
 static constexpr int POOL_TP_INIT {512};
 static constexpr int POOL_TP_INC {512};
 static constexpr int TRANSPORT_INFO_LENGTH {64};
@@ -56,7 +58,7 @@ sockaddr_to_host_port(pj_pool_t* pool,
 
 SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
-                                 const std::shared_ptr<ring::IceTransport>& ice,
+                                 const std::shared_ptr<IceTransport>& ice,
                                  int comp_id, std::function<int()> destroy_cb)
     : base()
     , pool_(nullptr, pj_pool_release)
@@ -252,3 +254,5 @@ SipIceTransport::destroy()
     RING_WARN("SIP transport ICE: destroy");
     return destroy_cb_();
 }
+
+} // namespace ring

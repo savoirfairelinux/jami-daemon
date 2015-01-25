@@ -111,6 +111,6 @@ private:
     std::shared_ptr<VideoDeviceImpl> deviceImpl_;
 };
 
-}} //namespace ring //namespace video
+}} // namespace ring::video
 
 #endif // __VIDEO_DEVICE_H__

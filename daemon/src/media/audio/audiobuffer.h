@@ -67,7 +67,7 @@ struct AudioFormat {
      * Returns bytes necessary to hold one frame of audio data.
      */
     inline size_t getBytesPerFrame() const {
-        return sizeof(ring::AudioSample)*nb_channels;
+        return sizeof(AudioSample)*nb_channels;
     }
 
     /**
@@ -96,7 +96,7 @@ class AudioBuffer {
         /**
          * Construtor from existing interleaved data (copied into the buffer).
          */
-        AudioBuffer(const ring::AudioSample* in, size_t sample_num, AudioFormat format);
+        AudioBuffer(const AudioSample* in, size_t sample_num, AudioFormat format);
 
         /**
          * Copy constructor that by default only copies the buffer parameters (channel number, sample rate and buffer size).
@@ -129,7 +129,7 @@ class AudioBuffer {
         }
 
         inline size_t size() const {
-            return frames() * channels() * sizeof(ring::AudioSample);
+            return frames() * channels() * sizeof(AudioSample);
         }
 
         /**
@@ -217,12 +217,12 @@ class AudioBuffer {
          * Return the data (audio samples) for a given channel number.
          * Channel data can be modified but size of individual channel vectors should not be changed by the user.
          */
-        std::vector<ring::AudioSample> *getChannel(unsigned chan);
+        std::vector<AudioSample> *getChannel(unsigned chan);
 
         /**
          * Return a pointer to the raw data in this buffer.
          */
-        inline std::vector<std::vector<ring::AudioSample> > &getData() {
+        inline std::vector<std::vector<AudioSample> > &getData() {
             return samples_;
         }
 
@@ -231,9 +231,9 @@ class AudioBuffer {
          * Caller should not store result because pointer validity is
          * limited in time.
          */
-        inline const std::vector<ring::AudioSample*> getDataRaw() {
+        inline const std::vector<AudioSample*> getDataRaw() {
             const unsigned chans = samples_.size();
-            std::vector<ring::AudioSample*> raw_data(chans, nullptr);
+            std::vector<AudioSample*> raw_data(chans, nullptr);
             for(unsigned i=0; i<chans; i++)
                 raw_data[i] = samples_[i].data();
             return raw_data;
@@ -249,11 +249,11 @@ class AudioBuffer {
 
         /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
-         * The out buffer must be at least of size capacity()*sizeof(ring::AudioSample) bytes.
+         * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
          *
          * @returns Number of samples writen.
          */
-        size_t interleave(ring::AudioSample* out) const;
+        size_t interleave(AudioSample* out) const;
 
         /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
@@ -261,12 +261,12 @@ class AudioBuffer {
          *
          * @returns Number of samples writen.
          */
-        size_t interleave(std::vector<ring::AudioSample>& out) const;
+        size_t interleave(std::vector<AudioSample>& out) const;
 
         /**
          * Returns vector of interleaved data (fixed-point 16-bits).
          */
-        std::vector<ring::AudioSample> interleave() const;
+        std::vector<AudioSample> interleave() const;
 
         /**
          * Write interleaved multichannel data to the out buffer, while samples are converted to float.
@@ -280,13 +280,13 @@ class AudioBuffer {
          * Import interleaved multichannel data. Internal buffer is resized as needed.
          * Function will read sample_num*channel_num elements of the in buffer.
          */
-        void deinterleave(const ring::AudioSample* in, size_t frame_num, unsigned nb_channels = 1);
+        void deinterleave(const AudioSample* in, size_t frame_num, unsigned nb_channels = 1);
 
         /**
          * Import interleaved multichannel data. Internal buffer is resized as needed.
          * Sample rate is set according to format.
          */
-        void deinterleave(const std::vector<ring::AudioSample>& in, AudioFormat format);
+        void deinterleave(const std::vector<AudioSample>& in, AudioFormat format);
 
         /**
          * convert float planar data to signed 16
@@ -331,15 +331,15 @@ class AudioBuffer {
          *
          * Buffer sample number is increased if required to hold the new requested samples.
          */
-        size_t copy(ring::AudioSample* in, size_t sample_num, size_t pos_out = 0);
+        size_t copy(AudioSample* in, size_t sample_num, size_t pos_out = 0);
 
     private:
         int sampleRate_;
 
         // buffers holding data for each channels
-        std::vector<std::vector<ring::AudioSample> > samples_;
+        std::vector<std::vector<AudioSample> > samples_;
 };
 
-}
+} // namespace ring
 
 #endif // _AUDIO_BUFFER_H

@@ -44,9 +44,11 @@
 #include "video/video_mixer.h"
 #endif
 
+namespace ring {
+
 typedef std::set<std::string> ParticipantSet;
 
-class Conference : public ring::Recordable {
+class Conference : public Recordable {
     public:
         enum ConferenceState {ACTIVE_ATTACHED, ACTIVE_DETACHED, ACTIVE_ATTACHED_REC, ACTIVE_DETACHED_REC, HOLD, HOLD_REC};
 
@@ -112,7 +114,7 @@ class Conference : public ring::Recordable {
         virtual bool toggleRecording();
 
 #ifdef RING_VIDEO
-        std::shared_ptr<ring::video::VideoMixer> getVideoMixer();
+        std::shared_ptr<video::VideoMixer> getVideoMixer();
 #endif
 
     private:
@@ -121,8 +123,10 @@ class Conference : public ring::Recordable {
         ParticipantSet participants_;
 
 #ifdef RING_VIDEO
-        std::shared_ptr<ring::video::VideoMixer> videoMixer_;
+        std::shared_ptr<video::VideoMixer> videoMixer_;
 #endif
 };
+
+} // namespace ring
 
 #endif

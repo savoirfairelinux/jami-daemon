@@ -38,6 +38,8 @@
 #include <map>
 #include <vector>
 
+namespace ring {
+
 class PluginManager;
 
 /*
@@ -67,14 +69,14 @@ class AudioCodecFactory {
          * @param payload The payload looked for
          * @return A shared pointer on a AudioCodec object
          */
-       std::shared_ptr<ring::AudioCodec> getCodec(int payload) const;
+       std::shared_ptr<AudioCodec> getCodec(int payload) const;
 
         /**
          * Get the codec object associated with the codec attribute
          * @param string The name to compare, should be in the form speex/16000
          * @return A shared pointer to an AudioCodec object
          */
-        std::shared_ptr<ring::AudioCodec> getCodec(const std::string &name) const;
+        std::shared_ptr<AudioCodec> getCodec(const std::string &name) const;
 
         /**
          * Set the default codecs order.
@@ -113,7 +115,7 @@ class AudioCodecFactory {
          * Instantiate a codec, used in AudioRTP to get an instance of Codec per call
          * @param CodecHandlePointer	The map containing the pointer on the object and the pointer on the handle function
          */
-        ring::AudioCodec* instantiateCodec(int payload) const;
+        AudioCodec* instantiateCodec(int payload) const;
 
         /**
          * For a given codec, return its specification
@@ -135,7 +137,7 @@ class AudioCodecFactory {
         PluginManager& pluginManager_;
 
         /** Maps a pointer on an audiocodec object to a payload */
-        typedef std::map<Id, std::shared_ptr<ring::AudioCodec>> AudioCodecsMap;
+        typedef std::map<Id, std::shared_ptr<AudioCodec>> AudioCodecsMap;
 
         /**
          * Scan the installation directory ( --prefix configure option )
@@ -147,7 +149,7 @@ class AudioCodecFactory {
          * Add a new audiocodec to the system.
          * @note Steals the ownership on given codec.
          */
-        void registerAudioCodec(ring::AudioCodec* codec);
+        void registerAudioCodec(AudioCodec* codec);
 
         /**
          * Check if the files found in searched directories seems valid
@@ -168,5 +170,7 @@ class AudioCodecFactory {
          */
         std::vector<int> defaultCodecList_ {};
 };
+
+} // namespace ring
 
 #endif // __CODEC_DESCRIPTOR_H__

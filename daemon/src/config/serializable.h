@@ -36,6 +36,8 @@ namespace YAML {
     class Node;
 }
 
+namespace ring {
+
 class Serializable {
 
     public:
@@ -43,5 +45,7 @@ class Serializable {
         virtual void serialize(YAML::Emitter &out) = 0;
         virtual void unserialize(const YAML::Node &node) = 0;
 };
+
+} // namespace ring
 
 #endif

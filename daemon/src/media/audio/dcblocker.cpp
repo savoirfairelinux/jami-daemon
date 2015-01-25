@@ -41,13 +41,13 @@ void DcBlocker::reset()
     states.assign(states.size(), (struct StreamState){0, 0, 0, 0});
 }
 
-void DcBlocker::doProcess(ring::AudioSample *out, ring::AudioSample *in, unsigned samples, struct StreamState * state)
+void DcBlocker::doProcess(AudioSample *out, AudioSample *in, unsigned samples, struct StreamState * state)
 {
     for (unsigned i = 0; i < samples; ++i) {
         state->x_ = in[i];
 
 
-        state->y_ = (ring::AudioSample) ((float) state->x_ - (float) state->xm1_ + 0.9999 * (float) state->y_);
+        state->y_ = (AudioSample) ((float) state->x_ - (float) state->xm1_ + 0.9999 * (float) state->y_);
         state->xm1_ = state->x_;
         state->ym1_ = state->y_;
 
@@ -55,7 +55,7 @@ void DcBlocker::doProcess(ring::AudioSample *out, ring::AudioSample *in, unsigne
     }
 }
 
-void DcBlocker::process(ring::AudioSample *out, ring::AudioSample *in, int samples)
+void DcBlocker::process(AudioSample *out, AudioSample *in, int samples)
 {
     if (out == NULL or in == NULL or samples == 0) return;
     doProcess(out, in, samples, &states[0]);
@@ -70,9 +70,9 @@ void DcBlocker::process(AudioBuffer& buf)
 
     unsigned i;
     for(i=0; i<chans; i++) {
-        ring::AudioSample *chan = buf.getChannel(i)->data();
+        AudioSample *chan = buf.getChannel(i)->data();
         doProcess(chan, chan, samples, &states[i]);
     }
 }
 
-}
+} // namespace ring

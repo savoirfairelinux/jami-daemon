@@ -154,6 +154,6 @@ class AudioRecord {
         NON_COPYABLE(AudioRecord);
 };
 
-}
+} // namespace ring
 
 #endif // _AUDIO_RECORD_H

@@ -51,8 +51,12 @@
 #include <stdexcept>
 
 namespace ring {
-class AudioCodec;
+
+namespace test {
+class SDPTest;
 }
+
+class AudioCodec;
 
 class SdpException : public std::runtime_error {
     public:
@@ -266,14 +270,14 @@ class Sdp {
         void setMediaTransportInfoFromRemoteSdp();
 
         std::string getSessionVideoCodec() const;
-        std::vector<ring::AudioCodec*> getSessionAudioMedia() const;
+        std::vector<AudioCodec*> getSessionAudioMedia() const;
         // Sets @param settings with appropriate values and returns true if
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
         bool getOutgoingAudioSettings(std::map<std::string, std::string> &settings) const;
 
-        void addIceAttributes(const ring::IceTransport::Attribute&& ice_attrs);
-        ring::IceTransport::Attribute getIceAttributes() const;
+        void addIceAttributes(const IceTransport::Attribute&& ice_attrs);
+        IceTransport::Attribute getIceAttributes() const;
 
         void addIceCandidates(unsigned media_index,
                               const std::vector<std::string>& cands);
@@ -283,7 +287,6 @@ class Sdp {
     private:
 
         NON_COPYABLE(Sdp);
-        friend class SDPTest;
 
         std::string getLineFromSession(const pjmedia_sdp_session *sess, const std::string &keyword) const;
         std::string getOutgoingVideoCodec() const;
@@ -331,14 +334,14 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<ring::AudioCodec *> audio_codec_list_;
+        std::vector<AudioCodec *> audio_codec_list_;
         std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<ring::AudioCodec *> sessionAudioMediaLocal_;
-        std::vector<ring::AudioCodec *> sessionAudioMediaRemote_;
+        std::vector<AudioCodec *> sessionAudioMediaLocal_;
+        std::vector<AudioCodec *> sessionAudioMediaRemote_;
         std::vector<std::string> sessionVideoMedia_;
 
         std::string publishedIpAddr_;
@@ -402,7 +405,10 @@ class Sdp {
         void addZrtpAttribute(pjmedia_sdp_media* media, std::string hash);
 
         void addRTCPAttribute(pjmedia_sdp_media *med);
+
+        friend class test::SDPTest;
 };
 
+} // namespace ring
 
 #endif

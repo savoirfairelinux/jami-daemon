@@ -39,18 +39,18 @@
 #include "call.h"
 #include "noncopyable.h"
 
-class IAXAccount;
+class iax_session;
 
 namespace ring {
-    class RingBuffer;
-    class AudioBuffer;
-}
+
+class IAXAccount;
+class RingBuffer;
+class AudioBuffer;
 
 /**
  * @file: iaxcall.h
  * @brief IAXCall are IAX implementation of a normal Call
  */
-class iax_session;
 
 class IAXCall : public Call
 {
@@ -114,13 +114,15 @@ class IAXCall : public Call
                              const std::string& from);
 #endif
 
-        void putAudioData(ring::AudioBuffer& buf);
+        void putAudioData(AudioBuffer& buf);
 
     private:
         NON_COPYABLE(IAXCall);
 
         // Incoming audio ring buffer
-        std::shared_ptr<ring::RingBuffer> ringbuffer_{};
+        std::shared_ptr<RingBuffer> ringbuffer_{};
 };
+
+} // namespace ring
 
 #endif

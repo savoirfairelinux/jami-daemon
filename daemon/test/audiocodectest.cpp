@@ -37,10 +37,12 @@
 #include "plugin_manager.h"
 
 #include "test_utils.h"
-#include "ring_types.h" // for ring::AudioSample
+#include "ring_types.h" // for AudioSample
 
 #include <cmath>
 #include <climits>
+
+namespace ring { namespace test {
 
 /*
  * Detect the power of a signal for a given frequency.
@@ -48,7 +50,7 @@
  * http://netwerkt.wordpress.com/2011/08/25/goertzel-filter/
  */
 static double
-goertzelFilter(ring::AudioSample *samples, double freq, unsigned N, double sample_rate)
+goertzelFilter(AudioSample *samples, double freq, unsigned N, double sample_rate)
 {
     double s_prev = 0.0;
     double s_prev2 = 0.0;
@@ -71,13 +73,13 @@ void AudioCodecTest::testCodecs()
     AudioCodecFactory factory(pluginMgr);
     const auto payloadTypes = factory.getCodecList();
 
-    std::vector<std::shared_ptr<ring::AudioCodec>> codecs;
+    std::vector<std::shared_ptr<AudioCodec>> codecs;
 
     for (auto p : payloadTypes)
         codecs.push_back(factory.getCodec(p));
 
-    std::vector<std::vector<ring::AudioSample>> sine = {};
-    std::vector<std::vector<ring::AudioSample>> pcm;
+    std::vector<std::vector<AudioSample>> sine = {};
+    std::vector<std::vector<AudioSample>> pcm;
 
     unsigned sampleRate = 0;
     double referencePower = 0.0;
@@ -88,8 +90,8 @@ void AudioCodecTest::testCodecs()
         if (sampleRate != c->getCurrentClockRate()) {
             sampleRate = c->getCurrentClockRate();
             const unsigned nbSamples = sampleRate * 0.02; // 20 ms worth of samples
-            sine = {std::vector<ring::AudioSample>(nbSamples)};
-            pcm = {std::vector<ring::AudioSample>(nbSamples)};
+            sine = {std::vector<AudioSample>(nbSamples)};
+            pcm = {std::vector<AudioSample>(nbSamples)};
 
             const float theta = M_2_PI * frequency_ / sampleRate;
 
@@ -115,3 +117,5 @@ void AudioCodecTest::testCodecs()
         CPPUNIT_ASSERT(decodedRatio > 0.0);
     }
 }
+
+}} // namespace ring::test

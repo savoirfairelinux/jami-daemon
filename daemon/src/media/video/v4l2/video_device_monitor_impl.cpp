@@ -259,4 +259,4 @@ VideoDeviceMonitor::VideoDeviceMonitor() :
 VideoDeviceMonitor::~VideoDeviceMonitor()
 {}
 
-}}
+}} // namespace ring::video

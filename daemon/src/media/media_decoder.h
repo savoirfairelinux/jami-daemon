@@ -53,14 +53,15 @@ class AVDictionary;
 class AVFormatContext;
 class AVCodec;
 
+namespace ring {
+
 #ifdef RING_VIDEO
-namespace ring { namespace video {
+namespace video {
     class VideoFrame;
     class VideoPacket;
-}}
+}
 #endif // RING_VIDEO
 
-namespace ring {
     class AudioBuffer;
     class AudioFormat;
     class RingBuffer;
@@ -89,14 +90,14 @@ public:
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(ring::video::VideoFrame&, ring::video::VideoPacket&);
-        Status flush(ring::video::VideoFrame&);
+        Status decode(video::VideoFrame&, video::VideoPacket&);
+        Status flush(video::VideoFrame&);
  #endif // RING_VIDEO
 
         int setupFromAudioData();
         Status decode_audio(AVFrame* frame);
-        void writeToRingBuffer(AVFrame* frame, ring::RingBuffer& rb,
-                               const ring::AudioFormat outFormat);
+        void writeToRingBuffer(AVFrame* frame, RingBuffer& rb,
+                               const AudioFormat outFormat);
 
         int getWidth() const;
         int getHeight() const;
@@ -110,7 +111,7 @@ public:
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
-        std::unique_ptr<ring::Resampler> resampler_;
+        std::unique_ptr<Resampler> resampler_;
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
@@ -122,6 +123,7 @@ public:
     protected:
         AVDictionary *options_ = nullptr;
     };
-}
+
+} // namespace ring
 
 #endif // __MEDIA_DECODER_H__

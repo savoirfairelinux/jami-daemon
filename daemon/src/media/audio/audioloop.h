@@ -88,6 +88,6 @@ class AudioLoop {
         virtual void onBufferFinish();
 };
 
-}
+} // namespace ring
 
 #endif // __AUDIOLOOP_H__

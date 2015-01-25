@@ -36,8 +36,8 @@
 #include <cstddef> // for size_t
 
 namespace ring {
+
 typedef int16_t AudioSample;
-}
 
 static constexpr size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
 
@@ -68,5 +68,7 @@ getGlobalInstance()
 
     return wlink.lock();
 }
+
+} // namespace ring
 
 #endif // RING_TYPES_H_

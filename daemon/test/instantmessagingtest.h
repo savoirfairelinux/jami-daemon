@@ -42,6 +42,8 @@
 #ifndef INSTANTMANAGER_TEST_
 #define INSTANTMANAGER_TEST_
 
+namespace ring { namespace InstantMessaging { namespace test {
+
 class InstantMessagingTest : public CppUnit::TestCase {
         CPPUNIT_TEST_SUITE(InstantMessagingTest);
         CPPUNIT_TEST(testSaveSingleMessage);
@@ -68,5 +70,7 @@ class InstantMessagingTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(InstantMessagingTest, "InstantMessagingTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(InstantMessagingTest);
+
+}}} // namespace ring::InstantMessaging::test
 
 #endif
