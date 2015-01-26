@@ -206,7 +206,7 @@ int main(int argc, char *argv [])
     std::vector<char> writable(programName.size() + 1);
     std::copy(programName.begin(), programName.end(), writable.begin());
 
-    fileutils::set_program_dir(writable.data());
+    ring::fileutils::set_program_dir(writable.data());
 
 #ifdef TOP_BUILDDIR
     if (!getenv("CODECS_PATH"))
