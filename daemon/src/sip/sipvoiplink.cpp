@@ -326,52 +326,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
-#if USE_CCRTP
-    call->getAudioRtp().initConfig();
-    try {
-        call->getAudioRtp().initSession();
-    } catch (const ost::Socket::Error &err) {
-        RING_ERR("AudioRtp socket error");
-        return PJ_FALSE;
-    }
-#endif
 
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
-
-#if USE_CCRTP
-    if (body and body->len > 0 and call->getAudioRtp().isSdesEnabled()) {
-        std::string sdpOffer(static_cast<const char*>(body->data), body->len);
-        size_t start = sdpOffer.find("a=crypto:");
-
-        // Found crypto header in SDP
-        if (start != std::string::npos) {
-            CryptoOffer crypto_offer;
-            crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
-
-            const size_t size = RING_ARRAYSIZE(CryptoSuites);
-            std::vector<CryptoSuiteDefinition> localCapabilities(size);
-
-            std::copy(CryptoSuites, CryptoSuites + size,
-                      localCapabilities.begin());
-
-#if HAVE_SDES
-            SdesNegotiator sdesnego(localCapabilities, crypto_offer);
-
-            if (sdesnego.negotiate()) {
-                try {
-                    call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
-                    call->getAudioRtp().initLocalCryptoInfo();
-                } catch (const AudioRtpFactoryException &e) {
-                    RING_ERR("%s", e.what());
-                    return PJ_FALSE;
-                }
-            }
-
-#endif
-        }
-    }
-#endif
 
     call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
     if (not call->getIceTransport()) {
@@ -390,9 +347,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
-#if USE_CCRTP
-    call->getAudioRtp().start(audioCodecs);
-#endif
 
     pjsip_dialog *dialog = 0;
 
