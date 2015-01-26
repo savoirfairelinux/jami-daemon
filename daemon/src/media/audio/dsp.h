@@ -31,6 +31,7 @@
 #ifndef DSP_H_
 #define DSP_H_
 
+#include <cstdint>
 #include <speex/speex_preprocess.h>
 #include <vector>
 #include <memory>
