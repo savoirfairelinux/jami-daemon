@@ -44,6 +44,8 @@
 
 #include "ring.h"
 
+namespace ring {
+
 class ConfigurationManager
 {
     public:
@@ -171,5 +173,7 @@ class ConfigurationManager
         ring_config_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
+
+} // namespace ring
 
 #endif //CONFIGURATIONMANAGER_H

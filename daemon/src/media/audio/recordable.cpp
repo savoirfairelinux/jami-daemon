@@ -60,4 +60,4 @@ void Recordable::setRecordingFormat(AudioFormat format)
     recAudio_.setSndFormat(format);
 }
 
-}
+} // namespace ring

@@ -34,20 +34,22 @@
 #include <map>
 #include <string>
 
-using namespace std;
+namespace ring { namespace video { namespace test {
 
 void VideoInputTest::testInput()
 {
-    string resource = "display://" + string(getenv("DISPLAY") ? : ":0.0");
-    ring::video::VideoInput video;
+    std::string resource = "display://" + std::string(getenv("DISPLAY") ? : ":0.0");
+    VideoInput video;
     video.switchInput(resource);
     usleep(10000);
 }
 
+}}} // namespace ring::video::test
+
 int main ()
 {
     for (int i = 0; i < 20; ++i) {
-        VideoInputTest test;
+        ring::video::test::VideoInputTest test;
         test.testInput();
     }
     return 0;

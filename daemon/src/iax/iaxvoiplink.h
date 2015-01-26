@@ -46,14 +46,13 @@
 #include <mutex>
 #include <memory>
 
+namespace ring {
+
 class IAXAccount;
 class IAXCall;
 class AudioCodec;
 class AudioLayer;
-
-namespace ring {
-    class Resampler;
-}
+class Resampler;
 
 /**
  * @file iaxvoiplink.h
@@ -153,11 +152,11 @@ class IAXVoIPLink {
         IAXAccount& account_;
 
         /** encoder/decoder/resampler buffers */
-        ring::AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, ring::AudioFormat::MONO()};
-        ring::AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, ring::AudioFormat::MONO()};
+        AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, AudioFormat::MONO()};
+        AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, AudioFormat::MONO()};
         unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
 
-        std::unique_ptr<ring::Resampler> resampler_;
+        std::unique_ptr<Resampler> resampler_;
 
         /** Whether init() was called already or not
          * This should be used in init() and terminate(), to
@@ -165,5 +164,7 @@ class IAXVoIPLink {
          */
         bool initDone_{false};
 };
+
+} // namespace ring
 
 #endif

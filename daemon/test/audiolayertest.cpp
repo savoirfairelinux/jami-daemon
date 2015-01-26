@@ -37,7 +37,7 @@
 #include "test_utils.h"
 #include <unistd.h>
 
-using namespace ring;
+namespace ring { namespace test {
 
 AudioLayerTest::AudioLayerTest() : manager_(0), pulselayer_(0), layer_(0)
 {}
@@ -104,3 +104,5 @@ void AudioLayerTest::testPulseConnect()
 
     CPPUNIT_ASSERT(pulselayer_);
 }
+
+}} // namespace ring::test

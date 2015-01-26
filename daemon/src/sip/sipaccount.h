@@ -51,7 +51,12 @@
 #include <vector>
 #include <map>
 
-typedef std::vector<pj_ssl_cipher> CipherArray;
+namespace YAML {
+    class Node;
+    class Emitter;
+}
+
+namespace ring {
 
 namespace Conf {
     const char *const KEEP_ALIVE_ENABLED = "keepAlive";
@@ -70,10 +75,7 @@ namespace Conf {
     const char *const NOT_SUPP_WARNING_KEY = "notSuppWarning";
 }
 
-namespace YAML {
-    class Node;
-    class Emitter;
-}
+typedef std::vector<pj_ssl_cipher> CipherArray;
 
 class SIPPresence;
 class SIPCall;
@@ -729,5 +731,7 @@ class SIPAccount : public SIPAccountBase {
          */
         SIPPresence * presence_;
 };
+
+} // namespace ring
 
 #endif

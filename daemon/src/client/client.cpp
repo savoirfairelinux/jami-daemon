@@ -41,6 +41,8 @@
 #include "videomanager.h"
 #endif // RING_VIDEO
 
+namespace ring {
+
 Client::Client() :
     callManager_(new CallManager)
     , configurationManager_(new ConfigurationManager)
@@ -87,3 +89,5 @@ VideoManager * Client::getVideoManager()
     return videoManager_;
 }
 #endif
+
+} // namespace ring

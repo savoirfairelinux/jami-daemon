@@ -177,4 +177,4 @@ std::string AudioDevice::getName() const
     return buf;
 }
 
-}
+} // namespace ring

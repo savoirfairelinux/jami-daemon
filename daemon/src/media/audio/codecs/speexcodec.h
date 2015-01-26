@@ -48,9 +48,9 @@ public:
             speex_frame_size_(0),
             mode_(mode) {
                 assert(payload >= 110 && payload <= 112);
-                assert(110 == PAYLOAD_CODEC_SPEEX_8000 &&
-                       111 == PAYLOAD_CODEC_SPEEX_16000 &&
-                       112 == PAYLOAD_CODEC_SPEEX_32000);
+                assert(110 == ring::PAYLOAD_CODEC_SPEEX_8000 &&
+                       111 == ring::PAYLOAD_CODEC_SPEEX_16000 &&
+                       112 == ring::PAYLOAD_CODEC_SPEEX_32000);
 
                 bitrate_ = bitRate;
                 hasDynamicPayload_ = dynamicPayload;

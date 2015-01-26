@@ -171,8 +171,8 @@ class CoreLayer : public AudioLayer {
         ::AudioBufferList* captureBuff_; // CoreAudio buffer.
 
         /** Interleaved buffer */
-        std::vector<ring::AudioSample> playbackIBuff_;
-        std::vector<ring::AudioSample> captureIBuff_;
+        std::vector<AudioSample> playbackIBuff_;
+        std::vector<AudioSample> captureIBuff_;
 
         AudioUnit outputUnit_;
         AudioUnit inputUnit_;
@@ -184,6 +184,6 @@ class CoreLayer : public AudioLayer {
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
 
-}
+} // namespace ring
 
 #endif // CORE_LAYER_H_

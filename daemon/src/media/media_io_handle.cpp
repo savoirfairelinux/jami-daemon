@@ -50,4 +50,4 @@ MediaIOHandle::MediaIOHandle(ssize_t buffer_size,
 
 MediaIOHandle::~MediaIOHandle() { av_free(ctx_); av_free(buf_); }
 
-}
+} // namespace ring

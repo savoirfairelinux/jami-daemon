@@ -44,13 +44,10 @@
 #include <memory>
 #include <mutex>
 
+namespace ring {
 class Sdp;
 class Conference;
-
-namespace ring {
-    class IceSocket;
-    class SocketPair;
-};
+} // namespace ring
 
 namespace ring { namespace video {
 
@@ -61,8 +58,8 @@ public:
     ~VideoRtpSession();
 
     void start(int localPort);
-    void start(std::unique_ptr<ring::IceSocket> rtp_sock,
-               std::unique_ptr<ring::IceSocket> rtcp_sock);
+    void start(std::unique_ptr<IceSocket> rtp_sock,
+               std::unique_ptr<IceSocket> rtcp_sock);
     void stop();
     void updateDestination(const std::string &destination,
                            unsigned int port);
@@ -83,7 +80,7 @@ private:
     // all public methods must be locked internally before use
     std::recursive_mutex mutex_ = {};
 
-    std::unique_ptr<ring::SocketPair> socketPair_ = nullptr;
+    std::unique_ptr<SocketPair> socketPair_ = nullptr;
     std::unique_ptr<VideoSender> sender_ = nullptr;
     std::unique_ptr<VideoReceiveThread> receiveThread_ = nullptr;
     std::map<std::string, std::string> txArgs_;
@@ -96,6 +93,6 @@ private:
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
 };
 
-}}
+}} // namespace ring::video
 
 #endif // __VIDEO_RTP_SESSION_H__

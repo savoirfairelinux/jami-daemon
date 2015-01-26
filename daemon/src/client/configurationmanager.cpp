@@ -55,6 +55,8 @@
 
 #define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
 
+namespace ring {
+
 void ConfigurationManager::registerEvHandlers(struct ring_config_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
@@ -93,18 +95,18 @@ ConfigurationManager::getTlsSettingsDefault()
     portstr << DEFAULT_SIP_TLS_PORT;
 
     std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[CONFIG_TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[CONFIG_TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[CONFIG_TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[CONFIG_TLS_PASSWORD] = "";
-    tlsSettingsDefault[CONFIG_TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[CONFIG_TLS_CIPHERS] = "";
-    tlsSettingsDefault[CONFIG_TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[CONFIG_TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[CONFIG_TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
+    tlsSettingsDefault[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettingsDefault[Conf::CONFIG_TLS_CA_LIST_FILE] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_CERTIFICATE_FILE] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_PASSWORD] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_METHOD] = "TLSv1";
+    tlsSettingsDefault[Conf::CONFIG_TLS_CIPHERS] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_SERVER_NAME] = "";
+    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_SERVER] = "true";
+    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_CLIENT] = "true";
+    tlsSettingsDefault[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
+    tlsSettingsDefault[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
 
     return tlsSettingsDefault;
 }
@@ -282,17 +284,17 @@ std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
 
 void ConfigurationManager::setAudioOutputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::PLAYBACK);
+    return Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
 void ConfigurationManager::setAudioInputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::CAPTURE);
+    return Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
 void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, ring::DeviceType::RINGTONE);
+    return Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
 
 std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
@@ -681,3 +683,5 @@ std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
 {
     return std::vector<int32_t> {44100, 64};
 }
+
+} // namespace ring

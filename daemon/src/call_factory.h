@@ -41,6 +41,8 @@
 #include <string>
 #include <utility>
 
+namespace ring {
+
 class CallFactory {
     public:
         /**
@@ -238,5 +240,7 @@ CallFactory::getCallIDs<Call>() const;
 
 template <> std::size_t
 CallFactory::callCount<Call>();
+
+} // namespace ring
 
 #endif // CALL_FACTORY_H

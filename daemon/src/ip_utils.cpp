@@ -44,6 +44,8 @@
 #include <sys/ioctl.h>
 #include <unistd.h>
 
+namespace ring {
+
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 {
@@ -308,3 +310,5 @@ IpAddr::isPrivate() const
         return false;
     }
 }
+
+} // namespace ring

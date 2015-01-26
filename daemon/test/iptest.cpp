@@ -34,6 +34,8 @@
 #include "logger.h"
 #include "test_utils.h"
 
+namespace ring { namespace test {
+
 void IpTest::testIpAddr()
 {
 	TITLE();
@@ -87,3 +89,5 @@ void IpTest::testIpAddr()
 }
 
 IpTest::IpTest() : CppUnit::TestCase("IP Tests") {}
+
+}} // namespace ring::test

@@ -45,6 +45,8 @@
 #ifndef _NUMBERCLEANER_TEST_
 #define _NUMBERCLEANER_TEST_
 
+namespace ring { namespace test {
+
 class NumberCleanerTest : public CppUnit::TestCase {
 
         /**
@@ -82,5 +84,7 @@ class NumberCleanerTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(NumberCleanerTest, "NumberCleanerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(NumberCleanerTest);
+
+}} // namespace ring::test
 
 #endif

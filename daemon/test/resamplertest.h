@@ -43,6 +43,8 @@
 #define TMP_LOWSMPLR_BUFFER_LENGTH 160
 #define TMP_HIGHSMPLR_BUFFER_LENGTH 320
 
+namespace ring { namespace test {
+
 class ResamplerTest : public CppUnit::TestCase {
 
     /**
@@ -144,5 +146,7 @@ private:
 /* Register the test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ResamplerTest, "ResamplerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(ResamplerTest);
+
+}} // namespace ring::test
 
 #endif // _RESAMPLER_TEST_

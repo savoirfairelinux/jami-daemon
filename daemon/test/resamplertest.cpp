@@ -35,7 +35,7 @@
 
 #include "resamplertest.h"
 
-using namespace ring;
+namespace ring { namespace test {
 
 ResamplerTest::ResamplerTest() :
     CppUnit::TestCase("Resampler module test"), inputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO()), outputBuffer(MAX_BUFFER_LENGTH, AudioFormat::MONO())
@@ -235,3 +235,5 @@ void ResamplerTest::performDownsampling(Resampler &resampler)
         outputBuffer.copy(tmpOutputBuffer, -1, 0, j);
     }
 }
+
+}} // namespace ring::test

@@ -47,6 +47,8 @@
 #include "test_utils.h"
 #include "logger.h"
 
+namespace ring { namespace test {
+
 using std::cout;
 using std::endl;
 
@@ -231,3 +233,4 @@ void SdesNegotiatorTest::test32ByteKeyLength()
     CPPUNIT_ASSERT(negotiator.getAuthTagLength() == "32");
 }
 
+}} // namespace ring::test

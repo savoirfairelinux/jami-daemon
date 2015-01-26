@@ -48,7 +48,7 @@
 #include "call_factory.h"
 #include "ring_types.h"
 
-using namespace ring;
+namespace ring {
 
 std::mutex IAXVoIPLink::mutexIAX = {};
 
@@ -178,7 +178,7 @@ IAXVoIPLink::sendAudioFromMic()
         int compSize;
         unsigned int audioRate = audioCodec->getClockRate();
         int outSamples;
-        ring::AudioBuffer *in;
+        AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
@@ -350,7 +350,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
         size = max;
 
     audioCodec->decode(rawBuffer_.getData(), data , size);
-    ring::AudioBuffer *out = &rawBuffer_;
+    AudioBuffer *out = &rawBuffer_;
     unsigned int audioRate = audioCodec->getClockRate();
 
     if (audioRate != mainBufferSampleRate) {
@@ -443,3 +443,5 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             break;
     }
 }
+
+} // namespace ring

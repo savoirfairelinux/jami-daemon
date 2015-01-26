@@ -261,4 +261,4 @@ void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::sha
     render_frame(*f.get());
 }
 
-}}
+}} // namespace ring::video

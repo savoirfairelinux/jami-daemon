@@ -44,10 +44,10 @@
 #include <memory>
 
 namespace ring {
-
 class SocketPair;
+} // namespace ring
 
-    namespace video {
+namespace ring { namespace video {
 
 class VideoReceiveThread : public VideoGenerator {
 public:
@@ -98,6 +98,6 @@ private:
     void cleanup();
 };
 
-}}
+}} // namespace ring::video
 
 #endif // _VIDEO_RECEIVE_THREAD_H_
