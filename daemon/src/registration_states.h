@@ -32,6 +32,8 @@
 #ifndef REGISTRATION_STATES_H_
 #define REGISTRATION_STATES_H_
 
+namespace ring {
+
 /** Contains all the Registration states for an account can be in */
 enum class RegistrationState {
     UNREGISTERED,
@@ -45,5 +47,7 @@ enum class RegistrationState {
     ERROR_EXIST_STUN,
     ERROR_NOT_ACCEPTABLE
 };
+
+} // namespace ring
 
 #endif // REGISTRATION_STATES_H_

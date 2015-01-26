@@ -121,6 +121,6 @@ class rw_mutex {
 		bool writing;
 };
 
-}
+} // namespace ring
 
 #endif

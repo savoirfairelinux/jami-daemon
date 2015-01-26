@@ -54,6 +54,8 @@
 #define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
+namespace ring {
+
 static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 
 static int
@@ -138,8 +140,6 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     return udp_fd;
 }
 
-namespace ring {
-
 using std::string;
 static const int RTP_BUFFER_SIZE = 1472;
 
@@ -155,8 +155,8 @@ SocketPair::SocketPair(const char *uri, int localPort)
     openSockets(uri, localPort);
 }
 
-SocketPair::SocketPair(std::unique_ptr<ring::IceSocket> rtp_sock,
-                       std::unique_ptr<ring::IceSocket> rtcp_sock)
+SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
+                       std::unique_ptr<IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
     , rtcpWriteMutex_()
@@ -390,4 +390,4 @@ retry:
     return ret < 0 ? errno : ret;
 }
 
-}
+} // namespace ring

@@ -49,6 +49,13 @@
 #define PRESENCE_LOCK_FLAG          1
 #define PRESENCE_CLIENT_LOCK_FLAG   2
 
+/**
+ * TODO Clean this:
+ */
+struct pj_caching_pool;
+
+namespace ring {
+
 struct pres_msg_data {
     /**
      * Additional message headers as linked list. Application can add
@@ -86,15 +93,9 @@ struct pres_msg_data {
     pjsip_multipart_part multipart_parts;
 };
 
-
-
 class SIPAccount;
 class PresSubClient;
 class PresSubServer;
-/**
- * TODO Clean this:
- */
-struct pj_caching_pool;
 
 
 /**
@@ -251,5 +252,7 @@ class SIPPresence {
         pj_caching_pool  cp_;
         pj_pool_t       *pool_;
 };
+
+} // namespace ring
 
 #endif

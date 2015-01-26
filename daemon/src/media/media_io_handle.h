@@ -62,6 +62,6 @@ private:
     unsigned char *buf_;
 };
 
-}
+} // namespace ring
 
 #endif // __MEDIA_DECODER_H__

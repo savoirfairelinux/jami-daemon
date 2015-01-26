@@ -37,6 +37,7 @@
 
 #include "audio/codecs/audiocodec.h"
 
+namespace ring { namespace test {
 
 enum session_type {
     REMOTE_OFFER,
@@ -295,3 +296,5 @@ void SDPTest::testReinvite()
 
     CPPUNIT_ASSERT(session_->getRemoteIP() == "host.exampleReinvite.com");
 }
+
+}} // namespace ring::test

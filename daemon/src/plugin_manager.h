@@ -43,6 +43,8 @@
 
 #include <inttypes.h>
 
+namespace ring {
+
 class Plugin;
 
 class PluginManager
@@ -158,5 +160,7 @@ class PluginManager
         // registered services
         std::map<std::string, ServiceFunction> services_ {{}};
 };
+
+} // namespace ring
 
 #endif /* PLUGIN_MANAGER_H */

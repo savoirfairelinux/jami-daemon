@@ -38,6 +38,8 @@
 
 #include "sip/tlsvalidation.h"
 
+namespace ring { namespace test {
+
 void TlsTest::testKey()
 {
     TITLE();
@@ -93,3 +95,5 @@ void TlsTest::testHostname()
     CPPUNIT_ASSERT(verifyHostnameCertificate(wrongUrl, 443) != 0);
     CPPUNIT_ASSERT(verifyHostnameCertificate(NULL, 443) != 0);
 }
+
+}} // namespace ring::test

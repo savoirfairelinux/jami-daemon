@@ -74,6 +74,6 @@ class AudioRecorder {
         std::thread thread_;
 };
 
-}
+} // namespace ring
 
 #endif

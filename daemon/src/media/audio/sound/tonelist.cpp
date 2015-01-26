@@ -135,4 +135,4 @@ TelephoneTone::getCurrentTone()
     return tone_[currentTone_];
 }
 
-}
+} // namespace ring

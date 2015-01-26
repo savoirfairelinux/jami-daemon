@@ -38,7 +38,7 @@
 #include <algorithm>
 #include <stdexcept>
 
-using namespace ring;
+namespace ring {
 
 SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites,
                                const std::vector<std::string>& remoteAttribute) :
@@ -208,3 +208,5 @@ bool SdesNegotiator::negotiate()
 
     return negotiationSuccess;
 }
+
+} // namespace ring

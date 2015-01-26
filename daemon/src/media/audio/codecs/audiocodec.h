@@ -63,20 +63,20 @@ class AudioCodec {
          * Multichannel version of decode().
          * Default implementation calls mono version
          */
-        virtual int decode(std::vector<std::vector<ring::AudioSample> > &pcm, const uint8_t* data, size_t len);
+        virtual int decode(std::vector<std::vector<AudioSample> > &pcm, const uint8_t* data, size_t len);
 
         /**
          * Inform the codec of a lost packet and perform packet loss concealment.
          * Default implementation fills dst with 0.
          */
-        virtual int decode(std::vector<std::vector<ring::AudioSample> > &pcm);
+        virtual int decode(std::vector<std::vector<AudioSample> > &pcm);
 
         /**
          * Multichannel version of encode().
          * Default implementation calls encode() on the first channel (assume 1 channel).
          * @return the number of bytes encoded
          */
-        virtual size_t encode(const std::vector<std::vector<ring::AudioSample> > &pcm, uint8_t *data, size_t len);
+        virtual size_t encode(const std::vector<std::vector<AudioSample> > &pcm, uint8_t *data, size_t len);
 
         uint8_t getPayloadType() const;
 
@@ -157,7 +157,7 @@ class AudioCodec {
          * @param len: length of input buffer
          * @return the number of samples decoded
          */
-        virtual int decode(ring::AudioSample *pcm, unsigned char *data, size_t len);
+        virtual int decode(AudioSample *pcm, unsigned char *data, size_t len);
 
         /**
          * Encode an input buffer and fill the output buffer with the encoded data
@@ -166,7 +166,7 @@ class AudioCodec {
          * @param max_data_bytes: the maximum size of the encoded data buffer (data)
          * @return the number of bytes encoded
          */
-        virtual int encode(unsigned char *data, ring::AudioSample *pcm, size_t max_data_bytes);
+        virtual int encode(unsigned char *data, AudioSample *pcm, size_t max_data_bytes);
 
         /** Holds SDP-compliant codec name */
         std::string codecName_; // what we put inside sdp
@@ -190,8 +190,6 @@ class AudioCodec {
         AudioCodec& operator=(const AudioCodec&);
 
 };
-} // end namespace ring
-
 
 /** Enumeration that contains known audio payloads */
 enum {
@@ -217,5 +215,7 @@ enum {
     PAYLOAD_CODEC_SPEEX_16000 = 111,
     PAYLOAD_CODEC_SPEEX_32000 = 112
 };
+
+} // namespace ring
 
 #endif

@@ -45,6 +45,8 @@
 #ifndef _SIP_TEST_
 #define _SIP_TEST_
 
+namespace ring { namespace test {
+
 class SIPTest : public CppUnit::TestCase {
 
         /**
@@ -96,5 +98,7 @@ class SIPTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SIPTest, "SIPTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(SIPTest);
+
+}} // namespace ring::test
 
 #endif

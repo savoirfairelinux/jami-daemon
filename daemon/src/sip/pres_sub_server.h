@@ -42,6 +42,8 @@
 #include "noncopyable.h"
 #include "array_size.h"
 
+namespace ring {
+
 extern pj_bool_t pres_on_rx_subscribe_request(pjsip_rx_data *rdata);
 
 class SIPpresence;
@@ -88,5 +90,6 @@ class PresSubServer {
         bool            approved_;
 };
 
+} // namespace ring
 
 #endif    /* SERVERPRESENCESUB_H */

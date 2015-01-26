@@ -59,6 +59,8 @@
 #include "sip/sdp.h"
 #include "noncopyable.h"
 
+namespace ring { namespace test {
+
 class SdpSessionException : public std::exception {
     public:
         SdpSessionException(const std::string& str="") throw() : errstr(str) {}
@@ -123,5 +125,7 @@ class SDPTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SDPTest, "SDPTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(SDPTest);
+
+}} // namespace ring::test
 
 #endif

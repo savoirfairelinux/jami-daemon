@@ -193,6 +193,6 @@ private:
     std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
 };
 
-}}
+}} // namespace ring::video
 
 #endif // __VIDEO_BASE_H__
