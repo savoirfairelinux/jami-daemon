@@ -43,11 +43,10 @@
 #include <string>
 
 namespace ring {
-    class MediaDecoder;
+class MediaDecoder;
 }
 
 namespace ring { namespace video {
-
 
 class VideoInput : public VideoGenerator
 {
@@ -67,7 +66,7 @@ private:
 
     std::string sinkID_     = "local";
 
-    ring::MediaDecoder *decoder_  = nullptr;
+    MediaDecoder *decoder_  = nullptr;
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 
@@ -101,6 +100,6 @@ private:
     bool captureFrame();
 };
 
-}}
+}} // namespace ring::video
 
 #endif // __VIDEO_INPUT_H__

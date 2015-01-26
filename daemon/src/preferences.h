@@ -36,14 +36,16 @@
 #include <map>
 #include <vector>
 
-namespace ring {
-    class AudioLayer;
-}
-
 namespace YAML {
     class Emitter;
     class Node;
 }
+
+struct pjsip_msg;
+
+namespace ring {
+
+class AudioLayer;
 
 class Preferences : public Serializable {
     public:
@@ -190,8 +192,6 @@ class VoipPreference : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "voipPreferences";
 };
 
-struct pjsip_msg;
-
 class HookPreference : public Serializable {
     public:
         HookPreference();
@@ -226,8 +226,8 @@ class HookPreference : public Serializable {
 class AudioPreference : public Serializable {
     public:
         AudioPreference();
-        ring::AudioLayer *createAudioLayer();
-        ring::AudioLayer *switchAndCreateAudioLayer();
+        AudioLayer *createAudioLayer();
+        AudioLayer *switchAndCreateAudioLayer();
 
         std::string getAudioApi() const {
             return audioApi_;
@@ -450,5 +450,7 @@ class ShortcutPreferences : public Serializable {
         std::string togglePickupHangup_;
         constexpr static const char * const CONFIG_LABEL = "shortcuts";
 };
+
+} // namespace ring
 
 #endif

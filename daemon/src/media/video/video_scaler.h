@@ -59,6 +59,6 @@ private:
     uint8_t *tmp_data_[4]; // used by scale_and_pad
 };
 
-}}
+}} // namespace ring::video
 
 #endif // __VIDEO_SCALER_H__

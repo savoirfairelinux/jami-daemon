@@ -60,6 +60,10 @@
 #include <algorithm>
 #include "fileutils.h"
 
+namespace ring {
+
+using yaml_utils::parseValue;
+
 constexpr const char * const Preferences::CONFIG_LABEL;
 const char * const Preferences::DFT_ZONE = "North America";
 const char * const Preferences::REGISTRATION_EXPIRE_KEY = "registrationexpire";
@@ -137,10 +141,8 @@ Preferences::Preferences() :
 
 void Preferences::verifyAccountOrder(const std::vector<std::string> &accountIDs)
 {
-    using namespace std;
-
-    vector<string> tokens;
-    string token;
+    std::vector<std::string> tokens;
+    std::string token;
     bool drop = false;
 
     for (const auto c : accountOrder_) {
@@ -198,7 +200,6 @@ void Preferences::serialize(YAML::Emitter &out)
 
 void Preferences::unserialize(const YAML::Node &in)
 {
-    using namespace yaml_utils;
     const auto &node = in[CONFIG_LABEL];
 
     parseValue(node, ORDER_KEY, accountOrder_);
@@ -232,7 +233,6 @@ void VoipPreference::serialize(YAML::Emitter &out)
 
 void VoipPreference::unserialize(const YAML::Node &in)
 {
-    using namespace yaml_utils;
     const auto &node = in[CONFIG_LABEL];
     parseValue(node, PLAY_DTMF_KEY, playDtmf_);
     parseValue(node, PLAY_TONES_KEY, playTones_);
@@ -285,7 +285,6 @@ void HookPreference::serialize(YAML::Emitter &out)
 
 void HookPreference::unserialize(const YAML::Node &in)
 {
-    using namespace yaml_utils;
     const auto &node = in[CONFIG_LABEL];
 
     parseValue(node, IAX2_ENABLED_KEY, iax2Enabled_);
@@ -328,26 +327,26 @@ AudioPreference::AudioPreference() :
 static const int ALSA_DFT_CARD_ID = 0; // Index of the default soundcard
 
 static void
-checkSoundCard(int &card, ring::DeviceType type)
+checkSoundCard(int &card, DeviceType type)
 {
-    if (not ring::AlsaLayer::soundCardIndexExists(card, type)) {
+    if (not AlsaLayer::soundCardIndexExists(card, type)) {
         RING_WARN(" Card with index %d doesn't exist or is unusable.", card);
         card = ALSA_DFT_CARD_ID;
     }
 }
 #endif
 
-ring::AudioLayer* AudioPreference::createAudioLayer()
+AudioLayer* AudioPreference::createAudioLayer()
 {
 #if HAVE_OPENSL
-    return new ring::OpenSLLayer(*this);
+    return new OpenSLLayer(*this);
 #else
 
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
         if (system("jack_lsp > /dev/null") == 0) {
             try {
-                return new ring::JackLayer(*this);
+                return new JackLayer(*this);
             } catch (const std::runtime_error &e) {
                 RING_ERR("%s", e.what());
 #if HAVE_PULSE
@@ -369,7 +368,7 @@ ring::AudioLayer* AudioPreference::createAudioLayer()
 
     if (audioApi_ == PULSEAUDIO_API_STR) {
         try {
-            return new ring::PulseLayer(*this);
+            return new PulseLayer(*this);
         } catch (const std::runtime_error &e) {
             RING_WARN("Could not create pulseaudio layer, falling back to ALSA");
         }
@@ -380,17 +379,17 @@ ring::AudioLayer* AudioPreference::createAudioLayer()
 #if HAVE_ALSA
 
     audioApi_ = ALSA_API_STR;
-    checkSoundCard(alsaCardin_, ring::DeviceType::CAPTURE);
-    checkSoundCard(alsaCardout_, ring::DeviceType::PLAYBACK);
-    checkSoundCard(alsaCardring_, ring::DeviceType::RINGTONE);
+    checkSoundCard(alsaCardin_, DeviceType::CAPTURE);
+    checkSoundCard(alsaCardout_, DeviceType::PLAYBACK);
+    checkSoundCard(alsaCardring_, DeviceType::RINGTONE);
 
-    return new ring::AlsaLayer(*this);
+    return new AlsaLayer(*this);
 #endif
 
 #if HAVE_COREAUDIO
     audioApi_ = COREAUDIO_API_STR;
     try {
-        return new ring::CoreLayer(*this);
+        return new CoreLayer(*this);
     } catch (const std::runtime_error &e) {
         RING_WARN("Could not create coreaudio layer. There will be no sound.");
     }
@@ -450,7 +449,6 @@ AudioPreference::setRecordPath(const std::string &r)
 
 void AudioPreference::unserialize(const YAML::Node &in)
 {
-    using namespace yaml_utils;
     const auto &node = in[CONFIG_LABEL];
 
     // alsa submap
@@ -521,7 +519,6 @@ void ShortcutPreferences::serialize(YAML::Emitter &out)
 
 void ShortcutPreferences::unserialize(const YAML::Node &in)
 {
-    using namespace yaml_utils;
     const auto &node = in[CONFIG_LABEL];
 
     parseValue(node, HANGUP_SHORT_KEY, hangup_);
@@ -531,3 +528,4 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
+} // namespace ring

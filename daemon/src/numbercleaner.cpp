@@ -34,6 +34,8 @@
 
 #define INVALID_CHAR " -()"
 
+namespace ring { namespace NumberCleaner {
+
 static void
 strip_chars(const std::string &to_strip, std::string &num)
 {
@@ -41,7 +43,8 @@ strip_chars(const std::string &to_strip, std::string &num)
         num.erase(std::remove(num.begin(), num.end(), item), num.end());
 }
 
-std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix)
+std::string
+clean(std::string to_clean, const std::string &prefix)
 {
    size_t pos;
    //Hostname and DNS can have '-'
@@ -55,3 +58,5 @@ std::string NumberCleaner::clean(std::string to_clean, const std::string &prefix
       return high+to_clean.substr(pos+1);
    }
 }
+
+}} // namespace ring::NumberCleaner

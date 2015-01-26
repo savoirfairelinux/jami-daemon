@@ -40,13 +40,13 @@
 #include <memory>
 
 namespace ring {
+
 class IceTransport;
-}
 
 struct SipIceTransport
 {
         SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& pool, long t_type,
-                        const std::shared_ptr<ring::IceTransport>& ice,
+                        const std::shared_ptr<IceTransport>& ice,
                         int comp_id, std::function<int()> destroy_cb);
         ~SipIceTransport();
 
@@ -57,7 +57,7 @@ struct SipIceTransport
 
         IpAddr getLocalAddress() const;
 
-        std::shared_ptr<ring::IceTransport> getIceTransport() const {
+        std::shared_ptr<IceTransport> getIceTransport() const {
             return ice_;
         }
 
@@ -69,7 +69,7 @@ struct SipIceTransport
 
         pjsip_rx_data rdata;
         bool is_registered_ {false};
-        const std::shared_ptr<ring::IceTransport> ice_;
+        const std::shared_ptr<IceTransport> ice_;
         const int comp_id_;
 
         std::function<int()> destroy_cb_ {};
@@ -84,3 +84,5 @@ struct SipIceTransport
 
         pj_status_t destroy();
 };
+
+} // namespace ring

@@ -44,11 +44,14 @@
 
 #include "noncopyable.h"
 
-class ManagerImpl;
-
 namespace ring {
-    class PulseLayer;
-}
+
+class ManagerImpl;
+class PulseLayer;
+
+} // namespace ring
+
+namespace ring { namespace test {
 
 class AudioLayerTest: public CppUnit::TestFixture {
 
@@ -69,10 +72,12 @@ class AudioLayerTest: public CppUnit::TestFixture {
         NON_COPYABLE(AudioLayerTest);
 
         ManagerImpl* manager_;
-        ring::PulseLayer* pulselayer_;
+        PulseLayer* pulselayer_;
         int layer_;
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioLayerTest, "AudioLayerTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(AudioLayerTest);
+
+}} // namespace ring::test
 
 #endif // AUDIOLAYER_TEST_

@@ -101,4 +101,4 @@ void DSP::process(AudioBuffer& buff, int samples)
     }
 }
 
-}
+} // namespace ring

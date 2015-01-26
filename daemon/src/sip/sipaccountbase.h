@@ -47,7 +47,7 @@
 #include <map>
 #include <sstream>
 
-typedef std::vector<pj_ssl_cipher> CipherArray;
+namespace ring {
 
 namespace Conf {
     // SIP specific configuration keys
@@ -88,6 +88,8 @@ namespace Conf {
     const char *const VIDEO_PORT_MIN_KEY = "videoPortMin";
     const char *const VIDEO_PORT_MAX_KEY = "videoPortMax";
 }
+
+typedef std::vector<pj_ssl_cipher> CipherArray;
 
 class SIPVoIPLink;
 class SIPCall;
@@ -377,5 +379,7 @@ private:
     NON_COPYABLE(SIPAccountBase);
 
 };
+
+} // namespace ring
 
 #endif

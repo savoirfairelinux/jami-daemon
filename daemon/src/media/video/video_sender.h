@@ -75,6 +75,6 @@ private:
     std::string sdp_ = "";
 };
 
-}}
+}} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__

@@ -51,6 +51,8 @@
 #define VALID_PREPENDED_NUMBER      "95143334444"
 #define VALID_EXTENSION             "136"
 
+namespace ring { namespace test {
+
 void NumberCleanerTest::test_format_1(void)
 {
     RING_DBG("-------------------- NumberCleanerTest::test_format_1 --------------------\n");
@@ -126,3 +128,5 @@ void NumberCleanerTest::test_format_11(void)
 
     CPPUNIT_ASSERT(NumberCleaner::clean(NUMBER_TEST_10, "9") == VALID_EXTENSION);
 }
+
+}} // namespace ring::test

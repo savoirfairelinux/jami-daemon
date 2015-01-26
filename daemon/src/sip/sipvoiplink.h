@@ -59,6 +59,8 @@
 #include <mutex>
 #include <memory>
 
+namespace ring {
+
 class SIPCall;
 class SIPAccountBase;
 class SIPVoIPLink;
@@ -171,5 +173,7 @@ class SIPVoIPLink {
 
         friend class SIPTest;
 };
+
+} // namespace ring
 
 #endif // SIPVOIPLINK_H_

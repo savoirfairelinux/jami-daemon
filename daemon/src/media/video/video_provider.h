@@ -39,6 +39,6 @@ class VideoProvider {
         virtual ~VideoProvider() {}
 };
 
-}}
+}} // namespace ring::video
 
 #endif // VIDEO_PROVIDER_H_

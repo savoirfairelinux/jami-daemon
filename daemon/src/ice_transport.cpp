@@ -754,4 +754,4 @@ IceSocket::waitForData(unsigned int timeout)
     return ice_transport_->waitForData(compId_, timeout);
 }
 
-}
+} // namespace ring

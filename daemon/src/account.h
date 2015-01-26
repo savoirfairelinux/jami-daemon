@@ -46,6 +46,13 @@
 #include <random>
 #include <stdexcept>
 
+namespace YAML {
+class Emitter;
+class Node;
+}
+
+namespace ring {
+
 class Call;
 
 class VoipLinkException : public std::runtime_error {
@@ -53,11 +60,6 @@ class VoipLinkException : public std::runtime_error {
         VoipLinkException(const std::string &str = "") :
             std::runtime_error("VoipLinkException occured: " + str) {}
 };
-
-namespace YAML {
-    class Emitter;
-    class Node;
-}
 
 /**
  * @file account.h
@@ -374,5 +376,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::mt19937_64 rand_ {};
 };
+
+} // namespace ring
 
 #endif

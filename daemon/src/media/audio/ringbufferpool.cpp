@@ -425,4 +425,4 @@ RingBufferPool::flushAllBuffers()
     }
 }
 
-}
+} // namespace ring

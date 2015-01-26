@@ -39,14 +39,16 @@
 
 #include <memory>
 
-namespace ring {
-    class RingBufferPool;
-}
-
 /*
  * @file audiorecorderTest.cpp
  * @brief       Regroups unit tests related to the main buffer.
  */
+
+namespace ring {
+class RingBufferPool;
+} // namespace ring
+
+namespace ring { namespace test {
 
 class RingBufferPoolTest : public CppUnit::TestCase {
 
@@ -82,5 +84,7 @@ class RingBufferPoolTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(RingBufferPoolTest, "RingBufferPoolTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(RingBufferPoolTest);
+
+}} // namespace ring::test
 
 #endif  // RINGBUFFERPOOL_TEST_

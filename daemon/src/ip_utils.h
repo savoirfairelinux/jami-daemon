@@ -45,6 +45,7 @@
 #define IN_IS_ADDR_UNSPECIFIED(a) (((long int) (a)->s_addr) == 0x00000000)
 #endif /* IN_IS_ADDR_UNSPECIFIED */
 
+namespace ring {
 
 class IpAddr {
 public:
@@ -204,57 +205,60 @@ private:
 };
 
 namespace ip_utils {
-    static const char *const DEFAULT_INTERFACE = "default";
 
-    /**
-     * Return the generic "any host" IP address of the specified family.
-     * If family is unspecified, default to pj_AF_INET6() (IPv6).
-     */
-    IpAddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
+static const char *const DEFAULT_INTERFACE = "default";
 
-    /**
-     * Return the first host IP address of the specified family.
-     * If no address of the specified family is found, another family will
-     * be tried.
-     * Ex. : if family is pj_AF_INET6() (IPv6/default) and the system does not
-     * have an IPv6 address, an IPv4 address will be returned if available.
-     *
-     * If family is unspecified, default to pj_AF_INET6() if compiled
-     * with IPv6, or pj_AF_INET() otherwise.
-     */
-    IpAddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
+/**
+ * Return the generic "any host" IP address of the specified family.
+ * If family is unspecified, default to pj_AF_INET6() (IPv6).
+ */
+IpAddr getAnyHostAddr(pj_uint16_t family = pj_AF_UNSPEC());
 
-    /**
-     * Get the IP address of the network interface interface with the specified
-     * address family, or of any address family if unspecified (default).
-     */
-    IpAddr getInterfaceAddr(const std::string &interface, pj_uint16_t family = pj_AF_UNSPEC());
+/**
+ * Return the first host IP address of the specified family.
+ * If no address of the specified family is found, another family will
+ * be tried.
+ * Ex. : if family is pj_AF_INET6() (IPv6/default) and the system does not
+ * have an IPv6 address, an IPv4 address will be returned if available.
+ *
+ * If family is unspecified, default to pj_AF_INET6() if compiled
+ * with IPv6, or pj_AF_INET() otherwise.
+ */
+IpAddr getLocalAddr(pj_uint16_t family = pj_AF_UNSPEC());
 
-    /**
-    * List all the interfaces on the system and return
-    * a vector list containing their name (eth0, eth0:1 ...).
-    * @param void
-    * @return std::vector<std::string> A std::string vector
-    * of interface name available on all of the interfaces on
-    * the system.
-    */
-    std::vector<std::string> getAllIpInterfaceByName();
+/**
+ * Get the IP address of the network interface interface with the specified
+ * address family, or of any address family if unspecified (default).
+ */
+IpAddr getInterfaceAddr(const std::string &interface, pj_uint16_t family = pj_AF_UNSPEC());
 
-    /**
-    * List all the interfaces on the system and return
-    * a vector list containing their IP address.
-    * @param void
-    * @return std::vector<std::string> A std::string vector
-    * of IP address available on all of the interfaces on
-    * the system.
-    */
-    std::vector<std::string> getAllIpInterface();
+/**
+ * List all the interfaces on the system and return
+ * a vector list containing their name (eth0, eth0:1 ...).
+ * @param void
+ * @return std::vector<std::string> A std::string vector
+ * of interface name available on all of the interfaces on
+ * the system.
+ */
+std::vector<std::string> getAllIpInterfaceByName();
 
-    std::vector<IpAddr> getAddrList(const std::string &name, pj_uint16_t family = pj_AF_UNSPEC());
+/**
+ * List all the interfaces on the system and return
+ * a vector list containing their IP address.
+ * @param void
+ * @return std::vector<std::string> A std::string vector
+ * of IP address available on all of the interfaces on
+ * the system.
+ */
+std::vector<std::string> getAllIpInterface();
 
-    bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
+std::vector<IpAddr> getAddrList(const std::string &name, pj_uint16_t family = pj_AF_UNSPEC());
 
-    std::vector<IpAddr> getLocalNameservers();
-}
+bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
+
+std::vector<IpAddr> getLocalNameservers();
+
+} // namespace ip_utils
+} // namespace ring
 
 #endif // IP_UTILS_H_

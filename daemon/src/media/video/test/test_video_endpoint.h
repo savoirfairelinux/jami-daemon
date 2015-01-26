@@ -31,6 +31,8 @@
 #ifndef _VIDEO_ENDPOINT_TEST_
 #define _VIDEO_ENDPOINT_TEST_
 
+namespace ring { namespace video { namespace test {
+
 class VideoEndpointTest {
 public:
 	void testListInstalledCodecs();
@@ -38,5 +40,7 @@ public:
     void testIsSupportedCodec();
     void testRTPSession();
 };
+
+}}} // namespace ring::video::test
 
 #endif // _VIDEO_ENDPOINT_TEST_

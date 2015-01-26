@@ -58,6 +58,8 @@
 
 #define PRES_TIMER 300 // 5min
 
+namespace ring {
+
 int PresSubClient::modId_ = 0; // used to extract data structure from event_subscription
 
 void
@@ -614,3 +616,5 @@ bool PresSubClient::match(PresSubClient *b)
 {
     return (b->getURI() == getURI());
 }
+
+} // namespace ring

@@ -35,6 +35,8 @@
 #include "logger.h"
 #include "constants.h"
 
+namespace ring { namespace test {
+
 namespace {
 void restore()
 {
@@ -48,8 +50,6 @@ void backup()
         RING_ERR("Backup of %s failed", HISTORY_SAMPLE);
 }
 }
-
-namespace ring {
 
 void HistoryTest::setUp()
 {
@@ -103,4 +103,4 @@ void HistoryTest::tearDown()
     restore();
 }
 
-}
+}} // namespace ring::test

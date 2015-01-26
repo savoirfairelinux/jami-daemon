@@ -59,6 +59,6 @@ class DSP {
         std::vector<SpeexStatePtr> dspStates_;
 };
 
-}
+} // namespace ring
 
 #endif // DSP_H_

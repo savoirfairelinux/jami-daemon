@@ -153,4 +153,4 @@ bool AudioStream::isReady()
     return pa_stream_get_state(audiostream_) == PA_STREAM_READY;
 }
 
-}
+} // namespace ring

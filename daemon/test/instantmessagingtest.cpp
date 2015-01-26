@@ -40,7 +40,7 @@
 #define MAXIMUM_SIZE	10
 #define DELIMITER_CHAR	"\n\n"
 
-using namespace ring::InstantMessaging;
+namespace ring { namespace InstantMessaging { namespace test {
 
 void InstantMessagingTest::testSaveSingleMessage()
 {
@@ -143,13 +143,13 @@ void InstantMessagingTest::testGenerateXmlUriList()
     std::cout << std::endl;
 
     // Create a test list with two entries
-    ring::InstantMessaging::UriList list;
+    UriList list;
 
-    ring::InstantMessaging::UriEntry entry1;
-    entry1[ring::IM_XML_URI] = "\"sip:alex@example.com\"";
+    UriEntry entry1;
+    entry1[IM_XML_URI] = "\"sip:alex@example.com\"";
 
-    ring::InstantMessaging::UriEntry entry2;
-    entry2[ring::IM_XML_URI] = "\"sip:manu@example.com\"";
+    UriEntry entry2;
+    entry2[IM_XML_URI] = "\"sip:manu@example.com\"";
 
     list.push_front(entry1);
     list.push_front(entry2);
@@ -185,15 +185,15 @@ void InstantMessagingTest::testXmlUriListParsing()
     xmlbuffer.append("</resource-lists>");
 
 
-    ring::InstantMessaging::UriList list = parseXmlUriList(xmlbuffer);
+    UriList list = parseXmlUriList(xmlbuffer);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // An iterator over xml attribute
-    ring::InstantMessaging::UriEntry::iterator iterAttr;
+    UriEntry::iterator iterAttr;
 
     // An iterator over list entries
     for (auto &entry : list) {
-        iterAttr = entry.find(ring::IM_XML_URI);
+        iterAttr = entry.find(IM_XML_URI);
 
         CPPUNIT_ASSERT((iterAttr->second == std::string("sip:alex@example.com")) or
                 (iterAttr->second == std::string("sip:manu@example.com")));
@@ -245,14 +245,14 @@ void InstantMessagingTest::testGetUriListArea()
 
     std::cout << "urilist: " << urilist << std::endl;
 
-    ring::InstantMessaging::UriList list = parseXmlUriList(urilist);
+    UriList list = parseXmlUriList(urilist);
     CPPUNIT_ASSERT(list.size() == 2);
 
     // order may be important, for example to identify message sender
-    ring::InstantMessaging::UriEntry entry = list.front();
+    UriEntry entry = list.front();
     CPPUNIT_ASSERT(entry.size() == 2);
 
-    ring::InstantMessaging::UriEntry::iterator iterAttr = entry.find(ring::IM_XML_URI);
+    UriEntry::iterator iterAttr = entry.find(IM_XML_URI);
 
     if (iterAttr == entry.end()) {
         RING_ERR("Did not find attribute");
@@ -284,9 +284,11 @@ void InstantMessagingTest::testIllFormatedMessage()
 
     try {
         std::string message = findTextMessage(formatedText);
-    } catch (const ring::InstantMessageException &e) {
+    } catch (const InstantMessageException &e) {
         exceptionCaught = true;
     }
 
     CPPUNIT_ASSERT(exceptionCaught);
 }
+
+}}} // namespace ring::InstantMessaging::test

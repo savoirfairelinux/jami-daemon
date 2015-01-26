@@ -158,4 +158,4 @@ void VideoScaler::reset()
     }
 }
 
-}}
+}} // namespace ring::video

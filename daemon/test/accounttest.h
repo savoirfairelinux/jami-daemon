@@ -34,6 +34,8 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+namespace ring { namespace test {
+
 class AccountTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(AccountTest);
@@ -45,5 +47,7 @@ class AccountTest : public CppUnit::TestFixture {
 };
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AccountTest, "AccountTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(AccountTest);
+
+}} // namespace ring::test
 
 #endif /* ACCOUNTTEST_H_ */

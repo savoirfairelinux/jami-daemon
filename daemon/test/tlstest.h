@@ -43,6 +43,8 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
+namespace ring { namespace test {
+
 class TlsTest: public CppUnit::TestFixture {
 
         /*
@@ -62,5 +64,7 @@ class TlsTest: public CppUnit::TestFixture {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(TlsTest, "TlsTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(TlsTest);
+
+}} // namespace ring::test
 
 #endif // TLS_TEST_
