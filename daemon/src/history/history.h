@@ -37,9 +37,13 @@
 #include <mutex>
 #include <vector>
 
-class Call;
-
 namespace ring {
+
+namespace test {
+class HistoryTest;
+}
+
+class Call;
 
 class History {
 
@@ -94,7 +98,7 @@ class History {
         /* The path to the history file */
         std::string path_;
 
-        friend class HistoryTest;
+        friend class test::HistoryTest;
 };
 
 }

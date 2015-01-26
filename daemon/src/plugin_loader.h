@@ -34,6 +34,8 @@
 
 #include <string>
 
+namespace ring {
+
 class Plugin
 {
     public:
@@ -49,5 +51,7 @@ class Plugin
     protected:
         Plugin() = default;
 };
+
+} // namespace ring
 
 #endif /* PLUGIN_LOADER_H */

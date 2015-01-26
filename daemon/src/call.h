@@ -47,6 +47,8 @@
 #include <vector>
 #include <condition_variable>
 
+namespace ring {
+
 class VoIPLink;
 class Account;
 
@@ -57,7 +59,7 @@ template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
  * @brief A call is the base class for protocol-based calls
  */
 
-class Call : public ring::Recordable, public std::enable_shared_from_this<Call> {
+class Call : public Recordable, public std::enable_shared_from_this<Call> {
     public:
         static const char * const DEFAULT_ID;
 
@@ -310,8 +312,8 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
 
         bool isIceUsed() const;
         bool isIceRunning() const;
-        ring::IceSocket* newIceSocket(unsigned compId) const;
-        std::shared_ptr<ring::IceTransport> getIceTransport() const {
+        IceSocket* newIceSocket(unsigned compId) const;
+        std::shared_ptr<IceTransport> getIceTransport() const {
             return iceTransport_;
         }
 
@@ -323,7 +325,7 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
          */
         Call(Account& account, const std::string& id, Call::CallType type);
 
-        std::shared_ptr<ring::IceTransport> iceTransport_ {};
+        std::shared_ptr<IceTransport> iceTransport_ {};
 
     private:
         bool validTransition(CallState newState);
@@ -373,5 +375,7 @@ class Call : public ring::Recordable, public std::enable_shared_from_this<Call> 
         time_t timestamp_start_ {0};
         time_t timestamp_stop_ {0};
 };
+
+} // namespace ring
 
 #endif // __CALL_H__

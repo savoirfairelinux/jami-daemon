@@ -31,9 +31,13 @@
 #ifndef _VIDEO_INPUT_TEST_
 #define _VIDEO_INPUT_TEST_
 
+namespace ring { namespace video { namespace test {
+
 class VideoInputTest {
 public:
     void testInput();
 };
+
+}}} // namespace ring::video::test
 
 #endif // _VIDEO_INPUT_TEST_

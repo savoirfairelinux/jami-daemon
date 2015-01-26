@@ -61,7 +61,9 @@
 #include <gnutls/gnutls.h>
 #include <gnutls/x509.h>
 
-const ring::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
+namespace ring {
+
+const EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
     /* CheckValues        Name     */
     /* PASSED      */ "PASSED"      ,
     /* FAILED      */ "FAILED"      ,
@@ -71,7 +73,7 @@ const ring::EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesN
     /* CUSTOM      */ "DATE"        ,
 }};
 
-const ring::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
+const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
     /*      CertificateCheck                       Callback                            */
     /*HAS_PRIVATE_KEY                  */ &TlsValidator::hasPrivateKey                  ,
     /*EXPIRED                          */ &TlsValidator::notExpired                     ,
@@ -98,7 +100,7 @@ const ring::CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsVa
 }};
 
 
-const ring::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
+const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
     /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
     /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate         ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword ,
@@ -118,7 +120,7 @@ const ring::CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, Tls
     /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
 }};
 
-const ring::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
+const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
     /*      CertificateCheck                    Callback        */
     /*HAS_PRIVATE_KEY                  */ CheckValuesType::BOOLEAN ,
     /*EXPIRED                          */ CheckValuesType::BOOLEAN ,
@@ -147,7 +149,7 @@ const ring::Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesTy
     /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN ,
 }};
 
-const ring::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
+const EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
     /*      CertificateCheck                       Name                 */
     /*HAS_PRIVATE_KEY                  */ "HAS_PRIVATE_KEY"                ,
     /*EXPIRED                          */ "EXPIRED"                        ,
@@ -176,7 +178,7 @@ const ring::EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::Certifi
     /*NOT_ACTIVATED                    */ "NOT_ACTIVATED"                  ,
 }};
 
-const ring::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
+const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
     /* EXPIRATION_DATE              */ "EXPIRATION_DATE"              ,
     /* ACTIVATION_DATE              */ "ACTIVATION_DATE"              ,
     /* REQUIRE_PRIVATE_KEY_PASSWORD */ "REQUIRE_PRIVATE_KEY_PASSWORD" ,
@@ -196,7 +198,7 @@ const ring::EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certi
     /* NEXT_EXPECTED_UPDATE_DATE    */ "NEXT_EXPECTED_UPDATE_DATE"    ,
 }};
 
-const ring::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
+const EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
     /*   Type        Name    */
     /* BOOLEAN  */ "BOOLEAN"  ,
     /* ISO_DATE */ "ISO_DATE" ,
@@ -204,7 +206,7 @@ const ring::EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::Ch
     /* NUMBER   */ "NUMBER"   ,
 }};
 
-const ring::Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
+const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
     /*   Type          PASSED    FAILED   UNSUPPORTED   ISO_DATE    CUSTOM    NUMBER */
     /* BOOLEAN  */  {{  true   ,  true  ,    true     ,  false    ,  false   ,false }},
     /* ISO_DATE */  {{  false  ,  false ,    true     ,  true     ,  false  , false }},
@@ -277,7 +279,7 @@ std::string TlsValidator::getStringValue(const TlsValidator::CertificateCheck ch
  */
 bool TlsValidator::isValid(bool verbose)
 {
-    for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>()) {
+    for (const CertificateCheck check : Matrix0D<CertificateCheck>()) {
         if (enforcedCheckType[check] == CheckValuesType::BOOLEAN) {
             if (((this->*(checkCallback[check]))()).first == CheckValues::FAILED) {
                 if (verbose)
@@ -301,7 +303,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedChecks()
             = getStringValue(CertificateCheck::EXIST, exist());
     }
     else {
-        for (const CertificateCheck check : ring::Matrix0D<CertificateCheck>())
+        for (const CertificateCheck check : Matrix0D<CertificateCheck>())
             ret[CertificateCheckNames[check]] = getStringValue(check,(this->*(checkCallback[check]))());
     }
 
@@ -315,7 +317,7 @@ std::map<std::string,std::string> TlsValidator::getSerializedDetails()
 {
     std::map<std::string,std::string> ret;
     if (certificateFound_) {
-        for (const CertificateDetails det : ring::Matrix0D<CertificateDetails>()) {
+        for (const CertificateDetails det : Matrix0D<CertificateDetails>()) {
             const CheckResult r = (this->*(getterCallback[det]))();
             std::string val;
             // TODO move this to a fuction
@@ -1174,3 +1176,5 @@ TlsValidator::CheckResult TlsValidator::getActivationDate()
 
     return formatDate(expiration);
 }
+
+} // namespace ring

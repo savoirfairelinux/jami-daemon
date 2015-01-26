@@ -133,4 +133,4 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
     dataOut.deinterleave(scratchBuffer_.data(), src_data.output_frames, nbChans);
 }
 
-}
+} // namespace ring

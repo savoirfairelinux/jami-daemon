@@ -58,10 +58,9 @@
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
-class AudioPreference;
-
 namespace ring {
 
+class AudioPreference;
 class Resampler;
 
 enum class DeviceType {
@@ -281,6 +280,6 @@ class AudioLayer {
         time_t lastNotificationTime_;
 };
 
-}
+} // namespace ring
 
 #endif // _AUDIO_LAYER_H_

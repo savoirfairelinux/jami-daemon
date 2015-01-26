@@ -35,8 +35,8 @@
 #include <map>
 #include <string>
 
+namespace ring { namespace libav_utils {
 
-namespace libav_utils {
     void sfl_avcodec_init();
 
     int libav_pixel_format(int fmt);
@@ -56,6 +56,7 @@ namespace libav_utils {
     void sfl_url_split(const char *url,
                       char *hostname, size_t hostname_size, int *port,
                       char *path, size_t path_size);
-}
+
+}} // namespace ring::libav_utils
 
 #endif // __LIBAV_UTILS_H__

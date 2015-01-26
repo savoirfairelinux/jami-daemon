@@ -37,15 +37,17 @@
 #include "client/configurationmanager.h"
 #include "logger.h"
 
+namespace ring { namespace test {
+
 void AccountTest::TestAddRemove()
 {
     RING_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
     std::map<std::string, std::string> details(Manager::instance().getClient()->getConfigurationManager()->getAccountTemplate());
-    details[CONFIG_ACCOUNT_TYPE] = "SIP";
-    details[CONFIG_ACCOUNT_ENABLE] = "false";
-    details[CONFIG_LOCAL_INTERFACE] = "default";
-    details[CONFIG_LOCAL_PORT] = "5060";
+    details[Conf::CONFIG_ACCOUNT_TYPE] = "SIP";
+    details[Conf::CONFIG_ACCOUNT_ENABLE] = "false";
+    details[Conf::CONFIG_LOCAL_INTERFACE] = "default";
+    details[Conf::CONFIG_LOCAL_PORT] = "5060";
 
     std::string accountId = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(not accountId.empty());
@@ -55,3 +57,5 @@ void AccountTest::TestAddRemove()
 
     CPPUNIT_ASSERT(!Manager::instance().hasAccount(accountId));
 }
+
+}} // namespace ring::test

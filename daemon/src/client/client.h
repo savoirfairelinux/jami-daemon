@@ -36,11 +36,12 @@
 #endif
 #include "noncopyable.h"
 
+namespace ring {
+
 class ConfigurationManager;
 class CallManager;
 class NetworkManager;
 class Instance;
-
 class PresenceManager;
 
 #ifdef RING_VIDEO
@@ -74,5 +75,7 @@ class Client {
         NetworkManager* networkManager_;
 #endif
 };
+
+} // namespace ring
 
 #endif

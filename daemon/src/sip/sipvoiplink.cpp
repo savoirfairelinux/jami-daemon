@@ -83,7 +83,7 @@
 #include <istream>
 #include <algorithm>
 
-using namespace ring;
+namespace ring {
 
 /** Environment variable used to set pjsip's logging level */
 #define SIPLOGLEVEL "SIPLOGLEVEL"
@@ -338,14 +338,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
 
     if (!ac) {
         RING_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
     pjsip_dialog *dialog = 0;
@@ -1137,12 +1137,10 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
     std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
 
-    using namespace ring::InstantMessaging;
-
     try {
         // retreive the recipient-list of this message
-        std::string urilist = findTextUriList(formattedMessage);
-        UriList list = parseXmlUriList(urilist);
+        std::string urilist = InstantMessaging::findTextUriList(formattedMessage);
+        auto list = InstantMessaging::parseXmlUriList(urilist);
 
         // If no item present in the list, peer is considered as the sender
         std::string from;
@@ -1150,7 +1148,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         if (list.empty()) {
             from = call->getPeerNumber();
         } else {
-            from = list.front()[IM_XML_URI];
+            from = list.front()[InstantMessaging::IM_XML_URI];
 
             if (from == "Me")
                 from = call->getPeerNumber();
@@ -1160,12 +1158,13 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
         if (from[0] == '<' && from[from.size() - 1] == '>')
             from = from.substr(1, from.size() - 2);
 
-        Manager::instance().incomingMessage(call->getCallId(), from, findTextMessage(formattedMessage));
+        Manager::instance().incomingMessage(call->getCallId(), from,
+                                            InstantMessaging::findTextMessage(formattedMessage));
 
         // Respond with a 200/OK
         sendOK(inv->dlg, r_data, tsx);
 
-    } catch (const ring::InstantMessageException &except) {
+    } catch (const InstantMessaging::InstantMessageException &except) {
         RING_ERR("%s", except.what());
     }
 #endif
@@ -1220,7 +1219,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
     };
 
-    auto token = std::hash<std::string>()(name + ring::to_string(type));
+    auto token = std::hash<std::string>()(name + to_string(type));
     {
         std::lock_guard<std::mutex> lock(resolveMutex_);
         resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
@@ -1259,3 +1258,5 @@ SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjs
         }
     }
 }
+
+} // namespace ring

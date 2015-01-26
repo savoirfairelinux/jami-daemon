@@ -68,6 +68,6 @@ class TelephoneTone {
         Tone::TONEID currentTone_;
 };
 
-}
+} // namespace ring
 
 #endif

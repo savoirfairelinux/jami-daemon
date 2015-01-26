@@ -43,6 +43,8 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
+namespace ring { namespace test {
+
 class ConfigurationTest: public CppUnit::TestFixture {
 
         /*
@@ -58,8 +60,11 @@ class ConfigurationTest: public CppUnit::TestFixture {
         void testNodeParse();
         void test_expand_path();
 };
+
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ConfigurationTest, "ConfigurationTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(ConfigurationTest);
+
+}} // namespace ring::test
 
 #endif // CONFIGURATION_TEST_

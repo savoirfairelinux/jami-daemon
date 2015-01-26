@@ -82,6 +82,6 @@ private:
 #endif
 };
 
-}}
+}} // namespace ring::video
 
 #endif // SHM_SINK_H_
