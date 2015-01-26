@@ -282,28 +282,6 @@ CallManager::startTone(int32_t start, int32_t type)
         Manager::instance().stopTone();
 }
 
-// TODO: this will have to be adapted
-// for conferencing in order to get
-// the right pointer for the given
-// callID.
-#if USE_CCRTP && HAVE_ZRTP
-AudioZrtpSession *
-CallManager::getAudioZrtpSession(const std::string& callID)
-{
-    // TODO: remove SIP dependency
-    const auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
-    if (!call)
-        throw CallManagerException("Call id " + callID + " is not valid");
-
-    AudioZrtpSession * zSession = call->getAudioRtp().getAudioZrtpSession();
-
-    if (!zSession)
-        throw CallManagerException("Failed to get AudioZrtpSession");
-
-    return zSession;
-}
-#endif
-
 void
 CallManager::setSASVerified(const std::string& callID)
 {

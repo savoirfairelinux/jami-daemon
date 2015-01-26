@@ -58,10 +58,6 @@
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
 #define PCM_DMIX_DSNOOP "dmix/dsnoop" // Audio profile using Alsa dmix/dsnoop
 
-namespace ost {
-class Time;
-}
-
 namespace ring {
 
 class AudioPreference;

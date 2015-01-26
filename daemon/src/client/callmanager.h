@@ -156,12 +156,6 @@ class CallManager
         void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
 
     private:
-
-#if USE_CCRTP && HAVE_ZRTP
-        AudioZrtpSession * getAudioZrtpSession(const std::string& callID);
-#endif
-
-    private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
         ring_call_ev_handlers evHandlers_{};

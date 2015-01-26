@@ -241,21 +241,6 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     std::vector<AudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
-#if USE_CCRTP
-    try {
-        call->getAudioRtp().initConfig();
-        call->getAudioRtp().initSession();
-
-        if (isStunEnabled())
-            call->updateSDPFromSTUN();
-
-        call->getAudioRtp().initLocalCryptoInfo();
-        call->getAudioRtp().start(audioCodecs);
-    } catch (...) {
-        throw VoipLinkException("Could not start rtp session for early media");
-    }
-#endif
-
     // Building the local SDP offer
     auto& sdp = call->getSDP();
 
