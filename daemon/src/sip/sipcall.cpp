@@ -91,9 +91,7 @@ static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
-#if USE_CCRTP
-        call.getAudioRtp().sendDtmfDigit(code);
-#endif
+        RING_WARN("DTMF over RTP not supported yet");
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
         RING_WARN("Unknown DTMF type %s, defaulting to %s instead",
@@ -246,24 +244,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::updateSDPFromSTUN()
 {
-#if USE_CCRTP
-    auto& account = getSIPAccount();
-    std::vector<long> socketDescriptors(getAudioRtp().getSocketDescriptors());
-
-    try {
-        std::vector<pj_sockaddr> stunPorts(getSIPVoIPLink()->sipTransport->getSTUNAddresses(account.getStunServerName(), account.getStunPort(), socketDescriptors));
-
-        // FIXME: get video sockets
-        //stunPorts.resize(4);
-
-        account.setPublishedAddress(stunPorts[0]);
-        // published IP MUST be updated first, since RTCP depends on it
-        sdp_->setPublishedIP(account.getPublishedAddress());
-        sdp_->updatePorts(stunPorts);
-    } catch (const std::runtime_error &e) {
-        RING_ERR("%s", e.what());
-    }
-#endif
+    RING_WARN("SIPCall::updateSDPFromSTUN() not implemented", __func__);
 }
 
 void SIPCall::answer()
@@ -598,13 +579,6 @@ SIPCall::offhold()
         RING_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
-#if USE_CCRTP
-    catch (const ost::Socket *) {
-        throw VoipLinkException("Socket problem in offhold");
-    } catch (const ring::AudioRtpFactoryException &) {
-        throw VoipLinkException("Socket problem in offhold");
-    }
-#endif
 }
 
 void
@@ -641,18 +615,6 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
     if (audioCodecs.empty()) {
         throw std::runtime_error("Could not instantiate any codecs");
     }
-
-#if USE_CCRTP
-    audiortp_.initConfig();
-    audiortp_.initSession();
-
-    // Invoke closure
-    SDPUpdateFunc();
-
-    audiortp_.restoreLocalContext();
-    audiortp_.initLocalCryptoInfoOnOffHold();
-    audiortp_.start(audioCodecs);
-#endif
 
     sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
     sdp_->removeAttributeFromLocalAudioMedia("sendonly");
@@ -842,52 +804,6 @@ SIPCall::startAllMedia()
     CryptoOffer crypto_offer;
     getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
 
-#if USE_CCRTP && HAVE_SDES
-    bool nego_success = false;
-
-    if (!crypto_offer.empty()) {
-        std::vector<ring::CryptoSuiteDefinition> localCapabilities;
-
-        for (size_t i = 0; i < RING_ARRAYSIZE(ring::CryptoSuites); ++i)
-            localCapabilities.push_back(ring::CryptoSuites[i]);
-
-        ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
-        auto callMgr = Manager::instance().getClient()->getCallManager();
-
-        if (sdesnego.negotiate()) {
-            nego_success = true;
-
-            try {
-                audiortp_.setRemoteCryptoInfo(sdesnego);
-                callMgr->secureSdesOn(getCallId());
-            } catch (const AudioRtpFactoryException &e) {
-                RING_ERR("%s", e.what());
-                callMgr->secureSdesOff(getCallId());
-            }
-        } else {
-            RING_ERR("SDES negotiation failure");
-            callMgr->secureSdesOff(getCallId());
-        }
-    } else {
-        RING_DBG("No crypto offer available");
-    }
-
-    // We did not find any crypto context for this media, RTP fallback
-    if (!nego_success && audiortp_.isSdesEnabled()) {
-        RING_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
-        audiortp_.stop();
-        audiortp_.setSrtpEnabled(false);
-
-        const auto& account = getSIPAccount();
-        if (account.getSrtpFallback()) {
-            audiortp_.initSession();
-
-            if (account.isStunEnabled())
-                updateSDPFromSTUN();
-        }
-    }
-#endif // USE_CCRTP && HAVE_SDES
-
     std::vector<ring::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
@@ -914,11 +830,6 @@ SIPCall::startAllMedia()
                 audioCodecs.push_back(ac);
             }
         }
-
-#if USE_CCRTP
-        if (not audioCodecs.empty())
-            getAudioRtp().updateSessionMedia(audioCodecs);
-#endif
     } catch (const SdpException &e) {
         RING_ERR("%s", e.what());
     } catch (const std::exception &rtpException) {

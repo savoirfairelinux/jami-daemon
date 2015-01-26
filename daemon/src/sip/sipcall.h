@@ -39,9 +39,7 @@
 #endif
 
 #include "call.h"
-#if USE_CCRTP
-#include "audio/audiortp/audio_rtp_factory.h"
-#endif
+
 #ifdef RING_VIDEO
 #include "video/video_rtp_session.h"
 #endif
@@ -94,22 +92,12 @@ class SIPCall : public Call
             return *sdp_;
         }
 
-#if USE_CCRTP
-        /**
-         * Returns a pointer to the AudioRtp object
-         */
-        ring::AudioRtpFactory& getAudioRtp() {
-            return audiortp_;
-        }
-#else
-
         /**
          * Returns a pointer to the AVFormatRtpSession object
          */
         ring::AVFormatRtpSession& getAVFormatRTP() const {
             return *avformatrtp_;
         }
-#endif
 
 #ifdef RING_VIDEO
         /**
@@ -211,14 +199,7 @@ class SIPCall : public Call
 
         std::vector<ring::IceCandidate> getAllRemoteCandidates();
 
-#if USE_CCRTP
-        /**
-         * Audio Rtp Session factory
-         */
-        ring::AudioRtpFactory audiortp_;
-#else
         std::unique_ptr<ring::AVFormatRtpSession> avformatrtp_;
-#endif
 
 #ifdef RING_VIDEO
         /**

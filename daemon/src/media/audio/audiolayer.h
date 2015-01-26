@@ -60,10 +60,6 @@
 
 class AudioPreference;
 
-namespace ost {
-class Time;
-}
-
 namespace ring {
 
 class Resampler;
