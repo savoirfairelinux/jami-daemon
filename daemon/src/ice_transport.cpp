@@ -234,6 +234,12 @@ bool
 IceTransport::start(const Attribute& rem_attrs,
                     const std::vector<IceCandidate>& rem_candidates)
 {
+    // pj_ice_strans_start_ice crashes if remote candidates array is empty
+    if (rem_candidates.empty()) {
+        RING_ERR("ICE start failed: no remote candidates");
+        return false;
+    }
+
     pj_str_t ufrag, pwd;
     RING_DBG("ICE negotiation starting (%u remote candidates)", rem_candidates.size());
     auto status = pj_ice_strans_start_ice(icest_.get(),
