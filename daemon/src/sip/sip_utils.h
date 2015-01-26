@@ -41,7 +41,8 @@
 
 struct pjsip_msg;
 
-namespace sip_utils {
+namespace ring { namespace sip_utils {
+
     /**
      * Helper function to parser header from incoming sip messages
      * @return Header from SIP message
@@ -60,6 +61,7 @@ namespace sip_utils {
     void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
     void sip_strerror(pj_status_t code);
-}
+
+}} // namespace ring::sip_utils
 
 #endif // SIP_UTILS_H_

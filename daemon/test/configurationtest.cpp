@@ -32,6 +32,8 @@
 #include "fileutils.h"
 #include "config/yamlparser.h"
 
+namespace ring { namespace test {
+
 void ConfigurationTest::testNodeParse()
 {
     YAML::Node node  = YAML::Load("[{a: 0, b: 1, c: 2}, {a: 0, b: 1, c: 2}]");
@@ -50,3 +52,5 @@ void ConfigurationTest::test_expand_path(void){
   CPPUNIT_ASSERT(fileutils::expand_path(pattern_2) == home.append("/x"));
   CPPUNIT_ASSERT(fileutils::expand_path(pattern_3) == "~foo/x");
 }
+
+}} // namespace ring::test

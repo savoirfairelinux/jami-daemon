@@ -37,6 +37,8 @@
 #include <functional>
 #include <stdexcept>
 
+namespace ring {
+
 // FIXME: this is ugly
 // If condition A is false, print the error message in M and exit thread
 #define EXIT_IF_FAIL(A, M, ...) if (!(A)) { \
@@ -71,5 +73,7 @@ private:
     std::atomic<bool> running_ = {false};
     std::thread thread_ = {};
 };
+
+} // namespace ring
 
 #endif // __THREADLOOP_H__

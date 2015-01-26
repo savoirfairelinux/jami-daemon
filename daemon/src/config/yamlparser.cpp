@@ -28,14 +28,14 @@
  *  as that of the covered work.
  */
 
-#include <yaml-cpp/yaml.h>
+#include "yamlparser.h"
 
-namespace yaml_utils {
+namespace ring {
 
 // FIXME: Maybe think of something more clever, this is due to yaml-cpp's poor
 // handling of empty values for nested collections.
 std::vector<std::map<std::string, std::string>>
-parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys)
+yaml_utils::parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys)
 {
     std::vector<std::map<std::string, std::string>> result;
     for (const auto &n : node) {
@@ -48,4 +48,4 @@ parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> 
     return result;
 }
 
-}
+} // namespace ring

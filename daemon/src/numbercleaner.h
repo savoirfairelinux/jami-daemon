@@ -34,8 +34,10 @@
 
 #include <string>
 
-namespace NumberCleaner {
+namespace ring { namespace NumberCleaner {
+
 std::string clean(std::string to_clean, const std::string &prefix = "");
-}
+
+}} // namespace ring::NumberCleaner
 
 #endif  // _NUMBER_CLEANER_H_

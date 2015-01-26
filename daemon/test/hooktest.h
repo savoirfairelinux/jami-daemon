@@ -34,6 +34,8 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
+namespace ring { namespace test {
+
 class HookTest : public CppUnit::TestFixture {
 
         CPPUNIT_TEST_SUITE(HookTest);
@@ -48,5 +50,7 @@ class HookTest : public CppUnit::TestFixture {
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HookTest, "HookTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(HookTest);
+
+}} // namespace ring::test
 
 #endif /* HOOKTEST_H_ */

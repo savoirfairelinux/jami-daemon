@@ -42,6 +42,8 @@
 #include "logger.h"
 #include "manager.h"
 
+namespace ring {
+
 CallManager::CallManager()
 {
     libav_utils::sfl_avcodec_init();
@@ -488,3 +490,5 @@ void CallManager::onRtcpReportReceived(const std::string& callID, const std::map
         evHandlers_.on_rtcp_receive_report(callID, stats);
     }
 }
+
+} // namespace ring

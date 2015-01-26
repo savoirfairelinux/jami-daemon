@@ -121,4 +121,4 @@ std::ostream& operator << (std::ostream& o, const HistoryItem& item)
     return o;
 }
 
-}
+} // namespace ring

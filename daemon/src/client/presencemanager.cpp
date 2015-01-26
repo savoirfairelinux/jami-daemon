@@ -44,6 +44,8 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 
+namespace ring {
+
 constexpr static const char* STATUS_KEY     = "Status";
 constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
@@ -205,3 +207,5 @@ void PresenceManager::subscriptionStateChanged(const std::string& accountID, con
         evHandlers_.on_subscription_state_change(accountID, buddyUri, state);
     }
 }
+
+} // namespace ring

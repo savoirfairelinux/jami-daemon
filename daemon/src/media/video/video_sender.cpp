@@ -39,7 +39,6 @@
 #include <map>
 #include <unistd.h>
 
-
 namespace ring { namespace video {
 
 using std::string;
@@ -83,4 +82,4 @@ void VideoSender::forceKeyFrame()
     ++forceKeyFrame_;
 }
 
-}} //namespace ring //namespace video
+}} // namespace ring::video

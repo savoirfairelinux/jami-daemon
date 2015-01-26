@@ -48,25 +48,25 @@
 #include "client/videomanager.h"
 #endif // RING_VIDEO
 
-static CallManager* getCallManager()
+static ring::CallManager* getCallManager()
 {
-    return Manager::instance().getClient()->getCallManager();
+    return ring::Manager::instance().getClient()->getCallManager();
 }
 
-static ConfigurationManager* getConfigurationManager()
+static ring::ConfigurationManager* getConfigurationManager()
 {
-    return Manager::instance().getClient()->getConfigurationManager();
+    return ring::Manager::instance().getClient()->getConfigurationManager();
 }
 
-static PresenceManager* getPresenceManager()
+static ring::PresenceManager* getPresenceManager()
 {
-    return Manager::instance().getClient()->getPresenceManager();
+    return ring::Manager::instance().getClient()->getPresenceManager();
 }
 
 #ifdef RING_VIDEO
-static VideoManager* getVideoManager()
+static ring::VideoManager* getVideoManager()
 {
-    return Manager::instance().getClient()->getVideoManager();
+    return ring::Manager::instance().getClient()->getVideoManager();
 }
 #endif // RING_VIDEO
 
@@ -92,10 +92,10 @@ int ring_init(ring_ev_handlers* ev_handlers, enum ring_init_flag flags)
     // Create manager
     try {
         // FIXME: static evil
-        static ManagerImpl *manager;
+        static ring::ManagerImpl *manager;
         // ensure that we haven't been in this function before
         assert(!manager);
-        manager = &(Manager::instance());
+        manager = &(ring::Manager::instance());
     } catch (...) {
         return -RING_ERR_MANAGER_INIT;
     }
@@ -111,7 +111,7 @@ int ring_init(ring_ev_handlers* ev_handlers, enum ring_init_flag flags)
 
     // Initialize manager now
     try {
-        Manager::instance().init("");
+        ring::Manager::instance().init("");
     } catch (...) {
         return -RING_ERR_MANAGER_INIT;
     }
@@ -122,12 +122,12 @@ int ring_init(ring_ev_handlers* ev_handlers, enum ring_init_flag flags)
 void ring_fini(void)
 {
     // Finish manager
-    Manager::instance().finish();
+    ring::Manager::instance().finish();
 }
 
 void ring_poll_events()
 {
-    Manager::instance().pollEvents();
+    ring::Manager::instance().pollEvents();
 }
 
 bool ring_call_place(const std::string& account_id, const std::string& call_id, const std::string& to)

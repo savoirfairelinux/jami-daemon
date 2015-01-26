@@ -49,6 +49,18 @@
 #include <map>
 #include <chrono>
 
+/**
+ * @file sipaccount.h
+ * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
+ */
+
+namespace YAML {
+class Node;
+class Emitter;
+}
+
+namespace ring {
+
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_PRIVKEY_PATH_KEY = "dhtPrivkeyPath";
@@ -58,15 +70,6 @@ namespace Conf {
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 }
 
-namespace YAML {
-    class Node;
-    class Emitter;
-}
-
-/**
- * @file sipaccount.h
- * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
- */
 class RingAccount : public SIPAccountBase {
     public:
         constexpr static const char * const ACCOUNT_TYPE = "RING";
@@ -290,7 +293,7 @@ class RingAccount : public SIPAccountBase {
 
         struct PendingCall {
             std::chrono::steady_clock::time_point start;
-            std::shared_ptr<ring::IceTransport> ice;
+            std::shared_ptr<IceTransport> ice;
             std::shared_ptr<SIPCall> call;
             dht::InfoHash id;
         };
@@ -372,5 +375,7 @@ class RingAccount : public SIPAccountBase {
         pjsip_transport *via_tp_ {nullptr};
 
 };
+
+} // namespace ring
 
 #endif

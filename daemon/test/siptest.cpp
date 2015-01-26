@@ -50,6 +50,8 @@ pthread_cond_t count_nb_thread;
 int counter = 0;
 }
 
+namespace ring { namespace test {
+
 void *sippThreadWithCount(void *str)
 {
     pthread_mutex_lock(&count_mutex);
@@ -427,3 +429,5 @@ void SIPTest::testIncomingIpCallSdp()
     else
         std::cout << "SIPTest: completed join with thread" << std::endl;
 }
+
+}} // namespace ring::test

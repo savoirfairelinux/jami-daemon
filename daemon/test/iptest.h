@@ -42,6 +42,8 @@
  * @brief       Regroups unit tests related to an audio buffer.
  */
 
+namespace ring { namespace test {
+
 class IpTest : public CppUnit::TestCase {
 
         /*
@@ -61,5 +63,7 @@ class IpTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(IpTest, "IpTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(IpTest);
+
+}} // namespace ring::test
 
 #endif  // IP_TEST_

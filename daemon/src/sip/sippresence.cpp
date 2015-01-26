@@ -47,6 +47,8 @@
 #define MAX_N_SUB_SERVER 50
 #define MAX_N_SUB_CLIENT 50
 
+namespace ring {
+
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
     , status_data_()
@@ -555,3 +557,5 @@ SIPPresence::publish(SIPPresence *pres)
 
     return PJ_SUCCESS;
 }
+
+} // namespace ring

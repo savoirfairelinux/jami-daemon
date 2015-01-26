@@ -36,9 +36,11 @@
 // will need this include.
 #include "managerimpl.h"
 
-namespace Manager {
-    ManagerImpl& instance();
-}
+namespace ring { namespace Manager {
+
+ManagerImpl& instance();
+
+}} // namespace ring::Manager
 
 #endif // MANAGER_H_
 

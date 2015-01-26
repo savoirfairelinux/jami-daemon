@@ -37,10 +37,6 @@
 // Application import
 #include "noncopyable.h"
 
-namespace ring {
-
-class History;
-
 /*
  * @file historyTest.h
  * @brief       Regroups unitary tests related to the phone number cleanup function.
@@ -48,6 +44,12 @@ class History;
 
 #ifndef HISTORY_TEST_
 #define HISTORY_TEST_
+
+namespace ring {
+class History;
+} // namespace ring
+
+namespace ring { namespace test {
 
 class HistoryTest : public CppUnit::TestCase {
 
@@ -95,6 +97,7 @@ class HistoryTest : public CppUnit::TestCase {
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(HistoryTest, "HistoryTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(HistoryTest);
 
-}
+
+}} // namespace ring::test
 
 #endif // HISTORY_TEST_
