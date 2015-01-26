@@ -35,6 +35,8 @@
 #include <cassert>
 #include "libav_utils.h"
 
+namespace ring { namespace video { namespace test {
+
 void VideoEndpointTest::testListInstalledCodecs()
 {
     /* This would list codecs */
@@ -45,10 +47,12 @@ void VideoEndpointTest::testListInstalledCodecs()
         std::cout << '\t' << *it << std::endl;
 }
 
+}}} // namespace ring::video::test
+
 int main ()
 {
-    libav_utils::sfl_avcodec_init();
-    VideoEndpointTest test;
+    ring::libav_utils::sfl_avcodec_init();
+    ring::video::test::VideoEndpointTest test;
     test.testListInstalledCodecs();
     return 0;
 }

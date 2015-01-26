@@ -54,6 +54,8 @@
 #define DEFAULT_SIP_PORT    5060
 #define DEFAULT_SIP_TLS_PORT 5061
 
+namespace ring {
+
 struct SipTransportDescr
 {
     SipTransportDescr() {}
@@ -136,9 +138,8 @@ private:
 
 class IpAddr;
 class SipIceTransport;
-namespace ring {
-    class IceTransport;
-}
+class IceTransport;
+
 /**
  * Manages the transports and receive callbacks from PJSIP
  */
@@ -157,7 +158,7 @@ public:
 #endif
 
 #if HAVE_DHT
-    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<ring::IceTransport>, unsigned comp_id);
+    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
 #endif
 
     std::shared_ptr<SipTransport> findTransport(pjsip_transport*);
@@ -248,5 +249,7 @@ private:
     pjsip_endpoint *endpt_;
 
 };
+
+} // namespace ring
 
 #endif // SIPTRANSPORT_H_

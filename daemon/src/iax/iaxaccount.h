@@ -42,6 +42,8 @@ namespace YAML {
     class Node;
 }
 
+namespace ring {
+
 class IAXCall;
 
 /**
@@ -155,5 +157,7 @@ class IAXAccount : public Account {
          * to force a registration. */
         int nextRefreshStamp_ = 0;
 };
+
+} // namespace ring
 
 #endif

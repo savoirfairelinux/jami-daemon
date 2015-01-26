@@ -63,7 +63,8 @@
 #include <cerrno>
 #include <cstddef>
 
-namespace fileutils {
+namespace ring { namespace fileutils {
+
 // returns true if directory exists
 bool check_dir(const char *path)
 {
@@ -362,4 +363,4 @@ get_data_dir()
         "share" DIR_SEPARATOR_STR + PACKAGE;
 }
 
-}
+}} // namespace ring::fileutils

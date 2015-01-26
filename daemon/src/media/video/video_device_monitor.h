@@ -42,8 +42,8 @@
 #include "video_device.h"
 
 namespace YAML {
-    class Emitter;
-    class Node;
+class Emitter;
+class Node;
 }
 
 namespace ring { namespace video {
@@ -102,6 +102,6 @@ class VideoDeviceMonitor : public Serializable
         constexpr static const char *CONFIG_LABEL = "video";
 };
 
-}} //namespace ring //namespace video
+}} // namespace ring::video
 
 #endif /* VIDEO_DEVICE_MONITOR_H__ */

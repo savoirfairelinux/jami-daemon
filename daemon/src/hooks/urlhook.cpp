@@ -31,6 +31,8 @@
 #include "urlhook.h"
 #include <cstdlib>
 
+namespace ring {
+
 int UrlHook::runAction(const std::string &command, const std::string &args)
 {
     //FIXME : use fork and execve, so no need to escape shell arguments
@@ -39,3 +41,4 @@ int UrlHook::runAction(const std::string &command, const std::string &args)
     return system(cmd.c_str());
 }
 
+} // namespace ring

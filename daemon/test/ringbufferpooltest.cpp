@@ -37,7 +37,7 @@
 #include "logger.h"
 #include "test_utils.h"
 
-using namespace ring;
+namespace ring { namespace test {
 
 void RingBufferPoolTest::testBindUnbindBuffer()
 {
@@ -219,3 +219,5 @@ void RingBufferPoolTest::testConference()
 RingBufferPoolTest::RingBufferPoolTest()
     : CppUnit::TestCase("Audio Layer Tests") , rbPool_(new RingBufferPool)
 {}
+
+}} // namespace ring::test

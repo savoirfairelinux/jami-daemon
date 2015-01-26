@@ -658,7 +658,7 @@ OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
     }
 
     if (bufferIsFilled_) {
-        SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(ring::AudioSample));
+        SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(AudioSample));
         if (SL_RESULT_SUCCESS != result) {
             RING_DBG("Error could not enqueue buffers in playback callback\n");
         }
@@ -687,7 +687,7 @@ OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
     SLresult result;
     // enqueue an empty buffer to be filled by the recorder
     // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(ring::AudioSample));
+    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(AudioSample));
 
     audioCaptureFillBuffer(old_buffer);
 
@@ -858,4 +858,4 @@ void dumpAvailableEngineInterfaces()
     }
 }
 
-}
+} // namespace ring

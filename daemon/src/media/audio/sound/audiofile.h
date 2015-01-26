@@ -66,6 +66,6 @@ class AudioFile : public AudioLoop {
         unsigned updatePlaybackScale_;
 };
 
-}
+} // namespace ring
 
 #endif // __AUDIOFILE_H__

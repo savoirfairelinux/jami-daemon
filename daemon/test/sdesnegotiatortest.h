@@ -59,9 +59,9 @@
 
 #include "sip/sdes_negotiator.h" // for CryptoSuiteDefinition
 
-namespace ring {
-    class Pattern;
-}
+namespace ring { namespace test {
+
+class Pattern;
 
 class SdesNegotiatorTest : public CppUnit::TestCase {
 
@@ -105,5 +105,7 @@ class SdesNegotiatorTest : public CppUnit::TestCase {
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(SdesNegotiatorTest, "SdesNegotiatorTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(SdesNegotiatorTest);
+
+}} // namespace ring::test
 
 #endif // __SDESNEGOTIATOR_TEST_H__

@@ -44,6 +44,8 @@
 #include <cppunit/TestCase.h>
 #include <cppunit/TestSuite.h>
 
+namespace ring { namespace test {
+
 class AudioCodecTest: public CppUnit::TestFixture {
 
         /*
@@ -58,8 +60,11 @@ class AudioCodecTest: public CppUnit::TestFixture {
     public:
         void testCodecs();
 };
+
 /* Register our test module */
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(AudioCodecTest, "AudioCodecTest");
 CPPUNIT_TEST_SUITE_REGISTRATION(AudioCodecTest);
+
+}} // namespace ring::test
 
 #endif // AUDIO_CODEC_TEST_

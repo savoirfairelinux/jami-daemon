@@ -65,7 +65,7 @@ int main(int argc, char* argv[])
     printf("\nRing Daemon Test Suite, by Savoir-Faire Linux 2004-2015\n\n");
     setConsoleLog(true);
     setDebugMode(true);
-    fileutils::FileHandle f(fileutils::create_pidfile());
+    ring::fileutils::FileHandle f(ring::fileutils::create_pidfile());
     if (f.fd == -1) {
         fprintf(stderr, "An dring instance is already running, quitting...\n");
         return 1;
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
     printf("\n\n=== SFLphone initialization ===\n\n");
     backup();
-    Manager::instance().init(CONFIG_SAMPLE);
+    ring::Manager::instance().init(CONFIG_SAMPLE);
 
     // Get the top level suite from the registry
     printf("\n\n=== Test Suite: %s ===\n\n", testSuiteName.c_str());
@@ -147,7 +147,7 @@ int main(int argc, char* argv[])
     bool wasSuccessful = runner.run();
 
     printf("=== Test suite ending ===\n");
-    Manager::instance().finish();
+    ring::Manager::instance().finish();
 
     restore();
 

@@ -45,6 +45,8 @@
 
 #include "ring.h"
 
+namespace ring {
+
 class VideoManager
 {
     private:
@@ -56,13 +58,13 @@ class VideoManager
          * this video input instance: this instance is destroyed when the last
          * external user has released its shared pointer.
          */
-        std::weak_ptr<ring::video::VideoInput> videoInput_ = {};
-        std::shared_ptr<ring::video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-        ring::video::VideoDeviceMonitor videoDeviceMonitor_ = {};
+        std::weak_ptr<video::VideoInput> videoInput_ = {};
+        std::shared_ptr<video::VideoFrameActiveWriter> videoPreview_ = nullptr;
+        video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
         void registerEvHandlers(struct ring_video_ev_handlers* evHandlers);
-        ring::video::VideoDeviceMonitor& getVideoDeviceMonitor();
+        video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
     // Methods
     public:
@@ -76,7 +78,7 @@ class VideoManager
         std::vector<std::string>
         getDeviceList();
 
-        ring::video::VideoCapabilities
+        video::VideoCapabilities
         getCapabilities(const std::string& name);
 
         std::map<std::string, std::string>
@@ -100,7 +102,7 @@ class VideoManager
         bool hasCameraStarted();
         bool switchInput(const std::string& resource);
         bool switchToCamera();
-        std::shared_ptr<ring::video::VideoFrameActiveWriter> getVideoCamera();
+        std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 
     // Signals
     public:
@@ -113,5 +115,7 @@ class VideoManager
         ring_video_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
+
+} // namespace ring
 
 #endif // VIDEOMANAGER_H_

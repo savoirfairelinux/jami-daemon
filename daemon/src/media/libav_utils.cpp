@@ -43,6 +43,8 @@
 #include <mutex>
 #include <exception>
 
+namespace ring { namespace libav_utils {
+
 std::map<std::string, std::string> encoders_;
 
 #ifdef RING_VIDEO
@@ -64,11 +66,7 @@ findInstalledVideoCodecs()
             RING_ERR("Didn't find \"%s\" encoder", it.second.c_str());
     }
 }
-#endif // RING_VIDEO
 
-namespace libav_utils {
-
-#ifdef RING_VIDEO
 std::vector<std::string> getVideoCodecList()
 {
     if (installed_video_codecs_.empty())
@@ -210,4 +208,4 @@ void sfl_url_split(const char *url,
                  path, path_size, url);
 }
 
-} // end namespace libav_utils
+}} // namespace ring::libav_utils

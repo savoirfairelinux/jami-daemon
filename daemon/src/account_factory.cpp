@@ -46,6 +46,8 @@
 
 #include <stdexcept>
 
+namespace ring {
+
 const char* const AccountFactory::DEFAULT_ACCOUNT_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 AccountFactory::AccountFactory()
@@ -213,3 +215,5 @@ void AccountFactory::initIP2IPAccount()
     ip2ip_account_ = createAccount(SIPAccount::ACCOUNT_TYPE,
                                    SIPAccount::IP2IP_PROFILE);
 }
+
+} // namespace ring

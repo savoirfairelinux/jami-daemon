@@ -99,4 +99,4 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
 
 void AudioLoop::onBufferFinish() {}
 
-}
+} // namespace ring

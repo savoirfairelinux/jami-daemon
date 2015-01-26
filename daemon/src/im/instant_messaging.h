@@ -57,7 +57,7 @@
 #define MODE_APPEND			std::ios::out || std::ios::app
 #define MODE_TEST			std::ios::out
 
-namespace ring {
+namespace ring { namespace InstantMessaging {
 
 const std::string IM_XML_URI("uri");
 const std::string BOUNDARY("--boundary");
@@ -68,81 +68,81 @@ class InstantMessageException : public std::runtime_error {
             std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
-namespace InstantMessaging {
-        typedef std::map<std::string, std::string> UriEntry;
-        typedef std::list<UriEntry> UriList;
+typedef std::map<std::string, std::string> UriEntry;
+typedef std::list<UriEntry> UriList;
 
-        /*
-         * Write the text message to the right file
-         * The call ID is associated to a file descriptor, so it is easy then to retrieve the right file
-         *
-         * @param message	The text message
-         * @param id	The current call
-         * @return True if the message could have been successfully saved, False otherwise
-         */
-        bool saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
+/*
+ * Write the text message to the right file
+ * The call ID is associated to a file descriptor, so it is easy then to retrieve the right file
+ *
+ * @param message	The text message
+ * @param id	The current call
+ * @return True if the message could have been successfully saved, False otherwise
+ */
+bool saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
 
-        /*
-         * Send a SIP string message inside a call
-         *
-         * @param id	The call ID we will retrieve the invite session from
-         * @param message	The string message, as sent by the client
-         */
-        void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
+/*
+ * Send a SIP string message inside a call
+ *
+ * @param id	The call ID we will retrieve the invite session from
+ * @param message	The string message, as sent by the client
+ */
+void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
 
-        void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
+void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
 #if HAVE_IAX
-        void send_iax_message(iax_session *session, const std::string& id, const std::string&);
+void send_iax_message(iax_session *session, const std::string& id, const std::string&);
 #endif
 
-        std::vector<std::string> split_message(std::string);
+std::vector<std::string> split_message(std::string);
 
-        /**
-         * Generate Xml participant list for multi recipient based on RFC Draft 5365
-         *
-        * @param A UriList of UriEntry
-        *
-        * @return A string containing the full XML formated information to be included in the
-        *         sip instant message.
-        */
-        std::string generateXmlUriList(UriList &list);
+/**
+ * Generate Xml participant list for multi recipient based on RFC Draft 5365
+ *
+ * @param A UriList of UriEntry
+ *
+ * @return A string containing the full XML formated information to be included in the
+ *         sip instant message.
+ */
+std::string generateXmlUriList(UriList &list);
 
-        /**
-         * Parse the Urilist from a SIP Instant Message provided by a UriList service.
-         *
-         * @param A XML formated string as obtained from a SIP instant message.
-         *
-         * @return An UriList of UriEntry containing parsed XML information as a map.
-         */
-        UriList parseXmlUriList(const std::string &urilist);
+/**
+ * Parse the Urilist from a SIP Instant Message provided by a UriList service.
+ *
+ * @param A XML formated string as obtained from a SIP instant message.
+ *
+ * @return An UriList of UriEntry containing parsed XML information as a map.
+ */
+UriList parseXmlUriList(const std::string &urilist);
 
-        /**
-         * Format text message according to RFC 5365, append recipient-list to the message
-         *
-         * @param text to be displayed
-         * @param list containing the recipients
-         *
-         * @return formated text stored into a string to be included in sip MESSAGE
-         */
-        std::string appendUriList(const std::string &text, UriList &list);
+/**
+ * Format text message according to RFC 5365, append recipient-list to the message
+ *
+ * @param text to be displayed
+ * @param list containing the recipients
+ *
+ * @return formated text stored into a string to be included in sip MESSAGE
+ */
+std::string appendUriList(const std::string &text, UriList &list);
 
-        /**
-             * Retreive the xml formated uri list in formated text data according to RFC 5365
-             *
-         * @param text The formated text message as retreived in the SIP message
-         *
-         * @return A string containing the XML content
-         */
-        std::string findTextUriList(const std::string &text);
+/**
+ * Retreive the xml formated uri list in formated text data according to RFC 5365
+ *
+ * @param text The formated text message as retreived in the SIP message
+ *
+ * @return A string containing the XML content
+ */
+std::string findTextUriList(const std::string &text);
 
-        /**
-             * Retrive the plain text message in formated text data according to RFC 5365
-             *
-         * @param text The formated text message as retreived in the SIP message
-         *
-         * @return A string containing the actual message
-         */
-        std::string findTextMessage(const std::string &text);
-} // end namespace InstantMessaging
-}
+/**
+ * Retrive the plain text message in formated text data according to RFC 5365
+ *
+ * @param text The formated text message as retreived in the SIP message
+ *
+ * @return A string containing the actual message
+ */
+std::string findTextMessage(const std::string &text);
+
+}} // namespace ring::InstantMessaging
+
 #endif // __INSTANT_MESSAGING_H_

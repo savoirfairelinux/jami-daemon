@@ -55,6 +55,7 @@ namespace ring {
 
 class AlsaThread;
 class RingBuffer;
+class AudioPreference;
 
 /** Associate a sound card index to its string description */
 typedef std::pair<int , std::string> HwIDPair;
@@ -205,7 +206,7 @@ class AlsaLayer : public AudioLayer {
          * @param buffer The non-interleaved data to be copied
          * @param frames Frames in the buffer
          */
-        void write(ring::AudioSample* buffer, int frames, snd_pcm_t *handle);
+        void write(AudioSample* buffer, int frames, snd_pcm_t *handle);
 
         /**
          * Read data from the internal ring buffer
@@ -214,7 +215,7 @@ class AlsaLayer : public AudioLayer {
          * @param frames  The number of frames to get
          * @return int The number of frames actually read
          */
-        int read(ring::AudioSample* buffer, int frames);
+        int read(AudioSample* buffer, int frames);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
@@ -249,8 +250,8 @@ class AlsaLayer : public AudioLayer {
         AudioBuffer captureBuff_;
 
         /** Interleaved buffer */
-        std::vector<ring::AudioSample> playbackIBuff_;
-        std::vector<ring::AudioSample> captureIBuff_;
+        std::vector<AudioSample> playbackIBuff_;
+        std::vector<AudioSample> captureIBuff_;
 
         bool is_playback_prepared_;
         bool is_capture_prepared_;
@@ -263,6 +264,6 @@ class AlsaLayer : public AudioLayer {
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
-}
+} // namespace ring
 
 #endif // ALSA_LAYER_H_

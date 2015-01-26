@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "test_utils.h"
 
-using namespace ring;
+namespace ring { namespace test {
 
 void AudioBufferTest::testAudioBufferConstructors()
 {
@@ -100,3 +100,5 @@ void AudioBufferTest::testAudioBufferMix()
 
 
 AudioBufferTest::AudioBufferTest() : CppUnit::TestCase("Audio Buffer Tests") {}
+
+}} // namespace ring::test

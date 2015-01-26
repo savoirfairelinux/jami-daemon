@@ -42,15 +42,15 @@
 
 #include "ring.h"
 
+namespace ring {
+
+class AudioZrtpSession;
+
 class CallManagerException: public std::runtime_error {
     public:
         CallManagerException(const std::string& str = "") :
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
-
-namespace ring {
-class AudioZrtpSession;
-}
 
 class CallManager
 {
@@ -161,5 +161,7 @@ class CallManager
         ring_call_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
+
+} // namespace ring
 
 #endif//CALLMANAGER_H

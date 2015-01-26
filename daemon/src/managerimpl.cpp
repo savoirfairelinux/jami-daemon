@@ -92,11 +92,9 @@
 #include <sys/stat.h>  // mkdir(2)
 #include <memory>
 
-using namespace ring;
+namespace ring {
 
 std::atomic_bool ManagerImpl::initialized = {false};
-
-using namespace ring;
 
 static void
 copy_over(const std::string &srcPath, const std::string &destPath)
@@ -135,10 +133,10 @@ ManagerImpl::ManagerImpl() :
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(*pluginManager_), client_(),
-    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, ring::AudioFormat::MONO()),
+    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
-    , ringbufferpool_(new ring::RingBufferPool)
+    , ringbufferpool_(new RingBufferPool)
     , callFactory(), conferenceMap_(), history_(),
     finished_(false), accountFactory_(), ice_tf_()
 {
@@ -235,9 +233,9 @@ ManagerImpl::init(const std::string &config_file)
         if (audiodriver_) {
             {
                 std::lock_guard<std::mutex> toneLock(toneMutex_);
-                telephoneTone_.reset(new ring::TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
+                telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
             }
-            dtmfKey_.reset(new ring::DTMF(getRingBufferPool().getInternalSamplingRate()));
+            dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate()));
         }
     }
 
@@ -376,7 +374,7 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
         if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
     }
 
     std::shared_ptr<Call> call;
@@ -437,7 +435,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             RING_DBG("Detach main participant from conference");
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
         }
     }
 
@@ -603,7 +601,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         } else if (isConference(currentCallId) && callId != currentCallId) {
             holdConference(currentCallId);
         } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
     }
 
     std::shared_ptr<Call> call;
@@ -741,7 +739,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
     // We now need to bind the audio to the remain participant
 
     // Unbind main participant audio from conference
-    getRingBufferPool().unBindAll(ring::RingBufferPool::DEFAULT_ID);
+    getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
     ParticipantSet participants(conf->getParticipantList());
 
@@ -749,7 +747,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
     ParticipantSet::iterator iter_p = participants.begin();
 
     if (iter_p != participants.end())
-        getRingBufferPool().bindCallID(*iter_p, ring::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().bindCallID(*iter_p, RingBufferPool::DEFAULT_ID);
 
     // Then remove the conference from the conference map
     if (conferenceMap_.erase(conference_id))
@@ -875,7 +873,7 @@ ManagerImpl::addParticipant(const std::string& callId,
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
         if (isConference(current_call_id))
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id);
     }
@@ -927,7 +925,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         std::string current_call_id(getCurrentCallId());
 
         if (isConference(current_call_id))
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id);
     }
@@ -945,12 +943,12 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         ParticipantSet participants(conf->getParticipantList());
 
         for (const auto &item_p : participants) {
-            getRingBufferPool().bindCallID(item_p, ring::RingBufferPool::DEFAULT_ID);
+            getRingBufferPool().bindCallID(item_p, RingBufferPool::DEFAULT_ID);
             // Reset ringbuffer's readpointers
             getRingBufferPool().flush(item_p);
         }
 
-        getRingBufferPool().flush(ring::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
 
         if (conf->getState() == Conference::ACTIVE_DETACHED)
             conf->setState(Conference::ACTIVE_ATTACHED);
@@ -1011,7 +1009,7 @@ ManagerImpl::joinParticipant(const std::string& callId1,
     if ((current_call_id != callId1) and (current_call_id != callId2)) {
         // If currently in a conference
         if (isConference(current_call_id))
-            detachParticipant(ring::RingBufferPool::DEFAULT_ID);
+            detachParticipant(RingBufferPool::DEFAULT_ID);
         else
             onHoldCall(current_call_id); // currently in a call
     }
@@ -1121,7 +1119,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
 {
     const std::string current_call_id(getCurrentCallId());
 
-    if (call_id != ring::RingBufferPool::DEFAULT_ID) {
+    if (call_id != RingBufferPool::DEFAULT_ID) {
         auto call = getCallFromCallID(call_id);
         if (!call) {
             RING_ERR("Could not find call %s", call_id.c_str());
@@ -1151,7 +1149,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
 
     } else {
         RING_DBG("Unbind main participant from conference %d");
-        getRingBufferPool().unBindAll(ring::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
             RING_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
@@ -1226,7 +1224,7 @@ ManagerImpl::processRemainingParticipants(Conference &conf)
         for (const auto &p : participants)
             getRingBufferPool().flush(p);
 
-        getRingBufferPool().flush(ring::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().flush(RingBufferPool::DEFAULT_ID);
     } else if (n == 1) {
         // this call is the last participant, hence
         // the conference is over
@@ -1292,7 +1290,7 @@ ManagerImpl::addStream(Call& call)
         RING_DBG("Add stream to call");
 
         // bind to main
-        getRingBufferPool().bindCallID(call_id, ring::RingBufferPool::DEFAULT_ID);
+        getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
 
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
         if (!audiodriver_) {
@@ -1674,7 +1672,7 @@ ManagerImpl::callBusy(Call& call)
     client_.getCallManager()->callStateChanged(call_id, "BUSY");
 
     if (isCurrentCall(call)) {
-        playATone(ring::Tone::TONE_BUSY);
+        playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
 
@@ -2424,8 +2422,8 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     // Get the type
 
     const char* accountType;
-    if (details.find(CONFIG_ACCOUNT_TYPE) != details.end())
-        accountType = (*details.find(CONFIG_ACCOUNT_TYPE)).second.c_str();
+    if (details.find(Conf::CONFIG_ACCOUNT_TYPE) != details.end())
+        accountType = (*details.find(Conf::CONFIG_ACCOUNT_TYPE)).second.c_str();
     else
         accountType = AccountFactory::DEFAULT_ACCOUNT_TYPE;
 
@@ -2434,7 +2432,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     auto newAccount = accountFactory_.createAccount(accountType, newAccountID);
     if (!newAccount) {
         RING_ERR("Unknown %s param when calling addAccount(): %s",
-              CONFIG_ACCOUNT_TYPE, accountType);
+              Conf::CONFIG_ACCOUNT_TYPE, accountType);
         return "";
     }
 
@@ -2503,7 +2501,8 @@ void
 ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
                          const std::string &accountOrder)
 {
-    using namespace yaml_utils;
+    using yaml_utils::parseValue;
+
     std::string accountType;
     parseValue(node, "type", accountType);
 
@@ -2541,8 +2540,6 @@ ManagerImpl::loadAccount(const YAML::Node &node, int &errorCount,
 int
 ManagerImpl::loadAccountMap(const YAML::Node &node)
 {
-    using namespace Conf;
-
     accountFactory_.initIP2IPAccount();
 
     // build preferences
@@ -2790,3 +2787,5 @@ ManagerImpl::newOutgoingCall(const std::string& id,
 
     return account->newOutgoingCall(id, finalToUrl);
 }
+
+} // namespace ring
