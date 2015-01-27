@@ -14,7 +14,7 @@ unittest:
 	@echo ""
 else
 unittest:
-	@echo "SFLphone WARNING:"
+	@echo "Ring WARNING:"
 	@echo " -- You need the cppunit devel package to compile the unitary tests."
 endif
 
