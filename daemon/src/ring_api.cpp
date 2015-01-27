@@ -39,7 +39,7 @@
 #include "manager.h"
 #include "managerimpl.h"
 #include "logger.h"
-#include "ring.h"
+#include "dring.h"
 #include "client/callmanager.h"
 #include "client/configurationmanager.h"
 #include "client/presencemanager.h"
