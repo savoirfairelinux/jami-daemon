@@ -40,6 +40,7 @@
 
 #include "fileutils.h"
 #include "logger.h"
+#include "security.h"
 
 #include <sstream>
 #include <iomanip>
@@ -63,14 +64,16 @@
 
 namespace ring {
 
+//Map the internal ring Enum class of the exported names
+
 const EnumClassNames<TlsValidator::CheckValues> TlsValidator::CheckValuesNames = {{
-    /* CheckValues        Name     */
-    /* PASSED      */ "PASSED"      ,
-    /* FAILED      */ "FAILED"      ,
-    /* UNSUPPORTED */ "UNSUPPORTED" ,
-    /* ISO_DATE    */ "ISO_DATE"    ,
-    /* CUSTOM      */ "CUSTOM"      ,
-    /* CUSTOM      */ "DATE"        ,
+    /* CheckValues                        Name                         */
+    /* PASSED      */ DRing::Certificate::CheckValuesNames::PASSED      ,
+    /* FAILED      */ DRing::Certificate::CheckValuesNames::FAILED      ,
+    /* UNSUPPORTED */ DRing::Certificate::CheckValuesNames::UNSUPPORTED ,
+    /* ISO_DATE    */ DRing::Certificate::CheckValuesNames::ISO_DATE    ,
+    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::CUSTOM      ,
+    /* CUSTOM      */ DRing::Certificate::CheckValuesNames::DATE        ,
 }};
 
 const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidator::CheckResult> TlsValidator::checkCallback = {{
@@ -98,7 +101,6 @@ const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidato
     /*UNEXPECTED_OWNER                 */ &TlsValidator::expectedOwner                  ,
     /*NOT_ACTIVATED                    */ &TlsValidator::activated                      ,
 }};
-
 
 const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
     /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
@@ -135,75 +137,69 @@ const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> Tl
     /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN ,
     /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN ,
     /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN ,
-//     /*REQUIRE_PRIVATE_KEY_PASSWORD     */ CheckValuesType::BOOLEAN ,
     /*OUTGOING_SERVER                  */ CheckValuesType::CUSTOM  ,
     /*EXIST                            */ CheckValuesType::BOOLEAN ,
     /*VALID                            */ CheckValuesType::BOOLEAN ,
     /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN ,
     /*KNOWN_AUTHORITY                  */ CheckValuesType::BOOLEAN ,
     /*NOT_REVOKED                      */ CheckValuesType::BOOLEAN ,
-//     /*EXPIRATION_DATE                  */ CheckValuesType::ISO_DATE,
-//     /*ACTIVATION_DATE                  */ CheckValuesType::ISO_DATE,
     /*AUTHORITY_MISMATCH               */ CheckValuesType::BOOLEAN ,
     /*UNEXPECTED_OWNER                 */ CheckValuesType::BOOLEAN ,
     /*NOT_ACTIVATED                    */ CheckValuesType::BOOLEAN ,
 }};
 
 const EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCheckNames = {{
-    /*      CertificateCheck                       Name                 */
-    /*HAS_PRIVATE_KEY                  */ "HAS_PRIVATE_KEY"                ,
-    /*EXPIRED                          */ "EXPIRED"                        ,
-    /*STRONG_SIGNING                   */ "STRONG_SIGNING"                 ,
-    /*NOT_SELF_SIGNED                  */ "NOT_SELF_SIGNED"                ,
-    /*KEY_MATCH                        */ "KEY_MATCH"                      ,
-    /*PRIVATE_KEY_STORAGE_PERMISSION   */ "PRIVATE_KEY_STORAGE_PERMISSION" ,
-    /*PUBLIC_KEY_STORAGE_PERMISSION    */ "PUBLIC_KEY_STORAGE_PERMISSION"  ,
-    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ "PRIVATEKEY_DIRECTORY_PERMISSIONS"  ,
-    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ "PUBLICKEY_DIRECTORY_PERMISSIONS"   ,
-    /*PRIVATE_KEY_STORAGE_LOCATION     */ "PRIVATE_KEY_STORAGE_LOCATION"   ,
-    /*PUBLIC_KEY_STORAGE_LOCATION      */ "PUBLIC_KEY_STORAGE_LOCATION"    ,
-    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ "PRIVATE_KEY_SELINUX_ATTRIBUTES" ,
-    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ "PUBLIC_KEY_SELINUX_ATTRIBUTES"  ,
-//     /*REQUIRE_PRIVATE_KEY_PASSWORD     */ "REQUIRE_PRIVATE_KEY_PASSWORD"   , // TODO move to certificateDetails()
-    /*OUTGOING_SERVER                  */ "OUTGOING_SERVER"                ,
-    /*EXIST                            */ "EXIST"                          ,
-    /*VALID                            */ "VALID"                          ,
-    /*VALID_AUTHORITY                  */ "VALID_AUTHORITY"                ,
-    /*KNOWN_AUTHORITY                  */ "KNOWN_AUTHORITY"                ,
-    /*NOT_REVOKED                      */ "NOT_REVOKED"                    ,
-//     /*EXPIRATION_DATE                  */ "EXPIRATION_DATE"                , // TODO move to certificateDetails()
-//     /*ACTIVATION_DATE                  */ "ACTIVATION_DATE"                , // TODO move to certificateDetails()
-    /*AUTHORITY_MISMATCH               */ "AUTHORITY_MISMATCH"             ,
-    /*UNEXPECTED_OWNER                 */ "UNEXPECTED_OWNER"               ,
-    /*NOT_ACTIVATED                    */ "NOT_ACTIVATED"                  ,
+    /*      CertificateCheck                                   Name                                         */
+    /*HAS_PRIVATE_KEY                  */ DRing::Certificate::ChecksNames::HAS_PRIVATE_KEY                   ,
+    /*EXPIRED                          */ DRing::Certificate::ChecksNames::EXPIRED                           ,
+    /*STRONG_SIGNING                   */ DRing::Certificate::ChecksNames::STRONG_SIGNING                    ,
+    /*NOT_SELF_SIGNED                  */ DRing::Certificate::ChecksNames::NOT_SELF_SIGNED                   ,
+    /*KEY_MATCH                        */ DRing::Certificate::ChecksNames::KEY_MATCH                         ,
+    /*PRIVATE_KEY_STORAGE_PERMISSION   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_PERMISSION    ,
+    /*PUBLIC_KEY_STORAGE_PERMISSION    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_PERMISSION     ,
+    /*PRIVATEKEY_DIRECTORY_PERMISSIONS */ DRing::Certificate::ChecksNames::PRIVATE_KEY_DIRECTORY_PERMISSIONS ,
+    /*PUBLICKEY_DIRECTORY_PERMISSIONS  */ DRing::Certificate::ChecksNames::PUBLIC_KEY_DIRECTORY_PERMISSIONS  ,
+    /*PRIVATE_KEY_STORAGE_LOCATION     */ DRing::Certificate::ChecksNames::PRIVATE_KEY_STORAGE_LOCATION      ,
+    /*PUBLIC_KEY_STORAGE_LOCATION      */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_LOCATION       ,
+    /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_SELINUX_ATTRIBUTES    ,
+    /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_SELINUX_ATTRIBUTES     ,
+    /*OUTGOING_SERVER                  */ DRing::Certificate::ChecksNames::OUTGOING_SERVER                   ,
+    /*EXIST                            */ DRing::Certificate::ChecksNames::EXIST                             ,
+    /*VALID                            */ DRing::Certificate::ChecksNames::VALID                             ,
+    /*VALID_AUTHORITY                  */ DRing::Certificate::ChecksNames::VALID_AUTHORITY                   ,
+    /*KNOWN_AUTHORITY                  */ DRing::Certificate::ChecksNames::KNOWN_AUTHORITY                   ,
+    /*NOT_REVOKED                      */ DRing::Certificate::ChecksNames::NOT_REVOKED                       ,
+    /*AUTHORITY_MISMATCH               */ DRing::Certificate::ChecksNames::AUTHORITY_MISMATCH                ,
+    /*UNEXPECTED_OWNER                 */ DRing::Certificate::ChecksNames::UNEXPECTED_OWNER                  ,
+    /*NOT_ACTIVATED                    */ DRing::Certificate::ChecksNames::NOT_ACTIVATED                     ,
 }};
 
 const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::CertificateDetailsNames = {{
-    /* EXPIRATION_DATE              */ "EXPIRATION_DATE"              ,
-    /* ACTIVATION_DATE              */ "ACTIVATION_DATE"              ,
-    /* REQUIRE_PRIVATE_KEY_PASSWORD */ "REQUIRE_PRIVATE_KEY_PASSWORD" ,
-    /* PUBLIC_SIGNATURE             */ "PUBLIC_SIGNATURE"             ,
-    /* VERSION_NUMBER               */ "VERSION_NUMBER"               ,
-    /* SERIAL_NUMBER                */ "SERIAL_NUMBER"                ,
-    /* ISSUER                       */ "ISSUER"                       ,
-    /* SUBJECT_KEY_ALGORITHM        */ "SUBJECT_KEY_ALGORITHM"        ,
-    /* CN                           */ "CN"                           ,
-    /* N                            */ "N"                            ,
-    /* O                            */ "O"                            ,
-    /* SIGNATURE_ALGORITHM          */ "SIGNATURE_ALGORITHM"          ,
-    /* MD5_FINGERPRINT              */ "MD5_FINGERPRINT"              ,
-    /* SHA1_FINGERPRINT             */ "SHA1_FINGERPRINT"             ,
-    /* PUBLIC_KEY_ID                */ "PUBLIC_KEY_ID"                ,
-    /* ISSUER_DN                    */ "ISSUER_DN"                    ,
-    /* NEXT_EXPECTED_UPDATE_DATE    */ "NEXT_EXPECTED_UPDATE_DATE"    ,
+    /* EXPIRATION_DATE              */ DRing::Certificate::DetailsNames::EXPIRATION_DATE              ,
+    /* ACTIVATION_DATE              */ DRing::Certificate::DetailsNames::ACTIVATION_DATE              ,
+    /* REQUIRE_PRIVATE_KEY_PASSWORD */ DRing::Certificate::DetailsNames::REQUIRE_PRIVATE_KEY_PASSWORD ,
+    /* PUBLIC_SIGNATURE             */ DRing::Certificate::DetailsNames::PUBLIC_SIGNATURE             ,
+    /* VERSION_NUMBER               */ DRing::Certificate::DetailsNames::VERSION_NUMBER               ,
+    /* SERIAL_NUMBER                */ DRing::Certificate::DetailsNames::SERIAL_NUMBER                ,
+    /* ISSUER                       */ DRing::Certificate::DetailsNames::ISSUER                       ,
+    /* SUBJECT_KEY_ALGORITHM        */ DRing::Certificate::DetailsNames::SUBJECT_KEY_ALGORITHM        ,
+    /* CN                           */ DRing::Certificate::DetailsNames::CN                           ,
+    /* N                            */ DRing::Certificate::DetailsNames::N                            ,
+    /* O                            */ DRing::Certificate::DetailsNames::O                            ,
+    /* SIGNATURE_ALGORITHM          */ DRing::Certificate::DetailsNames::SIGNATURE_ALGORITHM          ,
+    /* MD5_FINGERPRINT              */ DRing::Certificate::DetailsNames::MD5_FINGERPRINT              ,
+    /* SHA1_FINGERPRINT             */ DRing::Certificate::DetailsNames::SHA1_FINGERPRINT             ,
+    /* PUBLIC_KEY_ID                */ DRing::Certificate::DetailsNames::PUBLIC_KEY_ID                ,
+    /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN                    ,
+    /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE    ,
 }};
 
 const EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
-    /*   Type        Name    */
-    /* BOOLEAN  */ "BOOLEAN"  ,
-    /* ISO_DATE */ "ISO_DATE" ,
-    /* CUSTOM   */ "CUSTOM"   ,
-    /* NUMBER   */ "NUMBER"   ,
+    /*   Type                            Name                          */
+    /* BOOLEAN  */ DRing::Certificate::ChecksValuesTypesNames::BOOLEAN  ,
+    /* ISO_DATE */ DRing::Certificate::ChecksValuesTypesNames::ISO_DATE ,
+    /* CUSTOM   */ DRing::Certificate::ChecksValuesTypesNames::CUSTOM   ,
+    /* NUMBER   */ DRing::Certificate::ChecksValuesTypesNames::NUMBER   ,
 }};
 
 const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool> TlsValidator::acceptedCheckValuesResult = {{
@@ -216,7 +212,8 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
 
 
 TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey) :
-certificatePath_(certificate), privateKeyPath_(privatekey), caCert_(nullptr), caChecked_(false)
+certificatePath_(certificate), privateKeyPath_(privatekey), certificateFound_(false), caCert_(nullptr),
+caChecked_(false)
 {
     int err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS)
@@ -225,6 +222,7 @@ certificatePath_(certificate), privateKeyPath_(privatekey), caCert_(nullptr), ca
     try {
         x509crt_ = {fileutils::loadFile(certificatePath_)};
         certificateContent_ = x509crt_.getPacked();
+        certificateFound_ = true;
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
     }
@@ -349,39 +347,6 @@ void TlsValidator::setCaTlsValidator(const TlsValidator& validator)
 {
     caChecked_ = false;
     caCert_ = (TlsValidator*)(&validator);
-}
-
-/**
- * Print the Subject, the Issuer and the Verification status of a given certificate.
- *
- * @todo Move to "certificateDetails()" once completed
- */
-static int crypto_cert_print_issuer(gnutls_x509_crt_t cert,
-                                    gnutls_x509_crt_t issuer)
-{
-    char name[512];
-    char issuer_name[512];
-    size_t name_size;
-    size_t issuer_name_size;
-
-    issuer_name_size = sizeof(issuer_name);
-    gnutls_x509_crt_get_issuer_dn(cert, issuer_name,
-                                  &issuer_name_size);
-
-    name_size = sizeof(name);
-    gnutls_x509_crt_get_dn(cert, name, &name_size);
-
-    RING_DBG("Subject: %s", name);
-    RING_DBG("Issuer: %s", issuer_name);
-
-    if (issuer != nullptr) {
-        issuer_name_size = sizeof(issuer_name);
-        gnutls_x509_crt_get_dn(issuer, issuer_name, &issuer_name_size);
-
-        RING_DBG("Verified against: %s", issuer_name);
-    }
-
-    return 0;
 }
 
 /**
@@ -1177,4 +1142,4 @@ TlsValidator::CheckResult TlsValidator::getActivationDate()
     return formatDate(expiration);
 }
 
-} // namespace ring
+}
