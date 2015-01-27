@@ -544,13 +544,10 @@ chooseIGD(void)
     devlist = upnpDiscover(2000, NULL, NULL, 0, 0, &upnp_status);
 
     if (devlist) {
-        struct UPNPDev * device = nullptr;
-        struct UPNPUrls newIGDURLs = UPNPUrls();
-        struct IGDdatas newIGDDatas = IGDdatas();
+        UPNPDev * device = nullptr;
+        UPNPUrls newIGDURLs = UPNPUrls();
+        IGDdatas newIGDDatas = IGDdatas();
         char lanaddr[64];
-
-        newIGDURLs = UPNPUrls();
-        newIGDDatas = IGDdatas();
 
         RING_DBG("UPnP devices found on the network");
         for(device = devlist; device; device = device->pNext)
@@ -564,37 +561,33 @@ chooseIGD(void)
         switch(upnp_status) {
             case -1:
                 RING_ERR("UPnP : internal error getting valid IGD");
-                newIGDURLs = UPNPUrls();
-                newIGDDatas = IGDdatas();
                 break;
             case 0:
                 RING_WARN("UPnP : no valid IGD found");
-                FreeUPNPUrls(&newIGDURLs);
-                newIGDURLs = UPNPUrls();
-                newIGDDatas = IGDdatas();
                 break;
             case 1:
                 RING_DBG("UPnP : found valid IGD : %s", newIGDURLs.controlURL);
                 break;
             case 2:
-                RING_DBG("UPnP : found a (not connected?) IGD, will try to use it anyway: %s", newIGDURLs.controlURL);
+                RING_WARN("UPnP : found an IGD, but it does not seem to be connected : %s", newIGDURLs.controlURL);
                 break;
             case 3:
-                RING_DBG("UPnP : UPnP device found, cannot determine if it is an IGD, will try to use it anyway : %s", newIGDURLs.controlURL);
+                RING_WARN("UPnP : UPnP device found, but it does not seem to be an IGD : %s", newIGDURLs.controlURL);
                 break;
             default:
-                RING_DBG("UPnP : device found, cannot determine if it is a UPnP device, will try to use it anyway : %s", newIGDURLs.controlURL);
+                RING_WARN("UPnP : device found, but cannot determine if it is a UPnP device : %s", newIGDURLs.controlURL);
         }
 
-        if (upnp_status > 0)
-            RING_DBG("UPnP : local IP address reported as: %s", lanaddr);
-
-        IGD igd{newIGDDatas, newIGDURLs};
-
         freeUPNPDevlist(devlist);
-        devlist = nullptr;
 
-        return igd;
+        /* only accept IGD if it was determined to be valid */
+        if (upnp_status == 1) {
+            RING_DBG("UPnP : local IP address reported as: %s", lanaddr);
+            return IGD(newIGDDatas, newIGDURLs);
+        } else {
+            FreeUPNPUrls(&newIGDURLs);
+            return IGD();
+        }
     } else {
         RING_WARN("UPnP : looking for IGD UPnP devices on the network failed with error: %d : %s", upnp_status, strupnperror(upnp_status));
         return IGD();
