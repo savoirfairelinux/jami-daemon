@@ -26,7 +26,7 @@ LT_INIT(disable-static)
 CFLAGS="$CFLAGS -Wall -Wextra -Wshadow"
 
 dnl uninstalled gsr ui dir
-AC_DEFINE_UNQUOTED(SFLPHONE_UIDIR_UNINSTALLED, "`pwd`/src/",
+AC_DEFINE_UNQUOTED(RING_UIDIR_UNINSTALLED, "`pwd`/src/",
   [path to uninstalled Ring UI dir])
 
 PKG_CHECK_MODULES(DBUSGLIB, dbus-glib-1 >= 0.75);
