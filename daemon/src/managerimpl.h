@@ -87,7 +87,7 @@ static const char * const default_conf = "conf";
 
 typedef std::set<std::string> CallIDSet;
 
-/** Manager (controller) of sflphone daemon */
+/** Manager (controller) of Ring daemon */
 class ManagerImpl {
     private:
         std::unique_ptr<PluginManager> pluginManager_;
@@ -623,14 +623,14 @@ class ManagerImpl {
 
         /**
          * Configure the start-up option
-         * @return int	1 if SFLphone should start in the system tray
+         * @return int	1 if Ring should start in the system tray
          *	        0 otherwise
          */
         int isStartHidden();
 
         /**
          * Configure the start-up option
-         * At startup, SFLphone can be displayed or start hidden in the system tray
+         * At startup, Ring can be displayed or start hidden in the system tray
          */
         void startHidden();
 
@@ -920,7 +920,7 @@ class ManagerImpl {
         void saveHistory();
 
         /**
-         * Suspends SFLphone's audio processing if no calls remain, allowing
+         * Suspends Ring's audio processing if no calls remain, allowing
          * other applications to resume audio.
          * See:
          * https://projects.savoirfairelinux.com/issues/7037

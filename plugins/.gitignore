@@ -15,7 +15,7 @@ install-sh
 ltmain.sh
 missing
 gnome.schemas
-sflphone.desktop
-sflphone.desktop.*
+ring.desktop
+ring.desktop.*
 stamp-h.in
 stamp-h1
