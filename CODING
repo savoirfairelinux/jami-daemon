@@ -7,7 +7,7 @@ http://projects.savoirfairelinux.net/wiki/sflphone/Coding_Standards
 = Gerrit workflow =
 
 We are now using Gerrit as a code review tool.
-Wiki documentation: https://projects.savoirfairelinux.com/projects/sflphone/wiki/WorkingWithGerrit
+Wiki documentation: https://projects.savoirfairelinux.com/projects/ring/wiki/WorkingWithGerrit
 
 == commit messages ==
 
