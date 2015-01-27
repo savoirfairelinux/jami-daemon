@@ -55,16 +55,18 @@ public:
 
 #if HAVE_UPNP
 
-    IGD(IGDdatas d = IGDdatas(), UPNPUrls u = UPNPUrls());
+    /* constructors */
+    IGD() : datas_(), urls_() {};
+    IGD(IGDdatas& d , UPNPUrls& u) : datas_(d), urls_(u) {};
 
     /* move constructor and operator */
-    IGD(IGD&& other) = default;
-    IGD& operator=(IGD&&) = default;
+    IGD(IGD&& other);
+    IGD& operator=(IGD&& other);
 
     ~IGD();
 
-    std::shared_ptr<const IGDdatas> getDatas() const {return datas_;};
-    std::shared_ptr<const UPNPUrls> getURLs() const {return urls_;};
+    const IGDdatas& getDatas() const {return datas_;};
+    const UPNPUrls& getURLs() const {return urls_;};
 #else
     /* use default constructor and destructor */
 #endif
@@ -74,10 +76,8 @@ private:
     NON_COPYABLE(IGD);
 
 #if HAVE_UPNP
-    void copyURLs(const UPNPUrls &urlsSource, UPNPUrls *urlsDest);
-
-    std::shared_ptr<const IGDdatas> datas_;
-    std::shared_ptr<const UPNPUrls> urls_;
+    IGDdatas datas_;
+    UPNPUrls urls_;
 #endif
 
 };
