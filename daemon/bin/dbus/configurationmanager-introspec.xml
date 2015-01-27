@@ -646,6 +646,7 @@
            <arg type="a{ss}" name="details" direction="out">
               <tp:docstring>
                <p>A key-value list of all certificate validation</p>
+               The constants used as keys are defined in the "security.h" constants header file
               </tp:docstring>
            </arg>
        </method>
@@ -660,6 +661,7 @@
            <arg type="a{ss}" name="details" direction="out">
               <tp:docstring>
                <p>A key-value list of all certificate details</p>
+               The constants used as keys are defined in the "security.h" constants header file
               </tp:docstring>
            </arg>
        </method>
