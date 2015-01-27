@@ -472,18 +472,22 @@ IceTransport::selectUPnPIceCandidates()
          * add candidate with that port and public IP
          */
         IpAddr publicIP = upnp_->getExternalIP();
-        for(unsigned comp_id = 0; comp_id < component_count_; comp_id++) {
-            RING_DBG("UPnP : Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
-            std::vector<IpAddr> candidates = getLocalCandidatesAddr(comp_id);
-            for(IpAddr addr : candidates) {
-                uint16_t port = addr.getPort();
-                uint16_t port_used;
-                if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
-                    publicIP.setPort(port_used);
-                    addCandidate(comp_id, publicIP);
-                } else
-                    RING_WARN("UPnP : Could not create a port mapping for the ICE candidae.");
+        if (publicIP) {
+            for(unsigned comp_id = 0; comp_id < component_count_; comp_id++) {
+                RING_DBG("UPnP : Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
+                std::vector<IpAddr> candidates = getLocalCandidatesAddr(comp_id);
+                for(IpAddr addr : candidates) {
+                    uint16_t port = addr.getPort();
+                    uint16_t port_used;
+                    if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
+                        publicIP.setPort(port_used);
+                        addCandidate(comp_id, publicIP);
+                    } else
+                        RING_WARN("UPnP : Could not create a port mapping for the ICE candidae.");
+                }
             }
+        } else {
+            RING_WARN("UPnP : Could not determine public IP for ICE candidates.");
         }
     }
 }

@@ -326,6 +326,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
                     ? account->getPublishedIpAddress() : addrToUse;
     }
 
+    /* fallback on local address */
+    if (not addrSdp) addrSdp = addrToUse;
+
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
     call->setDisplayName(displayName);
@@ -892,6 +895,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(account.getTransportType());
+    IpAddr addrToUse = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
 
     IpAddr address;
     if (account.getUseUPnP()) {
@@ -899,10 +903,12 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
         address = account.getPublishedSameasLocal() ?
             account.getUPnPIpAddress() : account.getPublishedIpAddress();
     } else {
-        address = account.getPublishedSameasLocal()
-                    ? IpAddr(ip_utils::getInterfaceAddr(account.getLocalInterface(), family))
-                    : account.getPublishedIpAddress();
+        address = account.getPublishedSameasLocal() ?
+            addrToUse : account.getPublishedIpAddress();
     }
+
+    /* fallback on local address */
+    if (not address) address = addrToUse;
 
     call->setCallMediaLocal(address);
 

@@ -239,6 +239,9 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             getPublishedIpAddress() : localAddress;
     }
 
+    /* fallback on local address */
+    if (not addrSdp) addrSdp = localAddress;
+
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
@@ -1419,7 +1422,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         hostname_,
         address, port);
 
-    if (getUseUPnP()) {
+    if (getUseUPnP() and getUPnPIpAddress()) {
         address = getUPnPIpAddress().toString();
         port = publishedPortUsed_;
         useUPnPAddressPortInVIA();
