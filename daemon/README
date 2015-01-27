@@ -91,7 +91,7 @@ make install
 Done !
 
 More details available here:
-https://projects.savoirfairelinux.com/projects/sflphone/wiki/How_to_build
+https://projects.savoirfairelinux.com/projects/ring/wiki/How_to_build
 
 How to compile on OSX
 ---------------------
@@ -195,7 +195,7 @@ and general feedback on the SFLphone mailing-list:
 http://lists.savoirfairelinux.net/mailman/listinfo/sflphone
 
 Bug reports:
-https://projects.savoirfairelinux.com/projects/sflphone/wiki/BugReports
+https://projects.savoirfairelinux.com/projects/ring/wiki/BugReports
 
 IRC (on #freenode):
 #sflphone
