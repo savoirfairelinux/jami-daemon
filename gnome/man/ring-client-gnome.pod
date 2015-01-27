@@ -14,7 +14,7 @@ B<ring-client-gnome> is a GTK+ client for Ring; it communicates with the core si
 
 =head1 BUGS
 
-Please report bugs at https://projects.savoirfairelinux.com/projects/sflphone/issues/new.
+Please report bugs at https://projects.savoirfairelinux.com/projects/ring/issues/new.
 
 =head1 AUTHORS
 
