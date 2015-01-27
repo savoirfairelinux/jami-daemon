@@ -25,7 +25,7 @@ AM_CPPFLAGS =		$(DEPS_CFLAGS)										\
 					-DDATADIR=\""$(datadir)"\"							\
 					-DLIBDIR=\""$(libdir)"\"							\
 					-DLOCALEDIR=\""$(localedir)"\"							\
-					-DSFLPHONE_UIDIR=\""$(datadir)/ring/ui"\" \
+					-DRING_UIDIR=\""$(datadir)/ring/ui"\" \
 					-DPLUGINS_DIR=\""$(sflplugindir)"\"
 indent:
 	@echo "Indenting code:"
