@@ -240,6 +240,9 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
             getPublishedIpAddress() : localAddress;
     }
 
+    /* fallback on local address */
+    if (not addrSdp) addrSdp = localAddress;
+
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
