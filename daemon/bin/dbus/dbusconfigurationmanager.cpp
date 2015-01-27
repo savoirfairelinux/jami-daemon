@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 #include <iostream>
-#include "ring.h"
+#include "dring.h"
 
 #include "dbusconfigurationmanager.h"
 

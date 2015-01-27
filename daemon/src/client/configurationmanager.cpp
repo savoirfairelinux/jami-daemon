@@ -142,28 +142,38 @@ void ConfigurationManager::setTlsSettings(const std::map<std::string, std::strin
     accountsChanged();
 }
 
-std::map<std::string, std::string> ConfigurationManager::validateCertificate(const std::string& accountId,
+std::map<std::string, std::string> ConfigurationManager::validateCertificate(const std::string&,
                                                                              const std::string& certificate,
                                                                              const std::string& privateKey)
 {
 #if HAVE_TLS && HAVE_DHT
-    TlsValidator validator(certificate,privateKey);
-    return validator.getSerializedChecks();
+    try {
+        TlsValidator validator(certificate,privateKey);
+        return validator.getSerializedChecks();
+    }
+    catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed");
+    }
 #else
     RING_WARN("TLS not supported");
-    return std::map<std::string, std::string>();
 #endif
+    return std::map<std::string, std::string>();
 }
 
 std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
-    TlsValidator validator(certificate,"");
-    return validator.getSerializedDetails();
+    try {
+        TlsValidator validator(certificate,"");
+        return validator.getSerializedDetails();
+    }
+    catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed");
+    }
 #else
     RING_WARN("TLS not supported");
-    return std::map<std::string, std::string>();
 #endif
+    return std::map<std::string, std::string>();
 }
 
 void ConfigurationManager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
