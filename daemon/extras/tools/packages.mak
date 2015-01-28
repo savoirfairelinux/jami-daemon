@@ -39,3 +39,6 @@ SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
 ANT_VERSION=1.9.4
 ANT_URL=$(APACHE)/ant/binaries/apache-ant-$(ANT_VERSION)-bin.tar.bz2
+
+GETTEXT_VERSION=0.19.4
+GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
