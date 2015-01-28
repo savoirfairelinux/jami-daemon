@@ -43,7 +43,7 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-#include "ring.h"
+#include "dring.h"
 
 namespace ring {
 

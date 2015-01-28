@@ -36,7 +36,7 @@
 #include <getopt.h>
 #include <string>
 
-#include "ring.h"
+#include "dring.h"
 #include "fileutils.h"
 
 static int sflphFlags = 0;
