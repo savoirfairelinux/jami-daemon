@@ -249,6 +249,23 @@ CLEAN_PKG += ant
 DISTCLEAN_PKG += apache-ant-$(ANT_VERSION).tar.bz2
 CLEAN_FILE += .ant
 
+# GNU gettext
+
+gettext-$(GETTEXT_VERSION).tar.gz:
+	$(call download,$(GETTEXT_URL))
+
+gettext: gettext-$(GETTEXT_VERSION).tar.gz
+	$(UNPACK)
+	$(MOVE)
+
+.gettext: gettext
+	(cd $<; ./configure --prefix=$(PREFIX) && $(MAKE) && $(MAKE) install)
+	touch $@
+
+CLEAN_FILE += .gettext
+CLEAN_PKG += gettext
+DISTCLEAN_PKG += gettext-$(CMAKE_VERSION).tar.gz
+
 #
 #
 #
