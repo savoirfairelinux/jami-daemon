@@ -133,3 +133,6 @@ libring_la_SOURCES = conference.cpp \
 		string_utils.cpp \
 		rw_mutex.h \
 		ring_api.cpp
+
+nobase_include_HEADERS= dring/dring.h \
+		dring/security.h
