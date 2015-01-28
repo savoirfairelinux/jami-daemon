@@ -116,16 +116,19 @@ RingAccount::newIncomingCall(const std::string& from)
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
-        if (call_it->call->getPeerNumber() == from) {
-            auto call = call_it->call;
+        auto call = call_it->call.lock();
+        if (not call) {
+            RING_WARN("newIncomingCall: discarding deleted call");
+            call_it = pendingSipCalls_.erase(call_it);
+        } else if (call->getPeerNumber() == from) {
             pendingSipCalls_.erase(call_it);
-            RING_WARN("Found matching call for %s", from.c_str());
+            RING_DBG("newIncomingCall: found matching call for %s", from.c_str());
             return call;
         } else {
             ++call_it;
         }
     }
-    RING_ERR("Can't find matching call for %s", from.c_str());
+    RING_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
     return nullptr;
 }
 
@@ -173,6 +176,9 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     const dht::Value::Id callvid  = std::uniform_int_distribution<dht::Value::Id>{}(rand_);
     const dht::Value::Id replyvid = callvid+1;
+
+    std::weak_ptr<SIPCall> weak_call = call;
+
     dht_.putEncrypted(
         callkey,
         toH,
@@ -181,19 +187,23 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             ice->getLocalAttributesAndCandidates(),
             callvid
         },
-        [callkey, callvid, call, shared](bool ok) {
+        [callkey, callvid, weak_call, shared](bool ok) {
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             if (!ok) {
-                call->setConnectionState(Call::DISCONNECTED);
-                Manager::instance().callFailure(*call);
+                RING_WARN("Can't put ICE descriptor on DHT");
+                if (auto call = weak_call.lock()) {
+                    call->setConnectionState(Call::DISCONNECTED);
+                    Manager::instance().callFailure(*call);
+                    call->removeCall();
+                }
             }
             this_.dht_.cancelPut(callkey, callvid);
         }
     );
 
-    dht_.listen(
+    auto lk = dht_.listen(
         callkey,
-        [shared, call, callkey, ice, toH, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
+        [shared, weak_call, callkey, ice, toH, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             RING_DBG("Outcall listen callback (%d values)", vals.size());
             for (const auto& v : vals) {
@@ -213,7 +223,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     );
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, toH});
+        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, std::move(lk), callkey, toH});
     }
     return call;
 }
@@ -522,8 +532,14 @@ RingAccount::handleEvents()
     auto now = std::chrono::steady_clock::now();
     auto c = pendingCalls_.begin();
     while (c != pendingCalls_.end()) {
+        auto call = c->call.lock();
+        if (not call) {
+            RING_WARN("Removing deleted call from pending calls");
+            dht_.cancelListen(c->call_key, c->listen_key.get());
+            c = pendingCalls_.erase(c);
+            continue;
+        }
         auto ice = c->ice.get();
-        auto call = c->call.get();
         if (ice->isRunning()) {
             call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
             call->setConnectionState(Call::PROGRESSING);
@@ -534,14 +550,18 @@ RingAccount::handleEvents()
                 pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
             } else {
                 RING_WARN("ICE succeeded : removing pending outgoing call");
-                createOutgoingCall(c->call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                createOutgoingCall(call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                dht_.cancelListen(c->call_key, c->listen_key.get());
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
             RING_WARN("ICE timeout : removing pending outgoing call");
+            if (c->id != dht::InfoHash())
+                dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
             Manager::instance().callFailure(*call);
             c = pendingCalls_.erase(c);
+            call->removeCall();
         } else
             ++c;
     }
@@ -704,6 +724,8 @@ void RingAccount::doRegister()
                         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
                             throw std::runtime_error("Can't initialize ICE..");
 
+                        std::weak_ptr<SIPCall> weak_call = call;
+
                         this_.dht_.putEncrypted(
                             listenKey,
                             v->owner.getId(),
@@ -712,14 +734,17 @@ void RingAccount::doRegister()
                                 ice->getLocalAttributesAndCandidates(),
                                 reply_vid
                             },
-                            [call,ice,shared,listenKey,reply_vid](bool ok) {
+                            [weak_call,ice,shared,listenKey,reply_vid](bool ok) {
                                 auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
-                                this_.dht_.cancelPut(listenKey, reply_vid);
                                 if (!ok) {
-                                    RING_ERR("ICE exchange failed");
-                                    call->setConnectionState(Call::DISCONNECTED);
-                                    Manager::instance().callFailure(*call);
+                                    RING_WARN("Can't put ICE descriptor on DHT");
+                                    if (auto call = weak_call.lock()) {
+                                        call->setConnectionState(Call::DISCONNECTED);
+                                        Manager::instance().callFailure(*call);
+                                        call->removeCall();
+                                    }
                                 }
+                                this_.dht_.cancelPut(listenKey, reply_vid);
                             }
                         );
                         ice->start(v->data);
@@ -727,7 +752,7 @@ void RingAccount::doRegister()
                         call->initRecFilename(from);
                         {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, call, dht::InfoHash()});
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, {}});
                         }
                         return true;
                     } catch (const std::exception& e) {
