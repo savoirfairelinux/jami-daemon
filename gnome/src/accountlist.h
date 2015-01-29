@@ -194,6 +194,7 @@ gboolean current_account_has_new_message(void);
 
 gboolean account_has_custom_user_agent(const account_t *account);
 gboolean account_has_autoanswer_on(const account_t *account);
+gboolean account_has_upnp_on(const account_t *account);
 gboolean account_is_IP2IP(const account_t *account);
 gboolean account_is_SIP(const account_t *account);
 gboolean account_is_IAX(const account_t *account);
