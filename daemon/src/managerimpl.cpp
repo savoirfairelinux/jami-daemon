@@ -243,10 +243,10 @@ ManagerImpl::init(const std::string &config_file)
 
     history_.load(preferences.getHistoryLimit());
 
-    if (preferences.getUseUPnP()) {
-        RING_DBG("Remove any old UPnP mappings for RING mapped to this IP");
-        upnp::Controller().removeMappingsByLocalIPAndDescription();
-    }
+    /* TODO: Is this necessary? This will require looking for a UPnP enabled IGD at each start
+     * of the daemon... */
+    RING_DBG("Remove any old UPnP mappings for RING mapped to this IP");
+    upnp::Controller().removeMappingsByLocalIPAndDescription();
 
     registerAccounts();
 }
@@ -295,10 +295,9 @@ ManagerImpl::finish()
         RING_ERR("%s", err.what());
     }
 
-    if (preferences.getUseUPnP()) {
-        RING_DBG("Remove any remaning ports mapped to this client for RING");
-        upnp::Controller().removeMappingsByLocalIPAndDescription();
-    }
+
+    RING_DBG("Remove any remaning ports mapped to this client for RING");
+    upnp::Controller().removeMappingsByLocalIPAndDescription();
 }
 
 bool
@@ -2407,7 +2406,6 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
         saveConfig();
 
         if (account->isEnabled()) {
-            account->setUseUPnP(preferences.getUseUPnP());
             account->doRegister();
         } else
             account->doUnregister();
@@ -2453,8 +2451,6 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
     newAccount->setAccountDetails(details);
 
     preferences.addAccount(newAccountID);
-
-    newAccount->setUseUPnP(preferences.getUseUPnP());
 
     newAccount->doRegister();
 
@@ -2715,7 +2711,6 @@ ManagerImpl::registerAccounts()
         a->loadConfig();
 
         if (a->isEnabled()) {
-            a->setUseUPnP(preferences.getUseUPnP());
             a->doRegister();
         }
     }
@@ -2743,7 +2738,6 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
     Manager::instance().saveConfig();
 
     if (acc->isEnabled()) {
-        acc->setUseUPnP(preferences.getUseUPnP());
         acc->doRegister();
     } else
         acc->doUnregister();

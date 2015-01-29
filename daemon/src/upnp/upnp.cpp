@@ -88,7 +88,6 @@ IGD& IGD::operator=(IGD&& other)
 IGD::~IGD()
 {
     /* free the URLs */
-    RING_WARN("UPnP : deleting IGD");
     FreeUPNPUrls(&urls_);
 }
 
@@ -143,6 +142,19 @@ Controller::~Controller()
 {
     /* remove all mappings */
     removeMappings();
+}
+
+/**
+ * Return whether or not this controller has a valid IGD,
+ * if 'flase' then all requests will fail
+ */
+bool
+Controller::hasValidIGD()
+{
+#if HAVE_UPNP
+    return defaultIGD_->isEmpty() ? false : true;
+#endif
+    return false;
 }
 
 /**
