@@ -110,6 +110,7 @@ static GtkWidget *video_port_max_spin_box;
 #endif
 static GtkWidget *presence_check_box;
 static gboolean is_account_new;
+static GtkWidget *upnp_enabled_check_box;
 
 typedef struct OptionsData {
     account_t *account;
@@ -148,6 +149,14 @@ auto_answer_cb(GtkToggleButton *widget, account_t *account)
     account_replace(account, CONFIG_ACCOUNT_AUTOANSWER,
                     gtk_toggle_button_get_active(widget) ? "true" : "false");
 }
+
+static void
+upnp_cb(GtkToggleButton *widget, account_t *account)
+{
+    account_replace(account, CONFIG_UPNP_ENABLED,
+                    gtk_toggle_button_get_active(widget) ? "true" : "false");
+}
+
 
 static void
 user_agent_checkbox_cb(GtkToggleButton *widget, account_t *account)
@@ -298,6 +307,15 @@ create_auto_answer_checkbox(const account_t *account)
     GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_Auto-answer calls"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_autoanswer_on(account));
     g_signal_connect(checkbox, "toggled", G_CALLBACK(auto_answer_cb), (gpointer) account);
+    return checkbox;
+}
+
+static GtkWidget*
+create_upnp_check_box(const account_t *account)
+{
+    GtkWidget *checkbox = gtk_check_button_new_with_mnemonic(_("_UPnP enabled"));
+    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox), account_has_upnp_on(account));
+    g_signal_connect(checkbox, "toggled", G_CALLBACK(upnp_cb), (gpointer) account);
     return checkbox;
 }
 
@@ -550,6 +568,10 @@ create_parameters_frame(account_t *account, GtkWidget* account_combo)
     row++;
     auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_grid_attach(GTK_GRID(grid), auto_answer_checkbox, 0, row, 1, 1);
+
+    row++;
+    upnp_enabled_check_box = create_upnp_check_box(account);
+    gtk_grid_attach(GTK_GRID(grid), upnp_enabled_check_box, 0, row, 1, 1);
 
     gtk_widget_show_all(grid);
     return frame;
@@ -1499,6 +1521,9 @@ static GtkWidget* create_direct_ip_calls_tab(account_t *account)
 
     auto_answer_checkbox = create_auto_answer_checkbox(account);
     gtk_box_pack_start(GTK_BOX(vbox), auto_answer_checkbox, FALSE, FALSE, 0);
+
+    upnp_enabled_check_box = create_upnp_check_box(account);
+    gtk_box_pack_start(GTK_BOX(vbox), upnp_enabled_check_box, FALSE, FALSE, 0);
 
     gtk_widget_show_all(vbox);
     return vbox;
