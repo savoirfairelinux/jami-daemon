@@ -74,6 +74,7 @@ static const char *const CONFIG_PUBLISHED_SAMEAS_LOCAL          = "Account.publi
 static const char *const CONFIG_LOCAL_PORT                      = "Account.localPort";
 static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publishedPort";
 static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publishedAddress";
+static const char *const CONFIG_UPNP_ENABLED                    = "Account.upnpEnabled";
 
 // SIP specific parameters
 static const char *const CONFIG_STUN_SERVER                     = "STUN.server";

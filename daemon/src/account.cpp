@@ -83,6 +83,7 @@ const char * const Account::DEFAULT_USER_AGENT          = PACKAGE_NAME "/" PACKA
 const char * const Account::USER_AGENT_KEY              = "useragent";
 const char * const Account::HAS_CUSTOM_USER_AGENT_KEY   = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
+const char * const Account::UPNP_ENABLED_KEY            = "upnpEnabled";
 
 using std::map;
 using std::string;
@@ -106,6 +107,7 @@ Account::Account(const string &accountID)
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
     , mailBox_()
+    , upnpEnabled_(false)
 {
     std::random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
@@ -194,6 +196,7 @@ void Account::serialize(YAML::Emitter &out)
     out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
+    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
 }
 
 void Account::unserialize(const YAML::Node &node)
@@ -218,6 +221,8 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, USER_AGENT_KEY, userAgent_);
     parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
     parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
+
+    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
 }
 
 void Account::setAccountDetails(const std::map<std::string, std::string> &details)
@@ -237,6 +242,7 @@ void Account::setAccountDetails(const std::map<std::string, std::string> &detail
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     else
         userAgent_ = DEFAULT_USER_AGENT;
+    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
 }
 
 std::map<std::string, std::string> Account::getAccountDetails() const
@@ -260,6 +266,7 @@ std::map<std::string, std::string> Account::getAccountDetails() const
     a[Conf::CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_RINGTONE_PATH] = ringtonePath_;
+    a[Conf::CONFIG_UPNP_ENABLED] = upnpEnabled_ ? TRUE_STR : FALSE_STR;
 
     return a;
 }
@@ -459,26 +466,41 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
 
 #undef find_iter
 
-void
-Account::setUseUPnP(bool useUPnP)
+/**
+ * Checks whether the upnp settings is enabled in the account.
+ * If so, tries to get a controller with a valid IGD.
+ * If not, destroys the controller.
+ *
+ * Returns whether or not there is a controller with a valid IGD to use.
+ */
+bool
+Account::checkUPnP()
 {
     std::unique_lock<std::mutex> lk(upnp_mtx);
 
-    if (useUPnP == static_cast<bool>(upnp_))
-        return;
+    if (upnpEnabled_ != (bool)upnp_) {
+        if (upnpEnabled_){
+            upnp_.reset(new upnp::Controller());
+            if (upnp_->hasValidIGD())
+                upnpIp_ = upnp_->getExternalIP();
+        } else {
+            upnp_.reset();
+            upnpIp_ = IpAddr{};
+        }
+    }
 
-    if (useUPnP){
-        upnp_.reset(new upnp::Controller());
-        upnpIp_ = upnp_->getExternalIP();
-    } else
-        upnp_.reset();
+    return upnp_ and upnp_->hasValidIGD();
 }
 
+/**
+ * Returns whether or not the upnp controller has a valid IGD
+ * with which to make port mappings
+ */
 bool
 Account::getUseUPnP() const
 {
     std::unique_lock<std::mutex> lk(upnp_mtx);
-    return static_cast<bool>(upnp_);
+    return upnp_ and upnp_->hasValidIGD();
 }
 
 } // namespace ring

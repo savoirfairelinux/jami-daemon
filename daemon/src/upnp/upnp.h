@@ -163,6 +163,12 @@ public:
     ~Controller();
 
     /**
+     * Return whether or not this controller has a valid IGD,
+     * if 'flase' then all requests will fail
+     */
+    bool hasValidIGD();
+
+    /**
      * tries to add mapping from and to the port_desired
      * if unique == true, makes sure the client is not using this port already
      * if the mapping fails, tries other available ports until success

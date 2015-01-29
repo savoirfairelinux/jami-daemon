@@ -744,7 +744,9 @@ void SIPAccount::doRegister()
 
     RING_DBG("doRegister %s", hostname_.c_str());
 
-    if (not mapPortUPnP())
+    /* check UPnP to see if the account setting is enabled and try to get a
+     * UPnP controller; if this succeeds then try to map the account port */
+    if (not (checkUPnP() and mapPortUPnP()) )
         RING_WARN("Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
 
     if (hostname_.empty() || isIP2IP()) {

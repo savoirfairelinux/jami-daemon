@@ -603,7 +603,9 @@ void RingAccount::doRegister()
         return;
     }
 
-    if (not mapPortUPnP())
+    /* check UPnP to see if the account setting is enabled and try to get a
+     * UPnP controller; if this succeeds then try to map the account port */
+    if (not (checkUPnP() and mapPortUPnP()) )
         RING_WARN("Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
 
     try {

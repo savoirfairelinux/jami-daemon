@@ -255,12 +255,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const VIDEO_CODEC_BITRATE;
 
         /**
-         * Set whether or not to use UPnP
-         */
-        void setUseUPnP(bool useUPnP);
-
-        /**
-         * Get whether UPnP is used.
          * @return bool Flag which determines if UPnP is used or not.
          */
         bool getUseUPnP() const;
@@ -313,6 +307,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const HAS_CUSTOM_USER_AGENT_KEY;
         static const char * const DEFAULT_USER_AGENT;
         static const char * const PRESENCE_MODULE_ENABLED_KEY;
+        static const char * const UPNP_ENABLED_KEY;
 
         static std::string mapStateNumberToString(RegistrationState state);
 
@@ -414,6 +409,23 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         IpAddr upnpIp_ {};
         std::unique_ptr<ring::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
+
+        /**
+         * Whether or not UPnP is enabled for this account
+         * Note that this is only used to store the account setting,
+         * getUseUPnP() should be used to check if UPnP is being use
+         * ie: if the UPnP controller has been initialized
+         */
+        bool upnpEnabled_;
+
+        /**
+         * Checks whether the upnp settings is enabled in the account.
+         * If so, tries to get a controller with a valid IGD.
+         * If not, destroys the controller.
+         *
+         * Returns whether or not there is a controller with a valid IGD to use.
+         */
+        bool checkUPnP();
 };
 
 } // namespace ring
