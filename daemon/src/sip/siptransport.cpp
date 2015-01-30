@@ -36,7 +36,6 @@
 
 #include "ringdht/sip_transport_ice.h"
 
-#include "manager.h"
 #include "client/configurationmanager.h"
 #include "array_size.h"
 #include "intrin.h"
@@ -161,14 +160,11 @@ cp_(cp), pool_(pool), endpt_(endpt)
 #if HAVE_DHT
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE", pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP), &ice_pj_transport_type_);
 #endif
-
-    Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
 }
 
 SipTransportBroker::~SipTransportBroker()
 {
     RING_DBG("Destroying SipTransportBroker");
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
@@ -241,14 +237,6 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
             }
         }
     }
-}
-
-void
-SipTransportBroker::handleEvents()
-{
-    std::unique_lock<std::mutex> lock(iceMutex_);
-    for (auto& t : iceTransports_)
-        t.loop();
 }
 
 std::shared_ptr<SipTransport>
