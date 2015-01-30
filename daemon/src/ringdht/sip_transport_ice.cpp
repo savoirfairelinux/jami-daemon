@@ -31,6 +31,7 @@
 
 #include "sip_transport_ice.h"
 #include "ice_transport.h"
+#include "manager.h"
 #include "logger.h"
 
 #include <pjsip/sip_transport.h>
@@ -158,10 +159,14 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
     is_registered_ = true;
+
+    Manager::instance().registerEventHandler((uintptr_t)this,
+                                             [this]{ loop(); });
 }
 
 SipIceTransport::~SipIceTransport()
 {
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
     pj_lock_destroy(base.lock);
     pj_atomic_destroy(base.ref_cnt);
 }
