@@ -219,8 +219,6 @@ private:
 
     void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
 
-    void handleEvents();
-
     /**
      * List of transports so we can bubble the events up.
      */
