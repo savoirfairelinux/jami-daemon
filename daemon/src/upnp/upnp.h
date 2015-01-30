@@ -117,7 +117,7 @@ public:
     {};
 
     /* move constructor and operator */
-    Mapping(Mapping&& other) = default;
+    Mapping(Mapping&&) = default;
     Mapping& operator=(Mapping&&) = default;
 
     friend bool operator== (Mapping &cRedir1, Mapping &cRedir2);

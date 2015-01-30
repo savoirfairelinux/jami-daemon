@@ -133,9 +133,9 @@ bool operator!= (Mapping &cMap1, Mapping &cMap2)
 }
 
 Controller::Controller()
-    : udpGlobalMappings_(getGlobalInstance<UDPMapGlobal>())
+    : defaultIGD_(getIGD())
+    , udpGlobalMappings_(getGlobalInstance<UDPMapGlobal>())
     , tcpGlobalMappings_(getGlobalInstance<TCPMapGlobal>())
-    , defaultIGD_(getIGD())
 {}
 
 Controller::~Controller()
