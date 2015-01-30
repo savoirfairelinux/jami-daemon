@@ -1,0 +1,25 @@
+From 3cc22ec5a7aa62dc17085d927f57ea9400a270b0 Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@gmail.com>
+Date: Thu, 29 Jan 2015 20:46:30 -0500
+Subject: [PATCH] Remove broken linker test
+
+---
+ configure | 3 ---
+ 1 file changed, 3 deletions(-)
+
+diff --git a/configure b/configure
+index 4ff3fc7..d01f593 100755
+--- a/configure
++++ b/configure
+@@ -559,9 +559,6 @@ process_detect() {
+         }
+     fi
+     check_header stdio.h || die "Unable to invoke compiler: ${CC} ${CFLAGS}"
+-    check_ld <<EOF || die "Toolchain is unable to link executables"
+-int main(void) {return 0;}
+-EOF
+     # check system headers
+     check_header stdint.h
+     check_header pthread.h
+--
+2.1.0

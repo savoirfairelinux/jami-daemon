@@ -13,6 +13,9 @@ libvpx: libvpx-$(VPX_VERSION).tar.bz2 .sum-vpx
 	$(APPLY) $(SRC)/vpx/libvpx-sysroot.patch
 	$(APPLY) $(SRC)/vpx/libvpx-no-cross.patch
 	$(APPLY) $(SRC)/vpx/libvpx-mac.patch
+ifdef HAVE_ANDROID
+	$(APPLY) $(SRC)/vpx/libvpx-broken_linker_test.patch
+endif
 	$(MOVE)
 
 DEPS_vpx =
@@ -92,7 +95,7 @@ ifdef HAVE_ANDROID
 # uses that path to look for the compiler (which we already know)
 VPX_CONF += --sdk-path=$(shell dirname $(shell which $(HOST)-gcc))
 # needed for cpu-features.h
-VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
+VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/ -I ${ANDROID_NDK}/platforms/${ANDROID_API}/arch-${PLATFORM_SHORT_ARCH}/usr/include -L${ANDROID_NDK}/platforms/${ANDROID_API}/arch-${PLATFORM_SHORT_ARCH}/usr/lib"
 endif
 
 .vpx: libvpx
