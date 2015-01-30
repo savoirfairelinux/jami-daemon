@@ -121,6 +121,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , serviceRoute_()
     , cred_()
     , tlsSetting_()
+    , ciphers_(100)
     , tlsCaListFile_()
     , tlsCertificateFile_()
     , tlsPrivateKeyFile_()
@@ -1497,6 +1498,33 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
     result.host.slen = addr.length();
     result.port = port;
     return result;
+}
+
+std::vector<std::string>
+SIPAccount::getSupportedCiphers() const
+{
+    //Currently, both OpenSSL and GNUTLS implementations are static
+    //reloading this for each account is unnecessary
+    static std::vector<std::string> ret(0);
+
+    // LIMITATION Assume the size might change, if there is a '0' cipher,
+    // this will cause the cache to be repopulated for nothing.
+    if (!cipherNames_.size()) {
+        CipherArray avail_ciphers(256);
+        unsigned cipherNum = 256;
+        if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
+            RING_ERR("Could not determine cipher list on this system");
+        avail_ciphers.resize(cipherNum);
+
+        cipherNames_.clear();
+        cipherNames_.resize(avail_ciphers.size());
+        for (const auto &item : avail_ciphers) {
+            if (item > 0) // 0 doesn't have a name
+                ret.push_back(pj_ssl_cipher_name(item));
+        }
+    }
+
+    return ret;
 }
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
