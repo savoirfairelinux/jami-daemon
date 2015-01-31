@@ -575,26 +575,26 @@ SIPVoIPLink::~SIPVoIPLink()
 {
     RING_DBG("destroying SIPVoIPLink instance");
 
-    const int MAX_TIMEOUT_ON_LEAVING = 5;
-
     sipTransportBroker->shutdown();
 
+    const int MAX_TIMEOUT_ON_LEAVING = 5;
     for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
         sleep(1);
 
-    const pj_time_val tv = {0, 10};
-    pjsip_endpt_handle_events(endpt_, &tv);
+    Manager::instance().unregisterEventHandler((uintptr_t)this);
+    handleEvents();
 
     if (!Manager::instance().callFactory.empty<SIPCall>())
         RING_ERR("%d SIP calls remains!",
               Manager::instance().callFactory.callCount<SIPCall>());
 
-    // destroy SIP transport before endpoint
-    sipTransportBroker.reset();
-
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
+    // The broker owns pjsip_transport_t structures (i.e. via SipIceTransport)
+    // So we destroy it after the endpt to be sure that pjsip will not
+    // manipulate them.
 
     pjsip_endpt_destroy(endpt_);
+    sipTransportBroker.reset();
+
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
 }
