@@ -255,21 +255,15 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
 std::shared_ptr<SipTransport>
 SipTransportBroker::findTransport(pjsip_transport* t)
 {
-    if (!t)
-        return nullptr;
-    {
+    if (t) {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
-        auto i = transports_.find(t);
-        if (i == transports_.end()) {
-            auto ret = std::make_shared<SipTransport>(t);
-            transports_[t] = ret;
-            return ret;
-        }
-        else if (auto spt = i->second.lock())
-            return spt;
-        else
-            return nullptr;
+
+        auto key = transports_.find(t);
+        if (key != transports_.end())
+            return key->second.lock();
     }
+
+    return nullptr;
 }
 
 void
