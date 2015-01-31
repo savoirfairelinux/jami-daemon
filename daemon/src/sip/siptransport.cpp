@@ -39,6 +39,7 @@
 #include "client/configurationmanager.h"
 #include "array_size.h"
 #include "intrin.h"
+#include "sipvoiplink.h"
 
 #include <pjsip.h>
 #include <pjsip/sip_types.h>
@@ -57,9 +58,6 @@
 #define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { RING_ERR(M, ##__VA_ARGS__); return (VAL); }
 
 namespace ring {
-
-// FIXME: remove this when pjsip_tp_state_callback gives us enough info
-static SipTransportBroker* instance = nullptr;
 
 constexpr const char* TRANSPORT_STATE_STR[] = {
     "CONNECTED", "DISCONNECTED", "SHUTDOWN", "DESTROY", "UNKNOWN STATE"
@@ -171,7 +169,6 @@ iceTransports_(),
 #endif
 cp_(cp), pool_(pool), endpt_(endpt)
 {
-    instance = this;
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), SipTransportBroker::tp_state_callback);
     if (status != PJ_SUCCESS) {
         RING_ERR("Can't set transport callback");
@@ -192,7 +189,6 @@ SipTransportBroker::~SipTransportBroker()
         udpTransports_.clear();
         transports_.clear();
     }
-    instance = nullptr;
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     {
         std::unique_lock<std::mutex> lock(iceMutex_);
@@ -201,15 +197,21 @@ SipTransportBroker::~SipTransportBroker()
     }
 }
 
-/** Static tranport state change callback */
+/** static method (so C callable) used by PJSIP making interface to C++ */
 void
-SipTransportBroker::tp_state_callback(pjsip_transport *tp, pjsip_transport_state state, const pjsip_transport_state_info* info)
+SipTransportBroker::tp_state_callback(pjsip_transport* tp,
+                                      pjsip_transport_state state,
+                                      const pjsip_transport_state_info* info)
 {
-    if (!instance) {
-        RING_ERR("Can't bubble event: SipTransportBroker instance is null !");
-        return;
+    // There is no way (at writing) to link a user data to a PJSIP transport.
+    // So we obtain it from the global SIPVoIPLink instance that owns it.
+    // Be sure the broker's owner is not deleted during proccess
+    if (auto sipLink = getSIPVoIPLink()) {
+        if (auto& broker = sipLink->sipTransportBroker)
+            broker->transportStateChanged(tp, state, info);
+        else
+            RING_ERR("SIPVoIPLink with invalid SipTransportBroker");
     }
-    instance->transportStateChanged(tp, state, info);
 }
 
 void
