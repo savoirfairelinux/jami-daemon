@@ -174,11 +174,6 @@ public:
     }
 
     /**
-     * This function returns a list of STUN mapped sockets for
-     * a given set of socket file descriptors */
-    std::vector<pj_sockaddr> getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socks) const;
-
-    /**
      * Get the correct address to use (ie advertised) from
      * a uri. The corresponding transport that should be used
      * with that uri will be discovered.
@@ -190,14 +185,6 @@ public:
 
     void findLocalAddressFromSTUN(pjsip_transport *transport, pj_str_t *stunServerName,
             int stunPort, std::string &address, pj_uint16_t &port) const;
-
-    /**
-     * Call released_cb(success) when transport tp is destroyed, making the
-     * socket available for a new similar transport.
-     * success is true if the transport is actually released.
-     * TODO: make this call non-blocking.
-     */
-    void waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb);
 
     /**
      * Start gracefull shutdown procedure for all transports
@@ -226,7 +213,6 @@ private:
      */
     std::map<pjsip_transport*, std::weak_ptr<SipTransport>> transports_ {};
     std::mutex transportMapMutex_ {};
-    std::condition_variable transportDestroyedCv_ {};
 
     /**
      * Transports are stored in this map in order to retreive them in case

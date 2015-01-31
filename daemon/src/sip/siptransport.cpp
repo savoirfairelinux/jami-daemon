@@ -237,7 +237,6 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp, pjsip_transport_s
                 RING_WARN("UDP transport destroy");
                 transports_.erase(transport_key->second);
                 udpTransports_.erase(transport_key);
-                transportDestroyedCv_.notify_all();
             }
         }
     }
@@ -280,25 +279,6 @@ SipTransportBroker::shutdown()
             pjsip_transport_shutdown(transport->get());
         }
     }
-}
-
-void
-SipTransportBroker::waitForReleased(const SipTransportDescr& tp, std::function<void(bool)> released_cb)
-{
-    std::vector<std::pair<SipTransportDescr, pjsip_transport*>> to_destroy_all;
-    bool destroyed = false;
-    {
-        std::unique_lock<std::mutex> lock(transportMapMutex_);
-        auto check_destroyed = [&](){
-            return udpTransports_.find(tp) == udpTransports_.end();
-        };
-        destroyed = transportDestroyedCv_.wait_for(lock, std::chrono::seconds(10), check_destroyed);
-        if (!destroyed)
-            destroyed = check_destroyed();
-    }
-
-    if (released_cb)
-        released_cb(destroyed);
 }
 
 std::shared_ptr<SipTransport>
@@ -458,38 +438,6 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice, uns
     return ret;
 }
 #endif
-
-std::vector<pj_sockaddr>
-SipTransportBroker::getSTUNAddresses(const pj_str_t serverName, pj_uint16_t port, std::vector<long> &socketDescriptors) const
-{
-    const size_t ip_num = socketDescriptors.size();
-    pj_sockaddr_in ipv4[ip_num];
-    pj_status_t ret = pjstun_get_mapped_addr(&cp_.factory,
-            socketDescriptors.size(), &socketDescriptors[0],
-            &serverName, port, &serverName, port, ipv4);
-
-    if (ret != PJ_SUCCESS) {
-        RING_ERR("STUN query to server \"%.*s\" failed", serverName.slen, serverName.ptr);
-        switch (ret) {
-            case PJLIB_UTIL_ESTUNNOTRESPOND:
-                RING_ERR("No response from STUN server(s)");
-                break;
-            case PJLIB_UTIL_ESTUNSYMMETRIC:
-                RING_ERR("Different mapped addresses are returned by servers.");
-                break;
-            default:
-                break;
-        }
-        throw std::runtime_error("Can't resolve STUN request");
-    }
-
-    std::vector<pj_sockaddr> result(ip_num);
-    for(size_t i=0; i<ip_num; i++) {
-        result[i].ipv4 = ipv4[i];
-        RING_WARN("STUN PORTS: %ld", pj_sockaddr_get_port(&result[i]));
-    }
-    return result;
-}
 
 #define RETURN_IF_NULL(A, M, ...) if ((A) == NULL) { RING_ERR(M, ##__VA_ARGS__); return; }
 
