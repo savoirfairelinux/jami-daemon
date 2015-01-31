@@ -103,37 +103,39 @@ private:
     pjsip_tpfactory* listener {nullptr};
 };
 
-typedef std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)> SipTransportStateCallback;
+using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
 
 /**
  * SIP transport wraps pjsip_transport.
  */
-struct SipTransport
+class SipTransport
 {
-    SipTransport() {}
-    SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>& l = {});
+    public:
+        SipTransport(pjsip_transport*);
+        SipTransport(pjsip_transport*, const std::shared_ptr<TlsListener>&);
 
-    virtual ~SipTransport();
+        ~SipTransport();
 
-    static const char* stateToStr(pjsip_transport_state state);
+        static const char* stateToStr(pjsip_transport_state state);
 
-    void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info);
+        void stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info);
 
-    pjsip_transport* get() {
-        return transport;
-    }
+        pjsip_transport* get() {
+            return transport_.get();
+        }
 
-    void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
-    bool removeStateListener(uintptr_t lid);
+        void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
+        bool removeStateListener(uintptr_t lid);
 
-    static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
+        static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
-private:
-    NON_COPYABLE(SipTransport);
-    pjsip_transport* transport {nullptr};
-    std::shared_ptr<TlsListener> tlsListener {};
-    std::map<uintptr_t, SipTransportStateCallback> stateListeners {};
-    std::mutex stateListenersMutex_ {};
+    private:
+        NON_COPYABLE(SipTransport);
+
+        std::unique_ptr<pjsip_transport, decltype(pjsip_transport_dec_ref)&> transport_;
+        std::shared_ptr<TlsListener> tlsListener_;
+        std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
+        std::mutex stateListenersMutex_;
 };
 
 class IpAddr;
