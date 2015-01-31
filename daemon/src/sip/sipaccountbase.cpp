@@ -331,4 +331,11 @@ SIPAccountBase::generateVideoPort() const
 }
 #endif
 
+pjsip_tpselector
+SIPAccountBase::getTransportSelector() {
+    if (!transport_)
+        return SIPVoIPLink::getTransportSelector(nullptr);
+    return SIPVoIPLink::getTransportSelector(transport_->get());
+}
+
 } // namespace ring

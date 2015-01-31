@@ -156,6 +156,35 @@ class SIPVoIPLink {
 
         pj_pool_t* getPool() const;
 
+        /**
+         * Get the correct address to use (ie advertised) from
+         * a uri. The corresponding transport that should be used
+         * with that uri will be discovered.
+         *
+         * @param uri The uri from which we want to discover the address to use
+         * @param transport The transport to use to discover the address
+         */
+        void findLocalAddressFromTransport(pjsip_transport* transport,
+                                           pjsip_transport_type_e transportType,
+                                           const std::string& host,
+                                           std::string& address,
+                                           pj_uint16_t& port) const;
+
+        void findLocalAddressFromSTUN(pjsip_transport* transport,
+                                      pj_str_t* stunServerName,
+                                      int stunPort, std::string& address,
+                                      pj_uint16_t& port) const;
+
+        /**
+         * Initialize the transport selector
+         * @param transport     A transport associated with an account
+         * @return          	A transport selector structure
+         */
+        static inline pjsip_tpselector getTransportSelector(pjsip_transport *transport) {
+            pjsip_tpselector tp = {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
+            return tp;
+        }
+
     private:
         NON_COPYABLE(SIPVoIPLink);
 

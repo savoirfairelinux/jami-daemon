@@ -228,7 +228,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
-    auto account(getSIPVoIPLink()->guessAccount(toUsername, viaHostname, remote_hostname));
+    auto link = getSIPVoIPLink();
+
+    auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
         RING_ERR("NULL account");
         return PJ_FALSE;
@@ -300,7 +302,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // RING_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
-    auto transport = getSIPVoIPLink()->sipTransportBroker->findTransport(rdata->tp_info.transport);
+    auto transport = link->sipTransportBroker->findTransport(rdata->tp_info.transport);
     if (!transport) {
         transport = account->getTransport();
         if (!transport) {
@@ -366,7 +368,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    pjsip_tpselector tp_sel  = SipTransportBroker::getTransportSelector(transport->get());
+    pjsip_tpselector tp_sel  = link->getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Could not set transport for dialog");
         return PJ_FALSE;
@@ -1280,5 +1282,102 @@ SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjs
         }
     }
 }
+
+#define RETURN_IF_NULL(A, M, ...) \
+    if ((A) == NULL) { RING_WARN(M, ##__VA_ARGS__); return; }
+
+void
+SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
+                                           pjsip_transport_type_e transportType,
+                                           const std::string& host,
+                                           std::string& addr,
+                                           pj_uint16_t& port) const
+{
+    // Initialize the sip port with the default SIP port
+    port = pjsip_transport_get_default_port_for_type(transportType);
+
+    // Initialize the sip address with the hostname
+    const auto pjMachineName = pj_gethostname();
+    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
+
+    // Update address and port with active transport
+    RETURN_IF_NULL(transport,
+                   "Transport is NULL in findLocalAddress, using local address %s :%d",
+                   addr.c_str(), port);
+
+    // get the transport manager associated with the SIP enpoint
+    auto tpmgr = pjsip_endpt_get_tpmgr(endpt_);
+    RETURN_IF_NULL(tpmgr,
+                   "Transport manager is NULL in findLocalAddress, using local address %s :%d",
+                   addr.c_str(), port);
+
+    pj_str_t pjstring;
+    pj_cstr(&pjstring, host.c_str());
+
+    auto tp_sel = getTransportSelector(transport);
+    pjsip_tpmgr_fla2_param param = { transportType, &tp_sel, pjstring, PJ_FALSE,
+                                     {nullptr, 0}, 0, nullptr };
+    if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_, &param) != PJ_SUCCESS) {
+        RING_WARN("Could not retrieve local address and port from transport, using %s :%d",
+                  addr.c_str(), port);
+        return;
+    }
+
+    // Update local address based on the transport type
+    addr = std::string(param.ret_addr.ptr, param.ret_addr.slen);
+
+    // Determine the local port based on transport information
+    port = param.ret_port;
+}
+
+void
+SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
+                                      pj_str_t* stunServerName,
+                                      int stunPort,
+                                      std::string& addr,
+                                      pj_uint16_t& port) const
+{
+    // Initialize the sip port with the default SIP port
+    port = DEFAULT_SIP_PORT;
+
+    // Initialize the sip address with the hostname
+    const pj_str_t* pjMachineName = pj_gethostname();
+    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
+
+    // Update address and port with active transport
+    RETURN_IF_NULL(transport,
+                   "Transport is NULL in findLocalAddress, using local address %s:%d",
+                   addr.c_str(), port);
+
+    IpAddr mapped_addr;
+    pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
+    const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort,
+                                    *stunServerName, stunPort};
+    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_->factory,
+                                                           &stunOpt, 1,
+                                                           &sipSocket,
+                                                           &static_cast<pj_sockaddr_in&>(mapped_addr));
+
+    switch (stunStatus) {
+        case PJLIB_UTIL_ESTUNNOTRESPOND:
+           RING_ERR("No response from STUN server %.*s",
+                    stunServerName->slen, stunServerName->ptr);
+           return;
+        case PJLIB_UTIL_ESTUNSYMMETRIC:
+           RING_ERR("Different mapped addresses are returned by servers.");
+           return;
+        case PJ_SUCCESS:
+            port = mapped_addr.getPort();
+            addr = mapped_addr.toString();
+        default:
+           break;
+    }
+
+    RING_WARN("Using address %s provided by STUN server %.*s",
+              IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen,
+              stunServerName->ptr);
+}
+
+#undef RETURN_IF_NULL
 
 } // namespace ring

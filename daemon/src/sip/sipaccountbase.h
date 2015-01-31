@@ -265,11 +265,7 @@ public:
     /**
      * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
      */
-    inline pjsip_tpselector getTransportSelector() {
-        if (!transport_)
-            return SipTransportBroker::getTransportSelector(nullptr);
-        return SipTransportBroker::getTransportSelector(transport_->get());
-    }
+    pjsip_tpselector getTransportSelector();
 
 protected:
     virtual void serialize(YAML::Emitter &out);

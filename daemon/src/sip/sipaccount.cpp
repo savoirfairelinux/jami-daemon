@@ -345,7 +345,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    const pjsip_tpselector tp_sel = SipTransportBroker::getTransportSelector(transport->get());
+    const pjsip_tpselector tp_sel = link_->getTransportSelector(transport->get());
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Unable to associate transport for invite session dialog");
         return false;
@@ -1419,7 +1419,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     std::string address;
     pj_uint16_t port;
 
-    link_->sipTransportBroker->findLocalAddressFromTransport(
+    link_->findLocalAddressFromTransport(
         t,
         transportType,
         hostname_,
@@ -1435,7 +1435,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         port = publishedPort_;
         RING_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_->sipTransportBroker->findLocalAddressFromSTUN(
+        link_->findLocalAddressFromSTUN(
             t,
             &stunServerName_,
             stunPort_,
@@ -1490,7 +1490,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_->sipTransportBroker->findLocalAddressFromSTUN(
+    link_->findLocalAddressFromSTUN(
         transport_ ? transport_->get() : nullptr,
         &stunServerName_,
         stunPort_,
