@@ -544,7 +544,7 @@ RingAccount::handleEvents()
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransport->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            call->setTransport(link_->sipTransportBroker->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
             call->setConnectionState(Call::PROGRESSING);
             if (c->id == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");

@@ -128,7 +128,7 @@ class SIPVoIPLink {
         /**
          * Instance that maintain and manage transport (UDP, TLS)
          */
-        std::unique_ptr<SipTransportBroker> sipTransport;
+        std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
 #ifdef RING_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
@@ -157,7 +157,6 @@ class SIPVoIPLink {
         pj_pool_t* getPool() const;
 
     private:
-
         NON_COPYABLE(SIPVoIPLink);
 
 #ifdef RING_VIDEO

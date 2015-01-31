@@ -198,7 +198,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
         std::shared_ptr<SipTransport> t =
 #if HAVE_TLS
-            isTlsEnabled() ? link_->sipTransport->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
+            isTlsEnabled() ? link_->sipTransportBroker->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
 #endif
             transport_;
         setTransport(t);
@@ -803,7 +803,7 @@ void SIPAccount::doRegister_()
         initTlsConfiguration();
 
         if (!tlsListener_) {
-            tlsListener_ = link_->sipTransport->getTlsListener(
+            tlsListener_ = link_->sipTransportBroker->getTlsListener(
                 SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
                 getTlsSetting());
             if (!tlsListener_) {
@@ -832,7 +832,7 @@ void SIPAccount::doRegister_()
     if (isIP2IP()) {
         // If we use Tls for IP2IP, transports will be created on connection.
         if (!tlsEnable_)
-            setTransport(link_->sipTransport->getUdpTransport(
+            setTransport(link_->sipTransportBroker->getUdpTransport(
                 SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
             ));
         return;
@@ -843,11 +843,11 @@ void SIPAccount::doRegister_()
         transport_.reset();
 #if HAVE_TLS
         if (isTlsEnabled()) {
-            setTransport(link_->sipTransport->getTlsTransport(tlsListener_, hostIp_));
+            setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_));
         } else
 #endif
         {
-            setTransport(link_->sipTransport->getUdpTransport(
+            setTransport(link_->sipTransportBroker->getUdpTransport(
                 SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
             ));
         }
@@ -1419,7 +1419,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     std::string address;
     pj_uint16_t port;
 
-    link_->sipTransport->findLocalAddressFromTransport(
+    link_->sipTransportBroker->findLocalAddressFromTransport(
         t,
         transportType,
         hostname_,
@@ -1435,7 +1435,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         port = publishedPort_;
         RING_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_->sipTransport->findLocalAddressFromSTUN(
+        link_->sipTransportBroker->findLocalAddressFromSTUN(
             t,
             &stunServerName_,
             stunPort_,
@@ -1490,7 +1490,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_->sipTransport->findLocalAddressFromSTUN(
+    link_->sipTransportBroker->findLocalAddressFromSTUN(
         transport_ ? transport_->get() : nullptr,
         &stunServerName_,
         stunPort_,

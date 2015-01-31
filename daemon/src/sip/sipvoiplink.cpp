@@ -300,7 +300,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // RING_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
-    auto transport = getSIPVoIPLink()->sipTransport->findTransport(rdata->tp_info.transport);
+    auto transport = getSIPVoIPLink()->sipTransportBroker->findTransport(rdata->tp_info.transport);
     if (!transport) {
         transport = account->getTransport();
         if (!transport) {
@@ -518,7 +518,7 @@ SIPVoIPLink::SIPVoIPLink()
         TRY(pjsip_endpt_set_resolver(endpt_, resv));
     }
 
-    sipTransport.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
+    sipTransportBroker.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -590,7 +590,7 @@ SIPVoIPLink::~SIPVoIPLink()
 
     const int MAX_TIMEOUT_ON_LEAVING = 5;
 
-    sipTransport->shutdown();
+    sipTransportBroker->shutdown();
 
     for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
         sleep(1);
@@ -603,7 +603,7 @@ SIPVoIPLink::~SIPVoIPLink()
               Manager::instance().callFactory.callCount<SIPCall>());
 
     // destroy SIP transport before endpoint
-    sipTransport.reset();
+    sipTransportBroker.reset();
 
     Manager::instance().unregisterEventHandler((uintptr_t)this);
 
