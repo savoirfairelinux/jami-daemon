@@ -74,24 +74,35 @@ SipTransportDescr::toString() const
     return ss.str();
 }
 
-SipTransport::SipTransport(pjsip_transport* t, const std::shared_ptr<TlsListener>& l) :
-transport(t), tlsListener(l)
+SipTransport::SipTransport(pjsip_transport* t)
+    : transport_(nullptr, pjsip_transport_dec_ref)
 {
-    pjsip_transport_add_ref(transport);
+    if (not t or pjsip_transport_add_ref(t) != PJ_SUCCESS)
+        throw std::runtime_error("invalid transport");
+
+    // Set pointer here, right after the successful pjsip_transport_add_ref
+    transport_.reset(t);
+
+    RING_DBG("SipTransport@%p {tr=%p {rc=%u}}",
+             this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
+}
+
+SipTransport::SipTransport(pjsip_transport* t,
+                           const std::shared_ptr<TlsListener>& l)
+    : SipTransport(t)
+{
+    tlsListener_ = l;
 }
 
 SipTransport::~SipTransport()
 {
-    if (transport) {
-        pjsip_transport_shutdown(transport);
-        pjsip_transport_dec_ref(transport); // ??
-        RING_DBG("Destroying transport (refcount: %u)",  pj_atomic_get(transport->ref_cnt));
-        transport = nullptr;
-    }
+    RING_DBG("~SipTransport@%p {tr=%p {rc=%u}}",
+             this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 
 bool
-SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t, pjsip_transport_state state)
+SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t,
+                      pjsip_transport_state state)
 {
     return state != PJSIP_TP_STATE_DISCONNECTED
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
@@ -112,7 +123,8 @@ SipTransport::stateToStr(pjsip_transport_state state)
 }
 
 void
-SipTransport::stateCallback(pjsip_transport_state state, const pjsip_transport_state_info *info)
+SipTransport::stateCallback(pjsip_transport_state state,
+                            const pjsip_transport_state_info *info)
 {
     std::vector<SipTransportStateCallback> cbs {};
     {
