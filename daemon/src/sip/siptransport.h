@@ -195,7 +195,7 @@ private:
      * Transports are stored in this map in order to retreive them in case
      * several accounts would share the same port number.
      */
-    std::map<SipTransportDescr, pjsip_transport*> udpTransports_ {};
+    std::map<SipTransportDescr, pjsip_transport*> udpTransports_;
 
     /**
      * Storage for SIP/ICE transport instances.
