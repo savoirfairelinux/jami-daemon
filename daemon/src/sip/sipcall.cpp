@@ -584,7 +584,7 @@ SIPCall::offhold()
 }
 
 void
-SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
+SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
 {
     if (not setState(Call::ACTIVE))
         return;
@@ -851,7 +851,6 @@ SIPCall::stopAllMedias()
 void
 SIPCall::openPortsUPnP()
 {
-    auto& account = getSIPAccount();
     if (upnp_) {
         /**
          * Try to open the desired ports with UPnP,

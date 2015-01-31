@@ -43,12 +43,12 @@ namespace ring {
 
 using std::string;
 
-MediaEncoder::MediaEncoder() :
+MediaEncoder::MediaEncoder()
+    : outputCtx_(avformat_alloc_context())
 #ifdef RING_VIDEO
-    scaler_(),
-    scaledFrame_(),
+    , scaler_()
+    , scaledFrame_()
 #endif // RING_VIDEO
-    outputCtx_(avformat_alloc_context())
 {}
 
 MediaEncoder::~MediaEncoder()

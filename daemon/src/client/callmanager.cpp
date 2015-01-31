@@ -283,31 +283,31 @@ CallManager::startTone(int32_t start, int32_t type)
 }
 
 void
-CallManager::setSASVerified(const std::string& callID)
+CallManager::setSASVerified(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::resetSASVerified(const std::string& callID)
+CallManager::resetSASVerified(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::setConfirmGoClear(const std::string& callID)
+CallManager::setConfirmGoClear(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::requestGoClear(const std::string& callID)
+CallManager::requestGoClear(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::acceptEnrollment(const std::string& callID, bool accepted)
+CallManager::acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
 {
     RING_ERR("ZRTP not supported");
 }
