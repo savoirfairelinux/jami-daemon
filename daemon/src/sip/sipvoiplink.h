@@ -42,8 +42,8 @@
 #endif
 
 #include "ring_types.h"
-#include "siptransport.h"
 #include "ip_utils.h"
+#include "noncopyable.h"
 
 #include <pjsip.h>
 #include <pjlib.h>
@@ -64,6 +64,7 @@ namespace ring {
 class SIPCall;
 class SIPAccountBase;
 class SIPVoIPLink;
+class SipTransportBroker;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
@@ -127,7 +128,7 @@ class SIPVoIPLink {
         /**
          * Instance that maintain and manage transport (UDP, TLS)
          */
-        std::unique_ptr<SipTransportBroker> sipTransport {};
+        std::unique_ptr<SipTransportBroker> sipTransport;
 
 #ifdef RING_VIDEO
         static void enqueueKeyframeRequest(const std::string &callID);
