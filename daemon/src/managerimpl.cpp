@@ -124,6 +124,32 @@ restore_backup(const std::string &path)
     copy_over(backup_path, path);
 }
 
+/**
+ * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
+ * SIPLOGLEVEL = 0 minimum logging
+ * SIPLOGLEVEL = 6 maximum logging
+ */
+
+/** Environment variable used to set pjsip's logging level */
+static constexpr const char* SIPLOGLEVEL = "SIPLOGLEVEL";
+
+static void
+setSipLogLevel()
+{
+    char* envvar = getenv(SIPLOGLEVEL);
+    int level = 0;
+
+    if (envvar != nullptr) {
+        if (not (std::istringstream(envvar) >> level))
+            level = 0;
+
+        // From 0 (min) to 6 (max)
+        level = std::max(0, std::min(level, 6));
+    }
+
+    pj_log_set_level(level);
+}
+
 void
 ManagerImpl::loadDefaultAccountMap()
 {
@@ -184,12 +210,17 @@ ManagerImpl::init(const std::string &config_file)
             throw std::runtime_error(#ret " failed");        \
     } while (0)
 
-    // Our PJSIP dependency (SIP and ICE)
+    srand(time(NULL)); // to get random number for RANDOM_PORT
+
+    // Initialize PJSIP (SIP and ICE implementation)
     TRY(pj_init());
+    setSipLogLevel();
     TRY(pjlib_util_init());
     TRY(pjnath_init());
-
 #undef TRY
+
+    RING_DBG("pjsip version %s for %s initialized",
+             pj_get_version(), PJ_OS_NAME);
 
     ice_tf_.reset(new IceTransportFactory());
 

@@ -79,13 +79,6 @@ extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
 
 class SIPVoIPLink {
     public:
-        /**
-         * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
-         * SIPLOGLEVEL = 0 minimum logging
-         * SIPLOGLEVEL = 6 maximum logging
-         */
-        static void setSipLogLevel();
-
 #ifdef __ANDROID__
         static void setSipLogger();
 #endif
