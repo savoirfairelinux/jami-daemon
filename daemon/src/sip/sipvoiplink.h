@@ -68,7 +68,7 @@ class SipTransportBroker;
 
 typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
 
-extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
+extern std::shared_ptr<SIPVoIPLink> getSIPVoIPLink();
 
 /**
  * @file sipvoiplink.h

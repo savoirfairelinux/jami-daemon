@@ -167,13 +167,6 @@ SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool)
     : cp_(cp), pool_(pool), endpt_(endpt)
 {
-    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
-                                           SipTransportBroker::tp_state_callback);
-    if (status != PJ_SUCCESS) {
-        RING_ERR("Can't set transport callback");
-        sip_utils::sip_strerror(status);
-    }
-
 #if HAVE_DHT
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
                                   pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
@@ -186,7 +179,6 @@ SipTransportBroker::~SipTransportBroker()
     RING_DBG("~SipTransportBroker@%p", this);
 
     shutdown();
-    pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
 
     udpTransports_.clear();
     transports_.clear();
@@ -200,23 +192,6 @@ SipTransportBroker::~SipTransportBroker()
     }
 
     RING_DBG("destroying SipTransportBroker@%p", this);
-}
-
-/** static method (so C callable) used by PJSIP making interface to C++ */
-void
-SipTransportBroker::tp_state_callback(pjsip_transport* tp,
-                                      pjsip_transport_state state,
-                                      const pjsip_transport_state_info* info)
-{
-    // There is no way (at writing) to link a user data to a PJSIP transport.
-    // So we obtain it from the global SIPVoIPLink instance that owns it.
-    // Be sure the broker's owner is not deleted during proccess
-    if (auto sipLink = getSIPVoIPLink()) {
-        if (auto& broker = sipLink->sipTransportBroker)
-            broker->transportStateChanged(tp, state, info);
-        else
-            RING_ERR("SIPVoIPLink with invalid SipTransportBroker");
-    }
 }
 
 void

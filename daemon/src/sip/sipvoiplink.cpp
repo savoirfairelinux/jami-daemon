@@ -82,6 +82,7 @@
 
 #include <istream>
 #include <algorithm>
+#include <atomic>
 
 namespace ring {
 
@@ -106,7 +107,17 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
+std::shared_ptr<SIPVoIPLink>
+getSIPVoIPLink()
+{
+    // limit to two instance creation by run
+    static std::atomic<unsigned> count {1};
+
+    if (count.fetch_sub(1, std::memory_order_relaxed) > 0)
+        return getGlobalInstance<SIPVoIPLink>();
+
+    return nullptr;
+}
 
 /**
  * Helper function to process refer function on call transfer
@@ -226,6 +237,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
     auto link = getSIPVoIPLink();
+    if (not link) {
+        RING_ERR("no more VoIP link");
+        return PJ_FALSE;
+    }
 
     auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
@@ -459,6 +474,22 @@ transaction_request_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
+static void
+tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
+                  const pjsip_transport_state_info* info)
+{
+    // There is no way (at writing) to link a user data to a PJSIP transport.
+    // So we obtain it from the global SIPVoIPLink instance that owns it.
+    // Be sure the broker's owner is not deleted during proccess
+    if (auto sipLink = getSIPVoIPLink()) {
+        if (auto& broker = sipLink->sipTransportBroker)
+            broker->transportStateChanged(tp, state, info);
+        else
+            RING_ERR("SIPVoIPLink with invalid SipTransportBroker");
+    } else
+        RING_ERR("no more VoIP link");
+}
+
 /*************************************************************************************************/
 
 pjsip_endpoint * SIPVoIPLink::getEndpoint()
@@ -508,6 +539,13 @@ SIPVoIPLink::SIPVoIPLink()
     }
 
     sipTransportBroker.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
+
+    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
+                                           tp_state_callback);
+    if (status != PJ_SUCCESS) {
+        RING_ERR("Can't set transport callback");
+        sip_utils::sip_strerror(status);
+    }
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -568,31 +606,38 @@ SIPVoIPLink::SIPVoIPLink()
     // ready to handle events
     // Implementation note: we don't use std::bind(xxx, this) here
     // as handleEvents needs a valid instance to be called.
-    Manager::instance().registerEventHandler((uintptr_t)this, []() { getSIPVoIPLink()->handleEvents(); });
+    Manager::instance().registerEventHandler((uintptr_t)this, []{
+            if (auto link = getSIPVoIPLink())
+                link->handleEvents();
+            else
+                RING_ERR("no more VoIP link");
+        });
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
     RING_DBG("destroying SIPVoIPLink instance");
 
-    const int MAX_TIMEOUT_ON_LEAVING = 5;
+    // Remaining calls should not happen as possible upper callbacks
+    // may be called and another instance of SIPVoIPLink can be re-created!
+
+    if (not Manager::instance().callFactory.empty<SIPCall>())
+        RING_ERR("%d SIP calls remains!",
+                 Manager::instance().callFactory.callCount<SIPCall>());
 
     sipTransportBroker->shutdown();
 
-    for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
+    const int MAX_TIMEOUT_ON_LEAVING = 5;
+    for (int timeout = 0;
+         pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
+         timeout++)
         sleep(1);
 
-    const pj_time_val tv = {0, 10};
-    pjsip_endpt_handle_events(endpt_, &tv);
-
-    if (!Manager::instance().callFactory.empty<SIPCall>())
-        RING_ERR("%d SIP calls remains!",
-              Manager::instance().callFactory.callCount<SIPCall>());
-
-    // destroy SIP transport before endpoint
-    sipTransportBroker.reset();
-
+    pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
+    handleEvents();
+
+    sipTransportBroker.reset();
 
     pjsip_endpt_destroy(endpt_);
     pj_pool_release(pool_);
@@ -708,9 +753,11 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    auto link = getSIPVoIPLink();
-    std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
-    link->keyframeRequests_.push(id);
+    if (auto link = getSIPVoIPLink()) {
+        std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
+        link->keyframeRequests_.push(id);
+    } else
+        RING_ERR("no more VoIP link");
 }
 
 // Called from SIP event thread
@@ -1236,16 +1283,15 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 void
 SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
 {
-    auto sthis_ = getSIPVoIPLink();
-    auto& this_ = *sthis_;
-    {
-        std::lock_guard<std::mutex> lock(this_.resolveMutex_);
-        auto it = this_.resolveCallbacks_.find((uintptr_t)token);
-        if (it != this_.resolveCallbacks_.end()) {
+    if (auto link = getSIPVoIPLink()) {
+        std::lock_guard<std::mutex> lock(link->resolveMutex_);
+        auto it = link->resolveCallbacks_.find((uintptr_t)token);
+        if (it != link->resolveCallbacks_.end()) {
             it->second(status, addr);
-            this_.resolveCallbacks_.erase(it);
+            link->resolveCallbacks_.erase(it);
         }
-    }
+    } else
+        RING_ERR("no more VoIP link");
 }
 
 #define RETURN_IF_NULL(A, M, ...) \
