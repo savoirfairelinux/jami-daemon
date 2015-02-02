@@ -85,9 +85,6 @@
 
 namespace ring {
 
-/** Environment variable used to set pjsip's logging level */
-#define SIPLOGLEVEL "SIPLOGLEVEL"
-
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 /**
@@ -488,18 +485,8 @@ SIPVoIPLink::SIPVoIPLink()
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
-    srand(time(NULL)); // to get random number for RANDOM_PORT
-
-    TRY(pj_init());
-
-    TRY(pjlib_util_init());
-
-    setSipLogLevel();
-    TRY(pjnath_init());
-
     pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
     pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
-
     if (!pool_)
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
@@ -575,8 +562,6 @@ SIPVoIPLink::SIPVoIPLink()
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
-    RING_DBG("pjsip version %s for %s initialized", pj_get_version(), PJ_OS_NAME);
-
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
@@ -612,8 +597,6 @@ SIPVoIPLink::~SIPVoIPLink()
     pjsip_endpt_destroy(endpt_);
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
-
-    pj_shutdown();
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -660,24 +643,6 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     }
 
     return result;
-}
-
-void SIPVoIPLink::setSipLogLevel()
-{
-    char *envvar = getenv(SIPLOGLEVEL);
-    int level = 0;
-
-    if (envvar != NULL) {
-        std::string loglevel = envvar;
-
-        if (!(std::istringstream(loglevel) >> level)) level = 0;
-
-        level = level > 6 ? 6 : level;
-        level = level < 0 ? 0 : level;
-    }
-
-    // From 0 (min) to 6 (max)
-    pj_log_set_level(level);
 }
 
 // Called from EventThread::run (not main thread)

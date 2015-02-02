@@ -53,9 +53,7 @@ namespace ring {
 std::mutex IAXVoIPLink::mutexIAX = {};
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) : account_(account), resampler_(new Resampler{44100})
-{
-    srand(time(NULL));    // to get random number for RANDOM_PORT
-}
+{}
 
 IAXVoIPLink::~IAXVoIPLink()
 {
