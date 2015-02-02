@@ -374,7 +374,13 @@ SIPCall::refuse()
 static void
 transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 {
-    auto mod_ua_id = getSIPVoIPLink()->getModId();
+    auto link = getSIPVoIPLink();
+    if (not link) {
+        RING_ERR("no more VoIP link");
+        return;
+    }
+
+    auto mod_ua_id = link->getModId();
 
     switch (pjsip_evsub_get_state(sub)) {
         case PJSIP_EVSUB_STATE_ACCEPTED:

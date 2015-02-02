@@ -165,7 +165,7 @@ public:
     std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
 #endif
 
-    std::shared_ptr<SipTransport> findTransport(pjsip_transport*);
+    std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
     /**
      * Start gracefull shutdown procedure for all transports
@@ -202,9 +202,6 @@ private:
      */
 #if HAVE_DHT
     int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
-
-    std::list<SipIceTransport> iceTransports_;
-    std::mutex iceMutex_ {};
 #endif
 
     pj_caching_pool& cp_;

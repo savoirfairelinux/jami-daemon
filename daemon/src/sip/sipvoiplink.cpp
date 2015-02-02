@@ -107,17 +107,7 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
-std::shared_ptr<SIPVoIPLink>
-getSIPVoIPLink()
-{
-    // limit to two instance creation by run
-    static std::atomic<unsigned> count {1};
-
-    if (count.fetch_sub(1, std::memory_order_relaxed) > 0)
-        return getGlobalInstance<SIPVoIPLink>();
-
-    return nullptr;
-}
+decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
 
 /**
  * Helper function to process refer function on call transfer
@@ -314,7 +304,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // RING_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
-    auto transport = link->sipTransportBroker->findTransport(rdata->tp_info.transport);
+    // Append PJSIP transport to the broker's SipTransport list
+    auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
     if (!transport) {
         transport = account->getTransport();
         if (!transport) {
@@ -509,8 +500,6 @@ pj_pool_t* SIPVoIPLink::getPool() const
 
 SIPVoIPLink::SIPVoIPLink()
 {
-    RING_DBG("creating SIPVoIPLink instance");
-
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
@@ -612,11 +601,13 @@ SIPVoIPLink::SIPVoIPLink()
             else
                 RING_ERR("no more VoIP link");
         });
+
+    RING_DBG("SIPVoIPLink@%p", this);
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    RING_DBG("destroying SIPVoIPLink instance");
+    RING_DBG("~SIPVoIPLink@%p", this);
 
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!

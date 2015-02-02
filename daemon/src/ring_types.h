@@ -33,6 +33,7 @@
 
 #include <type_traits>
 #include <memory>
+#include <mutex>
 #include <cstddef> // for size_t
 
 namespace ring {
@@ -54,13 +55,21 @@ using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, 
  * as we keep only a weak reference on it.
  * But when created it's always the same object until all holders release their sharing.
  */
-template <class T>
+template <class T, signed MaxRespawn=-1>
 std::shared_ptr<T>
 getGlobalInstance()
 {
+    static std::mutex mutex;
     static std::weak_ptr<T> wlink;
 
+    std::unique_lock<std::mutex> lock(mutex);
+
     if (wlink.expired()) {
+        static signed counter {MaxRespawn};
+        if (not counter)
+            return nullptr;
+        if (counter > 0)
+            counter--;
         auto link = std::make_shared<T>();
         wlink = link;
         return link;
