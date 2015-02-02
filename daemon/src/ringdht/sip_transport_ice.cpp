@@ -61,7 +61,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
                                  const std::shared_ptr<IceTransport>& ice,
                                  int comp_id, std::function<int()> destroy_cb)
-    : base()
+    : trInfo()
     , pool_(nullptr, pj_pool_release)
     , rxPool_(nullptr, pj_pool_release)
     , rdata()
@@ -69,10 +69,13 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
     , comp_id_(comp_id)
     , destroy_cb_(destroy_cb)
 {
+    trInfo.self = this;
+
     if (not ice or not ice->isRunning())
         throw std::logic_error("ice transport must exist and negotiation completed");
 
     RING_DBG("Creating SipIceTransport");
+    auto& base = trInfo.base;
 
     pool_.reset(pjsip_endpt_create_pool(endpt, "SipIceTransport.pool", POOL_TP_INIT, POOL_TP_INC));
     if (not pool_)
@@ -122,15 +125,15 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                        pjsip_tx_data *tdata,
                        const pj_sockaddr_t *rem_addr, int addr_len,
                        void *token, pjsip_transport_callback callback) {
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
+        auto this_ = reinterpret_cast<SipIceTransportTranpoline*>(transport)->self;
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
     base.do_shutdown = [](pjsip_transport *transport){
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
+        auto this_ = reinterpret_cast<SipIceTransportTranpoline*>(transport)->self;
         return this_->shutdown();
     };
     base.destroy = [](pjsip_transport *transport){
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
+        auto this_ = reinterpret_cast<SipIceTransportTranpoline*>(transport)->self;
         return this_->destroy();
     };
 
@@ -167,8 +170,8 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
 SipIceTransport::~SipIceTransport()
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    pj_lock_destroy(base.lock);
-    pj_atomic_destroy(base.ref_cnt);
+    pj_lock_destroy(trInfo.base.lock);
+    pj_atomic_destroy(trInfo.base.ref_cnt);
 }
 
 void

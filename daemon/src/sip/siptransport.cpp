@@ -188,7 +188,7 @@ SipTransportBroker::~SipTransportBroker()
                   iceTransports_.size());
         for (const auto& tr : iceTransports_)
             RING_WARN("+ %p {t=%p {rc=%u}}",
-                      &tr, &tr.base, pj_atomic_get(tr.base.ref_cnt));
+                      &tr, &tr.trInfo.base, pj_atomic_get(tr.trInfo.base.ref_cnt));
     }
 
     RING_DBG("destroying SipTransportBroker@%p", this);
@@ -232,7 +232,7 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
             const auto iceKey = std::find_if(
                 iceTransports_.begin(), iceTransports_.end(),
                 [tp](const SipIceTransport& sit) {
-                    return &sit.base == tp;
+                    return &sit.trInfo.base == tp;
                 });
             if (iceKey != iceTransports_.cend())
                 iceTransports_.erase(iceKey);
@@ -427,7 +427,7 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
                                  comp_id, nullptr);
 
     auto& sip_ice_tr = iceTransports_.front();
-    auto tr = &sip_ice_tr.base;
+    auto tr = &sip_ice_tr.trInfo.base;
     auto sip_tr = std::make_shared<SipTransport>(tr);
     {
         std::unique_lock<std::mutex> lock(transportMapMutex_);

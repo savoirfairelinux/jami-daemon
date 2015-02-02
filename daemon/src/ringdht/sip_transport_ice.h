@@ -61,7 +61,13 @@ struct SipIceTransport
             return ice_;
         }
 
-        pjsip_transport base;
+        // This structure SHOULD be standard-layout,
+        // implies std::is_standard_layout<SipIceTransportTranpoline>::value
+        // SHOULD return true!
+        struct SipIceTransportTranpoline {
+                pjsip_transport base; // do not move, SHOULD be the fist member
+                SipIceTransport* self {nullptr};
+        } trInfo;
 
     private:
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
