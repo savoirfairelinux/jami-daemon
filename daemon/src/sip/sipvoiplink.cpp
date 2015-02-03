@@ -499,8 +499,6 @@ pj_pool_t* SIPVoIPLink::getPool() const
 
 SIPVoIPLink::SIPVoIPLink()
 {
-    RING_DBG("creating SIPVoIPLink instance");
-
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
@@ -598,32 +596,34 @@ SIPVoIPLink::SIPVoIPLink()
     // as handleEvents needs a valid instance to be called.
     Manager::instance().registerEventHandler((uintptr_t)this,
                                              [this]{ handleEvents(); });
+
+    RING_DBG("SIPVoIPLink@%p", this);
 }
 
 SIPVoIPLink::~SIPVoIPLink()
 {
-    RING_DBG("destroying SIPVoIPLink instance");
+    RING_DBG("~SIPVoIPLink@%p", this);
 
-    const int MAX_TIMEOUT_ON_LEAVING = 5;
+    // Remaining calls should not happen as possible upper callbacks
+    // may be called and another instance of SIPVoIPLink can be re-created!
+
+    if (not Manager::instance().callFactory.empty<SIPCall>())
+        RING_ERR("%d SIP calls remains!",
+                 Manager::instance().callFactory.callCount<SIPCall>());
 
     sipTransportBroker->shutdown();
 
-    for (int timeout = 0; pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING; timeout++)
+    const int MAX_TIMEOUT_ON_LEAVING = 5;
+    for (int timeout = 0;
+         pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
+         timeout++)
         sleep(1);
 
-    const pj_time_val tv = {0, 10};
-    pjsip_endpt_handle_events(endpt_, &tv);
-
-    if (!Manager::instance().callFactory.empty<SIPCall>())
-        RING_ERR("%d SIP calls remains!",
-              Manager::instance().callFactory.callCount<SIPCall>());
-
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-
-    // destroy SIP transport before endpoint
-    sipTransportBroker.reset();
-
     Manager::instance().unregisterEventHandler((uintptr_t)this);
+    handleEvents();
+
+    sipTransportBroker.reset();
 
     pjsip_endpt_destroy(endpt_);
     pj_pool_release(pool_);
