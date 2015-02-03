@@ -46,7 +46,7 @@
 bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID), link_(getSIPVoIPLink())
+    : Account(accountID), link_(getSIPVoIPLink()), mediaFactory_(ring::getMediaCodecFactory())
 {}
 
 template <typename T>

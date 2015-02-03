@@ -38,6 +38,7 @@
 #include <map>
 #include <vector>
 
+#if 0
 class PluginManager;
 
 /*
@@ -169,4 +170,5 @@ class AudioCodecFactory {
         std::vector<int> defaultCodecList_ {};
 };
 
+#endif
 #endif // __CODEC_DESCRIPTOR_H__

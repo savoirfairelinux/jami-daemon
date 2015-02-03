@@ -40,6 +40,7 @@
 #include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
+#include "media_codec_factory.h"
 
 #include <pjsip/sip_types.h>
 
@@ -295,6 +296,7 @@ protected:
      * Voice over IP Link contains a listener thread and calls
      */
     std::shared_ptr<SIPVoIPLink> link_;
+    std::shared_ptr<ring::MediaCodecFactory> mediaFactory_;
 
     std::shared_ptr<SipTransport> transport_ {};
 

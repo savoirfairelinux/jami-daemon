@@ -51,6 +51,7 @@
 #include <stdexcept>
 #include <sstream>
 
+#if 0
 AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
     : pluginManager_(pluginManager)
 {
@@ -332,3 +333,4 @@ AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 
     return v;
 }
+#endif

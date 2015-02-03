@@ -42,6 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
+#include "libav_utils.h"
 
 using namespace ring;
 
@@ -610,17 +611,19 @@ SIPCall::offhold()
 void
 SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
 {
+#if 0
+    //ebail : disable for the moment
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<ring::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<ring::MediaAudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         RING_WARN("Session media is empty");
         return;
     }
 
-    std::vector<ring::AudioCodec*> audioCodecs;
+    std::vector<ring::MediaAudioCodec*> audioCodecs;
 
     for (auto & i : sessionMedia) {
 
@@ -628,7 +631,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
             continue;
 
         // Create a new instance for this codec
-        ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
+        ring::MediaAudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
             RING_ERR("Could not instantiate codec %d", i->getPayloadType());
@@ -669,6 +672,7 @@ SIPCall::internalOffHold(const std::function<void()> &SDPUpdateFunc)
         RING_WARN("Reinvite failed, resuming hold");
         onhold();
     }
+#endif
 }
 
 void
@@ -888,7 +892,7 @@ SIPCall::startAllMedia()
     }
 #endif // USE_CCRTP && HAVE_SDES
 
-    std::vector<ring::AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<ring::MediaAudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         RING_WARN("Session media is empty");
@@ -898,15 +902,15 @@ SIPCall::startAllMedia()
     try {
         Manager::instance().startAudioDriverStream();
 
-        std::vector<AudioCodec*> audioCodecs;
+        std::vector<MediaAudioCodec*> audioCodecs;
 
         for (const auto & i : sessionMedia) {
             if (!i)
                 continue;
 
-            const int pl = i->getPayloadType();
+            const int pl = i->payloadType_;
 
-            ring::AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+            ring::MediaAudioCodec *ac = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(pl));
 
             if (!ac) {
                 RING_ERR("Could not instantiate codec %d", pl);

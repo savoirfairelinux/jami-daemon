@@ -255,6 +255,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
+    RING_DBG("ELOI : > %s \n",__FUNCTION__);
     audioDecoder_.reset(new ring::MediaDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
@@ -271,6 +272,7 @@ AudioReceiveThread::setup()
                  "decoder IO startup failed");
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+    RING_DBG("ELOI : < %s \n",__FUNCTION__);
     return true;
 }
 

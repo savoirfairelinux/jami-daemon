@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,34 +29,25 @@
  *  as that of the covered work.
  */
 
-#ifndef __LIBAV_UTILS_H__
-#define __LIBAV_UTILS_H__
+#ifndef __MEDIA_AUDIO_CODEC_H__
+#define __MEDIA_AUDIO_CODEC_H__
 
-#include <vector>
-#include <map>
-#include <string>
+#include "media_codec.h"
+namespace ring {
+    class MediaAudioCodec: public MediaCodec {
 
+public:
 
-namespace libav_utils {
+    MediaAudioCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t bitrate = 0, uint16_t sampleRate = 0, uint16_t nbChannels = 0, uint16_t payloadType = 0, bool isActive = true);
+    ~MediaAudioCodec();
 
-    void sfl_avcodec_init();
+    uint16_t sampleRate_;
+    uint16_t nbChannels_;
 
-    int libav_pixel_format(int fmt);
-    int sfl_pixel_format(int fmt);
+    std::vector<std::string> getCodecSpecifications();
 
-    std::map<std::string, std::string> encodersMap();
+private:
+    };
 
-    std::vector<std::string> getVideoCodecList();
-
-    std::vector<std::map <std::string, std::string> > getDefaultCodecs();
-
-
-    const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
-    const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
-
-    void sfl_url_split(const char *url,
-                      char *hostname, size_t hostname_size, int *port,
-                      char *path, size_t path_size);
 }
-
-#endif // __LIBAV_UTILS_H__
+#endif //__MEDIA_AUDIO_CODEC_H__

@@ -232,11 +232,11 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::MediaAudioCodec* ac = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByName("PCMA", ring::MEDIA_AUDIO));
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<ring::MediaAudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
 #if USE_CCRTP

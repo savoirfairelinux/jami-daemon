@@ -97,9 +97,9 @@ std::vector< std::string > DBusConfigurationManager::getSupportedTlsMethod()
     return ring_config_get_supported_tls_method();
 }
 
-std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const int32_t& payload)
+std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const int32_t& codecId)
 {
-    return ring_config_get_audio_codec_details(payload);
+    return ring_config_get_audio_codec_details(codecId);
 }
 
 std::vector< int32_t > DBusConfigurationManager::getActiveAudioCodecList(const std::string& accountID)

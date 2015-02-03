@@ -123,6 +123,7 @@ static void init_once()
     if (getDebugMode())
         av_log_set_level(AV_LOG_VERBOSE);
 
+#if 0
     /* list of codecs tested and confirmed to work */
     encoders_["H264"]        = "libx264";
     encoders_["H263-2000"]   = "h263p";
@@ -147,6 +148,7 @@ static void init_once()
     //encoders["H263"]          = "h263";
 
     findInstalledVideoCodecs();
+#endif
 }
 
 static std::once_flag already_called;

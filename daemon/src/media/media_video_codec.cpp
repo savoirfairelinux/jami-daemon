@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -27,35 +28,17 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#include <iostream>
+#include <unistd.h>
+#include "media_video_codec.h"
 
-#ifndef __LIBAV_UTILS_H__
-#define __LIBAV_UTILS_H__
+using std::string;
+namespace ring {
 
-#include <vector>
-#include <map>
-#include <string>
-
-
-namespace libav_utils {
-
-    void sfl_avcodec_init();
-
-    int libav_pixel_format(int fmt);
-    int sfl_pixel_format(int fmt);
-
-    std::map<std::string, std::string> encodersMap();
-
-    std::vector<std::string> getVideoCodecList();
-
-    std::vector<std::map <std::string, std::string> > getDefaultCodecs();
-
-
-    const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
-    const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
-
-    void sfl_url_split(const char *url,
-                      char *hostname, size_t hostname_size, int *port,
-                      char *path, size_t path_size);
+MediaVideoCodec::MediaVideoCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t payloadType, bool isActive)
+    : MediaCodec(avcodecId, name, libName, MEDIA_VIDEO, type, payloadType, isActive){}
+MediaVideoCodec::~MediaVideoCodec()
+{
 }
 
-#endif // __LIBAV_UTILS_H__
+}

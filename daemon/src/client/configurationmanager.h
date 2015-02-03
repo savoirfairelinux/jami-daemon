@@ -65,7 +65,7 @@ class ConfigurationManager
 
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
-        std::vector< std::string > getAudioCodecDetails(int32_t payload);
+        std::vector< std::string > getAudioCodecDetails(int32_t codecId);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
 
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);

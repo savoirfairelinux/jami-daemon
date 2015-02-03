@@ -94,10 +94,10 @@ Sdp::~Sdp()
 }
 
 static bool
-hasPayload(const std::vector<ring::AudioCodec*> &codecs, int pt)
+hasPayload(const std::vector<ring::MediaAudioCodec*> &codecs, int pt)
 {
     for (const auto &i : codecs)
-        if (i and i->getPayloadType() == pt)
+        if (i and i->payloadType_ == pt)
             return true;
     return false;
 }
@@ -120,11 +120,11 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
     return os.str();
 }
 
-static ring::AudioCodec *
+static ring::MediaCodec *
 findCodecByName(const std::string &codec)
 {
     // try finding by name
-    return Manager::instance().audioCodecFactory.getCodec(codec).get();
+    return ring::getMediaCodecFactory()->searchCodecByName(codec);
 }
 
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
@@ -151,16 +151,18 @@ void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
             if (!pj_stricmp2(&current->desc.media, "audio")) {
                 const unsigned long pt = pj_strtoul(&current->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaLocal_, pt)) {
-                    auto codec = Manager::instance().audioCodecFactory.getCodec(pt).get();
+                    auto codec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(pt, ring::MEDIA_AUDIO));
                     if (codec)
                         sessionAudioMediaLocal_.push_back(codec);
                     else {
-                        codec = findCodecByName(rtpmapToString(rtpmap));
+                        codec = dynamic_cast< ring::MediaAudioCodec*> (findCodecByName(rtpmapToString(rtpmap)));
                         if (codec)
                             sessionAudioMediaLocal_.push_back(codec);
                         else
                             RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
+                }else{
+                    RING_ERR("Can not find codec matching payload %d", pt);
                 }
             } else if (!pj_stricmp2(&current->desc.media, "video")) {
                 const string codec(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
@@ -215,18 +217,20 @@ void Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
                 const unsigned long pt = pj_strtoul(&r_media->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
-                    auto codec = Manager::instance().audioCodecFactory.getCodec(pt).get();
+                    auto codec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(pt));
                     if (codec) {
                         RING_DBG("Adding codec with new payload type %d", pt);
                         sessionAudioMediaRemote_.push_back(codec);
                     } else {
                         // Search by codec name, clock rate and param (channel count)
-                        codec = findCodecByName(rtpmapToString(rtpmap));
+                        codec = dynamic_cast< ring::MediaAudioCodec*> (findCodecByName(rtpmapToString(rtpmap)));
                         if (codec)
                             sessionAudioMediaRemote_.push_back(codec);
                         else
                             RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
+                }else{
+                    RING_ERR("Can not find codec matching payload %d", pt);
                 }
             }
         }
@@ -242,27 +246,31 @@ string Sdp::getSessionVideoCodec() const
     return sessionVideoMedia_[0];
 }
 
-std::vector<ring::AudioCodec*>
+std::vector<ring::MediaAudioCodec*>
 Sdp::getSessionAudioMedia() const
 {
-    vector<ring::AudioCodec*> codecs;
+    vector<ring::MediaAudioCodec*> codecs;
 
     // Common codecs first
     for (auto c : sessionAudioMediaLocal_) {
         if (std::find(sessionAudioMediaRemote_.begin(), sessionAudioMediaRemote_.end(), c) != sessionAudioMediaRemote_.end())
+        {
             codecs.push_back(c);
+        }
     }
     RING_DBG("%u common audio codecs", codecs.size());
 
     // Next, the other codecs we declared to be able to encode
     for (auto c : sessionAudioMediaLocal_) {
-        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())
+        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())  {
             codecs.push_back(c);
+        }
     }
     // Finally, the remote codecs so we can decode them
     for (auto c : sessionAudioMediaRemote_) {
-        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end())
+        if (std::find(codecs.begin(), codecs.end(), c) == codecs.end()) {
             codecs.push_back(c);
+        }
     }
     RING_DBG("Ready to decode %u audio codecs", codecs.size());
 
@@ -284,25 +292,27 @@ Sdp::setMediaDescriptorLines(bool audio)
     int dynamic_payload = 96;
 
     med->desc.fmt_count = audio ? audio_codec_list_.size() : video_codec_list_.size();
-
+    ring::MediaAudioCodec *codec = NULL;
     for (unsigned i = 0; i < med->desc.fmt_count; ++i) {
         unsigned clock_rate;
         string enc_name;
         int payload;
-        const char *channels = "";
+        std::string channels;
+
 
         if (audio) {
-            ring::AudioCodec *codec = audio_codec_list_[i];
-            payload = codec->getPayloadType();
-            enc_name = codec->getMimeSubtype();
-            clock_rate = codec->getSDPClockRate();
-            channels = codec->getSDPChannels();
+            codec = audio_codec_list_[i];
+            payload = codec->payloadType_;
+            enc_name = codec->name_;
+            clock_rate = codec->sampleRate_;
+            channels = std::to_string(codec->nbChannels_).c_str();
             // G722 requires G722/8000 media description even though it's @ 16000 Hz
             // See http://tools.ietf.org/html/rfc3551#section-4.5.2
-            if (codec->getPayloadType () == 9)
+            if (payload == 9)
                 clock_rate = 8000;
         } else {
             // FIXME: get this key from header
+            RING_ERR("FIXME: hardcoding rtpmap");
             enc_name = video_codec_list_[i]["name"];
             clock_rate = 90000;
             payload = dynamic_payload;
@@ -321,8 +331,8 @@ Sdp::setMediaDescriptorLines(bool audio)
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
-        rtpmap.param.ptr = (char *) channels;
-        rtpmap.param.slen = strlen(channels); // don't include NULL terminator
+        rtpmap.param.ptr = (char *) channels.c_str();
+        rtpmap.param.slen = strlen(channels.c_str()); // don't include NULL terminator
 
         pjmedia_sdp_attr *attr;
         pjmedia_sdp_rtpmap_to_attr(memPool_.get(), &rtpmap, &attr);
@@ -459,7 +469,7 @@ void Sdp::setLocalMediaAudioCapabilities(const vector<int> &selectedCodecs)
 
     audio_codec_list_.clear();
     for (const auto &i : selectedCodecs) {
-        auto codec = Manager::instance().audioCodecFactory.getCodec(i).get();
+        auto codec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecById(i));
 
         if (codec)
             audio_codec_list_.push_back(codec);
@@ -1139,13 +1149,14 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
 {
     string codec(getOutgoingAudioCodec());
     if (not codec.empty()) {
-        const string encoder(libav_utils::encodersMap()[codec]);
-        if (encoder.empty()) {
+        ring::MediaAudioCodec* mediaAudioCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByName(codec, ring::MEDIA_AUDIO));
+        if ( ! mediaAudioCodec ) {
             RING_DBG("Couldn't find encoder for \"%s\"\n", codec.c_str());
             return false;
         } else {
-            args["codec"] = encoder;
-            const int payload = getOutgoingAudioPayload();
+            RING_DBG("CANDIDATE: %s",mediaAudioCodec->to_string().c_str());
+            args["codec"] = mediaAudioCodec->name_;
+            const int payload = mediaAudioCodec->payloadType_;
             std::ostringstream os;
             os << payload;
             args["payload_type"] = os.str();

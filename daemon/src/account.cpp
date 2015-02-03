@@ -153,6 +153,7 @@ void Account::loadDefaultCodecs()
     // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
 
     // Initialize codec
+#if 0
     vector<string> result;
     result.push_back("0");
     result.push_back("3");
@@ -164,6 +165,7 @@ void Account::loadDefaultCodecs()
     result.push_back("112");
 
     setActiveAudioCodecs(result);
+#endif
 #ifdef RING_VIDEO
     // we don't need to validate via setVideoCodecs, since these are defaults
     videoCodecList_ = libav_utils::getDefaultCodecs();
@@ -349,9 +351,17 @@ join_string(const std::vector<std::string> &v)
     std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
     return os.str();
 }
+std::vector<int32_t> Account::getActiveAudioCodecs() const
+{
+    std::vector<int32_t> listId =
+        ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
+    return listId;
+}
+
 
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {
+#if 0
     // first clear the previously stored codecs
     audioCodecList_.clear();
 
@@ -364,6 +374,7 @@ void Account::setActiveAudioCodecs(const vector<string> &list)
 
     // update the codec string according to new codec selection
     audioCodecStr_ = join_string(list);
+#endif
 }
 
 string Account::mapStateNumberToString(RegistrationState state)
@@ -402,9 +413,10 @@ is_inactive(const map<string, string> &codec)
     return iter == codec.end() or iter->second != "true";
 }
 
-vector<int>
+vector<int32_t>
 Account::getDefaultAudioCodecs()
 {
+#if 0
     vector<int> result;
     result.push_back(0);
     result.push_back(3);
@@ -416,6 +428,13 @@ Account::getDefaultAudioCodecs()
     result.push_back(112);
 
     return result;
+#endif
+    // for the moment only return this list
+    //TODO: use objects instead of ids !!!
+    std::vector<int32_t> listId =
+        ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
+
+    return listId;
 }
 
 vector<map<string, string> >

@@ -73,6 +73,7 @@
 #include "sip_utils.h"
 #include "string_utils.h"
 #include "logger.h"
+#include "libav_utils.h"
 
 #include <pjsip/sip_endpoint.h>
 #include <pjsip/sip_uri.h>
@@ -381,14 +382,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    ring::AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    ring::MediaAudioCodec* ac = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByName("PCMA", ring::MEDIA_AUDIO));
 
     if (!ac) {
         RING_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<ring::AudioCodec *> audioCodecs;
+    std::vector<ring::MediaAudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 #if USE_CCRTP
     call->getAudioRtp().start(audioCodecs);

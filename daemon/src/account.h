@@ -36,6 +36,7 @@
 #include "noncopyable.h"
 #include "config/serializable.h"
 #include "registration_states.h"
+#include "media_codec_factory.h"
 
 #include <functional>
 #include <string>
@@ -192,10 +193,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<int> getActiveAudioCodecs() const {
-            return audioCodecList_;
-        }
-
+        std::vector<int> getActiveAudioCodecs() const;
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
@@ -323,6 +321,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Vector containing the order of the codecs
          */
         std::vector<int> audioCodecList_;
+        /* available audio codec  */
+        std::vector<ring::MediaAudioCodec*> *availableAudioCodecList_;
+        /* video codec installed on system (libav) */
+        std::vector<ring::MediaVideoCodec*> *availableVideoCodecList_;
+
 
         /**
          * Vector containing the video codecs in order

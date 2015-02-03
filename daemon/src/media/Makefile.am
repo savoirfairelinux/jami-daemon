@@ -13,7 +13,11 @@ libmedia_la_SOURCES = \
     socket_pair.cpp \
     media_decoder.cpp \
     media_encoder.cpp \
-    media_io_handle.cpp
+    media_io_handle.cpp \
+	media_codec.cpp \
+	media_audio_codec.cpp \
+	media_video_codec.cpp \
+	media_codec_factory.cpp
 
 noinst_HEADERS = \
 	libav_utils.h \
@@ -21,7 +25,11 @@ noinst_HEADERS = \
 	socket_pair.h \
     media_decoder.h \
     media_encoder.h \
-    media_io_handle.h
+    media_io_handle.h \
+    media_codec.h \
+    media_audio_codec.h \
+    media_video_codec.h \
+	media_codec_factory.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la

@@ -395,9 +395,9 @@ std::vector<std::string> ring_config_get_supported_tls_method(void)
     return getConfigurationManager()->getSupportedTlsMethod();
 }
 
-std::vector<std::string> ring_config_get_audio_codec_details(int payload)
+std::vector<std::string> ring_config_get_audio_codec_details(int codecId)
 {
-    return getConfigurationManager()->getAudioCodecDetails(payload);
+    return getConfigurationManager()->getAudioCodecDetails(codecId);
 }
 
 std::vector<int> ring_config_get_active_audio_codec_list(const std::string& account_id)
