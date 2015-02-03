@@ -38,6 +38,7 @@
 
 #include <functional>
 #include <memory>
+#include <type_traits> // std::is_standard_layout
 
 namespace ring {
 
@@ -45,9 +46,20 @@ class IceTransport;
 
 struct SipIceTransport
 {
+        // This structure SHOULD be standard-layout,
+        // implies std::is_standard_layout<TransportData>::value
+        // SHOULD return true!
+        using TransportData = struct {
+                pjsip_transport base; // do not move, SHOULD be the fist member
+                SipIceTransport* self {nullptr};
+        };
+        static_assert(std::is_standard_layout<TransportData>::value,
+                      "TranportData requires standard-layout");
+
+
         SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& pool, long t_type,
                         const std::shared_ptr<IceTransport>& ice,
-                        int comp_id, std::function<int()> destroy_cb);
+                        int comp_id);
         ~SipIceTransport();
 
         /**
@@ -61,28 +73,26 @@ struct SipIceTransport
             return ice_;
         }
 
-        pjsip_transport base;
+        pjsip_transport* getTransportBase() {
+            return &trData_.base;
+        }
 
     private:
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> rxPool_;
 
-        pjsip_rx_data rdata;
+        TransportData trData_;
+
+        pjsip_rx_data rdata_;
         bool is_registered_ {false};
         const std::shared_ptr<IceTransport> ice_;
         const int comp_id_;
-
-        std::function<int()> destroy_cb_ {};
 
         pj_status_t send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                          int addr_len, void *token,
                          pjsip_transport_callback callback);
 
         ssize_t onRecv();
-
-        pj_status_t shutdown();
-
-        pj_status_t destroy();
 };
 
 } // namespace ring

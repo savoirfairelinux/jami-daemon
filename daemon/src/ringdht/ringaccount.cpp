@@ -1019,7 +1019,8 @@ RingAccount::getContactHeader(pjsip_transport* t)
         return contact_;
     }
 
-    auto ice = reinterpret_cast<SipIceTransport*>(t);
+    // FIXME: be sure that given transport is from SipIceTransport
+    auto ice = reinterpret_cast<SipIceTransport::TransportData*>(t)->self;
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;

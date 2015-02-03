@@ -172,6 +172,7 @@ SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                   pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
                                   &ice_pj_transport_type_);
 #endif
+    RING_DBG("SipTransportBroker@%p", this);
 }
 
 SipTransportBroker::~SipTransportBroker()
@@ -182,14 +183,6 @@ SipTransportBroker::~SipTransportBroker()
 
     udpTransports_.clear();
     transports_.clear();
-
-    if (not iceTransports_.empty()) {
-        RING_WARN("Remaining %u registred ICE transports",
-                  iceTransports_.size());
-        for (const auto& tr : iceTransports_)
-            RING_WARN("+ %p {t=%p {rc=%u}}",
-                      &tr, &tr.base, pj_atomic_get(tr.base.ref_cnt));
-    }
 
     RING_DBG("destroying SipTransportBroker@%p", this);
 }
@@ -217,25 +210,17 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 
         sipTransport = key->second.lock();
 
-        bool dead = not sipTransport;
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
-        dead |= state == PJSIP_TP_STATE_DESTROY;
+        bool destroyed = state == PJSIP_TP_STATE_DESTROY;
 #else
-        dead |= tp->is_destroying;
+        bool destroyed = tp->is_destroying;
 #endif
 
         // maps cleanup
-        if (dead) {
+        if (destroyed) {
+            RING_DBG("unmap pjsip transport@%p {SipTransport@%p}",
+                     tp, sipTransport.get());
             transports_.erase(key);
-
-            // If ICE
-            const auto iceKey = std::find_if(
-                iceTransports_.begin(), iceTransports_.end(),
-                [tp](const SipIceTransport& sit) {
-                    return &sit.base == tp;
-                });
-            if (iceKey != iceTransports_.cend())
-                iceTransports_.erase(iceKey);
 
             // If UDP
             const auto type = tp->key.type;
@@ -248,9 +233,6 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
                 if (updKey != udpTransports_.cend())
                     udpTransports_.erase(updKey);
             }
-
-            RING_DBG("unmapped pjsip transport@%p {SipTransport@%p}",
-                     tp, sipTransport.get());
         }
     }
 
@@ -261,14 +243,23 @@ SipTransportBroker::transportStateChanged(pjsip_transport* tp,
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::findTransport(pjsip_transport* t)
+SipTransportBroker::addTransport(pjsip_transport* t)
 {
     if (t) {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
 
         auto key = transports_.find(t);
+        if (key != transports_.end()) {
+            if (auto sipTr = key->second.lock())
+                return sipTr;
+        }
+
+        auto sipTr = std::make_shared<SipTransport>(t);
         if (key != transports_.end())
-            return key->second.lock();
+            key->second = sipTr;
+        else
+            transports_.emplace(std::make_pair(t, sipTr));
+        return sipTr;
     }
 
     return nullptr;
@@ -422,13 +413,13 @@ std::shared_ptr<SipTransport>
 SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
                                     unsigned comp_id)
 {
-    std::unique_lock<std::mutex> lock(iceMutex_);
-    iceTransports_.emplace_front(endpt_, pool_, ice_pj_transport_type_, ice,
-                                 comp_id, nullptr);
-
-    auto& sip_ice_tr = iceTransports_.front();
-    auto tr = &sip_ice_tr.base;
+    auto sip_ice_tr = std::unique_ptr<SipIceTransport>(new SipIceTransport(endpt_, pool_,
+                                                                           ice_pj_transport_type_,
+                                                                           ice, comp_id));
+    auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
+    sip_ice_tr.release(); // managed by PJSIP now
+
     {
         std::unique_lock<std::mutex> lock(transportMapMutex_);
         // we do not check for key existance as we've just created it

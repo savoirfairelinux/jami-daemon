@@ -60,19 +60,21 @@ sockaddr_to_host_port(pj_pool_t* pool,
 SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                                  long /* t_type */,
                                  const std::shared_ptr<IceTransport>& ice,
-                                 int comp_id, std::function<int()> destroy_cb)
-    : base()
-    , pool_(nullptr, pj_pool_release)
+                                 int comp_id)
+    : pool_(nullptr, pj_pool_release)
     , rxPool_(nullptr, pj_pool_release)
-    , rdata()
+    , trData_()
+    , rdata_()
     , ice_(ice)
     , comp_id_(comp_id)
-    , destroy_cb_(destroy_cb)
 {
+    trData_.self = this;
+
     if (not ice or not ice->isRunning())
         throw std::logic_error("ice transport must exist and negotiation completed");
 
-    RING_DBG("Creating SipIceTransport");
+    RING_DBG("SipIceTransport@%p {tr=%p}", this, &trData_.base);
+    auto& base = trData_.base;
 
     pool_.reset(pjsip_endpt_create_pool(endpt, "SipIceTransport.pool", POOL_TP_INIT, POOL_TP_INC));
     if (not pool_)
@@ -84,7 +86,7 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
     base.pool = pool;
 
-    rdata.tp_info.pool = pool;
+    rdata_.tp_info.pool = pool;
 
     // FIXME: not destroyed in case of exception
     if (pj_atomic_create(pool, 0, &base.ref_cnt) != PJ_SUCCESS)
@@ -122,16 +124,19 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
                        pjsip_tx_data *tdata,
                        const pj_sockaddr_t *rem_addr, int addr_len,
                        void *token, pjsip_transport_callback callback) {
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
+        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
-    base.do_shutdown = [](pjsip_transport *transport){
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
-        return this_->shutdown();
+    base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
+        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        RING_WARN("SipIceTransport@%p: shutdown", this_);
+        return PJ_SUCCESS;
     };
-    base.destroy = [](pjsip_transport *transport){
-        auto this_ = reinterpret_cast<SipIceTransport*>(transport);
-        return this_->destroy();
+    base.destroy = [](pjsip_transport *transport) -> pj_status_t {
+        auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        RING_WARN("SipIceTransport@%p: destroy", this_);
+        delete this_;
+        return PJ_SUCCESS;
     };
 
     /* Init rdata */
@@ -143,18 +148,18 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
         throw std::bad_alloc();
     auto rx_pool = rxPool_.get();
 
-    rdata.tp_info.pool = rx_pool;
-    rdata.tp_info.transport = &base;
-    rdata.tp_info.tp_data = this;
-    rdata.tp_info.op_key.rdata = &rdata;
-    pj_ioqueue_op_key_init(&rdata.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
-    rdata.pkt_info.src_addr = base.key.rem_addr;
-    rdata.pkt_info.src_addr_len = sizeof(rdata.pkt_info.src_addr);
+    rdata_.tp_info.pool = rx_pool;
+    rdata_.tp_info.transport = &base;
+    rdata_.tp_info.tp_data = this;
+    rdata_.tp_info.op_key.rdata = &rdata_;
+    pj_ioqueue_op_key_init(&rdata_.tp_info.op_key.op_key, sizeof(pj_ioqueue_op_key_t));
+    rdata_.pkt_info.src_addr = base.key.rem_addr;
+    rdata_.pkt_info.src_addr_len = sizeof(rdata_.pkt_info.src_addr);
     auto rem_addr = &base.key.rem_addr;
-    pj_sockaddr_print(rem_addr, rdata.pkt_info.src_name, sizeof(rdata.pkt_info.src_name), 0);
-    rdata.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
-    rdata.pkt_info.len  = 0;
-    rdata.pkt_info.zero = 0;
+    pj_sockaddr_print(rem_addr, rdata_.pkt_info.src_name, sizeof(rdata_.pkt_info.src_name), 0);
+    rdata_.pkt_info.src_port = pj_sockaddr_get_port(rem_addr);
+    rdata_.pkt_info.len  = 0;
+    rdata_.pkt_info.zero = 0;
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
@@ -166,9 +171,11 @@ SipIceTransport::SipIceTransport(pjsip_endpoint* endpt, pj_pool_t& /* pool */,
 
 SipIceTransport::~SipIceTransport()
 {
+    RING_DBG("~SipIceTransport@%p", this);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    pj_lock_destroy(base.lock);
-    pj_atomic_destroy(base.ref_cnt);
+    pj_lock_destroy(trData_.base.lock);
+    pj_atomic_destroy(trData_.base.ref_cnt);
+    RING_DBG("destroying SipIceTransport@%p", this);
 }
 
 void
@@ -224,40 +231,25 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 ssize_t
 SipIceTransport::onRecv()
 {
-    rdata.pkt_info.len += ice_->recv(comp_id_,
-        (uint8_t*)rdata.pkt_info.packet+rdata.pkt_info.len,
-        sizeof(rdata.pkt_info.packet)-rdata.pkt_info.len);
-    rdata.pkt_info.zero = 0;
-    pj_gettimeofday(&rdata.pkt_info.timestamp);
+    rdata_.pkt_info.len += ice_->recv(comp_id_,
+        (uint8_t*)rdata_.pkt_info.packet+rdata_.pkt_info.len,
+        sizeof(rdata_.pkt_info.packet)-rdata_.pkt_info.len);
+    rdata_.pkt_info.zero = 0;
+    pj_gettimeofday(&rdata_.pkt_info.timestamp);
 
-    auto eaten = pjsip_tpmgr_receive_packet(rdata.tp_info.transport->tpmgr, &rdata);
+    auto eaten = pjsip_tpmgr_receive_packet(rdata_.tp_info.transport->tpmgr, &rdata_);
 
     /* Move unprocessed data to the front of the buffer */
-    auto rem = rdata.pkt_info.len - eaten;
-    if (rem > 0 && rem != rdata.pkt_info.len) {
-        std::move(rdata.pkt_info.packet + eaten,
-                  rdata.pkt_info.packet + eaten + rem,
-                  rdata.pkt_info.packet);
+    auto rem = rdata_.pkt_info.len - eaten;
+    if (rem > 0 && rem != rdata_.pkt_info.len) {
+        std::move(rdata_.pkt_info.packet + eaten,
+                  rdata_.pkt_info.packet + eaten + rem,
+                  rdata_.pkt_info.packet);
     }
-    rdata.pkt_info.len = rem;
+    rdata_.pkt_info.len = rem;
 
     /* Reset pool */
-    pj_pool_reset(rdata.tp_info.pool);
-}
-
-pj_status_t
-SipIceTransport::shutdown()
-{
-    RING_WARN("SIP transport ICE: shutdown");
-}
-
-pj_status_t
-SipIceTransport::destroy()
-{
-    if (not is_registered_ or not destroy_cb_)
-        return PJ_SUCCESS;
-    RING_WARN("SIP transport ICE: destroy");
-    return destroy_cb_();
+    pj_pool_reset(rdata_.tp_info.pool);
 }
 
 } // namespace ring
