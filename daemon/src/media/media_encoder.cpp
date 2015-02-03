@@ -347,7 +347,7 @@ int MediaEncoder::encode_audio(const ring::AudioBuffer &buffer)
     const auto sample_rate = buffer.getSampleRate();
 
     while (nb_frames > 0) {
-        AVFrame *frame = avcodec_alloc_frame();
+        AVFrame *frame = av_frame_alloc();
         if (!frame) {
             av_freep(&sample_data);
             return -1;
