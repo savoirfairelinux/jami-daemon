@@ -303,7 +303,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // RING_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
 
-    auto transport = link->sipTransportBroker->findTransport(rdata->tp_info.transport);
+    // Append PJSIP transport to the broker's SipTransport list
+    auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
     if (!transport) {
         transport = account->getTransport();
         if (!transport) {
