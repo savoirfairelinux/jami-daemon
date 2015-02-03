@@ -1,10 +1,7 @@
 include $(top_srcdir)/globals.mak
 
-TESTS=test_video_endpoint test_shm test_video_input test_video_rtp
-check_PROGRAMS=test_video_endpoint test_video_rtp test_video_input test_shm
-
-test_video_endpoint_SOURCES=test_video_endpoint.cpp test_video_endpoint.h
-test_video_endpoint_LDADD=$(top_builddir)/src/libring.la $(top_builddir)/src/media/video/libvideo.la $(YAML_LIBS)
+TESTS=test_shm test_video_input test_video_rtp
+check_PROGRAMS=test_video_rtp test_video_input test_shm
 
 test_video_rtp_SOURCES=test_video_rtp.cpp
 test_video_rtp_LDADD=$(top_builddir)/src/libring.la $(top_builddir)/src/media/video/libvideo.la $(YAML_LIBS)

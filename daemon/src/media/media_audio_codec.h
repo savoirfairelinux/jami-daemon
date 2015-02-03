@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,21 +29,25 @@
  *  as that of the covered work.
  */
 
-#include "video_rtp_session.h"
-#include "video_device_monitor.h"
+#ifndef __MEDIA_AUDIO_CODEC_H__
+#define __MEDIA_AUDIO_CODEC_H__
 
-#include <iostream>
-#include <map>
-#include <string>
-#include <unistd.h> // for sleep
+#include "media_codec.h"
+namespace ring {
+    class MediaAudioCodec: public MediaCodec {
 
-int main ()
-{
-    ring::video::VideoDeviceMonitor monitor;
-    ring::video::VideoRtpSession session("test", {});
-    session.start(12345);
-    sleep(5);
-    session.stop();
+public:
 
-    return 0;
+    MediaAudioCodec(unsigned avcodecId, const std::string name, std::string libName, CodecType type, uint16_t bitrate = 0, uint16_t sampleRate = 0, uint16_t nbChannels = 0, uint16_t payloadType = 0, bool isActive = true);
+    ~MediaAudioCodec();
+
+    uint16_t sampleRate_;
+    uint16_t nbChannels_;
+
+    std::vector<std::string> getCodecSpecifications();
+
+private:
+    };
+
 }
+#endif //__MEDIA_AUDIO_CODEC_H__
