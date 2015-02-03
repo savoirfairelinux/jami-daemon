@@ -51,6 +51,7 @@
 #include <stdexcept>
 #include <sstream>
 
+#if 0
 namespace ring {
 
 AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)
@@ -336,3 +337,5 @@ AudioCodecFactory::getCodecSpecifications(const int32_t& payload) const
 }
 
 } // namespace ring
+
+#endif
