@@ -56,7 +56,6 @@
 
 #include "audio/audiolayer.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
-#include "audio/codecs/audiocodecfactory.h"
 
 #include "preferences.h"
 #include "history/history.h"
@@ -756,8 +755,6 @@ class ManagerImpl {
          */
         std::vector<std::string> loadAccountOrder() const;
 
-        // map of codec (for configlist request)
-        const AudioCodecFactory audioCodecFactory;
 
     private:
         void removeAccounts();
