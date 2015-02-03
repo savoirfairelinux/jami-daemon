@@ -351,14 +351,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    MediaAudioCodec* ac = dynamic_cast<MediaAudioCodec*>(getMediaCodecFactory()->searchCodecByName("PCMA", MEDIA_AUDIO));
 
     if (!ac) {
         RING_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<AudioCodec *> audioCodecs;
+    std::vector<ring::MediaAudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
     pjsip_dialog *dialog = 0;
