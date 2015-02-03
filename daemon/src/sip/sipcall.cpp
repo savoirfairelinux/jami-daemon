@@ -47,6 +47,8 @@
 #include "audio/audiortp/avformat_rtp_session.h"
 #include "client/callmanager.h"
 
+#include "system_codec_container.h"
+
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
 #endif
@@ -592,17 +594,19 @@ SIPCall::offhold()
 void
 SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
 {
+#if 0
+    //ebail : disable for the moment
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<SystemAudioCodecInfo*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         RING_WARN("Session media is empty");
         return;
     }
 
-    std::vector<AudioCodec*> audioCodecs;
+    std::vector<SystemAudioCodecInfo*> audioCodecs;
 
     for (auto & i : sessionMedia) {
 
@@ -610,7 +614,7 @@ SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
             continue;
 
         // Create a new instance for this codec
-        AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
+        SystemAudioCodecInfo* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
             RING_ERR("Could not instantiate codec %d", i->getPayloadType());
@@ -639,6 +643,7 @@ SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
         RING_WARN("Reinvite failed, resuming hold");
         onhold();
     }
+#endif
 }
 
 void
@@ -811,7 +816,7 @@ SIPCall::startAllMedia()
     CryptoOffer crypto_offer;
     getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
 
-    std::vector<AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<std::shared_ptr<SystemAudioCodecInfo>> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         RING_WARN("Session media is empty");
@@ -821,15 +826,14 @@ SIPCall::startAllMedia()
     try {
         Manager::instance().startAudioDriverStream();
 
-        std::vector<AudioCodec*> audioCodecs;
-
+	std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
         for (const auto & i : sessionMedia) {
             if (!i)
                 continue;
 
-            const int pl = i->getPayloadType();
+            const int pl = i->payloadType_;
 
-            AudioCodec *ac = Manager::instance().audioCodecFactory.instantiateCodec(pl);
+            auto ac = std::dynamic_pointer_cast<SystemAudioCodecInfo>(getSystemCodecContainer()->searchCodecByPayload(pl));
 
             if (!ac) {
                 RING_ERR("Could not instantiate codec %d", pl);

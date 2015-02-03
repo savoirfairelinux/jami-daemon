@@ -131,6 +131,8 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
     parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
     const auto &vCodecNode = node[VIDEO_CODECS_KEY];
+    /*ebail : for the moment disable it*/
+#if 0
     auto tmp = parseVectorMap(vCodecNode, {VIDEO_CODEC_BITRATE, VIDEO_CODEC_ENABLED, VIDEO_CODEC_NAME, VIDEO_CODEC_PARAMETERS});
 #ifdef RING_VIDEO
     if (tmp.empty()) {
@@ -141,6 +143,8 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 #endif
     // validate it
     setVideoCodecs(tmp);
+#endif
+    setVideoCodecs(getAllVideoCodecsId());
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     int port = DEFAULT_SIP_PORT;
