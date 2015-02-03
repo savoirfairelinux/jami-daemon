@@ -47,6 +47,7 @@
 #include "map_utils.h"
 #include "call_factory.h"
 #include "ring_types.h"
+#include "media_codec_factory.h"
 
 namespace ring {
 
@@ -153,12 +154,12 @@ IAXVoIPLink::sendAudioFromMic()
             continue;
 
         int codecType = currentCall->getAudioCodec();
-        auto audioCodec = Manager::instance().audioCodecFactory.getCodec(codecType).get();
+        auto audioCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(codecType, ring::MEDIA_AUDIO));
 
         if (!audioCodec)
             continue;
 
-        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
+        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate_);
 
         unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
@@ -174,7 +175,7 @@ IAXVoIPLink::sendAudioFromMic()
         samples = Manager::instance().getRingBufferPool().getData(rawBuffer_, currentCall->getCallId());
 
         int compSize;
-        unsigned int audioRate = audioCodec->getClockRate();
+        unsigned int audioRate = audioCodec->sampleRate_;
         int outSamples;
         AudioBuffer *in;
 
@@ -189,7 +190,10 @@ IAXVoIPLink::sendAudioFromMic()
             in = &rawBuffer_;
         }
 
+        //ebail to compile : comment this code
+#if 0
         compSize = audioCodec->encode(in->getData(), encodedData_, RAW_BUFFER_SIZE);
+#endif
 
         if (currentCall->session and samples > 0) {
             std::lock_guard<std::mutex> lock(mutexIAX);
@@ -329,11 +333,11 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!event->datalen)
         return;
 
-    auto audioCodec = Manager::instance().audioCodecFactory.getCodec(call.getAudioCodec()).get();
+    ring::MediaAudioCodec* audioCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(call.getAudioCodec(), ring::MEDIA_AUDIO));
     if (!audioCodec)
         return;
 
-    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
+    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate_);
     unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
     if (event->subclass)
@@ -342,14 +346,17 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     unsigned char *data = (unsigned char*) event->data;
     unsigned int size = event->datalen;
 
-    unsigned int max = audioCodec->getClockRate() * 20 / 1000;
+    unsigned int max = audioCodec->sampleRate_ * 20 / 1000;
 
     if (size > max)
         size = max;
 
+#if 0
+    //ebail TODO: support SFL audio plugins API
     audioCodec->decode(rawBuffer_.getData(), data , size);
+#endif
     AudioBuffer *out = &rawBuffer_;
-    unsigned int audioRate = audioCodec->getClockRate();
+    unsigned int audioRate = audioCodec->sampleRate_;
 
     if (audioRate != mainBufferSampleRate) {
         rawBuffer_.setSampleRate(mainBufferSampleRate);
