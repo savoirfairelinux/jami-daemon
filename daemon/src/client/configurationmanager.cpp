@@ -46,6 +46,7 @@
 #include "sip/sipaccount.h"
 #include "security_const.h"
 #include "audio/audiolayer.h"
+#include "media_codec_factory.h"
 
 #include <dirent.h>
 
@@ -222,12 +223,9 @@ std::vector<std::string> ConfigurationManager::getAccountList()
  */
 std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
-
-    if (list.empty())
-        errorAlert(CODECS_NOT_LOADED);
-
-    return list;
+    std::vector<int32_t> listId =
+        ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
+    return listId;
 }
 
 std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
@@ -256,14 +254,15 @@ std::vector<std::string> ConfigurationManager::getSupportedCiphers(const std::st
 
 }
 
-std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t payload)
+std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t codecId)
 {
-    std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
-
-    if (result.empty())
+    ring::MediaAudioCodec* foundCodec = NULL;
+    if( foundCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecById(codecId, ring::MEDIA_AUDIO)))
         errorAlert(CODECS_NOT_LOADED);
 
-    return result;
+
+    RING_DBG("####### foundCodec->name_ == %s", foundCodec->name_.c_str());
+    return foundCodec->getCodecSpecifications();
 }
 
 std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
