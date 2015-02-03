@@ -36,7 +36,7 @@
 #include "libav_utils.h"
 #endif
 
-#include "account_schema.h"
+#include "account_const.h"
 #include "client/configurationmanager.h"
 #include "manager.h"
 
@@ -102,24 +102,24 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
 {
     Account::serialize(out);
 
-    out << YAML::Key << Conf::AUDIO_PORT_MAX_KEY << YAML::Value << audioPortRange_.second;
-    out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
-    out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType_;
-    out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface_;
-    out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
-    out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
-    out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
-    out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
+    out << YAML::Key << DRing::Account::ConfProperties::Audio::PORT_MAX << YAML::Value << audioPortRange_.second;
+    out << YAML::Key << DRing::Account::ConfProperties::Audio::PORT_MIN << YAML::Value << audioPortRange_.first;
+    out << YAML::Key << DRing::Account::ConfProperties::DTMF_TYPE << YAML::Value << dtmfType_;
+    out << YAML::Key << DRing::Account::ConfProperties::INTERFACE_KEY << YAML::Value << interface_;
+    out << YAML::Key << DRing::Account::ConfProperties::PORT_KEY << YAML::Value << localPort_;
+    out << YAML::Key << DRing::Account::ConfProperties::PUBLISHED_ADDRESS << YAML::Value << publishedIpAddress_;
+    out << YAML::Key << DRing::Account::ConfProperties::PUBLISHED_PORT << YAML::Value << publishedPort_;
+    out << YAML::Key << DRing::Account::ConfProperties::PUBLISHED_SAMEAS_LOCAL << YAML::Value << publishedSameasLocal_;
 
     out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
-    out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
-    out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
+    out << YAML::Key << DRing::Account::ConfProperties::Video::PORT_MAX << YAML::Value << videoPortRange_.second;
+    out << YAML::Key << DRing::Account::ConfProperties::Video::PORT_MIN << YAML::Value << videoPortRange_.first;
 }
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
 {
-    out << YAML::Key << Conf::TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
+    out << YAML::Key << DRing::Account::ConfProperties::TLS::PORT_KEY << YAML::Value << tlsListenerPort_;
 }
 
 void SIPAccountBase::unserialize(const YAML::Node &node)
@@ -142,29 +142,29 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     // validate it
     setVideoCodecs(tmp);
 
-    parseValue(node, Conf::INTERFACE_KEY, interface_);
+    parseValue(node, DRing::Account::ConfProperties::INTERFACE_KEY, interface_);
     int port = DEFAULT_SIP_PORT;
-    parseValue(node, Conf::PORT_KEY, port);
+    parseValue(node, DRing::Account::ConfProperties::PORT_KEY, port);
     localPort_ = port;
 
-    parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
+    parseValue(node, DRing::Account::ConfProperties::PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
     std::string publishedIpAddress;
-    parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
+    parseValue(node, DRing::Account::ConfProperties::PUBLISHED_ADDRESS, publishedIpAddress);
     IpAddr publishedIp = publishedIpAddress;
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);
 
-    parseValue(node, Conf::PUBLISH_PORT_KEY, port);
+    parseValue(node, DRing::Account::ConfProperties::PUBLISHED_PORT, port);
     publishedPort_ = port;
 
-    parseValue(node, Conf::DTMF_TYPE_KEY, dtmfType_);
+    parseValue(node, DRing::Account::ConfProperties::DTMF_TYPE, dtmfType_);
 
     // get tls submap
-    const auto &tlsMap = node[Conf::TLS_KEY];
-    parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
+    const auto &tlsMap = node[DRing::Account::ConfProperties::TLS::KEY];
+    parseValue(tlsMap, DRing::Account::ConfProperties::TLS::PORT_KEY, tlsListenerPort_);
 
-    unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
-    unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
+    unserializeRange(node, DRing::Account::ConfProperties::Audio::PORT_MIN, DRing::Account::ConfProperties::Audio::PORT_MAX, audioPortRange_);
+    unserializeRange(node, DRing::Account::ConfProperties::Video::PORT_MIN, DRing::Account::ConfProperties::Video::PORT_MAX, videoPortRange_);
 }
 
 
@@ -172,32 +172,32 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
 {
     Account::setAccountDetails(details);
 
-    parseBool(details, Conf::CONFIG_VIDEO_ENABLED, videoEnabled_);
+    parseBool(details, DRing::Account::ConfProperties::Video::ENABLED, videoEnabled_);
 
     // general sip settings
-    parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
-    parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
-    parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
-    parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
+    parseString(details, DRing::Account::ConfProperties::LOCAL_INTERFACE, interface_);
+    parseBool(details, DRing::Account::ConfProperties::PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
+    parseString(details, DRing::Account::ConfProperties::PUBLISHED_ADDRESS, publishedIpAddress_);
+    parseInt(details, DRing::Account::ConfProperties::LOCAL_PORT, localPort_);
+    parseInt(details, DRing::Account::ConfProperties::PUBLISHED_PORT, publishedPort_);
 
-    parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
+    parseString(details, DRing::Account::ConfProperties::ACCOUNT_DTMF_TYPE, dtmfType_);
 
     int tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, tmpMin);
+    parseInt(details, DRing::Account::ConfProperties::Audio::PORT_MIN, tmpMin);
     int tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, tmpMax);
+    parseInt(details, DRing::Account::ConfProperties::Audio::PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, audioPortRange_);
 #ifdef RING_VIDEO
     tmpMin = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, tmpMin);
+    parseInt(details, DRing::Account::ConfProperties::Video::PORT_MIN, tmpMin);
     tmpMax = -1;
-    parseInt(details, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, tmpMax);
+    parseInt(details, DRing::Account::ConfProperties::Video::PORT_MAX, tmpMax);
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
     // TLS
-    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    parseInt(details, DRing::Account::ConfProperties::TLS::LISTENER_PORT, tlsListenerPort_);
 }
 
 std::map<std::string, std::string>
@@ -206,31 +206,31 @@ SIPAccountBase::getAccountDetails() const
     std::map<std::string, std::string> a = Account::getAccountDetails();
 
     // note: The IP2IP profile will always have IP2IP as an alias
-    a[Conf::CONFIG_VIDEO_ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    a[DRing::Account::ConfProperties::Video::ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
+    a[DRing::Account::ConfProperties::ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
 
     // Add sip specific details
 
-    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
+    addRangeToDetails(a, DRing::Account::ConfProperties::Audio::PORT_MIN, DRing::Account::ConfProperties::Audio::PORT_MAX, audioPortRange_);
 #ifdef RING_VIDEO
-    addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
+    addRangeToDetails(a, DRing::Account::ConfProperties::Video::PORT_MIN, DRing::Account::ConfProperties::Video::PORT_MAX, videoPortRange_);
 #endif
 
-    a[Conf::CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
-    a[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
-    a[Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
+    a[DRing::Account::ConfProperties::ACCOUNT_DTMF_TYPE] = dtmfType_;
+    a[DRing::Account::ConfProperties::LOCAL_INTERFACE] = interface_;
+    a[DRing::Account::ConfProperties::PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
+    a[DRing::Account::ConfProperties::PUBLISHED_ADDRESS] = publishedIpAddress_;
 
     std::stringstream localport;
     localport << localPort_;
-    a[Conf::CONFIG_LOCAL_PORT] = localport.str();
+    a[DRing::Account::ConfProperties::LOCAL_PORT] = localport.str();
     std::stringstream publishedport;
     publishedport << publishedPort_;
-    a[Conf::CONFIG_PUBLISHED_PORT] = publishedport.str();
+    a[DRing::Account::ConfProperties::PUBLISHED_PORT] = publishedport.str();
 
     std::stringstream tlslistenerport;
     tlslistenerport << tlsListenerPort_;
-    a[Conf::CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
+    a[DRing::Account::ConfProperties::TLS::LISTENER_PORT] = tlslistenerport.str();
     return a;
 }
 
@@ -238,11 +238,11 @@ std::map<std::string, std::string>
 SIPAccountBase::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    a[DRing::Account::VolatileProperties::REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
     std::stringstream codestream;
     codestream << transportStatus_;
-    a[Conf::CONFIG_TRANSPORT_STATE_CODE] = codestream.str();
-    a[Conf::CONFIG_TRANSPORT_STATE_DESC] = transportError_ ;
+    a[DRing::Account::VolatileProperties::Transport::STATE_CODE] = codestream.str();
+    a[DRing::Account::VolatileProperties::Transport::STATE_DESC] = transportError_ ;
 
     return a;
 }

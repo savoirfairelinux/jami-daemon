@@ -35,7 +35,6 @@
 #endif
 
 #include "configurationmanager.h"
-#include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
 #include "sip/tlsvalidator.h"
@@ -46,6 +45,7 @@
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "security_const.h"
+#include "account_const.h"
 #include "audio/audiolayer.h"
 
 #include <dirent.h>
@@ -96,18 +96,18 @@ ConfigurationManager::getTlsSettingsDefault()
     portstr << DEFAULT_SIP_TLS_PORT;
 
     std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[Conf::CONFIG_TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PASSWORD] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CIPHERS] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::LISTENER_PORT] = portstr.str();
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::CA_LIST_FILE] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::PASSWORD] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::METHOD] = "TLSv1";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::CIPHERS] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::SERVER_NAME] = "";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::VERIFY_SERVER] = "true";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::VERIFY_CLIENT] = "true";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::REQUIRE_CLIENT_CERTIFICATE] = "true";
+    tlsSettingsDefault[DRing::Account::ConfProperties::TLS::NEGOTIATION_TIMEOUT_SEC] = "2";
 
     return tlsSettingsDefault;
 }
