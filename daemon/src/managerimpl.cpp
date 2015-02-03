@@ -81,8 +81,6 @@
 #include "conference.h"
 #include "ice_transport.h"
 
-#include "upnp/upnp.h"
-
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -274,11 +272,6 @@ ManagerImpl::init(const std::string &config_file)
 
     history_.load(preferences.getHistoryLimit());
 
-    /* TODO: Is this necessary? This will require looking for a UPnP enabled IGD at each start
-     * of the daemon... */
-    RING_DBG("Remove any old UPnP mappings for RING mapped to this IP");
-    upnp::Controller().removeMappingsByLocalIPAndDescription();
-
     registerAccounts();
 }
 
@@ -325,10 +318,6 @@ ManagerImpl::finish()
     } catch (const VoipLinkException &err) {
         RING_ERR("%s", err.what());
     }
-
-
-    RING_DBG("Remove any remaning ports mapped to this client for RING");
-    upnp::Controller().removeMappingsByLocalIPAndDescription();
 }
 
 bool

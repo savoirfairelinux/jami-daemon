@@ -72,6 +72,11 @@ public:
 #endif
     bool isEmpty() const;
 
+    /**
+     * removes all mappings with the local IP and the given description
+     */
+    void removeMappingsByLocalIPAndDescription(const std::string& description);
+
 private:
     NON_COPYABLE(IGD);
 
@@ -189,11 +194,6 @@ public:
      * removes all mappings added by this instance
      */
     void removeMappings();
-
-    /**
-     * removes all mappings with the local IP and the given description
-     */
-    void removeMappingsByLocalIPAndDescription(const std::string& description = Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
 
     /**
      * tries to get the external ip of the IGD (router)
