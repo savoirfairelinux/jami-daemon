@@ -67,12 +67,14 @@ findInstalledVideoCodecs()
     }
 }
 
+#if 0
 std::vector<std::string> getVideoCodecList()
 {
     if (installed_video_codecs_.empty())
         findInstalledVideoCodecs();
     return installed_video_codecs_;
 }
+#endif
 #endif // RING_VIDEO
 
 // protect libav/ffmpeg access
@@ -127,6 +129,7 @@ static void init_once()
     if (getDebugMode())
         av_log_set_level(AV_LOG_VERBOSE);
 
+#if 0
     /* list of codecs tested and confirmed to work */
     encoders_["H264"]        = "libx264";
     encoders_["H263-2000"]   = "h263p";
@@ -152,6 +155,7 @@ static void init_once()
 #ifdef RING_VIDEO
     findInstalledVideoCodecs();
 #endif // RING_VIDEO
+#endif
 }
 
 static std::once_flag already_called;
