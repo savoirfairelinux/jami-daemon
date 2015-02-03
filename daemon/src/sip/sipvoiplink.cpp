@@ -106,7 +106,7 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
+decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
 
 /**
  * Helper function to process refer function on call transfer
@@ -226,6 +226,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
 
     auto link = getSIPVoIPLink();
+    if (not link) {
+        RING_ERR("no more VoIP link");
+        return PJ_FALSE;
+    }
 
     auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
     if (!account) {
@@ -568,7 +572,12 @@ SIPVoIPLink::SIPVoIPLink()
     // ready to handle events
     // Implementation note: we don't use std::bind(xxx, this) here
     // as handleEvents needs a valid instance to be called.
-    Manager::instance().registerEventHandler((uintptr_t)this, []() { getSIPVoIPLink()->handleEvents(); });
+    Manager::instance().registerEventHandler((uintptr_t)this, []{
+            if (auto link = getSIPVoIPLink())
+                link->handleEvents();
+            else
+                RING_ERR("no more VoIP link");
+        });
 }
 
 SIPVoIPLink::~SIPVoIPLink()
@@ -708,9 +717,11 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
-    auto link = getSIPVoIPLink();
-    std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
-    link->keyframeRequests_.push(id);
+    if (auto link = getSIPVoIPLink()) {
+        std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
+        link->keyframeRequests_.push(id);
+    } else
+        RING_ERR("no more VoIP link");
 }
 
 // Called from SIP event thread
@@ -1236,16 +1247,15 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 void
 SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
 {
-    auto sthis_ = getSIPVoIPLink();
-    auto& this_ = *sthis_;
-    {
-        std::lock_guard<std::mutex> lock(this_.resolveMutex_);
-        auto it = this_.resolveCallbacks_.find((uintptr_t)token);
-        if (it != this_.resolveCallbacks_.end()) {
+    if (auto link = getSIPVoIPLink()) {
+        std::lock_guard<std::mutex> lock(link->resolveMutex_);
+        auto it = link->resolveCallbacks_.find((uintptr_t)token);
+        if (it != link->resolveCallbacks_.end()) {
             it->second(status, addr);
-            this_.resolveCallbacks_.erase(it);
+            link->resolveCallbacks_.erase(it);
         }
-    }
+    } else
+        RING_ERR("no more VoIP link");
 }
 
 #define RETURN_IF_NULL(A, M, ...) \
