@@ -786,6 +786,12 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
         pendingCalls_.clear();
         pendingSipCalls_.clear();
     }
+
+    if (getUseUPnP()) {
+        RING_DBG("UPnP : removing port mapping for DHT account.");
+        upnp_->removeMappings();
+    }
+
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());
@@ -794,11 +800,6 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     setRegistrationState(RegistrationState::UNREGISTERED);
     if (released_cb)
         released_cb(false);
-
-    if (getUseUPnP()) {
-        RING_DBG("UPnP : removing port mapping for DHT account.");
-        upnp_->removeMappings();
-    }
 }
 
 void
