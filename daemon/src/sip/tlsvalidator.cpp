@@ -40,7 +40,7 @@
 
 #include "fileutils.h"
 #include "logger.h"
-#include "security.h"
+#include "security_const.h"
 
 #include <sstream>
 #include <iomanip>
@@ -91,7 +91,6 @@ const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidato
     /*PUBLIC_KEY_STORAGE_LOCATION      */ &TlsValidator::publicKeyStorageLocation       ,
     /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ &TlsValidator::privateKeySelinuxAttributes    ,
     /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ &TlsValidator::publicKeySelinuxAttributes     ,
-    /*OUTGOING_SERVER                  */ &TlsValidator::outgoingServer                 ,
     /*EXIST                            */ &TlsValidator::exist                          ,
     /*VALID                            */ &TlsValidator::valid                          ,
     /*VALID_AUTHORITY                  */ &TlsValidator::validAuthority                 ,
@@ -120,6 +119,7 @@ const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValida
     /* PUBLIC_KEY_ID                */  &TlsValidator::getPublicKeyId            ,
     /* ISSUER_DN                    */  &TlsValidator::getIssuerDN               ,
     /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
+    /* OUTGOING_SERVER              */  &TlsValidator::outgoingServer            ,
 }};
 
 const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
@@ -137,7 +137,6 @@ const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> Tl
     /*PUBLIC_KEY_STORAGE_LOCATION      */ CheckValuesType::BOOLEAN ,
     /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ CheckValuesType::BOOLEAN ,
     /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ CheckValuesType::BOOLEAN ,
-    /*OUTGOING_SERVER                  */ CheckValuesType::CUSTOM  ,
     /*EXIST                            */ CheckValuesType::BOOLEAN ,
     /*VALID                            */ CheckValuesType::BOOLEAN ,
     /*VALID_AUTHORITY                  */ CheckValuesType::BOOLEAN ,
@@ -163,7 +162,6 @@ const EnumClassNames<TlsValidator::CertificateCheck> TlsValidator::CertificateCh
     /*PUBLIC_KEY_STORAGE_LOCATION      */ DRing::Certificate::ChecksNames::PUBLIC_KEY_STORAGE_LOCATION       ,
     /*PRIVATE_KEY_SELINUX_ATTRIBUTES   */ DRing::Certificate::ChecksNames::PRIVATE_KEY_SELINUX_ATTRIBUTES    ,
     /*PUBLIC_KEY_SELINUX_ATTRIBUTES    */ DRing::Certificate::ChecksNames::PUBLIC_KEY_SELINUX_ATTRIBUTES     ,
-    /*OUTGOING_SERVER                  */ DRing::Certificate::ChecksNames::OUTGOING_SERVER                   ,
     /*EXIST                            */ DRing::Certificate::ChecksNames::EXIST                             ,
     /*VALID                            */ DRing::Certificate::ChecksNames::VALID                             ,
     /*VALID_AUTHORITY                  */ DRing::Certificate::ChecksNames::VALID_AUTHORITY                   ,
@@ -192,6 +190,8 @@ const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certificate
     /* PUBLIC_KEY_ID                */ DRing::Certificate::DetailsNames::PUBLIC_KEY_ID                ,
     /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN                    ,
     /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE    ,
+    /* OUTGOING_SERVER              */ DRing::Certificate::DetailsNames::OUTGOING_SERVER              ,
+
 }};
 
 const EnumClassNames<const TlsValidator::CheckValuesType> TlsValidator::CheckValuesTypeNames = {{
@@ -845,19 +845,6 @@ TlsValidator::CheckResult TlsValidator::requirePrivateKeyPassword()
     // TODO
     return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 }
-
-/**
- * The expected outgoing server domain
- *
- * @todo Move to "certificateDetails()" method once completed
- * @todo extract information for the certificate
- */
-TlsValidator::CheckResult TlsValidator::outgoingServer()
-{
-    // TODO
-    return TlsValidator::CheckResult(CheckValues::CUSTOM, "");
-}
-
 /**
  * The CA and certificate provide conflicting ownership information
  */
@@ -1141,5 +1128,18 @@ TlsValidator::CheckResult TlsValidator::getActivationDate()
 
     return formatDate(expiration);
 }
+
+/**
+ * The expected outgoing server domain
+ *
+ * @todo Move to "certificateDetails()" method once completed
+ * @todo extract information for the certificate
+ */
+TlsValidator::CheckResult TlsValidator::outgoingServer()
+{
+    // TODO
+    return TlsValidator::CheckResult(CheckValues::CUSTOM, "");
+}
+
 
 } //namespace ring
