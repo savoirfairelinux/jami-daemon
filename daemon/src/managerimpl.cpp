@@ -159,7 +159,7 @@ ManagerImpl::ManagerImpl() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(*pluginManager_),
+    hasTriedToRegister_(false),
     callManager_(new CallManager), configurationManager_(new ConfigurationManager),
     presenceManager_(new PresenceManager)
 #ifdef RING_VIDEO
