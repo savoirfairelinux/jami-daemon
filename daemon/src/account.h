@@ -41,6 +41,7 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 #include "ip_utils.h"
+#include "media_codec_factory.h"
 
 #include <functional>
 #include <string>
@@ -205,10 +206,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<int> getActiveAudioCodecs() const {
-            return audioCodecList_;
-        }
-
+        std::vector<int> getActiveAudioCodecs() const;
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
