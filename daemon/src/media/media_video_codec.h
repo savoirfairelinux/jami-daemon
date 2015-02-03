@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,31 +29,22 @@
  *  as that of the covered work.
  */
 
-#include "test_video_endpoint.h"
-#include <cstdlib>
-#include <memory>
-#include <iostream>
-#include <cassert>
-#include "libav_utils.h"
+#ifndef __MEDIA_VIDEO_CODEC_H__
+#define __MEDIA_VIDEO_CODEC_H__
 
-namespace ring { namespace video { namespace test {
+#include "media_codec.h"
 
-void VideoEndpointTest::testListInstalledCodecs()
-{
-    /* This would list codecs */
-    std::cout << "Installed codecs:" << std::endl;
-    std::vector<std::string> codecs(libav_utils::getVideoCodecList());
-    std::vector<std::string>::iterator it;
-    for (it = codecs.begin(); it != codecs.end(); ++it)
-        std::cout << '\t' << *it << std::endl;
+namespace ring {
+    class MediaVideoCodec: public MediaCodec {
+
+public:
+    MediaVideoCodec(unsigned avcodecId, const std::string name, std::string libName, CodecType type = CODEC_UNDEFINED, uint16_t payloadType = -1, bool isActive = true);
+    ~MediaVideoCodec();
+
+    uint16_t frameRate_;
+    uint16_t profileId_;
+
+private:
+    };
 }
-
-}}} // namespace ring::video::test
-
-int main ()
-{
-    ring::libav_utils::sfl_avcodec_init();
-    ring::video::test::VideoEndpointTest test;
-    test.testListInstalledCodecs();
-    return 0;
-}
+#endif //__MEDIA_VIDEO_CODEC_H__
