@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -27,22 +28,36 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
-#include "video_rtp_session.h"
-#include "video_device_monitor.h"
-
 #include <iostream>
-#include <map>
-#include <string>
-#include <unistd.h> // for sleep
+#include <unistd.h>
+#include "media_audio_codec.h"
 
-int main ()
+using std::string;
+namespace ring {
+
+MediaAudioCodec::MediaAudioCodec(AVCodecID avcodecId, const std::string name, std::string libName, CodecType type, uint16_t bitrate, uint16_t sampleRate, uint16_t nbChannels, uint16_t payloadType, bool isActive)
+    : MediaCodec(avcodecId, name, libName, MEDIA_AUDIO, type, bitrate, payloadType, isActive) {
+    sampleRate_ = sampleRate;
+    nbChannels_ = nbChannels;
+    }
+
+MediaAudioCodec::~MediaAudioCodec()
 {
-    ring::video::VideoDeviceMonitor monitor;
-    ring::video::VideoRtpSession session("test", {});
-    session.start(12345);
-    sleep(5);
-    session.stop();
+}
+std::vector<std::string> MediaAudioCodec::getCodecSpecifications()
+{
+    //FORMAT: list of
+    //  * name of the codec
+    //  * sample rate
+    //  * bit rate
+    //  * channel number
 
-    return 0;
+     std::vector< std::string > listSpec;
+     listSpec.push_back(name_);
+     listSpec.push_back(std::to_string(sampleRate_));
+     listSpec.push_back(std::to_string(bitrate_));
+     listSpec.push_back(std::to_string(nbChannels_));
+     return listSpec;
+}
+
 }

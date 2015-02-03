@@ -246,11 +246,11 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    MediaAudioCodec* ac = dynamic_cast<MediaAudioCodec*>(getMediaCodecFactory()->searchCodecByName("PCMA", MEDIA_AUDIO));
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<AudioCodec *> audioCodecs;
+    std::vector<MediaAudioCodec *> audioCodecs;
     audioCodecs.push_back(ac);
 
     // Building the local SDP offer
