@@ -35,6 +35,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "media_audio_codec.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -288,7 +289,7 @@ class Sdp {
         void setMediaTransportInfoFromRemoteSdp();
 
         std::string getSessionVideoCodec() const;
-        std::vector<AudioCodec*> getSessionAudioMedia() const;
+        std::vector<MediaAudioCodec*> getSessionAudioMedia() const;
         // Sets @param settings with appropriate values and returns true if
         // we are sending video, false otherwise
         bool getOutgoingVideoSettings(std::map<std::string, std::string> &settings) const;
@@ -353,14 +354,14 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<AudioCodec *> audio_codec_list_;
+        std::vector<MediaAudioCodec *> audio_codec_list_;
         std::vector<std::map<std::string, std::string> > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<AudioCodec *> sessionAudioMediaLocal_;
-        std::vector<AudioCodec *> sessionAudioMediaRemote_;
+        std::vector<MediaAudioCodec *> sessionAudioMediaLocal_;
+        std::vector<MediaAudioCodec *> sessionAudioMediaRemote_;
         std::vector<std::string> sessionVideoMedia_;
 
         std::string publishedIpAddr_;
