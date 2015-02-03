@@ -45,7 +45,7 @@
 #include "fileutils.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
-#include "security.h"
+#include "security_const.h"
 #include "audio/audiolayer.h"
 
 #include <dirent.h>
