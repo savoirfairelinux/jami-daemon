@@ -135,4 +135,5 @@ libring_la_SOURCES = conference.cpp \
 		ring_api.cpp
 
 nobase_include_HEADERS= dring/dring.h \
-		dring/security.h
+		dring/security_const.h \
+		dring/account_const.h

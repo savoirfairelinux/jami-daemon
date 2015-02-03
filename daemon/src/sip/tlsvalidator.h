@@ -59,7 +59,6 @@ public:
         PUBLIC_KEY_STORAGE_LOCATION       , /** Some operating systems have extra policies for certificate storage   */
         PRIVATE_KEY_SELINUX_ATTRIBUTES    , /** Some operating systems require keys to have extra attributes         */
         PUBLIC_KEY_SELINUX_ATTRIBUTES     , /** Some operating systems require keys to have extra attributes         */
-        OUTGOING_SERVER                   , /** The hostname/outgoing server used for this certificate               */
         EXIST                             , /** The certificate file doesn't exist or is not accessible              */
         VALID                             , /** The file is not a certificate                                        */
         VALID_AUTHORITY                   , /** The claimed authority did not sign the certificate                   */
@@ -92,6 +91,7 @@ public:
         PUBLIC_KEY_ID                  ,
         ISSUER_DN                      ,
         NEXT_EXPECTED_UPDATE_DATE      ,
+        OUTGOING_SERVER                , /** The hostname/outgoing server used for this certificate               */
         COUNT__
     };
 
@@ -162,7 +162,6 @@ public:
     CheckResult publicKeyStorageLocation();
     CheckResult privateKeySelinuxAttributes();
     CheckResult publicKeySelinuxAttributes();
-    CheckResult outgoingServer();
     CheckResult exist();
     CheckResult valid();
     CheckResult validAuthority();
@@ -189,6 +188,7 @@ public:
     CheckResult getSha1Fingerprint();
     CheckResult getPublicKeyId();
     CheckResult getIssuerDN();
+    CheckResult outgoingServer();
 
     void setCaTlsValidator(const TlsValidator& validator);
 
