@@ -1354,6 +1354,7 @@ ManagerImpl::removeStream(Call& call)
 void
 ManagerImpl::registerEventHandler(uintptr_t handlerId, EventHandler handler)
 {
+    RING_DBG("%s: %X", __func__, handlerId);
     eventHandlerMap_.insert(std::make_pair(handlerId, handler));
 }
 
@@ -1361,17 +1362,19 @@ void
 ManagerImpl::unregisterEventHandler(uintptr_t handlerId)
 {
     eventHandlerMap_.erase(handlerId);
+    RING_DBG("%s: %X", __func__, handlerId);
 }
 
 // Must be invoked periodically by a timer from the main event loop
 void ManagerImpl::pollEvents()
 {
-    // Make a copy of handlers map as handlers can modify this map
-    const auto handlers = eventHandlerMap_;
-    for (const auto& it : handlers) {
+    auto iter = eventHandlerMap_.begin();
+    while (iter != eventHandlerMap_.end()) {
         if (finished_)
             return;
-        it.second();
+        auto next = std::next(iter);
+        iter->second();
+        iter = next;
     }
 }
 
