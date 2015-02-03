@@ -1016,11 +1016,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     // Update connection information
     sdp.setMediaTransportInfoFromRemoteSdp();
 
-    call->openPortsUPnP();
-
-    // Handle possible ICE transport
-    if (!call->startIce())
-        RING_WARN("ICE not started");
+    call->onMediaUpdate();
 }
 
 static void
