@@ -136,7 +136,9 @@ int MediaDecoder::setupFromAudioData()
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
+    RING_DBG("ELOI [%d] > avformat_find_stream_info \n",__LINE__);
     ret = avformat_find_stream_info(inputCtx_, NULL);
+    RING_DBG("ELOI [%d] < avformat_find_stream_info \n",__LINE__);
 #endif
 
     if (ret < 0) {
