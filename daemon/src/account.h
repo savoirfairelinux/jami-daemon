@@ -41,6 +41,7 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 #include "ip_utils.h"
+#include "media_codec.h"
 
 #include <functional>
 #include <string>
@@ -65,6 +66,7 @@ class Node;
 namespace ring {
 
 class Call;
+class SystemCodecContainer;
 
 class VoipLinkException : public std::runtime_error {
     public:
@@ -194,21 +196,18 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        std::vector<std::map<std::string, std::string> >
-        getAllVideoCodecs() const;
+        std::vector<unsigned>
+        getAllVideoCodecsId() const;
 
-        std::vector<std::map<std::string, std::string> >
+        std::vector<unsigned>
         getActiveVideoCodecs() const;
 
-        static std::vector<int> getDefaultAudioCodecs();
+        static std::vector<unsigned> getDefaultAudioCodecs();
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<int> getActiveAudioCodecs() const {
-            return audioCodecList_;
-        }
-
+        std::vector<unsigned> getActiveAudioCodecs() const;
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
@@ -348,7 +347,9 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Vector containing the order of the codecs
          */
+        std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
         std::vector<int> audioCodecList_;
+        std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
 
         /**
          * Vector containing the video codecs in order
@@ -360,7 +361,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * to generate codec order list
          */
         std::string audioCodecStr_;
-
+        std::string videoCodecStr_;
         /**
          * Ringtone .au file used for this account
          */
@@ -410,6 +411,24 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * flag which determines if this account is set to use UPnP.
          */
         std::atomic_bool upnpEnabled_ {false};
+
+
+        /*
+         * private account codec searching functions
+         *
+         * */
+
+        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
+        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
+        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
+        void desactivateAllMedia(MediaType mediaType);
+        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType);
+
+
+
+
 };
 
 } // namespace ring

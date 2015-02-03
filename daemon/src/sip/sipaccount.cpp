@@ -61,6 +61,8 @@
 #include "libav_utils.h"
 #endif
 
+#include "system_codec_container.h"
+
 #include <unistd.h>
 #include <pwd.h>
 
@@ -246,11 +248,12 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    auto ac = std::dynamic_pointer_cast<SystemAudioCodecInfo>
+        (getSystemCodecContainer()->searchCodecByName("PCMA", MEDIA_AUDIO));
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<AudioCodec *> audioCodecs;
+    std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
     audioCodecs.push_back(ac);
 
     // Building the local SDP offer

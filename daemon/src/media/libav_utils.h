@@ -44,7 +44,7 @@ namespace ring { namespace libav_utils {
 
     std::map<std::string, std::string> encodersMap();
 
-    std::vector<std::string> getVideoCodecList();
+    //std::vector<std::string> getVideoCodecList();
 
 #ifdef RING_VIDEO
     std::vector<std::map <std::string, std::string> > getDefaultVideoCodecs();
