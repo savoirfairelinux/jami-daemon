@@ -172,6 +172,8 @@ public:
      */
     void shutdown();
 
+    void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
+
 private:
     NON_COPYABLE(SipTransportBroker);
 
@@ -182,10 +184,6 @@ private:
     * @return a pointer to the new transport
     */
     std::shared_ptr<SipTransport> createUdpTransport(const SipTransportDescr&);
-
-    static void tp_state_callback(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
-
-    void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
 
     /**
      * List of transports so we can bubble the events up.
