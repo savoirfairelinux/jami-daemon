@@ -165,8 +165,8 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
-    , callFactory(), conferenceMap_(), history_(),
-    finished_(false), accountFactory_(), ice_tf_()
+    , callFactory(), conferenceMap_(), history_()
+    , accountFactory_(), ice_tf_()
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
@@ -291,10 +291,9 @@ ManagerImpl::setPath(const std::string &path)
 void
 ManagerImpl::finish()
 {
-    if (finished_)
+    bool expected = false;
+    if (not finished_.compare_exchange_strong(expected, true))
         return;
-
-    finished_ = true;
 
     try {
         // Forbid call creation
@@ -325,7 +324,6 @@ ManagerImpl::finish()
     } catch (const VoipLinkException &err) {
         RING_ERR("%s", err.what());
     }
-
 
     RING_DBG("Remove any remaning ports mapped to this client for RING");
     upnp::Controller().removeMappingsByLocalIPAndDescription();
@@ -1368,13 +1366,13 @@ ManagerImpl::unregisterEventHandler(uintptr_t handlerId)
 // Must be invoked periodically by a timer from the main event loop
 void ManagerImpl::pollEvents()
 {
-    if (finished_)
-        return;
-
     // Make a copy of handlers map as handlers can modify this map
     const auto handlers = eventHandlerMap_;
-    for (const auto& it : handlers)
+    for (const auto& it : handlers) {
+        if (finished_)
+            return;
         it.second();
+    }
 }
 
 //THREAD=Main

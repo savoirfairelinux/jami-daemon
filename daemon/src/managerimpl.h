@@ -47,6 +47,7 @@
 #include <memory>
 #include <mutex>
 #include <random>
+#include <atomic>
 
 #include "client/client.h"
 
@@ -991,7 +992,7 @@ class ManagerImpl {
          * TODO: move this to ConfigurationManager
          */
         History history_;
-        bool finished_;
+        std::atomic_bool finished_ {false};
 
         AccountFactory accountFactory_;
 
