@@ -1,8 +1,13 @@
 include ../globals.mak
 
+RING_VIDEO_LIBS=
+
 if RING_VIDEO
-RING_VIDEO_LIBS=./media/video/libvideo.la \
-			   ./media/video/v4l2/libv4l2.la
+RING_VIDEO_LIBS+=./media/video/libvideo.la
+if HAVE_LINUX
+RING_VIDEO_LIBS+= \
+                ./media/video/v4l2/libv4l2.la
+endif
 endif
 
 if BUILD_INSTANT_MESSAGING
