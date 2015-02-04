@@ -53,7 +53,7 @@ namespace ring {
 class AudioSender {
     public:
         AudioSender(const std::string& id,
-                    std::map<std::string, std::string> txArgs,
+                    const MediaDescription& args,
                     SocketPair& socketPair);
         ~AudioSender();
 
@@ -64,8 +64,9 @@ class AudioSender {
         bool setup(SocketPair& socketPair);
 
         std::string id_;
-        std::map<std::string, std::string> args_;
-        const AudioFormat format_;
+        //std::map<std::string, std::string> args_;
+        //const AudioFormat format_;
+        MediaDescription args_;
         std::unique_ptr<MediaEncoder> audioEncoder_;
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
@@ -76,18 +77,18 @@ class AudioSender {
         void cleanup();
 };
 
-AudioSender::AudioSender(const std::string& id, std::map<std::string, std::string> txArgs, SocketPair& socketPair) :
+AudioSender::AudioSender(const std::string& id, const MediaDescription& args /*std::map<std::string, std::string> txArgs*/, SocketPair& socketPair) :
     id_(id),
-    args_(txArgs),
-    format_(std::atoi(args_["sample_rate"].c_str()),
-            std::atoi(args_["channels"].c_str())),
+    args_(args),
+    /*format_(std::atoi(args_["sample_rate"].c_str()),
+            std::atoi(args_["channels"].c_str())),*/
     loop_([&] { return setup(socketPair); },
           std::bind(&AudioSender::process, this),
           std::bind(&AudioSender::cleanup, this))
 {
-    std::ostringstream os;
+    /*std::ostringstream os;
     os << secondsPerPacket_ * format_.sample_rate;
-    args_["frame_size"] = os.str();
+    args_["frame_size"] = os.str();*/
     loop_.start();
 }
 
@@ -99,16 +100,18 @@ AudioSender::~AudioSender()
 bool
 AudioSender::setup(SocketPair& socketPair)
 {
+/*
     auto enc_name = args_["codec"].c_str();
     auto dest = args_["destination"].c_str();
-
+*/
+    auto dest = "rtp://" + args_.addr.toString(true);
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext());
 
     try {
         /* Encoder setup */
-        audioEncoder_->setOptions(args_);
-        audioEncoder_->openOutput(enc_name, "rtp", dest, NULL, false);
+        //audioEncoder_->setOptions(args_);
+        audioEncoder_->openOutput(dest.c_str(), args_/*enc_name, , dest, NULL, false*/);
         audioEncoder_->setIOContext(muxContext_);
         audioEncoder_->startIO();
     } catch (const MediaEncoderException &e) {
@@ -134,11 +137,10 @@ void
 AudioSender::process()
 {
     auto mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    double resampleFactor = mainBuffFormat.sample_rate / (double) format_.sample_rate;
+    double resampleFactor = mainBuffFormat.sample_rate / (double) args_.audioformat.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const size_t samplesToGet = resampleFactor * secondsPerPacket_ * format_.sample_rate;
-
+    const size_t samplesToGet = mainBuffFormat.sample_rate * secondsPerPacket_;
     if (Manager::instance().getRingBufferPool().availableForGet(id_) < samplesToGet)
         return;
 
@@ -146,7 +148,7 @@ AudioSender::process()
     AudioBuffer micData(samplesToGet, mainBuffFormat);
 
     const size_t samples = Manager::instance().getRingBufferPool().getData(micData, id_);
-    micData.setChannelNum(format_.nb_channels, true); // down/upmix as needed
+    micData.setChannelNum(args_.audioformat.nb_channels, true); // down/upmix as needed
 
     if (samples != samplesToGet) {
         RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
@@ -154,13 +156,13 @@ AudioSender::process()
         return;
     }
 
-    if (mainBuffFormat.sample_rate != format_.sample_rate)
+    if (mainBuffFormat.sample_rate != args_.audioformat.sample_rate)
     {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler(format_));
+            resampler_.reset(new Resampler(args_.audioformat));
         }
-        AudioBuffer resampledData(samplesToGet, format_);
+        AudioBuffer resampledData(samplesToGet, args_.audioformat);
         resampler_->resample(micData, resampledData);
         if (audioEncoder_->encode_audio(resampledData) < 0)
             RING_ERR("encoding failed");
@@ -180,8 +182,8 @@ AudioSender::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
 {
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
-    auto resampleFactor = (double) mainBuffFormat.sample_rate / format_.sample_rate;
-    const size_t samplesToGet = resampleFactor * secondsPerPacket_ * format_.sample_rate;
+    auto resampleFactor = (double) mainBuffFormat.sample_rate / args_.audioformat.sample_rate;
+    const size_t samplesToGet = resampleFactor * secondsPerPacket_ * args_.audioformat.sample_rate;
 
     return mainBuffer.waitForDataAvailable(id_, samplesToGet, max_wait);
 }
@@ -199,7 +201,8 @@ class AudioReceiveThread
 
         static constexpr auto SDP_FILENAME = "dummyFilename";
 
-        std::map<std::string, std::string> args_;
+        //std::map<std::string, std::string> args_;
+        struct MediaDecoderParams args_;
 
         static int interruptCb(void *ctx);
         static int readFunction(void *opaque, uint8_t *buf, int buf_size);
@@ -245,12 +248,14 @@ AudioReceiveThread::setup()
     audioDecoder_.reset(new MediaDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
-    args_["sdp_flags"] = "custom_io";
+    //args_["sdp_flags"] = "custom_io";
+    args_.input = SDP_FILENAME;
+    args_.format = "sdp";
+    args_.sdp_flags = "custom_io";
     EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
     audioDecoder_->setIOContext(sdpContext_.get());
-    audioDecoder_->setOptions(args_);
-    EXIT_IF_FAIL(not audioDecoder_->openInput(SDP_FILENAME, "sdp"),
-                 "Could not open input \"%s\"", SDP_FILENAME);
+    //audioDecoder_->setOptions(args_);
+    EXIT_IF_FAIL(not audioDecoder_->openInput(args_), "Could not open input \"%s\"", SDP_FILENAME);
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
 
@@ -333,9 +338,8 @@ AudioReceiveThread::startLoop()
     loop_.start();
 }
 
-AVFormatRtpSession::AVFormatRtpSession(const std::string& id,
-                                       const std::map<std::string, std::string>& txArgs)
-    : id_(id), txArgs_(txArgs)
+AVFormatRtpSession::AVFormatRtpSession(const std::string& id)
+    : RtpSession(id)
 {
     // don't move this into the initializer list or Cthulus will emerge
     ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(id_);
@@ -346,6 +350,7 @@ AVFormatRtpSession::~AVFormatRtpSession()
     stop();
 }
 
+/*
 void
 AVFormatRtpSession::updateSDP(const Sdp& sdp)
 {
@@ -419,32 +424,33 @@ AVFormatRtpSession::updateDestination(const std::string& destination,
         RING_DBG("Sending audio disabled, port was set to 0");
         sending_ = false;
     }
-}
+}*/
 
 void
 AVFormatRtpSession::startSender()
 {
-    if (not sending_)
+    if (not local_.enabled)
         return;
 
     if (sender_)
         RING_WARN("Restarting audio sender");
 
     try {
-        sender_.reset(new AudioSender(id_, txArgs_, *socketPair_));
+        sender_.reset(new AudioSender(id_, local_, *socketPair_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
-        sending_ = false;
+        //sending_ = false;
+        local_.enabled = false;
     }
 }
 
 void
 AVFormatRtpSession::startReceiver()
 {
-    if (receiving_) {
+    if (remote_.enabled) {
         if (receiveThread_)
-            RING_WARN("restarting video receiver");
-        receiveThread_.reset(new AudioReceiveThread(id_, receivingSDP_));
+            RING_WARN("Restarting audio receiver");
+        receiveThread_.reset(new AudioReceiveThread(id_, remote_.receiving_sdp));
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
@@ -458,15 +464,15 @@ AVFormatRtpSession::start(int localPort)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }
 
     try {
-        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+        socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), local_.addr.getPort()));
     } catch (const std::runtime_error &e) {
-        RING_ERR("Socket creation failed on port %d: %s", localPort, e.what());
+        RING_ERR("Socket creation failed on port %d: %s", local_.addr.getPort(), e.what());
         return;
     }
 
@@ -480,7 +486,7 @@ AVFormatRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }

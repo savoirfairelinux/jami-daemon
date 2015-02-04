@@ -2,10 +2,8 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudiortp.la
 
-libaudiortp_la_SOURCES = \
-		base64.c base64.h
 
-libaudiortp_la_SOURCES += \
+libaudiortp_la_SOURCES = \
 		avformat_rtp_session.cpp \
 		avformat_rtp_session.h
 
