@@ -10,18 +10,21 @@ endif
 
 libmedia_la_SOURCES = \
 	libav_utils.cpp \
-    socket_pair.cpp \
-    media_decoder.cpp \
-    media_encoder.cpp \
-    media_io_handle.cpp
+	socket_pair.cpp \
+	media_decoder.cpp \
+	media_encoder.cpp \
+	media_io_handle.cpp \
+	srtp.c
 
 noinst_HEADERS = \
+	rtp_session.h \
 	libav_utils.h \
 	libav_deps.h \
 	socket_pair.h \
-    media_decoder.h \
-    media_encoder.h \
-    media_io_handle.h
+	media_decoder.h \
+	media_encoder.h \
+	media_io_handle.h \
+	srtp.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la

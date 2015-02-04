@@ -37,7 +37,7 @@
 #include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
-#include "sip_utils.h"
+#include "sdes_negotiator.h"
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
@@ -120,10 +120,10 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
     //, avformatrtp_(new AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
-    , avformatrtp_(new AVFormatRtpSession(id, *new std::map<std::string, std::string>))
+    , avformatrtp_(new AVFormatRtpSession(id))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, getSettings())
+    , videortp_(id/*, getSettings()*/)
 #endif
     , sdp_(new Sdp(id))
 {
@@ -775,9 +775,57 @@ SIPCall::startIce()
 void
 SIPCall::startAllMedia()
 {
-    auto& remoteIP = sdp_->getRemoteIP();
+    auto local_slots = sdp_->getLocalMediaSlots();
+    auto remote_slots = sdp_->getRemoteMediaSlots();
+    auto slot_num = std::min(local_slots.size(), remote_slots.size());
+    unsigned ice_comp_id = 0;
+
+    for (decltype(slot_num) i=0; i<slot_num; i++) {
+        const auto& local = local_slots[i];
+        const auto& remote = remote_slots[i];
+        if (local.type != remote.type) {
+            RING_ERR("Inconsistent media types between local and remote for SDP media slot %d", i);
+            continue;
+        }
+
+        RtpSession* rtp = (local.type == MediaType::AUDIO) ? dynamic_cast<RtpSession*>(avformatrtp_.get()) : dynamic_cast<RtpSession*>(&videortp_);
+        rtp->updateMedia(local, remote);
+        if (isIceRunning()) {
+            std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
+            std::unique_ptr<IceSocket> sockRTCP(newIceSocket(ice_comp_id++));
+            rtp->start(std::move(sockRTP), std::move(sockRTCP));
+        } else {
+            rtp->start(local.addr.getPort());
+        }
+
+    }
+
+/*
+#if HAVE_SDES
+    std::vector<ring::CryptoSuiteDefinition> localCapabilities;
+    if (srtpEnabled_) {
+        for (size_t i = 0; i < RING_ARRAYSIZE(ring::CryptoSuites); ++i)
+            localCapabilities.push_back(ring::CryptoSuites[i]);
+    }
+#endif // HAVE_SDES
+
+    auto remoteIP = sdp_->getRemoteIP();
+    remoteIP.setPort(sdp_->getRemoteAudioPort());
     avformatrtp_->updateSDP(*sdp_);
     avformatrtp_->updateDestination(remoteIP, sdp_->getRemoteAudioPort());
+#if HAVE_SDES
+    if (srtpEnabled_) {
+        auto local_offer = sdp_->getLocalCryptoOffer(0);
+        auto remote_offer = sdp_->getRemoteCryptoOffer(0);
+        if (not remote_offer.empty()) {
+            auto sdes = ring::SdesNegotiator{localCapabilities, remote_offer}.negotiate();
+            if (sdes) {
+                avformatrtp_->updateSRTP(sdes);
+                Manager::instance().getClient()->getCallManager()->secureSdesOn(getCallId());
+            }
+        }
+    }
+#endif // HAVE_SDES
     if (isIceRunning()) {
         std::unique_ptr<IceSocket> sockRTP(newIceSocket(ICE_AUDIO_RTP_COMPID));
         std::unique_ptr<IceSocket> sockRTCP(newIceSocket(ICE_AUDIO_RTCP_COMPID));
@@ -791,6 +839,14 @@ SIPCall::startAllMedia()
     auto remoteVideoPort = sdp_->getRemoteVideoPort();
     videortp_.updateSDP(*sdp_);
     videortp_.updateDestination(remoteIP, remoteVideoPort);
+#if HAVE_SDES
+    auto crypto_offer_video = sdp_->getRemoteCryptoOffer(1);
+    if (not crypto_offer_video.empty()) {
+        auto sdes = ring::SdesNegotiator{localCapabilities, crypto_offer_video}.negotiate();
+        if (sdes)
+            avformatrtp_->updateSRTP(sdes);
+    }
+#endif // HAVE_SDES
     if (isIceRunning()) {
         std::unique_ptr<IceSocket> sockRTP(newIceSocket(ICE_VIDEO_RTP_COMPID));
         std::unique_ptr<IceSocket> sockRTCP(newIceSocket(ICE_VIDEO_RTCP_COMPID));
@@ -810,8 +866,48 @@ SIPCall::startAllMedia()
 #endif
 
     // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
-    CryptoOffer crypto_offer;
-    getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
+    //getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
+/*
+#if HAVE_SDES
+    bool nego_success = false;
+    CryptoOffer crypto_offer = sdp_->getRemoteCryptoOffer();
+    if (!crypto_offer.empty()) {
+
+        ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+
+        if (sdesnego.negotiate()) {
+            nego_success = true;
+            try {
+                setRemoteCryptoInfo(sdesnego);
+                Manager::instance().getClient()->getCallManager()->secureSdesOn(getCallId());
+            } catch (const std::exception &e) {
+                RING_ERR("%s", e.what());
+                Manager::instance().getClient()->getCallManager()->secureSdesOff(getCallId());
+            }
+        } else {
+            RING_ERR("SDES negotiation failure");
+            Manager::instance().getClient()->getCallManager()->secureSdesOff(getCallId());
+        }
+    } else {
+        RING_DBG("No crypto offer available");
+    }
+
+    // We did not find any crypto context for this media, RTP fallback
+    if (!nego_success && srtpEnabled_ && keyExchangeProtocol_ == KeyExchangeProtocol::SDES) {
+        RING_ERR("Negotiation failed but SRTP is enabled, fallback on RTP");
+        getAudioRtp().stop();
+        getAudioRtp().setSrtpEnabled(false);
+
+        const auto& account = getSIPAccount();
+        if (account.getSrtpFallback()) {
+            getAudioRtp().initSession();
+
+            if (account.isStunEnabled())
+                updateSDPFromSTUN();
+        }
+    }
+
+#endif // HAVE_SDES*/
 
     std::vector<AudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
 
@@ -868,7 +964,7 @@ SIPCall::onMediaUpdate()
     if (getState() == ACTIVE) {
         // TODO apply changes without restarting everything
         RING_WARN("Restarting media");
-        stopAllMedia();
+        //stopAllMedia();
         startAllMedia();
     }
 }

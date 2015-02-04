@@ -51,7 +51,7 @@ namespace ring { namespace video {
 class VideoSender : public VideoFramePassiveReader
 {
 public:
-    VideoSender(std::map<std::string, std::string> args,
+    VideoSender(const MediaDescription& args,
                 SocketPair& socketPair);
 
     std::string getSDP() const { return sdp_; }

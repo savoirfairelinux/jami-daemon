@@ -50,14 +50,14 @@ namespace ring { namespace video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const string &callID,
-                                 const map<string, string> &txArgs) :
-    txArgs_(txArgs), callID_(callID)
+VideoRtpSession::VideoRtpSession(const string &callID/*,
+                                 const map<string, string> &txArgs*/) :
+    RtpSession(callID)
 {}
 
 VideoRtpSession::~VideoRtpSession()
 { stop(); }
-
+/*
 void VideoRtpSession::updateSDP(const Sdp &sdp)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -101,7 +101,6 @@ void VideoRtpSession::updateSDP(const Sdp &sdp)
     if (sending_)
         sending_ = sdp.getOutgoingVideoSettings(txArgs_);
 }
-
 void VideoRtpSession::updateDestination(const string &destination,
                                         unsigned int port)
 {
@@ -127,11 +126,11 @@ void VideoRtpSession::updateDestination(const string &destination,
         RING_DBG("Sending video disabled, port was set to 0");
         sending_ = false;
     }
-}
+}*/
 
 void VideoRtpSession::startSender()
 {
-    if (sending_) {
+    if (local_.enabled) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -141,20 +140,22 @@ void VideoRtpSession::startSender()
         }
 
         try {
-            sender_.reset(new VideoSender(txArgs_, *socketPair_));
+            sender_.reset(new VideoSender(local_, *socketPair_));
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
-            sending_ = false;
+            //sending_ = false;
+            local_.enabled = false;
         }
     }
 }
 
 void VideoRtpSession::startReceiver()
 {
-    if (receiving_) {
+    if (remote_.enabled) {
         if (receiveThread_)
             RING_WARN("restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
+        MediaDecoderParams params;
+        receiveThread_.reset(new VideoReceiveThread(callID_, remote_));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
@@ -170,13 +171,13 @@ void VideoRtpSession::start(int localPort)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }
 
     try {
-        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+        socketPair_.reset(new SocketPair(/*txArgs_["destination"].c_str()*/getRemoteRtpUri().c_str(), localPort));
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
@@ -203,7 +204,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }
@@ -249,6 +250,13 @@ void VideoRtpSession::stop()
     conference_ = nullptr;
 }
 
+/*
+void VideoRtpSession::updateSRTP(const CryptoAttribute& local, const CryptoAttribute& remote)
+{
+    if (socketPair_)
+        socketPair_->createSRTP(local.getCryptoSuite(), local., remote.getCryptoSuite(), remote.);
+}
+*/
 void VideoRtpSession::forceKeyFrame()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -262,8 +270,8 @@ void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
 
     videoMixer_ = std::move(conference->getVideoMixer());
     assert(videoMixer_.get());
-    videoMixer_->setDimensions(atol(txArgs_["width"].c_str()),
-                               atol(txArgs_["height"].c_str()));
+    videoMixer_->setDimensions(local_.width, local_.height/* atol(txArgs_["width"].c_str()),
+                               atol(txArgs_["height"].c_str())*/);
 
     if (sender_) {
         // Swap sender from local video to conference video mixer
@@ -285,7 +293,8 @@ void VideoRtpSession::enterConference(Conference* conference)
     exitConference();
 
     conference_ = conference;
-    if (sending_ or receiveThread_)
+
+    if (local_.enabled or receiveThread_)
         setupConferenceVideoPipeline(conference);
 }
 
