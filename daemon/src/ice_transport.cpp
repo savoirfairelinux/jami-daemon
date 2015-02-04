@@ -129,7 +129,10 @@ IceTransport::IceTransport(const char* name, int component_count,
         throw std::runtime_error("pj_ice_strans_create() failed");
 }
 
-IceTransport::~IceTransport() = default;
+IceTransport::~IceTransport()
+{
+    icest_.reset(); // must be done first to invalid callbacks
+}
 
 void
 IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
