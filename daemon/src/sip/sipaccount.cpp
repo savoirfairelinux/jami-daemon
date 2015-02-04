@@ -70,7 +70,7 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 #include "ip_utils.h"
 
 namespace ring {
@@ -889,7 +889,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
         released_cb(true);
 
     if (getUseUPnP()) {
-        RING_DBG("UPnP : removing port mapping for SIP account.");
+        RING_DBG("UPnP: removing port mapping for SIP account.");
         upnp_->removeMappings();
     }
 }

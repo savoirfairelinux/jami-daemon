@@ -42,7 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include "audio/audiortp/avformat_rtp_session.h"
 #include "client/callmanager.h"
@@ -866,7 +866,7 @@ SIPCall::openPortsUPnP()
          *       the newly selected port should possibly be checked against the list of used ports and marked
          *       as used, the old port should be "released"
          */
-        RING_DBG("UPnP : openening ports via upnp for SDP session.");
+        RING_DBG("UPnP: openening ports via upnp for SDP session.");
         uint16_t audio_port_used;
         if (upnp_->addAnyMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
             uint16_t control_port_used;

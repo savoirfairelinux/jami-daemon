@@ -61,7 +61,7 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include <algorithm>
 #include <array>
@@ -788,7 +788,7 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     if (getUseUPnP()) {
-        RING_DBG("UPnP : removing port mapping for DHT account.");
+        RING_DBG("UPnP: removing port mapping for DHT account.");
         upnp_->removeMappings();
     }
 
