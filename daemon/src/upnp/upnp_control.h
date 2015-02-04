@@ -42,55 +42,10 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "ip_utils.h"
-
-#if HAVE_UPNP
-#include <miniupnpc/miniupnpc.h>
-#endif
+#include "upnp_context.h"
+#include "upnp_igd.h"
 
 namespace ring { namespace upnp {
-
-/* defines a UPnP capable Internet Gateway Device (a router) */
-class IGD {
-public:
-
-#if HAVE_UPNP
-
-    /* constructors */
-    IGD() : datas_(), urls_() {};
-    IGD(IGDdatas& d , UPNPUrls& u) : datas_(d), urls_(u) {};
-
-    /* move constructor and operator */
-    IGD(IGD&& other);
-    IGD& operator=(IGD&& other);
-
-    ~IGD();
-
-    const IGDdatas& getDatas() const {return datas_;};
-    const UPNPUrls& getURLs() const {return urls_;};
-#else
-    /* use default constructor and destructor */
-    IGD() = default;
-    ~IGD() = default;;
-    /* use default move constructor and operator */
-    IGD(IGD&&) = default;
-    IGD& operator=(IGD&&) = default;
-#endif
-    bool isEmpty() const;
-
-    /**
-     * removes all mappings with the local IP and the given description
-     */
-    void removeMappingsByLocalIPAndDescription(const std::string& description);
-
-private:
-    NON_COPYABLE(IGD);
-
-#if HAVE_UPNP
-    IGDdatas datas_;
-    UPNPUrls urls_;
-#endif
-
-};
 
 enum class PortType {UDP,TCP};
 
@@ -104,7 +59,6 @@ public:
     constexpr static uint16_t UPNP_PORT_MIN = 1024;
     constexpr static uint16_t UPNP_PORT_MAX = 65535;
 
-    std::shared_ptr<const IGD> igd; /* the IGD associated with this mapping */
     IpAddr local_ip; /* the destination of the mapping */
     uint16_t port_external;
     uint16_t port_internal;
@@ -112,14 +66,12 @@ public:
     std::string description;
 
     Mapping(
-        std::shared_ptr<const IGD> igd = std::make_shared<const IGD>(),
         IpAddr local_ip = IpAddr(),
         uint16_t port_external = 0,
         uint16_t port_internal = 0,
         PortType type = PortType::UDP,
         std::string description = UPNP_DEFAULT_MAPPING_DESCRIPTION)
-    : igd(igd)
-    , local_ip(local_ip)
+    : local_ip(local_ip)
     , port_external(port_external)
     , port_internal(port_internal)
     , type(type)
@@ -141,7 +93,7 @@ public:
     };
 
     bool isValid() const {
-        return igd->isEmpty() or port_external == 0 or port_internal == 0 ? false : true;
+        return port_external == 0 or port_internal == 0 ? false : true;
     };
 private:
     NON_COPYABLE(Mapping);
@@ -160,7 +112,7 @@ public:
      * this is only relevant when multiple accounts are using the same SIP port */
     unsigned users;
     GlobalMapping(const Mapping& mapping, unsigned users = 1)
-        : Mapping(mapping.igd, mapping.local_ip, mapping.port_external, mapping.port_internal, mapping.type, mapping.description)
+        : Mapping(mapping.local_ip, mapping.port_external, mapping.port_internal, mapping.type, mapping.description)
         , users(users)
     {};
 };
@@ -219,7 +171,7 @@ private:
      * TODO: Currently, we assume that the IGD will not change once it has been selected;
      *       however, the user could switch routers while the client is running
      */
-    std::shared_ptr<IGD> defaultIGD_;
+    std::shared_ptr<UPnPContext> upnpContext_;
 
     /**
      * list of mappings created by this instance
@@ -250,8 +202,6 @@ private:
      */
     uint16_t chooseRandomPort(PortType type);
 };
-
-std::shared_ptr<IGD> getIGD();
 
 }} // namespace ring::upnp
 
