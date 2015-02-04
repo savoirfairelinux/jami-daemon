@@ -30,9 +30,11 @@
  */
 #include "media_codec.h"
 #include <string.h>
+#include <sstream>
+
 
 namespace ring {
-MediaCodec::MediaCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, MEDIA_TYPE mediaType, CODEC_TYPE codecType, uint16_t bitrate, uint16_t payloadType, bool isActive)
+MediaCodec::MediaCodec(AVCodecID avcodecId, const std::string name, std::string libName, MEDIA_TYPE mediaType, CODEC_TYPE codecType, uint16_t bitrate, uint16_t payloadType, bool isActive)
 {
     avcodecId_ = avcodecId;
     name_ = name;
@@ -54,32 +56,10 @@ uint16_t MediaCodec::getCodecId()
 }
 std::string MediaCodec::to_string()
 {
-    uint16_t len =
-        strlen("codecid=") +
-        sizeof(uint16_t) +
-        strlen("avcodecid=") +
-        sizeof(uint16_t) +
-        strlen("name=") +
-        strlen(name_.c_str()) +
-        strlen("PT=") +
-        sizeof(uint16_t) +
-        strlen("isActive") +
-        strlen("false") + // worth case strlen(false) > strlen(true)
-        strlen("libName") +
-        strlen(libName_.c_str()) +
-        strlen("bitrate=") +
-        sizeof(uint16_t) +
-        1;
+    std::ostringstream out;
+    out << "type:" << codecType_ << " ,id:" << codecId_ << " ,avcodecID:" << avcodecId_ << " ,name:" << name_ << " ,PT:" << payloadType_ << " ,isActive:" << (isActive_ ? "true " : "false") << " ,libName:" << libName_ << " ,bitrate:" << bitrate_;
 
-
-    char* ret = (char*) malloc(len);
-    snprintf(ret, len, "type %d: codecid=%d,avcodecid=%d,name=%s,PT=%d,isActive=%s,libName=%s,bitrate=%d",
-            codecType_,
-            codecId_, avcodecId_, name_.c_str(), payloadType_, (isActive_ ? "true " : "false"), libName_.c_str(), bitrate_);
-
-    std::string retString (ret);
-    free(ret);
-    return retString;
+    return out.str();
 }
 static uint16_t generateId()
 {

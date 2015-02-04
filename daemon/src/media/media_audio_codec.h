@@ -38,7 +38,7 @@ namespace ring {
 
 public:
 
-    MediaAudioCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t bitrate = 0, uint16_t sampleRate = 0, uint16_t nbChannels = 0, uint16_t payloadType = 0, bool isActive = true);
+    MediaAudioCodec(AVCodecID avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t bitrate = 0, uint16_t sampleRate = 0, uint16_t nbChannels = 0, uint16_t payloadType = 0, bool isActive = true);
     ~MediaAudioCodec();
 
     uint16_t sampleRate_;
