@@ -32,12 +32,13 @@
 #ifndef __VIDEO_RTP_SESSION_H__
 #define __VIDEO_RTP_SESSION_H__
 
+#include "media/rtp_session.h"
+
 #include "video_base.h"
 #include "video_mixer.h"
 #include "noncopyable.h"
 #include "video_sender.h"
 #include "video_receive_thread.h"
-#include "socket_pair.h"
 
 #include <string>
 #include <map>
@@ -45,25 +46,26 @@
 #include <mutex>
 
 namespace ring {
-class Sdp;
 class Conference;
-} // namespace ring
 
-namespace ring { namespace video {
+namespace video {
 
-class VideoRtpSession {
+class VideoRtpSession : public RtpSession {
 public:
-    VideoRtpSession(const std::string &callID,
-                    const std::map<std::string, std::string> &txArgs);
+    VideoRtpSession(const std::string &callID/*, const std::map<std::string, std::string> &txArgs*/);
     ~VideoRtpSession();
 
     void start(int localPort);
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock);
     void stop();
-    void updateDestination(const std::string &destination,
-                           unsigned int port);
-    void updateSDP(const Sdp &sdp);
+
+    /*void updateSRTP(const CryptoAttribute& local, const CryptoAttribute& remote);
+    void updateDestination(const std::string &destination, unsigned int port);
+    void updateSDP(const Sdp &sdp);*/
+
+    //void updateMedia(const MediaDescription& local, const MediaDescription& remote);
+
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
@@ -78,16 +80,10 @@ private:
     void startReceiver();
 
     // all public methods must be locked internally before use
-    std::recursive_mutex mutex_ = {};
 
-    std::unique_ptr<SocketPair> socketPair_ = nullptr;
     std::unique_ptr<VideoSender> sender_ = nullptr;
     std::unique_ptr<VideoReceiveThread> receiveThread_ = nullptr;
-    std::map<std::string, std::string> txArgs_;
-    std::map<std::string, std::string> rxArgs_ = {};
-    bool sending_ = false;
-    bool receiving_ = false;
-    const std::string callID_;
+    //std::map<std::string, std::string> rxArgs_ = {};
     Conference* conference_ = nullptr;
     std::shared_ptr<VideoMixer> videoMixer_ = nullptr;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
