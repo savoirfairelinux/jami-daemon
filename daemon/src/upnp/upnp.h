@@ -69,6 +69,11 @@ public:
     const UPNPUrls& getURLs() const {return urls_;};
 #else
     /* use default constructor and destructor */
+    IGD() = default;
+    ~IGD() = default;;
+    /* use default move constructor and operator */
+    IGD(IGD&&) = default;
+    IGD& operator=(IGD&&) = default;
 #endif
     bool isEmpty() const;
 
