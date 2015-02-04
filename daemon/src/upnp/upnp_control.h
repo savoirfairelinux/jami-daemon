@@ -42,55 +42,9 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "ip_utils.h"
-
-#if HAVE_UPNP
-#include <miniupnpc/miniupnpc.h>
-#endif
+#include "upnp_context.h"
 
 namespace ring { namespace upnp {
-
-/* defines a UPnP capable Internet Gateway Device (a router) */
-class IGD {
-public:
-
-#if HAVE_UPNP
-
-    /* constructors */
-    IGD() : datas_(), urls_() {};
-    IGD(IGDdatas& d , UPNPUrls& u) : datas_(d), urls_(u) {};
-
-    /* move constructor and operator */
-    IGD(IGD&& other);
-    IGD& operator=(IGD&& other);
-
-    ~IGD();
-
-    const IGDdatas& getDatas() const {return datas_;};
-    const UPNPUrls& getURLs() const {return urls_;};
-#else
-    /* use default constructor and destructor */
-    IGD() = default;
-    ~IGD() = default;;
-    /* use default move constructor and operator */
-    IGD(IGD&&) = default;
-    IGD& operator=(IGD&&) = default;
-#endif
-    bool isEmpty() const;
-
-    /**
-     * removes all mappings with the local IP and the given description
-     */
-    void removeMappingsByLocalIPAndDescription(const std::string& description);
-
-private:
-    NON_COPYABLE(IGD);
-
-#if HAVE_UPNP
-    IGDdatas datas_;
-    UPNPUrls urls_;
-#endif
-
-};
 
 enum class PortType {UDP,TCP};
 
@@ -219,7 +173,7 @@ private:
      * TODO: Currently, we assume that the IGD will not change once it has been selected;
      *       however, the user could switch routers while the client is running
      */
-    std::shared_ptr<IGD> defaultIGD_;
+    std::shared_ptr<UPnPContext> upnpContext_;
 
     /**
      * list of mappings created by this instance
@@ -250,8 +204,6 @@ private:
      */
     uint16_t chooseRandomPort(PortType type);
 };
-
-std::shared_ptr<IGD> getIGD();
 
 }} // namespace ring::upnp
 
