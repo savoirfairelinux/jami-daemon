@@ -70,7 +70,7 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 #include "ip_utils.h"
 
 namespace ring {
@@ -231,7 +231,7 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     call->setCallMediaLocal(localAddress);
 
     IpAddr addrSdp;
-    if (getUseUPnP()) {
+    if (getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         addrSdp = getPublishedSameasLocal() ?
             getUPnPIpAddress() : getPublishedIpAddress();
@@ -712,7 +712,7 @@ std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
 
 bool SIPAccount::mapPortUPnP()
 {
-    if (getUseUPnP()) {
+    if (getUPnPActive()) {
         /* create port mapping from published port to local port to the local IP
          * note that since different accounts can use the same port,
          * it may already be open, thats OK
@@ -745,13 +745,39 @@ void SIPAccount::doRegister()
 
     RING_DBG("doRegister %s", hostname_.c_str());
 
-    /* check UPnP to see if the account setting is enabled and try to get a
-     * UPnP controller; if this succeeds then try to map the account port */
-    if (not (checkUPnP() and mapPortUPnP()) )
-        RING_WARN("Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
+    /* if UPnP is enabled, then wait for IGD to complete registration */
+    if ( upnpEnabled_ ) {
+        RING_DBG("UPnP: waiting for IGD to register SIP account");
+        setRegistrationState(RegistrationState::TRYING);
+        auto shared = shared_from_this();
+        RING_DBG("UPnP: waiting for IGD to register RING account");
+        std::thread{ [shared] {
+            /* We have to register the external thread so it could access the pjsip frameworks */
+            if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+                    static thread_local pj_thread_desc desc;
+                    static thread_local pj_thread_t *this_thread;
+#else
+                    static __thread pj_thread_desc desc;
+                    static __thread pj_thread_t *this_thread;
+#endif
+                    RING_DBG("Registering thread with pjlib");
+                    pj_thread_register(NULL, desc, &this_thread);
+            }
 
+            auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
+            if ( not this_->mapPortUPnP())
+                RING_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
+            this_->doRegister1_();
+        }}.detach();
+    } else
+        doRegister1_();
+}
+
+void SIPAccount::doRegister1_()
+{
     if (hostname_.empty() || isIP2IP()) {
-        doRegister_();
+        doRegister2_();
         return;
     }
 
@@ -767,12 +793,12 @@ void SIPAccount::doRegister()
                 return;
             }
             this_->hostIp_ = host_ips[0];
-            this_->doRegister_();
+            this_->doRegister2_();
         }
     );
 }
 
-void SIPAccount::doRegister_()
+void SIPAccount::doRegister2_()
 {
     bool ipv6 = false;
     if (isIP2IP()) {
@@ -888,10 +914,8 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     if (released_cb)
         released_cb(true);
 
-    if (getUseUPnP()) {
-        RING_DBG("UPnP : removing port mapping for SIP account.");
-        upnp_->removeMappings();
-    }
+    /* RING_DBG("UPnP: removing port mapping for SIP account."); */
+    upnp_->removeMappings();
 }
 
 void SIPAccount::startKeepAliveTimer()
@@ -969,7 +993,7 @@ SIPAccount::sendRegister()
     const pj_str_t pjContact(getContactHeader());
 
     if (transport_) {
-        if (getUseUPnP() or not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
+        if (getUPnPActive() or not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port *via = getViaAddr();
             RING_DBG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
 
@@ -1425,7 +1449,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         hostname_,
         address, port);
 
-    if (getUseUPnP() and getUPnPIpAddress()) {
+    if (getUPnPActive() and getUPnPIpAddress()) {
         address = getUPnPIpAddress().toString();
         port = publishedPortUsed_;
         useUPnPAddressPortInVIA();

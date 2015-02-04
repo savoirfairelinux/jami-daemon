@@ -491,7 +491,8 @@ class SIPAccount : public SIPAccountBase {
         void onRegister(pjsip_regc_cbparam *param);
 
     private:
-        void doRegister_();
+        void doRegister1_();
+        void doRegister2_();
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.

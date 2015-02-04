@@ -54,7 +54,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 #include "ip_utils.h"
 
 namespace ring {
@@ -107,7 +107,7 @@ Account::Account(const string &accountID)
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
     , mailBox_()
-    , upnpEnabled_(false)
+    , upnp_(new upnp::Controller())
 {
     std::random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
@@ -222,7 +222,9 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
     parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
 
-    parseValue(node, UPNP_ENABLED_KEY, upnpEnabled_);
+    bool enabled;
+    parseValue(node, UPNP_ENABLED_KEY, enabled);
+    upnpEnabled_.store(enabled);
 }
 
 void Account::setAccountDetails(const std::map<std::string, std::string> &details)
@@ -242,7 +244,9 @@ void Account::setAccountDetails(const std::map<std::string, std::string> &detail
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     else
         userAgent_ = DEFAULT_USER_AGENT;
-    parseBool(details, Conf::CONFIG_UPNP_ENABLED, upnpEnabled_);
+    bool enabled;
+    parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
+    upnpEnabled_.store(enabled);
 }
 
 std::map<std::string, std::string> Account::getAccountDetails() const
@@ -467,40 +471,30 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
 #undef find_iter
 
 /**
- * Checks whether the upnp settings is enabled in the account.
- * If so, tries to get a controller with a valid IGD.
- * If not, destroys the controller.
- *
- * Returns whether or not there is a controller with a valid IGD to use.
+ * Get the UPnP IP (external router) address.
+ * If use UPnP is set to false, the address will be empty.
  */
-bool
-Account::checkUPnP()
-{
-    std::unique_lock<std::mutex> lk(upnp_mtx);
+IpAddr
+Account::getUPnPIpAddress() const {
+    if (not upnpEnabled_)
+        return {};
 
-    if (upnpEnabled_ != (bool)upnp_) {
-        if (upnpEnabled_){
-            upnp_.reset(new upnp::Controller());
-            if (upnp_->hasValidIGD())
-                upnpIp_ = upnp_->getExternalIP();
-        } else {
-            upnp_.reset();
-            upnpIp_ = IpAddr{};
-        }
-    }
-
-    return upnp_ and upnp_->hasValidIGD();
+    std::lock_guard<std::mutex> lk(upnp_mtx);
+    return upnp_->getExternalIP();
 }
 
 /**
- * Returns whether or not the upnp controller has a valid IGD
- * with which to make port mappings
+ * returns whether or not UPnP is enabled and active_
+ * ie: if it is able to make port mappings
  */
 bool
-Account::getUseUPnP() const
+Account::getUPnPActive() const
 {
-    std::unique_lock<std::mutex> lk(upnp_mtx);
-    return upnp_ and upnp_->hasValidIGD();
+    if (not upnpEnabled_)
+        return false;
+
+    std::lock_guard<std::mutex> lk(upnp_mtx);
+    return upnp_->hasValidIGD();
 }
 
 } // namespace ring
