@@ -78,10 +78,10 @@ struct AudioFormat {
         return (getBytesPerFrame() * sample_rate * delay_ms) / 1000;
     }
 
-    static const unsigned DEFAULT_SAMPLE_RATE = 48000;
+    static constexpr unsigned DEFAULT_SAMPLE_RATE = 48000;
+    static const AudioFormat NONE() { return AudioFormat{0, 0}; }
     static const AudioFormat MONO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 1}; }
     static const AudioFormat STEREO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 2}; }
-
 };
 
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f);

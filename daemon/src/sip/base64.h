@@ -65,4 +65,41 @@ uint8_t *sfl_base64_decode(const uint8_t *data,
 }
 #endif
 
+#include <string>
+#include <vector>
+
+namespace ring {
+namespace base64 {
+
+std::string
+encode(const std::vector<uint8_t>::const_iterator begin, const std::vector<uint8_t>::const_iterator end)
+{
+	int output_length = 4 * ((std::distance(begin, end) + 2) / 3);
+	std::string out;
+	out.resize(output_length);
+	pj_base64_encode(&(*begin), std::distance(begin, end), &(*out.begin()), &output_length);
+  out.resize(output_length);
+	return out;
+}
+
+std::string
+encode(const std::vector<uint8_t>& dat)
+{
+	return encode(dat.cbegin(), dat.cend());
+}
+
+std::vector<uint8_t>
+decode(const std::string& str)
+{
+    int output_length = str.length() / 4 * 3 + 2;
+    std::vector<uint8_t> output;
+    output.resize(output_length);
+    const pj_str_t pjstr {(char*)str.data(), (unsigned)str.size()};
+    pj_base64_decode(&pjstr, output.data(), &output_length);
+    output.resize(output_length);
+    return output;
+}
+
+}} // namespace ring::base64
+
 #endif // H_BASE64

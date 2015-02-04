@@ -166,10 +166,6 @@ SipTransport::removeStateListener(uintptr_t lid)
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool) :
-#if HAVE_DHT
-iceTransports_(),
-tlsIceTransports_(),
-#endif
 cp_(cp), pool_(pool), endpt_(endpt)
 {
 #if HAVE_DHT
