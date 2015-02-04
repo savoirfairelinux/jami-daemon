@@ -32,7 +32,7 @@
 #include "logger.h"
 #include "sip/sip_utils.h"
 #include "manager.h"
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include <pjlib.h>
 #include <utility>
