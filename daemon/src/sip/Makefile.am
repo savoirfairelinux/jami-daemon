@@ -17,7 +17,9 @@ libsiplink_la_SOURCES = \
         sipvoiplink.h \
         siptransport.h \
         sip_utils.cpp \
-        sip_utils.h
+        sip_utils.h \
+        base64.h \
+        base64.c
 
 if BUILD_TLS
 libsiplink_la_SOURCES += tlsvalidation.c \
