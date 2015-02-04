@@ -355,7 +355,7 @@ PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libsws
 
 PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 51.0.0,, AC_MSG_ERROR([Missing libavutil development files]))
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.5.0,, AC_MSG_ERROR([Missing libavutil development files]))
 
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))

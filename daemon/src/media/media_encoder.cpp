@@ -33,6 +33,8 @@
 #include "media_encoder.h"
 #include "media_io_handle.h"
 #include "audio/audiobuffer.h"
+
+#include "string_utils.h"
 #include "logger.h"
 
 #include <iostream>
@@ -77,9 +79,31 @@ extract(const std::map<std::string, std::string>& map, const std::string& key)
     return iter->second.c_str();
 }
 
-void MediaEncoder::setOptions(const std::map<std::string, std::string>& options)
+void MediaEncoder::setOptions(const MediaDescription& args /*const std::map<std::string, std::string>& options*/)
 {
-    const char *value;
+    if (args.width)
+        av_dict_set(&options_, "width", ring::to_string(args.width).c_str(), 0);
+    if (args.height)
+        av_dict_set(&options_, "height", ring::to_string(args.height).c_str(), 0);
+
+    av_dict_set(&options_, "bitrate", ring::to_string(args.bitrate).c_str(), 0);
+
+    if (args.audioformat.sample_rate)
+        av_dict_set(&options_, "sample_rate", ring::to_string(args.audioformat.sample_rate).c_str(), 0);
+    if (args.audioformat.nb_channels)
+        av_dict_set(&options_, "channels", ring::to_string(args.audioformat.nb_channels).c_str(), 0);
+    if (args.audioformat.sample_rate && args.audioformat.nb_channels)
+        av_dict_set(&options_, "frame_size", ring::to_string(static_cast<unsigned>(0.02 * args.audioformat.sample_rate)).c_str(), 0);
+
+    if (not args.payload_type.empty())
+        av_dict_set(&options_, "payload_type", args.payload_type.c_str(), 0);
+/*
+    if (not args.framerate.empty())
+        av_dict_set(&options_, "framerate", args.framerate.c_str(), 0);
+*/
+    if (not args.parameters.empty())
+        av_dict_set(&options_, "parameters", args.parameters.c_str(), 0);
+    /*const char *value;
 
     value = extract(options, "width");
     if (value)
@@ -115,14 +139,15 @@ void MediaEncoder::setOptions(const std::map<std::string, std::string>& options)
 
     value = extract(options, "payload_type");
     if (value)
-        av_dict_set(&options_, "payload_type", value, 0);
+        av_dict_set(&options_, "payload_type", value, 0);*/
 }
 
 void
-MediaEncoder::openOutput(const char *enc_name, const char *short_name,
-                         const char *filename, const char *mime_type, bool is_video)
+MediaEncoder::openOutput(const char *filename, const ring::MediaDescription& args/*const char *enc_name, const char *short_name,
+                         const char *filename, const char *mime_type, bool is_video*/)
 {
-    AVOutputFormat *oformat = av_guess_format(short_name, filename, mime_type);
+    setOptions(args);
+    AVOutputFormat *oformat = av_guess_format("rtp", filename, nullptr);
 
     if (!oformat) {
         RING_ERR("Unable to find a suitable output format for %s", filename);
@@ -135,24 +160,23 @@ MediaEncoder::openOutput(const char *enc_name, const char *short_name,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
     /* find the video encoder */
-    outputEncoder_ = avcodec_find_encoder_by_name(enc_name);
+    outputEncoder_ = avcodec_find_encoder_by_name(args.codec.c_str());
     if (!outputEncoder_) {
-        RING_ERR("Encoder \"%s\" not found!", enc_name);
+        RING_ERR("Encoder \"%s\" not found!", args.codec.c_str());
         throw MediaEncoderException("No output encoder");
     }
 
-    prepareEncoderContext(is_video);
+    prepareEncoderContext(args.type == MediaType::VIDEO);
 
     /* let x264 preset override our encoder settings */
-    if (!strcmp(enc_name, "libx264")) {
-        AVDictionaryEntry *entry = av_dict_get(options_, "parameters",
-                                               NULL, 0);
+    if (args.codec == "libx264") {
+        //AVDictionaryEntry *entry = av_dict_get(options_, "parameters", NULL, 0);
         // FIXME: this should be parsed from the fmtp:profile-level-id
         // attribute of our peer, it will determine what profile and
         // level we are sending (i.e. that they can accept).
-        extractProfileLevelID(entry?entry->value:"", encoderCtx_);
+        extractProfileLevelID(args.parameters/*entry?entry->value:""*/, encoderCtx_);
         forcePresetX264();
-    } else if (!strcmp(enc_name, "libvpx")) {
+    } else if (args.codec == "libvpx") {
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
     }
 
@@ -176,7 +200,7 @@ MediaEncoder::openOutput(const char *enc_name, const char *short_name,
 
     stream_->codec = encoderCtx_;
 #ifdef RING_VIDEO
-    if (is_video) {
+    if (args.type == MediaType::VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx_->width;
         const int height = encoderCtx_->height;

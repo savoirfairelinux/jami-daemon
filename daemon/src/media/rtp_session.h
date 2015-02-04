@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,53 +29,61 @@
  *  as that of the covered work.
  */
 
-#ifndef AVFORMAT_RTP_SESSION_H__
-#define AVFORMAT_RTP_SESSION_H__
+#ifndef __RTP_SESSION_H__
+#define __RTP_SESSION_H__
 
-#include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
+#include "socket_pair.h"
+#include "sip/sip_utils.h"
 
-#include <map>
 #include <string>
+#include <map>
 #include <memory>
 #include <mutex>
 
 namespace ring {
 
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
+class Sdp;
 
-class AVFormatRtpSession : public RtpSession {
+class RtpSession {
 public:
-    AVFormatRtpSession(const std::string& id/*, const std::map<std::string, std::string>& txArgs*/);
-    virtual ~AVFormatRtpSession();
+    RtpSession(const std::string &callID/*, const std::map<std::string, std::string> &txArgs*/) : callID_(callID)/*, txArgs_(txArgs)*/ {}
+    virtual ~RtpSession() {};
 
-    void start(int localPort);
-    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock);
-    void stop();
+    virtual void start(int localPort) = 0;
+    virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void stop() = 0;
 
-    //void updateMedia(const MediaDescription& local, const MediaDescription& remote);
-    /*void updateSRTP(const CryptoAttribute& local, const CryptoAttribute& remote) {}
-    void updateDestination(const std::string& destination, unsigned int port);
-    void updateSDP(const Sdp &sdp);*/
+    virtual void updateMedia(const MediaDescription& local, const MediaDescription& remote) {
+        local_ = local;
+        remote_ = remote;
+    }
+    /*virtual void updateSRTP(const CryptoAttribute& local, const CryptoAttribute& remote) = 0;
+    virtual void updateDestination(const std::string &destination, unsigned int port) = 0;
+    virtual void updateSDP(const Sdp &sdp) = 0;*/
+
+protected:
+    std::recursive_mutex mutex_ = {};
+    std::unique_ptr<SocketPair> socketPair_ = nullptr;
+    const std::string callID_;
+
+    MediaDescription local_;
+    MediaDescription remote_;
+
+    std::string getRemoteRtpUri() const {
+        return "rtp://" + remote_.addr.toString(true);
+    }
+
+    /*std::map<std::string, std::string> txArgs_;
+
+
+    bool sending_ = false;
+    bool receiving_ = false;*/
 
 private:
-    NON_COPYABLE(AVFormatRtpSession);
-
-    void startSender();
-    void startReceiver();
-
-    std::string id_;
-    //std::string receivingSDP_;
-    std::unique_ptr<AudioSender> sender_;
-    std::unique_ptr<AudioReceiveThread> receiveThread_;
-    std::shared_ptr<RingBuffer> ringbuffer_;
+    NON_COPYABLE(RtpSession);
 };
 
 } // namespace ring
 
-#endif // __AVFORMAT_RTP_SESSION_H__
+#endif // __RTP_SESSION_H__

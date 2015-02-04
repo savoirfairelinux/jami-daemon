@@ -31,29 +31,24 @@
 #include "sdes_negotiator.h"
 #include "pattern.h"
 
-#include <cstdio>
 #include <memory>
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 #include <stdexcept>
 
+#include <cstdio>
+
 namespace ring {
 
 SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites,
                                const std::vector<std::string>& remoteAttribute) :
     remoteAttribute_(remoteAttribute),
-    localCapabilities_(localCapabilites),
-    cryptoSuite_(),
-    srtpKeyMethod_(),
-    srtpKeyInfo_(),
-    lifetime_(),
-    mkiValue_(),
-    mkiLength_(),
-    authTagLength_()
+    localCapabilities_(localCapabilites)
 {}
 
-std::vector<CryptoAttribute *> SdesNegotiator::parse()
+std::vector<CryptoAttribute>
+SdesNegotiator::parse() const
 {
     // The patterns below try to follow
     // the ABNF grammar rules described in
@@ -68,7 +63,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
         // used to match white space (which are used as separator)
         generalSyntaxPattern.reset(new Pattern("[\x20\x09]+", true));
 
-        tagPattern.reset(new Pattern("^a=crypto:(?P<tag>[0-9]{1,9})", false));
+        tagPattern.reset(new Pattern("^(?P<tag>[0-9]{1,9})", false));
 
         cryptoSuitePattern.reset(new Pattern(
             "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
@@ -90,7 +85,7 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
     // Take each line from the vector
     // and parse its content
 
-    std::vector<CryptoAttribute *> cryptoAttributeVector;
+    std::vector<CryptoAttribute> cryptoAttributeVector;
 
     for (const auto &item : remoteAttribute_) {
 
@@ -161,52 +156,26 @@ std::vector<CryptoAttribute *> SdesNegotiator::parse()
         }
 
         // Add the new CryptoAttribute to the vector
-
-        CryptoAttribute * cryptoAttribute = new CryptoAttribute(tag, cryptoSuite, srtpKeyMethod, srtpKeyInfo, lifetime, mkiValue, mkiLength);
-        cryptoAttributeVector.push_back(cryptoAttribute);
+        cryptoAttributeVector.emplace_back(tag, cryptoSuite, srtpKeyMethod, srtpKeyInfo, lifetime, mkiValue, mkiLength);
     }
-
     return cryptoAttributeVector;
 }
 
-bool SdesNegotiator::negotiate()
+CryptoAttribute
+SdesNegotiator::negotiate() const
 {
-    std::vector<CryptoAttribute *> cryptoAttributeVector(parse());
-    std::vector<CryptoAttribute *>::iterator iter_offer = cryptoAttributeVector.begin();
-
-    std::vector<CryptoSuiteDefinition>::const_iterator iter_local = localCapabilities_.begin();
-
-    bool negotiationSuccess = false;
-
     try {
-        while (!negotiationSuccess && (iter_offer != cryptoAttributeVector.end())) {
-            iter_local = localCapabilities_.begin();
-
-            while (!negotiationSuccess && (iter_local != localCapabilities_.end())) {
-
-                if ((*iter_offer)->getCryptoSuite().compare((*iter_local).name)) {
-                    negotiationSuccess = true;
-
-                    cryptoSuite_ = (*iter_offer)->getCryptoSuite();
-                    srtpKeyMethod_ = (*iter_offer)->getSrtpKeyMethod();
-                    srtpKeyInfo_ = (*iter_offer)->getSrtpKeyInfo();
-                    authTagLength_ = cryptoSuite_.substr(cryptoSuite_.size() - 2, 2);
-                }
-
-                ++iter_local;
+        auto cryptoAttributeVector(parse());
+        for (const auto& iter_offer : cryptoAttributeVector) {
+            for (const auto& iter_local : localCapabilities_) {
+                if (iter_offer.getCryptoSuite().compare(iter_local.name))
+                    return iter_offer;
             }
-            delete *iter_offer;
-            *iter_offer = 0;
-            ++iter_offer;
         }
-
-    } catch (const ParseError& exception) {
-        return false;
-    } catch (const MatchError& exception) {
-        return false;
     }
-
-    return negotiationSuccess;
+    catch (const ParseError& exception) {}
+    catch (const MatchError& exception) {}
+    return {};
 }
 
 } // namespace ring
