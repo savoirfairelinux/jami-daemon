@@ -48,7 +48,7 @@ libring_la_LIBADD = \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
 	./history/libhistory.la \
-	./upnp/libupnp.la \
+	./upnp/libupnpcontrol.la \
 	$(RINGACC_LIBA) \
 	$(IAX_LIBA) \
 	$(IM_LIBA) \
