@@ -141,8 +141,10 @@ class SipTransport
 };
 
 class IpAddr;
-class SipIceTransport;
 class IceTransport;
+class SipIceTransport;
+class SipsIceTransport;
+class TlsParams;
 
 /**
  * Manages the transports and receive callbacks from PJSIP
@@ -163,6 +165,7 @@ public:
 
 #if HAVE_DHT
     std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
+    std::shared_ptr<SipTransport> getTlsIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id, const TlsParams&);
 #endif
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);

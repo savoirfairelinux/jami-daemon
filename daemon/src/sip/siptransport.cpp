@@ -35,6 +35,7 @@
 #include "ip_utils.h"
 
 #include "ringdht/sip_transport_ice.h"
+#include "ringdht/sips_transport_ice.h"
 
 #include "client/configurationmanager.h"
 #include "array_size.h"
@@ -164,8 +165,12 @@ SipTransport::removeStateListener(uintptr_t lid)
 }
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
-                                       pj_caching_pool& cp, pj_pool_t& pool)
-    : cp_(cp), pool_(pool), endpt_(endpt)
+                                       pj_caching_pool& cp, pj_pool_t& pool) :
+#if HAVE_DHT
+iceTransports_(),
+tlsIceTransports_(),
+#endif
+cp_(cp), pool_(pool), endpt_(endpt)
 {
 #if HAVE_DHT
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
@@ -413,9 +418,24 @@ std::shared_ptr<SipTransport>
 SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
                                     unsigned comp_id)
 {
-    auto sip_ice_tr = std::unique_ptr<SipIceTransport>(new SipIceTransport(endpt_, pool_,
-                                                                           ice_pj_transport_type_,
-                                                                           ice, comp_id));
+    auto sip_ice_tr = std::unique_ptr<SipIceTransport>(new SipIceTransport(endpt_, pool_, ice_pj_transport_type_, ice, comp_id));
+    auto tr = sip_ice_tr->getTransportBase();
+    auto sip_tr = std::make_shared<SipTransport>(tr);
+    sip_ice_tr.release(); // managed by PJSIP now
+
+    {
+        std::unique_lock<std::mutex> lock(transportMapMutex_);
+        // we do not check for key existance as we've just created it
+        // (member of new SipIceTransport instance)
+        transports_.emplace(std::make_pair(tr, sip_tr));
+    }
+    return sip_tr;
+}
+
+std::shared_ptr<SipTransport>
+SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport> ice, unsigned comp_id, const TlsParams& params)
+{
+    auto sip_ice_tr = std::unique_ptr<SipsIceTransport>(new SipsIceTransport(endpt_, pool_, params, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_ice_tr.release(); // managed by PJSIP now
