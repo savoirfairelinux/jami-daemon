@@ -1351,27 +1351,41 @@ ManagerImpl::removeStream(Call& call)
     getRingBufferPool().unBindAll(call_id);
 }
 
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 ManagerImpl::registerEventHandler(uintptr_t handlerId, EventHandler handler)
 {
-    eventHandlerMap_.insert(std::make_pair(handlerId, handler));
+    eventHandlerMap_[handlerId] = handler;
 }
 
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 ManagerImpl::unregisterEventHandler(uintptr_t handlerId)
 {
-    eventHandlerMap_.erase(handlerId);
+    auto iter = eventHandlerMap_.find(handlerId);
+    if (iter != eventHandlerMap_.end()) {
+        if (iter == nextEventHandler_)
+            nextEventHandler_ = eventHandlerMap_.erase(iter);
+        else
+            eventHandlerMap_.erase(iter);
+    }
 }
 
 // Must be invoked periodically by a timer from the main event loop
 void ManagerImpl::pollEvents()
 {
-    // Make a copy of handlers map as handlers can modify this map
-    const auto handlers = eventHandlerMap_;
-    for (const auto& it : handlers) {
+    auto iter = eventHandlerMap_.begin();
+    while (iter != eventHandlerMap_.end()) {
         if (finished_)
             return;
-        it.second();
+
+        // WARN: following callback can do anything and typically
+        // calls (un)registerEventHandler.
+        // Think twice before modify this code.
+
+        nextEventHandler_ = std::next(iter);
+        iter->second();
+        iter = nextEventHandler_;
     }
 }
 

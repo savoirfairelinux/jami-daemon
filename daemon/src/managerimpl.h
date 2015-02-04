@@ -968,7 +968,8 @@ class ManagerImpl {
     private:
         NON_COPYABLE(ManagerImpl);
 
-        std::map<uintptr_t, EventHandler> eventHandlerMap_{};
+        std::map<uintptr_t, EventHandler> eventHandlerMap_;
+        decltype(eventHandlerMap_)::iterator nextEventHandler_;
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
