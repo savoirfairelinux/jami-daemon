@@ -42,7 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include "audio/audiortp/avformat_rtp_session.h"
 #include "client/callmanager.h"

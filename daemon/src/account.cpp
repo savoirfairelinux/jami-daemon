@@ -54,7 +54,7 @@
 
 #include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 #include "ip_utils.h"
 
 namespace ring {

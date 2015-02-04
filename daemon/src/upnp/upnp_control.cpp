@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 
-#include "upnp.h"
+#include "upnp_control.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -41,176 +41,15 @@
 #include <random>
 #include <memory>
 
-#if HAVE_UPNP
-#include <miniupnpc/upnperrors.h>
-#include <miniupnpc/miniwget.h>
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
-#endif
-
 #include "logger.h"
 #include "ip_utils.h"
 #include "ring_types.h"
+#include "upnp_context.h"
 
 namespace ring { namespace upnp {
 
-#if HAVE_UPNP
-
-static void
-resetURLs(UPNPUrls& urls)
-{
-    urls.controlURL = nullptr;
-    urls.ipcondescURL = nullptr;
-    urls.controlURL_CIF = nullptr;
-    urls.controlURL_6FC = nullptr;
-#ifdef MINIUPNPC_VERSION /* if not defined, its version 1.6 */
-    urls.rootdescURL = nullptr;
-#endif
-}
-
-/* move constructor */
-IGD::IGD(IGD&& other)
-    : datas_(other.datas_)
-    , urls_(other.urls_)
-{
-    resetURLs(other.urls_);
-}
-
-/* move operator */
-IGD& IGD::operator=(IGD&& other)
-{
-    datas_ = other.datas_;
-    urls_ = other.urls_;
-    resetURLs(other.urls_);
-    return *this;
-}
-
-IGD::~IGD()
-{
-    /* free the URLs */
-    FreeUPNPUrls(&urls_);
-}
-
-#endif /* HAVE_UPNP */
-
-/**
- * removes all mappings with the local IP and the given description
- */
-void
-IGD::removeMappingsByLocalIPAndDescription(const std::string& description)
-{
-#if HAVE_UPNP
-    if (isEmpty())
-        return;
-
-    /* need to get the local addr */
-    IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
-    if (!local_ip) {
-        RING_DBG("UPnP : cannot determine local IP");
-        return;
-    }
-
-    int upnp_status;
-    int i = 0;
-    char index[6];
-    char intClient[40];
-    char intPort[6];
-    char extPort[6];
-    char protocol[4];
-    char desc[80];
-    char enabled[6];
-    char rHost[64];
-    char duration[16];
-
-    RING_DBG("UPnP : removing all port mappings with description: \"%s\" and local ip: %s",
-             description.c_str(), local_ip.toString().c_str());
-
-    do {
-        snprintf(index, 6, "%d", i);
-        rHost[0] = '\0';
-        enabled[0] = '\0';
-        duration[0] = '\0';
-        desc[0] = '\0';
-        extPort[0] = '\0';
-        intPort[0] = '\0';
-        intClient[0] = '\0';
-        upnp_status = UPNP_GetGenericPortMappingEntry(getURLs().controlURL,
-                                                      getDatas().first.servicetype,
-                                                      index,
-                                                      extPort, intClient, intPort,
-                                                      protocol, desc, enabled,
-                                                      rHost, duration);
-        if(upnp_status == UPNPCOMMAND_SUCCESS) {
-            /* remove if matches description and ip
-             * once the port mapping is deleted, there will be one less, and the rest will "move down"
-             * that is, we don't need to increment the mapping index in that case
-             */
-            if( strcmp(description.c_str(), desc) == 0 and strcmp(local_ip.toString().c_str(), intClient) == 0) {
-                RING_DBG("UPnP : found mapping with matching description and ip:\n\t%s %5s->%s:%-5s '%s'",
-                         protocol, extPort, intClient, intPort, desc);
-                int delete_err = 0;
-                delete_err = UPNP_DeletePortMapping(getURLs().controlURL, getDatas().first.servicetype, extPort, protocol, NULL);
-                if(delete_err != UPNPCOMMAND_SUCCESS) {
-                    RING_DBG("UPnP : UPNP_DeletePortMapping() failed with error code %d : %s", delete_err, strupnperror(delete_err));
-                } else {
-                    RING_DBG("UPnP : deletion success");
-                    /* decrement the mapping index since it will be incremented */
-                    i--;
-                }
-            }
-        } else if (upnp_status == 713) {
-            /* 713 : SpecifiedArrayIndexInvalid
-             * this means there are no more mappings to check, and we're done
-             */
-        } else {
-            RING_DBG("UPnP : GetGenericPortMappingEntry() failed with error code %d : %s", upnp_status, strupnperror(upnp_status));
-        }
-        i++;
-    } while(upnp_status == UPNPCOMMAND_SUCCESS);
-#endif
-}
-
-/**
- * checks if the instance of IGD is empty
- * ie: not actually an IGD
- */
-bool
-IGD::isEmpty() const
-{
-#if HAVE_UPNP
-    if (urls_.controlURL != nullptr) {
-        if (urls_.controlURL[0] == '\0') {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return true;
-    }
-#else
-    return true;
-#endif
-}
-
-bool operator== (Mapping &cMap1, Mapping &cMap2)
-{
-    /* we don't compare the description because it doesn't change the function of the
-     * mapping; we don't compare the IGD because for now we assume that we always
-     * use the same one and that all mappings are active
-     */
-    return (cMap1.local_ip == cMap2.local_ip &&
-            cMap1.port_external == cMap2.port_external &&
-            cMap1.port_internal == cMap2.port_internal &&
-            cMap1.type == cMap2.type);
-}
-
-bool operator!= (Mapping &cMap1, Mapping &cMap2)
-{
-    return !(cMap1 == cMap2);
-}
-
 Controller::Controller()
-    : defaultIGD_(getIGD())
+    : upnpContext_(getUPnPContext())
     , udpGlobalMappings_(getGlobalInstance<UDPMapGlobal>())
     , tcpGlobalMappings_(getGlobalInstance<TCPMapGlobal>())
 {}
@@ -532,100 +371,6 @@ Controller::getExternalIP()
     /* return empty address */
     return {};
 #endif
-}
-
-/**
- * tries to find a valid IGD on the network
- */
-static IGD
-chooseIGD(void)
-{
-#if HAVE_UPNP
-    std::unique_ptr<UPNPDev, decltype(freeUPNPDevlist)&> devlist(nullptr, freeUPNPDevlist);
-    int upnp_status = 0;
-
-    RING_DBG("UPnP : finding default IGD");
-
-    /* look for UPnP devices on the network */
-    devlist.reset(upnpDiscover(2000, NULL, NULL, 0, 0, &upnp_status));
-
-    if (devlist) {
-        UPNPDev * device = nullptr;
-        std::unique_ptr<UPNPUrls, decltype(FreeUPNPUrls)&> newIGDURLs(new UPNPUrls, FreeUPNPUrls);
-        std::unique_ptr<IGDdatas> newIGDDatas(new IGDdatas);
-        char lanaddr[64];
-
-        RING_DBG("UPnP devices found on the network");
-        for(device = devlist.get(); device; device = device->pNext)
-        {
-            RING_DBG(" desc: %s\n st: %s",
-                     device->descURL, device->st);
-        }
-
-        upnp_status = UPNP_GetValidIGD(devlist.get(), newIGDURLs.get(), newIGDDatas.get(), lanaddr, sizeof(lanaddr));
-
-        switch(upnp_status) {
-            case -1:
-                RING_ERR("UPnP : internal error getting valid IGD");
-                break;
-            case 0:
-                RING_WARN("UPnP : no valid IGD found");
-                break;
-            case 1:
-                RING_DBG("UPnP : found valid IGD : %s", newIGDURLs->controlURL);
-                break;
-            case 2:
-                RING_WARN("UPnP : found an IGD, but it does not seem to be connected : %s", newIGDURLs->controlURL);
-                break;
-            case 3:
-                RING_WARN("UPnP : UPnP device found, but it does not seem to be an IGD : %s", newIGDURLs->controlURL);
-                break;
-            default:
-                RING_WARN("UPnP : device found, but cannot determine if it is a UPnP device : %s", newIGDURLs->controlURL);
-        }
-
-        /* only accept IGD if it was determined to be valid */
-        if (upnp_status == 1) {
-            RING_DBG("UPnP : local IP address reported as: %s", lanaddr);
-            return {*newIGDDatas.release(), *newIGDURLs.release()};
-        } else {
-            return {};
-        }
-    } else {
-        RING_WARN("UPnP : looking for IGD UPnP devices on the network failed with error: %d : %s", upnp_status, strupnperror(upnp_status));
-        return {};
-    }
-
-#else
-    return {};
-#endif
-}
-
-static void
-clean_igd(IGD* igd)
-{
-    if (igd and not igd->isEmpty()) {
-        RING_DBG("UPnP : removing all RING mappings before deleting shared IGD object");
-        igd->removeMappingsByLocalIPAndDescription(Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
-    }
-    delete igd;
-};
-
-std::shared_ptr<IGD>
-getIGD(void)
-{
-    static std::shared_ptr<IGD> igd(nullptr, clean_igd);
-
-    if (not igd) {
-        igd = std::make_shared<IGD>(chooseIGD());
-        if (not igd->isEmpty()) {
-            /* remove any old RING mappings the first time we find an IGD */
-            RING_DBG("UPnP : removing any existing RING mappings for new IGD");
-            igd->removeMappingsByLocalIPAndDescription(Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
-        }
-    }
-
-    return igd;
 }
 
 }} // namespace ring::upnp
