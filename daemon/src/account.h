@@ -255,18 +255,16 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const VIDEO_CODEC_BITRATE;
 
         /**
-         * @return bool Flag which determines if UPnP is used or not.
+         * returns whether or not UPnP is enabled and active
+         * ie: if it is able to make port mappings
          */
-        bool getUseUPnP() const;
+        bool getUPnPActive() const;
 
         /**
          * Get the UPnP IP (external router) address.
          * If use UPnP is set to false, the address will be empty.
          */
-        IpAddr getUPnPIpAddress() const {
-            std::unique_lock<std::mutex> lk(upnp_mtx);
-            return upnpIp_;
-        }
+        IpAddr getUPnPIpAddress() const;
 
     private:
         NON_COPYABLE(Account);
@@ -403,29 +401,15 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::mt19937_64 rand_ {};
 
         /**
-         * UPnP IP address (external router address),
-         * used only if use UPnP is set to true
+         * UPnP IGD controller and the mutex to access it
          */
-        IpAddr upnpIp_ {};
         std::unique_ptr<ring::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
 
         /**
-         * Whether or not UPnP is enabled for this account
-         * Note that this is only used to store the account setting,
-         * getUseUPnP() should be used to check if UPnP is being use
-         * ie: if the UPnP controller has been initialized
+         * flag which determines if this account is set to use UPnP.
          */
-        bool upnpEnabled_;
-
-        /**
-         * Checks whether the upnp settings is enabled in the account.
-         * If so, tries to get a controller with a valid IGD.
-         * If not, destroys the controller.
-         *
-         * Returns whether or not there is a controller with a valid IGD to use.
-         */
-        bool checkUPnP();
+        std::atomic_bool upnpEnabled_ {false};
 };
 
 } // namespace ring

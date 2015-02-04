@@ -256,6 +256,8 @@ class RingAccount : public SIPAccountBase {
 
     private:
 
+        void doRegister_();
+
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
         const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
 

@@ -61,7 +61,7 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include <algorithm>
 #include <array>
@@ -160,7 +160,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         ("sip:"+call->getCallId()).c_str(),
         ICE_COMPONENTS,
         true,
-        getUseUPnP()
+        getUPnPActive()
     );
     if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
         call->setConnectionState(Call::DISCONNECTED);
@@ -241,7 +241,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     call->setCallMediaLocal(call->getIceTransport()->getDefaultLocalAddress());
 
     IpAddr addrSdp;
-    if (getUseUPnP()) {
+    if (getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         addrSdp = getPublishedSameasLocal() ?
             getUPnPIpAddress() : getPublishedIpAddress();
@@ -572,7 +572,7 @@ RingAccount::handleEvents()
 
 bool RingAccount::mapPortUPnP()
 {
-    if (getUseUPnP()) {
+    if (getUPnPActive()) {
         /* create port mapping from published port to local port to the local IP
          * note that since different RING accounts can use the same port,
          * it may already be open, thats OK
@@ -581,6 +581,7 @@ bool RingAccount::mapPortUPnP()
          * a different port, if succesfull, then we have to use that port for DHT
          */
         uint16_t port_used;
+        std::lock_guard<std::mutex> lock(upnp_mtx);
         if (upnp_->addAnyMapping(dhtPort_, ring::upnp::PortType::UDP, false, &port_used)) {
             if (port_used != dhtPort_)
                 RING_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
@@ -603,11 +604,23 @@ void RingAccount::doRegister()
         return;
     }
 
-    /* check UPnP to see if the account setting is enabled and try to get a
-     * UPnP controller; if this succeeds then try to map the account port */
-    if (not (checkUPnP() and mapPortUPnP()) )
-        RING_WARN("Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+    /* if UPnP is enabled, then wait for IGD to complete registration */
+    if ( upnpEnabled_ ) {
+        auto shared = shared_from_this();
+        RING_DBG("UPnP: waiting for IGD to register RING account");
+        setRegistrationState(RegistrationState::TRYING);
+        std::thread{ [shared] {
+            auto this_ = std::static_pointer_cast<RingAccount>(shared).get();
+            if ( not this_->mapPortUPnP())
+                RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+            this_->doRegister_();
+        }}.detach();
+    } else
+        doRegister_();
 
+}
+void RingAccount::doRegister_()
+{
     try {
         loadTreatedCalls();
         if (dht_.isRunning()) {
@@ -724,7 +737,7 @@ void RingAccount::doRegister()
                             ("sip:"+call->getCallId()).c_str(),
                             ICE_COMPONENTS,
                             false,
-                            this_.getUseUPnP()
+                            this_.getUPnPActive()
                         );
                         if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
                             throw std::runtime_error("Can't initialize ICE..");
@@ -787,10 +800,8 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
         pendingSipCalls_.clear();
     }
 
-    if (getUseUPnP()) {
-        RING_DBG("UPnP : removing port mapping for DHT account.");
-        upnp_->removeMappings();
-    }
+    /* RING_DBG("UPnP: removing port mapping for DHT account."); */
+    upnp_->removeMappings();
 
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
