@@ -38,7 +38,7 @@ namespace ring {
     class MediaVideoCodec: public MediaCodec {
 
 public:
-    MediaVideoCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type = CODEC_TYPE_UNDEFINED, uint16_t payloadType = -1, bool isActive = true);
+    MediaVideoCodec(AVCodecID avcodecId, const std::string name, std::string libName, CODEC_TYPE type = CODEC_TYPE_UNDEFINED, uint16_t payloadType = -1, bool isActive = true);
     ~MediaVideoCodec();
 
     uint16_t frameRate_;

@@ -83,39 +83,42 @@ MediaCodecFactory::checkInstalledCodecs()
     bool isEncoder = false;
     bool isDecoder = false;
 
-    AVCodecID codecId;
-    std::string codecName;
-    CODEC_TYPE codecType;
+    AVCodecID *codecId;
+    std::string *codecName;
+    CODEC_TYPE *codecType;
+    uint16_t codecTypeInt;
 
     for (int i = 0; i < availableCodecList->size(); i++)
     {
-        codecId = (AVCodecID) availableCodecList->at(i)->avcodecId_;
-        codecName = availableCodecList->at(i)->name_;
-        codecType = availableCodecList->at(i)->codecType_;
+        codecId = &availableCodecList->at(i)->avcodecId_;
+        codecName = &availableCodecList->at(i)->name_;
+        codecType = &availableCodecList->at(i)->codecType_;
 
-        RING_INFO("Checking codec %s", codecName.c_str());
+        RING_INFO("Checking codec %s", codecName->c_str());
 
-        if (codecType & CODEC_TYPE_ENCODER)
+        if (*codecType & CODEC_TYPE_ENCODER)
         {
-            codec = avcodec_find_encoder(codecId);
+            codec = avcodec_find_encoder(*codecId);
             if (!codec)
             {
-                RING_ERR("Can not find encoder for codec  %s", codecName.c_str());
-                //TODO remove flag from this decoder
+                RING_ERR("Can not find encoder for codec  %s", codecName->c_str());
+                codecTypeInt = ((uint16_t) *codecType) & ~CODEC_TYPE_ENCODER;
+                availableCodecList->at(i)->codecType_ = (CODEC_TYPE) codecTypeInt;
             } else {
-                RING_INFO("### Found encoder for  %s", codecName.c_str());
+                RING_INFO("### Found encoder %s", availableCodecList->at(i)->to_string().c_str());
             }
         }
 
-        if (codecType & CODEC_TYPE_DECODER)
+        if (*codecType & CODEC_TYPE_DECODER)
         {
-            codec = avcodec_find_decoder(codecId);
+            codec = avcodec_find_decoder(*codecId);
             if (!codec)
             {
-                RING_ERR("Can not find decoder for codec  %s", codecName.c_str());
-                //TODO remove flag from this decoder
+                RING_ERR("Can not find decoder for codec  %s", codecName->c_str());
+                codecTypeInt = ((uint16_t) *codecType) & ~CODEC_TYPE_DECODER;
+                availableCodecList->at(i)->codecType_ = (CODEC_TYPE) codecTypeInt;
             } else {
-                RING_INFO("### Found decoder for  %s", codecName.c_str());
+                RING_INFO("### Found decoder %s", availableCodecList->at(i)->to_string().c_str());
             }
         }
     }

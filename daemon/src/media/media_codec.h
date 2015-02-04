@@ -32,16 +32,17 @@
 #ifndef __MEDIA_CODEC_H__
 #define __MEDIA_CODEC_H__
 
+#include "libav_deps.h"
 #include <string>
 #include <vector>
 #include <iostream>
 #include <unistd.h>
 
 namespace ring {
-    enum CODEC_TYPE {
-        CODEC_TYPE_UNDEFINED = 0x0,
-        CODEC_TYPE_ENCODER = 0x1,
-        CODEC_TYPE_DECODER = 0x2,
+    enum CODEC_TYPE : uint16_t {
+        CODEC_TYPE_UNDEFINED = 0,
+        CODEC_TYPE_ENCODER = 1,
+        CODEC_TYPE_DECODER = 2,
         CODEC_TYPE_ENCODER_DECODER = CODEC_TYPE_ENCODER | CODEC_TYPE_DECODER
     };
     enum MEDIA_TYPE {
@@ -53,11 +54,11 @@ namespace ring {
     class MediaCodec{
 
 public:
-        MediaCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, MEDIA_TYPE mediaType, CODEC_TYPE codecType = CODEC_TYPE_UNDEFINED, uint16_t bitrate = 0, uint16_t payloadType = 0, bool isActive = true);
+        MediaCodec(AVCodecID  avcodecId, const std::string name, std::string libName, MEDIA_TYPE mediaType, CODEC_TYPE codecType = CODEC_TYPE_UNDEFINED, uint16_t bitrate = 0, uint16_t payloadType = 0, bool isActive = true);
         virtual ~MediaCodec();
 
         uint16_t codecId_;
-        /*AVCodecID*/ uint16_t avcodecId_;
+        AVCodecID  avcodecId_;
         std::string name_;
         std::string libName_;
         uint16_t payloadType_;
