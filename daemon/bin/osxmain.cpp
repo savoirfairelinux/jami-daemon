@@ -151,7 +151,7 @@ static int osxTests()
         .config_ev_handlers = {},
         .pres_ev_handlers = {}
 #ifdef RING_VIDEO
-        .video_ev_handlers = {}
+        ,.video_ev_handlers = {}
 #endif
     };
 

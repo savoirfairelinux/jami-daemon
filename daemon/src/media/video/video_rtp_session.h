@@ -78,19 +78,19 @@ private:
     void startReceiver();
 
     // all public methods must be locked internally before use
-    std::recursive_mutex mutex_ = {};
+    std::recursive_mutex mutex_;
 
-    std::unique_ptr<SocketPair> socketPair_ = nullptr;
-    std::unique_ptr<VideoSender> sender_ = nullptr;
-    std::unique_ptr<VideoReceiveThread> receiveThread_ = nullptr;
+    std::unique_ptr<SocketPair> socketPair_;
+    std::unique_ptr<VideoSender> sender_;
+    std::unique_ptr<VideoReceiveThread> receiveThread_;
     std::map<std::string, std::string> txArgs_;
-    std::map<std::string, std::string> rxArgs_ = {};
+    std::map<std::string, std::string> rxArgs_;
     bool sending_ = false;
     bool receiving_ = false;
     const std::string callID_;
-    Conference* conference_ = nullptr;
-    std::shared_ptr<VideoMixer> videoMixer_ = nullptr;
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
+    Conference* conference_;
+    std::shared_ptr<VideoMixer> videoMixer_;
+    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
 };
 
 }} // namespace ring::video
