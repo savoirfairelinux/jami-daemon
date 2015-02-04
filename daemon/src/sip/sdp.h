@@ -35,6 +35,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "sip_utils.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -63,8 +64,6 @@ class SdpException : public std::runtime_error {
         SdpException(const std::string& str="") :
             std::runtime_error("SDP: SdpException occured: " + str) {}
 };
-
-typedef std::vector<std::string> CryptoOffer;
 
 class Sdp {
     public:
@@ -122,13 +121,13 @@ class Sdp {
          * Returns a string version of the negotiated SDP fields which pertain
          * to video.
          */
-        std::string getIncomingVideoDescription() const;
+        //std::string getIncomingVideoDescription() const;
 
         /**
          * Returns a string version of the negotiated SDP fields which pertain
          * to audio.
          */
-        std::string getIncomingAudioDescription() const;
+        //std::string getIncomingAudioDescription() const;
 
         /*
          * On building an invite outside a dialog, build the local offer and create the
@@ -137,7 +136,7 @@ class Sdp {
          */
         bool
         createOffer(const std::vector<int> &selectedCodecs,
-                    const std::vector<std::map<std::string, std::string> > &videoCodecs);
+                    const std::vector<std::map<std::string, std::string> > &videoCodecs, sip_utils::KeyExchangeProtocol);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -147,7 +146,7 @@ class Sdp {
         */
         void receiveOffer(const pjmedia_sdp_session* remote,
                           const std::vector<int> &selectedCodecs,
-                          const std::vector<std::map<std::string, std::string> > &videoCodecs);
+                          const std::vector<std::map<std::string, std::string> > &videoCodecs, sip_utils::KeyExchangeProtocol);
 
         /**
          * Start the sdp negotiation.
@@ -201,7 +200,7 @@ class Sdp {
             localVideoControlPort_ = control_port;
         }
 
-        void updatePorts(const std::vector<pj_sockaddr> &sockets);
+        //void updatePorts(const std::vector<pj_sockaddr> &sockets);
 
         /**
          * Return IP of destination
@@ -260,15 +259,39 @@ class Sdp {
          * Get SRTP master key
          * @param remote sdp session
          * @param crypto offer
+         * @deprecated
          */
-        void getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
+        //static void getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer);
+
+        /**
+         * Get remote SRTP master key for media at media_index
+         */
+        CryptoOffer getRemoteCryptoOffer(unsigned media_index) const;
 
         /**
          * Set the SRTP master_key
          * @param mk The Master Key of a srtp session.
          */
-        void setLocalSdpCrypto(const std::vector<std::string> &lc) {
+        /*void setLocalSdpCrypto(const std::vector<CryptoOffer> &lc) {
             srtpCrypto_ = lc;
+        }*/
+
+        CryptoOffer getLocalCryptoOffer() const {
+            return srtpCrypto_.front();
+        }
+
+
+
+        static std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session, bool remote);
+
+        std::vector<MediaDescription> getLocalMediaSlots() const
+        {
+            return getMediaSlots(activeLocalSession_, false);
+        }
+
+        std::vector<MediaDescription> getRemoteMediaSlots() const
+        {
+            return getMediaSlots(activeRemoteSession_, true);
         }
 
         /**
@@ -379,8 +402,9 @@ class Sdp {
 
         /**
          * "a=crypto" sdes local attributes obtained from AudioSrtpSession
+         * (one per media slot)
          */
-        std::vector<std::string> srtpCrypto_;
+        std::vector<CryptoOffer> srtpCrypto_;
 
         unsigned int telephoneEventPayload_;
 
@@ -388,7 +412,8 @@ class Sdp {
          * Build the sdp media section
          * Add rtpmap field if necessary
          */
-        pjmedia_sdp_media *setMediaDescriptorLines(bool audio);
+        pjmedia_sdp_media *setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol);
+        pjmedia_sdp_attr *generateSdesAttribute();
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 
@@ -402,14 +427,15 @@ class Sdp {
          * Build the local SDP offer
          */
         int createLocalSession(const std::vector<int> &selectedAudio,
-                               const std::vector<std::map<std::string, std::string> > &selectedVideo);
+                               const std::vector<std::map<std::string, std::string> > &selectedVideo, sip_utils::KeyExchangeProtocol);
+
         /*
          * Adds a sdes attribute to the given media section.
          *
          * @param media The media to add the srtp attribute to
          * @throw SdpException
          */
-        void addSdesAttribute(const std::vector<std::string>& crypto);
+        void addSdesAttribute(unsigned media_index, const CryptoOffer& crypto);
 
         /*
          * Adds a zrtp-hash  attribute to

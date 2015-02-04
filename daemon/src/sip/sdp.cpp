@@ -38,6 +38,10 @@
 
 #include "sipaccount.h"
 #include "sipvoiplink.h"
+#include "sdes_negotiator.h"
+#include "string_utils.h"
+#include "base64.h"
+
 #include "manager.h"
 #include "logger.h"
 #include "libav_utils.h"
@@ -128,6 +132,15 @@ findCodecByName(const std::string &codec)
     // try finding by name
     return Manager::instance().audioCodecFactory.getCodec(codec).get();
 }
+
+static void
+randomFill(std::vector<uint8_t>& dest)
+{
+    std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
+    std::random_device rdev;
+    std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
+}
+
 
 void Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session *sdp)
 {
@@ -271,9 +284,27 @@ Sdp::getSessionAudioMedia() const
     return codecs;
 }
 
+pjmedia_sdp_attr *
+Sdp::generateSdesAttribute()
+{
+    static constexpr const unsigned cryptoSuite = 0;
+    std::vector<uint8_t> keyAndSalt;
+    keyAndSalt.resize(ring::CryptoSuites[cryptoSuite].masterKeyLength / 8 + ring::CryptoSuites[cryptoSuite].masterSaltLength / 8);
+    // generate keys
+    randomFill(keyAndSalt);
+
+    std::string tag = "1";
+    std::string crypto_attr = tag + " " + ring::CryptoSuites[cryptoSuite].name + " inline:" + base64::encode(keyAndSalt);
+    RING_DBG("%s", crypto_attr.c_str());
+
+    pj_str_t val = { (char*) crypto_attr.c_str(), static_cast<pj_ssize_t>(crypto_attr.size()) };
+    return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
+    /*if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
+        SdpException("Could not add sdes attribute to media");*/
+}
 
 pjmedia_sdp_media *
-Sdp::setMediaDescriptorLines(bool audio)
+Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
@@ -348,8 +379,14 @@ Sdp::setMediaDescriptorLines(bool audio)
     }
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "sendrecv", NULL);
-    if (!zrtpHelloHash_.empty())
-        addZrtpAttribute(med, zrtpHelloHash_);
+
+    if (kx == sip_utils::KeyExchangeProtocol::SDES) {
+        if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
+            SdpException("Could not add sdes attribute to media");
+    } /* else if (kx == sip_utils::KeyExchangeProtocol::ZRTP) {
+        if (!zrtpHelloHash_.empty())
+            addZrtpAttribute(med, zrtpHelloHash_);
+    } */
 
     if (audio) {
         setTelephoneEventRtpmap(med);
@@ -391,7 +428,7 @@ Sdp::setPublishedIP(const IpAddr& ip_addr)
 {
     setPublishedIP(ip_addr, ip_addr.getFamily());
 }
-
+/*
 void
 Sdp::updatePorts(const std::vector<pj_sockaddr> &sockets)
 {
@@ -420,7 +457,7 @@ Sdp::updatePorts(const std::vector<pj_sockaddr> &sockets)
     }
 }
 
-
+*/
 void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
 {
     std::ostringstream s;
@@ -479,7 +516,7 @@ printSession(const pjmedia_sdp_session *session)
     RING_DBG("%s", sessionStr.c_str());
 }
 
-int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<map<string, string> > &selectedVideoCodecs)
+int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<map<string, string> > &selectedVideoCodecs, sip_utils::KeyExchangeProtocol security)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
@@ -501,9 +538,7 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     else
         localSession_->origin.addr_type = pj_str((char*) "IP4");
     localSession_->origin.addr = pj_str((char*) publishedIpAddr_.c_str());
-
-    localSession_->name = pj_str((char*) PACKAGE);
-
+    localSession_->name = pj_str((char*) PACKAGE_NAME);
     localSession_->conn->net_type = localSession_->origin.net_type;
     localSession_->conn->addr_type = localSession_->origin.addr_type;
     localSession_->conn->addr = localSession_->origin.addr;
@@ -515,16 +550,13 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
     localSession_->time.stop = 0;
 
     // For DTMF RTP events
-    const bool audio = true;
+    constexpr bool audio = true;
     localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLines(audio);
+    localSession_->media[0] = setMediaDescriptorLines(audio, security);
     if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLines(!audio);
+        localSession_->media[1] = setMediaDescriptorLines(!audio, security);
         ++localSession_->media_count;
     }
-
-    if (!srtpCrypto_.empty())
-        addSdesAttribute(srtpCrypto_);
 
     RING_DBG("SDP: Local SDP Session:");
     printSession(localSession_);
@@ -534,9 +566,9 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
 
 bool
 Sdp::createOffer(const vector<int> &selectedCodecs,
-                 const vector<map<string, string> > &videoCodecs)
+                 const vector<map<string, string> > &videoCodecs, sip_utils::KeyExchangeProtocol security)
 {
-    if (createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
+    if (createLocalSession(selectedCodecs, videoCodecs, security) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return false;
     }
@@ -550,7 +582,7 @@ Sdp::createOffer(const vector<int> &selectedCodecs,
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const vector<int> &selectedCodecs,
-                       const vector<map<string, string> > &videoCodecs)
+                       const vector<map<string, string> > &videoCodecs, sip_utils::KeyExchangeProtocol kx)
 {
     if (!remote) {
         RING_ERR("Remote session is NULL");
@@ -560,7 +592,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     RING_DBG("Remote SDP Session:");
     printSession(remote);
 
-    if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs) != PJ_SUCCESS) {
+    if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs, kx) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return;
     }
@@ -601,6 +633,74 @@ void Sdp::startNegotiation()
         setActiveRemoteSdpSession(active_remote);
 }
 
+std::vector<MediaDescription>
+Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote)
+{
+    static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+
+    std::vector<MediaDescription> ret;
+    for (unsigned i = 0; i < session->media_count; i++) {
+        auto media = session->media[i];
+        MediaDescription descr;
+        if (!pj_stricmp2(&media->desc.media, "audio"))
+            descr.type = MediaType::AUDIO;
+        else if (!pj_stricmp2(&media->desc.media, "video"))
+            descr.type = MediaType::VIDEO;
+        else
+            continue;
+        descr.enabled = media->desc.port;
+        if (!descr.enabled)
+            continue;
+
+        // get connection info
+        pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
+        if (not conn) {
+            RING_ERR("Could not find connecion information for media");
+            continue;
+        }
+        descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
+        descr.addr.setPort(media->desc.port);
+
+        descr.holding = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "recvonly", nullptr)
+                     || pjmedia_sdp_attr_find2(media->attr_count, media->attr, "inactive", nullptr);
+
+        // get codecs infos
+        for (unsigned j = 0; j<media->desc.fmt_count; j++) {
+            const pjmedia_sdp_attr *rtpMapAttribute = pjmedia_sdp_media_find_attr(media, &STR_RTPMAP, &media->desc.fmt[j]);
+            if (!rtpMapAttribute) {
+                RING_ERR("Could not find rtpmap attribute");
+                continue;
+            }
+            pjmedia_sdp_rtpmap rtpmap;
+            pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap);
+            const std::string codec_raw(rtpmap.enc_name.ptr, rtpmap.enc_name.slen);
+            descr.codec = libav_utils::encodersMap()[codec_raw];
+            if (descr.codec.empty()) {
+                RING_ERR("Could not find codec %s", codec_raw.c_str());
+                continue;
+            }
+            descr.payload_type = std::string(rtpmap.pt.ptr, rtpmap.pt.slen);
+            if (descr.type == MediaType::AUDIO) {
+                descr.audioformat.sample_rate = rtpmap.clock_rate;
+                descr.audioformat.nb_channels = std::stoi({rtpmap.param.ptr, rtpmap.param.slen});
+            } else {
+                //descr.bitrate = getOutgoingVideoField(codec, "bitrate");
+            }
+            // for now, first codec only
+            break;
+        }
+
+        // get crypto info
+        for (unsigned j = 0; j < media->attr_count; j++) {
+            pjmedia_sdp_attr *attribute = media->attr[j];
+            if (pj_stricmp2(&attribute->name, "crypto") == 0)
+                descr.crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
+        }
+        ret.emplace_back(std::move(descr));
+    }
+    return ret;
+}
+
 namespace
 {
     vector<string> split(const string &s, char delim)
@@ -625,7 +725,7 @@ string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &ke
             return item;
     return "";
 }
-
+/*
 // removes token from line starting with prefix
 static void
 remove_token(std::string& text, const char* prefix, const std::string& token)
@@ -658,6 +758,7 @@ remove_line_with_token(std::string& text, const std::string& token)
 // Here we filter out parts of the SDP that libavformat doesn't need to
 // know about...we should probably give the video decoder thread the original
 // SDP and deal with the streams properly at that level
+
 string Sdp::getIncomingVideoDescription() const
 {
     pjmedia_sdp_session *videoSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
@@ -726,6 +827,7 @@ get_payloads(const char* prefix, const std::string& sdp)
 // Here we filter out parts of the SDP that libavformat doesn't need to
 // know about...we should probably give the audio decoder thread the original
 // SDP and deal with the streams properly at that level
+
 std::string Sdp::getIncomingAudioDescription() const
 {
     pjmedia_sdp_session *audioSession = pjmedia_sdp_session_clone(memPool_.get(), activeLocalSession_);
@@ -774,7 +876,7 @@ std::string Sdp::getIncomingAudioDescription() const
     }
 
     return sessionStr;
-}
+}*/
 
 std::string Sdp::getOutgoingVideoCodec() const
 {
@@ -830,10 +932,7 @@ std::string Sdp::getOutgoingAudioRate() const
 std::string Sdp::getOutgoingAudioChannels() const
 {
     // e.g. opus/48000/2, g722/16000
-    string str("a=rtpmap:");
-    std::stringstream os;
-    os << getOutgoingAudioPayload();
-    str += os.str();
+    auto str = std::string("a=rtpmap:") + ring::to_string(getOutgoingAudioPayload());
     string aCodecLine(getLineFromSession(activeRemoteSession_, str));
 
     const auto nb_slashes = std::count(aCodecLine.begin(), aCodecLine.end(), '/');
@@ -907,15 +1006,14 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
     }
 }
 
-void Sdp::addSdesAttribute(const vector<std::string>& crypto)
+void Sdp::addSdesAttribute(unsigned media_index, const CryptoOffer& crypto)
 {
+    auto media = localSession_->media[media_index];
     for (const auto &item : crypto) {
         pj_str_t val = { (char*) item.c_str(), static_cast<pj_ssize_t>(item.size()) };
         pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
-
-        for (unsigned i = 0; i < localSession_->media_count; i++)
-            if (pjmedia_sdp_media_add_attr(localSession_->media[i], attr) != PJ_SUCCESS)
-                throw SdpException("Could not add sdes attribute to media");
+        if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
+            throw SdpException("Could not add sdes attribute to media");
     }
 }
 
@@ -925,9 +1023,27 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
     std::string val = "1.10 " + hash;
     pj_str_t value = { (char*)val.c_str(), static_cast<pj_ssize_t>(val.size()) };
     pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "zrtp-hash", &value);
-
     if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
         throw SdpException("Could not add zrtp attribute to media");
+}
+
+CryptoOffer
+Sdp::getRemoteCryptoOffer(unsigned media_index) const
+{
+    auto session = activeRemoteSession_;//remoteSession_ ? remoteSession_ : activeRemoteSession_;
+    if (media_index >= session->media_count) {
+        RING_ERR("getRemoteCryptoOffer failed: cannot access media#%u (may be deactivated)", media_index);
+        return {};
+    }
+    auto media = session->media[media_index];
+    CryptoOffer crypto_offer;
+    for (unsigned j = 0; j < media->attr_count; j++) {
+        pjmedia_sdp_attr *attribute = media->attr[j];
+        // @TODO our parser require the "a=crypto:" to be present
+        if (pj_stricmp2(&attribute->name, "crypto") == 0)
+            crypto_offer.emplace_back(attribute->value.ptr, attribute->value.slen);
+    }
+    return crypto_offer;
 }
 
 void
@@ -1095,6 +1211,7 @@ void Sdp::setMediaTransportInfoFromRemoteSdp()
     }
 }
 
+/*
 void Sdp::getRemoteSdpCryptoFromOffer(const pjmedia_sdp_session* remote_sdp, CryptoOffer& crypto_offer)
 {
     for (unsigned i = 0; i < remote_sdp->media_count; ++i) {
@@ -1178,5 +1295,5 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
     }
     return false;
 }
-
+*/
 } // namespace ring
