@@ -32,7 +32,7 @@
 #include "logger.h"
 #include "sip/sip_utils.h"
 #include "manager.h"
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include <pjlib.h>
 #include <utility>
@@ -477,7 +477,7 @@ IceTransport::selectUPnPIceCandidates()
         IpAddr publicIP = upnp_->getExternalIP();
         if (publicIP) {
             for(unsigned comp_id = 0; comp_id < component_count_; comp_id++) {
-                RING_DBG("UPnP : Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
+                RING_DBG("UPnP: Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
                 std::vector<IpAddr> candidates = getLocalCandidatesAddr(comp_id);
                 for(IpAddr addr : candidates) {
                     uint16_t port = addr.getPort();
@@ -486,11 +486,11 @@ IceTransport::selectUPnPIceCandidates()
                         publicIP.setPort(port_used);
                         addCandidate(comp_id, publicIP);
                     } else
-                        RING_WARN("UPnP : Could not create a port mapping for the ICE candidae.");
+                        RING_WARN("UPnP: Could not create a port mapping for the ICE candidae.");
                 }
             }
         } else {
-            RING_WARN("UPnP : Could not determine public IP for ICE candidates.");
+            RING_WARN("UPnP: Could not determine public IP for ICE candidates.");
         }
     }
 }
