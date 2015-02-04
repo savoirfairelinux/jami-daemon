@@ -70,7 +70,7 @@
 #include <sstream>
 #include <cstdlib>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 #include "ip_utils.h"
 
 namespace ring {
