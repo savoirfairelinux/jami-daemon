@@ -320,7 +320,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     IpAddr addrToUse = ip_utils::getInterfaceAddr(account->getLocalInterface(), family);
 
     IpAddr addrSdp;
-    if (account->getUseUPnP()) {
+    if (account->getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         addrSdp = account->getPublishedSameasLocal() ?
             account->getUPnPIpAddress() : account->getPublishedIpAddress();
@@ -899,7 +899,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     IpAddr addrToUse = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
 
     IpAddr address;
-    if (account.getUseUPnP()) {
+    if (account.getUPnPActive()) {
         /* use UPnP addr, or published addr if its set */
         address = account.getPublishedSameasLocal() ?
             account.getUPnPIpAddress() : account.getPublishedIpAddress();
