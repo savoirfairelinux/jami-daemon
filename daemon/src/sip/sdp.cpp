@@ -1153,7 +1153,7 @@ bool Sdp::getOutgoingAudioSettings(map<string, string> &args) const
             return false;
         } else {
             RING_DBG("CANDIDATE: %s",mediaAudioCodec->to_string().c_str());
-            args["codec"] = mediaAudioCodec->name_;
+            args["codec"] = mediaAudioCodec->libName_;
             const int payload = mediaAudioCodec->payloadType_;
             std::ostringstream os;
             os << payload;
