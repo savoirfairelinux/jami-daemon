@@ -339,11 +339,40 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
+/*
+    if (body and body->len > 0 and account->getSrtpEnabled() and account->getSrtpKeyExchange() == "sdes") {
+        std::string sdpOffer(static_cast<const char*>(body->data), body->len);
+        size_t start = sdpOffer.find("a=crypto:");
+
+        // Found crypto header in SDP
+        if (start != std::string::npos) {
+            CryptoOffer crypto_offer;
+            crypto_offer.push_back(std::string(sdpOffer.substr(start, (sdpOffer.size() - start) - 1)));
+
+            constexpr size_t size = RING_ARRAYSIZE(ring::CryptoSuites);
+            std::vector<ring::CryptoSuiteDefinition> localCapabilities(size);
+            std::copy(ring::CryptoSuites, ring::CryptoSuites + size, localCapabilities.begin());
+
+#if HAVE_SDES
+            ring::SdesNegotiator sdesnego(localCapabilities, crypto_offer);
+
+            if (sdesnego.negotiate()) {
+                try {
+                    call->getAudioRtp().setRemoteCryptoInfo(sdesnego);
+                    call->getAudioRtp().initLocalCryptoInfo();
+                } catch (const std::exception &e) {
+                    RING_ERR("%s", e.what());
+                    return PJ_FALSE;
+                }
+            }
+#endif
+        }
+    }*/
 
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs(), account->getSrtpKeyExchange());
     if (not call->getIceTransport()) {
         RING_DBG("Initializing ICE transport");
         call->initIceTransport(false);
@@ -876,7 +905,7 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     const auto& account = call->getSIPAccount();
     auto& localSDP = call->getSDP();
 
-    localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs(), account.getSrtpKeyExchange());
     localSDP.startNegotiation();
 
     pjsip_inv_set_sdp_answer(inv, localSDP.getLocalSdpSession());
@@ -916,7 +945,7 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
-    const bool created = localSDP.createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    const bool created = localSDP.createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs(), account.getSrtpKeyExchange());
 
     if (created)
         *p_offer = localSDP.getLocalSdpSession();

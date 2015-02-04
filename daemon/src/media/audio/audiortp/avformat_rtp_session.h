@@ -32,7 +32,8 @@
 #define AVFORMAT_RTP_SESSION_H__
 
 #include "threadloop.h"
-#include "audio/audiobuffer.h"
+#include "media/rtp_session.h"
+#include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -42,45 +43,36 @@
 
 namespace ring {
 
-class Sdp;
-class ThreadLoop;
-class MediaEncoder;
-class SocketPair;
 class RingBuffer;
-class Resampler;
 class AudioSender;
 class AudioReceiveThread;
 class IceSocket;
 
-class AVFormatRtpSession {
-    public:
-        AVFormatRtpSession(const std::string& id,
-                           const std::map<std::string, std::string>& txArgs);
-        ~AVFormatRtpSession();
+class AVFormatRtpSession : public RtpSession {
+public:
+    AVFormatRtpSession(const std::string& id/*, const std::map<std::string, std::string>& txArgs*/);
+    virtual ~AVFormatRtpSession();
 
-        void start(int localPort);
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-        void updateDestination(const std::string& destination, unsigned int port);
-        void updateSDP(const Sdp &sdp);
+    void start(int localPort);
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock);
+    void stop();
 
-    private:
-        NON_COPYABLE(AVFormatRtpSession);
+    //void updateMedia(const MediaDescription& local, const MediaDescription& remote);
+    /*void updateSRTP(const CryptoAttribute& local, const CryptoAttribute& remote) {}
+    void updateDestination(const std::string& destination, unsigned int port);
+    void updateSDP(const Sdp &sdp);*/
 
-        void startSender();
-        void startReceiver();
+private:
+    NON_COPYABLE(AVFormatRtpSession);
 
-        std::string id_;
-        std::map<std::string, std::string> txArgs_;
-        std::string receivingSDP_;
-        std::unique_ptr<SocketPair> socketPair_;
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-        std::recursive_mutex mutex_;
-        bool sending_;
-        bool receiving_;
+    void startSender();
+    void startReceiver();
+
+    std::string id_;
+    std::string receivingSDP_;
+    std::unique_ptr<AudioSender> sender_;
+    std::unique_ptr<AudioReceiveThread> receiveThread_;
+    std::shared_ptr<RingBuffer> ringbuffer_;
 };
 
 } // namespace ring
