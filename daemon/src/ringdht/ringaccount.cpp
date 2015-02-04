@@ -61,7 +61,7 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp.h"
+#include "upnp/upnp_control.h"
 
 #include <algorithm>
 #include <array>

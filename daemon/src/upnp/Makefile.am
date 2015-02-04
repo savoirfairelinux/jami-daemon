@@ -1,11 +1,15 @@
 include $(top_srcdir)/globals.mak
 
-noinst_LTLIBRARIES = libupnp.la
+noinst_LTLIBRARIES = libupnpcontrol.la
 
-libupnp_la_SOURCES = \
-        upnp.cpp \
-        upnp.h
+libupnpcontrol_la_CXXFLAGS = \
+				@CXXFLAGS@ \
+				@LIBUPNP_CFLAGS@
 
-libupnp_la_CXXFLAGS = @CXXFLAGS@
+libupnpcontrol_la_LDFLAGS = @LIBUPNP_LIBS@
 
-libupnp_la_LDFLAGS = @UPNP_LIBS@
+libupnpcontrol_la_SOURCES = \
+        upnp_control.cpp \
+        upnp_control.h \
+        upnp_context.cpp \
+        upnp_context.h

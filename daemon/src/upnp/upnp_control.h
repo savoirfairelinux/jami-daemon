@@ -42,55 +42,9 @@
 #include "noncopyable.h"
 #include "logger.h"
 #include "ip_utils.h"
-
-#if HAVE_UPNP
-#include <miniupnpc/miniupnpc.h>
-#endif
+#include "upnp_context.h"
 
 namespace ring { namespace upnp {
-
-/* defines a UPnP capable Internet Gateway Device (a router) */
-class IGD {
-public:
-
-#if HAVE_UPNP
-
-    /* constructors */
-    IGD() : datas_(), urls_() {};
-    IGD(IGDdatas& d , UPNPUrls& u) : datas_(d), urls_(u) {};
-
-    /* move constructor and operator */
-    IGD(IGD&& other);
-    IGD& operator=(IGD&& other);
-
-    ~IGD();
-
-    const IGDdatas& getDatas() const {return datas_;};
-    const UPNPUrls& getURLs() const {return urls_;};
-#else
-    /* use default constructor and destructor */
-    IGD() = default;
-    ~IGD() = default;;
-    /* use default move constructor and operator */
-    IGD(IGD&&) = default;
-    IGD& operator=(IGD&&) = default;
-#endif
-    bool isEmpty() const;
-
-    /**
-     * removes all mappings with the local IP and the given description
-     */
-    void removeMappingsByLocalIPAndDescription(const std::string& description);
-
-private:
-    NON_COPYABLE(IGD);
-
-#if HAVE_UPNP
-    IGDdatas datas_;
-    UPNPUrls urls_;
-#endif
-
-};
 
 enum class PortType {UDP,TCP};
 
