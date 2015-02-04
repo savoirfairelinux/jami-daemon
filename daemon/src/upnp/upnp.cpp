@@ -41,11 +41,9 @@
 #include <random>
 #include <memory>
 
-#if HAVE_UPNP
-#include <miniupnpc/upnperrors.h>
-#include <miniupnpc/miniwget.h>
-#include <miniupnpc/miniupnpc.h>
-#include <miniupnpc/upnpcommands.h>
+#if HAVE_LIBUPNP
+#include <upnp/upnp.h>
+#include <upnp/upnptools.h>
 #endif
 
 #include "logger.h"
@@ -208,6 +206,46 @@ bool operator!= (Mapping &cMap1, Mapping &cMap2)
 {
     return !(cMap1 == cMap2);
 }
+
+#if HAVE_LIBUPNP
+
+UPnPContext::UPnPContext()
+{
+    int upnp_err;
+    char* ip_address = nullptr;
+    unsigned short port = 0;
+
+#ifdef UPNP_ENABLE_IPV6
+    RING_DBG("UPnP : using IPv6");
+    upnp_err = UpnpInit2(0, 0);
+#else
+    RING_DBG("UPnP : using IPv4");
+    upnp_err = UpnpInit(0, 0);
+#endif
+    if ( upnp_err != UPNP_E_SUCCESS ) {
+        RING_DBG("UPnP : error in UpnpInit(): %s", UpnpGetErrorMessage(upnp_err));
+        UpnpFinish();
+    }
+    initialiazed_ = true;
+
+    ip_address = UpnpGetServerIpAddress(); /* do not free, it is freed by UpnpFinish() */
+    port = UpnpGetServerPort();
+
+    RING_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
+
+    /* relax the parser to allow malformed XML text */
+    ixmlRelaxParser( 1 );
+}
+
+UPnPContext::~UPnPContext()
+{
+    if (initialiazed_){
+        /* make sure everything is unregistered, freed, and UpnpFinish() is called */
+        UpnpFinish();
+    }
+}
+
+#endif
 
 Controller::Controller()
     : defaultIGD_(getIGD())

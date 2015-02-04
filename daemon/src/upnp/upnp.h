@@ -43,10 +43,6 @@
 #include "logger.h"
 #include "ip_utils.h"
 
-#if HAVE_UPNP
-#include <miniupnpc/miniupnpc.h>
-#endif
-
 namespace ring { namespace upnp {
 
 /* defines a UPnP capable Internet Gateway Device (a router) */
@@ -163,6 +159,32 @@ public:
         : Mapping(mapping.igd, mapping.local_ip, mapping.port_external, mapping.port_internal, mapping.type, mapping.description)
         , users(users)
     {};
+};
+
+class UPnPContext {
+public:
+
+#if HAVE_LIBUPNP
+
+    UPnPContext();
+    ~UPnPContext();
+
+#else
+    /* use default constructor and destructor */
+    UPnPContext() = default;
+    ~UPnPContext() = default;;
+    /* use default move constructor and operator */
+    UPnPContext(UPnPContext&&) = default;
+    UPnPContext& operator=(UPnPContext&&) = default;
+#endif
+
+    bool isInitialized() const { return initialized_; };
+
+private:
+    NON_COPYABLE(Mapping);
+
+    bool initialized_ {false};
+
 };
 
 class Controller {
