@@ -64,7 +64,7 @@ MediaCodecFactory::initCodecConfig()
 
     /* Define supported audio codec*/
     MediaAudioCodec*  mediaAudioCodec = NULL;
-    mediaAudioCodec = new MediaAudioCodec(AV_CODEC_ID_PCM_ALAW, "PCMA","PCM A-law", CODEC_TYPE_ENCODER_DECODER, 64,48000,1,8);
+    mediaAudioCodec = new MediaAudioCodec(AV_CODEC_ID_PCM_ALAW, "PCMA","pcma", CODEC_TYPE_ENCODER_DECODER, 64,48000,1,8);
     addCodec(mediaAudioCodec);
 
     mediaAudioCodec = new MediaAudioCodec(AV_CODEC_ID_OPUS, "opus","libopus", CODEC_TYPE_ENCODER_DECODER, 0, 48000,2,104);
