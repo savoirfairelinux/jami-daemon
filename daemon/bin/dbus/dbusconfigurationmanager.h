@@ -132,9 +132,6 @@ class DBusConfigurationManager :
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
-        bool checkForPrivateKey(const std::string& pemPath);
-        bool checkCertificateValidity(const std::string& caPath, const std::string& pemPath);
-        bool checkHostnameCertificate(const  std::string& host, const std::string& port);
         std::map<std::string, std::string> validateCertificate(const std::string& accountId,
             const std::string& certificate, const std::string& privateKey);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);

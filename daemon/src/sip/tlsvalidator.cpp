@@ -421,6 +421,7 @@ unsigned int TlsValidator::compareToCa()
     return caValidationOutput_;
 }
 
+#if 0 // disabled, see .h for reason
 /**
  * Verify if a hostname is valid
  *
@@ -661,6 +662,7 @@ out:
     close(sockfd);
     return res;
 }
+#endif
 
 /**
  * Check if the Validator have access to a private key

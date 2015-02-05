@@ -140,7 +140,8 @@ public:
      * @param certificate The certificate path
      * @param privatekey An optional private key file path
      */
-    TlsValidator(const std::string& certificate, const std::string& privatekey);
+    TlsValidator(const std::string& certificate,
+                 const std::string& privatekey = "");
 
     ~TlsValidator();
 
@@ -247,8 +248,8 @@ private:
     // Helper
     unsigned int compareToCa();
 
-    // TODO remove
 public:
+#if 0 // TODO reimplement this method. do not use it as it
     /**
      * Verify that the local hostname points to a valid SSL server by
      * establishing a connection to it and by validating its certificate.
@@ -257,7 +258,8 @@ public:
      * @return 0 if success, -1 otherwise
      */
     static int verifyHostnameCertificate(const std::string& host,
-                                  const uint16_t port);
+                                         const uint16_t port);
+#endif
 
 
 }; // TlsValidator
