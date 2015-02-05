@@ -20,8 +20,6 @@ libsiplink_la_SOURCES = \
         sip_utils.h
 
 if BUILD_TLS
-libsiplink_la_SOURCES += tlsvalidation.c \
-                         tlsvalidation.h
 # These files depend on opendht
 if USE_DHT
 libsiplink_la_SOURCES += tlsvalidator.cpp \

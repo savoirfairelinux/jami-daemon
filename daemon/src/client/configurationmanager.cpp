@@ -39,7 +39,6 @@
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
 #include "sip/tlsvalidator.h"
-#include "sip/tlsvalidation.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -616,41 +615,6 @@ void ConfigurationManager::setCredentials(const std::string& accountID,
     if (sipaccount)
         sipaccount->setCredentials(details);
 }
-
-bool ConfigurationManager::checkForPrivateKey(const std::string& pemPath)
-{
-#if HAVE_TLS && HAVE_DHT
-    return containsPrivateKey(pemPath.c_str()) == 0;
-#else
-    RING_WARN("TLS not supported");
-    return false;
-#endif
-}
-
-bool ConfigurationManager::checkCertificateValidity(const std::string& caPath,
-                                                    const std::string& pemPath)
-{
-#if HAVE_TLS && HAVE_DHT
-    return certificateIsValid(caPath.size() > 0 ? caPath.c_str() : NULL,
-                              pemPath.c_str()) == 0;
-#else
-    RING_WARN("TLS not supported");
-    return false;
-#endif
-}
-
-bool ConfigurationManager::checkHostnameCertificate(const std::string& host,
-                                                    const std::string& port)
-{
-#if HAVE_TLS && HAVE_DHT
-    return verifyHostnameCertificate(host.c_str(),
-                                     strtol(port.c_str(), NULL, 10)) == 0;
-#else
-    RING_WARN("TLS not supported");
-    return false;
-#endif
-}
-
 
 void ConfigurationManager::volumeChanged(const std::string& device, double value)
 {

@@ -2129,23 +2129,15 @@ dbus_get_tls_settings_default(void)
 gboolean
 dbus_check_certificate(const gchar *capath, const gchar *certpath)
 {
-    GError *error = NULL;
-    gboolean result;
-    cx_ring_Ring_ConfigurationManager_check_certificate_validity(config_proxy, capath, certpath, &result, &error);
-    check_error(error);
-
-    return result;
+    /* deprecated */
+    return FALSE;
 }
 
 gboolean
 dbus_certificate_contains_private_key(const gchar *filepath)
 {
-    GError *error = NULL;
-    gboolean result;
-    cx_ring_Ring_ConfigurationManager_check_for_private_key(config_proxy, filepath, &result, &error);
-    check_error(error);
-
-    return result;
+    /* deprecated */
+    return FALSE;
 }
 
 gchar *
