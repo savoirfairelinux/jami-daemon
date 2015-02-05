@@ -261,9 +261,6 @@ std::map<std::string, std::string> ring_config_get_shortcuts();
 void ring_config_set_shortcuts(const std::map<std::string, std::string>& shortcuts);
 void ring_config_set_volume(const std::string& device, double value);
 double ring_config_get_volume(const std::string& device);
-bool ring_config_check_for_private_key(const std::string& pem_path);
-bool ring_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path);
-bool ring_config_check_hostname_certificate(const std::string& host, const std::string& port);
 
 /* presence API */
 void ring_pres_publish(const std::string& account_id, int status, const std::string& note);
