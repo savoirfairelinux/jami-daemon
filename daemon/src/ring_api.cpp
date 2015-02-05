@@ -670,21 +670,6 @@ double ring_config_get_volume(const std::string& device)
     return getConfigurationManager()->getVolume(device);
 }
 
-bool ring_config_check_for_private_key(const std::string& pem_path)
-{
-    return getConfigurationManager()->checkForPrivateKey(pem_path);
-}
-
-bool ring_config_check_certificate_validity(const std::string& ca_path, const std::string& pem_path)
-{
-    return getConfigurationManager()->checkCertificateValidity(ca_path, pem_path);
-}
-
-bool ring_config_check_hostname_certificate(const std::string& host, const std::string& port)
-{
-    return getConfigurationManager()->checkHostnameCertificate(host, port);
-}
-
 std::map<std::string, std::string> ring_config_validate_certificate(const std::string& accountId, const std::string& certificate, const std::string& private_key)
 {
     return getConfigurationManager()->validateCertificate(accountId,certificate,private_key);

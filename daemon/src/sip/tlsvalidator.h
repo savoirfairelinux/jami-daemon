@@ -140,7 +140,8 @@ public:
      * @param certificate The certificate path
      * @param privatekey An optional private key file path
      */
-    TlsValidator(const std::string& certificate, const std::string& privatekey);
+    TlsValidator(const std::string& certificate,
+                 const std::string& privatekey = "");
 
     ~TlsValidator();
 
@@ -246,20 +247,6 @@ private:
 
     // Helper
     unsigned int compareToCa();
-
-    // TODO remove
-public:
-    /**
-     * Verify that the local hostname points to a valid SSL server by
-     * establishing a connection to it and by validating its certificate.
-     *
-     * @param host the DNS domain address that the certificate should feature
-     * @return 0 if success, -1 otherwise
-     */
-    static int verifyHostnameCertificate(const std::string& host,
-                                  const uint16_t port);
-
-
 }; // TlsValidator
 
 } // namespace ring

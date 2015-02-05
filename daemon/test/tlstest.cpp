@@ -36,7 +36,7 @@
 #include "test_utils.h"
 #include "logger.h"
 
-#include "sip/tlsvalidation.h"
+#include "sip/tlsvalidator.h"
 
 namespace ring { namespace test {
 
@@ -79,21 +79,6 @@ void TlsTest::testCertificate()
 
     // This certificate is expired
     CPPUNIT_ASSERT(certificateIsValid(NULL, expiredCertificate) != 0);
-}
-
-void TlsTest::testHostname()
-{
-    TITLE();
-
-    const char *correctUrl = "casecurity.org";
-    const char *wrongUrl = "www..com";
-
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 443) == 0);
-
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 80) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(correctUrl, 0) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(wrongUrl, 443) != 0);
-    CPPUNIT_ASSERT(verifyHostnameCertificate(NULL, 443) != 0);
 }
 
 }} // namespace ring::test
