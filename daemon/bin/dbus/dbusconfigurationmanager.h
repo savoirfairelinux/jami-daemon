@@ -58,11 +58,18 @@
 
 #include <stdexcept>
 
+namespace ring {
+    class ConfigurationManager;
+}
+
 class DBusConfigurationManager :
     public cx::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+    private:
+        ring::ConfigurationManager* configurationManager_;
+
     public:
         DBusConfigurationManager(DBus::Connection& connection);
 
@@ -76,7 +83,7 @@ class DBusConfigurationManager :
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
-        std::map< std::string, std::string > getTlsSettingsDefault();
+        std::map< std::string, std::string > getTlsDefaultSettings();
         std::vector< std::string > getSupportedCiphers(const std::string& accountID);
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();

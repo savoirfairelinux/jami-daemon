@@ -40,7 +40,7 @@
 
 namespace ring {
 
-void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
+void VideoManager::registerEvHandlers(struct video_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }

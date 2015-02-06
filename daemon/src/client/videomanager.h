@@ -43,7 +43,7 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-#include "dring.h"
+#include "videomanager_interface.h"
 
 namespace ring {
 
@@ -63,7 +63,7 @@ class VideoManager
         video::VideoDeviceMonitor videoDeviceMonitor_ = {};
 
     public:
-        void registerEvHandlers(struct ring_video_ev_handlers* evHandlers);
+        void registerEvHandlers(struct video_ev_handlers* evHandlers);
         video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
     // Methods
@@ -112,7 +112,7 @@ class VideoManager
 
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        ring_video_ev_handlers evHandlers_{};
+        video_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
