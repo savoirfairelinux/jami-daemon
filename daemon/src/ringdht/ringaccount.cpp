@@ -40,7 +40,7 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-#include "sip_transport_ice.h"
+#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
 #include <opendht/securedht.h>
@@ -544,7 +544,12 @@ RingAccount::handleEvents()
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransportBroker->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            regenerateCAList();
+            auto id = loadIdentity();
+            call->setTransport(link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, TlsParams {
+                .ca_list = caListPath_,
+                .id = id.second
+            }));
             call->setConnectionState(Call::PROGRESSING);
             if (c->id == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
@@ -1005,8 +1010,8 @@ std::string RingAccount::getFromUri() const
 std::string RingAccount::getToUri(const std::string& to) const
 {
     const std::string transport {pjsip_transport_get_type_name(transportType_)};
-    return "<sip:" + to + ">";
-    //return "<sips:" + to + ";transport=" + transport + ">";
+    //return "<sip:" + to + ">";
+    return "<sips:" + to + ";transport=" + transport + ">";
 }
 
 pj_str_t
@@ -1016,12 +1021,12 @@ RingAccount::getContactHeader(pjsip_transport* t)
         t = transport_->get();
     if (!t) {
         RING_ERR("Transport not created yet");
-        pj_cstr(&contact_, "<sip:>");
+        pj_cstr(&contact_, "<sips:>");
         return contact_;
     }
 
     // FIXME: be sure that given transport is from SipIceTransport
-    auto ice = reinterpret_cast<SipIceTransport::TransportData*>(t)->self;
+    auto ice = reinterpret_cast<SipsIceTransport::TransportData*>(t)->self;
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;
@@ -1051,18 +1056,17 @@ RingAccount::getContactHeader(pjsip_transport* t)
 #endif
 */
     RING_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
-    contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
+    /*contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "<sip:%s%s%s>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.toString(true).c_str());    /*
+                                     address.toString(true).c_str());    */
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s%s%s:%d;transport=%s>",
+                                     "<sips:%s%s%s;transport=%s>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.c_str(),
-                                     port,
-                                     pjsip_transport_get_type_name(transportType));*/
+                                     address.toString(true).c_str(),
+                                     pjsip_transport_get_type_name(transportType_));
     return contact_;
 }
 
