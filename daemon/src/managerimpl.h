@@ -73,12 +73,6 @@ class PluginManager;
 class AudioFile;
 class DTMF;
 class TelephoneTone;
-class ConfigurationManager;
-class PresenceManager;
-class CallManager;
-#ifdef RING_VIDEO
-class VideoManager;
-#endif
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -101,13 +95,6 @@ class ManagerImpl {
         ManagerImpl();
         ~ManagerImpl();
 
-        std::unique_ptr<ConfigurationManager> configurationManager_;
-        std::unique_ptr<CallManager> callManager_;
-        std::unique_ptr<PresenceManager> presenceManager_;
-
-#ifdef RING_VIDEO
-        std::unique_ptr<VideoManager> videoManager_;
-#endif
         /**
          * General preferences configuration
          */
@@ -880,14 +867,6 @@ class ManagerImpl {
          * @return bool True if there is a current call
          */
         bool hasCurrentCall() const;
-
-        CallManager* getCallManager();
-        ConfigurationManager* getConfigurationManager();
-        PresenceManager* getPresenceManager();
-
-#ifdef RING_VIDEO
-        VideoManager * getVideoManager();
-#endif
 
         std::vector<std::map<std::string, std::string> > getHistory();
         void clearHistory();
