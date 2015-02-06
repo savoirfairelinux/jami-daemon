@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_CALLMANAGER_H__
-#define __RING_CALLMANAGER_H__
+#ifndef __RING_DBUSCALLMANAGER_H__
+#define __RING_DBUSCALLMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -55,11 +55,18 @@
 
 #include <stdexcept>
 
+namespace ring {
+    class CallManager;
+}
+
 class DBusCallManager :
     public cx::ring::Ring::CallManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+    private:
+        ring::CallManager* callManager_;
+
     public:
         DBusCallManager(DBus::Connection& connection);
 
