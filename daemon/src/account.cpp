@@ -77,7 +77,6 @@ const char * const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsernam
 const char * const Account::PASSWORD_KEY                = "password";
 const char * const Account::HOSTNAME_KEY                = "hostname";
 const char * const Account::ACCOUNT_ENABLE_KEY          = "enable";
-const char * const Account::ACCOUNT_AUTOANSWER_KEY      = "autoAnswer";
 const char * const Account::MAILBOX_KEY                 = "mailbox";
 const char * const Account::DEFAULT_USER_AGENT          = PACKAGE_NAME "/" PACKAGE_VERSION;
 const char * const Account::USER_AGENT_KEY              = "useragent";
@@ -96,7 +95,6 @@ Account::Account(const string &accountID)
     , hostname_()
     , alias_()
     , enabled_(true)
-    , autoAnswerEnabled_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
     , audioCodecList_()
     , videoCodecList_()
@@ -188,7 +186,6 @@ void Account::serialize(YAML::Emitter &out)
     out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
     out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
-    out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
     out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
     out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
@@ -206,7 +203,6 @@ void Account::unserialize(const YAML::Node &node)
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
     parseValue(node, USERNAME_KEY, username_);
-    parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
     //parseValue(node, PASSWORD_KEY, password_);
 
     parseValue(node, MAILBOX_KEY, mailBox_);
@@ -234,7 +230,6 @@ void Account::setAccountDetails(const std::map<std::string, std::string> &detail
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
-    parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
     parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
@@ -263,7 +258,6 @@ std::map<std::string, std::string> Account::getAccountDetails() const
     a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
     a[Conf::CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
     a[Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_RINGTONE_PATH] = ringtonePath_;
     a[Conf::CONFIG_UPNP_ENABLED] = upnpEnabled_ ? TRUE_STR : FALSE_STR;

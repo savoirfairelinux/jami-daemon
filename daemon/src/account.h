@@ -301,7 +301,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const PASSWORD_KEY;
         static const char * const HOSTNAME_KEY;
         static const char * const ACCOUNT_ENABLE_KEY;
-        static const char * const ACCOUNT_AUTOANSWER_KEY;
         static const char * const MAILBOX_KEY;
         static const char * const USER_AGENT_KEY;
         static const char * const HAS_CUSTOM_USER_AGENT_KEY;
@@ -337,9 +336,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Modified by the configuration (key: ENABLED)
          */
         bool enabled_;
-
-        /* If true, automatically answer calls to this account */
-        bool autoAnswerEnabled_;
 
         /*
          * The general, protocol neutral registration
