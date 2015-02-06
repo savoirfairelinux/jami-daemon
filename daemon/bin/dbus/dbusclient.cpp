@@ -170,7 +170,6 @@ int DBusClient::initLibrary(int sflphFlags)
     ring_config_ev_handlers configEvHandlers = {
         bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::accountsChanged, confM),
-        bind(&DBusConfigurationManager::historyChanged, confM),
         bind(&DBusConfigurationManager::stunStatusFailure, confM, _1),
         bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3),

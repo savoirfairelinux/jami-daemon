@@ -427,10 +427,6 @@ int32_t ConfigurationManager::getHistoryLimit()
     return Manager::instance().getHistoryLimit();
 }
 
-void ConfigurationManager::clearHistory()
-{
-    return Manager::instance().clearHistory();
-}
 
 void ConfigurationManager::setHistoryLimit(int32_t days)
 {
@@ -561,10 +557,6 @@ void ConfigurationManager::setAccountsOrder(const std::string& order)
     Manager::instance().setAccountsOrder(order);
 }
 
-std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistory()
-{
-    return Manager::instance().getHistory();
-}
 
 std::string
 ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
@@ -627,13 +619,6 @@ void ConfigurationManager::accountsChanged()
 {
     if (evHandlers_.on_accounts_change) {
         evHandlers_.on_accounts_change();
-    }
-}
-
-void ConfigurationManager::historyChanged()
-{
-    if (evHandlers_.on_history_change) {
-        evHandlers_.on_history_change();
     }
 }
 

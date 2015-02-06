@@ -56,7 +56,6 @@ struct ring_config_ev_handlers
 {
     std::function<void (const std::string& /*device*/, double /*value*/)> on_volume_change;
     std::function<void ()> on_accounts_change;
-    std::function<void ()> on_history_change;
     std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
     std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
     std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
@@ -241,11 +240,9 @@ bool ring_config_is_always_recording(void);
 void ring_config_set_always_recording(bool rec);
 void ring_config_set_history_limit(int days);
 int ring_config_get_history_limit(void);
-void ring_config_clear_history(void);
 void ring_config_set_accounts_order(const std::string& order);
 std::map<std::string, std::string> ring_config_get_hook_settings(void);
 void ring_config_set_hook_settings(const std::map<std::string, std::string>& settings);
-std::vector<std::map<std::string, std::string>> ring_config_get_history(void);
 std::map<std::string, std::string> ring_config_get_tls_settings();
 std::map<std::string, std::string> ring_config_validate_certificate(const std::string& accountId,
     const std::string& certificate, const std::string& private_key);

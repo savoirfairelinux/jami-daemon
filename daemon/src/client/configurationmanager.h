@@ -111,14 +111,11 @@ class ConfigurationManager
 
         void setHistoryLimit(int32_t days);
         int32_t getHistoryLimit();
-        void clearHistory();
 
         void setAccountsOrder(const std::string& order);
 
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
-
-        std::vector<std::map<std::string, std::string> > getHistory();
 
         std::map<std::string, std::string> getTlsSettings();
         void setTlsSettings(const std::map< std::string, std::string >& details);
@@ -151,8 +148,6 @@ class ConfigurationManager
         void volumeChanged(const std::string& device, double value);
 
         void accountsChanged();
-
-        void historyChanged();
 
         void stunStatusFailure(const std::string& accoundID);
 

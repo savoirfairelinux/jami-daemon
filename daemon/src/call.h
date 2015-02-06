@@ -234,9 +234,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual std::map<std::string, std::string> getDetails();
         static std::map<std::string, std::string> getNullDetails();
 
-        virtual std::map<std::string, std::string>
-        createHistoryEntry() const;
-
         virtual bool toggleRecording();
 
         /**

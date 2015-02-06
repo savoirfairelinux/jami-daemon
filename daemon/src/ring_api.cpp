@@ -585,11 +585,6 @@ int ring_config_get_history_limit(void)
     return getConfigurationManager()->getHistoryLimit();
 }
 
-void ring_config_clear_history(void)
-{
-    getConfigurationManager()->clearHistory();
-}
-
 void ring_config_set_accounts_order(const std::string& order)
 {
     getConfigurationManager()->setAccountsOrder(order);
@@ -603,11 +598,6 @@ std::map<std::string, std::string> ring_config_get_hook_settings(void)
 void ring_config_set_hook_settings(const std::map<std::string, std::string>& settings)
 {
     getConfigurationManager()->setHookSettings(settings);
-}
-
-std::vector<std::map<std::string, std::string>> ring_config_get_history(void)
-{
-    return getConfigurationManager()->getHistory();
 }
 
 std::map<std::string, std::string> ring_config_get_tls_settings()

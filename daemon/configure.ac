@@ -645,7 +645,6 @@ AC_CONFIG_FILES([Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
                  src/hooks/Makefile \
-                 src/history/Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
                  src/media/video/test/Makefile \
