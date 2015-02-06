@@ -225,19 +225,7 @@ std::vector<int32_t> ConfigurationManager::getAudioCodecList()
 {
     std::vector<int32_t> listId =
         ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
-    RING_DBG("Audio codec list");
-    for (int i = 0; i < listId.size(); i++)
-        RING_DBG("codecId:%d",listId[i]);
-
     return listId;
-#if 0
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
-
-    if (list.empty())
-        errorAlert(CODECS_NOT_LOADED);
-
-    return list;
-#endif
 }
 
 std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
@@ -272,6 +260,8 @@ std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t code
     if( foundCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecById(codecId, ring::MEDIA_AUDIO)))
         errorAlert(CODECS_NOT_LOADED);
 
+
+    RING_DBG("####### foundCodec->name_ == %s", foundCodec->name_.c_str());
     return foundCodec->getCodecSpecifications();
 }
 

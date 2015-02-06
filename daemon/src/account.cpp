@@ -358,36 +358,41 @@ void Account::setVideoCodecs(const vector<map<string, string> > &list)
 // Required format: payloads separated by slashes.
 // @return std::string The serializable string
 static std::string
-join_string(const std::vector<std::string> &v)
+join_string(const std::vector<int32_t> &v)
 {
     std::ostringstream os;
-    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
+    std::copy(v.begin(), v.end(), std::ostream_iterator<std::int32_t>(os, "/"));
     return os.str();
 }
 std::vector<int32_t> Account::getActiveAudioCodecs() const
 {
     std::vector<int32_t> listId =
-        ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
+        ring::getMediaCodecFactory()->getActiveMediaCodecIdList(ring::MEDIA_AUDIO);
     return listId;
 }
 
 
 void Account::setActiveAudioCodecs(const vector<string> &list)
 {
-#if 0
     // first clear the previously stored codecs
-    audioCodecList_.clear();
+    // TODO: mutex to protect isActive
+    getMediaCodecFactory()->desactivateAllMedia(MEDIA_AUDIO);
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
+    uint16_t order = 1;
     for (const auto &item : list) {
-        int payload = std::atoi(item.c_str());
-        audioCodecList_.push_back(payload);
+        int codecId = std::atoi(item.c_str());
+        if ( auto mediaCodec = getMediaCodecFactory()->searchCodecById(codecId,MEDIA_AUDIO))
+        {
+            mediaCodec->isActive_ = true;
+            mediaCodec->order_ = order;
+            order++;
+        }
     }
-
-    // update the codec string according to new codec selection
-    audioCodecStr_ = join_string(list);
-#endif
+    auto vec = getMediaCodecFactory()->getMediaCodecList();
+    std::sort(vec->begin(), vec->end(), sortMediaCodec);
+    audioCodecStr_ = join_string(getActiveAudioCodecs());
 }
 
 string Account::mapStateNumberToString(RegistrationState state)

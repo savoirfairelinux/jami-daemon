@@ -66,6 +66,7 @@ public:
         uint16_t bitrate_;
         CODEC_TYPE codecType_;
         MEDIA_TYPE mediaType_;
+        uint16_t order_;
 
         uint16_t getCodecId();
         std::string to_string();
