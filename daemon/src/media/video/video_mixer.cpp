@@ -50,10 +50,9 @@ VideoMixer::VideoMixer(const std::string &id) :
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
     // Local video camera is the main participant
-    auto videoCtrl = Manager::instance().getVideoManager();
-    videoLocal_ = videoCtrl->getVideoCamera();
+    videoLocal_ = getVideoCamera();
     if (videoLocal_) {
-        videoCtrl->switchToCamera();
+        DRing::switchToCamera();
         videoLocal_->attach(this);
     }
     loop_.start();
@@ -189,7 +188,7 @@ void VideoMixer::start_sink()
 {
     if (sink_.start()) {
         if (this->attach(&sink_)) {
-            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), width_, height_, true);
+            startedDecoding(id_, sink_.openedName(), width_, height_, true);
             RING_DBG("MX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), width_, height_);
         }
@@ -200,7 +199,7 @@ void VideoMixer::start_sink()
 void VideoMixer::stop_sink()
 {
     if (this->detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), true);
+        stoppedDecoding(id_, sink_.openedName(), true);
         sink_.stop();
     }
 }

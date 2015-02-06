@@ -27,76 +27,77 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "dring.h"
 
 #include "dbusvideomanager.h"
+#include "managerimpl.h"
+#include "manager.h"
+#include "client/videomanager.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/VideoManager")
-{
-}
+{}
 
 std::vector<std::map<std::string, std::string>> DBusVideoManager::getCodecs(const std::string& accountID)
 {
-    return ring_video_get_codecs(accountID);
+    return getCodecs(accountID);
 }
 
 void DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details)
 {
-    ring_video_set_codecs(accountID, details);
+    setCodecs(accountID, details);
 }
 
 std::vector<std::string> DBusVideoManager::getDeviceList()
 {
-    return ring_video_get_device_list();
+    return getDeviceList();
 }
 
 std::map<std::string, std::map<std::string, std::vector<std::string>>> DBusVideoManager::getCapabilities(const std::string& name)
 {
-    return ring_video_get_capabilities(name);
+    return getCapabilities(name);
 }
 
 std::map<std::string, std::string> DBusVideoManager::getSettings(const std::string& name)
 {
-    return ring_video_get_settings(name);
+    return getSettings(name);
 }
 
 void DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-    ring_video_apply_settings(name, settings);
+    applySettings(name, settings);
 }
 
 void DBusVideoManager::setDefaultDevice(const std::string &dev)
 {
-    ring_video_set_default_device(dev);
+    setDefaultDevice(dev);
 }
 
 std::string DBusVideoManager::getDefaultDevice()
 {
-    return ring_video_get_default_device();
+    return getDefaultDevice();
 }
 
 std::string DBusVideoManager::getCurrentCodecName(const std::string &callID)
 {
-    return ring_video_get_current_codec_name(callID);
+    return getCurrentCodecName(callID);
 }
 
 void DBusVideoManager::startCamera()
 {
-    ring_video_start_camera();
+    startCamera();
 }
 
 void DBusVideoManager::stopCamera()
 {
-    ring_video_stop_camera();
+    stopCamera();
 }
 
 bool DBusVideoManager::switchInput(const std::string& resource)
 {
-    return ring_video_switch_input(resource);
+    return switchInput(resource);
 }
 
 bool DBusVideoManager::hasCameraStarted()
 {
-    return ring_video_is_camera_started();
+    return hasCameraStarted();
 }

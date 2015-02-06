@@ -567,10 +567,10 @@ VideoDevice::getSettings() const
     return deviceImpl_->getSettings();
 }
 
-VideoCapabilities
+DRing::VideoCapabilities
 VideoDevice::getCapabilities() const
 {
-    VideoCapabilities cap;
+    DRing::VideoCapabilities cap;
 
     for (const auto& chan : deviceImpl_->getChannelList())
         for (const auto& size : deviceImpl_->getSizeList(chan))

@@ -40,128 +40,50 @@
 #include <vector>
 #include <string>
 
-#include "dring.h"
+#include "callmanager_interface.h"
 
 namespace ring {
 
-class AudioZrtpSession;
-
-class CallManagerException: public std::runtime_error {
-    public:
-        CallManagerException(const std::string& str = "") :
-            std::runtime_error("A CallManagerException occured: " + str) {}
+struct CallManager {
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  ::DRing::call_ev_handlers evHandlers_;
+  #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
-class CallManager
-{
-    public:
-        CallManager();
-        void registerEvHandlers(struct ring_call_ev_handlers* evHandlers);
+extern CallManager callManager;
 
-    // Methods
-    public:
-        /* Call related methods */
-        bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+void callStateChanged(const std::string& callID, const std::string& state);
 
-        bool refuse(const std::string& callID);
-        bool accept(const std::string& callID);
-        bool hangUp(const std::string& callID);
-        bool hold(const std::string& callID);
-        bool unhold(const std::string& callID);
-        bool transfer(const std::string& callID, const std::string& to);
-        bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-        std::map< std::string, std::string > getCallDetails(const std::string& callID);
-        std::vector< std::string > getCallList();
+void transferFailed();
+void transferSucceeded();
 
-        /* Conference related methods */
-        void removeConference(const std::string& conference_id);
-        bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
-        void createConfFromParticipantList(const std::vector< std::string >& participants);
-        bool isConferenceParticipant(const std::string& call_id);
-        bool addParticipant(const std::string& callID, const std::string& confID);
-        bool addMainParticipant(const std::string& confID);
-        bool detachParticipant(const std::string& callID);
-        bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-        bool hangUpConference(const std::string& confID);
-        bool holdConference(const std::string& confID);
-        bool unholdConference(const std::string& confID);
-        std::vector<std::string> getConferenceList();
-        std::vector<std::string> getParticipantList(const std::string& confID);
-        std::vector<std::string> getDisplayNames(const std::string& confID);
-        std::string getConferenceId(const std::string& callID);
-        std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+void recordPlaybackStopped(const std::string& path);
 
-        /* File Playback methods */
-        bool startRecordedFilePlayback(const std::string& filepath);
-        void stopRecordedFilePlayback(const std::string& filepath);
+void voiceMailNotify(const std::string& callID, int32_t nd_msg);
 
-        /* General audio methods */
-        bool toggleRecording(const std::string& callID);
-        /* DEPRECATED */
-        void setRecording(const std::string& callID);
+void onIncomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
+void onIncomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
 
-        void recordPlaybackSeek(double value);
-        bool getIsRecording(const std::string& callID);
-        std::string getCurrentAudioCodecName(const std::string& callID);
-        void playDTMF(const std::string& key);
-        void startTone(int32_t start, int32_t type);
+void recordPlaybackFilepath(const std::string& id, const std::string& filename);
 
-        /* Security related methods */
-        void setSASVerified(const std::string& callID);
-        void resetSASVerified(const std::string& callID);
-        void setConfirmGoClear(const std::string& callID);
-        void requestGoClear(const std::string& callID);
-        void acceptEnrollment(const std::string& callID, bool accepted);
+void conferenceCreated(const std::string& confID);
+void conferenceChanged(const std::string& confID,const std::string& state);
 
-        /* Instant messaging */
-        void sendTextMessage(const std::string& callID, const std::string& message);
-        void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+void updatePlaybackScale(const std::string&, int32_t, int32_t);
+void conferenceRemoved(const std::string&);
+void newCallCreated(const std::string&, const std::string&, const std::string&);
+void sipCallStateChanged(const std::string&, const std::string&, int32_t);
+void recordingStateChanged(const std::string& callID, bool state);
+void secureSdesOn(const std::string& arg);
+void secureSdesOff(const std::string& arg);
 
-    // Signals
-    public:
-        void callStateChanged(const std::string& callID, const std::string& state);
+void secureZrtpOn(const std::string& callID, const std::string& cipher);
+void secureZrtpOff(const std::string& callID);
+void showSAS(const std::string& callID, const std::string& sas, bool verified);
+void zrtpNotSuppOther(const std::string& callID);
+void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
 
-        void transferFailed();
-
-        void transferSucceeded();
-
-        void recordPlaybackStopped(const std::string& path);
-
-        void voiceMailNotify(const std::string& callID, int32_t nd_msg);
-
-        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
-
-        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
-
-        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
-
-        void conferenceCreated(const std::string& confID);
-
-        void conferenceChanged(const std::string& confID,const std::string& state);
-
-        void updatePlaybackScale(const std::string&, int32_t, int32_t);
-        void conferenceRemoved(const std::string&);
-        void newCallCreated(const std::string&, const std::string&, const std::string&);
-        void sipCallStateChanged(const std::string&, const std::string&, int32_t);
-        void recordingStateChanged(const std::string& callID, bool state);
-        void secureSdesOn(const std::string& arg);
-        void secureSdesOff(const std::string& arg);
-
-        void secureZrtpOn(const std::string& callID, const std::string& cipher);
-        void secureZrtpOff(const std::string& callID);
-        void showSAS(const std::string& callID, const std::string& sas, bool verified);
-        void zrtpNotSuppOther(const std::string& callID);
-        void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
-
-        void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
-
-    private:
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        // Event handlers; needed by the library API
-        ring_call_ev_handlers evHandlers_{};
-#pragma GCC diagnostic warning "-Wmissing-field-initializers"
-};
-
+void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
 } // namespace ring
 
 #endif//CALLMANAGER_H
