@@ -112,11 +112,9 @@ class DBusConfigurationManager :
         void setIsAlwaysRecording(const bool& rec);
         void setHistoryLimit(const int32_t& days);
         int32_t getHistoryLimit();
-        void clearHistory();
         void setAccountsOrder(const std::string& order);
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
-        std::vector<std::map<std::string, std::string>> getHistory();
         std::map<std::string, std::string> getTlsSettings();
         void setTlsSettings(const std::map<std::string, std::string>& details);
         std::map<std::string, std::string> getIp2IpDetails();
