@@ -103,18 +103,18 @@ void AlsaThread::initAudioLayer(void)
         alsa_->is_capture_open_ = alsa_->openDevice(&alsa_->captureHandle_, pcmc, SND_PCM_STREAM_CAPTURE);
 
         if (not alsa_->is_capture_open_)
-            Manager::instance().getConfigurationManager()->errorAlert(ALSA_CAPTURE_DEVICE);
+            errorAlert(ALSA_CAPTURE_DEVICE);
     }
 
     if (not alsa_->is_playback_open_) {
         alsa_->is_playback_open_ = alsa_->openDevice(&alsa_->playbackHandle_, pcmp, SND_PCM_STREAM_PLAYBACK);
 
         if (not alsa_->is_playback_open_)
-            Manager::instance().getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+            errorAlert(ALSA_PLAYBACK_DEVICE);
 
         if (alsa_->getIndexPlayback() != alsa_->getIndexRingtone())
             if (!alsa_->openDevice(&alsa_->ringtoneHandle_, pcmr, SND_PCM_STREAM_PLAYBACK))
-                Manager::instance().getConfigurationManager()->errorAlert(ALSA_PLAYBACK_DEVICE);
+                errorAlert(ALSA_PLAYBACK_DEVICE);
     }
 
     alsa_->hardwareFormatAvailable(alsa_->getFormat());

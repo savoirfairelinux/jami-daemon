@@ -61,13 +61,13 @@ VideoDeviceMonitor::getDeviceList() const
     return names;
 }
 
-VideoCapabilities
+DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& name) const
 {
     const auto iter = findDeviceByName(name);
 
     if (iter == devices_.end())
-        return VideoCapabilities();
+        return DRing::VideoCapabilities();
 
     return iter->getCapabilities();
 }
@@ -159,7 +159,7 @@ notify()
         return;
     }
 
-    Manager::instance().getVideoManager()->deviceEvent();
+    deviceEvent();
 }
 
 void

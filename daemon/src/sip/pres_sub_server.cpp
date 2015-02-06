@@ -188,7 +188,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     PresSubServer *presSubServer = new PresSubServer(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presSubServer);
     // Notify the client.
-    Manager::instance().getPresenceManager()->newServerSubscriptionRequest(presSubServer->remote_);
+    newServerSubscriptionRequest(presSubServer->remote_);
 
     pres->addPresSubServer(presSubServer);
 
