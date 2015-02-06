@@ -28,54 +28,45 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_DBUSPRESENCEMANAGER_H__
-#define __RING_DBUSPRESENCEMANAGER_H__
+#ifndef PRESENCEMANAGERI_H
+#define PRESENCEMANAGERI_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
-#include "dbus_cpp.h"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "dbuspresencemanager.adaptor.h"
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic warning "-Wunused-but-set-variable"
-#endif
-
-#include <stdexcept>
 
 namespace ring {
-    class PresenceManager;
-}
 
-class DBusPresenceManager :
-    public cx::ring::Ring::PresenceManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
+/* presence events */
+struct pres_ev_handlers
 {
-    private:
-        ring::PresenceManager* presenceManager_;
+    std::function<void (const std::string& /*remote*/)> on_new_server_subscription_request;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/)> on_server_error;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/)> on_new_buddy_notification;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/)> on_subscription_state_change;
+};
 
+class PresenceManagerI
+{
     public:
-        DBusPresenceManager(DBus::Connection& connection);
+        void registerEvHandlers(struct pres_ev_handlers* evHandlers);
 
-        // Methods
-        void publish(const std::string& accountID, const bool& status, const std::string& note);
-        void answerServerRequest(const std::string& uri, const bool& flag);
-        void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
+    // Methods
+    public:
+        /* Presence subscription/Notification. */
+        void publish(const std::string& accountID, bool status, const std::string& note);
+        void answerServerRequest(const std::string& uri, bool flag);
+        void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
         std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
         void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 };
 
-#endif // __RING_DBUSPRESENCEMANAGER_H__
+} // namespace ring
+
+#endif //PRESENCEMANAGERI_H

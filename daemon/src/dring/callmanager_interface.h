@@ -28,50 +28,61 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_DBUSCALLMANAGER_H__
-#define __RING_DBUSCALLMANAGER_H__
+#ifndef __RING_CALLMANAGERI_H__
+#define __RING_CALLMANAGERI_H__
 
-#include <vector>
-#include <map>
-#include <string>
-
-#include "dbus_cpp.h"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
-
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "dbuscallmanager.adaptor.h"
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic warning "-Wunused-but-set-variable"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
 #endif
 
 #include <stdexcept>
+#include <map>
+#include <vector>
+#include <string>
+#include <functional>
+
+#include "dring.h"
 
 namespace ring {
-    class CallManager;
-}
 
-class DBusCallManager :
-    public cx::ring::Ring::CallManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
+/* call events */
+struct call_ev_handlers
 {
-    private:
-        ring::CallManager* callManager_;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/)> on_state_change;
+    std::function<void ()> on_transfer_fail;
+    std::function<void ()> on_transfer_success;
+    std::function<void (const std::string& /*path*/)> on_record_playback_stopped;
+    std::function<void (const std::string& /*call_id*/, int /*nd_msg*/)> on_voice_mail_notify;
+    std::function<void (const std::string& /*id*/, const std::string& /*from*/, const std::string& /*msg*/)> on_incoming_message;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*from*/)> on_incoming_call;
+    std::function<void (const std::string& /*id*/, const std::string& /*filename*/)> on_record_playback_filepath;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_created;
+    std::function<void (const std::string& /*conf_id*/, const std::string& /*state*/)> on_conference_changed;
+    std::function<void (const std::string& /*filepath*/, int /*position*/, int /*scale*/)> on_update_playback_scale;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_remove;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*to*/)> on_new_call;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/, int /*code*/)> on_sip_call_state_change;
+    std::function<void (const std::string& /*call_id*/, int /*state*/)> on_record_state_change;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*cipher*/)> on_secure_zrtp_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_zrtp_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*sas*/, int /*verified*/)> on_show_sas;
+    std::function<void (const std::string& /*call_id*/)> on_zrtp_not_supp_other;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*reason*/, const std::string& /*severity*/)> on_zrtp_negotiation_fail;
+    std::function<void (const std::string& /*call_id*/, const std::map<std::string, int>& /*stats*/)> on_rtcp_receive_report;
+};
 
+class CallManagerException;
+
+class CallManagerI
+{
     public:
-        DBusCallManager(DBus::Connection& connection);
+        void registerEvHandlers(call_ev_handlers* evHandlers);
 
-        // Methods
+        /* Call related methods */
         bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+
         bool refuse(const std::string& callID);
         bool accept(const std::string& callID);
         bool hangUp(const std::string& callID);
@@ -81,6 +92,8 @@ class DBusCallManager :
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
         std::map< std::string, std::string > getCallDetails(const std::string& callID);
         std::vector< std::string > getCallList();
+
+        /* Conference related methods */
         void removeConference(const std::string& conference_id);
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);
@@ -97,21 +110,34 @@ class DBusCallManager :
         std::vector<std::string> getDisplayNames(const std::string& confID);
         std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+
+        /* File Playback methods */
         bool startRecordedFilePlayback(const std::string& filepath);
         void stopRecordedFilePlayback(const std::string& filepath);
+
+        /* General audio methods */
         bool toggleRecording(const std::string& callID);
+        /* DEPRECATED */
         void setRecording(const std::string& callID);
-        void recordPlaybackSeek(const double& value);
+
+        void recordPlaybackSeek(double value);
         bool getIsRecording(const std::string& callID);
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
-        void startTone(const int32_t& start, const int32_t& type);
+        void startTone(int32_t start, int32_t type);
+
+        /* Security related methods */
         void setSASVerified(const std::string& callID);
         void resetSASVerified(const std::string& callID);
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
-        void acceptEnrollment(const std::string& callID, const bool& accepted);
+        void acceptEnrollment(const std::string& callID, bool accepted);
+
+        /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
+        void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 };
 
-#endif // __RING_CALLMANAGER_H__
+} // namespace ring
+
+#endif//CALLMANAGERI_H

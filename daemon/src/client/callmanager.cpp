@@ -49,7 +49,7 @@ CallManager::CallManager()
     libav_utils::sfl_avcodec_init();
 }
 
-void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
+void CallManager::registerEvHandlers(struct call_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
