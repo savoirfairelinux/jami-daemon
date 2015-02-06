@@ -146,8 +146,6 @@ static void reset()
 static void
 auto_answer_cb(GtkToggleButton *widget, account_t *account)
 {
-    account_replace(account, CONFIG_ACCOUNT_AUTOANSWER,
-                    gtk_toggle_button_get_active(widget) ? "true" : "false");
 }
 
 static void
