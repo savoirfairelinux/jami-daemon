@@ -27,8 +27,8 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEOMANAGER_H_
-#define VIDEOMANAGER_H_
+#ifndef VIDEOMANAGERI_H_
+#define VIDEOMANAGERI_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -36,48 +36,49 @@
 
 #include <memory> // for weak/shared_ptr
 #include <vector>
+#include <atomic>
 #include <map>
 #include <string>
 
-#include "video/video_device_monitor.h"
-#include "video/video_base.h"
-#include "video/video_input.h"
+namespace DRing {
 
-#include "videomanager_interface.h"
+typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
 
-namespace ring {
-
-struct VideoManager
+/* video events */
+struct video_ev_handlers
 {
-  /* VideoManager acts as a cache of the active VideoInput.
-   * When this input is needed, you must use getVideoCamera
-   * to create the instance if not done yet and obtain a shared pointer
-   * for your own usage.
-   * VideoManager instance doesn't increment the reference count of
-   * this video input instance: this instance is destroyed when the last
-   * external user has released its shared pointer.
-   */
-  std::weak_ptr<video::VideoInput> videoInput_ = {};
-  std::shared_ptr<video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-  video::VideoDeviceMonitor videoDeviceMonitor_ = {};
-  std::atomic_bool started_ = {false};
-  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  ::DRing::video_ev_handlers evHandlers_{};
-  #pragma GCC diagnostic warning "-Wmissing-field-initializers"
-
+    std::function<void ()> on_device_event;
+    std::function<void (const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/)> on_start_decoding;
+    std::function<void (const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/)> on_stop_decoding;
 };
 
-extern VideoManager videoManager;
+void registerEvHandlers(struct video_ev_handlers* evHandlers);
 
-void deviceEvent();
-void startedDecoding(const std::string &id, const std::string& shmPath, int w, int h, bool isMixer);
-void stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer);
+std::vector<std::map<std::string, std::string> > getCodecs(const std::string& accountID);
 
-// Private
+void setCodecs(const std::string& accountID,
+             const std::vector<std::map<std::string, std::string> > &details);
 
-std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
-video::VideoDeviceMonitor& getVideoDeviceMonitor();
+std::vector<std::string> getDeviceList();
 
-} // namespace ring
+VideoCapabilities getCapabilities(const std::string& name);
 
-#endif // VIDEOMANAGER_H_
+std::map<std::string, std::string> getSettings(const std::string& name);
+
+void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
+
+void setDefaultDevice(const std::string& name);
+
+std::string getDefaultDevice();
+
+std::string getCurrentCodecName(const std::string &callID);
+
+void startCamera();
+void stopCamera();
+bool hasCameraStarted();
+bool switchInput(const std::string& resource);
+bool switchToCamera();
+
+} // namespace DRing
+
+#endif // VIDEOMANAGERI_H_

@@ -818,8 +818,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
 
-            CallManager *cm = Manager::instance().getCallManager();
-            cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
+            sipCallStateChanged(call->getCallId(), desc, statusCode);
         }
     }
 

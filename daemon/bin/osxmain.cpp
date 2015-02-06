@@ -37,6 +37,12 @@
 #include <string>
 
 #include "dring.h"
+#include "callmanager_interface.h"
+#include "configurationmanager_interface.h"
+#include "presencemanager_interface.h"
+#ifdef RING_VIDEO
+#include "videomanager_interface.h"
+#endif
 #include "fileutils.h"
 
 static int sflphFlags = 0;
@@ -130,40 +136,22 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
     return quit;
 }
 
-void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, const std::string& from)
-{
-    std::cout << std::endl << "INCOMING CALL!" << std::endl <<
-        "Account: " << acc_id <<
-        ", Id: " << call_id <<
-        ", From: " << from << std::endl << std::endl;
-
-    ring_call_accept(call_id);
-    ring_call_set_recording(call_id);
-    //ring_call_join_participant(call_id, "patate");
-}
-
 static int osxTests()
 {
-    ring_ev_handlers evHandlers = {
-        .call_ev_handlers = {
-            .on_incoming_call = myOnIncomingCall
-        },
-        .config_ev_handlers = {},
-        .pres_ev_handlers = {}
+    DRing::call_ev_handlers callEvHandlers;
+    DRing::config_ev_handlers configEvHandlers;
+    DRing::pres_ev_handlers presEvHandlers;
+
+    std::map<EventHandlerKey, void*> evHandlers;
+    evHandlers.emplace(EventHandlerKey::CALL, static_cast<void*>(&callEvHandlers));
+    evHandlers.emplace(EventHandlerKey::CONFIG, static_cast<void*>(&configEvHandlers));
+    evHandlers.emplace(EventHandlerKey::PRESENCE, static_cast<void*>(&presEvHandlers));
 #ifdef RING_VIDEO
-        ,.video_ev_handlers = {}
+    DRing::video_ev_handlers videoEvHandlers;
+    evHandlers.emplace(EventHandlerKey::CALL, static_cast<void*>(&callEvHandlers));
 #endif
-    };
 
-    ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
-
-    //ring_call_play_dtmf("0");
-    //sleep(1);
-    //ring_call_play_dtmf("1");
-    //sleep(1);
-
-    //ring_call_place("IP2IP", "patate", "127.0.0.1");
-    //ring_call_set_recording("patate");
+    ring_init(evHandlers, static_cast<ring_init_flag>(sflphFlags));
 
     while (true) {
         ring_poll_events();
