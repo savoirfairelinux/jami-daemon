@@ -387,8 +387,8 @@ class SIPAccount : public SIPAccountBase {
             return srtpEnabled_;
         }
 
-        virtual std::string getSrtpKeyExchange() const {
-            return srtpKeyExchange_;
+        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
+            return srtpKeyExchange_ == "srtp" ? sip_utils::KeyExchangeProtocol::SDES : sip_utils::KeyExchangeProtocol::NONE;
         }
 
         virtual bool getSrtpFallback() const {

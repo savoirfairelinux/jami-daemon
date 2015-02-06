@@ -1,10 +1,13 @@
 /*
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,43 +29,52 @@
  *  as that of the covered work.
  */
 
-#ifndef H_BASE64
-#define H_BASE64
+#ifndef __RTP_SESSION_H__
+#define __RTP_SESSION_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "noncopyable.h"
+#include "socket_pair.h"
+#include "sip/sip_utils.h"
 
-#include "stdint.h"
+#include <string>
+#include <map>
+#include <memory>
+#include <mutex>
 
-/**
- * Encode a buffer in base64.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a base64-encoded buffer
- *
- * @note callers should free the returned memory
- */
-uint8_t *sfl_base64_encode(const uint8_t *data,
-                           size_t input_length, size_t *output_length);
+namespace ring {
 
-/**
- * Decode a base64 buffer.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a buffer
- *
- * @note callers should free the returned memory
- */
-uint8_t *sfl_base64_decode(const uint8_t *data,
-                           size_t input_length, size_t *output_length);
+class Sdp;
 
-#ifdef __cplusplus
-}
-#endif
+class RtpSession {
+public:
+    RtpSession(const std::string &callID) : callID_(callID) {}
+    virtual ~RtpSession() {};
 
-#endif // H_BASE64
+    virtual void start(int localPort) = 0;
+    virtual void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void stop() = 0;
+
+    virtual void updateMedia(const MediaDescription& local, const MediaDescription& remote) {
+        local_ = local;
+        remote_ = remote;
+    }
+
+protected:
+    std::recursive_mutex mutex_ = {};
+    std::unique_ptr<SocketPair> socketPair_ = nullptr;
+    const std::string callID_;
+
+    MediaDescription local_;
+    MediaDescription remote_;
+
+    std::string getRemoteRtpUri() const {
+        return "rtp://" + remote_.addr.toString(true);
+    }
+
+private:
+    NON_COPYABLE(RtpSession);
+};
+
+} // namespace ring
+
+#endif // __RTP_SESSION_H__
