@@ -40,7 +40,7 @@
 #include <vector>
 #include <string>
 
-#include "dring.h"
+#include "callmanager_interface.h"
 
 namespace ring {
 
@@ -52,14 +52,11 @@ class CallManagerException: public std::runtime_error {
             std::runtime_error("A CallManagerException occured: " + str) {}
 };
 
-class CallManager
-{
+class CallManager : public CallManagerI {
     public:
         CallManager();
-        void registerEvHandlers(struct ring_call_ev_handlers* evHandlers);
+        void registerEvHandlers(call_ev_handlers* evHandlers);
 
-    // Methods
-    public:
         /* Call related methods */
         bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
 
@@ -158,7 +155,7 @@ class CallManager
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        ring_call_ev_handlers evHandlers_{};
+        call_ev_handlers evHandlers_;
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

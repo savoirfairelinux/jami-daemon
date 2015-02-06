@@ -38,14 +38,14 @@
 #include <vector>
 #include <string>
 
-#include "dring.h"
+#include "presencemanager_interface.h"
 
 namespace ring {
 
-class PresenceManager
+class PresenceManager : public PresenceManagerI
 {
     public:
-        void registerEvHandlers(struct ring_pres_ev_handlers* evHandlers);
+        void registerEvHandlers(struct pres_ev_handlers* evHandlers);
 
     // Methods
     public:
@@ -67,7 +67,7 @@ class PresenceManager
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        ring_pres_ev_handlers evHandlers_{};
+        pres_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

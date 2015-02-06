@@ -51,7 +51,7 @@ constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
 constexpr static const char* OFFLINE_KEY    = "Offline";
 
-void PresenceManager::registerEvHandlers(struct ring_pres_ev_handlers* evHandlers)
+void PresenceManager::registerEvHandlers(struct pres_ev_handlers* evHandlers)
 {
     evHandlers_ = *evHandlers;
 }
