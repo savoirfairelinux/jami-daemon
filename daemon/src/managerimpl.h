@@ -61,7 +61,6 @@
 #include "audio/codecs/audiocodecfactory.h"
 
 #include "preferences.h"
-#include "history/history.h"
 #include "noncopyable.h"
 
 namespace ring {
@@ -881,9 +880,6 @@ class ManagerImpl {
         VideoManager * getVideoManager();
 #endif
 
-        std::vector<std::map<std::string, std::string> > getHistory();
-        void clearHistory();
-
         /**
          * Get an account pointer, looks for both SIP and IAX
          * @param accountID account ID to get
@@ -917,8 +913,6 @@ class ManagerImpl {
          * Send registration for all enabled accounts
          */
         void registerAccounts();
-
-        void saveHistory();
 
         /**
          * Suspends Ring's audio processing if no calls remain, allowing
@@ -988,11 +982,6 @@ class ManagerImpl {
         // Map containing conference pointers
         ConferenceMap conferenceMap_;
 
-        /**
-         * To handle the persistent history
-         * TODO: move this to ConfigurationManager
-         */
-        History history_;
         std::atomic_bool finished_ {false};
 
         AccountFactory accountFactory_;

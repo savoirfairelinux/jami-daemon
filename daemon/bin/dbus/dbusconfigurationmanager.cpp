@@ -277,11 +277,6 @@ int32_t DBusConfigurationManager::getHistoryLimit()
     return ring_config_get_history_limit();
 }
 
-void DBusConfigurationManager::clearHistory()
-{
-    ring_config_clear_history();
-}
-
 void DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
     ring_config_set_accounts_order(order);
@@ -295,11 +290,6 @@ std::map<std::string, std::string> DBusConfigurationManager::getHookSettings()
 void DBusConfigurationManager::setHookSettings(const std::map<std::string, std::string>& settings)
 {
     ring_config_set_hook_settings(settings);
-}
-
-std::vector<std::map<std::string, std::string> > DBusConfigurationManager::getHistory()
-{
-    return ring_config_get_history();
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getTlsSettings()
