@@ -196,10 +196,6 @@ class SIPCall : public Call
     private:
         NON_COPYABLE(SIPCall);
 
-        // override of Call::createHistoryEntry
-        std::map<std::string, std::string>
-        createHistoryEntry() const;
-
         void stopAllMedia();
 
         /**
