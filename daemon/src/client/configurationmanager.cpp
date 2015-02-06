@@ -90,26 +90,26 @@ std::map<std::string, std::string> ConfigurationManager::getVolatileAccountDetai
 }
 
 std::map<std::string, std::string>
-ConfigurationManager::getTlsSettingsDefault()
+ConfigurationManager::getTlsDefaultSettings()
 {
     std::stringstream portstr;
     portstr << DEFAULT_SIP_TLS_PORT;
 
-    std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[Conf::CONFIG_TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PASSWORD] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CIPHERS] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
+    std::map<std::string, std::string> tlsDefaultSettings;
+    tlsDefaultSettings[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsDefaultSettings[Conf::CONFIG_TLS_CA_LIST_FILE] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_CERTIFICATE_FILE] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_PASSWORD] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_METHOD] = "TLSv1";
+    tlsDefaultSettings[Conf::CONFIG_TLS_CIPHERS] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_SERVER_NAME] = "";
+    tlsDefaultSettings[Conf::CONFIG_TLS_VERIFY_SERVER] = "true";
+    tlsDefaultSettings[Conf::CONFIG_TLS_VERIFY_CLIENT] = "true";
+    tlsDefaultSettings[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
+    tlsDefaultSettings[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
 
-    return tlsSettingsDefault;
+    return tlsDefaultSettings;
 }
 
 std::map<std::string, std::string> ConfigurationManager::getTlsSettings()

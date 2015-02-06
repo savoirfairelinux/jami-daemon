@@ -632,7 +632,7 @@
            </arg>
        </method>
 
-       <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
+       <method name="getTlsDefaultSettings" tp:name-for-bindings="getTlsDefaultSettings">
                    <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">
            </arg>
