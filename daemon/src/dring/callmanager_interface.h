@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_CALLMANAGER_H__
-#define __RING_CALLMANAGER_H__
+#ifndef __RING_CALLMANAGERI_H__
+#define __RING_CALLMANAGERI_H__
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -39,22 +39,45 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <functional>
 
-#include "callmanager_interface.h"
+#include "dring.h"
 
 namespace ring {
 
-class AudioZrtpSession;
-
-class CallManagerException: public std::runtime_error {
-    public:
-        CallManagerException(const std::string& str = "") :
-            std::runtime_error("A CallManagerException occured: " + str) {}
+/* call events */
+struct ring_call_ev_handlers
+{
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/)> on_state_change;
+    std::function<void ()> on_transfer_fail;
+    std::function<void ()> on_transfer_success;
+    std::function<void (const std::string& /*path*/)> on_record_playback_stopped;
+    std::function<void (const std::string& /*call_id*/, int /*nd_msg*/)> on_voice_mail_notify;
+    std::function<void (const std::string& /*id*/, const std::string& /*from*/, const std::string& /*msg*/)> on_incoming_message;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*from*/)> on_incoming_call;
+    std::function<void (const std::string& /*id*/, const std::string& /*filename*/)> on_record_playback_filepath;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_created;
+    std::function<void (const std::string& /*conf_id*/, const std::string& /*state*/)> on_conference_changed;
+    std::function<void (const std::string& /*filepath*/, int /*position*/, int /*scale*/)> on_update_playback_scale;
+    std::function<void (const std::string& /*conf_id*/)> on_conference_remove;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*call_id*/, const std::string& /*to*/)> on_new_call;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*state*/, int /*code*/)> on_sip_call_state_change;
+    std::function<void (const std::string& /*call_id*/, int /*state*/)> on_record_state_change;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_sdes_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*cipher*/)> on_secure_zrtp_on;
+    std::function<void (const std::string& /*call_id*/)> on_secure_zrtp_off;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*sas*/, int /*verified*/)> on_show_sas;
+    std::function<void (const std::string& /*call_id*/)> on_zrtp_not_supp_other;
+    std::function<void (const std::string& /*call_id*/, const std::string& /*reason*/, const std::string& /*severity*/)> on_zrtp_negotiation_fail;
+    std::function<void (const std::string& /*call_id*/, const std::map<std::string, int>& /*stats*/)> on_rtcp_receive_report;
 };
 
-class CallManager : public CallManagerI {
+class CallManagerException;
+
+class CallManagerI
+{
     public:
-        CallManager();
         void registerEvHandlers(ring_call_ev_handlers* evHandlers);
 
         /* Call related methods */
@@ -113,52 +136,8 @@ class CallManager : public CallManagerI {
         /* Instant messaging */
         void sendTextMessage(const std::string& callID, const std::string& message);
         void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
-
-    // Signals
-    public:
-        void callStateChanged(const std::string& callID, const std::string& state);
-
-        void transferFailed();
-
-        void transferSucceeded();
-
-        void recordPlaybackStopped(const std::string& path);
-
-        void voiceMailNotify(const std::string& callID, int32_t nd_msg);
-
-        void incomingMessage(const std::string& ID, const std::string& from, const std::string& msg);
-
-        void incomingCall(const std::string& accountID, const std::string& callID, const std::string& from);
-
-        void recordPlaybackFilepath(const std::string& id, const std::string& filename);
-
-        void conferenceCreated(const std::string& confID);
-
-        void conferenceChanged(const std::string& confID,const std::string& state);
-
-        void updatePlaybackScale(const std::string&, int32_t, int32_t);
-        void conferenceRemoved(const std::string&);
-        void newCallCreated(const std::string&, const std::string&, const std::string&);
-        void sipCallStateChanged(const std::string&, const std::string&, int32_t);
-        void recordingStateChanged(const std::string& callID, bool state);
-        void secureSdesOn(const std::string& arg);
-        void secureSdesOff(const std::string& arg);
-
-        void secureZrtpOn(const std::string& callID, const std::string& cipher);
-        void secureZrtpOff(const std::string& callID);
-        void showSAS(const std::string& callID, const std::string& sas, bool verified);
-        void zrtpNotSuppOther(const std::string& callID);
-        void zrtpNegotiationFailed(const std::string& callID, const std::string& arg2, const std::string& arg3);
-
-        void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats);
-
-    private:
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        // Event handlers; needed by the library API
-        ring_call_ev_handlers evHandlers_;
-#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 } // namespace ring
 
-#endif//CALLMANAGER_H
+#endif//CALLMANAGERI_H

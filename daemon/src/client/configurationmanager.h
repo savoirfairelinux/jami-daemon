@@ -42,11 +42,11 @@
 #include <map>
 #include <string>
 
-#include "dring.h"
+#include "configurationmanager_interface.h"
 
 namespace ring {
 
-class ConfigurationManager
+class ConfigurationManager : public ConfigurationManagerI
 {
     public:
         void registerEvHandlers(struct ring_config_ev_handlers* evHandlers);
@@ -63,7 +63,7 @@ class ConfigurationManager
         void sendRegister(const std::string& accoundID, bool enable);
         void registerAllAccounts(void);
 
-        std::map< std::string, std::string > getTlsSettingsDefault();
+        std::map< std::string, std::string > getTlsDefaultSettings();
 
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();

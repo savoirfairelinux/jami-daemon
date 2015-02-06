@@ -137,4 +137,12 @@ libring_la_SOURCES = conference.cpp \
 
 nobase_include_HEADERS= dring/dring.h \
 		dring/security_const.h \
+		dring/callmanager_interface.h \
+		dring/configurationmanager_interface.h \
+		dring/presencemanager_interface.h \
 		dring/account_const.h
+
+if RING_VIDEO
+nobase_include_HEADERS+= \
+		dring/videomanager_interface.h
+endif

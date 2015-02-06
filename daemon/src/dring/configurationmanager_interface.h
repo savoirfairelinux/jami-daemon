@@ -31,42 +31,40 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_DBUSCONFIGURATIONMANAGER_H__
-#define __RING_DBUSCONFIGURATIONMANAGER_H__
+#ifndef CONFIGURATIONMANAGERI_H
+#define CONFIGURATIONMANAGERI_H
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
-#include "dbus_cpp.h"
+namespace ring {
 
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
-#endif
+/* configuration events */
+struct ring_config_ev_handlers
+{
+    std::function<void (const std::string& /*device*/, double /*value*/)> on_volume_change;
+    std::function<void ()> on_accounts_change;
+    std::function<void ()> on_history_change;
+    std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
+    std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */)> on_volatile_details_change;
+    std::function<void (int /*alert*/)> on_error;
+};
 
-#pragma GCC diagnostic ignored "-Wignored-qualifiers"
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-#include "dbusconfigurationmanager.adaptor.h"
-#pragma GCC diagnostic warning "-Wignored-qualifiers"
-#pragma GCC diagnostic warning "-Wunused-parameter"
-
-#if __GNUC__ >= 4 && __GNUC_MINOR__ >= 6
-/* This warning option only exists for gcc 4.6.0 and greater. */
-#pragma GCC diagnostic warning "-Wunused-but-set-variable"
-#endif
-
-#include <stdexcept>
-
-class DBusConfigurationManager :
-    public cx::ring::Ring::ConfigurationManager_adaptor,
-    public DBus::IntrospectableAdaptor,
-    public DBus::ObjectAdaptor
+class ConfigurationManagerI
 {
     public:
-        DBusConfigurationManager(DBus::Connection& connection);
+        void registerEvHandlers(struct ring_config_ev_handlers* evHandlers);
 
-        // Methods
+    // Methods
+    public:
         std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
         std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
@@ -74,68 +72,97 @@ class DBusConfigurationManager :
         std::string addAccount(const std::map< std::string, std::string >& details);
         void removeAccount(const std::string& accoundID);
         std::vector< std::string > getAccountList();
-        void sendRegister(const std::string& accoundID, const bool& enable);
+        void sendRegister(const std::string& accoundID, bool enable);
         void registerAllAccounts(void);
+
         std::map< std::string, std::string > getTlsDefaultSettings();
-        std::vector< std::string > getSupportedCiphers(const std::string& accountID);
+
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
-        std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
+        std::vector< std::string > getSupportedCiphers(const std::string& accountID) const;
+        std::vector< std::string > getAudioCodecDetails(int32_t payload);
         std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
+
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
+
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
         std::vector< std::string > getAudioOutputDeviceList();
-        void setAudioOutputDevice(const int32_t& index);
-        void setAudioInputDevice(const int32_t& index);
-        void setAudioRingtoneDevice(const int32_t& index);
+        void setAudioOutputDevice(int32_t index);
+        void setAudioInputDevice(int32_t index);
+        void setAudioRingtoneDevice(int32_t index);
         std::vector< std::string > getAudioInputDeviceList();
         std::vector< std::string > getCurrentAudioDevicesIndex();
         int32_t getAudioInputDeviceIndex(const std::string& name);
         int32_t getAudioOutputDeviceIndex(const std::string& name);
         std::string getCurrentAudioOutputPlugin();
         bool getNoiseSuppressState();
-        void setNoiseSuppressState(const bool& state);
+        void setNoiseSuppressState(bool state);
+
         bool isAgcEnabled();
-        void setAgcState(const bool& enabled);
-        void muteDtmf(const bool& mute);
+        void setAgcState(bool enabled);
+
+        void muteDtmf(bool mute);
         bool isDtmfMuted();
+
         bool isCaptureMuted();
-        void muteCapture(const bool& mute);
+        void muteCapture(bool mute);
         bool isPlaybackMuted();
-        void mutePlayback(const bool& mute);
+        void mutePlayback(bool mute);
+
         std::map<std::string, std::string> getRingtoneList();
+
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
-        std::vector<std::string> getSupportedAudioManagers();
+
         int32_t isIax2Enabled();
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();
-        void setIsAlwaysRecording(const bool& rec);
-        void setHistoryLimit(const int32_t& days);
+        void setIsAlwaysRecording(bool rec);
+
+        void setHistoryLimit(int32_t days);
         int32_t getHistoryLimit();
         void clearHistory();
+
         void setAccountsOrder(const std::string& order);
+
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
+
         std::vector<std::map<std::string, std::string> > getHistory();
+
         std::map<std::string, std::string> getTlsSettings();
         void setTlsSettings(const std::map< std::string, std::string >& details);
         std::map< std::string, std::string > getIp2IpDetails();
+
         std::vector< std::map< std::string, std::string > > getCredentials(const std::string& accountID);
         void setCredentials(const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
+
         std::string getAddrFromInterfaceName(const std::string& interface);
+
         std::vector<std::string> getAllIpInterface();
         std::vector<std::string> getAllIpInterfaceByName();
+
         std::map<std::string, std::string> getShortcuts();
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
-        void setVolume(const std::string& device, const double& value);
+
+        void setVolume(const std::string& device, double value);
         double getVolume(const std::string& device);
+
+        /*
+         * Security
+         */
+        bool checkForPrivateKey(const std::string& pemPath);
+        bool checkCertificateValidity(const std::string& caPath,
+                                      const std::string& pemPath);
+        bool checkHostnameCertificate(const std::string& host,
+                                      const std::string& port);
         std::map<std::string, std::string> validateCertificate(const std::string& accountId,
             const std::string& certificate, const std::string& privateKey);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-
 };
 
-#endif // __RING_DBUSCONFIGURATIONMANAGER_H__
+} // namespace ring
+
+#endif //CONFIGURATIONMANAGERI_H
