@@ -28,21 +28,31 @@
  *  as that of the covered work.
  */
 
-#ifndef PRESENCEINT_H
-#define PRESENCEINT_H
+#ifndef PRESENCEMANAGERI_H
+#define PRESENCEMANAGERI_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
 #include <vector>
+#include <map>
 #include <string>
+#include <functional>
 
-#include "presencemanager_interface.h"
 
 namespace ring {
 
-class PresenceManager : public PresenceManagerI
+/* presence events */
+struct ring_pres_ev_handlers
+{
+    std::function<void (const std::string& /*remote*/)> on_new_server_subscription_request;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/)> on_server_error;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/)> on_new_buddy_notification;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/)> on_subscription_state_change;
+};
+
+class PresenceManagerI
 {
     public:
         void registerEvHandlers(struct ring_pres_ev_handlers* evHandlers);
@@ -55,22 +65,8 @@ class PresenceManager : public PresenceManagerI
         void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
         std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
         void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
-
-    // Signals
-    public:
-        void newServerSubscriptionRequest(const std::string& remote);
-        void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
-        void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                                  bool status, const std::string& lineStatus);
-        void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri, bool state);
-
-    private:
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        // Event handlers; needed by the library API
-        ring_pres_ev_handlers evHandlers_{};
-#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 } // namespace ring
 
-#endif //PRESENCEINT_H
+#endif //PRESENCEMANAGERI_H
