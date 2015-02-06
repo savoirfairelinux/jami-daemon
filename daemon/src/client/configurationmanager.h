@@ -42,14 +42,14 @@
 #include <map>
 #include <string>
 
-#include "dring.h"
+#include "configurationmanager_interface.h"
 
 namespace ring {
 
 class ConfigurationManager
 {
     public:
-        void registerEvHandlers(struct ring_config_ev_handlers* evHandlers);
+        void registerEvHandlers(struct config_ev_handlers* evHandlers);
 
     // Methods
     public:
@@ -63,7 +63,7 @@ class ConfigurationManager
         void sendRegister(const std::string& accoundID, bool enable);
         void registerAllAccounts(void);
 
-        std::map< std::string, std::string > getTlsSettingsDefault();
+        std::map< std::string, std::string > getTlsDefaultSettings();
 
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
@@ -166,7 +166,7 @@ class ConfigurationManager
     private:
 #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
         // Event handlers; needed by the library API
-        ring_config_ev_handlers evHandlers_{};
+        config_ev_handlers evHandlers_{};
 #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 

@@ -31,18 +31,25 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "dring.h"
+
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
 
 #include "dbusinstance.h"
+
 #include "dbuscallmanager.h"
+#include "callmanager_interface.h"
+
 #include "dbusconfigurationmanager.h"
+#include "configurationmanager_interface.h"
+
 #include "dbuspresencemanager.h"
+#include "presencemanager_interface.h"
 
 #ifdef RING_VIDEO
 #include "dbusvideomanager.h"
+#include "videomanager_interface.h"
 #endif
 
 struct EventCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
@@ -138,7 +145,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto callM = callManager_; // just an alias
 
     // Call event handlers
-    ring_call_ev_handlers callEvHandlers = {
+    ring::call_ev_handlers callEvHandlers = {
         bind(&DBusCallManager::callStateChanged, callM, _1, _2),
         bind(&DBusCallManager::transferFailed, callM),
         bind(&DBusCallManager::transferSucceeded, callM),
@@ -167,7 +174,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto confM = configurationManager_; // just an alias
 
     // Configuration event handlers
-    ring_config_ev_handlers configEvHandlers = {
+    ring::config_ev_handlers configEvHandlers = {
         bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2),
         bind(&DBusConfigurationManager::accountsChanged, confM),
         bind(&DBusConfigurationManager::historyChanged, confM),
@@ -180,7 +187,7 @@ int DBusClient::initLibrary(int sflphFlags)
 
     auto presM = presenceManager_;
     // Presence event handlers
-    ring_pres_ev_handlers presEvHandlers = {
+    ring::pres_ev_handlers presEvHandlers = {
         bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1),
         bind(&DBusPresenceManager::serverError, presM, _1, _2, _3),
         bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4),
@@ -191,7 +198,7 @@ int DBusClient::initLibrary(int sflphFlags)
     auto videoM = videoManager_;
 
     // Video event handlers
-    ring_video_ev_handlers videoEvHandlers = {
+    ring::video_ev_handlers videoEvHandlers = {
         bind(&DBusVideoManager::deviceEvent, videoM),
         bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5),
         bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)
@@ -199,17 +206,19 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif // RING_VIDEO
 
     // All event handlers
-    ring_ev_handlers evHandlers = {
-        .call_ev_handlers = callEvHandlers,
-        .config_ev_handlers = configEvHandlers,
-        .pres_ev_handlers = presEvHandlers,
+    std::map<EventHandlerKey, void*> evHandlers;
+
+
+    evHandlers.emplace(EventHandlerKey::CALL, static_cast<void*>(&callEvHandlers));
+    evHandlers.emplace(EventHandlerKey::CONFIG, static_cast<void*>(&configEvHandlers));
+    evHandlers.emplace(EventHandlerKey::PRESENCE, static_cast<void*>(&presEvHandlers));
+
 #ifdef RING_VIDEO
-        .video_ev_handlers = videoEvHandlers
+    evHandlers.emplace(EventHandlerKey::CALL, static_cast<void*>(&callEvHandlers));
 #endif // RING_VIDEO
-    };
 
     // Initialize now
-    return ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
+    return ring_init(evHandlers, static_cast<ring_init_flag>(sflphFlags));
 }
 
 void DBusClient::finiLibrary()

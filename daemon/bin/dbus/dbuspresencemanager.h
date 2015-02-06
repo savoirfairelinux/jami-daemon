@@ -55,11 +55,18 @@
 
 #include <stdexcept>
 
+namespace ring {
+    class PresenceManager;
+}
+
 class DBusPresenceManager :
     public cx::ring::Ring::PresenceManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+    private:
+        ring::PresenceManager* presenceManager_;
+
     public:
         DBusPresenceManager(DBus::Connection& connection);
 
