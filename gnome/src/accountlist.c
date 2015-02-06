@@ -339,7 +339,7 @@ gboolean account_has_custom_user_agent(const account_t *account)
 
 gboolean account_has_autoanswer_on(const account_t *account)
 {
-    return g_strcmp0(account_lookup(account, CONFIG_ACCOUNT_AUTOANSWER), "true") == 0;
+    return FALSE;
 }
 
 gboolean account_has_upnp_on(const account_t *account)
