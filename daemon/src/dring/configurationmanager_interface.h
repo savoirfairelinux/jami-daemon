@@ -31,8 +31,8 @@
  *  as that of the covered work.
  */
 
-#ifndef CONFIGURATIONMANAGER_H
-#define CONFIGURATIONMANAGER_H
+#ifndef CONFIGURATIONMANAGERI_H
+#define CONFIGURATIONMANAGERI_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,12 +41,24 @@
 #include <vector>
 #include <map>
 #include <string>
-
-#include "configurationmanager_interface.h"
+#include <functional>
 
 namespace ring {
 
-class ConfigurationManager : public ConfigurationManagerI
+/* configuration events */
+struct ring_config_ev_handlers
+{
+    std::function<void (const std::string& /*device*/, double /*value*/)> on_volume_change;
+    std::function<void ()> on_accounts_change;
+    std::function<void ()> on_history_change;
+    std::function<void (const std::string& /*account_id*/)> on_stun_status_fail;
+    std::function<void (const std::string& /*account_id*/, int /*state*/)> on_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/)> on_sip_registration_state_change;
+    std::function<void (const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */)> on_volatile_details_change;
+    std::function<void (int /*alert*/)> on_error;
+};
+
+class ConfigurationManagerI
 {
     public:
         void registerEvHandlers(struct ring_config_ev_handlers* evHandlers);
@@ -149,32 +161,8 @@ class ConfigurationManager : public ConfigurationManagerI
         std::map<std::string, std::string> validateCertificate(const std::string& accountId,
             const std::string& certificate, const std::string& privateKey);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-
-
-    // Signals
-    public:
-        void volumeChanged(const std::string& device, double value);
-
-        void accountsChanged();
-
-        void historyChanged();
-
-        void stunStatusFailure(const std::string& accoundID);
-
-        void registrationStateChanged(const std::string& accoundID, int state);
-        void sipRegistrationStateChanged(const std::string&, const std::string&, int32_t state);
-        void volatileAccountDetailsChanged(const std::string& accountID, const std::map<std::string, std::string> &details);
-        void errorAlert(int alert);
-
-        std::vector< int32_t > getHardwareAudioFormat();
-
-    private:
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        // Event handlers; needed by the library API
-        ring_config_ev_handlers evHandlers_{};
-#pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
 
 } // namespace ring
 
-#endif //CONFIGURATIONMANAGER_H
+#endif //CONFIGURATIONMANAGERI_H

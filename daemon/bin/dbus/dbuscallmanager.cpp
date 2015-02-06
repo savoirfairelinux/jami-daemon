@@ -32,6 +32,11 @@
 
 #include "dbuscallmanager.h"
 
+static ring::CallManager* getCallManager()
+{
+    return ring::Manager::instance().getClient()->getCallManager();
+}
+
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")
 {
@@ -39,7 +44,7 @@ DBusCallManager::DBusCallManager(DBus::Connection& connection)
 
 bool DBusCallManager::placeCall(const std::string& accountID, const std::string& callID, const std::string& to)
 {
-    return ring_call_place(accountID, callID, to);
+    return getCallManager()->placeCall(accountID, callID, to);
 }
 
 bool DBusCallManager::refuse(const std::string& callID)
