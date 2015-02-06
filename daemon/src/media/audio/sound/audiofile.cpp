@@ -59,8 +59,7 @@ AudioFile::onBufferFinish()
     }
 
     if ((updatePlaybackScale_ % 5) == 0) {
-        CallManager *cm = Manager::instance().getCallManager();
-        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->frames() / divisor);
+        updatePlaybackScale(filepath_, pos_ / divisor, buffer_->frames() / divisor);
     }
 
     updatePlaybackScale_++;

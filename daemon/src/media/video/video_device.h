@@ -35,10 +35,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "videomanager_interface.h"
 
 namespace ring { namespace video {
 
-typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
 typedef std::map<std::string, std::string> VideoSettings;
 // FIXME move VideoSettings in video_base since video_decoder (and encoder?) may use it.
 
@@ -73,7 +73,7 @@ public:
      *                 '800x448': ['15'],
      *                 '960x540': ['10']}}
      */
-    VideoCapabilities getCapabilities() const;
+    DRing::VideoCapabilities getCapabilities() const;
 
     /*
      * Get the string/string map of settings for the device.
