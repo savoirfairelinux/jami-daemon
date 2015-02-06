@@ -133,10 +133,15 @@ MediaCodecFactory::addCodec(MediaCodec* c)
 std::vector<MediaCodec*> *
 MediaCodecFactory::getMediaCodecList(MEDIA_TYPE mediaType)
 {
-    std::vector<MediaCodec*> * mediaCodecList;
+    if (mediaType & MEDIA_ALL)
+        return availableCodecList;
+
+    //otherwise we have to instantiate a new list containing filtered objects
+    // must be destroyed by the caller...
+    std::vector<MediaCodec*>  *mediaCodecList = new std::vector<MediaCodec*>;
     for ( uint16_t i = 0; i < availableCodecList->size(); i++)
     {
-        if (availableCodecList->at(i)->mediaType_ & mediaType)
+        if ((availableCodecList->at(i)->mediaType_ & mediaType))
             mediaCodecList->push_back( availableCodecList->at(i));
     }
     return mediaCodecList;
@@ -147,11 +152,33 @@ MediaCodecFactory::getMediaCodecIdList(MEDIA_TYPE mediaType)
     std::vector<int32_t> idList;
     for ( uint16_t i = 0; i < availableCodecList->size(); i++)
     {
-        if (availableCodecList->at(i)->mediaType_ & mediaType)
+        if ((availableCodecList->at(i)->mediaType_ & mediaType))
             idList.push_back( availableCodecList->at(i)->getCodecId());
     }
     return idList;
 }
+std::vector<int32_t>
+MediaCodecFactory::getActiveMediaCodecIdList(MEDIA_TYPE mediaType)
+{
+    std::vector<int32_t> idList;
+    for ( uint16_t i = 0; i < availableCodecList->size(); i++)
+    {
+        if ((availableCodecList->at(i)->mediaType_ & mediaType)
+            && (availableCodecList->at(i)->isActive_))
+            idList.push_back( availableCodecList->at(i)->getCodecId());
+    }
+    return idList;
+}
+
+void MediaCodecFactory::desactivateAllMedia(MEDIA_TYPE mediaType)
+{
+    for ( uint16_t i = 0; i < availableCodecList->size(); i++)
+    {
+        if (availableCodecList->at(i)->mediaType_ & mediaType)
+            availableCodecList->at(i)->isActive_ = false;
+    }
+}
+
 ring::MediaCodec*
 MediaCodecFactory::searchCodecById(uint16_t codecId, MEDIA_TYPE mediaType)
 {

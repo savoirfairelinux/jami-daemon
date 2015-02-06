@@ -279,6 +279,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::set<std::string> callIDSet_ = {{}};
 
+        /**
+         * sort MediaCodec by order
+         */
+        static bool sortMediaCodec(MediaCodec* c1  , MediaCodec* c2) {
+            return (c1->order_< c2->order_);
+        }
+
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);

@@ -56,10 +56,16 @@ extern decltype(getGlobalInstance<MediaCodecFactory>)& getMediaCodecFactory;
             void addCodec(MediaCodec* c);
 
             std::vector<MediaCodec*> *
-            getMediaCodecList(MEDIA_TYPE mediaType);
+            getMediaCodecList(MEDIA_TYPE mediaType = MEDIA_ALL);
 
             std::vector<int32_t>
             getMediaCodecIdList(MEDIA_TYPE type = MEDIA_ALL);
+
+            std::vector<int32_t>
+            getActiveMediaCodecIdList(MEDIA_TYPE type = MEDIA_ALL);
+
+            void
+            desactivateAllMedia(MEDIA_TYPE type = MEDIA_ALL);
 
             ring::MediaCodec*
             searchCodecById(uint16_t codecId, MEDIA_TYPE type = MEDIA_ALL);

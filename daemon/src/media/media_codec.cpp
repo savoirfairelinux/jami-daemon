@@ -45,6 +45,7 @@ MediaCodec::MediaCodec(AVCodecID avcodecId, const std::string name, std::string 
     codecId_ = generateId();
     codecType_ = codecType;
     mediaType_ = mediaType;
+    order_ = 0; //undefined order
 }
 MediaCodec::~MediaCodec()
 {
@@ -57,7 +58,7 @@ uint16_t MediaCodec::getCodecId()
 std::string MediaCodec::to_string()
 {
     std::ostringstream out;
-    out << "type:" << codecType_ << " ,id:" << codecId_ << " ,avcodecID:" << avcodecId_ << " ,name:" << name_ << " ,PT:" << payloadType_ << " ,isActive:" << (isActive_ ? "true " : "false") << " ,libName:" << libName_ << " ,bitrate:" << bitrate_;
+    out << "order:" << order_ << " type:" << codecType_ << " ,id:" << codecId_ << " ,avcodecID:" << avcodecId_ << " ,name:" << name_ << " ,PT:" << payloadType_ << " ,isActive:" << (isActive_ ? "true " : "false") << " ,libName:" << libName_ << " ,bitrate:" << bitrate_;
 
     return out.str();
 }
@@ -68,7 +69,6 @@ static uint16_t generateId()
 
 bool operator== (MediaCodec codec1, MediaCodec codec2)
 {
-    //return ((codec1.avcodecId_ == codec2.avcodecId_) && (codec1.name_.compare(codec2.name_) == 0));
     return (codec1.avcodecId_ == codec2.avcodecId_);
 }
 }
