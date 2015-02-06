@@ -63,8 +63,7 @@ namespace ring {
 static video::VideoSettings
 getSettings()
 {
-    const auto videoman = Manager::instance().getVideoManager();
-    return videoman->getSettings(videoman->getDefaultDevice());
+    return getSettings(getDefaultDevice());
 }
 #endif
 

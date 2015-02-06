@@ -38,38 +38,23 @@
 #include <vector>
 #include <string>
 
-#include "dring.h"
+#include "presencemanager_interface.h"
 
 namespace ring {
 
-class PresenceManager
-{
-    public:
-        void registerEvHandlers(struct ring_pres_ev_handlers* evHandlers);
-
-    // Methods
-    public:
-        /* Presence subscription/Notification. */
-        void publish(const std::string& accountID, bool status, const std::string& note);
-        void answerServerRequest(const std::string& uri, bool flag);
-        void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
-        std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
-        void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
-
-    // Signals
-    public:
-        void newServerSubscriptionRequest(const std::string& remote);
-        void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
-        void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                                  bool status, const std::string& lineStatus);
-        void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri, bool state);
-
-    private:
-#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-        // Event handlers; needed by the library API
-        ring_pres_ev_handlers evHandlers_{};
-#pragma GCC diagnostic warning "-Wmissing-field-initializers"
+struct PresenceManager {
+  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+  pres_ev_handlers evHandlers_{};
+  #pragma GCC diagnostic warning "-Wmissing-field-initializers"
 };
+
+extern PresenceManager presenceManager;
+
+void newServerSubscriptionRequest(const std::string& remote);
+void serverError(const std::string& accountID, const std::string& error, const std::string& msg);
+void newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
+                            bool status, const std::string& lineStatus);
+void subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri, bool state);
 
 } // namespace ring
 

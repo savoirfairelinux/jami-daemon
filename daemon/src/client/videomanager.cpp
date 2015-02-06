@@ -40,19 +40,27 @@
 
 namespace ring {
 
-void VideoManager::registerEvHandlers(struct ring_video_ev_handlers* evHandlers)
+VideoManager videoManager;
+
+void registerEvHandlers(struct video_ev_handlers* evHandlers)
 {
-    evHandlers_ = *evHandlers;
+    videoManager.evHandlers_ = *evHandlers;
 }
 
-video::VideoDeviceMonitor &
-VideoManager::getVideoDeviceMonitor()
+std::shared_ptr<video::VideoFrameActiveWriter>
+getVideoCamera()
 {
-    return videoDeviceMonitor_;
+    auto input = videoManager.videoInput_.lock();
+    if (!input) {
+        videoManager.started_ = false;
+        input.reset(new video::VideoInput());
+        videoManager.videoInput_ = input;
+    }
+    return input;
 }
 
 std::vector<std::map<std::string, std::string> >
-VideoManager::getCodecs(const std::string &accountID)
+getCodecs(const std::string &accountID)
 {
     if (const auto acc = Manager::instance().getAccount(accountID))
         return acc->getAllVideoCodecs();
@@ -61,7 +69,7 @@ VideoManager::getCodecs(const std::string &accountID)
 }
 
 void
-VideoManager::setCodecs(const std::string& accountID,
+setCodecs(const std::string& accountID,
                         const std::vector<std::map<std::string, std::string> > &details)
 {
     if (auto acc = Manager::instance().getAccount(accountID)) {
@@ -71,61 +79,66 @@ VideoManager::setCodecs(const std::string& accountID,
 }
 
 std::vector<std::string>
-VideoManager::getDeviceList()
+getDeviceList()
 {
-    return videoDeviceMonitor_.getDeviceList();
+    return videoManager.videoDeviceMonitor_.getDeviceList();
 }
 
 video::VideoCapabilities
-VideoManager::getCapabilities(const std::string& name)
+getCapabilities(const std::string& name)
 {
-    return videoDeviceMonitor_.getCapabilities(name);
+    return videoManager.videoDeviceMonitor_.getCapabilities(name);
 }
 
 std::string
-VideoManager::getDefaultDevice()
+getDefaultDevice()
 {
-    return videoDeviceMonitor_.getDefaultDevice();
+    return videoManager.videoDeviceMonitor_.getDefaultDevice();
 }
 
 void
-VideoManager::setDefaultDevice(const std::string &name)
+setDefaultDevice(const std::string &name)
 {
     RING_DBG("Setting device to %s", name.c_str());
-    videoDeviceMonitor_.setDefaultDevice(name);
+    videoManager.videoDeviceMonitor_.setDefaultDevice(name);
+}
+
+video::VideoDeviceMonitor& getVideoDeviceMonitor()
+{
+    return videoManager.videoDeviceMonitor_;
 }
 
 std::map<std::string, std::string>
-VideoManager::getSettings(const std::string& name) {
-    return videoDeviceMonitor_.getSettings(name);
+getSettings(const std::string& name) {
+    return videoManager.videoDeviceMonitor_.getSettings(name);
 }
 
 void
-VideoManager::applySettings(const std::string& name,
+applySettings(const std::string& name,
         const std::map<std::string, std::string>& settings)
 {
-    videoDeviceMonitor_.applySettings(name, settings);
+    videoManager.videoDeviceMonitor_.applySettings(name, settings);
 }
 
 void
-VideoManager::startCamera()
+startCamera()
 {
-    videoPreview_ = getVideoCamera();
-    started_ = switchToCamera();
+    videoManager.videoPreview_ = getVideoCamera();
+    videoManager.started_ = switchToCamera();
 }
 
 void
-VideoManager::stopCamera()
+stopCamera()
 {
     if (switchInput(""))
-        started_ = false;
-    videoPreview_.reset();
+        videoManager.started_ = false;
+    videoManager.videoPreview_.reset();
 }
 
 bool
-VideoManager::switchInput(const std::string &resource)
+switchInput(const std::string &resource)
 {
-    auto input = videoInput_.lock();
+    auto input = videoManager.videoInput_.lock();
     if (!input) {
         RING_WARN("Video input not initialized");
         return false;
@@ -134,53 +147,41 @@ VideoManager::switchInput(const std::string &resource)
 }
 
 bool
-VideoManager::switchToCamera()
+switchToCamera()
 {
-    return switchInput("v4l2://" + videoDeviceMonitor_.getDefaultDevice());
-}
-
-std::shared_ptr<video::VideoFrameActiveWriter>
-VideoManager::getVideoCamera()
-{
-    auto input = videoInput_.lock();
-    if (!input) {
-        started_ = false;
-        input.reset(new video::VideoInput());
-        videoInput_ = input;
-    }
-    return input;
+    return switchInput("v4l2://" + videoManager.videoDeviceMonitor_.getDefaultDevice());
 }
 
 bool
-VideoManager::hasCameraStarted()
+hasCameraStarted()
 {
-    return started_;
+    return videoManager.started_;
 }
 
 std::string
-VideoManager::getCurrentCodecName(const std::string & /*callID*/)
+getCurrentCodecName(const std::string & /*callID*/)
 {
     return "";
 }
 
-void VideoManager::deviceEvent()
+void deviceEvent()
 {
-    if (evHandlers_.on_device_event) {
-        evHandlers_.on_device_event();
+    if (videoManager.evHandlers_.on_device_event) {
+        videoManager.evHandlers_.on_device_event();
     }
 }
 
-void VideoManager::startedDecoding(const std::string &id, const std::string& shmPath, int w, int h, bool isMixer)
+void startedDecoding(const std::string &id, const std::string& shmPath, int w, int h, bool isMixer)
 {
-    if (evHandlers_.on_start_decoding) {
-        evHandlers_.on_start_decoding(id, shmPath, w, h, isMixer);
+    if (videoManager.evHandlers_.on_start_decoding) {
+        videoManager.evHandlers_.on_start_decoding(id, shmPath, w, h, isMixer);
     }
 }
 
-void VideoManager::stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer)
+void stoppedDecoding(const std::string &id, const std::string& shmPath, bool isMixer)
 {
-    if (evHandlers_.on_stop_decoding) {
-        evHandlers_.on_stop_decoding(id, shmPath, isMixer);
+    if (videoManager.evHandlers_.on_stop_decoding) {
+        videoManager.evHandlers_.on_stop_decoding(id, shmPath, isMixer);
     }
 }
 

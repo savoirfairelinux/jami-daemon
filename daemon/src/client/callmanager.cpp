@@ -32,7 +32,6 @@
 #include <cstring>
 
 #include "callmanager.h"
-#include "libav_utils.h"
 #include "call_factory.h"
 
 #include "sip/sipcall.h"
@@ -44,17 +43,14 @@
 
 namespace ring {
 
-CallManager::CallManager()
+CallManager callManager;
+
+void registerEvHandlers(struct call_ev_handlers* evHandlers)
 {
-    libav_utils::sfl_avcodec_init();
+    callManager.evHandlers_ = *evHandlers;
 }
 
-void CallManager::registerEvHandlers(struct ring_call_ev_handlers* evHandlers)
-{
-    evHandlers_ = *evHandlers;
-}
-
-bool CallManager::placeCall(const std::string& accountID,
+bool placeCall(const std::string& accountID,
                             const std::string& callID,
                             const std::string& to)
 {
@@ -68,200 +64,200 @@ bool CallManager::placeCall(const std::string& accountID,
 }
 
 bool
-CallManager::refuse(const std::string& callID)
+refuse(const std::string& callID)
 {
     return Manager::instance().refuseCall(callID);
 }
 
 bool
-CallManager::accept(const std::string& callID)
+accept(const std::string& callID)
 {
     return Manager::instance().answerCall(callID);
 }
 
 bool
-CallManager::hangUp(const std::string& callID)
+hangUp(const std::string& callID)
 {
     return Manager::instance().hangupCall(callID);
 }
 
 bool
-CallManager::hangUpConference(const std::string& confID)
+hangUpConference(const std::string& confID)
 {
     return Manager::instance().hangupConference(confID);
 }
 
 bool
-CallManager::hold(const std::string& callID)
+hold(const std::string& callID)
 {
     return Manager::instance().onHoldCall(callID);
 }
 
 bool
-CallManager::unhold(const std::string& callID)
+unhold(const std::string& callID)
 {
     return Manager::instance().offHoldCall(callID);
 }
 
 bool
-CallManager::transfer(const std::string& callID, const std::string& to)
+transfer(const std::string& callID, const std::string& to)
 {
     return Manager::instance().transferCall(callID, to);
 }
 
 bool
-CallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
+attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     return Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 bool
-CallManager::joinParticipant(const std::string& sel_callID,
+joinParticipant(const std::string& sel_callID,
                              const std::string& drag_callID)
 {
     return Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
-CallManager::createConfFromParticipantList(const std::vector<std::string>& participants)
+createConfFromParticipantList(const std::vector<std::string>& participants)
 {
     Manager::instance().createConfFromParticipantList(participants);
 }
 
 bool
-CallManager::isConferenceParticipant(const std::string& callID)
+isConferenceParticipant(const std::string& callID)
 {
     return  Manager::instance().isConferenceParticipant(callID);
 }
 
 void
-CallManager::removeConference(const std::string& conference_id)
+removeConference(const std::string& conference_id)
 {
     Manager::instance().removeConference(conference_id);
 }
 
 bool
-CallManager::addParticipant(const std::string& callID, const std::string& confID)
+addParticipant(const std::string& callID, const std::string& confID)
 {
     return  Manager::instance().addParticipant(callID, confID);
 }
 
 bool
-CallManager::addMainParticipant(const std::string& confID)
+addMainParticipant(const std::string& confID)
 {
     return Manager::instance().addMainParticipant(confID);
 }
 
 bool
-CallManager::detachParticipant(const std::string& callID)
+detachParticipant(const std::string& callID)
 {
     return Manager::instance().detachParticipant(callID);
 }
 
 bool
-CallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
+joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
     return Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool
-CallManager::holdConference(const std::string& confID)
+holdConference(const std::string& confID)
 {
     return Manager::instance().holdConference(confID);
 }
 
 bool
-CallManager::unholdConference(const std::string& confID)
+unholdConference(const std::string& confID)
 {
     return Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
-CallManager::getConferenceDetails(const std::string& callID)
+getConferenceDetails(const std::string& callID)
 {
     return Manager::instance().getConferenceDetails(callID);
 }
 
 std::vector<std::string>
-CallManager::getConferenceList()
+getConferenceList()
 {
     return Manager::instance().getConferenceList();
 }
 
 std::vector<std::string>
-CallManager::getParticipantList(const std::string& confID)
+getParticipantList(const std::string& confID)
 {
     return Manager::instance().getParticipantList(confID);
 }
 
 std::vector<std::string>
-CallManager::getDisplayNames(const std::string& confID)
+getDisplayNames(const std::string& confID)
 {
     return Manager::instance().getDisplayNames(confID);
 }
 
 std::string
-CallManager::getConferenceId(const std::string& callID)
+getConferenceId(const std::string& callID)
 {
     return Manager::instance().getConferenceId(callID);
 }
 
 bool
-CallManager::startRecordedFilePlayback(const std::string& filepath)
+startRecordedFilePlayback(const std::string& filepath)
 {
     return Manager::instance().startRecordedFilePlayback(filepath);
 }
 
 void
-CallManager::stopRecordedFilePlayback(const std::string& filepath)
+stopRecordedFilePlayback(const std::string& filepath)
 {
     Manager::instance().stopRecordedFilePlayback(filepath);
 }
 
 bool
-CallManager::toggleRecording(const std::string& callID)
+toggleRecording(const std::string& callID)
 {
     return Manager::instance().toggleRecordingCall(callID);
 }
 
 void
-CallManager::setRecording(const std::string& callID)
+setRecording(const std::string& callID)
 {
     toggleRecording(callID);
 }
 
 void
-CallManager::recordPlaybackSeek(double value)
+recordPlaybackSeek(double value)
 {
     Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
-CallManager::getIsRecording(const std::string& callID)
+getIsRecording(const std::string& callID)
 {
     return Manager::instance().isRecording(callID);
 }
 
-std::string CallManager::getCurrentAudioCodecName(const std::string& /*callID*/)
+std::string getCurrentAudioCodecName(const std::string& /*callID*/)
 {
     RING_WARN("Deprecated");
     return "";
 }
 
 std::map<std::string, std::string>
-CallManager::getCallDetails(const std::string& callID)
+getCallDetails(const std::string& callID)
 {
     return Manager::instance().getCallDetails(callID);
 }
 
 std::vector<std::string>
-CallManager::getCallList()
+getCallList()
 {
     return Manager::instance().getCallList();
 }
 
 void
-CallManager::playDTMF(const std::string& key)
+playDTMF(const std::string& key)
 {
     auto code = key.data()[0];
     Manager::instance().playDtmf(code);
@@ -271,7 +267,7 @@ CallManager::playDTMF(const std::string& key)
 }
 
 void
-CallManager::startTone(int32_t start, int32_t type)
+startTone(int32_t start, int32_t type)
 {
     if (start) {
         if (type == 0)
@@ -283,36 +279,36 @@ CallManager::startTone(int32_t start, int32_t type)
 }
 
 void
-CallManager::setSASVerified(const std::string& /*callID*/)
+setSASVerified(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::resetSASVerified(const std::string& /*callID*/)
+resetSASVerified(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::setConfirmGoClear(const std::string& /*callID*/)
+setConfirmGoClear(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::requestGoClear(const std::string& /*callID*/)
+requestGoClear(const std::string& /*callID*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
 void
-CallManager::acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
+acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
 {
     RING_ERR("ZRTP not supported");
 }
 
-void CallManager::sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
+void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
 {
 #if HAVE_INSTANT_MESSAGING
     Manager::instance().sendTextMessage(callID, message, from);
@@ -320,7 +316,7 @@ void CallManager::sendTextMessage(const std::string& callID, const std::string& 
 }
 
 void
-CallManager::sendTextMessage(const std::string& callID, const std::string& message)
+sendTextMessage(const std::string& callID, const std::string& message)
 {
 #if HAVE_INSTANT_MESSAGING
     if (!Manager::instance().sendTextMessage(callID, message, "Me"))
@@ -330,164 +326,164 @@ CallManager::sendTextMessage(const std::string& callID, const std::string& messa
 #endif
 }
 
-void CallManager::callStateChanged(const std::string& callID, const std::string& state)
+void callStateChanged(const std::string& callID, const std::string& state)
 {
-    if (evHandlers_.on_state_change) {
-        evHandlers_.on_state_change(callID, state);
+    if (callManager.evHandlers_.on_state_change) {
+        callManager.evHandlers_.on_state_change(callID, state);
     }
 }
 
-void CallManager::transferFailed()
+void transferFailed()
 {
-    if (evHandlers_.on_transfer_fail) {
-        evHandlers_.on_transfer_fail();
+    if (callManager.evHandlers_.on_transfer_fail) {
+        callManager.evHandlers_.on_transfer_fail();
     }
 }
 
-void CallManager::transferSucceeded()
+void transferSucceeded()
 {
-    if (evHandlers_.on_transfer_success) {
-        evHandlers_.on_transfer_success();
+    if (callManager.evHandlers_.on_transfer_success) {
+        callManager.evHandlers_.on_transfer_success();
     }
 }
 
-void CallManager::recordPlaybackStopped(const std::string& path)
+void recordPlaybackStopped(const std::string& path)
 {
-    if (evHandlers_.on_record_playback_stopped) {
-        evHandlers_.on_record_playback_stopped(path);
+    if (callManager.evHandlers_.on_record_playback_stopped) {
+        callManager.evHandlers_.on_record_playback_stopped(path);
     }
 }
 
-void CallManager::voiceMailNotify(const std::string& callID, int32_t nd_msg)
+void voiceMailNotify(const std::string& callID, int32_t nd_msg)
 {
-    if (evHandlers_.on_voice_mail_notify) {
-        evHandlers_.on_voice_mail_notify(callID, nd_msg);
+    if (callManager.evHandlers_.on_voice_mail_notify) {
+        callManager.evHandlers_.on_voice_mail_notify(callID, nd_msg);
     }
 }
 
-void CallManager::incomingMessage(const std::string& ID, const std::string& from, const std::string& msg)
+void onIncomingMessage(const std::string& ID, const std::string& from, const std::string& msg)
 {
-    if (evHandlers_.on_incoming_message) {
-        evHandlers_.on_incoming_message(ID, from, msg);
+    if (callManager.evHandlers_.on_incoming_message) {
+        callManager.evHandlers_.on_incoming_message(ID, from, msg);
     }
 }
 
-void CallManager::incomingCall(const std::string& accountID, const std::string& callID, const std::string& from)
+void onIncomingCall(const std::string& accountID, const std::string& callID, const std::string& from)
 {
-    if (evHandlers_.on_incoming_call) {
-        evHandlers_.on_incoming_call(accountID, callID, from);
+    if (callManager.evHandlers_.on_incoming_call) {
+        callManager.evHandlers_.on_incoming_call(accountID, callID, from);
     }
 }
 
-void CallManager::recordPlaybackFilepath(const std::string& id, const std::string& filename)
+void recordPlaybackFilepath(const std::string& id, const std::string& filename)
 {
-    if (evHandlers_.on_record_playback_filepath) {
-        evHandlers_.on_record_playback_filepath(id, filename);
+    if (callManager.evHandlers_.on_record_playback_filepath) {
+        callManager.evHandlers_.on_record_playback_filepath(id, filename);
     }
 }
 
-void CallManager::conferenceCreated(const std::string& confID)
+void conferenceCreated(const std::string& confID)
 {
-    if (evHandlers_.on_conference_created) {
-        evHandlers_.on_conference_created(confID);
+    if (callManager.evHandlers_.on_conference_created) {
+        callManager.evHandlers_.on_conference_created(confID);
     }
 }
 
-void CallManager::conferenceChanged(const std::string& confID, const std::string& state)
+void conferenceChanged(const std::string& confID, const std::string& state)
 {
-    if (evHandlers_.on_conference_changed) {
-        evHandlers_.on_conference_changed(confID, state);
+    if (callManager.evHandlers_.on_conference_changed) {
+        callManager.evHandlers_.on_conference_changed(confID, state);
     }
 }
 
-void CallManager::updatePlaybackScale(const std::string& filepath, int32_t position, int32_t scale)
+void updatePlaybackScale(const std::string& filepath, int32_t position, int32_t scale)
 {
-    if (evHandlers_.on_update_playback_scale) {
-        evHandlers_.on_update_playback_scale(filepath, position, scale);
+    if (callManager.evHandlers_.on_update_playback_scale) {
+        callManager.evHandlers_.on_update_playback_scale(filepath, position, scale);
     }
 }
 
-void CallManager::conferenceRemoved(const std::string& confID)
+void conferenceRemoved(const std::string& confID)
 {
-    if (evHandlers_.on_conference_remove) {
-        evHandlers_.on_conference_remove(confID);
+    if (callManager.evHandlers_.on_conference_remove) {
+        callManager.evHandlers_.on_conference_remove(confID);
     }
 }
 
-void CallManager::newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to)
+void newCallCreated(const std::string& accountID, const std::string& callID, const std::string& to)
 {
-    if (evHandlers_.on_new_call) {
-        evHandlers_.on_new_call(accountID, callID, to);
+    if (callManager.evHandlers_.on_new_call) {
+        callManager.evHandlers_.on_new_call(accountID, callID, to);
     }
 }
 
-void CallManager::sipCallStateChanged(const std::string& callID, const std::string& state, int32_t code)
+void sipCallStateChanged(const std::string& callID, const std::string& state, int32_t code)
 {
-    if (evHandlers_.on_sip_call_state_change) {
-        evHandlers_.on_sip_call_state_change(callID, state, code);
+    if (callManager.evHandlers_.on_sip_call_state_change) {
+        callManager.evHandlers_.on_sip_call_state_change(callID, state, code);
     }
 }
 
-void CallManager::recordingStateChanged(const std::string& callID, bool state)
+void recordingStateChanged(const std::string& callID, bool state)
 {
-    if (evHandlers_.on_record_state_change) {
-        evHandlers_.on_record_state_change(callID, state);
+    if (callManager.evHandlers_.on_record_state_change) {
+        callManager.evHandlers_.on_record_state_change(callID, state);
     }
 }
 
-void CallManager::secureSdesOn(const std::string& callID)
+void secureSdesOn(const std::string& callID)
 {
-    if (evHandlers_.on_secure_sdes_on) {
-        evHandlers_.on_secure_sdes_on(callID);
+    if (callManager.evHandlers_.on_secure_sdes_on) {
+        callManager.evHandlers_.on_secure_sdes_on(callID);
     }
 }
 
-void CallManager::secureSdesOff(const std::string& callID)
+void secureSdesOff(const std::string& callID)
 {
-    if (evHandlers_.on_secure_sdes_off) {
-        evHandlers_.on_secure_sdes_off(callID);
+    if (callManager.evHandlers_.on_secure_sdes_off) {
+        callManager.evHandlers_.on_secure_sdes_off(callID);
     }
 }
 
-void CallManager::secureZrtpOn(const std::string& callID, const std::string& cipher)
+void secureZrtpOn(const std::string& callID, const std::string& cipher)
 {
-    if (evHandlers_.on_secure_zrtp_on) {
-        evHandlers_.on_secure_zrtp_on(callID, cipher);
+    if (callManager.evHandlers_.on_secure_zrtp_on) {
+        callManager.evHandlers_.on_secure_zrtp_on(callID, cipher);
     }
 }
 
-void CallManager::secureZrtpOff(const std::string& callID)
+void secureZrtpOff(const std::string& callID)
 {
-    if (evHandlers_.on_secure_zrtp_off) {
-        evHandlers_.on_secure_zrtp_off(callID);
+    if (callManager.evHandlers_.on_secure_zrtp_off) {
+        callManager.evHandlers_.on_secure_zrtp_off(callID);
     }
 }
 
-void CallManager::showSAS(const std::string& callID, const std::string& sas, bool verified)
+void showSAS(const std::string& callID, const std::string& sas, bool verified)
 {
-    if (evHandlers_.on_show_sas) {
-        evHandlers_.on_show_sas(callID, sas, verified);
+    if (callManager.evHandlers_.on_show_sas) {
+        callManager.evHandlers_.on_show_sas(callID, sas, verified);
     }
 }
 
-void CallManager::zrtpNotSuppOther(const std::string& callID)
+void zrtpNotSuppOther(const std::string& callID)
 {
-    if (evHandlers_.on_zrtp_not_supp_other) {
-        evHandlers_.on_zrtp_not_supp_other(callID);
+    if (callManager.evHandlers_.on_zrtp_not_supp_other) {
+        callManager.evHandlers_.on_zrtp_not_supp_other(callID);
     }
 }
 
-void CallManager::zrtpNegotiationFailed(const std::string& callID, const std::string& reason, const std::string& severity)
+void zrtpNegotiationFailed(const std::string& callID, const std::string& reason, const std::string& severity)
 {
-    if (evHandlers_.on_zrtp_negotiation_fail) {
-        evHandlers_.on_zrtp_negotiation_fail(callID, reason, severity);
+    if (callManager.evHandlers_.on_zrtp_negotiation_fail) {
+        callManager.evHandlers_.on_zrtp_negotiation_fail(callID, reason, severity);
     }
 }
 
-void CallManager::onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats)
+void onRtcpReportReceived(const std::string& callID, const std::map<std::string, int>& stats)
 {
-    if (evHandlers_.on_rtcp_receive_report) {
-        evHandlers_.on_rtcp_receive_report(callID, stats);
+    if (callManager.evHandlers_.on_rtcp_receive_report) {
+        callManager.evHandlers_.on_rtcp_receive_report(callID, stats);
     }
 }
 
