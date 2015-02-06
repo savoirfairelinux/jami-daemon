@@ -31,343 +31,358 @@
 #include "dring.h"
 
 #include "dbusconfigurationmanager.h"
+#include "managerimpl.h"
+#include "manager.h"
+#include "client/configurationmanager.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
 {
+    configurationManager_ = ring::Manager::instance().getConfigurationManager();
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getAccountDetails(const std::string& accountID)
 {
-    return ring_config_get_account_details(accountID);
+    return configurationManager_->getAccountDetails(accountID);
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getVolatileAccountDetails(const std::string& accountID)
 {
-    return ring_config_get_volatile_account_details(accountID);
+    return configurationManager_->getVolatileAccountDetails(accountID);
 }
 
 void DBusConfigurationManager::setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details)
 {
-    ring_config_set_account_details(accountID, details);
+    configurationManager_->setAccountDetails(accountID, details);
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getAccountTemplate()
 {
-    return ring_config_get_account_template();
+    return configurationManager_->getAccountTemplate();
 }
 
 std::string DBusConfigurationManager::addAccount(const std::map< std::string, std::string >& details)
 {
-    return ring_config_add_account(details);
+    return configurationManager_->addAccount(details);
 }
 
 void DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
-    ring_config_remove_account(accountID);
+    configurationManager_->removeAccount(accountID);
 }
 
 std::vector< std::string > DBusConfigurationManager::getAccountList()
 {
-    return ring_config_get_account_list();
+    return configurationManager_->getAccountList();
 }
 
 void DBusConfigurationManager::sendRegister(const std::string& accountID, const bool& enable)
 {
-    ring_config_send_register(accountID, enable);
+    configurationManager_->sendRegister(accountID, enable);
 }
 
 void DBusConfigurationManager::registerAllAccounts(void)
 {
-    ring_config_register_all_accounts();
+    configurationManager_->registerAllAccounts();
 }
 
-std::map< std::string, std::string > DBusConfigurationManager::getTlsSettingsDefault()
+std::map< std::string, std::string > DBusConfigurationManager::getTlsDefaultSettings()
 {
-    return ring_config_get_tls_default_settings();
+    return configurationManager_->getTlsDefaultSettings();
 }
 
 std::vector< int32_t > DBusConfigurationManager::getAudioCodecList()
 {
-    return ring_config_get_audio_codec_list();
+    return configurationManager_->getAudioCodecList();
 }
 
 std::vector< std::string > DBusConfigurationManager::getSupportedTlsMethod()
 {
-    return ring_config_get_supported_tls_method();
+    return configurationManager_->getSupportedTlsMethod();
 }
 
 std::vector< std::string > DBusConfigurationManager::getSupportedCiphers(const std::string& accountID)
 {
-    return ring_config_get_supported_ciphers(accountID);
+    return configurationManager_->getSupportedCiphers(accountID);
 }
 
 std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const int32_t& payload)
 {
-    return ring_config_get_audio_codec_details(payload);
+    return configurationManager_->getAudioCodecDetails(payload);
 }
 
 std::vector< int32_t > DBusConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
-    return ring_config_get_active_audio_codec_list(accountID);
+    return configurationManager_->getActiveAudioCodecList(accountID);
 }
 
 void DBusConfigurationManager::setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID)
 {
-    ring_config_set_active_audio_codec_list(list, accountID);
+    configurationManager_->setActiveAudioCodecList(list, accountID);
 }
 
 std::vector< std::string > DBusConfigurationManager::getAudioPluginList()
 {
-    return ring_config_get_audio_plugin_list();
+    return configurationManager_->getAudioPluginList();
 }
 
 void DBusConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
 {
-    ring_config_set_audio_plugin(audioPlugin);
+    configurationManager_->setAudioPlugin(audioPlugin);
 }
 
 std::vector< std::string > DBusConfigurationManager::getAudioOutputDeviceList()
 {
-    return ring_config_get_audio_output_device_list();
+    return configurationManager_->getAudioOutputDeviceList();
 }
 
 void DBusConfigurationManager::setAudioOutputDevice(const int32_t& index)
 {
-    ring_config_set_audio_output_device(index);
+    configurationManager_->setAudioOutputDevice(index);
 }
 
 void DBusConfigurationManager::setAudioInputDevice(const int32_t& index)
 {
-    ring_config_set_audio_input_device(index);
+    configurationManager_->setAudioInputDevice(index);
 }
 
 void DBusConfigurationManager::setAudioRingtoneDevice(const int32_t& index)
 {
-    ring_config_set_audio_ringtone_device(index);
+    configurationManager_->setAudioRingtoneDevice(index);
 }
 
 std::vector< std::string > DBusConfigurationManager::getAudioInputDeviceList()
 {
-    return ring_config_get_audio_input_device_list();
+    return configurationManager_->getAudioInputDeviceList();
 }
 
 std::vector< std::string > DBusConfigurationManager::getCurrentAudioDevicesIndex()
 {
-    return ring_config_get_current_audio_devices_index();
+    return configurationManager_->getCurrentAudioDevicesIndex();
 }
 
 int32_t DBusConfigurationManager::getAudioInputDeviceIndex(const std::string& name)
 {
-    return ring_config_get_audio_input_device_index(name);
+    return configurationManager_->getAudioInputDeviceIndex(name);
 }
 
 int32_t DBusConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
 {
-    return ring_config_get_audio_output_device_index(name);
+    return configurationManager_->getAudioOutputDeviceIndex(name);
 }
 
 std::string DBusConfigurationManager::getCurrentAudioOutputPlugin()
 {
-    return ring_config_get_current_audio_output_plugin();
+    return configurationManager_->getCurrentAudioOutputPlugin();
 }
 
 bool DBusConfigurationManager::getNoiseSuppressState()
 {
-    return ring_config_get_noise_suppress_state();
+    return configurationManager_->getNoiseSuppressState();
 }
 
 void DBusConfigurationManager::setNoiseSuppressState(const bool& state)
 {
-    ring_config_set_noise_suppress_state(state);
+    configurationManager_->setNoiseSuppressState(state);
 }
 
 bool DBusConfigurationManager::isAgcEnabled()
 {
-    return ring_config_is_agc_enabled();
+    return configurationManager_->isAgcEnabled();
 }
 
 void DBusConfigurationManager::setAgcState(const bool& enabled)
 {
-    ring_config_enable_agc(enabled);
+    configurationManager_->setAgcState(enabled);
 }
 
 void DBusConfigurationManager::muteDtmf(const bool& mute)
 {
-    ring_config_mute_dtmf(mute);
+    configurationManager_->muteDtmf(mute);
 }
 
 bool DBusConfigurationManager::isDtmfMuted()
 {
-    return ring_config_is_dtmf_muted();
+    return configurationManager_->isDtmfMuted();
 }
 
 bool DBusConfigurationManager::isCaptureMuted()
 {
-    return ring_config_is_capture_muted();
+    return configurationManager_->isCaptureMuted();
 }
 
 void DBusConfigurationManager::muteCapture(const bool& mute)
 {
-    ring_config_mute_capture(mute);
+    configurationManager_->muteCapture(mute);
 }
 
 bool DBusConfigurationManager::isPlaybackMuted()
 {
-    return ring_config_is_playback_muted();
+    return configurationManager_->isPlaybackMuted();
 }
 
 void DBusConfigurationManager::mutePlayback(const bool& mute)
 {
-    ring_config_mute_playback(mute);
+    configurationManager_->mutePlayback(mute);
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getRingtoneList()
 {
-    return ring_config_get_ringtone_list();
+    return configurationManager_->getRingtoneList();
 }
 
 std::string DBusConfigurationManager::getAudioManager()
 {
-    return ring_config_get_audio_manager();
+    return configurationManager_->getAudioManager();
 }
 
 bool DBusConfigurationManager::setAudioManager(const std::string& api)
 {
-    return ring_config_set_audio_manager(api);
+    return configurationManager_->setAudioManager(api);
 }
 
+//FIXME
 std::vector<std::string> DBusConfigurationManager::getSupportedAudioManagers()
 {
-    return ring_config_get_supported_audio_managers();
+    return {
+#if HAVE_ALSA
+        ALSA_API_STR,
+#endif
+#if HAVE_PULSE
+        PULSEAUDIO_API_STR,
+#endif
+#if HAVE_JACK
+        JACK_API_STR,
+#endif
+    };
 }
 
 int32_t DBusConfigurationManager::isIax2Enabled()
 {
-    return ring_config_is_iax2_enabled();
+    return configurationManager_->isIax2Enabled();
 }
 
 std::string DBusConfigurationManager::getRecordPath()
 {
-    return ring_config_get_record_path();
+    return configurationManager_->getRecordPath();
 }
 
 void DBusConfigurationManager::setRecordPath(const std::string& recPath)
 {
-    ring_config_set_record_path(recPath);
+    configurationManager_->setRecordPath(recPath);
 }
 
 bool DBusConfigurationManager::getIsAlwaysRecording()
 {
-    return ring_config_is_always_recording();
+    return configurationManager_->getIsAlwaysRecording();
 }
 
 void DBusConfigurationManager::setIsAlwaysRecording(const bool& rec)
 {
-    ring_config_set_always_recording(rec);
+    configurationManager_->setIsAlwaysRecording(rec);
 }
 
 void DBusConfigurationManager::setHistoryLimit(const int32_t& days)
 {
-    ring_config_set_history_limit(days);
+    configurationManager_->setHistoryLimit(days);
 }
 
 int32_t DBusConfigurationManager::getHistoryLimit()
 {
-    return ring_config_get_history_limit();
+    return configurationManager_->getHistoryLimit();
 }
 
 void DBusConfigurationManager::clearHistory()
 {
-    ring_config_clear_history();
+    configurationManager_->clearHistory();
 }
 
 void DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
-    ring_config_set_accounts_order(order);
+    configurationManager_->setAccountsOrder(order);
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getHookSettings()
 {
-    return ring_config_get_hook_settings();
+    return configurationManager_->getHookSettings();
 }
 
 void DBusConfigurationManager::setHookSettings(const std::map<std::string, std::string>& settings)
 {
-    ring_config_set_hook_settings(settings);
+    configurationManager_->setHookSettings(settings);
 }
 
 std::vector<std::map<std::string, std::string> > DBusConfigurationManager::getHistory()
 {
-    return ring_config_get_history();
+    return configurationManager_->getHistory();
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getTlsSettings()
 {
-    return ring_config_get_tls_settings();
+    return configurationManager_->getTlsSettings();
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey)
 {
-   return ring_config_validate_certificate(accountId, certificate, privateKey);
+   return configurationManager_->validateCertificate(accountId, certificate, privateKey);
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getCertificateDetails(const std::string& certificate)
 {
-    return ring_config_get_certificate_details(certificate);
+    return configurationManager_->getCertificateDetails(certificate);
 }
 
 void DBusConfigurationManager::setTlsSettings(const std::map< std::string, std::string >& details)
 {
-    ring_config_set_tls_settings(details);
+    configurationManager_->setTlsSettings(details);
 }
 
 std::map< std::string, std::string > DBusConfigurationManager::getIp2IpDetails()
 {
-    return ring_config_get_ip2ip_details();
+    return configurationManager_->getIp2IpDetails();
 }
 
 std::vector< std::map< std::string, std::string > > DBusConfigurationManager::getCredentials(const std::string& accountID)
 {
-    return ring_config_get_credentials(accountID);
+    return configurationManager_->getCredentials(accountID);
 }
 
 void DBusConfigurationManager::setCredentials(const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details)
 {
-    ring_config_set_credentials(accountID, details);
+    configurationManager_->setCredentials(accountID, details);
 }
 
 std::string DBusConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
 {
-    return ring_config_get_addr_from_interface_name(interface);
+    return configurationManager_->getAddrFromInterfaceName(interface);
 }
 
 std::vector<std::string> DBusConfigurationManager::getAllIpInterface()
 {
-    return ring_config_get_all_ip_interface();
+    return configurationManager_->getAllIpInterface();
 }
 
 std::vector<std::string> DBusConfigurationManager::getAllIpInterfaceByName()
 {
-    return ring_config_get_all_ip_interface_by_name();
+    return configurationManager_->getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string> DBusConfigurationManager::getShortcuts()
 {
-    return ring_config_get_shortcuts();
+    return configurationManager_->getShortcuts();
 }
 
 void DBusConfigurationManager::setShortcuts(const std::map<std::string, std::string> &shortcutsMap)
 {
-    ring_config_set_shortcuts(shortcutsMap);
+    configurationManager_->setShortcuts(shortcutsMap);
 }
 
 void DBusConfigurationManager::setVolume(const std::string& device, const double& value)
 {
-    ring_config_set_volume(device, value);
+    configurationManager_->setVolume(device, value);
 }
 
 double DBusConfigurationManager::getVolume(const std::string& device)
 {
-    return ring_config_get_volume(device);
+    return configurationManager_->getVolume(device);
 }
