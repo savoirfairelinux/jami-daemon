@@ -91,7 +91,7 @@ void VideoInput::process()
 
     if (newDecoderCreated) {
         /* Signal the client about the new sink */
-        Manager::instance().getVideoManager()->startedDecoding(sinkID_, sink_.openedName(),
+        startedDecoding(sinkID_, sink_.openedName(),
                 decoder_->getWidth(), decoder_->getHeight(), false);
         RING_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(),
@@ -176,9 +176,7 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
-    Manager::instance().getVideoManager()->stoppedDecoding(sinkID_,
-                                                           sink_.openedName(),
-                                                           false);
+    stoppedDecoding(sinkID_, sink_.openedName(), false);
     flushFrames();
     delete decoder_;
     decoder_ = nullptr;
@@ -187,8 +185,7 @@ VideoInput::deleteDecoder()
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    std::map<std::string, std::string> map =
-        Manager::instance().getVideoManager()->getSettings(device);
+    std::map<std::string, std::string> map = getSettings(device);
 
     if (map.empty())
         return false;

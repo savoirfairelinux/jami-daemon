@@ -1109,8 +1109,8 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
 
-        Manager::instance().getConfigurationManager()->sipRegistrationStateChanged(getAccountID(), state, param->code);
-        Manager::instance().getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
+        sipRegistrationStateChanged(getAccountID(), state, param->code);
+        volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         setRegistrationStateDetailed(details);
@@ -1818,7 +1818,7 @@ SIPAccount::supportPresence(int function, bool enabled)
         enablePresence(false);
 
     Manager::instance().saveConfig();
-    Manager::instance().getConfigurationManager()->accountsChanged();
+    accountsChanged();
 }
 
 MatchRank

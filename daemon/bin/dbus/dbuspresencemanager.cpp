@@ -30,33 +30,37 @@
 #include "dring.h"
 
 #include "dbuspresencemanager.h"
+#include "managerimpl.h"
+#include "manager.h"
+#include "client/presencemanager.h"
 
 DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/PresenceManager")
 {
+    presenceManager_ = ring::Manager::instance().getPresenceManager();
 }
 
 void DBusPresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
 {
-    ring_pres_publish(accountID, status, note);
+    presenceManager_->publish(accountID, status, note);
 }
 
 void DBusPresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
 {
-    ring_pres_answer_server_request(uri, flag);
+    presenceManager_->answerServerRequest(uri, flag);
 }
 
 void DBusPresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
 {
-    ring_pres_subscribe_buddy(accountID, uri, flag);
+    presenceManager_->subscribeBuddy(accountID, uri, flag);
 }
 
 std::vector<std::map<std::string, std::string> > DBusPresenceManager::getSubscriptions(const std::string& accountID)
 {
-    return ring_pres_get_subscriptions(accountID);
+    return presenceManager_->getSubscriptions(accountID);
 }
 
 void DBusPresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    ring_pres_set_subscriptions(accountID, uris);
+    presenceManager_->setSubscriptions(accountID, uris);
 }

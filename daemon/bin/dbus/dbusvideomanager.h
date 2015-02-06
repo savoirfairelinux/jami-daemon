@@ -54,11 +54,18 @@
 
 #include <stdexcept>
 
+namespace ring {
+    class VideoManager;
+}
+
 class DBusVideoManager :
     public cx::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+    private:
+        ring::VideoManager* videoManager_;
+
     public:
         DBusVideoManager(DBus::Connection& connection);
 

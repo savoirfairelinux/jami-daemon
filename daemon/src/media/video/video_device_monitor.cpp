@@ -159,7 +159,7 @@ notify()
         return;
     }
 
-    Manager::instance().getVideoManager()->deviceEvent();
+    deviceEvent();
 }
 
 void
