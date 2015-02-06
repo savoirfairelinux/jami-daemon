@@ -87,8 +87,8 @@ private:
     std::map<std::string, std::string> rxArgs_;
     bool sending_ = false;
     bool receiving_ = false;
+    Conference* conference_ {nullptr};
     const std::string callID_;
-    Conference* conference_;
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
 };
