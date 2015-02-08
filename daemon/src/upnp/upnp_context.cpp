@@ -64,6 +64,7 @@ int cp_callback(Upnp_EventType, void*, void*);
 static std::string get_element_text(IXML_Node*);
 static std::string get_first_doc_item(IXML_Document *, const char *);
 static std::string get_first_element_item(IXML_Element *, const char *);
+static void checkResponseError(IXML_Document *);
 
 /**
  * This should be used to get a UPnPContext.
@@ -77,47 +78,6 @@ getUPnPContext()
     static auto context = std::make_shared<UPnPContext>();
     return context;
 }
-
-#if HAVE_UPNP
-
-static void
-resetURLs(UPNPUrls& urls)
-{
-    urls.controlURL = nullptr;
-    urls.ipcondescURL = nullptr;
-    urls.controlURL_CIF = nullptr;
-    urls.controlURL_6FC = nullptr;
-#ifdef MINIUPNPC_VERSION /* if not defined, its version 1.6 */
-    urls.rootdescURL = nullptr;
-#endif
-}
-
-/* move constructor */
-IGD::IGD(IGD&& other)
-    : datas_(other.datas_)
-    , urls_(other.urls_)
-{
-    resetURLs(other.urls_);
-}
-
-/* move operator */
-IGD& IGD::operator=(IGD&& other)
-{
-    if (this != otehr) {
-        datas_ = other.datas_;
-        urls_ = other.urls_;
-        resetURLs(other.urls_);
-    }
-    return *this;
-}
-
-IGD::~IGD()
-{
-    /* free the URLs */
-    FreeUPNPUrls(&urls_);
-}
-
-#endif /* HAVE_UPNP */
 
 /**
  * removes all mappings with the local IP and the given description
@@ -193,28 +153,6 @@ IGD::removeMappingsByLocalIPAndDescription(const std::string& description)
         }
         i++;
     } while(upnp_status == UPNPCOMMAND_SUCCESS);
-#endif
-}
-
-/**
- * checks if the instance of IGD is empty
- * ie: not actually an IGD
- */
-bool
-IGD::isEmpty() const
-{
-#if HAVE_UPNP
-    if (urls_.controlURL != nullptr) {
-        if (urls_.controlURL[0] == '\0') {
-            return true;
-        } else {
-            return false;
-        }
-    } else {
-        return true;
-    }
-#else
-    return true;
 #endif
 }
 
@@ -344,9 +282,19 @@ UPnPContext::parseIGD(IXML_Document *doc, const Upnp_Discovery* d_event)
     }
     lock.unlock();
 
+    std::shared_ptr<IGD> new_igd;
+    int upnp_err;
+
     std::string friendlyName = get_first_doc_item(doc, "friendlyName");
     if (not friendlyName.empty() )
         RING_DBG("UPnP: checking new device of type IGD: '%s'", friendlyName.c_str());
+
+    /* determine baseURL */
+    std::string baseURL = get_first_doc_item(doc, "URLBase");
+    if (baseURL.empty()) {
+        /* get it from the discovery event location */
+        baseURL = std::string(d_event->Location);
+    }
 
     /* check if its a valid IGD:
      *      1. check for IGD device... already done if this function is called
@@ -360,9 +308,9 @@ UPnPContext::parseIGD(IXML_Document *doc, const Upnp_Discovery* d_event)
     std::unique_ptr<IXML_NodeList, decltype(ixmlNodeList_free)&> serviceList(nullptr, ixmlNodeList_free);
     serviceList.reset(ixmlDocument_getElementsByTagName(doc, "serviceType"));
     /* check for WANIPConnection or WANPPPConnection service */
-    bool found_valid_IGD = false;
+    bool found_connected_IGD = false;
     unsigned long list_length = ixmlNodeList_length(serviceList.get());
-    for (unsigned long node_idx = 0; node_idx < list_length and not found_valid_IGD; node_idx++) {
+    for (unsigned long node_idx = 0; node_idx < list_length and not found_connected_IGD; node_idx++) {
         IXML_Node* serviceType_node = ixmlNodeList_item(serviceList.get(), node_idx);
         std::string serviceType = get_element_text(serviceType_node);
         if (serviceType.compare(UPNP_WANIP_SERVICE) == 0 or serviceType.compare(UPNP_WANPPP_SERVICE) == 0) {
@@ -373,18 +321,42 @@ UPnPContext::parseIGD(IXML_Document *doc, const Upnp_Discovery* d_event)
                     /* get the service definitions */
                     IXML_Element* service_element = (IXML_Element*)service_node;
                     std::string serviceId = get_first_element_item(service_element, "serviceId");
-                    if (not serviceId.empty())
-                        RING_DBG("UPnP: got serviceId: %s", serviceId.c_str());
+
                     std::string controlURL = get_first_element_item(service_element, "controlURL");
-                    if (not controlURL.empty())
-                        RING_DBG("UPnP: got controlURL: %s", controlURL.c_str());
+                    if (not controlURL.empty()) {
+                        std::unique_ptr<char> absolute_url(new char[baseURL.size() + controlURL.size() + 1]);
+                        upnp_err = UpnpResolveURL(baseURL.c_str(), controlURL.c_str(), absolute_url.get());
+                        if (upnp_err == UPNP_E_SUCCESS) {
+                            controlURL = std::string(absolute_url.get());
+                        } else {
+                            RING_WARN("UPnP: error resolving absolute controlURL: %s", UpnpGetErrorMessage(upnp_err));
+                        }
+                    }
                     std::string eventSubURL = get_first_element_item(service_element, "eventSubURL");
-                    if (not eventSubURL.empty())
-                        RING_DBG("UPnP: got eventSubURL: %s", eventSubURL.c_str());
+                    if (not eventSubURL.empty()) {
+                        std::unique_ptr<char> absolute_url(new char[baseURL.size() + controlURL.size() + 1]);
+                        upnp_err = UpnpResolveURL(baseURL.c_str(), eventSubURL.c_str(), absolute_url.get());
+                        if (upnp_err == UPNP_E_SUCCESS) {
+                            eventSubURL = std::string(absolute_url.get());
+                        } else {
+                            RING_WARN("UPnP: error resolving absolute eventSubURL: %s", UpnpGetErrorMessage(upnp_err));
+                        }
+                    }
 
+                    if (not (serviceId.empty() and controlURL.empty() and eventSubURL.empty()) ) {
+                        RING_DBG("UPnP: got service info from device:\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
+                                 serviceType.c_str(), serviceId.c_str(), controlURL.c_str(), eventSubURL.c_str());
+                        new_igd = std::make_shared<IGD>(UDN,
+                                                    baseURL,
+                                                    friendlyName,
+                                                    serviceType,
+                                                    serviceId,
+                                                    controlURL,
+                                                    eventSubURL);
+
+                        found_connected_IGD = isIGDConnected(new_igd);
+                    }
                     /* TODO: check if connected and we can get IP address */
-
-                    found_valid_IGD = true;
                 } else
                      RING_WARN("UPnP: IGD \"serviceType\" parent node is not called \"service\"!");
             } else
@@ -396,10 +368,10 @@ UPnPContext::parseIGD(IXML_Document *doc, const Upnp_Discovery* d_event)
      * subscribe to the WANIPConnection or WANPPPConnection service to receive
      * updates about state changes, eg: new external IP
      */
-    if (found_valid_IGD) {
+    if (found_connected_IGD) {
         RING_DBG("UPnP: device is a potentially valid IGD, checking if its connected");
         lock.lock();
-        valid_igds_.emplace(UDN, std::make_shared<IGD>());
+        valid_igds_.emplace(UDN, new_igd);
         lock.unlock();
     }
 }
@@ -466,8 +438,7 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
 
         /* check if we are already in the process of checking this device */
         std::unique_lock<std::mutex> lock(upnpContext->cp_mutex_);
-        std::set<std::string>::iterator it;
-        it = upnpContext->cp_checking_devices_.find(std::string(d_event->Location));
+        auto it = upnpContext->cp_checking_devices_.find(std::string(d_event->Location));
 
         if (it == upnpContext->cp_checking_devices_.end()) {
             upnpContext->cp_checking_devices_.emplace(std::string(d_event->Location));
@@ -476,8 +447,9 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
             if (d_event->ErrCode != UPNP_E_SUCCESS)
                 RING_WARN("UPnP: Error in discovery event received by the CP: %s", UpnpGetErrorMessage(d_event->ErrCode));
 
-            RING_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
+            /* RING_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
                      d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, d_event->Location, d_event->Os);
+            */
 
             /* note: this thing will block until success for the system socket timeout
              *       unless libupnp is compile with '-disable-blocking-tcp-connections'
@@ -595,6 +567,58 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
     return UPNP_E_SUCCESS; /* return value currently ignored by SDK */
 }
 
-#endif
+static void
+checkResponseError(IXML_Document* doc)
+{
+    if (not doc)
+        return;
+
+    std::string errorCode = get_first_doc_item(doc, "errorCode");
+    if (not errorCode.empty()) {
+        std::string errorDescription = get_first_doc_item(doc, "errorDescription");
+        RING_WARN("UPnP: response contains error: %s : %s", errorCode.c_str(), errorDescription.c_str());
+    }
+}
+
+bool
+UPnPContext::isIGDConnected(std::shared_ptr<IGD> igd)
+{
+    bool connected = false;
+    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
+    action.reset(UpnpMakeAction("GetStatusInfo", igd->getServiceType().c_str(), 0, nullptr));
+
+    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
+    IXML_Document* response_ptr = nullptr;
+    int upnp_err = UpnpSendAction(ctrlpt_handle_, igd->getControlURL().c_str(), igd->getServiceType().c_str(),
+                                  nullptr, action.get(), &response_ptr);
+    response.reset(response_ptr);
+    checkResponseError(response.get());
+    if( upnp_err != UPNP_E_SUCCESS) {
+        /* TODO: if failed, should we chck if the igd is disconnected? */
+        RING_WARN("UPnP: Failed to get GetStatusInfo from: %s, %s",
+                  igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
+
+        return false;
+    }
+
+    /* for debugging, print response */
+    // char* response_doc = ixmlPrintDocument(response.get());
+    // RING_DBG("UPnP: GetStatusInfo response:\n%s", response_doc);
+    // ixmlFreeDOMString(response_doc);
+
+    /* parse response */
+    std::string status = get_first_doc_item(response.get(), "NewConnectionStatus");
+    if (status.compare("Connected") == 0)
+        connected = true;
+
+    /* response should also contain the following elements, but we don't care for now:
+     *  "NewLastConnectionError"
+     *  "NewUptime"
+     */
+    return connected;
+}
+
+
+#endif /* HAVE_LIBUPNP */
 
 }} // namespace ring::upnp

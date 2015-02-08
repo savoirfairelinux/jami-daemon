@@ -56,20 +56,40 @@ namespace ring { namespace upnp {
 class IGD {
 public:
 
-#if HAVE_UPNP
+#if HAVE_LIBUPNP
 
     /* constructors */
-    IGD() : datas_(), urls_() {};
-    IGD(IGDdatas& d , UPNPUrls& u) : datas_(d), urls_(u) {};
+    IGD() {};
+    IGD(std::string UDN,
+        std::string baseURL,
+        std::string friendlyName,
+        std::string serviceType,
+        std::string serviceId,
+        std::string controlURL,
+        std::string eventSubURL)
+        : UDN_(UDN)
+        , baseURL_(baseURL)
+        , friendlyName_(friendlyName)
+        , serviceType_(serviceType)
+        , serviceId_(serviceId)
+        , controlURL_(controlURL)
+        , eventSubURL_(eventSubURL)
+        {};
 
     /* move constructor and operator */
-    IGD(IGD&& other);
-    IGD& operator=(IGD&& other);
+    IGD(IGD&& other) = default;
+    IGD& operator=(IGD&& other) = default;
 
-    ~IGD();
+    ~IGD() = default;
 
-    const IGDdatas& getDatas() const {return datas_;};
-    const UPNPUrls& getURLs() const {return urls_;};
+    const std::string& getUDN() const { return UDN_; };
+    const std::string& getBaseURL() const { return baseURL_; };
+    const std::string& getFriendlyName() const { return friendlyName_; };
+    const std::string& getServiceType() const { return serviceType_; };
+    const std::string& getServiceId() const { return serviceId_; };
+    const std::string& getControlURL() const { return controlURL_; };
+    const std::string& getEventSubURL() const { return eventSubURL_; };
+
 #else
     /* use default constructor and destructor */
     IGD() = default;
@@ -78,7 +98,6 @@ public:
     IGD(IGD&&) = default;
     IGD& operator=(IGD&&) = default;
 #endif
-    bool isEmpty() const;
 
     /**
      * removes all mappings with the local IP and the given description
@@ -88,9 +107,17 @@ public:
 private:
     NON_COPYABLE(IGD);
 
-#if HAVE_UPNP
-    IGDdatas datas_;
-    UPNPUrls urls_;
+#if HAVE_LIBUPNP
+    /* root device info */
+    std::string UDN_ {}; /* used to uniquely identify this UPnP device */
+    std::string baseURL_ {};
+    std::string friendlyName_ {};
+
+    /* port forwarding service info */
+    std::string serviceType_ {};
+    std::string serviceId_ {};
+    std::string controlURL_ {};
+    std::string eventSubURL_ {};
 #endif
 
 };
@@ -177,8 +204,10 @@ private:
      * Parses the device description and adds desired devices to
      * relevant lists
      */
-    void parseDevice(IXML_Document *doc, const Upnp_Discovery* d_event);
-    void parseIGD(IXML_Document *doc, const Upnp_Discovery* d_event);
+    void parseDevice(IXML_Document *, const Upnp_Discovery *);
+    void parseIGD(IXML_Document *, const Upnp_Discovery *);
+
+    bool isIGDConnected(std::shared_ptr<IGD>);
 
 #endif /* HAVE_LIBUPNP */
 

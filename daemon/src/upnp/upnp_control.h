@@ -58,7 +58,6 @@ public:
     constexpr static uint16_t UPNP_PORT_MIN = 1024;
     constexpr static uint16_t UPNP_PORT_MAX = 65535;
 
-    std::shared_ptr<const IGD> igd; /* the IGD associated with this mapping */
     IpAddr local_ip; /* the destination of the mapping */
     uint16_t port_external;
     uint16_t port_internal;
@@ -66,14 +65,12 @@ public:
     std::string description;
 
     Mapping(
-        std::shared_ptr<const IGD> igd = std::make_shared<const IGD>(),
         IpAddr local_ip = IpAddr(),
         uint16_t port_external = 0,
         uint16_t port_internal = 0,
         PortType type = PortType::UDP,
         std::string description = UPNP_DEFAULT_MAPPING_DESCRIPTION)
-    : igd(igd)
-    , local_ip(local_ip)
+    : local_ip(local_ip)
     , port_external(port_external)
     , port_internal(port_internal)
     , type(type)
@@ -95,7 +92,7 @@ public:
     };
 
     bool isValid() const {
-        return igd->isEmpty() or port_external == 0 or port_internal == 0 ? false : true;
+        return port_external == 0 or port_internal == 0 ? false : true;
     };
 private:
     NON_COPYABLE(Mapping);
@@ -114,7 +111,7 @@ public:
      * this is only relevant when multiple accounts are using the same SIP port */
     unsigned users;
     GlobalMapping(const Mapping& mapping, unsigned users = 1)
-        : Mapping(mapping.igd, mapping.local_ip, mapping.port_external, mapping.port_internal, mapping.type, mapping.description)
+        : Mapping(mapping.local_ip, mapping.port_external, mapping.port_internal, mapping.type, mapping.description)
         , users(users)
     {};
 };
