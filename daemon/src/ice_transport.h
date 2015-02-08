@@ -54,7 +54,6 @@ class Controller;
 
 class IceTransport;
 
-using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
@@ -68,11 +67,8 @@ class IceTransport {
         /**
          * Constructor
          */
-        IceTransport(const char* name, int component_count,
-                     bool master,
-                     bool upnp_enabled = false,
-                     IceTransportCompleteCb on_initdone_cb={},
-                     IceTransportCompleteCb on_negodone_cb={});
+        IceTransport(const char* name, int component_count, bool master,
+                     bool upnp_enabled = false);
 
         /**
          * Destructor
@@ -202,8 +198,6 @@ class IceTransport {
         void getDefaultCanditates();
 
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        IceTransportCompleteCb on_initdone_cb_;
-        IceTransportCompleteCb on_negodone_cb_;
         bool iceTransportInitDone_ {false};
         bool iceTransportNegoDone_ {false};
         std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
@@ -256,9 +250,7 @@ class IceTransportFactory {
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
                                                       bool master,
-                                                      bool upnp_enabled = false,
-                                                      IceTransportCompleteCb&& on_initdone_cb={},
-                                                      IceTransportCompleteCb&& on_negodone_cb={});
+                                                      bool upnp_enabled = false);
 
         int processThread();
 

@@ -94,13 +94,9 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
         RING_WARN("null IceTransport");
 }
 
-IceTransport::IceTransport(const char* name, int component_count,
-                           bool master, bool upnp_enabled,
-                           IceTransportCompleteCb on_initdone_cb,
-                           IceTransportCompleteCb on_negodone_cb)
+IceTransport::IceTransport(const char* name, int component_count, bool master,
+                           bool upnp_enabled)
     : pool_(nullptr, pj_pool_release)
-    , on_initdone_cb_(on_initdone_cb)
-    , on_negodone_cb_(on_negodone_cb)
     , component_count_(component_count)
     , compIO_(component_count)
     , initiator_session_(master)
@@ -139,22 +135,23 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                          pj_status_t status)
 {
     const char *opname =
-        op == PJ_ICE_STRANS_OP_INIT? "initialization" :
+        op == PJ_ICE_STRANS_OP_INIT ? "initialization" :
         op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     if (!icest_.get())
         icest_.reset(ice_st);
 
     const bool done = status == PJ_SUCCESS;
+    RING_DBG("ICE %s with %s", opname, done?"success":"error");
+
+    if (!done) {
+        char errmsg[PJ_ERR_MSG_SIZE];
+        pj_strerror(status, errmsg, sizeof(errmsg));
+        RING_ERR("ICE %s failed: %s", opname, errmsg);
+    }
 
     {
-        std::unique_lock<std::mutex> lk(iceMutex_);
-        if (!done) {
-            char errmsg[PJ_ERR_MSG_SIZE];
-            pj_strerror(status, errmsg, sizeof(errmsg));
-            RING_ERR("ICE %s failed: %s", opname, errmsg);
-        }
-        RING_DBG("ICE %s with %s", opname, done?"success":"error");
+        std::lock_guard<std::mutex> lk(iceMutex_);
         if (op == PJ_ICE_STRANS_OP_INIT) {
             iceTransportInitDone_ = done;
             if (iceTransportInitDone_) {
@@ -162,17 +159,13 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                     setInitiatorSession();
                 else
                     setSlaveSession();
-            }
-            if (on_initdone_cb_)
-                on_initdone_cb_(*this, done);
-            if (iceTransportInitDone_)
                 selectUPnPIceCandidates();
+            }
         } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
             iceTransportNegoDone_ = done;
-            if (on_negodone_cb_)
-                on_negodone_cb_(*this, done);
         }
     }
+
     iceCV_.notify_all();
 }
 
@@ -807,16 +800,10 @@ IceTransportFactory::handleEvents(unsigned max_msec, unsigned *p_count)
 
 
 std::shared_ptr<IceTransport>
-IceTransportFactory::createTransport(const char* name,
-                                     int component_count,
-                                     bool master,
-                                     bool upnp_enabled,
-                                     IceTransportCompleteCb&& on_initdone_cb,
-                                     IceTransportCompleteCb&& on_negodone_cb)
+IceTransportFactory::createTransport(const char* name, int component_count,
+                                     bool master, bool upnp_enabled)
 {
-    return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled,
-                                          std::forward<IceTransportCompleteCb>(on_initdone_cb),
-                                          std::forward<IceTransportCompleteCb>(on_negodone_cb));
+    return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled);
 }
 
 void
