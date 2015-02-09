@@ -49,8 +49,6 @@
 #include <random>
 #include <atomic>
 
-#include "client/client.h"
-
 #include "conference.h"
 
 #include "account_factory.h"
@@ -75,6 +73,12 @@ class PluginManager;
 class AudioFile;
 class DTMF;
 class TelephoneTone;
+class ConfigurationManager;
+class PresenceManager;
+class CallManager;
+#ifdef RING_VIDEO
+class VideoManager;
+#endif
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -96,6 +100,11 @@ class ManagerImpl {
     public:
         ManagerImpl();
         ~ManagerImpl();
+
+        std::unique_ptr<ConfigurationManager> configurationManager_;
+        std::unique_ptr<CallManager> callManager_;
+        std::unique_ptr<PresenceManager> presenceManager_;
+        std::unique_ptr<VideoManager> videoManager_;
 
         /**
          * General preferences configuration
@@ -784,8 +793,6 @@ class ManagerImpl {
          */
         void playATone(Tone::TONEID toneId);
 
-        Client client_;
-
         /** Current Call ID */
         std::shared_ptr<Call> currentCall_ = nullptr;
 
@@ -872,11 +879,10 @@ class ManagerImpl {
          */
         bool hasCurrentCall() const;
 
-        /**
-         * Return the current Client
-         * @return A pointer to the Client instance
-         */
-        Client* getClient();
+        CallManager* getCallManager();
+        ConfigurationManager* getConfigurationManager();
+        PresenceManager* getPresenceManager();
+
 #ifdef RING_VIDEO
         VideoManager * getVideoManager();
 #endif

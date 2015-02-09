@@ -277,7 +277,7 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
 
     // Notify the client of the new transport state
     if (currentStatus != transportStatus_)
-        Manager::instance().getClient()->getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
+        Manager::instance().getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
 }
 
 void
