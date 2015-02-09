@@ -35,7 +35,6 @@
 #include <sstream>
 #include "logger.h"
 #include "manager.h"
-#include "client/client.h"
 #include "client/presencemanager.h"
 #include "client/configurationmanager.h"
 #include "sipaccount.h"
@@ -206,7 +205,7 @@ void SIPPresence::reportPresSubClientNotification(const std::string& uri, pjsip_
         note_ = note;
     }
     // report status to client signal
-    Manager::instance().getClient()->getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
+    Manager::instance().getPresenceManager()->newBuddyNotification(acc_ID, uri, status->info[0].basic_open, note);
 }
 
 void SIPPresence::subscribeClient(const std::string& uri, bool flag)
@@ -382,7 +381,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
             char errmsg[PJ_ERR_MSG_SIZE];
             pj_strerror(param->status, errmsg, sizeof(errmsg));
             RING_ERR("Client (PUBLISH) failed, status=%d, msg=%s", param->status, errmsg);
-            Manager::instance().getClient()->getPresenceManager()->serverError(
+            Manager::instance().getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
                     error,
                     errmsg);
@@ -396,7 +395,7 @@ SIPPresence::publish_cb(struct pjsip_publishc_cbparam *param)
         } else if ((param->code == PJSIP_SC_BAD_EVENT) || (param->code == PJSIP_SC_NOT_IMPLEMENTED)){ //489 or 501
             RING_WARN("Client (PUBLISH) failed (%s)",error.c_str());
 
-            Manager::instance().getClient()->getPresenceManager()->serverError(
+            Manager::instance().getPresenceManager()->serverError(
                     pres->getAccount()->getAccountID(),
                     error,
                     "Publish not supported.");

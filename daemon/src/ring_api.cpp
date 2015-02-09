@@ -50,23 +50,23 @@
 
 static ring::CallManager* getCallManager()
 {
-    return ring::Manager::instance().getClient()->getCallManager();
+    return ring::Manager::instance().getCallManager();
 }
 
 static ring::ConfigurationManager* getConfigurationManager()
 {
-    return ring::Manager::instance().getClient()->getConfigurationManager();
+    return ring::Manager::instance().getConfigurationManager();
 }
 
 static ring::PresenceManager* getPresenceManager()
 {
-    return ring::Manager::instance().getClient()->getPresenceManager();
+    return ring::Manager::instance().getPresenceManager();
 }
 
 #ifdef RING_VIDEO
 static ring::VideoManager* getVideoManager()
 {
-    return ring::Manager::instance().getClient()->getVideoManager();
+    return ring::Manager::instance().getVideoManager();
 }
 #endif // RING_VIDEO
 

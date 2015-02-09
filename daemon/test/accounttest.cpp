@@ -43,7 +43,7 @@ void AccountTest::TestAddRemove()
 {
     RING_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
-    std::map<std::string, std::string> details(Manager::instance().getClient()->getConfigurationManager()->getAccountTemplate());
+    std::map<std::string, std::string> details(Manager::instance().getConfigurationManager()->getAccountTemplate());
     details[Conf::CONFIG_ACCOUNT_TYPE] = "SIP";
     details[Conf::CONFIG_ACCOUNT_ENABLE] = "false";
     details[Conf::CONFIG_LOCAL_INTERFACE] = "default";
