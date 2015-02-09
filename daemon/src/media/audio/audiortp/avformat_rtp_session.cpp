@@ -386,6 +386,12 @@ AVFormatRtpSession::start(int localPort)
 
     try {
         socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), local_.addr.getPort()));
+        if (local_.crypto and remote_.crypto) {
+            RING_WARN("Init SRTP: outgoing %s %s", local_.crypto.getCryptoSuite().c_str(), local_.crypto.getSrtpKeyInfo().c_str());
+            RING_WARN("Init SRTP: incoming %s %s", remote_.crypto.getCryptoSuite().c_str(), remote_.crypto.getSrtpKeyInfo().c_str());
+            socketPair_->createSRTP(local_.crypto.getCryptoSuite().c_str(), local_.crypto.getSrtpKeyInfo().c_str(),
+                                    remote_.crypto.getCryptoSuite().c_str(), remote_.crypto.getSrtpKeyInfo().c_str());
+        }
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed on port %d: %s", local_.addr.getPort(), e.what());
         return;
@@ -406,7 +412,18 @@ AVFormatRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
         return;
     }
 
-    socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+    try {
+        socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+        if (local_.crypto and remote_.crypto) {
+            RING_WARN("Init SRTP: outgoing %s %s", local_.crypto.getCryptoSuite().c_str(), local_.crypto.getSrtpKeyInfo().c_str());
+            RING_WARN("Init SRTP: incoming %s %s", remote_.crypto.getCryptoSuite().c_str(), remote_.crypto.getSrtpKeyInfo().c_str());
+            socketPair_->createSRTP(local_.crypto.getCryptoSuite().c_str(), local_.crypto.getSrtpKeyInfo().c_str(),
+                                    remote_.crypto.getCryptoSuite().c_str(), remote_.crypto.getSrtpKeyInfo().c_str());
+        }
+    } catch (const std::runtime_error &e) {
+        RING_ERR("Socket creation failed");
+        return;
+    }
 
     startSender();
     startReceiver();

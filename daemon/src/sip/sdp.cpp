@@ -45,6 +45,7 @@
 #include "manager.h"
 #include "logger.h"
 #include "libav_utils.h"
+#include "array_size.h"
 
 #include <algorithm>
 #include <cassert>
@@ -83,6 +84,10 @@ Sdp::Sdp(const std::string& id)
     memPool_.reset(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
                                   id.c_str(), POOL_INITIAL_SIZE,
                                   POOL_INCREMENT_SIZE, NULL));
+    const size_t suites_size = RING_ARRAYSIZE(CryptoSuites);
+    std::vector<CryptoSuiteDefinition> localCaps(suites_size);
+    std::copy(CryptoSuites, CryptoSuites + suites_size, localCaps.begin());
+    sdesNego_ = {localCaps};
     if (not memPool_)
         throw std::runtime_error("pj_pool_create() failed");
 }
@@ -617,7 +622,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep)
 
 
 std::vector<MediaDescription>
-Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote)
+Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
 {
     static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
 
@@ -686,8 +691,10 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote)
         // get crypto info
         for (unsigned j = 0; j < media->attr_count; j++) {
             pjmedia_sdp_attr *attribute = media->attr[j];
-            if (pj_stricmp2(&attribute->name, "crypto") == 0)
-                descr.crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
+            if (pj_stricmp2(&attribute->name, "crypto") == 0) {
+                descr.crypto = sdesNego_.negotiate({std::string(attribute->value.ptr, attribute->value.slen)});
+                RING_WARN("found crypto : %s", descr.crypto.to_string().c_str());
+            }
         }
         ret.emplace_back(std::move(descr));
     }
@@ -759,6 +766,7 @@ Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
     }
 }
 
+/*
 void Sdp::addSdesAttribute(unsigned media_index, const CryptoOffer& crypto)
 {
     auto media = localSession_->media[media_index];
@@ -768,7 +776,7 @@ void Sdp::addSdesAttribute(unsigned media_index, const CryptoOffer& crypto)
         if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
             throw SdpException("Could not add sdes attribute to media");
     }
-}
+}*/
 
 void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
@@ -780,6 +788,7 @@ void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
         throw SdpException("Could not add zrtp attribute to media");
 }
 
+/*
 CryptoOffer
 Sdp::getRemoteCryptoOffer(unsigned media_index) const
 {
@@ -797,7 +806,7 @@ Sdp::getRemoteCryptoOffer(unsigned media_index) const
             crypto_offer.emplace_back(attribute->value.ptr, attribute->value.slen);
     }
     return crypto_offer;
-}
+}*/
 
 void
 Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cands)
