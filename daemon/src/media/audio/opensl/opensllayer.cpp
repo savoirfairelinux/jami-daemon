@@ -115,7 +115,7 @@ OpenSLLayer::startStream()
 
     RING_DBG("Start OpenSL audio layer");
 
-    std::vector<int32_t> hw_infos = Manager::instance().getClient()->getConfigurationManager()->getHardwareAudioFormat();
+    std::vector<int32_t> hw_infos = Manager::instance().getConfigurationManager()->getHardwareAudioFormat();
     hardwareFormat_ = AudioFormat(hw_infos[0], 1);  // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
 

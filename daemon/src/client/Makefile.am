@@ -3,8 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libclient.la
 
 noinst_HEADERS = callmanager.h           \
-                 configurationmanager.h  \
-                 client.h
+                 configurationmanager.h
 
 PRESENCE_SRC = presencemanager.cpp
 noinst_HEADERS += presencemanager.h
@@ -14,8 +13,7 @@ VIDEO_SRC = videomanager.cpp
 noinst_HEADERS += videomanager.h
 endif
 
-libclient_la_SOURCES = client.cpp                \
-                       callmanager.cpp           \
+libclient_la_SOURCES = callmanager.cpp           \
                        configurationmanager.cpp  \
                        $(PRESENCE_SRC)           \
                        $(VIDEO_SRC)
