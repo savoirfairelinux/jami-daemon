@@ -33,10 +33,13 @@
 #define SDP_H_
 
 #include "noncopyable.h"
+
+#include "sdes_negotiator.h"
+#include "sip_utils.h"
+
 #include "ip_utils.h"
 #include "ice_transport.h"
 #include "media_audio_codec.h"
-#include "sip_utils.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -248,7 +251,7 @@ class Sdp {
         /**
          * Get remote SRTP master key for media at media_index
          */
-        CryptoOffer getRemoteCryptoOffer(unsigned media_index) const;
+        //CryptoOffer getRemoteCryptoOffer(unsigned media_index) const;
 
         /**
          * Set the SRTP master_key
@@ -264,7 +267,7 @@ class Sdp {
 
 */
 
-        static std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session, bool remote);
+        std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session, bool remote) const;
 
         std::vector<MediaDescription> getLocalMediaSlots() const
         {
@@ -365,13 +368,14 @@ class Sdp {
         int localVideoDataPort_;
         int localVideoControlPort_;
 
+        SdesNegotiator sdesNego_;
         std::string zrtpHelloHash_;
 
         /**
          * "a=crypto" sdes local attributes obtained from AudioSrtpSession
          * (one per media slot)
          */
-        std::vector<CryptoOffer> srtpCrypto_;
+        //std::vector<CryptoOffer> srtpCrypto_;
 
         unsigned int telephoneEventPayload_;
 
@@ -402,7 +406,7 @@ class Sdp {
          * @param media The media to add the srtp attribute to
          * @throw SdpException
          */
-        void addSdesAttribute(unsigned media_index, const CryptoOffer& crypto);
+        //void addSdesAttribute(unsigned media_index, const CryptoOffer& crypto);
 
         /*
          * Adds a zrtp-hash  attribute to
