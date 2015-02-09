@@ -73,6 +73,7 @@
 
 #include "client/configurationmanager.h"
 #include "client/callmanager.h"
+#include "client/presencemanager.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -158,8 +159,16 @@ ManagerImpl::ManagerImpl() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(*pluginManager_), client_(),
-    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
+    hasTriedToRegister_(false), audioCodecFactory(*pluginManager_),
+    callManager_(new CallManager), configurationManager_(new ConfigurationManager),
+    presenceManager_(new PresenceManager)
+#ifdef RING_VIDEO
+    , videoManager_(new VideoManager)
+#endif
+#ifdef USE_NETWORKMANAGER
+    , networkManager_(0)
+#endif
+    , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
@@ -174,7 +183,43 @@ ManagerImpl::ManagerImpl() :
 }
 
 ManagerImpl::~ManagerImpl()
-{}
+{
+#ifdef USE_NETWORKMANAGER
+    delete networkManager_;
+#endif
+#ifdef RING_VIDEO
+    delete videoManager_;
+#endif
+    delete configurationManager_;
+    delete presenceManager_;
+    delete callManager_;
+}
+
+CallManager*
+ManagerImpl::getCallManager()
+{
+    return callManager_;
+}
+
+ConfigurationManager*
+ManagerImpl::getConfigurationManager()
+{
+    return configurationManager_;
+}
+
+PresenceManager*
+ManagerImpl::getPresenceManager()
+{
+    return presenceManager_;
+}
+
+#ifdef RING_VIDEO
+VideoManager*
+ManagerImpl::getVideoManager()
+{
+    return videoManager_;
+}
+#endif
 
 bool
 ManagerImpl::parseConfiguration()
@@ -493,7 +538,7 @@ ManagerImpl::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    client_.getCallManager()->callStateChanged(call_id, "CURRENT");
+    getCallManager()->callStateChanged(call_id, "CURRENT");
 
     return result;
 }
@@ -518,7 +563,7 @@ ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     RING_DBG("Send call state change (HUNGUP) for id %s", callId.c_str());
-    client_.getCallManager()->callStateChanged(callId, "HUNGUP");
+    getCallManager()->callStateChanged(callId, "HUNGUP");
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
@@ -609,7 +654,7 @@ ManagerImpl::onHoldCall(const std::string& callId)
     if (current_call_id == callId)
         unsetCurrentCall();
 
-    client_.getCallManager()->callStateChanged(callId, "HOLD");
+    getCallManager()->callStateChanged(callId, "HOLD");
 
     return result;
 }
@@ -647,7 +692,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         return false;
     }
 
-    client_.getCallManager()->callStateChanged(callId, "UNHOLD");
+    getCallManager()->callStateChanged(callId, "UNHOLD");
 
     if (isConferenceParticipant(callId))
         switchCall(getCallFromCallID(call->getConfId()));
@@ -682,13 +727,13 @@ ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 void
 ManagerImpl::transferFailed()
 {
-    client_.getCallManager()->transferFailed();
+    getCallManager()->transferFailed();
 }
 
 void
 ManagerImpl::transferSucceeded()
 {
-    client_.getCallManager()->transferSucceeded();
+    getCallManager()->transferSucceeded();
 }
 
 bool
@@ -722,7 +767,7 @@ ManagerImpl::refuseCall(const std::string& id)
 
     removeWaitingCall(id);
 
-    client_.getCallManager()->callStateChanged(id, "HUNGUP");
+    getCallManager()->callStateChanged(id, "HUNGUP");
 
     // Disconnect streams
     removeStream(*call);
@@ -743,7 +788,7 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     // Add conference to map
     conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
-    client_.getCallManager()->conferenceCreated(conf->getConfID());
+    getCallManager()->conferenceCreated(conf->getConfID());
 
     return conf;
 }
@@ -765,7 +810,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
         return;
     }
 
-    client_.getCallManager()->conferenceRemoved(conference_id);
+    getCallManager()->conferenceRemoved(conference_id);
 
     // We now need to bind the audio to the remain participant
 
@@ -825,7 +870,7 @@ ManagerImpl::holdConference(const std::string& id)
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
 
-    client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
     return true;
 }
@@ -858,7 +903,7 @@ ManagerImpl::unHoldConference(const std::string& id)
 
     conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
 
-    client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
     return true;
 }
@@ -988,7 +1033,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         else
             RING_WARN("Invalid conference state while adding main participant");
 
-        client_.getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+        getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
     }
 
     switchCall(getCallFromCallID(conference_id));
@@ -1132,7 +1177,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         if (!callSuccess)
             conf->remove(generatedCallID);
         else {
-            client_.getCallManager()->newCallCreated(account, generatedCallID, tostr);
+            getCallManager()->newCallCreated(account, generatedCallID, tostr);
             successCounter++;
         }
     }
@@ -1140,7 +1185,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
-        client_.getCallManager()->conferenceCreated(conf->getConfID());
+        getCallManager()->conferenceCreated(conf->getConfID());
         conf->setRecordingFormat(ringbufferpool_->getInternalAudioFormat());
     }
 }
@@ -1202,7 +1247,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
         else
             RING_WARN("Undefined behavior, invalid conference state in detach participant");
 
-        client_.getCallManager()->conferenceChanged(conf->getConfID(),
+        getCallManager()->conferenceChanged(conf->getConfID(),
                                                   conf->getStateStr());
 
         unsetCurrentCall();
@@ -1236,7 +1281,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
 
     removeStream(*call);
 
-    client_.getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
 
     processRemainingParticipants(*conf);
 }
@@ -1541,7 +1586,7 @@ ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 
     std::string from("<" + number + ">");
 
-    client_.getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
+    getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
 }
 
 //THREAD=VoIP
@@ -1572,10 +1617,10 @@ ManagerImpl::incomingMessage(const std::string& callID,
         }
 
         // in case of a conference we must notify client using conference id
-        client_.getCallManager()->incomingMessage(conf->getConfID(), from, message);
+        getCallManager()->incomingMessage(conf->getConfID(), from, message);
 
     } else
-        client_.getCallManager()->incomingMessage(callID, from, message);
+        getCallManager()->incomingMessage(callID, from, message);
 }
 
 //THREAD=VoIP
@@ -1664,7 +1709,7 @@ ManagerImpl::peerAnsweredCall(Call& call)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    client_.getCallManager()->callStateChanged(call_id, "CURRENT");
+    getCallManager()->callStateChanged(call_id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1677,7 +1722,7 @@ ManagerImpl::peerRingingCall(Call& call)
     if (isCurrentCall(call))
         ringback();
 
-    client_.getCallManager()->callStateChanged(call_id, "RINGING");
+    getCallManager()->callStateChanged(call_id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -1698,7 +1743,7 @@ ManagerImpl::peerHungupCall(Call& call)
     call.peerHungup();
     saveHistory();
 
-    client_.getCallManager()->callStateChanged(call_id, "HUNGUP");
+    getCallManager()->callStateChanged(call_id, "HUNGUP");
 
     checkAudio();
     removeWaitingCall(call_id);
@@ -1714,7 +1759,7 @@ ManagerImpl::callBusy(Call& call)
 {
     const auto call_id = call.getCallId();
 
-    client_.getCallManager()->callStateChanged(call_id, "BUSY");
+    getCallManager()->callStateChanged(call_id, "BUSY");
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
@@ -1731,7 +1776,7 @@ ManagerImpl::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
 
-    client_.getCallManager()->callStateChanged(call_id, "FAILURE");
+    getCallManager()->callStateChanged(call_id, "FAILURE");
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
@@ -1753,7 +1798,7 @@ void
 ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
                                            int nb_msg)
 {
-    client_.getCallManager()->voiceMailNotify(accountId, nb_msg);
+    getCallManager()->voiceMailNotify(accountId, nb_msg);
 }
 
 /**
@@ -1800,7 +1845,7 @@ ManagerImpl::stopTone()
     if (audiofile_) {
         std::string filepath(audiofile_->getFilePath());
 
-        client_.getCallManager()->recordPlaybackStopped(filepath);
+        getCallManager()->recordPlaybackStopped(filepath);
         audiofile_.reset();
     }
 }
@@ -1893,7 +1938,7 @@ ManagerImpl::playRingtone(const std::string& accountID)
         std::lock_guard<std::mutex> m(toneMutex_);
 
         if (audiofile_) {
-            client_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+            getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
             audiofile_.reset();
         }
 
@@ -2112,8 +2157,8 @@ ManagerImpl::toggleRecordingCall(const std::string& id)
     }
 
     const bool result = rec->toggleRecording();
-    client_.getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
-    client_.getCallManager()->recordingStateChanged(id, result);
+    getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
+    getCallManager()->recordingStateChanged(id, result);
     return result;
 }
 
@@ -2145,7 +2190,7 @@ ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         std::lock_guard<std::mutex> m(toneMutex_);
 
         if (audiofile_) {
-            client_.getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+            getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
             audiofile_.reset();
         }
 
@@ -2184,7 +2229,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
         std::lock_guard<std::mutex> m(toneMutex_);
         audiofile_.reset();
     }
-    client_.getCallManager()->recordPlaybackStopped(filepath);
+    getCallManager()->recordPlaybackStopped(filepath);
 }
 
 void ManagerImpl::setHistoryLimit(int days)
@@ -2444,7 +2489,7 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
             account->doUnregister();
 
         // Update account details to the client side
-        client_.getConfigurationManager()->accountsChanged();
+        getConfigurationManager()->accountsChanged();
     });
 }
 
@@ -2489,7 +2534,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     saveConfig();
 
-    client_.getConfigurationManager()->accountsChanged();
+    getConfigurationManager()->accountsChanged();
 
     return newAccountID;
 }
@@ -2512,7 +2557,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     saveConfig();
 
-    client_.getConfigurationManager()->accountsChanged();
+    getConfigurationManager()->accountsChanged();
 }
 
 bool
@@ -2710,7 +2755,7 @@ ManagerImpl::saveHistory()
     if (!history_.save())
         RING_ERR("Could not save history!");
     else
-        client_.getConfigurationManager()->historyChanged();
+        getConfigurationManager()->historyChanged();
 }
 
 void
@@ -2781,20 +2826,6 @@ ManagerImpl::getAudioDriver()
 {
     return audiodriver_;
 }
-
-Client*
-ManagerImpl::getClient()
-{
-    return &client_;
-}
-
-#ifdef RING_VIDEO
-VideoManager *
-ManagerImpl::getVideoManager()
-{
-    return client_.getVideoManager();
-}
-#endif
 
 std::shared_ptr<Call>
 ManagerImpl::newOutgoingCall(const std::string& id,
