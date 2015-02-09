@@ -386,6 +386,9 @@ AVFormatRtpSession::start(int localPort)
 
     try {
         socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), local_.addr.getPort()));
+        if (local_.crypto and remote_.crypto) {
+            //socketPair_->createSRTP();
+        }
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed on port %d: %s", local_.addr.getPort(), e.what());
         return;

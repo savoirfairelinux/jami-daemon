@@ -41,14 +41,13 @@
 
 namespace ring {
 
-SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites,
-                               const std::vector<std::string>& remoteAttribute) :
-    remoteAttribute_(remoteAttribute),
+SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites) :
+    //remoteAttribute_(remoteAttribute),
     localCapabilities_(localCapabilites)
 {}
 
 std::vector<CryptoAttribute>
-SdesNegotiator::parse() const
+SdesNegotiator::parse(const std::vector<std::string>& attributes)
 {
     // The patterns below try to follow
     // the ABNF grammar rules described in
@@ -87,7 +86,7 @@ SdesNegotiator::parse() const
 
     std::vector<CryptoAttribute> cryptoAttributeVector;
 
-    for (const auto &item : remoteAttribute_) {
+    for (const auto &item : attributes) {
 
         // Split the line into its component
         // that we will analyze further down.
@@ -162,10 +161,10 @@ SdesNegotiator::parse() const
 }
 
 CryptoAttribute
-SdesNegotiator::negotiate() const
+SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
 {
     try {
-        auto cryptoAttributeVector(parse());
+        auto cryptoAttributeVector(parse(attributes));
         for (const auto& iter_offer : cryptoAttributeVector) {
             for (const auto& iter_local : localCapabilities_) {
                 if (iter_offer.getCryptoSuite().compare(iter_local.name))
