@@ -165,9 +165,6 @@ ManagerImpl::ManagerImpl() :
 #ifdef RING_VIDEO
     , videoManager_(new VideoManager)
 #endif
-#ifdef USE_NETWORKMANAGER
-    , networkManager_(0)
-#endif
     , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
