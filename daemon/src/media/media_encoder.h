@@ -39,6 +39,8 @@
 #include "video/video_scaler.h"
 #endif
 
+#include "sip/sip_utils.h"
+
 #include "noncopyable.h"
 
 #include <map>
@@ -66,11 +68,9 @@ public:
     MediaEncoder();
     ~MediaEncoder();
 
-    void setOptions(const std::map<std::string, std::string>& options);
 
     void setInterruptCallback(int (*cb)(void*), void *opaque);
-    void openOutput(const char *enc_name, const char *short_name,
-                   const char *filename, const char *mime_type, bool is_video);
+    void openOutput(const char *filename, const MediaDescription& args);
     void startIO();
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
@@ -90,6 +90,7 @@ public:
 
 private:
     NON_COPYABLE(MediaEncoder);
+    void setOptions(const MediaDescription& args);
     void setScaleDest(void *data, int width, int height, int pix_fmt);
     void prepareEncoderContext(bool is_video);
     void forcePresetX264();
@@ -99,6 +100,7 @@ private:
     AVCodecContext *encoderCtx_ = nullptr;
     AVFormatContext *outputCtx_ = nullptr;
     AVStream *stream_ = nullptr;
+    unsigned sent_samples = 0;
 
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
