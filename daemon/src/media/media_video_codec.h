@@ -43,6 +43,8 @@ public:
 
     uint16_t frameRate_;
     uint16_t profileId_;
+    std::string parameters_;
+    std::vector<std::string> getCodecSpecifications();
 
 private:
     };

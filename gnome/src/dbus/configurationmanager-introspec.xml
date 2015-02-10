@@ -356,7 +356,7 @@
        </method>
 
        <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
-           <arg type="i" name="payload" direction="in">
+           <arg type="i" name="codecid" direction="in">
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="details" direction="out">

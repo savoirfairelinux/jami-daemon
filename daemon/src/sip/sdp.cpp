@@ -304,7 +304,7 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
                 clock_rate = codec->sampleRate_;
         } else {
             // FIXME: get this key from header
-            enc_name = video_codec_list_[i]["name"];
+            enc_name = video_codec_list_[i]->name_;
             clock_rate = 90000;
             payload = dynamic_payload;
         }
@@ -322,7 +322,7 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
         rtpmap.pt = med->desc.fmt[i];
         rtpmap.enc_name = pj_str((char*) enc_name.c_str());
         rtpmap.clock_rate = clock_rate;
-        if (codec->nbChannels_ > 1) {
+        if ( audio && (codec->nbChannels_ > 1 )) {
             rtpmap.param.ptr = (char *) channels.c_str();
             rtpmap.param.slen = strlen(channels.c_str()); // don't include NULL terminator
         } else {
@@ -339,7 +339,7 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            std::string profileLevelID(video_codec_list_[i]["parameters"]);
+            std::string profileLevelID(video_codec_list_[i]->parameters_);
             if (profileLevelID.empty())
                 profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
             os << "fmtp:" << dynamic_payload << " " << profileLevelID;
@@ -421,16 +421,20 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     med->attr[med->attr_count++] = attr_fmtp;
 }
 
-void Sdp::setLocalMediaVideoCapabilities(const vector<map<string, string> > &codecs)
+void Sdp::setLocalMediaVideoCapabilities(const vector<int> &selectedCodecs)
 {
     video_codec_list_.clear();
 #ifdef RING_VIDEO
-    if (codecs.empty())
-        RING_WARN("No selected video codec while building local SDP offer");
-    else
-        video_codec_list_ = codecs;
+    for (const auto &i : selectedCodecs) {
+        auto codec = dynamic_cast<MediaVideoCodec*>(getMediaCodecFactory()->searchCodecById(i));
+
+        if (codec)
+            video_codec_list_.push_back(codec);
+        else
+            RING_WARN("Couldn't find audio codec");
+    }
 #else
-    (void) codecs;
+    (void) selectedCodecs;
 #endif
 }
 
@@ -459,7 +463,7 @@ printSession(const pjmedia_sdp_session *session)
     RING_DBG("%s", sessionStr.c_str());
 }
 
-int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<map<string, string> > &selectedVideoCodecs, sip_utils::KeyExchangeProtocol security)
+int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector<int> &selectedVideoCodecs, sip_utils::KeyExchangeProtocol security)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
@@ -508,10 +512,10 @@ int Sdp::createLocalSession(const vector<int> &selectedAudioCodecs, const vector
 }
 
 bool
-Sdp::createOffer(const vector<int> &selectedCodecs,
-                 const vector<map<string, string> > &videoCodecs, sip_utils::KeyExchangeProtocol security)
+Sdp::createOffer(const vector<int> &selectedAudioCodecs,
+                 const vector<int> &selectedVideoCodecs, sip_utils::KeyExchangeProtocol security)
 {
-    if (createLocalSession(selectedCodecs, videoCodecs, security) != PJ_SUCCESS) {
+    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return false;
     }
@@ -524,8 +528,8 @@ Sdp::createOffer(const vector<int> &selectedCodecs,
 }
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
-                       const vector<int> &selectedCodecs,
-                       const vector<map<string, string> > &videoCodecs, sip_utils::KeyExchangeProtocol kx)
+                       const vector<int> &selectedAudioCodecs,
+                       const vector<int> &selectedVideoCodecs, sip_utils::KeyExchangeProtocol kx)
 {
     if (!remote) {
         RING_ERR("Remote session is NULL");
@@ -535,7 +539,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     RING_DBG("Remote SDP Session:");
     printSession(remote);
 
-    if (!localSession_ and createLocalSession(selectedCodecs, videoCodecs, kx) != PJ_SUCCESS) {
+    if (!localSession_ and createLocalSession(selectedAudioCodecs, selectedVideoCodecs, kx) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return;
     }
@@ -749,6 +753,7 @@ findCodecInList(const vector<map<string, string> > &codecs, const string &codec)
     return codecs.end();
 }
 
+#if 0
 std::string
 Sdp::getOutgoingVideoField(const std::string &codec, const char *key) const
 {
@@ -760,6 +765,7 @@ Sdp::getOutgoingVideoField(const std::string &codec, const char *key) const
     }
     return "";
 }
+#endif
 
 void
 Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
