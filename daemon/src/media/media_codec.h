@@ -45,10 +45,11 @@ namespace ring {
         CODEC_TYPE_DECODER = 2,
         CODEC_TYPE_ENCODER_DECODER = CODEC_TYPE_ENCODER | CODEC_TYPE_DECODER
     };
-    enum MEDIA_TYPE {
-        MEDIA_AUDIO = 0x1,
-        MEDIA_VIDEO = 0x2,
-        MEDIA_CRYPTO = 0x4,
+    enum MEDIA_TYPE : uint16_t {
+        MEDIA_UNDEFINED = 0,
+        MEDIA_AUDIO = 1,
+        MEDIA_VIDEO = 2,
+        MEDIA_CRYPTO = 4,
         MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO | MEDIA_CRYPTO
     };
     class MediaCodec{
@@ -73,7 +74,7 @@ public:
 private:
     };
 static uint16_t generateId();
-static uint16_t s_codecId = 0;
+static uint16_t s_codecId = 100;
 bool operator== (MediaCodec codec1, MediaCodec codec2);
 }
 #endif // __MEDIA_CODEC_H__
