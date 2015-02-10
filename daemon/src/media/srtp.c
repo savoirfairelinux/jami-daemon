@@ -96,7 +96,7 @@ int ff_srtp_set_crypto_raw(struct SRTPContext *s, const char *suite, const uint8
     if (!s->aes || !s->hmac)
         return AVERROR(ENOMEM);
 
-    if (master_key_len != 14 || master_salt_len != 16) {
+    if (master_key_len != 16 || master_salt_len != 14) {
         av_log(NULL, AV_LOG_WARNING, "Incorrect amount of SRTP params\n");
         return AVERROR(EINVAL);
     }
