@@ -226,9 +226,9 @@ SocketPair::~SocketPair()
 void SocketPair::createSRTP(const char *out_suite, const char *out_key,
                             const char *in_suite, const char *in_key)
 {
-    RING_WARN("createSRTP: out %s %s", out_suite, out_key);
+    /*RING_WARN("createSRTP: out %s %s", out_suite, out_key);
     RING_WARN("createSRTP: in  %s %s", in_suite,  in_key);
-    srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
+    srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));*/
 }
 
 void SocketPair::interrupt()
