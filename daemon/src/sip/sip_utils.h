@@ -32,6 +32,10 @@
 #ifndef SIP_UTILS_H_
 #define SIP_UTILS_H_
 
+#include "ip_utils.h"
+#include "media_codec.h"
+#include "media/audio/audiobuffer.h"
+
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
 
@@ -41,7 +45,40 @@
 
 struct pjsip_msg;
 
-namespace ring { namespace sip_utils {
+namespace ring {
+
+
+typedef std::vector<std::string> CryptoOffer;
+
+enum class MediaType { AUDIO, VIDEO };
+
+struct MediaDescription {
+    MediaType type {};
+    bool enabled {false};
+    bool holding {false};
+    IpAddr addr {};
+
+    MediaCodec* codec {};
+    std::string payload_type {};
+    std::string receiving_sdp {};
+    unsigned bitrate {};
+
+    //audio
+    AudioFormat audioformat {AudioFormat::NONE()};
+
+    //video
+    unsigned width {};
+    unsigned height {};
+    std::string parameters {};
+
+    //crypto
+    CryptoOffer crypto {};
+};
+
+
+namespace sip_utils {
+
+    enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
 
     /**
      * Helper function to parser header from incoming sip messages
