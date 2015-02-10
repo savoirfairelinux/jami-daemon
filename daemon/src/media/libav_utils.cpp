@@ -67,12 +67,14 @@ findInstalledVideoCodecs()
     }
 }
 
+#if 0
 std::vector<std::string> getVideoCodecList()
 {
     if (installed_video_codecs_.empty())
         findInstalledVideoCodecs();
     return installed_video_codecs_;
 }
+#endif
 #endif // RING_VIDEO
 
 // protect libav/ffmpeg access

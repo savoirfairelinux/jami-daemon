@@ -257,11 +257,9 @@ std::vector<std::string> ConfigurationManager::getSupportedCiphers(const std::st
 std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t codecId)
 {
     ring::MediaAudioCodec* foundCodec = NULL;
-    if( foundCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecById(codecId, ring::MEDIA_AUDIO)))
+    foundCodec = dynamic_cast<MediaAudioCodec*>(getMediaCodecFactory()->searchCodecById(codecId, MEDIA_AUDIO));
+    if (!foundCodec)
         errorAlert(CODECS_NOT_LOADED);
-
-
-    RING_DBG("####### foundCodec->name_ == %s", foundCodec->name_.c_str());
     return foundCodec->getCodecSpecifications();
 }
 
