@@ -1363,6 +1363,7 @@ ManagerImpl::addStream(Call& call)
         audiodriver_->flushUrgent();
         audiodriver_->flushMain();
     }
+    startAudioDriverStream();
 }
 
 void
