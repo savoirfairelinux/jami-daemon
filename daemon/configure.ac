@@ -525,15 +525,6 @@ AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
 
-# NETWORK MANAGER
-# required dependency(ies): libiax2 (static)
-dnl Check for network-manager
-AC_ARG_WITH([networkmanager], [AS_HELP_STRING([--without-networkmanager],
-            [disable support for network-manager events])], [],
-            [with_networkmanager=yes])
-
-AM_CONDITIONAL(USE_NETWORKMANAGER, test "x$with_networkmanager" = "xyes" )
-
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 
