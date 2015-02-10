@@ -39,9 +39,11 @@
 #endif
 
 #include "call.h"
+#include "sip_utils.h"
+#include "media/srtp.h"
 
 #ifdef RING_VIDEO
-#include "video/video_rtp_session.h"
+#include "media/video/video_rtp_session.h"
 #endif
 
 #include "noncopyable.h"
@@ -182,7 +184,20 @@ class SIPCall : public Call
 
         void startAllMedia();
 
+        void onMediaUpdate();
+
         void openPortsUPnP();
+
+        /**
+         * Init local crypto context for outgoing data
+         * this method must be called before sending or receiving an SDP offer.
+         * It is required for media negotiation that the local cryptographic
+         * context be properly initialized.
+         *
+         * @return The new local crypto context, to be cached by the caller
+         */
+        void initLocalCryptoInfo();
+        void setRemoteCryptoInfo(const SdesNegotiator &nego);
 
     private:
         NON_COPYABLE(SIPCall);
@@ -191,7 +206,7 @@ class SIPCall : public Call
         std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        void stopAllMedias();
+        void stopAllMedia();
 
         /**
          * Transfer method used for both type of transfer
@@ -211,6 +226,14 @@ class SIPCall : public Call
          * Video Rtp Session factory
          */
         video::VideoRtpSession videortp_;
+#endif
+
+#ifdef HAVE_SDES
+        bool srtpEnabled_ {false};
+        sip_utils::KeyExchangeProtocol keyExchangeProtocol_;
+        bool remoteOfferIsSet_;
+        SRTPContext localSrtp_;
+        SRTPContext remoteSrtp_;
 #endif
 
         /**

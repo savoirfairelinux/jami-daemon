@@ -242,8 +242,8 @@ class RingAccount : public SIPAccountBase {
             return false;
         }
 
-        virtual std::string getSrtpKeyExchange() const {
-            return "sdes";
+        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
+            return sip_utils::KeyExchangeProtocol::SDES;
         }
 
         virtual bool getSrtpFallback() const {

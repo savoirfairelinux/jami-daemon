@@ -39,6 +39,8 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
+#include "sip/sip_utils.h"
+
 #include "noncopyable.h"
 
 #include <map>
@@ -62,67 +64,74 @@ namespace video {
 }
 #endif // RING_VIDEO
 
-    class AudioBuffer;
-    class AudioFormat;
-    class RingBuffer;
-    class Resampler;
-    class MediaIOHandle;
+class AudioFormat;
+class RingBuffer;
+class Resampler;
+class MediaIOHandle;
 
-    class MediaDecoder {
+struct MediaDecoderParams {
+    std::string input {};
+    std::string format {};
+    unsigned width {}, height {};
+    unsigned framerate {};
+    std::string video_size {};
+    std::string channel {};
+    std::string loop {};
+    std::string sdp_flags {};
+
+    MediaDecoderParams() {}
+    MediaDecoderParams(const MediaDescription& d) : width(d.width), height(d.height) {}
+};
+
+class MediaDecoder {
 
 public:
-        enum class Status {
-            Success,
-            FrameFinished,
-            EOFError,
-            ReadError,
-            DecodeError
-        };
-
-        MediaDecoder();
-        ~MediaDecoder();
-
-        void emulateRate() { emulateRate_ = true; }
-        void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const std::string &source_str,
-                      const std::string &format_str);
-
-        void setIOContext(MediaIOHandle *ioctx);
-#ifdef RING_VIDEO
-        int setupFromVideoData();
-        Status decode(video::VideoFrame&, video::VideoPacket&);
-        Status flush(video::VideoFrame&);
- #endif // RING_VIDEO
-
-        int setupFromAudioData();
-        Status decode_audio(AVFrame* frame);
-        void writeToRingBuffer(AVFrame* frame, RingBuffer& rb,
-                               const AudioFormat outFormat);
-
-        int getWidth() const;
-        int getHeight() const;
-        int getPixelFormat() const;
-
-        void setOptions(const std::map<std::string, std::string>& options);
-
-    private:
-        NON_COPYABLE(MediaDecoder);
-
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
-        AVFormatContext *inputCtx_ = nullptr;
-        std::unique_ptr<Resampler> resampler_;
-        int streamIndex_ = -1;
-        bool emulateRate_ = false;
-        int64_t startTime_;
-        int64_t lastDts_;
-        std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
-
-        void extract(const std::map<std::string, std::string>& map, const std::string& key);
-
-    protected:
-        AVDictionary *options_ = nullptr;
+    enum class Status {
+        Success,
+        FrameFinished,
+        EOFError,
+        ReadError,
+        DecodeError
     };
+
+    MediaDecoder();
+    ~MediaDecoder();
+
+    void emulateRate() { emulateRate_ = true; }
+    void setInterruptCallback(int (*cb)(void*), void *opaque);
+    int openInput(const MediaDecoderParams&);
+
+    void setIOContext(MediaIOHandle *ioctx);
+#ifdef RING_VIDEO
+    int setupFromVideoData();
+    Status decode(video::VideoFrame&, video::VideoPacket&);
+    Status flush(video::VideoFrame&);
+#endif // RING_VIDEO
+
+    int setupFromAudioData();
+    Status decode_audio(AVFrame* frame);
+    void writeToRingBuffer(AVFrame* frame, RingBuffer& rb, const AudioFormat outFormat);
+
+    int getWidth() const;
+    int getHeight() const;
+    int getPixelFormat() const;
+
+private:
+    NON_COPYABLE(MediaDecoder);
+
+    AVCodec *inputDecoder_ = nullptr;
+    AVCodecContext *decoderCtx_ = nullptr;
+    AVFormatContext *inputCtx_ = nullptr;
+    std::unique_ptr<Resampler> resampler_;
+    int streamIndex_ = -1;
+    bool emulateRate_ = false;
+    int64_t startTime_;
+    int64_t lastDts_;
+    std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
+
+protected:
+    AVDictionary *options_ = nullptr;
+};
 
 } // namespace ring
 
