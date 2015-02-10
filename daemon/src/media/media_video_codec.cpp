@@ -35,7 +35,7 @@
 using std::string;
 namespace ring {
 
-MediaVideoCodec::MediaVideoCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t payloadType, bool isActive)
+MediaVideoCodec::MediaVideoCodec(AVCodecID avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t payloadType, bool isActive)
     : MediaCodec(avcodecId, name, libName, MEDIA_VIDEO, type, payloadType, isActive){}
 MediaVideoCodec::~MediaVideoCodec()
 {

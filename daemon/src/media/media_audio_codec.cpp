@@ -35,7 +35,7 @@
 using std::string;
 namespace ring {
 
-MediaAudioCodec::MediaAudioCodec(/*AVCodecID*/ uint16_t avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t bitrate, uint16_t sampleRate, uint16_t nbChannels, uint16_t payloadType, bool isActive)
+MediaAudioCodec::MediaAudioCodec(AVCodecID avcodecId, const std::string name, std::string libName, CODEC_TYPE type, uint16_t bitrate, uint16_t sampleRate, uint16_t nbChannels, uint16_t payloadType, bool isActive)
     : MediaCodec(avcodecId, name, libName, MEDIA_AUDIO, type, bitrate, payloadType, isActive) {
     sampleRate_ = sampleRate;
     nbChannels_ = nbChannels;
