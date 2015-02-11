@@ -87,7 +87,7 @@ std::map< std::string, std::string > DBusConfigurationManager::getTlsSettingsDef
     return ring_config_get_tls_default_settings();
 }
 
-std::vector< int32_t > DBusConfigurationManager::getAudioCodecList()
+std::vector<unsigned> DBusConfigurationManager::getAudioCodecList()
 {
     return ring_config_get_audio_codec_list();
 }
@@ -102,12 +102,12 @@ std::vector< std::string > DBusConfigurationManager::getSupportedCiphers(const s
     return ring_config_get_supported_ciphers(accountID);
 }
 
-std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const int32_t& codecId)
+std::vector< std::string > DBusConfigurationManager::getAudioCodecDetails(const unsigned& codecId)
 {
     return ring_config_get_audio_codec_details(codecId);
 }
 
-std::vector< int32_t > DBusConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
+std::vector<unsigned> DBusConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
 {
     return ring_config_get_active_audio_codec_list(accountID);
 }

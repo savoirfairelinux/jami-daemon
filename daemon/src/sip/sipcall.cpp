@@ -615,14 +615,14 @@ SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<rMediaAudioCodec*> sessionMedia(sdp_->getSessionAudioMedia());
+    std::vector<rSystemAudioCodecInfo*> sessionMedia(sdp_->getSessionAudioMedia());
 
     if (sessionMedia.empty()) {
         RING_WARN("Session media is empty");
         return;
     }
 
-    std::vector<MediaAudioCodec*> audioCodecs;
+    std::vector<SystemAudioCodecInfo*> audioCodecs;
 
     for (auto & i : sessionMedia) {
 
@@ -630,7 +630,7 @@ SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
             continue;
 
         // Create a new instance for this codec
-        MediaAudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
+        SystemAudioCodecInfo* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
 
         if (ac == NULL) {
             RING_ERR("Could not instantiate codec %d", i->getPayloadType());
