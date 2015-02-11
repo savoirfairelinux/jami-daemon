@@ -119,6 +119,19 @@ class SIPCall : public Call
         struct InvSessionDeleter { void operator()(pjsip_inv_session*) {} };
         std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv {};
 
+        void setSecure(bool sec) {
+            if (srtpEnabled_)
+                return;
+            if (sec && getConnectionState() != DISCONNECTED) {
+                throw std::runtime_error("Can't enable security since call is already connected");
+            }
+            srtpEnabled_ = sec;
+        }
+
+        bool isSecure() const {
+            return srtpEnabled_;
+        }
+
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
         void setContactHeader(pj_str_t *contact);
@@ -216,13 +229,13 @@ class SIPCall : public Call
          */
         video::VideoRtpSession videortp_;
 #endif
+        bool srtpEnabled_ {false};
 /*
 #ifdef HAVE_SDES
-        bool srtpEnabled_ {false};
         sip_utils::KeyExchangeProtocol keyExchangeProtocol_;
         bool remoteOfferIsSet_;
 #endif
-*/
+
         /**
          * Hold the transport used for SIP communication.
          * Will be different from the account registration transport for

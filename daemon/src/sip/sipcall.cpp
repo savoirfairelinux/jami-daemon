@@ -796,6 +796,12 @@ SIPCall::startIce()
 void
 SIPCall::startAllMedia()
 {
+    if (isSecure() && not transport_->isSecure()) {
+        RING_ERR("Can't perform secure call over insecure SIP transport");
+        Manager::instance().callFailure(*this);
+        removeCall();
+        return;
+    }
     auto local_slots = sdp_->getLocalMediaSlots();
     auto remote_slots = sdp_->getRemoteMediaSlots();
     auto slot_num = std::min(local_slots.size(), remote_slots.size());
@@ -806,6 +812,10 @@ SIPCall::startAllMedia()
         const auto& remote = remote_slots[i];
         if (local.type != remote.type) {
             RING_ERR("Inconsistent media types between local and remote for SDP media slot %d", i);
+            continue;
+        }
+        if (isSecure() && (not local.crypto || not remote.crypto)) {
+            RING_ERR("Can't perform secure call over insecure RTP transport");
             continue;
         }
         RtpSession* rtp = (local.type == MEDIA_AUDIO) ? dynamic_cast<RtpSession*>(avformatrtp_.get()) : dynamic_cast<RtpSession*>(&videortp_);
