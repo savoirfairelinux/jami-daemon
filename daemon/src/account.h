@@ -196,18 +196,18 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        std::vector<std::map<std::string, std::string> >
-        getAllVideoCodecs() const;
+        std::vector<unsigned>
+        getAllVideoCodecsId() const;
 
-        std::vector<std::map<std::string, std::string> >
+        std::vector<unsigned>
         getActiveVideoCodecs() const;
 
-        static std::vector<int> getDefaultAudioCodecs();
+        static std::vector<unsigned> getDefaultAudioCodecs();
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<int> getActiveAudioCodecs() const;
+        std::vector<unsigned> getActiveAudioCodecs() const;
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
@@ -279,11 +279,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::set<std::string> callIDSet_ = {{}};
 
         /**
-         * sort MediaCodec by order
+         * sort SystemCodecInfo by order
          */
-        static bool sortMediaCodec(MediaCodec* c1  , MediaCodec* c2) {
+        /*
+        static bool sortSystemCodecInfo(SystemCodecInfo* c1  , SystemCodecInfo* c2) {
             return (c1->order_< c2->order_);
-        }
+        }*/
 
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
@@ -354,19 +355,17 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Vector containing the order of the codecs
          */
+        std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
         std::vector<int> audioCodecList_;
+        std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
 
         /**
          * Vector containing the video codecs in order
          */
         std::vector<std::map<std::string, std::string> > videoCodecList_;
 
-        /**
-         * List of audio codecs obtained when parsing configuration and used
-         * to generate codec order list
-         */
         std::string audioCodecStr_;
-
+        std::string videoCodecStr_;
         /**
          * Ringtone .au file used for this account
          */
@@ -416,6 +415,24 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * flag which determines if this account is set to use UPnP.
          */
         std::atomic_bool upnpEnabled_ {false};
+
+
+        /*
+         * private account codec searching functions
+         *
+         * */
+
+        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
+        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
+        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
+        void desactivateAllMedia(MediaType mediaType);
+        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType);
+
+
+
+
 };
 
 } // namespace ring

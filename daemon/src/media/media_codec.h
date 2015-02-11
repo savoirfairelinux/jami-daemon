@@ -56,28 +56,107 @@ enum MediaType : unsigned {
     MEDIA_VIDEO = 2,
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
 };
+/*
+ * SystemCodecInfo
+ * represent information of a codec available on the system (using libav)
+ * store default codec values
+ */
+struct SystemCodecInfo {
+    SystemCodecInfo(unsigned  avcodecId, const std::string name, std::string libName, MediaType mediaType,
+            CodecType codecType = CODEC_UNDEFINED, unsigned bitrate = 0, unsigned payloadType = 0);
 
-struct MediaCodec {
-    MediaCodec(unsigned  avcodecId, const std::string name, std::string libName, MediaType mediaType, CodecType codecType = CODEC_UNDEFINED, uint16_t bitrate = 0, uint16_t payloadType = 0, bool isActive = true);
-    virtual ~MediaCodec();
+    virtual ~SystemCodecInfo();
+
+    /* generic codec information */
+    unsigned id_; /* id of the codec used with dbus */
+    unsigned  avcodecId_;  /* read as AVCodecID libav codec identifier */
+    std::string name_;
+    std::string libName_;
+    CodecType codecType_;
+    MediaType mediaType_;
+
+    /* default codec values */
+    unsigned payloadType_;
+    unsigned bitrate_;
+
+    std::string to_string() const;
+};
+
+/*
+ * SystemAudioCodecInfo
+ * represent information of a audio codec available on the system (using libav)
+ * store default codec values
+ */
+struct SystemAudioCodecInfo : SystemCodecInfo {
+
+    SystemAudioCodecInfo(unsigned avcodecId, const std::string name,
+            std::string libName, CodecType type, unsigned bitrate = 0,
+            unsigned sampleRate = 0, unsigned nbChannels = 0, unsigned payloadType = 0);
+
+    ~SystemAudioCodecInfo();
 
     bool isPCMG722() const;
 
-    uint16_t codecId_;
-    unsigned  avcodecId_;
-    std::string name_;
-    std::string libName_;
-    uint16_t payloadType_;
-    bool isActive_;
-    uint16_t bitrate_;
-    CodecType codecType_;
-    MediaType mediaType_;
-    uint16_t order_;
-
-    uint16_t getCodecId();
-    std::string to_string();
+    unsigned sampleRate_;
+    unsigned nbChannels_;
+    std::vector<std::string> getCodecSpecifications();
 };
-bool operator== (MediaCodec codec1, MediaCodec codec2);
+
+/*
+ * SystemVideoCodecInfo
+ * represent information of a video codec available on the system (using libav)
+ * store default codec values
+ */
+struct SystemVideoCodecInfo :  SystemCodecInfo {
+
+    SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
+            std::string libName, CodecType type = CODEC_UNDEFINED, unsigned payloadType = 0);
+
+    ~SystemVideoCodecInfo();
+
+    unsigned frameRate_;
+    unsigned profileId_;
+    std::string parameters_;
+    std::vector<std::string> getCodecSpecifications();
+};
+
+/*
+ * AccountCodecInfo
+ * represent information of a codec on a account
+ * store account codec values
+ */
+
+struct AccountCodecInfo {
+    const SystemCodecInfo& systemCodecInfo;
+    unsigned order_; /*used to define prefered codec list order in UI*/
+    bool isActive_;
+    /* account custom values */
+    unsigned payloadType_;
+    unsigned bitrate_;
+
+    AccountCodecInfo(const SystemCodecInfo& sysCodecInfo);
+    ~AccountCodecInfo();
+};
+struct AccountAudioCodecInfo : AccountCodecInfo {
+    /* account custom values */
+    unsigned sampleRate_;
+    unsigned nbChannels_;
+    std::vector<std::string> getCodecSpecifications();
+    AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
+    ~AccountAudioCodecInfo();
+
+};
+struct AccountVideoCodecInfo : AccountCodecInfo {
+    /* account custom values */
+    unsigned frameRate_;
+    unsigned profileId_;
+    std::string parameters_;
+    std::vector<std::string> getCodecSpecifications();
+    AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
+    ~AccountVideoCodecInfo();
+};
+
+bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 
 class CryptoAttribute {
 public:
@@ -143,7 +222,7 @@ struct MediaDescription {
     bool holding {false};
     IpAddr addr {};
 
-    MediaCodec* codec {};
+    std::shared_ptr<SystemCodecInfo> codec {};
     std::string payload_type {};
     std::string receiving_sdp {};
     unsigned bitrate {};
@@ -159,5 +238,5 @@ struct MediaDescription {
     CryptoAttribute crypto {};
 };
 
-}
-#endif // __MEDIA_CODEC_H__
+}//namespace ring
+#endif //__MEDIA_AUDIO_CODEC_H__
