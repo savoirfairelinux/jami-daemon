@@ -15,9 +15,7 @@ libmedia_la_SOURCES = \
 	media_encoder.cpp \
 	media_io_handle.cpp \
 	media_codec.cpp \
-	media_audio_codec.cpp \
-	media_video_codec.cpp \
-	media_codec_factory.cpp \
+	system_codec_container.cpp \
 	srtp.c
 
 noinst_HEADERS = \
@@ -30,9 +28,7 @@ noinst_HEADERS = \
 	media_io_handle.h \
 	media_device.h \
 	media_codec.h \
-	media_audio_codec.h \
-	media_video_codec.h \
-	media_codec_factory.h \
+	system_codec_container.h \
 	srtp.h
 
 libmedia_la_LIBADD = \
