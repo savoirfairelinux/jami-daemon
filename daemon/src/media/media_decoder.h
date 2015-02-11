@@ -34,6 +34,8 @@
 
 #include "config.h"
 
+#include "media_codec.h"
+
 #ifdef RING_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
