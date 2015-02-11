@@ -86,7 +86,7 @@ class IAXCall : public Call
          */
         int getFirstMatchingFormat(int needles, const std::string &accountID) const;
 
-        int getAudioCodec() const;
+        int getAudioCodecPayload() const;
 
         int format;
         iax_session* session;

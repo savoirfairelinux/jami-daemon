@@ -78,10 +78,10 @@ class DBusConfigurationManager :
         void registerAllAccounts(void);
         std::map< std::string, std::string > getTlsSettingsDefault();
         std::vector< std::string > getSupportedCiphers(const std::string& accountID);
-        std::vector< int32_t > getAudioCodecList();
+        std::vector<unsigned> getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
-        std::vector< std::string > getAudioCodecDetails(const int32_t& codecId);
-        std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
+        std::vector< std::string > getAudioCodecDetails(const unsigned& codecId);
+        std::vector<unsigned> getActiveAudioCodecList(const std::string& accountID);
         void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
         std::vector< std::string > getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
