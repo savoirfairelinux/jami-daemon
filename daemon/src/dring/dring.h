@@ -203,11 +203,11 @@ std::vector<std::string> ring_config_get_account_list(void);
 void ring_config_send_register(const std::string& account_id, bool enable);
 void ring_config_register_all_accounts(void);
 std::map<std::string, std::string> ring_config_get_tls_default_settings(void);
-std::vector<int> ring_config_get_audio_codec_list(void);
+std::vector<unsigned> ring_config_get_audio_codec_list(void);
 std::vector<std::string> ring_config_get_supported_tls_method(void);
 std::vector<std::string> ring_config_get_supported_ciphers(const std::string& account_id);
 std::vector<std::string> ring_config_get_audio_codec_details(int payload);
-std::vector<int> ring_config_get_active_audio_codec_list(const std::string& account_id);
+std::vector<unsigned> ring_config_get_active_audio_codec_list(const std::string& account_id);
 void ring_config_set_active_audio_codec_list(const std::vector<std::string>& list, const std::string& account_id);
 std::vector<std::string> ring_config_get_audio_plugin_list(void);
 void ring_config_set_audio_plugin(const std::string& audio_plugin);
@@ -271,8 +271,9 @@ void ring_pres_set_subscriptions(const std::string& account_id, const std::vecto
 
 /* video API */
 #ifdef RING_VIDEO
-std::vector<std::map<std::string, std::string>> ring_video_get_codecs(const std::string& account_id);
-void ring_video_set_codecs(const std::string& account_id, const std::vector<std::map<std::string, std::string>>& details);
+std::vector<unsigned> ring_video_get_video_codec_list(const std::string& account_id);
+std::vector<std::string> ring_video_get_video_codec_details(unsigned codecId);
+void ring_video_set_video_codec_list(const std::string& account_id, const std::vector<unsigned>& list);
 std::vector<std::string> ring_video_get_device_list(void);
 std::map<std::string, std::map<std::string, std::vector<std::string>>> ring_video_get_capabilities(const std::string& name);
 std::map<std::string, std::string> ring_video_get_settings(const std::string& name);
