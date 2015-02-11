@@ -33,8 +33,6 @@
 #define SIP_UTILS_H_
 
 #include "ip_utils.h"
-#include "media_codec.h"
-#include "media/audio/audiobuffer.h"
 
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>

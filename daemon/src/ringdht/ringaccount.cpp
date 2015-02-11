@@ -62,6 +62,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "upnp/upnp_control.h"
+#include "system_codec_container.h"
 
 #include <algorithm>
 #include <array>
@@ -256,11 +257,12 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     // Initialize the session using ULAW as default codec in case of early media
     // The session should be ready to receive media once the first INVITE is sent, before
     // the session initialization is completed
-    MediaAudioCodec* ac = dynamic_cast<MediaAudioCodec*>( getMediaCodecFactory()->searchCodecByName("PCMA", ring::MEDIA_AUDIO));
+    auto ac = std::dynamic_pointer_cast<SystemAudioCodecInfo>
+        ( getSystemCodecContainer()->searchCodecByName("PCMA", ring::MEDIA_AUDIO));
     if (!ac)
         throw VoipLinkException("Could not instantiate codec for early media");
 
-    std::vector<MediaAudioCodec *> audioCodecs;
+    std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
     audioCodecs.push_back(ac);
 
     // Building the local SDP offer
