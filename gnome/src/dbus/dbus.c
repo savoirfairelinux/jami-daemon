@@ -38,9 +38,9 @@
 #include "calltab.h"
 #include "callmanager-glue.h"
 #include "configurationmanager-glue.h"
-#ifdef SFL_VIDEO
+//#ifdef SFL_VIDEO
 #include "videomanager-glue.h"
-#endif
+//#endif
 #include "instance-glue.h"
 #include "preferencesdialog.h"
 #include "mainwindow.h"
@@ -1424,21 +1424,31 @@ dbus_audio_codec_list()
 }
 
 #ifdef SFL_VIDEO
-GPtrArray *
-dbus_get_video_codecs(const gchar *accountID)
+GArray *
+dbus_get_video_codec_list(const gchar *accountID)
 {
     GError *error = NULL;
-    GPtrArray *array = NULL;
-    cx_ring_Ring_VideoManager_get_codecs(video_proxy, accountID, &array, &error);
+    GArray *array = NULL;
+    cx_ring_Ring_VideoManager_get_video_codec_list(video_proxy, accountID, &array, &error);
+    check_error(error);
+    return array;
+}
+
+gchar **
+dbus_get_video_codec_details(int id)
+{
+    GError *error = NULL;
+    gchar **array;
+    cx_ring_Ring_VideoManager_get_video_codec_details(video_proxy, id, &array, &error);
     check_error(error);
     return array;
 }
 
 void
-dbus_set_video_codecs(const gchar *accountID, const GPtrArray *list)
+dbus_set_video_codec_list(const gchar *accountID, const GPtrArray *list)
 {
     GError *error = NULL;
-    cx_ring_Ring_VideoManager_set_codecs(video_proxy, accountID, list, &error);
+    cx_ring_Ring_VideoManager_set_video_codec_list(video_proxy, accountID, list, &error);
     check_error(error);
 }
 

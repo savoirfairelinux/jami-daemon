@@ -29,9 +29,9 @@
  *  as that of the covered work.
  */
 
+#include "media_codec.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
-#include "media_codec.h"
 #include "libav_deps.h"
 
 #include "audio/audiobuffer.h"
