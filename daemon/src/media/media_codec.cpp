@@ -28,47 +28,141 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#include "libav_deps.h"
+
 #include "media_codec.h"
+
 #include <string.h>
 #include <sstream>
 
 
 namespace ring {
-MediaCodec::MediaCodec(AVCodecID avcodecId, const std::string name, std::string libName, MediaType mediaType, CodecType codecType, uint16_t bitrate, uint16_t payloadType, bool isActive)
+// TODO: initialize inside a function !
+// put SystemCodecInfo in abstract
+//static unsigned s_codecId = 1;
+
+static unsigned& generateId()
 {
-    avcodecId_ = avcodecId;
-    name_ = name;
-    payloadType_ = payloadType;
-    isActive_ = isActive;
-    libName_ = libName;
-    bitrate_ = bitrate;
-    codecId_ = generateId();
-    codecType_ = codecType;
-    mediaType_ = mediaType;
-    order_ = 0; //undefined order
+    static unsigned id = 0;
+    return ++id;
 }
-MediaCodec::~MediaCodec()
-{
-    //TODO
-}
-uint16_t MediaCodec::getCodecId()
-{
-    return codecId_;
-}
-std::string MediaCodec::to_string()
+
+/*
+ * SystemCodecInfo
+ */
+SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string name, std::string libName,
+        MediaType mediaType, CodecType codecType, unsigned bitrate, unsigned payloadType)
+    : id_(generateId())
+    , avcodecId_(avcodecId)
+    , name_(name)
+    , libName_(libName)
+    , codecType_(codecType)
+    , mediaType_(mediaType)
+    , payloadType_(payloadType)
+    , bitrate_(bitrate)
+{}
+
+SystemCodecInfo::~SystemCodecInfo()
+{}
+
+std::string SystemCodecInfo::to_string() const
 {
     std::ostringstream out;
-    out << "order:" << order_ << " type:" << (unsigned)codecType_ << " ,id:" << codecId_ << " ,avcodecID:" << avcodecId_ << " ,name:" << name_ << " ,PT:" << payloadType_ << " ,isActive:" << (isActive_ ? "true " : "false") << " ,libName:" << libName_ << " ,bitrate:" << bitrate_;
+    out << " type:" << (unsigned)codecType_ << " , avcodecID:" << avcodecId_
+        << " ,name:" << name_ << " ,PT:" << payloadType_ << " ,libName:" << libName_ << " ,bitrate:" << bitrate_;
 
     return out.str();
 }
-static uint16_t generateId()
+
+/*
+ * SystemAudioCodecInfo
+ */
+
+SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned avcodecId, const std::string name, std::string libName,
+        CodecType type, unsigned bitrate, unsigned sampleRate, unsigned nbChannels, unsigned payloadType)
+    : SystemCodecInfo(avcodecId, name, libName, MEDIA_AUDIO, type, bitrate, payloadType)
+    , sampleRate_(sampleRate), nbChannels_(nbChannels)
+{}
+
+SystemAudioCodecInfo::~SystemAudioCodecInfo()
+{}
+
+bool
+SystemAudioCodecInfo::isPCMG722() const
 {
-    return s_codecId++;
+    return avcodecId_ == AV_CODEC_ID_ADPCM_G722;
 }
 
-bool operator== (MediaCodec codec1, MediaCodec codec2)
+
+std::vector<std::string> SystemAudioCodecInfo::getCodecSpecifications()
 {
-    return (codec1.avcodecId_ == codec2.avcodecId_);
+    //FORMAT: list of
+    //  * name of the codec
+    //  * sample rate
+    //  * bit rate
+    //  * channel number
+
+     std::vector< std::string > listSpec;
+     listSpec.push_back(name_);
+     listSpec.push_back(std::to_string(sampleRate_));
+     listSpec.push_back(std::to_string(bitrate_));
+     listSpec.push_back(std::to_string(nbChannels_));
+     return listSpec;
 }
+
+/*
+ * SystemVideoCodecInfo
+ */
+SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned avcodecId, const std::string name, std::string libName,
+        CodecType type, unsigned payloadType)
+    : SystemCodecInfo(avcodecId, name, libName, MEDIA_VIDEO, type, payloadType)
+{}
+
+SystemVideoCodecInfo::~SystemVideoCodecInfo()
+{}
+
+std::vector<std::string> SystemVideoCodecInfo::getCodecSpecifications()
+{
+    //FORMAT: list of
+    //  * name of the codec
+    //  * bit rate
+    //  * parameters
+
+     std::vector< std::string > listSpec;
+     listSpec.push_back(name_);
+     listSpec.push_back(std::to_string(bitrate_));
+     listSpec.push_back(parameters_);
+     return listSpec;
 }
+
+AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
+    : systemCodecInfo(sysCodecInfo)
+    ,order_(0)
+    ,isActive_(true)
+    ,payloadType_(sysCodecInfo.payloadType_)
+    ,bitrate_(sysCodecInfo.bitrate_)
+{}
+
+AccountCodecInfo::~AccountCodecInfo()
+{}
+
+AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo)
+    : AccountCodecInfo(sysCodecInfo)
+    ,sampleRate_(sysCodecInfo.sampleRate_)
+    ,nbChannels_(sysCodecInfo.nbChannels_)
+{}
+
+AccountAudioCodecInfo::~AccountAudioCodecInfo()
+{}
+
+AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo)
+    : AccountCodecInfo(sysCodecInfo)
+    ,frameRate_(sysCodecInfo.frameRate_)
+    ,profileId_(sysCodecInfo.profileId_)
+{}
+
+AccountVideoCodecInfo::~AccountVideoCodecInfo()
+{}
+
+} // namespace ring

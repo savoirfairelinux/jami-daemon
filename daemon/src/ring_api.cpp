@@ -385,7 +385,7 @@ std::map<std::string, std::string> ring_config_get_tls_default_settings(void)
     return getConfigurationManager()->getTlsSettingsDefault();
 }
 
-std::vector<int> ring_config_get_audio_codec_list(void)
+std::vector<unsigned> ring_config_get_audio_codec_list(void)
 {
     return getConfigurationManager()->getAudioCodecList();
 }
@@ -406,7 +406,7 @@ std::vector<std::string> ring_config_get_audio_codec_details(int codecId)
     return getConfigurationManager()->getAudioCodecDetails(codecId);
 }
 
-std::vector<int> ring_config_get_active_audio_codec_list(const std::string& account_id)
+std::vector<unsigned> ring_config_get_active_audio_codec_list(const std::string& account_id)
 {
     return getConfigurationManager()->getActiveAudioCodecList(account_id);
 }
@@ -702,14 +702,18 @@ void ring_pres_set_subscriptions(const std::string& account_id, const std::vecto
 }
 
 #ifdef RING_VIDEO
-std::vector<std::map<std::string, std::string>> ring_video_get_codecs(const std::string& account_id)
+std::vector<unsigned> ring_video_get_video_codec_list(const std::string& account_id)
 {
-    return getVideoManager()->getCodecs(account_id);
+    return getVideoManager()->getVideoCodecList(account_id);
+}
+std::vector<std::string> ring_video_get_video_codec_details(unsigned codecId)
+{
+    return getVideoManager()->getVideoCodecDetails(codecId);
 }
 
-void ring_video_set_codecs(const std::string& account_id, const std::vector<std::map<std::string, std::string>>& details)
+void ring_video_set_video_codec_list(const std::string& account_id, const std::vector<unsigned>& list)
 {
-    getVideoManager()->setCodecs(account_id, details);
+    getVideoManager()->setVideoCodecList(account_id, list);
 }
 
 std::vector<std::string> ring_video_get_device_list(void)
