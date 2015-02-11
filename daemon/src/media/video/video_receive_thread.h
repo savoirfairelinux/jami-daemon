@@ -45,14 +45,12 @@
 
 namespace ring {
 class SocketPair;
-} // namespace ring
 
-namespace ring { namespace video {
+namespace video {
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id,
-                       const std::map<std::string, std::string> &args);
+    VideoReceiveThread(const std::string &id, const std::string &sdp);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -69,7 +67,7 @@ public:
 private:
     NON_COPYABLE(VideoReceiveThread);
 
-    std::map<std::string, std::string> args_;
+    DeviceParams args_;
 
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */

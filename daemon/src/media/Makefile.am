@@ -20,6 +20,7 @@ libmedia_la_SOURCES = \
 	media_codec_factory.cpp
 
 noinst_HEADERS = \
+	rtp_session.h \
 	libav_utils.h \
 	libav_deps.h \
 	socket_pair.h \
