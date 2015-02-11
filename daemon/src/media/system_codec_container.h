@@ -29,25 +29,52 @@
  *  as that of the covered work.
  */
 
-#ifndef __MEDIA_AUDIO_CODEC_H__
-#define __MEDIA_AUDIO_CODEC_H__
+#ifndef __SYSTEM_CODEC_CONTAINER_H__
+#define __SYSTEM_CODEC_CONTAINER_H__
 
 #include "media_codec.h"
+#include "ring_types.h"
+
+#include <string>
+#include <vector>
+#include <memory>
+
 namespace ring {
-    class MediaAudioCodec: public MediaCodec {
 
-public:
+class SystemCodecContainer;
 
-    MediaAudioCodec(AVCodecID avcodecId, const std::string name, std::string libName, CodecType type, uint16_t bitrate = 0, uint16_t sampleRate = 0, uint16_t nbChannels = 0, uint16_t payloadType = 0, bool isActive = true);
-    ~MediaAudioCodec();
+extern decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer;
 
-    uint16_t sampleRate_;
-    uint16_t nbChannels_;
+class SystemCodecContainer{
+    public:
+        SystemCodecContainer();
+        ~SystemCodecContainer();
 
-    std::vector<std::string> getCodecSpecifications();
 
-private:
-    };
+        std::vector<std::shared_ptr<SystemCodecInfo>>
+        getSystemCodecInfoList(MediaType mediaType = MEDIA_ALL);
 
-}
-#endif //__MEDIA_AUDIO_CODEC_H__
+        std::vector<unsigned>
+        getSystemCodecInfoIdList(MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecByName(std::string name, MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecByPayload(unsigned payload, MediaType type = MEDIA_ALL);
+
+    private:
+        /* available audio & video codec  */
+        std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList;
+
+        void initCodecConfig();
+        void checkInstalledCodecs();
+
+};
+
+} // namespace ring
+
+#endif //SYSTEM_CODEC_CONTAINER
