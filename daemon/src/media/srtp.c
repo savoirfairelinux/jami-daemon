@@ -125,6 +125,7 @@ static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
 
 int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 {
+    av_log(NULL, AV_LOG_WARNING, "ff_srtp_decrypt %p %d\n", buf, *buf);
     uint8_t iv[16] = { 0 }, hmac[20];
     int len = *lenptr;
     int av_uninit(seq_largest);
@@ -238,6 +239,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 int ff_srtp_encrypt(struct SRTPContext *s, const uint8_t *in, int len,
                     uint8_t *out, int outlen)
 {
+    av_log(NULL, AV_LOG_WARNING, "ff_srtp_encrypt %p %d\n", in, len);
     uint8_t iv[16] = { 0 }, hmac[20];
     uint64_t index;
     uint32_t ssrc;
