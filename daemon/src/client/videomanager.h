@@ -68,12 +68,14 @@ class VideoManager
 
     // Methods
     public:
-        std::vector<std::map<std::string, std::string> >
-        getCodecs(const std::string& accountID);
+        std::vector<unsigned>
+        getVideoCodecList(const std::string& accountID);
 
         void
-        setCodecs(const std::string& accountID,
-                  const std::vector<std::map<std::string, std::string> > &details);
+        setVideoCodecList(const std::string& accountID,
+                  const std::vector<unsigned> &list);
+
+        std::vector<std::string> getVideoCodecDetails(unsigned codecId);
 
         std::vector<std::string>
         getDeviceList();

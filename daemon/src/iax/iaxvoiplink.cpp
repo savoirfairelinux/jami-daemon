@@ -47,7 +47,7 @@
 #include "map_utils.h"
 #include "call_factory.h"
 #include "ring_types.h"
-#include "media_codec_factory.h"
+#include "system_codec_container.h"
 
 namespace ring {
 
@@ -153,8 +153,9 @@ IAXVoIPLink::sendAudioFromMic()
         if (currentCall->getState() != Call::ACTIVE)
             continue;
 
-        int codecType = currentCall->getAudioCodec();
-        auto audioCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(codecType, ring::MEDIA_AUDIO));
+        int codecType = currentCall->getAudioCodecPayload();
+        auto audioCodec = std::dynamic_pointer_cast<SystemAudioCodecInfo>
+            (getSystemCodecContainer()->searchCodecByPayload(codecType, MEDIA_AUDIO));
 
         if (!audioCodec)
             continue;
@@ -174,7 +175,7 @@ IAXVoIPLink::sendAudioFromMic()
         rawBuffer_.resize(samples);
         samples = Manager::instance().getRingBufferPool().getData(rawBuffer_, currentCall->getCallId());
 
-        int compSize;
+        int compSize=0;
         unsigned int audioRate = audioCodec->sampleRate_;
         int outSamples;
         AudioBuffer *in;
@@ -198,7 +199,8 @@ IAXVoIPLink::sendAudioFromMic()
         if (currentCall->session and samples > 0) {
             std::lock_guard<std::mutex> lock(mutexIAX);
 
-            if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
+            if (iax_send_voice(currentCall->session, currentCall->format,
+                               encodedData_, compSize, outSamples) == -1)
                 RING_ERR("IAX: Error sending voice data.");
         }
     }
@@ -333,7 +335,8 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!event->datalen)
         return;
 
-    ring::MediaAudioCodec* audioCodec = dynamic_cast< ring::MediaAudioCodec*>( ring::getMediaCodecFactory()->searchCodecByPayload(call.getAudioCodec(), ring::MEDIA_AUDIO));
+    auto audioCodec = std::dynamic_pointer_cast<SystemAudioCodecInfo>
+        (getSystemCodecContainer()->searchCodecByPayload(call.getAudioCodecPayload(), MEDIA_AUDIO));
     if (!audioCodec)
         return;
 

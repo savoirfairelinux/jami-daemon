@@ -28,17 +28,53 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <iostream>
-#include <unistd.h>
-#include "media_video_codec.h"
 
-using std::string;
+#ifndef __SYSTEM_CODEC_CONTAINER_H__
+#define __SYSTEM_CODEC_CONTAINER_H__
+
+#include "media_codec.h"
+#include "ring_types.h"
+
+#include <string>
+#include <vector>
+#include <memory>
+
 namespace ring {
 
-MediaVideoCodec::MediaVideoCodec(unsigned avcodecId, const std::string name, std::string libName, CodecType type, uint16_t payloadType, bool isActive)
-    : MediaCodec(avcodecId, name, libName, MEDIA_VIDEO, type, payloadType, isActive){}
-MediaVideoCodec::~MediaVideoCodec()
-{
-}
+class SystemCodecContainer;
 
-}
+extern decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer;
+
+class SystemCodecContainer{
+    public:
+        SystemCodecContainer();
+        ~SystemCodecContainer();
+
+
+        std::vector<std::shared_ptr<SystemCodecInfo>>
+        getSystemCodecInfoList(MediaType mediaType = MEDIA_ALL);
+
+        std::vector<unsigned>
+        getSystemCodecInfoIdList(MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecById(unsigned codecId, MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecByName(std::string name, MediaType type = MEDIA_ALL);
+
+        std::shared_ptr<SystemCodecInfo>
+        searchCodecByPayload(unsigned payload, MediaType type = MEDIA_ALL);
+
+    private:
+        /* available audio & video codec  */
+        std::vector<std::shared_ptr<SystemCodecInfo>> availableCodecList;
+
+        void initCodecConfig();
+        void checkInstalledCodecs();
+
+};
+
+} // namespace ring
+
+#endif //SYSTEM_CODEC_CONTAINER
