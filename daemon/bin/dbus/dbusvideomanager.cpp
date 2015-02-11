@@ -36,14 +36,19 @@ DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
 {
 }
 
-std::vector<std::map<std::string, std::string>> DBusVideoManager::getCodecs(const std::string& accountID)
+std::vector< int32_t > DBusVideoManager::getVideoCodecList(const std::string& accountID)
 {
-    return ring_video_get_codecs(accountID);
+    return ring_video_get_video_codec_list(accountID);
 }
 
-void DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details)
+std::vector<std::string> DBusVideoManager::getVideoCodecDetails(const int32_t& codecId)
 {
-    ring_video_set_codecs(accountID, details);
+    return ring_video_get_video_codec_details(codecId);
+}
+
+void DBusVideoManager::setVideoCodecList(const std::string& accountID, const std::vector<int32_t> &list)
+{
+    ring_video_set_video_codec_list(accountID, list);
 }
 
 std::vector<std::string> DBusVideoManager::getDeviceList()
