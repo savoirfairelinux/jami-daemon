@@ -35,6 +35,7 @@
 #include "noncopyable.h"
 #include "socket_pair.h"
 #include "sip/sip_utils.h"
+#include "media_codec.h"
 
 #include <string>
 #include <map>

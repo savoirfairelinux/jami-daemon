@@ -43,7 +43,6 @@
 #include "siptransport.h"
 #include "noncopyable.h"
 #include "ring_types.h" // enable_if_base_of
-#include "media_codec_factory.h"
 
 #include <pjsip/sip_transport_tls.h>
 #include <pjsip/sip_types.h>
