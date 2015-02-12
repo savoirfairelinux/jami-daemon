@@ -195,10 +195,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        std::vector<std::map<std::string, std::string> >
-        getAllVideoCodecs() const;
+        std::vector<int32_t>
+        getAllVideoCodecsId() const;
 
-        std::vector<std::map<std::string, std::string> >
+        std::vector<int32_t>
         getActiveVideoCodecs() const;
 
         static std::vector<int> getDefaultAudioCodecs();
@@ -360,12 +360,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::vector<std::map<std::string, std::string> > videoCodecList_;
 
-        /**
-         * List of audio codecs obtained when parsing configuration and used
-         * to generate codec order list
-         */
         std::string audioCodecStr_;
-
+        std::string videoCodecStr_;
         /**
          * Ringtone .au file used for this account
          */

@@ -167,29 +167,25 @@ preferences_dialog_fill_codec_list(account_t *acc)
     GtkListStore *codecStore = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView)));
     gtk_list_store_clear(codecStore);
 
-    GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    GArray *vcodecs = dbus_get_video_codec_list(acc->accountID);
     if (!vcodecs)
         return;
 
-    // Add the codecs in the list
-    for (size_t i = 0; i < vcodecs->len; ++i) {
-        GHashTable *c = g_ptr_array_index(vcodecs, i);
-
-        if (c) {
-            GtkTreeIter iter;
-            gtk_list_store_append(codecStore, &iter);
-            const gchar *bitrate = g_hash_table_lookup(c, "bitrate");
-            const gchar *parameters = g_hash_table_lookup(c, "parameters");
-            const gboolean is_active = !g_strcmp0(g_hash_table_lookup(c, "enabled"), "true");
-            const gchar *name = g_hash_table_lookup(c, "name");
-
-            gtk_list_store_set(codecStore, &iter, COLUMN_CODEC_ACTIVE,
-                               is_active, COLUMN_CODEC_NAME, name,
-                               COLUMN_CODEC_BITRATE, bitrate,
-                               COLUMN_CODEC_PARAMETERS, parameters, -1);
-        }
+    GtkTreeIter iter;
+    // Get details for each codec
+    for (guint i = 0; i < vcodecs->len; i++) {
+        gtk_list_store_append(codecStore, &iter);
+        gchar **specs = dbus_get_video_codec_details(g_array_index(vcodecs, gint, i));
+        const gchar *name = g_strdup(specs[0]);
+        const gchar *bitrate = g_strdup(specs[1]);
+        const gchar *parameters = g_strdup(specs[2]);
+        //FIXME : take from the list
+        const gboolean is_active = TRUE;
+        gtk_list_store_set(codecStore, &iter, COLUMN_CODEC_ACTIVE,
+                       is_active, COLUMN_CODEC_NAME, name,
+                       COLUMN_CODEC_BITRATE, bitrate,
+                       COLUMN_CODEC_PARAMETERS, parameters, -1);
     }
-    g_ptr_array_free(vcodecs, TRUE);
 }
 
 /**
@@ -257,6 +253,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
                        COLUMN_CODEC_NAME, &name, -1);
 
     g_debug("%s", name);
+#if 0
     GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
     if (!vcodecs)
         return;
@@ -275,6 +272,7 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
         video_codec_set_active(codec, active);
         dbus_set_video_codecs(acc->accountID, vcodecs);
     }
+#endif
 }
 
 
@@ -337,12 +335,12 @@ codec_move(gboolean move_up, gpointer data)
         if (dest_pos >= 0 &&
             dest_pos < gtk_tree_model_iter_n_children(model, NULL)) {
             account_t *acc = (account_t *) data;
-            GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+            GArray *vcodecs = dbus_get_video_codec_list(acc->accountID);
             if (vcodecs) {
                 // Perpetuate changes in daemon
-                vcodecs = swap_pointers(vcodecs, pos, dest_pos);
+                //vcodecs = swap_pointers(vcodecs, pos, dest_pos);
                 // FIXME: only do this AFTER apply is clicked, not every time we move codecs!
-                dbus_set_video_codecs(acc->accountID, vcodecs);
+                dbus_set_video_codec_list(acc->accountID, vcodecs);
                 g_ptr_array_free(vcodecs, TRUE);
             }
         }
@@ -405,13 +403,14 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
         gchar *name = NULL;
         gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
 
-        GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+        GArray *vcodecs = dbus_get_video_codec_list(acc->accountID);
         if (!vcodecs)
             return;
 
         gchar *bitrate = g_strdup_printf("%llu", val);
         gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_BITRATE, bitrate, -1);
 
+#if 0
         GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
         if (codec) {
             g_debug("Setting new bitrate %s for %s", bitrate, name);
@@ -420,6 +419,7 @@ bitrate_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar *n
         } else {
             g_warning("Could not find codec %s", name);
         }
+#endif
         g_free(bitrate);
         g_ptr_array_free(vcodecs, TRUE);
     }
@@ -448,10 +448,11 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
     gchar *name = NULL;
     gtk_tree_model_get(model, &iter, COLUMN_CODEC_NAME, &name, -1);
 
-    GPtrArray *vcodecs = dbus_get_video_codecs(acc->accountID);
+    GArray *vcodecs = dbus_get_video_codec_list(acc->accountID);
     if (!vcodecs)
         return;
 
+#if 0
     gtk_list_store_set(GTK_LIST_STORE(model), &iter, COLUMN_CODEC_PARAMETERS, new_text, -1);
 
     GHashTable *codec = video_codec_list_get_by_name(vcodecs, name);
@@ -463,6 +464,7 @@ parameters_edited_cb(G_GNUC_UNUSED GtkCellRenderer *renderer, gchar *path, gchar
         g_warning("Could not find codec %s", name);
     }
     g_ptr_array_free(vcodecs, TRUE);
+#endif
 }
 
 
