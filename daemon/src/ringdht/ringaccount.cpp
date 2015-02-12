@@ -40,7 +40,7 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-#include "sip_transport_ice.h"
+#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
 #include <opendht/securedht.h>
@@ -539,15 +539,43 @@ RingAccount::handleEvents()
         auto call = c->call.lock();
         if (not call) {
             RING_WARN("Removing deleted call from pending calls");
-            dht_.cancelListen(c->call_key, c->listen_key.get());
+            if (c->call_key != dht::InfoHash())
+                dht_.cancelListen(c->call_key, c->listen_key.get());
             c = pendingCalls_.erase(c);
             continue;
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransportBroker->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            regenerateCAList();
+            auto id = loadIdentity();
+            auto remote_h = c->id;
+            call->setTransport(link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, TlsParams {
+                .ca_list = caListPath_,
+                .id = id.second,
+                .cert_check = [remote_h](unsigned status, const gnutls_datum_t *cert_list, unsigned cert_num) -> pj_status_t {
+                    RING_WARN("TLS certificate check for %s", remote_h.toString().c_str());
+                    if (cert_num == 0)
+                        return PJ_SSL_CERT_EUNKNOWN;
+                    try {
+                        std::vector<uint8_t> crt_blob(cert_list[0].data, cert_list[0].data+cert_list[0].size);
+                        dht::crypto::Certificate crt(crt_blob);
+                        const auto tls_id = crt.getId();
+                        if (crt.getUID() != tls_id.toString()) {
+                            RING_WARN("Certificate UID must be the public key ID");
+                            return PJ_SSL_CERT_EUNTRUSTED;
+                        }
+                        if (tls_id != remote_h) {
+                            RING_WARN("Certificate public key (ID %s) doesn't match expectation (%s)", tls_id.toString().c_str(), remote_h.toString().c_str());
+                            return PJ_SSL_CERT_EUNTRUSTED;
+                        }
+                    } catch (const std::exception& e) {
+                        return PJ_SSL_CERT_EUNKNOWN;
+                    }
+                    return PJ_SUCCESS;
+                }
+            }));
             call->setConnectionState(Call::PROGRESSING);
-            if (c->id == dht::InfoHash()) {
+            if (c->call_key == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
                 auto in = c;
                 ++c;
@@ -560,7 +588,7 @@ RingAccount::handleEvents()
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
             RING_WARN("ICE timeout : removing pending outgoing call");
-            if (c->id != dht::InfoHash())
+            if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
             Manager::instance().callFailure(*call);
@@ -709,13 +737,14 @@ void RingAccount::doRegister()
                             RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                             continue;
                         }
-                        if (v->owner.getId() == this_.dht_.getId())
+                        auto remote_id = v->owner.getId();
+                        if (remote_id == this_.dht_.getId())
                             continue;
                         auto res = this_.treatedCalls_.insert(v->id);
                         this_.saveTreatedCalls();
                         if (!res.second)
                             continue;
-                        auto from = v->owner.getId().toString();
+                        auto from = remote_id.toString();
                         auto from_vid = v->id;
                         auto reply_vid = from_vid+1;
                         RING_WARN("Received incomming DHT call request from %s (vid %llx) !!", from.c_str(), from_vid);
@@ -734,7 +763,7 @@ void RingAccount::doRegister()
 
                         this_.dht_.putEncrypted(
                             listenKey,
-                            v->owner.getId(),
+                            remote_id,
                             dht::Value {
                                 this_.ICE_ANNOUCEMENT_TYPE.id,
                                 ice->getLocalAttributesAndCandidates(),
@@ -758,7 +787,7 @@ void RingAccount::doRegister()
                         call->initRecFilename(from);
                         {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, {}});
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, remote_id});
                         }
                         return true;
                     } catch (const std::exception& e) {
@@ -1006,8 +1035,8 @@ std::string RingAccount::getFromUri() const
 std::string RingAccount::getToUri(const std::string& to) const
 {
     const std::string transport {pjsip_transport_get_type_name(transportType_)};
-    return "<sip:" + to + ">";
-    //return "<sips:" + to + ";transport=" + transport + ">";
+    //return "<sip:" + to + ">";
+    return "<sips:" + to + ";transport=" + transport + ">";
 }
 
 pj_str_t
@@ -1017,12 +1046,12 @@ RingAccount::getContactHeader(pjsip_transport* t)
         t = transport_->get();
     if (!t) {
         RING_ERR("Transport not created yet");
-        pj_cstr(&contact_, "<sip:>");
+        pj_cstr(&contact_, "<sips:>");
         return contact_;
     }
 
     // FIXME: be sure that given transport is from SipIceTransport
-    auto ice = reinterpret_cast<SipIceTransport::TransportData*>(t)->self;
+    auto ice = reinterpret_cast<SipsIceTransport::TransportData*>(t)->self;
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     /*pjsip_transport_type_e transportType = transportType_;
@@ -1052,18 +1081,17 @@ RingAccount::getContactHeader(pjsip_transport* t)
 #endif
 */
     RING_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
-    contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
+    /*contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "<sip:%s%s%s>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.toString(true).c_str());    /*
+                                     address.toString(true).c_str());    */
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s%s%s:%d;transport=%s>",
+                                     "<sips:%s%s%s;transport=%s>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.c_str(),
-                                     port,
-                                     pjsip_transport_get_type_name(transportType));*/
+                                     address.toString(true).c_str(),
+                                     pjsip_transport_get_type_name(transportType_));
     return contact_;
 }
 
