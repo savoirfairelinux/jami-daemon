@@ -1541,6 +1541,7 @@ SIPAccount::getSupportedCiphers() const
             RING_ERR("Could not determine cipher list on this system");
 
         // filter-out 0 ciphers
+        availCiphers.reserve(cipherNum);
         std::copy_if(avail_ciphers.begin(), avail_ciphers.end(),
                      availCiphers.begin(),
                      [](pj_ssl_cipher& item){ return item > 0; });
