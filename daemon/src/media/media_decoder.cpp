@@ -36,6 +36,8 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+
+#include "string_utils.h"
 #include "logger.h"
 
 #include <iostream>
@@ -66,42 +68,27 @@ MediaDecoder::~MediaDecoder()
     }
 }
 
-void
-MediaDecoder::extract(const std::map<std::string, std::string>& map, const std::string& key)
+int MediaDecoder::openInput(const DeviceParams& params)
 {
-    auto iter = map.find(key);
-
-    if (iter != map.end())
-        av_dict_set(&options_, key.c_str(), iter->second.c_str(), 0);
-}
-
-void
-MediaDecoder::setOptions(const std::map<std::string, std::string>& options)
-{
-    extract(options, "framerate");
-    extract(options, "video_size");
-    extract(options, "channel");
-    extract(options, "loop");
-    extract(options, "sdp_flags");
-}
-
-int MediaDecoder::openInput(const std::string &source_str,
-                            const std::string &format_str)
-{
-    AVInputFormat *iformat = av_find_input_format(format_str.c_str());
+    AVInputFormat *iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat)
-        RING_WARN("Cannot find format \"%s\"", format_str.c_str());
+        RING_WARN("Cannot find format \"%s\"", params.format.c_str());
 
-    int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
-                                  options_ ? &options_ : NULL);
+    av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
+    av_dict_set(&options_, "video_size", params.video_size.c_str(), 0);
+    av_dict_set(&options_, "channel", params.channel.c_str(), 0);
+    av_dict_set(&options_, "loop", params.loop.c_str(), 0);
+    av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
+
+    int ret = avformat_open_input(&inputCtx_, params.input.c_str(), iformat, options_ ? &options_ : NULL);
 
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
         RING_ERR("avformat_open_input failed: %s", errbuf);
     } else {
-        RING_DBG("Using format %s", format_str.c_str());
+        RING_DBG("Using format %s", params.format.c_str());
     }
 
     return ret;

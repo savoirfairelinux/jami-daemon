@@ -32,7 +32,7 @@
 /* Mainly based on the following stackoverflow question:
  * http://stackoverflow.com/questions/342409/how-do-i-base64-encode-decode-in-c
  */
-static const uint8_t encoding_table[] = {
+static const char encoding_table[] = {
     'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
     'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V',
     'W', 'X', 'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g',
@@ -43,68 +43,66 @@ static const uint8_t encoding_table[] = {
 
 static const int mod_table[] = { 0, 2, 1 };
 
-uint8_t *sfl_base64_encode(const uint8_t *data,
-                           size_t input_length, size_t *output_length)
+char *ring_base64_encode(const uint8_t *input, size_t input_length,
+                             char *output, size_t *output_length)
 {
-    int i, j;
-    uint8_t *encoded_data;
+    size_t i, j;
+    size_t out_sz = *output_length;
     *output_length = 4 * ((input_length + 2) / 3);
-
-    encoded_data = (uint8_t *)malloc(*output_length);
-    if (encoded_data == NULL)
+    if (out_sz < *output_length || output == NULL)
         return NULL;
 
     for (i = 0, j = 0; i < input_length; ) {
-        uint8_t octet_a = i < input_length ? data[i++] : 0;
-        uint8_t octet_b = i < input_length ? data[i++] : 0;
-        uint8_t octet_c = i < input_length ? data[i++] : 0;
+        uint8_t octet_a = i < input_length ? input[i++] : 0;
+        uint8_t octet_b = i < input_length ? input[i++] : 0;
+        uint8_t octet_c = i < input_length ? input[i++] : 0;
 
         uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
 
-        encoded_data[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
-        encoded_data[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
+        output[j++] = encoding_table[(triple >> 3 * 6) & 0x3F];
+        output[j++] = encoding_table[(triple >> 2 * 6) & 0x3F];
+        output[j++] = encoding_table[(triple >> 1 * 6) & 0x3F];
+        output[j++] = encoding_table[(triple >> 0 * 6) & 0x3F];
     }
 
     for (i = 0; i < mod_table[input_length % 3]; i++)
-        encoded_data[*output_length - 1 - i] = '=';
+        output[*output_length - 1 - i] = '=';
 
-    return encoded_data;
+    return output;
 }
 
-uint8_t *sfl_base64_decode(const uint8_t *data,
-                           size_t input_length, size_t *output_length)
+uint8_t *ring_base64_decode(const char *input, size_t input_length,
+                             uint8_t *output, size_t *output_length)
 {
-    int i, j;
+    size_t i, j;
     uint8_t decoding_table[256];
-    unsigned char *decoded_data;
 
-    for (i = 0; i < 64; i++)
-        decoding_table[(uint8_t) encoding_table[i]] = i;
+    uint8_t c;
+    for (c = 0; c < 64; c++)
+        decoding_table[encoding_table[c]] = c;
 
     if (input_length % 4 != 0)
         return NULL;
 
+    size_t out_sz = *output_length;
     *output_length = input_length / 4 * 3;
-    if (data[input_length - 1] == '=')
+    if (input[input_length - 1] == '=')
         (*output_length)--;
-    if (data[input_length - 2] == '=')
+    if (input[input_length - 2] == '=')
         (*output_length)--;
 
-    decoded_data = (unsigned char *)malloc(*output_length);
-    if (decoded_data == NULL)
+    if (out_sz < *output_length || output == NULL)
         return NULL;
 
     for (i = 0, j = 0; i < input_length;) {
-        uint8_t sextet_a = data[i] == '=' ? 0 & i++
-                                          : decoding_table[data[i++]];
-        uint8_t sextet_b = data[i] == '=' ? 0 & i++
-                                          : decoding_table[data[i++]];
-        uint8_t sextet_c = data[i] == '=' ? 0 & i++
-                                          : decoding_table[data[i++]];
-        uint8_t sextet_d = data[i] == '=' ? 0 & i++
-                                          : decoding_table[data[i++]];
+        uint8_t sextet_a = input[i] == '=' ? 0 & i++
+                                          : decoding_table[input[i++]];
+        uint8_t sextet_b = input[i] == '=' ? 0 & i++
+                                          : decoding_table[input[i++]];
+        uint8_t sextet_c = input[i] == '=' ? 0 & i++
+                                          : decoding_table[input[i++]];
+        uint8_t sextet_d = input[i] == '=' ? 0 & i++
+                                          : decoding_table[input[i++]];
 
         uint32_t triple = (sextet_a << 3 * 6) +
                           (sextet_b << 2 * 6) +
@@ -112,12 +110,12 @@ uint8_t *sfl_base64_decode(const uint8_t *data,
                           (sextet_d << 0 * 6);
 
         if (j < *output_length)
-            decoded_data[j++] = (triple >> 2 * 8) & 0xFF;
+            output[j++] = (triple >> 2 * 8) & 0xFF;
         if (j < *output_length)
-            decoded_data[j++] = (triple >> 1 * 8) & 0xFF;
+            output[j++] = (triple >> 1 * 8) & 0xFF;
         if (j < *output_length)
-            decoded_data[j++] = (triple >> 0 * 8) & 0xFF;
+            output[j++] = (triple >> 0 * 8) & 0xFF;
     }
 
-    return decoded_data;
+    return output;
 }
