@@ -28,6 +28,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#include "libav_deps.h"
 #include "media_codec.h"
 #include <string.h>
 #include <sstream>
@@ -56,6 +57,13 @@ MediaCodec::~MediaCodec()
 {
     //TODO
 }
+
+bool
+MediaCodec::isPCMG722() const
+{
+    return avcodecId_ == AV_CODEC_ID_ADPCM_G722;
+}
+
 uint16_t MediaCodec::getCodecId()
 {
     return codecId_;
