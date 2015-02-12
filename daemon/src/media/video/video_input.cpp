@@ -143,19 +143,19 @@ bool VideoInput::captureFrame()
 void
 VideoInput::createDecoder()
 {
-    if (input_.empty())
+    if (decOpts_.input.empty())
         return;
 
     decoder_ = new MediaDecoder();
 
-    decoder_->setOptions(decOpts_);
+    //decoder_->setOptions(decOpts_);
     if (emulateRate_)
         decoder_->emulateRate();
 
     decoder_->setInterruptCallback(interruptCb, this);
 
-    if (decoder_->openInput(input_, format_) < 0) {
-        RING_ERR("Could not open input \"%s\"", input_.c_str());
+    if (decoder_->openInput(decOpts_ /*, format_*/) < 0) {
+        RING_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
         delete decoder_;
         decoder_ = nullptr;
         return;
@@ -187,18 +187,19 @@ VideoInput::deleteDecoder()
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    std::map<std::string, std::string> map =
-        Manager::instance().getVideoManager()->getSettings(device);
-
+    auto map = Manager::instance().getVideoManager()->getSettings(device);
     if (map.empty())
         return false;
 
     clearOptions();
-    input_ = map["input"];
-    format_ = "video4linux2";
-    decOpts_["channel"] = map["channel_num"];
-    decOpts_["framerate"] = map["framerate"];
-    decOpts_["video_size"] = map["video_size"];
+
+    //decOpts_ = Manager::instance().getVideoManager()->getSettings(device);
+    decOpts_.input = map["input"];
+    decOpts_.format = "video4linux2";
+
+    decOpts_.channel = map["channel_num"];
+    decOpts_.framerate = std::stoi(map["framerate"]);
+    decOpts_.video_size = map["video_size"];
 
     return true;
 }
@@ -209,15 +210,15 @@ VideoInput::initX11(std::string display)
     size_t space = display.find(' ');
 
     clearOptions();
-    format_ = "x11grab";
-    decOpts_["framerate"] = "25";
+    decOpts_.format = "x11grab";
+    decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
-        decOpts_["video_size"] = display.substr(space + 1);
-        input_ = display.erase(space);
+        decOpts_.video_size = display.substr(space + 1);
+        decOpts_.input = display.erase(space);
     } else {
-        input_ = display;
-        decOpts_["video_size"] = "vga";
+        decOpts_.input = display;
+        decOpts_.video_size = "vga";
     }
 
     return true;
@@ -236,19 +237,19 @@ VideoInput::initFile(std::string path)
     }
 
     clearOptions();
-    input_ = path;
     emulateRate_ = true;
-    decOpts_["loop"] = "1";
+    decOpts_.input = path;
+    decOpts_.loop = "1";
 
     // Force 1fps for static image
     if (ext == "jpeg" || ext == "jpg" || ext == "png") {
-        format_ = "image2";
-        decOpts_["framerate"] = "1";
+        decOpts_.format = "image2";
+        decOpts_.framerate = 1;
     } else {
         RING_WARN("Guessing file type for %s", path.c_str());
         // FIXME: proper parsing of FPS etc. should be done in
         // MediaDecoder, not here.
-        decOpts_["framerate"] = "25";
+        decOpts_.framerate = 25;
     }
 
     return true;

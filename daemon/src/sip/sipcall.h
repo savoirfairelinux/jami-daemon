@@ -39,9 +39,10 @@
 #endif
 
 #include "call.h"
+#include "sip_utils.h"
 
 #ifdef RING_VIDEO
-#include "video/video_rtp_session.h"
+#include "media/video/video_rtp_session.h"
 #endif
 
 #include "noncopyable.h"
@@ -182,6 +183,8 @@ class SIPCall : public Call
 
         void startAllMedia();
 
+        void onMediaUpdate();
+
         void openPortsUPnP();
 
     private:
@@ -191,7 +194,7 @@ class SIPCall : public Call
         std::map<std::string, std::string>
         createHistoryEntry() const;
 
-        void stopAllMedias();
+        void stopAllMedia();
 
         /**
          * Transfer method used for both type of transfer
@@ -212,7 +215,13 @@ class SIPCall : public Call
          */
         video::VideoRtpSession videortp_;
 #endif
-
+/*
+#ifdef HAVE_SDES
+        bool srtpEnabled_ {false};
+        sip_utils::KeyExchangeProtocol keyExchangeProtocol_;
+        bool remoteOfferIsSet_;
+#endif
+*/
         /**
          * Hold the transport used for SIP communication.
          * Will be different from the account registration transport for
