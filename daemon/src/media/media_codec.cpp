@@ -37,10 +37,6 @@
 
 
 namespace ring {
-// TODO: initialize inside a function !
-// put SystemCodecInfo in abstract
-//static unsigned s_codecId = 1;
-
 static unsigned& generateId()
 {
     static unsigned id = 0;
@@ -89,6 +85,10 @@ SystemAudioCodecInfo::~SystemAudioCodecInfo()
 
 bool
 SystemAudioCodecInfo::isPCMG722() const
+{
+    return avcodecId_ == AV_CODEC_ID_ADPCM_G722;
+}
+
 {
     return avcodecId_ == AV_CODEC_ID_ADPCM_G722;
 }

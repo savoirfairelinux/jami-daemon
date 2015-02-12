@@ -269,7 +269,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
     auto& sdp = call->getSDP();
 
     sdp.setPublishedIP(addrSdp);
-    const bool created = sdp.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
+    const bool created = sdp.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs(), getSrtpKeyExchange());
 
     if (not created or not SIPStartCall(call, target))
         throw VoipLinkException("Could not send outgoing INVITE request for new call");

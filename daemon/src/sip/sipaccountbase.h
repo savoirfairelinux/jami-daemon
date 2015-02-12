@@ -37,6 +37,8 @@
 #endif
 
 #include "siptransport.h"
+#include "sip_utils.h"
+
 #include "account.h"
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -232,7 +234,7 @@ public:
         return false;
     }
 
-    virtual std::string getSrtpKeyExchange() const = 0;
+    virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const = 0;
 
     virtual bool getSrtpFallback() const = 0;
 

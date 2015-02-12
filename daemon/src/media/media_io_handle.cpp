@@ -34,7 +34,7 @@
 
 namespace ring {
 
-MediaIOHandle::MediaIOHandle(ssize_t buffer_size,
+MediaIOHandle::MediaIOHandle(size_t buffer_size,
                              bool writeable,
                              io_readcallback read_cb,
                              io_writecallback write_cb,
