@@ -348,11 +348,21 @@ AVFormatRtpSession::~AVFormatRtpSession()
 void
 AVFormatRtpSession::startSender()
 {
-    if (not local_.enabled)
+    if (not local_.enabled or local_.holding) {
+        RING_WARN("Audio sending disabled");
+        if (sender_) {
+            if (socketPair_)
+                socketPair_->interrupt();
+            sender_.reset();
+        }
         return;
+    }
 
-    if (sender_)
+    if (sender_) {
+        if (socketPair_)
+            socketPair_->interrupt();
         RING_WARN("Restarting audio sender");
+    }
 
     try {
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), local_, *socketPair_));
@@ -366,16 +376,18 @@ AVFormatRtpSession::startSender()
 void
 AVFormatRtpSession::startReceiver()
 {
-    if (remote_.enabled) {
-        if (receiveThread_)
-            RING_WARN("Restarting audio receiver");
-        receiveThread_.reset(new AudioReceiveThread(callID_, remote_.receiving_sdp));
-        receiveThread_->addIOContext(*socketPair_);
-        receiveThread_->startLoop();
-    } else {
-        RING_DBG("Audio receiving disabled");
+    if (not remote_.enabled or remote_.holding) {
+        RING_WARN("Audio receiving disabled");
         receiveThread_.reset();
+        return;
     }
+
+    if (receiveThread_)
+        RING_WARN("Restarting audio receiver");
+
+    receiveThread_.reset(new AudioReceiveThread(callID_, remote_.receiving_sdp));
+    receiveThread_->addIOContext(*socketPair_);
+    receiveThread_->startLoop();
 }
 
 void
