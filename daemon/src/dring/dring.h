@@ -270,8 +270,9 @@ void ring_pres_set_subscriptions(const std::string& account_id, const std::vecto
 
 /* video API */
 #ifdef RING_VIDEO
-std::vector<std::map<std::string, std::string>> ring_video_get_codecs(const std::string& account_id);
-void ring_video_set_codecs(const std::string& account_id, const std::vector<std::map<std::string, std::string>>& details);
+std::vector< int32_t > ring_video_get_video_codec_list(const std::string& account_id);
+std::vector<std::string> ring_video_get_video_codec_details(int codecId);
+void ring_video_set_video_codec_list(const std::string& account_id, const std::vector<int32_t>& list);
 std::vector<std::string> ring_video_get_device_list(void);
 std::map<std::string, std::map<std::string, std::vector<std::string>>> ring_video_get_capabilities(const std::string& name);
 std::map<std::string, std::string> ring_video_get_settings(const std::string& name);

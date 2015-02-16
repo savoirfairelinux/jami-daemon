@@ -98,9 +98,8 @@ Account::Account(const string &accountID)
     , enabled_(true)
     , autoAnswerEnabled_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
-    , audioCodecList_()
-    , videoCodecList_()
     , audioCodecStr_()
+    , videoCodecStr_()
     , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -174,10 +173,10 @@ void Account::loadDefaultCodecs()
     result.push_back("112");
 
     setActiveAudioCodecs(result);
-#endif
 #ifdef RING_VIDEO
     // we don't need to validate via setVideoCodecs, since these are defaults
     videoCodecList_ = libav_utils::getDefaultVideoCodecs();
+#endif
 #endif
 }
 
@@ -350,12 +349,14 @@ isCodecListValid(const vector<map<string, string> > &list)
 
 void Account::setVideoCodecs(const vector<map<string, string> > &list)
 {
+/*
 #ifdef RING_VIDEO
     if (isCodecListValid(list))
         videoCodecList_ = list;
 #else
     (void) list;
 #endif
+*/
 }
 
 // Convert a list of payloads in a special format, readable by the server.
@@ -371,7 +372,7 @@ join_string(const std::vector<int32_t> &v)
 std::vector<int32_t> Account::getActiveAudioCodecs() const
 {
     std::vector<int32_t> listId =
-        ring::getMediaCodecFactory()->getActiveMediaCodecIdList(ring::MEDIA_AUDIO);
+        getMediaCodecFactory()->getActiveMediaCodecIdList(MEDIA_AUDIO);
     return listId;
 }
 
@@ -422,10 +423,10 @@ string Account::mapStateNumberToString(RegistrationState state)
 #undef CASE_STATE
 }
 
-vector<map<string, string> >
-Account::getAllVideoCodecs() const
+std::vector<int32_t>
+Account::getAllVideoCodecsId() const
 {
-    return videoCodecList_;
+    return getMediaCodecFactory()->getMediaCodecIdList(MEDIA_VIDEO);
 }
 
 static bool
@@ -454,21 +455,16 @@ Account::getDefaultAudioCodecs()
     // for the moment only return this list
     //TODO: use objects instead of ids !!!
     std::vector<int32_t> listId =
-        ring::getMediaCodecFactory()->getMediaCodecIdList(ring::MEDIA_AUDIO);
+        getMediaCodecFactory()->getMediaCodecIdList(MEDIA_AUDIO);
 
     return listId;
 }
 
-vector<map<string, string> >
-Account::getActiveVideoCodecs() const
+std::vector<int32_t> Account::getActiveVideoCodecs() const
 {
-    if (not videoEnabled_)
-        return vector<map<string, string>>();
-
-    // FIXME: validate video codec details first
-    vector<map<string, string> > result(videoCodecList_);
-    result.erase(std::remove_if(result.begin(), result.end(), is_inactive), result.end());
-    return result;
+    std::vector<int32_t> listId =
+        getMediaCodecFactory()->getActiveMediaCodecIdList(MEDIA_VIDEO);
+    return listId;
 }
 
 #define find_iter()                             \

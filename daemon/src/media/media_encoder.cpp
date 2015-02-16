@@ -475,6 +475,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         auto width_param = av_dict_get(options_, "width", NULL, 0);
         char *width = width_param ? width_param->value : nullptr;
         dstWidth_ = encoderCtx_->width = width ? atoi(width) : 0;
+        RING_DBG("#### ELOI dstWidth_ = %d \n", dstWidth_);
         auto height_param = av_dict_get(options_, "height", NULL, 0);
         char *height = height_param ? height_param->value : nullptr;
         dstHeight_ = encoderCtx_->height = height ? atoi(height) : 0;

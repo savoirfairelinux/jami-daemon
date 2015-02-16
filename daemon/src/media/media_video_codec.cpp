@@ -41,4 +41,19 @@ MediaVideoCodec::~MediaVideoCodec()
 {
 }
 
+std::vector<std::string> MediaVideoCodec::getCodecSpecifications()
+{
+    //FORMAT: list of
+    //  * name of the codec
+    //  * bit rate
+    //  * parameters
+
+     std::vector< std::string > listSpec;
+     listSpec.push_back(name_);
+     listSpec.push_back(std::to_string(bitrate_));
+     listSpec.push_back(parameters_);
+     printf("> MediaVideoCodec::getCodecSpecifications \n ");
+     return listSpec;
+}
+
 }

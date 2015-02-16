@@ -77,7 +77,7 @@ struct MediaCodec {
     std::string to_string();
 };
 static uint16_t generateId();
-static uint16_t s_codecId = 0;
+static uint16_t s_codecId = 100;
 bool operator== (MediaCodec codec1, MediaCodec codec2);
 
 class CryptoAttribute {
