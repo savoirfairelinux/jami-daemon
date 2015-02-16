@@ -812,11 +812,12 @@ SIPCall::startAllMedia()
             RING_ERR("Inconsistent media types between local and remote for SDP media slot");
             continue;
         }
+        RtpSession* rtp = (local.type == MEDIA_AUDIO) ? dynamic_cast<RtpSession*>(avformatrtp_.get()) : dynamic_cast<RtpSession*>(&videortp_);
         if (isSecure() && (not local.crypto || not remote.crypto)) {
             RING_ERR("Can't perform secure call over insecure RTP transport");
+            rtp->stop();
             continue;
         }
-        RtpSession* rtp = (local.type == MEDIA_AUDIO) ? dynamic_cast<RtpSession*>(avformatrtp_.get()) : dynamic_cast<RtpSession*>(&videortp_);
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
@@ -849,8 +850,8 @@ SIPCall::onMediaUpdate()
 
     if (getState() == ACTIVE) {
         // TODO apply changes without restarting everything
-        RING_WARN("Restarting media");
-        //stopAllMedia();
+        RING_WARN("Restarting medias");
+        stopAllMedia();
         startAllMedia();
     }
 }
