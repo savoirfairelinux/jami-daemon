@@ -34,6 +34,8 @@
 
 #include "noncopyable.h"
 
+#include <yaml-cpp/yaml.h>
+
 #include <cstdlib>
 #include <cstdint>
 #include <memory>
@@ -193,6 +195,30 @@ private:
     std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
 };
 
+struct VideoSettings
+{
+    VideoSettings() {}
+    VideoSettings(const std::map<std::string, std::string>& settings);
+
+    std::map<std::string, std::string> to_map() const;
+
+    std::string name {};
+    std::string video_size {};
+    std::string channel {};
+    unsigned framerate {};
+};
+
 }} // namespace ring::video
+
+namespace YAML {
+template<>
+struct convert<ring::video::VideoSettings> {
+    static Node encode(const ring::video::VideoSettings& rhs);
+    static bool decode(const Node& node, ring::video::VideoSettings& rhs);
+};
+
+Emitter& operator << (Emitter& out, const ring::video::VideoSettings& v);
+
+} // namespace YAML
 
 #endif // __VIDEO_BASE_H__

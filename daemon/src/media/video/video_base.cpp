@@ -29,9 +29,9 @@
  *  as that of the covered work.
  */
 
-#include <cassert>
 #include "libav_deps.h"
 #include "video_base.h"
+#include "string_utils.h"
 #include "logger.h"
 
 namespace ring { namespace video {
@@ -189,4 +189,73 @@ std::shared_ptr<VideoFrame> VideoGenerator::obtainLastFrame()
     return lastFrame_;
 }
 
+/*=== VideoSettings =========================================================*/
+
+static std::string
+extractString(const std::map<std::string, std::string>& settings, const std::string& key) {
+    auto i = settings.find(key);
+    if (i != settings.cend())
+        return i->second;
+    return {};
+}
+
+static unsigned
+extractInt(const std::map<std::string, std::string>& settings, const std::string& key) {
+    auto i = settings.find(key);
+    if (i != settings.cend())
+        return std::stoi(i->second);
+    return 0;
+}
+
+VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
+{
+    name = extractString(settings, "name");
+    channel = extractString(settings, "channel");
+    video_size = extractString(settings, "size");
+    framerate = extractInt(settings, "rate");
+}
+
+std::map<std::string, std::string>
+VideoSettings::to_map() const
+{
+    std::map<std::string, std::string> settings;
+    settings["name"] = name;
+    settings["size"] = video_size;
+    settings["channel"] = channel;
+    settings["rate"] = ring::to_string(framerate);
+    return settings;
+}
+
 }} // namespace ring::video
+
+namespace YAML {
+
+Node
+convert<ring::video::VideoSettings>::encode(const ring::video::VideoSettings& rhs) {
+    Node node;
+    node["name"] = rhs.name;
+    node["video_size"] = rhs.video_size;
+    node["channel"] = rhs.channel;
+    node["framerate"] = ring::to_string(rhs.framerate);
+    return node;
+}
+
+bool
+convert<ring::video::VideoSettings>::decode(const Node& node, ring::video::VideoSettings& rhs) {
+    if (not node.IsMap()) {
+        RING_WARN("Can't decode VideoSettings YAML node");
+        return false;
+    }
+    rhs.name = node["name"].as<std::string>();
+    rhs.video_size = node["video_size"].as<std::string>();
+    rhs.channel = node["channel"].as<std::string>();
+    rhs.framerate = node["framerate"].as<unsigned>();
+    return true;
+}
+
+Emitter& operator << (Emitter& out, const ring::video::VideoSettings& v) {
+    out << convert<ring::video::VideoSettings>::encode(v);
+    return out;
+}
+
+} // namespace YAML

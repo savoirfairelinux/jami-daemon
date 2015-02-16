@@ -68,6 +68,11 @@ class VideoDeviceMonitor : public Serializable
         void addDevice(const std::string &node);
         void removeDevice(const std::string &node);
 
+        /**
+         * Params for libav
+         */
+        DeviceParams getDeviceParams(const std::string& name) const;
+
         /*
          * Interface to load from/store to the (YAML) configuration file.
          */
