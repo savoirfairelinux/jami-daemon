@@ -750,7 +750,6 @@ void SIPAccount::doRegister()
         RING_DBG("UPnP: waiting for IGD to register SIP account");
         setRegistrationState(RegistrationState::TRYING);
         auto shared = shared_from_this();
-        RING_DBG("UPnP: waiting for IGD to register RING account");
         std::thread{ [shared] {
             /* We have to register the external thread so it could access the pjsip frameworks */
             if (!pj_thread_is_registered()) {
