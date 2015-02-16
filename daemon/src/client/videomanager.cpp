@@ -51,21 +51,29 @@ VideoManager::getVideoDeviceMonitor()
     return videoDeviceMonitor_;
 }
 
-std::vector<std::map<std::string, std::string> >
-VideoManager::getCodecs(const std::string &accountID)
+std::vector< int32_t >
+VideoManager::getVideoCodecList(const std::string &accountID)
 {
     if (const auto acc = Manager::instance().getAccount(accountID))
-        return acc->getAllVideoCodecs();
+        return acc->getAllVideoCodecsId();
     else
-        return std::vector<std::map<std::string, std::string> >();
+        return std::vector<int32_t>();
+}
+std::vector<std::string> VideoManager::getVideoCodecDetails(int32_t codecId)
+{
+    MediaVideoCodec* foundCodec = NULL;
+    foundCodec = dynamic_cast<MediaVideoCodec*>(getMediaCodecFactory()->searchCodecById(codecId, MEDIA_VIDEO));
+    if ( ! foundCodec )
+        return std::vector<std::string>();
+    return foundCodec->getCodecSpecifications();
 }
 
 void
-VideoManager::setCodecs(const std::string& accountID,
-                        const std::vector<std::map<std::string, std::string> > &details)
+VideoManager::setVideoCodecList(const std::string& accountID,
+                        const std::vector<int32_t> &list)
 {
     if (auto acc = Manager::instance().getAccount(accountID)) {
-        acc->setVideoCodecs(details);
+        //acc->setVideoCodecsId(list);
         Manager::instance().saveConfig();
     }
 }

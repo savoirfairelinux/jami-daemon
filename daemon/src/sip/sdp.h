@@ -34,13 +34,13 @@
 #define SDP_H_
 
 #include "noncopyable.h"
-
 #include "sdes_negotiator.h"
 #include "sip_utils.h"
-
 #include "ip_utils.h"
 #include "ice_transport.h"
 #include "media_audio_codec.h"
+#include "media_video_codec.h"
+#include "sip_utils.h"
 
 #include <pjmedia/sdp.h>
 #include <pjmedia/sdp_neg.h>
@@ -128,8 +128,8 @@ class Sdp {
          * @returns true if offer was created, false otherwise
          */
         bool
-        createOffer(const std::vector<int> &selectedCodecs,
-                    const std::vector<std::map<std::string, std::string> > &videoCodecs, sip_utils::KeyExchangeProtocol);
+        createOffer(const std::vector<int> &selectedAudioCodecs,
+                    const std::vector<int> &selectedVideoCodecs, sip_utils::KeyExchangeProtocol);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -138,8 +138,8 @@ class Sdp {
         * @param remote    The remote offer
         */
         void receiveOffer(const pjmedia_sdp_session* remote,
-                          const std::vector<int> &selectedCodecs,
-                          const std::vector<std::map<std::string, std::string> > &videoCodecs, sip_utils::KeyExchangeProtocol);
+                          const std::vector<int> &selectedAudioCodecs,
+                          const std::vector<int> &selectedVideoCodecs, sip_utils::KeyExchangeProtocol);
 
         /**
          * Start the sdp negotiation.
@@ -292,7 +292,7 @@ class Sdp {
          * Codec Map used for offer
          */
         std::vector<MediaAudioCodec *> audio_codec_list_;
-        std::vector<std::map<std::string, std::string> > video_codec_list_;
+        std::vector<MediaVideoCodec* > video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
@@ -328,12 +328,12 @@ class Sdp {
          * @param List of codec in preference order
          */
         void setLocalMediaAudioCapabilities(const std::vector<int> &selected);
-        void setLocalMediaVideoCapabilities(const std::vector<std::map<std::string, std::string> > &codecs);
+        void setLocalMediaVideoCapabilities(const std::vector<int> &codecs);
         /*
          * Build the local SDP offer
          */
         int createLocalSession(const std::vector<int> &selectedAudio,
-                               const std::vector<std::map<std::string, std::string> > &selectedVideo, sip_utils::KeyExchangeProtocol);
+                               const std::vector<int> &selectedVideo, sip_utils::KeyExchangeProtocol);
 
         /*
          * Adds a zrtp-hash  attribute to
