@@ -83,6 +83,15 @@ constexpr static const char * ARRAY_IDX_INVALID_STR = "713";
 constexpr static int          CONFLICT_IN_MAPPING = 718;
 constexpr static const char * CONFLICT_IN_MAPPING_STR = "718";
 
+/* max number of times to retry mapping if it fails due to conflict;
+ * there isn't much logic in picking this number... ideally not many ports should
+ * be mapped in a system, so a few number of random port retries should work;
+ * a high number of retries would indicate there might be some kind of bug or else
+ * incompatibility with the router; we use it to prevent an infinite loop of
+ * retrying to map the entry
+ */
+constexpr static unsigned MAX_RETRIES = 20;
+
 /*
  * Local prototypes
  */
@@ -358,18 +367,29 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
     Mapping mapping = addMapping(igd, port_desired, port_local, type, &upnp_error);
     /* keep trying to add the mapping as long as the upnp error is 718 == conflicting mapping
      * if adding the mapping fails for any other reason, give up
+     * don't try more than MAX_RETRIES to prevent infinite loops
      */
-    while ( not mapping and (upnp_error == CONFLICT_IN_MAPPING or upnp_error == INVALID_ARGS) ) {
+    unsigned numberRetries = 0;
+
+    while ( not mapping
+            and (upnp_error == CONFLICT_IN_MAPPING or upnp_error == INVALID_ARGS)
+            and numberRetries < MAX_RETRIES ) {
         /* acceptable errors to keep trying:
          * 718 : conflictin mapping
          * 402 : invalid args (due to router implementation)
          */
+        RING_DBG("UPnP: mapping failed (conflicting entry? err = %d), trying with a different port.",
+                 upnp_error);
         /* TODO: make sure we don't try sellecting the same random port twice if it fails ? */
         port_desired = chooseRandomPort(igd, type);
         if (use_same_port)
             port_local = port_desired;
         mapping = addMapping(igd, port_desired, port_local, type, &upnp_error);
+        ++numberRetries;
     }
+
+    if (not mapping and numberRetries == MAX_RETRIES)
+        RING_DBG("UPnP: could not add mapping after %u retries, giving up", MAX_RETRIES);
 
     return mapping;
 }
@@ -850,8 +870,8 @@ UPnPContext::isIGDConnected(const IGD* igd)
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get GetStatusInfo from: %s, %s",
-                  igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
+        RING_WARN("UPnP: Failed to get GetStatusInfo from: %s, %d: %s",
+                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
 
         return false;
     }
@@ -882,8 +902,8 @@ UPnPContext::getExternalIP(const IGD* igd)
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get GetExternalIPAddress from: %s, %s",
-                  igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
+        RING_WARN("UPnP: Failed to get GetExternalIPAddress from: %s, %d: %s",
+                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return {};
     }
 
@@ -922,8 +942,8 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
         response.reset(response_ptr);
         if( not response and upnp_err != UPNP_E_SUCCESS) {
             /* TODO: if failed, should we chck if the igd is disconnected? */
-            RING_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %s",
-                      igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
+            RING_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %d: %s",
+                      igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
             return;
         }
 
@@ -943,7 +963,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
                 std::string protocol = get_first_doc_item(response.get(), "NewProtocol");
 
                 RING_DBG("UPnP: deleting entry with matching desciption and ip:\n\t%s %5s->%s:%-5s '%s'",
-                         protocol.c_str(), port_external.c_str(), client_ip.c_str(), port_internal.c_str(), protocol.c_str());
+                         protocol.c_str(), port_external.c_str(), client_ip.c_str(), port_internal.c_str(), desc_actual.c_str());
 
                 /* delete entry */
                 if (not deletePortMapping(igd, port_external, protocol)) {
@@ -989,8 +1009,8 @@ UPnPContext::deletePortMapping(const IGD* igd, const std::string& port_external,
     response.reset(response_ptr);
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we check if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get %s from: %s, %s",
-                  action_name.c_str(), igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
+        RING_WARN("UPnP: Failed to get %s from: %s, %d: %s", action_name.c_str(),
+                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return false;
     }
     /* check if there is an error code */
@@ -1038,9 +1058,9 @@ UPnPContext::addPortMapping(const IGD* igd, const Mapping& mapping, int* error_c
     response.reset(response_ptr);
     if( not response and upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %s",
-                  igd->getServiceType().c_str(), UpnpGetErrorMessage(upnp_err));
-        *error_code = upnp_err;
+        RING_WARN("UPnP: Failed to %s from: %s, %d: %s", action_name.c_str(),
+                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+        *error_code = -1; /* make sure to -1 since we didn't get a response */
         return false;
     }
 
