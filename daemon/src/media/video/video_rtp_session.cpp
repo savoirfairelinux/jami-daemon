@@ -58,7 +58,7 @@ VideoRtpSession::~VideoRtpSession()
 
 void VideoRtpSession::startSender()
 {
-    if (local_.enabled) {
+    if (local_.enabled and not remote_.holding) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -78,7 +78,7 @@ void VideoRtpSession::startSender()
 
 void VideoRtpSession::startReceiver()
 {
-    if (remote_.enabled) {
+    if (remote_.enabled and not remote_.holding) {
         if (receiveThread_)
             RING_WARN("restarting video receiver");
         receiveThread_.reset(new VideoReceiveThread(callID_, remote_.receiving_sdp));
