@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+#include "media_device.h"
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
