@@ -140,8 +140,8 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
     } else {
-        dhtf = toUrl.find("sip:");
-        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+4;
+        dhtf = toUrl.find("sips:");
+        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
     }
     if (toUrl.length() - dhtf < 40)
         throw std::invalid_argument("id must be a ring infohash");
@@ -154,6 +154,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
     call->setIPToIP(true);
+    call->setSecure(isTlsEnabled());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     auto ice = iceTransportFactory.createTransport(
