@@ -30,11 +30,12 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <map>
+
 #include "account.h"
 #include "account_schema.h"
 #include "accounttest.h"
 #include "manager.h"
-#include "client/configurationmanager.h"
+#include "configurationmanager_interface.h"
 #include "logger.h"
 
 namespace ring { namespace test {
@@ -43,18 +44,17 @@ void AccountTest::TestAddRemove()
 {
     RING_DBG("-------------------- %s --------------------\n", __PRETTY_FUNCTION__);
 
-    std::map<std::string, std::string> details(Manager::instance().getConfigurationManager()->getAccountTemplate());
+    auto details = DRing::getAccountTemplate();
     details[Conf::CONFIG_ACCOUNT_TYPE] = "SIP";
     details[Conf::CONFIG_ACCOUNT_ENABLE] = "false";
     details[Conf::CONFIG_LOCAL_INTERFACE] = "default";
     details[Conf::CONFIG_LOCAL_PORT] = "5060";
 
-    std::string accountId = Manager::instance().addAccount(details);
+    auto accountId = Manager::instance().addAccount(details);
     CPPUNIT_ASSERT(not accountId.empty());
     CPPUNIT_ASSERT(Manager::instance().hasAccount(accountId));
 
     Manager::instance().removeAccount(accountId);
-
     CPPUNIT_ASSERT(!Manager::instance().hasAccount(accountId));
 }
 

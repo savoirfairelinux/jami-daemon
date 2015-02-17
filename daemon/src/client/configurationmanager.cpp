@@ -3,6 +3,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,7 +35,7 @@
 #include "config.h"
 #endif
 
-#include "configurationmanager.h"
+#include "configurationmanager_interface.h"
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
@@ -46,6 +47,7 @@
 #include "sip/sipaccount.h"
 #include "security_const.h"
 #include "audio/audiolayer.h"
+#include "client/signal.h"
 
 #include <dirent.h>
 
@@ -53,124 +55,127 @@
 #include <cstring>
 #include <sstream>
 
-#define CODECS_NOT_LOADED           0x1000  /** Codecs not found */
+namespace DRing {
 
-namespace ring {
+constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
-void ConfigurationManager::registerEvHandlers(struct ring_config_ev_handlers* evHandlers)
+using ring::SIPAccount;
+using ring::TlsValidator;
+using ring::Account;
+using ring::DeviceType;
+using ring::HookPreference;
+
+void
+registerConfHandlers(const std::map<std::string,
+                     std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
-    evHandlers_ = *evHandlers;
-}
+    auto& handlers_ = ring::getSignalHandlers();
+    for (auto& item : handlers) {
+        auto iter = handlers_.find(item.first);
+        if (iter == handlers_.end()) {
+            RING_ERR("Signal %s not supported", item.first.c_str());
+            continue;
+        }
 
-std::map<std::string, std::string> ConfigurationManager::getIp2IpDetails()
-{
-    const auto account = Manager::instance().getIP2IPAccount();
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
-
-    if (!sipaccount) {
-        RING_ERR("Could not find IP2IP account");
-        return std::map<std::string, std::string>();
-    } else
-        return sipaccount->getIp2IpDetails();
-}
-
-
-std::map<std::string, std::string> ConfigurationManager::getAccountDetails(
-    const std::string& accountID)
-{
-    return Manager::instance().getAccountDetails(accountID);
-}
-
-
-std::map<std::string, std::string> ConfigurationManager::getVolatileAccountDetails(
-    const std::string& accountID)
-{
-    return Manager::instance().getVolatileAccountDetails(accountID);
+        iter->second = std::move(item.second);
+    }
 }
 
 std::map<std::string, std::string>
-ConfigurationManager::getTlsSettingsDefault()
+getIp2IpDetails()
+{
+    auto account = ring::Manager::instance().getIP2IPAccount();
+    if (auto sipaccount = static_cast<SIPAccount*>(account.get()))
+        return sipaccount->getIp2IpDetails();
+    RING_ERR("Could not find IP2IP account");
+    return std::map<std::string, std::string>();
+}
+
+
+std::map<std::string, std::string>
+getAccountDetails(const std::string& accountID)
+{
+    return ring::Manager::instance().getAccountDetails(accountID);
+}
+
+
+std::map<std::string, std::string>
+getVolatileAccountDetails(const std::string& accountID)
+{
+    return ring::Manager::instance().getVolatileAccountDetails(accountID);
+}
+
+std::map<std::string, std::string>
+getTlsDefaultSettings()
 {
     std::stringstream portstr;
     portstr << DEFAULT_SIP_TLS_PORT;
 
-    std::map<std::string, std::string> tlsSettingsDefault;
-    tlsSettingsDefault[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
-    tlsSettingsDefault[Conf::CONFIG_TLS_CA_LIST_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CERTIFICATE_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_PASSWORD] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_METHOD] = "TLSv1";
-    tlsSettingsDefault[Conf::CONFIG_TLS_CIPHERS] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_SERVER_NAME] = "";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_SERVER] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_VERIFY_CLIENT] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = "true";
-    tlsSettingsDefault[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = "2";
-
-    return tlsSettingsDefault;
+    return {
+        {ring::Conf::CONFIG_TLS_LISTENER_PORT, portstr.str()},
+        {ring::Conf::CONFIG_TLS_CA_LIST_FILE, ""},
+        {ring::Conf::CONFIG_TLS_CERTIFICATE_FILE, ""},
+        {ring::Conf::CONFIG_TLS_PRIVATE_KEY_FILE, ""},
+        {ring::Conf::CONFIG_TLS_PASSWORD, ""},
+        {ring::Conf::CONFIG_TLS_METHOD, "TLSv1"},
+        {ring::Conf::CONFIG_TLS_CIPHERS, ""},
+        {ring::Conf::CONFIG_TLS_SERVER_NAME, ""},
+        {ring::Conf::CONFIG_TLS_VERIFY_SERVER, "true"},
+        {ring::Conf::CONFIG_TLS_VERIFY_CLIENT, "true"},
+        {ring::Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, "true"},
+        {ring::Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, "2"}
+    };
 }
 
-std::map<std::string, std::string> ConfigurationManager::getTlsSettings()
+std::map<std::string, std::string>
+getTlsSettings()
 {
-    std::map<std::string, std::string> tlsSettings;
-
-    const auto account = Manager::instance().getIP2IPAccount();
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
-
-    if (!sipaccount)
-        return tlsSettings;
-
-    return sipaccount->getTlsSettings();
+    auto account = ring::Manager::instance().getIP2IPAccount();
+    if (auto sipaccount = static_cast<SIPAccount*>(account.get()))
+        return sipaccount->getTlsSettings();
+    RING_ERR("Could not find IP2IP account");
+    return std::map<std::string, std::string>();
 }
 
-void ConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
+void
+setTlsSettings(const std::map<std::string, std::string>& details)
 {
-    const auto account = Manager::instance().getIP2IPAccount();
-    const auto sipaccount = static_cast<SIPAccount *>(account.get());
-
-    if (!sipaccount) {
-        RING_DBG("No valid account in set TLS settings");
-        return;
+    auto account = ring::Manager::instance().getIP2IPAccount();
+    if (auto sipaccount = static_cast<SIPAccount*>(account.get())) {
+        sipaccount->setTlsSettings(details);
+        ring::Manager::instance().saveConfig();
+        ring::emitSignal<ConfigurationSignal::AccountsChanged>();
     }
 
-    sipaccount->setTlsSettings(details);
-
-    Manager::instance().saveConfig();
-
-    // Update account details to the client side
-    accountsChanged();
+    RING_DBG("No valid account in set TLS settings");
+    return;
 }
 
-std::map<std::string, std::string> ConfigurationManager::validateCertificate(const std::string&,
-                                                                             const std::string& certificate,
-                                                                             const std::string& privateKey)
+std::map<std::string, std::string>
+validateCertificate(const std::string&,
+                    const std::string& certificate,
+                    const std::string& privateKey)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        TlsValidator validator(certificate,privateKey);
-        return validator.getSerializedChecks();
-    }
-    catch(const std::runtime_error& e) {
-        std::map<std::string, std::string> res;
+        return TlsValidator{certificate, privateKey}.getSerializedChecks();
+    } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
-        res[DRing::Certificate::ChecksNames::EXIST] = DRing::Certificate::CheckValuesNames::FAILED;
-        return res;
+        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
 #else
     RING_WARN("TLS not supported");
-    return std::map<std::string, std::string>();
+    return {};
 #endif
 }
 
-std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(const std::string& certificate)
+std::map<std::string, std::string>
+getCertificateDetails(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        TlsValidator validator(certificate,"");
-        return validator.getSerializedDetails();
-    }
-    catch(const std::runtime_error& e) {
+        return TlsValidator{certificate,""}.getSerializedDetails();
+    } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }
 #else
@@ -179,474 +184,415 @@ std::map<std::string, std::string> ConfigurationManager::getCertificateDetails(c
     return std::map<std::string, std::string>();
 }
 
-void ConfigurationManager::setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
+void
+setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
-    Manager::instance().setAccountDetails(accountID, details);
+    ring::Manager::instance().setAccountDetails(accountID, details);
 }
 
-void ConfigurationManager::sendRegister(const std::string& accountID, bool enable)
+void
+sendRegister(const std::string& accountID, bool enable)
 {
-    Manager::instance().sendRegister(accountID, enable);
+    ring::Manager::instance().sendRegister(accountID, enable);
 }
 
-void ConfigurationManager::registerAllAccounts()
+void
+registerAllAccounts()
 {
-    Manager::instance().registerAccounts();
+    ring::Manager::instance().registerAccounts();
 }
 
 ///This function is used as a base for new accounts for clients that support it
-std::map<std::string, std::string> ConfigurationManager::getAccountTemplate()
+std::map<std::string, std::string>
+getAccountTemplate()
 {
-    SIPAccount dummy("dummy", false);
-    return dummy.getAccountDetails();
+    return SIPAccount{"dummy", false}.getAccountDetails();
 }
 
-std::string ConfigurationManager::addAccount(const std::map<std::string, std::string>& details)
+std::string
+addAccount(const std::map<std::string, std::string>& details)
 {
-    return Manager::instance().addAccount(details);
+    return ring::Manager::instance().addAccount(details);
 }
 
-void ConfigurationManager::removeAccount(const std::string& accountID)
+void
+removeAccount(const std::string& accountID)
 {
-    return Manager::instance().removeAccount(accountID);
+    return ring::Manager::instance().removeAccount(accountID);
 }
 
-std::vector<std::string> ConfigurationManager::getAccountList()
+std::vector<std::string>
+getAccountList()
 {
-    return Manager::instance().getAccountList();
+    return ring::Manager::instance().getAccountList();
 }
 
 /**
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t> ConfigurationManager::getAudioCodecList()
+std::vector<int32_t>
+getAudioCodecList()
 {
-    std::vector<int32_t> list(Manager::instance().audioCodecFactory.getCodecList());
-
+    std::vector<int32_t> list {ring::Manager::instance().audioCodecFactory.getCodecList()};
     if (list.empty())
-        errorAlert(CODECS_NOT_LOADED);
-
+        ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
 }
 
-std::vector<std::string> ConfigurationManager::getSupportedTlsMethod()
+std::vector<std::string>
+getSupportedTlsMethod()
 {
-    std::vector<std::string> method;
-    method.push_back("Default");
-    method.push_back("TLSv1");
-    method.push_back("SSLv3");
-    method.push_back("SSLv23");
-    return method;
+    return {"Default", "TLSv1", "SSLv3", "SSLv23"};
 }
 
-std::vector<std::string> ConfigurationManager::getSupportedCiphers(const std::string& accountID) const
+std::vector<std::string>
+getSupportedCiphers(const std::string& accountID)
 {
 #if HAVE_TLS
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
-    if (sipaccount) {
+    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return sipaccount->getSupportedCiphers();
-    } else {
-        RING_ERR("SIP account %s doesn't exist", accountID.c_str());
-#else
-    {
+    RING_ERR("SIP account %s doesn't exist", accountID.c_str());
 #endif
-        return {};
-    }
-
+    return {};
 }
 
-std::vector<std::string> ConfigurationManager::getAudioCodecDetails(int32_t payload)
+std::vector<std::string>
+getAudioCodecDetails(int32_t payload)
 {
-    std::vector<std::string> result(Manager::instance().audioCodecFactory.getCodecSpecifications(payload));
-
+    std::vector<std::string> result {ring::Manager::instance().audioCodecFactory.getCodecSpecifications(payload)};
     if (result.empty())
-        errorAlert(CODECS_NOT_LOADED);
-
+        ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return result;
 }
 
-std::vector<int32_t> ConfigurationManager::getActiveAudioCodecList(const std::string& accountID)
+std::vector<int32_t>
+getActiveAudioCodecList(const std::string& accountID)
 {
-    if (const auto acc = Manager::instance().getAccount(accountID))
+    if (auto acc = ring::Manager::instance().getAccount(accountID))
         return acc->getActiveAudioCodecs();
-    else {
-        RING_ERR("Could not find account %s, returning default", accountID.c_str());
-        return Account::getDefaultAudioCodecs();
-    }
+    RING_ERR("Could not find account %s, returning default", accountID.c_str());
+    return Account::getDefaultAudioCodecs();
 }
 
-void ConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
+void
+setActiveAudioCodecList(const std::vector<std::string>& list,
+                        const std::string& accountID)
 {
-    if (auto acc = Manager::instance().getAccount(accountID)) {
+    if (auto acc = ring::Manager::instance().getAccount(accountID)) {
         acc->setActiveAudioCodecs(list);
-        Manager::instance().saveConfig();
+        ring::Manager::instance().saveConfig();
     } else {
         RING_ERR("Could not find account %s", accountID.c_str());
     }
 }
 
-std::vector<std::string> ConfigurationManager::getAudioPluginList()
+std::vector<std::string>
+getAudioPluginList()
 {
-    std::vector<std::string> v;
-
-    v.push_back(PCM_DEFAULT);
-    v.push_back(PCM_DMIX_DSNOOP);
-
-    return v;
+    return {PCM_DEFAULT, PCM_DMIX_DSNOOP};
 }
 
-void ConfigurationManager::setAudioPlugin(const std::string& audioPlugin)
+void
+setAudioPlugin(const std::string& audioPlugin)
 {
-    return Manager::instance().setAudioPlugin(audioPlugin);
+    return ring::Manager::instance().setAudioPlugin(audioPlugin);
 }
 
-std::vector<std::string> ConfigurationManager::getAudioOutputDeviceList()
+std::vector<std::string>
+getAudioOutputDeviceList()
 {
-    return Manager::instance().getAudioOutputDeviceList();
+    return ring::Manager::instance().getAudioOutputDeviceList();
 }
 
-std::vector<std::string> ConfigurationManager::getAudioInputDeviceList()
+std::vector<std::string>
+getAudioInputDeviceList()
 {
-    return Manager::instance().getAudioInputDeviceList();
+    return ring::Manager::instance().getAudioInputDeviceList();
 }
 
-void ConfigurationManager::setAudioOutputDevice(int32_t index)
+void
+setAudioOutputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
+    return ring::Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
-void ConfigurationManager::setAudioInputDevice(int32_t index)
+void
+setAudioInputDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
+    return ring::Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
-void ConfigurationManager::setAudioRingtoneDevice(int32_t index)
+void
+setAudioRingtoneDevice(int32_t index)
 {
-    return Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
+    return ring::Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
 
-std::vector<std::string> ConfigurationManager::getCurrentAudioDevicesIndex()
+std::vector<std::string>
+getCurrentAudioDevicesIndex()
 {
-    return Manager::instance().getCurrentAudioDevicesIndex();
+    return ring::Manager::instance().getCurrentAudioDevicesIndex();
 }
 
-int32_t ConfigurationManager::getAudioInputDeviceIndex(const std::string& name)
+int32_t
+getAudioInputDeviceIndex(const std::string& name)
 {
-    return Manager::instance().getAudioInputDeviceIndex(name);
+    return ring::Manager::instance().getAudioInputDeviceIndex(name);
 }
 
-int32_t ConfigurationManager::getAudioOutputDeviceIndex(const std::string& name)
+int32_t
+getAudioOutputDeviceIndex(const std::string& name)
 {
-    return Manager::instance().getAudioOutputDeviceIndex(name);
+    return ring::Manager::instance().getAudioOutputDeviceIndex(name);
 }
 
-std::string ConfigurationManager::getCurrentAudioOutputPlugin()
+std::string
+getCurrentAudioOutputPlugin()
 {
-    RING_DBG("Get audio plugin %s", Manager::instance().getCurrentAudioOutputPlugin().c_str());
-
-    return Manager::instance().getCurrentAudioOutputPlugin();
+    auto plugin = ring::Manager::instance().getCurrentAudioOutputPlugin();
+    RING_DBG("Get audio plugin %s", plugin.c_str());
+    return plugin;
 }
 
-bool ConfigurationManager::getNoiseSuppressState()
+bool
+getNoiseSuppressState()
 {
-    return Manager::instance().getNoiseSuppressState();
+    return ring::Manager::instance().getNoiseSuppressState();
 }
 
-void ConfigurationManager::setNoiseSuppressState(bool state)
+void
+setNoiseSuppressState(bool state)
 {
-    Manager::instance().setNoiseSuppressState(state);
+    ring::Manager::instance().setNoiseSuppressState(state);
 }
 
-bool ConfigurationManager::isAgcEnabled()
+bool
+isAgcEnabled()
 {
-    return Manager::instance().isAGCEnabled();
+    return ring::Manager::instance().isAGCEnabled();
 }
 
-void ConfigurationManager::setAgcState(bool enabled)
+void
+setAgcState(bool enabled)
 {
-    Manager::instance().setAGCState(enabled);
+    ring::Manager::instance().setAGCState(enabled);
 }
 
-int32_t ConfigurationManager::isIax2Enabled()
+int32_t
+isIax2Enabled()
 {
     return HAVE_IAX;
 }
 
-std::string ConfigurationManager::getRecordPath()
+std::string
+getRecordPath()
 {
-    return Manager::instance().audioPreference.getRecordPath();
+    return ring::Manager::instance().audioPreference.getRecordPath();
 }
 
-void ConfigurationManager::setRecordPath(const std::string& recPath)
+void
+setRecordPath(const std::string& recPath)
 {
-    Manager::instance().audioPreference.setRecordPath(recPath);
+    ring::Manager::instance().audioPreference.setRecordPath(recPath);
 }
 
-bool ConfigurationManager::getIsAlwaysRecording()
+bool
+getIsAlwaysRecording()
 {
-    return Manager::instance().getIsAlwaysRecording();
+    return ring::Manager::instance().getIsAlwaysRecording();
 }
 
-void ConfigurationManager::setIsAlwaysRecording(bool rec)
+void
+setIsAlwaysRecording(bool rec)
 {
-    Manager::instance().setIsAlwaysRecording(rec);
+    ring::Manager::instance().setIsAlwaysRecording(rec);
 }
 
-int32_t ConfigurationManager::getHistoryLimit()
+int32_t
+getHistoryLimit()
 {
-    return Manager::instance().getHistoryLimit();
+    return ring::Manager::instance().getHistoryLimit();
 }
 
-void ConfigurationManager::clearHistory()
+void
+clearHistory()
 {
-    return Manager::instance().clearHistory();
+    return ring::Manager::instance().clearHistory();
 }
 
-void ConfigurationManager::setHistoryLimit(int32_t days)
+void
+setHistoryLimit(int32_t days)
 {
-    Manager::instance().setHistoryLimit(days);
+    ring::Manager::instance().setHistoryLimit(days);
 }
 
-bool ConfigurationManager::setAudioManager(const std::string& api)
+bool
+setAudioManager(const std::string& api)
 {
-    return Manager::instance().setAudioManager(api);
+    return ring::Manager::instance().setAudioManager(api);
 }
 
-std::string ConfigurationManager::getAudioManager()
+std::string
+getAudioManager()
 {
-    return Manager::instance().getAudioManager();
+    return ring::Manager::instance().getAudioManager();
 }
 
-void ConfigurationManager::setVolume(const std::string& device, double value)
+void
+setVolume(const std::string& device, double value)
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver()) {
+        RING_DBG("set volume for %s: %f", device.c_str(), value);
 
-    if (!audiolayer) {
+        if (device == "speaker")
+            audiolayer->setPlaybackGain(value);
+        else if (device == "mic")
+            audiolayer->setCaptureGain(value);
+
+        ring::emitSignal<ConfigurationSignal::VolumeChanged>(device, value);
+    } else {
         RING_ERR("Audio layer not valid while updating volume");
-        return;
     }
-
-    RING_DBG("set volume for %s: %f", device.c_str(), value);
-
-    if (device == "speaker") {
-        audiolayer->setPlaybackGain(value);
-    } else if (device == "mic") {
-        audiolayer->setCaptureGain(value);
-    }
-
-    volumeChanged(device, value);
 }
 
 double
-ConfigurationManager::getVolume(const std::string& device)
+getVolume(const std::string& device)
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
-
-    if (!audiolayer) {
-        RING_ERR("Audio layer not valid while updating volume");
-        return 0.0;
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver()) {
+        if (device == "speaker")
+            return audiolayer->getPlaybackGain();
+        if (device == "mic")
+            return audiolayer->getCaptureGain();
     }
 
-    if (device == "speaker")
-        return audiolayer->getPlaybackGain();
-    else if (device == "mic")
-        return audiolayer->getCaptureGain();
-
-    return 0;
+    RING_ERR("Audio layer not valid while updating volume");
+    return 0.0;
 }
 
 // FIXME: we should store "muteDtmf" instead of "playDtmf"
 // in config and avoid negating like this
-bool ConfigurationManager::isDtmfMuted()
+bool
+isDtmfMuted()
 {
-    return not Manager::instance().voipPreferences.getPlayDtmf();
+    return not ring::Manager::instance().voipPreferences.getPlayDtmf();
 }
 
-void ConfigurationManager::muteDtmf(bool mute)
+void
+muteDtmf(bool mute)
 {
-    Manager::instance().voipPreferences.setPlayDtmf(not mute);
+    ring::Manager::instance().voipPreferences.setPlayDtmf(not mute);
 }
 
-bool ConfigurationManager::isCaptureMuted()
+bool
+isCaptureMuted()
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->isCaptureMuted();
 
-    if (!audiolayer) {
-        RING_ERR("Audio layer not valid");
-        return false;
-    }
-
-    return audiolayer->isCaptureMuted();
+    RING_ERR("Audio layer not valid");
+    return false;
 }
 
-void ConfigurationManager::muteCapture(bool mute)
+void
+muteCapture(bool mute)
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->muteCapture(mute);
 
-    if (!audiolayer) {
-        RING_ERR("Audio layer not valid");
-        return;
-    }
-
-    return audiolayer->muteCapture(mute);
+    RING_ERR("Audio layer not valid");
+    return;
 }
 
-bool ConfigurationManager::isPlaybackMuted()
+bool
+isPlaybackMuted()
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->isPlaybackMuted();
 
-    if (!audiolayer) {
-        RING_ERR("Audio layer not valid");
-        return false;
-    }
-
-    return audiolayer->isPlaybackMuted();
+    RING_ERR("Audio layer not valid");
+    return false;
 }
 
-void ConfigurationManager::mutePlayback(bool mute)
+void
+mutePlayback(bool mute)
 {
-    auto audiolayer = Manager::instance().getAudioDriver();
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->mutePlayback(mute);
 
-    if (!audiolayer) {
-        RING_ERR("Audio layer not valid");
-        return;
-    }
-
-    return audiolayer->mutePlayback(mute);
+    RING_ERR("Audio layer not valid");
+    return;
 }
 
-std::map<std::string, std::string> ConfigurationManager::getHookSettings()
+std::map<std::string, std::string>
+getHookSettings()
 {
-    return Manager::instance().hookPreference.toMap();
+    return ring::Manager::instance().hookPreference.toMap();
 }
 
-void ConfigurationManager::setHookSettings(const std::map<std::string,
-        std::string>& settings)
+void
+setHookSettings(const std::map<std::string,
+                std::string>& settings)
 {
-    Manager::instance().hookPreference = HookPreference(settings);
+    ring::Manager::instance().hookPreference = HookPreference(settings);
 }
 
-void ConfigurationManager::setAccountsOrder(const std::string& order)
+void setAccountsOrder(const std::string& order)
 {
-    Manager::instance().setAccountsOrder(order);
+    ring::Manager::instance().setAccountsOrder(order);
 }
 
-std::vector<std::map<std::string, std::string> > ConfigurationManager::getHistory()
+std::vector<std::map<std::string, std::string>>
+getHistory()
 {
-    return Manager::instance().getHistory();
+    return ring::Manager::instance().getHistory();
 }
 
 std::string
-ConfigurationManager::getAddrFromInterfaceName(const std::string& interface)
+getAddrFromInterfaceName(const std::string& interface)
 {
-    return ip_utils::getInterfaceAddr(interface);
+    return ring::ip_utils::getInterfaceAddr(interface);
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterface()
+std::vector<std::string>
+getAllIpInterface()
 {
-    return ip_utils::getAllIpInterface();
+    return ring::ip_utils::getAllIpInterface();
 }
 
-std::vector<std::string> ConfigurationManager::getAllIpInterfaceByName()
+std::vector<std::string>
+getAllIpInterfaceByName()
 {
-    return ip_utils::getAllIpInterfaceByName();
+    return ring::ip_utils::getAllIpInterfaceByName();
 }
 
-std::map<std::string, std::string> ConfigurationManager::getShortcuts()
+std::map<std::string, std::string>
+getShortcuts()
 {
-    return Manager::instance().shortcutPreferences.getShortcuts();
+    return ring::Manager::instance().shortcutPreferences.getShortcuts();
 }
 
-void ConfigurationManager::setShortcuts(
-    const std::map<std::string, std::string>& shortcutsMap)
+void
+setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
 {
-    Manager::instance().shortcutPreferences.setShortcuts(shortcutsMap);
-    Manager::instance().saveConfig();
+    ring::Manager::instance().shortcutPreferences.setShortcuts(shortcutsMap);
+    ring::Manager::instance().saveConfig();
 }
 
-std::vector<std::map<std::string, std::string> > ConfigurationManager::getCredentials(
-    const std::string& accountID)
+std::vector<std::map<std::string, std::string>>
+getCredentials(const std::string& accountID)
 {
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
-
-    std::vector<std::map<std::string, std::string> > credentialInformation;
-
-    if (!sipaccount)
-        return credentialInformation;
-    else
+    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return sipaccount->getCredentials();
+    return {};
 }
 
-void ConfigurationManager::setCredentials(const std::string& accountID,
-        const std::vector<std::map<std::string, std::string> >& details)
+void
+setCredentials(const std::string& accountID,
+               const std::vector<std::map<std::string, std::string>>& details)
 {
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
-
-    if (sipaccount)
+    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         sipaccount->setCredentials(details);
 }
 
-void ConfigurationManager::volumeChanged(const std::string& device, double value)
-{
-    if (evHandlers_.on_volume_change) {
-        evHandlers_.on_volume_change(device, value);
-    }
-}
-
-void ConfigurationManager::accountsChanged()
-{
-    if (evHandlers_.on_accounts_change) {
-        evHandlers_.on_accounts_change();
-    }
-}
-
-void ConfigurationManager::historyChanged()
-{
-    if (evHandlers_.on_history_change) {
-        evHandlers_.on_history_change();
-    }
-}
-
-void ConfigurationManager::stunStatusFailure(const std::string& accountID)
-{
-    if (evHandlers_.on_stun_status_fail) {
-        evHandlers_.on_stun_status_fail(accountID);
-    }
-}
-
-void ConfigurationManager::registrationStateChanged(const std::string& accountID, int state)
-{
-    if (evHandlers_.on_registration_state_change) {
-        evHandlers_.on_registration_state_change(accountID, state);
-    }
-}
-
-void ConfigurationManager::sipRegistrationStateChanged(const std::string& accountID, const std::string& state, int32_t code)
-{
-    if (evHandlers_.on_sip_registration_state_change) {
-        evHandlers_.on_sip_registration_state_change(accountID, state, code);
-    }
-}
-
-
-void ConfigurationManager::volatileAccountDetailsChanged(const std::string& accountID, const std::map<std::string, std::string> &details)
-{
-    if (evHandlers_.on_volatile_details_change) {
-        evHandlers_.on_volatile_details_change(accountID, details);
-    }
-}
-
-void ConfigurationManager::errorAlert(int alert)
-{
-    if (evHandlers_.on_error) {
-        evHandlers_.on_error(alert);
-    }
-}
-
-std::vector< int32_t > ConfigurationManager::getHardwareAudioFormat()
-{
-    return std::vector<int32_t> {44100, 64};
-}
-
-} // namespace ring
+} // namespace DRing

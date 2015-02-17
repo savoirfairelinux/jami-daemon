@@ -37,18 +37,26 @@
 #include <string>
 
 #include "dring.h"
+#include "callmanager_interface.h"
+#include "configurationmanager_interface.h"
+#include "presencemanager_interface.h"
+#ifdef RING_VIDEO
+#include "videomanager_interface.h"
+#endif
 #include "fileutils.h"
 
-static int sflphFlags = 0;
+static int ringFlags = 0;
 
-static void print_title()
+static void
+print_title()
 {
-    std::cout << "Ring Daemon " << ring_version() <<
-        ", by Savoir-Faire Linux 2004-2015" << std::endl <<
-        "http://www.sflphone.org/" << std::endl;
+    std::cout << "Ring Daemon " << DRing::version()
+              << ", by Savoir-Faire Linux 2004-2015" << std::endl
+              << "http://www.sflphone.org/" << std::endl;
 }
 
-static void print_usage()
+static void
+print_usage()
 {
     std::cout << std::endl <<
     "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
@@ -60,12 +68,9 @@ static void print_usage()
 // Parse command line arguments, setting debug options or printing a help
 // message accordingly.
 // returns true if we should quit (i.e. help was printed), false otherwise
-static bool parse_args(int argc, char *argv[], bool &persistent)
+static bool
+parse_args(int argc, char *argv[], bool& persistent)
 {
-    int consoleFlag = false;
-    int debugFlag = false;
-    int helpFlag = false;
-    int versionFlag = false;
     static const struct option long_options[] = {
         /* These options set a flag. */
         {"debug", no_argument, NULL, 'd'},
@@ -76,16 +81,16 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
         {0, 0, 0, 0} /* Sentinel */
     };
 
+    int consoleFlag = false;
+    int debugFlag = false;
+    int helpFlag = false;
+    int versionFlag = false;
+
     while (true) {
         /* getopt_long stores the option index here. */
         int option_index = 0;
-        int c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
 
-        /* Detect the end of the options. */
-        if (c == -1)
-            break;
-
-        switch (c) {
+        switch (getopt_long(argc, argv, "dcphv", long_options, &option_index)) {
             case 'd':
                 debugFlag = true;
                 break;
@@ -107,86 +112,63 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
                 versionFlag = true;
                 break;
 
+            case -1: // end of the options
             default:
                 break;
         }
     }
 
-    bool quit = false;
     if (helpFlag) {
         print_usage();
-        quit = true;
-    } else if (versionFlag) {
-        // We've always print the title/version, so we can just exit
-        quit = true;
-    } else {
-        if (consoleFlag) {
-            sflphFlags |= RING_FLAG_CONSOLE_LOG;
-        }
-        if (debugFlag) {
-            sflphFlags |= RING_FLAG_DEBUG;
-        }
+        return true;
     }
-    return quit;
+
+    if (versionFlag) {
+        // We've always print the title/version, so we can just exit
+        return true;
+    }
+
+    if (consoleFlag)
+        ringFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
+
+    if (debugFlag)
+        ringFlags |= DRing::DRING_FLAG_DEBUG;
+
+    return false;
 }
 
-void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, const std::string& from)
+static int
+osxTests()
 {
-    std::cout << std::endl << "INCOMING CALL!" << std::endl <<
-        "Account: " << acc_id <<
-        ", Id: " << call_id <<
-        ", From: " << from << std::endl << std::endl;
+    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
-    ring_call_accept(call_id);
-    ring_call_set_recording(call_id);
-    //ring_call_join_participant(call_id, "patate");
-}
-
-static int osxTests()
-{
-    ring_ev_handlers evHandlers = {
-        .call_ev_handlers = {
-            .on_incoming_call = myOnIncomingCall
-        },
-        .config_ev_handlers = {},
-        .pres_ev_handlers = {}
-#ifdef RING_VIDEO
-        ,.video_ev_handlers = {}
-#endif
-    };
-
-    ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
-
-    //ring_call_play_dtmf("0");
-    //sleep(1);
-    //ring_call_play_dtmf("1");
-    //sleep(1);
-
-    //ring_call_place("IP2IP", "patate", "127.0.0.1");
-    //ring_call_set_recording("patate");
+    DRing::init(std::map<DRing::EventHandlerKey, std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>>(),
+                static_cast<DRing::InitFlag>(ringFlags));
 
     while (true) {
-        ring_poll_events();
+        DRing::poll_events();
         sleep(1);
     }
 
-    ring_fini();
+    DRing::fini();
 }
 
-static int run()
+static int
+run()
 {
     osxTests();
     return 0;
 }
 
-static void interrupt()
-{
-}
+static void
+interrupt()
+{}
 
-static void signal_handler(int code)
+static void
+signal_handler(int code)
 {
     std::cerr << "Caught signal " << strsignal(code)
-                  << ", terminating..." << std::endl;
+              << ", terminating..." << std::endl;
 
     // Unset signal handlers
     signal(SIGHUP, SIG_DFL);
@@ -196,13 +178,12 @@ static void signal_handler(int code)
     interrupt();
 }
 
-int main(int argc, char *argv [])
+int
+main(int argc, char *argv [])
 {
-    int ret;
-
     // make a copy as we don't want to modify argv[0], copy it to a vector to
     // guarantee that memory is correctly managed/exception safe
-    std::string programName(argv[0]);
+    std::string programName {argv[0]};
     std::vector<char> writable(programName.size() + 1);
     std::copy(programName.begin(), programName.end(), writable.begin());
 
@@ -216,7 +197,6 @@ int main(int argc, char *argv [])
     print_title();
 
     bool persistent = false;
-
     if (parse_args(argc, argv, persistent))
         return 0;
 
@@ -230,7 +210,5 @@ int main(int argc, char *argv [])
     std::cerr << "Warning: built with video support" << std::endl;
 #endif
 
-    ret = run();
-
-    return ret;
+    return run();
 }

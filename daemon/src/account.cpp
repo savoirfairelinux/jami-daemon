@@ -47,7 +47,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#include "client/configurationmanager.h"
+#include "client/signal.h"
 #include "account_schema.h"
 #include "string_utils.h"
 #include "config/yamlparser.h"
@@ -150,9 +150,11 @@ void Account::setRegistrationState(RegistrationState state)
     if (state != registrationState_) {
         registrationState_ = state;
         // Notify the client
-        ConfigurationManager *c(Manager::instance().getConfigurationManager());
-        c->registrationStateChanged(accountID_, static_cast<int32_t>(registrationState_));
-        c->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
+        emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(accountID_,
+                static_cast<int32_t>(registrationState_));
+
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_,
+                getVolatileAccountDetails());
     }
 }
 

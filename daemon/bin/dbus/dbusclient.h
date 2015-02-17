@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,7 +33,6 @@
 #define __DBUSCLIENT_H__
 
 #include "dring.h"
-#include "noncopyable.h"
 
 class DBusConfigurationManager;
 class DBusCallManager;
@@ -54,26 +54,24 @@ class DBusClient {
         DBusClient(int sflphFlags, bool persistent);
         ~DBusClient();
 
-        int event_loop();
-        int exit();
+        int event_loop() noexcept;
+        int exit() noexcept;
 
     private:
-        NON_COPYABLE(DBusClient);
-
         int initLibrary(int sflphFlags);
-        void finiLibrary();
+        void finiLibrary() noexcept;
 
-        DBusCallManager*          callManager_;
-        DBusConfigurationManager* configurationManager_;
+        std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
+        std::unique_ptr<DBus::DefaultTimeout> timeout_;
 
-        DBusPresenceManager*      presenceManager_;
-        DBusInstance*             instanceManager_;
-        DBus::BusDispatcher*  dispatcher_;
+        std::unique_ptr<DBusCallManager>          callManager_;
+        std::unique_ptr<DBusConfigurationManager> configurationManager_;
+        std::unique_ptr<DBusPresenceManager>      presenceManager_;
+        std::unique_ptr<DBusInstance>             instanceManager_;
 
 #ifdef RING_VIDEO
-        DBusVideoManager *videoManager_;
+        std::unique_ptr<DBusVideoManager>         videoManager_;
 #endif
-        DBus::DefaultTimeout *timeout_;
 };
 
 #endif

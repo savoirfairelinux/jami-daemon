@@ -36,6 +36,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "logger.h"
+#include "client/signal.h"
 
 #include <unistd.h>
 #include <map>
@@ -149,7 +150,7 @@ void VideoReceiveThread::process()
 void VideoReceiveThread::cleanup()
 {
     if (detach(&sink_))
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
+        emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
     sink_.stop();
 
     if (videoDecoder_)
@@ -223,7 +224,7 @@ void VideoReceiveThread::enterConference()
         return;
 
     if (detach(&sink_)) {
-        Manager::instance().getVideoManager()->stoppedDecoding(id_, sink_.openedName(), false);
+        emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
         RING_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
 }
@@ -235,7 +236,7 @@ void VideoReceiveThread::exitConference()
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
         if (attach(&sink_)) {
-            Manager::instance().getVideoManager()->startedDecoding(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
+            emitSignal<DRing::VideoSignal::DecodingStarted>(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
             RING_DBG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }

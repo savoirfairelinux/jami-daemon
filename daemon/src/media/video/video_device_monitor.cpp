@@ -37,6 +37,7 @@
 
 #include "manager.h"
 #include "client/videomanager.h"
+#include "client/signal.h"
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "video_device_monitor.h"
@@ -61,13 +62,13 @@ VideoDeviceMonitor::getDeviceList() const
     return names;
 }
 
-VideoCapabilities
+DRing::VideoCapabilities
 VideoDeviceMonitor::getCapabilities(const string& name) const
 {
     const auto iter = findDeviceByName(name);
 
     if (iter == devices_.end())
-        return VideoCapabilities();
+        return DRing::VideoCapabilities();
 
     return iter->getCapabilities();
 }
@@ -158,8 +159,7 @@ notify()
         RING_WARN("Manager not initialized yet");
         return;
     }
-
-    Manager::instance().getVideoManager()->deviceEvent();
+    emitSignal<DRing::VideoSignal::DeviceEvent>();
 }
 
 void

@@ -36,7 +36,6 @@
 
 #include "ringdht/sip_transport_ice.h"
 
-#include "client/configurationmanager.h"
 #include "array_size.h"
 #include "intrin.h"
 #include "sipvoiplink.h"
