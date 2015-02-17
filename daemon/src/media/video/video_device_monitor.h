@@ -58,7 +58,7 @@ class VideoDeviceMonitor : public Serializable
 
         std::vector<std::string> getDeviceList() const;
 
-        VideoCapabilities getCapabilities(const std::string& name) const;
+        DRing::VideoCapabilities getCapabilities(const std::string& name) const;
         VideoSettings getSettings(const std::string& name);
         void applySettings(const std::string& name, VideoSettings settings);
 

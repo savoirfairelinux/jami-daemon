@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
  *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,200 +32,181 @@
 #include <iostream>
 #include <cstring>
 #include <stdexcept>
-#include "dring.h"
 
 #include "dbusclient.h"
 #include "dbus_cpp.h"
 
 #include "dbusinstance.h"
+
+#include "callmanager_interface.h"
 #include "dbuscallmanager.h"
+
 #include "dbusconfigurationmanager.h"
+#include "configurationmanager_interface.h"
+
 #include "dbuspresencemanager.h"
+#include "presencemanager_interface.h"
 
 #ifdef RING_VIDEO
 #include "dbusvideomanager.h"
+#include "videomanager_interface.h"
 #endif
 
-struct EventCallback : DBus::Callback_Base<void, DBus::DefaultTimeout&>
+class EventCallback :
+    public DBus::Callback_Base<void, DBus::DefaultTimeout&>
 {
-    EventCallback(const std::function<void()> &func) :
-        callback_(func)
-    {}
+    public:
+        EventCallback(const std::function<void()>&& func)
+            : callback_ {std::forward<const std::function<void()>>(func)}
+            {}
 
-    void call(DBus::DefaultTimeout &) const
-    {
-        callback_();
-    }
+        void call(DBus::DefaultTimeout&) const {
+            callback_();
+        }
 
-private:
-    std::function<void()> callback_;
+    private:
+        const std::function<void()> callback_;
 };
 
-DBusClient::DBusClient(int sflphFlags, bool persistent) :
-    callManager_(nullptr)
-    , configurationManager_(nullptr)
-    , presenceManager_(nullptr)
-    , instanceManager_(nullptr)
-    , dispatcher_(new DBus::BusDispatcher)
-#ifdef RING_VIDEO
-    , videoManager_(nullptr)
-#endif
-    , timeout_(nullptr)
+DBusClient::DBusClient(int sflphFlags, bool persistent)
+    : dispatcher_(new DBus::BusDispatcher)
 {
     try {
         DBus::_init_threading();
-        DBus::default_dispatcher = dispatcher_;
+        DBus::default_dispatcher = dispatcher_.get();
 
         // timeout and expired are deleted internally by dispatcher_'s
         // destructor, so we must NOT delete them ourselves.
-        timeout_ = new DBus::DefaultTimeout(10 /* ms */, true, dispatcher_);
-        // Poll for SIP/IAX events
-        timeout_->expired = new EventCallback(ring_poll_events);
+        timeout_.reset(new DBus::DefaultTimeout {10 /* ms */, true, dispatcher_.get()});
+        // Poll for Deamon events
+        timeout_->expired = new EventCallback {DRing::poll_events};
 
-        DBus::Connection sessionConnection(DBus::Connection::SessionBus());
+        DBus::Connection sessionConnection {DBus::Connection::SessionBus()};
         sessionConnection.request_name("cx.ring.Ring");
 
-        callManager_ = new DBusCallManager(sessionConnection);
-        configurationManager_ = new DBusConfigurationManager(sessionConnection);
-
-        presenceManager_ = new DBusPresenceManager(sessionConnection);
+        callManager_.reset(new DBusCallManager {sessionConnection});
+        configurationManager_.reset(new DBusConfigurationManager {sessionConnection});
+        presenceManager_.reset(new DBusPresenceManager {sessionConnection});
 
         DBusInstance::OnNoMoreClientFunc onNoMoreClientFunc;
+        if (!persistent)
+            onNoMoreClientFunc = [this] {this->exit();};
 
-        if (!persistent) {
-            onNoMoreClientFunc = [this] () {
-                this->exit();
-            };
-        }
-
-        instanceManager_ = new DBusInstance(sessionConnection, onNoMoreClientFunc);
+        instanceManager_.reset(new DBusInstance {sessionConnection, onNoMoreClientFunc});
 
 #ifdef RING_VIDEO
-        videoManager_ = new DBusVideoManager(sessionConnection);
+        videoManager_.reset(new DBusVideoManager {sessionConnection});
 #endif
     } catch (const DBus::Error &err) {
-        throw std::runtime_error("cannot initialize DBus stuff");
+        throw std::runtime_error {"cannot initialize DBus stuff"};
     }
 
-    auto ret = initLibrary(sflphFlags);
-
-    if (ret < 0) {
-        throw std::runtime_error("cannot initialize libring");
-    }
+    if (initLibrary(sflphFlags) < 0)
+        throw std::runtime_error {"cannot initialize libring"};
 
     instanceManager_->started();
 }
 
 DBusClient::~DBusClient()
 {
-#ifdef RING_VIDEO
-    delete videoManager_;
-#endif
-
-    delete instanceManager_;
-
-    delete presenceManager_;
-
-    delete configurationManager_;
-    delete callManager_;
-    delete dispatcher_;
+    dispatcher_.reset(); // force dispatcher reset first
 }
 
 int DBusClient::initLibrary(int sflphFlags)
 {
     using namespace std::placeholders;
+
     using std::bind;
+    using DRing::exportable_callback;
+    using DRing::CallSignal;
+    using DRing::ConfigurationSignal;
+    using DRing::PresenceSignal;
+    using DRing::VideoSignal;
+    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
-    auto callM = callManager_; // just an alias
+    auto callM = callManager_.get();
+    auto confM = configurationManager_.get();
+    auto presM = presenceManager_.get();
+    auto videoM = videoManager_.get();
 
-    // Call event handlers
-    ring_call_ev_handlers callEvHandlers = {
-        bind(&DBusCallManager::callStateChanged, callM, _1, _2),
-        bind(&DBusCallManager::transferFailed, callM),
-        bind(&DBusCallManager::transferSucceeded, callM),
-        bind(&DBusCallManager::recordPlaybackStopped, callM, _1),
-        bind(&DBusCallManager::voiceMailNotify, callM, _1, _2),
-        bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3),
-        bind(&DBusCallManager::incomingCall, callM, _1, _2, _3),
-        bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2),
-        bind(&DBusCallManager::conferenceCreated, callM, _1),
-        bind(&DBusCallManager::conferenceChanged, callM, _1, _2),
-        bind(&DBusCallManager::updatePlaybackScale, callM, _1, _2, _3),
-        bind(&DBusCallManager::conferenceRemoved, callM, _1),
-        bind(&DBusCallManager::newCallCreated, callM, _1, _2, _3),
-        bind(&DBusCallManager::sipCallStateChanged, callM, _1, _2, _3),
-        bind(&DBusCallManager::recordingStateChanged, callM, _1, _2),
-        bind(&DBusCallManager::secureSdesOn, callM, _1),
-        bind(&DBusCallManager::secureSdesOff, callM, _1),
-        bind(&DBusCallManager::secureZrtpOn, callM, _1, _2),
-        bind(&DBusCallManager::secureZrtpOff, callM, _1),
-        bind(&DBusCallManager::showSAS, callM, _1, _2, _3),
-        bind(&DBusCallManager::zrtpNotSuppOther, callM, _1),
-        bind(&DBusCallManager::zrtpNegotiationFailed, callM, _1, _2, _3),
-        bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)
-    };
-
-    auto confM = configurationManager_; // just an alias
-
-    // Configuration event handlers
-    ring_config_ev_handlers configEvHandlers = {
-        bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2),
-        bind(&DBusConfigurationManager::accountsChanged, confM),
-        bind(&DBusConfigurationManager::historyChanged, confM),
-        bind(&DBusConfigurationManager::stunStatusFailure, confM, _1),
-        bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2),
-        bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3),
-        bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2),
-        bind(&DBusConfigurationManager::errorAlert, confM, _1),
-    };
-
-    auto presM = presenceManager_;
-    // Presence event handlers
-    ring_pres_ev_handlers presEvHandlers = {
-        bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1),
-        bind(&DBusPresenceManager::serverError, presM, _1, _2, _3),
-        bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4),
-        bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)
-    };
-
+    const std::map<DRing::EventHandlerKey, std::map<std::string, SharedCallback>> evHandlers = {
+        { // Call event handlers
+            DRing::EventHandlerKey::CALL, {
+                exportable_callback<CallSignal::StateChange>(bind(&DBusCallManager::callStateChanged, callM, _1, _2)),
+                exportable_callback<CallSignal::TransferFailed>(bind(&DBusCallManager::transferFailed, callM)),
+                exportable_callback<CallSignal::TransferSucceeded>(bind(&DBusCallManager::transferSucceeded, callM)),
+                exportable_callback<CallSignal::RecordPlaybackStopped>(bind(&DBusCallManager::recordPlaybackStopped, callM, _1)),
+                exportable_callback<CallSignal::VoiceMailNotify>(bind(&DBusCallManager::voiceMailNotify, callM, _1, _2)),
+                exportable_callback<CallSignal::IncomingMessage>(bind(&DBusCallManager::incomingMessage, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::IncomingCall>(bind(&DBusCallManager::incomingCall, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::RecordPlaybackFilepath>(bind(&DBusCallManager::recordPlaybackFilepath, callM, _1, _2)),
+                exportable_callback<CallSignal::ConferenceCreated>(bind(&DBusCallManager::conferenceCreated, callM, _1)),
+                exportable_callback<CallSignal::ConferenceChanged>(bind(&DBusCallManager::conferenceChanged, callM, _1, _2)),
+                exportable_callback<CallSignal::UpdatePlaybackScale>(bind(&DBusCallManager::updatePlaybackScale, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::ConferenceRemoved>(bind(&DBusCallManager::conferenceRemoved, callM, _1)),
+                exportable_callback<CallSignal::NewCallCreated>(bind(&DBusCallManager::newCallCreated, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::SipCallStateChanged>(bind(&DBusCallManager::sipCallStateChanged, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::RecordingStateChanged>(bind(&DBusCallManager::recordingStateChanged, callM, _1, _2)),
+                exportable_callback<CallSignal::SecureSdesOn>(bind(&DBusCallManager::secureSdesOn, callM, _1)),
+                exportable_callback<CallSignal::SecureSdesOff>(bind(&DBusCallManager::secureSdesOff, callM, _1)),
+                exportable_callback<CallSignal::SecureZrtpOn>(bind(&DBusCallManager::secureZrtpOn, callM, _1, _2)),
+                exportable_callback<CallSignal::SecureZrtpOff>(bind(&DBusCallManager::secureZrtpOff, callM, _1)),
+                exportable_callback<CallSignal::ShowSAS>(bind(&DBusCallManager::showSAS, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::ZrtpNotSuppOther>(bind(&DBusCallManager::zrtpNotSuppOther, callM, _1)),
+                exportable_callback<CallSignal::ZrtpNegotiationFailed>(bind(&DBusCallManager::zrtpNegotiationFailed, callM, _1, _2, _3)),
+                exportable_callback<CallSignal::RtcpReportReceived>(bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
+            }
+        },
+        { // Configuration event handlers
+            DRing::EventHandlerKey::CONFIG, {
+                exportable_callback<ConfigurationSignal::VolumeChanged>(bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2)),
+                exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&DBusConfigurationManager::accountsChanged, confM)),
+                exportable_callback<ConfigurationSignal::HistoryChanged>(bind(&DBusConfigurationManager::historyChanged, confM)),
+                exportable_callback<ConfigurationSignal::StunStatusFailed>(bind(&DBusConfigurationManager::stunStatusFailure, confM, _1)),
+                exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2)),
+                exportable_callback<ConfigurationSignal::SipRegistrationStateChanged>(bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3)),
+                exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2)),
+                exportable_callback<ConfigurationSignal::Error>(bind(&DBusConfigurationManager::errorAlert, confM, _1)),
+            }
+        },
+        { // Presence event handlers
+            DRing::EventHandlerKey::PRESENCE, {
+                exportable_callback<PresenceSignal::NewServerSubscriptionRequest>(bind(&DBusPresenceManager::newServerSubscriptionRequest, presM, _1)),
+                exportable_callback<PresenceSignal::ServerError>(bind(&DBusPresenceManager::serverError, presM, _1, _2, _3)),
+                exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4)),
+                exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
+            }
+        },
 #ifdef RING_VIDEO
-    auto videoM = videoManager_;
-
-    // Video event handlers
-    ring_video_ev_handlers videoEvHandlers = {
-        bind(&DBusVideoManager::deviceEvent, videoM),
-        bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5),
-        bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)
-    };
-#endif // RING_VIDEO
-
-    // All event handlers
-    ring_ev_handlers evHandlers = {
-        .call_ev_handlers = callEvHandlers,
-        .config_ev_handlers = configEvHandlers,
-        .pres_ev_handlers = presEvHandlers,
-#ifdef RING_VIDEO
-        .video_ev_handlers = videoEvHandlers
-#endif // RING_VIDEO
+        { // Video event handlers
+            DRing::EventHandlerKey::VIDEO, {
+                exportable_callback<VideoSignal::DeviceEvent>(bind(&DBusVideoManager::deviceEvent, videoM)),
+                exportable_callback<VideoSignal::DecodingStarted>(bind(&DBusVideoManager::startedDecoding, videoM, _1, _2, _3, _4, _5)),
+                exportable_callback<VideoSignal::DecodingStopped>(bind(&DBusVideoManager::stoppedDecoding, videoM, _1, _2, _3)),
+            }
+        },
+#endif
     };
 
     // Initialize now
-    return ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
+    return (unsigned)DRing::init(evHandlers, static_cast<DRing::InitFlag>(sflphFlags));
 }
 
-void DBusClient::finiLibrary()
+void
+DBusClient::finiLibrary() noexcept
 {
-    ring_fini();
+    DRing::fini();
 }
 
-int DBusClient::event_loop()
+int
+DBusClient::event_loop() noexcept
 {
     try {
         dispatcher_->enter();
-    } catch (const DBus::Error &err) {
+    } catch (const DBus::Error& err) {
         std::cerr << "quitting: " << err.name() << ": " << err.what() << std::endl;
         return 1;
-    } catch (const std::exception &err) {
+    } catch (const std::exception& err) {
         std::cerr << "quitting: " << err.what() << std::endl;
         return 1;
     }
@@ -232,16 +214,17 @@ int DBusClient::event_loop()
     return 0;
 }
 
-int DBusClient::exit()
+int
+DBusClient::exit() noexcept
 {
     try {
         dispatcher_->leave();
         timeout_->expired = new EventCallback([] {});
         finiLibrary();
-    } catch (const DBus::Error &err) {
+    } catch (const DBus::Error& err) {
         std::cerr << "quitting: " << err.name() << ": " << err.what() << std::endl;
         return 1;
-    } catch (const std::exception &err) {
+    } catch (const std::exception& err) {
         std::cerr << "quitting: " << err.what() << std::endl;
         return 1;
     }

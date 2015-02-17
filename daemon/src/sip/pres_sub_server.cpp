@@ -36,9 +36,9 @@
 #include "sipvoiplink.h"
 #include "manager.h"
 #include "sippresence.h"
-#include "client/presencemanager.h"
 #include "logger.h"
 #include "pres_sub_server.h"
+#include "client/signal.h"
 
 namespace ring {
 
@@ -188,8 +188,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     PresSubServer *presSubServer = new PresSubServer(pres, sub, remote, dlg);
     pjsip_evsub_set_mod_data(sub, pres->getModId(), presSubServer);
     // Notify the client.
-    Manager::instance().getPresenceManager()->newServerSubscriptionRequest(presSubServer->remote_);
-
+    emitSignal<DRing::PresenceSignal::NewServerSubscriptionRequest>(presSubServer->remote_);
     pres->addPresSubServer(presSubServer);
 
     /* Capture the value of Expires header. */

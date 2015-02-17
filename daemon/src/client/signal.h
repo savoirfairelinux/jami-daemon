@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,39 +28,46 @@
  *  as that of the covered work.
  */
 
-#include "dbuspresencemanager.h"
-#include "presencemanager_interface.h"
+#pragma once
 
-DBusPresenceManager::DBusPresenceManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/PresenceManager")
-{}
+#include "dring/callmanager_interface.h"
+#include "dring/configurationmanager_interface.h"
+#include "dring/presencemanager_interface.h"
 
-void
-DBusPresenceManager::publish(const std::string& accountID, const bool& status, const std::string& note)
-{
-    DRing::publish(accountID, status, note);
+#ifdef RING_VIDEO
+#include "dring/videomanager_interface.h"
+#endif // RING_VIDEO
+
+#include "logger.h"
+
+#include <exception>
+#include <memory>
+
+namespace ring {
+
+using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;
+extern SignalHandlerMap& getSignalHandlers();
+
+/*
+ * Find related user given callback and call it with given
+ * arguments.
+ */
+template <typename Ts, typename ...Args>
+static void emitSignal(Args...args) {
+    const auto& handlers = getSignalHandlers();
+    if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type> {handlers.at(Ts::name)}) {
+        try {
+            cb(args...);
+        } catch (std::exception& e) {
+            RING_ERR("Exception during emit signal %d:\n%s", Ts::name, e.what());
+        }
+    }
 }
 
-void
-DBusPresenceManager::answerServerRequest(const std::string& uri, const bool& flag)
-{
-    DRing::answerServerRequest(uri, flag);
+template <typename Ts>
+std::pair<std::string, std::shared_ptr<DRing::CallbackWrapper<typename Ts::cb_type>>>
+exported_callback() {
+    return std::make_pair((const std::string&)Ts::name, std::make_shared<DRing::CallbackWrapper<typename Ts::cb_type>>());
 }
 
-void
-DBusPresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag)
-{
-    DRing::subscribeBuddy(accountID, uri, flag);
-}
-
-auto
-DBusPresenceManager::getSubscriptions(const std::string& accountID) -> decltype(DRing::getSubscriptions(accountID))
-{
-    return DRing::getSubscriptions(accountID);
-}
-
-void
-DBusPresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
-{
-    DRing::setSubscriptions(accountID, uris);
-}
+} // namespace ring

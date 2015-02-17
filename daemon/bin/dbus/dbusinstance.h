@@ -53,9 +53,8 @@ class DBusInstance :
     public DBus::ObjectAdaptor
 {
     public:
-        typedef std::function<void ()> OnNoMoreClientFunc;
+        typedef std::function<void()> OnNoMoreClientFunc;
 
-    public:
         DBusInstance(DBus::Connection& connection,
                      const OnNoMoreClientFunc& onNoMoreClientFunc);
 

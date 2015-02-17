@@ -27,217 +27,256 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <iostream>
-#include "dring.h"
 
 #include "dbuscallmanager.h"
+#include "dring/callmanager_interface.h"
 
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")
+{}
+
+auto
+DBusCallManager::placeCall(const std::string& accountID, const std::string& callID, const std::string& to) -> decltype(DRing::placeCall(accountID, callID, to))
 {
+    return DRing::placeCall(accountID, callID, to);
 }
 
-bool DBusCallManager::placeCall(const std::string& accountID, const std::string& callID, const std::string& to)
+auto
+DBusCallManager::refuse(const std::string& callID) -> decltype(DRing::refuse(callID))
 {
-    return ring_call_place(accountID, callID, to);
+    return DRing::refuse(callID);
 }
 
-bool DBusCallManager::refuse(const std::string& callID)
+auto
+DBusCallManager::accept(const std::string& callID) -> decltype(DRing::accept(callID))
 {
-    return ring_call_refuse(callID);
+    return DRing::accept(callID);
 }
 
-bool DBusCallManager::accept(const std::string& callID)
+auto
+DBusCallManager::hangUp(const std::string& callID) -> decltype(DRing::hangUp(callID))
 {
-    return ring_call_accept(callID);
+    return DRing::hangUp(callID);
 }
 
-bool DBusCallManager::hangUp(const std::string& callID)
+auto
+DBusCallManager::hold(const std::string& callID) -> decltype(DRing::hold(callID))
 {
-    return ring_call_hang_up(callID);
+    return DRing::hold(callID);
 }
 
-bool DBusCallManager::hold(const std::string& callID)
+auto
+DBusCallManager::unhold(const std::string& callID) -> decltype(DRing::unhold(callID))
 {
-    return ring_call_hold(callID);
+    return DRing::unhold(callID);
 }
 
-bool DBusCallManager::unhold(const std::string& callID)
+auto
+DBusCallManager::transfer(const std::string& callID, const std::string& to) -> decltype(DRing::transfer(callID, to))
 {
-    return ring_call_unhold(callID);
+    return DRing::transfer(callID, to);
 }
 
-bool DBusCallManager::transfer(const std::string& callID, const std::string& to)
+auto
+DBusCallManager::attendedTransfer(const std::string& transferID, const std::string& targetID) -> decltype(DRing::attendedTransfer(transferID, targetID))
 {
-    return ring_call_transfer(callID, to);
+    return DRing::attendedTransfer(transferID, targetID);
 }
 
-bool DBusCallManager::attendedTransfer(const std::string& transferID, const std::string& targetID)
+auto
+DBusCallManager::getCallDetails(const std::string& callID) -> decltype(DRing::getCallDetails(callID))
 {
-    return ring_call_attended_transfer(transferID, targetID);
+    return DRing::getCallDetails(callID);
 }
 
-std::map< std::string, std::string > DBusCallManager::getCallDetails(const std::string& callID)
+auto
+DBusCallManager::getCallList() -> decltype(DRing::getCallList())
 {
-    return ring_call_get_call_details(callID);
+    return DRing::getCallList();
 }
 
-std::vector< std::string > DBusCallManager::getCallList()
+void
+DBusCallManager::removeConference(const std::string& conference_id)
 {
-    return ring_call_get_call_list();
+    DRing::removeConference(conference_id);
 }
 
-void DBusCallManager::removeConference(const std::string& conference_id)
+auto
+DBusCallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID) -> decltype(DRing::joinParticipant(sel_callID, drag_callID))
 {
-    ring_call_remove_conference(conference_id);
+    return DRing::joinParticipant(sel_callID, drag_callID);
 }
 
-bool DBusCallManager::joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
+void
+DBusCallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
 {
-    return ring_call_join_participant(sel_callID, drag_callID);
+    DRing::createConfFromParticipantList(participants);
 }
 
-void DBusCallManager::createConfFromParticipantList(const std::vector< std::string >& participants)
+auto
+DBusCallManager::isConferenceParticipant(const std::string& call_id) -> decltype(DRing::isConferenceParticipant(call_id))
 {
-    ring_call_create_conf_from_participant_list(participants);
+    return DRing::isConferenceParticipant(call_id);
 }
 
-bool DBusCallManager::isConferenceParticipant(const std::string& call_id)
+auto
+DBusCallManager::addParticipant(const std::string& callID, const std::string& confID) -> decltype(DRing::addParticipant(callID, confID))
 {
-    return ring_call_is_conference_participant(call_id);
+    return DRing::addParticipant(callID, confID);
 }
 
-bool DBusCallManager::addParticipant(const std::string& callID, const std::string& confID)
+auto
+DBusCallManager::addMainParticipant(const std::string& confID) -> decltype(DRing::addMainParticipant(confID))
 {
-    return ring_call_add_participant(callID, confID);
+    return DRing::addMainParticipant(confID);
 }
 
-bool DBusCallManager::addMainParticipant(const std::string& confID)
+auto
+DBusCallManager::detachParticipant(const std::string& callID) -> decltype(DRing::detachParticipant(callID))
 {
-    return ring_call_add_main_participant(confID);
+    return DRing::detachParticipant(callID);
 }
 
-bool DBusCallManager::detachParticipant(const std::string& callID)
+auto
+DBusCallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID) -> decltype(DRing::joinConference(sel_confID, drag_confID))
 {
-    return ring_call_detach_participant(callID);
+    return DRing::joinConference(sel_confID, drag_confID);
 }
 
-bool DBusCallManager::joinConference(const std::string& sel_confID, const std::string& drag_confID)
+auto
+DBusCallManager::hangUpConference(const std::string& confID) -> decltype(DRing::hangUpConference(confID))
 {
-    return ring_call_join_conference(sel_confID, drag_confID);
+    return DRing::hangUpConference(confID);
 }
 
-bool DBusCallManager::hangUpConference(const std::string& confID)
+auto
+DBusCallManager::holdConference(const std::string& confID) -> decltype(DRing::holdConference(confID))
 {
-    return ring_call_hang_up_conference(confID);
+    return DRing::holdConference(confID);
 }
 
-bool DBusCallManager::holdConference(const std::string& confID)
+auto
+DBusCallManager::unholdConference(const std::string& confID) -> decltype(DRing::unholdConference(confID))
 {
-    return ring_call_hold_conference(confID);
+    return DRing::unholdConference(confID);
 }
 
-bool DBusCallManager::unholdConference(const std::string& confID)
+auto
+DBusCallManager::getConferenceList() -> decltype(DRing::getConferenceList())
 {
-    return ring_call_unhold_conference(confID);
+    return DRing::getConferenceList();
 }
 
-std::vector<std::string> DBusCallManager::getConferenceList()
+auto
+DBusCallManager::getParticipantList(const std::string& confID) -> decltype(DRing::getParticipantList(confID))
 {
-    return ring_call_get_conference_list();
+    return DRing::getParticipantList(confID);
 }
 
-std::vector<std::string> DBusCallManager::getParticipantList(const std::string& confID)
+auto
+DBusCallManager::getDisplayNames(const std::string& confID) -> decltype(DRing::getDisplayNames(confID))
 {
-    return ring_call_get_participant_list(confID);
+    return DRing::getDisplayNames(confID);
 }
 
-std::vector<std::string> DBusCallManager::getDisplayNames(const std::string& confID)
+auto
+DBusCallManager::getConferenceId(const std::string& callID) -> decltype(DRing::getConferenceId(callID))
 {
-    return ring_call_get_display_names(confID);
+    return DRing::getConferenceId(callID);
 }
 
-std::string DBusCallManager::getConferenceId(const std::string& callID)
+auto
+DBusCallManager::getConferenceDetails(const std::string& callID) -> decltype(DRing::getConferenceDetails(callID))
 {
-    return ring_call_get_conference_id(callID);
+    return DRing::getConferenceDetails(callID);
 }
 
-std::map<std::string, std::string> DBusCallManager::getConferenceDetails(const std::string& callID)
+auto
+DBusCallManager::startRecordedFilePlayback(const std::string& filepath) -> decltype(DRing::startRecordedFilePlayback(filepath))
 {
-    return ring_call_get_conference_details(callID);
+    return DRing::startRecordedFilePlayback(filepath);
 }
 
-bool DBusCallManager::startRecordedFilePlayback(const std::string& filepath)
+void
+DBusCallManager::stopRecordedFilePlayback(const std::string& filepath)
 {
-    return ring_call_play_recorded_file(filepath);
+    DRing::stopRecordedFilePlayback(filepath);
 }
 
-void DBusCallManager::stopRecordedFilePlayback(const std::string& filepath)
+auto
+DBusCallManager::toggleRecording(const std::string& callID) -> decltype(DRing::toggleRecording(callID))
 {
-    ring_call_stop_recorded_file(filepath);
+    return DRing::toggleRecording(callID);
 }
 
-bool DBusCallManager::toggleRecording(const std::string& callID)
+void
+DBusCallManager::setRecording(const std::string& callID)
 {
-    return ring_call_toggle_recording(callID);
+    DRing::setRecording(callID);
 }
 
-void DBusCallManager::setRecording(const std::string& callID)
+void
+DBusCallManager::recordPlaybackSeek(const double& value)
 {
-    ring_call_set_recording(callID);
+    DRing::recordPlaybackSeek(value);
 }
 
-void DBusCallManager::recordPlaybackSeek(const double& value)
+auto
+DBusCallManager::getIsRecording(const std::string& callID) -> decltype(DRing::getIsRecording(callID))
 {
-    ring_call_record_playback_seek(value);
+    return DRing::getIsRecording(callID);
 }
 
-bool DBusCallManager::getIsRecording(const std::string& callID)
+auto
+DBusCallManager::getCurrentAudioCodecName(const std::string& callID) -> decltype(DRing::getCurrentAudioCodecName(callID))
 {
-    return ring_call_is_recording(callID);
+    return DRing::getCurrentAudioCodecName(callID);
 }
 
-std::string DBusCallManager::getCurrentAudioCodecName(const std::string& callID)
+void
+DBusCallManager::playDTMF(const std::string& key)
 {
-    return ring_call_get_current_audio_codec_name(callID);
+    DRing::playDTMF(key);
 }
 
-void DBusCallManager::playDTMF(const std::string& key)
+void
+DBusCallManager::startTone(const int32_t& start, const int32_t& type)
 {
-    ring_call_play_dtmf(key);
+    DRing::startTone(start, type);
 }
 
-void DBusCallManager::startTone(const int32_t& start, const int32_t& type)
+void
+DBusCallManager::setSASVerified(const std::string& callID)
 {
-    ring_call_start_tone(start, type);
+    DRing::setSASVerified(callID);
 }
 
-void DBusCallManager::setSASVerified(const std::string& callID)
+void
+DBusCallManager::resetSASVerified(const std::string& callID)
 {
-    ring_call_set_sas_verified(callID);
+    DRing::resetSASVerified(callID);
 }
 
-void DBusCallManager::resetSASVerified(const std::string& callID)
+void
+DBusCallManager::setConfirmGoClear(const std::string& callID)
 {
-    ring_call_reset_sas_verified(callID);
+    DRing::setConfirmGoClear(callID);
 }
 
-void DBusCallManager::setConfirmGoClear(const std::string& callID)
+void
+DBusCallManager::requestGoClear(const std::string& callID)
 {
-    ring_call_set_confirm_go_clear(callID);
+    DRing::requestGoClear(callID);
 }
 
-void DBusCallManager::requestGoClear(const std::string& callID)
+void
+DBusCallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
 {
-    ring_call_request_go_clear(callID);
+    DRing::acceptEnrollment(callID, accepted);
 }
 
-void DBusCallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
+void
+DBusCallManager::sendTextMessage(const std::string& callID, const std::string& message)
 {
-    ring_call_accept_enrollment(callID, accepted);
-}
-
-void DBusCallManager::sendTextMessage(const std::string& callID, const std::string& message)
-{
-    ring_call_send_text_message(callID, message);
+    DRing::sendTextMessage(callID, message);
 }

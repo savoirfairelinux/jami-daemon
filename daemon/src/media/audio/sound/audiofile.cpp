@@ -40,8 +40,8 @@
 
 #include "audiofile.h"
 #include "audio/resampler.h"
-#include "client/callmanager.h"
 #include "manager.h"
+#include "client/signal.h"
 
 #include "logger.h"
 
@@ -58,10 +58,10 @@ AudioFile::onBufferFinish()
         return;
     }
 
-    if ((updatePlaybackScale_ % 5) == 0) {
-        CallManager *cm = Manager::instance().getCallManager();
-        cm->updatePlaybackScale(filepath_, pos_ / divisor, buffer_->frames() / divisor);
-    }
+    if ((updatePlaybackScale_ % 5) == 0)
+        emitSignal<DRing::CallSignal::UpdatePlaybackScale>(filepath_,
+                                                           (unsigned)(pos_ / divisor),
+                                                           (unsigned)(buffer_->frames() / divisor));
 
     updatePlaybackScale_++;
 }
