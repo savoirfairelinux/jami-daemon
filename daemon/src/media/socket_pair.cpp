@@ -36,6 +36,10 @@
 #include "libav_utils.h"
 #include "logger.h"
 
+extern "C" {
+#include "srtp.h"
+}
+
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
@@ -57,6 +61,48 @@
 namespace ring {
 
 static const int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
+
+static const int RTP_MAX_PACKET_LENGTH = 8192;
+
+struct SRTPProtoContext {
+    SRTPProtoContext(const char *out_suite, const char *out_key,
+                     const char *in_suite, const char *in_key);
+    ~SRTPProtoContext();
+    void srtp_close();
+    SRTPContext srtp_out = {0};
+    SRTPContext srtp_in = {0};
+    uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
+};
+
+void SRTPProtoContext::srtp_close()
+{
+    ff_srtp_free(&srtp_out);
+    ff_srtp_free(&srtp_in);
+}
+
+// XXX: see srtp_open from libavformat/srtpproto.c
+SRTPProtoContext::SRTPProtoContext(const char *out_suite, const char *out_key,
+                                   const char *in_suite, const char *in_key)
+{
+    if (out_suite && out_key) {
+        if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
+            srtp_close();
+            throw std::runtime_error("Could not set crypto on output");
+        }
+    }
+
+    if (in_suite && in_key) {
+        if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
+            srtp_close();
+            throw std::runtime_error("Could not set crypto on input");
+        }
+    }
+}
+
+SRTPProtoContext::~SRTPProtoContext()
+{
+    srtp_close();
+}
 
 static int
 ff_network_wait_fd(int fd)
@@ -151,6 +197,7 @@ SocketPair::SocketPair(const char *uri, int localPort)
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , srtpContext_()
 {
     openSockets(uri, localPort);
 }
@@ -164,6 +211,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , srtpContext_()
 {}
 
 SocketPair::~SocketPair()
@@ -172,6 +220,13 @@ SocketPair::~SocketPair()
     if (rtpHandle_ >= 0)
         closeSockets();
 }
+
+void SocketPair::createSRTP(const char *out_suite, const char *out_key,
+                            const char *in_suite, const char *in_key)
+{
+    srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
+}
+
 
 void SocketPair::interrupt()
 {
@@ -246,25 +301,38 @@ SocketPair::waitForData()
 int
 SocketPair::readRtpData(void *buf, int buf_size)
 {
+    auto data = static_cast<uint8_t *>(buf);
+
     if (rtpHandle_ >= 0) {
         // work with system socket
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        auto result = recvfrom(rtpHandle_, buf, buf_size, 0,
-                               (struct sockaddr *)&from, &from_len);
+
+// XXX: see libavformat/srtpproto.c
+start:
+        int result = recvfrom(rtpHandle_, buf, buf_size, 0,
+                              (struct sockaddr *)&from, &from_len);
+        if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes)
+            if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
+                goto start;
+
         return result;
     }
 
     // work with IceSocket
-    auto result = rtp_sock_->recv(static_cast<unsigned char*>(buf), buf_size);
-    if (result < 0) {
+start_ice:
+    int result = rtp_sock_->recv(static_cast<unsigned char*>(buf), buf_size);
+    if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes) {
+        if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
+            goto start_ice;
+    } else if (result < 0) {
         errno = EIO;
         return -1;
-    }
-    if (result == 0) {
+    } else if (result == 0) {
         errno = EAGAIN;
         return -1;
     }
+
     return result;
 }
 
@@ -295,15 +363,39 @@ SocketPair::readRtcpData(void *buf, int buf_size)
 int
 SocketPair::writeRtpData(void *buf, int buf_size)
 {
+    auto data = static_cast<const uint8_t *>(buf);
+
     if (rtpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtpHandle_);
         if (ret < 0)
             return ret;
+
+        if (srtpContext_ and srtpContext_->srtp_out.aes) {
+            buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, data,
+                                       buf_size, srtpContext_->encryptbuf,
+                                       sizeof(srtpContext_->encryptbuf));
+            if (buf_size < 0)
+                return buf_size;
+
+            return sendto(rtpHandle_, srtpContext_->encryptbuf, buf_size, 0,
+                          (sockaddr*) &rtpDestAddr_, rtpDestAddrLen_);
+        }
+
         return sendto(rtpHandle_, buf, buf_size, 0,
                       (sockaddr*) &rtpDestAddr_, rtpDestAddrLen_);
     }
 
     // work with IceSocket
+    if (srtpContext_ and srtpContext_->srtp_out.aes) {
+        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, data,
+                                   buf_size, srtpContext_->encryptbuf,
+                                   sizeof(srtpContext_->encryptbuf));
+        if (buf_size < 0)
+            return buf_size;
+
+        return rtp_sock_->send(static_cast<unsigned char*>(srtpContext_->encryptbuf), buf_size);
+    }
+
     return rtp_sock_->send(static_cast<unsigned char*>(buf), buf_size);
 }
 
@@ -350,17 +442,6 @@ retry:
 
     return len;
 }
-
-/* RTCP packet types */
-enum RTCPType {
-    RTCP_FIR    = 192,
-    RTCP_IJ     = 195,
-    RTCP_SR     = 200,
-    RTCP_TOKEN  = 210
-};
-
-#define RTP_PT_IS_RTCP(x) (((x) >= RTCP_FIR && (x) <= RTCP_IJ) || \
-                           ((x) >= RTCP_SR  && (x) <= RTCP_TOKEN))
 
 int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 {
