@@ -69,7 +69,9 @@ class AudioSender {
         std::unique_ptr<MediaEncoder> audioEncoder_;
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
-        const double secondsPerPacket_ {0.02}; // 20 ms
+
+        using seconds = std::chrono::duration<double, std::ratio<1>>;
+        const seconds secondsPerPacket_ {0.02}; // 20 ms
 
         ThreadLoop loop_;
         void process();
@@ -86,7 +88,7 @@ AudioSender::AudioSender(const std::string& id, std::map<std::string, std::strin
           std::bind(&AudioSender::cleanup, this))
 {
     std::ostringstream os;
-    os << secondsPerPacket_ * format_.sample_rate;
+    os << (secondsPerPacket_ * format_.sample_rate).count();
     args_["frame_size"] = os.str();
     loop_.start();
 }
@@ -134,13 +136,16 @@ void
 AudioSender::process()
 {
     auto mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    double resampleFactor = mainBuffFormat.sample_rate / (double) format_.sample_rate;
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const size_t samplesToGet = resampleFactor * secondsPerPacket_ * format_.sample_rate;
-
-    if (Manager::instance().getRingBufferPool().availableForGet(id_) < samplesToGet)
-        return;
+    const size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(mainBuffFormat.sample_rate * secondsPerPacket_).count();
+    const auto samplesAvail = Manager::instance().getRingBufferPool().availableForGet(id_);
+    if (samplesAvail < samplesToGet) {
+        const double wait_ratio = 1. - std::min(.9, samplesAvail / (double)samplesToGet); // wait at least 10%
+        const auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_ * wait_ratio);
+        if (not waitForDataEncode(wait_time))
+            return;
+    }
 
     // FIXME
     AudioBuffer micData(samplesToGet, mainBuffFormat);
@@ -169,8 +174,7 @@ AudioSender::process()
             RING_ERR("encoding failed");
     }
 
-    const int millisecondsPerPacket = secondsPerPacket_ * 1000;
-    if (waitForDataEncode(std::chrono::milliseconds(millisecondsPerPacket))) {
+    if (waitForDataEncode(std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_))) {
         // Data available !
     }
 }
@@ -180,8 +184,7 @@ AudioSender::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
 {
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
-    auto resampleFactor = (double) mainBuffFormat.sample_rate / format_.sample_rate;
-    const size_t samplesToGet = resampleFactor * secondsPerPacket_ * format_.sample_rate;
+    const size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(mainBuffFormat.sample_rate * secondsPerPacket_).count();
 
     return mainBuffer.waitForDataAvailable(id_, samplesToGet, max_wait);
 }
