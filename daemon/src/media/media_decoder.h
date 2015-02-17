@@ -41,7 +41,7 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
-#include "sip/sip_utils.h"
+#include "media_device.h"
 
 #include "noncopyable.h"
 
