@@ -34,9 +34,10 @@
 #define SDP_H_
 
 #include "noncopyable.h"
+#include "sdes_negotiator.h"
+#include "sip_utils.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
-#include "sip_utils.h"
 #include "media_codec.h"
 
 #include <pjmedia/sdp.h>
@@ -205,7 +206,7 @@ class Sdp {
         void addAttributeToLocalVideoMedia(const char *attr);
         void removeAttributeFromLocalVideoMedia(const char *attr);
 
-        static std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session, bool remote);
+        std::vector<MediaDescription> getMediaSlots(const pjmedia_sdp_session* session, bool remote) const;
         using MediaSlot = std::pair<MediaDescription, MediaDescription>;
 
         std::vector<MediaSlot> getMediaSlots() const {
@@ -305,6 +306,7 @@ class Sdp {
         int localVideoDataPort_;
         int localVideoControlPort_;
 
+        SdesNegotiator sdesNego_;
         std::string zrtpHelloHash_;
 
         unsigned int telephoneEventPayload_;
