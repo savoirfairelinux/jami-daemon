@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2012-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,47 +28,47 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEOMANAGER_H_
-#define VIDEOMANAGER_H_
+#pragma once
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#include "dring/callmanager_interface.h"
+#include "dring/configurationmanager_interface.h"
+#include "dring/presencemanager_interface.h"
 
-#include <memory> // for weak/shared_ptr
-#include <vector>
-#include <map>
-#include <string>
+#ifdef RING_VIDEO
+#include "dring/videomanager_interface.h"
+#endif // RING_VIDEO
 
-#include "video/video_device_monitor.h"
-#include "video/video_base.h"
-#include "video/video_input.h"
+#include "logger.h"
 
+#include <exception>
+#include <memory>
 
 namespace ring {
 
-struct VideoManager
-{
-  /* VideoManager acts as a cache of the active VideoInput.
-   * When this input is needed, you must use getVideoCamera
-   * to create the instance if not done yet and obtain a shared pointer
-   * for your own usage.
-   * VideoManager instance doesn't increment the reference count of
-   * this video input instance: this instance is destroyed when the last
-   * external user has released its shared pointer.
-   */
-  std::weak_ptr<video::VideoInput> videoInput_ = {};
-  std::shared_ptr<video::VideoFrameActiveWriter> videoPreview_ = nullptr;
-  video::VideoDeviceMonitor videoDeviceMonitor_ = {};
-  std::atomic_bool started_ = {false};
-};
+using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;
+extern SignalHandlerMap& getSignalHandlers();
 
-extern VideoManager videoManager;
+/*
+ * Find related user given callback and call it with given
+ * arguments.
+ */
+template <typename Ts, typename ...Args>
+static void emitSignal(Args...args) {
+    const auto& handlers = getSignalHandlers();
+    if (const auto& gen_wrapper = handlers.at(Ts::name)) {
+        try {
+            DRing::CallbackWrapper<typename Ts::cb_type> w = gen_wrapper;
+            (*w)(args...);
+        } catch (std::exception& e) {
+            RING_ERR("Exception during emit signal %d:\n%s", Ts::name, e.what());
+        }
+    }
+}
 
-// Private
-std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
-video::VideoDeviceMonitor& getVideoDeviceMonitor();
+template <typename Ts>
+std::pair<std::string, std::shared_ptr<DRing::CallbackWrapper<typename Ts::cb_type>>>
+exported_callback() {
+    return std::make_pair((const std::string&)Ts::name, std::make_shared<DRing::CallbackWrapper<typename Ts::cb_type>>());
+}
 
 } // namespace ring
-
-#endif // VIDEOMANAGER_H_

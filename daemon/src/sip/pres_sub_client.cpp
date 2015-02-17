@@ -46,13 +46,12 @@
 
 #include "array_size.h"
 #include "pres_sub_client.h"
-#include "client/presencemanager.h"
-#include "client/configurationmanager.h"
 #include "sipaccount.h"
 #include "sippresence.h"
 #include "sipvoiplink.h"
 #include "sip_utils.h"
 #include "manager.h"
+#include "client/signal.h"
 
 #include "logger.h"
 
@@ -92,7 +91,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
 
     if (state == PJSIP_EVSUB_STATE_ACCEPTED) {
         pres_client->enable(true);
-        Manager::instance().getPresenceManager()->subscriptionStateChanged(
+        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(
                 pres->getAccount()->getAccountID(),
                 pres_client->getURI().c_str(),
                 PJ_TRUE);
@@ -103,7 +102,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
         int resub_delay = -1;
         pj_strdup_with_null(pres_client->pool_, &pres_client->term_reason_, pjsip_evsub_get_termination_reason(sub));
 
-        Manager::instance().getPresenceManager()->subscriptionStateChanged(
+        emitSignal<DRing::PresenceSignal::SubscriptionStateChanged>(
                 pres->getAccount()->getAccountID(),
                 pres_client->getURI().c_str(),
                 PJ_FALSE);
@@ -162,7 +161,7 @@ PresSubClient::pres_client_evsub_on_state(pjsip_evsub *sub, pjsip_event *event)
                  *  2) change the support field in the account schema if the pres_sub's server
                  *  is the same as the account's server
                  */
-                Manager::instance().getPresenceManager()->serverError(
+                emitSignal<DRing::PresenceSignal::ServerError>(
                         pres_client->getPresence()->getAccount()->getAccountID(),
                         error,
                         msg);

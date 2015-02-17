@@ -37,11 +37,12 @@
 #endif
 
 #include "account_schema.h"
-#include "client/configurationmanager.h"
 #include "manager.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
+
+#include "client/signal.h"
 
 namespace ring {
 
@@ -277,7 +278,7 @@ SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip
 
     // Notify the client of the new transport state
     if (currentStatus != transportStatus_)
-        Manager::instance().getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
 }
 
 void

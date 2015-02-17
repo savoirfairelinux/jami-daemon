@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 
-#include "presencemanager.h"
+#include "presencemanager_interface.h"
 
 #include <cerrno>
 #include <sstream>
@@ -43,26 +43,38 @@
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
+#include "client/signal.h"
 
-namespace ring {
+namespace DRing {
+
+using ring::SIPAccount;
 
 constexpr static const char* STATUS_KEY     = "Status";
 constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
 constexpr static const char* OFFLINE_KEY    = "Offline";
 
-void PresenceManager::registerEvHandlers(struct ring_pres_ev_handlers* evHandlers)
+void registerPresHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>& handlers)
 {
-    evHandlers_ = *evHandlers;
+    auto& handlers_ = ring::getSignalHandlers();
+    for (auto& item : handlers) {
+        auto iter = handlers_.find(item.first);
+        if (iter == handlers_.end()) {
+            RING_ERR("Signal %s not supported", item.first.c_str());
+            continue;
+        }
+
+        iter->second = std::move(item.second);
+    }
 }
 
 /**
  * Un/subscribe to buddySipUri for an accountID
  */
 void
-PresenceManager::subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
+subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 {
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
+    const auto sipaccount = ::ring::Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
         RING_ERR("Could not find account %s", accountID.c_str());
@@ -83,9 +95,9 @@ PresenceManager::subscribeBuddy(const std::string& accountID, const std::string&
  * Notify for IP2IP account and publish for PBX account
  */
 void
-PresenceManager::publish(const std::string& accountID, bool status, const std::string& note)
+publish(const std::string& accountID, bool status, const std::string& note)
 {
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
+    const auto sipaccount = ::ring::Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount) {
         RING_ERR("Could not find account %s.", accountID.c_str());
@@ -105,9 +117,9 @@ PresenceManager::publish(const std::string& accountID, bool status, const std::s
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-PresenceManager::answerServerRequest(const std::string& uri, bool flag)
+answerServerRequest(const std::string& uri, bool flag)
 {
-    const auto account = Manager::instance().getIP2IPAccount();
+    const auto account = ::ring::Manager::instance().getIP2IPAccount();
     const auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
@@ -132,10 +144,10 @@ PresenceManager::answerServerRequest(const std::string& uri, bool flag)
  * Get all active subscriptions for "accountID"
  */
 std::vector<std::map<std::string, std::string> >
-PresenceManager::getSubscriptions(const std::string& accountID)
+getSubscriptions(const std::string& accountID)
 {
     std::vector<std::map<std::string, std::string> > ret;
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
+    const auto sipaccount = ::ring::Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (sipaccount) {
         const auto pres = sipaccount->getPresence();
@@ -160,9 +172,9 @@ PresenceManager::getSubscriptions(const std::string& accountID)
  * Batch subscribing of URIs
  */
 void
-PresenceManager::setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
+setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
-    const auto sipaccount = Manager::instance().getAccount<SIPAccount>(accountID);
+    const auto sipaccount = ::ring::Manager::instance().getAccount<SIPAccount>(accountID);
 
     if (!sipaccount)
         return;
@@ -178,34 +190,4 @@ PresenceManager::setSubscriptions(const std::string& accountID, const std::vecto
         pres->subscribeClient(u, true);
 }
 
-void PresenceManager::newServerSubscriptionRequest(const std::string& remote)
-{
-    if (evHandlers_.on_new_server_subscription_request) {
-        evHandlers_.on_new_server_subscription_request(remote);
-    }
-}
-
-void PresenceManager::serverError(const std::string& accountID, const std::string& error, const std::string& msg)
-{
-    if (evHandlers_.on_server_error) {
-        evHandlers_.on_server_error(accountID, error, msg);
-    }
-}
-
-void PresenceManager::newBuddyNotification(const std::string& accountID, const std::string& buddyUri,
-                          bool status, const std::string& lineStatus)
-{
-    if (evHandlers_.on_new_buddy_notification) {
-        evHandlers_.on_new_buddy_notification(accountID, buddyUri, status, lineStatus);
-    }
-}
-
-void PresenceManager::subscriptionStateChanged(const std::string& accountID, const std::string& buddyUri,
-                          bool state)
-{
-    if (evHandlers_.on_subscription_state_change) {
-        evHandlers_.on_subscription_state_change(accountID, buddyUri, state);
-    }
-}
-
-} // namespace ring
+} // namespace DRing

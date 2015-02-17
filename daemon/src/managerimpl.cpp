@@ -6,7 +6,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,16 +71,14 @@
 #include "history/history.h"
 #include "manager.h"
 
-#include "client/configurationmanager.h"
-#include "client/callmanager.h"
-#include "client/presencemanager.h"
-
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
 #endif
 
 #include "conference.h"
 #include "ice_transport.h"
+
+#include "client/signal.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -160,12 +158,7 @@ ManagerImpl::ManagerImpl() :
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
     hasTriedToRegister_(false), audioCodecFactory(*pluginManager_),
-    callManager_(new CallManager), configurationManager_(new ConfigurationManager),
-    presenceManager_(new PresenceManager)
-#ifdef RING_VIDEO
-    , videoManager_(new VideoManager)
-#endif
-    , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
+    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
@@ -181,32 +174,6 @@ ManagerImpl::ManagerImpl() :
 
 ManagerImpl::~ManagerImpl()
 {}
-
-CallManager*
-ManagerImpl::getCallManager()
-{
-    return callManager_.get();
-}
-
-ConfigurationManager*
-ManagerImpl::getConfigurationManager()
-{
-    return configurationManager_.get();
-}
-
-PresenceManager*
-ManagerImpl::getPresenceManager()
-{
-    return presenceManager_.get();
-}
-
-#ifdef RING_VIDEO
-VideoManager*
-ManagerImpl::getVideoManager()
-{
-    return videoManager_.get();
-}
-#endif
 
 bool
 ManagerImpl::parseConfiguration()
@@ -525,7 +492,8 @@ ManagerImpl::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    getCallManager()->callStateChanged(call_id, "CURRENT");
+    //callStateChanged(call_id, "CURRENT");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT");
 
     return result;
 }
@@ -550,7 +518,7 @@ ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     RING_DBG("Send call state change (HUNGUP) for id %s", callId.c_str());
-    getCallManager()->callStateChanged(callId, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP");
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
@@ -641,7 +609,7 @@ ManagerImpl::onHoldCall(const std::string& callId)
     if (current_call_id == callId)
         unsetCurrentCall();
 
-    getCallManager()->callStateChanged(callId, "HOLD");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD");
 
     return result;
 }
@@ -679,7 +647,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         return false;
     }
 
-    getCallManager()->callStateChanged(callId, "UNHOLD");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "UNHOLD");
 
     if (isConferenceParticipant(callId))
         switchCall(getCallFromCallID(call->getConfId()));
@@ -714,13 +682,13 @@ ManagerImpl::transferCall(const std::string& callId, const std::string& to)
 void
 ManagerImpl::transferFailed()
 {
-    getCallManager()->transferFailed();
+    emitSignal<DRing::CallSignal::TransferFailed>();
 }
 
 void
 ManagerImpl::transferSucceeded()
 {
-    getCallManager()->transferSucceeded();
+    transferSucceeded();
 }
 
 bool
@@ -754,7 +722,7 @@ ManagerImpl::refuseCall(const std::string& id)
 
     removeWaitingCall(id);
 
-    getCallManager()->callStateChanged(id, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP");
 
     // Disconnect streams
     removeStream(*call);
@@ -775,7 +743,7 @@ ManagerImpl::createConference(const std::string& id1, const std::string& id2)
     // Add conference to map
     conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
 
-    getCallManager()->conferenceCreated(conf->getConfID());
+    emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
 
     return conf;
 }
@@ -797,7 +765,7 @@ ManagerImpl::removeConference(const std::string& conference_id)
         return;
     }
 
-    getCallManager()->conferenceRemoved(conference_id);
+    emitSignal<DRing::CallSignal::ConferenceRemoved>(conference_id);
 
     // We now need to bind the audio to the remain participant
 
@@ -857,7 +825,7 @@ ManagerImpl::holdConference(const std::string& id)
 
     conf->setState(isRec ? Conference::HOLD_REC : Conference::HOLD);
 
-    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
     return true;
 }
@@ -890,7 +858,7 @@ ManagerImpl::unHoldConference(const std::string& id)
 
     conf->setState(isRec ? Conference::ACTIVE_ATTACHED_REC : Conference::ACTIVE_ATTACHED);
 
-    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
     return true;
 }
@@ -1020,7 +988,7 @@ ManagerImpl::addMainParticipant(const std::string& conference_id)
         else
             RING_WARN("Invalid conference state while adding main participant");
 
-        getCallManager()->conferenceChanged(conference_id, conf->getStateStr());
+        emitSignal<DRing::CallSignal::ConferenceChanged>(conference_id, conf->getStateStr());
     }
 
     switchCall(getCallFromCallID(conference_id));
@@ -1164,7 +1132,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         if (!callSuccess)
             conf->remove(generatedCallID);
         else {
-            getCallManager()->newCallCreated(account, generatedCallID, tostr);
+            emitSignal<DRing::CallSignal::NewCallCreated>(account, generatedCallID, tostr);
             successCounter++;
         }
     }
@@ -1172,7 +1140,7 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
     // Create the conference if and only if at least 2 calls have been successfully created
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
-        getCallManager()->conferenceCreated(conf->getConfID());
+        emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
         conf->setRecordingFormat(ringbufferpool_->getInternalAudioFormat());
     }
 }
@@ -1234,8 +1202,7 @@ ManagerImpl::detachParticipant(const std::string& call_id)
         else
             RING_WARN("Undefined behavior, invalid conference state in detach participant");
 
-        getCallManager()->conferenceChanged(conf->getConfID(),
-                                                  conf->getStateStr());
+        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
         unsetCurrentCall();
     }
@@ -1268,7 +1235,7 @@ ManagerImpl::removeParticipant(const std::string& call_id)
 
     removeStream(*call);
 
-    getCallManager()->conferenceChanged(conf->getConfID(), conf->getStateStr());
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
     processRemainingParticipants(*conf);
 }
@@ -1444,7 +1411,7 @@ ManagerImpl::saveConfig()
         hookPreference.serialize(out);
         audioPreference.serialize(out);
 #ifdef RING_VIDEO
-        getVideoManager()->getVideoDeviceMonitor().serialize(out);
+        ring::getVideoDeviceMonitor().serialize(out);
 #endif
         shortcutPreferences.serialize(out);
 
@@ -1574,7 +1541,7 @@ ManagerImpl::incomingCall(Call &call, const std::string& accountId)
 
     std::string from("<" + number + ">");
 
-    getCallManager()->incomingCall(accountId, callID, call.getDisplayName() + " " + from);
+    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getDisplayName() + " " + from);
 }
 
 //THREAD=VoIP
@@ -1605,10 +1572,10 @@ ManagerImpl::incomingMessage(const std::string& callID,
         }
 
         // in case of a conference we must notify client using conference id
-        getCallManager()->incomingMessage(conf->getConfID(), from, message);
+        incomingMessage(conf->getConfID(), from, message);
 
     } else
-        getCallManager()->incomingMessage(callID, from, message);
+        incomingMessage(callID, from, message);
 }
 
 //THREAD=VoIP
@@ -1697,7 +1664,7 @@ ManagerImpl::peerAnsweredCall(Call& call)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    getCallManager()->callStateChanged(call_id, "CURRENT");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT");
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1710,7 +1677,7 @@ ManagerImpl::peerRingingCall(Call& call)
     if (isCurrentCall(call))
         ringback();
 
-    getCallManager()->callStateChanged(call_id, "RINGING");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "RINGING");
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -1731,7 +1698,7 @@ ManagerImpl::peerHungupCall(Call& call)
     call.peerHungup();
     saveHistory();
 
-    getCallManager()->callStateChanged(call_id, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP");
 
     checkAudio();
     removeWaitingCall(call_id);
@@ -1747,7 +1714,7 @@ ManagerImpl::callBusy(Call& call)
 {
     const auto call_id = call.getCallId();
 
-    getCallManager()->callStateChanged(call_id, "BUSY");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "BUSY");
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
@@ -1764,7 +1731,7 @@ ManagerImpl::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
 
-    getCallManager()->callStateChanged(call_id, "FAILURE");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "FAILURE");
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
@@ -1786,7 +1753,7 @@ void
 ManagerImpl::startVoiceMessageNotification(const std::string& accountId,
                                            int nb_msg)
 {
-    getCallManager()->voiceMailNotify(accountId, nb_msg);
+    emitSignal<DRing::CallSignal::VoiceMailNotify>(accountId, nb_msg);
 }
 
 /**
@@ -1833,7 +1800,7 @@ ManagerImpl::stopTone()
     if (audiofile_) {
         std::string filepath(audiofile_->getFilePath());
 
-        getCallManager()->recordPlaybackStopped(filepath);
+        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(filepath);
         audiofile_.reset();
     }
 }
@@ -1926,7 +1893,7 @@ ManagerImpl::playRingtone(const std::string& accountID)
         std::lock_guard<std::mutex> m(toneMutex_);
 
         if (audiofile_) {
-            getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+            emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audiofile_->getFilePath());
             audiofile_.reset();
         }
 
@@ -2145,8 +2112,8 @@ ManagerImpl::toggleRecordingCall(const std::string& id)
     }
 
     const bool result = rec->toggleRecording();
-    getCallManager()->recordPlaybackFilepath(id, rec->getFilename());
-    getCallManager()->recordingStateChanged(id, result);
+    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getFilename());
+    emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
     return result;
 }
 
@@ -2178,7 +2145,7 @@ ManagerImpl::startRecordedFilePlayback(const std::string& filepath)
         std::lock_guard<std::mutex> m(toneMutex_);
 
         if (audiofile_) {
-            getCallManager()->recordPlaybackStopped(audiofile_->getFilePath());
+            emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audiofile_->getFilePath());
             audiofile_.reset();
         }
 
@@ -2217,7 +2184,7 @@ void ManagerImpl::stopRecordedFilePlayback(const std::string& filepath)
         std::lock_guard<std::mutex> m(toneMutex_);
         audiofile_.reset();
     }
-    getCallManager()->recordPlaybackStopped(filepath);
+    emitSignal<DRing::CallSignal::RecordPlaybackStopped>(filepath);
 }
 
 void ManagerImpl::setHistoryLimit(int days)
@@ -2477,7 +2444,7 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
             account->doUnregister();
 
         // Update account details to the client side
-        getConfigurationManager()->accountsChanged();
+        emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
     });
 }
 
@@ -2522,7 +2489,7 @@ ManagerImpl::addAccount(const std::map<std::string, std::string>& details)
 
     saveConfig();
 
-    getConfigurationManager()->accountsChanged();
+    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 
     return newAccountID;
 }
@@ -2545,7 +2512,7 @@ void ManagerImpl::removeAccount(const std::string& accountID)
 
     saveConfig();
 
-    getConfigurationManager()->accountsChanged();
+    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 }
 
 bool
@@ -2630,8 +2597,7 @@ ManagerImpl::loadAccountMap(const YAML::Node &node)
     int errorCount = 0;
     try {
 #ifdef RING_VIDEO
-        VideoManager *controls(getVideoManager());
-        controls->getVideoDeviceMonitor().unserialize(node);
+        ring::getVideoDeviceMonitor().unserialize(node);
 #endif
     } catch (const YAML::Exception &e) {
         RING_ERR("%s: No video node in config file", e.what());
@@ -2743,7 +2709,7 @@ ManagerImpl::saveHistory()
     if (!history_.save())
         RING_ERR("Could not save history!");
     else
-        getConfigurationManager()->historyChanged();
+        emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 }
 
 void

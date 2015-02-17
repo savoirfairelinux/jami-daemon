@@ -37,13 +37,19 @@
 #include <string>
 
 #include "dring.h"
+#include "callmanager_interface.h"
+#include "configurationmanager_interface.h"
+#include "presencemanager_interface.h"
+#ifdef RING_VIDEO
+#include "videomanager_interface.h"
+#endif
 #include "fileutils.h"
 
 static int sflphFlags = 0;
 
 static void print_title()
 {
-    std::cout << "Ring Daemon " << ring_version() <<
+    std::cout << "Ring Daemon " << DRing::version() <<
         ", by Savoir-Faire Linux 2004-2015" << std::endl <<
         "http://www.sflphone.org/" << std::endl;
 }
@@ -121,56 +127,40 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
         quit = true;
     } else {
         if (consoleFlag) {
-            sflphFlags |= RING_FLAG_CONSOLE_LOG;
+            sflphFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
         }
         if (debugFlag) {
-            sflphFlags |= RING_FLAG_DEBUG;
+            sflphFlags |= DRing::DRING_FLAG_DEBUG;
         }
     }
     return quit;
 }
 
-void myOnIncomingCall(const std::string& acc_id, const std::string& call_id, const std::string& from)
-{
-    std::cout << std::endl << "INCOMING CALL!" << std::endl <<
-        "Account: " << acc_id <<
-        ", Id: " << call_id <<
-        ", From: " << from << std::endl << std::endl;
-
-    ring_call_accept(call_id);
-    ring_call_set_recording(call_id);
-    //ring_call_join_participant(call_id, "patate");
-}
-
 static int osxTests()
 {
-    ring_ev_handlers evHandlers = {
-        .call_ev_handlers = {
-            .on_incoming_call = myOnIncomingCall
-        },
-        .config_ev_handlers = {},
-        .pres_ev_handlers = {}
+    using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
+    const std::map<std::string, SharedCallback> callHandlers;
+    const std::map<std::string, SharedCallback> confHandlers;
+    const std::map<std::string, SharedCallback> presHandlers;
+
+    std::map<DRing::EventHandlerKey, std::map<std::string, SharedCallback>> evHandlers;
+
+    evHandlers.emplace(DRing::EventHandlerKey::CALL, callHandlers);
+    evHandlers.emplace(DRing::EventHandlerKey::CONFIG, confHandlers);
+    evHandlers.emplace(DRing::EventHandlerKey::PRESENCE, presHandlers);
 #ifdef RING_VIDEO
-        ,.video_ev_handlers = {}
+    const std::map<std::string, SharedCallback> videoHandlers;
+    evHandlers.emplace(DRing::EventHandlerKey::VIDEO, videoHandlers);
 #endif
-    };
 
-    ring_init(&evHandlers, static_cast<ring_init_flag>(sflphFlags));
-
-    //ring_call_play_dtmf("0");
-    //sleep(1);
-    //ring_call_play_dtmf("1");
-    //sleep(1);
-
-    //ring_call_place("IP2IP", "patate", "127.0.0.1");
-    //ring_call_set_recording("patate");
+    DRing::init(evHandlers, static_cast<DRing::InitFlag>(sflphFlags));
 
     while (true) {
-        ring_poll_events();
+        DRing::poll_events();
         sleep(1);
     }
 
-    ring_fini();
+    DRing::fini();
 }
 
 static int run()

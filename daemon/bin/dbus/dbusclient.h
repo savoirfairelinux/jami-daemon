@@ -63,17 +63,17 @@ class DBusClient {
         int initLibrary(int sflphFlags);
         void finiLibrary();
 
-        DBusCallManager*          callManager_;
-        DBusConfigurationManager* configurationManager_;
+        std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
+        std::unique_ptr<DBus::DefaultTimeout> timeout_;
 
-        DBusPresenceManager*      presenceManager_;
-        DBusInstance*             instanceManager_;
-        DBus::BusDispatcher*  dispatcher_;
+        std::unique_ptr<DBusCallManager>          callManager_;
+        std::unique_ptr<DBusConfigurationManager> configurationManager_;
+        std::unique_ptr<DBusPresenceManager>      presenceManager_;
+        std::unique_ptr<DBusInstance>             instanceManager_;
 
 #ifdef RING_VIDEO
-        DBusVideoManager *videoManager_;
+        std::unique_ptr<DBusVideoManager>         videoManager_;
 #endif
-        DBus::DefaultTimeout *timeout_;
 };
 
 #endif

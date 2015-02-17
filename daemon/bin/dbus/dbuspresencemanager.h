@@ -60,6 +60,7 @@ class DBusPresenceManager :
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+
     public:
         DBusPresenceManager(DBus::Connection& connection);
 
