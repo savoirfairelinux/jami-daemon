@@ -43,17 +43,12 @@ namespace ring { namespace video {
 
 using std::string;
 
-VideoSender::VideoSender(std::map<string, string> args,
-                         SocketPair& socketPair) :
+VideoSender::VideoSender(std::string dest, const DeviceParams& dev, const MediaDescription& args, SocketPair& socketPair) :
     muxContext_(socketPair.createIOContext()),
     videoEncoder_(new MediaEncoder)
 {
-    const char *enc_name = args["codec"].c_str();
-    const char *dest = args["destination"].c_str();
-
-    /* Encoder setup (may throw VideoEncoderException) */
-    videoEncoder_->setOptions(args);
-    videoEncoder_->openOutput(enc_name, "rtp", dest, NULL, true);
+    videoEncoder_->setDeviceOptions(dev);
+    videoEncoder_->openOutput(dest.c_str(), args);
     videoEncoder_->setIOContext(muxContext_);
     videoEncoder_->startIO();
 
