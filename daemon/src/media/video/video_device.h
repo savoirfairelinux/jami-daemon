@@ -31,6 +31,9 @@
 #ifndef __VIDEO_DEVICE_H__
 #define __VIDEO_DEVICE_H__
 
+#include "media/media_device.h"
+#include "video_base.h"
+
 #include <map>
 #include <memory>
 #include <string>
@@ -39,8 +42,6 @@
 namespace ring { namespace video {
 
 typedef std::map<std::string, std::map<std::string, std::vector<std::string>>> VideoCapabilities;
-typedef std::map<std::string, std::string> VideoSettings;
-// FIXME move VideoSettings in video_base since video_decoder (and encoder?) may use it.
 
 class VideoDeviceImpl;
 
@@ -76,12 +77,7 @@ public:
     VideoCapabilities getCapabilities() const;
 
     /*
-     * Get the string/string map of settings for the device.
-     * The keys are:
-     *   - "channel"
-     *   - "size"
-     *   - "rate"
-     *   - TODO ...
+     * Get the settings for the device.
      */
     VideoSettings getSettings() const;
 
@@ -93,6 +89,11 @@ public:
      * this function with an empty map will reset the device to default.
      */
     void applySettings(VideoSettings settings);
+
+    /**
+     * Returns the parameters needed for actual use of the device
+     */
+    DeviceParams getDeviceParams() const;
 
 private:
 
