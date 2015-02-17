@@ -59,6 +59,7 @@ class DBusVideoManager :
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+
     public:
         DBusVideoManager(DBus::Connection& connection);
 

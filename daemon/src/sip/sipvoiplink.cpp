@@ -4,7 +4,7 @@
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@
 #include "client/videomanager.h"
 #endif
 
-#include "client/callmanager.h"
+#include "client/signal.h"
 #include "client/configurationmanager.h"
 
 #include "pres_sub_server.h"
@@ -818,8 +818,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             const pj_str_t * description = pjsip_get_status_text(statusCode);
             std::string desc(description->ptr, description->slen);
 
-            CallManager *cm = Manager::instance().getCallManager();
-            cm->sipCallStateChanged(call->getCallId(), desc, statusCode);
+            emitSignal<DRing::CallSignal::SipCallStateChanged>(call->getCallId(), desc, statusCode);
         }
     }
 

@@ -1,9 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
- *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Author: Patrick Keroulas <patrick.keroulas@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef CONFIGURATIONMANAGER_H
-#define CONFIGURATIONMANAGER_H
+#ifndef PRESENCEMANAGERI_H
+#define PRESENCEMANAGERI_H
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -41,29 +38,28 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
-#include "configurationmanager_interface.h"
+namespace DRing {
 
-namespace ring {
-
-struct ConfigurationManager {
-  #pragma GCC diagnostic ignored "-Wmissing-field-initializers"
-  ::DRing::config_ev_handlers evHandlers_{};
-  #pragma GCC diagnostic warning "-Wmissing-field-initializers"
+/* presence events */
+struct pres_ev_handlers
+{
+    std::function<void (const std::string& /*remote*/)> on_new_server_subscription_request;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*error*/, const std::string& /*msg*/)> on_server_error;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*status*/, const std::string& /*line_status*/)> on_new_buddy_notification;
+    std::function<void (const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/)> on_subscription_state_change;
 };
 
-extern ConfigurationManager configurationManager;
+void registerEvHandlers(struct pres_ev_handlers* evHandlers);
 
-//Signals
-void volumeChanged(const std::string& device, double value);
-void accountsChanged();
-void historyChanged();
-void stunStatusFailure(const std::string& accoundID);
-void registrationStateChanged(const std::string& accoundID, int state);
-void sipRegistrationStateChanged(const std::string&, const std::string&, int32_t state);
-void volatileAccountDetailsChanged(const std::string& accountID, const std::map<std::string, std::string> &details);
-void errorAlert(int alert);
+/* Presence subscription/Notification. */
+void publish(const std::string& accountID, bool status, const std::string& note);
+void answerServerRequest(const std::string& uri, bool flag);
+void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
+std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
+void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
-} // namespace ring
+} // namespace DRing
 
-#endif //CONFIGURATIONMANAGER_H
+#endif //PRESENCEMANAGERI_H

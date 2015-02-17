@@ -3,8 +3,8 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
- *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -45,7 +45,6 @@
 #include "upnp/upnp_control.h"
 
 #include "audio/audiortp/avformat_rtp_session.h"
-#include "client/callmanager.h"
 
 #if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
@@ -53,20 +52,11 @@
 
 #ifdef RING_VIDEO
 #include "video/video_rtp_session.h"
-#include "client/videomanager.h"
+#include "dring/videomanager_interface.h"
 #include <chrono>
 #endif
 
 namespace ring {
-
-#ifdef RING_VIDEO
-static video::VideoSettings
-getSettings()
-{
-    const auto videoman = Manager::instance().getVideoManager();
-    return videoman->getSettings(videoman->getDefaultDevice());
-}
-#endif
 
 static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
 static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
@@ -123,7 +113,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
     , avformatrtp_(new AVFormatRtpSession(id, *new std::map<std::string, std::string>))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, getSettings())
+    , videortp_(id, ::DRing::getSettings(DRing::getDefaultDevice()))
 #endif
     , sdp_(new Sdp(id))
 {

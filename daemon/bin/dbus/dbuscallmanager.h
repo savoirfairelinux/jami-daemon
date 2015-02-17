@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_CALLMANAGER_H__
-#define __RING_CALLMANAGER_H__
+#ifndef __RING_DBUSCALLMANAGER_H__
+#define __RING_DBUSCALLMANAGER_H__
 
 #include <vector>
 #include <map>
