@@ -47,7 +47,7 @@
 
 #include "array_size.h"
 
-#include "client/configurationmanager.h"
+#include "client/signal.h"
 
 #include "account_schema.h"
 #include "logger.h"

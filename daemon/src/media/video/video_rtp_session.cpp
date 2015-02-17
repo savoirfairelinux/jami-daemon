@@ -189,10 +189,9 @@ void VideoRtpSession::start(int localPort)
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
-        auto videoCtrl = Manager::instance().getVideoManager();
-        videoLocal_ = videoCtrl->getVideoCamera();
+        videoLocal_ = getVideoCamera();
         if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            videoCtrl->switchToCamera();
+            DRing::switchToCamera();
     } else {
         videoLocal_.reset();
     }
@@ -217,10 +216,9 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
-        auto videoCtrl = Manager::instance().getVideoManager();
-        videoLocal_ = videoCtrl->getVideoCamera();
+        videoLocal_ = getVideoCamera();
         if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            videoCtrl->switchToCamera();
+            DRing::switchToCamera();
     } else {
         videoLocal_.reset();
     }

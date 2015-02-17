@@ -31,10 +31,10 @@
 #include "dbusinstance.h"
 
 DBusInstance::DBusInstance(DBus::Connection& connection,
-                           const OnNoMoreClientFunc& onNoMoreClientFunc) :
-    DBus::ObjectAdaptor(connection, "/cx/ring/Ring/Instance"),
-    onNoMoreClientFunc_(onNoMoreClientFunc),
-    count_(0)
+                           const OnNoMoreClientFunc& onNoMoreClientFunc)
+    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/Instance")
+    , onNoMoreClientFunc_(onNoMoreClientFunc)
+    , count_(0)
 {}
 
 void

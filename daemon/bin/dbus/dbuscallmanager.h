@@ -28,8 +28,8 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_CALLMANAGER_H__
-#define __RING_CALLMANAGER_H__
+#ifndef __RING_DBUSCALLMANAGER_H__
+#define __RING_DBUSCALLMANAGER_H__
 
 #include <vector>
 #include <map>
@@ -72,8 +72,8 @@ class DBusCallManager :
         bool unhold(const std::string& callID);
         bool transfer(const std::string& callID, const std::string& to);
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-        std::map< std::string, std::string > getCallDetails(const std::string& callID);
-        std::vector< std::string > getCallList();
+        std::map<std::string, std::string> getCallDetails(const std::string& callID);
+        std::vector<std::string> getCallList();
         void removeConference(const std::string& conference_id);
         bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
         void createConfFromParticipantList(const std::vector< std::string >& participants);

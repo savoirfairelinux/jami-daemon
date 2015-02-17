@@ -53,8 +53,6 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <stdexcept>
-
 class DBusPresenceManager :
     public cx::ring::Ring::PresenceManager_adaptor,
     public DBus::IntrospectableAdaptor,
@@ -67,7 +65,7 @@ class DBusPresenceManager :
         void publish(const std::string& accountID, const bool& status, const std::string& note);
         void answerServerRequest(const std::string& uri, const bool& flag);
         void subscribeBuddy(const std::string& accountID, const std::string& uri, const bool& flag);
-        std::vector<std::map<std::string, std::string> > getSubscriptions(const std::string& accountID);
+        std::vector<std::map<std::string, std::string>> getSubscriptions(const std::string& accountID);
         void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 };
 

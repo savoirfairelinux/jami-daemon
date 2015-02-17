@@ -56,8 +56,6 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <stdexcept>
-
 class DBusConfigurationManager :
     public cx::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
@@ -67,30 +65,30 @@ class DBusConfigurationManager :
         DBusConfigurationManager(DBus::Connection& connection);
 
         // Methods
-        std::map< std::string, std::string > getAccountDetails(const std::string& accountID);
+        std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
         std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
-        void setAccountDetails(const std::string& accountID, const std::map< std::string, std::string >& details);
+        void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
         std::map<std::string, std::string> getAccountTemplate();
-        std::string addAccount(const std::map< std::string, std::string >& details);
+        std::string addAccount(const std::map<std::string, std::string>& details);
         void removeAccount(const std::string& accoundID);
-        std::vector< std::string > getAccountList();
+        std::vector<std::string> getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
-        std::map< std::string, std::string > getTlsSettingsDefault();
-        std::vector< std::string > getSupportedCiphers(const std::string& accountID);
-        std::vector< int32_t > getAudioCodecList();
-        std::vector< std::string > getSupportedTlsMethod();
-        std::vector< std::string > getAudioCodecDetails(const int32_t& payload);
-        std::vector< int32_t > getActiveAudioCodecList(const std::string& accountID);
-        void setActiveAudioCodecList(const std::vector< std::string >& list, const std::string& accountID);
-        std::vector< std::string > getAudioPluginList();
+        std::map<std::string, std::string> getTlsDefaultSettings();
+        std::vector<std::string> getSupportedCiphers(const std::string& accountID);
+        std::vector<int32_t> getAudioCodecList();
+        std::vector<std::string> getSupportedTlsMethod();
+        std::vector<std::string> getAudioCodecDetails(const int32_t& payload);
+        std::vector<int32_t> getActiveAudioCodecList(const std::string& accountID);
+        void setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID);
+        std::vector<std::string> getAudioPluginList();
         void setAudioPlugin(const std::string& audioPlugin);
-        std::vector< std::string > getAudioOutputDeviceList();
+        std::vector<std::string> getAudioOutputDeviceList();
         void setAudioOutputDevice(const int32_t& index);
         void setAudioInputDevice(const int32_t& index);
         void setAudioRingtoneDevice(const int32_t& index);
-        std::vector< std::string > getAudioInputDeviceList();
-        std::vector< std::string > getCurrentAudioDevicesIndex();
+        std::vector<std::string> getAudioInputDeviceList();
+        std::vector<std::string> getCurrentAudioDevicesIndex();
         int32_t getAudioInputDeviceIndex(const std::string& name);
         int32_t getAudioOutputDeviceIndex(const std::string& name);
         std::string getCurrentAudioOutputPlugin();
@@ -104,7 +102,6 @@ class DBusConfigurationManager :
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();
         void mutePlayback(const bool& mute);
-        std::map<std::string, std::string> getRingtoneList();
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
         std::vector<std::string> getSupportedAudioManagers();
@@ -119,12 +116,12 @@ class DBusConfigurationManager :
         void setAccountsOrder(const std::string& order);
         std::map<std::string, std::string> getHookSettings();
         void setHookSettings(const std::map<std::string, std::string>& settings);
-        std::vector<std::map<std::string, std::string> > getHistory();
+        std::vector<std::map<std::string, std::string>> getHistory();
         std::map<std::string, std::string> getTlsSettings();
-        void setTlsSettings(const std::map< std::string, std::string >& details);
-        std::map< std::string, std::string > getIp2IpDetails();
-        std::vector< std::map< std::string, std::string > > getCredentials(const std::string& accountID);
-        void setCredentials(const std::string& accountID, const std::vector< std::map< std::string, std::string > >& details);
+        void setTlsSettings(const std::map<std::string, std::string>& details);
+        std::map<std::string, std::string> getIp2IpDetails();
+        std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);
+        void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
         std::string getAddrFromInterfaceName(const std::string& interface);
         std::vector<std::string> getAllIpInterface();
         std::vector<std::string> getAllIpInterfaceByName();
@@ -132,8 +129,7 @@ class DBusConfigurationManager :
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
-        std::map<std::string, std::string> validateCertificate(const std::string& accountId,
-            const std::string& certificate, const std::string& privateKey);
+        std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
 
 };

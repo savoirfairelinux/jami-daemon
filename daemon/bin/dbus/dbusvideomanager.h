@@ -52,26 +52,25 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-#include <stdexcept>
-
 class DBusVideoManager :
     public cx::ring::Ring::VideoManager_adaptor,
     public DBus::IntrospectableAdaptor,
     public DBus::ObjectAdaptor
 {
+
     public:
         DBusVideoManager(DBus::Connection& connection);
 
         // Methods
         std::vector<std::map<std::string, std::string>> getCodecs(const std::string& accountID);
-        void setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details);
+        void setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
         std::vector<std::string> getDeviceList();
         std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& name);
         std::map<std::string, std::string> getSettings(const std::string& name);
         void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
-        void setDefaultDevice(const std::string &dev);
+        void setDefaultDevice(const std::string& dev);
         std::string getDefaultDevice();
-        std::string getCurrentCodecName(const std::string &callID);
+        std::string getCurrentCodecName(const std::string& callID);
         void startCamera();
         void stopCamera();
         bool switchInput(const std::string& resource);

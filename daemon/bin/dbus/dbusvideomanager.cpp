@@ -27,76 +27,90 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include "dring.h"
 
 #include "dbusvideomanager.h"
+#include "managerimpl.h"
+#include "manager.h"
+#include "client/videomanager.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/VideoManager")
+{}
+
+auto
+DBusVideoManager::getCodecs(const std::string& accountID) -> decltype(DRing::getCodecs(accountID))
 {
+    return DRing::getCodecs(accountID);
 }
 
-std::vector<std::map<std::string, std::string>> DBusVideoManager::getCodecs(const std::string& accountID)
+void
+DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
 {
-    return ring_video_get_codecs(accountID);
+    DRing::setCodecs(accountID, details);
 }
 
-void DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string> > &details)
+auto
+DBusVideoManager::getDeviceList() -> decltype(DRing::getDeviceList())
 {
-    ring_video_set_codecs(accountID, details);
+    return DRing::getDeviceList();
 }
 
-std::vector<std::string> DBusVideoManager::getDeviceList()
+auto
+DBusVideoManager::getCapabilities(const std::string& name) -> decltype(DRing::getCapabilities(name))
 {
-    return ring_video_get_device_list();
+    return DRing::getCapabilities(name);
 }
 
-std::map<std::string, std::map<std::string, std::vector<std::string>>> DBusVideoManager::getCapabilities(const std::string& name)
+auto
+DBusVideoManager::getSettings(const std::string& name) -> decltype(DRing::getSettings(name))
 {
-    return ring_video_get_capabilities(name);
+    return DRing::getSettings(name);
 }
 
-std::map<std::string, std::string> DBusVideoManager::getSettings(const std::string& name)
+void
+DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
 {
-    return ring_video_get_settings(name);
+    DRing::applySettings(name, settings);
 }
 
-void DBusVideoManager::applySettings(const std::string& name, const std::map<std::string, std::string>& settings)
+void
+DBusVideoManager::setDefaultDevice(const std::string& dev)
 {
-    ring_video_apply_settings(name, settings);
+    DRing::setDefaultDevice(dev);
 }
 
-void DBusVideoManager::setDefaultDevice(const std::string &dev)
+auto
+DBusVideoManager::getDefaultDevice() -> decltype(DRing::getDefaultDevice())
 {
-    ring_video_set_default_device(dev);
+    return DRing::getDefaultDevice();
 }
 
-std::string DBusVideoManager::getDefaultDevice()
+auto
+DBusVideoManager::getCurrentCodecName(const std::string& callID) -> decltype(DRing::getCurrentCodecName(callID))
 {
-    return ring_video_get_default_device();
+    return DRing::getCurrentCodecName(callID);
 }
 
-std::string DBusVideoManager::getCurrentCodecName(const std::string &callID)
+void
+DBusVideoManager::startCamera()
 {
-    return ring_video_get_current_codec_name(callID);
+    DRing::startCamera();
 }
 
-void DBusVideoManager::startCamera()
+void
+DBusVideoManager::stopCamera()
 {
-    ring_video_start_camera();
+    DRing::stopCamera();
 }
 
-void DBusVideoManager::stopCamera()
+auto
+DBusVideoManager::switchInput(const std::string& resource) -> decltype(DRing::switchInput(resource))
 {
-    ring_video_stop_camera();
+    return DRing::switchInput(resource);
 }
 
-bool DBusVideoManager::switchInput(const std::string& resource)
+auto
+DBusVideoManager::hasCameraStarted() -> decltype(DRing::hasCameraStarted())
 {
-    return ring_video_switch_input(resource);
-}
-
-bool DBusVideoManager::hasCameraStarted()
-{
-    return ring_video_is_camera_started();
+    return DRing::hasCameraStarted();
 }
