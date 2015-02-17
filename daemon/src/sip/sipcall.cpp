@@ -66,26 +66,7 @@ static DeviceParams
 getVideoSettings()
 {
     const auto videoman = Manager::instance().getVideoManager();
-    const auto& settings_map = videoman->getSettings(videoman->getDefaultDevice());
-    DeviceParams params;
-
-    const auto& input = settings_map.find("input");
-    if (input != settings_map.cend())
-        params.input = input->second;
-
-    const auto& width = settings_map.find("width");
-    if (width != settings_map.cend())
-        params.width = std::stoi(width->second);
-
-    const auto& height = settings_map.find("height");
-    if (height != settings_map.cend())
-        params.height = std::stoi(height->second);
-
-    const auto& framerate = settings_map.find("framerate");
-    if (framerate != settings_map.cend())
-        params.framerate = std::stoi(framerate->second);
-
-    return params;
+    return videoman->getDeviceParams(videoman->getDefaultDevice());
 }
 #endif
 

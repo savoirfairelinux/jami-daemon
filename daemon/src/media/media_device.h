@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,7 +14,8 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
+ *  MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -28,21 +29,23 @@
  *  as that of the covered work.
  */
 
-#include "video_rtp_session.h"
-#include "video_device_monitor.h"
+#ifndef __MEDIA_DEVICE_H__
+#define __MEDIA_DEVICE_H__
 
-#include <iostream>
-#include <map>
 #include <string>
-#include <unistd.h> // for sleep
 
-int main ()
-{
-    ring::video::VideoDeviceMonitor monitor;
-    ring::video::VideoRtpSession session("test", monitor.getDeviceParams(monitor.getDefaultDevice()));
-    session.start(12345);
-    sleep(5);
-    session.stop();
+namespace ring {
 
-    return 0;
+struct DeviceParams {
+    std::string input {}; // Device path (e.g. /dev/video0)
+    std::string format {};
+    unsigned width {}, height {};
+    unsigned framerate {};
+    unsigned channel {}; // Channel number
+    std::string loop {};
+    std::string sdp_flags {};
+};
+
 }
+
+#endif // __MEDIA_DEVICE_H__

@@ -180,16 +180,5 @@ struct MediaDescription {
     CryptoAttribute crypto {};
 };
 
-struct DeviceParams {
-    std::string input {};
-    std::string format {};
-    unsigned width {}, height {};
-    unsigned framerate {};
-    std::string video_size {};
-    std::string channel {};
-    std::string loop {};
-    std::string sdp_flags {};
-};
-
 }//namespace ring
 #endif // __MEDIA_CODEC_H__
