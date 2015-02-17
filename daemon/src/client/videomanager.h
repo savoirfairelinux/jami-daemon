@@ -98,6 +98,8 @@ class VideoManager
         std::string
         getCurrentCodecName(const std::string &callID);
 
+        DeviceParams getDeviceParams(const std::string& name) const;
+
         std::atomic_bool started_ = {false};
         void startCamera();
         void stopCamera();

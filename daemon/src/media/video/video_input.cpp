@@ -187,20 +187,7 @@ VideoInput::deleteDecoder()
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    auto map = Manager::instance().getVideoManager()->getSettings(device);
-    if (map.empty())
-        return false;
-
-    clearOptions();
-
-    //decOpts_ = Manager::instance().getVideoManager()->getSettings(device);
-    decOpts_.input = map["input"];
-    decOpts_.format = "video4linux2";
-
-    decOpts_.channel = map["channel_num"];
-    decOpts_.framerate = std::stoi(map["framerate"]);
-    decOpts_.video_size = map["video_size"];
-
+    decOpts_ = Manager::instance().getVideoManager()->getDeviceParams(device);
     return true;
 }
 
@@ -214,11 +201,14 @@ VideoInput::initX11(std::string display)
     decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
-        decOpts_.video_size = display.substr(space + 1);
         decOpts_.input = display.erase(space);
+        RING_ERR("Ignoring video_size : ", display.substr(space + 1).c_str());
+        //decOpts_.video_size = display.substr(space + 1);
     } else {
         decOpts_.input = display;
-        decOpts_.video_size = "vga";
+        //decOpts_.video_size = "vga";
+        decOpts_.width = 640;
+        decOpts_.height = 480;
     }
 
     return true;

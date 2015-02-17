@@ -105,9 +105,17 @@ void
 VideoDeviceMonitor::setDefaultDevice(const string& name)
 {
     const auto it = findDeviceByName(name);
-
     if (it != devices_.end())
         defaultDevice_ = it->name;
+}
+
+DeviceParams
+VideoDeviceMonitor::getDeviceParams(const std::string& name) const
+{
+    const auto itd = findDeviceByName(name);
+    if (itd == devices_.cend())
+        return DeviceParams();
+    return itd->getDeviceParams();
 }
 
 static int
@@ -253,22 +261,17 @@ VideoDeviceMonitor::findDeviceByNode(const string& node) const
 vector<VideoSettings>::iterator
 VideoDeviceMonitor::findPreferencesByName(const string& name)
 {
-    vector<VideoSettings>::iterator it;
-
-    for (it = preferences_.begin(); it != preferences_.end(); ++it)
-        if ((*it)["name"] == name)
-            break;
-
-    return it;
+    for (auto it = preferences_.begin(); it != preferences_.end(); ++it)
+        if (it->name == name) return it;
+    return preferences_.end();
 }
 
 void
 VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 {
-    auto it = findPreferencesByName(settings["name"]);
+    auto it = findPreferencesByName(settings.name);
     if (it != preferences_.end())
         preferences_.erase(it);
-
     preferences_.push_back(settings);
 }
 
@@ -286,21 +289,19 @@ VideoDeviceMonitor::unserialize(const YAML::Node &in)
     const auto &node = in[CONFIG_LABEL];
 
     /* load the device list from the "video" YAML section */
-    auto tmp = preferences_;
-    yaml_utils::parseValue(node, "devices", tmp);
-
-    for (const auto &iter : tmp) {
-        VideoSettings pref = iter;
+    const auto& devices = node["devices"];
+    for (const auto& dev : devices) {
+        VideoSettings pref = dev.as<VideoSettings>();
+        if (pref.name.empty())
+            continue; // discard malformed section
         overwritePreferences(pref);
-
-        // Restore the device preferences if present
-        auto itd = findDeviceByName(pref["name"]);
+        auto itd = findDeviceByName(pref.name);
         if (itd != devices_.end())
             itd->applySettings(pref);
     }
 
     // Restore the default device if present, or select the first one
-    const string pref = preferences_.empty() ? "" : preferences_[0]["name"];
+    const string pref = preferences_.empty() ? "" : preferences_[0].name;
     const string first = devices_.empty() ? "" : devices_[0].name;
     if (findDeviceByName(pref) != devices_.end())
         defaultDevice_ = pref;
