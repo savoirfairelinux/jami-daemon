@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,52 +28,47 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSCLIENT_H__
-#define __DBUSCLIENT_H__
+#pragma once
 
-#include "dring.h"
-#include "noncopyable.h"
-
-class DBusConfigurationManager;
-class DBusCallManager;
-class DBusNetworkManager;
-class DBusInstance;
-class DBusPresenceManager;
+#include "dring/callmanager_interface.h"
+#include "dring/configurationmanager_interface.h"
+#include "dring/presencemanager_interface.h"
 
 #ifdef RING_VIDEO
-class DBusVideoManager;
-#endif
+#include "dring/videomanager_interface.h"
+#endif // RING_VIDEO
 
-namespace DBus {
-    class BusDispatcher;
-    class DefaultTimeout;
+#include "logger.h"
+
+#include <exception>
+#include <memory>
+
+namespace ring {
+
+using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;
+extern SignalHandlerMap& getSignalHandlers();
+
+/*
+ * Find related user given callback and call it with given
+ * arguments.
+ */
+template <typename Ts, typename ...Args>
+static void emitSignal(Args...args) {
+    const auto& handlers = getSignalHandlers();
+    if (const auto& gen_wrapper = handlers.at(Ts::name)) {
+        try {
+            DRing::CallbackWrapper<typename Ts::cb_type> w = gen_wrapper;
+            (*w)(args...);
+        } catch (std::exception& e) {
+            RING_ERR("Exception during emit signal %d:\n%s", Ts::name, e.what());
+        }
+    }
 }
 
-class DBusClient {
-    public:
-        DBusClient(int sflphFlags, bool persistent);
-        ~DBusClient();
+template <typename Ts>
+std::pair<std::string, std::shared_ptr<DRing::CallbackWrapper<typename Ts::cb_type>>>
+exported_callback() {
+    return std::make_pair((const std::string&)Ts::name, std::make_shared<DRing::CallbackWrapper<typename Ts::cb_type>>());
+}
 
-        int event_loop();
-        int exit();
-
-    private:
-        NON_COPYABLE(DBusClient);
-
-        int initLibrary(int sflphFlags);
-        void finiLibrary();
-
-        std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
-        std::unique_ptr<DBus::DefaultTimeout> timeout_;
-
-        std::unique_ptr<DBusCallManager>          callManager_;
-        std::unique_ptr<DBusConfigurationManager> configurationManager_;
-        std::unique_ptr<DBusPresenceManager>      presenceManager_;
-        std::unique_ptr<DBusInstance>             instanceManager_;
-
-#ifdef RING_VIDEO
-        std::unique_ptr<DBusVideoManager>         videoManager_;
-#endif
-};
-
-#endif
+} // namespace ring

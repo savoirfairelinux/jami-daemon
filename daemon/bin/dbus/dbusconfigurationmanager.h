@@ -76,7 +76,7 @@ class DBusConfigurationManager :
         std::vector< std::string > getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
-        std::map< std::string, std::string > getTlsSettingsDefault();
+        std::map< std::string, std::string > getTlsDefaultSettings();
         std::vector< std::string > getSupportedCiphers(const std::string& accountID);
         std::vector< int32_t > getAudioCodecList();
         std::vector< std::string > getSupportedTlsMethod();
@@ -104,7 +104,6 @@ class DBusConfigurationManager :
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();
         void mutePlayback(const bool& mute);
-        std::map<std::string, std::string> getRingtoneList();
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
         std::vector<std::string> getSupportedAudioManagers();

@@ -48,7 +48,6 @@
 #include "call_factory.h"
 
 #include "sippresence.h"
-#include "client/configurationmanager.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -56,6 +55,7 @@
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
+#include "client/signal.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -1132,8 +1132,8 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
     if (param->code && description) {
         std::string state(description->ptr, description->slen);
 
-        Manager::instance().getConfigurationManager()->sipRegistrationStateChanged(getAccountID(), state, param->code);
-        Manager::instance().getConfigurationManager()->volatileAccountDetailsChanged(accountID_, getVolatileAccountDetails());
+        emitSignal<DRing::ConfigurationSignal::SipRegistrationStateChanged>(getAccountID(), state, param->code);
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
         std::pair<int, std::string> details(param->code, state);
         // TODO: there id a race condition for this ressource when closing the application
         setRegistrationStateDetailed(details);
@@ -1841,7 +1841,7 @@ SIPAccount::supportPresence(int function, bool enabled)
         enablePresence(false);
 
     Manager::instance().saveConfig();
-    Manager::instance().getConfigurationManager()->accountsChanged();
+    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 }
 
 MatchRank

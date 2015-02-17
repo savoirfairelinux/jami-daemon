@@ -43,7 +43,7 @@ static std::unique_ptr<DBusClient> dbusClient;
 
 static void print_title()
 {
-    std::cout << "Ring Daemon " << ring_version() <<
+    std::cout << "Ring Daemon " << DRing::version() <<
         ", by Savoir-Faire Linux 2004-2015" << std::endl <<
         "http://www.sflphone.org/" << std::endl;
 }
@@ -121,10 +121,10 @@ static bool parse_args(int argc, char *argv[], bool &persistent)
         quit = true;
     } else {
         if (consoleFlag) {
-            ringFlags |= RING_FLAG_CONSOLE_LOG;
+            ringFlags |= DRing::DRING_FLAG_CONSOLE_LOG;
         }
         if (debugFlag) {
-            ringFlags |= RING_FLAG_DEBUG;
+            ringFlags |= DRing::DRING_FLAG_DEBUG;
         }
     }
     return quit;
