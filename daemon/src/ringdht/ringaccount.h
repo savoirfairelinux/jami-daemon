@@ -235,11 +235,11 @@ class RingAccount : public SIPAccountBase {
         newIncomingCall(const std::string& from = {});
 
         virtual bool isTlsEnabled() const {
-            return false;
+            return true;
         }
 
         virtual bool getSrtpEnabled() const {
-            return false;
+            return true;
         }
 
         virtual std::string getSrtpKeyExchange() const {
