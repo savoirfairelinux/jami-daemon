@@ -102,8 +102,19 @@ VideoDeviceMonitor::getDefaultDevice() const
     return defaultDevice_;
 }
 
+std::string
+VideoDeviceMonitor::getMRLForDefaultDevice() const
+{
+    vector<VideoDevice>::const_iterator it = findDeviceByName(defaultDevice_);
+    if(it == devices_.end())
+        return("");
+
+    std::string prefix = it->getDeviceParams().format;
+    return prefix + "://" + it->getSettings().name;
+}
+
 void
-VideoDeviceMonitor::setDefaultDevice(const string& name)
+VideoDeviceMonitor::setDefaultDevice(const std::string& name)
 {
     const auto it = findDeviceByName(name);
     if (it != devices_.end())
