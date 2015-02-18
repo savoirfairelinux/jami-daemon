@@ -109,14 +109,14 @@ getDefaultDevice()
 void
 setDefaultDevice(const std::string& name)
 {
-    RING_DBG("Setting device to %s", name.c_str());
+    RING_DBG("Setting default device to %s", name.c_str());
     videoManager.videoDeviceMonitor.setDefaultDevice(name);
 }
 
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
-    return videoManager.videoDeviceMonitor.getSettings(name);
+    return videoManager.videoDeviceMonitor.getSettings(name).to_map();
 }
 
 void
