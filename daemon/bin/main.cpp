@@ -85,7 +85,13 @@ parse_args(int argc, char *argv[], bool& persistent)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        switch (getopt_long(argc, argv, "dcphv", long_options, &option_index)) {
+        auto c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
+
+        // end of the options
+        if (c == -1)
+            break;
+
+        switch (c) {
             case 'd':
                 debugFlag = true;
                 break;
@@ -107,7 +113,6 @@ parse_args(int argc, char *argv[], bool& persistent)
                 versionFlag = true;
                 break;
 
-            case -1: // end of the options
             default:
                 break;
         }
