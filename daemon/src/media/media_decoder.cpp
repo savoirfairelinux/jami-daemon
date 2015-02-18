@@ -72,6 +72,7 @@ MediaDecoder::~MediaDecoder()
 int MediaDecoder::openInput(const DeviceParams& params)
 {
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
+    avdevice_register_all();
 
     if (!iformat)
         RING_WARN("Cannot find format \"%s\"", params.format.c_str());
@@ -93,6 +94,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
         params.input.c_str(),
         iformat,
         options_ ? &options_ : NULL);
+
+//    int ret = avformat_open_input(&inputCtx_, "video=Integrated", iformat,
+//                                  options_ ? &options_ : NULL);
 
     if (ret) {
         char errbuf[64];

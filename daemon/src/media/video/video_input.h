@@ -35,9 +35,12 @@
 #define __VIDEO_INPUT_H__
 
 #include "noncopyable.h"
-#include "shm_sink.h"
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
+
+#if TEMPORARY_SHM
+#include "shm_sink.h"
+#endif
 
 #include <map>
 #include <atomic>
@@ -68,7 +71,9 @@ private:
     std::string sinkID_     = "local";
 
     MediaDecoder *decoder_  = nullptr;
+#if TEMPORARY_SHM
     SHMSink sink_;
+#endif
     std::atomic<bool> switchPending_ = {false};
 
     DeviceParams decOpts_;
