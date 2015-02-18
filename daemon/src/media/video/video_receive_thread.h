@@ -33,6 +33,7 @@
 
 #include "media_decoder.h"
 #include "media_io_handle.h"
+#include "media_device.h"
 #include "shm_sink.h"
 #include "threadloop.h"
 #include "noncopyable.h"

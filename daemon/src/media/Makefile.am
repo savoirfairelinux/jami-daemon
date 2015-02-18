@@ -25,6 +25,7 @@ noinst_HEADERS = \
 	media_decoder.h \
 	media_encoder.h \
 	media_io_handle.h \
+	media_device.h \
 	media_codec.h \
 	system_codec_container.h
 
