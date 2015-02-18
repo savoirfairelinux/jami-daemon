@@ -370,12 +370,12 @@
 
        <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
-           <arg type="ai" name="list" direction="out">
+           <arg type="au" name="list" direction="out">
            </arg>
        </method>
 
        <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
-           <arg type="i" name="payload" direction="in">
+           <arg type="u" name="codecId" direction="in">
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="details" direction="out">
@@ -386,7 +386,7 @@
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
-           <arg type="ai" name="list" direction="out">
+           <arg type="au" name="list" direction="out">
            </arg>
        </method>
 

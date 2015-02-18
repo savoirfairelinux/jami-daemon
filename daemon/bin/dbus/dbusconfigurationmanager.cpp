@@ -116,9 +116,9 @@ DBusConfigurationManager::getSupportedCiphers(const std::string& accountID) -> d
 }
 
 auto
-DBusConfigurationManager::getAudioCodecDetails(const int32_t& payload) -> decltype(DRing::getAudioCodecDetails(payload))
+DBusConfigurationManager::getAudioCodecDetails(const unsigned& codecId) -> decltype(DRing::getAudioCodecDetails(codecId))
 {
-    return DRing::getAudioCodecDetails(payload);
+    return DRing::getAudioCodecDetails(codecId);
 }
 
 auto
