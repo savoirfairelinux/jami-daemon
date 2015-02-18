@@ -64,8 +64,9 @@ struct VideoSignal {
 
 void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
-std::vector<std::map<std::string, std::string>> getCodecs(const std::string& accountID);
-void setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
+std::vector<unsigned> getVideoCodecList(const std::string& accountID);
+std::vector<std::string> getVideoCodecDetails(unsigned codecId);
+void setVideoCodecList(const std::string& accountID, const std::vector<unsigned>& list);
 std::vector<std::string> getDeviceList();
 VideoCapabilities getCapabilities(const std::string& name);
 std::map<std::string, std::string> getSettings(const std::string& name);
