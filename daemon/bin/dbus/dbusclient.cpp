@@ -109,7 +109,17 @@ DBusClient::DBusClient(int sflphFlags, bool persistent)
 
 DBusClient::~DBusClient()
 {
-    dispatcher_.reset(); // force dispatcher reset first
+    // instances destruction order is important
+    // so we enforce it here
+
+#ifdef RING_VIDEO
+    videoManager_.reset();
+#endif
+    instanceManager_.reset();
+    presenceManager_.reset();
+    configurationManager_.reset();
+    callManager_.reset();
+    timeout_.reset();
 }
 
 int DBusClient::initLibrary(int sflphFlags)
