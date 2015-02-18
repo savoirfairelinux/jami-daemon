@@ -88,6 +88,8 @@ int MediaDecoder::openInput(const DeviceParams& params)
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
+    RING_DBG("Trying to open device %s with format %s", params.input.c_str(),
+                                                        params.format.c_str());
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
