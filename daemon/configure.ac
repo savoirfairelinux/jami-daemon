@@ -24,6 +24,7 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_OBJCXX
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -92,6 +93,11 @@ AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+
+AM_CONDITIONAL(TEMPORARY_SHM,   test "${SYS}" = "linux")
+AC_DEFINE_UNQUOTED([TEMPORARY_SHM],
+                    `if test "${SYS}" = "linux"; then echo 1; else echo 0; fi`,
+                    [Define if you use shm])
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
@@ -593,6 +599,7 @@ AC_CONFIG_FILES([Makefile \
                  src/hooks/Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
+                 src/media/video/osxvideo/Makefile \
                  src/media/video/test/Makefile \
                  src/upnp/Makefile \
                  test/Makefile \
