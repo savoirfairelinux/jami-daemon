@@ -102,7 +102,7 @@ endif
 
 # Darwin
 ifdef HAVE_DARWIN_OS
-LIBAVCONF += --arch=$(ARCH) --target-os=darwin
+LIBAVCONF += --arch=$(ARCH) --target-os=darwin --enable-indev=avfoundation
 ifeq ($(ARCH),x86_64)
 LIBAVCONF += --cpu=core2
 endif
@@ -161,6 +161,7 @@ libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 	mkdir -p $@-$(LIBAV_HASH)
 	(cd $@-$(LIBAV_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+	$(APPLY) $(SRC)/libav/osx.patch
 	$(MOVE)
 
 .libav: libav
