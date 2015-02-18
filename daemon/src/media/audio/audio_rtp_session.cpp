@@ -191,7 +191,7 @@ AudioSender::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
 class AudioReceiveThread
 {
     public:
-        AudioReceiveThread(const std::string &id, const std::string &sdp);
+        AudioReceiveThread(const std::string &id, unsigned channels, const std::string& sdp);
         ~AudioReceiveThread();
         void addIOContext(SocketPair &socketPair);
         void startLoop();
@@ -201,7 +201,8 @@ class AudioReceiveThread
 
         static constexpr auto SDP_FILENAME = "dummyFilename";
 
-        struct DeviceParams args_;
+        DeviceParams args_;
+        unsigned channels_;
 
         static int interruptCb(void *ctx);
         static int readFunction(void *opaque, uint8_t *buf, int buf_size);
@@ -226,8 +227,9 @@ class AudioReceiveThread
         void cleanup();
 };
 
-AudioReceiveThread::AudioReceiveThread(const std::string& id, const std::string& sdp)
+AudioReceiveThread::AudioReceiveThread(const std::string& id, unsigned channels, const std::string& sdp)
     : id_(id)
+    , channels_(channels)
     , stream_(sdp)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction, 0, 0, this))
     , loop_(std::bind(&AudioReceiveThread::setup, this),
@@ -256,7 +258,7 @@ AudioReceiveThread::setup()
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
 
-    EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(),
+    EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(channels_),
                  "decoder IO startup failed");
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
@@ -283,7 +285,7 @@ AudioReceiveThread::process()
                 loop_.stop();
                 break;
             }
-            if (not audioDecoder_->setupFromAudioData()) {
+            if (not audioDecoder_->setupFromAudioData(channels_)) {
                 RING_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
                 break;
@@ -384,7 +386,7 @@ AudioRtpSession::startReceiver()
     if (receiveThread_)
         RING_WARN("Restarting audio receiver");
 
-    receiveThread_.reset(new AudioReceiveThread(callID_, remote_.receiving_sdp));
+    receiveThread_.reset(new AudioReceiveThread(callID_, remote_.audioformat.nb_channels, remote_.receiving_sdp));
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->startLoop();
 }
