@@ -2,7 +2,7 @@ include $(top_srcdir)/globals.mak
 
 noinst_LTLIBRARIES = libaudio.la
 
-SUBDIRS = codecs audiortp sound
+SUBDIRS = sound
 
 if BUILD_OPENSL
 SUBDIRS += opensl
@@ -40,7 +40,8 @@ libaudio_la_SOURCES = \
 		audiolayer.cpp \
 		resampler.cpp \
 		$(RING_SPEEXDSP_SRC) \
-		dcblocker.cpp
+		dcblocker.cpp \
+		audio_rtp_session.cpp
 
 libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
 libaudio_la_LDFLAGS =
@@ -61,10 +62,10 @@ noinst_HEADERS = \
 		recordable.h \
 		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
-		resampler.h
+		resampler.h \
+		audio_rtp_session.h
 
 libaudio_la_LIBADD = \
-	./audiortp/libaudiortp.la \
 	./codecs/libcodecdescriptor.la \
 	./sound/libsound.la
 
