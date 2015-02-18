@@ -45,15 +45,14 @@ namespace ring { namespace video {
 
 using std::string;
 
-VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       const std::map<string, string>& args) :
+VideoReceiveThread::VideoReceiveThread(const std::string& id, const std::string &sdp) :
     VideoGenerator::VideoGenerator()
-    , args_(args)
+    , args_()
     , videoDecoder_()
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
-    , stream_(args_["receiving_sdp"])
+    , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , demuxContext_()
     , sink_(id)
@@ -80,41 +79,37 @@ bool VideoReceiveThread::setup()
 {
     videoDecoder_ = new MediaDecoder();
 
-    dstWidth_ = atoi(args_["width"].c_str());
-    dstHeight_ = atoi(args_["height"].c_str());
+    dstWidth_ = args_.width;
+    dstHeight_ = args_.height;
 
     const std::string SDP_FILENAME = "dummyFilename";
-    std::string format_str;
-    std::string input;
-
-    if (args_["input"].empty()) {
-        format_str = "sdp";
-        input = SDP_FILENAME;
-    } else if (args_["input"].substr(0, strlen("/dev/video")) == "/dev/video") {
+    if (args_.input.empty()) {
+        args_.format = "sdp";
+        args_.input = SDP_FILENAME;
+    } else if (args_.input.substr(0, strlen("/dev/video")) == "/dev/video") {
         // it's a v4l device if starting with /dev/video
         // FIXME: This is not a robust way of checking if we mean to use a
         // v4l2 device
-        format_str = "video4linux2";
-        input = args_["input"];
+        args_.format = "video4linux2";
     }
 
     videoDecoder_->setInterruptCallback(interruptCb, this);
 
-    if (input == SDP_FILENAME) {
+    if (args_.input == SDP_FILENAME) {
         // Force custom_io so the SDP demuxer will not open any UDP connections
         // We need it to use ICE transport.
-        args_["sdp_flags"] = "custom_io";
+        args_.sdp_flags = "custom_io";
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    videoDecoder_->setOptions(args_);
+    //videoDecoder_->setOptions(args_);
 
-    EXIT_IF_FAIL(!videoDecoder_->openInput(input, format_str),
-                 "Could not open input \"%s\"", input.c_str());
+    EXIT_IF_FAIL(!videoDecoder_->openInput(args_),
+                 "Could not open input \"%s\"", args_.input.c_str());
 
-    if (input == SDP_FILENAME) {
+    if (args_.input == SDP_FILENAME) {
         // Now replace our custom AVIOContext with one that will read packets
         videoDecoder_->setIOContext(demuxContext_);
     }
