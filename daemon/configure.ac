@@ -24,6 +24,7 @@ m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
+AC_PROG_OBJCXX
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
@@ -596,6 +597,7 @@ AC_CONFIG_FILES([Makefile \
                  src/hooks/Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
+                 src/media/video/osxvideo/Makefile \
                  src/media/video/test/Makefile \
                  src/upnp/Makefile \
                  test/Makefile \
