@@ -1,0 +1,8 @@
+Code-Review+1: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Code-Review+2: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
+Verified+1: Jenkins CI
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Wed, 18 Feb 2015 15:09:29 -0500
+Reviewed-on: https://gerrit-sflphone.savoirfairelinux.com/1228
+Project: ring
+Branch: refs/heads/master
