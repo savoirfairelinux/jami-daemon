@@ -214,14 +214,14 @@ GArray *dbus_audio_codec_list();
  * @param payload The payload of the audio codec
  * @return gchar** The audio codec details
  */
-gchar **dbus_audio_codec_details(int payload);
+gchar **dbus_audio_codec_details(int codecId);
 
 /**
  * ConfigurationManager - Get the video codec details
  * @param codec The name of the video codec
  * @return gchar** The video codec details
  */
-GHashTable *dbus_video_codec_details(const gchar *codec);
+gchar **dbus_video_codec_details(int codecId);
 
 /**
  * ConfigurationManager - Get the default audio codec list
@@ -255,7 +255,7 @@ dbus_get_video_codecs(const gchar *accountID);
  * @param list The list of codecs
  */
 void
-dbus_set_video_codecs(const gchar *id, const GPtrArray *list);
+dbus_set_video_codec_list(const gchar *id, const GArray *list);
 
 /**
  * ConfigurationManager - Switch the video input
