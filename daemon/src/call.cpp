@@ -326,13 +326,13 @@ Call::waitForIceNegotiation(unsigned timeout)
 bool
 Call::isIceUsed() const
 {
-    return iceTransport_->isInitialized();
+    return iceTransport_ and iceTransport_->isInitialized();
 }
 
 bool
 Call::isIceRunning() const
 {
-    return iceTransport_->isRunning();
+    return iceTransport_ and iceTransport_->isRunning();
 }
 
 IceSocket*
