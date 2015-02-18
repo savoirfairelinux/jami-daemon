@@ -34,10 +34,14 @@
 
 #include "media_codec.h"
 #include "media_io_handle.h"
-#include "media_device.h"
-#include "shm_sink.h"
 #include "threadloop.h"
 #include "noncopyable.h"
+#include "video_base.h"
+#include "media_device.h"
+
+#if TEMPORARY_SHM
+#include "shm_sink.h"
+#endif
 
 #include <map>
 #include <string>
@@ -83,8 +87,9 @@ private:
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
+#if TEMPORARY_SHM
     SHMSink sink_;
-
+#endif
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();

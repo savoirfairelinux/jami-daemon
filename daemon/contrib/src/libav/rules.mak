@@ -22,13 +22,13 @@ LIBAVCONF += \
         --enable-encoder=libx264     \
         --enable-encoder=pcm_alaw    \
         --enable-encoder=pcm_mulaw   \
-        --enable-encoder=libopus     \
-        --enable-encoder=libspeex    \
+        --enable-libopus             \
         --enable-encoder=libvpx      \
         --disable-decoder=libvpx     \
         --disable-decoder=libvpx_vp8 \
         --disable-decoder=libvpx_vp9 \
         --enable-encoder=h263p
+#        --enable-libspeex    \
 
 
 DEPS_libav = zlib x264 vpx $(DEPS_vpx)
@@ -69,7 +69,7 @@ endif
 
 # Darwin
 ifdef HAVE_DARWIN_OS
-LIBAVCONF += --arch=$(ARCH) --target-os=darwin
+LIBAVCONF += --arch=$(ARCH) --target-os=darwin --enable-indev=avfoundation
 ifeq ($(ARCH),x86_64)
 LIBAVCONF += --cpu=core2
 endif
@@ -127,6 +127,7 @@ libav: libav-$(HASH).tar.gz .sum-libav
 	rm -Rf $@ $@-$(HASH)
 	mkdir -p $@-$(HASH)
 	$(ZCAT) "$<" | (cd $@-$(HASH) && tar xv --strip-components=1)
+	$(APPLY) $(SRC)/libav/osx.patch
 	$(MOVE)
 
 .libav: libav

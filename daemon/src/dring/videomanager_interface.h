@@ -36,9 +36,10 @@
 
 #include <memory> // for weak/shared_ptr
 #include <vector>
-#include <atomic>
+//#include <atomic>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "dring.h"
 
@@ -79,6 +80,8 @@ void stopCamera();
 bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
+
+void registerFrameListener();
 
 } // namespace DRing
 
