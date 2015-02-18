@@ -777,7 +777,7 @@ SIPCall::startAllMedia()
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO) {
             if (videoInput_.empty())
-                videoInput_ = "v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice();
+                videoInput_ = videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
             videortp_.switchInput(videoInput_);
         }
 #endif

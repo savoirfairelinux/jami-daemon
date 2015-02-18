@@ -70,7 +70,6 @@ bool VideoInput::setup()
     }
     if (not attach(sink_.get()))
         RING_WARN("Failed to attach sink");
-
     return true;
 }
 
@@ -321,6 +320,9 @@ VideoInput::switchInput(const std::string& resource)
     } else if (prefix == "file") {
         /* Pathname */
         valid = initFile(suffix);
+    } else if (prefix == "avfoundation") {
+        /* AVFoundation */
+        valid = initCamera(suffix);
     }
 
     /* Unsupported MRL or failed initialization */

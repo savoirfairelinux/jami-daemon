@@ -87,6 +87,8 @@ class VideoFrame: public MediaFrame {
         // This buffer must follow given specifications.
         void setFromMemory(void* ptr, int format, int width, int height) noexcept;
 
+        void noise();
+
         // Copy-Assignement
         VideoFrame& operator =(const VideoFrame& src);
 

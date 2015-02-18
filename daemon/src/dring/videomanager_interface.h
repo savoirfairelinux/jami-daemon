@@ -34,6 +34,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "dring.h"
 
