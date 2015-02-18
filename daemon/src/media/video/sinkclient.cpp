@@ -299,7 +299,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
     if (target_) {
         VideoFrame dst;
         VideoScaler scaler;
-
+        RING_DBG("OMGGGGG");
         const int width = f->width();
         const int height = f->height();
         const int format = VIDEO_PIXFMT_BGRA;
