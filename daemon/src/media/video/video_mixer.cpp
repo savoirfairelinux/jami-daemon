@@ -49,7 +49,9 @@ static const double FRAME_DURATION = 1/30.;
 VideoMixer::VideoMixer(const std::string &id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
+#if TEMPORARY_SHM
     , sink_(id)
+#endif
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
 {
     // Local video camera is the main participant
@@ -63,7 +65,9 @@ VideoMixer::VideoMixer(const std::string &id)
 
 VideoMixer::~VideoMixer()
 {
+#if TEMPORARY_SHM
     stop_sink();
+#endif
 
     if (videoLocal_) {
         videoLocal_->detach(this);
@@ -184,10 +188,16 @@ void VideoMixer::setDimensions(int width, int height)
     if (previous_p)
         yuv422_clear_to_black(*previous_p);
 
+#if TEMPORARY_SHM
     stop_sink();
     start_sink();
+#else
+    emitSignal<DRing::VideoSignal::DecodingStopped>(id_, "", true);
+    emitSignal<DRing::VideoSignal::DecodingStarted>(id_, "", width_, height_, true);
+#endif
 }
 
+#if TEMPORARY_SHM
 void VideoMixer::start_sink()
 {
     if (sink_.start()) {
@@ -207,6 +217,7 @@ void VideoMixer::stop_sink()
         sink_.stop();
     }
 }
+#endif
 
 int VideoMixer::getWidth() const
 { return width_; }
