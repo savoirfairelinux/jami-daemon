@@ -42,7 +42,9 @@
 #include <string>
 #include <vector>
 
+#ifdef TEMPORARY_SHM
 class SHMHeader;
+#endif
 
 namespace ring { namespace video {
 
@@ -66,6 +68,8 @@ class SinkClient : public VideoFramePassiveReader
         void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
                     std::shared_ptr<ring::VideoFrame> &);
 
+        void registerFrameListener(std::function<void(const std::vector<unsigned char> &frame)>);
+
     private:
         NON_COPYABLE(SinkClient);
 
@@ -73,7 +77,10 @@ class SinkClient : public VideoFramePassiveReader
         void shm_unlock();
         std::string shm_name_;
         int fd_;
+
+#ifdef TEMPORARY_SHM
         SHMHeader *shm_area_;
+#endif
         size_t shm_area_len_;
         std::string opened_name_;
 #ifdef DEBUG_FPS

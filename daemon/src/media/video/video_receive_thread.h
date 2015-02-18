@@ -38,6 +38,10 @@
 #include "sinkclient.h"
 #include "threadloop.h"
 #include "noncopyable.h"
+#include "video_base.h"
+#include "media_device.h"
+
+#include "sinkclient.h"
 
 #include <map>
 #include <string>
