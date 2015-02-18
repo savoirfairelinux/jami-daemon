@@ -38,6 +38,8 @@
 #include "threadloop.h"
 #include "rw_mutex.h"
 
+#include "sinkclient.h"
+
 #include <list>
 #include <chrono>
 #include <memory>
