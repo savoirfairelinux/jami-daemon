@@ -121,13 +121,17 @@ int DBusClient::initLibrary(int sflphFlags)
     using DRing::CallSignal;
     using DRing::ConfigurationSignal;
     using DRing::PresenceSignal;
-    using DRing::VideoSignal;
+
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
     auto callM = callManager_.get();
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
+
+#ifdef RING_VIDEO
+    using DRing::VideoSignal;
     auto videoM = videoManager_.get();
+#endif
 
     const std::map<DRing::EventHandlerKey, std::map<std::string, SharedCallback>> evHandlers = {
         { // Call event handlers

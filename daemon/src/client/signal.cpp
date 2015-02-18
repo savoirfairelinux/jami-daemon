@@ -77,10 +77,12 @@ getSignalHandlers()
         exported_callback<DRing::PresenceSignal::NewBuddyNotification>(),
         exported_callback<DRing::PresenceSignal::SubscriptionStateChanged>(),
 
+#ifdef RING_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
+#endif
     };
 
     return handlers;
