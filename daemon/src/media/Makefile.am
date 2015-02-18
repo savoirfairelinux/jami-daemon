@@ -18,6 +18,7 @@ libmedia_la_SOURCES = \
 	system_codec_container.cpp
 
 noinst_HEADERS = \
+	rtp_session.h \
 	libav_utils.h \
 	libav_deps.h \
 	socket_pair.h \
