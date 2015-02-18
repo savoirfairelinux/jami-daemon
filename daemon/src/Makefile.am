@@ -8,6 +8,10 @@ if HAVE_LINUX
 RING_VIDEO_LIBS+= \
                 ./media/video/v4l2/libv4l2.la
 endif
+if HAVE_OSX
+RING_VIDEO_LIBS+= \
+                ./media/video/osxvideo/libosxvideo.la
+endif
 endif
 
 if BUILD_INSTANT_MESSAGING
@@ -81,6 +85,7 @@ libring_la_CFLAGS = \
 		@ALSA_CFLAGS@ \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
+		@LIBUPNP_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		@LIBUPNP_CFLAGS@ \
 		$(TLS_CFLAGS)
