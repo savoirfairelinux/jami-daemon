@@ -1,5 +1,6 @@
 /*
  *  Copyright (C) 2012-2014 Savoir-Faire Linux Inc.
+ *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -65,6 +66,7 @@ struct VideoManager
 
 extern VideoManager videoManager;
 
+// Private
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 

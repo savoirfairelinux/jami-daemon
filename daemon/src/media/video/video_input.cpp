@@ -49,7 +49,9 @@ namespace ring { namespace video {
 
 VideoInput::VideoInput() :
     VideoGenerator::VideoGenerator()
+#if TEMPORARY_SHM
     , sink_()
+#endif
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
@@ -62,6 +64,7 @@ VideoInput::~VideoInput()
 
 bool VideoInput::setup()
 {
+#if TEMPORARY_SHM
     /* Sink setup */
     if (!sink_.start()) {
         RING_ERR("Cannot start shared memory sink");
@@ -69,7 +72,7 @@ bool VideoInput::setup()
     }
     if (not attach(&sink_))
         RING_WARN("Failed to attach sink");
-
+#endif
     return true;
 }
 
@@ -92,11 +95,16 @@ void VideoInput::process()
 
     if (newDecoderCreated) {
         /* Signal the client about the new sink */
+#if TEMPORARY_SHM
         emitSignal<DRing::VideoSignal::DecodingStarted>(sinkID_, sink_.openedName(),
                     decoder_->getWidth(), decoder_->getHeight(), false);
         RING_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
               sink_.openedName().c_str(), decoder_->getWidth(),
               decoder_->getHeight());
+#else
+        emitSignal<DRing::VideoSignal::DecodingStarted>(sinkID_, "",
+                    decoder_->getWidth(), decoder_->getHeight(), false);
+#endif
     }
 }
 
@@ -104,8 +112,10 @@ void VideoInput::cleanup()
 {
     deleteDecoder();
 
+#if TEMPORARY_SHM
     if (detach(&sink_))
         sink_.stop();
+#endif
 }
 
 int VideoInput::interruptCb(void *data)
@@ -177,7 +187,11 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
+#if TEMPORARY_SHM
     emitSignal<DRing::VideoSignal::DecodingStopped>(sinkID_, sink_.openedName(), false);
+#else
+    emitSignal<DRing::VideoSignal::DecodingStopped>(sinkID_, "", false);
+#endif
     flushFrames();
     delete decoder_;
     decoder_ = nullptr;
@@ -193,7 +207,7 @@ VideoInput::initCamera(const std::string& device)
 
     clearOptions();
     input_ = map["input"];
-    format_ = "video4linux2";
+    format_ = "dshow";
     decOpts_["channel"] = map["channel_num"];
     decOpts_["framerate"] = map["framerate"];
     decOpts_["video_size"] = map["video_size"];

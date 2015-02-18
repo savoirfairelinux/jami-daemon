@@ -88,6 +88,7 @@ MediaDecoder::setOptions(const std::map<std::string, std::string>& options)
 int MediaDecoder::openInput(const std::string &source_str,
                             const std::string &format_str)
 {
+    avdevice_register_all();
     AVInputFormat *iformat = av_find_input_format(format_str.c_str());
 
     if (!iformat)
