@@ -36,8 +36,7 @@
 #include "video_mixer.h"
 #include "ice_socket.h"
 #include "socket_pair.h"
-#include "sip/sdp.h"
-#include "sip/sipvoiplink.h"
+#include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
 #include "logger.h"
 
@@ -50,88 +49,16 @@ namespace ring { namespace video {
 using std::map;
 using std::string;
 
-VideoRtpSession::VideoRtpSession(const string &callID,
-                                 const map<string, string> &txArgs) :
-    txArgs_(txArgs), callID_(callID)
+VideoRtpSession::VideoRtpSession(const string &callID, const DeviceParams& localVideoParams) :
+    RtpSession(callID), localVideoParams_(localVideoParams)
 {}
 
 VideoRtpSession::~VideoRtpSession()
 { stop(); }
 
-void VideoRtpSession::updateSDP(const Sdp &sdp)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    string desc(sdp.getIncomingVideoDescription());
-    // if port has changed
-    if (not desc.empty() and desc != rxArgs_["receiving_sdp"]) {
-        rxArgs_["receiving_sdp"] = desc;
-        RING_DBG("Updated incoming SDP to:\n%s",
-              rxArgs_["receiving_sdp"].c_str());
-    }
-
-    if (desc.empty()) {
-        RING_DBG("Video is inactive");
-        receiving_ = false;
-        sending_ = false;
-    } else if (desc.find("sendrecv") != string::npos) {
-        RING_DBG("Sending and receiving video");
-        receiving_ = true;
-        sending_ = true;
-    } else if (desc.find("inactive") != string::npos) {
-        RING_DBG("Video is inactive");
-        receiving_ = false;
-        sending_ = false;
-    } else if (desc.find("sendonly") != string::npos) {
-        RING_DBG("Receiving video disabled, video set to sendonly");
-        receiving_ = false;
-        sending_ = true;
-    } else if (desc.find("recvonly") != string::npos) {
-        RING_DBG("Sending video disabled, video set to recvonly");
-        sending_ = false;
-        receiving_ = true;
-    }
-    // even if it says sendrecv or recvonly, our peer may disable video by
-    // setting the port to 0
-    if (desc.find("m=video 0") != string::npos) {
-        RING_DBG("Receiving video disabled, port was set to 0");
-        receiving_ = false;
-    }
-
-    if (sending_)
-        sending_ = sdp.getOutgoingVideoSettings(txArgs_);
-}
-
-void VideoRtpSession::updateDestination(const string &destination,
-                                        unsigned int port)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (destination.empty()) {
-        RING_ERR("Destination is empty, ignoring");
-        return;
-    }
-
-    std::stringstream tmp;
-    tmp << "rtp://" << destination << ":" << port;
-    // if destination has changed
-    if (tmp.str() != txArgs_["destination"]) {
-        if (sender_) {
-            RING_ERR("Video is already being sent");
-            return;
-        }
-        txArgs_["destination"] = tmp.str();
-        RING_DBG("updated dest to %s",  txArgs_["destination"].c_str());
-    }
-
-    if (port == 0) {
-        RING_DBG("Sending video disabled, port was set to 0");
-        sending_ = false;
-    }
-}
-
 void VideoRtpSession::startSender()
 {
-    if (sending_) {
+    if (local_.enabled and not local_.holding) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -141,20 +68,20 @@ void VideoRtpSession::startSender()
         }
 
         try {
-            sender_.reset(new VideoSender(txArgs_, *socketPair_));
+            sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_, local_, *socketPair_));
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
-            sending_ = false;
+            local_.enabled = false;
         }
     }
 }
 
 void VideoRtpSession::startReceiver()
 {
-    if (receiving_) {
+    if (remote_.enabled and not remote_.holding) {
         if (receiveThread_)
             RING_WARN("restarting video receiver");
-        receiveThread_.reset(new VideoReceiveThread(callID_, rxArgs_));
+        receiveThread_.reset(new VideoReceiveThread(callID_, remote_.receiving_sdp));
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
@@ -170,13 +97,13 @@ void VideoRtpSession::start(int localPort)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }
 
     try {
-        socketPair_.reset(new SocketPair(txArgs_["destination"].c_str(), localPort));
+        socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), localPort));
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed on port %d: %s", localPort, e.what());
         return;
@@ -203,7 +130,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not sending_ and not receiving_) {
+    if (not local_.enabled and not remote_.enabled) {
         stop();
         return;
     }
@@ -262,8 +189,7 @@ void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
 
     videoMixer_ = std::move(conference->getVideoMixer());
     assert(videoMixer_.get());
-    videoMixer_->setDimensions(atol(txArgs_["width"].c_str()),
-                               atol(txArgs_["height"].c_str()));
+    videoMixer_->setDimensions(localVideoParams_.width, localVideoParams_.height);
 
     if (sender_) {
         // Swap sender from local video to conference video mixer
@@ -285,7 +211,8 @@ void VideoRtpSession::enterConference(Conference* conference)
     exitConference();
 
     conference_ = conference;
-    if (sending_ or receiveThread_)
+
+    if (local_.enabled or receiveThread_)
         setupConferenceVideoPipeline(conference);
 }
 

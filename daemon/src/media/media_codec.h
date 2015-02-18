@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2015 Savoir-Faire Linux Inc.
  *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -155,8 +156,40 @@ struct AccountVideoCodecInfo : AccountCodecInfo {
     AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
     ~AccountVideoCodecInfo();
 };
-
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 
+struct MediaDescription {
+    MediaType type {};
+    bool enabled {false};
+    bool holding {false};
+    IpAddr addr {};
+
+    std::shared_ptr<SystemCodecInfo> codec {};
+    std::string payload_type {};
+    std::string receiving_sdp {};
+    unsigned bitrate {};
+
+    //audio
+    AudioFormat audioformat {AudioFormat::NONE()};
+    unsigned frame_size {};
+
+    //video
+    std::string parameters {};
+
+    //crypto
+    CryptoAttribute crypto {};
+};
+
+struct DeviceParams {
+    std::string input {};
+    std::string format {};
+    unsigned width {}, height {};
+    unsigned framerate {};
+    std::string video_size {};
+    std::string channel {};
+    std::string loop {};
+    std::string sdp_flags {};
+};
+
 }//namespace ring
-#endif //__MEDIA_CODEC_H__
+#endif // __MEDIA_CODEC_H__
