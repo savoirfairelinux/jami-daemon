@@ -36,9 +36,10 @@
 
 #include <memory> // for weak/shared_ptr
 #include <vector>
-#include <atomic>
+//#include <atomic>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "dring.h"
 
