@@ -39,6 +39,8 @@
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
 
+#include "sinkclient.h"
+
 #include <map>
 #include <atomic>
 #include <future>

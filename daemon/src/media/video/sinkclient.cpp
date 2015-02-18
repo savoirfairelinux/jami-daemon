@@ -56,10 +56,12 @@ namespace ring { namespace video {
 
 SinkClient::SinkClient(const std::string &shm_name) :
     shm_name_(shm_name)
+#ifdef TEMPORARY_SHM
     , fd_(-1)
     , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
     , shm_area_len_(0)
     , opened_name_()
+#endif
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
@@ -74,6 +76,7 @@ SinkClient::~SinkClient()
 bool
 SinkClient::start()
 {
+#ifdef TEMPORARY_SHM
     if (fd_ != -1) {
         RING_ERR("fd must be -1");
         return false;
@@ -131,12 +134,14 @@ SinkClient::start()
         RING_ERR("sem_init: mutex initialization failed");
         return false;
     }
+#endif
     return true;
 }
 
 bool
 SinkClient::stop()
 {
+#ifdef TEMPORARY_SHM
     if (fd_ >= 0 and close(fd_) == -1)
         strErr();
 
@@ -152,12 +157,20 @@ SinkClient::stop()
     shm_area_len_ = 0;
     shm_area_ = static_cast<SHMHeader*>(MAP_FAILED);
 
+#endif
     return true;
+}
+
+void
+SinkClient::registerFrameListener(std::function<void(const std::vector<unsigned char> &frame)>)
+{
+    RING_DBG("FrameListener registered");
 }
 
 bool
 SinkClient::resize_area(size_t desired_length)
 {
+#ifdef TEMPORARY_SHM
     if (desired_length <= shm_area_len_)
         return true;
 
@@ -187,12 +200,14 @@ SinkClient::resize_area(size_t desired_length)
     }
 
     shm_lock();
+#endif
     return true;
 }
 
 void
 SinkClient::render(const std::vector<unsigned char>& data)
 {
+#ifdef TEMPORARY_SHM
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + data.size()))
@@ -203,11 +218,13 @@ SinkClient::render(const std::vector<unsigned char>& data)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
 void
 SinkClient::render_frame(VideoFrame& src)
 {
+#ifdef TEMPORARY_SHM
     VideoFrame dst;
     VideoScaler scaler;
 
@@ -242,11 +259,13 @@ SinkClient::render_frame(VideoFrame& src)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
 void
 SinkClient::render_callback(VideoProvider &provider, size_t bytes)
 {
+#ifdef TEMPORARY_SHM
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + bytes)) {
@@ -259,6 +278,7 @@ SinkClient::render_callback(VideoProvider &provider, size_t bytes)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
 void
