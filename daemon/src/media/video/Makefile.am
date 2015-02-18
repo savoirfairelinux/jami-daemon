@@ -3,7 +3,13 @@ include $(top_srcdir)/globals.mak
 SUBDIRS= test
 
 if HAVE_LINUX
-SUBDIRS+=v4l2
+SUBDIRS+= \
+    v4l2
+endif
+
+if HAVE_OSX
+SUBDIRS+= \
+    osxvideo
 endif
 
 noinst_LTLIBRARIES = libvideo.la
