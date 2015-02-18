@@ -62,6 +62,7 @@ libring_la_LDFLAGS = \
 		@SNDFILE_LIBS@ \
 		@YAMLCPP_LIBS@ \
 		@SPEEXDSP_LIBS@ \
+		@LIBUPNP_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
@@ -82,6 +83,7 @@ libring_la_CFLAGS = \
 		@PULSEAUDIO_CFLAGS@ \
 		@SAMPLERATE_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
+		@LIBUPNP_CFLAGS@ \
 		$(TLS_CFLAGS)
 
 if USE_DHT
