@@ -33,6 +33,7 @@
 #include "media_buffer.h"
 
 #include <new>
+#include <cstdlib>
 
 namespace ring {
 
@@ -125,6 +126,17 @@ VideoFrame::setFromMemory(void* ptr, int format, int width, int height) noexcept
         return;
     avpicture_fill((AVPicture*)frame_.get(), (uint8_t*)ptr,
                    (AVPixelFormat)frame_->format, width, height);
+}
+
+void
+VideoFrame::noise()
+{
+    auto f = frame_.get();
+    auto tot = size();
+    for (int i=0 ; i<tot ; ++i)
+    {
+        f->data[0][i] = std::rand() & 255;
+    }
 }
 
 VideoFrame&
