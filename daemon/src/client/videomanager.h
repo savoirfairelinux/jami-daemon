@@ -64,6 +64,7 @@ struct VideoManager
 
 extern VideoManager videoManager;
 
+// Private
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 
