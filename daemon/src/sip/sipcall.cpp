@@ -37,14 +37,14 @@
 #include "sipaccount.h" // for SIPAccount::ACCOUNT_TYPE
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
-#include "sip_utils.h"
+#include "sdes_negotiator.h"
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
 #include "upnp/upnp_control.h"
 
-#include "audio/audiortp/avformat_rtp_session.h"
+#include "audio/audio_rtp_session.h"
 
 #include "system_codec_container.h"
 
@@ -59,6 +59,33 @@
 #endif
 
 namespace ring {
+
+#ifdef RING_VIDEO
+static DeviceParams
+getVideoSettings()
+{
+    const auto& settings_map = ::DRing::getSettings(DRing::getDefaultDevice());
+    DeviceParams params;
+
+    const auto& input = settings_map.find("input");
+    if (input != settings_map.cend())
+        params.input = input->second;
+
+    const auto& width = settings_map.find("width");
+    if (width != settings_map.cend())
+        params.width = std::stoi(width->second);
+
+    const auto& height = settings_map.find("height");
+    if (height != settings_map.cend())
+        params.height = std::stoi(height->second);
+
+    const auto& framerate = settings_map.find("framerate");
+    if (framerate != settings_map.cend())
+        params.framerate = std::stoi(framerate->second);
+
+    return params;
+}
+#endif
 
 static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
 static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
@@ -111,11 +138,10 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
-    //, avformatrtp_(new AVFormatRtpSession(id, /* FIXME: These are video! */ getSettings()))
-    , avformatrtp_(new AVFormatRtpSession(id, *new std::map<std::string, std::string>))
+    , avformatrtp_(new AudioRtpSession(id))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, ::DRing::getSettings(DRing::getDefaultDevice()))
+    , videortp_(id, getVideoSettings())
 #endif
     , sdp_(new Sdp(id))
 {
@@ -291,7 +317,7 @@ void
 SIPCall::hangup(int reason)
 {
     // Stop all RTP streams
-    stopAllMedias();
+    stopAllMedia();
 
     if (not inv or not inv->dlg)
         throw VoipLinkException("No invite session for this call");
@@ -582,41 +608,12 @@ SIPCall::offhold()
 }
 
 void
-SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
+SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 {
-#if 0
-    //ebail : disable for the moment
     if (not setState(Call::ACTIVE))
         return;
 
-    std::vector<SystemAudioCodecInfo*> sessionMedia(sdp_->getSessionAudioMedia());
-
-    if (sessionMedia.empty()) {
-        RING_WARN("Session media is empty");
-        return;
-    }
-
-    std::vector<SystemAudioCodecInfo*> audioCodecs;
-
-    for (auto & i : sessionMedia) {
-
-        if (!i)
-            continue;
-
-        // Create a new instance for this codec
-        SystemAudioCodecInfo* ac = Manager::instance().audioCodecFactory.instantiateCodec(i->getPayloadType());
-
-        if (ac == NULL) {
-            RING_ERR("Could not instantiate codec %d", i->getPayloadType());
-            throw std::runtime_error("Could not instantiate codec");
-        }
-
-        audioCodecs.push_back(ac);
-    }
-
-    if (audioCodecs.empty()) {
-        throw std::runtime_error("Could not instantiate any codecs");
-    }
+    sdp_cb();
 
     sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
     sdp_->removeAttributeFromLocalAudioMedia("sendonly");
@@ -633,14 +630,13 @@ SIPCall::internalOffHold(const std::function<void()>& /*SDPUpdateFunc*/)
         RING_WARN("Reinvite failed, resuming hold");
         onhold();
     }
-#endif
 }
 
 void
 SIPCall::peerHungup()
 {
     // Stop all RTP streams
-    stopAllMedias();
+    stopAllMedia();
 
     if (not inv)
         throw VoipLinkException("No invite session for this call");
@@ -755,8 +751,10 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
-    if (iceTransport_->isStarted() || iceTransport_->isCompleted())
+    if (iceTransport_->isStarted() || iceTransport_->isCompleted()) {
+        RING_DBG("ICE already started");
         return true;
+    }
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         RING_ERR("ICE empty attributes");
@@ -768,84 +766,53 @@ SIPCall::startIce()
 void
 SIPCall::startAllMedia()
 {
-    auto& remoteIP = sdp_->getRemoteIP();
-    avformatrtp_->updateSDP(*sdp_);
-    avformatrtp_->updateDestination(remoteIP, sdp_->getRemoteAudioPort());
-    if (isIceRunning()) {
-        std::unique_ptr<IceSocket> sockRTP(newIceSocket(0));
-        std::unique_ptr<IceSocket> sockRTCP(newIceSocket(1));
-        avformatrtp_->start(std::move(sockRTP), std::move(sockRTCP));
-    } else {
-        const auto localAudioPort = sdp_->getLocalAudioPort();
-        avformatrtp_->start(localAudioPort ? localAudioPort : sdp_->getRemoteAudioPort());
-    }
+    auto slots = sdp_->getMediaSlots();
+    unsigned ice_comp_id = 0;
 
-#ifdef RING_VIDEO
-    auto remoteVideoPort = sdp_->getRemoteVideoPort();
-    videortp_.updateSDP(*sdp_);
-    videortp_.updateDestination(remoteIP, remoteVideoPort);
-    if (isIceRunning()) {
-        std::unique_ptr<IceSocket> sockRTP(newIceSocket(2));
-        std::unique_ptr<IceSocket> sockRTCP(newIceSocket(3));
-        try {
-            videortp_.start(std::move(sockRTP), std::move(sockRTCP));
-        } catch (const std::runtime_error &e) {
-            RING_ERR("videortp_.start() with ICE failed, %s", e.what());
+    for (const auto& slot : slots) {
+        const auto& local = slot.first;
+        const auto& remote = slot.second;
+        if (local.type != remote.type) {
+            RING_ERR("Inconsistent media types between local and remote for SDP media slot");
+            continue;
         }
-    } else {
-        const auto localVideoPort = sdp_->getLocalVideoPort();
-        try {
-            videortp_.start(localVideoPort ? localVideoPort : remoteVideoPort);
-        } catch (const std::runtime_error &e) {
-            RING_ERR("videortp_.start() failed, %s", e.what());
+        RtpSession* rtp = (local.type == MEDIA_AUDIO) ? dynamic_cast<RtpSession*>(avformatrtp_.get()) : dynamic_cast<RtpSession*>(&videortp_);
+        rtp->updateMedia(local, remote);
+        if (isIceRunning()) {
+            std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
+            std::unique_ptr<IceSocket> sockRTCP(newIceSocket(ice_comp_id++));
+            rtp->start(std::move(sockRTP), std::move(sockRTCP));
+        } else {
+            rtp->start(local.addr.getPort());
         }
-    }
-#endif
-
-    // Get the crypto attribute containing srtp's cryptographic context (keys, cipher)
-    CryptoOffer crypto_offer;
-    getSDP().getRemoteSdpCryptoFromOffer(sdp_->getActiveRemoteSdpSession(), crypto_offer);
-
-    std::vector<std::shared_ptr<SystemAudioCodecInfo>> sessionMedia(sdp_->getSessionAudioMedia());
-
-    if (sessionMedia.empty()) {
-        RING_WARN("Session media is empty");
-        return;
-    }
-
-    try {
-        Manager::instance().startAudioDriverStream();
-
-	std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
-        for (const auto & i : sessionMedia) {
-            if (!i)
-                continue;
-
-            const int pl = i->payloadType_;
-
-            auto ac = std::dynamic_pointer_cast<SystemAudioCodecInfo>(getSystemCodecContainer()->searchCodecByPayload(pl));
-
-            if (!ac) {
-                RING_ERR("Could not instantiate codec %d", pl);
-            } else {
-                audioCodecs.push_back(ac);
-            }
-        }
-    } catch (const SdpException &e) {
-        RING_ERR("%s", e.what());
-    } catch (const std::exception &rtpException) {
-        RING_ERR("%s", rtpException.what());
     }
 }
 
 void
-SIPCall::stopAllMedias()
+SIPCall::stopAllMedia()
 {
     RING_DBG("SIPCall %s: stopping all medias", getCallId().c_str());
     avformatrtp_->stop();
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
+}
+
+void
+SIPCall::onMediaUpdate()
+{
+    openPortsUPnP();
+
+    // Handle possible ICE transport
+    if (!startIce())
+        RING_WARN("ICE not started");
+
+    if (getState() == ACTIVE) {
+        // TODO apply changes without restarting everything
+        RING_WARN("Restarting medias");
+        stopAllMedia();
+        startAllMedia();
+    }
 }
 
 void

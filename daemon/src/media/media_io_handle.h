@@ -34,6 +34,9 @@
 
 #include "noncopyable.h"
 
+#include <cstddef>
+#include <cstdint>
+
 #ifndef AVFORMAT_AVIO_H
 class AVIOContext;
 #endif
@@ -46,7 +49,7 @@ namespace ring {
 
 class MediaIOHandle {
 public:
-    MediaIOHandle(ssize_t buffer_size,
+    MediaIOHandle(size_t buffer_size,
                   bool writeable,
                   io_readcallback read_cb,
                   io_writecallback write_cb,
