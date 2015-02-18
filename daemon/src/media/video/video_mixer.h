@@ -35,9 +35,10 @@
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
-#include "shm_sink.h"
 #include "threadloop.h"
 #include "rw_mutex.h"
+
+#include "sinkclient.h"
 
 #include <list>
 #include <chrono>
@@ -81,6 +82,7 @@ private:
     NON_COPYABLE(VideoMixer);
 
     void render_frame(VideoFrame& output, const VideoFrame& input, int index);
+
     void start_sink();
     void stop_sink();
 
@@ -91,7 +93,9 @@ private:
     int height_ = 0;
     std::list<VideoMixerSource *> sources_ = {};
     rw_mutex rwMutex_ = {};
-    SHMSink sink_;
+
+    SinkClient sink_;
+
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
