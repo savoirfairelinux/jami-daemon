@@ -28,19 +28,18 @@
  *  as that of the covered work.
  */
 
-#include <iostream>
-#include <cassert>
-#include <unistd.h> // for sleep
-#include <map>
-#include <string>
 #include "video_rtp_session.h"
 #include "video_device_monitor.h"
+
+#include <iostream>
+#include <map>
+#include <string>
+#include <unistd.h> // for sleep
 
 int main ()
 {
     ring::video::VideoDeviceMonitor monitor;
-    ring::video::VideoRtpSession session("test",
-            monitor.getSettings(monitor.getDefaultDevice()));
+    ring::video::VideoRtpSession session("test", {});
     session.start(12345);
     sleep(5);
     session.stop();
