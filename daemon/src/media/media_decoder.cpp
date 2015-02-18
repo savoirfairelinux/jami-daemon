@@ -421,6 +421,7 @@ void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
         (unsigned) decoded_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
+    RING_DBG("Decoded audio packet %s", decoderFormat.toString().c_str());
 
     AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 
