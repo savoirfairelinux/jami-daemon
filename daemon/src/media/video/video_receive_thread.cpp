@@ -56,7 +56,9 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(args_["receiving_sdp"])
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , demuxContext_()
+#if TEMPORARY_SHM
     , sink_(id)
+#endif
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
@@ -135,7 +137,9 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
+#if TEMPORARY_SHM
     EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+#endif
 
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
@@ -149,9 +153,13 @@ void VideoReceiveThread::process()
 
 void VideoReceiveThread::cleanup()
 {
+#if TEMPORARY_SHM
     if (detach(&sink_))
         emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
     sink_.stop();
+#else
+    emitSignal<DRing::VideoSignal::DecodingStopped>(id_, "", false);
+#endif
 
     if (videoDecoder_)
         delete videoDecoder_;
@@ -223,10 +231,14 @@ void VideoReceiveThread::enterConference()
     if (!loop_.isRunning())
         return;
 
+#if TEMPORARY_SHM
     if (detach(&sink_)) {
         emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
         RING_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
     }
+#else
+    emitSignal<DRing::VideoSignal::DecodingStopped>(id_, "", false);
+#endif
 }
 
 void VideoReceiveThread::exitConference()
@@ -235,11 +247,15 @@ void VideoReceiveThread::exitConference()
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
+#if TEMPORARY_SHM
         if (attach(&sink_)) {
             emitSignal<DRing::VideoSignal::DecodingStarted>(id_, sink_.openedName(), dstWidth_, dstHeight_, false);
             RING_DBG("RX: shm sink <%s> started: size = %dx%d",
                   sink_.openedName().c_str(), dstWidth_, dstHeight_);
         }
+#else
+        emitSignal<DRing::VideoSignal::DecodingStarted>(id_, "", dstWidth_, dstHeight_, false);
+#endif
     }
 }
 

@@ -35,8 +35,12 @@
 #define __VIDEO_INPUT_H__
 
 #include "noncopyable.h"
-#include "shm_sink.h"
 #include "threadloop.h"
+#include "video_base.h"
+
+#if TEMPORARY_SHM
+#include "shm_sink.h"
+#endif
 
 #include <map>
 #include <atomic>
@@ -67,7 +71,9 @@ private:
     std::string sinkID_     = "local";
 
     MediaDecoder *decoder_  = nullptr;
+#if TEMPORARY_SHM
     SHMSink sink_;
+#endif
     std::atomic<bool> switchPending_ = {false};
 
     std::map<std::string, std::string> decOpts_ = decltype(decOpts_){};
