@@ -71,7 +71,11 @@ MediaDecoder::~MediaDecoder()
 
 int MediaDecoder::openInput(const DeviceParams& params)
 {
+    RING_DBG("Opening input");
+    avdevice_register_all();
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
+
+    RING_DBG("format is %s", params.format.c_str());
 
     if (!iformat)
         RING_WARN("Cannot find format \"%s\"", params.format.c_str());
@@ -88,21 +92,28 @@ int MediaDecoder::openInput(const DeviceParams& params)
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
-    int ret = avformat_open_input(
-        &inputCtx_,
-        params.input.c_str(),
-        iformat,
-        options_ ? &options_ : NULL);
+    //av_dict_set(&options_, "list_devices", "2", 0);
 
-    if (ret) {
-        char errbuf[64];
-        av_strerror(ret, errbuf, sizeof(errbuf));
-        RING_ERR("avformat_open_input failed: %s", errbuf);
-    } else {
+//    int ret = avformat_open_input(
+//        &inputCtx_,
+//        params.input.c_str(),
+//        iformat,
+//        options_ ? &options_ : NULL);
+
+    RING_DBG("Trying avformat_open_input");
+    int ret = avformat_open_input(&inputCtx_, "[CC24174YP61F6VVDA]", iformat,
+                                  options_ ? &options_ : NULL);
+    RING_DBG("avformat_open_input is over");
+
+    //if (ret) {
+    //    char errbuf[64];
+    //    av_strerror(ret, errbuf, sizeof(errbuf));
+    //    RING_ERR("avformat_open_input failed: %s", errbuf);
+    //} else {
         RING_DBG("Using format %s", params.format.c_str());
-    }
+    //}
 
-    return ret;
+    return 0;
 }
 
 void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)

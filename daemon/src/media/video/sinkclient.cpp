@@ -40,8 +40,11 @@
 #include "video_scaler.h"
 #include "media_buffer.h"
 
-#include "shm_sink.h"
+#ifdef TEMPORARY_SHM
 #include "shm_header.h"
+#endif
+
+#include "sinkclient.h"
 #include "logger.h"
 
 #include <sys/mman.h>
@@ -54,25 +57,28 @@
 
 namespace ring { namespace video {
 
-SHMSink::SHMSink(const std::string &shm_name) :
+SinkClient::SinkClient(const std::string &shm_name) :
     shm_name_(shm_name)
+#ifdef TEMPORARY_SHM
     , fd_(-1)
     , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
     , shm_area_len_(0)
     , opened_name_()
+#endif
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
 #endif
 {}
 
-SHMSink::~SHMSink()
+SinkClient::~SinkClient()
 {
     stop();
 }
 
-bool SHMSink::start()
+bool SinkClient::start()
 {
+#ifdef TEMPORARY_SHM
     if (fd_ != -1) {
         RING_ERR("fd must be -1");
         return false;
@@ -128,11 +134,13 @@ bool SHMSink::start()
         RING_ERR("sem_init: mutex initialization failed");
         return false;
     }
+#endif
     return true;
 }
 
-bool SHMSink::stop()
+bool SinkClient::stop()
 {
+#ifdef TEMPORARY_SHM
     if (fd_ >= 0 and close(fd_) == -1)
         strErr();
 
@@ -148,11 +156,13 @@ bool SHMSink::stop()
     shm_area_len_ = 0;
     shm_area_ = static_cast<SHMHeader*>(MAP_FAILED);
 
+#endif
     return true;
 }
 
-bool SHMSink::resize_area(size_t desired_length)
+bool SinkClient::resize_area(size_t desired_length)
 {
+#ifdef TEMPORARY_SHM
     if (desired_length <= shm_area_len_)
         return true;
 
@@ -180,12 +190,14 @@ bool SHMSink::resize_area(size_t desired_length)
     }
 
     shm_lock();
+#endif
     return true;
 }
 
 void
-SHMSink::render(const std::vector<unsigned char>& data)
+SinkClient::render(const std::vector<unsigned char>& data)
 {
+#ifdef TEMPORARY_SHM
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + data.size()))
@@ -196,11 +208,13 @@ SHMSink::render(const std::vector<unsigned char>& data)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
 void
-SHMSink::render_frame(VideoFrame& src)
+SinkClient::render_frame(VideoFrame& src)
 {
+#ifdef TEMPORARY_SHM
     VideoFrame dst;
     VideoScaler scaler;
 
@@ -234,10 +248,12 @@ SHMSink::render_frame(VideoFrame& src)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
-void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
+void SinkClient::render_callback(VideoProvider &provider, size_t bytes)
 {
+#ifdef TEMPORARY_SHM
     shm_lock();
 
     if (!resize_area(sizeof(SHMHeader) + bytes)) {
@@ -250,15 +266,18 @@ void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
     shm_area_->buffer_gen++;
     sem_post(&shm_area_->notification);
     shm_unlock();
+#endif
 }
 
-void SHMSink::shm_lock()
+#ifdef TEMPORARY_SHM
+void SinkClient::shm_lock()
 { sem_wait(&shm_area_->mutex); }
 
-void SHMSink::shm_unlock()
+void SinkClient::shm_unlock()
 { sem_post(&shm_area_->mutex); }
+#endif
 
-void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::shared_ptr<VideoFrame> &frame_p)
+void SinkClient::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::shared_ptr<VideoFrame> &frame_p)
 {
     auto f = frame_p; // keep a local reference during rendering
     render_frame(*f.get());
