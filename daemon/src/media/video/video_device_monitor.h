@@ -64,6 +64,7 @@ class VideoDeviceMonitor : public Serializable
         void applySettings(const std::string& name, VideoSettings settings);
 
         std::string getDefaultDevice() const;
+        std::string getMRLForDefaultDevice() const;
         void setDefaultDevice(const std::string& name);
 
         void addDevice(const std::string &node);

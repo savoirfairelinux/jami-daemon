@@ -128,7 +128,7 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
-    return switchInput("v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice());
+    return switchInput(videoManager.videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
@@ -137,6 +137,12 @@ hasCameraStarted()
     return videoManager.started;
 }
 
+void registerFrameListener(std::string conversationID, std::function<void(std::vector<unsigned char>& frame)> cb)
+{
+    //TODO
+    // Call* c = getCallById(conversationID)
+    // c->getSink()->registerListener(cb);
+}
 
 } // namespace DRing
 
