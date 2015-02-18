@@ -127,6 +127,10 @@ class SipTransport
         void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
         bool removeStateListener(uintptr_t lid);
 
+        bool isSecure() const {
+            return PJSIP_TRANSPORT_IS_SECURE(transport_);
+        }
+
         static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
     private:
