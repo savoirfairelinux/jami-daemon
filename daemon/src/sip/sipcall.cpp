@@ -53,6 +53,7 @@
 #endif
 
 #ifdef RING_VIDEO
+#include "client/videomanager.h"
 #include "video/video_rtp_session.h"
 #include "dring/videomanager_interface.h"
 #include <chrono>
@@ -64,26 +65,8 @@ namespace ring {
 static DeviceParams
 getVideoSettings()
 {
-    const auto& settings_map = ::DRing::getSettings(DRing::getDefaultDevice());
-    DeviceParams params;
-
-    const auto& input = settings_map.find("input");
-    if (input != settings_map.cend())
-        params.input = input->second;
-
-    const auto& width = settings_map.find("width");
-    if (width != settings_map.cend())
-        params.width = std::stoi(width->second);
-
-    const auto& height = settings_map.find("height");
-    if (height != settings_map.cend())
-        params.height = std::stoi(height->second);
-
-    const auto& framerate = settings_map.find("framerate");
-    if (framerate != settings_map.cend())
-        params.framerate = std::stoi(framerate->second);
-
-    return params;
+    const auto& videomon = ring::getVideoDeviceMonitor();
+    return videomon.getDeviceParams(videomon.getDefaultDevice());
 }
 #endif
 
