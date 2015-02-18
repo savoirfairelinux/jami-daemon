@@ -134,7 +134,7 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
-    return switchInput("v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice());
+    return switchInput(videoManager.videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
