@@ -71,7 +71,11 @@ MediaDecoder::~MediaDecoder()
 
 int MediaDecoder::openInput(const DeviceParams& params)
 {
+    RING_DBG("Opening input");
+    avdevice_register_all();
     AVInputFormat *iformat = av_find_input_format(params.format.c_str());
+
+    RING_DBG("format is %s", params.format.c_str());
 
     if (!iformat)
         RING_WARN("Cannot find format \"%s\"", params.format.c_str());
@@ -88,11 +92,14 @@ int MediaDecoder::openInput(const DeviceParams& params)
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
+    RING_DBG("Trying avformat_open_input for device %s", params.input.c_str());
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
         iformat,
         options_ ? &options_ : NULL);
+
+    RING_DBG("avformat_open_input is over");
 
     if (ret) {
         char errbuf[64];
