@@ -183,5 +183,4 @@ getVideoDeviceMonitor()
 {
     return videoManager.videoDeviceMonitor;
 }
-
 } // namespace ring
