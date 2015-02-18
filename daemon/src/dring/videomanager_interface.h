@@ -36,9 +36,10 @@
 
 #include <memory> // for weak/shared_ptr
 #include <vector>
-#include <atomic>
+//#include <atomic>
 #include <map>
 #include <string>
+#include <functional>
 
 #include "dring.h"
 
@@ -80,6 +81,8 @@ bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, std::function<void(const unsigned char*)>&& cb);
+
+void registerFrameListener(std::string conversationID, std::function<void(std::vector<unsigned char>& frame)> cb);
 
 } // namespace DRing
 
