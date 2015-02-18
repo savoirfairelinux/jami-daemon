@@ -38,6 +38,7 @@
 #include "account.h"
 #include "logger.h"
 #include "manager.h"
+#include "system_codec_container.h"
 #include "client/signal.h"
 
 namespace DRing {
@@ -60,21 +61,29 @@ registerVideoHandlers(const std::map<std::string,
     }
 }
 
-
-std::vector<std::map<std::string, std::string>>
-getCodecs(const std::string& accountID)
+std::vector<unsigned>
+getVideoCodecList(const std::string& accountID)
 {
     if (auto acc = ring::Manager::instance().getAccount(accountID))
-        return acc->getAllVideoCodecs();
+        return acc->getAllVideoCodecsId();
+    return {};
+}
+
+std::vector<std::string>
+getVideoCodecDetails(unsigned codecId)
+{
+	auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_VIDEO);
+    if (auto foundCodec = std::dynamic_pointer_cast<ring::SystemVideoCodecInfo>(codec))
+        return foundCodec->getCodecSpecifications();
     return {};
 }
 
 void
-setCodecs(const std::string& accountID,
-          const std::vector<std::map<std::string, std::string>>& details)
+setVideoCodecList(const std::string& accountID,
+                  const std::vector<unsigned>& list)
 {
     if (auto acc = ring::Manager::instance().getAccount(accountID)) {
-        acc->setVideoCodecs(details);
+        acc->setVideoCodecs(list);
         ring::Manager::instance().saveConfig();
     }
 }
