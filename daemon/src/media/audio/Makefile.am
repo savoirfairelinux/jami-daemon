@@ -20,7 +20,9 @@ if BUILD_JACK
 SUBDIRS += jack
 endif
 
+if HAVE_OSX
 SUBDIRS += coreaudio
+endif
 
 if BUILD_SPEEXDSP
 RING_SPEEXDSP_SRC=dsp.cpp
