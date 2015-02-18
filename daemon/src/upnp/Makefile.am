@@ -3,10 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libupnpcontrol.la
 
 libupnpcontrol_la_CXXFLAGS = \
-				@CXXFLAGS@ \
-				@LIBUPNP_CFLAGS@
-
-libupnpcontrol_la_LDFLAGS = @LIBUPNP_LIBS@
+				@CXXFLAGS@
 
 libupnpcontrol_la_SOURCES = \
         upnp_control.cpp \
