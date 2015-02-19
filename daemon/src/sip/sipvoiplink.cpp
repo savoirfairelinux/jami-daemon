@@ -55,6 +55,7 @@
 #include "im/instant_messaging.h"
 #endif
 
+#include "system_codec_container.h"
 #include "audio/audiortp/avformat_rtp_session.h"
 
 #ifdef RING_VIDEO
@@ -349,14 +350,15 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    AudioCodec* ac = Manager::instance().audioCodecFactory.instantiateCodec(PAYLOAD_CODEC_ULAW);
+    auto ac = std::dynamic_pointer_cast<SystemAudioCodecInfo>
+        (getSystemCodecContainer()->searchCodecByName("PCMA", MEDIA_AUDIO));
 
     if (!ac) {
         RING_ERR("Could not instantiate codec");
         return PJ_FALSE;
     }
 
-    std::vector<AudioCodec *> audioCodecs;
+    std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
     audioCodecs.push_back(ac);
 
     pjsip_dialog *dialog = 0;

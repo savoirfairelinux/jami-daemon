@@ -47,6 +47,7 @@
 #include "map_utils.h"
 #include "call_factory.h"
 #include "ring_types.h"
+#include "system_codec_container.h"
 
 namespace ring {
 
@@ -152,13 +153,13 @@ IAXVoIPLink::sendAudioFromMic()
         if (currentCall->getState() != Call::ACTIVE)
             continue;
 
-        int codecType = currentCall->getAudioCodec();
-        auto audioCodec = Manager::instance().audioCodecFactory.getCodec(codecType).get();
-
+        int codecType = currentCall->getAudioCodecPayload();
+        auto codec = getSystemCodecContainer()->searchCodecByPayload(codecType, MEDIA_AUDIO);
+        auto audioCodec = std::dynamic_pointer_cast<SystemAudioCodecInfo>(codec);
         if (!audioCodec)
             continue;
 
-        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
+        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate_);
 
         unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
@@ -173,8 +174,8 @@ IAXVoIPLink::sendAudioFromMic()
         rawBuffer_.resize(samples);
         samples = Manager::instance().getRingBufferPool().getData(rawBuffer_, currentCall->getCallId());
 
-        int compSize;
-        unsigned int audioRate = audioCodec->getClockRate();
+        int compSize = 0;
+        unsigned int audioRate = audioCodec->sampleRate_;
         int outSamples;
         AudioBuffer *in;
 
@@ -189,12 +190,22 @@ IAXVoIPLink::sendAudioFromMic()
             in = &rawBuffer_;
         }
 
+
+    /*
+     * TODO ebail : *
+     * IAX use old codec API (based on audiocodec wrapper)
+     * It does not use libav API
+     * We disable it for the moment
+     */
+#if 0
         compSize = audioCodec->encode(in->getData(), encodedData_, RAW_BUFFER_SIZE);
+#endif
 
         if (currentCall->session and samples > 0) {
             std::lock_guard<std::mutex> lock(mutexIAX);
 
-            if (iax_send_voice(currentCall->session, currentCall->format, encodedData_, compSize, outSamples) == -1)
+            if (iax_send_voice(currentCall->session, currentCall->format,
+                               encodedData_, compSize, outSamples) == -1)
                 RING_ERR("IAX: Error sending voice data.");
         }
     }
@@ -329,27 +340,35 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!event->datalen)
         return;
 
-    auto audioCodec = Manager::instance().audioCodecFactory.getCodec(call.getAudioCodec()).get();
+    auto codec = getSystemCodecContainer()->searchCodecByPayload(call.getAudioCodecPayload(), MEDIA_AUDIO);
+    auto audioCodec = std::dynamic_pointer_cast<SystemAudioCodecInfo>(codec);
     if (!audioCodec)
         return;
 
-    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->getClockRate());
+    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate_);
     unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
     if (event->subclass)
         call.format = event->subclass;
 
-    unsigned char *data = (unsigned char*) event->data;
     unsigned int size = event->datalen;
-
-    unsigned int max = audioCodec->getClockRate() * 20 / 1000;
+    unsigned int max = audioCodec->sampleRate_ * 20 / 1000;
 
     if (size > max)
         size = max;
 
+    /*
+     * TODO ebail : *
+     * IAX use old codec API (based on audiocodec wrapper)
+     * It does not use libav API
+     * We disable it for the moment
+     */
+#if 0
+    unsigned char *data = (unsigned char*) event->data;
     audioCodec->decode(rawBuffer_.getData(), data , size);
+#endif
     AudioBuffer *out = &rawBuffer_;
-    unsigned int audioRate = audioCodec->getClockRate();
+    unsigned int audioRate = audioCodec->sampleRate_;
 
     if (audioRate != mainBufferSampleRate) {
         rawBuffer_.setSampleRate(mainBufferSampleRate);

@@ -38,6 +38,7 @@
 #include <map>
 #include <vector>
 
+#if 0
 namespace ring {
 
 class PluginManager;
@@ -172,5 +173,7 @@ class AudioCodecFactory {
 };
 
 } // namespace ring
+
+#endif
 
 #endif // __CODEC_DESCRIPTOR_H__
