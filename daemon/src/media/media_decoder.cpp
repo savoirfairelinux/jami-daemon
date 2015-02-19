@@ -82,7 +82,12 @@ int MediaDecoder::openInput(const DeviceParams& params)
     }
 
     av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
-    av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
+
+    if (params.channel) {
+        av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
+        RING_DBG("Decoding using %d channels", params.channel);
+    }
+
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 
@@ -112,7 +117,7 @@ void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
 
-int MediaDecoder::setupFromAudioData()
+int MediaDecoder::setupFromAudioData(const AudioFormat format)
 {
     int ret;
 
@@ -170,9 +175,14 @@ int MediaDecoder::setupFromAudioData()
         return -1;
     }
 
-    RING_DBG("Using %s", inputDecoder_->name);
-
     decoderCtx_->thread_count = 1;
+    decoderCtx_->channels = format.nb_channels;
+    decoderCtx_->sample_rate = format.sample_rate;
+    //decoderCtx_->request_channels = channels;
+    //decoderCtx_->request_channel_layout = channels > 1 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+
+    RING_WARN("Using %s with %s", inputDecoder_->name, format.toString().c_str());
+
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
@@ -421,6 +431,7 @@ void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
         (unsigned) decoded_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
+    RING_DBG("Decoded audio packet %s", decoderFormat.toString().c_str());
 
     AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
 

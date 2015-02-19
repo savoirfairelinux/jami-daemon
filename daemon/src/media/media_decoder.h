@@ -94,7 +94,7 @@ public:
     Status flush(video::VideoFrame&);
 #endif // RING_VIDEO
 
-    int setupFromAudioData();
+    int setupFromAudioData(const AudioFormat format);
     Status decode_audio(AVFrame* frame);
     void writeToRingBuffer(AVFrame* frame, RingBuffer& rb, const AudioFormat outFormat);
 
