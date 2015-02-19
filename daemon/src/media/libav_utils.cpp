@@ -45,36 +45,6 @@
 
 namespace ring { namespace libav_utils {
 
-std::map<std::string, std::string> encoders_;
-
-#ifdef RING_VIDEO
-std::vector<std::string> installed_video_codecs_;
-
-static void
-findInstalledVideoCodecs()
-{
-    std::vector<std::string> libav_codecs;
-    AVCodec *p = NULL;
-    while ((p = av_codec_next(p)))
-        if (p->type == AVMEDIA_TYPE_VIDEO)
-            libav_codecs.push_back(p->name);
-
-    for (const auto &it : encoders_) {
-        if (std::find(libav_codecs.begin(), libav_codecs.end(), it.second) != libav_codecs.end())
-            installed_video_codecs_.push_back(it.first);
-        else
-            RING_ERR("Didn't find \"%s\" encoder", it.second.c_str());
-    }
-}
-
-std::vector<std::string> getVideoCodecList()
-{
-    if (installed_video_codecs_.empty())
-        findInstalledVideoCodecs();
-    return installed_video_codecs_;
-}
-#endif // RING_VIDEO
-
 // protect libav/ffmpeg access
 static int
 avcodecManageMutex(void **data, enum AVLockOp op)
@@ -109,10 +79,6 @@ avcodecManageMutex(void **data, enum AVLockOp op)
     return AVERROR(ret);
 }
 
-std::map<std::string, std::string> encodersMap()
-{
-    return encoders_;
-}
 
 static void init_once()
 {
@@ -126,32 +92,6 @@ static void init_once()
 
     if (getDebugMode())
         av_log_set_level(AV_LOG_VERBOSE);
-
-    /* list of codecs tested and confirmed to work */
-    encoders_["H264"]        = "libx264";
-    encoders_["H263-2000"]   = "h263p";
-    encoders_["VP8"]         = "libvpx";
-    encoders_["MP4V-ES"]     = "mpeg4";
-
-    encoders_["PCMA"]        = "pcm_alaw";
-    encoders_["PCMU"]        = "pcm_mulaw";
-    encoders_["opus"]        = "libopus";
-    encoders_["G722"]        = "g722";
-    encoders_["speex"]       = "libspeex";
-
-    //FFmpeg needs to be modified to allow us to send configuration
-    //inline, with CODEC_FLAG_GLOBAL_HEADER
-    //encoders["THEORA"]        = "libtheora";
-
-    // ffmpeg hardcodes RTP output format to H263-2000
-    // but it can receive H263-1998
-    // encoders["H263-1998"]        = "h263p";
-
-    // ffmpeg doesn't know RTP format for H263 (payload type = 34)
-    //encoders["H263"]          = "h263";
-#ifdef RING_VIDEO
-    findInstalledVideoCodecs();
-#endif // RING_VIDEO
 }
 
 static std::once_flag already_called;
@@ -161,27 +101,6 @@ void sfl_avcodec_init()
     std::call_once(already_called, init_once);
 }
 
-#ifdef RING_VIDEO
-std::vector<std::map<std::string, std::string> >
-getDefaultVideoCodecs()
-{
-    const char * const DEFAULT_BITRATE = "400";
-    sfl_avcodec_init();
-    std::vector<std::map<std::string, std::string> > result;
-    for (const auto &item : installed_video_codecs_) {
-        std::map<std::string, std::string> codec;
-        // FIXME: get these keys from proper place
-        codec["name"] = item;
-        codec["bitrate"] = DEFAULT_BITRATE;
-        codec["enabled"] = "true";
-        // FIXME: make a nicer version of this
-        if (item == "H264")
-            codec["parameters"] = DEFAULT_H264_PROFILE_LEVEL_ID;
-        result.push_back(codec);
-    }
-    return result;
-}
-#endif // RING_VIDEO
 
 int libav_pixel_format(int fmt)
 {
