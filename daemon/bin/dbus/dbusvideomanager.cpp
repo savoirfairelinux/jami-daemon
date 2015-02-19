@@ -29,8 +29,6 @@
  */
 
 #include "dbusvideomanager.h"
-#include "managerimpl.h"
-#include "manager.h"
 #include "client/videomanager.h"
 
 DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
@@ -38,15 +36,21 @@ DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
 {}
 
 auto
-DBusVideoManager::getCodecs(const std::string& accountID) -> decltype(DRing::getCodecs(accountID))
+DBusVideoManager::getVideoCodecList(const std::string& accountID) -> decltype(DRing::getVideoCodecList(accountID))
 {
-    return DRing::getCodecs(accountID);
+    return DRing::getVideoCodecList(accountID);
+}
+
+auto
+DBusVideoManager::getVideoCodecDetails(const unsigned& codecId) -> decltype(DRing::getVideoCodecDetails(codecId))
+{
+    return DRing::getVideoCodecDetails(codecId);
 }
 
 void
-DBusVideoManager::setCodecs(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details)
+DBusVideoManager::setVideoCodecList(const std::string& accountID, const std::vector<unsigned> &list)
 {
-    DRing::setCodecs(accountID, details);
+    DRing::setVideoCodecList(accountID, list);
 }
 
 auto
