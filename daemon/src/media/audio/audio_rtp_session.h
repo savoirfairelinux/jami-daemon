@@ -1,10 +1,12 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
  *  (at your option) any later version.
+ *
  *  This program is distributed in the hope that it will be useful,
  *  but WITHOUT ANY WARRANTY; without even the implied warranty of
  *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
@@ -26,43 +28,46 @@
  *  as that of the covered work.
  */
 
-#ifndef H_BASE64
-#define H_BASE64
+#ifndef AUDIO_RTP_SESSION_H__
+#define AUDIO_RTP_SESSION_H__
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include "threadloop.h"
+#include "media/rtp_session.h"
+#include "media/audio/audiobuffer.h"
+#include "noncopyable.h"
 
-#include "stdint.h"
+#include <map>
+#include <string>
+#include <memory>
+#include <mutex>
 
-/**
- * Encode a buffer in base64.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a base64-encoded buffer
- *
- * @note callers should free the returned memory
- */
-uint8_t *sfl_base64_encode(const uint8_t *data,
-                           size_t input_length, size_t *output_length);
+namespace ring {
 
-/**
- * Decode a base64 buffer.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a buffer
- *
- * @note callers should free the returned memory
- */
-uint8_t *sfl_base64_decode(const uint8_t *data,
-                           size_t input_length, size_t *output_length);
+class RingBuffer;
+class AudioSender;
+class AudioReceiveThread;
+class IceSocket;
 
-#ifdef __cplusplus
-}
-#endif
+class AudioRtpSession : public RtpSession {
+public:
+    AudioRtpSession(const std::string& id);
+    virtual ~AudioRtpSession();
 
-#endif // H_BASE64
+    void start(int localPort);
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock);
+    void stop();
+
+private:
+    NON_COPYABLE(AudioRtpSession);
+
+    void startSender();
+    void startReceiver();
+
+    std::unique_ptr<AudioSender> sender_;
+    std::unique_ptr<AudioReceiveThread> receiveThread_;
+    std::shared_ptr<RingBuffer> ringbuffer_;
+};
+
+} // namespace ring
+
+#endif // __AUDIO_RTP_SESSION_H__
