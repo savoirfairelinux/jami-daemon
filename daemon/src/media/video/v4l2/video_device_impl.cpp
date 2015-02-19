@@ -66,7 +66,7 @@ class VideoV4l2Size {
          */
         void getFrameRates(int fd, unsigned int pixel_format);
         std::vector<std::string> getRateList() const;
-        float getRate(const std::string &name) const;
+        float getRate(unsigned rate) const;
 
         unsigned width;
         unsigned height;
@@ -119,6 +119,8 @@ class VideoDeviceImpl {
 
         VideoSettings getSettings() const;
         void applySettings(VideoSettings settings);
+
+        DeviceParams getDeviceParams() const;
 
     private:
         std::vector<VideoV4l2Channel> channels_;
@@ -265,12 +267,10 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
 }
 
 float
-VideoV4l2Size::getRate(const string &name) const
+VideoV4l2Size::getRate(unsigned rate) const
 {
     for (const auto& item : rates_) {
-        stringstream ss;
-        ss << item;
-        if (ss.str() == name)
+        if (item == rate)
             return item;
     }
 
@@ -498,54 +498,35 @@ void
 VideoDeviceImpl::applySettings(VideoSettings settings)
 {
     // Set preferences or fallback to defaults.
-    channel_ = getChannel(settings["channel"]);
-    size_ = channel_.getSize(settings["size"]);
-    rate_ = size_.getRate(settings["rate"]);
+    channel_ = getChannel(settings.channel);
+    size_ = channel_.getSize(settings.video_size);
+    rate_ = size_.getRate(settings.framerate);
 }
 
-template <class T>
-static inline string to_string(const T& t)
-{
-    std::stringstream ss;
-    ss << t;
-    return ss.str();
-}
-
-/*
- * FIXME the result map has duplicated value, for backward compatibility with
- * old methods getPreferences() and getSettings().
- *
- * A VideoSettings struct might be created with eventually a to_map() method.
- */
 VideoSettings
 VideoDeviceImpl::getSettings() const
 {
     VideoSettings settings;
-
-    settings["name"] = name;
-
-    // Device path (e.g. /dev/video0)
-    settings["input"] = device;
-
-    // Channel number
-    settings["channel_num"] = to_string(channel_.idx);
-    settings["channel"] = channel_.name;
-
-    // Video size
-    settings["width"] = to_string(size_.width);
-    settings["height"] = to_string(size_.height);
+    settings.name = name;
+    settings.channel = channel_.name;
     stringstream video_size;
-    video_size << settings["width"];
-    video_size << "x";
-    video_size << settings["height"];
-    settings["video_size"] = video_size.str();
-    settings["size"] = video_size.str();
-
-    // Frame rate
-    settings["framerate"] = to_string(rate_);
-    settings["rate"] = to_string(rate_);
-
+    video_size << size_.width << "x" << size_.height;
+    settings.video_size = video_size.str();
+    settings.framerate = rate_;
     return settings;
+}
+
+DeviceParams
+VideoDeviceImpl::getDeviceParams() const
+{
+    DeviceParams params;
+    params.input = device;
+    params.format = "video4linux2";
+    params.channel = channel_.idx;
+    params.width = size_.width;
+    params.height = size_.height;
+    params.framerate = rate_;
+    return params;
 }
 
 VideoDevice::VideoDevice(const string& path) :
@@ -565,6 +546,12 @@ VideoSettings
 VideoDevice::getSettings() const
 {
     return deviceImpl_->getSettings();
+}
+
+DeviceParams
+VideoDevice::getDeviceParams() const
+{
+    return deviceImpl_->getDeviceParams();
 }
 
 DRing::VideoCapabilities
