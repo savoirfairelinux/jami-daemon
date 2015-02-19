@@ -48,22 +48,28 @@
         </method>
 
         <!-- Video Codec related methods -->
+       <method name="getVideoCodecList" tp:name-for-bindings="getVideoCodecList">
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+           <arg type="aui" name="list" direction="out">
+           </arg>
+       </method>
 
-        <method name="getCodecs" tp:name-for-bindings="getCodecs">
-            <tp:docstring>Gets the hashtable describing all the codecs and their parameters for a given account</tp:docstring>
-            <arg type="s" name="accountID" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
-            <arg type="aa{ss}" name="details" direction="out">
-            </arg>
-        </method>
+       <method name="getVideoCodecDetails" tp:name-for-bindings="getVideoCodecDetails">
+           <arg type="ui" name="codecid" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="details" direction="out">
+           </arg>
+       </method>
 
-       <method name="setCodecs" tp:name-for-bindings="setCodecs">
+       <method name="setVideoCodecList" tp:name-for-bindings="setVideoCodecList">
            <tp:docstring>Sets a vector of hashtables describing codecs and their parameters for a given account, one hashtable per codec</tp:docstring>
            <arg type="s" name="accountID" direction="in">
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorMapStringString"/>
-           <arg type="aa{ss}" name="details" direction="in">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorInt"/>
+           <arg type="aui" name="list" direction="in">
            </arg>
         </method>
 

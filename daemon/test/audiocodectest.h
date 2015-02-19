@@ -52,7 +52,14 @@ class AudioCodecTest: public CppUnit::TestFixture {
          * Use cppunit library macros to add unit test the factory
          */
         CPPUNIT_TEST_SUITE(AudioCodecTest);
-        CPPUNIT_TEST(testCodecs);
+        /*
+         * ebail - 2015/02/18
+         * testCodecs unit test is based on audiocodecfactory
+         * we are not using it anymore
+         * we should make this unit test work with libav
+         * this test is disabled for the moment
+         * */
+        //CPPUNIT_TEST(testCodecs);
         CPPUNIT_TEST_SUITE_END();
 
         static const short frequency_ = 440;
