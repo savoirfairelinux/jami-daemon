@@ -32,6 +32,10 @@
 #ifndef SIP_UTILS_H_
 #define SIP_UTILS_H_
 
+#include "ip_utils.h"
+#include "media_codec.h"
+#include "media/audio/audiobuffer.h"
+
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
 
@@ -41,7 +45,9 @@
 
 struct pjsip_msg;
 
-namespace ring { namespace sip_utils {
+namespace ring {namespace sip_utils {
+
+    enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
 
     /**
      * Helper function to parser header from incoming sip messages
