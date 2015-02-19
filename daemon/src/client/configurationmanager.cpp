@@ -47,6 +47,7 @@
 #include "sip/sipaccount.h"
 #include "security_const.h"
 #include "audio/audiolayer.h"
+#include "system_codec_container.h"
 #include "client/signal.h"
 
 #include <dirent.h>
@@ -91,13 +92,11 @@ getIp2IpDetails()
     return std::map<std::string, std::string>();
 }
 
-
 std::map<std::string, std::string>
 getAccountDetails(const std::string& accountID)
 {
     return ring::Manager::instance().getAccountDetails(accountID);
 }
-
 
 std::map<std::string, std::string>
 getVolatileAccountDetails(const std::string& accountID)
@@ -231,10 +230,10 @@ getAccountList()
  * Send the list of all codecs loaded to the client through DBus.
  * Can stay global, as only the active codecs will be set per accounts
  */
-std::vector<int32_t>
+std::vector<unsigned>
 getAudioCodecList()
 {
-    std::vector<int32_t> list {ring::Manager::instance().audioCodecFactory.getCodecList()};
+    std::vector<unsigned> list {ring::getSystemCodecContainer()->getSystemCodecInfoIdList(ring::MEDIA_AUDIO)};
     if (list.empty())
         ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
@@ -258,15 +257,16 @@ getSupportedCiphers(const std::string& accountID)
 }
 
 std::vector<std::string>
-getAudioCodecDetails(int32_t payload)
+getAudioCodecDetails(unsigned codecId)
 {
-    std::vector<std::string> result {ring::Manager::instance().audioCodecFactory.getCodecSpecifications(payload)};
-    if (result.empty())
-        ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-    return result;
+    auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_AUDIO);
+    if (auto foundCodec = std::dynamic_pointer_cast<ring::SystemAudioCodecInfo>(codec))
+        return foundCodec->getCodecSpecifications();
+    ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
+    return {};
 }
 
-std::vector<int32_t>
+std::vector<unsigned>
 getActiveAudioCodecList(const std::string& accountID)
 {
     if (auto acc = ring::Manager::instance().getAccount(accountID))
