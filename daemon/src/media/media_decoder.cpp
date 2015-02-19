@@ -36,6 +36,8 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+
+#include "string_utils.h"
 #include "logger.h"
 
 #include <iostream>
@@ -66,42 +68,27 @@ MediaDecoder::~MediaDecoder()
     }
 }
 
-void
-MediaDecoder::extract(const std::map<std::string, std::string>& map, const std::string& key)
+int MediaDecoder::openInput(const DeviceParams& params)
 {
-    auto iter = map.find(key);
-
-    if (iter != map.end())
-        av_dict_set(&options_, key.c_str(), iter->second.c_str(), 0);
-}
-
-void
-MediaDecoder::setOptions(const std::map<std::string, std::string>& options)
-{
-    extract(options, "framerate");
-    extract(options, "video_size");
-    extract(options, "channel");
-    extract(options, "loop");
-    extract(options, "sdp_flags");
-}
-
-int MediaDecoder::openInput(const std::string &source_str,
-                            const std::string &format_str)
-{
-    AVInputFormat *iformat = av_find_input_format(format_str.c_str());
+    AVInputFormat *iformat = av_find_input_format(params.format.c_str());
 
     if (!iformat)
-        RING_WARN("Cannot find format \"%s\"", format_str.c_str());
+        RING_WARN("Cannot find format \"%s\"", params.format.c_str());
 
-    int ret = avformat_open_input(&inputCtx_, source_str.c_str(), iformat,
-                                  options_ ? &options_ : NULL);
+    av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
+    av_dict_set(&options_, "video_size", params.video_size.c_str(), 0);
+    av_dict_set(&options_, "channel", params.channel.c_str(), 0);
+    av_dict_set(&options_, "loop", params.loop.c_str(), 0);
+    av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
+
+    int ret = avformat_open_input(&inputCtx_, params.input.c_str(), iformat, options_ ? &options_ : NULL);
 
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));
         RING_ERR("avformat_open_input failed: %s", errbuf);
     } else {
-        RING_DBG("Using format %s", format_str.c_str());
+        RING_DBG("Using format %s", params.format.c_str());
     }
 
     return ret;
@@ -120,7 +107,7 @@ void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
 
-int MediaDecoder::setupFromAudioData()
+int MediaDecoder::setupFromAudioData(const AudioFormat format)
 {
     int ret;
 
@@ -178,9 +165,12 @@ int MediaDecoder::setupFromAudioData()
         return -1;
     }
 
-    RING_DBG("Using %s", inputDecoder_->name);
-
     decoderCtx_->thread_count = 1;
+    decoderCtx_->channels = format.nb_channels;
+    decoderCtx_->sample_rate = format.sample_rate;
+
+    RING_WARN("Audio decoding using %s with %s", inputDecoder_->name, format.toString().c_str());
+
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
@@ -433,7 +423,6 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
         (unsigned) libav_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
-
     AudioBuffer out(libav_frame->nb_samples, decoderFormat);
 
     if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
@@ -443,7 +432,7 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
         out.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
                          libav_frame->nb_samples, decoderCtx_->channels);
     }
-    if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
+    if (decoderFormat.sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler(outFormat));

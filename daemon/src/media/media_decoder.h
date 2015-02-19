@@ -39,6 +39,8 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
+#include "sip/sip_utils.h"
+
 #include "noncopyable.h"
 
 #include <map>
@@ -67,57 +69,53 @@ class Resampler;
 class MediaIOHandle;
 
 class MediaDecoder {
-    public:
-        enum class Status {
-            Success,
-            FrameFinished,
-            EOFError,
-            ReadError,
-            DecodeError
-        };
 
-        MediaDecoder();
-        ~MediaDecoder();
+public:
+    enum class Status {
+        Success,
+        FrameFinished,
+        EOFError,
+        ReadError,
+        DecodeError
+    };
 
-        void emulateRate() { emulateRate_ = true; }
-        void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const std::string &source_str,
-                      const std::string &format_str);
+    MediaDecoder();
+    ~MediaDecoder();
 
-        void setIOContext(MediaIOHandle *ioctx);
+    void emulateRate() { emulateRate_ = true; }
+    void setInterruptCallback(int (*cb)(void*), void *opaque);
+    int openInput(const DeviceParams&);
+
+    void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
-        int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
-        Status flush(VideoFrame&);
- #endif // RING_VIDEO
+    int setupFromVideoData();
+    Status decode(VideoFrame&, video::VideoPacket&);
+    Status flush(VideoFrame&);
+#endif // RING_VIDEO
 
-        int setupFromAudioData();
-        Status decode(const AudioFrame&);
-        void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
+    int setupFromAudioData(const AudioFormat format);
+    Status decode(const AudioFrame&);
+    void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
-        int getWidth() const;
-        int getHeight() const;
-        int getPixelFormat() const;
+    int getWidth() const;
+    int getHeight() const;
+    int getPixelFormat() const;
 
-        void setOptions(const std::map<std::string, std::string>& options);
+private:
+    NON_COPYABLE(MediaDecoder);
 
-    private:
-        NON_COPYABLE(MediaDecoder);
+    AVCodec *inputDecoder_ = nullptr;
+    AVCodecContext *decoderCtx_ = nullptr;
+    AVFormatContext *inputCtx_ = nullptr;
+    std::unique_ptr<Resampler> resampler_;
+    int streamIndex_ = -1;
+    bool emulateRate_ = false;
+    int64_t startTime_;
+    int64_t lastDts_;
+    std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
 
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
-        AVFormatContext *inputCtx_ = nullptr;
-        std::unique_ptr<Resampler> resampler_;
-        int streamIndex_ = -1;
-        bool emulateRate_ = false;
-        int64_t startTime_;
-        int64_t lastDts_;
-        std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
-
-        void extract(const std::map<std::string, std::string>& map, const std::string& key);
-
-    protected:
-        AVDictionary *options_ = nullptr;
+protected:
+    AVDictionary *options_ = nullptr;
 };
 
 } // namespace ring
