@@ -235,11 +235,11 @@ class RingAccount : public SIPAccountBase {
         newIncomingCall(const std::string& from = {});
 
         virtual bool isTlsEnabled() const {
-            return false;
+            return true;
         }
 
         virtual bool getSrtpEnabled() const {
-            return false;
+            return true;
         }
 
         virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
@@ -286,15 +286,6 @@ class RingAccount : public SIPAccountBase {
          * Maps require port via UPnP
          */
         bool mapPortUPnP();
-
-        /**
-         * @return pjsip_tls_setting structure, filled from the configuration
-         * file, that can be used directly by PJSIP to initialize
-         * TLS transport.
-         */
-        pjsip_tls_setting * getTlsSetting() {
-            return &tlsSetting_;
-        }
 
         dht::DhtRunner dht_ {};
 
@@ -371,7 +362,10 @@ class RingAccount : public SIPAccountBase {
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
-        pjsip_tls_setting tlsSetting_;
+        void generateDhParams();
+        std::shared_ptr<gnutls_dh_params_int> dhParams_;
+        std::mutex dhParamsMtx_;
+        std::condition_variable dhParamsCv_;
 
         /**
          * Optional: "received" parameter from VIA header
