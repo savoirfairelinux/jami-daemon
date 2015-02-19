@@ -40,14 +40,13 @@
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
 
-#include "sip_transport_ice.h"
+#include "sips_transport_ice.h"
 #include "ice_transport.h"
 
-#include <opendht/securedht.h>
-
-#include "array_size.h"
-
 #include "client/signal.h"
+
+#include "upnp/upnp_control.h"
+#include "system_codec_container.h"
 
 #include "account_schema.h"
 #include "logger.h"
@@ -57,12 +56,13 @@
 #include "libav_utils.h"
 #endif
 #include "fileutils.h"
+#include "string_utils.h"
+#include "array_size.h"
 
 #include "config/yamlparser.h"
-#include <yaml-cpp/yaml.h>
 
-#include "upnp/upnp_control.h"
-#include "system_codec_container.h"
+#include <opendht/securedht.h>
+#include <yaml-cpp/yaml.h>
 
 #include <algorithm>
 #include <array>
@@ -80,7 +80,7 @@ static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID), tlsSetting_(), via_addr_()
+    : SIPAccountBase(accountID), via_addr_()
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -233,7 +233,7 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 void
 RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target)
 {
-    RING_WARN("RingAccount::createOutgoingCall to: %s target: %s tlsListener: %d", to_id.c_str(), target.toString(true).c_str(), tlsListener_?1:0);
+    RING_WARN("RingAccount::createOutgoingCall to: %s target: %s", to_id.c_str(), target.toString(true).c_str());
     call->initIceTransport(true);
     call->setIPToIP(true);
     call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
@@ -364,9 +364,6 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
     out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
-    out << YAML::Key << Conf::DHT_PRIVKEY_PATH_KEY << YAML::Value << privkeyPath_;
-    out << YAML::Key << Conf::DHT_CERT_PATH_KEY << YAML::Value << certPath_;
-    out << YAML::Key << Conf::DHT_CA_CERT_PATH_KEY << YAML::Value << cacertPath_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -385,22 +382,19 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::DHT_PORT_KEY, port);
     dhtPort_ = port ? port : DHT_DEFAULT_PORT;
     dhtPortUsed_ = dhtPort_;
-    parseValue(node, Conf::DHT_PRIVKEY_PATH_KEY, privkeyPath_);
-    parseValue(node, Conf::DHT_CERT_PATH_KEY, certPath_);
-    parseValue(node, Conf::DHT_CA_CERT_PATH_KEY, cacertPath_);
     checkIdentityPath();
 }
 
 void
 RingAccount::checkIdentityPath()
 {
-    if (not privkeyPath_.empty() and not dataPath_.empty())
+    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty())
         return;
 
     const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-    privkeyPath_ = idPath + DIR_SEPARATOR_STR "dht.key";
-    certPath_ = idPath + DIR_SEPARATOR_STR "dht.crt";
-    cacertPath_ = idPath + DIR_SEPARATOR_STR "ca.crt";
+    tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
+    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
+    tlsCaListFile_ = idPath + DIR_SEPARATOR_STR "ca.crt";
 }
 
 std::vector<uint8_t>
@@ -441,9 +435,9 @@ RingAccount::loadIdentity()
     dht::crypto::PrivateKey dht_key;
 
     try {
-        ca_cert = dht::crypto::Certificate(fileutils::loadFile(cacertPath_));
-        dht_cert = dht::crypto::Certificate(fileutils::loadFile(certPath_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(privkeyPath_));
+        ca_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCaListFile_));
+        dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
+        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_));
     }
     catch (const std::exception& e) {
         RING_ERR("Error loading identity: %s", e.what());
@@ -459,11 +453,11 @@ RingAccount::loadIdentity()
         fileutils::check_dir(idPath_.c_str());
 
         saveIdentity(ca, idPath_ + DIR_SEPARATOR_STR "ca");
-        cacertPath_ = idPath_ + DIR_SEPARATOR_STR "ca.crt";
+        tlsCaListFile_ = idPath_ + DIR_SEPARATOR_STR "ca.crt";
 
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
-        certPath_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
-        privkeyPath_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+        tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
+        tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
 
         return {ca.second, id};
     }
@@ -507,20 +501,13 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     if (dhtPort_ == 0)
         dhtPort_ = DHT_DEFAULT_PORT;
     dhtPortUsed_ = dhtPort_;
-    parseString(details, Conf::CONFIG_DHT_PRIVKEY_PATH, privkeyPath_);
-    parseString(details, Conf::CONFIG_DHT_CERT_PATH, certPath_);
     checkIdentityPath();
 }
 
 std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-
-    std::stringstream dhtport;
-    dhtport << dhtPort_;
-    a[Conf::CONFIG_DHT_PORT] = dhtport.str();
-    a[Conf::CONFIG_DHT_PRIVKEY_PATH] = privkeyPath_;
-    a[Conf::CONFIG_DHT_CERT_PATH] = certPath_;
+    a[Conf::CONFIG_DHT_PORT] = ring::to_string(dhtPort_);
     return a;
 }
 
@@ -536,15 +523,56 @@ RingAccount::handleEvents()
         auto call = c->call.lock();
         if (not call) {
             RING_WARN("Removing deleted call from pending calls");
-            dht_.cancelListen(c->call_key, c->listen_key.get());
+            if (c->call_key != dht::InfoHash())
+                dht_.cancelListen(c->call_key, c->listen_key.get());
             c = pendingCalls_.erase(c);
             continue;
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            call->setTransport(link_->sipTransportBroker->getIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT));
+            regenerateCAList();
+            auto id = loadIdentity();
+            auto remote_h = c->id;
+            std::shared_ptr<gnutls_dh_params_int> dh;
+            {
+                std::unique_lock<std::mutex> l(dhParamsMtx_);
+                dhParamsCv_.wait(l, [&]() {
+                    return static_cast<bool>(dhParams_);
+                });
+                dh = dhParams_;
+            }
+            call->setTransport(link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, tls::TlsParams {
+                .ca_list = caListPath_,
+                .id = id.second,
+                .cert_check = [remote_h](unsigned status, const gnutls_datum_t *cert_list, unsigned cert_num) -> pj_status_t {
+                    RING_WARN("TLS certificate check for %s", remote_h.toString().c_str());
+                    if (status & GNUTLS_CERT_EXPIRED || status & GNUTLS_CERT_NOT_ACTIVATED)
+                        return PJ_SSL_CERT_EVALIDITY_PERIOD;
+                    else if (status & GNUTLS_CERT_INSECURE_ALGORITHM)
+                        return PJ_SSL_CERT_EUNTRUSTED;
+                    if (cert_num == 0)
+                        return PJ_SSL_CERT_EUNKNOWN;
+                    try {
+                        std::vector<uint8_t> crt_blob(cert_list[0].data, cert_list[0].data+cert_list[0].size);
+                        dht::crypto::Certificate crt(crt_blob);
+                        const auto tls_id = crt.getId();
+                        if (crt.getUID() != tls_id.toString()) {
+                            RING_WARN("Certificate UID must be the public key ID");
+                            return PJ_SSL_CERT_EUNTRUSTED;
+                        }
+                        if (tls_id != remote_h) {
+                            RING_WARN("Certificate public key (ID %s) doesn't match expectation (%s)", tls_id.toString().c_str(), remote_h.toString().c_str());
+                            return PJ_SSL_CERT_EUNTRUSTED;
+                        }
+                    } catch (const std::exception& e) {
+                        return PJ_SSL_CERT_EUNKNOWN;
+                    }
+                    return PJ_SUCCESS;
+                },
+                dh
+            }));
             call->setConnectionState(Call::PROGRESSING);
-            if (c->id == dht::InfoHash()) {
+            if (c->call_key == dht::InfoHash()) {
                 RING_WARN("ICE succeeded : moving incomming call to pending sip call");
                 auto in = c;
                 ++c;
@@ -557,7 +585,7 @@ RingAccount::handleEvents()
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
             RING_WARN("ICE timeout : removing pending outgoing call");
-            if (c->id != dht::InfoHash())
+            if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
             Manager::instance().callFailure(*call);
@@ -602,6 +630,10 @@ void RingAccount::doRegister()
         return;
     }
 
+    if (not dhParams_) {
+        generateDhParams();
+    }
+
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if ( upnpEnabled_ ) {
         auto shared = shared_from_this();
@@ -633,22 +665,10 @@ void RingAccount::doRegister_()
             case dht::Dht::Status::Connecting:
             case dht::Dht::Status::Connected:
                 setRegistrationState(status == dht::Dht::Status::Connected ? RegistrationState::REGISTERED : RegistrationState::TRYING);
-                /*if (!tlsListener_) {
-                    initTlsConfiguration();
-                    tlsListener_ = link_->sipTransport->getTlsListener(
-                        SipTransportDescr {getTransportType(), getTlsListenerPort(), getLocalInterface()},
-                        getTlsSetting());
-                    if (!tlsListener_) {
-                        setRegistrationState(RegistrationState::ERROR_GENERIC);
-                        RING_ERR("Error creating TLS listener.");
-                        return;
-                    }
-                }*/
                 break;
             case dht::Dht::Status::Disconnected:
             default:
                 setRegistrationState(status == dht::Dht::Status::Disconnected ? RegistrationState::UNREGISTERED : RegistrationState::ERROR_GENERIC);
-                tlsListener_.reset();
                 break;
             }
         });
@@ -719,13 +739,14 @@ void RingAccount::doRegister_()
                             RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                             continue;
                         }
-                        if (v->owner.getId() == this_.dht_.getId())
+                        auto remote_id = v->owner.getId();
+                        if (remote_id == this_.dht_.getId())
                             continue;
                         auto res = this_.treatedCalls_.insert(v->id);
                         this_.saveTreatedCalls();
                         if (!res.second)
                             continue;
-                        auto from = v->owner.getId().toString();
+                        auto from = remote_id.toString();
                         auto from_vid = v->id;
                         auto reply_vid = from_vid+1;
                         RING_WARN("Received incomming DHT call request from %s (vid %llx) !!", from.c_str(), from_vid);
@@ -744,7 +765,7 @@ void RingAccount::doRegister_()
 
                         this_.dht_.putEncrypted(
                             listenKey,
-                            v->owner.getId(),
+                            remote_id,
                             dht::Value {
                                 this_.ICE_ANNOUCEMENT_TYPE.id,
                                 ice->getLocalAttributesAndCandidates(),
@@ -768,7 +789,7 @@ void RingAccount::doRegister_()
                         call->initRecFilename(from);
                         {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, {}});
+                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, remote_id});
                         }
                         return true;
                     } catch (const std::exception& e) {
@@ -805,7 +826,6 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());
     dht_.join();
-    tlsListener_.reset();
     setRegistrationState(RegistrationState::UNREGISTERED);
     if (released_cb)
         released_cb(false);
@@ -884,7 +904,7 @@ RingAccount::regenerateCAList()
     }
     auto cas = getRegistredCAs();
     {
-        std::ifstream file(cacertPath_, std::ios::binary);
+        std::ifstream file(tlsCaListFile_, std::ios::binary);
         list << file.rdbuf();
     }
     for (const auto& ca : cas) {
@@ -965,25 +985,39 @@ RingAccount::loadValues() const
     return values;
 }
 
-void RingAccount::initTlsConfiguration()
+void
+RingAccount::initTlsConfiguration()
 {
-    // TLS listener is unique and should be only modified through IP2IP_PROFILE
-    pjsip_tls_setting_default(&tlsSetting_);
     regenerateCAList();
 
-    pj_cstr(&tlsSetting_.ca_list_file, caListPath_.c_str());
-    pj_cstr(&tlsSetting_.cert_file, certPath_.c_str());
-    pj_cstr(&tlsSetting_.privkey_file, privkeyPath_.c_str());
-    pj_cstr(&tlsSetting_.password, "");
-    tlsSetting_.method = PJSIP_TLSV1_METHOD;
-    tlsSetting_.ciphers_num = 0;
-    tlsSetting_.ciphers = nullptr;
-    tlsSetting_.verify_server = false;
-    tlsSetting_.verify_client = false;
-    tlsSetting_.require_client_cert = false;
-    tlsSetting_.timeout.sec = 2;
-    tlsSetting_.qos_type = PJ_QOS_TYPE_BEST_EFFORT;
-    tlsSetting_.qos_ignore_error = PJ_TRUE;
+}
+
+void
+RingAccount::generateDhParams()
+{
+    auto shared = shared_from_this();
+    std::weak_ptr<RingAccount> shared_w = std::static_pointer_cast<RingAccount>(shared);
+    auto t = std::thread([shared_w](){
+        using namespace std::chrono;
+        auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_NORMAL */ GNUTLS_SEC_PARAM_HIGH);
+        RING_DBG("Generating DH params with %u bits", bits);
+        high_resolution_clock::time_point t1 = high_resolution_clock::now();
+        gnutls_dh_params_t new_params_;
+        gnutls_dh_params_init(&new_params_);
+        gnutls_dh_params_generate2(new_params_, bits);
+        high_resolution_clock::time_point t2 = high_resolution_clock::now();
+        duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+        RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
+        std::shared_ptr<gnutls_dh_params_int> sp(new_params_, gnutls_dh_params_deinit);
+        if (auto s = shared_w.lock()) {
+            {
+                std::lock_guard<std::mutex> l(s->dhParamsMtx_);
+                s->dhParams_ = std::move(sp);
+            }
+            s->dhParamsCv_.notify_all();
+        }
+    });
+    t.detach();
 }
 
 void RingAccount::loadConfig()
@@ -1014,8 +1048,8 @@ std::string RingAccount::getFromUri() const
 std::string RingAccount::getToUri(const std::string& to) const
 {
     const std::string transport {pjsip_transport_get_type_name(transportType_)};
-    return "<sip:" + to + ">";
-    //return "<sips:" + to + ";transport=" + transport + ">";
+    //return "<sip:" + to + ">";
+    return "<sips:" + to + ";transport=" + transport + ">";
 }
 
 pj_str_t
@@ -1025,53 +1059,20 @@ RingAccount::getContactHeader(pjsip_transport* t)
         t = transport_->get();
     if (!t) {
         RING_ERR("Transport not created yet");
-        pj_cstr(&contact_, "<sip:>");
+        pj_cstr(&contact_, "<sips:>");
         return contact_;
     }
 
     // FIXME: be sure that given transport is from SipIceTransport
-    auto ice = reinterpret_cast<SipIceTransport::TransportData*>(t)->self;
-
-    // The transport type must be specified, in our case START_OTHER refers to stun transport
-    /*pjsip_transport_type_e transportType = transportType_;
-
-    if (transportType == PJSIP_TRANSPORT_START_OTHER)
-        transportType = PJSIP_TRANSPORT_UDP;*/
-
-    // Else we determine this infor based on transport information
-    //std::string address = "ring.dht";
-    //pj_uint16_t port = getTlsListenerPort();
-
-    //link_->sipTransport->findLocalAddressFromTransport(t, transportType, hostname_, address, port);
-    auto address = ice->getLocalAddress();
-    /*if (addr) {
-        address = addr;
-        port =
-    }*/
-    /*auto ports = ice->getLocalPorts();
-    if (not ports.empty())
-        port = ports[0];*/
-/*
-#if HAVE_IPV6
-    // Enclose IPv6 address in square brackets
-    if (IpAddr::isIpv6(address)) {
-        address = IpAddr(address);//.toString(false, true);
-    }
-#endif
-*/
+    auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
+    auto address = tlsTr->getLocalAddress();
     RING_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sip:%s%s%s>",
+                                     "<sips:%s%s%s;transport=%s>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.toString(true).c_str());    /*
-    contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s%s%s:%d;transport=%s>",
-                                     username_.c_str(),
-                                     (username_.empty() ? "" : "@"),
-                                     address.c_str(),
-                                     port,
-                                     pjsip_transport_get_type_name(transportType));*/
+                                     address.toString(true).c_str(),
+                                     pjsip_transport_get_type_name(transportType_));
     return contact_;
 }
 

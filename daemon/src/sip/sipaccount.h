@@ -642,10 +642,6 @@ class SIPAccount : public SIPAccountBase {
         pj_uint16_t stunPort_ {PJ_STUN_PORT};
 
         bool tlsEnable_ {false};
-        std::string tlsCaListFile_;
-        std::string tlsCertificateFile_;
-        std::string tlsPrivateKeyFile_;
-        std::string tlsPassword_;
         std::string tlsMethod_;
         std::string tlsCiphers_;
         std::string tlsServerName_;

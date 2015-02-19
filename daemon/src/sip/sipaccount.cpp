@@ -124,10 +124,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , cred_()
     , tlsSetting_()
     , ciphers_(100)
-    , tlsCaListFile_()
-    , tlsCertificateFile_()
-    , tlsPrivateKeyFile_()
-    , tlsPassword_()
     , tlsMethod_("TLSv1")
     , tlsCiphers_()
     , tlsServerName_(0, 0)
@@ -393,12 +389,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
     out << YAML::Key << Conf::REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
     out << YAML::Key << Conf::TIMEOUT_KEY << YAML::Value << tlsNegotiationTimeoutSec_;
-    out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
-    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
     out << YAML::Key << Conf::CIPHERS_KEY << YAML::Value << tlsCiphers_;
     out << YAML::Key << Conf::METHOD_KEY << YAML::Value << tlsMethod_;
-    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
-    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
     out << YAML::Key << Conf::SERVER_KEY << YAML::Value << tlsServerName_;
     out << YAML::EndMap;
 
@@ -494,16 +486,12 @@ void SIPAccount::unserialize(const YAML::Node &node)
     const auto &tlsMap = node[Conf::TLS_KEY];
 
     parseValue(tlsMap, Conf::TLS_ENABLE_KEY, tlsEnable_);
-    parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
-    parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
     parseValue(tlsMap, Conf::CIPHERS_KEY, tlsCiphers_);
 
     std::string tmpMethod(tlsMethod_);
     parseValue(tlsMap, Conf::METHOD_KEY, tmpMethod);
     validate(tlsMethod_, tmpMethod, VALID_TLS_METHODS);
 
-    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
-    parseValue(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
     parseValue(tlsMap, Conf::SERVER_KEY, tlsServerName_);
     parseValue(tlsMap, Conf::REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
     parseValue(tlsMap, Conf::VERIFY_CLIENT_KEY, tlsVerifyClient_);
@@ -563,12 +551,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
     // TLS settings
     parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
-    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
-    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-
-    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
     auto iter = details.find(Conf::CONFIG_TLS_METHOD);
     if (iter != details.end())
         validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
@@ -669,10 +651,6 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     a[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
-    a[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    a[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    a[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
     a[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
     a[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
     a[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;

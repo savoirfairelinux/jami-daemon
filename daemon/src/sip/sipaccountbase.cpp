@@ -121,6 +121,10 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
 {
     out << YAML::Key << Conf::TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
+    out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
+    out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
+    out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
+    out << YAML::Key << Conf::PRIVATE_KEY_KEY << YAML::Value << tlsPrivateKeyFile_;
 }
 
 void SIPAccountBase::unserialize(const YAML::Node &node)
@@ -171,6 +175,10 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     // get tls submap
     const auto &tlsMap = node[Conf::TLS_KEY];
     parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
+    parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
+    parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
+    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
+    parseValue(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
 
     unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
@@ -207,6 +215,10 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
 
     // TLS
     parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
+    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 }
 
 std::map<std::string, std::string>
@@ -240,6 +252,10 @@ SIPAccountBase::getAccountDetails() const
     std::stringstream tlslistenerport;
     tlslistenerport << tlsListenerPort_;
     a[Conf::CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
+    a[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
+    a[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
+    a[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
+    a[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
     return a;
 }
 
