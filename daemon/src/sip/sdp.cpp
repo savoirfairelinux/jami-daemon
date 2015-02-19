@@ -689,9 +689,12 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             }
             descr.payload_type = std::string(rtpmap.pt.ptr, rtpmap.pt.slen);
             if (descr.type == MEDIA_AUDIO) {
-                descr.audioformat.sample_rate = rtpmap.clock_rate;
+                auto audio_codec = static_cast<SystemAudioCodecInfo*>(descr.codec.get());
+                descr.audioformat.sample_rate = audio_codec->isPCMG722() ? 16000 : rtpmap.clock_rate;
                 if (rtpmap.param.slen && rtpmap.param.ptr)
                     descr.audioformat.nb_channels = std::stoi(std::string{rtpmap.param.ptr, (size_t)rtpmap.param.slen});
+                else
+                    descr.audioformat.nb_channels = 1;
             } else {
                 //descr.bitrate = getOutgoingVideoField(codec, "bitrate");
             }
