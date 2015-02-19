@@ -1542,14 +1542,13 @@ SIPAccount::getSupportedCiphers() const
         CipherArray avail_ciphers(cipherNum);
         if (pj_ssl_cipher_get_availables(&avail_ciphers.front(), &cipherNum) != PJ_SUCCESS)
             RING_ERR("Could not determine cipher list on this system");
-
-        // filter-out 0 ciphers
+        avail_ciphers.resize(cipherNum);
         availCiphers.reserve(cipherNum);
-        std::copy_if(avail_ciphers.begin(), avail_ciphers.end(),
-                     availCiphers.begin(),
-                     [](pj_ssl_cipher& item){ return item > 0; });
+        for (const auto &item : avail_ciphers) {
+            if (item > 0) // 0 doesn't have a name
+                availCiphers.push_back(pj_ssl_cipher_name(item));
+        }
     }
-
     return availCiphers;
 }
 
