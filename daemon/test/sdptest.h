@@ -60,6 +60,12 @@
 #include "noncopyable.h"
 
 namespace ring { namespace test {
+/*
+ * ebail - 2015/02/18
+ * unit test is based on old SDP manager code
+ * this test is disabled for the moment
+ * */
+#if 0
 
 class SdpSessionException : public std::exception {
     public:
@@ -129,3 +135,4 @@ CPPUNIT_TEST_SUITE_REGISTRATION(SDPTest);
 }} // namespace ring::test
 
 #endif
+#endif //_SDP_TEST_

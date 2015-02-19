@@ -28,6 +28,15 @@
  *  as that of the covered work.
  */
 
+/*
+ * ebail - 2015/02/18
+ * testCodecs unit test is based on audiocodecfactory
+ * we are not using it anymore
+ * we should make this unit test work with libav
+ * this test is disabled for the moment
+ * */
+#if 0
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -43,6 +52,7 @@
 #include <climits>
 
 namespace ring { namespace test {
+
 
 /*
  * Detect the power of a signal for a given frequency.
@@ -119,3 +129,4 @@ void AudioCodecTest::testCodecs()
 }
 
 }} // namespace ring::test
+#endif

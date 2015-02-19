@@ -28,6 +28,13 @@
  *  as that of the covered work.
  */
 
+/*
+ * ebail - 2015/02/18
+ * unit test is deprecated
+ * this test is disabled for the moment
+ * */
+#if 0
+
 #include <unistd.h>
 #include <cstdlib>
 #include <cstdio>
@@ -431,3 +438,4 @@ void SIPTest::testIncomingIpCallSdp()
 }
 
 }} // namespace ring::test
+#endif

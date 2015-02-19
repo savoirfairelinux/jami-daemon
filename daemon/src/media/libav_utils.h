@@ -42,14 +42,6 @@ namespace ring { namespace libav_utils {
     int libav_pixel_format(int fmt);
     int sfl_pixel_format(int fmt);
 
-    std::map<std::string, std::string> encodersMap();
-
-    std::vector<std::string> getVideoCodecList();
-
-#ifdef RING_VIDEO
-    std::vector<std::map <std::string, std::string> > getDefaultVideoCodecs();
-#endif // RING_VIDEO
-
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 
