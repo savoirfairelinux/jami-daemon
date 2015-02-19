@@ -157,7 +157,7 @@ ManagerImpl::ManagerImpl() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false), audioCodecFactory(*pluginManager_),
+    hasTriedToRegister_(false),
     currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()

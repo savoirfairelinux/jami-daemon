@@ -51,11 +51,13 @@
 #include "account_schema.h"
 #include "string_utils.h"
 #include "config/yamlparser.h"
+#include "system_codec_container.h"
 
 #include <yaml-cpp/yaml.h>
 
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
+#include "intrin.h"
 
 namespace ring {
 
@@ -85,12 +87,7 @@ const char * const Account::HAS_CUSTOM_USER_AGENT_KEY   = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY            = "upnpEnabled";
 
-using std::map;
-using std::string;
-using std::vector;
-
-
-Account::Account(const string &accountID)
+Account::Account(const std::string &accountID)
     : accountID_(accountID)
     , username_()
     , hostname_()
@@ -98,9 +95,10 @@ Account::Account(const string &accountID)
     , enabled_(true)
     , autoAnswerEnabled_(false)
     , registrationState_(RegistrationState::UNREGISTERED)
-    , audioCodecList_()
-    , videoCodecList_()
+    , systemCodecContainer_(getSystemCodecContainer())
+    , accountCodecInfoList_()
     , audioCodecStr_()
+    , videoCodecStr_()
     , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -126,13 +124,13 @@ Account::~Account()
 {}
 
 void
-Account::attachCall(const string& id)
+Account::attachCall(const std::string& id)
 {
     callIDSet_.insert(id);
 }
 
 void
-Account::detachCall(const string& id)
+Account::detachCall(const std::string& id)
 {
     callIDSet_.erase(id);
 }
@@ -145,7 +143,8 @@ Account::freeAccount()
     doUnregister();
 }
 
-void Account::setRegistrationState(RegistrationState state)
+void
+Account::setRegistrationState(RegistrationState state)
 {
     if (state != registrationState_) {
         registrationState_ = state;
@@ -158,31 +157,41 @@ void Account::setRegistrationState(RegistrationState state)
     }
 }
 
-void Account::loadDefaultCodecs()
+void
+Account::loadDefaultCodecs()
 {
-    // TODO
-    // CodecMap codecMap = Manager::instance ().getCodecDescriptorMap ().getCodecsMap();
+    // default codec are system codecs
+    auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
 
-    // Initialize codec
-    vector<string> result;
-    result.push_back("0");
-    result.push_back("3");
-    result.push_back("8");
-    result.push_back("9");
-    result.push_back("104");
-    result.push_back("110");
-    result.push_back("111");
-    result.push_back("112");
+    for (const auto& systemCodec: systemCodecList) {
+        // only take encoders and or decoders
+        if (systemCodec->codecType & CODEC_UNDEFINED)
+            continue;
 
-    setActiveAudioCodecs(result);
-#ifdef RING_VIDEO
-    // we don't need to validate via setVideoCodecs, since these are defaults
-    videoCodecList_ = libav_utils::getDefaultVideoCodecs();
-#endif
+        if (systemCodec->mediaType & MEDIA_AUDIO) {
+            // we are sure of our downcast type : use static_pointer_cast
+            auto audioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(systemCodec);
+            // instantiate AccountAudioCodecInfo initialized with our system codec
+            auto codec = std::make_shared <AccountAudioCodecInfo>(*audioCodec);
+            accountCodecInfoList_.push_back(codec);
+            RING_DBG("[%s] loading audio codec = %s", accountID_.c_str(),
+                     codec->systemCodecInfo.name.c_str());
+        }
+
+        if (systemCodec->mediaType & MEDIA_VIDEO) {
+            // we are sure of our downcast type : use static_pointer_cast
+            auto videoCodec = std::static_pointer_cast<SystemVideoCodecInfo>(systemCodec);
+            // instantiate AccountVideoCodecInfo initialized with our system codec
+            auto codec = std::make_shared<AccountVideoCodecInfo>(*videoCodec);
+            accountCodecInfoList_.push_back(codec);
+            RING_DBG("[%s] loading video codec = %s", accountID_.c_str(),
+                     codec->systemCodecInfo.name.c_str());
+        }
+    }
 }
 
-
-void Account::serialize(YAML::Emitter &out)
+void
+Account::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
@@ -201,7 +210,8 @@ void Account::serialize(YAML::Emitter &out)
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
 }
 
-void Account::unserialize(const YAML::Node &node)
+void
+Account::unserialize(const YAML::Node &node)
 {
     using yaml_utils::parseValue;
 
@@ -229,7 +239,8 @@ void Account::unserialize(const YAML::Node &node)
     upnpEnabled_.store(enabled);
 }
 
-void Account::setAccountDetails(const std::map<std::string, std::string> &details)
+void
+Account::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
     parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
@@ -251,7 +262,8 @@ void Account::setAccountDetails(const std::map<std::string, std::string> &detail
     upnpEnabled_.store(enabled);
 }
 
-std::map<std::string, std::string> Account::getAccountDetails() const
+std::map<std::string, std::string>
+Account::getAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
@@ -277,7 +289,8 @@ std::map<std::string, std::string> Account::getAccountDetails() const
     return a;
 }
 
-std::map<std::string, std::string> Account::getVolatileAccountDetails() const
+std::map<std::string, std::string>
+Account::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a;
 
@@ -286,33 +299,40 @@ std::map<std::string, std::string> Account::getVolatileAccountDetails() const
 }
 
 #ifdef RING_VIDEO
+/*
+* TODO ebail : *
+* video codec information format changed (merged with audio mechanism)
+* we need thus to adapt serialization / unserialization to it
+*
+*/
+#if 0
 static bool
-isPositiveInteger(const string &s)
+isPositiveInteger(const std::string& s)
 {
-    string::const_iterator it = s.begin();
+    std::string::const_iterator it = s.begin();
     while (it != s.end() and std::isdigit(*it))
         ++it;
     return not s.empty() and it == s.end();
 }
 
 static bool
-isBoolean(const string &s)
+isBoolean(const std::string& s)
 {
     return s == "true" or s == "false";
 }
 
 template <typename Predicate>
 static bool
-isFieldValid(const map<string, string> &codec, const char *field, Predicate p)
+isFieldValid(const std::map<std::string, std::string>& codec, const char* field, Predicate p)
 {
-    map<string, string>::const_iterator key(codec.find(field));
+    std::map<std::string, std::string>::const_iterator key(codec.find(field));
     return key != codec.end() and p(key->second);
 }
 
 static bool
-isCodecValid(const map<string, string> &codec, const vector<map<string, string> > &defaults)
+isCodecValid(const std::map<std::string, std::string>& codec, const std::vector<std::map<std::string, std::string>>& defaults)
 {
-    const map<string, string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
+    const std::map<std::string, std::string>::const_iterator name(codec.find(Account::VIDEO_CODEC_NAME));
     if (name == codec.end()) {
         RING_ERR("Field \"name\" missing in codec specification");
         return false;
@@ -329,10 +349,20 @@ isCodecValid(const map<string, string> &codec, const vector<map<string, string> 
     RING_ERR("Codec %s not supported", name->second.c_str());
     return false;
 }
+#endif // ebail
 
 static bool
-isCodecListValid(const vector<map<string, string> > &list)
+isCodecListValid(const std::vector<unsigned>& list UNUSED)
 {
+/*
+* TODO ebail : *
+* video codec information format changed (merged with audio mechanism)
+* we need thus to adapt serialization / unserialization to it
+*
+*/
+#if 1 /* ebail : for the moment always return true */
+    return true;
+#else
     const auto defaults(libav_utils::getDefaultVideoCodecs());
     if (list.size() != defaults.size()) {
         RING_ERR("New codec list has a different length than the list of supported codecs");
@@ -345,10 +375,12 @@ isCodecListValid(const vector<map<string, string> > &list)
             return false;
     }
     return true;
+#endif // ebail
 }
-#endif
+#endif // RING_VIDEO
 
-void Account::setVideoCodecs(const vector<map<string, string> > &list)
+void
+Account::setVideoCodecs(const std::vector<unsigned> &list)
 {
 #ifdef RING_VIDEO
     if (isCodecListValid(list))
@@ -362,30 +394,55 @@ void Account::setVideoCodecs(const vector<map<string, string> > &list)
 // Required format: payloads separated by slashes.
 // @return std::string The serializable string
 static std::string
-join_string(const std::vector<std::string> &v)
+join_string(const std::vector<unsigned> &v)
 {
     std::ostringstream os;
-    std::copy(v.begin(), v.end(), std::ostream_iterator<std::string>(os, "/"));
+    std::copy(v.begin(), v.end(), std::ostream_iterator<unsigned>(os, "/"));
     return os.str();
 }
 
-void Account::setActiveAudioCodecs(const vector<string> &list)
+std::vector<unsigned>
+Account::getActiveAudioCodecs() const
+{
+    return getActiveAccountCodecInfoIdList(MEDIA_AUDIO);
+}
+
+void
+Account::setActiveAudioCodecs(const std::vector<std::string>& list)
 {
     // first clear the previously stored codecs
-    audioCodecList_.clear();
+    // TODO: mutex to protect isActive
+    desactivateAllMedia(MEDIA_AUDIO);
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
-    for (const auto &item : list) {
-        int payload = std::atoi(item.c_str());
-        audioCodecList_.push_back(payload);
+    uint16_t order = 1;
+    for (const auto& item : list) {
+        auto codecId = std::atoi(item.c_str());
+        if (auto accCodec = searchCodecById(codecId, MEDIA_AUDIO)) {
+            accCodec->isActive = true;
+            accCodec->order = order;
+            ++order;
+        }
     }
 
-    // update the codec string according to new codec selection
-    audioCodecStr_ = join_string(list);
+    std::sort(std::begin(accountCodecInfoList_),
+              std::end  (accountCodecInfoList_),
+              [](std::shared_ptr<AccountCodecInfo> a,
+                 std::shared_ptr<AccountCodecInfo> b) {
+                  return a->order < b->order;
+              });
+
+    audioCodecStr_ = join_string(getActiveAccountCodecInfoIdList(MEDIA_AUDIO));
+
+    for (const auto& item : accountCodecInfoList_)
+        RING_DBG("[%s] order:%d,  isActive=%s, codec=%s", accountID_.c_str(),
+                 item->order, (item->isActive ? "true" : "false"),
+                 item->systemCodecInfo.to_string().c_str());
 }
 
-string Account::mapStateNumberToString(RegistrationState state)
+std::string
+Account::mapStateNumberToString(RegistrationState state)
 {
 #define CASE_STATE(X) case RegistrationState::X: \
                            return #X
@@ -408,63 +465,44 @@ string Account::mapStateNumberToString(RegistrationState state)
 #undef CASE_STATE
 }
 
-vector<map<string, string> >
-Account::getAllVideoCodecs() const
+std::vector<unsigned>
+Account::getAllVideoCodecsId() const
 {
-    return videoCodecList_;
+    return getAccountCodecInfoIdList(MEDIA_VIDEO);
 }
 
-static bool
-is_inactive(const map<string, string> &codec)
-{
-    map<string, string>::const_iterator iter = codec.find(Account::VIDEO_CODEC_ENABLED);
-    return iter == codec.end() or iter->second != "true";
-}
-
-vector<int>
+std::vector<unsigned>
 Account::getDefaultAudioCodecs()
 {
-    vector<int> result;
-    result.push_back(0);
-    result.push_back(3);
-    result.push_back(8);
-    result.push_back(9);
-    result.push_back(104);
-    result.push_back(110);
-    result.push_back(111);
-    result.push_back(112);
-
-    return result;
+    return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_AUDIO);
 }
 
-vector<map<string, string> >
+std::vector<unsigned>
 Account::getActiveVideoCodecs() const
 {
-    if (not videoEnabled_)
-        return vector<map<string, string>>();
-
-    // FIXME: validate video codec details first
-    vector<map<string, string> > result(videoCodecList_);
-    result.erase(std::remove_if(result.begin(), result.end(), is_inactive), result.end());
-    return result;
+    if (videoEnabled_)
+        return getActiveAccountCodecInfoIdList(MEDIA_VIDEO);
+    return {};
 }
 
-#define find_iter()                             \
-        const auto iter = details.find(key);    \
-        if (iter == details.end()) {            \
-            RING_ERR("Couldn't find key \"%s\"", key); \
-            return;                             \
-        }
+#define find_iter()                                    \
+    const auto& iter = details.find(key);               \
+    if (iter == details.end()) {                       \
+        RING_ERR("Couldn't find key \"%s\"", key);     \
+        return;                                        \
+    }
 
 void
-Account::parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s)
+Account::parseString(const std::map<std::string, std::string>& details,
+                     const char* key, std::string& s)
 {
     find_iter();
     s = iter->second;
 }
 
 void
-Account::parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b)
+Account::parseBool(const std::map<std::string, std::string>& details,
+                   const char* key, bool &b)
 {
     find_iter();
     b = iter->second == TRUE_STR;
@@ -477,12 +515,12 @@ Account::parseBool(const std::map<std::string, std::string> &details, const char
  * If use UPnP is set to false, the address will be empty.
  */
 IpAddr
-Account::getUPnPIpAddress() const {
+Account::getUPnPIpAddress() const
+{
     std::lock_guard<std::mutex> lk(upnp_mtx);
-    if (not upnpEnabled_)
-        return {};
-
-    return upnp_->getExternalIP();
+    if (upnpEnabled_)
+        return upnp_->getExternalIP();
+    return {};
 }
 
 /**
@@ -493,10 +531,90 @@ bool
 Account::getUPnPActive() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
-    if (not upnpEnabled_)
-        return false;
+    if (upnpEnabled_)
+        return upnp_->hasValidIGD();
+    return false;
+}
 
-    return upnp_->hasValidIGD();
+/*
+ * private account codec searching functions
+ *
+ * */
+std::shared_ptr<AccountCodecInfo>
+Account::searchCodecById(unsigned codecId, MediaType mediaType)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if ((codecIt->systemCodecInfo.id == codecId) &&
+            (codecIt->systemCodecInfo.mediaType & mediaType ))
+                return codecIt;
+    }
+    return {};
+}
+
+std::shared_ptr<AccountCodecInfo>
+Account::searchCodecByName(std::string name, MediaType mediaType)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if ((codecIt->systemCodecInfo.name.compare(name) == 0) &&
+            (codecIt->systemCodecInfo.mediaType & mediaType ))
+            return codecIt;
+    }
+    return {};
+}
+
+std::shared_ptr<AccountCodecInfo>
+Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if ((codecIt->payloadType == payload ) &&
+            (codecIt->systemCodecInfo.mediaType & mediaType ))
+            return codecIt;
+    }
+    return {};
+}
+
+std::vector<unsigned>
+Account::getActiveAccountCodecInfoIdList(MediaType mediaType) const
+{
+    std::vector<unsigned> idList;
+    for (auto& codecIt: accountCodecInfoList_) {
+        if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
+            (codecIt->isActive))
+            idList.push_back(codecIt->systemCodecInfo.id);
+    }
+    return idList;
+}
+
+std::vector<unsigned>
+Account::getAccountCodecInfoIdList(MediaType mediaType) const
+{
+    std::vector<unsigned> idList;
+    for (auto& codecIt: accountCodecInfoList_) {
+        if (codecIt->systemCodecInfo.mediaType & mediaType)
+            idList.push_back(codecIt->systemCodecInfo.id);
+    }
+    return idList;
+}
+
+void
+Account::desactivateAllMedia(MediaType mediaType)
+{
+    for (auto& codecIt: accountCodecInfoList_) {
+        if (codecIt->systemCodecInfo.mediaType & mediaType)
+            codecIt->isActive = false;
+    }
+}
+
+std::vector<std::shared_ptr<AccountCodecInfo>>
+Account::getActiveAccountCodecInfoList(MediaType mediaType)
+{
+    std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecList;
+    for (auto& codecIt: accountCodecInfoList_) {
+        if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
+            (codecIt->isActive))
+            accountCodecList.push_back(codecIt);
+    }
+    return accountCodecList;
 }
 
 } // namespace ring
