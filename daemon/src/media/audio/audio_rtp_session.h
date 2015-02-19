@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
- *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -14,8 +14,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,42 +28,44 @@
  *  as that of the covered work.
  */
 
-#ifndef __MEDIA_IO_HANDLE_H__
-#define __MEDIA_IO_HANDLE_H__
+#ifndef AUDIO_RTP_SESSION_H__
+#define AUDIO_RTP_SESSION_H__
 
+#include "threadloop.h"
+#include "media/rtp_session.h"
+#include "media/audio/audiobuffer.h"
 #include "noncopyable.h"
 
-#include <cstddef>
-#include <cstdint>
-
-#ifndef AVFORMAT_AVIO_H
-class AVIOContext;
-#endif
-
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+#include <string>
+#include <memory>
 
 namespace ring {
 
-class MediaIOHandle {
-public:
-    MediaIOHandle(size_t buffer_size,
-                  bool writeable,
-                  io_readcallback read_cb,
-                  io_writecallback write_cb,
-                  io_seekcallback seek_cb,
-                  void *opaque);
-    ~MediaIOHandle();
+class RingBuffer;
+class AudioSender;
+class AudioReceiveThread;
+class IceSocket;
 
-    AVIOContext* getContext() { return ctx_; }
+class AudioRtpSession : public RtpSession {
+public:
+    AudioRtpSession(const std::string& id);
+    virtual ~AudioRtpSession();
+
+    void start();
+    void start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock);
+    void stop();
 
 private:
-    NON_COPYABLE(MediaIOHandle);
-    AVIOContext *ctx_;
-    unsigned char *buf_;
+    NON_COPYABLE(AudioRtpSession);
+
+    void startSender();
+    void startReceiver();
+
+    std::unique_ptr<AudioSender> sender_;
+    std::unique_ptr<AudioReceiveThread> receiveThread_;
+    std::shared_ptr<RingBuffer> ringbuffer_;
 };
 
 } // namespace ring
 
-#endif // __MEDIA_DECODER_H__
+#endif // __AUDIO_RTP_SESSION_H__
