@@ -41,6 +41,7 @@
 #include "config/serializable.h"
 #include "registration_states.h"
 #include "ip_utils.h"
+#include "media_codec.h"
 
 #include <functional>
 #include <string>
@@ -55,18 +56,20 @@
 
 namespace ring { namespace upnp {
 class Controller;
-}}
+}} // namespace ring::upnp
 
 namespace YAML {
 class Emitter;
 class Node;
-}
+} // namespace YAML
 
 namespace ring {
 
 class Call;
+class SystemCodecContainer;
 
-class VoipLinkException : public std::runtime_error {
+class VoipLinkException : public std::runtime_error
+{
     public:
         VoipLinkException(const std::string &str = "") :
             std::runtime_error("VoipLinkException occured: " + str) {}
@@ -79,8 +82,8 @@ class VoipLinkException : public std::runtime_error {
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */
 
-class Account : public Serializable, public std::enable_shared_from_this<Account> {
-
+class Account : public Serializable, public std::enable_shared_from_this<Account>
+{
     public:
         constexpr static const char *TRUE_STR = "true";
         constexpr static const char *FALSE_STR = "false";
@@ -153,7 +156,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * This is why no newIncomingCall() method exist here.
          */
 
-        std::vector<std::shared_ptr<Call> > getCalls();
+        std::vector<std::shared_ptr<Call>> getCalls();
 
         /**
          * Tell if the account is enable or not.
@@ -194,31 +197,27 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        std::vector<std::map<std::string, std::string> >
-        getAllVideoCodecs() const;
+        std::vector<unsigned> getAllVideoCodecsId() const;
+        std::vector<unsigned> getActiveVideoCodecs() const;
 
-        std::vector<std::map<std::string, std::string> >
-        getActiveVideoCodecs() const;
-
-        static std::vector<int> getDefaultAudioCodecs();
+        static std::vector<unsigned> getDefaultAudioCodecs();
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<int> getActiveAudioCodecs() const {
-            return audioCodecList_;
-        }
+        std::vector<unsigned> getActiveAudioCodecs() const;
 
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
         void setActiveAudioCodecs(const std::vector<std::string>& list);
-        void setVideoCodecs(const std::vector<std::map<std::string, std::string> > &codecs);
+        void setVideoCodecs(const std::vector<unsigned> &codecs);
 
         std::string getRingtonePath() const {
             return ringtonePath_;
         }
+
         void setRingtonePath(const std::string &path) {
             ringtonePath_ = path;
         }
@@ -246,7 +245,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         }
 
         void attachCall(const std::string& id);
-
         void detachCall(const std::string& id);
 
         static const char * const VIDEO_CODEC_ENABLED;
@@ -277,13 +275,14 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Set of call's ID attached to the account.
          */
-        std::set<std::string> callIDSet_ = {{}};
+        std::set<std::string> callIDSet_;
 
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
 
         friend class ConfigurationTest;
+
         // General configuration keys for accounts
         static const char * const AUDIO_CODECS_KEY;
         static const char * const VIDEO_CODECS_KEY;
@@ -348,18 +347,21 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Vector containing the order of the codecs
          */
-        std::vector<int> audioCodecList_;
+        std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
+        std::vector<unsigned> audioCodecList_;
+        std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
 
         /**
          * Vector containing the video codecs in order
          */
-        std::vector<std::map<std::string, std::string> > videoCodecList_;
+        std::vector<unsigned> videoCodecList_;
 
         /**
          * List of audio codecs obtained when parsing configuration and used
          * to generate codec order list
          */
         std::string audioCodecStr_;
+        std::string videoCodecStr_;
 
         /**
          * Ringtone .au file used for this account
@@ -410,6 +412,24 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * flag which determines if this account is set to use UPnP.
          */
         std::atomic_bool upnpEnabled_ {false};
+
+
+        /*
+         * private account codec searching functions
+         *
+         * */
+
+        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
+        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
+        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
+        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
+        void desactivateAllMedia(MediaType mediaType);
+        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType);
+
+
+
+
 };
 
 } // namespace ring

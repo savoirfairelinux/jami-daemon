@@ -43,7 +43,6 @@
 #include "video/video_base.h"
 #include "video/video_input.h"
 
-
 namespace ring {
 
 struct VideoManager
