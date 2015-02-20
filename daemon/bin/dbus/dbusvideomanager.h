@@ -61,16 +61,12 @@ class DBusVideoManager :
         DBusVideoManager(DBus::Connection& connection);
 
         // Methods
-        std::vector<unsigned > getVideoCodecList(const std::string& accountID);
-        std::vector<std::string> getVideoCodecDetails(const unsigned& codecId);
-        void setVideoCodecList(const std::string& accountID, const std::vector<unsigned>& list);
         std::vector<std::string> getDeviceList();
         std::map<std::string, std::map<std::string, std::vector<std::string>>> getCapabilities(const std::string& name);
         std::map<std::string, std::string> getSettings(const std::string& name);
         void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
         void setDefaultDevice(const std::string& dev);
         std::string getDefaultDevice();
-        std::string getCurrentCodecName(const std::string& callID);
         void startCamera();
         void stopCamera();
         bool switchInput(const std::string& resource);

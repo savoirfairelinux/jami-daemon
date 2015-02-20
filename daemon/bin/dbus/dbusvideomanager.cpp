@@ -36,24 +36,6 @@ DBusVideoManager::DBusVideoManager(DBus::Connection& connection)
 {}
 
 auto
-DBusVideoManager::getVideoCodecList(const std::string& accountID) -> decltype(DRing::getVideoCodecList(accountID))
-{
-    return DRing::getVideoCodecList(accountID);
-}
-
-auto
-DBusVideoManager::getVideoCodecDetails(const unsigned& codecId) -> decltype(DRing::getVideoCodecDetails(codecId))
-{
-    return DRing::getVideoCodecDetails(codecId);
-}
-
-void
-DBusVideoManager::setVideoCodecList(const std::string& accountID, const std::vector<unsigned> &list)
-{
-    DRing::setVideoCodecList(accountID, list);
-}
-
-auto
 DBusVideoManager::getDeviceList() -> decltype(DRing::getDeviceList())
 {
     return DRing::getDeviceList();
@@ -87,12 +69,6 @@ auto
 DBusVideoManager::getDefaultDevice() -> decltype(DRing::getDefaultDevice())
 {
     return DRing::getDefaultDevice();
-}
-
-auto
-DBusVideoManager::getCurrentCodecName(const std::string& callID) -> decltype(DRing::getCurrentCodecName(callID))
-{
-    return DRing::getCurrentCodecName(callID);
 }
 
 void

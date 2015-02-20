@@ -231,9 +231,9 @@ getAccountList()
  * Can stay global, as only the active codecs will be set per accounts
  */
 std::vector<unsigned>
-getAudioCodecList()
+getCodecList()
 {
-    std::vector<unsigned> list {ring::getSystemCodecContainer()->getSystemCodecInfoIdList(ring::MEDIA_AUDIO)};
+    std::vector<unsigned> list {ring::getSystemCodecContainer()->getSystemCodecInfoIdList(ring::MEDIA_ALL)};
     if (list.empty())
         ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return list;
@@ -256,31 +256,51 @@ getSupportedCiphers(const std::string& accountID)
     return {};
 }
 
-std::vector<std::string>
-getAudioCodecDetails(unsigned codecId)
+std::map<std::string, std::string>
+getCodecDetails(const std::string& accountID, const unsigned& codecId)
 {
-    auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_AUDIO);
-    if (auto foundCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(codec))
-        return foundCodec->getCodecSpecifications();
+    auto acc = ring::Manager::instance().getAccount(accountID);
+    if (!acc)
+    {
+        RING_ERR("Could not find account %s", accountID.c_str());
+        return {};
+    }
+
+    auto codec = acc->searchCodecById(codecId, ring::MEDIA_ALL);
+    if (!codec)
+    {
+        ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
+        return {};
+    }
+
+    if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO)
+        if (auto foundCodec = std::static_pointer_cast<ring::AccountAudioCodecInfo>(codec))
+            return foundCodec->getCodecSpecifications();
+
+    if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO)
+        if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec))
+            return foundCodec->getCodecSpecifications();
+
     ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
     return {};
 }
 
 std::vector<unsigned>
-getActiveAudioCodecList(const std::string& accountID)
+getActiveCodecList(const std::string& accountID)
 {
     if (auto acc = ring::Manager::instance().getAccount(accountID))
-        return acc->getActiveAudioCodecs();
+        return acc->getActiveCodecs();
     RING_ERR("Could not find account %s, returning default", accountID.c_str());
-    return Account::getDefaultAudioCodecs();
+    return Account::getDefaultCodecs();
 }
 
 void
-setActiveAudioCodecList(const std::vector<std::string>& list,
-                        const std::string& accountID)
+setActiveCodecList(const std::string& accountID
+        , const std::vector<unsigned>& list)
 {
-    if (auto acc = ring::Manager::instance().getAccount(accountID)) {
-        acc->setActiveAudioCodecs(list);
+    if (auto acc = ring::Manager::instance().getAccount(accountID))
+    {
+        acc->setActiveCodecs(list);
         ring::Manager::instance().saveConfig();
     } else {
         RING_ERR("Could not find account %s", accountID.c_str());

@@ -47,33 +47,6 @@
             </arg>
         </method>
 
-        <!-- Video Codec related methods -->
-
-        <method name="getVideoCodecList" tp:name-for-bindings="getVideoCodecList">
-            <arg type="s" name="accountID" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
-            <arg type="au" name="list" direction="out">
-            </arg>
-        </method>
-
-        <method name="getVideoCodecDetails" tp:name-for-bindings="getVideoCodecDetails">
-            <arg type="u" name="codecid" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
-            <arg type="as" name="details" direction="out">
-            </arg>
-        </method>
-
-        <method name="setVideoCodecList" tp:name-for-bindings="setVideoCodecList">
-            <tp:docstring>Sets a vector of hashtables describing codecs and their parameters for a given account, one hashtable per codec</tp:docstring>
-            <arg type="s" name="accountID" direction="in">
-            </arg>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorInt"/>
-            <arg type="au" name="list" direction="in">
-            </arg>
-         </method>
-
         <method name="startCamera" tp:name-for-bindings="startCamera">
             <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
         </method>
@@ -141,10 +114,5 @@
             </arg>
         </signal>
 
-        <method name="getCurrentCodecName" tp:name-for-bindings="getCurrentCodecName">
-            <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="s" name="codecName" direction="out"/>
-        </method>
     </interface>
 </node>
