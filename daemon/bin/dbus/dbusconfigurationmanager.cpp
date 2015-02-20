@@ -98,9 +98,9 @@ DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefau
 }
 
 auto
-DBusConfigurationManager::getAudioCodecList() -> decltype(DRing::getAudioCodecList())
+DBusConfigurationManager::getCodecList() -> decltype(DRing::getCodecList())
 {
-    return DRing::getAudioCodecList();
+    return DRing::getCodecList();
 }
 
 auto
@@ -116,21 +116,21 @@ DBusConfigurationManager::getSupportedCiphers(const std::string& accountID) -> d
 }
 
 auto
-DBusConfigurationManager::getAudioCodecDetails(const unsigned& codecId) -> decltype(DRing::getAudioCodecDetails(codecId))
+DBusConfigurationManager::getCodecDetails(const std::string& accountID, const unsigned& codecId) -> decltype(DRing::getCodecDetails(accountID, codecId))
 {
-    return DRing::getAudioCodecDetails(codecId);
+    return DRing::getCodecDetails(accountID, codecId);
 }
 
 auto
-DBusConfigurationManager::getActiveAudioCodecList(const std::string& accountID) -> decltype(DRing::getActiveAudioCodecList(accountID))
+DBusConfigurationManager::getActiveCodecList(const std::string& accountID) -> decltype(DRing::getActiveCodecList(accountID))
 {
-    return DRing::getActiveAudioCodecList(accountID);
+    return DRing::getActiveCodecList(accountID);
 }
 
 void
-DBusConfigurationManager::setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID)
+DBusConfigurationManager::setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list)
 {
-    DRing::setActiveAudioCodecList(list, accountID);
+    DRing::setActiveCodecList(accountID, list);
 }
 
 auto
