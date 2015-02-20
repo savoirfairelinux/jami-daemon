@@ -194,6 +194,17 @@ constexpr static const char CERT_PATH          [] = "DHT.certificatePath"       
 
 } //namespace DRing::Account::DHT
 
+namespace CodecInfo {
+
+constexpr static const char NAME               [] = "CodecInfo.name"                    ;
+constexpr static const char TYPE               [] = "CodecInfo.type"                    ;
+constexpr static const char SAMPLE_RATE        [] = "CodecInfo.sampleRate"              ;
+constexpr static const char FRAME_RATE         [] = "CodecInfo.frameRate"               ;
+constexpr static const char BITRATE            [] = "CodecInfo.bitrate"                 ;
+constexpr static const char CHANNEL_NUMBER     [] = "CodecInfo.channelNumber"           ;
+
+} //namespace DRing::Account::CodecInfo::ConfProperties::CodecInfo
+
 } //namespace DRing::Account::ConfProperties
 
 } //namespace DRing::Account

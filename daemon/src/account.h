@@ -197,22 +197,21 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        std::vector<unsigned> getAllVideoCodecsId() const;
-        std::vector<unsigned> getActiveVideoCodecs() const;
-
-        static std::vector<unsigned> getDefaultAudioCodecs();
+        static std::vector<unsigned> getDefaultCodecs();
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<unsigned> getActiveAudioCodecs() const;
+        std::vector<unsigned> getActiveCodecs() const;
 
         /**
          * Update both the codec order structure and the codec string used for
          * SDP offer and configuration respectively
          */
-        void setActiveAudioCodecs(const std::vector<std::string>& list);
-        void setVideoCodecs(const std::vector<unsigned> &codecs);
+        void setActiveCodecs(const std::vector<unsigned>& list);
+        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
+
 
         std::string getRingtonePath() const {
             return ringtonePath_;
@@ -284,8 +283,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         friend class ConfigurationTest;
 
         // General configuration keys for accounts
-        static const char * const AUDIO_CODECS_KEY;
-        static const char * const VIDEO_CODECS_KEY;
+        static const char * const ALL_CODECS_KEY;
         static const char * const RINGTONE_PATH_KEY;
         static const char * const RINGTONE_ENABLED_KEY;
         static const char * const VIDEO_ENABLED_KEY;
@@ -345,23 +343,19 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         RegistrationState registrationState_;
 
         /**
-         * Vector containing the order of the codecs
+         * Vector containing all system codecs (with default parameters)
          */
         std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
-        std::vector<unsigned> audioCodecList_;
+        /**
+         * Vector containing all account codecs (set of system codecs with custom parameters)
+         */
         std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
 
         /**
-         * Vector containing the video codecs in order
-         */
-        std::vector<unsigned> videoCodecList_;
-
-        /**
-         * List of audio codecs obtained when parsing configuration and used
+         * List of audio and video codecs obtained when parsing configuration and used
          * to generate codec order list
          */
-        std::string audioCodecStr_;
-        std::string videoCodecStr_;
+        std::string allCodecStr_;
 
         /**
          * Ringtone .au file used for this account
@@ -416,13 +410,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * private account codec searching functions
          */
-        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
         std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
         std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
-        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
         void desactivateAllMedia(MediaType mediaType);
         std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType);
+
 };
 
 } // namespace ring
