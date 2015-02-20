@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -67,6 +68,11 @@ class VideoDeviceMonitor : public Serializable
 
         void addDevice(const std::string &node);
         void removeDevice(const std::string &node);
+
+        /**
+         * Params for libav
+         */
+        DeviceParams getDeviceParams(const std::string& name) const;
 
         /*
          * Interface to load from/store to the (YAML) configuration file.
