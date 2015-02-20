@@ -264,7 +264,9 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     else
         sdp.setPublishedIP(getPublishedAddress());
 
-    const bool created = sdp.createOffer(getActiveAudioCodecs(), getActiveVideoCodecs());
+    const bool created = sdp.createOffer(
+            getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
+            getActiveAccountCodecInfoIdList(MEDIA_VIDEO));
 
     if (not created or not SIPStartCall(call))
         throw VoipLinkException("Could not send outgoing INVITE request for new call");

@@ -100,13 +100,13 @@ void registerAllAccounts(void);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
-std::vector<unsigned> getAudioCodecList();
+std::vector<unsigned> getCodecList();
 std::vector<std::string> getSupportedTlsMethod();
 std::vector<std::string> getSupportedCiphers(const std::string& accountID);
-std::vector<std::string> getAudioCodecDetails(unsigned codecId);
-std::vector<unsigned> getActiveAudioCodecList(const std::string& accountID);
+std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
+std::vector<unsigned> getActiveCodecList(const std::string& accountID);
 
-void setActiveAudioCodecList(const std::vector<std::string>& list, const std::string& accountID);
+void setActiveCodecList(const std::vector<std::string>& list, const std::string& accountID);
 
 std::vector<std::string> getAudioPluginList();
 void setAudioPlugin(const std::string& audioPlugin);
