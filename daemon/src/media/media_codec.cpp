@@ -31,6 +31,7 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
+#include "account_const.h"
 
 #include <string.h>
 #include <sstream>
@@ -102,14 +103,16 @@ SystemAudioCodecInfo::isPCMG722() const
 }
 
 
-std::vector<std::string>
+std::map<std::string, std::string>
 SystemAudioCodecInfo::getCodecSpecifications()
 {
-    return {name,                              // name of the codec
-            std::to_string(sampleRate),        // sample rate
-            std::to_string(bitrate),           // bit rate
-            std::to_string(nbChannels)         // channel number
-            };
+    std::map<std::string, std::string> codecSpecMap;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::NAME] = name;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::TYPE] = (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO");
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(bitrate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE] = std::to_string(sampleRate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER] = std::to_string(nbChannels);
+    return codecSpecMap;
 }
 
 /*
@@ -119,20 +122,25 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
                                            const std::string m_name,
                                            std::string m_libName,
                                            CodecType m_type,
-                                           unsigned m_payloadType)
+                                           unsigned m_payloadType,
+                                           unsigned m_frameRate,
+                                           unsigned m_profileId)
     : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO, m_type, m_payloadType)
+    , frameRate(m_frameRate), profileId(m_profileId)
 {}
 
 SystemVideoCodecInfo::~SystemVideoCodecInfo()
 {}
 
-std::vector<std::string>
+std::map<std::string, std::string>
 SystemVideoCodecInfo::getCodecSpecifications()
 {
-    return {name,                      // name of the codec
-            std::to_string(bitrate),   // bit rate
-            parameters                 // parameters
-            };
+    std::map<std::string, std::string> codecSpecMap;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::NAME] = name;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::TYPE] = (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO");
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(bitrate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::FRAME_RATE] = std::to_string(frameRate);
+    return codecSpecMap;
 }
 
 AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
@@ -152,6 +160,18 @@ AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCode
     , nbChannels(sysCodecInfo.nbChannels)
 {}
 
+std::map<std::string, std::string>
+AccountAudioCodecInfo::getCodecSpecifications()
+{
+    std::map<std::string, std::string> codecSpecMap;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::NAME] = systemCodecInfo.name;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::TYPE] = (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO");
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(bitrate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE] = std::to_string(sampleRate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER] = std::to_string(nbChannels);
+    return codecSpecMap;
+}
+
 AccountAudioCodecInfo::~AccountAudioCodecInfo()
 {}
 
@@ -160,6 +180,17 @@ AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCode
     , frameRate(sysCodecInfo.frameRate)
     , profileId(sysCodecInfo.profileId)
 {}
+
+std::map<std::string, std::string>
+AccountVideoCodecInfo::getCodecSpecifications()
+{
+    std::map<std::string, std::string> codecSpecMap;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::NAME] = systemCodecInfo.name;
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::TYPE] = (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO");
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(bitrate);
+    codecSpecMap[DRing::Account::ConfProperties::CodecInfo::FRAME_RATE] = std::to_string(frameRate);
+    return codecSpecMap;
+}
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()
 {}

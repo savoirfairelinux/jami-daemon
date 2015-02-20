@@ -62,8 +62,7 @@
 
 namespace ring {
 
-const char * const Account::AUDIO_CODECS_KEY            = "audioCodecs";  // 0/9/110/111/112/
-const char * const Account::VIDEO_CODECS_KEY            = "videoCodecs";
+const char * const Account::ALL_CODECS_KEY              = "allCodecs";
 const char * const Account::VIDEO_CODEC_ENABLED         = "enabled";
 const char * const Account::VIDEO_CODEC_NAME            = "name";
 const char * const Account::VIDEO_CODEC_PARAMETERS      = "parameters";
@@ -98,8 +97,7 @@ Account::Account(const std::string &accountID)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
     , accountCodecInfoList_()
-    , audioCodecStr_()
-    , videoCodecStr_()
+    , allCodecStr_()
     , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -198,7 +196,7 @@ Account::serialize(YAML::Emitter &out)
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
     out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
-    out << YAML::Key << AUDIO_CODECS_KEY << YAML::Value << audioCodecStr_;
+    out << YAML::Key << ALL_CODECS_KEY << YAML::Value << allCodecStr_;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
@@ -223,10 +221,11 @@ Account::unserialize(const YAML::Node &node)
     //parseValue(node, PASSWORD_KEY, password_);
 
     parseValue(node, MAILBOX_KEY, mailBox_);
-    parseValue(node, AUDIO_CODECS_KEY, audioCodecStr_);
+    parseValue(node, ALL_CODECS_KEY, allCodecStr_);
 
     // Update codec list which one is used for SDP offer
-    setActiveAudioCodecs(split_string(audioCodecStr_, '/'));
+    //TODO: ebail: manage a list merging audio and video
+    setActiveCodecs(split_string_to_unsigned(allCodecStr_, '/'));
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -380,16 +379,6 @@ isCodecListValid(const std::vector<unsigned>& list UNUSED)
 }
 #endif // RING_VIDEO
 
-void
-Account::setVideoCodecs(const std::vector<unsigned> &list)
-{
-#ifdef RING_VIDEO
-    if (isCodecListValid(list))
-        videoCodecList_ = list;
-#else
-    (void) list;
-#endif
-}
 
 // Convert a list of payloads in a special format, readable by the server.
 // Required format: payloads separated by slashes.
@@ -403,24 +392,23 @@ join_string(const std::vector<unsigned> &v)
 }
 
 std::vector<unsigned>
-Account::getActiveAudioCodecs() const
+Account::getActiveCodecs() const
 {
-    return getActiveAccountCodecInfoIdList(MEDIA_AUDIO);
+    return getActiveAccountCodecInfoIdList(MEDIA_ALL);
 }
 
 void
-Account::setActiveAudioCodecs(const std::vector<std::string>& list)
+Account::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
     // TODO: mutex to protect isActive
-    desactivateAllMedia(MEDIA_AUDIO);
+    desactivateAllMedia(MEDIA_ALL);
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
     uint16_t order = 1;
     for (const auto& item : list) {
-        auto codecId = std::atoi(item.c_str());
-        if (auto accCodec = searchCodecById(codecId, MEDIA_AUDIO)) {
+        if (auto accCodec = searchCodecById(item, MEDIA_ALL)) {
             accCodec->isActive = true;
             accCodec->order = order;
             ++order;
@@ -434,7 +422,7 @@ Account::setActiveAudioCodecs(const std::vector<std::string>& list)
                   return a->order < b->order;
               });
 
-    audioCodecStr_ = join_string(getActiveAccountCodecInfoIdList(MEDIA_AUDIO));
+    allCodecStr_ = join_string(getActiveAccountCodecInfoIdList(MEDIA_ALL));
 
     for (const auto& item : accountCodecInfoList_)
         RING_DBG("[%s] order:%d,  isActive=%s, codec=%s", accountID_.c_str(),
@@ -467,23 +455,9 @@ Account::mapStateNumberToString(RegistrationState state)
 }
 
 std::vector<unsigned>
-Account::getAllVideoCodecsId() const
+Account::getDefaultCodecs()
 {
-    return getAccountCodecInfoIdList(MEDIA_VIDEO);
-}
-
-std::vector<unsigned>
-Account::getDefaultAudioCodecs()
-{
-    return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_AUDIO);
-}
-
-std::vector<unsigned>
-Account::getActiveVideoCodecs() const
-{
-    if (videoEnabled_)
-        return getActiveAccountCodecInfoIdList(MEDIA_VIDEO);
-    return {};
+    return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
 }
 
 #define find_iter()                                    \
