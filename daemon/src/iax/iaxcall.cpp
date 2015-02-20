@@ -89,7 +89,7 @@ IAXCall::getSupportedFormat(const std::string &accountID) const
     int format_mask = 0;
 
     if (account) {
-        std::vector<unsigned> codecs{account->getActiveAudioCodecs()};
+        std::vector<unsigned> codecs{account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO)};
 
         for (const auto &i : codecs)
             format_mask |= codecToASTFormat(i);
@@ -105,7 +105,7 @@ IAXCall::getFirstMatchingFormat(int needles, const std::string &accountID) const
     const auto account = Manager::instance().getAccount(accountID);
 
     if (account != NULL) {
-        std::vector<unsigned> codecs{account->getActiveAudioCodecs()};
+        std::vector<unsigned> codecs{account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO)};
 
         for (const auto &i : codecs) {
             int format_mask = codecToASTFormat(i);
