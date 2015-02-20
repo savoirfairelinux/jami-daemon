@@ -112,7 +112,6 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
 
-    out << YAML::Key << VIDEO_CODECS_KEY << YAML::Value << videoCodecList_;
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
     out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
@@ -149,7 +148,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     // validate it
     setVideoCodecs(tmp);
 #endif
-    setVideoCodecs(getAllVideoCodecsId());
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     int port = DEFAULT_SIP_PORT;

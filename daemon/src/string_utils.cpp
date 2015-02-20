@@ -46,5 +46,17 @@ split_string(const std::string &s, char delim)
             result.emplace_back(token);
     return result;
 }
+std::vector<unsigned>
+split_string_to_unsigned(const std::string &s, char delim)
+{
+    std::vector<unsigned> result;
+    std::string token;
+    std::istringstream ss(s);
+
+    while (std::getline(ss, token, delim))
+        if (not token.empty())
+            result.emplace_back(std::stoi(token));
+    return result;
+}
 
 } // namespace ring
