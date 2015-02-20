@@ -34,7 +34,6 @@
 #define __MEDIA_CODEC_H__
 
 #include "audio/audiobuffer.h" // for AudioFormat
-#include "sip/sdes_negotiator.h"
 #include "ip_utils.h"
 
 #include <string>
@@ -172,6 +171,64 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     std::string parameters;
 };
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
+
+class CryptoAttribute {
+public:
+    CryptoAttribute() {}
+    CryptoAttribute(const std::string &tag,
+                    const std::string &cryptoSuite,
+                    const std::string &srtpKeyMethod,
+                    const std::string &srtpKeyInfo,
+                    const std::string &lifetime,
+                    const std::string &mkiValue,
+                    const std::string &mkiLength) :
+        tag_(tag),
+        cryptoSuite_(cryptoSuite),
+        srtpKeyMethod_(srtpKeyMethod),
+        srtpKeyInfo_(srtpKeyInfo),
+        lifetime_(lifetime),
+        mkiValue_(mkiValue),
+        mkiLength_(mkiLength) {}
+
+    std::string getTag() const {
+        return tag_;
+    }
+    std::string getCryptoSuite() const {
+        return cryptoSuite_;
+    }
+    std::string getSrtpKeyMethod() const {
+        return srtpKeyMethod_;
+    }
+    std::string getSrtpKeyInfo() const {
+        return srtpKeyInfo_;
+    }
+    std::string getLifetime() const {
+        return lifetime_;
+    }
+    std::string getMkiValue() const {
+        return mkiValue_;
+    }
+    std::string getMkiLength() const {
+        return mkiLength_;
+    }
+
+    operator bool() const {
+        return not tag_.empty();
+    }
+
+    std::string to_string() const {
+        return tag_+" "+cryptoSuite_+" "+srtpKeyMethod_+":"+srtpKeyInfo_;
+    }
+
+private:
+    std::string tag_;
+    std::string cryptoSuite_;
+    std::string srtpKeyMethod_;
+    std::string srtpKeyInfo_;
+    std::string lifetime_;
+    std::string mkiValue_;
+    std::string mkiLength_;
+};
 
 /**
  * MediaDescription

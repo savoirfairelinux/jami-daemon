@@ -31,6 +31,8 @@
 #ifndef __SDES_NEGOTIATOR_H__
 #define __SDES_NEGOTIATOR_H__
 
+#include "media/media_codec.h"
+
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -88,60 +90,6 @@ static const CryptoSuiteDefinition CryptoSuites[] = {
 };
 
 
-class CryptoAttribute {
-    public:
-        CryptoAttribute() {}
-        CryptoAttribute(const std::string &tag,
-                        const std::string &cryptoSuite,
-                        const std::string &srtpKeyMethod,
-                        const std::string &srtpKeyInfo,
-                        const std::string &lifetime,
-                        const std::string &mkiValue,
-                        const std::string &mkiLength) :
-            tag_(tag),
-            cryptoSuite_(cryptoSuite),
-            srtpKeyMethod_(srtpKeyMethod),
-            srtpKeyInfo_(srtpKeyInfo),
-            lifetime_(lifetime),
-            mkiValue_(mkiValue),
-            mkiLength_(mkiLength) {}
-
-        std::string getTag() const {
-            return tag_;
-        }
-        std::string getCryptoSuite() const {
-            return cryptoSuite_;
-        }
-        std::string getSrtpKeyMethod() const {
-            return srtpKeyMethod_;
-        }
-        std::string getSrtpKeyInfo() const {
-            return srtpKeyInfo_;
-        }
-        std::string getLifetime() const {
-            return lifetime_;
-        }
-        std::string getMkiValue() const {
-            return mkiValue_;
-        }
-        std::string getMkiLength() const {
-            return mkiLength_;
-        }
-
-        operator bool() const {
-            return not tag_.empty();
-        }
-
-    private:
-        std::string tag_;
-        std::string cryptoSuite_;
-        std::string srtpKeyMethod_;
-        std::string srtpKeyInfo_;
-        std::string lifetime_;
-        std::string mkiValue_;
-        std::string mkiLength_;
-};
-
 class SdesNegotiator {
         /**
          * Constructor for an SDES crypto attributes
@@ -154,21 +102,25 @@ class SdesNegotiator {
          *       from it.
          */
     public:
-        SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites,
-                       const std::vector<std::string>& remoteAttribute);
+        SdesNegotiator() {}
+        SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
 
-        CryptoAttribute negotiate() const;
+        ring::CryptoAttribute negotiate(const std::vector<std::string>& attributes) const;
+
+        operator bool() const {
+            return not localCapabilities_.empty();
+        }
 
     private:
+        static std::vector<CryptoAttribute> parse(const std::vector<std::string>& attributes);
+
         /**
          * A vector list containing the remote attributes.
          * Multiple crypto lines can be sent, and the
          * preferred method is then chosen from that list.
          */
-        std::vector<std::string> remoteAttribute_;
         std::vector<CryptoSuiteDefinition> localCapabilities_;
-
-        std::vector<CryptoAttribute> parse() const;
 };
 }
+
 #endif // __SDES_NEGOTIATOR_H__
