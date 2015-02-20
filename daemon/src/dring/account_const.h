@@ -42,6 +42,7 @@ constexpr static const char READY                     [] = "READY"              
 constexpr static const char UNREGISTERED              [] = "UNREGISTERED"           ;
 constexpr static const char TRYING                    [] = "TRYING"                 ;
 constexpr static const char ERROR                     [] = "ERROR"                  ;
+constexpr static const char ERROR_GENERIC             [] = "ERROR_GENERIC"          ;
 constexpr static const char ERROR_AUTH                [] = "ERRORAUTH"              ;
 constexpr static const char ERROR_NETWORK             [] = "ERRORNETWORK"           ;
 constexpr static const char ERROR_HOST                [] = "ERRORHOST"              ;
