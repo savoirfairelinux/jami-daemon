@@ -84,6 +84,8 @@ void SRTPProtoContext::srtp_close()
 SRTPProtoContext::SRTPProtoContext(const char *out_suite, const char *out_key,
                                    const char *in_suite, const char *in_key)
 {
+    RING_WARN("SRTP outsuite %s %s", out_suite, out_key);
+    RING_WARN("SRTP insuite %s %s", in_suite, in_key);
     if (out_suite && out_key) {
         if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
             srtp_close();
@@ -226,7 +228,6 @@ void SocketPair::createSRTP(const char *out_suite, const char *out_key,
 {
     srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
 }
-
 
 void SocketPair::interrupt()
 {
