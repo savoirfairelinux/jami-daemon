@@ -32,6 +32,7 @@
 // libav_deps.h must be included first
 #include "libav_deps.h"
 #include "media_decoder.h"
+#include "media_buffer.h"
 #include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
@@ -280,7 +281,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -299,7 +300,7 @@ MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
-    AVFrame *frame = result.get();
+    auto frame = result.pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
@@ -391,7 +392,7 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
 
 #ifdef RING_VIDEO
 MediaDecoder::Status
-MediaDecoder::flush(video::VideoFrame& result)
+MediaDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -400,7 +401,7 @@ MediaDecoder::flush(video::VideoFrame& result)
     inpacket.size = 0;
 
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, result.get(),
+    auto len = avcodec_decode_video2(decoderCtx_, result.pointer(),
                                     &frameFinished, &inpacket);
     if (len <= 0)
         return Status::DecodeError;

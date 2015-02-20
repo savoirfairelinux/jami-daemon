@@ -29,8 +29,10 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+
 #include "video_mixer.h"
+#include "media_buffer.h"
 #include "logger.h"
 #include "client/videomanager.h"
 #include "client/signal.h"
@@ -44,8 +46,8 @@ namespace ring { namespace video {
 
 static const double FRAME_DURATION = 1/30.;
 
-VideoMixer::VideoMixer(const std::string &id) :
-    VideoGenerator::VideoGenerator()
+VideoMixer::VideoMixer(const std::string &id)
+    : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_(id)
     , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
@@ -103,8 +105,7 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
         if (x->source == ob) {
             if (!x->update_frame)
                 x->update_frame.reset(new VideoFrame);
-            // copy the input frame and make it available to the renderer
-            frame_p->copy(*x->update_frame.get());
+            *x->update_frame = *frame_p;
             x->atomic_swap_render(x->update_frame);
             return;
         }
@@ -121,12 +122,14 @@ void VideoMixer::process()
     lastProcess_ = now;
 
     VideoFrame& output = getNewFrame();
-    if (!output.allocBuffer(width_, height_, VIDEO_PIXFMT_YUV420P)) {
+    try {
+        output.reserve(VIDEO_PIXFMT_YUV420P, width_, height_);
+    } catch (const std::bad_alloc& e) {
         RING_ERR("VideoFrame::allocBuffer() failed");
         return;
     }
 
-    output.clear();
+    yuv422_clear_to_black(output);
 
     {
         auto lock(rwMutex_.read());
@@ -153,10 +156,10 @@ void VideoMixer::process()
     publishFrame();
 }
 
-void VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input,
-                              int index)
+void
+VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
 {
-    if (!width_ or !height_ or !input.get())
+    if (!width_ or !height_ or !input.pointer())
         return;
 
     const int n = sources_.size();
@@ -179,7 +182,7 @@ void VideoMixer::setDimensions(int width, int height)
     // cleanup the previous frame to have a nice copy in rendering method
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
     if (previous_p)
-        previous_p->clear();
+        yuv422_clear_to_black(*previous_p);
 
     stop_sink();
     start_sink();

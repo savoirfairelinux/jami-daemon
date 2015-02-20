@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -29,58 +29,61 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
-#include "video_base.h"
-#include "media_buffer.h"
-#include "logger.h"
+#pragma once
 
-#include <cassert>
+#include "config.h"
 
-namespace ring { namespace video {
+#include <memory>
 
-/*=== VideoPacket  ===========================================================*/
+#ifdef RING_VIDEO
+// forward declaration from libav
+class AVFrame;
+#endif
 
-VideoPacket::VideoPacket() : packet_(static_cast<AVPacket *>(av_mallocz(sizeof(AVPacket))))
-{
-    av_init_packet(packet_);
-}
+namespace ring {
 
-VideoPacket::~VideoPacket() { av_free_packet(packet_); av_free(packet_); }
+#ifdef RING_VIDEO
 
-/*=== VideoGenerator =========================================================*/
+class VideoFrame {
+    public:
+        // Construct an empty VideoFrame
+        VideoFrame();
 
-VideoFrame&
-VideoGenerator::getNewFrame()
-{
-    std::lock_guard<std::mutex> lk(mutex_);
-    if (writableFrame_)
-        writableFrame_->reset();
-    else
-        writableFrame_.reset(new VideoFrame());
-    return *writableFrame_.get();
-}
+        // Return a pointer on underlaying buffer
+        AVFrame* pointer() const noexcept { return frame_.get(); }
 
-void
-VideoGenerator::publishFrame()
-{
-    std::lock_guard<std::mutex> lk(mutex_);
-    lastFrame_ = std::move(writableFrame_);
-    notify(lastFrame_);
-}
+        void reset() noexcept;
 
-void
-VideoGenerator::flushFrames()
-{
-    std::lock_guard<std::mutex> lk(mutex_);
-    writableFrame_.reset();
-    lastFrame_.reset();
-}
+        // Return frame size in bytes
+        std::size_t size() const noexcept;
 
-std::shared_ptr<VideoFrame>
-VideoGenerator::obtainLastFrame()
-{
-    std::lock_guard<std::mutex> lk(mutex_);
-    return lastFrame_;
-}
+        // Return pixel format
+        int format() const noexcept;
 
-}} // namespace ring::video
+        // Return frame width in pixels
+        int width() const noexcept;
+
+        // Return frame height in pixels
+        int height() const noexcept;
+
+        void reserve(int format, int width, int height);
+
+        void setFromMemory(void* ptr, int format, int width, int height) noexcept;
+
+        // Copy-Assignement
+        VideoFrame& operator =(const VideoFrame& src);
+
+    private:
+        std::unique_ptr<AVFrame, void(*)(AVFrame*)> frame_;
+        bool allocated_ {false};
+
+        void setGeometry(int format, int width, int height) noexcept;
+};
+
+// Some helpers
+std::size_t videoFrameSize(int format, int width, int height);
+void yuv422_clear_to_black(VideoFrame& frame);
+
+#endif // RING_VIDEO
+
+} // namespace ring

@@ -1,3 +1,4 @@
+
 /*
  *  Copyright (C) 2013 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -31,20 +32,27 @@
 
 #include "libav_deps.h"
 #include "video_scaler.h"
+#include "media_buffer.h"
 #include "logger.h"
 
 #include <cassert>
 
 namespace ring { namespace video {
 
-VideoScaler::VideoScaler() : ctx_(0), mode_(SWS_FAST_BILINEAR), tmp_data_() {}
+VideoScaler::VideoScaler()
+    : ctx_(0), mode_(SWS_FAST_BILINEAR), tmp_data_()
+{}
 
-VideoScaler::~VideoScaler() { sws_freeContext(ctx_); }
-
-void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
+VideoScaler::~VideoScaler()
 {
-    const AVFrame *input_frame = input.get();
-    AVFrame *output_frame = output.get();
+    sws_freeContext(ctx_);
+}
+
+void
+VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
+{
+    const auto input_frame = input.pointer();
+    auto output_frame = output.pointer();
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
@@ -65,9 +73,10 @@ void VideoScaler::scale(const VideoFrame &input, VideoFrame &output)
               output_frame->linesize);
 }
 
-void VideoScaler::scale_with_aspect(const VideoFrame &input, VideoFrame &output)
+void
+VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
 {
-    AVFrame *output_frame = output.get();
+    auto output_frame = output.pointer();
     scale_and_pad(input, output, 0, 0, output_frame->width,
                   output_frame->height, true);
 }
@@ -87,13 +96,14 @@ static inline bool is_yuv_planar(const AVPixFmtDescriptor *desc)
     return not used_bit_mask;
 }
 
-void VideoScaler::scale_and_pad(const VideoFrame &input, VideoFrame &output,
-                                unsigned xoff, unsigned yoff,
-                                unsigned dest_width, unsigned dest_height,
-                                bool keep_aspect)
+void
+VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
+                           unsigned xoff, unsigned yoff,
+                           unsigned dest_width, unsigned dest_height,
+                           bool keep_aspect)
 {
-    const AVFrame *input_frame = input.get();
-    AVFrame *output_frame = output.get();
+    const auto input_frame = input.pointer();
+    auto output_frame = output.pointer();
 
     /* Correct destination width/height and offset if we need to keep input
      * frame aspect.

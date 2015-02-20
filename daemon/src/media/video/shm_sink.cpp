@@ -38,6 +38,7 @@
 #endif
 
 #include "video_scaler.h"
+#include "media_buffer.h"
 
 #include "shm_sink.h"
 #include "shm_header.h"
@@ -182,7 +183,8 @@ bool SHMSink::resize_area(size_t desired_length)
     return true;
 }
 
-void SHMSink::render(const std::vector<unsigned char> &data)
+void
+SHMSink::render(const std::vector<unsigned char>& data)
 {
     shm_lock();
 
@@ -196,15 +198,16 @@ void SHMSink::render(const std::vector<unsigned char> &data)
     shm_unlock();
 }
 
-void SHMSink::render_frame(VideoFrame& src)
+void
+SHMSink::render_frame(VideoFrame& src)
 {
     VideoFrame dst;
     VideoScaler scaler;
 
-    const int width = src.getWidth();
-    const int height = src.getHeight();
+    const int width = src.width();
+    const int height = src.height();
     const int format = VIDEO_PIXFMT_BGRA;
-    size_t bytes = dst.getSize(width, height, format);
+    size_t bytes = videoFrameSize(format, width, height);
 
     shm_lock();
 
@@ -213,7 +216,7 @@ void SHMSink::render_frame(VideoFrame& src)
         return;
     }
 
-    dst.setDestination(shm_area_->data, width, height, format);
+    dst.setFromMemory(shm_area_->data, width, height, format);
     scaler.scale(src, dst);
 
 #ifdef DEBUG_FPS

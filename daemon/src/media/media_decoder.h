@@ -57,20 +57,19 @@ namespace ring {
 
 #ifdef RING_VIDEO
 namespace video {
-    class VideoFrame;
-    class VideoPacket;
-}
+class VideoFrame;
+class VideoPacket;
+} // namespace ring::video
 #endif // RING_VIDEO
 
-    class AudioBuffer;
-    class AudioFormat;
-    class RingBuffer;
-    class Resampler;
-    class MediaIOHandle;
+class AudioBuffer;
+class AudioFormat;
+class RingBuffer;
+class Resampler;
+class MediaIOHandle;
 
-    class MediaDecoder {
-
-public:
+class MediaDecoder {
+    public:
         enum class Status {
             Success,
             FrameFinished,
@@ -90,8 +89,8 @@ public:
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(video::VideoFrame&, video::VideoPacket&);
-        Status flush(video::VideoFrame&);
+        Status decode(VideoFrame&, video::VideoPacket&);
+        Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
         int setupFromAudioData();
@@ -122,7 +121,7 @@ public:
 
     protected:
         AVDictionary *options_ = nullptr;
-    };
+};
 
 } // namespace ring
 

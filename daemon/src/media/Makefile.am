@@ -11,6 +11,7 @@ endif
 libmedia_la_SOURCES = \
 	libav_utils.cpp \
 	socket_pair.cpp \
+	media_buffer.cpp \
 	media_decoder.cpp \
 	media_encoder.cpp \
 	media_io_handle.cpp \
@@ -21,6 +22,7 @@ noinst_HEADERS = \
 	libav_utils.h \
 	libav_deps.h \
 	socket_pair.h \
+	media_buffer.h \
 	media_decoder.h \
 	media_encoder.h \
 	media_io_handle.h \
