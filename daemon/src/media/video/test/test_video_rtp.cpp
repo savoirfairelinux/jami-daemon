@@ -31,16 +31,21 @@
 #include "video_rtp_session.h"
 #include "video_device_monitor.h"
 
-#include <iostream>
-#include <map>
-#include <string>
+#include "ip_utils.h"
+
 #include <unistd.h> // for sleep
 
 int main ()
 {
     ring::video::VideoDeviceMonitor monitor;
     ring::video::VideoRtpSession session("test", {});
-    session.start(12345);
+
+    ring::MediaDescription local {};
+    local.addr = {AF_INET};
+    local.addr.setPort(12345);
+    session.updateMedia(local, ring::MediaDescription{});
+
+    session.start();
     sleep(5);
     session.stop();
 

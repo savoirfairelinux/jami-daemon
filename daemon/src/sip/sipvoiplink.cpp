@@ -56,7 +56,7 @@
 #endif
 
 #include "system_codec_container.h"
-#include "audio/audiortp/avformat_rtp_session.h"
+#include "audio/audio_rtp_session.h"
 
 #ifdef RING_VIDEO
 #include "video/video_rtp_session.h"
@@ -342,7 +342,11 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (account->isStunEnabled())
         call->updateSDPFromSTUN();
 
-    call->getSDP().receiveOffer(r_sdp, account->getActiveAudioCodecs(), account->getActiveVideoCodecs());
+    call->getSDP().receiveOffer(r_sdp,
+        account->getActiveAudioCodecs(),
+        account->getActiveVideoCodecs(),
+        account->getSrtpKeyExchange()
+    );
     if (not call->getIceTransport()) {
         RING_DBG("Initializing ICE transport");
         call->initIceTransport(false);
@@ -875,7 +879,11 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     const auto& account = call->getSIPAccount();
     auto& localSDP = call->getSDP();
 
-    localSDP.receiveOffer(offer, account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    localSDP.receiveOffer(offer,
+        account.getActiveAudioCodecs(),
+        account.getActiveVideoCodecs(),
+        account.getSrtpKeyExchange()
+    );
     localSDP.startNegotiation();
 
     pjsip_inv_set_sdp_answer(inv, localSDP.getLocalSdpSession());
@@ -915,7 +923,11 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
-    const bool created = localSDP.createOffer(account.getActiveAudioCodecs(), account.getActiveVideoCodecs());
+    const bool created = localSDP.createOffer(
+        account.getActiveAudioCodecs(),
+        account.getActiveVideoCodecs(),
+        account.getSrtpKeyExchange()
+    );
 
     if (created)
         *p_offer = localSDP.getLocalSdpSession();
@@ -1012,14 +1024,7 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
     sdp.setActiveLocalSdpSession(localSDP);
     sdp.setActiveRemoteSdpSession(remoteSDP);
 
-    // Update connection information
-    sdp.setMediaTransportInfoFromRemoteSdp();
-
-    call->openPortsUPnP();
-
-    // Handle possible ICE transport
-    if (!call->startIce())
-        RING_WARN("ICE not started");
+    call->onMediaUpdate();
 }
 
 static void

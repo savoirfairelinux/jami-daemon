@@ -32,38 +32,34 @@
 #ifndef __VIDEO_RTP_SESSION_H__
 #define __VIDEO_RTP_SESSION_H__
 
+#include "media/rtp_session.h"
+
 #include "video_base.h"
-#include "video_mixer.h"
-#include "noncopyable.h"
-#include "video_sender.h"
-#include "video_receive_thread.h"
-#include "socket_pair.h"
 
 #include <string>
-#include <map>
 #include <memory>
-#include <mutex>
 
 namespace ring {
-class Sdp;
 class Conference;
 } // namespace ring
 
 namespace ring { namespace video {
 
-class VideoRtpSession {
+class VideoMixer;
+class VideoSender;
+class VideoReceiveThread;
+
+class VideoRtpSession : public RtpSession {
 public:
-    VideoRtpSession(const std::string &callID,
-                    const std::map<std::string, std::string> &txArgs);
+    VideoRtpSession(const std::string& callID,
+                    const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
-    void start(int localPort);
+    void start();
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock);
     void stop();
-    void updateDestination(const std::string &destination,
-                           unsigned int port);
-    void updateSDP(const Sdp &sdp);
+
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
@@ -71,24 +67,15 @@ public:
     void exitConference();
 
 private:
-    NON_COPYABLE(VideoRtpSession);
-
     void setupConferenceVideoPipeline(Conference *conference);
     void startSender();
     void startReceiver();
 
-    // all public methods must be locked internally before use
-    std::recursive_mutex mutex_;
+    DeviceParams localVideoParams_;
 
-    std::unique_ptr<SocketPair> socketPair_;
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
-    std::map<std::string, std::string> txArgs_;
-    std::map<std::string, std::string> rxArgs_;
-    bool sending_ = false;
-    bool receiving_ = false;
     Conference* conference_ {nullptr};
-    const std::string callID_;
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
 };
