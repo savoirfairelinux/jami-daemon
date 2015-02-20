@@ -61,32 +61,6 @@ registerVideoHandlers(const std::map<std::string,
     }
 }
 
-std::vector<unsigned>
-getVideoCodecList(const std::string& accountID)
-{
-    if (auto acc = ring::Manager::instance().getAccount(accountID))
-        return acc->getAllVideoCodecsId();
-    return {};
-}
-
-std::vector<std::string>
-getVideoCodecDetails(unsigned codecId)
-{
-    auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_VIDEO);
-    if (auto foundCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(codec))
-        return foundCodec->getCodecSpecifications();
-    return {};
-}
-
-void
-setVideoCodecList(const std::string& accountID,
-                  const std::vector<unsigned>& list)
-{
-    if (auto acc = ring::Manager::instance().getAccount(accountID)) {
-        acc->setVideoCodecs(list);
-        ring::Manager::instance().saveConfig();
-    }
-}
 
 std::vector<std::string>
 getDeviceList()
@@ -163,11 +137,6 @@ hasCameraStarted()
     return videoManager.started;
 }
 
-std::string
-getCurrentCodecName(const std::string& /*callID*/)
-{
-    return "";
-}
 
 } // namespace DRing
 

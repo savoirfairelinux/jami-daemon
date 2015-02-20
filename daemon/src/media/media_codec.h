@@ -39,6 +39,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 #include <iostream>
 #include <unistd.h>
 
@@ -102,7 +103,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 
     ~SystemAudioCodecInfo();
 
-    std::vector<std::string> getCodecSpecifications();
+    std::map<std::string, std::string>  getCodecSpecifications();
     bool isPCMG722() const;
 
     unsigned sampleRate;
@@ -118,11 +119,12 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
                          std::string libName, CodecType type = CODEC_UNDEFINED,
-                         unsigned payloadType = 0);
+                         unsigned payloadType = 0, unsigned frameRate = 0,
+                         unsigned profileId = 0);
 
     ~SystemVideoCodecInfo();
 
-    std::vector<std::string> getCodecSpecifications();
+    std::map<std::string, std::string>  getCodecSpecifications();
 
     unsigned frameRate;
     unsigned profileId;
@@ -152,7 +154,7 @@ struct AccountAudioCodecInfo : AccountCodecInfo
     AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
     ~AccountAudioCodecInfo();
 
-    std::vector<std::string> getCodecSpecifications();
+    std::map<std::string, std::string>  getCodecSpecifications();
 
     /* account custom values */
     unsigned sampleRate;
@@ -164,7 +166,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
     ~AccountVideoCodecInfo();
 
-    std::vector<std::string> getCodecSpecifications();
+    std::map<std::string, std::string>  getCodecSpecifications();
 
     /* account custom values */
     unsigned frameRate;
