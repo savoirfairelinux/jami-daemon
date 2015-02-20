@@ -270,7 +270,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (account->getActiveAudioCodecs().empty()) {
+    if (account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO).empty()) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
 
         return PJ_FALSE;
@@ -343,8 +343,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         call->updateSDPFromSTUN();
 
     call->getSDP().receiveOffer(r_sdp,
-        account->getActiveAudioCodecs(),
-        account->getActiveVideoCodecs(),
+        account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
+        account->getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
         account->getSrtpKeyExchange()
     );
     if (not call->getIceTransport()) {
@@ -880,8 +880,8 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     auto& localSDP = call->getSDP();
 
     localSDP.receiveOffer(offer,
-        account.getActiveAudioCodecs(),
-        account.getActiveVideoCodecs(),
+        account.getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
+        account.getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
         account.getSrtpKeyExchange()
     );
     localSDP.startNegotiation();
@@ -924,8 +924,8 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
     const bool created = localSDP.createOffer(
-        account.getActiveAudioCodecs(),
-        account.getActiveVideoCodecs(),
+        account.getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
+        account.getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
         account.getSrtpKeyExchange()
     );
 

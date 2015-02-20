@@ -368,33 +368,33 @@
 
        <!-- Codecs-related methods -->
 
-       <method name="getAudioCodecList" tp:name-for-bindings="getAudioCodecList">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+       <method name="getCodecList" tp:name-for-bindings="getCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorUInt"/>
            <arg type="au" name="list" direction="out">
            </arg>
        </method>
 
-       <method name="getAudioCodecDetails" tp:name-for-bindings="getAudioCodecDetails">
-           <arg type="u" name="codecId" direction="in">
-           </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
-           <arg type="as" name="details" direction="out">
+       <method name="getCodecDetails" tp:name-for-bindings="getCodecDetails">
+           <arg type="s" name="accountID" direction="in"></arg>
+           <arg type="u" name="codecId" direction="in"></arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
            </arg>
        </method>
 
-       <method name="getActiveAudioCodecList" tp:name-for-bindings="getActiveAudioCodecList">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorInt"/>
+       <method name="getActiveCodecList" tp:name-for-bindings="getActiveCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorUInt"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
            <arg type="au" name="list" direction="out">
            </arg>
        </method>
 
-       <method name="setActiveAudioCodecList" tp:name-for-bindings="setActiveAudioCodecList">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="VectorString"/>
-           <arg type="as" name="list" direction="in">
-           </arg>
+       <method name="setActiveCodecList" tp:name-for-bindings="setActiveCodecList">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="VectorUInt"/>
            <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="au" name="list" direction="in">
            </arg>
        </method>
 
@@ -567,7 +567,7 @@
                    The account ID
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
            <arg type="a{ss}" name="details" tp:type="String_String_Map">
                <tp:docstring>
                    Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
