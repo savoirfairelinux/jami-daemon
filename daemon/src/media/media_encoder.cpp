@@ -29,8 +29,9 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_encoder.h"
+#include "media_buffer.h"
 #include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "logger.h"
@@ -181,7 +182,7 @@ MediaEncoder::openOutput(const char *enc_name, const char *short_name,
         const int width = encoderCtx_->width;
         const int height = encoderCtx_->height;
         const int format = libav_utils::sfl_pixel_format((int)encoderCtx_->pix_fmt);
-        scaledFrameBufferSize_ = scaledFrame_.getSize(width, height, format);
+        scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
             throw MediaEncoderException("buffer too small");
 
@@ -196,7 +197,7 @@ MediaEncoder::openOutput(const char *enc_name, const char *short_name,
         if (!scaledFrameBuffer_)
             throw MediaEncoderException("Could not allocate scaled frame buffer");
 
-        scaledFrame_.setDestination(scaledFrameBuffer_, width, height, format);
+        scaledFrame_.setFromMemory(scaledFrameBuffer_, format, width, height);
     }
 #endif // RING_VIDEO
 }
@@ -237,15 +238,15 @@ print_averror(const char *funcname, int err)
 }
 
 #ifdef RING_VIDEO
-int MediaEncoder::encode(video::VideoFrame &input, bool is_keyframe, int64_t frame_number)
+int MediaEncoder::encode(VideoFrame& input, bool is_keyframe, int64_t frame_number)
 {
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
-    scaledFrame_.clear(); // to fill blank space left by the "keep aspect"
+    yuv422_clear_to_black(scaledFrame_); // to fill blank space left by the "keep aspect"
     scaler_.scale_with_aspect(input, scaledFrame_);
 
-    AVFrame *frame = scaledFrame_.get();
+    auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
 
     if (is_keyframe) {

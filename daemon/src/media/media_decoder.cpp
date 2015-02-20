@@ -29,9 +29,9 @@
  *  as that of the covered work.
  */
 
-// libav_deps.h must be included first
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_decoder.h"
+#include "media_buffer.h"
 #include "media_io_handle.h"
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
@@ -280,7 +280,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -299,7 +299,7 @@ MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
-    AVFrame *frame = result.get();
+    auto frame = result.pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
@@ -333,8 +333,10 @@ MediaDecoder::decode(video::VideoFrame& result, video::VideoPacket& video_packet
 #endif // RING_VIDEO
 
 MediaDecoder::Status
-MediaDecoder::decode_audio(AVFrame *decoded_frame)
+MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
+    const auto libav_frame = decodedFrame.pointer();
+
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
     av_init_packet(&inpacket);
@@ -358,7 +360,7 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
         return Status::Success;
 
     int frameFinished = 0;
-    int len = avcodec_decode_audio4(decoderCtx_, decoded_frame,
+    int len = avcodec_decode_audio4(decoderCtx_, libav_frame,
                                     &frameFinished, &inpacket);
     if (len <= 0) {
         return Status::DecodeError;
@@ -366,11 +368,11 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
 
     if (frameFinished) {
         if (emulateRate_) {
-            if (decoded_frame->pkt_dts != AV_NOPTS_VALUE) {
+            if (libav_frame->pkt_dts != AV_NOPTS_VALUE) {
                 const auto now = std::chrono::system_clock::now();
                 const std::chrono::duration<double> seconds = now - lastFrameClock_;
                 const double dTB = av_q2d(inputCtx_->streams[streamIndex_]->time_base);
-                const double dts_diff = dTB * (decoded_frame->pkt_dts - lastDts_);
+                const double dts_diff = dTB * (libav_frame->pkt_dts - lastDts_);
                 const double usDelay = 1e6 * (dts_diff - seconds.count());
                 if (usDelay > 0.0) {
 #if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
@@ -380,7 +382,7 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
 #endif
                 }
                 lastFrameClock_ = now;
-                lastDts_ = decoded_frame->pkt_dts;
+                lastDts_ = libav_frame->pkt_dts;
             }
         }
         return Status::FrameFinished;
@@ -391,7 +393,7 @@ MediaDecoder::decode_audio(AVFrame *decoded_frame)
 
 #ifdef RING_VIDEO
 MediaDecoder::Status
-MediaDecoder::flush(video::VideoFrame& result)
+MediaDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -400,7 +402,7 @@ MediaDecoder::flush(video::VideoFrame& result)
     inpacket.size = 0;
 
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, result.get(),
+    auto len = avcodec_decode_video2(decoderCtx_, result.pointer(),
                                     &frameFinished, &inpacket);
     if (len <= 0)
         return Status::DecodeError;
@@ -421,30 +423,32 @@ int MediaDecoder::getHeight() const
 int MediaDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
 
-void MediaDecoder::writeToRingBuffer(AVFrame* decoded_frame,
-                                     RingBuffer& rb,
-                                     const AudioFormat outFormat)
+void
+MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
+                                RingBuffer& rb, const AudioFormat outFormat)
 {
+    const auto libav_frame = decodedFrame.pointer();
+
     const AudioFormat decoderFormat = {
-        (unsigned) decoded_frame->sample_rate,
+        (unsigned) libav_frame->sample_rate,
         (unsigned) decoderCtx_->channels
     };
 
-    AudioBuffer out(decoded_frame->nb_samples, decoderFormat);
+    AudioBuffer out(libav_frame->nb_samples, decoderFormat);
 
     if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
-        out.convertFloatPlanarToSigned16(decoded_frame->extended_data,
-                                         decoded_frame->nb_samples, decoderCtx_->channels);
+        out.convertFloatPlanarToSigned16(libav_frame->extended_data,
+                                         libav_frame->nb_samples, decoderCtx_->channels);
     } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
-        out.deinterleave(reinterpret_cast<const AudioSample*>(decoded_frame->data[0]),
-                         decoded_frame->nb_samples, decoderCtx_->channels);
+        out.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
+                         libav_frame->nb_samples, decoderCtx_->channels);
     }
-    if ((unsigned)decoded_frame->sample_rate != outFormat.sample_rate) {
+    if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler(outFormat));
         }
-        AudioBuffer resampledData(decoded_frame->nb_samples,
+        AudioBuffer resampledData(libav_frame->nb_samples,
                                        {(unsigned) outFormat.sample_rate,
                                         (unsigned) decoderCtx_->channels});
         resampler_->resample(out, resampledData);

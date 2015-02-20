@@ -30,8 +30,9 @@
  *  as that of the covered work.
  */
 
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+
 #include "config.h"
-#include "libav_deps.h"
 #include "video/video_base.h"
 #include "logger.h"
 
@@ -105,8 +106,8 @@ void sfl_avcodec_init()
 int libav_pixel_format(int fmt)
 {
     switch (fmt) {
-        case VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
-        case VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
+        case video::VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
+        case video::VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
     }
     return fmt;
 }
@@ -114,7 +115,7 @@ int libav_pixel_format(int fmt)
 int sfl_pixel_format(int fmt)
 {
     switch (fmt) {
-        case PIXEL_FORMAT(YUV420P): return VIDEO_PIXFMT_YUV420P;
+        case PIXEL_FORMAT(YUV420P): return video::VIDEO_PIXFMT_YUV420P;
     }
     return fmt;
 }

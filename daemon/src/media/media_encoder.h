@@ -40,6 +40,7 @@
 #endif
 
 #include "noncopyable.h"
+#include "media_buffer.h"
 
 #include <map>
 #include <memory>
@@ -75,7 +76,7 @@ public:
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
 #ifdef RING_VIDEO
-    int encode(video::VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO
 
     int encode_audio(const AudioBuffer &input);
@@ -102,7 +103,7 @@ private:
 
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
-    video::VideoFrame scaledFrame_;
+    VideoFrame scaledFrame_;
 #endif // RING_VIDEO
 
     uint8_t *scaledFrameBuffer_ = nullptr;

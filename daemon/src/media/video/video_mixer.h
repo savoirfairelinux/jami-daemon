@@ -46,9 +46,9 @@
 namespace ring { namespace video {
 
     struct VideoMixerSource {
-        Observable<std::shared_ptr<VideoFrame> >* source = nullptr;
-        std::unique_ptr<VideoFrame> update_frame = nullptr;
-        std::unique_ptr<VideoFrame> render_frame = nullptr;
+        Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
+        std::unique_ptr<VideoFrame> update_frame;
+        std::unique_ptr<VideoFrame> render_frame;
         void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
             std::lock_guard<std::mutex> lock(mutex_);
             render_frame.swap(other);

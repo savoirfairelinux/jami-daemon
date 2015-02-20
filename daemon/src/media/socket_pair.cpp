@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "socket_pair.h"
 #include "ice_socket.h"
 #include "libav_utils.h"

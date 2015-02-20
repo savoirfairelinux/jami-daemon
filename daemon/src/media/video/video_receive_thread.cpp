@@ -30,7 +30,7 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "video_receive_thread.h"
 #include "socket_pair.h"
 #include "manager.h"

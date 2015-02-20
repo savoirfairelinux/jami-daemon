@@ -29,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_FRAME_H__
-#define __VIDEO_FRAME_H__
+#pragma once
 
 #include "noncopyable.h"
 
@@ -40,7 +39,6 @@
 #include <set>
 #include <mutex>
 
-class AVFrame;
 class AVPacket;
 class AVDictionary;
 
@@ -48,64 +46,67 @@ class AVDictionary;
 class AVIOContext;
 #endif
 
+namespace ring {
+class VideoFrame;
+}
+
+namespace ring { namespace video {
+
 enum VideoPixelFormat {
     VIDEO_PIXFMT_BGRA = -1,
     VIDEO_PIXFMT_YUV420P = -2,
 };
 
-namespace ring { namespace video {
-
 template <typename T> class Observer;
 template <typename T> class Observable;
-class VideoFrame;
 
 /*=== Observable =============================================================*/
 
 template <typename T>
 class Observable
 {
-public:
-    Observable() : observers_(), mutex_() {}
-    virtual ~Observable() {
-        std::lock_guard<std::mutex> lk(mutex_);
-        for (auto &o : observers_)
-            o->detached(this);
-    };
+    public:
+        Observable() : observers_(), mutex_() {}
+        virtual ~Observable() {
+            std::lock_guard<std::mutex> lk(mutex_);
+            for (auto &o : observers_)
+                o->detached(this);
+        };
 
-    bool attach(Observer<T>* o) {
-        std::lock_guard<std::mutex> lk(mutex_);
-        if (o and observers_.insert(o).second) {
-            o->attached(this);
-            return true;
+        bool attach(Observer<T>* o) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            if (o and observers_.insert(o).second) {
+                o->attached(this);
+                return true;
+            }
+            return false;
         }
-        return false;
-    }
 
-    bool detach(Observer<T>* o) {
-        std::lock_guard<std::mutex> lk(mutex_);
-        if (o and observers_.erase(o)) {
-            o->detached(this);
-            return true;
+        bool detach(Observer<T>* o) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            if (o and observers_.erase(o)) {
+                o->detached(this);
+                return true;
+            }
+            return false;
         }
-        return false;
-    }
 
-    void notify(T& data) {
-        std::lock_guard<std::mutex> lk(mutex_);
-        for (auto observer : observers_)
-            observer->update(this, data);
-    }
+        void notify(T& data) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            for (auto observer : observers_)
+                observer->update(this, data);
+        }
 
-    int getObserversCount() {
-        std::lock_guard<std::mutex> lk(mutex_);
-        return observers_.size();
-    }
+        int getObserversCount() {
+            std::lock_guard<std::mutex> lk(mutex_);
+            return observers_.size();
+        }
 
-private:
-    NON_COPYABLE(Observable<T>);
+    private:
+        NON_COPYABLE(Observable<T>);
 
-    std::set<Observer<T>*> observers_;
-    std::mutex mutex_; // lock observers_
+        std::set<Observer<T>*> observers_;
+        std::mutex mutex_; // lock observers_
 };
 
 /*=== Observer =============================================================*/
@@ -120,53 +121,21 @@ public:
     virtual void detached(Observable<T>*) {};
 };
 
+struct VideoFrameActiveWriter: Observable<std::shared_ptr<VideoFrame>> {};
+struct VideoFramePassiveReader: Observer<std::shared_ptr<VideoFrame>> {};
+
 /*=== VideoPacket  ===========================================================*/
 
 class VideoPacket {
+    public:
+        VideoPacket();
+        ~VideoPacket();
+        AVPacket* get() { return packet_; };
 
-public:
-    VideoPacket();
-    ~VideoPacket();
-    AVPacket* get() { return packet_; };
-
-private:
-    NON_COPYABLE(VideoPacket);
-    AVPacket *packet_;
+    private:
+        NON_COPYABLE(VideoPacket);
+        AVPacket *packet_;
 };
-
-/*=== VideoFrame =============================================================*/
-
-class VideoFrame {
-public:
-    VideoFrame();
-
-    ~VideoFrame();
-
-    AVFrame* get() const { return frame_; };
-    int getPixelFormat() const;
-    int getWidth() const;
-    int getHeight() const;
-    void setGeometry(int width, int height, int pix_fmt);
-    void setDestination(void *data, int width, int height, int pix_fmt);
-    size_t getSize();
-    static size_t getSize(int width, int height, int format);
-    void setdefaults();
-    bool allocBuffer(int width, int height, int pix_fmt);
-    void copy(VideoFrame &dst);
-    void clear();
-    void clone(VideoFrame &dst);
-
-private:
-    NON_COPYABLE(VideoFrame);
-    AVFrame *frame_ = nullptr;
-    bool allocated_ = false;
-};
-
-class VideoFrameActiveWriter : public Observable<std::shared_ptr<VideoFrame> >
-{};
-
-class VideoFramePassiveReader : public Observer<std::shared_ptr<VideoFrame> >
-{};
 
 /*=== VideoGenerator =========================================================*/
 
@@ -194,5 +163,3 @@ private:
 };
 
 }} // namespace ring::video
-
-#endif // __VIDEO_BASE_H__

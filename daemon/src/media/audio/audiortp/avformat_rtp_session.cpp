@@ -27,6 +27,9 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+
 #include "avformat_rtp_session.h"
 
 #include "logger.h"
@@ -38,7 +41,6 @@
 #endif //RING_VIDEO
 
 #include "socket_pair.h"
-#include "libav_deps.h"
 #include "media_encoder.h"
 #include "media_decoder.h"
 #include "media_io_handle.h"
@@ -268,12 +270,12 @@ void
 AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    std::unique_ptr<AVFrame, void(*)(AVFrame*)> decodedFrame(av_frame_alloc(), [](AVFrame*p){av_frame_free(&p);});
+    AudioFrame decodedFrame;
 
-    switch (audioDecoder_->decode_audio(decodedFrame.get())) {
+    switch (audioDecoder_->decode(decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:
-            audioDecoder_->writeToRingBuffer(decodedFrame.get(), *ringbuffer_,
+            audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
             return;
 

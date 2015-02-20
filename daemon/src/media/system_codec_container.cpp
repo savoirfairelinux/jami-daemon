@@ -29,7 +29,7 @@
  *  as that of the covered work.
  */
 
-#include "libav_deps.h"
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "logger.h"
 #include "system_codec_container.h"
 
