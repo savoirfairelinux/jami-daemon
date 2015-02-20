@@ -58,6 +58,7 @@
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
 #include "intrin.h"
+#include "dring/account_const.h"
 
 namespace ring {
 
@@ -459,7 +460,7 @@ Account::mapStateNumberToString(RegistrationState state)
         CASE_STATE(ERROR_EXIST_STUN);
         CASE_STATE(ERROR_NOT_ACCEPTABLE);
         default:
-            return "ERROR_GENERIC";
+            return DRing::Account::States::ERROR_GENERIC;
     }
 
 #undef CASE_STATE
