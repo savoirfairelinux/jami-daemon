@@ -30,6 +30,7 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "media_device.h"
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"

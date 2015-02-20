@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2013-2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,6 +33,8 @@
 #pragma once
 
 #include "noncopyable.h"
+
+#include <yaml-cpp/yaml.h>
 
 #include <cstdlib>
 #include <cstdint>
@@ -162,4 +165,28 @@ private:
     std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
 };
 
+struct VideoSettings
+{
+    VideoSettings() {}
+    VideoSettings(const std::map<std::string, std::string>& settings);
+
+    std::map<std::string, std::string> to_map() const;
+
+    std::string name {};
+    std::string video_size {};
+    std::string channel {};
+    unsigned framerate {};
+};
+
 }} // namespace ring::video
+
+namespace YAML {
+template<>
+struct convert<ring::video::VideoSettings> {
+    static Node encode(const ring::video::VideoSettings& rhs);
+    static bool decode(const Node& node, ring::video::VideoSettings& rhs);
+};
+
+Emitter& operator << (Emitter& out, const ring::video::VideoSettings& v);
+
+} // namespace YAML

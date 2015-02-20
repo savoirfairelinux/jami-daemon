@@ -37,7 +37,7 @@
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "threadloop.h"
-#include "media/media_codec.h" // DeviceParams
+#include "media/media_device.h" // DeviceParams
 
 #include <map>
 #include <atomic>

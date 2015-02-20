@@ -41,6 +41,7 @@
 
 #include <map>
 #include <string>
+#include <sstream>
 #include <cassert>
 #include <unistd.h>
 
@@ -190,18 +191,7 @@ VideoInput::deleteDecoder()
 bool
 VideoInput::initCamera(const std::string& device)
 {
-    auto map = DRing::getSettings(device);
-    if (map.empty())
-        return false;
-
-    clearOptions();
-    decOpts_.input = map["input"];
-    decOpts_.format = "video4linux2";
-
-    decOpts_.channel = map["channel_num"];
-    decOpts_.framerate = std::stoi(map["framerate"]);
-    decOpts_.video_size = map["video_size"];
-
+    decOpts_ = ring::getVideoDeviceMonitor().getDeviceParams(device);
     return true;
 }
 
@@ -215,11 +205,15 @@ VideoInput::initX11(std::string display)
     decOpts_.framerate = 25;
 
     if (space != std::string::npos) {
-        decOpts_.video_size = display.substr(space + 1);
+        std::istringstream iss(display.substr(space + 1));
+        char sep;
+        iss >> decOpts_.width >> sep >> decOpts_.height;
         decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
-        decOpts_.video_size = "vga";
+        //decOpts_.video_size = "vga";
+        decOpts_.width = 640;
+        decOpts_.height = 480;
     }
 
     return true;
