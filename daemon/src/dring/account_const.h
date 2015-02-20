@@ -51,7 +51,7 @@ constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERRORSERVICEUNAVAILA
 constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERRORNOTACCEPTABLE"     ;
 constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout"        ;
 
-}; //namespace DRing::Account
+} //namespace DRing::Account
 
 namespace VolatileProperties {
 
@@ -62,16 +62,16 @@ constexpr static const char STATUS                    [] = "Account.registration
 constexpr static const char STATE_CODE                [] = "Account.registrationCode"       ;
 constexpr static const char STATE_DESC                [] = "Account.registrationDescription";
 
-}; //namespace DRing::VolatileProperties::Registration
+} //namespace DRing::VolatileProperties::Registration
 
 namespace Transport {
 
 constexpr static const char STATE_CODE                [] = "Transport.statusCode"           ;
 constexpr static const char STATE_DESC                [] = "Transport.statusDescription"    ;
 
-}; //namespace DRing::VolatileProperties::Transport
+} //namespace DRing::VolatileProperties::Transport
 
-}; //namespace DRing::Account::VolatileProperties
+} //namespace DRing::Account::VolatileProperties
 
 namespace ConfProperties {
 
@@ -100,7 +100,7 @@ namespace Audio {
 constexpr static const char PORT_MAX           [] = "Account.audioPortMax"               ;
 constexpr static const char PORT_MIN           [] = "Account.audioPortMin"               ;
 
-}; //namespace DRing::Account::ConfProperties::Audio
+} //namespace DRing::Account::ConfProperties::Audio
 
 namespace Video {
 
@@ -108,14 +108,14 @@ constexpr static const char ENABLED            [] = "Account.videoEnabled"      
 constexpr static const char PORT_MAX           [] = "Account.videoPortMax"               ;
 constexpr static const char PORT_MIN           [] = "Account.videoPortMin"               ;
 
-}; //namespace DRing::Account::ConfProperties::Video
+} //namespace DRing::Account::ConfProperties::Video
 
 namespace STUN {
 
 constexpr static const char SERVER             [] = "STUN.server"                        ;
 constexpr static const char ENABLED            [] = "STUN.enable"                        ;
 
-}; //namespace DRing::Account::ConfProperties::STUN
+} //namespace DRing::Account::ConfProperties::STUN
 
 namespace Presence {
 
@@ -123,21 +123,21 @@ constexpr static const char SUPPORT_PUBLISH    [] = "Account.presencePublishSupp
 constexpr static const char SUPPORT_SUBSCRIBE  [] = "Account.presenceSubscribeSupported" ;
 constexpr static const char ENABLED            [] = "Account.presenceEnabled"            ;
 
-}; //namespace DRing::Account::ConfProperties::Presence
+} //namespace DRing::Account::ConfProperties::Presence
 
 namespace Registration {
 
 constexpr static const char EXPIRE             [] = "Account.registrationExpire"         ;
 constexpr static const char STATUS             [] = "Account.registrationStatus"         ;
 
-}; //namespace DRing::Account::ConfProperties::Registration
+} //namespace DRing::Account::ConfProperties::Registration
 
 namespace Ringtone {
 
 constexpr static const char PATH               [] = "Account.ringtonePath"               ;
 constexpr static const char ENABLED            [] = "Account.ringtoneEnabled"            ;
 
-}; //namespace DRing::Account::ConfProperties::Ringtone
+} //namespace DRing::Account::ConfProperties::Ringtone
 
 namespace SRTP {
 
@@ -145,7 +145,7 @@ constexpr static const char KEY_EXCHANGE       [] = "SRTP.keyExchange"          
 constexpr static const char ENABLED            [] = "SRTP.enable"                        ;
 constexpr static const char RTP_FALLBACK       [] = "SRTP.rtpFallback"                   ;
 
-}; //namespace DRing::Account::ConfProperties::SRTP
+} //namespace DRing::Account::ConfProperties::SRTP
 
 
 namespace ZRTP {
@@ -155,7 +155,7 @@ constexpr static const char NOT_SUPP_WARNING   [] = "ZRTP.notSuppWarning"       
 constexpr static const char HELLO_HASH         [] = "ZRTP.helloHashEnable"               ;
 constexpr static const char DISPLAY_SAS_ONCE   [] = "ZRTP.displaySasOnce"                ;
 
-}; //namespace DRing::Account::ConfProperties::ZRTP
+} //namespace DRing::Account::ConfProperties::ZRTP
 
 namespace TLS {
 
@@ -174,7 +174,7 @@ constexpr static const char VERIFY_CLIENT      [] = "TLS.verifyClient"          
 constexpr static const char REQUIRE_CLIENT_CERTIFICATE [] = "TLS.requireClientCertificate";
 constexpr static const char NEGOTIATION_TIMEOUT_SEC    [] = "TLS.negotiationTimeoutSec"   ;
 
-}; //namespace DRing::Account::ConfProperties::TLS
+} //namespace DRing::Account::ConfProperties::TLS
 
 namespace DHT {
 
@@ -182,12 +182,12 @@ constexpr static const char PORT               [] = "DHT.port"                  
 constexpr static const char PRIVATE_PATH       [] = "DHT.privkeyPath"                    ;
 constexpr static const char CERT_PATH          [] = "DHT.certificatePath"                ;
 
-}; //namespace DRing::Account::DHT
+} //namespace DRing::Account::DHT
 
-}; //namespace DRing::Account::ConfProperties
+} //namespace DRing::Account::ConfProperties
 
-}; //namespace DRing::Account
+} //namespace DRing::Account
 
-}; //namespace DRing
+} //namespace DRing
 
 #endif
