@@ -31,7 +31,7 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_decoder.h"
-#include "media_codec.h"
+#include "media_device.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
 #include "audio/audiobuffer.h"
@@ -76,9 +76,15 @@ int MediaDecoder::openInput(const DeviceParams& params)
     if (!iformat)
         RING_WARN("Cannot find format \"%s\"", params.format.c_str());
 
-    av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
-    av_dict_set(&options_, "video_size", params.video_size.c_str(), 0);
-    av_dict_set(&options_, "channel", params.channel.c_str(), 0);
+    if (params.width and params.height) {
+        std::stringstream ss;
+        ss << params.width << "x" << params.height;
+        av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
+    }
+    if (params.framerate)
+        av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
+    if (params.channel)
+        av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
     av_dict_set(&options_, "sdp_flags", params.sdp_flags.c_str(), 0);
 

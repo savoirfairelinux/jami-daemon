@@ -33,6 +33,7 @@
 #define __VIDEO_RTP_SESSION_H__
 
 #include "media/rtp_session.h"
+#include "media/media_device.h"
 
 #include "video_base.h"
 
