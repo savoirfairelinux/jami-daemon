@@ -267,8 +267,8 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 
     sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(
-                            getActiveAudioCodecs(),
-                            getActiveVideoCodecs(),
+                            getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
+                            getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
                             getSrtpKeyExchange()
                          );
 
