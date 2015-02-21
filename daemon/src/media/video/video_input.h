@@ -37,6 +37,7 @@
 #include "noncopyable.h"
 #include "shm_sink.h"
 #include "threadloop.h"
+#include "media/media_codec.h" // DeviceParams
 
 #include <map>
 #include <atomic>
@@ -70,19 +71,12 @@ private:
     SHMSink sink_;
     std::atomic<bool> switchPending_ = {false};
 
-    std::map<std::string, std::string> decOpts_ = decltype(decOpts_){};
+    DeviceParams decOpts_;
 
-    std::string input_      = "";
-    std::string format_     = "";
     bool emulateRate_       = false;
     ThreadLoop loop_;
 
-    void clearOptions() {
-        decOpts_.clear();
-        input_.clear();
-        format_.clear();
-        emulateRate_ = false;
-    };
+    void clearOptions();
 
     void createDecoder();
     void deleteDecoder();

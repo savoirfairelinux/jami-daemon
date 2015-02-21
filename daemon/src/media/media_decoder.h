@@ -65,6 +65,7 @@ class AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;
+class DeviceParams;
 
 class MediaDecoder {
     public:
@@ -81,8 +82,7 @@ class MediaDecoder {
 
         void emulateRate() { emulateRate_ = true; }
         void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const std::string &source_str,
-                      const std::string &format_str);
+        int openInput(const DeviceParams&);
 
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
@@ -91,7 +91,7 @@ class MediaDecoder {
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
-        int setupFromAudioData();
+        int setupFromAudioData(const AudioFormat format);
         Status decode(const AudioFrame&);
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 

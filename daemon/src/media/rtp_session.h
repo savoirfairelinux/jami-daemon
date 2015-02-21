@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,8 +15,7 @@
  *
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
- *  MA  02110-1301 USA.
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
  *  Additional permission under GNU GPL version 3 section 7:
  *
@@ -29,42 +29,47 @@
  *  as that of the covered work.
  */
 
-#ifndef __MEDIA_IO_HANDLE_H__
-#define __MEDIA_IO_HANDLE_H__
+#ifndef __RTP_SESSION_H__
+#define __RTP_SESSION_H__
 
-#include "noncopyable.h"
+#include "socket_pair.h"
+#include "sip/sip_utils.h"
 
-#include <cstdlib>
-#include <cstdint>
-
-#ifndef AVFORMAT_AVIO_H
-class AVIOContext;
-#endif
-
-typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int(*io_writecallback)(void *opaque, uint8_t *buf, int buf_size);
-typedef int64_t(*io_seekcallback)(void *opaque, int64_t offset, int whence);
+#include <string>
+#include <memory>
+#include <mutex>
 
 namespace ring {
 
-class MediaIOHandle {
+class RtpSession {
 public:
-    MediaIOHandle(std::size_t buffer_size,
-                  bool writeable,
-                  io_readcallback read_cb,
-                  io_writecallback write_cb,
-                  io_seekcallback seek_cb,
-                  void *opaque);
-    ~MediaIOHandle();
+    RtpSession(const std::string &callID) : callID_(callID) {}
+    virtual ~RtpSession() {};
 
-    AVIOContext* getContext() { return ctx_; }
+    virtual void start() = 0;
+    virtual void start(std::unique_ptr<IceSocket> rtp_sock,
+                       std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void stop() = 0;
 
-private:
-    NON_COPYABLE(MediaIOHandle);
-    AVIOContext *ctx_;
-    unsigned char *buf_;
+    virtual void updateMedia(const MediaDescription& local,
+                             const MediaDescription& remote) {
+        local_ = local;
+        remote_ = remote;
+    }
+
+protected:
+    std::recursive_mutex mutex_;
+    std::unique_ptr<SocketPair> socketPair_;
+    const std::string callID_;
+
+    MediaDescription local_;
+    MediaDescription remote_;
+
+    std::string getRemoteRtpUri() const {
+        return "rtp://" + remote_.addr.toString(true);
+    }
 };
 
 } // namespace ring
 
-#endif // __MEDIA_DECODER_H__
+#endif // __RTP_SESSION_H__

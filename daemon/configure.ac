@@ -582,14 +582,12 @@ AC_CONFIG_FILES([Makefile \
                  src/ringdht/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
-                 src/media/audio/audiortp/Makefile \
                  src/media/audio/pulseaudio/Makefile \
                  src/media/audio/alsa/Makefile \
                  src/media/audio/opensl/Makefile \
                  src/media/audio/jack/Makefile \
                  src/media/audio/coreaudio/Makefile \
                  src/media/audio/sound/Makefile \
-                 src/media/audio/codecs/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
                  src/hooks/Makefile \
