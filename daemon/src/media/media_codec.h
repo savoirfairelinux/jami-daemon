@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2015 Savoir-Faire Linux Inc.
  *  Author: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -170,9 +171,53 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     unsigned profileId;
     std::string parameters;
 };
-
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 
-} // namespace ring
+/**
+ * MediaDescription
+ * Negotiated RTP media slot
+ */
+struct MediaDescription {
+    /** Audio / video */
+    MediaType type {};
+    bool enabled {false};
+    bool holding {false};
 
+    /** Endpoint socket address */
+    IpAddr addr {};
+
+    /** Codec */
+    std::shared_ptr<SystemCodecInfo> codec {};
+    std::string payload_type {};
+    std::string receiving_sdp {};
+    unsigned bitrate {};
+
+    /** Audio parameters */
+    AudioFormat audioformat {AudioFormat::NONE()};
+    unsigned frame_size {};
+
+    /** Video parameters */
+    std::string parameters {};
+
+    /** Crypto parameters */
+    CryptoAttribute crypto {};
+};
+
+/**
+ * DeviceParams
+ * Parameters used by MediaDecoder and MediaEncoder
+ * to open a LibAV device/stream
+ */
+struct DeviceParams {
+    std::string input {};
+    std::string format {};
+    unsigned width {}, height {};
+    unsigned framerate {};
+    std::string video_size {};
+    std::string channel {};
+    std::string loop {};
+    std::string sdp_flags {};
+};
+
+}//namespace ring
 #endif // __MEDIA_CODEC_H__

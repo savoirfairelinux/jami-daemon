@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2011-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +32,7 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
-#include "media_decoder.h"
+#include "media_codec.h"
 #include "media_io_handle.h"
 #include "shm_sink.h"
 #include "threadloop.h"
@@ -45,14 +46,14 @@
 
 namespace ring {
 class SocketPair;
+class MediaDecoder;
 } // namespace ring
 
 namespace ring { namespace video {
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id,
-                       const std::map<std::string, std::string> &args);
+    VideoReceiveThread(const std::string &id, const std::string &sdp);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -69,18 +70,18 @@ public:
 private:
     NON_COPYABLE(VideoReceiveThread);
 
-    std::map<std::string, std::string> args_;
+    DeviceParams args_;
 
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
-    MediaDecoder *videoDecoder_;
+    std::unique_ptr<MediaDecoder> videoDecoder_;
     int dstWidth_;
     int dstHeight_;
     const std::string id_;
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
-    MediaIOHandle *demuxContext_;
+    std::unique_ptr<MediaIOHandle> demuxContext_;
     SHMSink sink_;
 
     void (*requestKeyFrameCallback_)(const std::string &);
@@ -88,7 +89,6 @@ private:
     bool decodeFrame();
     static int interruptCb(void *ctx);
     static int readFunction(void *opaque, uint8_t *buf, int buf_size);
-
 
     ThreadLoop loop_;
 

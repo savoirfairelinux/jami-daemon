@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,61 +29,42 @@
  *  as that of the covered work.
  */
 
-#ifndef AVFORMAT_RTP_SESSION_H__
-#define AVFORMAT_RTP_SESSION_H__
+#ifndef AUDIO_RTP_SESSION_H__
+#define AUDIO_RTP_SESSION_H__
 
 #include "threadloop.h"
-#include "audio/audiobuffer.h"
-#include "noncopyable.h"
+#include "media/rtp_session.h"
+#include "media/audio/audiobuffer.h"
 
-#include <map>
 #include <string>
 #include <memory>
-#include <mutex>
 
 namespace ring {
 
-class Sdp;
-class ThreadLoop;
-class MediaEncoder;
-class SocketPair;
 class RingBuffer;
-class Resampler;
 class AudioSender;
 class AudioReceiveThread;
 class IceSocket;
 
-class AVFormatRtpSession {
+class AudioRtpSession : public RtpSession {
     public:
-        AVFormatRtpSession(const std::string& id,
-                           const std::map<std::string, std::string>& txArgs);
-        ~AVFormatRtpSession();
+        AudioRtpSession(const std::string& id);
+        virtual ~AudioRtpSession();
 
-        void start(int localPort);
+        void start();
         void start(std::unique_ptr<IceSocket> rtp_sock,
                    std::unique_ptr<IceSocket> rtcp_sock);
         void stop();
-        void updateDestination(const std::string& destination, unsigned int port);
-        void updateSDP(const Sdp &sdp);
 
     private:
-        NON_COPYABLE(AVFormatRtpSession);
-
         void startSender();
         void startReceiver();
 
-        std::string id_;
-        std::map<std::string, std::string> txArgs_;
-        std::string receivingSDP_;
-        std::unique_ptr<SocketPair> socketPair_;
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
         std::shared_ptr<RingBuffer> ringbuffer_;
-        std::recursive_mutex mutex_;
-        bool sending_;
-        bool receiving_;
 };
 
 } // namespace ring
 
-#endif // __AVFORMAT_RTP_SESSION_H__
+#endif // __AUDIO_RTP_SESSION_H__
