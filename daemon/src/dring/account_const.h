@@ -189,8 +189,6 @@ constexpr static const char NEGOTIATION_TIMEOUT_SEC    [] = "TLS.negotiationTime
 namespace DHT {
 
 constexpr static const char PORT               [] = "DHT.port"                           ;
-constexpr static const char PRIVATE_PATH       [] = "DHT.privkeyPath"                    ;
-constexpr static const char CERT_PATH          [] = "DHT.certificatePath"                ;
 
 } //namespace DRing::Account::DHT
 

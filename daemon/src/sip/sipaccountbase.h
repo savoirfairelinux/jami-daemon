@@ -336,9 +336,13 @@ protected:
     pj_uint16_t publishedPort_ {DEFAULT_SIP_PORT};
 
     /**
-     * The global TLS listener port which can be configured through the IP2IP_PROFILE
+     * The TLS listener port
      */
     pj_uint16_t tlsListenerPort_ {DEFAULT_SIP_TLS_PORT};
+    std::string tlsCaListFile_ {};
+    std::string tlsCertificateFile_ {};
+    std::string tlsPrivateKeyFile_ {};
+    std::string tlsPassword_ {};
 
     /**
      * DTMF type used for this account SIPINFO or RTP
