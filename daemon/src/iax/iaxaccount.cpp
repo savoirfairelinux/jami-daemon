@@ -93,7 +93,7 @@ std::map<std::string, std::string> IAXAccount::getVolatileAccountDetails() const
 void IAXAccount::doRegister()
 {
     try {
-        link_->init();
+        link_->init(rand_);
         sendRegister();
     } catch (const VoipLinkException &e) {
         RING_ERR("IAXAccount: %s", e.what());

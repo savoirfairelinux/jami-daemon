@@ -45,6 +45,7 @@
 
 #include <mutex>
 #include <memory>
+#include <random>
 
 namespace ring {
 
@@ -73,7 +74,7 @@ class IAXVoIPLink {
         /**
          * Init the voip link
          */
-        void init();
+        void init(std::mt19937_64& rand);
 
         /**
          * Terminate a voip link by clearing the call list
