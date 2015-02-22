@@ -359,7 +359,7 @@ protected:
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) - 2};
 
     static bool portsInUse_[HALF_MAX_PORT];
-    static uint16_t getRandomEvenNumber(const std::pair<uint16_t, uint16_t> &range);
+    uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
 
     static void
     addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
