@@ -145,8 +145,10 @@ class SipTransport
 };
 
 class IpAddr;
-class SipIceTransport;
 class IceTransport;
+namespace tls {
+   struct TlsParams;
+};
 
 /**
  * Manages the transports and receive callbacks from PJSIP
@@ -160,13 +162,20 @@ public:
     std::shared_ptr<SipTransport> getUdpTransport(const SipTransportDescr&);
 
 #if HAVE_TLS
-    std::shared_ptr<TlsListener> getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
+    std::shared_ptr<TlsListener>
+    getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
 
-    std::shared_ptr<SipTransport> getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
+    std::shared_ptr<SipTransport>
+    getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
 #endif
 
 #if HAVE_DHT
-    std::shared_ptr<SipTransport> getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
+    std::shared_ptr<SipTransport>
+    getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
+
+    std::shared_ptr<SipTransport>
+    getTlsIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id,
+                       const tls::TlsParams&);
 #endif
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
