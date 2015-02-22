@@ -48,6 +48,7 @@
 #include <vector>
 #include <map>
 #include <chrono>
+#include <list>
 
 /**
  * @file sipaccount.h
@@ -63,10 +64,6 @@ namespace ring {
 
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
-    const char *const DHT_PRIVKEY_PATH_KEY = "dhtPrivkeyPath";
-    const char *const DHT_PRIVKEY_PASSWORD_KEY = "dhtPrivkeyPassword";
-    const char *const DHT_CERT_PATH_KEY = "dhtCertificatePath";
-    const char *const DHT_CA_CERT_PATH_KEY = "dhtCACertificatePath";
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 }
 
@@ -235,11 +232,11 @@ class RingAccount : public SIPAccountBase {
         newIncomingCall(const std::string& from = {});
 
         virtual bool isTlsEnabled() const {
-            return false;
+            return true;
         }
 
         virtual bool getSrtpEnabled() const {
-            return false;
+            return true;
         }
 
         virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
@@ -287,15 +284,6 @@ class RingAccount : public SIPAccountBase {
          */
         bool mapPortUPnP();
 
-        /**
-         * @return pjsip_tls_setting structure, filled from the configuration
-         * file, that can be used directly by PJSIP to initialize
-         * TLS transport.
-         */
-        pjsip_tls_setting * getTlsSetting() {
-            return &tlsSetting_;
-        }
-
         dht::DhtRunner dht_ {};
 
         struct PendingCall {
@@ -318,11 +306,7 @@ class RingAccount : public SIPAccountBase {
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};
 
-        std::string cacertPath_ {};
-        std::string privkeyPath_ {};
-        std::string certPath_ {};
         std::string idPath_ {};
-
         std::string cachePath_ {};
         std::string dataPath_ {};
         std::string caPath_ {};
@@ -371,7 +355,10 @@ class RingAccount : public SIPAccountBase {
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
-        pjsip_tls_setting tlsSetting_;
+        void generateDhParams();
+        std::shared_ptr<gnutls_dh_params_int> dhParams_;
+        std::mutex dhParamsMtx_;
+        std::condition_variable dhParamsCv_;
 
         /**
          * Optional: "received" parameter from VIA header
