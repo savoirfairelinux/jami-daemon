@@ -49,6 +49,7 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
+#include "intrin.h"
 
 namespace ring { namespace upnp {
 
@@ -573,25 +574,27 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
                     /* get the relative controlURL and turn it into absolute address using the URLBase */
                     std::string controlURL = get_first_element_item(service_element, "controlURL");
                     if (not controlURL.empty()) {
-                        std::unique_ptr<char> absolute_url(new char[baseURL.size() + controlURL.size() + 1]);
-                        upnp_err = UpnpResolveURL(baseURL.c_str(), controlURL.c_str(), absolute_url.get());
+                        char *absolute_url = nullptr;
+                        upnp_err = UpnpResolveURL2(baseURL.c_str(), controlURL.c_str(), &absolute_url);
                         if (upnp_err == UPNP_E_SUCCESS) {
-                            controlURL = std::string(absolute_url.get());
+                            controlURL = absolute_url;
                         } else {
                             RING_WARN("UPnP: error resolving absolute controlURL: %s", UpnpGetErrorMessage(upnp_err));
                         }
+                        ::free(absolute_url);
                     }
 
                     /* get the relative eventSubURL and turn it into absolute address using the URLBase */
                     std::string eventSubURL = get_first_element_item(service_element, "eventSubURL");
                     if (not eventSubURL.empty()) {
-                        std::unique_ptr<char> absolute_url(new char[baseURL.size() + controlURL.size() + 1]);
-                        upnp_err = UpnpResolveURL(baseURL.c_str(), eventSubURL.c_str(), absolute_url.get());
+                        char *absolute_url = nullptr;
+                        upnp_err = UpnpResolveURL2(baseURL.c_str(), eventSubURL.c_str(), &absolute_url);
                         if (upnp_err == UPNP_E_SUCCESS) {
-                            eventSubURL = std::string(absolute_url.get());
+                            eventSubURL = absolute_url;
                         } else {
                             RING_WARN("UPnP: error resolving absolute eventSubURL: %s", UpnpGetErrorMessage(upnp_err));
                         }
+                        ::free(absolute_url);
                     }
 
                     /* make sure all of the services are defined
@@ -686,7 +689,7 @@ get_first_element_item(IXML_Element* element, const char* item)
 
 
 int
-cp_callback(Upnp_EventType event_type, void* event, void* user_data)
+cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
 {
     auto upnpContext = getUPnPContext();
 
@@ -764,7 +767,7 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
 
     case UPNP_EVENT_RECEIVED:
     {
-        struct Upnp_Event *e_event = (struct Upnp_Event *)event;
+        struct Upnp_Event *e_event UNUSED = (struct Upnp_Event *)event;
 
         RING_DBG("UPnP: Control Point event received");
 
@@ -924,7 +927,6 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
     RING_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
              description.c_str(), local_ip.toString().c_str());
 
-    int upnp_err;
     int entry_idx = 0;
     bool done = false;
 
