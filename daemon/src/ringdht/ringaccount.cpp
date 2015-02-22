@@ -185,8 +185,11 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
         callkey,
         toH,
         dht::Value {
-            ICE_ANNOUCEMENT_TYPE.id,
-            ice->getLocalAttributesAndCandidates(),
+            dht::DhtMessage::TYPE,
+            dht::DhtMessage(
+                dht::DhtMessage::Service::ICE_CANDIDATES,
+                ice->getLocalAttributesAndCandidates()
+            ),
             callvid
         },
         [callkey, callvid, weak_call, shared](bool ok) {
@@ -209,15 +212,18 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
             auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
             RING_DBG("Outcall listen callback (%d values)", vals.size());
             for (const auto& v : vals) {
-                if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
+                if (v->recipient != this_.dht_.getId() || v->type != dht::DhtMessage::TYPE.id) {
                     RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                     continue;
                 }
                 if (v->id != replyvid)
                     continue;
+                dht::DhtMessage msg {v->data};
+                if (msg.getService() != dht::DhtMessage::Service::ICE_CANDIDATES)
+                    continue;
                 RING_WARN("Got a DHT reply from %s !", toH.toString().c_str());
                 RING_WARN("Performing ICE negotiation.");
-                ice->start(v->data);
+                ice->start(msg.getMessage());
                 return false;
             }
             return true;
@@ -700,9 +706,6 @@ void RingAccount::doRegister_()
         );
 #endif
 
-        dht_.registerType(USER_PROFILE_TYPE);
-        dht_.registerType(ICE_ANNOUCEMENT_TYPE);
-
         dht_.importValues(loadValues());
 
         // Publish our own CA
@@ -754,12 +757,15 @@ void RingAccount::doRegister_()
                 for (const auto& v : vals) {
                     std::shared_ptr<SIPCall> call;
                     try {
-                        if (v->recipient != this_.dht_.getId() || v->type != this_.ICE_ANNOUCEMENT_TYPE.id) {
+                        if (v->recipient != this_.dht_.getId() || v->type != dht::DhtMessage::TYPE.id) {
                             RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
                             continue;
                         }
                         auto remote_id = v->owner.getId();
                         if (remote_id == this_.dht_.getId())
+                            continue;
+                        dht::DhtMessage msg {v->data};
+                        if (msg.getService() != dht::DhtMessage::Service::ICE_CANDIDATES)
                             continue;
                         auto res = this_.treatedCalls_.insert(v->id);
                         this_.saveTreatedCalls();
@@ -786,8 +792,11 @@ void RingAccount::doRegister_()
                             listenKey,
                             remote_id,
                             dht::Value {
-                                this_.ICE_ANNOUCEMENT_TYPE.id,
-                                ice->getLocalAttributesAndCandidates(),
+                                dht::DhtMessage::TYPE,
+                                dht::DhtMessage(
+                                    dht::DhtMessage::Service::ICE_CANDIDATES,
+                                    ice->getLocalAttributesAndCandidates()
+                                ),
                                 reply_vid
                             },
                             [weak_call,ice,shared,listenKey,reply_vid](bool ok) {
@@ -803,7 +812,7 @@ void RingAccount::doRegister_()
                                 this_.dht_.cancelPut(listenKey, reply_vid);
                             }
                         );
-                        ice->start(v->data);
+                        ice->start(msg.getMessage());
                         call->setPeerNumber(from);
                         call->initRecFilename(from);
                         {
