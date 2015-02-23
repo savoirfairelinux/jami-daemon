@@ -216,7 +216,7 @@ SHMSink::render_frame(VideoFrame& src)
         return;
     }
 
-    dst.setFromMemory(shm_area_->data, width, height, format);
+    dst.setFromMemory(shm_area_->data, format, width, height);
     scaler.scale(src, dst);
 
 #ifdef DEBUG_FPS
