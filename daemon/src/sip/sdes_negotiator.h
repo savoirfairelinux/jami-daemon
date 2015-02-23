@@ -83,7 +83,8 @@ struct CryptoSuiteDefinition {
 * List of accepted Crypto-Suites
 * as defined in RFC4568 (6.2)
 */
-constexpr static CryptoSuiteDefinition CryptoSuites[] = {
+
+static std::vector<CryptoSuiteDefinition> CryptoSuites = {
     { "AES_CM_128_HMAC_SHA1_80",
       128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160 },
 
@@ -93,7 +94,6 @@ constexpr static CryptoSuiteDefinition CryptoSuites[] = {
     { "F8_128_HMAC_SHA1_80",
       128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160 }
 };
-
 
 class SdesNegotiator {
         /**

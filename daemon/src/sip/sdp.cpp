@@ -82,7 +82,7 @@ Sdp::Sdp(const std::string& id)
     , localAudioControlPort_(0)
     , localVideoDataPort_(0)
     , localVideoControlPort_(0)
-    , sdesNego_ {{*CryptoSuites}}
+    , sdesNego_ {CryptoSuites}
     , zrtpHelloHash_()
     , telephoneEventPayload_(101) // same as asterisk
 {
