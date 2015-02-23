@@ -401,7 +401,7 @@ SipsIceTransport::startTlsSession()
     }
 
     if (is_server_)
-        gnutls_certificate_set_dh_params(xcred_, param_.dh_params.get());
+        gnutls_certificate_set_dh_params(xcred_, param_.dh_params.get().get());
 
     gnutls_certificate_set_verify_function(xcred_, [](gnutls_session_t session) {
         auto this_ = reinterpret_cast<SipsIceTransport*>(gnutls_session_get_ptr(session));
