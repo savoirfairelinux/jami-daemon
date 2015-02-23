@@ -40,7 +40,7 @@ namespace ProtocolNames {
 constexpr static const char SIP   [] = "SIP";
 constexpr static const char IAX   [] = "IAX";
 constexpr static const char IP2IP [] = "IP2IP";
-constexpr static const char DHT   [] = "DHT";
+constexpr static const char RING  [] = "RING";
 
 } //namespace DRing::ProtocolNames
 
