@@ -66,24 +66,36 @@ static constexpr int RTP_MAX_PACKET_LENGTH = 8192;
 class SRTPProtoContext {
     public:
         SRTPProtoContext(const char* out_suite, const char* out_key,
-                         const char* in_suite, const char* in_key)
-            : srtp_out{new SRTPContext, ff_srtp_free},
-              srtp_in{new SRTPContext, ff_srtp_free} {
+                         const char* in_suite, const char* in_key) {
             if (out_suite && out_key) {
                 // XXX: see srtp_open from libavformat/srtpproto.c
-                if (ff_srtp_set_crypto(srtp_out.get(), out_suite, out_key) < 0)
+                if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
+                    srtp_close();
                     throw std::runtime_error("Could not set crypto on output");
+                }
             }
 
             if (in_suite && in_key) {
-                if (ff_srtp_set_crypto(srtp_in.get(), in_suite, in_key) < 0)
+                if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
+                    srtp_close();
                     throw std::runtime_error("Could not set crypto on input");
+                }
             }
         }
 
-        std::unique_ptr<SRTPContext, decltype(ff_srtp_free)&> srtp_out;
-        std::unique_ptr<SRTPContext, decltype(ff_srtp_free)&> srtp_in;
+        ~SRTPProtoContext() {
+            srtp_close();
+        }
+
+        SRTPContext srtp_out;
+        SRTPContext srtp_in;
         uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
+
+    private:
+        void srtp_close() noexcept {
+            ff_srtp_free(&srtp_out);
+            ff_srtp_free(&srtp_in);
+        }
 };
 
 static int
@@ -291,8 +303,8 @@ SocketPair::readRtpData(void *buf, int buf_size)
 start:
         int result = recvfrom(rtpHandle_, buf, buf_size, 0,
                               (struct sockaddr *)&from, &from_len);
-        if (result > 0 and srtpContext_ and srtpContext_->srtp_in->aes)
-            if (ff_srtp_decrypt(srtpContext_->srtp_in.get(), data, &result) < 0)
+        if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes)
+            if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
                 goto start; // XXX: see libavformat/srtpproto.c
 
         return result;
@@ -301,8 +313,8 @@ start:
     // work with IceSocket
 start_ice:
     int result = rtp_sock_->recv(static_cast<unsigned char*>(buf), buf_size);
-    if (result > 0 and srtpContext_ and srtpContext_->srtp_in->aes) {
-        if (ff_srtp_decrypt(srtpContext_->srtp_in.get(), data, &result) < 0)
+    if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes) {
+        if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
             goto start_ice;
     } else if (result < 0) {
         errno = EIO;
@@ -349,8 +361,8 @@ SocketPair::writeRtpData(void* buf, int buf_size)
         if (ret < 0)
             return ret;
 
-        if (srtpContext_ and srtpContext_->srtp_out->aes) {
-            buf_size = ff_srtp_encrypt(srtpContext_->srtp_out.get(), data,
+        if (srtpContext_ and srtpContext_->srtp_out.aes) {
+            buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, data,
                                        buf_size, srtpContext_->encryptbuf,
                                        sizeof(srtpContext_->encryptbuf));
             if (buf_size < 0)
@@ -365,8 +377,8 @@ SocketPair::writeRtpData(void* buf, int buf_size)
     }
 
     // work with IceSocket
-    if (srtpContext_ and srtpContext_->srtp_out->aes) {
-        buf_size = ff_srtp_encrypt(srtpContext_->srtp_out.get(), data,
+    if (srtpContext_ and srtpContext_->srtp_out.aes) {
+        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, data,
                                    buf_size, srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
         if (buf_size < 0)
