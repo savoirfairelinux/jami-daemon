@@ -220,7 +220,6 @@ void SocketPair::createSRTP(const char *out_suite, const char *out_key,
                                             in_suite, in_key));
 }
 
-
 void SocketPair::interrupt()
 {
     interrupted_ = true;
