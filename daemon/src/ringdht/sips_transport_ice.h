@@ -49,6 +49,7 @@
 #include <mutex>
 #include <condition_variable>
 #include <chrono>
+#include <future>
 
 namespace ring {
 class IceTransport;
@@ -66,7 +67,7 @@ enum class TlsConnectionState {
 struct TlsParams {
     std::string ca_list;
     dht::crypto::Identity id;
-    std::shared_ptr<gnutls_dh_params_int> dh_params;
+    std::shared_future<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>> dh_params;
     std::chrono::steady_clock::duration timeout;
     std::function<pj_status_t(unsigned status,
                               const gnutls_datum_t* cert_list,
