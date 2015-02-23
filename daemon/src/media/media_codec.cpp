@@ -35,6 +35,7 @@
 
 #include <string.h>
 #include <sstream>
+#include <iostream>
 
 namespace ring {
 
@@ -50,16 +51,17 @@ generateId()
  */
 SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string name,
                                  std::string libName,
-                                 MediaType mediaType, CodecType codecType,
+                                 MediaType mediaType, CodecType codecType, bool m_isDynamicPayloadType,
                                  unsigned bitrate, unsigned payloadType)
     : id(generateId())
     , avcodecId(avcodecId)
     , name(name)
     , libName(libName)
-    , codecType(codecType)
     , mediaType(mediaType)
-    , payloadType(payloadType)
+    , codecType(codecType)
+    , isDynamicPayloadType(m_isDynamicPayloadType)
     , bitrate(bitrate)
+    , payloadType(payloadType)
 {}
 
 SystemCodecInfo::~SystemCodecInfo()
@@ -69,12 +71,13 @@ std::string
 SystemCodecInfo::to_string() const
 {
     std::ostringstream out;
-    out << " type:" << (unsigned)codecType
-        << " , avcodecID:" << avcodecId
-        << " ,name:" << name
-        << " ,PT:" << payloadType
-        << " ,libName:" << libName
-        << " ,bitrate:" << bitrate;
+    out << " type = " << (unsigned)codecType
+        << ", avcodecID = " << avcodecId
+        << ", name = " << name
+        << ", PT (" << (isDynamicPayloadType ? "dynamic)" : "static)")
+        << " = " << payloadType
+        << ", libName = " << libName
+        << ", bitrate = " << bitrate;
 
     return out.str();
 }
@@ -85,11 +88,13 @@ SystemCodecInfo::to_string() const
 SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned m_avcodecId,
                                            const std::string m_name,
                                            std::string m_libName,
-                                           CodecType m_type, unsigned m_bitrate,
+                                           CodecType m_type,
+                                           bool m_isDynamicPayloadType,
+                                           unsigned m_bitrate,
                                            unsigned m_sampleRate,
                                            unsigned m_nbChannels,
                                            unsigned m_payloadType)
-    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_AUDIO, m_type, m_bitrate, m_payloadType)
+    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_AUDIO, m_type, m_isDynamicPayloadType, m_bitrate, m_payloadType)
     , sampleRate(m_sampleRate), nbChannels(m_nbChannels)
 {}
 
@@ -122,10 +127,11 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
                                            const std::string m_name,
                                            std::string m_libName,
                                            CodecType m_type,
+                                           bool m_isDynamicPayloadType,
                                            unsigned m_payloadType,
                                            unsigned m_frameRate,
                                            unsigned m_profileId)
-    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO, m_type, m_payloadType)
+    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO, m_type, m_isDynamicPayloadType, m_payloadType)
     , frameRate(m_frameRate), profileId(m_profileId)
 {}
 

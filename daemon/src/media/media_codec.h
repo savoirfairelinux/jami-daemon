@@ -67,7 +67,8 @@ struct SystemCodecInfo
 {
     SystemCodecInfo(unsigned avcodecId, const std::string name,
                     std::string libName, MediaType mediaType,
-                    CodecType codecType = CODEC_UNDEFINED, unsigned bitrate = 0,
+                    CodecType codecType,
+                    bool isDynamicPayloadType, unsigned bitrate = 0,
                     unsigned payloadType = 0);
 
     virtual ~SystemCodecInfo();
@@ -79,6 +80,7 @@ struct SystemCodecInfo
     std::string libName;
     CodecType codecType;
     MediaType mediaType;
+    bool isDynamicPayloadType;
 
     /* default codec values */
     unsigned payloadType;
@@ -96,7 +98,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 {
     SystemAudioCodecInfo(unsigned avcodecId, const std::string name,
                          std::string libName, CodecType type,
-                         unsigned bitrate = 0,
+                         bool isDynamicPayloadType, unsigned bitrate = 0,
                          unsigned sampleRate = 0, unsigned nbChannels = 0,
                          unsigned payloadType = 0);
 
@@ -117,9 +119,9 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
-                         std::string libName, CodecType type = CODEC_UNDEFINED,
-                         unsigned payloadType = 0, unsigned frameRate = 0,
-                         unsigned profileId = 0);
+                         std::string libName, CodecType type,
+                         bool isDynamicPayloadType, unsigned payloadType = 0,
+                         unsigned frameRate = 0, unsigned profileId = 0);
 
     ~SystemVideoCodecInfo();
 
