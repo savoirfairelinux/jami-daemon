@@ -356,7 +356,8 @@ class RingAccount : public SIPAccountBase {
          * The TLS settings, used only if tls is chosen as a sip transport.
          */
         void generateDhParams();
-        std::shared_ptr<gnutls_dh_params_int> dhParams_;
+
+        std::shared_future<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>> dhParams_;
         std::mutex dhParamsMtx_;
         std::condition_variable dhParamsCv_;
 

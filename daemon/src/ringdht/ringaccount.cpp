@@ -544,18 +544,10 @@ RingAccount::handleEvents()
             regenerateCAList();
             auto id = loadIdentity();
             auto remote_h = c->id;
-            std::shared_ptr<gnutls_dh_params_int> dh;
-            {
-                std::unique_lock<std::mutex> l(dhParamsMtx_);
-                dhParamsCv_.wait(l, [&]() {
-                        return static_cast<bool>(dhParams_);
-                    });
-                dh = dhParams_;
-            }
             tls::TlsParams tlsParams {
                 .ca_list = caListPath_,
                 .id = id.second,
-                .dh_params = dh,
+                .dh_params = dhParams_,
                 .timeout = std::chrono::seconds(30),
                 .cert_check = [remote_h](unsigned status,
                                          const gnutls_datum_t* cert_list,
@@ -655,7 +647,7 @@ void RingAccount::doRegister()
         return;
     }
 
-    if (not dhParams_) {
+    if (not dhParams_.valid()) {
         generateDhParams();
     }
 
@@ -1020,32 +1012,29 @@ RingAccount::initTlsConfiguration()
 
 }
 
+static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
+getNewDhParams()
+{
+    using namespace std::chrono;
+    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, GNUTLS_SEC_PARAM_HIGH/* GNUTLS_SEC_PARAM_NORMAL */);
+    RING_DBG("Generating DH params with %u bits", bits);
+    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+    gnutls_dh_params_t new_params_;
+    gnutls_dh_params_init(&new_params_);
+    gnutls_dh_params_generate2(new_params_, bits);
+    high_resolution_clock::time_point t2 = high_resolution_clock::now();
+    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
+    return {new_params_, gnutls_dh_params_deinit};
+}
+
 void
 RingAccount::generateDhParams()
 {
-    auto shared = shared_from_this();
-    std::weak_ptr<RingAccount> shared_w = std::static_pointer_cast<RingAccount>(shared);
-    auto t = std::thread([shared_w](){
-        using namespace std::chrono;
-        auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_NORMAL */ GNUTLS_SEC_PARAM_HIGH);
-        RING_DBG("Generating DH params with %u bits", bits);
-        high_resolution_clock::time_point t1 = high_resolution_clock::now();
-        gnutls_dh_params_t new_params_;
-        gnutls_dh_params_init(&new_params_);
-        gnutls_dh_params_generate2(new_params_, bits);
-        high_resolution_clock::time_point t2 = high_resolution_clock::now();
-        duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
-        RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
-        std::shared_ptr<gnutls_dh_params_int> sp(new_params_, gnutls_dh_params_deinit);
-        if (auto s = shared_w.lock()) {
-            {
-                std::lock_guard<std::mutex> l(s->dhParamsMtx_);
-                s->dhParams_ = std::move(sp);
-            }
-            s->dhParamsCv_.notify_all();
-        }
-    });
-    t.detach();
+    std::packaged_task<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>()> task(getNewDhParams);
+    dhParams_ = task.get_future();
+    std::thread task_td(std::move(task));
+    task_td.detach();
 }
 
 void RingAccount::loadConfig()
