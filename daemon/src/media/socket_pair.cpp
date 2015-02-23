@@ -67,6 +67,8 @@ class SRTPProtoContext {
     public:
         SRTPProtoContext(const char* out_suite, const char* out_key,
                          const char* in_suite, const char* in_key) {
+            std::memset(&srtp_out, 0, sizeof(srtp_out));
+            std::memset(&srtp_in, 0, sizeof(srtp_in));
             if (out_suite && out_key) {
                 // XXX: see srtp_open from libavformat/srtpproto.c
                 if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
