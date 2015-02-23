@@ -138,7 +138,7 @@ private:
     gnutls_session_t session_ {nullptr};
     gnutls_certificate_credentials_t xcred_;
     gnutls_priority_t priority_cache;
-    gnutls_datum_t cookie_key_;
+    gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_;
 
     /**
