@@ -526,6 +526,9 @@ class SIPAccount : public SIPAccountBase {
             unsigned     attempt_cnt; /**< Attempt counter.     */
         } auto_rereg_;           /**< Reregister/reconnect data. */
 
+        std::uniform_int_distribution<decltype(pj_time_val::msec)> delay10ZeroDist_ {-10000, 10000};
+        std::uniform_int_distribution<decltype(pj_time_val::msec)> delay10PosDist_ {0, 10000};
+
         static void autoReregTimerCb(pj_timer_heap_t *th, pj_timer_entry *te);
 
         /**
@@ -700,6 +703,7 @@ class SIPAccount : public SIPAccountBase {
          * on the "Expire" sip header (or the "expire" Contact parameter)
          */
         pj_timer_entry keepAliveTimer_;
+        std::uniform_int_distribution<decltype(pj_timer_entry::id)> timerIdDist_ {};
 
         /**
          * Once enabled, this variable tells if the keepalive timer is activated

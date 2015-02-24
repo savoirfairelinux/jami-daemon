@@ -922,7 +922,7 @@ void SIPAccount::startKeepAliveTimer()
     pj_time_val keepAliveDelay_;
     keepAliveTimer_.cb = &SIPAccount::keepAliveRegistrationCb;
     keepAliveTimer_.user_data = this;
-    keepAliveTimer_.id = rand();
+    keepAliveTimer_.id = timerIdDist_(rand_);
 
     // expiration may be undetermined during the first registration request
     if (registrationExpire_ == 0) {
@@ -2125,10 +2125,10 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 
     /* Randomize interval by +/- 10 secs */
     if (delay.sec >= 10) {
-        delay.msec = -10000 + (pj_rand() % 20000);
+        delay.msec = delay10ZeroDist_(rand_);
     } else {
         delay.sec = 0;
-        delay.msec = (pj_rand() % 10000);
+        delay.msec = delay10PosDist_(rand_);
     }
 
     pj_time_val_normalize(&delay);
