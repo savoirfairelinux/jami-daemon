@@ -74,7 +74,7 @@ class SflPhoneTests():
 	HOSTNAME = "hostname"
 	USERNAME = "username"
 	PASSWORD = "password"
-	
+
         accDetails = {CONFIG_ACCOUNT_TYPE:"SIP", CONFIG_ACCOUNT_ALIAS:"testsuiteaccount",
                       HOSTNAME:"192.168.50.79", USERNAME:"31416",
                       PASSWORD:"1234"}
