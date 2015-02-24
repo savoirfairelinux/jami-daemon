@@ -761,7 +761,11 @@ SIPCall::startAllMedia()
         }
         RtpSession* rtp = local.type == MEDIA_AUDIO
             ? static_cast<RtpSession*>(avformatrtp_.get())
+#ifdef RING_VIDEO
             : static_cast<RtpSession*>(&videortp_);
+#else
+            : nullptr;
+#endif
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
