@@ -6,7 +6,7 @@
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
             <p>The CallManager interface is used to manage call and conference related actions.</p>
             <p>Since Ring-daemon supports multiple incoming/outgoing calls, any actions involving a specific call must address the method by the means of a unique callID.
-            Ring-clients is responsible for generating the callID on outgoing calls. Conversely, Ring-daemon will generate a unique callID for incoming calls.</p>
+            Ring-daemon will generate a unique callID for outgoing and incoming calls.</p>
         </tp:docstring>
         <method name="placeCall" tp:name-for-bindings="placeCall">
             <tp:docstring>
@@ -17,17 +17,12 @@
                 The ID of the account with which you want to make a call. If the call is to be placed without any account by means of a SIP URI (i.e. sip:num@server), the "IP2IP_PROFILE" is passed as the accountID. For more details on accounts see the configuration manager interface.
               </tp:docstring>
             </arg>
-            <arg type="s" name="callID" direction="in">
-              <tp:docstring>
-                The callID is a unique identifier that must be randomly generated on the client's side. Any subsequent actions refering to this call must use this callID.
-              </tp:docstring>
-            </arg>
             <arg type="s" name="to" direction="in">
               <tp:docstring>
                 If bound to a VoIP account, then the argument is the phone number. In case of calls involving "IP2IP_PROFILE", a complete SIP URI must be specified.
               </tp:docstring>
             </arg>
-            <arg type="b" name="callSucceeded" direction="out"/>
+            <arg type="s" name="callID" direction="out"/>
         </method>
 
         <method name="refuse" tp:name-for-bindings="refuse">

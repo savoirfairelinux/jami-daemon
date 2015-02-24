@@ -135,8 +135,9 @@ RingAccount::newIncomingCall(const std::string& from)
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl)
 {
+    auto& manager = Manager::instance();
     auto dhtf = toUrl.find("ring:");
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
@@ -153,11 +154,12 @@ RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
     RING_DBG("Calling DHT peer %s", toUri.c_str());
     auto toH = dht::InfoHash(toUri);
 
-    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, id, Call::OUTGOING);
+    auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
+                                                                  Call::OUTGOING);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    auto& iceTransportFactory = manager.getIceTransportFactory();
     auto ice = iceTransportFactory.createTransport(
         ("sip:"+call->getCallId()).c_str(),
         ICE_COMPONENTS,
@@ -277,9 +279,9 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 }
 
 std::shared_ptr<Call>
-RingAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<SIPCall>(id, toUrl);
+    return newOutgoingCall<SIPCall>(toUrl);
 }
 
 bool

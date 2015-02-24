@@ -169,7 +169,7 @@ SIPAccount::~SIPAccount()
 }
 
 std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string&)
+SIPAccount::newIncomingCall(const std::string& from UNUSED)
 {
     auto& manager = Manager::instance();
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::INCOMING);
@@ -177,13 +177,14 @@ SIPAccount::newIncomingCall(const std::string&)
 
 template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
     std::string to;
     std::string toUri;
     int family;
 
-    auto call = Manager::instance().callFactory.newCall<SIPCall, SIPAccount>(*this, id, Call::OUTGOING);
+    auto& manager = Manager::instance();
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::OUTGOING);
 
     if (isIP2IP()) {
         bool ipv6 = false;
@@ -273,9 +274,9 @@ SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<SIPCall>(id, toUrl);
+    return newOutgoingCall<SIPCall>(toUrl);
 }
 
 bool

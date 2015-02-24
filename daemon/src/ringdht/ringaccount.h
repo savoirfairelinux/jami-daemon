@@ -207,11 +207,10 @@ class RingAccount : public SIPAccountBase {
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id, const std::string& toUrl);
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl);
 
         /**
          * Create outgoing SIPCall.
-         * @param[in] id The ID of the call
          * @param[in] toUrl The address to call
          * @return std::shared_ptr<T> A shared pointer on the created call.
          *      The type of this instance is given in template argument.
@@ -219,11 +218,11 @@ class RingAccount : public SIPAccountBase {
          */
         template <class T=SIPCall>
         std::shared_ptr<enable_if_base_of<T, SIPCall> >
-        newOutgoingCall(const std::string& id, const std::string& toUrl);
+        newOutgoingCall(const std::string& toUrl);
 
         /**
          * Create incoming SIPCall.
-         * @param[in] id The ID of the call
+         * @param[in] from The origin of the call
          * @return std::shared_ptr<T> A shared pointer on the created call.
          *      The type of this instance is given in template argument.
          *      This type can be any base class of SIPCall class (included).

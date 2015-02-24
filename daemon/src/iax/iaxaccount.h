@@ -106,12 +106,10 @@ class IAXAccount : public Account {
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                              const std::string& toUrl);
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl);
 
         /**
          * Create outgoing IAXCall.
-         * @param[in] id The ID of the call
          * @param[in] toUrl The address to call
          * @return std::shared_ptr<T> A shared pointer on the created call.
          *      The type of this instance is given in template argument.
@@ -119,18 +117,18 @@ class IAXAccount : public Account {
          */
         template <class T=IAXCall>
         std::shared_ptr<enable_if_base_of<T, IAXCall> >
-        newOutgoingCall(const std::string& id, const std::string& toUrl);
+        newOutgoingCall(const std::string& toUrl);
 
         /**
          * Create incoming IAXCall.
-         * @param[in] id The ID of the call
+         * @param[in] from The origin uri of the call
          * @return std::shared_ptr<T> A shared pointer on the created call.
          *      The type of this instance is given in template argument.
          *      This type can be any base class of IAXCall class (included).
          */
         template <class T=IAXCall>
         std::shared_ptr<enable_if_base_of<T, IAXCall> >
-        newIncomingCall(const std::string& id);
+        newIncomingCall(const std::string& from);
 
         /**
          * Set whether or not to use UPnP

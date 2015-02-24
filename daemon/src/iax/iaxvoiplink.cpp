@@ -400,13 +400,10 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
 {
     const auto accountID = account_.getAccountID();
     std::shared_ptr<IAXCall> call;
-    std::string id;
 
     switch (event->etype) {
         case IAX_EVENT_CONNECT:
-            id = Manager::instance().getNewCallID();
-
-            call = account_.newIncomingCall<IAXCall>(id);
+            call = account_.newIncomingCall<IAXCall>("");
             if (!call) {
                 RING_ERR("failed to create an incoming IAXCall from account %s",
                       accountID.c_str());

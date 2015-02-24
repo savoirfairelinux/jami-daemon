@@ -64,7 +64,7 @@ class DBusCallManager :
         DBusCallManager(DBus::Connection& connection);
 
         // Methods
-        bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+        std::string placeCall(const std::string& accountID, const std::string& to);
         bool refuse(const std::string& callID);
         bool accept(const std::string& callID);
         bool hangUp(const std::string& callID);

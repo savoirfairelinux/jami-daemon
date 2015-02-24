@@ -61,17 +61,15 @@ registerCallHandlers(const std::map<std::string,
     }
 }
 
-bool
-placeCall(const std::string& accountID,
-          const std::string& callID,
-          const std::string& to)
+std::string
+placeCall(const std::string& accountID, const std::string& to)
 {
     // Check if a destination number is available
     if (to.empty()) {
         RING_DBG("No number entered - Call stopped");
-        return false;
+        return {};
     } else {
-        return ring::Manager::instance().outgoingCall(accountID, callID, to);
+        return ring::Manager::instance().outgoingCall(accountID, to);
     }
 }
 

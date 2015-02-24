@@ -145,12 +145,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * Create a new outgoing call.
          *
-         * @param id  The ID of the call
          * @param toUrl The address to call
          * @return std::shared_ptr<Call> A pointer on the created call
          */
-        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                                      const std::string& toUrl) = 0;
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) = 0;
 
         /* Note: we forbid incoming call creation from an instance of Account.
          * This is why no newIncomingCall() method exist here.

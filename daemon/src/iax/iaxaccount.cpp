@@ -43,6 +43,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "call_factory.h"
+#include "intrin.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
@@ -124,16 +125,20 @@ IAXAccount::loadConfig()
 
 template <>
 std::shared_ptr<IAXCall>
-IAXAccount::newIncomingCall(const std::string& id)
+IAXAccount::newIncomingCall(const std::string& from UNUSED)
 {
-    return Manager::instance().callFactory.newCall<IAXCall, IAXAccount>(*this, id, Call::INCOMING);
+    auto& manager = Manager::instance();
+    return manager.callFactory.newCall<IAXCall, IAXAccount>(*this, manager.getNewCallID(),
+                                                            Call::INCOMING);
 }
 
 template <>
 std::shared_ptr<IAXCall>
-IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+IAXAccount::newOutgoingCall(const std::string& toUrl)
 {
-    auto call = Manager::instance().callFactory.newCall<IAXCall, IAXAccount>(*this, id, Call::OUTGOING);
+    auto& manager = Manager::instance();
+    auto call = manager.callFactory.newCall<IAXCall, IAXAccount>(*this, manager.getNewCallID(),
+                                                                 Call::OUTGOING);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);
@@ -147,9 +152,9 @@ IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
 }
 
 std::shared_ptr<Call>
-IAXAccount::newOutgoingCall(const std::string& id, const std::string& toUrl)
+IAXAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<IAXCall>(id, toUrl);
+    return newOutgoingCall<IAXCall>(toUrl);
 }
 
 void

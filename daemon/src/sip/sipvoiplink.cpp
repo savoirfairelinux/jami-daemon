@@ -1216,8 +1216,7 @@ onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
     }
 
     try {
-        Manager::instance().newOutgoingCall(Manager::instance().getNewCallID(),
-                                            std::string(refer_to->hvalue.ptr,
+        Manager::instance().newOutgoingCall(std::string(refer_to->hvalue.ptr,
                                                         refer_to->hvalue.slen),
                                             currentCall->getAccountId());
         Manager::instance().hangupCall(currentCall->getCallId());

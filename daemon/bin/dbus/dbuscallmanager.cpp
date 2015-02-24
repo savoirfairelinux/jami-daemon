@@ -36,9 +36,9 @@ DBusCallManager::DBusCallManager(DBus::Connection& connection)
 {}
 
 auto
-DBusCallManager::placeCall(const std::string& accountID, const std::string& callID, const std::string& to) -> decltype(DRing::placeCall(accountID, callID, to))
+DBusCallManager::placeCall(const std::string& accountID, const std::string& to) -> decltype(DRing::placeCall(accountID, to))
 {
-    return DRing::placeCall(accountID, callID, to);
+    return DRing::placeCall(accountID, to);
 }
 
 auto
