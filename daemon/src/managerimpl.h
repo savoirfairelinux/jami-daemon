@@ -149,13 +149,13 @@ class ManagerImpl {
          * Functions which occur with a user's action
          * Place a new call
          * @param accountId	The account to make the call with
-         * @param call_id  The call identifier
          * @param to  The recipient of the call
          * @param conf_id The conference identifier if any
-         * @return bool true on success
-         *		  false otherwise
+         * @return id The call ID on success, empty string otherwise
          */
-        bool outgoingCall(const std::string&, const std::string&, const std::string&, const std::string& = "");
+        std::string outgoingCall(const std::string& accountId,
+                                 const std::string& to,
+                                 const std::string& conf_id = "");
 
         /**
          * Functions which occur with a user's action
@@ -919,15 +919,13 @@ class ManagerImpl {
 
         /**
          * Create a new outgoing call
-         * @param id  The ID of the call
          * @param toUrl The address to call
          * @param preferredAccountId The IP of preferred account to use.
          *   This is not necessary the account used.
          * @return Call*  A shared pointer on a valid call.
          * @note This function raises VoipLinkException() on errors.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& id,
-                                              const std::string& toUrl,
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl,
                                               const std::string& preferredAccountId);
 
         CallFactory callFactory;

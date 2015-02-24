@@ -152,7 +152,7 @@ struct CallSignal {
 void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */
-bool placeCall(const std::string& accountID, const std::string& callID, const std::string& to);
+std::string placeCall(const std::string& accountID, const std::string& to);
 
 bool refuse(const std::string& callID);
 bool accept(const std::string& callID);

@@ -369,32 +369,33 @@ ManagerImpl::switchCall(std::shared_ptr<Call> call)
 ///////////////////////////////////////////////////////////////////////////////
 /* Main Thread */
 
-bool
+std::string
 ManagerImpl::outgoingCall(const std::string& preferred_account_id,
-                          const std::string& call_id,
                           const std::string& to,
                           const std::string& conf_id)
 {
-    if (call_id.empty()) {
-        RING_DBG("New outgoing call abort, missing callid");
-        return false;
+    std::string current_call_id(getCurrentCallId());
+    std::string prefix(hookPreference.getNumberAddPrefix());
+    std::string to_cleaned(NumberCleaner::clean(to, prefix));
+    std::shared_ptr<Call> call;
+
+    try {
+        /* RING_WARN: after this call the account_id is obsolete
+         * as the factory may decide to use another account (like IP2IP).
+         */
+        RING_DBG("New outgoing call to %s", to_cleaned.c_str());
+        call = newOutgoingCall(to_cleaned, preferred_account_id);
+    } catch (const std::exception &e) {
+        RING_ERR("%s", e.what());
+        return {};
     }
 
-    // Call ID must be unique
-    if (isValidCall(call_id)) {
-        RING_ERR("Call id already exists in outgoing call");
-        return false;
-    }
+    if (not call)
+        return {};
 
-    RING_DBG("New outgoing call %s to %s", call_id.c_str(), to.c_str());
+    auto call_id = call->getCallId();
 
     stopTone();
-
-    std::string current_call_id(getCurrentCallId());
-
-    std::string prefix(hookPreference.getNumberAddPrefix());
-
-    std::string to_cleaned(NumberCleaner::clean(to, prefix));
 
     // in any cases we have to detach from current communication
     if (hasCurrentCall()) {
@@ -407,22 +408,6 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
             detachParticipant(RingBufferPool::DEFAULT_ID);
     }
 
-    std::shared_ptr<Call> call;
-
-    try {
-        /* RING_WARN: after this call the account_id is obsolete
-         * as the factory may decide to use another account (like IP2IP).
-         */
-        RING_DBG("New outgoing call to %s", to_cleaned.c_str());
-        call = newOutgoingCall(call_id, to_cleaned, preferred_account_id);
-    } catch (const std::exception &e) {
-        RING_ERR("%s", e.what());
-        return false;
-    }
-
-    if (not call)
-        return false;
-
     // try to reverse match the peer name using the cache
     if (call->getDisplayName().empty()) {
         const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
@@ -433,7 +418,8 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
     }
     switchCall(call);
     call->setConfId(conf_id);
-    return true;
+
+    return call_id;
 }
 
 //THREAD=Main : for outgoing Call
@@ -1118,23 +1104,18 @@ ManagerImpl::createConfFromParticipantList(const std::vector< std::string > &par
         std::string tostr(numberaccount.substr(0, numberaccount.find(",")));
         std::string account(numberaccount.substr(numberaccount.find(",") + 1, numberaccount.size()));
 
-        std::string generatedCallID(getNewCallID());
-
-        // Manager methods may behave differently if the call id participates in a conference
-        conf->add(generatedCallID);
-
         unsetCurrentCall();
 
         // Create call
-        bool callSuccess = outgoingCall(account, generatedCallID, tostr, conf->getConfID());
+        auto call_id = outgoingCall(account, tostr, conf->getConfID());
+        if (call_id.empty())
+            continue;
 
-        // If not able to create call remove this participant from the conference
-        if (!callSuccess)
-            conf->remove(generatedCallID);
-        else {
-            emitSignal<DRing::CallSignal::NewCallCreated>(account, generatedCallID, tostr);
-            successCounter++;
-        }
+        // Manager methods may behave differently if the call id participates in a conference
+        conf->add(call_id);
+
+        emitSignal<DRing::CallSignal::NewCallCreated>(account, call_id, tostr);
+        successCounter++;
     }
 
     // Create the conference if and only if at least 2 calls have been successfully created
@@ -2781,8 +2762,7 @@ ManagerImpl::getAudioDriver()
 }
 
 std::shared_ptr<Call>
-ManagerImpl::newOutgoingCall(const std::string& id,
-                             const std::string& toUrl,
+ManagerImpl::newOutgoingCall(const std::string& toUrl,
                              const std::string& preferredAccountId)
 {
     std::shared_ptr<Account> account = Manager::instance().getIP2IPAccount();
@@ -2793,7 +2773,7 @@ ManagerImpl::newOutgoingCall(const std::string& id,
         RING_WARN("Ring DHT call detected");
         auto dhtAcc = getAllAccounts<RingAccount>();
         if (not dhtAcc.empty())
-            return dhtAcc.front()->newOutgoingCall(id, finalToUrl);
+            return dhtAcc.front()->newOutgoingCall(finalToUrl);
     }
 #endif
 
@@ -2815,7 +2795,7 @@ ManagerImpl::newOutgoingCall(const std::string& id,
         return nullptr;
     }
 
-    return account->newOutgoingCall(id, finalToUrl);
+    return account->newOutgoingCall(finalToUrl);
 }
 
 } // namespace ring
