@@ -263,14 +263,14 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
     if (!acc)
     {
         RING_ERR("Could not find account %s", accountID.c_str());
-        return {};
+        return {{}};
     }
 
     auto codec = acc->searchCodecById(codecId, ring::MEDIA_ALL);
     if (!codec)
     {
         ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-        return {};
+        return {{}};
     }
 
     if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO)
@@ -282,7 +282,7 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
             return foundCodec->getCodecSpecifications();
 
     ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-    return {};
+    return {{}};
 }
 
 std::vector<unsigned>
