@@ -740,10 +740,22 @@ SIPCall::startAllMedia()
     for (const auto& slot : slots) {
         const auto& local = slot.first;
         const auto& remote = slot.second;
+
         if (local.type != remote.type) {
             RING_ERR("Inconsistent media types between local and remote for SDP media slot");
             continue;
         }
+
+        RtpSession* rtp = local.type == MEDIA_AUDIO
+            ? static_cast<RtpSession*>(avformatrtp_.get())
+#ifdef RING_VIDEO
+            : static_cast<RtpSession*>(&videortp_);
+#else
+            : nullptr;
+#endif
+
+        if (not rtp)
+            continue;
 
         if (!local.codec) {
             RING_ERR("No codec defined in local media slot");
@@ -754,15 +766,10 @@ SIPCall::startAllMedia()
             continue;
         }
 
-
         if (isSecure() && (not local.crypto || not remote.crypto)) {
             RING_ERR("Can't perform secure call over insecure RTP transport");
             continue;
         }
-        RtpSession* rtp = local.type == MEDIA_AUDIO
-            ? static_cast<RtpSession*>(avformatrtp_.get())
-            : static_cast<RtpSession*>(&videortp_);
-
 
         auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(local.codec);
         RING_DBG("########## UPDATE MEDIA ############");
