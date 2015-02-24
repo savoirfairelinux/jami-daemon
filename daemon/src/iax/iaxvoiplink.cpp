@@ -63,13 +63,14 @@ IAXVoIPLink::~IAXVoIPLink()
 }
 
 void
-IAXVoIPLink::init()
+IAXVoIPLink::init(std::mt19937_64& rand_generator)
 {
     if (initDone_)
         return;
 
+    std::uniform_int_distribution<int> port_dist(1024, 65024);
     std::lock_guard<std::mutex> lock(mutexIAX);
-    for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = rand() % 64000 + 1024, nbTry++) {
+    for (int port = IAX_DEFAULT_PORTNO, nbTry = 0; nbTry < 3 ; port = port_dist(rand_generator), nbTry++) {
         if (iax_init(port) >= 0) {
             Manager::instance().registerEventHandler((uintptr_t)this, std::bind(&IAXVoIPLink::handleEvents, this));
             initDone_ = true;
