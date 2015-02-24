@@ -35,10 +35,7 @@
 
 #include <memory>
 
-#ifdef RING_VIDEO
-// forward declaration from libav
 class AVFrame;
-#endif
 
 namespace ring {
 
