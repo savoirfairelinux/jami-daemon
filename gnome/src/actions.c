@@ -276,7 +276,7 @@ gboolean sflphone_init(GError **error, SFLPhoneClient *client)
     contacts_tab = calltab_init(TRUE, CONTACTS, client);
     history_tab = calltab_init(TRUE, HISTORY, client);
 
-    codecs_load();
+//    codecs_load();
     conferencelist_init(current_calls_tab);
 
     // Fetch the configured accounts
