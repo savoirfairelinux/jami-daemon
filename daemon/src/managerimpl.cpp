@@ -1572,10 +1572,9 @@ ManagerImpl::incomingMessage(const std::string& callID,
         }
 
         // in case of a conference we must notify client using conference id
-        incomingMessage(conf->getConfID(), from, message);
-
+        emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, message);
     } else
-        incomingMessage(callID, from, message);
+        emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, message);
 }
 
 //THREAD=VoIP
