@@ -51,6 +51,7 @@ class AVStream;
 class AVFormatContext;
 class AVDictionary;
 class AVCodec;
+class AVFrame;
 
 namespace ring {
 
