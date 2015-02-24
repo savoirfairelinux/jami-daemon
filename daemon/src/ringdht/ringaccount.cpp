@@ -1022,7 +1022,8 @@ getNewDhParams()
 void
 RingAccount::generateDhParams()
 {
-    std::packaged_task<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>()> task(getNewDhParams);
+    using rtype = std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>;
+    std::packaged_task<rtype()> task(&getNewDhParams);
     dhParams_ = task.get_future();
     std::thread task_td(std::move(task));
     task_td.detach();
