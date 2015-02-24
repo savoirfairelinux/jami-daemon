@@ -5,8 +5,8 @@
 
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
             <p>The CallManager interface is used to manage call and conference related actions.</p>
-            <p>Since SFLphone-daemon supports multiple incoming/outgoing calls, any actions involving a specific call must address the method by the means of a unique callID.
-            SFLphone-clients is responsible for generating the callID on outgoing calls. Conversely, SFLphone-daemon will generate a unique callID for incoming calls.</p>
+            <p>Since Ring-daemon supports multiple incoming/outgoing calls, any actions involving a specific call must address the method by the means of a unique callID.
+            Ring-clients is responsible for generating the callID on outgoing calls. Conversely, Ring-daemon will generate a unique callID for incoming calls.</p>
         </tp:docstring>
         <method name="placeCall" tp:name-for-bindings="placeCall">
             <tp:docstring>
@@ -204,8 +204,8 @@
         <method name="addMainParticipant" tp:name-for-bindings="addMainParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              <p>As the core can handle multiple calls and conferences, it may happen that the client's user leaves a conference to answer an incoming call or to start new calls. This method is used to reintroduce SFLphone-client's user into the conference.</p>
-              <p>Its put the current call on HOLD or detaches SFLphone-client's user from the another conference.</p>
+              <p>As the core can handle multiple calls and conferences, it may happen that the client's user leaves a conference to answer an incoming call or to start new calls. This method is used to reintroduce Ring-client's user into the conference.</p>
+              <p>Its put the current call on HOLD or detaches Ring-client's user from the another conference.</p>
             </tp:docstring>
             <arg type="s" name="confID" direction="in">
               <tp:docstring>
@@ -518,11 +518,11 @@
               <tp:docstring>
                 The acceptable states are:
                 <ul>
-                  <li>ACTIVE_ATTACHED: SFLphone user is
+                  <li>ACTIVE_ATTACHED: Ring user is
                   participating to this conference</li>
                   <li>ACTIVE_DETACHED: This situation can
                   occur if a call is received while
-                  SFLphone user is participating to a
+                  Ring user is participating to a
                   conference. In this case, one can leave
                   the conference by answering the
                   call. Other participants may continue
@@ -571,7 +571,7 @@
         <signal name="conferenceCreated" tp:name-for-bindings="conferenceCreated">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              Emited when a new conference is created. SFLphone-client is reponsible for storing the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
+              Emited when a new conference is created. Ring-client is reponsible for storing the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
             </tp:docstring>
             <arg type="s" name="confID">
               <tp:docstring>
@@ -583,7 +583,7 @@
         <signal name="conferenceRemoved" tp:name-for-bindings="conferenceRemoved">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              Emited when a new conference is remove. SFLphone-client should have kept a list of current participant in order to display modification.
+              Emited when a new conference is remove. Ring-client should have kept a list of current participant in order to display modification.
             </tp:docstring>
             <arg type="s" name="confID">
               <tp:docstring>
@@ -632,7 +632,7 @@
 
         <signal name="sipCallStateChanged" tp:name-for-bindings="sipCallStateChanged">
             <tp:docstring>
-              <p>Call state changed, SFLphone received a notification
+              <p>Call state changed, Ring received a notification
                 from registrar concerning this call.</p>
             </tp:docstring>
             <arg type="s" name="callID"  />
@@ -670,7 +670,7 @@
               <p>Transfer has been successfully
               processed. Client should remove transfered
               call from call list as it is no longer
-              accessible in SFLphone-daemon.</p>
+              accessible in Ring-daemon (dring).</p>
             </tp:docstring>
         </signal>
 
@@ -678,7 +678,7 @@
             <tp:docstring>
               <p>Transfer operation failed. Corresponding
               call is no longer accessible in
-              SFLphone-daemon.</p>
+              Ring-daemon (dring).</p>
             </tp:docstring>
         </signal>
 

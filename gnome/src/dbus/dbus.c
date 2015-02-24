@@ -1418,7 +1418,7 @@ dbus_audio_codec_list()
 {
     GError *error = NULL;
     GArray *array = NULL;
-    cx_ring_Ring_ConfigurationManager_get_audio_codec_list(config_proxy, &array, &error);
+    //cx_ring_Ring_ConfigurationManager_get_audio_codec_list(config_proxy, &array, &error);
     check_error(error);
     return array;
 }
@@ -1429,7 +1429,7 @@ dbus_get_video_codec_list(const gchar *accountID)
 {
     GError *error = NULL;
     GArray *array = NULL;
-    cx_ring_Ring_VideoManager_get_video_codec_list(video_proxy, accountID, &array, &error);
+    //cx_ring_Ring_VideoManager_get_video_codec_list(video_proxy, accountID, &array, &error);
     check_error(error);
     return array;
 }
@@ -1439,7 +1439,7 @@ dbus_get_video_codec_details(int id)
 {
     GError *error = NULL;
     gchar **array;
-    cx_ring_Ring_VideoManager_get_video_codec_details(video_proxy, id, &array, &error);
+    //cx_ring_Ring_VideoManager_get_video_codec_details(video_proxy, id, &array, &error);
     check_error(error);
     return array;
 }
@@ -1448,7 +1448,7 @@ void
 dbus_set_video_codec_list(const gchar *accountID, const GArray *list)
 {
     GError *error = NULL;
-    cx_ring_Ring_VideoManager_set_video_codec_list(video_proxy, accountID, list, &error);
+    //cx_ring_Ring_VideoManager_set_video_codec_list(video_proxy, accountID, list, &error);
     check_error(error);
 }
 
@@ -1468,7 +1468,7 @@ dbus_audio_codec_details(int payload)
 {
     GError *error = NULL;
     gchar **array;
-    cx_ring_Ring_ConfigurationManager_get_audio_codec_details(config_proxy, payload, &array, &error);
+    //cx_ring_Ring_ConfigurationManager_get_audio_codec_details(config_proxy, payload, &array, &error);
     check_error(error);
     return array;
 }
@@ -1478,8 +1478,8 @@ dbus_get_active_audio_codec_list(const gchar *accountID)
 {
     GArray *array = NULL;
     GError *error = NULL;
-    cx_ring_Ring_ConfigurationManager_get_active_audio_codec_list(config_proxy, accountID, &array,
-                                       &error);
+    //cx_ring_Ring_ConfigurationManager_get_active_audio_codec_list(config_proxy, accountID, &array,
+    //                                   &error);
     check_error(error);
 
     return array;
@@ -1489,7 +1489,7 @@ void
 dbus_set_active_audio_codec_list(const gchar **list, const gchar *accountID)
 {
     GError *error = NULL;
-    cx_ring_Ring_ConfigurationManager_set_active_audio_codec_list(config_proxy, list, accountID, &error);
+    //cx_ring_Ring_ConfigurationManager_set_active_audio_codec_list(config_proxy, list, accountID, &error);
     check_error(error);
 }
 
@@ -2130,7 +2130,7 @@ dbus_get_tls_settings_default(void)
 {
     GError *error = NULL;
     GHashTable *results = NULL;
-    cx_ring_Ring_ConfigurationManager_get_tls_settings_default(config_proxy, &results, &error);
+    //cx_ring_Ring_ConfigurationManager_get_tls_settings_default(config_proxy, &results, &error);
     check_error(error);
 
     return results;
