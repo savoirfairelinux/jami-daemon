@@ -411,11 +411,11 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
         call = newOutgoingCall(to_cleaned, preferred_account_id);
     } catch (const std::exception &e) {
         RING_ERR("%s", e.what());
-        return false;
+        return {};
     }
 
     if (not call)
-        return false;
+        return {};
 
     switchCall(call);
     call->setConfId(conf_id);
