@@ -105,7 +105,7 @@ ring_client_command_line_handler(G_GNUC_UNUSED GApplication *application,
 
     status_bar_display_account();
 
-    sflphone_fill_history_lazy();
+    //sflphone_fill_history_lazy();
     sflphone_fill_conference_list(client);
     sflphone_fill_call_list();
 
