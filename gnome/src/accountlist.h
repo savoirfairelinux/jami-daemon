@@ -85,7 +85,7 @@ typedef struct  {
     GPtrArray * credential_information;
 
     /* The codec lists */
-    GQueue *acodecs;
+    GQueue *allCodecs;
     guint _messages_number;
 } account_t;
 

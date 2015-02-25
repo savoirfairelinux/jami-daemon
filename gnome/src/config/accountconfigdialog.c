@@ -1486,7 +1486,7 @@ create_videocodecs_configuration(const account_t *a)
     gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
     gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
     gtk_widget_show(videocodecs);
-    gtk_container_add(GTK_CONTAINER (videocodecs), box);
+    //gtk_container_add(GTK_CONTAINER (videocodecs), box);
 
     /* Check button to enable/disable video for an account */
     gpointer ptr = account_lookup(a, CONFIG_VIDEO_ENABLED);
