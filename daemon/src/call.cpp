@@ -35,12 +35,14 @@
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "history/historyitem.h"
+#include "dring/call_const.h"
 
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
+#include "string_utils.h"
 
 namespace ring {
 
@@ -236,39 +238,31 @@ std::string Call::getTypeStr() const
     }
 }
 
-static std::string
-timestamp_to_string(const time_t &timestamp)
-{
-    std::stringstream time_str;
-    time_str << timestamp;
-    return time_str.str();
-}
-
 std::map<std::string, std::string> Call::createHistoryEntry() const
 {
-    std::map<std::string, std::string> result;
-
-    result[HistoryItem::ACCOUNT_ID_KEY] = getAccountId();
-    result[HistoryItem::CONFID_KEY] = confID_;
-    result[HistoryItem::CALLID_KEY] = id_;
-    result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
-    result[HistoryItem::PEER_NUMBER_KEY] = peerNumber_;
-    result[HistoryItem::RECORDING_PATH_KEY] = recAudio_.fileExists() ? getFilename() : "";
-    result[HistoryItem::TIMESTAMP_START_KEY] = timestamp_to_string(timestamp_start_);
-    result[HistoryItem::TIMESTAMP_STOP_KEY] = timestamp_to_string(timestamp_stop_);
+    std::map<std::string, std::string> result {
+        {HistoryItem::ACCOUNT_ID_KEY, getAccountId()},
+        {HistoryItem::CONFID_KEY, confID_},
+        {HistoryItem::CALLID_KEY, id_},
+        {HistoryItem::DISPLAY_NAME_KEY, displayName_},
+        {HistoryItem::PEER_NUMBER_KEY, peerNumber_},
+        {HistoryItem::RECORDING_PATH_KEY, recAudio_.fileExists() ? getFilename() : ""},
+        {HistoryItem::TIMESTAMP_START_KEY, ring::to_string(timestamp_start_)},
+        {HistoryItem::TIMESTAMP_STOP_KEY, ring::to_string(timestamp_stop_)}
+    };
 
     // FIXME: state will no longer exist, it will be split into
     // a boolean field called "missed" and a direction field "incoming" or "outgoing"
     if (connectionState_ == RINGING) {
-        result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
-        result[HistoryItem::MISSED_KEY] = "true";
+        result.emplace(HistoryItem::STATE_KEY, HistoryItem::MISSED_STRING);
+        result.emplace(HistoryItem::MISSED_KEY, "true");
     } else {
-        result[HistoryItem::STATE_KEY] = getTypeStr();
-        result[HistoryItem::MISSED_KEY] = "false";
+        result.emplace(HistoryItem::STATE_KEY, getTypeStr());
+        result.emplace(HistoryItem::MISSED_KEY, "false");
     }
 
     // now "missed" and direction are independent
-    result[HistoryItem::DIRECTION_KEY] = getTypeStr();
+    result.emplace(HistoryItem::DIRECTION_KEY, getTypeStr());
 
     return result;
 }
@@ -276,31 +270,29 @@ std::map<std::string, std::string> Call::createHistoryEntry() const
 std::map<std::string, std::string>
 Call::getDetails()
 {
-    std::map<std::string, std::string> details;
-    std::ostringstream type;
-    type << type_;
-    details["CALL_TYPE"] = type.str();
-    details["PEER_NUMBER"] = peerNumber_;
-    details["DISPLAY_NAME"] = displayName_;
-    details["CALL_STATE"] = getStateStr();
-    details["CONF_ID"] = confID_;
-    details["TIMESTAMP_START"] = timestamp_to_string(timestamp_start_);
-    details["ACCOUNTID"] = getAccountId();
-    return details;
+    return {
+        {DRing::Call::Details::CALL_TYPE,        ring::to_string(type_)},
+        {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
+        {DRing::Call::Details::DISPLAY_NAME,     displayName_},
+        {DRing::Call::Details::CALL_STATE,       getStateStr()},
+        {DRing::Call::Details::CONF_ID,          confID_},
+        {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
+        {DRing::Call::Details::ACCOUNTID,        getAccountId()},
+    };
 }
 
 std::map<std::string, std::string>
 Call::getNullDetails()
 {
-    std::map<std::string, std::string> details;
-    details["CALL_TYPE"] = "0";
-    details["PEER_NUMBER"] = "Unknown";
-    details["DISPLAY_NAME"] = "Unknown";
-    details["CALL_STATE"] = "UNKNOWN";
-    details["CONF_ID"] = "";
-    details["TIMESTAMP_START"] = "";
-    details["ACCOUNTID"] = "";
-    return details;
+    return {
+        {DRing::Call::Details::CALL_TYPE,        "0"},
+        {DRing::Call::Details::PEER_NUMBER,      ""},
+        {DRing::Call::Details::DISPLAY_NAME,     "Unknown"},
+        {DRing::Call::Details::CALL_STATE,       "UNKNOWN"},
+        {DRing::Call::Details::CONF_ID,          ""},
+        {DRing::Call::Details::TIMESTAMP_START,  ""},
+        {DRing::Call::Details::ACCOUNTID,        ""},
+    };
 }
 
 void
