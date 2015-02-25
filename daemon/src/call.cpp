@@ -34,12 +34,14 @@
 #include "account.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
+#include "dring/call_const.h"
 
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
 #include "map_utils.h"
 #include "call_factory.h"
+#include "string_utils.h"
 
 namespace ring {
 
@@ -235,42 +237,32 @@ std::string Call::getTypeStr() const
     }
 }
 
-static std::string
-timestamp_to_string(const time_t &timestamp)
-{
-    std::stringstream time_str;
-    time_str << timestamp;
-    return time_str.str();
-}
-
 std::map<std::string, std::string>
 Call::getDetails()
 {
-    std::map<std::string, std::string> details;
-    std::ostringstream type;
-    type << type_;
-    details["CALL_TYPE"] = type.str();
-    details["PEER_NUMBER"] = peerNumber_;
-    details["DISPLAY_NAME"] = displayName_;
-    details["CALL_STATE"] = getStateStr();
-    details["CONF_ID"] = confID_;
-    details["TIMESTAMP_START"] = timestamp_to_string(timestamp_start_);
-    details["ACCOUNTID"] = getAccountId();
-    return details;
+    return {
+        {DRing::Call::Details::CALL_TYPE,        ring::to_string(type_)},
+        {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
+        {DRing::Call::Details::DISPLAY_NAME,     displayName_},
+        {DRing::Call::Details::CALL_STATE,       getStateStr()},
+        {DRing::Call::Details::CONF_ID,          confID_},
+        {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
+        {DRing::Call::Details::ACCOUNTID,        getAccountId()},
+    };
 }
 
 std::map<std::string, std::string>
 Call::getNullDetails()
 {
-    std::map<std::string, std::string> details;
-    details["CALL_TYPE"] = "0";
-    details["PEER_NUMBER"] = "Unknown";
-    details["DISPLAY_NAME"] = "Unknown";
-    details["CALL_STATE"] = "UNKNOWN";
-    details["CONF_ID"] = "";
-    details["TIMESTAMP_START"] = "";
-    details["ACCOUNTID"] = "";
-    return details;
+    return {
+        {DRing::Call::Details::CALL_TYPE,        "0"},
+        {DRing::Call::Details::PEER_NUMBER,      ""},
+        {DRing::Call::Details::DISPLAY_NAME,     "Unknown"},
+        {DRing::Call::Details::CALL_STATE,       "UNKNOWN"},
+        {DRing::Call::Details::CONF_ID,          ""},
+        {DRing::Call::Details::TIMESTAMP_START,  ""},
+        {DRing::Call::Details::ACCOUNTID,        ""},
+    };
 }
 
 void
