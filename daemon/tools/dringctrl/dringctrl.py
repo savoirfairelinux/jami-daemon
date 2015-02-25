@@ -167,7 +167,7 @@ if __name__ == "__main__":
         ctrl.UnHold(args.unhold)
 
     if args.dtmf:
-        sflphone.Dtmf(dtmf)
+        ctrl.Dtmf(dtmf)
 
 """
 
