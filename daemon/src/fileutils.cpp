@@ -309,6 +309,10 @@ get_cache_dir()
     } else {
 #ifdef __ANDROID__
         return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
+#elif __APPLE__
+        return get_home_dir() + DIR_SEPARATOR_STR
+            + "Library" + DIR_SEPARATOR_STR + "Application Support"
+            + DIR_SEPARATOR_STR + PACKAGE;
 #else
         return get_home_dir() + DIR_SEPARATOR_STR +
             ".cache" + DIR_SEPARATOR_STR + PACKAGE;
