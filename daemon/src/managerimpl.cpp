@@ -1923,6 +1923,9 @@ ManagerImpl::retrieveConfigPath() const
 {
 #ifdef __ANDROID__
     std::string configdir = "/data/data/cx.ring";
+#elif __APPLE__
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+    "Library" + DIR_SEPARATOR_STR + "Application Support"+ DIR_SEPARATOR_STR + PACKAGE;
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
