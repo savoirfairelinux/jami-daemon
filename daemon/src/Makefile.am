@@ -35,7 +35,7 @@ TLS_LIB = @GNUTLS_LIBS@
 TLS_CFLAGS = @GNUTLS_CFLAGS@
 endif
 
-SUBDIRS = client media config hooks sip upnp $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks history sip upnp $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -47,6 +47,7 @@ libring_la_LIBADD = \
 	./client/libclient.la \
 	./config/libconfig.la \
 	./hooks/libhooks.la \
+	./history/libhistory.la \
 	./upnp/libupnpcontrol.la \
 	$(RINGACC_LIBA) \
 	$(IAX_LIBA) \
