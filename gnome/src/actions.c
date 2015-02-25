@@ -868,32 +868,32 @@ sflphone_rec_call(SFLPhoneClient *client)
 }
 
 static void
-sflphone_fill_audio_codec_list_per_account(account_t *account)
+sflphone_fill_all_codec_list_per_account(account_t *account)
 {
-    if (!account->acodecs)
-        account->acodecs = g_queue_new();
+    if (!account->allCodecs)
+        account->allCodecs = g_queue_new();
     else
-        g_queue_clear(account->acodecs);
+        g_queue_clear(account->allCodecs);
 
-    GQueue *system_acodecs = get_audio_codecs_list();
-    if (!system_acodecs) {  // should never happen
+    GQueue *system_codecs = get_all_codecs_list();
+    if (!system_codecs) {  // should never happen
         g_warning("Couldn't get codec list in %s at %d", __FILE__, __LINE__);
         return;
     }
 
     /* First add the active codecs for this account */
-    GArray *order = dbus_get_active_audio_codec_list(account->accountID);
+    GArray *order = dbus_get_active_codec_list(account->accountID);
     if (order) {
         for (guint i = 0; i < order->len; i++) {
-            gint payload = g_array_index(order, gint, i);
-            codec_t *orig = codec_list_get_by_payload(payload, system_acodecs);
+            guint codecId = g_array_index(order, gint, i);
+            codec_t *orig = codec_list_get_by_codecId(codecId, system_codecs);
             codec_t *c = codec_create_new_from_caps(orig);
 
             if (c) {
                 c->is_active = TRUE;
-                g_queue_push_tail(account->acodecs, c);
+                g_queue_push_tail(account->allCodecs, c);
             } else
-                g_warning("Couldn't find codec %d %p", payload, orig);
+                g_warning("Couldn't find codec %d %p", codecId, orig);
         }
         g_array_unref(order);
     } else {
@@ -901,19 +901,19 @@ sflphone_fill_audio_codec_list_per_account(account_t *account)
     }
 
     /* Here we add installed codecs that aren't active for the account */
-    guint caps_size = g_queue_get_length(system_acodecs);
+    guint caps_size = g_queue_get_length(system_codecs);
     for (guint i = 0; i < caps_size; ++i) {
-        codec_t * acodec = g_queue_peek_nth(system_acodecs, i);
-        if (codec_list_get_by_payload(acodec->payload, account->acodecs) == NULL) {
-            acodec->is_active = FALSE;
-            g_queue_push_tail(account->acodecs, acodec);
+        codec_t * codec = g_queue_peek_nth(system_codecs, i);
+        if (codec_list_get_by_codecId(codec->codecId, account->allCodecs) == NULL) {
+            codec->is_active = FALSE;
+            g_queue_push_tail(account->allCodecs, codec);
         }
     }
 }
 
 void sflphone_fill_codec_list_per_account(account_t *account)
 {
-    sflphone_fill_audio_codec_list_per_account(account);
+    sflphone_fill_all_codec_list_per_account(account);
 }
 
 void sflphone_fill_call_list(void)

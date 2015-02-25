@@ -77,21 +77,23 @@ fill_codec_list(const account_t *account)
     GQueue *list;
     if (!account) {
         g_debug("Account is NULL, using global codec list");
-        list = get_audio_codecs_list();
+        printf("Account is NULL, using global codec list \n");
+        list = get_all_codecs_list();
     } else {
-        list = account->acodecs;
+        list = account->allCodecs;
     }
 
     // Insert codecs
     for (size_t i = 0; i < list->length; ++i) {
         codec_t *c = g_queue_peek_nth(list, i);
 
-        if (c) {
+        //if ( c && g_strcmp0(c->type, "AUDIO") == 0 ) {
+        if ( c ) {
             g_debug("%s is %sactive", c->name, c->is_active ? "" : "not ");
             GtkTreeIter iter;
             gtk_list_store_append(codecStore, &iter);
             gchar *samplerate = g_strdup_printf("%d " KHZ, (gint) (c->sample_rate * 0.001));
-            gchar *bitrate = g_strdup_printf("%s " KBPS, c->bitrate);
+            gchar *bitrate = g_strdup_printf("%d " KBPS, c->bitrate);
             gchar *channels = g_strdup_printf("%d", c->channels);
 
             gtk_list_store_set(codecStore, &iter,
@@ -352,11 +354,13 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
                        &samplerate, -1);
 
     g_debug("Selected Codec: %s, %s", name, samplerate);
+    printf("Selected Codec: %s, %s \n", name, samplerate);
 
     codec_t* codec = NULL;
 
     const gboolean is_speex = utf8_case_equal(name, "speex");
     if (is_speex) {
+#if 0
         if (utf8_case_equal(samplerate, "8 " KHZ))
             codec = codec_list_get_by_payload(110, acc->acodecs);
         else if (utf8_case_equal(samplerate, "16 " KHZ))
@@ -365,8 +369,9 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
             codec = codec_list_get_by_payload(112, acc->acodecs);
         else
             codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
+#endif
     } else {
-        codec = codec_list_get_by_name((gconstpointer) name, acc->acodecs);
+        codec = codec_list_get_by_name((gconstpointer) name, acc->allCodecs);
     }
 
     // Toggle active value
@@ -390,6 +395,34 @@ codec_active_toggled(G_GNUC_UNUSED GtkCellRendererToggle *renderer, gchar *path,
  */
 static void codec_move(gboolean moveUp, gpointer data)
 {
+
+#if 0
+    // Get path of clicked codec active toggle box
+    GtkTreePath *treePath = gtk_tree_path_new_from_string(path);
+    GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, treePath);
+
+    // Retrieve userdata
+    account_t *acc = (account_t*) data;
+
+    if (!acc) {
+        g_warning("no account selected");
+        return;
+    }
+
+    // Get active value and name at iteration
+    gboolean active;
+    gchar* name;
+    gchar* samplerate;
+    gtk_tree_model_get(model, &iter, COLUMN_CODEC_ACTIVE, &active,
+                       COLUMN_CODEC_NAME, &name, COLUMN_CODEC_FREQUENCY,
+                       &samplerate, -1);
+#endif
+
+
+
+    gchar* codecToMove = NULL;
     // Get view, model and selection of codec store
     GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(codecTreeView));
     GtkTreeSelection *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(codecTreeView));
@@ -398,6 +431,7 @@ static void codec_move(gboolean moveUp, gpointer data)
     GtkTreeIter iter;
     gtk_tree_selection_get_selected(selection, &model, &iter);
     GtkTreeIter *iter2 = gtk_tree_iter_copy(&iter);
+
 
     // Find path of iteration
     gchar *path = gtk_tree_model_get_string_from_iter(GTK_TREE_MODEL(model), &iter);
@@ -410,6 +444,7 @@ static void codec_move(gboolean moveUp, gpointer data)
         gtk_tree_path_prev(treePath);
     else
         gtk_tree_path_next(treePath);
+
 
     gtk_tree_model_get_iter(model, &iter, treePath);
 
@@ -431,9 +466,9 @@ static void codec_move(gboolean moveUp, gpointer data)
     if (acc) {
         // propagate changes in codec queue
         if (moveUp)
-            codec_list_move_codec_up(indice, &acc->acodecs);
+            codec_list_move_codec_up(indice, &acc->allCodecs);
         else
-            codec_list_move_codec_down(indice, &acc->acodecs);
+            codec_list_move_codec_down(indice, &acc->allCodecs);
     }
 }
 

@@ -35,20 +35,37 @@
 /** @file codeclist.h
   * @brief A list to hold codecs.
   */
+static const gchar CODEC_INFO_NAME               [] = "CodecInfo.name";
+static const gchar CODEC_INFO_TYPE               [] = "CodecInfo.type";
+static const gchar CODEC_INFO_SAMPLE_RATE        [] = "CodecInfo.sampleRate";
+static const gchar CODEC_INFO_FRAME_RATE         [] = "CodecInfo.frameRate";
+static const gchar CODEC_INFO_BITRATE            [] = "CodecInfo.bitrate";
+static const gchar CODEC_INFO_CHANNEL_NUMBER     [] = "CodecInfo.channelNumber";
+
 
 typedef struct {
+    /** CodecId of the codec */
+    guint codecId;
     /** Payload of the codec */
-    gint payload;
+    guint payload;
     /** Tells if the codec has been activated */
     gboolean is_active;
     /** String description */
     gchar * name;
-    /** Sample rate */
-    gint sample_rate;
+    /** type (AUDIO oR VIDEO) */
+    gchar * type;
     /** Bitrate */
     gchar * bitrate;
+
+    /*Audio specific*/
+
+    /** Sample rate */
+    guint sample_rate;
     /** Channel number */
-    gint channels;
+    guint channels;
+
+    /*video specific*/
+    guint frame_rate;
 } codec_t;
 
 /** @struct codec_t
@@ -86,7 +103,7 @@ void codec_set_preferred_order(guint index, GQueue *q);
  */
 void codec_list_update_to_daemon(const account_t *acc);
 
-codec_t* codec_list_get_by_payload(gint payload, GQueue *q);
+codec_t* codec_list_get_by_codecId(guint codecId, GQueue *q);
 
 GQueue* get_audio_codecs_list(void);
 
