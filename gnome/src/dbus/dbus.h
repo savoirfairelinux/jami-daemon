@@ -207,21 +207,9 @@ void dbus_play_dtmf(const gchar *key);
  * ConfigurationManager - Get the audio codecs list
  * @return gchar** The list of audiocodecs
  */
-GArray *dbus_audio_codec_list();
-
-/**
- * ConfigurationManager - Get the audio codec details
- * @param payload The payload of the audio codec
- * @return gchar** The audio codec details
- */
-gchar **dbus_audio_codec_details(int codecId);
-
-/**
- * ConfigurationManager - Get the video codec details
- * @param codec The name of the video codec
- * @return gchar** The video codec details
- */
-gchar **dbus_video_codec_details(int codecId);
+GArray *dbus_get_active_codec_list(const gchar *accountID);
+void dbus_set_active_codec_list(const gchar *accountID, const GArray *list);
+GHashTable* dbus_get_codec_details(const gchar *accountID, guint codecId);
 
 /**
  * ConfigurationManager - Get the default audio codec list
@@ -229,33 +217,6 @@ gchar **dbus_video_codec_details(int codecId);
  * @return gchar** The default audio codec list
  */
 gchar **dbus_default_audio_codec_list();
-
-/**
- * ConfigurationManager - Get the list of the audio codecs used for media negotiation
- * @return The list of audio codecs
- */
-GArray *dbus_get_active_audio_codec_list(const gchar *accountID);
-
-/**
- * ConfigurationManager - Set the list of audio codecs used for media negociation
- * @param list The list of audio codecs
- */
-void dbus_set_active_audio_codec_list(const gchar **list, const gchar *);
-
-/**
- * ConfigurationManager - Get the list of the audio codecs used for media negotiation
- * @return gchar** The list of audio codecs
- */
-GPtrArray *
-dbus_get_video_codecs(const gchar *accountID);
-
-/**
- * ConfigurationManager - Set the list of audio codecs used for media negociation
- * @param id The accountID
- * @param list The list of codecs
- */
-void
-dbus_set_video_codec_list(const gchar *id, const GArray *list);
 
 /**
  * ConfigurationManager - Switch the video input
