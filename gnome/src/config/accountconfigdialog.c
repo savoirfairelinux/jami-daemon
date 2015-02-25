@@ -49,7 +49,7 @@
 #include "actions.h"
 #include "accountlist.h"
 #include "audioconf.h"
-#include "videoconf.h"
+//ebail : not use for the moment #include "videoconf.h"
 #include "accountconfigdialog.h"
 #include "account_schema.h"
 #include "zrtpadvanceddialog.h"
@@ -1479,14 +1479,15 @@ create_videocodecs_configuration(const account_t *a)
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 10);
     gtk_container_set_border_width(GTK_CONTAINER(vbox), 10);
 
-    GtkWidget *box = videocodecs_box(a);
+    // ebail : not use for the moment
+    //GtkWidget *box = videocodecs_box(a);
 
     // Box for the videocodecs
     GtkWidget *videocodecs = gnome_main_section_new(_("Video"));
     gtk_box_pack_start(GTK_BOX (vbox), videocodecs, FALSE, FALSE, 0);
     gtk_widget_set_size_request(GTK_WIDGET (videocodecs), -1, 200);
     gtk_widget_show(videocodecs);
-    gtk_container_add(GTK_CONTAINER (videocodecs), box);
+    //gtk_container_add(GTK_CONTAINER (videocodecs), box);
 
     /* Check button to enable/disable video for an account */
     gpointer ptr = account_lookup(a, CONFIG_VIDEO_ENABLED);
