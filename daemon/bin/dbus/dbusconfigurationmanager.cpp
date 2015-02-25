@@ -331,12 +331,6 @@ DBusConfigurationManager::getHistoryLimit() -> decltype(DRing::getHistoryLimit()
 }
 
 void
-DBusConfigurationManager::clearHistory()
-{
-    DRing::clearHistory();
-}
-
-void
 DBusConfigurationManager::setAccountsOrder(const std::string& order)
 {
     DRing::setAccountsOrder(order);
@@ -352,12 +346,6 @@ void
 DBusConfigurationManager::setHookSettings(const std::map<std::string, std::string>& settings)
 {
     DRing::setHookSettings(settings);
-}
-
-auto
-DBusConfigurationManager::getHistory() -> decltype(DRing::getHistory())
-{
-    return DRing::getHistory();
 }
 
 auto

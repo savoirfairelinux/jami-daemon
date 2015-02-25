@@ -183,13 +183,6 @@ void SIPCall::setContactHeader(pj_str_t *contact)
     pj_strcpy(&contactHeader_, contact);
 }
 
-std::map<std::string, std::string>
-SIPCall::createHistoryEntry() const
-{
-    std::map<std::string, std::string> entry(Call::createHistoryEntry());
-    return entry;
-}
-
 /**
  * Send a reINVITE inside an active dialog to modify its state
  * Local SDP session should be modified before calling this method

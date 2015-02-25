@@ -175,7 +175,6 @@ int DBusClient::initLibrary(int sflphFlags)
             DRing::EventHandlerKey::CONFIG, {
                 exportable_callback<ConfigurationSignal::VolumeChanged>(bind(&DBusConfigurationManager::volumeChanged, confM, _1, _2)),
                 exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&DBusConfigurationManager::accountsChanged, confM)),
-                exportable_callback<ConfigurationSignal::HistoryChanged>(bind(&DBusConfigurationManager::historyChanged, confM)),
                 exportable_callback<ConfigurationSignal::StunStatusFailed>(bind(&DBusConfigurationManager::stunStatusFailure, confM, _1)),
                 exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2)),
                 exportable_callback<ConfigurationSignal::SipRegistrationStateChanged>(bind(&DBusConfigurationManager::sipRegistrationStateChanged, confM, _1, _2, _3)),

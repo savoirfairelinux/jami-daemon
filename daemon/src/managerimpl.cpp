@@ -68,7 +68,6 @@
 #include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
-#include "history/history.h"
 #include "manager.h"
 
 #ifdef RING_VIDEO
@@ -162,7 +161,7 @@ ManagerImpl::ManagerImpl() :
     toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
     waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
-    , callFactory(), conferenceMap_(), history_()
+    , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
 {
     // initialize random generator
@@ -269,15 +268,13 @@ ManagerImpl::init(const std::string &config_file)
         }
     }
 
-    history_.load(preferences.getHistoryLimit());
-
     registerAccounts();
 }
 
 void
-ManagerImpl::setPath(const std::string &path)
+ManagerImpl::setPath(const std::string&)
 {
-    history_.setPath(path);
+    // FIME: needed?
 }
 
 void
@@ -297,9 +294,7 @@ ManagerImpl::finish() noexcept
             hangupCall(call->getCallId());
         callFactory.clear();
 
-        // Save accounts config and call's history
         saveConfig();
-        saveHistory();
 
         // Disconnect accounts, close link stacks and free allocated ressources
         unregisterAccounts();
@@ -408,14 +403,6 @@ ManagerImpl::outgoingCall(const std::string& preferred_account_id,
             detachParticipant(RingBufferPool::DEFAULT_ID);
     }
 
-    // try to reverse match the peer name using the cache
-    if (call->getDisplayName().empty()) {
-        const auto& name = history_.getNameFromHistory(call->getPeerNumber(),
-                                                       call->getAccountId());
-        const std::string pseudo_contact_name(name);
-        if (not pseudo_contact_name.empty())
-            call->setDisplayName(pseudo_contact_name);
-    }
     switchCall(call);
     call->setConfId(conf_id);
 
@@ -526,10 +513,8 @@ ManagerImpl::hangupCall(const std::string& callId)
     }
 
     try {
-        history_.addCall(call.get(), preferences.getHistoryLimit());
         call->hangup(0);
         checkAudio();
-        saveHistory();
     } catch (const VoipLinkException &e) {
         RING_ERR("%s", e.what());
         return false;
@@ -1674,9 +1659,7 @@ ManagerImpl::peerHungupCall(Call& call)
         unsetCurrentCall();
     }
 
-    history_.addCall(&call, preferences.getHistoryLimit());
     call.peerHungup();
-    saveHistory();
 
     emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP");
 
@@ -2612,12 +2595,6 @@ ManagerImpl::getCallDetails(const std::string &callID)
     }
 }
 
-std::vector<std::map<std::string, std::string> >
-ManagerImpl::getHistory()
-{
-    return history_.getSerialized();
-}
-
 std::vector<std::string>
 ManagerImpl::getCallList() const
 {
@@ -2685,21 +2662,6 @@ ManagerImpl::getConferenceId(const std::string& callID)
 
     RING_ERR("Call is NULL");
     return "";
-}
-
-void
-ManagerImpl::saveHistory()
-{
-    if (!history_.save())
-        RING_ERR("Could not save history!");
-    else
-        emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
-}
-
-void
-ManagerImpl::clearHistory()
-{
-    history_.clear();
 }
 
 void

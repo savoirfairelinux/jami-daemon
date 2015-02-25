@@ -59,10 +59,6 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "AccountsChanged";
                 using cb_type = void(void);
         };
-        struct HistoryChanged {
-                constexpr static const char* name = "HistoryChanged";
-                using cb_type = void(void);
-        };
         struct StunStatusFailed {
                 constexpr static const char* name = "StunStatusFailed";
                 using cb_type = void(const std::string& /*account_id*/);
@@ -144,14 +140,11 @@ void setIsAlwaysRecording(bool rec);
 
 void setHistoryLimit(int32_t days);
 int32_t getHistoryLimit();
-void clearHistory();
 
 void setAccountsOrder(const std::string& order);
 
 std::map<std::string, std::string> getHookSettings();
 void setHookSettings(const std::map<std::string, std::string>& settings);
-
-std::vector<std::map<std::string, std::string>> getHistory();
 
 std::map<std::string, std::string> getTlsSettings();
 void setTlsSettings(const std::map<std::string, std::string>& details);
