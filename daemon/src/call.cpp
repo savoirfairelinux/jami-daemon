@@ -34,6 +34,7 @@
 #include "account.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
+#include "history/historyitem.h"
 
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
@@ -241,6 +242,35 @@ timestamp_to_string(const time_t &timestamp)
     std::stringstream time_str;
     time_str << timestamp;
     return time_str.str();
+}
+
+std::map<std::string, std::string> Call::createHistoryEntry() const
+{
+    std::map<std::string, std::string> result;
+
+    result[HistoryItem::ACCOUNT_ID_KEY] = getAccountId();
+    result[HistoryItem::CONFID_KEY] = confID_;
+    result[HistoryItem::CALLID_KEY] = id_;
+    result[HistoryItem::DISPLAY_NAME_KEY] = displayName_;
+    result[HistoryItem::PEER_NUMBER_KEY] = peerNumber_;
+    result[HistoryItem::RECORDING_PATH_KEY] = recAudio_.fileExists() ? getFilename() : "";
+    result[HistoryItem::TIMESTAMP_START_KEY] = timestamp_to_string(timestamp_start_);
+    result[HistoryItem::TIMESTAMP_STOP_KEY] = timestamp_to_string(timestamp_stop_);
+
+    // FIXME: state will no longer exist, it will be split into
+    // a boolean field called "missed" and a direction field "incoming" or "outgoing"
+    if (connectionState_ == RINGING) {
+        result[HistoryItem::STATE_KEY] = HistoryItem::MISSED_STRING;
+        result[HistoryItem::MISSED_KEY] = "true";
+    } else {
+        result[HistoryItem::STATE_KEY] = getTypeStr();
+        result[HistoryItem::MISSED_KEY] = "false";
+    }
+
+    // now "missed" and direction are independent
+    result[HistoryItem::DIRECTION_KEY] = getTypeStr();
+
+    return result;
 }
 
 std::map<std::string, std::string>

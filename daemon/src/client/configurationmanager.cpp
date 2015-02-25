@@ -436,6 +436,12 @@ getHistoryLimit()
 }
 
 void
+clearHistory()
+{
+    return ring::Manager::instance().clearHistory();
+}
+
+void
 setHistoryLimit(int32_t days)
 {
     ring::Manager::instance().setHistoryLimit(days);
@@ -554,6 +560,12 @@ setHookSettings(const std::map<std::string,
 void setAccountsOrder(const std::string& order)
 {
     ring::Manager::instance().setAccountsOrder(order);
+}
+
+std::vector<std::map<std::string, std::string>>
+getHistory()
+{
+    return ring::Manager::instance().getHistory();
 }
 
 std::string
