@@ -409,6 +409,7 @@ AudioRtpSession::start()
     }
 
     try {
+
         socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(),
                                          local_.addr.getPort()));
         if (local_.crypto and remote_.crypto) {
