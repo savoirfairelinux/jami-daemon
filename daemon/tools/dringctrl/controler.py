@@ -438,6 +438,12 @@ class DRingCtrl(Thread):
 
         return [int(x) for x in self.configurationmanager.getCodecList()]
 
+    def getActiveCodecs(self, account=None):
+        """ Return all active codecs on given account"""
+
+        account = self._valid_account(account)
+        return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
+
     #
     # Call management
     #

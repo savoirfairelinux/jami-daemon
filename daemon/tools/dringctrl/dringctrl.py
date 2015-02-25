@@ -75,6 +75,8 @@ if __name__ == "__main__":
     parser.add_argument('--sac', help='Set active account',
                         metavar='<account>', type=str)
 
+    parser.add_argument('--gacl', help='Get active codecs for the account',
+                        nargs='?', metavar='<account>', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--sacl', help='Set active codecs for active account',
                         metavar='<codec list>', type=str)
 
@@ -128,6 +130,9 @@ if __name__ == "__main__":
 
     if args.gad:
         printAccountDetails(args.gad)
+
+    if hasattr(args, 'gacl'):
+        print(ctrl.getActiveCodecs(args.gacl))
 
     if args.sacl:
         ctrl.setActiveCodecList(codec_list=args.sacl)
