@@ -442,6 +442,11 @@ class DRingCtrl(Thread):
     # Call management
     #
 
+    def getAllCalls(self):
+        """Return all calls handled by the daemon"""
+
+        return [str(x) for x in self.callmanager.getCallList()]
+
     def getCallDetails(self, callid):
         """Return informations on this call if exists"""
 
