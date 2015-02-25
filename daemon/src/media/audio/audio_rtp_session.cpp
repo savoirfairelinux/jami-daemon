@@ -251,6 +251,7 @@ AudioReceiveThread::~AudioReceiveThread()
 bool
 AudioReceiveThread::setup()
 {
+   RING_DBG("ELOI > %s \n", __FUNCTION__);
     audioDecoder_.reset(new MediaDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
     // custom_io so the SDP demuxer will not open any UDP connections
@@ -268,6 +269,7 @@ AudioReceiveThread::setup()
                  "decoder IO startup failed");
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
+    RING_DBG("ELOI < %s \n", __FUNCTION__);
     return true;
 }
 
@@ -276,6 +278,7 @@ AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     AudioFrame decodedFrame;
+    RING_DBG("ELOI > %s \n", __FUNCTION__);
 
     switch (audioDecoder_->decode(decodedFrame)) {
 
@@ -409,6 +412,8 @@ AudioRtpSession::start()
     }
 
     try {
+
+        RING_DBG("ELOI %s port =%d \n", __FUNCTION__, local_.addr.getPort());
         socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(),
                                          local_.addr.getPort()));
         if (local_.crypto and remote_.crypto) {

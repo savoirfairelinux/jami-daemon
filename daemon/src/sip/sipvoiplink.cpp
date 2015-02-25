@@ -332,6 +332,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     /* fallback on local address */
     if (not addrSdp) addrSdp = addrToUse;
 
+    RING_DBG("ELOI %s > call.setConnectionState(Call::PROGRESSING) \n", __FUNCTION__);
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
     call->setDisplayName(displayName);
@@ -443,6 +444,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
+        RING_DBG("ELOI %s > call.setConnectionState(Call::TRYING) \n", __FUNCTION__);
         call->setConnectionState(Call::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
@@ -460,6 +462,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
+        RING_DBG("ELOI %s > call.setConnectionState(Call::RINGING) \n", __FUNCTION__);
         call->setConnectionState(Call::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
@@ -829,6 +832,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
+        RING_DBG("ELOI %s > makeCallRing \n", __FUNCTION__);
         makeCallRing(*call);
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established

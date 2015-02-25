@@ -1497,6 +1497,7 @@ ManagerImpl::incomingCall(Call &call, const std::string& accountId)
     }
 
     if (not hasCurrentCall()) {
+        RING_DBG("ELOI %s > call.setConnectionState(Call::RINGING) \n", __FUNCTION__);
         call.setConnectionState(Call::RINGING);
         playRingtone(accountId);
     }
@@ -1610,6 +1611,7 @@ ManagerImpl::sendTextMessage(const std::string& callID,
 void
 ManagerImpl::peerAnsweredCall(Call& call)
 {
+    RING_DBG("**************************ELOI %s  \n", __FUNCTION__);
     const auto call_id = call.getCallId();
     RING_DBG("Peer answered call %s", call_id.c_str());
 
@@ -1637,6 +1639,7 @@ void
 ManagerImpl::peerRingingCall(Call& call)
 {
     const auto call_id = call.getCallId();
+    RING_DBG("**************************ELOI %s  \n", __FUNCTION__);
     RING_DBG("Peer call %s ringing", call_id.c_str());
 
     if (isCurrentCall(call))

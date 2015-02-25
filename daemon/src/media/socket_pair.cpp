@@ -148,6 +148,7 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
 {
     int udp_fd = -1;
     struct addrinfo *res0 = NULL, *res = NULL;
+    RING_DBG("ELOI : udp_socket_create port =%d \n", local_port);
 
     res0 = udp_resolve_host(0, local_port);
     if (res0 == 0)
@@ -192,6 +193,7 @@ SocketPair::SocketPair(const char *uri, int localPort)
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
 {
+    RING_DBG("ELOI : creating SocketPair port =%d \n", localPort);
     openSockets(uri, localPort);
 }
 
