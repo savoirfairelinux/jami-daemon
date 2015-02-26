@@ -305,10 +305,10 @@ Call::isIceRunning() const
     return iceTransport_ and iceTransport_->isRunning();
 }
 
-IceSocket*
-Call::newIceSocket(unsigned compId) const
+std::unique_ptr<IceSocket>
+Call::newIceSocket(unsigned compId)
 {
-    return new IceSocket(iceTransport_, compId);
+    return std::unique_ptr<IceSocket> {new IceSocket(iceTransport_, compId)};
 }
 
 } // namespace ring

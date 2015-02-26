@@ -766,13 +766,11 @@ SIPCall::startAllMedia()
             ? static_cast<RtpSession*>(avformatrtp_.get())
             : static_cast<RtpSession*>(&videortp_);
         rtp->updateMedia(local, remote);
-        if (isIceRunning()) {
-            std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
-            std::unique_ptr<IceSocket> sockRTCP(newIceSocket(ice_comp_id++));
-            rtp->start(std::move(sockRTP), std::move(sockRTCP));
-        } else {
+        if (isIceRunning())
+            rtp->start(newIceSocket(ice_comp_id++),
+                       newIceSocket(ice_comp_id++));
+        else
             rtp->start();
-        }
     }
 }
 

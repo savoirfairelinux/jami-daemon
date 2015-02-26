@@ -309,7 +309,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         bool isIceUsed() const;
         bool isIceRunning() const;
-        IceSocket* newIceSocket(unsigned compId) const;
+
+        std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
+
         std::shared_ptr<IceTransport> getIceTransport() const {
             return iceTransport_;
         }
