@@ -39,8 +39,6 @@
 #include "noncopyable.h"
 #include "logger.h"
 
-#include <opendht/crypto.h>
-
 #include <pjsip.h>
 #include <pjnath/stun_config.h>
 
@@ -105,13 +103,6 @@ private:
     pjsip_tpfactory* listener {nullptr};
 };
 
-struct TlsInfos {
-    pj_ssl_cipher cipher;
-    pj_ssl_sock_proto proto;
-    pj_ssl_cert_verify_flag_t verifyStatus;
-    dht::crypto::Certificate peerCert;
-};
-
 using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
 
 /**
@@ -140,10 +131,6 @@ class SipTransport
             return PJSIP_TRANSPORT_IS_SECURE(transport_);
         }
 
-        const TlsInfos& getTlsInfos() const {
-            return tlsInfos_;
-        }
-
         static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
     private:
@@ -155,8 +142,6 @@ class SipTransport
         std::shared_ptr<TlsListener> tlsListener_;
         std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
         std::mutex stateListenersMutex_;
-
-        TlsInfos tlsInfos_;
 };
 
 class IpAddr;

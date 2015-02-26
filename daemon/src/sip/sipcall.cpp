@@ -52,8 +52,6 @@
 #include "im/instant_messaging.h"
 #endif
 
-#include "dring/call_const.h"
-
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
 #include "video/video_rtp_session.h"
@@ -826,18 +824,6 @@ SIPCall::openPortsUPnP()
         }
 #endif
     }
-}
-
-std::map<std::string, std::string>
-SIPCall::getDetails() const
-{
-    auto details = Call::getDetails();
-    if (transport_->isSecure()) {
-        const auto& tlsInfos = transport_->getTlsInfos();
-        details.emplace(DRing::Call::Details::TLS_PEER_CERT,    tlsInfos.peerCert.toString());
-        details.emplace(DRing::Call::Details::TLS_CIPHER,       pj_ssl_cipher_name(tlsInfos.cipher));
-    }
-    return details;
 }
 
 void

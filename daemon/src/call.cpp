@@ -80,7 +80,7 @@ Call::setConnectionState(ConnectionState state)
 }
 
 Call::ConnectionState
-Call::getConnectionState() const
+Call::getConnectionState()
 {
     std::lock_guard<std::mutex> lock(callMutex_);
     return connectionState_;
@@ -137,14 +137,14 @@ Call::setState(CallState state)
 }
 
 Call::CallState
-Call::getState() const
+Call::getState()
 {
     std::lock_guard<std::mutex> lock(callMutex_);
     return callState_;
 }
 
 std::string
-Call::getStateStr() const
+Call::getStateStr()
 {
     switch (getState()) {
         case ACTIVE:
@@ -238,7 +238,7 @@ std::string Call::getTypeStr() const
 }
 
 std::map<std::string, std::string>
-Call::getDetails() const
+Call::getDetails()
 {
     return {
         {DRing::Call::Details::CALL_TYPE,        ring::to_string(type_)},

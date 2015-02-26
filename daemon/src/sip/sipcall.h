@@ -193,8 +193,6 @@ class SIPCall : public Call
 
         void openPortsUPnP();
 
-        virtual std::map<std::string, std::string> getDetails() const;
-
     private:
         NON_COPYABLE(SIPCall);
 
