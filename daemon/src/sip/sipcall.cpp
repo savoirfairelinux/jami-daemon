@@ -801,8 +801,6 @@ SIPCall::onMediaUpdate()
 
     RING_WARN("starting medias");
     startAllMedia();
-    //Inform that A/V media is now processed
-    setState(ACTIVE);
 }
 
 void
