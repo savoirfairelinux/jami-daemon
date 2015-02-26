@@ -83,11 +83,6 @@ static constexpr int ICE_AUDIO_RTCP_COMPID {1};
 static constexpr int ICE_VIDEO_RTP_COMPID {2};
 static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
-
-/** A map to retreive SFLphone internal call id
- *  Given a SIP call ID (usefull for transaction sucha as transfer)*/
-static std::map<std::string, std::string> transferCallID;
-
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 static void
@@ -478,10 +473,6 @@ SIPCall::transferCommon(pj_str_t *dst)
 
     if (pjsip_xfer_initiate(sub, dst, &tdata) != PJ_SUCCESS)
         return false;
-
-    // Put SIP call id in map in order to retrieve call during transfer callback
-    std::string callidtransfer(inv->dlg->call_id->id.ptr, inv->dlg->call_id->id.slen);
-    transferCallID[callidtransfer] = getCallId();
 
     /* Send. */
     if (pjsip_xfer_send_request(sub, tdata) != PJ_SUCCESS)
