@@ -143,6 +143,8 @@ public:
     TlsValidator(const std::string& certificate,
                  const std::string& privatekey = "");
 
+    TlsValidator(const std::vector<uint8_t>& certificate_raw);
+
     ~TlsValidator();
 
     bool hasCa() const;
