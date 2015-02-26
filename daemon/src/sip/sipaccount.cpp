@@ -262,8 +262,8 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
         sdp.setPublishedIP(getPublishedAddress());
 
     const bool created = sdp.createOffer(
-        getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
-        getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
+        getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        getActiveAccountCodecInfoList(MEDIA_VIDEO),
         getSrtpKeyExchange()
     );
 
