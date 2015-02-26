@@ -602,7 +602,7 @@ RingAccount::handleEvents()
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
-            RING_WARN("ICE timeout : removing pending outgoing call");
+            RING_WARN("ICE timeout : removing pending call");
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
