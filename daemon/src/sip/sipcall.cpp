@@ -749,6 +749,17 @@ SIPCall::startAllMedia()
             RING_ERR("Inconsistent media types between local and remote for SDP media slot");
             continue;
         }
+
+        if (!local.codec) {
+            RING_ERR("No codec defined in local media slot");
+            continue;
+        }
+        if (!remote.codec) {
+            RING_ERR("No codec defined in remote media slot");
+            continue;
+        }
+
+
         if (isSecure() && (not local.crypto || not remote.crypto)) {
             RING_ERR("Can't perform secure call over insecure RTP transport");
             continue;
@@ -756,6 +767,34 @@ SIPCall::startAllMedia()
         RtpSession* rtp = local.type == MEDIA_AUDIO
             ? static_cast<RtpSession*>(avformatrtp_.get())
             : static_cast<RtpSession*>(&videortp_);
+
+
+        auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(local.codec);
+        RING_DBG("########## UPDATE MEDIA ############");
+        RING_DBG("[LOCAL][codec:%s][enabled:%s][holding:%s]"
+                , local.codec->systemCodecInfo.to_string().c_str()
+                , local.enabled ? "true" : "false"
+                , local.holding ? "true" : "false"
+                );
+        RING_DBG("[LOCAL][Audioformat] [sampleRate%d][nbChanels:%d]"
+                , accountAudioCodec->audioformat.sample_rate
+                , accountAudioCodec->audioformat.nb_channels
+                );
+        RING_DBG("[LOCAL] SDP: \n %s", local.receiving_sdp.c_str());
+
+        accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(remote.codec);
+        RING_DBG("[REMOTE][codec:%s][enabled:%s][holding:%s]"
+                , remote.codec->systemCodecInfo.to_string().c_str()
+                , remote.enabled ? "true" : "false"
+                , remote.holding ? "true" : "false"
+                );
+        RING_DBG("[REMOTE][Audioformat] [sampleRate%d][nbChanels:%d]"
+                , accountAudioCodec->audioformat.sample_rate
+                , accountAudioCodec->audioformat.nb_channels
+                );
+        RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
+        RING_DBG("####################################");
+
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             std::unique_ptr<IceSocket> sockRTP(newIceSocket(ice_comp_id++));
@@ -801,8 +840,6 @@ SIPCall::onMediaUpdate()
 
     RING_WARN("starting medias");
     startAllMedia();
-    //Inform that A/V media is now processed
-    setState(ACTIVE);
 }
 
 void

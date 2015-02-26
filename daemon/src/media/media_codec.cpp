@@ -90,17 +90,11 @@ SystemAudioCodecInfo::SystemAudioCodecInfo(unsigned m_avcodecId,
                                            unsigned m_nbChannels,
                                            unsigned m_payloadType)
     : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_AUDIO, m_type, m_bitrate, m_payloadType)
-    , sampleRate(m_sampleRate), nbChannels(m_nbChannels)
+    , audioformat{m_sampleRate, m_nbChannels}
 {}
 
 SystemAudioCodecInfo::~SystemAudioCodecInfo()
 {}
-
-bool
-SystemAudioCodecInfo::isPCMG722() const
-{
-    return avcodecId == AV_CODEC_ID_ADPCM_G722;
-}
 
 
 std::map<std::string, std::string>
@@ -110,8 +104,8 @@ SystemAudioCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(sampleRate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(nbChannels)}
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
         };
 }
 
@@ -156,8 +150,7 @@ AccountCodecInfo::~AccountCodecInfo()
 
 AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo)
     : AccountCodecInfo(sysCodecInfo)
-    , sampleRate(sysCodecInfo.sampleRate)
-    , nbChannels(sysCodecInfo.nbChannels)
+    , audioformat{sysCodecInfo.audioformat}
 {}
 
 std::map<std::string, std::string>
@@ -167,10 +160,17 @@ AccountAudioCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(sampleRate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(nbChannels)}
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
         };
 }
+
+bool
+AccountAudioCodecInfo::isPCMG722() const
+{
+    return systemCodecInfo.avcodecId == AV_CODEC_ID_ADPCM_G722;
+}
+
 
 AccountAudioCodecInfo::~AccountAudioCodecInfo()
 {}

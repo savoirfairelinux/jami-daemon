@@ -149,8 +149,9 @@ AudioSender::process()
     // FIXME
     AudioBuffer micData(samplesToGet, mainBuffFormat);
 
+    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
     const auto samples = Manager::instance().getRingBufferPool().getData(micData, id_);
-    micData.setChannelNum(args_.audioformat.nb_channels, true); // down/upmix as needed
+    micData.setChannelNum(accountAudioCodec->audioformat.nb_channels, true); // down/upmix as needed
 
     if (samples != samplesToGet) {
         RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
@@ -158,12 +159,12 @@ AudioSender::process()
         return;
     }
 
-    if (mainBuffFormat.sample_rate != args_.audioformat.sample_rate) {
+    if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler(args_.audioformat));
+            resampler_.reset(new Resampler(accountAudioCodec->audioformat));
         }
-        AudioBuffer resampledData(samplesToGet, args_.audioformat);
+        AudioBuffer resampledData(samplesToGet, accountAudioCodec->audioformat);
         resampler_->resample(micData, resampledData);
         if (audioEncoder_->encode_audio(resampledData) < 0)
             RING_ERR("encoding failed");
@@ -392,7 +393,8 @@ AudioRtpSession::startReceiver()
     if (receiveThread_)
         RING_WARN("Restarting audio receiver");
 
-    receiveThread_.reset(new AudioReceiveThread(callID_, remote_.audioformat,
+    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(remote_.codec);
+    receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
                                                 remote_.receiving_sdp));
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->startLoop();
@@ -404,8 +406,8 @@ AudioRtpSession::start()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     if (not local_.enabled and not remote_.enabled) {
-        stop();
-        return;
+       stop();
+       return;
     }
 
     try {

@@ -103,10 +103,8 @@ struct SystemAudioCodecInfo : SystemCodecInfo
     ~SystemAudioCodecInfo();
 
     std::map<std::string, std::string>  getCodecSpecifications();
-    bool isPCMG722() const;
 
-    unsigned sampleRate;
-    unsigned nbChannels;
+    AudioFormat audioformat {AudioFormat::NONE()};
 };
 
 /*
@@ -156,8 +154,8 @@ struct AccountAudioCodecInfo : AccountCodecInfo
     std::map<std::string, std::string>  getCodecSpecifications();
 
     /* account custom values */
-    unsigned sampleRate;
-    unsigned nbChannels;
+    AudioFormat audioformat {AudioFormat::NONE()};
+    bool isPCMG722() const;
 };
 
 struct AccountVideoCodecInfo : AccountCodecInfo
@@ -247,16 +245,17 @@ struct MediaDescription {
     IpAddr addr {};
 
     /** Codec */
-    std::shared_ptr<SystemCodecInfo> codec {};
+    std::shared_ptr<AccountCodecInfo> codec {};
     std::string payload_type {};
     std::string receiving_sdp {};
     unsigned bitrate {};
 
     /** Audio parameters */
-    AudioFormat audioformat {AudioFormat::NONE()};
     unsigned frame_size {};
 
     /** Video parameters */
+
+    //TODO: ebail manage it in AccountVideoCodecInfo
     std::string parameters {};
 
     /** Crypto parameters */

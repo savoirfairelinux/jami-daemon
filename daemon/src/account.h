@@ -209,6 +209,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         void setActiveCodecs(const std::vector<unsigned>& list);
         std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
         std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
+        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
+        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
 
         std::string getRingtonePath() const {
@@ -409,10 +411,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * private account codec searching functions
          */
         std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
-        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
         void desactivateAllMedia(MediaType mediaType);
-        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType);
 
 };
 
