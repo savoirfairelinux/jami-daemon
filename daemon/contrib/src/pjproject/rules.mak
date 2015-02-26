@@ -53,6 +53,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/aconfigureupdate.patch
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/unknowncipher.patch
+	$(APPLY) $(SRC)/pjproject/tls_cert.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
