@@ -571,12 +571,12 @@ RingAccount::handleEvents()
                         dht::crypto::Certificate crt(crt_blob);
                         const auto tls_id = crt.getId();
                         if (crt.getUID() != tls_id.toString()) {
-                            RING_WARN("Certificate UID must be the public key ID");
+                            RING_ERR("Certificate UID must be the public key ID");
                             return PJ_SSL_CERT_EUNTRUSTED;
                         }
 
                         if (tls_id != remote_h) {
-                            RING_WARN("Certificate public key (ID %s) doesn't match expectation (%s)",
+                            RING_ERR("Certificate public key (ID %s) doesn't match expectation (%s)",
                                       tls_id.toString().c_str(),
                                       remote_h.toString().c_str());
                             return PJ_SSL_CERT_EUNTRUSTED;
@@ -591,18 +591,18 @@ RingAccount::handleEvents()
             call->setTransport(tr);
             call->setConnectionState(Call::PROGRESSING);
             if (c->call_key == dht::InfoHash()) {
-                RING_WARN("ICE succeeded : moving incomming call to pending sip call");
+                RING_DBG("ICE succeeded : moving incomming call to pending sip call");
                 auto in = c;
                 ++c;
                 pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
             } else {
-                RING_WARN("ICE succeeded : removing pending outgoing call");
+                RING_DBG("ICE succeeded : removing pending outgoing call");
                 createOutgoingCall(call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 dht_.cancelListen(c->call_key, c->listen_key.get());
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
-            RING_WARN("ICE timeout : removing pending outgoing call");
+            RING_WARN("ICE timeout : removing pending call");
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             call->setConnectionState(Call::DISCONNECTED);
@@ -1026,6 +1026,7 @@ getNewDhParams()
     auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
 
     RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
+    gnutls_global_deinit();
     return {new_params_, gnutls_dh_params_deinit};
 }
 
@@ -1034,6 +1035,7 @@ RingAccount::generateDhParams()
 {
     std::packaged_task<decltype(getNewDhParams())()> task(&getNewDhParams);
     dhParams_ = task.get_future();
+    gnutls_global_init();
     std::thread task_td(std::move(task));
     task_td.detach();
 }
