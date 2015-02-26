@@ -45,7 +45,6 @@
 #include <pjsip/sip_types.h>
 #if HAVE_TLS
 #include <pjsip/sip_transport_tls.h>
-#include <pj/ssl_sock.h>
 #endif
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
@@ -132,23 +131,6 @@ void
 SipTransport::stateCallback(pjsip_transport_state state,
                             const pjsip_transport_state_info *info)
 {
-#if HAVE_TLS
-    auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
-    if (isSecure() && extInfo) {
-        auto tlsInfo = extInfo->ssl_sock_info;
-        tlsInfos_.proto = tlsInfo->proto;
-        tlsInfos_.cipher = tlsInfo->cipher;
-        tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t)tlsInfo->verify_status;
-        const auto& peer_crt = tlsInfo->remote_cert_info->cert_raw;
-        tlsInfos_.peerCert = {std::vector<uint8_t>(peer_crt.ptr, peer_crt.ptr + peer_crt.slen)};
-        RING_WARN("Updating TLS infos with proto %d cipher %s status %d crt %lu", tlsInfos_.proto, pj_ssl_cipher_name(tlsInfos_.cipher), tlsInfos_.verifyStatus, tlsInfos_.peerCert.getId());
-    } else {
-        tlsInfos_.proto = PJ_SSL_SOCK_PROTO_DEFAULT;
-        tlsInfos_.cipher = PJ_TLS_UNKNOWN_CIPHER;
-        tlsInfos_.peerCert = {};
-    }
-#endif
-
     std::vector<SipTransportStateCallback> cbs;
     {
         std::lock_guard<std::mutex> lock(stateListenersMutex_);

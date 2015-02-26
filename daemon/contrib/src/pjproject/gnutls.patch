@@ -24,13 +24,13 @@ ssl_sock_gtls: avoid NULL dereference
  pjlib/include/pj/compat/os_auto.h.in |    3 +
  pjlib/include/pj/config.h            |    4 +-
  pjlib/src/pj/ssl_sock_common.c       |    5 +
- pjlib/src/pj/ssl_sock_gtls.c         | 2782 ++++++++++++++++++++++++++++++++++
+ pjlib/src/pj/ssl_sock_gtls.c         | 2778 ++++++++++++++++++++++++++++++++++
  pjlib/src/pj/ssl_sock_ossl.c         |    6 +-
- 8 files changed, 3023 insertions(+), 62 deletions(-)
+ 8 files changed, 3019 insertions(+), 62 deletions(-)
  create mode 100644 pjlib/src/pj/ssl_sock_gtls.c
 
 diff --git a/aconfigure b/aconfigure
-index a296266..03f727f 100755
+index 24de91d..37e0914 100755
 --- a/aconfigure
 +++ b/aconfigure
 @@ -637,6 +637,8 @@ ac_no_opencore_amrnb
@@ -40,9 +40,9 @@ index a296266..03f727f 100755
 +libgnutls_present
 +gnutls_h_present
  ac_no_ssl
- ac_v4l2_ldflags
- ac_v4l2_cflags
-@@ -1457,8 +1459,8 @@ Optional Features:
+ ac_openh264_ldflags
+ ac_openh264_cflags
+@@ -1462,8 +1464,8 @@ Optional Features:
                            package and samples location using IPPROOT and
                            IPPSAMPLES env var or with --with-ipp and
                            --with-ipp-samples options
@@ -53,7 +53,7 @@ index a296266..03f727f 100755
    --disable-opencore-amr  Exclude OpenCORE AMR support from the build
                            (default: autodetect)
  
-@@ -7380,33 +7382,159 @@ fi
+@@ -7482,33 +7484,159 @@ fi
  
  # Check whether --enable-ssl was given.
  if test "${enable_ssl+set}" = set; then :
@@ -227,7 +227,7 @@ index a296266..03f727f 100755
  $as_echo_n "checking for ERR_load_BIO_strings in -lcrypto... " >&6; }
  if ${ac_cv_lib_crypto_ERR_load_BIO_strings+:} false; then :
    $as_echo_n "(cached) " >&6
-@@ -7446,7 +7574,7 @@ if test "x$ac_cv_lib_crypto_ERR_load_BIO_strings" = xyes; then :
+@@ -7548,7 +7676,7 @@ if test "x$ac_cv_lib_crypto_ERR_load_BIO_strings" = xyes; then :
    libcrypto_present=1 && LIBS="$LIBS -lcrypto"
  fi
  
@@ -236,7 +236,7 @@ index a296266..03f727f 100755
  $as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
  if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
    $as_echo_n "(cached) " >&6
-@@ -7486,22 +7614,23 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
+@@ -7588,22 +7716,23 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
    libssl_present=1 && LIBS="$LIBS -lssl"
  fi
  
@@ -271,10 +271,10 @@ index a296266..03f727f 100755
  if test "${with_opencore_amrnb+set}" = set; then :
    withval=$with_opencore_amrnb; as_fn_error $? "This option is obsolete and replaced by --with-opencore-amr=DIR" "$LINENO" 5
 diff --git a/aconfigure.ac b/aconfigure.ac
-index cd71a7a..465285e 100644
+index 6c35836..3be55c5 100644
 --- a/aconfigure.ac
 +++ b/aconfigure.ac
-@@ -1346,38 +1346,76 @@ fi
+@@ -1418,38 +1418,76 @@ fi
  
  dnl # Include SSL support
  AC_SUBST(ac_no_ssl)
@@ -383,7 +383,7 @@ index cd71a7a..465285e 100644
  dnl # Obsolete option --with-opencore-amrnb
  AC_ARG_WITH(opencore-amrnb,
 diff --git a/pjlib/build/Makefile b/pjlib/build/Makefile
-index a75fa65..529e0ff 100644
+index 1e64950..e650a31 100644
 --- a/pjlib/build/Makefile
 +++ b/pjlib/build/Makefile
 @@ -35,7 +35,7 @@ export PJLIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
@@ -396,7 +396,7 @@ index a75fa65..529e0ff 100644
  export PJLIB_CFLAGS += $(_CFLAGS)
  export PJLIB_CXXFLAGS += $(_CXXFLAGS)
 diff --git a/pjlib/include/pj/compat/os_auto.h.in b/pjlib/include/pj/compat/os_auto.h.in
-index 18df2bf..9295740 100644
+index 77980d3..6d6a625 100644
 --- a/pjlib/include/pj/compat/os_auto.h.in
 +++ b/pjlib/include/pj/compat/os_auto.h.in
 @@ -206,6 +206,9 @@
@@ -410,7 +410,7 @@ index 18df2bf..9295740 100644
  
  #endif	/* __PJ_COMPAT_OS_AUTO_H__ */
 diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
-index 31020a3..90aefe2 100644
+index c191ef1..4ace1bc 100644
 --- a/pjlib/include/pj/config.h
 +++ b/pjlib/include/pj/config.h
 @@ -854,13 +854,15 @@
@@ -431,7 +431,7 @@ index 31020a3..90aefe2 100644
  
  
 diff --git a/pjlib/src/pj/ssl_sock_common.c b/pjlib/src/pj/ssl_sock_common.c
-index 768a640..b116f1b 100644
+index 67a8d63..602a1af 100644
 --- a/pjlib/src/pj/ssl_sock_common.c
 +++ b/pjlib/src/pj/ssl_sock_common.c
 @@ -34,7 +34,12 @@ PJ_DEF(void) pj_ssl_sock_param_default(pj_ssl_sock_param *param)
@@ -449,10 +449,10 @@ index 768a640..b116f1b 100644
  #endif
 diff --git a/pjlib/src/pj/ssl_sock_gtls.c b/pjlib/src/pj/ssl_sock_gtls.c
 new file mode 100644
-index 0000000..7b4b941
+index 0000000..c2a4349
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
-@@ -0,0 +1,2782 @@
+@@ -0,0 +1,2778 @@
 +/* $Id$ */
 +/*
 + * Copyright (C) 2014 Savoir-Faire Linux. (http://www.savoirfairelinux.com)
@@ -1594,8 +1594,6 @@ index 0000000..7b4b941
 +        goto us_out;
 +
 +    tls_cert_get_info(ssock->pool, &ssock->local_cert_info, cert);
-+    const pj_str_t local_crt_raw = {(char*)us->data, (pj_ssize_t)us->size};
-+    pj_strdup(ssock->pool, &ssock->local_cert_info.cert_raw, &local_crt_raw);
 +
 +us_out:
 +    tls_last_error = ret;
@@ -1622,8 +1620,6 @@ index 0000000..7b4b941
 +        goto peer_out;
 +
 +    tls_cert_get_info(ssock->pool, &ssock->remote_cert_info, cert);
-+    const pj_str_t remote_crt_raw = {(char*)certs->data, (pj_ssize_t)certs->size};
-+    pj_strdup(ssock->pool, &ssock->remote_cert_info.cert_raw, &remote_crt_raw);
 +
 +peer_out:
 +    tls_last_error = ret;
@@ -3236,7 +3232,7 @@ index 0000000..7b4b941
 +
 +#endif /* PJ_HAS_SSL_SOCK */
 diff --git a/pjlib/src/pj/ssl_sock_ossl.c b/pjlib/src/pj/ssl_sock_ossl.c
-index ba4ae0b..98bbfee 100644
+index 7c7b6d0..e466bb7 100644
 --- a/pjlib/src/pj/ssl_sock_ossl.c
 +++ b/pjlib/src/pj/ssl_sock_ossl.c
 @@ -31,8 +31,10 @@
