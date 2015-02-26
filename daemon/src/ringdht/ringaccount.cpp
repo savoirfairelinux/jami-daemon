@@ -738,13 +738,13 @@ void RingAccount::doRegister_()
         }
 
         // Listen for incoming calls
-        auto shared = shared_from_this();
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         auto listenKey = "callto:"+dht_.getId().toString();
         RING_WARN("Listening on %s : %s", listenKey.c_str(), dht::InfoHash::get(listenKey).toString().c_str());
         dht_.listen (
             listenKey,
             [shared,listenKey] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
-                auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
+                auto& this_ = *shared.get();
                 for (const auto& v : vals) {
                     std::shared_ptr<SIPCall> call;
                     try {
@@ -1011,12 +1011,13 @@ getNewDhParams()
     using namespace std::chrono;
     auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, GNUTLS_SEC_PARAM_HIGH/* GNUTLS_SEC_PARAM_NORMAL */);
     RING_DBG("Generating DH params with %u bits", bits);
-    high_resolution_clock::time_point t1 = high_resolution_clock::now();
+
+    auto t1 = high_resolution_clock::now();
     gnutls_dh_params_t new_params_;
     gnutls_dh_params_init(&new_params_);
     gnutls_dh_params_generate2(new_params_, bits);
-    high_resolution_clock::time_point t2 = high_resolution_clock::now();
-    duration<double> time_span = duration_cast<duration<double>>(t2 - t1);
+    auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
+
     RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return {new_params_, gnutls_dh_params_deinit};
 }
