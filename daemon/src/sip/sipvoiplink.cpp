@@ -343,8 +343,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         call->updateSDPFromSTUN();
 
     call->getSDP().receiveOffer(r_sdp,
-        account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
-        account->getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
+        account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        account->getActiveAccountCodecInfoList(MEDIA_VIDEO),
         account->getSrtpKeyExchange()
     );
     if (not call->getIceTransport()) {
@@ -880,8 +880,8 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     auto& localSDP = call->getSDP();
 
     localSDP.receiveOffer(offer,
-        account.getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
-        account.getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
+        account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        account.getActiveAccountCodecInfoList(MEDIA_VIDEO),
         account.getSrtpKeyExchange()
     );
     localSDP.startNegotiation();
@@ -924,8 +924,8 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
     const bool created = localSDP.createOffer(
-        account.getActiveAccountCodecInfoIdList(MEDIA_AUDIO),
-        account.getActiveAccountCodecInfoIdList(MEDIA_VIDEO),
+        account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        account.getActiveAccountCodecInfoList(MEDIA_VIDEO),
         account.getSrtpKeyExchange()
     );
 
@@ -1379,7 +1379,5 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
               IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen,
               stunServerName->ptr);
 }
-
 #undef RETURN_IF_NULL
-
 } // namespace ring
