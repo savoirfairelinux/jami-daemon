@@ -183,6 +183,21 @@ getCertificateDetails(const std::string& certificate)
     return std::map<std::string, std::string>();
 }
 
+std::map<std::string, std::string>
+getCertificateDetails(const std::vector<uint8_t>& certificate_raw)
+{
+#if HAVE_TLS && HAVE_DHT
+    try {
+        return TlsValidator{certificate_raw}.getSerializedDetails();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed");
+    }
+#else
+    RING_WARN("TLS not supported");
+#endif
+    return std::map<std::string, std::string>();
+}
+
 void
 setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
