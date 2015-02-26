@@ -67,12 +67,12 @@ load_items(gpointer data)
     if (!id->items) {
         /* we either have to call the asynchronous dbus_get_history, or if it's
          * been called but has not finished yet, try again later */
-        if (!id->dbus_called) {
+       /* if (!id->dbus_called) {
             dbus_get_history(id);
             id->dbus_called = TRUE;
             return TRUE;
         } else if (!id->dbus_finished)
-            return TRUE;
+            return TRUE;*/
     }
 
     /* We made the call but the list was empty, so we're done */

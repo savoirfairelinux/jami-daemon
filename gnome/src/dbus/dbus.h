@@ -484,14 +484,6 @@ gchar **dbus_get_conference_list(void);
 
 void dbus_set_accounts_order(const gchar *order);
 
-/**
- * Get a the history
- * @return The PtrArray of history entries
- */
-void dbus_get_history(IdleData *id);
-
-void dbus_clear_history(void);
-
 void sflphone_display_transfer_status(const gchar *message);
 
 /**

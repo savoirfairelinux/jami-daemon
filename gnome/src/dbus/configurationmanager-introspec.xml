@@ -71,10 +71,29 @@
             </arg>
         </method>
 
+        <method name="getVolatileAccountDetails" tp:name-for-bindings="getVolatileAccountDetails">
+           <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" tp:type="String_String_Map" direction="out">
+               <tp:docstring>
+                   Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                   Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                   Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                   Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                   Account.presenceStatus                ( Published presence status                  )
+                   Account.presenceNote                  ( Published presence note (status string)    )
+               </tp:docstring>
+           </arg>
+       </method>
+
         <method name="setAccountDetails" tp:name-for-bindings="setAccountDetails">
             <tp:docstring>
                 Send new account parameters, or account parameters changes, to the core. The hash table is not required to be complete, only the updated parameters may be specified.
-                <tp:rationale>Account settings are written to the configuration file when sflphone properly quits.</tp:rationale>
+                <tp:rationale>Account settings are written to the configuration file when ring properly quits.</tp:rationale>
                 <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
             </tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
@@ -497,19 +516,7 @@
            </arg>
        </method>
 
-       <method name="getHistory" tp:name-for-bindings="getHistory">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
-           <!-- Return a List of type Dict<string, string> >...a List of Dicts -->
-           <arg type="aa{ss}" name="entries" direction="out"/>
-       </method>
-
-       <method name="clearHistory" tp:name-for-bindings="clearHistory">
-       </method>
-
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
-       </signal>
-
-       <signal name="historyChanged" tp:name-for-bindings="historyChanged">
        </signal>
 
        <!-- FIXME: we should rethink these two signals -->
@@ -522,8 +529,9 @@
        <!-- Only used by SIP accounts, data is directly from pjsip -->
        <signal name="sipRegistrationStateChanged" tp:name-for-bindings="sipRegistrationStateChanged">
            <tp:docstring>
-               <p>Account state changed, SFLphone received a notification from registrar.</p>
+               <p>Account state changed, Ring received a notification from registrar.</p>
            </tp:docstring>
+           <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
            <arg type="s" name="accountID" >
                <tp:docstring>
                    The account ID
@@ -541,6 +549,24 @@
            </arg>
        </signal>
 
+       <signal name="volatileAccountDetailsChanged" tp:name-for-bindings="volatileAccountDetailsChanged">
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <arg type="a{ss}" name="details" tp:type="String_String_Map">
+               <tp:docstring>
+                   Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
+                   Account.registrationStatus            ( Error code, like 200 (OK) or 408 (Timeout) )
+                   Account.registrationStatusDescription ( A technical error message (from PJSIP)     )
+                   Account.lastSuccessfulRegister        ( Timestamp of the last "REGISTERED" event   )
+                   Account.presenceStatus                ( Published presence status                  )
+                   Account.presenceNote                  ( Published presence note (status string)    )
+               </tp:docstring>
+           </arg>
+       </signal>
 
        <signal name="stunStatusFailure" tp:name-for_bindings="stunStatusFailure">
            <arg type="s" name="reason">
@@ -564,7 +590,27 @@
            </arg>
        </method>
 
-       <method name="getTlsSettingsDefault" tp:name-for-bindings="getTlsSettingsDefault">
+        <method name="getSupportedCiphers" tp:name-for-bindings="getSupportedCiphers">
+           <tp:added version="2.0.0"/>
+           <tp:docstring>
+                Returns a list of supported encryption ciphers used to encrypt SIP messages. The list depends on the TLS library being used.
+                Only registered SIP accounts currently support setting custom ciphers. This method returns an empty list if TLS support is disabled in either pjproject or Ring.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+                <tp:docstring>
+                    A SIP account id, other account IDs will be rejected.
+                </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of randomly sorted cipher names. The order may or may
+                   not be significant depending on the SSL library being used.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getTlsDefaultSettings" tp:name-for-bindings="getTlsDefaultSettings">
                    <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="out">
            </arg>
@@ -579,6 +625,42 @@
        <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
            <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
            <arg type="a{ss}" name="details" direction="in">
+           </arg>
+       </method>
+
+       <method name="validateCertificate" tp:name-for-bindings="validateCertificate">
+           <arg type="s" name="accountId" direction="in"></arg>
+           <arg type="s" name="certificatePath" direction="in">
+              <tp:docstring>
+               <p>A certificate path</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="privateKeyPath" direction="in">
+              <tp:docstring>
+               <p>An optional path a the private key for the certificate</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+              <tp:docstring>
+               <p>A key-value list of all certificate validation</p>
+               The constants used as keys are defined in the "security.h" constants header file
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getCertificateDetails" tp:name-for-bindings="getCertificateDetails">
+           <arg type="s" name="certificatePath" direction="in">
+              <tp:docstring>
+               <p>A certificate path</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+              <tp:docstring>
+               <p>A key-value list of all certificate details</p>
+               The constants used as keys are defined in the "security.h" constants header file
+              </tp:docstring>
            </arg>
        </method>
 

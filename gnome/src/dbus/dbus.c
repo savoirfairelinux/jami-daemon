@@ -1196,8 +1196,7 @@ dbus_place_call(const callable_obj_t *c)
 {
     GError *error = NULL;
     gboolean result;
-    cx_ring_Ring_CallManager_place_call(call_proxy, c->_accountID,
-            c->_callID, c->_peer_number, &result, &error);
+    cx_ring_Ring_CallManager_place_call(call_proxy, c->_accountID, c->_peer_number, &c->_callID, &error);
     check_error(error);
 }
 
@@ -1827,14 +1826,6 @@ dbus_get_history_limit(void)
     return days;
 }
 
-void
-dbus_clear_history(void)
-{
-    GError *error = NULL;
-    cx_ring_Ring_ConfigurationManager_clear_history(config_proxy, &error);
-    check_error(error);
-}
-
 gboolean
 dbus_set_audio_manager(const gchar *api)
 {
@@ -2049,12 +2040,6 @@ get_history_async_cb(G_GNUC_UNUSED DBusGProxy *proxy, GPtrArray *items, GError *
 }
 
 void
-dbus_get_history(IdleData *id)
-{
-    cx_ring_Ring_ConfigurationManager_get_history_async(config_proxy, get_history_async_cb, id);
-}
-
-void
 dbus_confirm_sas(const callable_obj_t *c)
 {
     GError *error = NULL;
@@ -2095,17 +2080,6 @@ dbus_get_supported_tls_method()
     check_error(error);
 
     return array;
-}
-
-GHashTable *
-dbus_get_tls_settings_default(void)
-{
-    GError *error = NULL;
-    GHashTable *results = NULL;
-    cx_ring_Ring_ConfigurationManager_get_tls_settings_default(config_proxy, &results, &error);
-    check_error(error);
-
-    return results;
 }
 
 gboolean

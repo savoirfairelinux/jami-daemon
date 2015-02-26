@@ -994,7 +994,7 @@ static void
 clear_history(G_GNUC_UNUSED GSimpleAction *action, G_GNUC_UNUSED GVariant *param, G_GNUC_UNUSED gpointer client)
 {
     calllist_clean_history();
-    dbus_clear_history();
+    //dbus_clear_history();
 }
 
 /**
