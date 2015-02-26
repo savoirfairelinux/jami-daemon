@@ -580,7 +580,7 @@ Account::desactivateAllMedia(MediaType mediaType)
 }
 
 std::vector<std::shared_ptr<AccountCodecInfo>>
-Account::getActiveAccountCodecInfoList(MediaType mediaType)
+Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 {
     std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecList;
     for (auto& codecIt: accountCodecInfoList_) {
