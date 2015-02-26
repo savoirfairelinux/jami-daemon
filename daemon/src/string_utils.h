@@ -62,6 +62,8 @@ std::string to_string(T &&value)
 
 #endif
 
+std::string trim(const std::string &s);
+
 std::vector<std::string>
 split_string(const std::string& s, char sep);
 

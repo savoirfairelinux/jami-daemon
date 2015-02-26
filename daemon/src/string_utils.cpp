@@ -31,8 +31,17 @@
 
 #include "string_utils.h"
 #include <sstream>
+#include <cctype>
+#include <algorithm>
 
 namespace ring {
+
+std::string
+trim(const std::string &s)
+{
+   auto wsfront = std::find_if_not(s.cbegin(),s.cend(), [](int c){return std::isspace(c);});
+   return std::string(wsfront, std::find_if_not(s.rbegin(),std::string::const_reverse_iterator(wsfront), [](int c){return std::isspace(c);}).base());
+}
 
 std::vector<std::string>
 split_string(const std::string &s, char delim)
