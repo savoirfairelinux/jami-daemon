@@ -748,10 +748,11 @@ SIPCall::startAllMedia()
             ? static_cast<RtpSession*>(avformatrtp_.get())
             : static_cast<RtpSession*>(&videortp_);
         rtp->updateMedia(local, remote);
-        if (isIceRunning())
-            rtp->start(newIceSocket(ice_comp_id++),
-                       newIceSocket(ice_comp_id++));
-        else
+        if (isIceRunning()) {
+            rtp->start(newIceSocket(ice_comp_id + 0),
+                       newIceSocket(ice_comp_id + 1));
+            ice_comp_id += 2;
+        } else
             rtp->start();
     }
 }
