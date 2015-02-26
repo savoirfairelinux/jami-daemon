@@ -102,12 +102,12 @@ Sdp::~Sdp()
 }
 
 static bool
-hasPayload(const std::vector<std::shared_ptr<SystemAudioCodecInfo>>& codecs,
+hasPayload(const std::vector<std::shared_ptr<AccountAudioCodecInfo>>& codecs,
            int pt)
 {
     return std::any_of(std::begin(codecs), std::end(codecs),
-                       [pt](const std::shared_ptr<SystemAudioCodecInfo>& c)
-                       { return c and c->payloadType == (unsigned)pt; });
+                       [pt](const std::shared_ptr<AccountAudioCodecInfo>& c)
+                       { return c and c->systemCodecInfo.payloadType == (unsigned)pt; });
 }
 
 static bool
@@ -128,11 +128,39 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
     return os.str();
 }
 
-std::shared_ptr<SystemCodecInfo>
-findCodecByName(const std::string &codec)
+std::shared_ptr<AccountCodecInfo>
+Sdp::findCodecByName(const std::string &codec) const
 {
-    // try finding by name
-    return getSystemCodecContainer()->searchCodecByName(codec);
+    //TODO : only manage a list?
+    for (const auto& accountCodec : audio_codec_list_) {
+        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        if (sysCodecInfo.name.compare(codec) == 0)
+            return accountCodec;
+    }
+
+    for (const auto& accountCodec : video_codec_list_) {
+        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        if (sysCodecInfo.name.compare(codec) == 0)
+            return accountCodec;
+    }
+    return nullptr;
+}
+std::shared_ptr<AccountCodecInfo>
+Sdp::findCodecByPayload(const unsigned payloadType)
+{
+    //TODO : only manage a list?
+    for (const auto& accountCodec : audio_codec_list_) {
+        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        if (sysCodecInfo.payloadType == payloadType)
+            return accountCodec;
+    }
+
+    for (const auto& accountCodec : video_codec_list_) {
+        auto sysCodecInfo = accountCodec->systemCodecInfo;
+        if (sysCodecInfo.payloadType == payloadType)
+            return accountCodec;
+    }
+    return nullptr;
 }
 
 static void
@@ -175,11 +203,11 @@ Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
                     or hasPayload(sessionAudioMediaLocal_, pt))
                     continue;
 
-                if (auto syscodec = getSystemCodecContainer()->searchCodecByPayload(pt, MEDIA_AUDIO)) {
-                    auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(syscodec);
+                if (auto accCodec = findCodecByPayload(pt)) {
+                    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(accCodec);
                     sessionAudioMediaLocal_.push_back(codec);
                 } else if (auto syscodec = findCodecByName(rtpmapToString(rtpmap))) {
-                    auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(syscodec);
+                    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(syscodec);
                     sessionAudioMediaLocal_.push_back(codec);
                 } else {
                     RING_ERR("Could not find codec matching name %.*s",
@@ -241,15 +269,19 @@ Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
 
                 const auto pt = pj_strtoul(&r_media->desc.fmt[fmt]);
                 if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
-                    auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(getSystemCodecContainer()->searchCodecByPayload(pt));
-                    if (codec) {
+                    auto accCodec = findCodecByPayload(pt);
+                    if (accCodec) {
+                        auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(accCodec);
                         RING_DBG("Adding codec with new payload type %d", pt);
                         sessionAudioMediaRemote_.push_back(codec);
                     } else {
                         // Search by codec name, clock rate and param (channel count)
-                        codec = std::static_pointer_cast<SystemAudioCodecInfo> (findCodecByName(rtpmapToString(rtpmap)));
+                        RING_DBG("payload %d not found. Trying to find by name %s", pt, rtpmap->enc_name);
+                        auto codec = std::static_pointer_cast<AccountAudioCodecInfo> (findCodecByName(rtpmapToString(rtpmap)));
                         if (codec)
+                        {
                             sessionAudioMediaRemote_.push_back(codec);
+                        }
                         else
                             RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
                     }
@@ -308,24 +340,26 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
         unsigned payload;
 
         if (audio) {
-            auto codec = audio_codec_list_[i];
-            payload = codec->payloadType;
-            enc_name = codec->name;
-            if (codec->nbChannels > 1) {
-                channels = ring::to_string(codec->nbChannels);
+            auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(audio_codec_list_[i]);
+            payload = accountAudioCodec->payloadType;
+            enc_name = accountAudioCodec->systemCodecInfo.name;
+
+            if (accountAudioCodec->audioformat.nb_channels > 1) {
+                channels = ring::to_string(accountAudioCodec->audioformat.nb_channels);
                 rtpmap.param.ptr = (char *) channels.c_str();
                 rtpmap.param.slen = strlen(channels.c_str()); // don't include NULL terminator
             }
             // G722 requires G722/8000 media description even though it's @ 16000 Hz
             // See http://tools.ietf.org/html/rfc3551#section-4.5.2
-            if (codec->isPCMG722())
+            if (accountAudioCodec->isPCMG722())
                 rtpmap.clock_rate = 8000;
             else
-                rtpmap.clock_rate = codec->sampleRate;
+                rtpmap.clock_rate = accountAudioCodec->audioformat.sample_rate;
+
         } else {
             // FIXME: get this key from header
             payload = dynamic_payload++;
-            enc_name = video_codec_list_[i]->name;
+            enc_name = video_codec_list_[i]->systemCodecInfo.name;
             rtpmap.clock_rate = 90000;
         }
 
@@ -348,7 +382,10 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            std::string profileLevelID(video_codec_list_[i]->parameters);
+            auto accountVideoCodec =
+                    std::static_pointer_cast<AccountVideoCodecInfo>(video_codec_list_[i]);
+            std::string profileLevelID(accountVideoCodec->parameters);
+
             if (profileLevelID.empty())
                 profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
             os << "fmtp:" << payload << " " << profileLevelID;
@@ -428,37 +465,18 @@ void Sdp::setTelephoneEventRtpmap(pjmedia_sdp_media *med)
     med->attr[med->attr_count++] = attr_fmtp;
 }
 
-void Sdp::setLocalMediaVideoCapabilities(const vector<unsigned> &selectedCodecs)
+void Sdp::setLocalMediaVideoCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedCodecs)
 {
-    video_codec_list_.clear();
 #ifdef RING_VIDEO
-    for (const auto &i : selectedCodecs) {
-        auto codec = std::static_pointer_cast<SystemVideoCodecInfo>(getSystemCodecContainer()->searchCodecById(i));
-
-        if (codec)
-            video_codec_list_.push_back(codec);
-        else
-            RING_WARN("Couldn't find video codec");
-    }
+    video_codec_list_ = selectedCodecs;
 #else
     (void) selectedCodecs;
 #endif
 }
 
-void Sdp::setLocalMediaAudioCapabilities(const vector<unsigned> &selectedCodecs)
+void Sdp::setLocalMediaAudioCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedCodecs)
 {
-    if (selectedCodecs.empty())
-        RING_WARN("No selected codec while building local SDP offer");
-
-    audio_codec_list_.clear();
-    for (const auto &i : selectedCodecs) {
-        auto codec = std::static_pointer_cast<SystemAudioCodecInfo>(getSystemCodecContainer()->searchCodecById(i));
-
-        if (codec)
-            audio_codec_list_.push_back(codec);
-        else
-            RING_WARN("Couldn't find audio codec");
-    }
+    audio_codec_list_ = selectedCodecs;
 }
 
 static void
@@ -470,8 +488,8 @@ printSession(const pjmedia_sdp_session *session)
     RING_DBG("%s", sessionStr.c_str());
 }
 
-int Sdp::createLocalSession(const vector<unsigned> &selectedAudioCodecs,
-                            const vector<unsigned> &selectedVideoCodecs,
+int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                            const std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                             sip_utils::KeyExchangeProtocol security)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
@@ -521,8 +539,8 @@ int Sdp::createLocalSession(const vector<unsigned> &selectedAudioCodecs,
 }
 
 bool
-Sdp::createOffer(const vector<unsigned>& selectedAudioCodecs,
-                 const vector<unsigned>& selectedVideoCodecs,
+Sdp::createOffer(std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                 std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                  sip_utils::KeyExchangeProtocol security)
 {
     if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security) != PJ_SUCCESS) {
@@ -539,8 +557,8 @@ Sdp::createOffer(const vector<unsigned>& selectedAudioCodecs,
 }
 
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
-                       const vector<unsigned>& selectedAudioCodecs,
-                       const vector<unsigned>& selectedVideoCodecs,
+                       std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                       std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                        sip_utils::KeyExchangeProtocol kx)
 {
     if (!remote) {
@@ -712,26 +730,28 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             }
             descr.payload_type = std::string(rtpmap.pt.ptr, rtpmap.pt.slen);
             if (descr.type == MEDIA_AUDIO) {
-                auto audio_codec = static_cast<SystemAudioCodecInfo*>(descr.codec.get());
-                descr.audioformat.sample_rate = audio_codec->isPCMG722() ? 16000 : rtpmap.clock_rate;
+                auto accountAudioCodec =
+                    std::static_pointer_cast<AccountAudioCodecInfo>(descr.codec);
+                accountAudioCodec->audioformat.sample_rate = accountAudioCodec->isPCMG722() ? 16000 : rtpmap.clock_rate;
                 if (rtpmap.param.slen && rtpmap.param.ptr)
-                    descr.audioformat.nb_channels = std::stoi(std::string{
+                    accountAudioCodec->audioformat.nb_channels = std::stoi(std::string{
                         rtpmap.param.ptr,
                         (size_t)rtpmap.param.slen
                     });
                 else
-                    descr.audioformat.nb_channels = 1;
+                    accountAudioCodec->audioformat.nb_channels = 1;
+
             } else {
                 //descr.bitrate = getOutgoingVideoField(codec, "bitrate");
             }
             // for now, first codec only
+            // we have to enable it
+            descr.enabled = true;
             break;
         }
 
-        if (remote) {
+        if (remote)
             descr.receiving_sdp = getFilteredSdp(session, i);
-            RING_WARN("receiving_sdp : %s", descr.receiving_sdp.c_str());
-        }
 
         // get crypto info
         std::vector<std::string> crypto;

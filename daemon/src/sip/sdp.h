@@ -54,6 +54,7 @@
 #include <vector>
 #include <string>
 #include <stdexcept>
+#include <mutex>
 
 namespace ring {
 
@@ -126,8 +127,8 @@ class Sdp {
          * SDP negotiator instance with it.
          * @returns true if offer was created, false otherwise
          */
-        bool createOffer(const std::vector<unsigned>& selectedAudioCodecs,
-                         const std::vector<unsigned>& selectedVideoCodecs,
+        bool createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                         const std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                          sip_utils::KeyExchangeProtocol);
 
         /*
@@ -137,8 +138,8 @@ class Sdp {
         * @param remote    The remote offer
         */
         void receiveOffer(const pjmedia_sdp_session* remote,
-                          const std::vector<unsigned>& selectedAudioCodecs,
-                          const std::vector<unsigned>& selectedVideoCodecs,
+                          const std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                          const std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                           sip_utils::KeyExchangeProtocol);
 
         /**
@@ -283,14 +284,14 @@ class Sdp {
         /**
          * Codec Map used for offer
          */
-        std::vector<std::shared_ptr<SystemAudioCodecInfo>> audio_codec_list_;
-        std::vector<std::shared_ptr<SystemVideoCodecInfo>> video_codec_list_;
+         std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
+         std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
 
         /**
          * The codecs that will be used by the session (after the SDP negotiation)
          */
-        std::vector<std::shared_ptr<SystemAudioCodecInfo>> sessionAudioMediaLocal_;
-        std::vector<std::shared_ptr<SystemAudioCodecInfo>> sessionAudioMediaRemote_;
+        std::vector<std::shared_ptr<AccountAudioCodecInfo>> sessionAudioMediaLocal_;
+        std::vector<std::shared_ptr<AccountAudioCodecInfo>> sessionAudioMediaRemote_;
         std::vector<std::string> sessionVideoMedia_;
 
         std::string publishedIpAddr_;
@@ -319,14 +320,14 @@ class Sdp {
          * Build the local media capabilities for this session
          * @param List of codec in preference order
          */
-        void setLocalMediaAudioCapabilities(const std::vector<unsigned>& selected);
-        void setLocalMediaVideoCapabilities(const std::vector<unsigned>& codecs);
+        void setLocalMediaAudioCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs);
+        void setLocalMediaVideoCapabilities(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs);
 
         /*
          * Build the local SDP offer
          */
-        int createLocalSession(const std::vector<unsigned>& selectedAudio,
-                               const std::vector<unsigned>& selectedVideo,
+        int createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>> selectedAudioCodecs,
+                               const std::vector<std::shared_ptr<AccountCodecInfo>> selectedVideoCodecs,
                                sip_utils::KeyExchangeProtocol);
         /*
          * Adds a sdes attribute to the given media section.
@@ -349,6 +350,9 @@ class Sdp {
         void addZrtpAttribute(pjmedia_sdp_media* media, std::string hash);
 
         void addRTCPAttribute(pjmedia_sdp_media *med);
+
+        std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
+        std::shared_ptr<AccountCodecInfo> findCodecByName(const std::string &codec) const;
 };
 
 } // namespace ring

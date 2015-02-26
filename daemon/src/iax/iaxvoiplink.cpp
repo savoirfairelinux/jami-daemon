@@ -156,12 +156,13 @@ IAXVoIPLink::sendAudioFromMic()
             continue;
 
         int codecType = currentCall->getAudioCodecPayload();
-        auto codec = getSystemCodecContainer()->searchCodecByPayload(codecType, MEDIA_AUDIO);
-        auto audioCodec = std::static_pointer_cast<SystemAudioCodecInfo>(codec);
-        if (!audioCodec)
+
+        auto codec = account_.searchCodecByPayload(codecType, MEDIA_AUDIO);
+        auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(codec);
+        if (!accountAudioCodec)
             continue;
 
-        Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate);
+        Manager::instance().getRingBufferPool().setInternalSamplingRate(accountAudioCodec->audioformat.sample_rate);
 
         unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
@@ -177,7 +178,7 @@ IAXVoIPLink::sendAudioFromMic()
         samples = Manager::instance().getRingBufferPool().getData(rawBuffer_, currentCall->getCallId());
 
         int compSize = 0;
-        unsigned int audioRate = audioCodec->sampleRate;
+        unsigned int audioRate = accountAudioCodec->audioformat.sample_rate;
         int outSamples;
         UNUSED AudioBuffer *in;
 
@@ -341,19 +342,19 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     if (!event->datalen)
         return;
 
-    auto codec = getSystemCodecContainer()->searchCodecByPayload(call.getAudioCodecPayload(), MEDIA_AUDIO);
-    auto audioCodec = std::dynamic_pointer_cast<SystemAudioCodecInfo>(codec);
-    if (!audioCodec)
+    auto codec = account_.searchCodecByPayload(call.getAudioCodecPayload(), MEDIA_AUDIO);
+    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(codec);
+    if (!accountAudioCodec)
         return;
 
-    Manager::instance().getRingBufferPool().setInternalSamplingRate(audioCodec->sampleRate);
+    Manager::instance().getRingBufferPool().setInternalSamplingRate(accountAudioCodec->audioformat.sample_rate);
     unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
 
     if (event->subclass)
         call.format = event->subclass;
 
     unsigned int size = event->datalen;
-    unsigned int max = audioCodec->sampleRate * 20 / 1000;
+    unsigned int max = accountAudioCodec->audioformat.sample_rate * 20 / 1000;
 
     if (size > max)
         size = max;
@@ -369,7 +370,7 @@ IAXVoIPLink::iaxHandleVoiceEvent(iax_event* event, IAXCall& call)
     audioCodec->decode(rawBuffer_.getData(), data , size);
 #endif
     AudioBuffer *out = &rawBuffer_;
-    unsigned int audioRate = audioCodec->sampleRate;
+    unsigned int audioRate = accountAudioCodec->audioformat.sample_rate;
 
     if (audioRate != mainBufferSampleRate) {
         rawBuffer_.setSampleRate(mainBufferSampleRate);
