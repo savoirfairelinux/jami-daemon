@@ -599,6 +599,9 @@ ManagerImpl::offHoldCall(const std::string& callId)
     if (hasCurrentCall()) {
         if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
             RING_DBG("Has current call (%s), put on hold", currentCallId.c_str());
+            //FIXME: ebail
+            // if 2 consecutive offHoldCall done, the second one should be ignored (already offhold)
+            // this call put the call onHold
             onHoldCall(currentCallId);
         } else if (isConference(currentCallId) && callId != currentCallId) {
             holdConference(currentCallId);

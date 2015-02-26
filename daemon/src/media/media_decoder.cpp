@@ -136,6 +136,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 #else
     ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
+    RING_DBG("Finding stream info DONE");
 
     if (ret < 0) {
         // workaround for this bug:
