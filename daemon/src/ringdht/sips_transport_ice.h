@@ -91,6 +91,7 @@ struct SipsIceTransport
     void reset();
 
     IpAddr getLocalAddress() const;
+    IpAddr getRemoteAddress() const;
 
     std::shared_ptr<IceTransport> getIceTransport() const {
         return ice_;
@@ -127,11 +128,11 @@ private:
     std::atomic<bool> canWrite_ {false};
 
     // TODO
-    pj_status_t verify_status_;
+    pj_status_t verifyStatus_ {};
     int last_err_;
 
-    pj_ssl_cert_info local_cert_info_;
-    pj_ssl_cert_info remote_cert_info_;
+    pj_ssl_cert_info localCertInfo_;
+    pj_ssl_cert_info remoteCertInfo_;
 
     std::atomic<TlsConnectionState> state_ {TlsConnectionState::DISCONNECTED};
     clock::time_point handshakeStart_;
@@ -169,8 +170,7 @@ private:
     pj_status_t startTlsSession();
     pj_status_t tryHandshake();
     void certGetCn(const pj_str_t *gen_name, pj_str_t *cn);
-    void certGetInfo(pj_pool_t *pool, pj_ssl_cert_info *ci,
-                     gnutls_x509_crt_t cert);
+    void certGetInfo(pj_pool_t *pool, pj_ssl_cert_info *ci, const gnutls_datum_t& cert);
     void certUpdate();
     pj_bool_t onHandshakeComplete(pj_status_t status);
     int verifyCertificate();
