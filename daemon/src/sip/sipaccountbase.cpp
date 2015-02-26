@@ -46,8 +46,6 @@
 
 namespace ring {
 
-bool SIPAccountBase::portsInUse_[HALF_MAX_PORT];
-
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID), link_(getSIPVoIPLink())
 {}
@@ -69,9 +67,9 @@ validate(std::string &member, const std::string &param, const T& valid)
 }
 
 static void
-updateRange(int min, int max, std::pair<uint16_t, uint16_t> &range)
+updateRange(uint16_t min, uint16_t max, std::pair<uint16_t, uint16_t> &range)
 {
-    if (min > 0 and (max > min) and max <= MAX_PORT - 2) {
+    if (min > 0 and (max > min) and max <= SIPAccountBase::MAX_PORT - 2) {
         range.first = min;
         range.second = max;
     }
@@ -319,24 +317,33 @@ SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
         transport_->addStateListener(reinterpret_cast<uintptr_t>(this), std::bind(&SIPAccountBase::onTransportStateChanged, this, std::placeholders::_1, std::placeholders::_2));
 }
 
+auto
+SIPAccountBase::getPortsReservation() noexcept -> decltype(getPortsReservation())
+{
+    // Note: static arrays are zero-initialized
+    static std::remove_reference<decltype(getPortsReservation())>::type portsInUse;
+    return portsInUse;
+}
+
 // returns even number in range [lower, upper]
 uint16_t
 SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const
 {
     std::uniform_int_distribution<uint16_t> dist(range.first/2, range.second/2);
     uint16_t result;
+
     do {
         result = 2 * dist(rand_);
-    } while (portsInUse_[result / 2]);
+    } while (getPortsReservation()[result / 2]);
 
-    portsInUse_[result / 2] = true;
+    getPortsReservation()[result / 2] = true;
     return result;
 }
 
 void
-SIPAccountBase::releasePort(uint16_t port)
+SIPAccountBase::releasePort(uint16_t port) noexcept
 {
-    portsInUse_[port / 2] = false;
+    getPortsReservation()[port / 2] = false;
 }
 
 uint16_t

@@ -101,14 +101,15 @@ class SIPCall;
  * @file sipaccount.h
  * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
  */
-enum {MAX_PORT = 65536};
-enum {HALF_MAX_PORT = MAX_PORT / 2};
+
 enum class MatchRank {NONE, PARTIAL, FULL};
 
 class SIPAccountBase : public Account {
 public:
     constexpr static const char * const OVERRTP_STR = "overrtp";
     constexpr static const char * const SIPINFO_STR = "sipinfo";
+    constexpr static unsigned MAX_PORT {65536};
+    constexpr static unsigned HALF_MAX_PORT {MAX_PORT / 2};
 
     /**
      * Constructor
@@ -248,12 +249,6 @@ public:
 
     virtual std::string getServerUri() const = 0;
 
-    uint16_t generateAudioPort() const;
-#ifdef RING_VIDEO
-    uint16_t generateVideoPort() const;
-#endif
-    static void releasePort(uint16_t port);
-
     virtual void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
 
     inline const std::shared_ptr<SipTransport>& getTransport() {
@@ -268,6 +263,18 @@ public:
      * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
      */
     pjsip_tpselector getTransportSelector();
+
+    /**
+     * Socket port generators for media
+     * Note: given ports are application wide, a port cannot be given again
+     * by any account instances until it's released by the static method
+     * releasePort().
+     */
+    uint16_t generateAudioPort() const;
+#ifdef RING_VIDEO
+    uint16_t generateVideoPort() const;
+#endif
+    static void releasePort(uint16_t port) noexcept;
 
 protected:
     virtual void serialize(YAML::Emitter &out);
@@ -362,7 +369,7 @@ protected:
      */
     std::pair<uint16_t, uint16_t> videoPortRange_ {49152, (MAX_PORT) - 2};
 
-    static bool portsInUse_[HALF_MAX_PORT];
+    static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
 
     static void
