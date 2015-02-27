@@ -48,6 +48,7 @@
 #include <mutex>
 #include <random>
 #include <atomic>
+#include <functional>
 
 #include "conference.h"
 
@@ -941,11 +942,15 @@ class ManagerImpl {
 
         IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
 
+        void addTask(const std::function<bool()>&& task);
+
     private:
         NON_COPYABLE(ManagerImpl);
 
         std::map<uintptr_t, EventHandler> eventHandlerMap_;
         decltype(eventHandlerMap_)::iterator nextEventHandler_;
+
+        std::list<std::function<bool()>> pendingTask_;
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in

@@ -1327,21 +1327,50 @@ ManagerImpl::unregisterEventHandler(uintptr_t handlerId)
     }
 }
 
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
+void
+ManagerImpl::addTask(const std::function<bool()>&& task)
+{
+    pendingTask_.emplace_back(task);
+}
+
 // Must be invoked periodically by a timer from the main event loop
 void ManagerImpl::pollEvents()
 {
-    auto iter = eventHandlerMap_.begin();
-    while (iter != eventHandlerMap_.end()) {
-        if (finished_)
-            return;
+    //-- Handlers
+    {
+        auto iter = eventHandlerMap_.begin();
+        while (iter != eventHandlerMap_.end()) {
 
-        // WARN: following callback can do anything and typically
-        // calls (un)registerEventHandler.
-        // Think twice before modify this code.
+            // quit ASAP?
+            if (finished_)
+                return;
 
-        nextEventHandler_ = std::next(iter);
-        iter->second();
-        iter = nextEventHandler_;
+            // WARN: following callback can do anything and typically
+            // calls (un)registerEventHandler.
+            // Think twice before modify this code.
+
+            nextEventHandler_ = std::next(iter);
+            iter->second();
+            iter = nextEventHandler_;
+        }
+    }
+
+    //-- Tasks
+    {
+        auto task_list = std::move(pendingTask_);
+        pendingTask_.clear();
+        auto iter = std::begin(task_list);
+        while (iter != task_list.cend()) {
+            if (finished_)
+                return;
+
+            auto next = std::next(iter);
+            if (not (*iter)())
+                task_list.erase(iter);
+            iter = next;
+        }
+        pendingTask_.splice(std::end(task_list), task_list);
     }
 }
 
