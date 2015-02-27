@@ -169,11 +169,43 @@ validateCertificate(const std::string&,
 }
 
 std::map<std::string, std::string>
+validateCertificateRaw(const std::string&,
+                    const std::vector<uint8_t>& certificate_raw)
+{
+#if HAVE_TLS && HAVE_DHT
+    try {
+        return TlsValidator{certificate_raw}.getSerializedChecks();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed");
+        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
+    }
+#else
+    RING_WARN("TLS not supported");
+    return {};
+#endif
+}
+
+std::map<std::string, std::string>
 getCertificateDetails(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{certificate,""}.getSerializedDetails();
+    } catch(const std::runtime_error& e) {
+        RING_WARN("Certificate loading failed");
+    }
+#else
+    RING_WARN("TLS not supported");
+#endif
+    return std::map<std::string, std::string>();
+}
+
+std::map<std::string, std::string>
+getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
+{
+#if HAVE_TLS && HAVE_DHT
+    try {
+        return TlsValidator{certificate_raw}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }
