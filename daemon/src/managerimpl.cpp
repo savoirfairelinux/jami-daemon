@@ -79,6 +79,8 @@
 
 #include "client/signal.h"
 
+#include <gnutls/gnutls.h> // init/logging
+
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -146,6 +148,41 @@ setSipLogLevel()
     pj_log_set_level(level);
 }
 
+#if HAVE_TLS
+/**
+ * Set gnutls's log level based on the RING_TLS_LOGLEVEL environment variable.
+ * RING_TLS_LOGLEVEL = 0 minimum logging (default)
+ * RING_TLS_LOGLEVEL = 9 maximum logging
+ */
+
+static constexpr int RING_TLS_LOGLEVEL = 0;
+
+static void
+tls_print_logs(int level, const char* msg)
+{
+    RING_DBG("GnuTLS [%d]: %s", level, msg);
+}
+
+static void
+setGnuTlsLogLevel()
+{
+    char* envvar = getenv("RING_TLS_LOGLEVEL");
+    int level = RING_TLS_LOGLEVEL;
+
+    if (envvar != nullptr) {
+        int var_level;
+        if (std::istringstream(envvar) >> var_level)
+            level = var_level;
+
+        // From 0 (min) to 9 (max)
+        level = std::max(0, std::min(level, 9));
+    }
+
+    gnutls_global_set_log_level(level);
+    gnutls_global_set_log_function(tls_print_logs);
+}
+#endif // HAVE_TLS
+
 void
 ManagerImpl::loadDefaultAccountMap()
 {
@@ -201,7 +238,7 @@ ManagerImpl::init(const std::string &config_file)
     // FIXME: this is no good
     initialized = true;
 
-#define TRY(ret) do {      \
+#define PJSIP_TRY(ret) do {                                 \
         if (ret != PJ_SUCCESS)                               \
             throw std::runtime_error(#ret " failed");        \
     } while (0)
@@ -209,14 +246,25 @@ ManagerImpl::init(const std::string &config_file)
     srand(time(NULL)); // to get random number for RANDOM_PORT
 
     // Initialize PJSIP (SIP and ICE implementation)
-    TRY(pj_init());
+    PJSIP_TRY(pj_init());
     setSipLogLevel();
-    TRY(pjlib_util_init());
-    TRY(pjnath_init());
+    PJSIP_TRY(pjlib_util_init());
+    PJSIP_TRY(pjnath_init());
 #undef TRY
 
     RING_DBG("pjsip version %s for %s initialized",
              pj_get_version(), PJ_OS_NAME);
+
+#if HAVE_TLS
+    // Init GnuTLS library
+    int ret = gnutls_global_init();
+    if (ret < 0)
+        throw std::runtime_error("Can't initialise GNUTLS : "
+                                 + std::string(gnutls_strerror(ret)));
+    setGnuTlsLogLevel();
+#endif // HAVE_TLS
+
+    RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
 
     ice_tf_.reset(new IceTransportFactory());
 
@@ -308,6 +356,9 @@ ManagerImpl::finish() noexcept
 
         ice_tf_.reset();
         pj_shutdown();
+#if HAVE_TLS
+        gnutls_global_deinit();
+#endif // HAVE_TLS
     } catch (const VoipLinkException &err) {
         RING_ERR("%s", err.what());
     }
