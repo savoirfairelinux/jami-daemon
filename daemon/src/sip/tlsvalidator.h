@@ -143,6 +143,8 @@ public:
     TlsValidator(const std::string& certificate,
                  const std::string& privatekey = "");
 
+    TlsValidator(const std::vector<uint8_t>& certificate_raw);
+
     ~TlsValidator();
 
     bool hasCa() const;
@@ -233,9 +235,9 @@ private:
     dht::crypto::Certificate x509crt_;
 
     bool certificateFound_;
-    bool privateKeyFound_;
-    TlsValidator* caCert_;
-    bool caChecked_;
+    bool privateKeyFound_ {false};
+    TlsValidator* caCert_ {nullptr};
+    bool caChecked_ {false};
     unsigned int caValidationOutput_;
 
     mutable char copy_buffer[4096];
