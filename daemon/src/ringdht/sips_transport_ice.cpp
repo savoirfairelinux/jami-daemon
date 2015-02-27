@@ -44,7 +44,6 @@ namespace ring { namespace tls {
 static constexpr int POOL_TP_INIT {512};
 static constexpr int POOL_TP_INC {512};
 static constexpr int TRANSPORT_INFO_LENGTH {64};
-static constexpr int GNUTLS_LOG_LEVEL {8};
 
 static void
 sockaddr_to_host_port(pj_pool_t* pool,
@@ -57,15 +56,8 @@ sockaddr_to_host_port(pj_pool_t* pool,
     host_port->port = pj_sockaddr_get_port(addr);
 }
 
-static void tls_print_logs(int level, const char* msg)
-{
-    if (level < 3)
-        return;
-    RING_DBG("GnuTLS [%d]: %s", level, msg);
-}
-
-
-static pj_status_t tls_status_from_err(int err)
+static pj_status_t
+tls_status_from_err(int err)
 {
     pj_status_t status;
 
@@ -334,9 +326,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     if (ret < 0)
         throw std::runtime_error("Can't initialise GNUTLS : "
                                  + std::string(gnutls_strerror(ret)));
-
-    gnutls_global_set_log_level(GNUTLS_LOG_LEVEL);
-    gnutls_global_set_log_function(tls_print_logs);
 
     gnutls_priority_init(&priority_cache,
                          "SECURE192:-VERS-TLS-ALL:+VERS-DTLS1.0:%SERVER_PRECEDENCE",
