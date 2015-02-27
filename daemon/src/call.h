@@ -167,7 +167,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Get the connection state of the call (protected by mutex)
          * @return ConnectionState The connection state
          */
-        ConnectionState getConnectionState();
+        ConnectionState getConnectionState() const;
 
         /**
          * Set the state of the call (protected by mutex)
@@ -180,9 +180,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Get the call state of the call (protected by mutex)
          * @return CallState  The call state
          */
-        CallState getState();
+        CallState getState() const;
 
-        std::string getStateStr();
+        std::string getStateStr() const;
 
         void setIPToIP(bool IPToIP) {
             isIPToIP_ = IPToIP;
@@ -231,7 +231,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         unsigned int getLocalVideoPort() const;
 
         void time_stop();
-        virtual std::map<std::string, std::string> getDetails();
+        virtual std::map<std::string, std::string> getDetails() const;
         static std::map<std::string, std::string> getNullDetails();
 
         virtual bool toggleRecording();
