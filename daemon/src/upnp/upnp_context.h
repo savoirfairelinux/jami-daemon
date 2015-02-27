@@ -60,10 +60,6 @@ class UPnPContext {
 public:
 
 #if HAVE_LIBUPNP
-
-    /* search timeout in seconds */
-    constexpr static int SEARCH_TIMEOUT_SEC = 30;
-
     UPnPContext();
     ~UPnPContext();
 
@@ -73,7 +69,7 @@ public:
      *       have expired; the timeout starts when the context is created as we start
      *       searching for IGDs immediately
      */
-    bool hasValidIGD();
+    bool waitValidIGD();
 
     /**
      * tries to add mapping from and to the port_desired
@@ -87,7 +83,7 @@ public:
      *
      * returns a valid mapping on success and an invalid mapping on failure
      *
-     * note: this function will call hasValidIGD and wait upto SEARCH_TIMEOUT_SEC
+     * note: this function will call waitValidIGD and wait upto SEARCH_TIMEOUT_SEC
      */
     Mapping addAnyMapping(uint16_t port_desired,
                           uint16_t port_local,
@@ -98,7 +94,7 @@ public:
     /**
      * tries to remove the given mapping
      *
-     * note: this function will call hasValidIGD and wait upto SEARCH_TIMEOUT_SEC
+     * note: this function will call waitValidIGD and wait upto SEARCH_TIMEOUT_SEC
      */
     void removeMapping(const Mapping& mapping);
 
@@ -162,7 +158,8 @@ private:
      * the mutex is used to access these lists and IGDs in a thread-safe manner
      */
     std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
-    std::mutex validIGDMutex_;
+    mutable std::mutex validIGDMutex_;
+    std::condition_variable validIGDCondVar_;
 
     /**
      * chooses the IGD to use (currently selects the first one in the map)
@@ -172,11 +169,6 @@ private:
 
     /* sends out async search for IGD */
     void searchForIGD();
-
-    /* vars to sync search timeout */
-    unsigned pendingIGDSearchRequests_ {0};
-    std::mutex igdSearchMutex_;
-    std::condition_variable igdSearchCondition_;
 
     /**
      * callback function for the UPnP client (control point)

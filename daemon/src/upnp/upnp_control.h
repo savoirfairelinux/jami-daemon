@@ -61,10 +61,10 @@ public:
      * Return whether or not this controller has a valid IGD,
      * if 'flase' then all requests will fail
      */
-    bool hasValidIGD();
+    bool waitValidIGD();
 
     /**
-     * like hasValidIGD, but calls the given callback when the IGD is found
+     * like waitValidIGD, but calls the given callback when the IGD is found
      * or when the search times out without finding one
      */
     // void waitForValildIGD(IGDFoundCallback cb);
