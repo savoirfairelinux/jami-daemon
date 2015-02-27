@@ -1016,15 +1016,24 @@ static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
 getNewDhParams()
 {
     using namespace std::chrono;
-    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, GNUTLS_SEC_PARAM_HIGH/* GNUTLS_SEC_PARAM_NORMAL */);
+    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_NORMAL);
     RING_DBG("Generating DH params with %u bits", bits);
-
     auto t1 = high_resolution_clock::now();
-    gnutls_dh_params_t new_params_;
-    gnutls_dh_params_init(&new_params_);
-    gnutls_dh_params_generate2(new_params_, bits);
-    auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
 
+    gnutls_dh_params_t new_params_;
+    int ret = gnutls_dh_params_init(&new_params_);
+    if (ret != GNUTLS_E_SUCCESS) {
+        RING_ERR("Error initializing DH params: %s", gnutls_strerror(ret));
+        return {nullptr, gnutls_dh_params_deinit};
+    }
+
+    ret = gnutls_dh_params_generate2(new_params_, bits);
+    if (ret != GNUTLS_E_SUCCESS) {
+        RING_ERR("Error generating DH params: %s", gnutls_strerror(ret));
+        return {nullptr, gnutls_dh_params_deinit};
+    }
+
+    auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
     RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return {new_params_, gnutls_dh_params_deinit};
 }
