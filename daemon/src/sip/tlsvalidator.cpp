@@ -212,8 +212,9 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
 
 
 TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey) :
-certificatePath_(certificate), privateKeyPath_(privatekey), certificateFound_(false), caCert_(nullptr),
-caChecked_(false)
+    certificatePath_(certificate),
+    privateKeyPath_(privatekey),
+    certificateFound_(false)
 {
     int err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS)
@@ -233,6 +234,22 @@ caChecked_(false)
         privateKeyFound_ = true;
     } catch (const std::exception& e) {
         privateKeyContent_.clear();
+    }
+}
+
+TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw) :
+    certificateFound_(true)
+{
+    int err = gnutls_global_init();
+    if (err != GNUTLS_E_SUCCESS)
+        throw TlsValidatorException(gnutls_strerror(err));
+
+    try {
+        x509crt_ = {certificate_raw};
+        certificateContent_ = x509crt_.getPacked();
+        certificateFound_ = true;
+    } catch (const std::exception& e) {
+        throw TlsValidatorException("Can't load certificate");
     }
 }
 
@@ -1080,8 +1097,8 @@ TlsValidator::CheckResult TlsValidator::getSha1Fingerprint()
  */
 TlsValidator::CheckResult TlsValidator::getPublicKeyId()
 {
-    size_t resultSize = sizeof(copy_buffer);
     static unsigned char unsigned_copy_buffer[4096];
+    size_t resultSize = sizeof(unsigned_copy_buffer);
     int err = gnutls_x509_crt_get_key_id(x509crt_.cert,0,unsigned_copy_buffer,&resultSize);
 
     // TODO check for GNUTLS_E_SHORT_MEMORY_BUFFER and increase the buffer size
