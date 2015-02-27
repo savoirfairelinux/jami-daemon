@@ -276,10 +276,6 @@ void SIPCall::answer()
         throw std::runtime_error("Could not send invite request answer (200 OK)");
     }
 
-    if (iceTransport_->isStarted())
-        waitForIceNegotiation(DEFAULT_ICE_NEGO_TIMEOUT);
-    startAllMedia();
-
     setConnectionState(CONNECTED);
     setState(ACTIVE);
 }
@@ -665,9 +661,6 @@ void
 SIPCall::onAnswered()
 {
     if (getConnectionState() != Call::CONNECTED) {
-        if (iceTransport_->isStarted())
-            waitForIceNegotiation(DEFAULT_ICE_NEGO_TIMEOUT);
-        startAllMedia();
         setConnectionState(Call::CONNECTED);
         setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(*this);
@@ -779,16 +772,28 @@ SIPCall::stopAllMedia()
 void
 SIPCall::onMediaUpdate()
 {
+    stopAllMedia();
     openPortsUPnP();
 
-    // Handle possible ICE transport
-    if (!startIce())
-        RING_WARN("ICE not started");
-
-    if (getState() == ACTIVE) {
-        // TODO apply changes without restarting everything
-        RING_WARN("Restarting medias");
-        stopAllMedia();
+    if (startIce()) {
+        auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
+        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {10};
+        Manager::instance().addTask([=] {
+            /* First step: wait for an ICE transport for SIP channel */
+            if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
+                RING_DBG("ice init failed (or timeout)");
+                this_->setConnectionState(Call::DISCONNECTED);
+                Manager::instance().callFailure(*this_); // signal client
+                this_->removeCall();
+                return false;
+            }
+            if (not this_->iceTransport_->isRunning())
+                return true;
+            startAllMedia();
+            return false;
+        });
+    } else {
+        RING_WARN("Starting medias without ICE");
         startAllMedia();
     }
 }
