@@ -389,6 +389,10 @@ SipsIceTransport::certGetInfo(pj_pool_t *pool, pj_ssl_cert_info *ci, const gnutl
     /* Update cert info */
     pj_bzero(ci, sizeof(pj_ssl_cert_info));
 
+    /* Full raw certificate */
+    const pj_str_t raw_crt_pjstr {(char*)crt_raw.data, crt_raw.size};
+    pj_strdup(pool, &ci->cert_raw, &raw_crt_pjstr);
+
     /* Version */
     ci->version = gnutls_x509_crt_get_version(crt.cert);
 
