@@ -276,7 +276,12 @@ void SIPCall::answer()
         throw std::runtime_error("Could not send invite request answer (200 OK)");
     }
 
+    if (iceTransport_->isStarted())
+        waitForIceNegotiation(DEFAULT_ICE_NEGO_TIMEOUT);
+    startAllMedia();
+
     setConnectionState(CONNECTED);
+    setState(ACTIVE);
 }
 
 void
@@ -660,7 +665,11 @@ void
 SIPCall::onAnswered()
 {
     if (getConnectionState() != Call::CONNECTED) {
+        if (iceTransport_->isStarted())
+            waitForIceNegotiation(DEFAULT_ICE_NEGO_TIMEOUT);
+        startAllMedia();
         setConnectionState(Call::CONNECTED);
+        setState(Call::ACTIVE);
         Manager::instance().peerAnsweredCall(*this);
     }
 }
@@ -767,32 +776,21 @@ SIPCall::stopAllMedia()
 #endif
 }
 
-/*
- * onMediaUpdate
- * Function called after each SDP negotiation
- * e.g invite or re-invite
- */
 void
 SIPCall::onMediaUpdate()
 {
-    RING_WARN("stop medias");
-    // In case of re-invite stop current A/V media
-    // In case of invite stopAllMedia won't do anything
-    stopAllMedia();
-
-    RING_WARN("open upnp ports");
     openPortsUPnP();
 
     // Handle possible ICE transport
-    if (startIce()) {
-        RING_DBG("ICE started waiting for negotiation");
-        waitForIceNegotiation(DEFAULT_ICE_NEGO_TIMEOUT);
-    }
+    if (!startIce())
+        RING_WARN("ICE not started");
 
-    RING_WARN("starting medias");
-    startAllMedia();
-    //Inform that A/V media is now processed
-    setState(ACTIVE);
+    if (getState() == ACTIVE) {
+        // TODO apply changes without restarting everything
+        RING_WARN("Restarting medias");
+        stopAllMedia();
+        startAllMedia();
+    }
 }
 
 void
