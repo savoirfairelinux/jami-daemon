@@ -61,10 +61,10 @@ Controller::~Controller()
  * if 'flase' then all requests will fail
  */
 bool
-Controller::hasValidIGD()
+Controller::waitValidIGD()
 {
 #if HAVE_LIBUPNP
-    return upnpContext_->hasValidIGD();
+    return upnpContext_->waitValidIGD();
 #endif
     return false;
 }

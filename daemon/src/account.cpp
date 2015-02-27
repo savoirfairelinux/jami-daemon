@@ -506,7 +506,7 @@ Account::getUPnPActive() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
     if (upnpEnabled_)
-        return upnp_->hasValidIGD();
+        return upnp_->waitValidIGD();
     return false;
 }
 
