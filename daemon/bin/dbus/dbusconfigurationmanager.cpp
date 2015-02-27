@@ -360,10 +360,22 @@ DBusConfigurationManager::validateCertificate(const std::string& accountId, cons
    return DRing::validateCertificate(accountId, certificate, privateKey);
 }
 
+std::map<std::string, std::string>
+DBusConfigurationManager::validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate)
+{
+    return DRing::validateCertificateRaw(accountId, certificate);
+}
+
 auto
 DBusConfigurationManager::getCertificateDetails(const std::string& certificate) -> decltype(DRing::getCertificateDetails(certificate))
 {
     return DRing::getCertificateDetails(certificate);
+}
+
+auto
+DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& certificate) -> decltype(DRing::getCertificateDetailsRaw(certificate))
+{
+    return DRing::getCertificateDetailsRaw(certificate);
 }
 
 void
