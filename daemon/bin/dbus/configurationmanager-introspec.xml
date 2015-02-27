@@ -664,6 +664,21 @@
            </arg>
        </method>
 
+       <method name="getCertificateDetailsRaw" tp:name-for-bindings="getCertificateDetailsRaw">
+           <arg type="ay" name="certificateRaw" direction="in">
+              <tp:docstring>
+               <p>A raw certificate</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="out">
+              <tp:docstring>
+               <p>A key-value list of all certificate details</p>
+               The constants used as keys are defined in the "security.h" constants header file
+              </tp:docstring>
+           </arg>
+       </method>
+
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
            <arg type="s" name="interface" direction="in">
            </arg>
