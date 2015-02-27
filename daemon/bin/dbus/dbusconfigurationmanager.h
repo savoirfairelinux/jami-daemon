@@ -129,7 +129,7 @@ class DBusConfigurationManager :
         double getVolume(const std::string& device);
         std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-
+        std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
