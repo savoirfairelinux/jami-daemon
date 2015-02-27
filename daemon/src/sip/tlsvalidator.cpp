@@ -212,8 +212,9 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
 
 
 TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey) :
-certificatePath_(certificate), privateKeyPath_(privatekey), certificateFound_(false), caCert_(nullptr),
-caChecked_(false)
+    certificatePath_(certificate),
+    privateKeyPath_(privatekey),
+    certificateFound_(false)
 {
     int err = gnutls_global_init();
     if (err != GNUTLS_E_SUCCESS)
@@ -233,6 +234,22 @@ caChecked_(false)
         privateKeyFound_ = true;
     } catch (const std::exception& e) {
         privateKeyContent_.clear();
+    }
+}
+
+TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw) :
+    certificateFound_(true)
+{
+    int err = gnutls_global_init();
+    if (err != GNUTLS_E_SUCCESS)
+        throw TlsValidatorException(gnutls_strerror(err));
+
+    try {
+        x509crt_ = {certificate_raw};
+        certificateContent_ = x509crt_.getPacked();
+        certificateFound_ = true;
+    } catch (const std::exception& e) {
+        throw TlsValidatorException("Can't load certificate");
     }
 }
 
@@ -367,11 +384,12 @@ static TlsValidator::CheckResult checkError(int err, char* copy_buffer, size_t s
  * ASCII-hexadecimal representation before being sent to DBus as it will cause the
  * process to assert
  */
-static std::string binaryToHex(const char* input, size_t input_sz)
+static std::string binaryToHex(const uint8_t* input, size_t input_sz)
 {
     std::ostringstream ret;
+    ret << std::hex;
     for (size_t i=0; i<input_sz; i++)
-        ret << std::hex << std::setfill('0') << std::setw(2) << std::uppercase << (unsigned)input[i];
+        ret << std::setfill('0') << std::setw(2) << (unsigned)input[i];
     return ret.str();
 }
 
@@ -394,7 +412,7 @@ static TlsValidator::CheckResult formatDate(const time_t time)
 static TlsValidator::CheckResult checkBinaryError(int err, char* copy_buffer, size_t resultSize)
 {
     if (err == GNUTLS_E_SUCCESS)
-        return TlsValidator::CheckResult(TlsValidator::CheckValues::CUSTOM, binaryToHex(copy_buffer, resultSize));
+        return TlsValidator::CheckResult(TlsValidator::CheckValues::CUSTOM, binaryToHex(reinterpret_cast<uint8_t*>(copy_buffer), resultSize));
     else
         return TlsValidator::CheckResult(TlsValidator::CheckValues::UNSUPPORTED, "");
 }
@@ -970,7 +988,7 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
 // gnutls_x509_crt_get_authority_key_gn_serial
     size_t resultSize = sizeof(copy_buffer);
     int err = gnutls_x509_crt_get_serial(x509crt_.cert, copy_buffer, &resultSize);
-    return checkError(err, copy_buffer, resultSize);
+    return checkBinaryError(err, copy_buffer, resultSize);
 }
 
 /**
@@ -1080,8 +1098,8 @@ TlsValidator::CheckResult TlsValidator::getSha1Fingerprint()
  */
 TlsValidator::CheckResult TlsValidator::getPublicKeyId()
 {
-    size_t resultSize = sizeof(copy_buffer);
     static unsigned char unsigned_copy_buffer[4096];
+    size_t resultSize = sizeof(unsigned_copy_buffer);
     int err = gnutls_x509_crt_get_key_id(x509crt_.cert,0,unsigned_copy_buffer,&resultSize);
 
     // TODO check for GNUTLS_E_SHORT_MEMORY_BUFFER and increase the buffer size
