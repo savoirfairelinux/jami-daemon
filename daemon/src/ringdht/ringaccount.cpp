@@ -2,6 +2,7 @@
  *  Copyright (C) 2014 Savoir-Faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -137,7 +138,6 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    auto& manager = Manager::instance();
     auto dhtf = toUrl.find("ring:");
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
@@ -147,93 +147,110 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     }
     if (toUrl.length() - dhtf < 40)
         throw std::invalid_argument("id must be a ring infohash");
+
     const std::string toUri = toUrl.substr(dhtf, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
 
-    RING_DBG("Calling DHT peer %s", toUri.c_str());
-    auto toH = dht::InfoHash(toUri);
+    RING_DBG("Calling DHT peer %s", toUrl.c_str());
 
+    auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::OUTGOING);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
-    auto& iceTransportFactory = manager.getIceTransportFactory();
-    auto ice = iceTransportFactory.createTransport(
-        ("sip:"+call->getCallId()).c_str(),
-        ICE_COMPONENTS,
-        true,
-        getUPnPActive()
-    );
-    if (not ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0) {
-        call->setConnectionState(Call::DISCONNECTED);
-        call->setState(Call::MERROR);
-        return call;
+    // Create an ICE transport for SIP channel
+    auto& tfactory = manager.getIceTransportFactory();
+    auto ice = tfactory.createTransport(("sip:" + call->getCallId()).c_str(),
+                                        ICE_COMPONENTS, true, getUPnPActive());
+    if (not ice) {
+        call->removeCall();
+        return nullptr;
     }
 
-    call->setState(Call::INACTIVE);
-    call->setConnectionState(Call::TRYING);
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
-    auto shared = shared_from_this();
-    const auto callkey = dht::InfoHash::get("callto:"+toUri);
+    manager.addTask([=] {
+        static std::uniform_int_distribution<dht::Value::Id> udist;
 
-    const dht::Value::Id callvid  = std::uniform_int_distribution<dht::Value::Id>{}(rand_);
-    const dht::Value::Id replyvid = callvid+1;
-
-    std::weak_ptr<SIPCall> weak_call = call;
-
-    dht_.putEncrypted(
-        callkey,
-        toH,
-        dht::Value {
-            dht::DhtMessage::TYPE,
-            dht::DhtMessage(
-                dht::DhtMessage::Service::ICE_CANDIDATES,
-                ice->getLocalAttributesAndCandidates()
-            ),
-            callvid
-        },
-        [callkey, callvid, weak_call, shared](bool ok) {
-            auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
-            if (!ok) {
-                RING_WARN("Can't put ICE descriptor on DHT");
-                if (auto call = weak_call.lock()) {
-                    call->setConnectionState(Call::DISCONNECTED);
-                    Manager::instance().callFailure(*call);
-                    call->removeCall();
-                }
-            }
-            this_.dht_.cancelPut(callkey, callvid);
+        /* First step: wait for an initialized ICE transport for SIP channel */
+        if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
+            RING_DBG("ice init failed (or timeout)");
+            call->setConnectionState(Call::DISCONNECTED);
+            call->setState(Call::MERROR);
+            Manager::instance().callFailure(*call); // signal client
+            call->removeCall();
+            return false;
         }
-    );
 
-    auto lk = dht_.listen(
-        callkey,
-        [shared, ice, toH, replyvid] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
-            auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
-            RING_DBG("Outcall listen callback (%d values)", vals.size());
-            for (const auto& v : vals) {
-                if (v->recipient != this_.dht_.getId()) {
-                    RING_DBG("Ignoring non encrypted or bad type value %s.", v->toString().c_str());
-                    continue;
-                }
-                if (v->id != replyvid)
-                    continue;
-                dht::DhtMessage msg {v->data};
-                RING_WARN("Got a DHT reply from %s !", toH.toString().c_str());
-                RING_WARN("Performing ICE negotiation.");
-                ice->start(msg.getMessage());
-                return false;
-            }
+        if (not ice->isInitialized())
             return true;
-        },
-        dht::DhtMessage::ServiceFilter(dht::DhtMessage::Service::ICE_CANDIDATES)
-    );
-    {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, std::move(lk), callkey, toH});
-    }
+
+        /* Next step: sent the ICE data to peer through DHT */
+        const dht::Value::Id callvid  = udist(shared_this->rand_);
+        const dht::Value::Id replyvid = callvid + 1;
+        const auto toH = dht::InfoHash(toUri);
+        const auto callkey = dht::InfoHash::get("callto:" + toUri);
+
+        std::weak_ptr<SIPCall> weak_call = call;
+
+        call->setConnectionState(Call::TRYING);
+        shared_this->dht_.putEncrypted(
+            callkey, toH,
+            dht::Value {
+                dht::DhtMessage::TYPE,
+                dht::DhtMessage(
+                    dht::DhtMessage::Service::ICE_CANDIDATES,
+                    ice->getLocalAttributesAndCandidates()
+                    ),
+                    callvid
+                },
+            [=](bool ok) { // Put complete callback
+                if (!ok) {
+                    RING_WARN("Can't put ICE descriptor on DHT");
+                    if (auto call = weak_call.lock()) {
+                        call->setConnectionState(Call::DISCONNECTED);
+                        Manager::instance().callFailure(*call); // signal client
+                        call->removeCall();
+                    }
+                }
+                shared_this->dht_.cancelPut(callkey, callvid);
+            });
+
+        auto listenKey = shared_this->dht_.listen(
+            callkey,
+            [=] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
+                RING_DBG("Outcall listen callback (%d values)", vals.size());
+                for (const auto& v : vals) {
+                    if (v->recipient != shared_this->dht_.getId()) {
+                        RING_DBG("Ignoring non encrypted or bad type value %s",
+                                 v->toString().c_str());
+                        continue;
+                    }
+                    if (v->id != replyvid)
+                        continue;
+                    dht::DhtMessage msg {v->data};
+                    RING_WARN("ICE request replied from DHT peer %s",
+                              toH.toString().c_str());
+                    ice->start(msg.getMessage());
+                    return false;
+                }
+                return true;
+            },
+            dht::DhtMessage::ServiceFilter(dht::DhtMessage::Service::ICE_CANDIDATES)
+        );
+
+        shared_this->pendingCalls_.emplace_back(PendingCall{
+            std::chrono::steady_clock::now(),
+            ice, weak_call,
+            std::move(listenKey),
+            callkey, toH
+        });
+        return false;
+    });
+
     return call;
 }
 
