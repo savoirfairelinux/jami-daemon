@@ -366,6 +366,12 @@ DBusConfigurationManager::getCertificateDetails(const std::string& certificate) 
     return DRing::getCertificateDetails(certificate);
 }
 
+auto
+DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& certificate) -> decltype(DRing::getCertificateDetailsRaw(certificate))
+{
+    return DRing::getCertificateDetailsRaw(certificate);
+}
+
 void
 DBusConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {
