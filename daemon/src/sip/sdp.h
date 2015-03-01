@@ -246,7 +246,10 @@ class Sdp {
         std::string getOutgoingVideoField(const std::string &codec, const char *key) const;
         void getProfileLevelID(const pjmedia_sdp_session *session, std::string &dest, int payload) const;
 
-        static std::string getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep);
+        /**
+         * Returns the printed original SDP filtered with only the specified media index and codec remaining.
+         */
+        static std::string getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep);
 
         /**
          * The pool to allocate memory
