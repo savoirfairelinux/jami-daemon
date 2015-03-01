@@ -34,6 +34,7 @@
 
 #include <string>
 #include <list>
+#include <mutex>
 
 #include "noncopyable.h"
 #include "pjsip/sip_types.h"
@@ -246,9 +247,8 @@ class SIPPresence {
         std::list< PresSubServer *> sub_server_list_; /**< Subscribers list.*/
         std::list< PresSubClient *> sub_client_list_; /**< Subcribed buddy list.*/
 
-        pj_mutex_t      *mutex_;
+        std::recursive_mutex mutex_;
         unsigned         mutex_nesting_level_;
-        pj_thread_t     *mutex_owner_;
         pj_caching_pool  cp_;
         pj_pool_t       *pool_;
 };

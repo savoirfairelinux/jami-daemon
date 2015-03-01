@@ -32,7 +32,6 @@
 
 #include "sippresence.h"
 
-#include <sstream>
 #include "logger.h"
 #include "manager.h"
 #include "sipaccount.h"
@@ -41,6 +40,9 @@
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
 #include "client/signal.h"
+
+#include <thread>
+#include <sstream>
 
 #define MAX_N_SUB_SERVER 50
 #define MAX_N_SUB_CLIENT 50
@@ -58,9 +60,6 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     , acc_(acc)
     , sub_server_list_()  //IP2IP context
     , sub_client_list_()
-    , mutex_()
-    , mutex_nesting_level_()
-    , mutex_owner_()
     , cp_()
     , pool_()
 {
@@ -69,13 +68,6 @@ SIPPresence::SIPPresence(SIPAccount *acc)
     pool_ = pj_pool_create(&cp_.factory, "pres", 1000, 1000, NULL);
     if (!pool_)
         throw std::runtime_error("Could not allocate pool for presence");
-
-    /* Create mutex */
-    if (pj_mutex_create_recursive(pool_, "pres", &mutex_) != PJ_SUCCESS) {
-        pj_pool_release(pool_);
-        pj_caching_pool_destroy(&cp_);
-        throw std::runtime_error("Unable to create mutex");
-    }
 
     /* init default status */
     updateStatus(false, " ");
@@ -91,9 +83,6 @@ SIPPresence::~SIPPresence()
     //    delete(c);
     sub_client_list_.clear();
     sub_server_list_.clear();
-
-    if (mutex_ and pj_mutex_destroy(mutex_) != PJ_SUCCESS)
-        RING_ERR("Error destroying mutex");
 
     pj_pool_release(pool_);
     pj_caching_pool_destroy(&cp_);
@@ -300,28 +289,17 @@ void SIPPresence::notifyPresSubServer()
 
 void SIPPresence::lock()
 {
-    pj_mutex_lock(mutex_);
-    mutex_owner_ = pj_thread_this();
-    ++mutex_nesting_level_;
+    mutex_.lock();
 }
 
 bool SIPPresence::tryLock()
 {
-    pj_status_t status;
-    status = pj_mutex_trylock(mutex_);
-    if (status == PJ_SUCCESS) {
-        mutex_owner_ = pj_thread_this();
-        ++mutex_nesting_level_;
-    }
-    return status==PJ_SUCCESS;
+    return mutex_.try_lock();
 }
 
 void SIPPresence::unlock()
 {
-    if (--mutex_nesting_level_ == 0)
-        mutex_owner_ = NULL;
-
-    pj_mutex_unlock(mutex_);
+    mutex_.unlock();
 }
 
 void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)

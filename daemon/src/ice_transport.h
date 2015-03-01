@@ -45,6 +45,7 @@
 #include <queue>
 #include <mutex>
 #include <condition_variable>
+#include <thread>
 
 namespace ring {
 
@@ -273,7 +274,7 @@ class IceTransportFactory {
 
         pj_caching_pool cp_;
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        std::unique_ptr<pj_thread_t, decltype(pj_thread_destroy)&> thread_;
+        std::thread thread_;
         pj_ice_strans_cfg ice_cfg_;
         pj_bool_t thread_quit_flag_ {PJ_FALSE};
 };
