@@ -94,8 +94,8 @@ void MediaEncoder::setOptions(const MediaDescription& args)
         av_dict_set(&options_, "frame_size",
                     ring::to_string(static_cast<unsigned>(0.02 * accountAudioCodec->audioformat.sample_rate)).c_str(), 0);
 
-    if (not args.payload_type.empty())
-        av_dict_set(&options_, "payload_type", args.payload_type.c_str(), 0);
+    if (args.payload_type)
+        av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
 
     if (not args.parameters.empty())
         av_dict_set(&options_, "parameters", args.parameters.c_str(), 0);

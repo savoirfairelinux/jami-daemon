@@ -246,7 +246,7 @@ struct MediaDescription {
 
     /** Codec */
     std::shared_ptr<AccountCodecInfo> codec {};
-    std::string payload_type {};
+    unsigned payload_type {};
     std::string receiving_sdp {};
     unsigned bitrate {};
 
