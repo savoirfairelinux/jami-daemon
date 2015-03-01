@@ -35,9 +35,12 @@
 #include "upnp/upnp_control.h"
 
 #include <pjlib.h>
+
 #include <utility>
 #include <algorithm>
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 #define TRY(ret) do {      \
         if ((ret) != PJ_SUCCESS)                             \
@@ -58,8 +61,8 @@ register_thread()
         static __thread pj_thread_desc desc;
         static __thread pj_thread_t *this_thread;
 #endif
-        RING_DBG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
+        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
     }
 }
 
@@ -68,7 +71,6 @@ IceTransport::Packet::Packet(void *pkt, pj_size_t size)
 {
     std::copy_n(reinterpret_cast<char*>(pkt), size, data.get());
 }
-
 
 void
 IceTransport::cb_on_rx_data(pj_ice_strans* ice_st,
@@ -696,7 +698,7 @@ IceTransport::waitForData(int comp_id, unsigned int timeout)
 IceTransportFactory::IceTransportFactory()
     : cp_()
     , pool_(nullptr, pj_pool_release)
-    , thread_(nullptr, pj_thread_destroy)
+    , thread_()
     , ice_cfg_()
 {
     pj_caching_pool_init(&cp_, NULL, 0);
@@ -711,14 +713,7 @@ IceTransportFactory::IceTransportFactory()
     TRY( pj_timer_heap_create(pool_.get(), 100, &ice_cfg_.stun_cfg.timer_heap) );
     TRY( pj_ioqueue_create(pool_.get(), 16, &ice_cfg_.stun_cfg.ioqueue) );
 
-    pj_thread_t* thread = nullptr;
-    const auto& thread_work = [](void* udata) {
-        register_thread();
-        return static_cast<IceTransportFactory*>(udata)->processThread();
-    };
-    TRY( pj_thread_create(pool_.get(), "icetransportpool",
-                          thread_work, this, 0, 0, &thread) );
-    thread_.reset(thread);
+    thread_ = std::thread(std::bind(&IceTransportFactory::processThread, this));
 
     ice_cfg_.af = pj_AF_INET();
 
@@ -732,13 +727,9 @@ IceTransportFactory::IceTransportFactory()
 
 IceTransportFactory::~IceTransportFactory()
 {
-    pj_thread_sleep(500);
-
     thread_quit_flag_ = PJ_TRUE;
-    if (thread_) {
-        pj_thread_join(thread_.get());
-        thread_.reset();
-    }
+    if (thread_.joinable())
+        thread_.join();
 
     if (ice_cfg_.stun_cfg.ioqueue)
         pj_ioqueue_destroy(ice_cfg_.stun_cfg.ioqueue);
@@ -753,6 +744,7 @@ IceTransportFactory::~IceTransportFactory()
 int
 IceTransportFactory::processThread()
 {
+    register_thread();
     while (!thread_quit_flag_) {
         handleEvents(500, NULL);
     }
@@ -786,7 +778,7 @@ IceTransportFactory::handleEvents(unsigned max_msec, unsigned *p_count)
         c = pj_ioqueue_poll(ice_cfg_.stun_cfg.ioqueue, &timeout);
         if (c < 0) {
             pj_status_t err = pj_get_netos_error();
-            pj_thread_sleep(PJ_TIME_VAL_MSEC(timeout));
+            std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             if (p_count)
                 *p_count = count;
             return err;

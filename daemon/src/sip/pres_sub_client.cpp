@@ -427,7 +427,8 @@ bool PresSubClient::lock()
     for(i=0; i<50; i++)
     {
         if (not pres_->tryLock()){
-            pj_thread_sleep(i/10);
+            // FIXME: i/10 in ms, sure!?
+            std::this_thread::sleep_for(std::chrono::milliseconds(i/10));
             continue;
         }
         lock_flag_ = PRESENCE_LOCK_FLAG;
@@ -438,7 +439,8 @@ bool PresSubClient::lock()
         if (pjsip_dlg_try_inc_lock(dlg_) != PJ_SUCCESS) {
             lock_flag_ = 0;
             pres_->unlock();
-            pj_thread_sleep(i/10);
+            // FIXME: i/10 in ms, sure!?
+            std::this_thread::sleep_for(std::chrono::milliseconds(i/10));
             continue;
         }
 
