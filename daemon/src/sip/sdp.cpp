@@ -595,14 +595,12 @@ void Sdp::startNegotiation()
 
 
 std::string
-Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep)
+Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep)
 {
     static constexpr size_t BUF_SZ = 4096;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> tmpPool_(
         pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
-                       "tmpSdp",
-                       BUF_SZ, BUF_SZ,
-                       nullptr),
+                           "tmpSdp", BUF_SZ, BUF_SZ, nullptr),
         pj_pool_release
     );
     auto cloned = pjmedia_sdp_session_clone(tmpPool_.get(), session);
@@ -636,9 +634,33 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep)
             i--;
         }
 
-    // we handle crypto ourselfs, don't tell libav about it
     for (unsigned i = 0; i < cloned->media_count; i++) {
         auto media = cloned->media[i];
+
+        // filter other codecs
+        for (unsigned c=0; c<media->desc.fmt_count; c++) {
+            auto& pt = media->desc.fmt[c];
+            if (pj_strtoul(&pt) == pt_keep)
+                continue;
+
+            while (auto attr = pjmedia_sdp_attr_find2(media->attr_count,
+                                                      media->attr,
+                                                      "rtpmap", &pt))
+                pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
+
+            while (auto attr = pjmedia_sdp_attr_find2(media->attr_count,
+                                                      media->attr,
+                                                      "fmt", &pt))
+                pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
+
+            std::move(media->desc.fmt+c+1,
+                      media->desc.fmt+media->desc.fmt_count,
+                      media->desc.fmt+c);
+            media->desc.fmt_count--;
+            c--;
+        }
+
+        // we handle crypto ourselfs, don't tell libav about it
         while (auto attr = pjmedia_sdp_attr_find2(media->attr_count,
                                                   media->attr, "crypto",
                                                   nullptr)) {
@@ -652,7 +674,6 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep)
 
     return sessionStr;
 }
-
 
 std::vector<MediaDescription>
 Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
@@ -710,15 +731,12 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
                 descr.enabled = false;
                 continue;
             }
-            descr.payload_type = std::string(rtpmap.pt.ptr, rtpmap.pt.slen);
+            descr.payload_type = pj_strtoul(&rtpmap.pt);
             if (descr.type == MEDIA_AUDIO) {
                 auto audio_codec = static_cast<SystemAudioCodecInfo*>(descr.codec.get());
                 descr.audioformat.sample_rate = audio_codec->isPCMG722() ? 16000 : rtpmap.clock_rate;
                 if (rtpmap.param.slen && rtpmap.param.ptr)
-                    descr.audioformat.nb_channels = std::stoi(std::string{
-                        rtpmap.param.ptr,
-                        (size_t)rtpmap.param.slen
-                    });
+                    descr.audioformat.nb_channels = pj_strtoul(&rtpmap.param);
                 else
                     descr.audioformat.nb_channels = 1;
             } else {
@@ -729,7 +747,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         }
 
         if (remote) {
-            descr.receiving_sdp = getFilteredSdp(session, i);
+            descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
             RING_WARN("receiving_sdp : %s", descr.receiving_sdp.c_str());
         }
 
