@@ -44,10 +44,12 @@
 namespace ring { namespace upnp {
 
 Controller::Controller()
-    : upnpContext_(getUPnPContext())
 {
-    if (not upnpContext_->isInitialized())
-        RING_WARN("UPnP: context is not initialized");
+    try {
+        upnpContext_ = getUPnPContext();
+    } catch (std::runtime_error& e) {
+        RING_ERR("UPnP context error: %s", e.what());
+    }
 }
 
 Controller::~Controller()
@@ -60,7 +62,7 @@ bool
 Controller::hasValidIGD(std::chrono::seconds timeout)
 {
 #if HAVE_LIBUPNP
-    return upnpContext_->hasValidIGD(timeout);
+    return upnpContext_ and upnpContext_->hasValidIGD(timeout);
 #endif
     return false;
 }
@@ -74,6 +76,9 @@ Controller::addAnyMapping(uint16_t port_desired,
                           uint16_t *port_used)
 {
 #if HAVE_LIBUPNP
+    if (not upnpContext_)
+        return false;
+
     Mapping mapping = upnpContext_->addAnyMapping(port_desired, port_local, type,
                                                   use_same_port, unique);
     if (mapping) {
@@ -84,8 +89,7 @@ Controller::addAnyMapping(uint16_t port_desired,
         auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
         instanceMappings.emplace(*port_used, std::move(mapping));
         return true;
-    } else
-        return false;
+    }
 #endif
     return false;
 }
@@ -102,6 +106,9 @@ Controller::addAnyMapping(uint16_t port_desired,
 void
 Controller::removeMappings(PortType type) {
 #if HAVE_LIBUPNP
+    if (not upnpContext_)
+        return;
+
     auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
     for (auto iter = instanceMappings.begin(); iter != instanceMappings.end(); ){
         auto& mapping = iter->second;
@@ -123,11 +130,10 @@ IpAddr
 Controller::getExternalIP()
 {
 #if HAVE_LIBUPNP
-    return upnpContext_->getExternalIP();
-#else
-    /* return empty address */
-    return {};
+    if (not upnpContext_)
+        return upnpContext_->getExternalIP();
 #endif
+    return {}; //  empty address
 }
 
 }} // namespace ring::upnp

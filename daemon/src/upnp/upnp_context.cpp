@@ -98,11 +98,20 @@ constexpr static unsigned MAX_RETRIES = 20;
 /*
  * Local prototypes
  */
-int cp_callback(Upnp_EventType, void*, void*);
 static std::string get_element_text(IXML_Node*);
 static std::string get_first_doc_item(IXML_Document*, const char*);
 static std::string get_first_element_item(IXML_Element*, const char*);
 static void checkResponseError(IXML_Document*);
+
+static int
+cp_callback(Upnp_EventType event_type, void* event, void* user_data)
+{
+    if (auto upnpContext = static_cast<UPnPContext*>(user_data))
+        return upnpContext->handleUPnPEvents(event_type, event);
+
+    RING_WARN("UPnP callback without UPnPContext");
+    return 0;
+}
 
 UPnPContext::UPnPContext()
 {
@@ -123,10 +132,9 @@ UPnPContext::UPnPContext()
     upnp_err = UpnpInit(0, 0);
 #endif
     if ( upnp_err != UPNP_E_SUCCESS ) {
-        RING_ERR("UPnP: error in UpnpInit(): %s", UpnpGetErrorMessage(upnp_err));
         UpnpFinish();
+        throw std::runtime_error(UpnpGetErrorMessage(upnp_err));
     }
-    initialized_ = true;
 
     ip_address = UpnpGetServerIpAddress(); /* do not free, it is freed by UpnpFinish() */
     port = UpnpGetServerPort();
@@ -137,13 +145,13 @@ UPnPContext::UPnPContext()
     ixmlRelaxParser( 1 );
 
     /* Register a control point to start looking for devices right away */
-    upnp_err = UpnpRegisterClient( cp_callback, nullptr, &ctrlptHandle_ );
+    upnp_err = UpnpRegisterClient( cp_callback, this, &ctrlptHandle_ );
     if ( upnp_err != UPNP_E_SUCCESS ) {
-        RING_ERR("UPnP: error registering control point: %s",
-                 UpnpGetErrorMessage(upnp_err));
         UpnpFinish();
-        initialized_ = false;
+        throw std::runtime_error(UpnpGetErrorMessage(upnp_err));
     }
+
+    RING_DBG("UPnP: ctrlptrHandle=%d", ctrlptHandle_);
     clientRegistered_ = true;
 
     /* send out async searches;
@@ -156,24 +164,22 @@ UPnPContext::UPnPContext()
 
 UPnPContext::~UPnPContext()
 {
-    if (initialized_){
-        /* make sure everything is unregistered, freed, and UpnpFinish() is called */
+    /* make sure everything is unregistered, freed, and UpnpFinish() is called */
 
-        {
-            std::lock_guard<std::mutex> lock(validIGDMutex_);
-            for( auto const &it : validIGDs_) {
-                removeMappingsByLocalIPAndDescription(it.second.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
-            }
+    {
+        std::lock_guard<std::mutex> lock(validIGDMutex_);
+        for( auto const &it : validIGDs_) {
+            removeMappingsByLocalIPAndDescription(it.second.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
         }
-
-        if (clientRegistered_)
-            UpnpUnRegisterClient( ctrlptHandle_ );
-
-        if (deviceRegistered_)
-            UpnpUnRegisterRootDevice( deviceHandle_ );
-
-        UpnpFinish();
     }
+
+    if (clientRegistered_)
+        UpnpUnRegisterClient( ctrlptHandle_ );
+
+    if (deviceRegistered_)
+        UpnpUnRegisterRootDevice( deviceHandle_ );
+
+    UpnpFinish();
 }
 
 void
@@ -185,10 +191,10 @@ UPnPContext::searchForIGD()
     }
 
     /* send out search for both types, as some routers may possibly only reply to one */
-    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, nullptr);
-    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, nullptr);
-    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, nullptr);
-    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, nullptr);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, this);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
 }
 
 bool
@@ -662,12 +668,9 @@ get_first_element_item(IXML_Element* element, const char* item)
     }
     return ret;
 }
-
 int
-cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
+UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 {
-    auto upnpContext = getUPnPContext();
-
     switch( event_type )
     {
     case UPNP_DISCOVERY_ADVERTISEMENT_ALIVE:
@@ -682,11 +685,11 @@ cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
              RING_DBG("UPnP: CP received a discovery search result"); */
 
         /* check if we are already in the process of checking this device */
-        std::unique_lock<std::mutex> lock(upnpContext->cpDeviceMutex_);
-        auto it = upnpContext->cpDevices_.find(std::string(d_event->Location));
+        std::unique_lock<std::mutex> lock(cpDeviceMutex_);
+        auto it = cpDevices_.find(std::string(d_event->Location));
 
-        if (it == upnpContext->cpDevices_.end()) {
-            upnpContext->cpDevices_.emplace(std::string(d_event->Location));
+        if (it == cpDevices_.end()) {
+            cpDevices_.emplace(std::string(d_event->Location));
             lock.unlock();
 
             if (d_event->ErrCode != UPNP_E_SUCCESS)
@@ -709,7 +712,7 @@ cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
                           UpnpGetErrorMessage(upnp_err));
             } else {
                 /* TODO: parse device description and add desired devices to relevant lists, etc */
-                upnpContext->parseDevice(desc_doc.get(), d_event);
+                parseDevice(desc_doc.get(), d_event);
             }
 
             /* finished parsing device; remove it from know devices list,
@@ -717,7 +720,7 @@ cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
              * eg: if we switch routers or if a new device with the same IP appears
              */
             lock.lock();
-            upnpContext->cpDevices_.erase(d_event->Location);
+            cpDevices_.erase(d_event->Location);
             lock.unlock();
         } else {
             lock.unlock();
