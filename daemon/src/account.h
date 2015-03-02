@@ -53,6 +53,7 @@
 #include <stdexcept>
 #include <atomic>
 #include <mutex>
+#include <chrono>
 
 namespace ring { namespace upnp {
 class Controller;
@@ -255,7 +256,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * returns whether or not UPnP is enabled and active
          * ie: if it is able to make port mappings
          */
-        bool getUPnPActive() const;
+        bool getUPnPActive(std::chrono::seconds timeout = {}) const;
 
         /**
          * Get the UPnP IP (external router) address.
