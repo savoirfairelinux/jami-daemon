@@ -208,7 +208,7 @@ UPnPContext::hasValidIGD(std::chrono::seconds timeout)
     std::unique_lock<std::mutex> lock(validIGDMutex_);
     if (!validIGDCondVar_.wait_for(lock, timeout,
                                    [this]{return not validIGDs_.empty();})) {
-        RING_WARN("UPnP: Valid IGD search timeout");
+        RING_WARN("UPnP: check for valid IGD timeout");
         return false;
     }
 
@@ -708,8 +708,13 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
             upnp_err = UpnpDownloadXmlDoc( d_event->Location, &desc_doc_ptr);
             desc_doc.reset(desc_doc_ptr);
             if ( upnp_err != UPNP_E_SUCCESS ) {
-                RING_WARN("UPnP: Error downloading device description: %s",
-                          UpnpGetErrorMessage(upnp_err));
+                /* the download of the xml doc has failed; this probably happened
+                 * because the router has UPnP disabled, but is still sending
+                 * UPnP discovery packets
+                 *
+                 * RING_WARN("UPnP: Error downloading device description: %s",
+                 *         UpnpGetErrorMessage(upnp_err));
+                 */
             } else {
                 /* TODO: parse device description and add desired devices to relevant lists, etc */
                 parseDevice(desc_doc.get(), d_event);
@@ -745,9 +750,9 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_EVENT_RECEIVED:
     {
-        struct Upnp_Event *e_event UNUSED = (struct Upnp_Event *)event;
+        /* struct Upnp_Event *e_event UNUSED = (struct Upnp_Event *)event; */
 
-        RING_DBG("UPnP: Control Point event received");
+        /* RING_DBG("UPnP: Control Point event received"); */
 
         /* TODO: handle event by updating any changed state variables */
 
@@ -767,21 +772,25 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
     break;
 
     case UPNP_EVENT_SUBSCRIBE_COMPLETE:
-        RING_DBG("UPnP: Control Point async subscription complete");
+        /* RING_DBG("UPnP: Control Point async subscription complete"); */
 
         /* TODO: check if successfull */
 
         break;
 
     case UPNP_DISCOVERY_SEARCH_TIMEOUT:
-        RING_DBG("UPnP: Control Point search timeout");
+        /* this event will occur whether or not a valid IGD has been found;
+         * it just indicates the search timeout has been reached
+         *
+         * RING_DBG("UPnP: Control Point search timeout");
+         */
         break;
 
     case UPNP_CONTROL_ACTION_COMPLETE:
     {
         struct Upnp_Action_Complete *a_event = (struct Upnp_Action_Complete *)event;
 
-        RING_DBG("UPnP: Control Point async action complete");
+        /* RING_DBG("UPnP: Control Point async action complete"); */
 
         if (a_event->ErrCode != UPNP_E_SUCCESS)
             RING_WARN("UPnP: Error in action complete event: %s",
@@ -796,7 +805,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
     {
         struct Upnp_State_Var_Complete *sv_event = (struct Upnp_State_Var_Complete *)event;
 
-        RING_DBG("UPnP: Control Point async get variable complete");
+        /* RING_DBG("UPnP: Control Point async get variable complete"); */
 
         if (sv_event->ErrCode != UPNP_E_SUCCESS)
             RING_WARN("UPnP: Error in get variable complete event: %s",
