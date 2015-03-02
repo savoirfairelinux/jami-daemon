@@ -66,6 +66,9 @@ public:
     void unbindMixer();
     void enterConference(Conference* conference);
     void exitConference();
+    void switchInput(const DeviceParams& params) {
+        localVideoParams_ = params;
+    }
 
 private:
     void setupConferenceVideoPipeline(Conference *conference);
