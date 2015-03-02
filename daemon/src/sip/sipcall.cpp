@@ -598,6 +598,14 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 }
 
 void
+SIPCall::switchInput(const std::string& resource)
+{
+    videoInput_ = resource;
+    if (SIPSessionReinvite() != PJ_SUCCESS)
+        RING_WARN("Reinvite failed");
+}
+
+void
 SIPCall::peerHungup()
 {
     // Stop all RTP streams
@@ -790,6 +798,17 @@ SIPCall::startAllMedia()
         RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
         RING_DBG("####################################");
 
+        /*if (local.type == MEDIA_VIDEO) {
+            if (videoInput_.empty())
+                videoInput_ = "v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice();
+            if (auto input = videoManager.videoInput.lock()) {
+                RING_WARN("videoInput_ = %s", videoInput_.c_str());
+                input->switchInput(videoInput_);
+                videortp_.switchInput(videoInput_, input->getParams());
+            } else {
+                RING_WARN("Can't lock video input");
+            }
+        }*/
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
@@ -818,7 +837,7 @@ SIPCall::onMediaUpdate()
 
     if (startIce()) {
         auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
-        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {10};
+        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
         Manager::instance().addTask([=] {
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {

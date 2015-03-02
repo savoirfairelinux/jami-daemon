@@ -174,6 +174,8 @@ VideoInput::createDecoder()
         decoder_ = nullptr;
         return;
     }
+    decOpts_.width = decoder_->getWidth();
+    decOpts_.height = decoder_->getHeight();
 }
 
 void
@@ -315,5 +317,8 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
+
+DeviceParams VideoInput::getParams() const
+{ return decOpts_; }
 
 }} // namespace ring::video

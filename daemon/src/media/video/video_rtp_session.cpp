@@ -68,6 +68,17 @@ void VideoRtpSession::startSender()
             RING_WARN("Restarting video sender");
         }
 
+        if (not conference_) {
+            videoLocal_ = getVideoCamera();
+            if (auto input = videoManager.videoInput.lock()) {
+                RING_WARN("startSender input->switchInput");
+                input->switchInput(input_);
+                localVideoParams_ = input->getParams();
+            } else {
+                RING_WARN("startSender input->switchInput FAILED");
+            }
+        }
+
         try {
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), localVideoParams_, local_, *socketPair_)
@@ -123,9 +134,11 @@ void VideoRtpSession::start()
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
-        videoLocal_ = getVideoCamera();
+        /*videoLocal_ = getVideoCamera();
         if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            DRing::switchToCamera();
+            DRing::switchToCamera();*/
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
     } else {
         videoLocal_.reset();
     }
@@ -150,9 +163,17 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
+        /*RING_WARN("videoLocal_ = getVideoCamera()");
         videoLocal_ = getVideoCamera();
-        if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            DRing::switchToCamera();
+        if (videoLocal_ and videoLocal_->attach(sender_.get())) {
+            RING_WARN("videoLocal_->attach");
+            if (auto input = videoManager.videoInput.lock()) {
+                RING_WARN("input->switchInput");
+                input->switchInput(input_);
+            }
+        }*/
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
     } else {
         videoLocal_.reset();
     }
