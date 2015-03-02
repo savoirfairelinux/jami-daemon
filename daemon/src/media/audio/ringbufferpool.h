@@ -159,7 +159,7 @@ class RingBufferPool {
 
         mutable std::recursive_mutex stateLock_ {};
 
-        AudioFormat internalAudioFormat_ {AudioFormat::MONO()};
+        AudioFormat internalAudioFormat_ {8000, 1};
 
         std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
