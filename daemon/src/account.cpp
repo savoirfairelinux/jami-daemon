@@ -454,9 +454,27 @@ Account::mapStateNumberToString(RegistrationState state)
 }
 
 std::vector<unsigned>
-Account::getDefaultCodecs()
+Account::getDefaultCodecsId()
 {
     return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
+}
+
+std::map<std::string, std::string>
+Account::getDefaultCodecDetails(const unsigned& codecId)
+{
+    auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_ALL);
+    if (codec)
+    {
+        if (codec->mediaType & ring::MEDIA_AUDIO) {
+            auto audioCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(codec);
+            return audioCodec->getCodecSpecifications();
+        }
+        if (codec->mediaType & ring::MEDIA_VIDEO) {
+            auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(codec);
+            return videoCodec->getCodecSpecifications();
+        }
+    }
+    return {{}};
 }
 
 #define find_iter()                                    \

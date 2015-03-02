@@ -196,7 +196,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             alias_ = alias;
         }
 
-        static std::vector<unsigned> getDefaultCodecs();
+        static std::vector<unsigned> getDefaultCodecsId();
+        static std::map<std::string, std::string> getDefaultCodecDetails(const unsigned& codecId);
 
          /* Accessor to data structures
          * @return The list that reflects the user's choice

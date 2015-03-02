@@ -256,14 +256,16 @@ getSupportedCiphers(const std::string& accountID)
     return {};
 }
 
+
 std::map<std::string, std::string>
 getCodecDetails(const std::string& accountID, const unsigned& codecId)
 {
     auto acc = ring::Manager::instance().getAccount(accountID);
     if (!acc)
     {
-        RING_ERR("Could not find account %s", accountID.c_str());
-        return {{}};
+        RING_ERR("Could not find account %s return default codec details"
+                , accountID.c_str());
+        return Account::getDefaultCodecDetails(codecId);
     }
 
     auto codec = acc->searchCodecById(codecId, ring::MEDIA_ALL);
@@ -291,7 +293,7 @@ getActiveCodecList(const std::string& accountID)
     if (auto acc = ring::Manager::instance().getAccount(accountID))
         return acc->getActiveCodecs();
     RING_ERR("Could not find account %s, returning default", accountID.c_str());
-    return Account::getDefaultCodecs();
+    return Account::getDefaultCodecsId();
 }
 
 void
