@@ -67,7 +67,7 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     RING_DBG("hardwareFormatAvailable : %s", playback.toString().c_str());
     urgentRingBuffer_.setFormat(playback);
     resampler_->setFormat(playback);
-    Manager::instance().hardwareAudioFormatChanged(playback);
+    audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
