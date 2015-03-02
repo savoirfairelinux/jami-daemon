@@ -40,6 +40,7 @@
 #include <mutex>
 #include <memory>
 #include <condition_variable>
+#include <chrono>
 
 #if HAVE_LIBUPNP
 #include <upnp/upnp.h>
@@ -58,22 +59,19 @@ namespace ring { namespace upnp {
 class UPnPContext {
 
 public:
+    constexpr static unsigned SEARCH_TIMEOUT {30};
+
 
 #if HAVE_LIBUPNP
-
-    /* search timeout in seconds */
-    constexpr static int SEARCH_TIMEOUT_SEC = 30;
-
     UPnPContext();
     ~UPnPContext();
 
     /**
-     * returns 'true' if there is at least one valid (connected) IGD
-     * note: this function will wait until an IGD has been found or SEARCH_TIMEOUT_SEC
-     *       have expired; the timeout starts when the context is created as we start
-     *       searching for IGDs immediately
+     * Returns 'true' if there is at least one valid (connected) IGD.
+     * @param timeout Time to wait until a valid IGD is found.
+     * If timeout is not given or 0, the function pool (non-blocking).
      */
-    bool hasValidIGD();
+    bool hasValidIGD(std::chrono::seconds timeout = {});
 
     /**
      * tries to add mapping from and to the port_desired
@@ -86,8 +84,6 @@ public:
      * that the external and internal ports are the same
      *
      * returns a valid mapping on success and an invalid mapping on failure
-     *
-     * note: this function will call hasValidIGD and wait upto SEARCH_TIMEOUT_SEC
      */
     Mapping addAnyMapping(uint16_t port_desired,
                           uint16_t port_local,
@@ -97,11 +93,12 @@ public:
 
     /**
      * tries to remove the given mapping
-     *
-     * note: this function will call hasValidIGD and wait upto SEARCH_TIMEOUT_SEC
      */
     void removeMapping(const Mapping& mapping);
 
+    /**
+     * tries to get the external ip of the router
+     */
     IpAddr getExternalIP();
 
 #else
@@ -162,7 +159,8 @@ private:
      * the mutex is used to access these lists and IGDs in a thread-safe manner
      */
     std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
-    std::mutex validIGDMutex_;
+    mutable std::mutex validIGDMutex_;
+    std::condition_variable validIGDCondVar_;
 
     /**
      * chooses the IGD to use (currently selects the first one in the map)
@@ -172,11 +170,6 @@ private:
 
     /* sends out async search for IGD */
     void searchForIGD();
-
-    /* vars to sync search timeout */
-    unsigned pendingIGDSearchRequests_ {0};
-    std::mutex igdSearchMutex_;
-    std::condition_variable igdSearchCondition_;
 
     /**
      * callback function for the UPnP client (control point)

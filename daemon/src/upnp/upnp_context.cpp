@@ -40,6 +40,7 @@
 #include <memory>
 #include <condition_variable>
 #include <random>
+#include <chrono>
 #include <cstdlib> // for std::free
 
 #if HAVE_LIBUPNP
@@ -178,39 +179,33 @@ UPnPContext::~UPnPContext()
 void
 UPnPContext::searchForIGD()
 {
-    if (clientRegistered_) {
-        std::lock_guard<std::mutex> lock(igdSearchMutex_);
-        /* send out search for both types, as some routers may possibly only reply to one */
-        UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT_SEC, UPNP_ROOT_DEVICE, nullptr);
-        UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT_SEC, UPNP_IGD_DEVICE, nullptr);
-        UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT_SEC, UPNP_WANIP_SERVICE, nullptr);
-        UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT_SEC, UPNP_WANPPP_SERVICE, nullptr);
+    if (not clientRegistered_) {
+        RING_WARN("UPnP: Control Point not registered");
+        return;
+    }
 
-        pendingIGDSearchRequests_ = 4;
-    } else
-        RING_WARN("UPnP: Control Point not registered.");
+    /* send out search for both types, as some routers may possibly only reply to one */
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_ROOT_DEVICE, nullptr);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, nullptr);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, nullptr);
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, nullptr);
 }
 
-/**
- * returns 'true' if there is at least one valid (connected) IGD
- * note: this function will until an IGD has been found or SEARCH_TIMEOUT_SEC
- *       have expired; the timeout starts when the context is created as we start
- *       searchign for IGDs immediately
- */
 bool
-UPnPContext::hasValidIGD()
+UPnPContext::hasValidIGD(std::chrono::seconds timeout)
 {
     if (not clientRegistered_) {
-        RING_WARN("UPnP: Control Point not registered.");
+        RING_WARN("UPnP: Control Point not registered");
         return false;
     }
 
-    {
-        std::unique_lock<std::mutex> lock(igdSearchMutex_);
-        igdSearchCondition_.wait(lock, [this] { return pendingIGDSearchRequests_ <= 0;});
+    std::unique_lock<std::mutex> lock(validIGDMutex_);
+    if (!validIGDCondVar_.wait_for(lock, timeout,
+                                   [this]{return not validIGDs_.empty();})) {
+        RING_WARN("UPnP: Valid IGD search timeout");
+        return false;
     }
 
-    std::lock_guard<std::mutex> lock(validIGDMutex_);
     return not validIGDs_.empty();
 }
 
@@ -256,7 +251,7 @@ UPnPContext::addMapping(IGD* igd,
     auto iter = globalMappings->find(port_external);
     if (iter != globalMappings->end()) {
         /* mapping exists with same external port */
-        GlobalMapping *mapping_ptr = &iter->second;
+        GlobalMapping* mapping_ptr = &iter->second;
         if (*mapping_ptr == mapping) {
             /* the same mapping, so nothing needs to be done */
             *upnp_error = UPNP_E_SUCCESS;
@@ -337,17 +332,12 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
                            bool use_same_port,
                            bool unique)
 {
-    if (not hasValidIGD()) {
-        RING_WARN("UPnP: no valid IGD availabe");
-        return {};
-    }
-
     /* get a lock on the igd list because we don't want the igd to be modified
      * or removed from the list while using it */
     std::lock_guard<std::mutex> lock(validIGDMutex_);
     IGD* igd = chooseIGD_unlocked();
     if (not igd) {
-        RING_WARN("UPnP: no valid IGD availabe");
+        RING_WARN("UPnP: no valid IGD available");
         return {};
     }
 
@@ -402,18 +392,13 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
 void
 UPnPContext::removeMapping(const Mapping& mapping)
 {
-    if (not hasValidIGD()) {
-        RING_WARN("UPnP: no valid IGD availabe");
-        return;
-    }
-
     /* get a lock on the igd list because we don't want the igd to be modified
      * or removed from the list while using it */
     std::lock_guard<std::mutex> lock(validIGDMutex_);
     IGD* igd = chooseIGD_unlocked();
     if (not igd) {
-        RING_WARN("UPnP: no valid IGD availabe");
-        return;;
+        RING_WARN("UPnP: no valid IGD available");
+        return;
     }
 
     /* first make sure the mapping exists in the global list of the igd */
@@ -451,17 +436,12 @@ UPnPContext::removeMapping(const Mapping& mapping)
 IpAddr
 UPnPContext::getExternalIP()
 {
-    if (not hasValidIGD()) {
-        RING_WARN("UPnP: no valid IGD availabe");
-        return {};
-    }
-
     /* get a lock on the igd list because we don't want the igd to be modified
      * or removed from the list while using it */
     std::lock_guard<std::mutex> lock(validIGDMutex_);
     IGD* igd = chooseIGD_unlocked();
     if (not igd) {
-        RING_WARN("UPnP: no valid IGD availabe");
+        RING_WARN("UPnP: no valid IGD available");
         return {};
     }
 
@@ -637,15 +617,6 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
             removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
             validIGDs_.emplace(UDN, std::move(new_igd));
         }
-
-        /* check if we have pending search requests and notify anyone waiting */
-        {
-            std::lock_guard<std::mutex> lock(igdSearchMutex_);
-            if (pendingIGDSearchRequests_ > 0) {
-                pendingIGDSearchRequests_ = 0;
-            }
-        }
-        igdSearchCondition_.notify_all();
     }
 }
 
@@ -691,7 +662,6 @@ get_first_element_item(IXML_Element* element, const char* item)
     }
     return ret;
 }
-
 
 int
 cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
@@ -801,16 +771,8 @@ cp_callback(Upnp_EventType event_type, void* event, void* /*user_data*/)
         break;
 
     case UPNP_DISCOVERY_SEARCH_TIMEOUT:
-    {
         RING_DBG("UPnP: Control Point search timeout");
-        {
-            std::lock_guard<std::mutex> lock(upnpContext->igdSearchMutex_);
-            if (upnpContext->pendingIGDSearchRequests_ > 0)
-                --(upnpContext->pendingIGDSearchRequests_);
-        }
-        upnpContext->igdSearchCondition_.notify_all();
-    }
-    break;
+        break;
 
     case UPNP_CONTROL_ACTION_COMPLETE:
     {

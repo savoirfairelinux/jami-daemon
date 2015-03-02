@@ -36,6 +36,7 @@
 #endif
 
 #include <memory>
+#include <chrono>
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
@@ -58,16 +59,11 @@ public:
     ~Controller();
 
     /**
-     * Return whether or not this controller has a valid IGD,
-     * if 'flase' then all requests will fail
+     * Return whether or not this controller has a valid IGD.
+     * @param timeout Time to wait until a valid IGD is found.
+     * If timeout is not given or 0, the function pool (non-blocking).
      */
-    bool hasValidIGD();
-
-    /**
-     * like hasValidIGD, but calls the given callback when the IGD is found
-     * or when the search times out without finding one
-     */
-    // void waitForValildIGD(IGDFoundCallback cb);
+    bool hasValidIGD(std::chrono::seconds timeout = {});
 
     /**
      * tries to add mapping from and to the port_desired

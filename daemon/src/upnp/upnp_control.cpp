@@ -56,29 +56,15 @@ Controller::~Controller()
     removeMappings();
 }
 
-/**
- * Return whether or not this controller has a valid IGD,
- * if 'flase' then all requests will fail
- */
 bool
-Controller::hasValidIGD()
+Controller::hasValidIGD(std::chrono::seconds timeout)
 {
 #if HAVE_LIBUPNP
-    return upnpContext_->hasValidIGD();
+    return upnpContext_->hasValidIGD(timeout);
 #endif
     return false;
 }
 
-/**
- * tries to add mapping from and to the port_desired
- * if unique == true, makes sure the client is not using this port already
- * if the mapping fails, tries other available ports until success
- *
- * tries to use a random port between 1024 < > 65535 if desired port fails
- *
- * maps port_desired to port_local; if use_same_port == true, makes sure that
- * that the extranl and internal ports are the same
- */
 bool
 Controller::addAnyMapping(uint16_t port_desired,
                           uint16_t port_local,
@@ -104,9 +90,6 @@ Controller::addAnyMapping(uint16_t port_desired,
     return false;
 }
 
-/**
- * addAnyMapping with the local port being the same as the external port
- */
 bool
 Controller::addAnyMapping(uint16_t port_desired,
                           PortType type,
@@ -116,11 +99,6 @@ Controller::addAnyMapping(uint16_t port_desired,
     addAnyMapping(port_desired, port_desired, type, true, unique, port_used);
 }
 
-/**
- * removes mappings added by this instance of the specified port type
- * if an mapping has more than one user in the global list, it is not deleted
- * from the router, but the number of users is decremented
- */
 void
 Controller::removeMappings(PortType type) {
 #if HAVE_LIBUPNP
@@ -132,10 +110,6 @@ Controller::removeMappings(PortType type) {
     }
 #endif
 }
-
-/**
- * removes all mappings added by this instance
- */
 void
 Controller::removeMappings()
 {
@@ -145,9 +119,6 @@ Controller::removeMappings()
 #endif
 }
 
-/**
- * tries to get the external ip of the router
- */
 IpAddr
 Controller::getExternalIP()
 {
