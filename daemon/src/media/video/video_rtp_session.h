@@ -66,12 +66,17 @@ public:
     void unbindMixer();
     void enterConference(Conference* conference);
     void exitConference();
+    void switchInput(std::string input, const DeviceParams& params) {
+        input_ = input;
+        localVideoParams_ = params;
+    }
 
 private:
     void setupConferenceVideoPipeline(Conference *conference);
     void startSender();
     void startReceiver();
 
+    std::string input_;
     DeviceParams localVideoParams_;
 
     std::unique_ptr<VideoSender> sender_;
