@@ -41,6 +41,7 @@
 #include <memory>
 #include <condition_variable>
 #include <chrono>
+#include <atomic>
 
 #if HAVE_LIBUPNP
 #include <upnp/upnp.h>
@@ -101,18 +102,20 @@ public:
      */
     IpAddr getExternalIP();
 
+    /**
+     * callback function for the UPnP client (control point)
+     * all UPnP events received by the client are processed here
+     */
+    int handleUPnPEvents(Upnp_EventType event_type, void* event);
+
 #else
     /* use default constructor and destructor */
     UPnPContext() = default;
     ~UPnPContext() = default;
 #endif
 
-    bool isInitialized() const { return initialized_; };
-
 private:
     NON_COPYABLE(UPnPContext);
-
-    bool initialized_ {false};
 
 #if HAVE_LIBUPNP
 
@@ -133,6 +136,7 @@ private:
      *
      * The mutex is to access the set in a thread safe manner
      */
+
     std::set<std::string> cpDevices_;
     std::mutex cpDeviceMutex_;
 
@@ -147,7 +151,7 @@ private:
      * keep track if we've successfully registered
      * a client and/ore device
      */
-    bool clientRegistered_ {false};
+    std::atomic_bool clientRegistered_ {false};
     bool deviceRegistered_ {false};
 
     /**
@@ -170,12 +174,6 @@ private:
 
     /* sends out async search for IGD */
     void searchForIGD();
-
-    /**
-     * callback function for the UPnP client (control point)
-     * all UPnP events received by the client are processed here
-     */
-    friend int cp_callback(Upnp_EventType, void*, void*);
 
     /**
      * Parses the device description and adds desired devices to
