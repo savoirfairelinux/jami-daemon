@@ -150,9 +150,15 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
+        RING_WARN("videoLocal_ = getVideoCamera()");
         videoLocal_ = getVideoCamera();
-        if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            DRing::switchToCamera();
+        if (videoLocal_ and videoLocal_->attach(sender_.get())) {
+            RING_WARN("videoLocal_->attach");
+            if (auto input = videoManager.videoInput.lock()) {
+                RING_WARN("input->switchInput");
+                input->switchInput(input_);
+            }
+        }
     } else {
         videoLocal_.reset();
     }

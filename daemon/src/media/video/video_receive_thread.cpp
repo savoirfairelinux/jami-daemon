@@ -104,8 +104,6 @@ bool VideoReceiveThread::setup()
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    //videoDecoder_->setOptions(args_);
-
     EXIT_IF_FAIL(!videoDecoder_->openInput(args_),
                  "Could not open input \"%s\"", args_.input.c_str());
 
@@ -182,18 +180,7 @@ bool VideoReceiveThread::decodeFrame()
             return true;
 
         case MediaDecoder::Status::DecodeError:
-            RING_WARN("decoding failure, trying to reset decoder...");
-            videoDecoder_.reset();
-            if (!setup()) {
-                RING_ERR("fatal error, rx thread re-setup failed");
-                loop_.stop();
-                break;
-            }
-            if (!videoDecoder_->setupFromVideoData()) {
-                RING_ERR("fatal error, v-decoder setup failed");
-                loop_.stop();
-                break;
-            }
+            RING_WARN("video decoding failure");
             if (requestKeyFrameCallback_)
                 requestKeyFrameCallback_(id_);
             break;
