@@ -2351,13 +2351,13 @@ ManagerImpl::initAudioDriver()
     audiodriver_.reset(audioPreference.createAudioLayer());
 }
 
-void
+AudioFormat
 ManagerImpl::hardwareAudioFormatChanged(AudioFormat format)
 {
-    audioFormatUsed(format);
+    return audioFormatUsed(format);
 }
 
-void
+AudioFormat
 ManagerImpl::audioFormatUsed(AudioFormat format)
 {
     AudioFormat currentFormat = ringbufferpool_->getInternalAudioFormat();
@@ -2365,7 +2365,7 @@ ManagerImpl::audioFormatUsed(AudioFormat format)
     format.sample_rate = std::max(currentFormat.sample_rate, format.sample_rate);
 
     if (currentFormat == format)
-        return;
+        return format;
 
     RING_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(), format.toString().c_str());
 
@@ -2376,6 +2376,7 @@ ManagerImpl::audioFormatUsed(AudioFormat format)
         telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), format.sample_rate));
     }
     dtmfKey_.reset(new DTMF(format.sample_rate));
+    return format;
 }
 
 void
