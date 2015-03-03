@@ -152,6 +152,8 @@ class SIPCall : public Call
 
         void offhold();
 
+        void switchInput(const std::string& resource);
+
         void peerHungup();
 
         void carryingDTMFdigits(char code);
@@ -218,6 +220,8 @@ class SIPCall : public Call
          * Video Rtp Session factory
          */
         video::VideoRtpSession videortp_;
+
+        std::string videoInput_;
 #endif
 
         bool srtpEnabled_ {false};
