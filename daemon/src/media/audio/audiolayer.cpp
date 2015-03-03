@@ -64,10 +64,10 @@ AudioLayer::~AudioLayer()
 void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 {
     std::lock_guard<std::mutex> lock(mutex_);
-    RING_DBG("hardwareFormatAvailable : %s", playback.toString().c_str());
-    urgentRingBuffer_.setFormat(playback);
-    resampler_->setFormat(playback);
-    Manager::instance().hardwareAudioFormatChanged(playback);
+    RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
+    audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
+    urgentRingBuffer_.setFormat(audioFormat_);
+    resampler_->setFormat(audioFormat_);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
