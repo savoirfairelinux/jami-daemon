@@ -45,14 +45,14 @@
 namespace ring {
 
 enum CodecType : unsigned {
-    CODEC_UNDEFINED = 0,
+    CODEC_NONE = 0, // indicates that no codec is used or defined
     CODEC_ENCODER = 1,
     CODEC_DECODER = 2,
     CODEC_ENCODER_DECODER = CODEC_ENCODER | CODEC_DECODER
 };
 
 enum MediaType : unsigned {
-    MEDIA_UNDEFINED = 0,
+    MEDIA_NONE = 0, // indicates that no media is used or defined
     MEDIA_AUDIO = 1,
     MEDIA_VIDEO = 2,
     MEDIA_ALL = MEDIA_AUDIO | MEDIA_VIDEO
@@ -67,7 +67,7 @@ struct SystemCodecInfo
 {
     SystemCodecInfo(unsigned avcodecId, const std::string name,
                     std::string libName, MediaType mediaType,
-                    CodecType codecType = CODEC_UNDEFINED, unsigned bitrate = 0,
+                    CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
                     unsigned payloadType = 0);
 
     virtual ~SystemCodecInfo();
@@ -115,7 +115,7 @@ struct SystemAudioCodecInfo : SystemCodecInfo
 struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
-                         std::string libName, CodecType type = CODEC_UNDEFINED,
+                         std::string libName, CodecType type = CODEC_NONE,
                          unsigned payloadType = 0, unsigned frameRate = 0,
                          unsigned profileId = 0);
 

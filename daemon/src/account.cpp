@@ -164,7 +164,7 @@ Account::loadDefaultCodecs()
 
     for (const auto& systemCodec: systemCodecList) {
         // only take encoders and or decoders
-        if (systemCodec->codecType & CODEC_UNDEFINED)
+        if (systemCodec->codecType == CODEC_NONE)
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
@@ -498,11 +498,15 @@ Account::getActiveAccountCodecInfoIdList(MediaType mediaType) const
 std::vector<unsigned>
 Account::getAccountCodecInfoIdList(MediaType mediaType) const
 {
+    if (mediaType == CODEC_NONE)
+        return {};
+
     std::vector<unsigned> idList;
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
             idList.push_back(codecIt->systemCodecInfo.id);
     }
+
     return idList;
 }
 
@@ -518,12 +522,16 @@ Account::desactivateAllMedia(MediaType mediaType)
 std::vector<std::shared_ptr<AccountCodecInfo>>
 Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 {
+    if (mediaType == MEDIA_NONE)
+        return {};
+
     std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecList;
     for (auto& codecIt: accountCodecInfoList_) {
         if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
             (codecIt->isActive))
             accountCodecList.push_back(codecIt);
     }
+
     return accountCodecList;
 }
 
