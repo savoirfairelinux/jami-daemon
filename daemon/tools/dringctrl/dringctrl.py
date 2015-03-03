@@ -39,6 +39,7 @@ from gi.repository import GObject
 
 from errors import *
 from controler import DRingCtrl
+from tester import DRingTester
 
 def printAccountDetails(account):
     details = ctrl.getAccountDetails(account)
@@ -98,9 +99,12 @@ if __name__ == "__main__":
 
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
 
+    parser.add_argument('--test', help='Launch automatic tests', action='store_true')
+
     args = parser.parse_args()
 
     ctrl = DRingCtrl(sys.argv[0])
+    tester = DRingTester(sys.argv[0])
 
     if len(sys.argv) == 1:
         ctrl.run()
@@ -173,6 +177,8 @@ if __name__ == "__main__":
 
     if args.dtmf:
         ctrl.Dtmf(dtmf)
+    if args.test:
+        tester.start(ctrl)
 
 """
 
