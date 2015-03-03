@@ -39,6 +39,8 @@ from gi.repository import GObject
 
 from errors import *
 from controler import DRingCtrl
+from tester import DRingTester
+from toggle_video_preview import DRingToggleVideo
 
 def printAccountDetails(account):
     details = ctrl.getAccountDetails(account)
@@ -97,6 +99,9 @@ if __name__ == "__main__":
     group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
 
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
+    parser.add_argument('--toggleVideo', help='Launch toggle video  tests', action='store_true')
+
+    parser.add_argument('--test', help='Launch automatic tests', action='store_true')
 
     args = parser.parse_args()
 
@@ -174,6 +179,12 @@ if __name__ == "__main__":
     if args.dtmf:
         ctrl.Dtmf(args.dtmf)
 
+    if args.test:
+        DRingTester().start(ctrl)
+
+    if args.toggleVideo:
+        DRingToggleVideo().start()
+
 """
 
 		# Get call details
@@ -186,26 +197,10 @@ if __name__ == "__main__":
 				print "Account: " + details['ACCOUNTID']
 				print "Peer: " + details['PEER_NAME'] + "<" + details['PEER_NUMBER'] + ">"
 
-		elif opt == "--sac":
-			if arg is "":
-			    print "Must specifies the accout to be set"
-			else:
-                            sflphone.setAccount(arg)
-
-		# Unhold a call
-		elif opt == "--unhold":
-			if arg == "current": arg = sflphone.getCurrentCallID()
-			sflphone.UnHold(arg)
-
 		# Transfer the current call
 		elif opt == "--transfer":
 			call = sflphone.callmanager.getCurrentCallID()
 			sflphone.Transfert(call, arg)
-
-		# Send DTMF
-		elif opt == "--dtmf":
-			sflphone.Dtmf(arg)
-
 
 		#
 		# account options
@@ -234,31 +229,4 @@ if __name__ == "__main__":
 			else:
 				sflphone.setAccountRegistered(arg, False)
 				print arg + ": Sent unregister request."
-
-		# Enable an account
-		elif opt == "--enable":
-			if not sflphone.checkAccountExists(arg):
-				print "Account " + arg + ": no such account."
-
-			elif sflphone.isAccountEnable(arg):
-				print "Account " + arg + ": already enabled."
-
-			else:
-				sflphone.setAccountEnable(arg, True)
-				print arg + ": Account enabled."
-
-		# Disable an account
-		elif opt == "--disable":
-			if not sflphone.checkAccountExists(arg):
-				print "Account " + arg + ": no such account."
-
-			elif not sflphone.isAccountEnable(arg):
-				print "Account " + arg + ": already disabled."
-
-			else:
-				sflphone.setAccountRegistered(arg, False)
-				sflphone.setAccountEnable(arg, False)
-				print arg + ": Account disabled."
-
-
 """

@@ -1,6 +1,7 @@
+#!/usr/bin/env python3
 #
 # Copyright (C) 2015 Savoir-Faire Linux Inc.
-# Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+# Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,23 +29,22 @@
 # as that of the covered work.
 #
 
-"""Internal exceptions"""
+import dbus
+import time
+import sys
+import os
+from random import randint
 
 
-class DRingCtrlError(Exception):
-    """Base class for all our exceptions."""
+class DRingToggleVideo():
+    def start(self):
+        bus = dbus.SessionBus()
 
-    def __init__(self, help=None):
-        self.help = str(help)
+        videoControlBus = bus.get_object('org.sflphone.SFLphone', '/org/sflphone/SFLphone/VideoControls')
+        videoControl = dbus.Interface(videoControlBus, dbus_interface='org.sflphone.SFLphone.VideoControls')
 
-    def __str__(self):
-        return self.help
-
-class DRingCtrlDBusError(DRingCtrlError):
-    """General error for dbus communication"""
-
-class DRingCtrlDeamonError(DRingCtrlError):
-    """General error for daemon communication"""
-
-class DRingCtrlAccountError(DRingCtrlError):
-    """General error for account handling"""
+        while True:
+            time.sleep(2)
+            videoControl.startCamera()
+            time.sleep(2)
+            videoControl.stopCamera()
