@@ -237,6 +237,8 @@ class Sdp {
 
         std::vector<std::string> getIceCandidates(unsigned media_index) const;
 
+        void clearIce();
+
     private:
         friend class test::SDPTest;
 
@@ -250,6 +252,8 @@ class Sdp {
          * Returns the printed original SDP filtered with only the specified media index and codec remaining.
          */
         static std::string getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep);
+
+        void clearIce(pjmedia_sdp_session * const session);
 
         /**
          * The pool to allocate memory

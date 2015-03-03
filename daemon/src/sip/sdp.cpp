@@ -930,6 +930,27 @@ Sdp::getIceAttributes() const
     return ice_attrs;
 }
 
+void
+Sdp::clearIce()
+{
+    if (localSession_)
+        clearIce(localSession_);
+    if (remoteSession_)
+        clearIce(remoteSession_);
+}
+
+void
+Sdp::clearIce(pjmedia_sdp_session * const session)
+{
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-ufrag");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-pwd");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "candidate");
+    for (unsigned i=0; i < session->media_count; i++) {
+        auto media = session->media[i];
+        pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
+    }
+}
+
 // Returns index of desired media attribute, or -1 if not found */
 static int
 getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)

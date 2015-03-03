@@ -247,6 +247,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         virtual void hangup(int reason) = 0;
 
+        virtual void switchInput(const std::string&) {};
+
         /**
          * Refuse incoming call
          */
