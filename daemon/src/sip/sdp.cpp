@@ -930,6 +930,14 @@ Sdp::getIceAttributes() const
     return ice_attrs;
 }
 
+void
+Sdp::clearIce()
+{
+    pjmedia_sdp_attr_remove_all(&localSession_->attr_count, localSession_->attr, "ice-ufrag");
+    pjmedia_sdp_attr_remove_all(&localSession_->attr_count, localSession_->attr, "ice-pwd");
+    pjmedia_sdp_attr_remove_all(&localSession_->attr_count, localSession_->attr, "candidate");
+}
+
 // Returns index of desired media attribute, or -1 if not found */
 static int
 getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
