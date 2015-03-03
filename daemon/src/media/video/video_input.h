@@ -59,6 +59,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    DeviceParams getParams() const;
 
     bool switchInput(const std::string& resource);
 
