@@ -650,14 +650,15 @@ class ManagerImpl {
          * Callback called when the audio layer initialised with its
          * preferred format.
          */
-        void hardwareAudioFormatChanged(AudioFormat format);
+        AudioFormat hardwareAudioFormatChanged(AudioFormat format);
 
         /**
          * Should be called by any component dealing with an external
          * audio source, indicating the format used so the mixer format
          * can be eventually adapted.
+         * @returns the new format used by the main buffer.
          */
-        void audioFormatUsed(AudioFormat format);
+        AudioFormat audioFormatUsed(AudioFormat format);
 
         /**
          * Handle audio sounds heard by a caller while they wait for their
