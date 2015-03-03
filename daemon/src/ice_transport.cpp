@@ -148,15 +148,16 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
         icest_.reset(ice_st);
 
     const bool done = status == PJ_SUCCESS;
+    RING_DBG("ICE %s with %s", opname, done?"success":"error");
+
+    if (!done) {
+        char errmsg[PJ_ERR_MSG_SIZE];
+        pj_strerror(status, errmsg, sizeof(errmsg));
+        RING_ERR("ICE %s failed: %s", opname, errmsg);
+    }
 
     {
-        std::unique_lock<std::mutex> lk(iceMutex_);
-        if (!done) {
-            char errmsg[PJ_ERR_MSG_SIZE];
-            pj_strerror(status, errmsg, sizeof(errmsg));
-            RING_ERR("ICE %s failed: %s", opname, errmsg);
-        }
-        RING_DBG("ICE %s with %s", opname, done?"success":"error");
+        std::lock_guard<std::mutex> lk(iceMutex_);
         if (op == PJ_ICE_STRANS_OP_INIT) {
             iceTransportInitDone_ = done;
             if (iceTransportInitDone_) {
@@ -164,17 +165,18 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                     setInitiatorSession();
                 else
                     setSlaveSession();
-            }
-            if (on_initdone_cb_)
-                on_initdone_cb_(*this, done);
-            if (iceTransportInitDone_)
                 selectUPnPIceCandidates();
+            }
         } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
             iceTransportNegoDone_ = done;
-            if (on_negodone_cb_)
-                on_negodone_cb_(*this, done);
         }
     }
+
+    if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
+        on_initdone_cb_(*this, done);
+    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_)
+        on_negodone_cb_(*this, done);
+
     iceCV_.notify_all();
 }
 
