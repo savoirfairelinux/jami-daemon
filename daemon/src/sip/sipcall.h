@@ -53,6 +53,7 @@
 
 struct pjsip_evsub;
 struct pjsip_inv_session;
+struct pjmedia_sdp_session;
 
 namespace ring {
 
@@ -126,6 +127,8 @@ class SIPCall : public Call
 
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
+        void generateMediaPorts();
+
         void setContactHeader(pj_str_t *contact);
 
         void setTransport(const std::shared_ptr<SipTransport>& t) {
@@ -151,6 +154,8 @@ class SIPCall : public Call
         void onhold();
 
         void offhold();
+
+        void switchInput(const std::string& resource);
 
         void peerHungup();
 
@@ -191,6 +196,8 @@ class SIPCall : public Call
 
         void onMediaUpdate();
 
+        void onReceiveOffer(const pjmedia_sdp_session *offer);
+
         void openPortsUPnP();
 
         virtual std::map<std::string, std::string> getDetails() const;
@@ -218,6 +225,8 @@ class SIPCall : public Call
          * Video Rtp Session factory
          */
         video::VideoRtpSession videortp_;
+
+        std::string videoInput_;
 #endif
 
         bool srtpEnabled_ {false};
