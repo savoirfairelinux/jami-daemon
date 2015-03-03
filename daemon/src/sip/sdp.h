@@ -237,6 +237,8 @@ class Sdp {
 
         std::vector<std::string> getIceCandidates(unsigned media_index) const;
 
+        void clearIce();
+
     private:
         friend class test::SDPTest;
 
