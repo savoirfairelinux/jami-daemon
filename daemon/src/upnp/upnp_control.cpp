@@ -130,7 +130,7 @@ IpAddr
 Controller::getExternalIP()
 {
 #if HAVE_LIBUPNP
-    if (not upnpContext_)
+    if (upnpContext_)
         return upnpContext_->getExternalIP();
 #endif
     return {}; //  empty address
