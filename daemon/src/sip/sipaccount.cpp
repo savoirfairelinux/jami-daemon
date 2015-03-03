@@ -263,7 +263,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 
     const bool created = sdp.createOffer(
         getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        getActiveAccountCodecInfoList(MEDIA_VIDEO),
+        getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
         getSrtpKeyExchange()
     );
 

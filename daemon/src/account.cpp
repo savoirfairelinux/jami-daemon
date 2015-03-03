@@ -164,7 +164,7 @@ Account::loadDefaultCodecs()
 
     for (const auto& systemCodec: systemCodecList) {
         // only take encoders and or decoders
-        if (systemCodec->codecType & CODEC_UNDEFINED)
+        if (systemCodec->codecType == CODEC_NONE)
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
@@ -381,8 +381,7 @@ std::map<std::string, std::string>
 Account::getDefaultCodecDetails(const unsigned& codecId)
 {
     auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_ALL);
-    if (codec)
-    {
+    if (codec) {
         if (codec->mediaType & ring::MEDIA_AUDIO) {
             auto audioCodec = std::static_pointer_cast<ring::SystemAudioCodecInfo>(codec);
             return audioCodec->getCodecSpecifications();
@@ -453,10 +452,12 @@ Account::getUPnPActive(std::chrono::seconds timeout) const
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
-    for (auto& codecIt: accountCodecInfoList_) {
-        if ((codecIt->systemCodecInfo.id == codecId) &&
-            (codecIt->systemCodecInfo.mediaType & mediaType ))
+    if (mediaType != MEDIA_NONE) {
+        for (auto& codecIt: accountCodecInfoList_) {
+            if ((codecIt->systemCodecInfo.id == codecId) &&
+                (codecIt->systemCodecInfo.mediaType & mediaType ))
                 return codecIt;
+        }
     }
     return {};
 }
@@ -464,10 +465,12 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecByName(std::string name, MediaType mediaType)
 {
-    for (auto& codecIt: accountCodecInfoList_) {
-        if ((codecIt->systemCodecInfo.name.compare(name) == 0) &&
-            (codecIt->systemCodecInfo.mediaType & mediaType ))
-            return codecIt;
+    if (mediaType != MEDIA_NONE) {
+        for (auto& codecIt: accountCodecInfoList_) {
+            if ((codecIt->systemCodecInfo.name.compare(name) == 0) &&
+                (codecIt->systemCodecInfo.mediaType & mediaType ))
+                return codecIt;
+        }
     }
     return {};
 }
@@ -475,10 +478,12 @@ Account::searchCodecByName(std::string name, MediaType mediaType)
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 {
-    for (auto& codecIt: accountCodecInfoList_) {
-        if ((codecIt->payloadType == payload ) &&
-            (codecIt->systemCodecInfo.mediaType & mediaType ))
-            return codecIt;
+    if (mediaType != MEDIA_NONE) {
+        for (auto& codecIt: accountCodecInfoList_) {
+            if ((codecIt->payloadType == payload ) &&
+                (codecIt->systemCodecInfo.mediaType & mediaType ))
+                return codecIt;
+        }
     }
     return {};
 }
@@ -486,6 +491,9 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 std::vector<unsigned>
 Account::getActiveAccountCodecInfoIdList(MediaType mediaType) const
 {
+    if (mediaType == MEDIA_NONE)
+        return {};
+
     std::vector<unsigned> idList;
     for (auto& codecIt: accountCodecInfoList_) {
         if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
@@ -498,17 +506,24 @@ Account::getActiveAccountCodecInfoIdList(MediaType mediaType) const
 std::vector<unsigned>
 Account::getAccountCodecInfoIdList(MediaType mediaType) const
 {
+    if (mediaType == MEDIA_NONE)
+        return {};
+
     std::vector<unsigned> idList;
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
             idList.push_back(codecIt->systemCodecInfo.id);
     }
+
     return idList;
 }
 
 void
 Account::desactivateAllMedia(MediaType mediaType)
 {
+    if (mediaType == MEDIA_NONE)
+        return;
+
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
             codecIt->isActive = false;
@@ -518,12 +533,16 @@ Account::desactivateAllMedia(MediaType mediaType)
 std::vector<std::shared_ptr<AccountCodecInfo>>
 Account::getActiveAccountCodecInfoList(MediaType mediaType) const
 {
+    if (mediaType == MEDIA_NONE)
+        return {};
+
     std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecList;
     for (auto& codecIt: accountCodecInfoList_) {
         if ((codecIt->systemCodecInfo.mediaType & mediaType) &&
             (codecIt->isActive))
             accountCodecList.push_back(codecIt);
     }
+
     return accountCodecList;
 }
 
