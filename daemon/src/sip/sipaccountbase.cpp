@@ -29,6 +29,7 @@
  *  as that of the covered work.
  */
 
+
 #include "sipaccountbase.h"
 #include "sipvoiplink.h"
 
@@ -43,6 +44,8 @@
 #include <yaml-cpp/yaml.h>
 
 #include "client/signal.h"
+
+#include <type_traits>
 
 namespace ring {
 

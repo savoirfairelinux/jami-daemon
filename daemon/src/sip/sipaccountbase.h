@@ -45,6 +45,7 @@
 
 #include <pjsip/sip_types.h>
 
+#include <array>
 #include <vector>
 #include <map>
 #include <sstream>
