@@ -174,6 +174,8 @@ VideoInput::createDecoder()
         decoder_ = nullptr;
         return;
     }
+    decOpts_.width = decoder_->getWidth();
+    decOpts_.height = decoder_->getHeight();
 }
 
 void
@@ -195,6 +197,12 @@ VideoInput::initCamera(const std::string& device)
     return true;
 }
 
+static constexpr unsigned
+round2pow(unsigned i, unsigned n)
+{
+    return (i >> n) << n;
+}
+
 bool
 VideoInput::initX11(std::string display)
 {
@@ -207,7 +215,11 @@ VideoInput::initX11(std::string display)
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
         char sep;
-        iss >> decOpts_.width >> sep >> decOpts_.height;
+        unsigned w, h;
+        iss >> w >> sep >> h;
+        // round to 8 pixel block
+        decOpts_.width = round2pow(w, 3);
+        decOpts_.height = round2pow(h, 3);
         decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
@@ -315,5 +327,8 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
+
+DeviceParams VideoInput::getParams() const
+{ return decOpts_; }
 
 }} // namespace ring::video
