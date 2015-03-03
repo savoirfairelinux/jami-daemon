@@ -166,6 +166,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
             return enabled_;
         }
 
+        bool isVideoEnabled() const {
+            return videoEnabled_;
+        }
+
         void setEnabled(bool enable) {
             enabled_ = enable;
         }

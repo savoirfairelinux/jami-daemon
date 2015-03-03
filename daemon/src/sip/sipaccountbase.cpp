@@ -134,25 +134,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     Account::unserialize(node);
 
     parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
-    /*
-     * TODO ebail : *
-     * video codec information format changed (merged with audio mechanism)
-     * we need thus to adapt serialization / unserialization to it
-     */
-#if 0
-    const auto &vCodecNode = node[VIDEO_CODECS_KEY];
-    auto tmp = parseVectorMap(vCodecNode, {VIDEO_CODEC_BITRATE, VIDEO_CODEC_ENABLED, VIDEO_CODEC_NAME, VIDEO_CODEC_PARAMETERS});
-#ifdef RING_VIDEO
-    if (tmp.empty()) {
-        // Video codecs are an empty list
-        RING_WARN("Loading default video codecs");
-        tmp = libav_utils::getDefaultVideoCodecs();
-    }
-#endif
-    // validate it
-    setVideoCodecs(tmp);
-#endif
-
     parseValue(node, Conf::INTERFACE_KEY, interface_);
     int port = DEFAULT_SIP_PORT;
     parseValue(node, Conf::PORT_KEY, port);
