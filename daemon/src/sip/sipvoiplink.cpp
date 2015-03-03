@@ -925,7 +925,8 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     localSDP.setPublishedIP(address);
     const bool created = localSDP.createOffer(
         account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account.getActiveAccountCodecInfoList(MEDIA_VIDEO),
+        account.isVideoEnabled() ? account.getActiveAccountCodecInfoList(MEDIA_VIDEO)
+            : std::vector<std::shared_ptr<AccountCodecInfo>>{},
         account.getSrtpKeyExchange()
     );
 
