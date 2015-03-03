@@ -315,7 +315,7 @@ Sdp::generateSdesAttribute()
 }
 
 pjmedia_sdp_media *
-Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
+Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangeProtocol kx)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
@@ -399,7 +399,7 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
         addRTCPAttribute(med); // video has its own RTCP
     }
 
-    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "sendrecv", NULL);
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "recvonly" : "inactive") : "sendrecv", NULL);
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
@@ -490,7 +490,8 @@ printSession(const pjmedia_sdp_session *session)
 
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                             const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                            sip_utils::KeyExchangeProtocol security)
+                            sip_utils::KeyExchangeProtocol security,
+                            bool holding)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
@@ -526,9 +527,9 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
     // For DTMF RTP events
     constexpr bool audio = true;
     localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLines(audio, security);
+    localSession_->media[0] = setMediaDescriptorLines(audio, holding, security);
     if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLines(!audio, security);
+        localSession_->media[1] = setMediaDescriptorLines(!audio, holding, security);
         ++localSession_->media_count;
     }
 
@@ -541,9 +542,10 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
 bool
 Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                  const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                 sip_utils::KeyExchangeProtocol security)
+                 sip_utils::KeyExchangeProtocol security,
+                 bool holding)
 {
-    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security) != PJ_SUCCESS) {
+    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return false;
     }
@@ -559,7 +561,8 @@ Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedA
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                       sip_utils::KeyExchangeProtocol kx)
+                       sip_utils::KeyExchangeProtocol kx,
+                       bool holding)
 {
     if (!remote) {
         RING_ERR("Remote session is NULL");
@@ -570,7 +573,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     printSession(remote);
 
     if (not localSession_ and createLocalSession(selectedAudioCodecs,
-                                                 selectedVideoCodecs, kx) != PJ_SUCCESS) {
+                                                 selectedVideoCodecs, kx, holding) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return;
     }
@@ -930,6 +933,27 @@ Sdp::getIceAttributes() const
     return ice_attrs;
 }
 
+void
+Sdp::clearIce()
+{
+    if (localSession_)
+        clearIce(localSession_);
+    if (remoteSession_)
+        clearIce(remoteSession_);
+}
+
+void
+Sdp::clearIce(pjmedia_sdp_session * const session)
+{
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-ufrag");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-pwd");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "candidate");
+    for (unsigned i=0; i < session->media_count; i++) {
+        auto media = session->media[i];
+        pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
+    }
+}
+
 // Returns index of desired media attribute, or -1 if not found */
 static int
 getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
@@ -948,6 +972,7 @@ getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * cons
         return i;
 }
 
+/*
 void Sdp::addAttributeToLocalAudioMedia(const char *attr)
 {
     const int i = getIndexOfAttribute(localSession_, "audio");
@@ -981,5 +1006,6 @@ void Sdp::addAttributeToLocalVideoMedia(const char *attr)
     pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_.get(), attr, NULL);
     pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
+*/
 
 } // namespace ring
