@@ -126,6 +126,8 @@ class SIPCall : public Call
 
         void setCallMediaLocal(const pj_sockaddr& localIP);
 
+        void generateMediaPorts();
+
         void setContactHeader(pj_str_t *contact);
 
         void setTransport(const std::shared_ptr<SipTransport>& t) {
@@ -151,6 +153,8 @@ class SIPCall : public Call
         void onhold();
 
         void offhold();
+
+        void switchInput(const std::string& resource);
 
         void peerHungup();
 
@@ -218,6 +222,8 @@ class SIPCall : public Call
          * Video Rtp Session factory
          */
         video::VideoRtpSession videortp_;
+
+        std::string videoInput_;
 #endif
 
         bool srtpEnabled_ {false};

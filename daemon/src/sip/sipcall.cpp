@@ -150,28 +150,34 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
 {
+    setLocalIp(localIP);
+
+    if (getLocalAudioPort() == 0 || getLocalVideoPort() == 0)
+        generateMediaPorts();
+}
+
+void
+SIPCall::generateMediaPorts()
+{
     auto& account = getSIPAccount();
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
-    if (getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = account.generateAudioPort();
-        setLocalAudioPort(callLocalAudioPort);
-        sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
-    }
-
-    setLocalIp(localIP);
+    const unsigned callLocalAudioPort = account.generateAudioPort();
+    if (getLocalAudioPort() != 0)
+        account.releasePort(getLocalAudioPort());
+    setLocalAudioPort(callLocalAudioPort);
+    sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
 
 #ifdef RING_VIDEO
-    if (getLocalVideoPort() == 0) {
-        // https://projects.savoirfairelinux.com/issues/17498
-        const unsigned int callLocalVideoPort = account.generateVideoPort();
-        // this should already be guaranteed by SIPAccount
-        assert(getLocalAudioPort() != callLocalVideoPort);
-
-        setLocalVideoPort(callLocalVideoPort);
-        sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
-    }
+    // https://projects.savoirfairelinux.com/issues/17498
+    const unsigned int callLocalVideoPort = account.generateVideoPort();
+    if (getLocalVideoPort() != 0)
+        account.releasePort(getLocalVideoPort());
+    // this should already be guaranteed by SIPAccount
+    assert(getLocalAudioPort() != callLocalVideoPort);
+    setLocalVideoPort(callLocalVideoPort);
+    sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
 #endif
 }
 
@@ -188,7 +194,16 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 int
 SIPCall::SIPSessionReinvite()
 {
+    // Generate new ports to receive the new media stream
+    // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
+    generateMediaPorts();
+    sdp_->createOffer(getSIPAccount().getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                    getSIPAccount().getActiveAccountCodecInfoList(MEDIA_VIDEO),
+                    getSIPAccount().getSrtpKeyExchange());
+
+    setupLocalSDPFromIce();
     pjmedia_sdp_session *local_sdp = sdp_->getLocalSdpSession();
+
     pjsip_tx_data *tdata;
 
     if (local_sdp and inv and inv->pool_prov
@@ -598,6 +613,14 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 }
 
 void
+SIPCall::switchInput(const std::string& resource)
+{
+    videoInput_ = resource;
+    if (SIPSessionReinvite() != PJ_SUCCESS)
+        RING_WARN("Reinvite failed");
+}
+
+void
 SIPCall::peerHungup()
 {
     // Stop all RTP streams
@@ -763,7 +786,6 @@ SIPCall::startAllMedia()
             ? static_cast<RtpSession*>(avformatrtp_.get())
             : static_cast<RtpSession*>(&videortp_);
 
-
         auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(local.codec);
         RING_DBG("########## UPDATE MEDIA ############");
         RING_DBG("[LOCAL][codec:%s][enabled:%s][holding:%s]"
@@ -790,6 +812,11 @@ SIPCall::startAllMedia()
         RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
         RING_DBG("####################################");
 
+        if (local.type == MEDIA_VIDEO) {
+            if (videoInput_.empty())
+                videoInput_ = "v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice();
+            videortp_.switchInput(videoInput_);
+        }
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
@@ -818,7 +845,7 @@ SIPCall::onMediaUpdate()
 
     if (startIce()) {
         auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
-        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {10};
+        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
         Manager::instance().addTask([=] {
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
