@@ -181,7 +181,7 @@ validateCertificateRaw(const std::string&,
     }
 #else
     RING_WARN("TLS not supported");
-    return {};
+    return {{}};
 #endif
 }
 
@@ -197,7 +197,7 @@ getCertificateDetails(const std::string& certificate)
 #else
     RING_WARN("TLS not supported");
 #endif
-    return {};
+    return {{}};
 }
 
 std::map<std::string, std::string>
@@ -212,7 +212,7 @@ getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
 #else
     RING_WARN("TLS not supported");
 #endif
-    return {};
+    return {{}};
 }
 
 void
