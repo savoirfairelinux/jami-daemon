@@ -67,22 +67,8 @@ static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, pj_pool_release)
-    , negotiator_(nullptr)
-    , localSession_(nullptr)
-    , remoteSession_(nullptr)
-    , activeLocalSession_(nullptr)
-    , activeRemoteSession_(nullptr)
-    , audio_codec_list_()
-    , video_codec_list_()
-    , sessionAudioMediaLocal_()
-    , sessionAudioMediaRemote_()
-    , sessionVideoMedia_()
     , publishedIpAddr_()
     , publishedIpAddrType_()
-    , localAudioDataPort_(0)
-    , localAudioControlPort_(0)
-    , localVideoDataPort_(0)
-    , localVideoControlPort_(0)
     , sdesNego_ {CryptoSuites}
     , zrtpHelloHash_()
     , telephoneEventPayload_(101) // same as asterisk
@@ -176,54 +162,7 @@ randomFill(std::vector<uint8_t>& dest)
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
-    activeLocalSession_ = (pjmedia_sdp_session*) sdp;
-
-    sessionAudioMediaLocal_.clear();
-
-    for (unsigned i = 0; i < activeLocalSession_->media_count; ++i) {
-        auto current = activeLocalSession_->media[i];
-
-        for (unsigned fmt = 0; fmt < current->desc.fmt_count; ++fmt) {
-            static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-            auto rtpMapAttribute = pjmedia_sdp_media_find_attr(current, &STR_RTPMAP, &current->desc.fmt[fmt]);
-
-            if (!rtpMapAttribute) {
-                RING_ERR("Could not find rtpmap attribute");
-                break;
-            }
-
-            pjmedia_sdp_rtpmap* rtpmap; // pool managed
-            pjmedia_sdp_attr_to_rtpmap(memPool_.get(), rtpMapAttribute, &rtpmap);
-
-            if (!pj_stricmp2(&current->desc.media, "audio")) {
-                // Add audio codec
-
-                // Check if payloadType is not TelephoneEvent and not added yet
-                const auto pt = pj_strtoul(&current->desc.fmt[fmt]);
-                if (pt == telephoneEventPayload_
-                    or hasPayload(sessionAudioMediaLocal_, pt))
-                    continue;
-
-                if (auto accCodec = findCodecByPayload(pt)) {
-                    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(accCodec);
-                    sessionAudioMediaLocal_.push_back(codec);
-                } else if (auto syscodec = findCodecByName(rtpmapToString(rtpmap))) {
-                    auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(syscodec);
-                    sessionAudioMediaLocal_.push_back(codec);
-                } else {
-                    RING_ERR("Could not find codec matching name %.*s",
-                             rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
-                }
-
-            } else if (!pj_stricmp2(&current->desc.media, "video")) {
-                // Add video codec
-
-                const std::string codec(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
-                if (not hasCodec(sessionVideoMedia_, codec))
-                    sessionVideoMedia_.push_back(codec);
-            }
-        }
-    }
+    activeLocalSession_ = sdp;
 }
 
 void
@@ -234,64 +173,7 @@ Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
         return;
     }
 
-    activeRemoteSession_ = (pjmedia_sdp_session*) sdp;
-
-    sessionAudioMediaRemote_.clear();
-
-    bool parsedTelelphoneEvent = false;
-    for (unsigned i = 0; i < sdp->media_count; i++) {
-        pjmedia_sdp_media *r_media = sdp->media[i];
-        if (!pj_stricmp2(&r_media->desc.media, "audio")) {
-
-            if (not parsedTelelphoneEvent) {
-                static const pj_str_t STR_TELEPHONE_EVENT = { (char*) "telephone-event", 15};
-                auto telephoneEvent = pjmedia_sdp_attr_find(r_media->attr_count, r_media->attr, &STR_TELEPHONE_EVENT, NULL);
-
-                if (telephoneEvent != NULL) {
-                    pjmedia_sdp_rtpmap *rtpmap;
-                    pjmedia_sdp_attr_to_rtpmap(memPool_.get(), telephoneEvent, &rtpmap);
-                    telephoneEventPayload_ = pj_strtoul(&rtpmap->pt);
-                    parsedTelelphoneEvent = true;
-                }
-            }
-
-            // add audio codecs from remote as needed
-            for (unsigned fmt = 0; fmt < r_media->desc.fmt_count; ++fmt) {
-                static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
-                auto rtpMapAttribute = pjmedia_sdp_media_find_attr(r_media, &STR_RTPMAP, &r_media->desc.fmt[fmt]);
-
-                if (!rtpMapAttribute) {
-                    RING_ERR("Could not find rtpmap attribute");
-                    break;
-                }
-
-                pjmedia_sdp_rtpmap* rtpmap;
-                pjmedia_sdp_attr_to_rtpmap(memPool_.get(), rtpMapAttribute, &rtpmap);
-
-                const auto pt = pj_strtoul(&r_media->desc.fmt[fmt]);
-                if (pt != telephoneEventPayload_ and not hasPayload(sessionAudioMediaRemote_, pt)) {
-                    auto accCodec = findCodecByPayload(pt);
-                    if (accCodec) {
-                        auto codec = std::static_pointer_cast<AccountAudioCodecInfo>(accCodec);
-                        RING_DBG("Adding codec with new payload type %d", pt);
-                        sessionAudioMediaRemote_.push_back(codec);
-                    } else {
-                        // Search by codec name, clock rate and param (channel count)
-                        RING_DBG("payload %d not found. Trying to find by name %s", pt, rtpmap->enc_name);
-                        auto codec = std::static_pointer_cast<AccountAudioCodecInfo> (findCodecByName(rtpmapToString(rtpmap)));
-                        if (codec)
-                        {
-                            sessionAudioMediaRemote_.push_back(codec);
-                        }
-                        else
-                            RING_ERR("Could not get codec for name %.*s", rtpmap->enc_name.slen, rtpmap->enc_name.ptr);
-                    }
-                } else {
-                    RING_ERR("Can not find codec matching payload %d", pt);
-                }
-            }
-        }
-    }
+    activeRemoteSession_ = sdp;
 }
 
 pjmedia_sdp_attr *
@@ -316,7 +198,7 @@ Sdp::generateSdesAttribute()
 }
 
 pjmedia_sdp_media *
-Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
+Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangeProtocol kx)
 {
     pjmedia_sdp_media *med = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_media);
 
@@ -400,7 +282,7 @@ Sdp::setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol kx)
         addRTCPAttribute(med); // video has its own RTCP
     }
 
-    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "sendrecv", NULL);
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "recvonly" : "inactive") : "sendrecv", NULL);
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
@@ -491,7 +373,8 @@ printSession(const pjmedia_sdp_session *session)
 
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                             const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                            sip_utils::KeyExchangeProtocol security)
+                            sip_utils::KeyExchangeProtocol security,
+                            bool holding)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
@@ -527,9 +410,9 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
     // For DTMF RTP events
     constexpr bool audio = true;
     localSession_->media_count = 1;
-    localSession_->media[0] = setMediaDescriptorLines(audio, security);
+    localSession_->media[0] = setMediaDescriptorLines(audio, holding, security);
     if (not selectedVideoCodecs.empty()) {
-        localSession_->media[1] = setMediaDescriptorLines(!audio, security);
+        localSession_->media[1] = setMediaDescriptorLines(!audio, holding, security);
         ++localSession_->media_count;
     }
 
@@ -542,9 +425,10 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
 bool
 Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                  const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                 sip_utils::KeyExchangeProtocol security)
+                 sip_utils::KeyExchangeProtocol security,
+                 bool holding)
 {
-    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security) != PJ_SUCCESS) {
+    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return false;
     }
@@ -560,7 +444,8 @@ Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedA
 void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
                        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                        const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                       sip_utils::KeyExchangeProtocol kx)
+                       sip_utils::KeyExchangeProtocol kx,
+                       bool holding)
 {
     if (!remote) {
         RING_ERR("Remote session is NULL");
@@ -571,7 +456,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
     printSession(remote);
 
     if (not localSession_ and createLocalSession(selectedAudioCodecs,
-                                                 selectedVideoCodecs, kx) != PJ_SUCCESS) {
+                                                 selectedVideoCodecs, kx, holding) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return;
     }
@@ -718,7 +603,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         // get connection info
         pjmedia_sdp_conn* conn = media->conn ? media->conn : session->conn;
         if (not conn) {
-            RING_ERR("Could not find connecion information for media");
+            RING_ERR("Could not find connection information for media");
             continue;
         }
         descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
@@ -771,7 +656,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
 
         if (remote) {
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
-            RING_WARN("receiving_sdp : %s", descr.receiving_sdp.c_str());
+            RING_WARN("Filtered SDP for remote media #%u :\n%s", i, descr.receiving_sdp.c_str());
         }
 
         // get crypto info
@@ -874,7 +759,7 @@ Sdp::addIceCandidates(unsigned media_index, const std::vector<std::string>& cand
 std::vector<std::string>
 Sdp::getIceCandidates(unsigned media_index) const
 {
-    auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
+    auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
     if (not session) {
         RING_ERR("getIceCandidates failed: no remote session");
         return {};
@@ -918,9 +803,15 @@ IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
     IceTransport::Attribute ice_attrs;
-    auto session = remoteSession_ ? remoteSession_ : activeRemoteSession_;
+    auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
     assert(session);
+    return getIceAttributes(session);
+}
 
+IceTransport::Attribute
+Sdp::getIceAttributes(const pjmedia_sdp_session* session)
+{
+    IceTransport::Attribute ice_attrs;
     for (unsigned i=0; i < session->attr_count; i++) {
         pjmedia_sdp_attr *attribute = session->attr[i];
         if (pj_stricmp2(&attribute->name, "ice-ufrag") == 0)
@@ -931,56 +822,25 @@ Sdp::getIceAttributes() const
     return ice_attrs;
 }
 
-// Returns index of desired media attribute, or -1 if not found */
-static int
-getIndexOfAttribute(const pjmedia_sdp_session * const session, const char * const type)
+void
+Sdp::clearIce()
 {
-    if (!session) {
-        RING_ERR("Session is NULL when looking for \"%s\" attribute", type);
-        return -1;
+    if (localSession_)
+        clearIce(localSession_);
+    if (remoteSession_)
+        clearIce(remoteSession_);
+}
+
+void
+Sdp::clearIce(pjmedia_sdp_session* session)
+{
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-ufrag");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "ice-pwd");
+    pjmedia_sdp_attr_remove_all(&session->attr_count, session->attr, "candidate");
+    for (unsigned i=0; i < session->media_count; i++) {
+        auto media = session->media[i];
+        pjmedia_sdp_attr_remove_all(&media->attr_count, media->attr, "candidate");
     }
-    size_t i = 0;
-    while (i < session->media_count and pj_stricmp2(&session->media[i]->desc.media, type) != 0)
-        ++i;
-
-    if (i == session->media_count)
-        return -1;
-    else
-        return i;
-}
-
-void Sdp::addAttributeToLocalAudioMedia(const char *attr)
-{
-    const int i = getIndexOfAttribute(localSession_, "audio");
-    if (i == -1)
-        return;
-    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_.get(), attr, NULL);
-    pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
-}
-
-void Sdp::removeAttributeFromLocalAudioMedia(const char *attr)
-{
-    const int i = getIndexOfAttribute(localSession_, "audio");
-    if (i == -1)
-        return;
-    pjmedia_sdp_media_remove_all_attr(localSession_->media[i], attr);
-}
-
-void Sdp::removeAttributeFromLocalVideoMedia(const char *attr)
-{
-    const int i = getIndexOfAttribute(localSession_, "video");
-    if (i == -1)
-        return;
-    pjmedia_sdp_media_remove_all_attr(localSession_->media[i], attr);
-}
-
-void Sdp::addAttributeToLocalVideoMedia(const char *attr)
-{
-    const int i = getIndexOfAttribute(localSession_, "video");
-    if (i == -1)
-        return;
-    pjmedia_sdp_attr *attribute = pjmedia_sdp_attr_create(memPool_.get(), attr, NULL);
-    pjmedia_sdp_media_add_attr(localSession_->media[i], attribute);
 }
 
 } // namespace ring
