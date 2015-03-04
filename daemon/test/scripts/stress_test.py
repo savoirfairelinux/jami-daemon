@@ -63,12 +63,13 @@ global_info  = ""
 
 #Start the GDB plugin
 def start_daemon():
-	os.system(gdbWrapperCommand)
-	time.sleep(10)
+	#os.system(gdbWrapperCommand)
+	#time.sleep(10)
 	reInit()
 
 #Stop the daemon normally, do it 3 time to be sure it will unregister everyone
 def stop_daemon():
+	print("Stopping daemon")
 	try:
 		instanceManager.Unregister(123)
 		instanceManager.Unregister(123)
@@ -225,7 +226,7 @@ def run():
 # It call itself to make the test simpler, this also test answering up as a side bonus
 def stress_answer_hangup_server():
 	details = configurationManager.getAccountDetails(first_account)
-	callManager.placeCall(first_account,str(randint(100000000,100000000000)),sip_number_2)
+	callManager.placeCall(first_account,sip_number_2)
 	time.sleep(0.05)
 	calls = callManager.getCallList()
 
@@ -244,7 +245,7 @@ def stress_answer_hangup_server():
 			callManager.accept(v)
 			callManager.accept(v)
 			callManager.accept(v)
-			callManager.placeCall(first_account,str(randint(100000000,100000000000)),sip_number_2)
+			callManager.placeCall(first_account,sip_number_2)
 
 		#Hang up
 		callManager.hangUp(calls[0])
@@ -258,7 +259,7 @@ add_to_suit("Place call",'Place, answer and hangup',stress_answer_hangup_server)
 
 # This test is similar to stress_answer_hangup_server, but test using IP2IP calls
 def stress_answer_hangup_IP2IP():
-	callManager.placeCall(first_account,str(randint(100000000,100000000000)),"sip:127.0.0.1")
+	callManager.placeCall(first_account,"sip:127.0.0.1")
 	time.sleep(0.05)
 	calls = callManager.getCallList()
 
@@ -308,10 +309,10 @@ def stress_transfers():
 					destination_number = "sip:127.0.0.1"
 				else:
 					destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
-					callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
+					callManager.placeCall(acc1,destination_number)
 				second_call = None
 				if k == 1:
-					callManager.placeCall(acc1,str(randint(100000000,100000000000)),sip_number_1)
+					callManager.placeCall(acc1,sip_number_1)
 				answer_all_calls()
 
 				if k == 1:
@@ -326,7 +327,7 @@ def stress_transfers():
 					calls = callManager.getCallList()
 					for i, v in enumerate(calls):
 						callManager.transfer(v,destination_number)
-add_to_suit("Transfer",'Make calls and transfer them',stress_transfers)
+#add_to_suit("Transfer",'Make calls and transfer them',stress_transfers)
 
 
 # This test make as tons or calls, then hangup them all as fast as it can
@@ -356,7 +357,7 @@ def stress_concurent_calls():
 				destination_number = "sip:127.0.0.1"
 			else:
 				destination_number = configurationManager.getAccountDetails(acc2)["Account.username"]
-			callManager.placeCall(acc1,str(randint(100000000,100000000000)),destination_number)
+			callManager.placeCall(acc1,destination_number)
 	calls = callManager.getCallList()
 	for i, v in enumerate(calls):
 		callManager.hangUp(v)
@@ -392,7 +393,7 @@ def stress_hold_unhold_server():
 		callManager.hangUp(v)
 
 	#Place a call
-	callManager.placeCall(first_account,str(randint(100000000,100000000000)),first_account_number)
+	callManager.placeCall(first_account,first_account_number)
 	calls = callManager.getCallList()
 	if len(calls) < 1:
 		return {'code':5,'error':"\nUnit test \"stress_hold_unhold\" failed: The call is gone"}
