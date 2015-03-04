@@ -44,11 +44,10 @@
 
 #include <unistd.h>
 
-#if 0
-TODO
-* implement shutdown callback
-* auto connect optional
-#endif
+/* TODO
+ * implement shutdown callback
+ * auto connect optional
+ */
 
 namespace ring {
 

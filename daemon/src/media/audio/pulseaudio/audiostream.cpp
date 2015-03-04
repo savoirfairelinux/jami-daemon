@@ -31,6 +31,8 @@
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "logger.h"
+#include "intrin.h"
+
 #include <stdexcept>
 
 namespace ring {
@@ -111,7 +113,7 @@ AudioStream::~AudioStream()
 void
 AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 {
-    char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
+    UNUSED char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
@@ -124,14 +126,12 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
         case PA_STREAM_READY:
             RING_DBG("Stream successfully created, connected to %s", pa_stream_get_device_name(s));
-#if 0
-            RING_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
-            RING_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
-            RING_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
-            RING_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
-            RING_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
-#endif
-            RING_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
+            //RING_DBG("maxlength %u", pa_stream_get_buffer_attr(s)->maxlength);
+            //RING_DBG("tlength %u", pa_stream_get_buffer_attr(s)->tlength);
+            //RING_DBG("prebuf %u", pa_stream_get_buffer_attr(s)->prebuf);
+            //RING_DBG("minreq %u", pa_stream_get_buffer_attr(s)->minreq);
+            //RING_DBG("fragsize %u", pa_stream_get_buffer_attr(s)->fragsize);
+            //RING_DBG("samplespec %s", pa_sample_spec_snprint(str, sizeof(str), pa_stream_get_sample_spec(s)));
             break;
 
         case PA_STREAM_UNCONNECTED:
