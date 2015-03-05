@@ -699,10 +699,8 @@ SIPVoIPLink::handleEvents()
         pj_thread_register(NULL, desc, &this_thread);
     }
 
-    static const pj_time_val timeout = {0, 10};
-    pj_status_t ret;
-
-    if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
+    auto ret = pjsip_endpt_handle_events(endpt_, NULL);
+    if (ret != PJ_SUCCESS)
         sip_utils::sip_strerror(ret);
 
 #ifdef RING_VIDEO
