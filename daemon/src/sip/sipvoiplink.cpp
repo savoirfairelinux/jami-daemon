@@ -699,7 +699,8 @@ SIPVoIPLink::handleEvents()
         pj_thread_register(NULL, desc, &this_thread);
     }
 
-    auto ret = pjsip_endpt_handle_events(endpt_, NULL);
+    static const pj_time_val timeout = {0, 0}; // polling
+    auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
     if (ret != PJ_SUCCESS)
         sip_utils::sip_strerror(ret);
 
