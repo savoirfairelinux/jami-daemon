@@ -699,7 +699,7 @@ SIPVoIPLink::handleEvents()
         pj_thread_register(NULL, desc, &this_thread);
     }
 
-    static const pj_time_val timeout = {0, 10};
+    static const pj_time_val timeout = {0, 0};
     pj_status_t ret;
 
     if ((ret = pjsip_endpt_handle_events(endpt_, &timeout)) != PJ_SUCCESS)
