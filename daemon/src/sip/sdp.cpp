@@ -116,12 +116,16 @@ rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
 }
 
 std::shared_ptr<AccountCodecInfo>
-Sdp::findCodecByName(const std::string &codec) const
+Sdp::findCodecBySpec(const std::string &codec, const unsigned clockrate) const
 {
     //TODO : only manage a list?
     for (const auto& accountCodec : audio_codec_list_) {
-        auto sysCodecInfo = accountCodec->systemCodecInfo;
-        if (sysCodecInfo.name.compare(codec) == 0)
+        auto audioCodecInfo = std::static_pointer_cast<AccountAudioCodecInfo>(accountCodec);
+        auto& sysCodecInfo = *static_cast<const SystemAudioCodecInfo*>(&audioCodecInfo->systemCodecInfo);
+        if (sysCodecInfo.name.compare(codec) == 0 and
+            (audioCodecInfo->isPCMG722() ?
+                (clockrate == 8000) :
+                (sysCodecInfo.audioformat.sample_rate == clockrate)))
             return accountCodec;
     }
 
@@ -132,6 +136,7 @@ Sdp::findCodecByName(const std::string &codec) const
     }
     return nullptr;
 }
+
 std::shared_ptr<AccountCodecInfo>
 Sdp::findCodecByPayload(const unsigned payloadType)
 {
@@ -629,27 +634,18 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
                 continue;
             }
             const std::string codec_raw(rtpmap.enc_name.ptr, rtpmap.enc_name.slen);
-            descr.codec = findCodecByName(codec_raw);
+            descr.rtp_clockrate = rtpmap.clock_rate;
+            descr.codec = findCodecBySpec(codec_raw, rtpmap.clock_rate);
             if (not descr.codec) {
                 RING_ERR("Could not find codec %s", codec_raw.c_str());
                 descr.enabled = false;
                 continue;
             }
             descr.payload_type = pj_strtoul(&rtpmap.pt);
-            if (descr.type == MEDIA_AUDIO) {
-                auto accountAudioCodec =
-                    std::static_pointer_cast<AccountAudioCodecInfo>(descr.codec);
-                accountAudioCodec->audioformat.sample_rate = accountAudioCodec->isPCMG722() ? 16000 : rtpmap.clock_rate;
-                if (rtpmap.param.slen && rtpmap.param.ptr)
-                    accountAudioCodec->audioformat.nb_channels = pj_strtoul(&rtpmap.param);
-                else
-                    accountAudioCodec->audioformat.nb_channels = 1;
-
-            } else {
-                //descr.bitrate = getOutgoingVideoField(codec, "bitrate");
-            }
-            // for now, first codec only
-            // we have to enable it
+            /*if (descr.type == MEDIA_VIDEO) {
+                descr.bitrate = getOutgoingVideoField(codec, "bitrate");
+            }*/
+            // for now, just keep the first codec only
             descr.enabled = true;
             break;
         }
