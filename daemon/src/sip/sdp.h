@@ -351,7 +351,7 @@ class Sdp {
         void addRTCPAttribute(pjmedia_sdp_media *med);
 
         std::shared_ptr<AccountCodecInfo> findCodecByPayload(const unsigned payloadType);
-        std::shared_ptr<AccountCodecInfo> findCodecByName(const std::string &codec) const;
+        std::shared_ptr<AccountCodecInfo> findCodecBySpec(const std::string &codecName, const unsigned clockrate=0) const;
 };
 
 } // namespace ring
