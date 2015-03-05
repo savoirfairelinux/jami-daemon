@@ -875,18 +875,7 @@ sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
     if (!call_ptr)
         return;
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
-
-    const auto& account = call->getSIPAccount();
-    auto& localSDP = call->getSDP();
-
-    localSDP.receiveOffer(offer,
-        account.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account.getActiveAccountCodecInfoList(MEDIA_VIDEO),
-        account.getSrtpKeyExchange()
-    );
-    localSDP.startNegotiation();
-
-    pjsip_inv_set_sdp_answer(inv, localSDP.getLocalSdpSession());
+    call->onReceiveOffer(offer);
 }
 
 static void
