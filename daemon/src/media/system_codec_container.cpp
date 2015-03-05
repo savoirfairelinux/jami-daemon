@@ -87,7 +87,7 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_ADPCM_G722,
                                                "G722", "g722",
                                                CODEC_ENCODER_DECODER,
-                                               0, 8000, 1, 9),
+                                               0, 16000, 1, 9),
 
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
