@@ -555,6 +555,8 @@ class ManagerImpl {
         bool isAGCEnabled() const;
         void setAGCState(bool enabled);
 
+        void switchInput(const std::string& callid, const std::string& res);
+
         /**
          * Ringtone option.
          * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.

@@ -128,7 +128,8 @@ class Sdp {
          */
         bool createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                          const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                         sip_utils::KeyExchangeProtocol);
+                         sip_utils::KeyExchangeProtocol,
+                         bool holding=false);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -139,7 +140,8 @@ class Sdp {
         void receiveOffer(const pjmedia_sdp_session* remote,
                           const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                           const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                          sip_utils::KeyExchangeProtocol);
+                          sip_utils::KeyExchangeProtocol,
+                          bool holding=false);
 
         /**
          * Start the sdp negotiation.
@@ -204,11 +206,6 @@ class Sdp {
             return localAudioControlPort_;
         }
 
-        void addAttributeToLocalAudioMedia(const char *attr);
-        void removeAttributeFromLocalAudioMedia(const char *attr);
-        void addAttributeToLocalVideoMedia(const char *attr);
-        void removeAttributeFromLocalVideoMedia(const char *attr);
-
         std::vector<MediaDescription>
         getMediaSlots(const pjmedia_sdp_session* session, bool remote) const;
 
@@ -231,11 +228,14 @@ class Sdp {
 
         void addIceAttributes(const IceTransport::Attribute&& ice_attrs);
         IceTransport::Attribute getIceAttributes() const;
+        static IceTransport::Attribute getIceAttributes(const pjmedia_sdp_session* session);
 
         void addIceCandidates(unsigned media_index,
                               const std::vector<std::string>& cands);
 
         std::vector<std::string> getIceCandidates(unsigned media_index) const;
+
+        void clearIce();
 
     private:
         friend class test::SDPTest;
@@ -251,58 +251,53 @@ class Sdp {
          */
         static std::string getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep);
 
+        static void clearIce(pjmedia_sdp_session* session);
+
         /**
          * The pool to allocate memory
          */
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> memPool_;
 
         /** negotiator */
-        pjmedia_sdp_neg *negotiator_;
+        pjmedia_sdp_neg *negotiator_ {nullptr};
 
         /**
          * Local SDP
          */
-        pjmedia_sdp_session *localSession_;
+        pjmedia_sdp_session *localSession_ {nullptr};
 
         /**
          * Remote SDP
          */
-        pjmedia_sdp_session *remoteSession_;
+        pjmedia_sdp_session *remoteSession_ {nullptr};
 
         /**
          * The negotiated SDP remote session
          * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
          * negotiation, with the compatible media from each part
          */
-        const pjmedia_sdp_session *activeLocalSession_;
+        const pjmedia_sdp_session *activeLocalSession_ {nullptr};
 
         /**
          * The negotiated SDP remote session
          * Explanation: each endpoint's offer is negotiated, and a new sdp offer results from this
          * negotiation, with the compatible media from each part
          */
-        const pjmedia_sdp_session *activeRemoteSession_;
+        const pjmedia_sdp_session *activeRemoteSession_ {nullptr};
 
         /**
          * Codec Map used for offer
          */
-         std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
-         std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
-
-        /**
-         * The codecs that will be used by the session (after the SDP negotiation)
-         */
-        std::vector<std::shared_ptr<AccountAudioCodecInfo>> sessionAudioMediaLocal_;
-        std::vector<std::shared_ptr<AccountAudioCodecInfo>> sessionAudioMediaRemote_;
-        std::vector<std::string> sessionVideoMedia_;
+        std::vector<std::shared_ptr<AccountCodecInfo>> audio_codec_list_;
+        std::vector<std::shared_ptr<AccountCodecInfo>> video_codec_list_;
 
         std::string publishedIpAddr_;
         pj_uint16_t publishedIpAddrType_;
 
-        int localAudioDataPort_;
-        int localAudioControlPort_;
-        int localVideoDataPort_;
-        int localVideoControlPort_;
+        int localAudioDataPort_ {0};
+        int localAudioControlPort_ {0};
+        int localVideoDataPort_ {0};
+        int localVideoControlPort_ {0};
 
         SdesNegotiator sdesNego_;
         std::string zrtpHelloHash_;
@@ -313,7 +308,7 @@ class Sdp {
          * Build the sdp media section
          * Add rtpmap field if necessary
          */
-        pjmedia_sdp_media *setMediaDescriptorLines(bool audio, sip_utils::KeyExchangeProtocol);
+        pjmedia_sdp_media *setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangeProtocol);
         pjmedia_sdp_attr *generateSdesAttribute();
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
@@ -330,7 +325,9 @@ class Sdp {
          */
         int createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                                const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
-                               sip_utils::KeyExchangeProtocol);
+                               sip_utils::KeyExchangeProtocol,
+                               bool holding);
+
         /*
          * Adds a sdes attribute to the given media section.
          *

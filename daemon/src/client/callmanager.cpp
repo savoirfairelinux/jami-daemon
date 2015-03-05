@@ -289,6 +289,12 @@ startTone(int32_t start, int32_t type)
        ring::Manager::instance().stopTone();
 }
 
+bool
+switchInput(const std::string& callID, const std::string& resource)
+{
+    ring::Manager::instance().switchInput(callID, resource);
+}
+
 void
 setSASVerified(const std::string& /*callID*/)
 {

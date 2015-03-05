@@ -150,8 +150,10 @@ bool VideoInput::captureFrame()
 void
 VideoInput::createDecoder()
 {
-    if (decOpts_.input.empty())
+    if (decOpts_.input.empty()) {
+        foundDecOpts_.set_value(decOpts_);
         return;
+    }
 
     decoder_ = new MediaDecoder();
 
@@ -164,6 +166,8 @@ VideoInput::createDecoder()
         RING_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
         delete decoder_;
         decoder_ = nullptr;
+        //foundDecOpts_.set_exception(std::runtime_error("Could not open input"));
+        foundDecOpts_.set_value(decOpts_);
         return;
     }
 
@@ -172,8 +176,13 @@ VideoInput::createDecoder()
         RING_ERR("decoder IO startup failed");
         delete decoder_;
         decoder_ = nullptr;
+        //foundDecOpts_.set_exception(std::runtime_error("Could not read data"));
+        foundDecOpts_.set_value(decOpts_);
         return;
     }
+    decOpts_.width = decoder_->getWidth();
+    decOpts_.height = decoder_->getHeight();
+    foundDecOpts_.set_value(decOpts_);
 }
 
 void
@@ -195,6 +204,12 @@ VideoInput::initCamera(const std::string& device)
     return true;
 }
 
+static constexpr unsigned
+round2pow(unsigned i, unsigned n)
+{
+    return (i >> n) << n;
+}
+
 bool
 VideoInput::initX11(std::string display)
 {
@@ -207,7 +222,11 @@ VideoInput::initX11(std::string display)
     if (space != std::string::npos) {
         std::istringstream iss(display.substr(space + 1));
         char sep;
-        iss >> decOpts_.width >> sep >> decOpts_.height;
+        unsigned w, h;
+        iss >> w >> sep >> h;
+        // round to 8 pixel block
+        decOpts_.width = round2pow(w, 3);
+        decOpts_.height = round2pow(h, 3);
         decOpts_.input = display.erase(space);
     } else {
         decOpts_.input = display;
@@ -250,15 +269,18 @@ VideoInput::initFile(std::string path)
     return true;
 }
 
-bool
+std::future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
     RING_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
         RING_ERR("Video switch already requested");
-        return false;
+        return {};
     }
+
+    std::promise<DeviceParams> p;
+    foundDecOpts_.swap(p);
 
     // Switch off video input?
     if (resource.empty()) {
@@ -266,7 +288,7 @@ VideoInput::switchInput(const std::string& resource)
         switchPending_ = true;
         if (!loop_.isRunning())
             loop_.start();
-        return true;
+        return foundDecOpts_.get_future();
     }
 
     // Supported MRL schemes
@@ -274,11 +296,11 @@ VideoInput::switchInput(const std::string& resource)
 
     const auto pos = resource.find(sep);
     if (pos == std::string::npos)
-        return false;
+        return {};
 
     const auto prefix = resource.substr(0, pos);
     if ((pos + sep.size()) >= resource.size())
-        return false;
+        return {};
 
     const auto suffix = resource.substr(pos + sep.size());
 
@@ -304,7 +326,7 @@ VideoInput::switchInput(const std::string& resource)
     else
         RING_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
 
-    return valid;
+    return valid ? foundDecOpts_.get_future() : std::future<DeviceParams> {};
 }
 
 int VideoInput::getWidth() const
@@ -315,5 +337,8 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
+
+DeviceParams VideoInput::getParams() const
+{ return decOpts_; }
 
 }} // namespace ring::video
