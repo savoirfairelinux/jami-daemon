@@ -68,6 +68,20 @@ void VideoRtpSession::startSender()
             RING_WARN("Restarting video sender");
         }
 
+        std::future<DeviceParams> newParams;
+        if (not conference_) {
+            videoLocal_ = getVideoCamera();
+            if (auto input = videoManager.videoInput.lock()) {
+                newParams = input->switchInput(input_);
+                if (newParams.valid())
+                    localVideoParams_ = newParams.get();
+                else
+                    RING_WARN("No valid new video parameters.");
+            } else {
+                RING_WARN("Can't lock video input");
+            }
+        }
+
         try {
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), localVideoParams_, local_, *socketPair_)
@@ -123,9 +137,8 @@ void VideoRtpSession::start()
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
-        videoLocal_ = getVideoCamera();
-        if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            DRing::switchToCamera();
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
     } else {
         videoLocal_.reset();
     }
@@ -150,9 +163,8 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     if (conference_)
         setupConferenceVideoPipeline(conference_);
     else if (sender_) {
-        videoLocal_ = getVideoCamera();
-        if (videoLocal_ and videoLocal_->attach(sender_.get()))
-            DRing::switchToCamera();
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
     } else {
         videoLocal_.reset();
     }

@@ -2097,6 +2097,17 @@ ManagerImpl::getCurrentAudioDevicesIndex()
     return v;
 }
 
+void
+ManagerImpl::switchInput(const std::string& call_id, const std::string& res)
+{
+    auto call = getCallFromCallID(call_id);
+    if (!call) {
+        RING_ERR("Call %s is NULL", call_id.c_str());
+        return;
+    }
+    call->switchInput(res);
+}
+
 int
 ManagerImpl::isRingtoneEnabled(const std::string& id)
 {

@@ -41,6 +41,7 @@
 
 #include <map>
 #include <atomic>
+#include <future>
 #include <string>
 
 namespace ring {
@@ -59,8 +60,9 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    DeviceParams getParams() const;
 
-    bool switchInput(const std::string& resource);
+    std::future<DeviceParams> switchInput(const std::string& resource);
 
 private:
     NON_COPYABLE(VideoInput);
@@ -72,6 +74,7 @@ private:
     std::atomic<bool> switchPending_ = {false};
 
     DeviceParams decOpts_;
+    std::promise<DeviceParams> foundDecOpts_;
 
     bool emulateRate_       = false;
     ThreadLoop loop_;

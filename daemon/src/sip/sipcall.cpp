@@ -150,28 +150,38 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
 {
+    setLocalIp(localIP);
+
+    if (getLocalAudioPort() == 0
+#ifdef RING_VIDEO
+        || getLocalVideoPort() == 0
+#endif
+        )
+        generateMediaPorts();
+}
+
+void
+SIPCall::generateMediaPorts()
+{
     auto& account = getSIPAccount();
 
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
-    if (getLocalAudioPort() == 0) {
-        const unsigned callLocalAudioPort = account.generateAudioPort();
-        setLocalAudioPort(callLocalAudioPort);
-        sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
-    }
-
-    setLocalIp(localIP);
+    const unsigned callLocalAudioPort = account.generateAudioPort();
+    if (getLocalAudioPort() != 0)
+        account.releasePort(getLocalAudioPort());
+    setLocalAudioPort(callLocalAudioPort);
+    sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
 
 #ifdef RING_VIDEO
-    if (getLocalVideoPort() == 0) {
-        // https://projects.savoirfairelinux.com/issues/17498
-        const unsigned int callLocalVideoPort = account.generateVideoPort();
-        // this should already be guaranteed by SIPAccount
-        assert(getLocalAudioPort() != callLocalVideoPort);
-
-        setLocalVideoPort(callLocalVideoPort);
-        sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
-    }
+    // https://projects.savoirfairelinux.com/issues/17498
+    const unsigned int callLocalVideoPort = account.generateVideoPort();
+    if (getLocalVideoPort() != 0)
+        account.releasePort(getLocalVideoPort());
+    // this should already be guaranteed by SIPAccount
+    assert(getLocalAudioPort() != callLocalVideoPort);
+    setLocalVideoPort(callLocalVideoPort);
+    sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
 #endif
 }
 
@@ -188,7 +198,19 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 int
 SIPCall::SIPSessionReinvite()
 {
+    // Generate new ports to receive the new media stream
+    // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
+    generateMediaPorts();
+    sdp_->clearIce();
+    auto& acc = getSIPAccount();
+    sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                      acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+                      acc.getSrtpKeyExchange(),
+                      getState() == Call::HOLD);
+    initIceTransport(true);
+    setupLocalSDPFromIce();
     pjmedia_sdp_session *local_sdp = sdp_->getLocalSdpSession();
+
     pjsip_tx_data *tdata;
 
     if (local_sdp and inv and inv->pool_prov
@@ -541,18 +563,10 @@ SIPCall::onhold()
     videortp_.stop();
 #endif
 
-    sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
-    sdp_->removeAttributeFromLocalAudioMedia("sendonly");
-    sdp_->addAttributeToLocalAudioMedia("sendonly");
-
-#ifdef RING_VIDEO
-    sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdp_->removeAttributeFromLocalVideoMedia("inactive");
-    sdp_->addAttributeToLocalVideoMedia("inactive");
-#endif
-
-    if (SIPSessionReinvite() != PJ_SUCCESS)
-        RING_WARN("Reinvite failed");
+    if (getConnectionState() == Call::CONNECTED) {
+        if (SIPSessionReinvite() != PJ_SUCCESS)
+            RING_WARN("Reinvite failed");
+    }
 }
 
 void
@@ -580,21 +594,20 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 
     sdp_cb();
 
-    sdp_->removeAttributeFromLocalAudioMedia("sendrecv");
-    sdp_->removeAttributeFromLocalAudioMedia("sendonly");
-    sdp_->addAttributeToLocalAudioMedia("sendrecv");
-
-#ifdef RING_VIDEO
-    sdp_->removeAttributeFromLocalVideoMedia("sendrecv");
-    sdp_->removeAttributeFromLocalVideoMedia("sendonly");
-    sdp_->removeAttributeFromLocalVideoMedia("inactive");
-    sdp_->addAttributeToLocalVideoMedia("sendrecv");
-#endif
-
-    if (SIPSessionReinvite() != PJ_SUCCESS) {
-        RING_WARN("Reinvite failed, resuming hold");
-        onhold();
+    if (getConnectionState() == Call::CONNECTED) {
+        if (SIPSessionReinvite() != PJ_SUCCESS) {
+            RING_WARN("Reinvite failed, resuming hold");
+            onhold();
+        }
     }
+}
+
+void
+SIPCall::switchInput(const std::string& resource)
+{
+    videoInput_ = resource;
+    if (SIPSessionReinvite() != PJ_SUCCESS)
+        RING_WARN("Reinvite failed");
 }
 
 void
@@ -697,8 +710,10 @@ SIPCall::getAllRemoteCandidates()
                                    std::vector<IceCandidate>& out) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
-            if (iceTransport_->getCandidateFromSDP(line, cand))
+            if (iceTransport_->getCandidateFromSDP(line, cand)) {
+                RING_ERR("Remote candidate: %s", line.c_str());
                 out.emplace_back(cand);
+            }
         }
     };
 
@@ -796,7 +811,13 @@ SIPCall::startAllMedia()
                 );
         RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
         RING_DBG("####################################");
-
+#ifdef RING_VIDEO
+        if (local.type == MEDIA_VIDEO) {
+            if (videoInput_.empty())
+                videoInput_ = "v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice();
+            videortp_.switchInput(videoInput_);
+        }
+#endif
         rtp->updateMedia(local, remote);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
@@ -820,13 +841,19 @@ SIPCall::stopAllMedia()
 void
 SIPCall::onMediaUpdate()
 {
+    RING_WARN("SIPCall::onMediaUpdate");
     stopAllMedia();
     openPortsUPnP();
 
     if (startIce()) {
         auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
-        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {10};
+        auto ice = iceTransport_;
+        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
         Manager::instance().addTask([=] {
+            if (ice != this_->iceTransport_) {
+                RING_ERR("ICE transport replaced");
+                return false;
+            }
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
                 RING_DBG("ice init failed (or timeout)");
@@ -844,6 +871,26 @@ SIPCall::onMediaUpdate()
         RING_WARN("Starting medias without ICE");
         startAllMedia();
     }
+}
+
+void
+SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
+{
+    sdp_->clearIce();
+    auto& acc = getSIPAccount();
+    sdp_->receiveOffer(offer,
+        acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
+        acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+        acc.getSrtpKeyExchange(),
+        getState() == Call::HOLD
+    );
+    auto ice_attrs = Sdp::getIceAttributes(offer);
+    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
+        initIceTransport(false);
+        setupLocalSDPFromIce();
+    }
+    sdp_->startNegotiation();
+    pjsip_inv_set_sdp_answer(inv.get(), sdp_->getLocalSdpSession());
 }
 
 void

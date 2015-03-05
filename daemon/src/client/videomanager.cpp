@@ -118,10 +118,15 @@ stopCamera()
 bool
 switchInput(const std::string& resource)
 {
-    if (auto input = videoManager.videoInput.lock())
-        return input->switchInput(resource);
-
-    RING_WARN("Video input not initialized");
+    if (auto call = ring::Manager::instance().getCurrentCall()) {
+        // TODO remove this part when clients are updated to use CallManager::switchInput
+        call->switchInput(resource);
+        return true;
+    } else {
+        if (auto input = videoManager.videoInput.lock())
+            return input->switchInput(resource).valid();
+        RING_WARN("Video input not initialized");
+    }
     return false;
 }
 

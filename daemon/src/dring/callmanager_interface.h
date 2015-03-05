@@ -197,6 +197,8 @@ std::string getCurrentAudioCodecName(const std::string& callID);
 void playDTMF(const std::string& key);
 void startTone(int32_t start, int32_t type);
 
+bool switchInput(const std::string& callID, const std::string& resource);
+
 /* Security related methods */
 void setSASVerified(const std::string& callID);
 void resetSASVerified(const std::string& callID);
