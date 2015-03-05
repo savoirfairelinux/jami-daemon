@@ -87,10 +87,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual ~Call();
 
         /**
-         * Return a reference on the call id
+         * Return a copy of the call id
          * @return call id
          */
-        const std::string& getCallId() const {
+        std::string getCallId() const {
             return id_;
         }
 
