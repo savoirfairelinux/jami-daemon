@@ -39,6 +39,8 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
+#include "audio/audiobuffer.h"
+
 #include "noncopyable.h"
 
 #include <map>
@@ -113,6 +115,9 @@ class MediaDecoder {
         int64_t startTime_;
         int64_t lastDts_;
         std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
+
+        AudioBuffer decBuff_;
+        AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
 
