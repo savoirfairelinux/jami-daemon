@@ -304,16 +304,31 @@ void SIPCall::answer()
     setState(ACTIVE);
 }
 
+static void
+sendEndSessionMsg(pjsip_inv_session* inv, int status, const pj_str_t* contact_str)
+{
+    pjsip_tx_data* tdata = nullptr;
+    if (pjsip_inv_end_session(inv, status, nullptr, &tdata) != PJ_SUCCESS || !tdata)
+        return;
+
+    sip_utils::addContactHeader(contact_str, tdata);
+
+    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS) {
+        RING_ERR("pjsip error: failed to sind end session message");
+        return;
+    }
+}
+
 void
 SIPCall::hangup(int reason)
 {
     // Stop all RTP streams
     stopAllMedia();
 
-    if (not inv or not inv->dlg)
+    if (not inv or not inv->dlg) {
+        removeCall();
         throw VoipLinkException("No invite session for this call");
-
-    auto& account = getSIPAccount();
+    }
 
     pjsip_route_hdr *route = inv->dlg->route_set.next;
     while (route and route != &inv->dlg->route_set) {
@@ -328,31 +343,17 @@ SIPCall::hangup(int reason)
         route = route->next;
     }
 
-    pjsip_tx_data *tdata = NULL;
-
     const int status = reason ? reason :
                        inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
                        PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
                        inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
                        0;
+    const pj_str_t contactStr(getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr));
 
-    // User hangup current call. Notify peer
-    if (pjsip_inv_end_session(inv.get(), status, NULL, &tdata) != PJ_SUCCESS || !tdata)
-        return;
+    // Notify the peer
+    sendEndSessionMsg(inv.get(), status, &contactStr);
 
-    // contactStr must stay in scope as long as tdata
-    const pj_str_t contactStr(account.getContactHeader(transport_ ? transport_->get() : nullptr));
-    sip_utils::addContactHeader(&contactStr, tdata);
-
-    if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
-        RING_ERR("Error sending hangup message");
-        inv.reset();
-        return;
-    }
-
-    // Make sure user data is NULL in callbacks
-    inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
-
+    inv.reset();
     removeCall();
 }
 
@@ -364,19 +365,12 @@ SIPCall::refuse()
 
     avformatrtp_->stop();
 
-    pjsip_tx_data *tdata;
+    const pj_str_t contactStr(getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr));
 
-    if (pjsip_inv_end_session(inv.get(), PJSIP_SC_DECLINE, NULL, &tdata) != PJ_SUCCESS)
-        return;
+    // Notify the peer
+    sendEndSessionMsg(inv.get(), PJSIP_SC_DECLINE, &contactStr);
 
-    if (pjsip_inv_send_msg(inv.get(), tdata) != PJ_SUCCESS) {
-        inv.reset();
-        return;
-    }
-
-    // Make sure the pointer is NULL in callbacks
-    inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
-
+    inv.reset();
     removeCall();
 }
 
