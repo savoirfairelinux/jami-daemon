@@ -72,6 +72,9 @@ class AudioSender {
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
 
+        AudioBuffer micData_;
+        AudioBuffer resampledData_;
+
         using seconds = std::chrono::duration<double, std::ratio<1>>;
         const seconds secondsPerPacket_ {0.02}; // 20 ms
 
@@ -128,6 +131,8 @@ AudioSender::cleanup()
 {
     audioEncoder_.reset();
     muxContext_.reset();
+    micData_.clear();
+    resampledData_.clear();
 }
 
 void
@@ -146,30 +151,32 @@ AudioSender::process()
             return;
     }
 
-    // FIXME
-    AudioBuffer micData(samplesToGet, mainBuffFormat);
-
-    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    const auto samples = Manager::instance().getRingBufferPool().getData(micData, id_);
-    micData.setChannelNum(accountAudioCodec->audioformat.nb_channels, true); // down/upmix as needed
-
+    // get data
+    micData_.setFormat(mainBuffFormat);
+    micData_.resize(samplesToGet);
+    const auto samples = Manager::instance().getRingBufferPool().getData(micData_, id_);
     if (samples != samplesToGet) {
         RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
                 samplesToGet, id_.c_str(), samples);
         return;
     }
 
+    // down/upmix as needed
+    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
+    micData_.setChannelNum(accountAudioCodec->audioformat.nb_channels, true);
+
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler(accountAudioCodec->audioformat));
         }
-        AudioBuffer resampledData(samplesToGet, accountAudioCodec->audioformat);
-        resampler_->resample(micData, resampledData);
-        if (audioEncoder_->encode_audio(resampledData) < 0)
+        resampledData_.setFormat(accountAudioCodec->audioformat);
+        resampledData_.resize(samplesToGet);
+        resampler_->resample(micData_, resampledData_);
+        if (audioEncoder_->encode_audio(resampledData_) < 0)
             RING_ERR("encoding failed");
     } else {
-        if (audioEncoder_->encode_audio(micData) < 0)
+        if (audioEncoder_->encode_audio(micData_) < 0)
             RING_ERR("encoding failed");
     }
 
