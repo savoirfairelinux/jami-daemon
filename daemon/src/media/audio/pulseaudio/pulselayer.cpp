@@ -490,14 +490,15 @@ void PulseLayer::writeToSpeaker()
         urgentBytes = urgentSamples * sample_size;
     }
 
-    AudioSample *data = 0;
+    AudioSample* data = nullptr;
 
     if (urgentBytes) {
-        AudioBuffer linearbuff(urgentSamples, format);
+        playbackBuffer_.setFormat(format);
+        playbackBuffer_.resize(urgentSamples);
         pa_stream_begin_write(s, (void**)&data, &urgentBytes);
-        urgentRingBuffer_.get(linearbuff, RingBufferPool::DEFAULT_ID); // retrive only the first sample_spec->channels channels
-        linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        linearbuff.interleave(data);
+        urgentRingBuffer_.get(playbackBuffer_, RingBufferPool::DEFAULT_ID); // retrive only the first sample_spec->channels channels
+        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        playbackBuffer_.interleave(data);
         pa_stream_write(s, data, urgentBytes, nullptr, 0, PA_SEEK_RELATIVE);
         // Consume the regular one as well (same amount of samples)
         Manager::instance().getRingBufferPool().discard(urgentSamples, RingBufferPool::DEFAULT_ID);
@@ -511,9 +512,10 @@ void PulseLayer::writeToSpeaker()
     if (toneToPlay) {
         if (playback_->isReady()) {
             pa_stream_begin_write(s, (void**)&data, &writableBytes);
-            AudioBuffer linearbuff(writableSamples, format);
-            toneToPlay->getNext(linearbuff, playbackGain_); // retrive only n_channels
-            linearbuff.interleave(data);
+            playbackBuffer_.setFormat(format);
+            playbackBuffer_.resize(writableSamples);
+            toneToPlay->getNext(playbackBuffer_, playbackGain_); // retrive only n_channels
+            playbackBuffer_.interleave(data);
             pa_stream_write(s, data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
         }
 
@@ -550,18 +552,19 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
-    AudioBuffer linearbuff(readableSamples, format);
-    Manager::instance().getRingBufferPool().getData(linearbuff, RingBufferPool::DEFAULT_ID);
+    playbackBuffer_.setFormat(format);
+    playbackBuffer_.resize(readableSamples);
+    Manager::instance().getRingBufferPool().getData(playbackBuffer_, RingBufferPool::DEFAULT_ID);
 
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, format);
-        resampler_->resample(linearbuff, rsmpl_out);
+        resampler_->resample(playbackBuffer_, rsmpl_out);
         rsmpl_out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         rsmpl_out.interleave(data);
         pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     } else {
-        linearbuff.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        linearbuff.interleave(data);
+        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        playbackBuffer_.interleave(data);
         pa_stream_write(s, data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);
     }
 }
@@ -584,19 +587,20 @@ void PulseLayer::readFromMic()
     assert(sample_size);
     const size_t samples = bytes / sample_size / format.nb_channels;
 
-    AudioBuffer in(samples, format);
-    in.deinterleave((AudioSample*)data, samples, format.nb_channels);
+    micBuffer_.setFormat(format);
+    micBuffer_.resize(samples);
+    micBuffer_.deinterleave((AudioSample*)data, samples, format.nb_channels);
+    micBuffer_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     unsigned int mainBufferSampleRate = Manager::instance().getRingBufferPool().getInternalSamplingRate();
     bool resample = audioFormat_.sample_rate != mainBufferSampleRate;
 
-    in.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
-
-    AudioBuffer * out = &in;
-
+    AudioBuffer* out;
     if (resample) {
-        micBuffer_.setSampleRate(mainBufferSampleRate);
-        resampler_->resample(in, micBuffer_);
+        micResampleBuffer_.setSampleRate(mainBufferSampleRate);
+        resampler_->resample(micBuffer_, micResampleBuffer_);
+        out = &micResampleBuffer_;
+    } else {
         out = &micBuffer_;
     }
 
