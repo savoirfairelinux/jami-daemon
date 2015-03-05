@@ -89,12 +89,17 @@ std::ostream& operator <<(std::ostream& stream, const AudioFormat& f);
 class AudioBuffer {
     public:
         /**
-         * Default constructor.
+         * Default constructor
+         */
+        AudioBuffer() : AudioBuffer {0, AudioFormat::NONE()} {}
+
+        /**
+         * Construct from given sample number and audio format
          */
         AudioBuffer(size_t sample_num, AudioFormat format);
 
         /**
-         * Construtor from existing interleaved data (copied into the buffer).
+         * Construct from existing interleaved data (copied into the buffer).
          */
         AudioBuffer(const AudioSample* in, size_t sample_num, AudioFormat format);
 
