@@ -431,19 +431,18 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
                                 RingBuffer& rb, const AudioFormat outFormat)
 {
     const auto libav_frame = decodedFrame.pointer();
-
-    const AudioFormat decoderFormat = {
+    decBuff_.setFormat(AudioFormat{
         (unsigned) libav_frame->sample_rate,
         (unsigned) decoderCtx_->channels
-    };
-    AudioBuffer out(libav_frame->nb_samples, decoderFormat);
+    });
+    decBuff_.resize(libav_frame->nb_samples);
 
     if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_FLTP ) {
-        out.convertFloatPlanarToSigned16(libav_frame->extended_data,
+        decBuff_.convertFloatPlanarToSigned16(libav_frame->extended_data,
                                          libav_frame->nb_samples,
                                          decoderCtx_->channels);
     } else if ( decoderCtx_->sample_fmt == AV_SAMPLE_FMT_S16 ) {
-        out.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
+        decBuff_.deinterleave(reinterpret_cast<const AudioSample*>(libav_frame->data[0]),
                          libav_frame->nb_samples, decoderCtx_->channels);
     }
     if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
@@ -451,13 +450,12 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
             RING_DBG("Creating audio resampler");
             resampler_.reset(new Resampler(outFormat));
         }
-        AudioBuffer resampledData(libav_frame->nb_samples,
-                                       {(unsigned) outFormat.sample_rate,
-                                        (unsigned) decoderCtx_->channels});
-        resampler_->resample(out, resampledData);
-        rb.put(resampledData);
+        resamplingBuff_.setFormat({(unsigned) outFormat.sample_rate, (unsigned) decoderCtx_->channels});
+        resamplingBuff_.resize(libav_frame->nb_samples);
+        resampler_->resample(decBuff_, resamplingBuff_);
+        rb.put(resamplingBuff_);
     } else {
-        rb.put(out);
+        rb.put(decBuff_);
     }
 }
 
