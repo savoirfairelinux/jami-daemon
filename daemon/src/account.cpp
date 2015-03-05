@@ -163,8 +163,8 @@ Account::loadDefaultCodecs()
     auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
 
     for (const auto& systemCodec: systemCodecList) {
-        // only take encoders and or decoders
-        if (systemCodec->codecType == CODEC_NONE)
+        // As defined in SDP RFC, only select a codec if he can encode and decode
+        if ((systemCodec->codecType & CODEC_ENCODER_DECODER) != CODEC_ENCODER_DECODER)
             continue;
 
         if (systemCodec->mediaType & MEDIA_AUDIO) {
