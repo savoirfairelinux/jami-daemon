@@ -244,18 +244,17 @@ struct MediaDescription {
     /** Endpoint socket address */
     IpAddr addr {};
 
-    /** Codec */
+    /** RTP */
     std::shared_ptr<AccountCodecInfo> codec {};
     unsigned payload_type {};
     std::string receiving_sdp {};
     unsigned bitrate {};
+    unsigned rtp_clockrate {8000};
 
     /** Audio parameters */
     unsigned frame_size {};
 
     /** Video parameters */
-
-    //TODO: ebail manage it in AccountVideoCodecInfo
     std::string parameters {};
 
     /** Crypto parameters */
