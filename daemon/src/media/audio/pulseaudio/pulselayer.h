@@ -54,7 +54,7 @@ class RingBuffer;
 /**
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
-typedef struct PaDeviceInfos {
+struct PaDeviceInfos {
         uint32_t index;
         std::string name;
         std::string description;
@@ -97,7 +97,7 @@ typedef struct PaDeviceInfos {
             private:
                 const std::string &baseline;
         };
-} PaDeviceInfos;
+};
 
 class PulseMainLoopLock {
     public:
@@ -208,6 +208,10 @@ class PulseLayer : public AudioLayer {
          * Buffers used to avoid doing malloc/free in the audio thread
          */
         AudioBuffer micBuffer_ {0, AudioFormat::MONO()};
+        AudioBuffer micResampleBuffer_ {0, AudioFormat::MONO()};
+
+        AudioBuffer playbackBuffer_ {0, AudioFormat::MONO()};
+        AudioBuffer playbackResampleBuffer_ {0, AudioFormat::MONO()};
 
         /** PulseAudio server defaults */
         AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};
