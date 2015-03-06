@@ -18,6 +18,9 @@ LIBAVCONF = \
 #encoders
 LIBAVCONF += \
         --enable-libx264             \
+		--enable-libopus			 \
+		--enable-libspeex			 \
+		--enable-libvpx  			 \
         --enable-encoder=g722        \
         --enable-encoder=libx264     \
         --enable-encoder=pcm_alaw    \
