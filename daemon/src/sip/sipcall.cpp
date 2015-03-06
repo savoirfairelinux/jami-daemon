@@ -131,14 +131,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 
 SIPCall::~SIPCall()
 {
-    const auto mod_ua_id = getSIPVoIPLink()->getModId();
-
-    // prevent this from getting accessed in callbacks
-    // RING_WARN: this is not thread-safe!
-    if (inv && inv->mod_data[mod_ua_id]) {
-        RING_WARN("Call was not properly removed from invite callbacks");
-        inv->mod_data[mod_ua_id] = nullptr;
-    }
+    inv.reset(); // prevents callback usage
 }
 
 SIPAccountBase&
@@ -940,6 +933,14 @@ SIPCall::setSecure(bool sec)
         throw std::runtime_error("Can't enable security since call is already connected");
     }
     srtpEnabled_ = sec;
+}
+
+void
+SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
+{
+    // prevent this from getting accessed in callbacks
+    // RING_WARN: this is not thread-safe!
+    inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
 }
 
 } // namespace ring
