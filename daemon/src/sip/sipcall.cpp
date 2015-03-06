@@ -599,9 +599,11 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 void
 SIPCall::switchInput(const std::string& resource)
 {
+#ifdef RING_VIDEO
     videoInput_ = resource;
     if (SIPSessionReinvite() != PJ_SUCCESS)
         RING_WARN("Reinvite failed");
+#endif
 }
 
 void
