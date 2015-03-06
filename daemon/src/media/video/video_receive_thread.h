@@ -35,7 +35,7 @@
 #include "media_codec.h"
 #include "media_io_handle.h"
 #include "media_device.h"
-#include "shm_sink.h"
+#include "sinkclient.h"
 #include "threadloop.h"
 #include "noncopyable.h"
 
@@ -83,8 +83,7 @@ private:
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
-    SHMSink sink_;
-
+    SinkClient sink_;
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();

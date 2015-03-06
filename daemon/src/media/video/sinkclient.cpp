@@ -37,11 +37,11 @@
 #include "config.h"
 #endif
 
+#include "sinkclient.h"
+#include "shm_header.h"
+
 #include "video_scaler.h"
 #include "media_buffer.h"
-
-#include "shm_sink.h"
-#include "shm_header.h"
 #include "logger.h"
 
 #include <sys/mman.h>
@@ -54,7 +54,7 @@
 
 namespace ring { namespace video {
 
-SHMSink::SHMSink(const std::string &shm_name) :
+SinkClient::SinkClient(const std::string &shm_name) :
     shm_name_(shm_name)
     , fd_(-1)
     , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
@@ -66,12 +66,13 @@ SHMSink::SHMSink(const std::string &shm_name) :
 #endif
 {}
 
-SHMSink::~SHMSink()
+SinkClient::~SinkClient()
 {
     stop();
 }
 
-bool SHMSink::start()
+bool
+SinkClient::start()
 {
     if (fd_ != -1) {
         RING_ERR("fd must be -1");
@@ -112,7 +113,9 @@ bool SHMSink::start()
         return false;
     }
 
-    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, shm_area_len_, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
+    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, shm_area_len_,
+                                             PROT_READ | PROT_WRITE,
+                                             MAP_SHARED, fd_, 0));
 
     if (shm_area_ == MAP_FAILED) {
         RING_ERR("Could not map shm area, mmap failed");
@@ -131,7 +134,8 @@ bool SHMSink::start()
     return true;
 }
 
-bool SHMSink::stop()
+bool
+SinkClient::stop()
 {
     if (fd_ >= 0 and close(fd_) == -1)
         strErr();
@@ -151,7 +155,8 @@ bool SHMSink::stop()
     return true;
 }
 
-bool SHMSink::resize_area(size_t desired_length)
+bool
+SinkClient::resize_area(size_t desired_length)
 {
     if (desired_length <= shm_area_len_)
         return true;
@@ -170,7 +175,9 @@ bool SHMSink::resize_area(size_t desired_length)
         return false;
     }
 
-    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, desired_length, PROT_READ | PROT_WRITE, MAP_SHARED, fd_, 0));
+    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, desired_length,
+                                             PROT_READ | PROT_WRITE,
+                                             MAP_SHARED, fd_, 0));
     shm_area_len_ = desired_length;
 
     if (shm_area_ == MAP_FAILED) {
@@ -184,7 +191,7 @@ bool SHMSink::resize_area(size_t desired_length)
 }
 
 void
-SHMSink::render(const std::vector<unsigned char>& data)
+SinkClient::render(const std::vector<unsigned char>& data)
 {
     shm_lock();
 
@@ -199,7 +206,7 @@ SHMSink::render(const std::vector<unsigned char>& data)
 }
 
 void
-SHMSink::render_frame(VideoFrame& src)
+SinkClient::render_frame(VideoFrame& src)
 {
     VideoFrame dst;
     VideoScaler scaler;
@@ -220,7 +227,8 @@ SHMSink::render_frame(VideoFrame& src)
     scaler.scale(src, dst);
 
 #ifdef DEBUG_FPS
-    const std::chrono::time_point<std::chrono::system_clock> currentTime = std::chrono::system_clock::now();
+    const std::chrono::time_point<std::chrono::system_clock> currentTime = \
+        std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     frameCount_++;
     if (seconds.count() > 1) {
@@ -236,7 +244,8 @@ SHMSink::render_frame(VideoFrame& src)
     shm_unlock();
 }
 
-void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
+void
+SinkClient::render_callback(VideoProvider &provider, size_t bytes)
 {
     shm_lock();
 
@@ -252,13 +261,21 @@ void SHMSink::render_callback(VideoProvider &provider, size_t bytes)
     shm_unlock();
 }
 
-void SHMSink::shm_lock()
-{ sem_wait(&shm_area_->mutex); }
+void
+SinkClient::shm_lock()
+{
+    sem_wait(&shm_area_->mutex);
+}
 
-void SHMSink::shm_unlock()
-{ sem_post(&shm_area_->mutex); }
+void
+SinkClient::shm_unlock()
+{
+    sem_post(&shm_area_->mutex);
+}
 
-void SHMSink::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/, std::shared_ptr<VideoFrame> &frame_p)
+void
+SinkClient::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
+                   std::shared_ptr<VideoFrame> &frame_p)
 {
     auto f = frame_p; // keep a local reference during rendering
     render_frame(*f.get());
