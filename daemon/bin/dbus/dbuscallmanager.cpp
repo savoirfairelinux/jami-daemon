@@ -227,6 +227,12 @@ DBusCallManager::getIsRecording(const std::string& callID) -> decltype(DRing::ge
     return DRing::getIsRecording(callID);
 }
 
+void
+DBusCallManager::switchInput(const std::string& callID, const std::string& input)
+{
+    DRing::switchInput(callID, input);
+}
+
 auto
 DBusCallManager::getCurrentAudioCodecName(const std::string& callID) -> decltype(DRing::getCurrentAudioCodecName(callID))
 {
