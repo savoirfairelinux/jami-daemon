@@ -88,6 +88,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
+    dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
 
     /*  ~/.local/{appname}    */
     fileutils::check_dir(fileutils::get_data_dir().c_str());
@@ -95,7 +96,6 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     /*  ~/.local/{appname}/{accountID}    */
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath_.c_str());
-    dataPath_ = idPath_ + DIR_SEPARATOR_STR "values";
     caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
     caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
     checkIdentityPath();
@@ -1007,15 +1007,17 @@ RingAccount::loadValues() const
     std::vector<dht::Dht::ValuesExport> values;
     const auto dircontent(fileutils::readDirectory(dataPath_));
     for (const auto& fname : dircontent) {
+        const auto file = dataPath_+DIR_SEPARATOR_STR+fname;
         try {
-            std::ifstream ifs(dataPath_+DIR_SEPARATOR_STR+fname, std::ifstream::in | std::ifstream::binary);
+            std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
             std::istreambuf_iterator<char> begin(ifs), end;
-            values.push_back({{fname}, std::vector<uint8_t>{begin, end}});
+            values.emplace_back(dht::Dht::ValuesExport{{fname}, std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
             RING_ERR("Error reading value: %s", e.what());
-            continue;
         }
+        remove(file.c_str());
     }
+    RING_WARN("Loaded %lu values", values.size());
     return values;
 }
 
