@@ -4,38 +4,36 @@ LIBAV_SNAPURL := http://git.libav.org/?p=libav.git;a=snapshot;h=$(HASH);sf=tgz
 PKGS += libav
 
 LIBAVCONF = \
-        --cc="$(CC)"                 \
-        --pkg-config="$(PKG_CONFIG)" \
-        --disable-everything         \
-        --enable-gpl                 \
-        --enable-version3            \
-        --enable-decoders            \
-        --enable-protocols           \
-        --enable-demuxers            \
-        --enable-muxers              \
-        --enable-swscale
+		  --cc="$(CC)" \
+		  --pkg-config="$(PKG_CONFIG)" \
+		  --disable-everything \
+		  --enable-gpl \
+		  --enable-version3 \
+		  --enable-decoders \
+		  --enable-protocols \
+		  --enable-demuxers \
+		  --enable-muxers \
+		  --enable-swscale
 
 #encoders
 LIBAVCONF += \
-        --enable-libx264             \
-	--enable-libopus	     \
-	--enable-libspeex	     \
-	--enable-libvpx  	     \
-        --enable-encoder=g722        \
-        --enable-encoder=libx264     \
-        --enable-encoder=pcm_alaw    \
-        --enable-encoder=pcm_mulaw   \
-        --enable-encoder=libopus     \
-        --enable-encoder=libspeex    \
-        --enable-encoder=libvpx      \
-        --disable-decoder=libvpx     \
-        --disable-decoder=libvpx_vp8 \
-        --disable-decoder=libvpx_vp9 \
-        --enable-encoder=h263p
-
+		  --enable-libx264 \
+		  --enable-libopus \
+		  --enable-libspeex \
+		  --enable-libvpx \
+		  --enable-encoder=g722 \
+		  --enable-encoder=libx264 \
+		  --enable-encoder=pcm_alaw \
+		  --enable-encoder=pcm_mulaw \
+		  --enable-encoder=libopus \
+		  --enable-encoder=libspeex \
+		  --enable-encoder=libvpx \
+		  --disable-decoder=libvpx \
+		  --disable-decoder=libvpx_vp8 \
+		  --disable-decoder=libvpx_vp9 \
+		  --enable-encoder=h263p
 
 DEPS_libav = zlib x264 vpx $(DEPS_vpx)
-
 
 ifdef HAVE_CROSS_COMPILE
 LIBAVCONF += --enable-cross-compile
