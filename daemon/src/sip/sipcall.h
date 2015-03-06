@@ -116,8 +116,11 @@ class SIPCall : public Call
         /**
          * The invite session to be reused in case of transfer
          */
-        struct InvSessionDeleter { void operator()(pjsip_inv_session*) {} };
-        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv {};
+        struct InvSessionDeleter {
+                void operator()(pjsip_inv_session*) const noexcept;
+        };
+
+        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
 
         void setSecure(bool sec);
 
