@@ -51,6 +51,7 @@ void
 SystemCodecContainer::initCodecConfig()
 {
     availableCodecList_ = {
+#ifdef RING_VIDEO
         /* Define supported video codec*/
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
@@ -67,7 +68,7 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
                                                CODEC_ENCODER_DECODER),
-
+#endif
         /* Define supported audio codec*/
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
                                                "PCMA", "pcm_alaw",
