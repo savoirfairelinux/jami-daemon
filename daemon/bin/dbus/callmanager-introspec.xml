@@ -407,6 +407,14 @@
             <arg type="s" name="codecName" direction="out"/>
         </method>
 
+        <method name="switchInput" tp:name-for-bindings="switchInput">
+            <tp:docstring>
+                Switch input for the specified call
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in"/>
+            <arg type="s" name="input" direction="in"/>
+        </method>
+
         <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
             <tp:docstring>
                 Send a text message to the specified call
