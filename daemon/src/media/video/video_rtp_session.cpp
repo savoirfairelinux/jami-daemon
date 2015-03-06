@@ -68,11 +68,10 @@ void VideoRtpSession::startSender()
             RING_WARN("Restarting video sender");
         }
 
-        std::future<DeviceParams> newParams;
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = videoManager.videoInput.lock()) {
-                newParams = input->switchInput(input_);
+                std::future<DeviceParams> newParams = input->switchInput(input_);
                 if (newParams.valid())
                     localVideoParams_ = newParams.get();
                 else
