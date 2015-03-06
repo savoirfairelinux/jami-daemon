@@ -35,9 +35,10 @@
 #define __VIDEO_INPUT_H__
 
 #include "noncopyable.h"
-#include "shm_sink.h"
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
+
+#include "sinkclient.h"
 
 #include <map>
 #include <atomic>
@@ -70,7 +71,7 @@ private:
     std::string sinkID_     = "local";
 
     MediaDecoder *decoder_  = nullptr;
-    SHMSink sink_;
+    SinkClient sink_;
     std::atomic<bool> switchPending_ = {false};
 
     DeviceParams decOpts_;

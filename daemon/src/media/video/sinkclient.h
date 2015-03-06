@@ -47,12 +47,12 @@ class SHMHeader;
 
 namespace ring { namespace video {
 
-class SHMSink : public VideoFramePassiveReader
+class SinkClient : public VideoFramePassiveReader
 {
     public:
-        SHMSink(const std::string &shm_name = "");
+        SinkClient(const std::string &shm_name = "");
         std::string openedName() const { return opened_name_; }
-        ~SHMSink();
+        ~SinkClient();
 
         bool start();
         bool stop();
@@ -66,8 +66,10 @@ class SHMSink : public VideoFramePassiveReader
         // as VideoFramePassiveReader
         void update(Observable<std::shared_ptr<ring::VideoFrame>>*, std::shared_ptr<ring::VideoFrame> &);
 
+        void registerFrameListener(std::function<void(const std::vector<unsigned char> &frame)>);
+
     private:
-        NON_COPYABLE(SHMSink);
+        NON_COPYABLE(SinkClient);
 
         void shm_lock();
         void shm_unlock();
