@@ -30,6 +30,9 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 #include "logger.h"
 #include "system_codec_container.h"
 
