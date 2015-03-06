@@ -33,8 +33,7 @@
  *  as that of the covered work.
  */
 
-#ifndef SHM_SINK_H_
-#define SHM_SINK_H_
+#pragma once
 
 #include "noncopyable.h"
 #include "video_provider.h"
@@ -47,12 +46,12 @@ class SHMHeader;
 
 namespace ring { namespace video {
 
-class SHMSink : public VideoFramePassiveReader
+class SinkClient : public VideoFramePassiveReader
 {
     public:
-        SHMSink(const std::string &shm_name = "");
+        SinkClient(const std::string &shm_name = "");
         std::string openedName() const { return opened_name_; }
-        ~SHMSink();
+        ~SinkClient();
 
         bool start();
         bool stop();
@@ -64,10 +63,11 @@ class SHMSink : public VideoFramePassiveReader
         void render_callback(VideoProvider &provider, size_t bytes);
 
         // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<ring::VideoFrame>>*, std::shared_ptr<ring::VideoFrame> &);
+        void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
+                    std::shared_ptr<ring::VideoFrame> &);
 
     private:
-        NON_COPYABLE(SHMSink);
+        NON_COPYABLE(SinkClient);
 
         void shm_lock();
         void shm_unlock();
@@ -83,5 +83,3 @@ class SHMSink : public VideoFramePassiveReader
 };
 
 }} // namespace ring::video
-
-#endif // SHM_SINK_H_
