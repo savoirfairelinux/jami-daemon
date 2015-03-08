@@ -103,6 +103,8 @@ constexpr static const char LOCAL_PORT            [] = "Account.localPort";
 constexpr static const char PUBLISHED_PORT        [] = "Account.publishedPort";
 constexpr static const char PUBLISHED_ADDRESS     [] = "Account.publishedAddress";
 constexpr static const char USER_AGENT            [] = "Account.useragent";
+constexpr static const char UPNP_ENABLED          [] = "Account.upnpEnabled";
+constexpr static const char HAS_CUSTOM_USER_AGENT [] = "Account.hasCustomUserAgent";
 
 
 namespace Audio {
