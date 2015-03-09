@@ -72,6 +72,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
         std::bind(&SipsIceTransport::setup, this),
         std::bind(&SipsIceTransport::loop, this),
         std::bind(&SipsIceTransport::clean, this))
+    , xcred_ {nullptr, gnutls_certificate_free_credentials}
 {
     trData_.self = this;
 
@@ -234,33 +235,36 @@ SipsIceTransport::startTlsSession()
     gnutls_priority_set(session_, priority_cache);
 
     /* Allocate credentials for handshaking and transmission */
-    ret = gnutls_certificate_allocate_credentials(&xcred_);
-    if (ret < 0) {
+    gnutls_certificate_credentials_t certCred;
+    ret = gnutls_certificate_allocate_credentials(&certCred);
+    if (ret < 0 or not certCred) {
         RING_ERR("Can't allocate credentials");
         reset();
         return PJ_ENOMEM;
     }
 
+    xcred_.reset(certCred);
+
     if (is_server_) {
         auto& dh_params = param_.dh_params.get();
         if (dh_params)
-            gnutls_certificate_set_dh_params(xcred_, dh_params.get());
+            gnutls_certificate_set_dh_params(certCred, dh_params.get());
         else
             RING_ERR("DH params unavaliable");
     }
 
-    gnutls_certificate_set_verify_function(xcred_, [](gnutls_session_t session) {
+    gnutls_certificate_set_verify_function(certCred, [](gnutls_session_t session) {
         auto this_ = reinterpret_cast<SipsIceTransport*>(gnutls_session_get_ptr(session));
         return this_->verifyCertificate();
     });
 
     if (not param_.ca_list.empty()) {
         /* Load CA if one is specified. */
-        ret = gnutls_certificate_set_x509_trust_file(xcred_,
+        ret = gnutls_certificate_set_x509_trust_file(certCred,
                                                      param_.ca_list.c_str(),
                                                      GNUTLS_X509_FMT_PEM);
         if (ret < 0)
-            ret = gnutls_certificate_set_x509_trust_file(xcred_,
+            ret = gnutls_certificate_set_x509_trust_file(certCred,
                                                          param_.ca_list.c_str(),
                                                          GNUTLS_X509_FMT_DER);
         if (ret < 0)
@@ -269,7 +273,7 @@ SipsIceTransport::startTlsSession()
 
         if (param_.id.first) {
             /* Load certificate, key and pass */
-            ret = gnutls_certificate_set_x509_key(xcred_,
+            ret = gnutls_certificate_set_x509_key(certCred,
                                                   &param_.id.second->cert, 1,
                                                   param_.id.first->x509_key);
             if (ret < 0)
@@ -279,7 +283,7 @@ SipsIceTransport::startTlsSession()
     }
 
     /* Finally set credentials for this session */
-    ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, xcred_);
+    ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, certCred);
     if (ret != GNUTLS_E_SUCCESS) {
         reset();
         return tls_status_from_err(ret);
@@ -326,10 +330,7 @@ SipsIceTransport::closeTlsSession()
         session_ = nullptr;
     }
 
-    if (xcred_) {
-        gnutls_certificate_free_credentials(xcred_);
-        xcred_ = nullptr;
-    }
+    xcred_.reset();
 }
 
 void
