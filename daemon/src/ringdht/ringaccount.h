@@ -67,6 +67,10 @@ namespace Conf {
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 }
 
+namespace tls {
+class GnuTlsGlobalInit;
+} // namespace tls
+
 class RingAccount : public SIPAccountBase {
     public:
         constexpr static const char * const ACCOUNT_TYPE = "RING";
@@ -379,6 +383,7 @@ class RingAccount : public SIPAccountBase {
         pj_str_t contact_ {contactBuffer_, 0};
         pjsip_transport *via_tp_ {nullptr};
 
+        std::unique_ptr<tls::GnuTlsGlobalInit> gtlsGIG_;
 };
 
 } // namespace ring

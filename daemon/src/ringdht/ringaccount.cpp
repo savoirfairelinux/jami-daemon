@@ -62,6 +62,8 @@
 
 #include "config/yamlparser.h"
 
+#include "gnutls_support.h"
+
 #include <opendht/securedht.h>
 #include <yaml-cpp/yaml.h>
 
@@ -82,6 +84,7 @@ constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
+    , gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -96,12 +99,6 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
     caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
     checkIdentityPath();
-
-    int rc = gnutls_global_init();
-    if (rc != GNUTLS_E_SUCCESS) {
-        RING_ERR("Error initializing GnuTLS : %s", gnutls_strerror(rc));
-        throw VoipLinkException("Can't initialize GnuTLS.");
-    }
 }
 
 RingAccount::~RingAccount()

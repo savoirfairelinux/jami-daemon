@@ -80,7 +80,7 @@
 #include "client/signal.h"
 
 #if HAVE_TLS
-#include <gnutls/gnutls.h> // init/logging
+#include "gnutls_support.h"
 #endif
 
 #include <cerrno>
@@ -93,6 +93,7 @@
 #include <sys/types.h> // mkdir(2)
 #include <sys/stat.h>  // mkdir(2)
 #include <memory>
+#include <mutex>
 
 namespace ring {
 
@@ -203,6 +204,10 @@ ManagerImpl::ManagerImpl() :
     , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
 {
+#if HAVE_TLS
+    thread_local static auto gnutlGIG = tls::GnuTlsGlobalInit::make_guard();
+#endif
+
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
     std::random_device rdev;
@@ -258,15 +263,9 @@ ManagerImpl::init(const std::string &config_file)
              pj_get_version(), PJ_OS_NAME);
 
 #if HAVE_TLS
-    // Init GnuTLS library
-    int ret = gnutls_global_init();
-    if (ret < 0)
-        throw std::runtime_error("Can't initialise GNUTLS : "
-                                 + std::string(gnutls_strerror(ret)));
     setGnuTlsLogLevel();
-#endif // HAVE_TLS
-
     RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
+#endif
 
     ice_tf_.reset(new IceTransportFactory());
 
@@ -358,9 +357,6 @@ ManagerImpl::finish() noexcept
 
         ice_tf_.reset();
         pj_shutdown();
-#if HAVE_TLS
-        gnutls_global_deinit();
-#endif // HAVE_TLS
     } catch (const VoipLinkException &err) {
         RING_ERR("%s", err.what());
     }

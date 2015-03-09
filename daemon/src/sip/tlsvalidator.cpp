@@ -42,6 +42,8 @@
 #include "logger.h"
 #include "security_const.h"
 
+#include "gnutls_support.h"
+
 #include <sstream>
 #include <iomanip>
 
@@ -58,9 +60,6 @@
 #include <netdb.h>
 #include <unistd.h>
 #include <fcntl.h>
-
-#include <gnutls/gnutls.h>
-#include <gnutls/x509.h>
 
 namespace ring {
 
@@ -211,15 +210,12 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
 }};
 
 
-TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey) :
-    certificatePath_(certificate),
-    privateKeyPath_(privatekey),
-    certificateFound_(false)
+TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey)
+    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
+    , certificatePath_(certificate)
+    , privateKeyPath_(privatekey)
+    , certificateFound_(false)
 {
-    int err = gnutls_global_init();
-    if (err != GNUTLS_E_SUCCESS)
-        throw TlsValidatorException(gnutls_strerror(err));
-
     try {
         x509crt_ = {fileutils::loadFile(certificatePath_)};
         certificateContent_ = x509crt_.getPacked();
@@ -237,13 +233,10 @@ TlsValidator::TlsValidator(const std::string& certificate, const std::string& pr
     }
 }
 
-TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw) :
-    certificateFound_(true)
+TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
+    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
+    , certificateFound_(true)
 {
-    int err = gnutls_global_init();
-    if (err != GNUTLS_E_SUCCESS)
-        throw TlsValidatorException(gnutls_strerror(err));
-
     try {
         x509crt_ = {certificate_raw};
         certificateContent_ = x509crt_.getPacked();
@@ -255,7 +248,6 @@ TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw) :
 
 TlsValidator::~TlsValidator()
 {
-    gnutls_global_deinit();
 }
 
 /**

@@ -31,6 +31,7 @@
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
 #include "logger.h"
+#include "gnutls_support.h"
 
 #include <pjsip/sip_transport.h>
 #include <pjsip/sip_endpoint.h>
@@ -60,7 +61,8 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    const TlsParams& param,
                                    const std::shared_ptr<ring::IceTransport>& ice,
                                    int comp_id)
-    : pool_(nullptr, pj_pool_release)
+    : gtlsGIG_(GnuTlsGlobalInit::make_guard())
+    , pool_ {nullptr, pj_pool_release}
     , rxPool_(nullptr, pj_pool_release)
     , trData_()
     , ice_(ice)
@@ -179,11 +181,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                               &tls_strerror);
     pj_assert(status == PJ_SUCCESS);*/
 
-    /* Init GnuTLS library */
-    int ret = gnutls_global_init();
-    if (ret < 0)
-        throw std::runtime_error("Can't initialise GNUTLS : "
-                                 + std::string(gnutls_strerror(ret)));
 
     gnutls_priority_init(&priority_cache,
                          "SECURE192:-VERS-TLS-ALL:+VERS-DTLS1.0:%SERVER_PRECEDENCE",
@@ -214,9 +211,6 @@ SipsIceTransport::~SipsIceTransport()
     reset();
     ice_->setOnRecv(comp_id_, nullptr);
     tlsThread_.join();
-
-    /* Free GnuTLS library */
-    gnutls_global_deinit();
 
     pj_lock_destroy(trData_.base.lock);
     pj_atomic_destroy(trData_.base.ref_cnt);
@@ -688,6 +682,10 @@ bool
 SipsIceTransport::setup()
 {
     RING_WARN("Starting GnuTLS thread");
+
+    // GNU TLS library init
+    thread_local static auto gtlsGIG = GnuTlsGlobalInit::make_guard();
+
     if (is_server_) {
         gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
         state_ = TlsConnectionState::COOKIE;
