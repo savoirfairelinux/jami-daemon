@@ -356,7 +356,7 @@ SIPCall::refuse()
     if (!isIncoming() or getConnectionState() == Call::CONNECTED or !inv)
         return;
 
-    avformatrtp_->stop();
+    stopAllMedia();
 
     const pj_str_t contactStr(getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr));
 
@@ -545,10 +545,7 @@ SIPCall::onhold()
     if (not setState(Call::HOLD))
         return;
 
-    avformatrtp_->stop();
-#ifdef RING_VIDEO
-    videortp_.stop();
-#endif
+    stopAllMedia();
 
     if (getConnectionState() == Call::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS)
