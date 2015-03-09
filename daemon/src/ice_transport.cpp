@@ -719,6 +719,8 @@ IceTransportFactory::IceTransportFactory()
 
     ice_cfg_.af = pj_AF_INET();
 
+    ice_cfg_.stun.cfg.max_pkt_size = 8192;
+    ice_cfg_.turn.cfg.max_pkt_size = 8192;
     //ice_cfg_.stun.max_host_cands = icedemo.opt.max_host;
     ice_cfg_.opt.aggressive = PJ_FALSE;
 
