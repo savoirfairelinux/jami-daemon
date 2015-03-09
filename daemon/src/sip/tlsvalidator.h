@@ -31,6 +31,10 @@
 #include <string>
 #include <vector>
 
+namespace ring { namespace tls {
+class GnuTlsGlobalInit;
+}} // namespace ring::tls
+
 namespace ring {
 
 class TlsValidatorException : public std::runtime_error {
@@ -227,6 +231,7 @@ private:
 
     static const Matrix1D<CertificateCheck, CheckValuesType> enforcedCheckType;
 
+    std::unique_ptr<tls::GnuTlsGlobalInit> gtlsGIG_;
     std::string certificatePath_;
     std::string privateKeyPath_;
     std::vector<uint8_t> certificateContent_;

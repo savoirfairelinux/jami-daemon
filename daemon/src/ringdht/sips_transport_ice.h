@@ -39,7 +39,6 @@
 #include <pj/pool.h>
 
 #include <gnutls/gnutls.h>
-#include <gnutls/x509.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
 
@@ -56,6 +55,8 @@ class IceTransport;
 } // namespace ring
 
 namespace ring { namespace tls {
+
+class GnuTlsGlobalInit;
 
 enum class TlsConnectionState {
     DISCONNECTED,
@@ -102,6 +103,7 @@ struct SipsIceTransport
     }
 
 private:
+    std::unique_ptr<GnuTlsGlobalInit> gtlsGIG_;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> rxPool_;
 
