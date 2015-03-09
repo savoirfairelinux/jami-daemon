@@ -504,11 +504,13 @@ SipsIceTransport::getInfo(pj_ssl_sock_info* info)
 
         /* Current cipher */
         cipher = gnutls_cipher_get(session_);
-        for (size_t i; ; ++i) {
+        for (size_t i=0; ; ++i) {
             const auto suite = gnutls_cipher_suite_info(i, id, nullptr, &lookup,
                                                         nullptr, nullptr);
-            if (not suite)
+            if (not suite) {
+                RING_ERR("Can't find info for cipher %s (%d)", gnutls_cipher_get_name(cipher), cipher);
                 break;
+            }
 
             if (lookup == cipher) {
                 info->cipher = (pj_ssl_cipher) ((id[0] << 8) | id[1]);
