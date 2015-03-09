@@ -89,7 +89,7 @@ struct SipsIceTransport
                     const std::shared_ptr<IceTransport>& ice, int comp_id);
     ~SipsIceTransport();
 
-    void reset();
+    void shutdown();
 
     IpAddr getLocalAddress() const;
     IpAddr getRemoteAddress() const;
@@ -113,7 +113,6 @@ private:
     };
 
     TransportData trData_;
-    bool is_registered_ {false};
     const std::shared_ptr<IceTransport> ice_;
     const int comp_id_;
 
@@ -145,39 +144,39 @@ private:
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_;
 
+    // ThreadLoop
     bool setup();
     void loop();
     void clean();
 
     // SIP transport <-> GnuTLS
-    pj_status_t send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
-                     int addr_len, void *token,
+    pj_status_t send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
+                     int addr_len, void* token,
                      pjsip_transport_callback callback);
-    ssize_t trySend(pjsip_tx_data_op_key *tdata);
+    ssize_t trySend(pjsip_tx_data_op_key* tdata);
     pj_status_t flushOutputBuff();
-    std::list<DelayedTxData> outputBuff_ {};
-    std::mutex outputBuffMtx_ {};
+    std::list<DelayedTxData> outputBuff_;
+    std::mutex outputBuffMtx_;
     pjsip_rx_data rdata_;
 
     // GnuTLS <-> ICE
     ssize_t tlsSend(const void*, size_t);
     ssize_t tlsRecv(void* d , size_t s);
     int waitForTlsData(unsigned ms);
-    std::mutex inputBuffMtx_ {};
-    std::list<std::vector<uint8_t>> tlsInputBuff_ {};
+    std::mutex inputBuffMtx_;
+    std::list<std::vector<uint8_t>> tlsInputBuff_;
 
     pj_status_t startTlsSession();
     void closeTlsSession();
 
     pj_status_t tryHandshake();
-    void certGetCn(const pj_str_t *gen_name, pj_str_t *cn);
-    void certGetInfo(pj_pool_t *pool, pj_ssl_cert_info *ci, const gnutls_datum_t& cert);
+    void certGetCn(const pj_str_t* gen_name, pj_str_t* cn);
+    void certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci, const gnutls_datum_t& cert);
     void certUpdate();
-    pj_bool_t onHandshakeComplete(pj_status_t status);
+    bool onHandshakeComplete(pj_status_t status);
     int verifyCertificate();
-    pj_status_t getInfo (pj_ssl_sock_info *info);
+    void getInfo(pj_ssl_sock_info* info);
     static pj_status_t tls_status_from_err(int err);
-
 };
 
 }} // namespace ring::tls
