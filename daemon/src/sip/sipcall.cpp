@@ -920,8 +920,11 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
+        auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+        if (tlsInfos.cipher and not cipher)
+            RING_WARN("Unknown cipher: %d", tlsInfos.cipher);
+        details.emplace(DRing::Call::Details::TLS_CIPHER,       cipher ? cipher : "");
         details.emplace(DRing::Call::Details::TLS_PEER_CERT,    tlsInfos.peerCert.toString());
-        details.emplace(DRing::Call::Details::TLS_CIPHER,       pj_ssl_cipher_name(tlsInfos.cipher));
     }
     return details;
 }
