@@ -697,6 +697,12 @@ IceTransport::waitForData(int comp_id, unsigned int timeout)
     return io.queue.front().datalen;
 }
 
+// TODO: C++14 ? remove me and use std::min
+template< class T >
+static constexpr const T& min( const T& a, const T& b ) {
+    return (b < a) ? b : a;
+}
+
 IceTransportFactory::IceTransportFactory()
     : cp_()
     , pool_(nullptr, pj_pool_release)
@@ -712,8 +718,9 @@ IceTransportFactory::IceTransportFactory()
     pj_ice_strans_cfg_default(&ice_cfg_);
     ice_cfg_.stun_cfg.pf = &cp_.factory;
 
+    static constexpr auto IOQUEUE_MAX_HANDLES = min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY( pj_timer_heap_create(pool_.get(), 100, &ice_cfg_.stun_cfg.timer_heap) );
-    TRY( pj_ioqueue_create(pool_.get(), 16, &ice_cfg_.stun_cfg.ioqueue) );
+    TRY( pj_ioqueue_create(pool_.get(), IOQUEUE_MAX_HANDLES, &ice_cfg_.stun_cfg.ioqueue) );
 
     thread_ = std::thread(std::bind(&IceTransportFactory::processThread, this));
 
