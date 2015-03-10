@@ -437,7 +437,20 @@ class SIPAccount : public SIPAccountBase {
             return keepAliveEnabled_;
         }
 
-        virtual void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
+        void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
+
+        virtual inline std::shared_ptr<SipTransport> getTransport() {
+            return transport_;
+        }
+
+        inline pjsip_transport_type_e getTransportType() const {
+            return transportType_;
+        }
+
+        /**
+         * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
+         */
+        pjsip_tpselector getTransportSelector();
 
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
@@ -518,6 +531,12 @@ class SIPAccount : public SIPAccountBase {
         bool userMatch(const std::string &username) const;
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+
+        /**
+         * Callback called by the transport layer when the registration
+         * transport state changes.
+         */
+        virtual void onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info);
 
         struct {
             pj_bool_t    active;    /**< Flag of reregister status. */
