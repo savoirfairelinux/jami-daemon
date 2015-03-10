@@ -239,13 +239,7 @@ UPnPContext::addMapping(IGD* igd,
 {
     *upnp_error = -1;
 
-    IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
-    if (!local_ip) {
-        RING_DBG("UPnP: cannot determine local IP");
-        return {};
-    }
-
-    Mapping mapping{local_ip, port_external, port_internal};
+    Mapping mapping{port_external, port_internal};
 
     /* check if this mapping already exists
      * if the mapping is the same, then we just need to increment the number of users globally
@@ -440,6 +434,22 @@ UPnPContext::removeMapping(const Mapping& mapping)
 }
 
 IpAddr
+UPnPContext::getLocalIP()
+{
+    /* get a lock on the igd list because we don't want the igd to be modified
+     * or removed from the list while using it */
+    std::lock_guard<std::mutex> lock(validIGDMutex_);
+    IGD* igd = chooseIGD_unlocked();
+    if (not igd) {
+        RING_WARN("UPnP: no valid IGD available");
+        return {};
+    }
+
+    /* if its a valid igd, we must have already gotten the local ip */
+    return igd->localIp;
+}
+
+IpAddr
 UPnPContext::getExternalIP()
 {
     /* get a lock on the igd list because we don't want the igd to be modified
@@ -598,7 +608,10 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
                             new_igd->publicIp = getExternalIP(new_igd.get());
                             if (new_igd->publicIp) {
                                 RING_DBG("UPnP: got external IP: %s", new_igd->publicIp.toString().c_str());
-                                found_connected_IGD = true;
+                                new_igd->localIp = ip_utils::getLocalAddr(pj_AF_INET());
+                                if (new_igd->localIp)
+                                    found_connected_IGD = true;
+
                             }
                         }
                     }
@@ -895,15 +908,13 @@ UPnPContext::getExternalIP(const IGD* igd)
 void
 UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::string& description)
 {
-    /* need to get the local addr */
-    IpAddr local_ip = ip_utils::getLocalAddr(pj_AF_INET());
-    if (!local_ip) {
+    if (!igd->localIp) {
         RING_DBG("UPnP: cannot determine local IP in function removeMappingsByLocalIPAndDescription()");
         return;
     }
 
     RING_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
-             description.c_str(), local_ip.toString().c_str());
+             description.c_str(), igd->localIp.toString().c_str());
 
     int entry_idx = 0;
     bool done = false;
@@ -936,7 +947,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
             std::string client_ip = get_first_doc_item(response.get(), "NewInternalClient");
 
             /* check if same IP and description */
-            if (IpAddr(client_ip) == local_ip and desc_actual.compare(description) == 0) {
+            if (IpAddr(client_ip) == igd->localIp and desc_actual.compare(description) == 0) {
                 /* get the rest of the needed parameters */
                 std::string port_internal = get_first_doc_item(response.get(), "NewInternalPort");
                 std::string port_external = get_first_doc_item(response.get(), "NewExternalPort");
@@ -1021,7 +1032,7 @@ UPnPContext::addPortMapping(const IGD* igd, const Mapping& mapping, int* error_c
     UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
                     "NewInternalPort", mapping.getPortInternalStr().c_str());
     UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewInternalClient", mapping.getLocalIp().toString().c_str());
+                    "NewInternalClient", igd->localIp.toString().c_str());
     UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
                     "NewEnabled", "1");
     UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),

@@ -102,6 +102,12 @@ public:
      */
     IpAddr getExternalIP();
 
+
+    /**
+     * get our local ip
+     */
+    IpAddr getLocalIP();
+
     /**
      * callback function for the UPnP client (control point)
      * all UPnP events received by the client are processed here

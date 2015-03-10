@@ -34,8 +34,7 @@ namespace ring { namespace upnp {
 
 /* move constructor and operator */
 Mapping::Mapping(Mapping&& other)
-    : local_ip_(std::move(other.local_ip_))
-    , port_external_(other.port_external_)
+    : port_external_(other.port_external_)
     , port_internal_(other.port_internal_)
     , type_(other.type_)
     , description_(std::move(other.description_))
@@ -47,7 +46,6 @@ Mapping::Mapping(Mapping&& other)
 Mapping& Mapping::operator=(Mapping&& other)
 {
     if (this != &other) {
-        local_ip_ = std::move(other.local_ip_);
         port_external_ = other.port_external_;
         other.port_external_ = 0;
         port_internal_ = other.port_internal_;
@@ -64,8 +62,7 @@ bool operator== (Mapping &cMap1, Mapping &cMap2)
      * mapping; we don't compare the IGD because for now we assume that we always
      * use the same one and that all mappings are active
      */
-    return (cMap1.local_ip_ == cMap2.local_ip_ &&
-            cMap1.port_external_ == cMap2.port_external_ &&
+    return (cMap1.port_external_ == cMap2.port_external_ &&
             cMap1.port_internal_ == cMap2.port_internal_ &&
             cMap1.type_ == cMap2.type_);
 }

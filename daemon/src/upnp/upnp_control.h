@@ -100,6 +100,11 @@ public:
      */
     IpAddr getExternalIP();
 
+    /**
+     * tries to get the local ip of the IGD (router)
+     */
+    IpAddr getLocalIP();
+
 private:
 
     /**

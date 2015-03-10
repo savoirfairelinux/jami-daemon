@@ -52,13 +52,11 @@ public:
     constexpr static uint16_t UPNP_PORT_MAX = 65535;
 
     Mapping(
-        IpAddr local_ip = IpAddr(),
         uint16_t port_external = 0,
         uint16_t port_internal = 0,
         PortType type = PortType::UDP,
         std::string description = UPNP_DEFAULT_MAPPING_DESCRIPTION)
-    : local_ip_(local_ip)
-    , port_external_(port_external)
+    : port_external_(port_external)
     , port_internal_(port_internal)
     , type_(type)
     , description_(description)
@@ -73,7 +71,6 @@ public:
     friend bool operator== (Mapping &cRedir1, Mapping &cRedir2);
     friend bool operator!= (Mapping &cRedir1, Mapping &cRedir2);
 
-    const IpAddr& getLocalIp()         const { return local_ip_; };
     uint16_t      getPortExternal()    const { return port_external_; };
     std::string   getPortExternalStr() const { return std::to_string(port_external_); };
     uint16_t      getPortInternal()    const { return port_internal_; };
@@ -83,7 +80,7 @@ public:
     std::string   getDescription()     const { return description_; };
 
     std::string toString() const {
-        return local_ip_.toString() + ", " + getPortExternalStr() + ":" + getPortInternalStr() + ", " + getTypeStr();
+        return getPortExternalStr() + ":" + getPortInternalStr() + ", " + getTypeStr();
     };
 
     bool isValid() const {
@@ -98,7 +95,6 @@ private:
     NON_COPYABLE(Mapping);
 
 protected:
-    IpAddr local_ip_; /* the destination of the mapping */
     uint16_t port_external_;
     uint16_t port_internal_;
     PortType type_; /* UPD or TCP */
@@ -118,8 +114,7 @@ public:
      * this is only relevant when multiple accounts are using the same SIP port */
     unsigned users;
     GlobalMapping(const Mapping& mapping, unsigned users = 1)
-        : Mapping(mapping.getLocalIp()
-        , mapping.getPortExternal()
+        : Mapping(mapping.getPortExternal()
         , mapping.getPortInternal()
         , mapping.getType()
         , mapping.getDescription())
@@ -135,6 +130,9 @@ class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
 class IGD {
 public:
 
+    /* device address seen by IGD */
+    IpAddr localIp;
+
     /* external IP of IGD; can change */
     IpAddr publicIp;
 
@@ -143,7 +141,7 @@ public:
     PortMapGlobal tcpMappings;
 
     /* constructors */
-    IGD() {};
+    IGD() {}
     IGD(std::string UDN,
         std::string baseURL,
         std::string friendlyName,
@@ -158,7 +156,7 @@ public:
         , serviceId_(serviceId)
         , controlURL_(controlURL)
         , eventSubURL_(eventSubURL)
-        {};
+        {}
 
     /* move constructor and operator */
     IGD(IGD&&) = default;

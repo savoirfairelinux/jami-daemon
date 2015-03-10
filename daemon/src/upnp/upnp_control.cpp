@@ -127,6 +127,16 @@ Controller::removeMappings()
 }
 
 IpAddr
+Controller::getLocalIP()
+{
+#if HAVE_LIBUPNP
+    if (upnpContext_)
+        return upnpContext_->getLocalIP();
+#endif
+    return {}; //  empty address
+}
+
+IpAddr
 Controller::getExternalIP()
 {
 #if HAVE_LIBUPNP

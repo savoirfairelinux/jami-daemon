@@ -239,7 +239,7 @@ class IceTransport {
         /**
          * Adds candidate to ICE session
          */
-        void addCandidate(int comp_id, const IpAddr& addr);
+        void addCandidate(int comp_id, const IpAddr& localAddr, const IpAddr& publicAddr);
 
         /**
          * Creates UPnP port mappings and adds ICE candidates based on those mappings
