@@ -100,7 +100,13 @@ public:
     /**
      * tries to get the external ip of the router
      */
-    IpAddr getExternalIP();
+    IpAddr getExternalIP() const;
+
+
+    /**
+     * get our local ip
+     */
+    IpAddr getLocalIP() const;
 
     /**
      * callback function for the UPnP client (control point)
@@ -170,7 +176,7 @@ private:
      * chooses the IGD to use (currently selects the first one in the map)
      * assumes you already have a lock on igd_mutex_
      */
-    IGD* chooseIGD_unlocked();
+    IGD* chooseIGD_unlocked() const;
 
     /* sends out async search for IGD */
     void searchForIGD();

@@ -98,7 +98,12 @@ public:
     /**
      * tries to get the external ip of the IGD (router)
      */
-    IpAddr getExternalIP();
+    IpAddr getExternalIP() const;
+
+    /**
+     * tries to get the local ip of the IGD (router)
+     */
+    IpAddr getLocalIP() const;
 
 private:
 

@@ -436,7 +436,7 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
     pj_ice_sess_cand cand[PJ_ARRAY_SIZE(cand_)];
     unsigned cand_cnt = PJ_ARRAY_SIZE(cand);
 
-    if (pj_ice_strans_enum_cands(icest_.get(), comp_id+1, &cand_cnt, cand) != PJ_SUCCESS) {
+    if (pj_ice_strans_enum_cands(icest_.get(), comp_id, &cand_cnt, cand) != PJ_SUCCESS) {
         RING_ERR("pj_ice_strans_enum_cands() failed");
         return cand_addrs;
     }
@@ -447,24 +447,25 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
 }
 
 void
-IceTransport::addCandidate(int comp_id, const IpAddr& addr)
+IceTransport::addCandidate(int comp_id, const IpAddr& localAddr,
+                           const IpAddr& publicAddr)
 {
     pj_ice_sess_cand cand;
 
-    cand.type = PJ_ICE_CAND_TYPE_HOST;
-    cand.status = PJ_SUCCESS;
-    cand.comp_id = comp_id + 1; /* starts at 1, not 0 */
+    cand.type = PJ_ICE_CAND_TYPE_SRFLX;
+    cand.status = PJ_EPENDING; /* not used */
+    cand.comp_id = comp_id;
     cand.transport_id = 1; /* 1 = STUN */
     cand.local_pref = 65535; /* host */
     /* cand.foundation = ? */
     /* cand.prio = calculated by ice session */
     /* make base and addr the same since we're not going through a server */
-    pj_sockaddr_cp(&cand.base_addr, addr.pjPtr());
-    pj_sockaddr_cp(&cand.addr, addr.pjPtr());
-    pj_bzero(&cand.rel_addr, sizeof(cand.rel_addr)); /* not usring rel_addr */
+    pj_sockaddr_cp(&cand.base_addr, localAddr.pjPtr());
+    pj_sockaddr_cp(&cand.addr, publicAddr.pjPtr());
+    pj_sockaddr_cp(&cand.rel_addr, &cand.base_addr);
     pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
 
-    pj_ice_sess_add_cand(pj_ice_strans_get_ice_sess(icest_.get()),
+    auto ret = pj_ice_sess_add_cand(pj_ice_strans_get_ice_sess(icest_.get()),
         cand.comp_id,
         cand.transport_id,
         cand.type,
@@ -475,6 +476,17 @@ IceTransport::addCandidate(int comp_id, const IpAddr& addr)
         &cand.rel_addr,
         pj_sockaddr_get_len(&cand.addr),
         NULL);
+
+    if (ret != PJ_SUCCESS) {
+        RING_ERR("fail to add candidate for comp_id=%d : %s : %s", comp_id
+                 , localAddr.toString().c_str()
+                 , publicAddr.toString().c_str());
+        sip_utils::sip_strerror(ret);
+    } else {
+        RING_DBG("success to add candidate for comp_id=%d : %s : %s", comp_id
+                , localAddr.toString().c_str()
+                , publicAddr.toString().c_str());
+    }
 }
 
 void
@@ -486,23 +498,28 @@ IceTransport::selectUPnPIceCandidates()
          * create a port mapping either with that port, or with an available port
          * add candidate with that port and public IP
          */
-        IpAddr publicIP = upnp_->getExternalIP();
-        if (publicIP) {
-            for(unsigned comp_id = 0; comp_id < component_count_; comp_id++) {
-                RING_DBG("UPnP: Opening port(s) for Ice comp %d and adding candidate with public IP.", comp_id);
-                std::vector<IpAddr> candidates = getLocalCandidatesAddr(comp_id);
-                for(IpAddr addr : candidates) {
+        if (auto publicIP = upnp_->getExternalIP()) {
+            /* comp_id start at 1 */
+            for (unsigned comp_id = 1; comp_id <= component_count_; ++comp_id) {
+                RING_DBG("UPnP: Opening port(s) for ICE comp %d and adding candidate with public IP",
+                         comp_id);
+                auto candidates = getLocalCandidatesAddr(comp_id);
+                for (IpAddr addr : candidates) {
+                    auto localIP = upnp_->getLocalIP();
+                    localIP.setPort(addr.getPort());
+                    if (addr != localIP)
+                        continue;
                     uint16_t port = addr.getPort();
                     uint16_t port_used;
                     if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
                         publicIP.setPort(port_used);
-                        addCandidate(comp_id, publicIP);
+                        addCandidate(comp_id, addr, publicIP);
                     } else
-                        RING_WARN("UPnP: Could not create a port mapping for the ICE candidae.");
+                        RING_WARN("UPnP: Could not create a port mapping for the ICE candide");
                 }
             }
         } else {
-            RING_WARN("UPnP: Could not determine public IP for ICE candidates.");
+            RING_WARN("UPnP: Could not determine public IP for ICE candidates");
         }
     }
 }
