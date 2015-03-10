@@ -24,7 +24,7 @@ ifdef HAVE_ANDROID
 PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
 endif
 
-PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2
+PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CAND=32 -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2
 
 PKGS += pjproject
 # FIXME: nominally 2.2.0 is enough, but it has to be patched for gnutls

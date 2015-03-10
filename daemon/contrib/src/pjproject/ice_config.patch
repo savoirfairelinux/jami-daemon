@@ -1,5 +1,12 @@
 --- a/pjnath/include/pjnath/config.h
 +++ b/pjnath/include/pjnath/config.h
+@@ -231,5 +231,5 @@
+  * Default: 16
+  */
+ #ifndef PJ_ICE_MAX_CAND
+-#   define PJ_ICE_MAX_CAND			    16
++#   define PJ_ICE_MAX_CAND			    32
+ #endif
 @@ -250,5 +250,5 @@
   * the maximum number of components (PJ_ICE_MAX_COMP) value.
   */
