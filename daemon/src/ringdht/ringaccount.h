@@ -238,10 +238,6 @@ class RingAccount : public SIPAccountBase {
             return true;
         }
 
-        virtual bool getSrtpEnabled() const {
-            return true;
-        }
-
         virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
             return sip_utils::KeyExchangeProtocol::SDES;
         }
