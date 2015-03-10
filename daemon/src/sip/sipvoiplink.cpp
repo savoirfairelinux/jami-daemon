@@ -889,10 +889,18 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     const auto& account = call->getSIPAccount();
-
+    auto family = pj_AF_INET();
     // FIXME : for now, use the same address family as the SIP transport
-    auto family = pjsip_transport_type_get_af(account.getTransportType());
-    IpAddr addrToUse = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
+    if (auto dlg = inv->dlg) {
+        if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
+            if (auto tr = dlg->tp_sel.u.transport)
+                family = tr->local_addr.addr.sa_family;
+        } else if (dlg->tp_sel.type == PJSIP_TPSELECTOR_TRANSPORT) {
+            if (auto tr = dlg->tp_sel.u.listener)
+                family = tr->local_addr.addr.sa_family;
+        }
+    }
+    auto ifaceAddr = ip_utils::getInterfaceAddr(account.getLocalInterface(), family);
 
     IpAddr address;
     if (account.getUPnPActive()) {
@@ -901,11 +909,11 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
             account.getUPnPIpAddress() : account.getPublishedIpAddress();
     } else {
         address = account.getPublishedSameasLocal() ?
-            addrToUse : account.getPublishedIpAddress();
+            ifaceAddr : account.getPublishedIpAddress();
     }
 
     /* fallback on local address */
-    if (not address) address = addrToUse;
+    if (not address) address = ifaceAddr;
 
     call->setCallMediaLocal(address);
 

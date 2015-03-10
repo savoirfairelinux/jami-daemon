@@ -248,22 +248,9 @@ public:
 
     virtual std::string getToUri(const std::string& username) const = 0;
 
-    virtual std::string getServerUri() const = 0;
-
-    virtual void setTransport(const std::shared_ptr<SipTransport>& = nullptr);
-
-    inline const std::shared_ptr<SipTransport>& getTransport() {
-        return transport_;
+    virtual inline std::shared_ptr<SipTransport> getTransport() {
+        return nullptr;
     }
-
-    inline pjsip_transport_type_e getTransportType() const {
-        return transportType_;
-    }
-
-    /**
-     * Shortcut for SipTransport::getTransportSelector(account.getTransport()).
-     */
-    pjsip_tpselector getTransportSelector();
 
     /**
      * Socket port generators for media
@@ -291,12 +278,6 @@ protected:
      * @return std::map< std::string, std::string > The account volatile details
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
-
-    /**
-     * Callback called by the transport layer when the registration
-     * transport state changes.
-     */
-    virtual void onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info);
 
     /**
      * Voice over IP Link contains a listener thread and calls

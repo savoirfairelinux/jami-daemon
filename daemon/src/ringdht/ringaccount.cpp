@@ -104,7 +104,6 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 RingAccount::~RingAccount()
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    setTransport();
     dht_.join();
     gnutls_global_deinit();
 }
@@ -1098,18 +1097,17 @@ std::string RingAccount::getToUri(const std::string& to) const
 pj_str_t
 RingAccount::getContactHeader(pjsip_transport* t)
 {
-    if (!t && transport_)
-        t = transport_->get();
     if (!t) {
-        RING_ERR("Transport not created yet");
-        pj_cstr(&contact_, "<sips:>");
+        RING_ERR("getContactHeader: no SIP transport provided");
+        contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
+                                     "<sips:%s@ring.dht>",
+                                     username_.c_str());
         return contact_;
     }
 
     // FIXME: be sure that given transport is from SipIceTransport
     auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
     auto address = tlsTr->getLocalAddress();
-    RING_WARN("getContactHeader %s@%s", username_.c_str(), address.toString(true).c_str());
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                      "<sips:%s%s%s;transport=%s>",
                                      username_.c_str(),

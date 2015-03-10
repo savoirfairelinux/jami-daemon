@@ -53,9 +53,7 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
     : Account(accountID), link_(getSIPVoIPLink())
 {}
 
-SIPAccountBase::~SIPAccountBase() {
-    setTransport();
-}
+SIPAccountBase::~SIPAccountBase() {}
 
 template <typename T>
 static void
@@ -253,55 +251,6 @@ SIPAccountBase::getVolatileAccountDetails() const
     return a;
 }
 
-void
-SIPAccountBase::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
-{
-    pj_status_t currentStatus = transportStatus_;
-    RING_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
-    if (!SipTransport::isAlive(transport_, state)) {
-        if (info) {
-            char err_msg[128];
-            err_msg[0] = '\0';
-            pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
-            transportStatus_ = info->status;
-            transportError_  = std::string(descr.ptr, descr.slen);
-            RING_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
-        }
-        else {
-            // This is already the generic error used by pjsip.
-            transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
-            transportError_  = "";
-        }
-        setRegistrationState(RegistrationState::ERROR_GENERIC);
-        setTransport();
-    }
-    else {
-        // The status can be '0', this is the same as OK
-        transportStatus_ = info && info->status ? info->status : PJSIP_SC_OK;
-        transportError_  = "";
-    }
-
-    // Notify the client of the new transport state
-    if (currentStatus != transportStatus_)
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
-}
-
-void
-SIPAccountBase::setTransport(const std::shared_ptr<SipTransport>& t)
-{
-    if (t == transport_)
-        return;
-    if (transport_) {
-        RING_DBG("Removing transport from account");
-        transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
-    }
-
-    transport_ = t;
-
-    if (transport_)
-        transport_->addStateListener(reinterpret_cast<uintptr_t>(this), std::bind(&SIPAccountBase::onTransportStateChanged, this, std::placeholders::_1, std::placeholders::_2));
-}
-
 auto
 SIPAccountBase::getPortsReservation() noexcept -> decltype(getPortsReservation())
 {
@@ -344,12 +293,5 @@ SIPAccountBase::generateVideoPort() const
     return acquireRandomEvenPort(videoPortRange_);
 }
 #endif
-
-pjsip_tpselector
-SIPAccountBase::getTransportSelector() {
-    if (!transport_)
-        return SIPVoIPLink::getTransportSelector(nullptr);
-    return SIPVoIPLink::getTransportSelector(transport_->get());
-}
 
 } // namespace ring
