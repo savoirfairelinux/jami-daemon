@@ -273,6 +273,64 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     return call;
 }
 
+void
+SIPAccount::onTransportStateChanged(pjsip_transport_state state, const pjsip_transport_state_info *info)
+{
+    pj_status_t currentStatus = transportStatus_;
+    RING_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
+    if (!SipTransport::isAlive(transport_, state)) {
+        if (info) {
+            char err_msg[128];
+            err_msg[0] = '\0';
+            pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
+            transportStatus_ = info->status;
+            transportError_  = std::string(descr.ptr, descr.slen);
+            RING_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+        }
+        else {
+            // This is already the generic error used by pjsip.
+            transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
+            transportError_  = "";
+        }
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        setTransport();
+    }
+    else {
+        // The status can be '0', this is the same as OK
+        transportStatus_ = info && info->status ? info->status : PJSIP_SC_OK;
+        transportError_  = "";
+    }
+
+    // Notify the client of the new transport state
+    if (currentStatus != transportStatus_)
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
+}
+
+void
+SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
+{
+    if (t == transport_)
+        return;
+    if (transport_) {
+        RING_DBG("Removing transport from account");
+        if (regc_)
+            pjsip_regc_release_transport(regc_);
+        transport_->removeStateListener(reinterpret_cast<uintptr_t>(this));
+    }
+
+    transport_ = t;
+
+    if (transport_)
+        transport_->addStateListener(reinterpret_cast<uintptr_t>(this), std::bind(&SIPAccount::onTransportStateChanged, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+pjsip_tpselector
+SIPAccount::getTransportSelector() {
+    if (!transport_)
+        return SIPVoIPLink::getTransportSelector(nullptr);
+    return SIPVoIPLink::getTransportSelector(transport_->get());
+}
+
 std::shared_ptr<Call>
 SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
@@ -1587,16 +1645,6 @@ computeMd5HashFromCredential(const std::string& username,
         pj_val_to_hex_digit(digest[i], &hash[2 * i]);
 
     return std::string(hash, 32);
-}
-
-void
-SIPAccount::setTransport(const std::shared_ptr<SipTransport>& t)
-{
-    if (transport_ == t)
-        return;
-    if (transport_ && regc_)
-        pjsip_regc_release_transport(regc_);
-    SIPAccountBase::setTransport(t);
 }
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
