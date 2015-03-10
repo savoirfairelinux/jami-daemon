@@ -79,6 +79,7 @@ struct AudioFormat {
     }
 
     static const constexpr unsigned DEFAULT_SAMPLE_RATE = 48000;
+    static const AudioFormat DEFAULT() { return AudioFormat{16000, 1}; }
     static const AudioFormat NONE() { return AudioFormat{0, 0}; }
     static const AudioFormat MONO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 1}; }
     static const AudioFormat STEREO() { return AudioFormat{DEFAULT_SAMPLE_RATE, 2}; }
