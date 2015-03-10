@@ -223,6 +223,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     call->initIceTransport(true);
 
     call->setIPToIP(isIP2IP());
+    call->setSecure(isTlsEnabled());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 
