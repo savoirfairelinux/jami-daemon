@@ -232,10 +232,6 @@ public:
         publishedPort_ = port;
     }
 
-    virtual bool getSrtpEnabled() const {
-        return false;
-    }
-
     virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const = 0;
 
     virtual bool getSrtpFallback() const = 0;

@@ -381,6 +381,7 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
                             sip_utils::KeyExchangeProtocol security,
                             bool holding)
 {
+    RING_WARN("createLocalSession %d", security);
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
 
