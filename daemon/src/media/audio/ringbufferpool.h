@@ -134,8 +134,6 @@ class RingBufferPool {
     private:
         NON_COPYABLE(RingBufferPool);
 
-        static constexpr AudioFormat DEFAULT_POOL_FORMAT {16000, 1};
-
         // A set of RingBuffers readable by a call
         typedef std::set<std::shared_ptr<RingBuffer>,
             std::owner_less<std::shared_ptr<RingBuffer>> > ReadBindings;
@@ -161,7 +159,7 @@ class RingBufferPool {
 
         mutable std::recursive_mutex stateLock_ {};
 
-        AudioFormat internalAudioFormat_ {DEFAULT_POOL_FORMAT};
+        AudioFormat internalAudioFormat_ {AudioFormat::DEFAULT()};
 
         std::shared_ptr<RingBuffer> defaultRingBuffer_;
 };
