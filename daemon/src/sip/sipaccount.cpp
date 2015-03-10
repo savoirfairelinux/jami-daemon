@@ -243,17 +243,6 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     /* fallback on local address */
     if (not addrSdp) addrSdp = localAddress;
 
-    // Initialize the session using ULAW as default codec in case of early media
-    // The session should be ready to receive media once the first INVITE is sent, before
-    // the session initialization is completed
-    auto ac = std::static_pointer_cast<SystemAudioCodecInfo>
-        (getSystemCodecContainer()->searchCodecByName("PCMA", MEDIA_AUDIO));
-    if (!ac)
-        throw VoipLinkException("Could not instantiate codec for early media");
-
-    std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
-    audioCodecs.push_back(ac);
-
     // Building the local SDP offer
     auto& sdp = call->getSDP();
 
