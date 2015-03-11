@@ -267,15 +267,13 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
 
 #ifdef RING_VIDEO
         if (enc_name == "H264") {
-            std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            auto accountVideoCodec =
-                    std::static_pointer_cast<AccountVideoCodecInfo>(video_codec_list_[i]);
-            std::string profileLevelID(accountVideoCodec->parameters);
-
-            if (profileLevelID.empty())
-                profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
+            const auto accountVideoCodec = std::static_pointer_cast<AccountVideoCodecInfo>(video_codec_list_[i]);
+            const auto profileLevelID = accountVideoCodec->parameters.empty() ?
+                libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID :
+                accountVideoCodec->parameters;
+            std::ostringstream os;
             os << "fmtp:" << payload << " " << profileLevelID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), os.str().c_str(), NULL);
         }
@@ -587,7 +585,8 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
 std::vector<MediaDescription>
 Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
 {
-    static const pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+    static constexpr pj_str_t STR_RTPMAP = { (char*) "rtpmap", 6 };
+    static constexpr pj_str_t STR_FMTP = { (char*) "fmtp", 4 };
 
     std::vector<MediaDescription> ret;
     for (unsigned i = 0; i < session->media_count; i++) {
@@ -642,9 +641,15 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
                 continue;
             }
             descr.payload_type = pj_strtoul(&rtpmap.pt);
-            /*if (descr.type == MEDIA_VIDEO) {
-                descr.bitrate = getOutgoingVideoField(codec, "bitrate");
-            }*/
+            if (descr.type == MEDIA_VIDEO) {
+                const auto fmtpAttr = pjmedia_sdp_media_find_attr(media, &STR_FMTP, &media->desc.fmt[j]);
+                //descr.bitrate = getOutgoingVideoField(codec, "bitrate");
+                if (fmtpAttr && fmtpAttr->value.ptr && fmtpAttr->value.slen) {
+                    const auto& value = fmtpAttr->value;
+                    descr.parameters = std::string(value.ptr,
+                                                   value.ptr + value.slen);
+                }
+            }
             // for now, just keep the first codec only
             descr.enabled = true;
             break;
@@ -692,36 +697,6 @@ namespace
         return elems;
     }
 } // end anonymous namespace
-
-string Sdp::getLineFromSession(const pjmedia_sdp_session *sess, const string &keyword) const
-{
-    char buffer[2048];
-    int size = pjmedia_sdp_print(sess, buffer, sizeof buffer);
-    string sdp(buffer, size);
-    const vector<string> tokens(split(sdp, '\n'));
-    for (const auto &item : tokens)
-        if (item.find(keyword) != string::npos)
-            return item;
-    return "";
-}
-
-
-void
-Sdp::getProfileLevelID(const pjmedia_sdp_session *session,
-                       std::string &profile, int payload) const
-{
-    std::ostringstream os;
-    os << "a=fmtp:" << payload;
-    string fmtpLine(getLineFromSession(session, os.str()));
-    const std::string needle("profile-level-id=");
-    const size_t DIGITS_IN_PROFILE_LEVEL_ID = 6;
-    const size_t needleLength = needle.size() + DIGITS_IN_PROFILE_LEVEL_ID;
-    const size_t pos = fmtpLine.find(needle);
-    if (pos != std::string::npos and fmtpLine.size() >= (pos + needleLength)) {
-        profile = fmtpLine.substr(pos, needleLength);
-        RING_DBG("Using %s", profile.c_str());
-    }
-}
 
 void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
