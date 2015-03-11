@@ -682,9 +682,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     if (hasCredentials()) {
         for (const auto &vect_item : credentials_) {
             const std::string password = retrievePassword(vect_item, username_);
-
             if (not password.empty())
-                a[Conf::CONFIG_ACCOUNT_PASSWORD] = password;
+                a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD, password);
         }
     }
 
@@ -693,69 +692,47 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     if (isIP2IP())
         registrationStateDescription = "Direct IP call";
     else {
-        int code = registrationStateDetailed_.first;
-        std::stringstream out;
-        out << code;
-        registrationStateCode = out.str();
+        registrationStateCode = ring::to_string(registrationStateDetailed_.first);
         registrationStateDescription = registrationStateDetailed_.second;
     }
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, registrationStateCode);
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDescription);
 
-    a[Conf::CONFIG_LOCAL_PORT] = ring::to_string(localPort_);
+    a.emplace(Conf::CONFIG_LOCAL_PORT,                      ring::to_string(localPort_));
+    a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     ring::to_string(registrationExpire_));
+    a.emplace(Conf::CONFIG_STUN_ENABLE,                     stunEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_STUN_SERVER,                     stunServer_);
+    a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
-    a[Conf::CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR;
-    // initialize status values
-    a[Conf::CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
+    a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PRESENCE_PUBLISH_SUPPORTED,      presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED,    presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PRESENCE_STATUS,                 presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PRESENCE_NOTE,                   presence_ ? presence_->getNote() : " ");
 
-    // Add sip specific details
-    a[Conf::CONFIG_ACCOUNT_ROUTESET] = serviceRoute_;
+    auto tlsSettings(getTlsSettings());
+    a.insert(tlsSettings.begin(), tlsSettings.end());
 
-    std::stringstream registrationExpireStr;
-    registrationExpireStr << registrationExpire_;
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE] = registrationExpireStr.str();
-
-    a[Conf::CONFIG_STUN_ENABLE] = stunEnabled_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_STUN_SERVER] = stunServer_;
-    a[Conf::CONFIG_KEEP_ALIVE_ENABLED] = keepAliveEnabled_ ? TRUE_STR : FALSE_STR;
-
-    // TLS listener is unique and parameters are modified through IP2IP_PROFILE
-    a[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_TLS_LISTENER_PORT] = ring::to_string(tlsListenerPort_);
-    a[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
-    a[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
-    a[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    a[Conf::CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-
-    a[Conf::CONFIG_SRTP_KEY_EXCHANGE] = sip_utils::getKeyExchangeName(srtpKeyExchange_);
-    a[Conf::CONFIG_SRTP_ENABLE] = isSrtpEnabled() ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
-
-    a[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
-
+    a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE,               sip_utils::getKeyExchangeName(srtpKeyExchange_));
+    a.emplace(Conf::CONFIG_SRTP_ENABLE,                     isSrtpEnabled() ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK,               srtpFallback_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ZRTP_DISPLAY_SAS,                zrtpDisplaySas_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE,           zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ZRTP_HELLO_HASH,                 zrtpHelloHash_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ZRTP_NOT_SUPP_WARNING,           zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR);
     return a;
 }
 
 std::map<std::string, std::string> SIPAccount::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getVolatileAccountDetails();
-    std::stringstream codestream;
-    codestream << registrationStateDetailed_.first;
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = codestream.str();
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDetailed_.second;
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, ring::to_string(registrationStateDetailed_.first));
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDetailed_.second);
 
     if (presence_) {
-        a[Conf::CONFIG_PRESENCE_STATUS] = presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR;
-        a[Conf::CONFIG_PRESENCE_NOTE] = presence_ ? presence_->getNote() : " ";
+        a.emplace(Conf::CONFIG_PRESENCE_STATUS,     presence_->isOnline() ? TRUE_STR : FALSE_STR);
+        a.emplace(Conf::CONFIG_PRESENCE_NOTE,       presence_->getNote());
     }
 
 #if HAVE_TLS
@@ -1761,26 +1738,24 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
     return ip2ipAccountDetails;
 }
 
-std::map<std::string, std::string> SIPAccount::getTlsSettings() const
+std::map<std::string, std::string>
+SIPAccount::getTlsSettings() const
 {
-    assert(isIP2IP());
-    std::map<std::string, std::string> tlsSettings;
-
-    tlsSettings[Conf::CONFIG_TLS_LISTENER_PORT] = ring::to_string(tlsListenerPort_);
-    tlsSettings[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
-    tlsSettings[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    tlsSettings[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    tlsSettings[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
-    tlsSettings[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
-    tlsSettings[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
-    tlsSettings[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;
-    tlsSettings[Conf::CONFIG_TLS_VERIFY_SERVER] = tlsVerifyServer_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[Conf::CONFIG_TLS_VERIFY_CLIENT] = tlsVerifyClient_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
-    tlsSettings[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
-
-    return tlsSettings;
+    return {
+        {Conf::CONFIG_TLS_ENABLE,           tlsEnable_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_TLS_LISTENER_PORT,    ring::to_string(tlsListenerPort_)},
+        {Conf::CONFIG_TLS_CA_LIST_FILE,     tlsCaListFile_},
+        {Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_},
+        {Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_},
+        {Conf::CONFIG_TLS_PASSWORD,         tlsPassword_},
+        {Conf::CONFIG_TLS_METHOD,           tlsMethod_},
+        {Conf::CONFIG_TLS_CIPHERS,          tlsCiphers_},
+        {Conf::CONFIG_TLS_SERVER_NAME,      tlsServerName_},
+        {Conf::CONFIG_TLS_VERIFY_SERVER,    tlsVerifyServer_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_TLS_VERIFY_CLIENT,    tlsVerifyClient_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    tlsNegotiationTimeoutSec_}
+    };
 }
 
 static void
