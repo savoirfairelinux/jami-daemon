@@ -772,31 +772,6 @@ SIPCall::startAllMedia()
             continue;
         }
 
-        auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(local.codec);
-        RING_DBG("########## UPDATE MEDIA ############");
-        RING_DBG("[LOCAL][codec:%s][enabled:%s][holding:%s]"
-                , local.codec->systemCodecInfo.to_string().c_str()
-                , local.enabled ? "true" : "false"
-                , local.holding ? "true" : "false"
-                );
-        RING_DBG("[LOCAL][Audioformat] [sampleRate%d][nbChanels:%d]"
-                , accountAudioCodec->audioformat.sample_rate
-                , accountAudioCodec->audioformat.nb_channels
-                );
-        RING_DBG("[LOCAL] SDP: \n %s", local.receiving_sdp.c_str());
-
-        accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(remote.codec);
-        RING_DBG("[REMOTE][codec:%s][enabled:%s][holding:%s]"
-                , remote.codec->systemCodecInfo.to_string().c_str()
-                , remote.enabled ? "true" : "false"
-                , remote.holding ? "true" : "false"
-                );
-        RING_DBG("[REMOTE][Audioformat] [sampleRate%d][nbChanels:%d]"
-                , accountAudioCodec->audioformat.sample_rate
-                , accountAudioCodec->audioformat.nb_channels
-                );
-        RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
-        RING_DBG("####################################");
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO) {
             if (videoInput_.empty())
@@ -804,7 +779,7 @@ SIPCall::startAllMedia()
             videortp_.switchInput(videoInput_);
         }
 #endif
-        rtp->updateMedia(local, remote);
+        rtp->updateMedia(remote, local);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
                        newIceSocket(ice_comp_id + 1));
