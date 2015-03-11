@@ -63,6 +63,10 @@
 
 #include "system_codec_container.h"
 
+#include "upnp/upnp_control.h"
+#include "ip_utils.h"
+#include "string_utils.h"
+
 #include <unistd.h>
 #include <pwd.h>
 
@@ -71,9 +75,6 @@
 #include <memory>
 #include <sstream>
 #include <cstdlib>
-
-#include "upnp/upnp_control.h"
-#include "ip_utils.h"
 
 namespace ring {
 
@@ -430,6 +431,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
 
+    out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
+
     // each credential is a map, and we can have multiple credentials
     out << YAML::Key << Conf::CRED_KEY << YAML::Value << credentials_;
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
@@ -448,6 +451,7 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
     SIPAccountBase::serializeTls(out);
     out << YAML::Key << Conf::TLS_ENABLE_KEY << YAML::Value << tlsEnable_;
+    out << YAML::Key << Conf::TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
     out << YAML::Key << Conf::VERIFY_CLIENT_KEY << YAML::Value << tlsVerifyClient_;
     out << YAML::Key << Conf::VERIFY_SERVER_KEY << YAML::Value << tlsVerifyServer_;
     out << YAML::Key << Conf::REQUIRE_CERTIF_KEY << YAML::Value << tlsRequireClientCertificate_;
@@ -506,6 +510,10 @@ void SIPAccount::unserialize(const YAML::Node &node)
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
+    int port = sip_utils::DEFAULT_SIP_PORT;
+    parseValue(node, Conf::PORT_KEY, port);
+    localPort_ = port;
+
     if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
 
     if (not isIP2IP()) parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
@@ -548,6 +556,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
     const auto &tlsMap = node[Conf::TLS_KEY];
 
     parseValue(tlsMap, Conf::TLS_ENABLE_KEY, tlsEnable_);
+    parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
     parseValue(tlsMap, Conf::CIPHERS_KEY, tlsCiphers_);
 
     std::string tmpMethod(tlsMethod_);
@@ -585,6 +594,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 {
     SIPAccountBase::setAccountDetails(details);
 
+    parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+
     // SIP specific account settings
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
 
@@ -611,6 +622,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
     // TLS settings
     parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
+    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     auto iter = details.find(Conf::CONFIG_TLS_METHOD);
     if (iter != details.end())
         validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
@@ -690,6 +702,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE] = registrationStateCode;
     a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC] = registrationStateDescription;
 
+    a[Conf::CONFIG_LOCAL_PORT] = ring::to_string(localPort_);
+
     a[Conf::CONFIG_PRESENCE_ENABLED] = presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_PRESENCE_PUBLISH_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED] = presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR;
@@ -710,6 +724,7 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
 
     // TLS listener is unique and parameters are modified through IP2IP_PROFILE
     a[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_TLS_LISTENER_PORT] = ring::to_string(tlsListenerPort_);
     a[Conf::CONFIG_TLS_METHOD] = tlsMethod_;
     a[Conf::CONFIG_TLS_CIPHERS] = tlsCiphers_;
     a[Conf::CONFIG_TLS_SERVER_NAME] = tlsServerName_;
@@ -1737,10 +1752,7 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
     ip2ipAccountDetails[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[Conf::CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
-    std::stringstream portstr;
-    portstr << localPort_;
-    ip2ipAccountDetails[Conf::CONFIG_LOCAL_PORT] = portstr.str();
+    ip2ipAccountDetails[Conf::CONFIG_LOCAL_PORT] = ring::to_string(localPort_);
 
     std::map<std::string, std::string> tlsSettings(getTlsSettings());
     std::copy(tlsSettings.begin(), tlsSettings.end(), std::inserter(
@@ -1754,9 +1766,7 @@ std::map<std::string, std::string> SIPAccount::getTlsSettings() const
     assert(isIP2IP());
     std::map<std::string, std::string> tlsSettings;
 
-    std::stringstream portstr;
-    portstr << tlsListenerPort_;
-    tlsSettings[Conf::CONFIG_TLS_LISTENER_PORT] = portstr.str();
+    tlsSettings[Conf::CONFIG_TLS_LISTENER_PORT] = ring::to_string(tlsListenerPort_);
     tlsSettings[Conf::CONFIG_TLS_ENABLE] = tlsEnable_ ? TRUE_STR : FALSE_STR;
     tlsSettings[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
     tlsSettings[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
