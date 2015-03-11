@@ -83,7 +83,6 @@ using yaml_utils::parseVectorMap;
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
 static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
-static const char *const VALID_SRTP_KEY_EXCHANGES[] = {"", "sdes", "zrtp"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
@@ -223,6 +222,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     call->initIceTransport(true);
 
     call->setIPToIP(isIP2IP());
+    call->setSecure(isTlsEnabled());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 
@@ -459,8 +459,7 @@ void SIPAccount::serialize(YAML::Emitter &out)
 
     // srtp submap
     out << YAML::Key << Conf::SRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << Conf::SRTP_ENABLE_KEY << YAML::Value << srtpEnabled_;
-    out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << srtpKeyExchange_;
+    out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << sip_utils::getKeyExchangeName(srtpKeyExchange_);
     out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
     out << YAML::EndMap;
 
@@ -564,11 +563,9 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     // get srtp submap
     const auto &srtpMap = node[Conf::SRTP_KEY];
-    parseValue(srtpMap, Conf::SRTP_ENABLE_KEY, srtpEnabled_);
-
     std::string tmpKey;
     parseValue(srtpMap, Conf::KEY_EXCHANGE_KEY, tmpKey);
-    validate(srtpKeyExchange_, tmpKey, VALID_SRTP_KEY_EXCHANGES);
+    srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(tmpKey.c_str());
     parseValue(srtpMap, Conf::RTP_FALLBACK_KEY, srtpFallback_);
 }
 
@@ -629,11 +626,10 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
 
     // srtp settings
-    parseBool(details, Conf::CONFIG_SRTP_ENABLE, srtpEnabled_);
     parseBool(details, Conf::CONFIG_SRTP_RTP_FALLBACK, srtpFallback_);
     iter = details.find(Conf::CONFIG_SRTP_KEY_EXCHANGE);
     if (iter != details.end())
-        validate(srtpKeyExchange_, iter->second, VALID_SRTP_KEY_EXCHANGES);
+        srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(iter->second.c_str());
 
     if (credentials_.empty()) { // credentials not set, construct 1 entry
         RING_WARN("No credentials set, inferring them...");
@@ -722,8 +718,8 @@ std::map<std::string, std::string> SIPAccount::getAccountDetails() const
     a[Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE] = tlsRequireClientCertificate_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC] = tlsNegotiationTimeoutSec_;
 
-    a[Conf::CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    a[Conf::CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    a[Conf::CONFIG_SRTP_KEY_EXCHANGE] = sip_utils::getKeyExchangeName(srtpKeyExchange_);
+    a[Conf::CONFIG_SRTP_ENABLE] = isSrtpEnabled() ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
 
     a[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
@@ -1734,8 +1730,8 @@ std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
 {
     assert(isIP2IP());
     std::map<std::string, std::string> ip2ipAccountDetails;
-    ip2ipAccountDetails[Conf::CONFIG_SRTP_KEY_EXCHANGE] = srtpKeyExchange_;
-    ip2ipAccountDetails[Conf::CONFIG_SRTP_ENABLE] = srtpEnabled_ ? TRUE_STR : FALSE_STR;
+    ip2ipAccountDetails[Conf::CONFIG_SRTP_KEY_EXCHANGE] = sip_utils::getKeyExchangeName(srtpKeyExchange_);
+    ip2ipAccountDetails[Conf::CONFIG_SRTP_ENABLE] = isSrtpEnabled() ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
     ip2ipAccountDetails[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;

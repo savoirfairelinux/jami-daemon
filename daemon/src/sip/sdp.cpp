@@ -654,9 +654,9 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             break;
         }
 
-        if (remote) {
+        if (not remote) {
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
-            RING_WARN("Filtered SDP for remote media #%u :\n%s", i, descr.receiving_sdp.c_str());
+            RING_WARN("Filtered SDP for local media #%u :\n%s", i, descr.receiving_sdp.c_str());
         }
 
         // get crypto info
