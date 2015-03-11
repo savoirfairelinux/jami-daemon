@@ -366,7 +366,7 @@ AudioRtpSession::~AudioRtpSession()
 void
 AudioRtpSession::startSender()
 {
-    if (not local_.enabled or local_.holding) {
+    if (not send_.enabled or send_.holding) {
         RING_WARN("Audio sending disabled");
         if (sender_) {
             if (socketPair_)
@@ -380,18 +380,18 @@ AudioRtpSession::startSender()
         RING_WARN("Restarting audio sender");
 
     try {
-        sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), local_,
+        sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
                                       *socketPair_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
-        local_.enabled = false;
+        send_.enabled = false;
     }
 }
 
 void
 AudioRtpSession::startReceiver()
 {
-    if (not remote_.enabled or remote_.holding) {
+    if (not receive_.enabled or receive_.holding) {
         RING_WARN("Audio receiving disabled");
         receiveThread_.reset();
         return;
@@ -400,9 +400,9 @@ AudioRtpSession::startReceiver()
     if (receiveThread_)
         RING_WARN("Restarting audio receiver");
 
-    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(remote_.codec);
+    auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
-                                                remote_.receiving_sdp));
+                                                receive_.receiving_sdp));
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->startLoop();
 }
@@ -412,23 +412,23 @@ AudioRtpSession::start()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not local_.enabled and not remote_.enabled) {
+    if (not receive_.enabled and not receive_.enabled) {
        stop();
        return;
     }
 
     try {
-        socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(),
-                                         local_.addr.getPort()));
-        if (local_.crypto and remote_.crypto) {
-            socketPair_->createSRTP(local_.crypto.getCryptoSuite().c_str(),
-                                    local_.crypto.getSrtpKeyInfo().c_str(),
-                                    remote_.crypto.getCryptoSuite().c_str(),
-                                    remote_.crypto.getSrtpKeyInfo().c_str());
+        socketPair_.reset(
+            new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort())
+        );
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str(),
+                                    receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error &e) {
-        RING_ERR("Socket creation failed on port %d: %s",
-            local_.addr.getPort(), e.what());
+        RING_ERR("Socket creation failed on port %d: %s", receive_.addr.getPort(), e.what());
         return;
     }
 
@@ -442,7 +442,7 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not local_.enabled and not remote_.enabled) {
+    if (not send_.enabled and not receive_.enabled) {
         stop();
         return;
     }
@@ -450,11 +450,11 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     try {
         socketPair_.reset(new SocketPair(std::move(rtp_sock),
                                          std::move(rtcp_sock)));
-        if (local_.crypto and remote_.crypto) {
-            socketPair_->createSRTP(local_.crypto.getCryptoSuite().c_str(),
-                                    local_.crypto.getSrtpKeyInfo().c_str(),
-                                    remote_.crypto.getCryptoSuite().c_str(),
-                                    remote_.crypto.getSrtpKeyInfo().c_str());
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str(),
+                                    receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str());
         }
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed");

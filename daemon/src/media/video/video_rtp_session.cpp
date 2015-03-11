@@ -59,7 +59,7 @@ VideoRtpSession::~VideoRtpSession()
 
 void VideoRtpSession::startSender()
 {
-    if (local_.enabled and not local_.holding) {
+    if (send_.enabled and not send_.holding) {
         if (sender_) {
             if (videoLocal_)
                 videoLocal_->detach(sender_.get());
@@ -84,22 +84,22 @@ void VideoRtpSession::startSender()
 
         try {
             sender_.reset(
-                new VideoSender(getRemoteRtpUri(), localVideoParams_, local_, *socketPair_)
+                new VideoSender(getRemoteRtpUri(), localVideoParams_, send_, *socketPair_)
             );
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
-            local_.enabled = false;
+            send_.enabled = false;
         }
     }
 }
 
 void VideoRtpSession::startReceiver()
 {
-    if (remote_.enabled and not remote_.holding) {
+    if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
             RING_WARN("restarting video receiver");
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, remote_.receiving_sdp)
+            new VideoReceiveThread(callID_, receive_.receiving_sdp)
         );
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiveThread_->addIOContext(*socketPair_);
@@ -116,17 +116,23 @@ void VideoRtpSession::start()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not local_.enabled and not remote_.enabled) {
+    if (not send_.enabled and not receive_.enabled) {
         stop();
         return;
     }
 
     try {
         socketPair_.reset(
-            new SocketPair(getRemoteRtpUri().c_str(), local_.addr.getPort())
+            new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort())
         );
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str(),
+                                    receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str());
+        }
     } catch (const std::runtime_error &e) {
-        RING_ERR("Socket creation failed on port %d: %s", local_.addr.getPort(), e.what());
+        RING_ERR("Socket creation failed on port %d: %s", receive_.addr.getPort(), e.what());
         return;
     }
 
@@ -149,12 +155,24 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    if (not local_.enabled and not remote_.enabled) {
+    if (not send_.enabled and not receive_.enabled) {
         stop();
         return;
     }
 
-    socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+    try {
+        socketPair_.reset(new SocketPair(std::move(rtp_sock),
+                                         std::move(rtcp_sock)));
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str(),
+                                    receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str());
+        }
+    } catch (const std::runtime_error &e) {
+        RING_ERR("Socket creation failed");
+        return;
+    }
 
     startSender();
     startReceiver();
@@ -229,7 +247,7 @@ void VideoRtpSession::enterConference(Conference* conference)
 
     conference_ = conference;
 
-    if (local_.enabled or receiveThread_)
+    if (send_.enabled or receiveThread_)
         setupConferenceVideoPipeline(conference);
 }
 

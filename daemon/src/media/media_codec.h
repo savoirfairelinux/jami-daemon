@@ -248,11 +248,11 @@ struct MediaDescription {
     std::shared_ptr<AccountCodecInfo> codec {};
     unsigned payload_type {};
     std::string receiving_sdp {};
-    unsigned bitrate {};
+    //unsigned bitrate {};
     unsigned rtp_clockrate {8000};
 
     /** Audio parameters */
-    unsigned frame_size {};
+    //unsigned frame_size {};
 
     /** Video parameters */
     std::string parameters {};
