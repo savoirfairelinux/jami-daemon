@@ -51,10 +51,10 @@ public:
                        std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void stop() = 0;
 
-    virtual void updateMedia(const MediaDescription& local,
-                             const MediaDescription& remote) {
-        local_ = local;
-        remote_ = remote;
+    virtual void updateMedia(const MediaDescription& send,
+                             const MediaDescription& receive) {
+        send_ = send;
+        receive_ = receive;
     }
 
 protected:
@@ -62,11 +62,11 @@ protected:
     std::unique_ptr<SocketPair> socketPair_;
     const std::string callID_;
 
-    MediaDescription local_;
-    MediaDescription remote_;
+    MediaDescription send_;
+    MediaDescription receive_;
 
     std::string getRemoteRtpUri() const {
-        return "rtp://" + remote_.addr.toString(true);
+        return "rtp://" + send_.addr.toString(true);
     }
 };
 

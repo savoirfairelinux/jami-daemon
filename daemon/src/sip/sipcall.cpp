@@ -738,9 +738,9 @@ SIPCall::startAllMedia()
     auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
 
-    for (const auto& slot : slots) {
-        const auto& local = slot.first;
-        const auto& remote = slot.second;
+    for (auto& slot : slots) {
+        auto& local = slot.first;
+        auto& remote = slot.second;
 
         if (local.type != remote.type) {
             RING_ERR("Inconsistent media types between local and remote for SDP media slot");
@@ -786,14 +786,11 @@ SIPCall::startAllMedia()
         RING_DBG("[LOCAL] SDP: \n %s", local.receiving_sdp.c_str());
 
         accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(remote.codec);
-        RING_DBG("[REMOTE][codec:%s][enabled:%s][holding:%s]"
+        RING_DBG("[REMOTE][codec:%s][enabled:%s][holding:%s][format:%s]"
                 , remote.codec->systemCodecInfo.to_string().c_str()
                 , remote.enabled ? "true" : "false"
                 , remote.holding ? "true" : "false"
-                );
-        RING_DBG("[REMOTE][Audioformat] [sampleRate%d][nbChanels:%d]"
-                , accountAudioCodec->audioformat.sample_rate
-                , accountAudioCodec->audioformat.nb_channels
+                , accountAudioCodec->audioformat.toString().c_str()
                 );
         RING_DBG("[REMOTE] SDP: \n %s", remote.receiving_sdp.c_str());
         RING_DBG("####################################");
@@ -802,9 +799,11 @@ SIPCall::startAllMedia()
             if (videoInput_.empty())
                 videoInput_ = "v4l2://" + videoManager.videoDeviceMonitor.getDefaultDevice();
             videortp_.switchInput(videoInput_);
+            if (not remote.parameters.empty())
+                RING_WARN("Encoding using remote params: %s", remote.parameters.c_str());
         }
 #endif
-        rtp->updateMedia(local, remote);
+        rtp->updateMedia(remote, local);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
                        newIceSocket(ice_comp_id + 1));
