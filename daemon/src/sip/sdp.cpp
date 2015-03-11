@@ -270,12 +270,8 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
             std::ostringstream os;
             // FIXME: this should not be hardcoded, it will determine what profile and level
             // our peer will send us
-            auto accountVideoCodec =
-                    std::static_pointer_cast<AccountVideoCodecInfo>(video_codec_list_[i]);
-            std::string profileLevelID(accountVideoCodec->parameters);
-
-            if (profileLevelID.empty())
-                profileLevelID = libav_utils::MAX_H264_PROFILE_LEVEL_ID;
+            auto accountVideoCodec = std::static_pointer_cast<AccountVideoCodecInfo>(video_codec_list_[i]);
+            std::string profileLevelID = accountVideoCodec->parameters.empty() ? libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID : accountVideoCodec->parameters;
             os << "fmtp:" << payload << " " << profileLevelID;
             med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), os.str().c_str(), NULL);
         }
