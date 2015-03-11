@@ -203,11 +203,8 @@ ManagerImpl::ManagerImpl() :
     , ringbufferpool_(new RingBufferPool)
     , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
+    , gnutlGIG_ {tls::GnuTlsGlobalInit::make_guard()}
 {
-#if HAVE_TLS
-    thread_local static auto gnutlGIG = tls::GnuTlsGlobalInit::make_guard();
-#endif
-
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
     std::random_device rdev;
