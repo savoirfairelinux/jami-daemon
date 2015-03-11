@@ -32,10 +32,10 @@
 #ifndef _VIDEO_RECEIVE_THREAD_H_
 #define _VIDEO_RECEIVE_THREAD_H_
 
+#include "video_base.h"
 #include "media_codec.h"
 #include "media_io_handle.h"
 #include "media_device.h"
-#include "sinkclient.h"
 #include "threadloop.h"
 #include "noncopyable.h"
 
@@ -51,6 +51,8 @@ class MediaDecoder;
 } // namespace ring
 
 namespace ring { namespace video {
+
+class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
@@ -83,7 +85,7 @@ private:
     std::istringstream stream_;
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
-    SinkClient sink_;
+    std::shared_ptr<SinkClient> sink_;
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();

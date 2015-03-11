@@ -40,6 +40,12 @@
 #include "manager.h"
 #include "system_codec_container.h"
 #include "client/signal.h"
+#include "video/sinkclient.h"
+
+#include <functional>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace DRing {
 
@@ -142,6 +148,15 @@ hasCameraStarted()
     return videoManager.started;
 }
 
+void
+registerSinkTarget(const std::string& sinkId,
+                   std::function<void(unsigned char*)>&& cb)
+{
+    if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
+        sink->registerTarget(std::forward<std::function<void(unsigned char*)>>(cb));
+    else
+        RING_WARN("No sink found for id '%s'", sinkId.c_str());
+}
 
 } // namespace DRing
 

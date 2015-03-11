@@ -35,7 +35,6 @@
 #define __VIDEO_INPUT_H__
 
 #include "noncopyable.h"
-#include "sinkclient.h"
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
 
@@ -49,6 +48,8 @@ class MediaDecoder;
 }
 
 namespace ring { namespace video {
+
+class SinkClient;
 
 class VideoInput : public VideoGenerator
 {
@@ -70,7 +71,7 @@ private:
     std::string sinkID_     = "local";
 
     MediaDecoder *decoder_  = nullptr;
-    SinkClient sink_;
+    std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ = {false};
 
     DeviceParams decOpts_;
