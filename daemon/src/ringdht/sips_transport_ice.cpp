@@ -643,10 +643,6 @@ bool
 SipsIceTransport::setup()
 {
     RING_WARN("Starting GnuTLS thread");
-
-    // GNU TLS library init
-    thread_local static auto gtlsGIG = GnuTlsGlobalInit::make_guard();
-
     if (is_server_) {
         gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
         state_ = TlsConnectionState::COOKIE;

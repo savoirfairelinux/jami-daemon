@@ -68,6 +68,10 @@ class YamlParser;
 class YamlEmitter;
 }
 
+namespace tls {
+class GnuTlsGlobalInit;
+}
+
 class PluginManager;
 class AudioFile;
 class DTMF;
@@ -985,6 +989,8 @@ class ManagerImpl {
 
         /* ICE support */
         std::unique_ptr<IceTransportFactory> ice_tf_;
+
+        std::unique_ptr<tls::GnuTlsGlobalInit> gnutlGIG_;
 };
 
 } // namespace ring
