@@ -1066,7 +1066,6 @@ void RingAccount::loadConfig()
 {
     RING_WARN("RingAccount::loadConfig()");
     initTlsConfiguration();
-    transportType_ = PJSIP_TRANSPORT_TLS;
 }
 
 MatchRank
@@ -1089,9 +1088,7 @@ std::string RingAccount::getFromUri() const
 
 std::string RingAccount::getToUri(const std::string& to) const
 {
-    const std::string transport {pjsip_transport_get_type_name(transportType_)};
-    //return "<sip:" + to + ">";
-    return "<sips:" + to + ";transport=" + transport + ">";
+    return "<sips:" + to + ";transport=tls>";
 }
 
 pj_str_t
@@ -1109,11 +1106,10 @@ RingAccount::getContactHeader(pjsip_transport* t)
     auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
     auto address = tlsTr->getLocalAddress();
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s%s%s;transport=%s>",
+                                     "<sips:%s%s%s;transport=tls>",
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
-                                     address.toString(true).c_str(),
-                                     pjsip_transport_get_type_name(transportType_));
+                                     address.toString(true).c_str());
     return contact_;
 }
 

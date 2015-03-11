@@ -291,12 +291,37 @@ class SIPAccount : public SIPAccountBase {
         void destroyRegistrationInfo();
 
         /**
+         * Get the port on which the transport/listener should use, or is
+         * actually using.
+         * @return pj_uint16 The port used for that account
+         */
+        pj_uint16_t getLocalPort() const {
+            return localPort_;
+        }
+
+        /**
+         * Set the new port on which this account is running over.
+         * @pram port The port used by this account.
+         */
+        void setLocalPort(pj_uint16_t port) {
+            localPort_ = port;
+        }
+
+        /**
          * @return pjsip_tls_setting structure, filled from the configuration
          * file, that can be used directly by PJSIP to initialize
          * TLS transport.
          */
         pjsip_tls_setting * getTlsSetting() {
             return &tlsSetting_;
+        }
+
+        /**
+         * Get the local port for TLS listener.
+         * @return pj_uint16 The port used for that account
+         */
+        pj_uint16_t getTlsListenerPort() const {
+            return tlsListenerPort_;
         }
 
         /**
@@ -553,6 +578,18 @@ class SIPAccount : public SIPAccountBase {
          */
         std::vector< std::map<std::string, std::string > > credentials_;
 
+        std::shared_ptr<SipTransport> transport_ {};
+
+        std::shared_ptr<TlsListener> tlsListener_ {};
+
+        /**
+         * Transport type used for this sip account. Currently supported types:
+         *    PJSIP_TRANSPORT_UNSPECIFIED
+         *    PJSIP_TRANSPORT_UDP
+         *    PJSIP_TRANSPORT_TLS
+         */
+        pjsip_transport_type_e transportType_ {PJSIP_TRANSPORT_UNSPECIFIED};
+
 #if HAVE_TLS
 
         static const CipherArray TLSv1_DEFAULT_CIPHER_LIST;
@@ -660,6 +697,16 @@ class SIPAccount : public SIPAccountBase {
          * The STUN server port
          */
         pj_uint16_t stunPort_ {PJ_STUN_PORT};
+
+        /**
+         * Local port to whih this account is bound
+         */
+        pj_uint16_t localPort_ {DEFAULT_SIP_PORT};
+
+        /**
+         * The TLS listener port
+         */
+        pj_uint16_t tlsListenerPort_ {DEFAULT_SIP_TLS_PORT};
 
         bool tlsEnable_ {false};
         std::string tlsMethod_;
