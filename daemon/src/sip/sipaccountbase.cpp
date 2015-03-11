@@ -165,7 +165,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
 }
 
-
 void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     Account::setAccountDetails(details);
@@ -206,8 +205,8 @@ SIPAccountBase::getAccountDetails() const
     std::map<std::string, std::string> a = Account::getAccountDetails();
 
     // note: The IP2IP profile will always have IP2IP as an alias
-    a[Conf::CONFIG_VIDEO_ENABLED] = videoEnabled_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
+    a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, isIP2IP() ? "READY" : mapStateNumberToString(registrationState_));
 
     // Add sip specific details
 
@@ -216,16 +215,16 @@ SIPAccountBase::getAccountDetails() const
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MIN, Conf::CONFIG_ACCOUNT_VIDEO_PORT_MAX, videoPortRange_);
 #endif
 
-    a[Conf::CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
-    a[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
-    a[Conf::CONFIG_PUBLISHED_PORT] = ring::to_string(publishedPort_);
-    a[Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
+    a.emplace(Conf::CONFIG_ACCOUNT_DTMF_TYPE,       dtmfType_);
+    a.emplace(Conf::CONFIG_LOCAL_INTERFACE,         interface_);
+    a.emplace(Conf::CONFIG_PUBLISHED_PORT,          ring::to_string(publishedPort_));
+    a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
 
-    a[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
-    a[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
-    a[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;
-    a[Conf::CONFIG_TLS_PASSWORD] = tlsPassword_;
+    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE,        tlsCaListFile_);
+    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,    tlsCertificateFile_);
+    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,    tlsPrivateKeyFile_);
+    a.emplace(Conf::CONFIG_TLS_PASSWORD,            tlsPassword_);
     return a;
 }
 
@@ -233,12 +232,9 @@ std::map<std::string, std::string>
 SIPAccountBase::getVolatileAccountDetails() const
 {
     std::map<std::string, std::string> a = Account::getVolatileAccountDetails();
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = isIP2IP() ? "READY" : mapStateNumberToString(registrationState_);
-    std::stringstream codestream;
-    codestream << transportStatus_;
-    a[Conf::CONFIG_TRANSPORT_STATE_CODE] = codestream.str();
-    a[Conf::CONFIG_TRANSPORT_STATE_DESC] = transportError_ ;
-
+    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, isIP2IP() ? "READY" : mapStateNumberToString(registrationState_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    ring::to_string(transportStatus_));
+    a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
 }
 
