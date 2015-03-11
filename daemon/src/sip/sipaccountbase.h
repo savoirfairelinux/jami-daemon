@@ -36,11 +36,11 @@
 #include "config.h"
 #endif
 
-#include "sip_utils.h"
-
 #include "account.h"
-#include "noncopyable.h"
+
+#include "sip_utils.h"
 #include "ip_utils.h"
+#include "noncopyable.h"
 
 #include <pjsip/sip_types.h>
 
