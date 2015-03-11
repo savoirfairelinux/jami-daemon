@@ -104,8 +104,6 @@ bool VideoReceiveThread::setup()
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    //videoDecoder_->setOptions(args_);
-
     EXIT_IF_FAIL(!videoDecoder_->openInput(args_),
                  "Could not open input \"%s\"", args_.input.c_str());
 
