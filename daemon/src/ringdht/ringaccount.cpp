@@ -532,7 +532,7 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
 std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
-    a[Conf::CONFIG_DHT_PORT] = ring::to_string(dhtPort_);
+    a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
     return a;
 }
 
