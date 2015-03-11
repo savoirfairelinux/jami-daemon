@@ -1,4 +1,4 @@
-HASH=HEAD
+HASH=1cc6fef0671c5522c952671ee06bf973135a22c4
 LIBAV_SNAPURL := http://git.libav.org/?p=libav.git;a=snapshot;h=$(HASH);sf=tgz
 
 PKGS += libav
