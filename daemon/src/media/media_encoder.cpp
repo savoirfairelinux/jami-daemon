@@ -127,14 +127,7 @@ MediaEncoder::openOutput(const char *filename,
 
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
-        //AVDictionaryEntry *entry = av_dict_get(options_, "parameters", NULL, 0);
-        // FIXME: this should be parsed from the fmtp:profile-level-id
-        // attribute of our peer, it will determine what profile and
-        // level we are sending (i.e. that they can accept).
-        auto systemVideoCodecInfo =
-            dynamic_cast<const SystemVideoCodecInfo&> (args.codec->systemCodecInfo);
-        extractProfileLevelID(systemVideoCodecInfo.parameters/*entry?entry->value:""*/, encoderCtx_);
-
+        extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
