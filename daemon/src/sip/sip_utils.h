@@ -45,36 +45,39 @@
 
 struct pjsip_msg;
 
-namespace ring {namespace sip_utils {
+namespace ring { namespace sip_utils {
 
-    enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
+static constexpr int DEFAULT_SIP_PORT {5060};
+static constexpr int DEFAULT_SIP_TLS_PORT {5061};
 
-    constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
-        return kx == KeyExchangeProtocol::SDES ? "sdes" : (
-               kx == KeyExchangeProtocol::ZRTP ? "zrtp" : "");
-    }
-    constexpr KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
-        return !strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
-    }
+enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
 
-    /**
-     * Helper function to parser header from incoming sip messages
-     * @return Header from SIP message
-     */
-    std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
+constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
+    return kx == KeyExchangeProtocol::SDES ? "sdes" : (
+        kx == KeyExchangeProtocol::ZRTP ? "zrtp" : "");
+}
+constexpr KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
+    return !strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
+}
 
-    pjsip_route_hdr *
-    createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
+/**
+ * Helper function to parser header from incoming sip messages
+ * @return Header from SIP message
+ */
+std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
 
-    void stripSipUriPrefix(std::string& sipUri);
+pjsip_route_hdr *
+createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
 
-    std::string parseDisplayName(const char * buffer);
+void stripSipUriPrefix(std::string& sipUri);
 
-    std::string getHostFromUri(const std::string& sipUri);
+std::string parseDisplayName(const char * buffer);
 
-    void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
+std::string getHostFromUri(const std::string& sipUri);
 
-    void sip_strerror(pj_status_t code);
+void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
+
+void sip_strerror(pj_status_t code);
 
 }} // namespace ring::sip_utils
 

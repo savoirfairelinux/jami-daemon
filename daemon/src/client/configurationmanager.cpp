@@ -108,7 +108,7 @@ std::map<std::string, std::string>
 getTlsDefaultSettings()
 {
     std::stringstream portstr;
-    portstr << DEFAULT_SIP_TLS_PORT;
+    portstr << ring::sip_utils::DEFAULT_SIP_TLS_PORT;
 
     return {
         {ring::Conf::CONFIG_TLS_LISTENER_PORT, portstr.str()},

@@ -37,6 +37,7 @@
 #endif
 
 #include "sip/sipaccountbase.h"
+
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
@@ -70,6 +71,8 @@ namespace Conf {
 namespace tls {
 class GnuTlsGlobalInit;
 } // namespace tls
+
+class IceTransport;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -173,18 +176,6 @@ class RingAccount : public SIPAccountBase {
         pjsip_host_port *
         getViaAddr() {
             return &via_addr_;
-        }
-
-        int getRPort() const {
-            if (rPort_ == -1)
-                return localPort_;
-            else
-                return rPort_;
-        }
-
-        void setRPort(int rPort) {
-            rPort_ = rPort;
-            via_addr_.port = rPort;
         }
 
         /* Returns true if the username and/or hostname match this account */

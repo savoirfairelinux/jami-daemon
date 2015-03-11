@@ -36,6 +36,9 @@
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "sip_utils.h"
+
 #include "noncopyable.h"
 #include "logger.h"
 
@@ -52,9 +55,6 @@
 #include <vector>
 #include <list>
 #include <memory>
-
-#define DEFAULT_SIP_PORT    5060
-#define DEFAULT_SIP_TLS_PORT 5061
 
 namespace ring {
 
@@ -85,7 +85,7 @@ struct SipTransportDescr
     std::string toString() const;
 
     pjsip_transport_type_e type {PJSIP_TRANSPORT_UNSPECIFIED};
-    pj_uint16_t listenerPort {DEFAULT_SIP_PORT};
+    pj_uint16_t listenerPort {sip_utils::DEFAULT_SIP_PORT};
     std::string interface {"default"};
 };
 
