@@ -60,8 +60,8 @@ SystemCodecContainer::initCodecConfig()
                                                "H264", "libx264",
                                                CODEC_ENCODER_DECODER),
 
-        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263P,
-                                               "H263-2000", "h263p",
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
+                                               "H263", "h263",
                                                CODEC_ENCODER_DECODER),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
