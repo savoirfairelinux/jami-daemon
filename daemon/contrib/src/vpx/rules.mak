@@ -71,6 +71,7 @@ endif
 endif
 
 VPX_CONF := \
+	--as=yasm \
 	--enable-runtime-cpu-detect \
 	--disable-docs \
 	--disable-examples \
