@@ -79,6 +79,7 @@ void stopCamera();
 bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
+void registerSinkTarget(const std::string& sinkId, std::function<void(unsigned char*)>&& cb);
 
 } // namespace DRing
 
