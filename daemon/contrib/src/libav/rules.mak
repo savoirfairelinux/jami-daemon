@@ -1,37 +1,74 @@
-HASH=1cc6fef0671c5522c952671ee06bf973135a22c4
-LIBAV_SNAPURL := http://git.libav.org/?p=libav.git;a=snapshot;h=$(HASH);sf=tgz
+#Libav 11-1 (git version packaged for ubuntu  14.10)
+LIBAV_HASH := f851477889ae48e2f17073cf7486e1d5561b7ae4
+LIBAV_GITURL := git://git.libav.org/libav.git
 
 PKGS += libav
 
 LIBAVCONF = \
-		  --cc="$(CC)" \
-		  --pkg-config="$(PKG_CONFIG)" \
-		  --disable-everything \
-		  --enable-gpl \
-		  --enable-version3 \
-		  --enable-decoders \
-		  --enable-protocols \
-		  --enable-demuxers \
-		  --enable-muxers \
-		  --enable-swscale
+		--cc="$(CC)" \
+		--pkg-config="$(PKG_CONFIG)" \
+		--enable-zlib \
+		--enable-gpl \
+		--enable-swscale \
+		--enable-protocols
 
-#encoders
+#disable everything
 LIBAVCONF += \
-		  --enable-libx264 \
-		  --enable-libopus \
-		  --enable-libspeex \
-		  --enable-libvpx \
-		  --enable-encoder=g722 \
-		  --enable-encoder=libx264 \
-		  --enable-encoder=pcm_alaw \
-		  --enable-encoder=pcm_mulaw \
-		  --enable-encoder=libopus \
-		  --enable-encoder=libspeex \
-		  --enable-encoder=libvpx \
-		  --disable-decoder=libvpx \
-		  --disable-decoder=libvpx_vp8 \
-		  --disable-decoder=libvpx_vp9 \
-		  --enable-encoder=h263p
+		--disable-everything
+
+#enable muxers/demuxers
+LIBAVCONF += \
+		--enable-demuxers \
+		--enable-muxers
+
+#enable parsers
+LIBAVCONF += \
+		--enable-parser=h263 \
+		--enable-parser=h264 \
+		--enable-parser=mpeg4video \
+		--enable-parser=opus \
+		--enable-parser=vp8
+
+#librairies
+LIBAVCONF += \
+		--enable-libx264 \
+		--enable-libopus \
+		--enable-libvpx
+
+#encoders/decoders
+LIBAVCONF += \
+		--enable-encoder=adpcm_g722 \
+		--enable-decoder=adpcm_g722 \
+		--enable-encoder=rawvideo \
+		--enable-decoder=rawvideo \
+		--enable-encoder=libx264 \
+		--enable-decoder=h264 \
+		--enable-encoder=pcm_alaw \
+		--enable-decoder=pcm_alaw \
+		--enable-encoder=pcm_mulaw \
+		--enable-decoder=pcm_mulaw \
+		--enable-encoder=libopus \
+		--enable-decoder=libopus \
+		--enable-encoder=mpeg4 \
+		--enable-decoder=mpeg4 \
+		--enable-encoder=libvpx_vp8 \
+		--enable-decoder=vp8 \
+		--enable-encoder=h263 \
+		--enable-decoder=h263
+
+# Linux
+ifdef HAVE_LINUX
+LIBAVCONF += \
+	--enable-x11grab
+endif
+
+# There is an unresolved symbol for speex when linking statically
+ifndef HAVE_DARWIN_OS
+LIBAVCONF += \
+          --enable-libspeex \
+          --enable-encoder=libspeex \
+          --enable-decoder=libspeex
+endif
 
 DEPS_libav = zlib x264 vpx $(DEPS_vpx)
 
@@ -117,17 +154,18 @@ ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 54.20.3 libswscale li
 PKGS_FOUND += libav
 endif
 
-$(TARBALLS)/libav-$(HASH).tar.gz:
-	$(call download,$(LIBAV_SNAPURL))
+$(TARBALLS)/libav-$(LIBAV_HASH).tar.xz:
+	$(call download_git,$(LIBAV_GITURL),master,$(LIBAV_HASH))
 
-.sum-libav: $(TARBALLS)/libav-$(HASH).tar.gz
+.sum-libav: libav-$(LIBAV_HASH).tar.xz
 	$(warning Not implemented.)
 	touch $@
 
-libav: libav-$(HASH).tar.gz .sum-libav
-	rm -Rf $@ $@-$(HASH)
-	mkdir -p $@-$(HASH)
-	$(ZCAT) "$<" | (cd $@-$(HASH) && tar xv --strip-components=1)
+libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
+	rm -Rf $@ $@-$(LIBAV_HASH)
+	mkdir -p $@-$(LIBAV_HASH)
+	(cd $@-$(LIBAV_HASH) && tar xv --strip-components=1 -f ../$<)
+	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
 .libav: libav
