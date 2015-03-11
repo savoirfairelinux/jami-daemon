@@ -44,6 +44,7 @@
 #include <yaml-cpp/yaml.h>
 
 #include "client/signal.h"
+#include "string_utils.h"
 
 #include <type_traits>
 
@@ -86,6 +87,13 @@ unserializeRange(const YAML::Node &node, const char *minKey, const char *maxKey,
     updateRange(tmpMin, tmpMax, range);
 }
 
+static void
+addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
+{
+    a.emplace(minKey, ring::to_string(range.first));
+    a.emplace(maxKey, ring::to_string(range.second));
+}
+
 template <typename T>
 static void
 parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
@@ -106,7 +114,6 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::AUDIO_PORT_MIN_KEY << YAML::Value << audioPortRange_.first;
     out << YAML::Key << Conf::DTMF_TYPE_KEY << YAML::Value << dtmfType_;
     out << YAML::Key << Conf::INTERFACE_KEY << YAML::Value << interface_;
-    out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
     out << YAML::Key << Conf::PUBLISH_ADDR_KEY << YAML::Value << publishedIpAddress_;
     out << YAML::Key << Conf::PUBLISH_PORT_KEY << YAML::Value << publishedPort_;
     out << YAML::Key << Conf::SAME_AS_LOCAL_KEY << YAML::Value << publishedSameasLocal_;
@@ -118,7 +125,6 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
 {
-    out << YAML::Key << Conf::TLS_PORT_KEY << YAML::Value << tlsListenerPort_;
     out << YAML::Key << Conf::CALIST_KEY << YAML::Value << tlsCaListFile_;
     out << YAML::Key << Conf::CERTIFICATE_KEY << YAML::Value << tlsCertificateFile_;
     out << YAML::Key << Conf::TLS_PASSWORD_KEY << YAML::Value << tlsPassword_;
@@ -135,10 +141,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     parseValue(node, VIDEO_ENABLED_KEY, videoEnabled_);
 
     parseValue(node, Conf::INTERFACE_KEY, interface_);
-    int port = DEFAULT_SIP_PORT;
-    parseValue(node, Conf::PORT_KEY, port);
-    localPort_ = port;
-
     parseValue(node, Conf::SAME_AS_LOCAL_KEY, publishedSameasLocal_);
     std::string publishedIpAddress;
     parseValue(node, Conf::PUBLISH_ADDR_KEY, publishedIpAddress);
@@ -146,6 +148,7 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
     if (publishedIp and not publishedSameasLocal_)
         setPublishedAddress(publishedIp);
 
+    int port = DEFAULT_SIP_PORT;
     parseValue(node, Conf::PUBLISH_PORT_KEY, port);
     publishedPort_ = port;
 
@@ -153,7 +156,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
     // get tls submap
     const auto &tlsMap = node[Conf::TLS_KEY];
-    parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
     parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
     parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
     parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
@@ -174,7 +176,6 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     parseString(details, Conf::CONFIG_LOCAL_INTERFACE, interface_);
     parseBool(details, Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL, publishedSameasLocal_);
     parseString(details, Conf::CONFIG_PUBLISHED_ADDRESS, publishedIpAddress_);
-    parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
     parseInt(details, Conf::CONFIG_PUBLISHED_PORT, publishedPort_);
 
     parseString(details, Conf::CONFIG_ACCOUNT_DTMF_TYPE, dtmfType_);
@@ -193,7 +194,6 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
 #endif
 
     // TLS
-    parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
     parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
     parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
@@ -218,19 +218,10 @@ SIPAccountBase::getAccountDetails() const
 
     a[Conf::CONFIG_ACCOUNT_DTMF_TYPE] = dtmfType_;
     a[Conf::CONFIG_LOCAL_INTERFACE] = interface_;
+    a[Conf::CONFIG_PUBLISHED_PORT] = ring::to_string(publishedPort_);
     a[Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL] = publishedSameasLocal_ ? TRUE_STR : FALSE_STR;
     a[Conf::CONFIG_PUBLISHED_ADDRESS] = publishedIpAddress_;
 
-    std::stringstream localport;
-    localport << localPort_;
-    a[Conf::CONFIG_LOCAL_PORT] = localport.str();
-    std::stringstream publishedport;
-    publishedport << publishedPort_;
-    a[Conf::CONFIG_PUBLISHED_PORT] = publishedport.str();
-
-    std::stringstream tlslistenerport;
-    tlslistenerport << tlsListenerPort_;
-    a[Conf::CONFIG_TLS_LISTENER_PORT] = tlslistenerport.str();
     a[Conf::CONFIG_TLS_CA_LIST_FILE] = tlsCaListFile_;
     a[Conf::CONFIG_TLS_CERTIFICATE_FILE] = tlsCertificateFile_;
     a[Conf::CONFIG_TLS_PRIVATE_KEY_FILE] = tlsPrivateKeyFile_;

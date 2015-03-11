@@ -36,7 +36,6 @@
 #include "config.h"
 #endif
 
-#include "siptransport.h"
 #include "sip_utils.h"
 
 #include "account.h"
@@ -48,7 +47,6 @@
 #include <array>
 #include <vector>
 #include <map>
-#include <sstream>
 #include <memory>
 
 namespace ring {
@@ -150,16 +148,11 @@ public:
         return false;
     }
 
-    virtual pjsip_tls_setting * getTlsSetting() {
-        return nullptr;
-    }
-
     /**
-     * Get the local port for TLS listener.
-     * @return pj_uint16 The port used for that account
+     * Get the local interface name on which this account is bound.
      */
-    pj_uint16_t getTlsListenerPort() const {
-        return tlsListenerPort_;
+    const std::string& getLocalInterface() const {
+        return interface_;
     }
 
     /**
@@ -182,39 +175,6 @@ public:
     }
 
     /**
-     * Get the local interface name on which this account is bound.
-     */
-    const std::string& getLocalInterface() const {
-        return interface_;
-    }
-
-    /**
-     * Get a flag which determine the usage in sip headers of either the local
-     * IP address and port (_localAddress and localPort_) or to an address set
-     * manually (_publishedAddress and publishedPort_).
-     */
-    bool getPublishedSameasLocal() const {
-        return publishedSameasLocal_;
-    }
-
-    /**
-     * Get the port on which the transport/listener should use, or is
-     * actually using.
-     * @return pj_uint16 The port used for that account
-     */
-    pj_uint16_t getLocalPort() const {
-        return localPort_;
-    }
-
-    /**
-     * Set the new port on which this account is running over.
-     * @pram port The port used by this account.
-     */
-    void setLocalPort(pj_uint16_t port) {
-        localPort_ = port;
-    }
-
-    /**
      * Get the published port, which is the port to be advertised as the port
      * for the chosen SIP transport.
      * @return pj_uint16 The port used for that account
@@ -232,6 +192,15 @@ public:
         publishedPort_ = port;
     }
 
+    /**
+     * Get a flag which determine the usage in sip headers of either the local
+     * IP address and port (_localAddress and localPort_) or to an address set
+     * manually (_publishedAddress and publishedPort_).
+     */
+    bool getPublishedSameasLocal() const {
+        return publishedSameasLocal_;
+    }
+
     virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const = 0;
 
     virtual bool getSrtpFallback() const = 0;
@@ -243,10 +212,6 @@ public:
     virtual pj_str_t getContactHeader(pjsip_transport* = nullptr) = 0;
 
     virtual std::string getToUri(const std::string& username) const = 0;
-
-    virtual inline std::shared_ptr<SipTransport> getTransport() {
-        return nullptr;
-    }
 
     /**
      * Socket port generators for media
@@ -280,18 +245,6 @@ protected:
      */
     std::shared_ptr<SIPVoIPLink> link_;
 
-    std::shared_ptr<SipTransport> transport_ {};
-
-    std::shared_ptr<TlsListener> tlsListener_ {};
-
-    /**
-     * Transport type used for this sip account. Currently supported types:
-     *    PJSIP_TRANSPORT_UNSPECIFIED
-     *    PJSIP_TRANSPORT_UDP
-     *    PJSIP_TRANSPORT_TLS
-     */
-    pjsip_transport_type_e transportType_ {PJSIP_TRANSPORT_UNSPECIFIED};
-
     /**
      * interface name on which this account is bound
      */
@@ -308,22 +261,14 @@ protected:
      * configuration
      */
     IpAddr publishedIp_ {};
-    std::string publishedIpAddress_ {};
 
-    /**
-     * Local port to whih this account is bound
-     */
-    pj_uint16_t localPort_ {DEFAULT_SIP_PORT};
+    std::string publishedIpAddress_ {};
 
     /**
      * Published port, used only if defined by the user
      */
     pj_uint16_t publishedPort_ {DEFAULT_SIP_PORT};
 
-    /**
-     * The TLS listener port
-     */
-    pj_uint16_t tlsListenerPort_ {DEFAULT_SIP_TLS_PORT};
     std::string tlsCaListFile_;
     std::string tlsCertificateFile_;
     std::string tlsPrivateKeyFile_;
@@ -349,17 +294,6 @@ protected:
 
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
-
-    static void
-    addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey, const char *maxKey, const std::pair<uint16_t, uint16_t> &range)
-    {
-        std::ostringstream os;
-        os << range.first;
-        a[minKey] = os.str();
-        os.str("");
-        os << range.second;
-        a[maxKey] = os.str();
-    }
 
 private:
     NON_COPYABLE(SIPAccountBase);
