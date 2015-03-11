@@ -9,29 +9,43 @@ LIBAVCONF = \
 		  --disable-everything \
 		  --enable-gpl \
 		  --enable-version3 \
-		  --enable-decoders \
 		  --enable-protocols \
 		  --enable-demuxers \
 		  --enable-muxers \
 		  --enable-swscale
 
-#encoders
+#encoders/decoders
 LIBAVCONF += \
 		  --enable-libx264 \
 		  --enable-libopus \
 		  --enable-libspeex \
 		  --enable-libvpx \
-		  --enable-encoder=g722 \
-		  --enable-encoder=libx264 \
-		  --enable-encoder=pcm_alaw \
+		  --enable-encoder=adpcm_g722 \
+		  --enable-decoder=adpcm_g722 \
+          --enable-encoder=rawvideo \
+          --enable-decoder=rawvideo \
+          --enable-encoder=libx264 \
+          --enable-decoder=h264 \
+          --enable-encoder=pcm_alaw \
+		  --enable-decoder=pcm_alaw \
 		  --enable-encoder=pcm_mulaw \
+		  --enable-decoder=pcm_mulaw \
 		  --enable-encoder=libopus \
-		  --enable-encoder=libspeex \
-		  --enable-encoder=libvpx \
-		  --disable-decoder=libvpx \
-		  --disable-decoder=libvpx_vp8 \
-		  --disable-decoder=libvpx_vp9 \
-		  --enable-encoder=h263p
+		  --enable-decoder=libopus \
+		  --enable-encoder=mpeg4 \
+		  --enable-decoder=mpeg4 \
+		  --enable-encoder=libvpx_vp8 \
+		  --enable-decoder=vp8 \
+		  --enable-encoder=h263 \
+		  --enable-decoder=h263
+
+# There is an unresolved symbol for speex when linking statically
+ifndef HAVE_DARWIN_OS
+LIBAVCONF += \
+          --enable-libspeex \
+          --enable-encoder=libspeex \
+          --enable-decoder=libspeex
+endif
 
 DEPS_libav = zlib x264 vpx $(DEPS_vpx)
 
