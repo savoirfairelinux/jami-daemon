@@ -20,13 +20,7 @@ endif
 
 ACLOCAL_AMFLAGS = -I m4
 
-
-#FIXME: this will change when libring is fixed
-if HAVE_WIN32
-SUBDIRS = bin
-else
 SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
-endif
 
 EXTRA_DIST = m4/libtool.m4 \
 			 m4/lt~obsolete.m4 \

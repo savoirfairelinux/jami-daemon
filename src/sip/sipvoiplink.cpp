@@ -63,7 +63,7 @@
 #include "client/videomanager.h"
 #endif
 
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include "pres_sub_server.h"
 

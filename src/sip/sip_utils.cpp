@@ -43,10 +43,12 @@
 #include <pjsip/sip_uri.h>
 #include <pj/list.h>
 
+#ifndef _WIN32
 #include <netdb.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#endif
 
 #include <vector>
 #include <algorithm>

@@ -12,6 +12,10 @@ if HAVE_OSX
 RING_VIDEO_LIBS+= \
                 ./media/video/osxvideo/libosxvideo.la
 endif
+if HAVE_WIN32
+RING_VIDEO_LIBS+= \
+                ./media/video/winvideo/libwinvideo.la
+endif
 endif
 
 if BUILD_INSTANT_MESSAGING
@@ -66,6 +70,7 @@ libring_la_LDFLAGS = \
 		@YAMLCPP_LIBS@ \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
+		@PORTAUDIO_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
@@ -88,6 +93,7 @@ libring_la_CFLAGS = \
 		@LIBUPNP_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		@LIBUPNP_CFLAGS@ \
+		@PORTAUDIO_CFLAGS@ \
 		$(TLS_CFLAGS)
 
 if USE_DHT
@@ -142,6 +148,12 @@ libring_la_SOURCES = conference.cpp \
 		ring_api.cpp \
 		gnutls_support.h \
 		rational.h
+
+if HAVE_WIN32
+libring_la_SOURCES += \
+		dlfcn.c \
+		winsyslog.c
+endif
 
 nobase_include_HEADERS= dring/dring.h \
 		dring/security_const.h \
