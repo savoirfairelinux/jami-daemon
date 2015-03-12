@@ -34,7 +34,20 @@
 
 #include "media_io_handle.h"
 
-#include <sys/socket.h>
+#ifdef HAVE_CONFIG_H
+    #include <config.h>
+#endif
+
+#ifndef _WIN32
+    #include <sys/socket.h>
+    #include <netdb.h>
+    #include <poll.h>
+#else
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    typedef int socklen_t;
+#endif
+
 #include <mutex>
 #include <memory>
 #include <atomic>
