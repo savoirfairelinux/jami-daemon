@@ -40,7 +40,7 @@
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #define MAX_N_SUB_SERVER 50
 #define MAX_N_SUB_CLIENT 50

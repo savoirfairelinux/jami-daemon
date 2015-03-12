@@ -52,10 +52,12 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/tcp.h>
-#include <netinet/in.h>
-#include <netdb.h>
+#ifndef _WIN32
+    #include <sys/socket.h>
+    #include <netinet/tcp.h>
+    #include <netinet/in.h>
+    #include <netdb.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 

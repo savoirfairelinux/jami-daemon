@@ -42,7 +42,7 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 namespace ring {
 
