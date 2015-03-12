@@ -36,13 +36,19 @@
 #include "libav_utils.h"
 #include "logger.h"
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
-#include <poll.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
+#ifdef WIN32
+#define SOCK_NONBLOCK FIONBIO
+#define poll WSAPoll
+#endif
 
 #ifdef __ANDROID__
 #include <asm-generic/fcntl.h>
@@ -250,7 +256,7 @@ SocketPair::readRtpData(void *buf, int buf_size)
         // work with system socket
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        auto result = recvfrom(rtpHandle_, buf, buf_size, 0,
+        auto result = recvfrom(rtpHandle_, (char*)buf, buf_size, 0,
                                (struct sockaddr *)&from, &from_len);
         return result;
     }
@@ -275,7 +281,7 @@ SocketPair::readRtcpData(void *buf, int buf_size)
         // work with system socket
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtcpHandle_, buf, buf_size, 0,
+        return recvfrom(rtcpHandle_,(char*) buf, buf_size, 0,
                         (struct sockaddr *)&from, &from_len);
     }
 
@@ -299,7 +305,7 @@ SocketPair::writeRtpData(void *buf, int buf_size)
         auto ret = ff_network_wait_fd(rtpHandle_);
         if (ret < 0)
             return ret;
-        return sendto(rtpHandle_, buf, buf_size, 0,
+        return sendto(rtpHandle_, (char*) buf, buf_size, 0,
                       (sockaddr*) &rtpDestAddr_, rtpDestAddrLen_);
     }
 
@@ -316,7 +322,7 @@ SocketPair::writeRtcpData(void *buf, int buf_size)
         auto ret = ff_network_wait_fd(rtcpHandle_);
         if (ret < 0)
             return ret;
-        return sendto(rtcpHandle_, buf, buf_size, 0,
+        return sendto(rtcpHandle_,(char*) buf, buf_size, 0,
                       (sockaddr*) &rtcpDestAddr_, rtcpDestAddrLen_);
     }
 
