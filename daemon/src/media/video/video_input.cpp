@@ -36,8 +36,9 @@
 #include "media_decoder.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+
 #include "sinkclient.h"
+#include "client/xsignal.h"
 #include "logger.h"
 
 #include <map>
