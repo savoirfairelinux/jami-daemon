@@ -12,6 +12,11 @@ SUBDIRS+= \
     osxvideo
 endif
 
+if HAVE_WIN32
+SUBDIRS+= \
+	winvideo
+endif
+
 noinst_LTLIBRARIES = libvideo.la
 libvideo_la_SOURCES = \
 	video_device.h \

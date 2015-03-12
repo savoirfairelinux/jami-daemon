@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
+
 #include "sinkclient.h"
 #include "logger.h"
 
@@ -329,6 +330,11 @@ VideoInput::switchInput(const std::string& resource)
     } else if (prefix == "file") {
         /* Pathname */
         valid = initFile(suffix);
+    } else if (prefix == "avfoundation") {
+        /* AVFoundation */
+        valid = initCamera(suffix);
+    } else if (prefix == "dshow") {
+        valid = initCamera(suffix);
     }
 
     // Unsupported MRL or failed initialization

@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
+
 #include "sinkclient.h"
 #include "logger.h"
 

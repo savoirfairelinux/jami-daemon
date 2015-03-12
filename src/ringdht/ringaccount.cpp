@@ -690,9 +690,9 @@ void RingAccount::doRegister_()
 
 #if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
-            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); }
+            //[](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
+            //[](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
         );
 #endif
 

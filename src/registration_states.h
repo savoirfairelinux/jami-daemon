@@ -32,6 +32,10 @@
 #ifndef REGISTRATION_STATES_H_
 #define REGISTRATION_STATES_H_
 
+#ifdef REGISTERED
+#undef REGISTERED
+#endif
+
 namespace ring {
 
 /** Contains all the Registration states for an account can be in */

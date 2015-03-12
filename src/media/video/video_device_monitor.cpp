@@ -38,6 +38,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
+
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "video_device_monitor.h"
