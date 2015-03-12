@@ -37,7 +37,7 @@
 
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "video_device_monitor.h"

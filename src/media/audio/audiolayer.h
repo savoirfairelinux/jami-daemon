@@ -53,6 +53,7 @@
 #define ALSA_API_STR                "alsa"
 #define JACK_API_STR                "jack"
 #define COREAUDIO_API_STR           "coreaudio"
+#define PORTAUDIO_API_STR           "portaudio"
 
 #define PCM_DEFAULT "default"         // Default ALSA plugin
 #define PCM_DSNOOP  "plug:dsnoop"     // Alsa plugin for microphone sharing
