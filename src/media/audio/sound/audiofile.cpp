@@ -41,7 +41,7 @@
 #include "audiofile.h"
 #include "audio/resampler.h"
 #include "manager.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include "logger.h"
 
@@ -97,7 +97,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     if (!fileHandle)
         throw AudioFileException("File handle " + fileName + " could not be created");
     if (fileHandle.error()) {
-        RING_ERR("%s", fileHandle.strError());
+        RING_ERR("Error fileHandle: %s", fileHandle.strError());
         throw AudioFileException("File " + fileName + " doesn't exist");
     }
 
