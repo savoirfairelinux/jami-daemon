@@ -44,7 +44,7 @@
 #include "sip/sipaccount.h"
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 namespace DRing {
 
