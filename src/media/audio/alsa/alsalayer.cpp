@@ -34,7 +34,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "noncopyable.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"

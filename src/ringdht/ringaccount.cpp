@@ -44,7 +44,7 @@
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
 
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -689,9 +689,9 @@ void RingAccount::doRegister_()
 
 #if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
-            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); }
+            //[](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
+            //[](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
         );
 #endif
 
@@ -738,8 +738,8 @@ void RingAccount::doRegister_()
 
         // Listen for incoming calls
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        auto listenKey = "callto:"+dht_.getId().toString();
-        RING_WARN("Listening on %s : %s", listenKey.c_str(), dht::InfoHash::get(listenKey).toString().c_str());
+        auto listenKey = dht::InfoHash::get("callto:"+dht_.getId().toString());
+        RING_WARN("Listening on %s", listenKey.toString().c_str());
         dht_.listen (
             listenKey,
             [shared,listenKey] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
@@ -788,7 +788,7 @@ void RingAccount::doRegister_()
                                 reply_vid
                             },
                             [weak_call,ice,shared,listenKey,reply_vid](bool ok) {
-                                auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
+                                auto& this_ = *shared.get();
                                 if (!ok) {
                                     RING_WARN("Can't put ICE descriptor on DHT");
                                     if (auto call = weak_call.lock()) {
