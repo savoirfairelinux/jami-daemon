@@ -50,6 +50,9 @@
 #if HAVE_COREAUDIO
 #include "audio/coreaudio/corelayer.h"
 #endif
+#if HAVE_PORTAUDIO
+#include "audio/portaudio/portaudiolayer.h"
+#endif
 #endif /* HAVE_OPENSL */
 
 #include <yaml-cpp/yaml.h>
@@ -58,6 +61,7 @@
 #include "sip/sip_utils.h"
 #include <sstream>
 #include <algorithm>
+#include <stdexcept>
 #include "fileutils.h"
 
 namespace ring {
@@ -356,6 +360,8 @@ AudioLayer* AudioPreference::createAudioLayer()
                 audioApi_ = ALSA_API_STR;
 #elif HAVE_COREAUDIO
                 audioApi_ = COREAUDIO_API_STR;
+#elif HAVE_PORTAUDIO
+                audioApi_ = PORTAUDIO_API_STR;
 #else
                 throw;
 #endif
@@ -396,6 +402,15 @@ AudioLayer* AudioPreference::createAudioLayer()
     return NULL;
 #endif
 
+#if HAVE_PORTAUDIO
+    audioApi_ = PORTAUDIO_API_STR;
+    try {
+        return new PortAudioLayer(*this);
+    } catch (const std::runtime_error &e) {
+        RING_WARN("Could not create PortAudio layer. There will be no sound.");
+    }
+    return nullptr;
+#endif
 #endif // __ANDROID__
 }
 

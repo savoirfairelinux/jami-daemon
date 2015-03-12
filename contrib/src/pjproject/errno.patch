@@ -1,0 +1,13 @@
+--- pjproject/pjlib/include/pj/errno.h	2013-04-04 23:02:19.000000000 -0400
++++ pjproject/pjlib/include/pj/errno.h	2015-02-27 12:21:24.171567801 -0500
+@@ -432,6 +432,11 @@
+  * Socket is stopped
+  */
+ #define PJ_ESOCKETSTOP	    (PJ_ERRNO_START_STATUS + 24)/* 70024 */
++/**
++ * @hideinitializer
++ * There is no data available right now, try again later.
++ */
++#define PJ_EAGAIN	    	(PJ_ERRNO_START_STATUS + 25)/* 70025 */
+
+ /** @} */   /* pj_errnum */

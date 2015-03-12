@@ -32,9 +32,22 @@
 #ifndef SOCKET_PAIR_H_
 #define SOCKET_PAIR_H_
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "media_io_handle.h"
 
+#ifndef _WIN32
 #include <sys/socket.h>
+#include <netdb.h>
+#include <poll.h>
+#else
+#include <winsock2.h>
+#include <ws2tcpip.h>
+using socklen_t = int;
+#endif
+
 #include <mutex>
 #include <memory>
 #include <atomic>
