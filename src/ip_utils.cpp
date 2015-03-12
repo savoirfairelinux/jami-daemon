@@ -34,15 +34,13 @@
 
 #include "sip/sip_utils.h"
 
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-
-#include <netdb.h>
-#include <net/if.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+
+#ifdef _WIN32
+    #define InetPtonA inet_pton
+    WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
+#endif
 
 namespace ring {
 
@@ -141,6 +139,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
     IpAddr addr = {};
 
+    #ifndef _WIN32
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         RING_ERR("Could not open socket: %m");
@@ -170,6 +169,26 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
+    #else
+    char ac[80];
+    if (gethostname(ac, sizeof(ac)) == SOCKET_ERROR) {
+        RING_ERR("Error while getting hostname");
+        return 1;
+    }
+
+    struct hostent *phe = gethostbyname(ac);
+    if (phe == 0) {
+        RING_ERR("Bad host lookup");
+        return 1;
+    }
+
+    struct in_addr pAddr;
+    memcpy(&pAddr, phe->h_addr_list[0], sizeof(struct in_addr));
+    std::string ip_adress = inet_ntoa(pAddr);
+    addr = inet_addr(ip_adress.c_str());
+    if (addr.isUnspecified())
+        return getLocalAddr(addr.getFamily());
+    #endif
 
     return addr;
 }
@@ -177,11 +196,11 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 std::vector<std::string>
 ip_utils::getAllIpInterfaceByName()
 {
-    static ifreq ifreqs[20];
-    ifconf ifconf;
-
     std::vector<std::string> ifaceList;
     ifaceList.push_back("default");
+    #ifndef _WIN32
+    static ifreq ifreqs[20];
+    ifconf ifconf;
 
     ifconf.ifc_buf = (char*) (ifreqs);
     ifconf.ifc_len = sizeof(ifreqs);
@@ -196,6 +215,9 @@ ip_utils::getAllIpInterfaceByName()
         close(sock);
     }
 
+    #else
+        RING_ERR("Not implemented yet. (iphlpapi.h problem)");
+    #endif
     return ifaceList;
 }
 
@@ -222,7 +244,7 @@ std::vector<IpAddr>
 ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
-#ifdef __ANDROID__
+#if defined __ANDROID__ || defined _WIN32
 #warning "Not implemented"
 #else
     if (not (_res.options & RES_INIT))
@@ -256,7 +278,12 @@ IpAddr::isUnspecified() const
 {
     switch (addr.addr.sa_family) {
     case AF_INET:
+        //#ifndef _WIN32
         return IN_IS_ADDR_UNSPECIFIED(&addr.ipv4.sin_addr);
+        //#else // FIXME: That's obviously not gonna work
+        //printf("IS UNSPECIFIED\n");
+        //return false;
+        //#endif
     case AF_INET6:
         return IN6_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
     default:
@@ -269,7 +296,12 @@ IpAddr::isLoopback() const
 {
     switch (addr.addr.sa_family) {
     case AF_INET: {
+        //#ifndef _WIN32
         uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+        //#else // FIXME: That's obviously not gonna work
+        //uint8_t b1 = 42;
+        //printf("IS LOOPBACK\n");
+        //#endif
         return b1 == 127;
     }
     case AF_INET6:
@@ -288,8 +320,13 @@ IpAddr::isPrivate() const
     switch (addr.addr.sa_family) {
     case AF_INET:
         uint8_t b1, b2;
+        //#ifndef _WIN32
         b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
         b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0x0ff);
+        //#else // FIXME: That's obviously not gonna work
+        //b1 = b2 = 42;
+        //printf("IS PRIVATE\n");
+        //#endif
         // 10.x.y.z
         if (b1 == 10)
             return true;
