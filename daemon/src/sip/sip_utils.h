@@ -49,6 +49,14 @@ namespace ring {namespace sip_utils {
 
     enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
 
+    constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
+        return kx == KeyExchangeProtocol::SDES ? "sdes" : (
+               kx == KeyExchangeProtocol::ZRTP ? "zrtp" : "");
+    }
+    constexpr KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
+        return !strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
+    }
+
     /**
      * Helper function to parser header from incoming sip messages
      * @return Header from SIP message

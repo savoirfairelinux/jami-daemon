@@ -382,14 +382,8 @@ class SIPAccount : public SIPAccountBase {
             return tlsEnable_;
         }
 
-        virtual bool getSrtpEnabled() const {
-            return srtpEnabled_;
-        }
-
         virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
-            return srtpKeyExchange_ == "srtp"
-                 ? sip_utils::KeyExchangeProtocol::SDES
-                 : sip_utils::KeyExchangeProtocol::NONE;
+            return srtpKeyExchange_;
         }
 
         virtual bool getSrtpFallback() const {
@@ -532,6 +526,10 @@ class SIPAccount : public SIPAccountBase {
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+        bool isSrtpEnabled() const {
+            return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE;
+        }
+
         /**
          * Callback called by the transport layer when the registration
          * transport state changes.
@@ -673,16 +671,10 @@ class SIPAccount : public SIPAccountBase {
         std::string tlsNegotiationTimeoutSec_;
 
         /**
-         * Determine if SRTP is enabled for this account, SRTP and ZRTP are mutually exclusive
-         * This only determine if the media channel is secured. One could only enable TLS
-         * with no secured media channel.
+         * Specifies the type of key exchange used for SRTP  (sdes/zrtp), if any.
+         * This only determine if the media channel is secured.
          */
-        bool srtpEnabled_ {false};
-
-        /**
-         * Specifies the type of key exchange usd for SRTP (sdes/zrtp)
-         */
-        std::string srtpKeyExchange_ {""};
+        sip_utils::KeyExchangeProtocol srtpKeyExchange_ {sip_utils::KeyExchangeProtocol::NONE};
 
         /**
          * Determine if the softphone should fallback on non secured media channel if SRTP negotiation fails.

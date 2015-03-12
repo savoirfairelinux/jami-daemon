@@ -125,6 +125,12 @@ void VideoRtpSession::start()
         socketPair_.reset(
             new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort())
         );
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str(),
+                                    send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str());
+        }
     } catch (const std::runtime_error &e) {
         RING_ERR("Socket creation failed on port %d: %s", receive_.addr.getPort(), e.what());
         return;
@@ -154,7 +160,19 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
         return;
     }
 
-    socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+    try {
+        socketPair_.reset(new SocketPair(std::move(rtp_sock),
+                                         std::move(rtcp_sock)));
+        if (send_.crypto and receive_.crypto) {
+            socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
+                                    receive_.crypto.getSrtpKeyInfo().c_str(),
+                                    send_.crypto.getCryptoSuite().c_str(),
+                                    send_.crypto.getSrtpKeyInfo().c_str());
+        }
+    } catch (const std::runtime_error &e) {
+        RING_ERR("Socket creation failed");
+        return;
+    }
 
     startSender();
     startReceiver();
