@@ -48,7 +48,7 @@
 #include "security_const.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include <dirent.h>
 

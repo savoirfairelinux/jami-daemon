@@ -18,8 +18,6 @@ LIBAVCONF = \
 #encoders
 LIBAVCONF += \
 		  --enable-libx264 \
-		  --enable-libopus \
-		  --enable-libspeex \
 		  --enable-libvpx \
 		  --enable-encoder=g722 \
 		  --enable-encoder=libx264 \
@@ -33,13 +31,18 @@ LIBAVCONF += \
 		  --disable-decoder=libvpx_vp9 \
 		  --enable-encoder=h263p
 
-DEPS_libav = zlib x264 vpx $(DEPS_vpx)
+DEPS_libav = zlib x264 opus speex vpx $(DEPS_vpx)
+
 
 ifdef HAVE_CROSS_COMPILE
 LIBAVCONF += --enable-cross-compile
 ifndef HAVE_DARWIN_OS
 LIBAVCONF += --cross-prefix=$(HOST)-
 endif
+else
+LIBAVCONF += \
+		--enable-libopus \
+		--enable-libspeex
 endif
 
 # ARM stuff
