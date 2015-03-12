@@ -24,6 +24,10 @@ if HAVE_OSX
 SUBDIRS += coreaudio
 endif
 
+if HAVE_PORTAUDIO
+SUBDIRS += portaudio
+endif
+
 if BUILD_SPEEXDSP
 RING_SPEEXDSP_SRC=dsp.cpp
 RING_SPEEXDSP_HEAD=dsp.h
@@ -88,4 +92,9 @@ endif
 if BUILD_OPENSL
 libaudio_la_LIBADD += ./opensl/libopensl.la
 libaudio_la_LDFLAGS += -lOpenSLES
+endif
+
+if BUILD_PORTAUDIO
+libaudio_la_LIBADD += ./portaudio/libportaudiolayer.la
+libaudio_la_LDFLAGS += @PORTAUDIO_LIBS@
 endif

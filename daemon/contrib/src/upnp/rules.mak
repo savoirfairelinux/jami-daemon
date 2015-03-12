@@ -13,6 +13,7 @@ $(TARBALLS)/libupnp-$(UPNP_VERSION).tar.bz2:
 .sum-upnp: libupnp-$(UPNP_VERSION).tar.bz2
 
 ifdef HAVE_WIN32
+# Error : No rule to make pthreads
 DEPS_upnp += pthreads $(DEPS_pthreads)
 LIBUPNP_ECFLAGS = -DPTW32_STATIC_LIB
 endif

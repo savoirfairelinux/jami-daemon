@@ -34,7 +34,20 @@
 
 #include <pjlib.h>
 
-#include <netinet/ip.h>
+#ifdef _WIN32
+    #include <ws2tcpip.h>
+    #include <config.h>
+    #include <winsock2.h>
+#else
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+    #include <arpa/nameser.h>
+    #include <resolv.h>
+    #include <netdb.h>
+    #include <netinet/ip.h>
+    #include <net/if.h>
+    #include <sys/ioctl.h>
+#endif
 
 #include <string>
 #include <vector>
