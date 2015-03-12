@@ -54,7 +54,7 @@
 #endif
 
 #include "dring/call_const.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
