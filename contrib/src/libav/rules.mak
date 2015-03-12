@@ -32,8 +32,6 @@ LIBAVCONF += \
 #librairies
 LIBAVCONF += \
 		--enable-libx264 \
-		--enable-libopus \
-		--enable-libspeex \
 		--enable-libvpx
 
 #encoders/decoders
@@ -65,7 +63,24 @@ LIBAVCONF += \
 	--enable-x11grab
 endif
 
-DEPS_libav = zlib x264 vpx $(DEPS_vpx)
+ifdef HAVE_WIN32
+LIBAVCONF += \
+	--enable-indev=vfwcap \
+	--enable-dxva2
+endif
+
+# There is an unresolved symbol for speex when linking statically
+ifndef HAVE_DARWIN_OS
+ifndef HAVE_WIN32
+LIBAVCONF += \
+          --enable-libspeex \
+          --enable-libopus \
+          --enable-encoder=libspeex \
+          --enable-decoder=libspeex
+endif
+endif
+
+DEPS_libav = zlib x264 vpx opus speex $(DEPS_vpx)
 
 ifdef HAVE_CROSS_COMPILE
 LIBAVCONF += --enable-cross-compile

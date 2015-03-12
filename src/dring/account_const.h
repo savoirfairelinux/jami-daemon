@@ -31,6 +31,11 @@
 #ifndef DRING_ACCOUNT_H
 #define DRING_ACCOUNT_H
 
+//Defined in windows.h
+#ifdef ERROR
+#undef ERROR
+#endif
+
 namespace DRing {
 
 namespace Account {
