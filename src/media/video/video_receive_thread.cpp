@@ -36,9 +36,10 @@
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+
 #include "sinkclient.h"
 #include "logger.h"
+#include "client/xsignal.h"
 
 #include <unistd.h>
 #include <map>

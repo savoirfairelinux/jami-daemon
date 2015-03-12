@@ -35,6 +35,32 @@ namespace ring { namespace tls {
 class GnuTlsGlobalInit;
 }} // namespace ring::tls
 
+#  if !defined (S_IRWXG)
+#    define S_IRWXG 00070
+#  endif /* S_IRWXG */
+#  if !defined (S_IRGRP)
+#    define S_IRGRP 00040
+#  endif /* S_IRGRP */
+#  if !defined (S_IWGRP)
+#    define S_IWGRP 00020
+#  endif /* S_IWGRP */
+#  if !defined (S_IXGRP)
+#    define S_IXGRP 00010
+#  endif /* S_IXGRP */
+#  if !defined (S_IRWXO)
+#    define S_IRWXO 00007
+#  endif /* S_IRWXO */
+#  if !defined (S_IROTH)
+#    define S_IROTH 00004
+#  endif /* S_IROTH */
+#  if !defined (S_IWOTH)
+#    define S_IWOTH 00002
+#  endif /* S_IWOTH */
+#  if !defined (S_IXOTH)
+#    define S_IXOTH 00001
+#  endif /* S_IXOTH */
+
+
 namespace ring {
 
 class TlsValidatorException : public std::runtime_error {
