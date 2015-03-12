@@ -164,6 +164,8 @@ public:
     }
 
     inline socklen_t getLength() const {
+        if (not *this)
+            return 0;
         return pj_sockaddr_get_len(&addr);
     }
 
