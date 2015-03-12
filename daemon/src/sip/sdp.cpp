@@ -88,33 +88,6 @@ Sdp::~Sdp()
 #endif
 }
 
-static bool
-hasPayload(const std::vector<std::shared_ptr<AccountAudioCodecInfo>>& codecs,
-           int pt)
-{
-    return std::any_of(std::begin(codecs), std::end(codecs),
-                       [pt](const std::shared_ptr<AccountAudioCodecInfo>& c)
-                       { return c and c->systemCodecInfo.payloadType == (unsigned)pt; });
-}
-
-static bool
-hasCodec(const std::vector<std::string> &codecs, const std::string &codec)
-{
-    return std::find(codecs.begin(), codecs.end(), codec) != codecs.end();
-}
-
-static std::string
-rtpmapToString(pjmedia_sdp_rtpmap *rtpmap)
-{
-    std::ostringstream os;
-    const std::string enc(rtpmap->enc_name.ptr, rtpmap->enc_name.slen);
-    const std::string param(rtpmap->param.ptr, rtpmap->param.slen);
-    os << enc << "/" << rtpmap->clock_rate;
-    if (not param.empty())
-        os << "/" << param;
-    return os.str();
-}
-
 std::shared_ptr<AccountCodecInfo>
 Sdp::findCodecBySpec(const std::string &codec, const unsigned clockrate) const
 {
@@ -654,10 +627,8 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             break;
         }
 
-        if (not remote) {
+        if (not remote)
             descr.receiving_sdp = getFilteredSdp(session, i, descr.payload_type);
-            RING_WARN("Filtered SDP for local media #%u :\n%s", i, descr.receiving_sdp.c_str());
-        }
 
         // get crypto info
         std::vector<std::string> crypto;
@@ -683,19 +654,6 @@ Sdp::getMediaSlots() const
         s.emplace_back(std::move(loc[i]), std::move(rem[i]));
     return s;
 }
-
-namespace
-{
-    vector<string> split(const string &s, char delim)
-    {
-        vector<string> elems;
-        stringstream ss(s);
-        string item;
-        while(getline(ss, item, delim))
-            elems.push_back(item);
-        return elems;
-    }
-} // end anonymous namespace
 
 void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
 {
