@@ -34,7 +34,7 @@
 
 #include "callmanager_interface.h"
 #include "call_factory.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include "sip/sipcall.h"
 #include "sip/sipvoiplink.h"
