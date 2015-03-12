@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
- *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,29 +28,28 @@
  *  as that of the covered work.
  */
 
-#ifndef REGISTRATION_STATES_H_
-#define REGISTRATION_STATES_H_
+#ifndef CAPTURE_GRAPH_INTERFACES
+#define CAPTURE_GRAPH_INTERFACES
 
-#ifdef REGISTERED
-#undef REGISTERED
-#endif
+#include <dshow.h>
 
-namespace ring {
+namespace ring { namespace video {
 
-/** Contains all the Registration states for an account can be in */
-enum class RegistrationState {
-    UNREGISTERED,
-    TRYING,
-    REGISTERED,
-    ERROR_GENERIC,
-    ERROR_AUTH,
-    ERROR_NETWORK,
-    ERROR_HOST,
-    ERROR_SERVICE_UNAVAILABLE,
-    ERROR_EXIST_STUN,
-    ERROR_NOT_ACCEPTABLE
+class CaptureGraphInterfaces {
+public:
+    CaptureGraphInterfaces()
+        : captureGraph_(nullptr)
+        , graph_(nullptr)
+        , videoInputFilter_(nullptr)
+        , streamConf_(nullptr)
+    {}
+
+    ICaptureGraphBuilder2* captureGraph_;
+    IGraphBuilder* graph_;
+    IBaseFilter* videoInputFilter_;
+    IAMStreamConfig* streamConf_;
 };
 
-} // namespace ring
+}} // namespace ring::video
 
-#endif // REGISTRATION_STATES_H_
+#endif

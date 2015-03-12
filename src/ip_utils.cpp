@@ -34,15 +34,13 @@
 
 #include "sip/sip_utils.h"
 
-#include <arpa/inet.h>
-#include <arpa/nameser.h>
-#include <resolv.h>
-
-#include <netdb.h>
-#include <net/if.h>
 #include <sys/types.h>
-#include <sys/ioctl.h>
 #include <unistd.h>
+
+#ifdef _WIN32
+#define InetPtonA inet_pton
+WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
+#endif
 
 namespace ring {
 
@@ -141,6 +139,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
     IpAddr addr = {};
 
+#ifndef _WIN32
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         RING_ERR("Could not open socket: %m");
@@ -170,6 +169,35 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     addr = ifr.ifr_addr;
     if (addr.isUnspecified())
         return getLocalAddr(addr.getFamily());
+#else // _WIN32
+    struct addrinfo hints;
+    struct addrinfo *result = NULL;
+    struct sockaddr_in  *sockaddr_ipv4;
+    struct sockaddr_in6 *sockaddr_ipv6;
+
+    ZeroMemory(&hints, sizeof(hints));
+
+    DWORD dwRetval = getaddrinfo(interface.c_str(), "0", &hints, &result);
+    if (dwRetval != 0) {
+        RING_ERR("getaddrinfo failed with error: %d", dwRetval);
+        return addr;
+    }
+
+    switch (result->ai_family) {
+        sockaddr_ipv4 = (struct sockaddr_in *) result->ai_addr;
+        addr = sockaddr_ipv4->sin_addr;
+        break;
+        case AF_INET6:
+        sockaddr_ipv6 = (struct sockaddr_in6 *) result->ai_addr;
+        addr = sockaddr_ipv6->sin6_addr;
+        break;
+        default:
+        break;
+    }
+
+    if (addr.isUnspecified())
+            return getLocalAddr(addr.getFamily());
+#endif // !_WIN32
 
     return addr;
 }
@@ -177,11 +205,11 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 std::vector<std::string>
 ip_utils::getAllIpInterfaceByName()
 {
-    static ifreq ifreqs[20];
-    ifconf ifconf;
-
     std::vector<std::string> ifaceList;
     ifaceList.push_back("default");
+#ifndef _WIN32
+    static ifreq ifreqs[20];
+    ifconf ifconf;
 
     ifconf.ifc_buf = (char*) (ifreqs);
     ifconf.ifc_len = sizeof(ifreqs);
@@ -196,6 +224,9 @@ ip_utils::getAllIpInterfaceByName()
         close(sock);
     }
 
+#else
+        RING_ERR("Not implemented yet. (iphlpapi.h problem)");
+#endif
     return ifaceList;
 }
 
@@ -222,7 +253,7 @@ std::vector<IpAddr>
 ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
-#ifdef __ANDROID__
+#if defined __ANDROID__ || defined _WIN32
 #warning "Not implemented"
 #else
     if (not (_res.options & RES_INIT))

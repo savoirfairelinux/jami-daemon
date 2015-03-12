@@ -401,7 +401,7 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
     std::memset(ci, 0, sizeof(pj_ssl_cert_info));
 
     /* Full raw certificate */
-    const pj_str_t raw_crt_pjstr {(char*)crt_raw.data, crt_raw.size};
+    const pj_str_t raw_crt_pjstr {(char*)crt_raw.data, (long int) crt_raw.size};
     pj_strdup(pool, &ci->cert_raw, &raw_crt_pjstr);
 
     /* Version */
