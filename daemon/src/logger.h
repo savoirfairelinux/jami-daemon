@@ -73,8 +73,8 @@ void strErr();
                            ##__VA_ARGS__
 #else
 
-#define LOG_FORMAT(M, ...) "%s:%d: " M, FILE_NAME, __LINE__, \
-                           ##__VA_ARGS__
+#define LOG_FORMAT(M, ...) "%s:%d: " M, FILE_NAME , __LINE__, \
+							##__VA_ARGS__
 #endif
 
 #ifdef __ANDROID__
@@ -98,14 +98,18 @@ void strErr();
 #define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
                                                   LOG_FORMAT(M, ##__VA_ARGS__))
 
-/* TODO: WINDOWS, Actually implement logging system. */
-#elif defined _WIN32
-#define LOG_ERR     0
-#define LOG_WARNING 1
-#define LOG_INFO    2
-#define LOG_DEBUG   3
+#elif _WIN32
 
-#define LOGGER(M, LEVEL, ...) printf(M, ##__VA_ARGS__)
+#include "winsyslog.h"
+
+#define LOG_ERR     EVENTLOG_ERROR_TYPE
+#define LOG_WARNING EVENTLOG_WARNING_TYPE
+#define LOG_INFO    EVENTLOG_INFORMATION_TYPE
+#define LOG_DEBUG   EVENTLOG_SUCCESS
+
+#define FILE_NAME __FILE__
+
+#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
 
 #else
 
@@ -122,9 +126,7 @@ void strErr();
 #define RING_INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define RING_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
 
-
 #define BLACK "\033[22;30m"
-#define RED "\033[22;31m"
 #define GREEN "\033[22;32m"
 #define BROWN "\033[22;33m"
 #define BLUE "\033[22;34m"
@@ -134,12 +136,20 @@ void strErr();
 #define DARK_GREY "\033[01;30m"
 #define LIGHT_RED "\033[01;31m"
 #define LIGHT_SCREEN "\033[01;32m"
-#define YELLOW "\033[01;33m"
 #define LIGHT_BLUE "\033[01;34m"
 #define LIGHT_MAGENTA "\033[01;35m"
 #define LIGHT_CYAN "\033[01;36m"
 #define WHITE "\033[01;37m"
 #define END_COLOR "\033[0m"
+
+#ifndef _WIN32
+#define RED "\033[22;31m"
+#define YELLOW "\033[01;33m"
+#else
+#define RED FOREGROUND_RED
+// Because no yellow on Windows
+#define YELLOW FOREGROUND_BLUE
+#endif
 
 #ifdef __cplusplus
 }

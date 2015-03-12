@@ -39,7 +39,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "system_codec_container.h"
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 namespace DRing {
 
