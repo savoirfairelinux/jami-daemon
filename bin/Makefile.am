@@ -1,8 +1,10 @@
 if HAVE_WIN32
 libexec_PROGRAMS = ringcli
 ringcli_SOURCES = winmain.cpp
-#FIXME This is temporary
-ringcli_LDADD = $(SPEEX_LIBS)
+ringcli_CXXFLAGS = -I$(top_srcdir)/src \
+                   -I$(top_srcdir)/src/dring \
+                   -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
 if HAVE_OSX

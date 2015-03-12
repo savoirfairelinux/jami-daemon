@@ -43,8 +43,8 @@
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
 
-#include "client/signal.h"
 #include "string_utils.h"
+#include "client/xsignal.h"
 
 #include <type_traits>
 

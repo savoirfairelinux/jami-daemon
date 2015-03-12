@@ -42,11 +42,21 @@ HAVE_WIN64 := 1
 endif
 
 ifdef HAVE_CROSS_COMPILE
+PKG_CONFIG ?= $(HOST)-pkg-config --static
+PKG_CONFIG_PATH_CUSTOM = $(PREFIX)/lib/pkgconfig
+export PKG_CONFIG_PATH_CUSTOM
+else
+PKG_CONFIG ?= pkg-config
+endif
+
+PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(PREFIX)/lib/pkgconfig
+export PKG_CONFIG_PATH
+
+ifdef HAVE_CROSS_COMPILE
 need_pkg = 1
 else
 need_pkg = $(shell $(PKG_CONFIG) $(1) || echo 1)
 endif
-
 #
 # Default values for tools
 #
@@ -147,6 +157,7 @@ ifdef HAVE_WIN32
 ifneq ($(shell $(CC) $(CFLAGS) -E -dM -include _mingw.h - < /dev/null | grep -E __MINGW64_VERSION_MAJOR),)
 HAVE_MINGW_W64 := 1
 endif
+EXTRA_CXXFLAGS += -std=c++11
 endif
 
 ifdef HAVE_SOLARIS
@@ -186,16 +197,7 @@ endif
 ACLOCAL_AMFLAGS += -I$(PREFIX)/share/aclocal
 export ACLOCAL_AMFLAGS
 
-PKG_CONFIG ?= pkg-config
-ifdef HAVE_CROSS_COMPILE
-# This inhibits .pc file from within the cross-compilation toolchain sysroot.
-# Hopefully, nobody ever needs that.
-PKG_CONFIG_PATH := /usr/share/pkgconfig
-PKG_CONFIG_LIBDIR := /usr/$(HOST)/lib/pkgconfig
-export PKG_CONFIG_LIBDIR
-endif
-PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(PREFIX)/lib/pkgconfig
-export PKG_CONFIG_PATH
+
 
 ifndef GIT
 ifeq ($(shell git --version >/dev/null 2>&1 || echo FAIL),)
@@ -268,7 +270,7 @@ HOSTCONF += --enable-static --disable-shared
 endif
 
 ifdef HAVE_WIN32
-HOSTCONF += --without-pic
+HOSTCONF += --enable-static --disable-shared --without-pic
 PIC :=
 else
 HOSTCONF += --with-pic
