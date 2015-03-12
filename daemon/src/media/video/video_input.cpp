@@ -36,8 +36,9 @@
 #include "media_decoder.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+
 #include "sinkclient.h"
+#include "client/xsignal.h"
 #include "logger.h"
 
 #include <map>
@@ -328,6 +329,8 @@ VideoInput::switchInput(const std::string& resource)
         valid = initFile(suffix);
     } else if (prefix == "avfoundation") {
         /* AVFoundation */
+        valid = initCamera(suffix);
+    } else if (prefix == "vfwcap") {
         valid = initCamera(suffix);
     }
 
