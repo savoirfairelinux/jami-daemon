@@ -43,6 +43,7 @@
 #include "noncopyable.h"
 
 #include <pjsip/sip_types.h>
+#include <opendht/value.h>
 
 #include <array>
 #include <vector>

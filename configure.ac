@@ -63,10 +63,6 @@ case "${host_os}" in
     SYS=mingw32
     AC_CHECK_TOOL(WINDRES, windres, :)
     AC_CHECK_TOOL(OBJCOPY, objcopy, :)
-    AH_TOP([#if defined(_WIN32) && !defined(_WIN32_WINNT)])
-    AH_TOP([# define _WIN32_WINNT 0x0502 /* Windows XP SP2 */])
-    AH_TOP([#endif])
-    AC_DEFINE([_WIN32_IE], 0x0600, [Define to '0x0600' for IE 6.0 (and shell) APIs.])
     AC_DEFINE([_UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
     AC_DEFINE([UNICODE], [1], [Define to 1 for Unicode (Wide Chars) APIs.])
     AC_DEFINE([_ISOC99_SOURCE], [1], [Extensions to ISO C89 from ISO C99.])
@@ -77,8 +73,8 @@ case "${host_os}" in
     AC_DEFINE([_XOPEN_SOURCE_EXTENDED], [1], [XPG things and X/Open Unix extensions.])
     AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
     AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
-
-    LDFLAGS="${LDFLAGS} -Wl,--nxcompat -Wl,--no-seh -Wl,--dynamicbase"
+    CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601"
+    LDFLAGS+="-no-undefined -avoid-version -Wl,--nxcompat -Wl,--dynamicbase"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
     AC_SUBST(WINDOWS_ARCH)
@@ -218,6 +214,11 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   CFLAGS="${CFLAGS} -I${CONTRIB_DIR}/include"
   CXXFLAGS="${CXXFLAGS} -I${CONTRIB_DIR}/include"
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
+  AS_IF([test "${SYS}" = "mingw32"],[
+        PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
+        AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
+        export PKG_CONFIG_PATH_CUSTOM
+  ])
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
   LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
 
@@ -300,6 +301,22 @@ AS_IF([test "x$have_jack" = "xyes"],,
              [AC_MSG_ERROR([jack requested but not found])
       ])
 ])
+
+dnl check for libportaudio
+AS_IF([test "${SYS}" = "mingw32"],[
+AC_ARG_WITH([portaudio], [AS_HELP_STRING([--without-portaudio],
+            [disable support for portaudio])], [], [with_portaudio=yes])
+
+AS_IF([test "x$with_portaudio" = "xyes"],
+      [PKG_CHECK_MODULES(PORTAUDIO, [portaudio-2.0],
+        [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])],
+        [AC_MSG_WARN([Missing libportaudio development files])
+         AC_DEFINE([HAVE_PORTAUDIO], 0, [Define if you have portaudio])
+        ])
+      ])
+])
+AM_CONDITIONAL(BUILD_PORTAUDIO, test "x$with_portaudio" = "xyes")
+AM_CONDITIONAL(HAVE_PORTAUDIO, test "x$with_portaudio" = "xyes")
 
 AC_DEFINE_UNQUOTED([HAVE_JACK], `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have jack])
 AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
@@ -572,7 +589,7 @@ dnl debug mode is default-disabled
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
 
 AS_IF([test "x$enable_debug" = "xyes"],
-      [CXXFLAGS="${CXXFLAGS} -g -Wall -Wextra -Wnon-virtual-dtor -O0"])
+      [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -O0"])
 
 dnl What Makefiles to generate
 
@@ -591,6 +608,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/audio/opensl/Makefile \
                  src/media/audio/jack/Makefile \
                  src/media/audio/coreaudio/Makefile \
+                 src/media/audio/portaudio/Makefile \
                  src/media/audio/sound/Makefile \
                  src/config/Makefile \
                  src/client/Makefile \
@@ -598,6 +616,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
                  src/media/video/osxvideo/Makefile \
+                 src/media/video/winvideo/Makefile \
                  src/media/video/test/Makefile \
                  src/upnp/Makefile \
                  test/Makefile \

@@ -51,7 +51,9 @@
 #include "client/ring_signal.h"
 #include "dring/videomanager_interface.h"
 
+#ifndef _WIN32
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>
