@@ -223,7 +223,6 @@ int MediaDecoder::setupFromVideoData()
 #else
     ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
-
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/
@@ -283,7 +282,6 @@ int MediaDecoder::setupFromVideoData()
         RING_ERR("Could not open codec");
         return -1;
     }
-
     return 0;
 }
 

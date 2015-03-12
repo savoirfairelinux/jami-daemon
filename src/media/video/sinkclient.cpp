@@ -49,7 +49,9 @@
 #include "logger.h"
 #include "noncopyable.h"
 
+#ifndef _WIN32
 #include <sys/mman.h>
+#endif
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>
