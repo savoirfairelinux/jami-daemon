@@ -38,6 +38,10 @@
 static int consoleLog;
 static int debugMode;
 
+#ifdef WIN32
+#include "winsyslog.h"
+#endif
+
 void logger(const int level, const char* format, ...)
 {
     if (!debugMode && level == LOG_DEBUG)
@@ -51,11 +55,21 @@ void logger(const int level, const char* format, ...)
 
 void vlogger(const int level, const char *format, va_list ap)
 {
+#ifdef WIN32
+    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+    WORD saved_attributes;
+#endif
+
     if (!debugMode && level == LOG_DEBUG)
         return;
 
     if (consoleLog) {
+#ifndef _WIN32
         const char *color_prefix = "";
+#else
+        WORD color_prefix = FOREGROUND_GREEN;
+#endif
 
         switch (level) {
             case LOG_ERR:
@@ -66,9 +80,23 @@ void vlogger(const int level, const char *format, va_list ap)
                 break;
         }
 
+#ifndef _WIN32
         fputs(color_prefix, stderr);
+#else
+        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+        saved_attributes = consoleInfo.wAttributes;
+        SetConsoleTextAttribute(hConsole, color_prefix);
+#endif
+
         vfprintf(stderr, format, ap);
+
+#ifndef _WIN32
         fputs(END_COLOR"\n", stderr);
+#else
+        fputs("\n", stderr);
+        SetConsoleTextAttribute(hConsole, saved_attributes);
+#endif
+
     } else {
         vsyslog(level, format, ap);
     }

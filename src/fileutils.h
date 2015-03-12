@@ -44,8 +44,13 @@
 #define PIDFILE ".ring.pid"
 
 
+#ifndef _WIN32
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
 #define DIR_SEPARATOR_CH  '/'  // Directory separator string
+#else
+#define DIR_SEPARATOR_STR "\\"   // Directory separator char
+#define DIR_SEPARATOR_CH  '\\'  // Directory separator string
+#endif
 
 namespace ring { namespace fileutils {
 
@@ -57,6 +62,10 @@ namespace ring { namespace fileutils {
     const char *get_program_dir();
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
+
+#ifdef _WIN32
+    bool recursive_mkdir(const std::string& path);
+#endif
 
     /**
      * Read content of the directory.
