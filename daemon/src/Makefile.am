@@ -63,6 +63,7 @@ libring_la_LDFLAGS = \
 		@YAMLCPP_LIBS@ \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
+		@PORTAUDIO_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
@@ -136,6 +137,12 @@ libring_la_SOURCES = conference.cpp \
 		string_utils.cpp \
 		rw_mutex.h \
 		ring_api.cpp
+
+if HAVE_WIN32
+libring_la_SOURCES += \
+		dlfcn.c \
+		winsyslog.c
+endif
 
 nobase_include_HEADERS= dring/dring.h \
 		dring/security_const.h \

@@ -47,7 +47,7 @@
 
 #include "array_size.h"
 
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include "account_schema.h"
 #include "logger.h"

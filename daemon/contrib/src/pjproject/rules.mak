@@ -23,6 +23,9 @@ PJPROJECT_OPTIONS := --disable-oss          \
 ifdef HAVE_ANDROID
 PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
 endif
+ifdef HAVE_WIN32
+PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
+endif
 
 PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2
 
@@ -50,6 +53,7 @@ ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/intptr_t.patch
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
+	$(APPLY) $(SRC)/pjproject/errno.patch
 	$(APPLY) $(SRC)/pjproject/aconfigureupdate.patch
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/unknowncipher.patch

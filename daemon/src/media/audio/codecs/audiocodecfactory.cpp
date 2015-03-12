@@ -32,6 +32,7 @@
  *  as that of the covered work.
  */
 
+#if 0
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -51,7 +52,7 @@
 #include <stdexcept>
 #include <sstream>
 
-#if 0
+
 namespace ring {
 
 AudioCodecFactory::AudioCodecFactory(PluginManager& pluginManager)

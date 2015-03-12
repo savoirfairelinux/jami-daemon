@@ -36,6 +36,10 @@
 #include "sip/sdes_negotiator.h"
 #include "ip_utils.h"
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <string>
 #include <vector>
 #include <iostream>
