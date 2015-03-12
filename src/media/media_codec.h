@@ -33,6 +33,10 @@
 #ifndef __MEDIA_CODEC_H__
 #define __MEDIA_CODEC_H__
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "audio/audiobuffer.h" // for AudioFormat
 #include "ip_utils.h"
 

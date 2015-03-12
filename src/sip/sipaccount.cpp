@@ -68,13 +68,22 @@
 #include "string_utils.h"
 
 #include <unistd.h>
-#include <pwd.h>
+
 
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
+
+#include "upnp/upnp_control.h"
+#include "ip_utils.h"
+
+#ifdef _WIN32
+#include <lmcons.h>
+#else
+#include <pwd.h>
+#endif
 
 namespace ring {
 
@@ -1332,9 +1341,17 @@ bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endp
 
 std::string SIPAccount::getLoginName()
 {
+#ifndef _WIN32
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
+#else
+    LPWSTR username[UNLEN+1];
+    DWORD username_len = UNLEN+1;
+    return GetUserName(*username, &username_len) ? std::string((char*)*username) : "";
+#endif
 }
+
+
 
 std::string SIPAccount::getFromUri() const
 {
