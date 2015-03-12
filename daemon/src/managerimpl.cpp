@@ -78,7 +78,7 @@
 #include "conference.h"
 #include "ice_transport.h"
 
-#include "client/signal.h"
+#include "client/xsignal.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -1952,7 +1952,11 @@ ManagerImpl::retrieveConfigPath() const
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 
+#ifndef _WIN32
     if (mkdir(configdir.data(), 0700) != 0) {
+#else
+    if (fileutils::recursive_mkdir(configdir.data()) != true) {
+#endif
         // If directory creation failed
         if (errno != EEXIST)
             RING_DBG("Cannot create directory: %s!", configdir.c_str());
