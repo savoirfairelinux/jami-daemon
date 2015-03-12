@@ -40,13 +40,19 @@ extern "C" {
 #include "srtp.h"
 }
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <cstring>
 #include <stdexcept>
 #include <unistd.h>
-#include <poll.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
+
+#ifdef _WIN32
+#define SOCK_NONBLOCK FIONBIO
+#define poll WSAPoll
+#endif
 
 #ifdef __ANDROID__
 #include <asm-generic/fcntl.h>
@@ -302,7 +308,7 @@ SocketPair::readRtpData(void *buf, int buf_size)
         socklen_t from_len = sizeof(from);
 
 start:
-        int result = recvfrom(rtpHandle_, buf, buf_size, 0,
+        int result = recvfrom(rtpHandle_, (char*)buf, buf_size, 0,
                               (struct sockaddr *)&from, &from_len);
         if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes)
             if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
@@ -335,7 +341,7 @@ SocketPair::readRtcpData(void *buf, int buf_size)
         // work with system socket
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtcpHandle_, buf, buf_size, 0,
+        return recvfrom(rtcpHandle_,(char*) buf, buf_size, 0,
                         (struct sockaddr *)&from, &from_len);
     }
 
@@ -369,11 +375,11 @@ SocketPair::writeRtpData(void* buf, int buf_size)
             if (buf_size < 0)
                 return buf_size;
 
-            return sendto(rtpHandle_, srtpContext_->encryptbuf, buf_size, 0,
+            return sendto(rtpHandle_, (char*)srtpContext_->encryptbuf, buf_size, 0,
                           (sockaddr*) &rtpDestAddr_, rtpDestAddrLen_);
         }
 
-        return sendto(rtpHandle_, buf, buf_size, 0,
+        return sendto(rtpHandle_, (char*)buf, buf_size, 0,
                       (sockaddr*) &rtpDestAddr_, rtpDestAddrLen_);
     }
 
@@ -400,7 +406,7 @@ SocketPair::writeRtcpData(void *buf, int buf_size)
         auto ret = ff_network_wait_fd(rtcpHandle_);
         if (ret < 0)
             return ret;
-        return sendto(rtcpHandle_, buf, buf_size, 0,
+        return sendto(rtcpHandle_,(char*) buf, buf_size, 0,
                       (sockaddr*) &rtcpDestAddr_, rtcpDestAddrLen_);
     }
 
