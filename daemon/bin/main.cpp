@@ -178,8 +178,17 @@ main(int argc, char *argv [])
     ring::fileutils::set_program_dir(writable.data());
 
 #ifdef TOP_BUILDDIR
+  #ifdef HAVE_SETENV
     if (!getenv("CODECS_PATH"))
         setenv("CODECS_PATH", TOP_BUILDDIR "/src/media/audio/codecs", 1);
+  #else
+    if (!getenv("CODECS_PATH")) {
+        int len = strlen(TOP_BUILDDIR "/src/media/audio/codecs")+1+strlen(TOP_BUILDDIR "/src/media/audio/codecs")+1;
+        char *str = (char*) malloc(len);
+        sprintf(str, "%s=%s", "CODECS_PATH", TOP_BUILDDIR "/src/media/audio/codecs");
+        putenv(str);
+    }
+  #endif
 #endif
 
     print_title();

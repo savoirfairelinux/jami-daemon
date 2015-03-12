@@ -43,6 +43,8 @@
 #include <exception>
 #include <memory>
 
+#include <iostream>
+
 namespace ring {
 
 using SignalHandlerMap = std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>;

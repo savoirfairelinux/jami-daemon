@@ -47,8 +47,13 @@
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <pwd.h>
-#ifndef __ANDROID__
+#ifndef _WIN32
+    #include <pwd.h>
+#else
+    #include <shlobj.h>
+    #define NAME_MAX 255
+#endif
+#if !defined __ANDROID__ && !defined _WIN32
 #   include <wordexp.h>
 #endif
 
@@ -71,7 +76,11 @@ bool check_dir(const char *path)
     DIR *dir = opendir(path);
 
     if (!dir) { // doesn't exist
+        #ifndef _WIN32
         if (mkdir(path, 0755) != 0) {   // couldn't create the dir
+        #else
+        if (recursive_mkdir(path) != true) {
+        #endif
             perror(path);
             return false;
         }
@@ -97,6 +106,7 @@ const char *get_program_dir()
     return program_dir;
 }
 
+#if 0
 /* Lock a file region */
 static int
 lockReg(int fd, int cmd, int type, int whence, int start, off_t len)
@@ -159,11 +169,12 @@ create_pidfile()
 
     return f;
 }
+#endif
 
 std::string
 expand_path(const std::string &path)
 {
-#ifdef __ANDROID__
+#if defined __ANDROID__ || defined WIN32
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -276,7 +287,11 @@ readDirectory(const std::string& dir)
     dirent* entry;
 
     std::vector<std::string> files;
+    #ifndef WIN32
     while (!readdir_r(dp, reinterpret_cast<dirent*>(buf.data()), &entry) && entry) {
+    #else
+    while ((entry = readdir(dp)) != nullptr) {
+    #endif
         const std::string fname {entry->d_name};
         if (fname == "." || fname == "..")
             continue;
@@ -319,8 +334,16 @@ get_cache_dir()
 std::string
 get_home_dir()
 {
-#ifdef __ANDROID__
+#if defined __ANDROID__
     return get_program_dir();
+#elif defined WIN32
+    WCHAR path[MAX_PATH];
+    if (SUCCEEDED(SHGetFolderPathW(NULL, CSIDL_PROFILE, NULL, 0, path))) {
+        char tmp[MAX_PATH];
+        char DefChar = ' ';
+        WideCharToMultiByte(CP_ACP,0,path,-1, tmp,MAX_PATH,&DefChar, NULL);
+        return std::string(tmp);
+    }
 #else
 
     // 1) try getting user's home directory from the environment
@@ -344,7 +367,7 @@ get_home_dir()
 std::string
 get_data_dir()
 {
-#ifdef __ANDROID__
+#if defined __ANDROID__
     return get_program_dir();
 #endif
     const std::string data_home(XDG_DATA_HOME);
@@ -354,6 +377,23 @@ get_data_dir()
     // $HOME/.local/share should be used."
     return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
         "share" DIR_SEPARATOR_STR + PACKAGE;
+}
+
+bool
+recursive_mkdir(const std::string& path) {
+    RING_DBG("mkdir : %s", path.c_str());
+    if (mkdir(path.data()) != 0) {
+        if (errno == ENOENT) {
+            recursive_mkdir(path.substr(0, path.find_last_of("\\")));
+        }
+        else if (errno != EEXIST) {
+            if (mkdir(path.data()) != 0) {
+                perror("mkdir");
+                return false;
+            }
+        }
+    }
+    return true;
 }
 
 }} // namespace ring::fileutils
