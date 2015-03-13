@@ -35,7 +35,6 @@
 #include "noncopyable.h"
 #include "video_base.h"
 #include "video_scaler.h"
-#include "sinkclient.h"
 #include "threadloop.h"
 #include "rw_mutex.h"
 
@@ -44,6 +43,8 @@
 #include <memory>
 
 namespace ring { namespace video {
+
+class SinkClient;
 
     struct VideoMixerSource {
         Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
@@ -93,7 +94,7 @@ private:
     std::list<VideoMixerSource *> sources_ = {};
     rw_mutex rwMutex_ = {};
 
-    SinkClient sink_;
+    std::shared_ptr<SinkClient> sink_;
 
     ThreadLoop loop_;
     std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
