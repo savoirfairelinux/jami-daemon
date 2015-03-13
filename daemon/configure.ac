@@ -543,6 +543,9 @@ AS_IF([test "x$with_upnp" = "xyes"],
          AC_DEFINE([HAVE_LIBUPNP], 0, [Define if you have libupnp])])
       ])
 
+AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}"; then echo 1; else echo 0; fi`,
+	[Define if you have shared memory support])
+
 # DOXYGEN
 # required dependency(ies): doxygen
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/

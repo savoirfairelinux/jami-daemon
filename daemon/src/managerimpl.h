@@ -72,6 +72,10 @@ namespace tls {
 class GnuTlsGlobalInit;
 }
 
+namespace video {
+class SinkClient;
+}
+
 class PluginManager;
 class AudioFile;
 class DTMF;
@@ -951,6 +955,10 @@ class ManagerImpl {
 
         void addTask(const std::function<bool()>&& task);
 
+        std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="");
+
+        std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
+
     private:
         NON_COPYABLE(ManagerImpl);
 
@@ -991,6 +999,9 @@ class ManagerImpl {
         std::unique_ptr<IceTransportFactory> ice_tf_;
 
         std::unique_ptr<tls::GnuTlsGlobalInit> gnutlGIG_;
+
+        /* Sink ID mapping */
+        std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 };
 
 } // namespace ring
