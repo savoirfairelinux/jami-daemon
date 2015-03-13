@@ -35,51 +35,55 @@
 
 #pragma once
 
-#include "noncopyable.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "video_provider.h"
 #include "video_base.h"
 
 #include <string>
 #include <vector>
-
-class SHMHeader;
+#include <memory>
 
 namespace ring { namespace video {
+
+#if HAVE_SHM
+class ShmHolder;
+#endif // HAVE_SHM
 
 class SinkClient : public VideoFramePassiveReader
 {
     public:
-        SinkClient(const std::string &shm_name = "");
-        std::string openedName() const { return opened_name_; }
-        ~SinkClient();
+        SinkClient(const std::string& id="");
 
-        bool start();
-        bool stop();
+        const std::string& getId() const noexcept {
+            return id_;
+        }
 
-        bool resize_area(size_t desired_length);
-
-        void render(const std::vector<unsigned char> &data);
-        void render_frame(VideoFrame& src);
-        void render_callback(VideoProvider &provider, size_t bytes);
+        std::string openedName() const noexcept;
 
         // as VideoFramePassiveReader
         void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
-                    std::shared_ptr<ring::VideoFrame> &);
+                    std::shared_ptr<ring::VideoFrame>&);
+
+        bool start() noexcept;
+        bool stop() noexcept;
+
+        template <class T>
+        void registerTarget(T&& cb) noexcept {
+            target_ = std::forward<T>(cb);
+        }
 
     private:
-        NON_COPYABLE(SinkClient);
+        const std::string id_;
+        std::function<void(unsigned char*)> target_;
+        std::vector<unsigned char> targetData_;
 
-        void shm_lock();
-        void shm_unlock();
-        std::string shm_name_;
-        int fd_;
-        SHMHeader *shm_area_;
-        size_t shm_area_len_;
-        std::string opened_name_;
-#ifdef DEBUG_FPS
-        unsigned frameCount_;
-        std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
-#endif
+#if HAVE_SHM
+        // using shared_ptr and not unique_ptr as ShmHolder is forwared only
+        std::shared_ptr<ShmHolder> shm_;
+#endif // HAVE_SHM
 };
 
 }} // namespace ring::video

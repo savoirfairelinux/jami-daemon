@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2012-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  Portions derived from GStreamer:
  *  Copyright (C) <2009> Collabora Ltd
@@ -38,11 +39,15 @@
 #endif
 
 #include "sinkclient.h"
+
+#if HAVE_SHM
 #include "shm_header.h"
+#endif // HAVE_SHM
 
 #include "video_scaler.h"
 #include "media_buffer.h"
 #include "logger.h"
+#include "noncopyable.h"
 
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -51,54 +56,85 @@
 #include <unistd.h>
 #include <cerrno>
 #include <cstring>
+#include <stdexcept>
 
 namespace ring { namespace video {
 
-SinkClient::SinkClient(const std::string &shm_name) :
-    shm_name_(shm_name)
-    , fd_(-1)
-    , shm_area_(static_cast<SHMHeader*>(MAP_FAILED))
-    , shm_area_len_(0)
-    , opened_name_()
-#ifdef DEBUG_FPS
-    , frameCount_(0u)
-    , lastFrameDebug_(std::chrono::system_clock::now())
-#endif
-{}
+#if HAVE_SHM
+// RAII class helper on sem_wait/sem_post sempahore operations
+class SemGuardLock {
+    public:
+        explicit SemGuardLock(sem_t& mutex) : m_(mutex) {
+            auto ret = ::sem_wait(&m_);
+            if (ret < 0) {
+                std::ostringstream msg;
+                msg << "SHM mutex@" << &m_
+                    << " lock failed (" << ret << ")";
+                throw std::logic_error {msg.str()};
+            }
+        }
 
-SinkClient::~SinkClient()
+        ~SemGuardLock() {
+            ::sem_post(&m_);
+        }
+
+    private:
+        sem_t& m_;
+};
+
+class ShmHolder
 {
-    stop();
+    public:
+        ShmHolder(const std::string& shm_name);
+        ~ShmHolder();
+
+        std::string openedName() const noexcept {
+            return opened_name_;
+        }
+
+        void render_frame(VideoFrame& src);
+
+    private:
+        bool resize_area(std::size_t desired_length);
+        void alloc_area(std::size_t desired_length) noexcept;
+
+        std::string shm_name_;
+        std::string opened_name_;
+        std::size_t shm_area_len_ {0};
+        SHMHeader* shm_area_ {static_cast<SHMHeader*>(MAP_FAILED)};
+        int fd_ {-1};
+};
+
+void
+ShmHolder::alloc_area(std::size_t desired_length) noexcept
+{
+    shm_area_ = static_cast<SHMHeader*>(::mmap(nullptr, desired_length,
+                                               PROT_READ | PROT_WRITE,
+                                               MAP_SHARED, fd_, 0));
 }
 
-bool
-SinkClient::start()
+ShmHolder::ShmHolder(const std::string& shm_name) : shm_name_ {shm_name}
 {
-    if (fd_ != -1) {
-        RING_ERR("fd must be -1");
-        return false;
-    }
-
-    const int flags = O_RDWR | O_CREAT | O_TRUNC | O_EXCL;
-    const int perms = S_IRUSR | S_IWUSR;
+    static constexpr int flags = O_RDWR | O_CREAT | O_TRUNC | O_EXCL;
+    static constexpr int perms = S_IRUSR | S_IWUSR;
 
     if (not shm_name_.empty()) {
-        fd_ = shm_open(shm_name_.c_str(), flags, perms);
+        fd_ = ::shm_open(shm_name_.c_str(), flags, perms);
         if (fd_ < 0) {
-            RING_ERR("could not open shm area \"%s\"", shm_name_.c_str());
-            strErr();
-            return false;
+            std::ostringstream msg;
+            msg << "could not open shm area \""
+                << shm_name_.c_str()
+                << "\"";
+            throw std::runtime_error {msg.str()};
         }
     } else {
         for (int i = 0; fd_ < 0; ++i) {
             std::ostringstream name;
             name << PACKAGE_NAME << "_shm_" << getpid() << "_" << i;
             shm_name_ = name.str();
-            fd_ = shm_open(shm_name_.c_str(), flags, perms);
-            if (fd_ < 0 and errno != EEXIST) {
-                strErr();
-                return false;
-            }
+            fd_ = ::shm_open(shm_name_.c_str(), flags, perms);
+            if (fd_ < 0 and errno != EEXIST)
+                throw std::runtime_error {"shm_open() failed"};
         }
     }
 
@@ -107,106 +143,73 @@ SinkClient::start()
 
     shm_area_len_ = sizeof(SHMHeader);
 
-    if (ftruncate(fd_, shm_area_len_)) {
+    if (::ftruncate(fd_, shm_area_len_)) {
         RING_ERR("Could not make shm area large enough for header");
         strErr();
-        return false;
+        throw std::runtime_error {"could not make shm area large enough for header"};
     }
 
-    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, shm_area_len_,
-                                             PROT_READ | PROT_WRITE,
-                                             MAP_SHARED, fd_, 0));
+    alloc_area(shm_area_len_);
 
-    if (shm_area_ == MAP_FAILED) {
-        RING_ERR("Could not map shm area, mmap failed");
-        return false;
-    }
+    if (shm_area_ == MAP_FAILED)
+        throw std::runtime_error {"could not map shm area, mmap failed"};
 
-    memset(shm_area_, 0, shm_area_len_);
-    if (sem_init(&shm_area_->notification, 1, 0) != 0) {
-        RING_ERR("sem_init: notification initialization failed");
-        return false;
-    }
-    if (sem_init(&shm_area_->mutex, 1, 1) != 0) {
-        RING_ERR("sem_init: mutex initialization failed");
-        return false;
-    }
-    return true;
+    std::memset(shm_area_, 0, shm_area_len_);
+
+    if (::sem_init(&shm_area_->notification, 1, 0) != 0)
+        throw std::runtime_error {"sem_init: notification initialization failed"};
+
+    if (::sem_init(&shm_area_->mutex, 1, 1) != 0)
+        throw std::runtime_error {"sem_init: mutex initialization failed"};
 }
 
-bool
-SinkClient::stop()
+ShmHolder::~ShmHolder()
 {
-    if (fd_ >= 0 and close(fd_) == -1)
+    if (fd_ >= 0 and ::close(fd_) == -1)
         strErr();
 
-    fd_ = -1;
+    if (not opened_name_.empty())
+        ::shm_unlink(opened_name_.c_str());
 
-    if (not opened_name_.empty()) {
-        shm_unlink(opened_name_.c_str());
-        opened_name_ = "";
+    if (shm_area_ != MAP_FAILED) {
+        ::sem_post(&shm_area_->notification);
+        if (::munmap(shm_area_, shm_area_len_) < 0)
+            strErr();
     }
-
-    if (shm_area_ != MAP_FAILED)
-        munmap(shm_area_, shm_area_len_);
-    shm_area_len_ = 0;
-    shm_area_ = static_cast<SHMHeader*>(MAP_FAILED);
-
-    return true;
 }
 
 bool
-SinkClient::resize_area(size_t desired_length)
+ShmHolder::resize_area(size_t desired_length)
 {
     if (desired_length <= shm_area_len_)
         return true;
 
-    shm_unlock();
-
-    if (munmap(shm_area_, shm_area_len_)) {
+    if (::munmap(shm_area_, shm_area_len_)) {
         RING_ERR("Could not unmap shared area");
         strErr();
         return false;
     }
 
-    if (ftruncate(fd_, desired_length)) {
+    if (::ftruncate(fd_, desired_length)) {
         RING_ERR("Could not resize shared area");
         strErr();
         return false;
     }
 
-    shm_area_ = static_cast<SHMHeader*>(mmap(NULL, desired_length,
-                                             PROT_READ | PROT_WRITE,
-                                             MAP_SHARED, fd_, 0));
-    shm_area_len_ = desired_length;
+    alloc_area(desired_length);
 
     if (shm_area_ == MAP_FAILED) {
-        shm_area_ = 0;
+        shm_area_len_ = 0;
         RING_ERR("Could not remap shared area");
         return false;
     }
 
-    shm_lock();
+    shm_area_len_ = desired_length;
     return true;
 }
 
 void
-SinkClient::render(const std::vector<unsigned char>& data)
-{
-    shm_lock();
-
-    if (!resize_area(sizeof(SHMHeader) + data.size()))
-        return;
-
-    memcpy(shm_area_->data, data.data(), data.size());
-    shm_area_->buffer_size = data.size();
-    shm_area_->buffer_gen++;
-    sem_post(&shm_area_->notification);
-    shm_unlock();
-}
-
-void
-SinkClient::render_frame(VideoFrame& src)
+ShmHolder::render_frame(VideoFrame& src)
 {
     VideoFrame dst;
     VideoScaler scaler;
@@ -214,71 +217,101 @@ SinkClient::render_frame(VideoFrame& src)
     const int width = src.width();
     const int height = src.height();
     const int format = VIDEO_PIXFMT_BGRA;
-    size_t bytes = videoFrameSize(format, width, height);
-
-    shm_lock();
+    const auto bytes = videoFrameSize(format, width, height);
 
     if (!resize_area(sizeof(SHMHeader) + bytes)) {
         RING_ERR("Could not resize area");
         return;
     }
+
+    SemGuardLock lk{shm_area_->mutex};
 
     dst.setFromMemory(shm_area_->data, format, width, height);
     scaler.scale(src, dst);
 
-#ifdef DEBUG_FPS
-    const std::chrono::time_point<std::chrono::system_clock> currentTime = \
-        std::chrono::system_clock::now();
-    const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
-    frameCount_++;
-    if (seconds.count() > 1) {
-        RING_DBG("%s: FPS %f", shm_name_.c_str(), frameCount_ / seconds.count());
-        frameCount_ = 0;
-        lastFrameDebug_ = currentTime;
-    }
-#endif
-
     shm_area_->buffer_size = bytes;
-    shm_area_->buffer_gen++;
+    ++shm_area_->buffer_gen;
     sem_post(&shm_area_->notification);
-    shm_unlock();
 }
 
-void
-SinkClient::render_callback(VideoProvider &provider, size_t bytes)
+std::string
+SinkClient::openedName() const noexcept
 {
-    shm_lock();
+    return shm_->openedName();
+}
 
-    if (!resize_area(sizeof(SHMHeader) + bytes)) {
-        RING_ERR("Could not resize area");
-        return;
+bool
+SinkClient::start() noexcept
+{
+    if (not shm_) {
+        try {
+            shm_ = std::make_shared<ShmHolder>(id_);
+        } catch (const std::runtime_error& e) {
+            strErr();
+            RING_ERR("SHMHolder ctor failure: %s", e.what());
+        }
     }
-
-    provider.fillBuffer(static_cast<void*>(shm_area_->data));
-    shm_area_->buffer_size = bytes;
-    shm_area_->buffer_gen++;
-    sem_post(&shm_area_->notification);
-    shm_unlock();
+    return static_cast<bool>(shm_);
 }
 
-void
-SinkClient::shm_lock()
+bool
+SinkClient::stop() noexcept
 {
-    sem_wait(&shm_area_->mutex);
+    shm_.reset();
+    return true;
 }
 
-void
-SinkClient::shm_unlock()
+#else // HAVE_SHM
+
+std::string
+SinkClient::openedName() const noexcept
 {
-    sem_post(&shm_area_->mutex);
+    return {};
 }
 
+bool
+SinkClient::start() noexcept
+{
+    return true;
+}
+
+bool
+SinkClient::stop() noexcept
+{
+    return true;
+}
+
+#endif // !HAVE_SHM
+
+SinkClient::SinkClient(const std::string& id) : id_ {id}
+{}
+
 void
-SinkClient::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
-                   std::shared_ptr<VideoFrame> &frame_p)
+SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
+                   std::shared_ptr<VideoFrame>& frame_p)
 {
     auto f = frame_p; // keep a local reference during rendering
-    render_frame(*f.get());
+
+#if HAVE_SHM
+    shm_->render_frame(*f.get());
+#endif
+
+    if (target_) {
+        VideoFrame dst;
+        VideoScaler scaler;
+
+        const int width = f->width();
+        const int height = f->height();
+        const int format = VIDEO_PIXFMT_BGRA;
+        const auto bytes = videoFrameSize(format, width, height);
+
+        targetData_.resize(bytes);
+        auto data = targetData_.data();
+
+        dst.setFromMemory(data, format, width, height);
+        scaler.scale(*f, dst);
+        target_(data);
+    }
 }
 
 }} // namespace ring::video

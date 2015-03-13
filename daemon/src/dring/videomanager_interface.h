@@ -58,6 +58,8 @@ void stopCamera();
 bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
+void registerSinkTarget(const std::string& sinkId, const std::function<void(unsigned char*)>& cb);
+void registerSinkTarget(const std::string& sinkId, std::function<void(unsigned char*)>&& cb);
 
 // Video signal type definitions
 struct VideoSignal {
