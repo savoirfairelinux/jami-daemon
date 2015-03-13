@@ -292,7 +292,7 @@ startTone(int32_t start, int32_t type)
 bool
 switchInput(const std::string& callID, const std::string& resource)
 {
-    ring::Manager::instance().switchInput(callID, resource);
+    return ring::Manager::instance().switchInput(callID, resource);
 }
 
 void

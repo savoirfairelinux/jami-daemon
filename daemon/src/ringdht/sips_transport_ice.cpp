@@ -320,6 +320,8 @@ SipsIceTransport::startTlsSession()
     // start handshake
     handshakeStart_ = clock::now();
     state_ = TlsConnectionState::HANDSHAKING;
+
+    return PJ_SUCCESS;
 }
 
 void
@@ -646,9 +648,9 @@ SipsIceTransport::setup()
     if (is_server_) {
         gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
         state_ = TlsConnectionState::COOKIE;
-    } else
-        startTlsSession();
-    return true;
+        return true;
+    }
+    return startTlsSession();
 }
 
 void

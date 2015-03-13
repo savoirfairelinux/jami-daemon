@@ -559,7 +559,7 @@ class ManagerImpl {
         bool isAGCEnabled() const;
         void setAGCState(bool enabled);
 
-        void switchInput(const std::string& callid, const std::string& res);
+        bool switchInput(const std::string& callid, const std::string& res);
 
         /**
          * Ringtone option.

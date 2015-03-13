@@ -100,7 +100,8 @@ Controller::addAnyMapping(uint16_t port_desired,
                           bool unique,
                           uint16_t *port_used)
 {
-    addAnyMapping(port_desired, port_desired, type, true, unique, port_used);
+    return addAnyMapping(port_desired, port_desired, type, true, unique,
+                         port_used);
 }
 
 void

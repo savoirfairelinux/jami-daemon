@@ -2090,15 +2090,16 @@ ManagerImpl::getCurrentAudioDevicesIndex()
     return v;
 }
 
-void
+bool
 ManagerImpl::switchInput(const std::string& call_id, const std::string& res)
 {
     auto call = getCallFromCallID(call_id);
     if (!call) {
         RING_ERR("Call %s is NULL", call_id.c_str());
-        return;
+        return false;
     }
     call->switchInput(res);
+    return true;
 }
 
 int

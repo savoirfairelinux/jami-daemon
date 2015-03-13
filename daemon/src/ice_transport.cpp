@@ -242,7 +242,7 @@ IceTransport::setSlaveSession()
         }
         return true;
     }
-    createIceSession(PJ_ICE_SESS_ROLE_CONTROLLED);
+    return createIceSession(PJ_ICE_SESS_ROLE_CONTROLLED);
 }
 
 bool
@@ -441,9 +441,10 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
         return cand_addrs;
     }
 
-    for (unsigned i=0; i<cand_cnt; ++i) {
+    for (unsigned i=0; i<cand_cnt; ++i)
         cand_addrs.push_back(cand[i].addr);
-    }
+
+    return cand_addrs;
 }
 
 void
