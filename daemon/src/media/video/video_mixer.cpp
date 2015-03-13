@@ -37,6 +37,7 @@
 #include "client/videomanager.h"
 #include "client/signal.h"
 #include "manager.h"
+#include "sinkclient.h"
 #include "logger.h"
 
 #include <cmath>
@@ -49,8 +50,10 @@ static const double FRAME_DURATION = 1/30.;
 VideoMixer::VideoMixer(const std::string &id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
-    , sink_(id)
-    , loop_([]{return true;}, std::bind(&VideoMixer::process, this), []{})
+    , sink_ {Manager::instance().createSinkClient(id)}
+    , loop_([]{return true;},
+            std::bind(&VideoMixer::process, this),
+            []{})
 {
     // Local video camera is the main participant
     videoLocal_ = getVideoCamera();
@@ -190,11 +193,14 @@ void VideoMixer::setDimensions(int width, int height)
 
 void VideoMixer::start_sink()
 {
-    if (sink_.start()) {
-        if (this->attach(&sink_)) {
-            emitSignal<DRing::VideoSignal::DecodingStarted>(id_, sink_.openedName(), width_, height_, true);
+    if (sink_->start()) {
+        if (this->attach(sink_.get())) {
+            emitSignal<DRing::VideoSignal::DecodingStarted>(id_,
+                                                            sink_->openedName(),
+                                                            width_, height_,
+                                                            true);
             RING_DBG("MX: shm sink <%s> started: size = %dx%d",
-                  sink_.openedName().c_str(), width_, height_);
+                  sink_->openedName().c_str(), width_, height_);
         }
     } else
         RING_WARN("MX: sink startup failed");
@@ -202,9 +208,11 @@ void VideoMixer::start_sink()
 
 void VideoMixer::stop_sink()
 {
-    if (this->detach(&sink_)) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), true);
-        sink_.stop();
+    if (this->detach(sink_.get())) {
+        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
+                                                        sink_->openedName(),
+                                                        true);
+        sink_->stop();
     }
 }
 

@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/signal.h"
+#include "sinkclient.h"
 #include "logger.h"
 
 #include <unistd.h>
@@ -55,7 +56,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , id_(id)
     , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
-    , sink_(id)
+    , sink_ {Manager::instance().createSinkClient(id)}
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
@@ -128,7 +129,7 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
-    EXIT_IF_FAIL(sink_.start(), "RX: sink startup failed");
+    EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
 
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
@@ -142,9 +143,11 @@ void VideoReceiveThread::process()
 
 void VideoReceiveThread::cleanup()
 {
-    if (detach(&sink_))
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
-    sink_.stop();
+    if (detach(sink_.get()))
+        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
+                                                        sink_->openedName(),
+                                                        false);
+    sink_->stop();
 
     videoDecoder_.reset();
     demuxContext_.reset();
@@ -202,9 +205,11 @@ void VideoReceiveThread::enterConference()
     if (!loop_.isRunning())
         return;
 
-    if (detach(&sink_)) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_.openedName(), false);
-        RING_DBG("RX: shm sink <%s> detached", sink_.openedName().c_str());
+    if (detach(sink_.get())) {
+        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
+                                                        sink_->openedName(),
+                                                        false);
+        RING_DBG("RX: shm sink <%s> detached", sink_->openedName().c_str());
     }
 }
 
@@ -214,13 +219,13 @@ void VideoReceiveThread::exitConference()
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
-        if (attach(&sink_)) {
+        if (attach(sink_.get())) {
             emitSignal<DRing::VideoSignal::DecodingStarted>(id_,
-                                                            sink_.openedName(),
+                                                            sink_->openedName(),
                                                             dstWidth_,
                                                             dstHeight_, false);
             RING_DBG("RX: shm sink <%s> started: size = %dx%d",
-                  sink_.openedName().c_str(), dstWidth_, dstHeight_);
+                     sink_->openedName().c_str(), dstWidth_, dstHeight_);
         }
     }
 }
