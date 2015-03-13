@@ -56,8 +56,9 @@ constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
     return kx == KeyExchangeProtocol::SDES ? "sdes" : (
         kx == KeyExchangeProtocol::ZRTP ? "zrtp" : "");
 }
-constexpr KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
-    return !strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
+
+static inline KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
+    return !std::strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
 }
 
 /**
