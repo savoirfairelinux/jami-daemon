@@ -37,6 +37,7 @@
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/signal.h"
+#include "sinkclient.h"
 #include "logger.h"
 
 #include <map>
@@ -47,9 +48,9 @@
 
 namespace ring { namespace video {
 
-VideoInput::VideoInput() :
-    VideoGenerator::VideoGenerator()
-    , sink_()
+VideoInput::VideoInput()
+    : VideoGenerator::VideoGenerator()
+    , sink_ {Manager::instance().createSinkClient("local")}
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
@@ -63,11 +64,11 @@ VideoInput::~VideoInput()
 bool VideoInput::setup()
 {
     /* Sink setup */
-    if (!sink_.start()) {
+    if (!sink_->start()) {
         RING_ERR("Cannot start shared memory sink");
         return false;
     }
-    if (not attach(&sink_))
+    if (not attach(sink_.get()))
         RING_WARN("Failed to attach sink");
 
     return true;
@@ -92,11 +93,14 @@ void VideoInput::process()
 
     if (newDecoderCreated) {
         /* Signal the client about the new sink */
-        emitSignal<DRing::VideoSignal::DecodingStarted>(sinkID_, sink_.openedName(),
-                    decoder_->getWidth(), decoder_->getHeight(), false);
+        emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
+                                                        sink_->openedName(),
+                                                        decoder_->getWidth(),
+                                                        decoder_->getHeight(),
+                                                        false);
         RING_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
-              sink_.openedName().c_str(), decoder_->getWidth(),
-              decoder_->getHeight());
+                 sink_->openedName().c_str(), decoder_->getWidth(),
+                 decoder_->getHeight());
     }
 }
 
@@ -104,8 +108,8 @@ void VideoInput::cleanup()
 {
     deleteDecoder();
 
-    if (detach(&sink_))
-        sink_.stop();
+    if (detach(sink_.get()))
+        sink_->stop();
 }
 
 void VideoInput::clearOptions()
@@ -191,7 +195,9 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
-    emitSignal<DRing::VideoSignal::DecodingStopped>(sinkID_, sink_.openedName(), false);
+    emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
+                                                    sink_->openedName(),
+                                                    false);
     flushFrames();
     delete decoder_;
     decoder_ = nullptr;
