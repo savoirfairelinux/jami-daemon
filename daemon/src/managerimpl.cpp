@@ -84,6 +84,7 @@
 #endif
 
 #include "libav_utils.h"
+#include "video/sinkclient.h"
 
 #include <cerrno>
 #include <algorithm>
@@ -2855,6 +2856,32 @@ ManagerImpl::newOutgoingCall(const std::string& toUrl,
     }
 
     return account->newOutgoingCall(finalToUrl);
+}
+
+std::shared_ptr<video::SinkClient>
+ManagerImpl::createSinkClient(const std::string& id)
+{
+    const auto& iter = sinkMap_.find(id);
+    if (iter != std::end(sinkMap_)) {
+        if (iter->second.expired())
+            sinkMap_.erase(iter);
+        else
+            return nullptr;
+    }
+
+    auto sink = std::make_shared<video::SinkClient>(id);
+    sinkMap_.emplace(id, sink);
+    return sink;
+}
+
+std::shared_ptr<video::SinkClient>
+ManagerImpl::getSinkClient(const std::string& id)
+{
+    const auto& iter = sinkMap_.find(id);
+    if (iter != std::end(sinkMap_))
+        if (auto sink = iter->second.lock())
+            return sink;
+    return nullptr;
 }
 
 } // namespace ring
