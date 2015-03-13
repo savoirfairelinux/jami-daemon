@@ -1,0 +1,12 @@
+[submodule "client-gnome"]
+	path = client-gnome
+	url = https://gerrit-sflphone.savoirfairelinux.com/ring-client-gnome
+[submodule "client-macosx"]
+	path = client-macosx
+	url = https://gerrit-sflphone.savoirfairelinux.com/ring-client-macosx
+[submodule "libringclient"]
+	path = libringclient
+	url = git@git.kde.org:libringclient
+[submodule "client-kde"]
+	path = client-kde
+	url = git@git.kde.org:sflphone-kde
