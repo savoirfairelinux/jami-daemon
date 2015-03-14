@@ -650,7 +650,7 @@ SipsIceTransport::setup()
         state_ = TlsConnectionState::COOKIE;
         return true;
     }
-    return startTlsSession();
+    return startTlsSession() == PJ_SUCCESS;
 }
 
 void
