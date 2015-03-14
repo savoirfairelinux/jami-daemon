@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2014 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2011-2015 Savoir-Faire Linux Inc.
  *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
