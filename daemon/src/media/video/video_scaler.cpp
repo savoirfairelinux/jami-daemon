@@ -1,6 +1,6 @@
 
 /*
- *  Copyright (C) 2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2013-2015 Savoir-Faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
