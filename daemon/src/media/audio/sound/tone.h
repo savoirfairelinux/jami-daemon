@@ -69,14 +69,7 @@ class Tone : public AudioLoop {
          * @param nb are the number of int16 (mono) to generate
          * by example nb=5 generate 10 int16, 5 for the left, 5 for the right
          */
-        void genSin(AudioSample* buffer, int frequency1, int frequency2, int nb);
-
-        /**
-         *
-         */
-        void fillWavetable();
-
-        double interpolate(double x) const;
+        void genSin(AudioSample* buffer, int frequency1, int frequency2, size_t nb);
 
     private:
 
@@ -85,12 +78,6 @@ class Tone : public AudioLoop {
          * @param definition String that contain frequency/time of the tone.
          */
         void genBuffer(const std::string& definition);
-
-        static const int TABLE_LENGTH = 4096;
-        double wavetable_[TABLE_LENGTH];
-
-        double xhigher_;
-        double xlower_;
 };
 
 } // namespace ring

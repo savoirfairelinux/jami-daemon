@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  Inspired by tonegenerator of
  *   Laurielle Lea <laurielle.lea@savoirfairelinux.com> (2004)
@@ -31,24 +32,18 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-/*
- * YM: 2006-11-15: changes unsigned int to std::string::size_type, thanks to Pierre Pomes (AMD64 compilation)
- */
 #include "tone.h"
 #include "logger.h"
 #include "ring_types.h"
-#include <cmath>
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
+
 #include <vector>
+#include <cmath>
 
 namespace ring {
 
 Tone::Tone(const std::string& definition, unsigned int sampleRate) :
-    AudioLoop(sampleRate), xhigher_(0.0), xlower_(0.0)
+    AudioLoop(sampleRate)
 {
-    fillWavetable();
     genBuffer(definition); // allocate memory with definition parameter
 }
 
@@ -69,7 +64,7 @@ Tone::genBuffer(const std::string& definition)
     std::string::size_type posEnd = 0; // position of the next comma
 
     std::string s; // portion of frequency
-    int count; // number of int for one sequence
+    size_t count; // number of int for one sequence
 
     std::string::size_type deflen = definition.length();
 
@@ -130,62 +125,15 @@ Tone::genBuffer(const std::string& definition)
 }
 
 void
-Tone::fillWavetable()
+Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, size_t nb)
 {
-    static const double TABLE_SZ = TABLE_LENGTH - 1.0;
-    static const double TWO_PI = 2.0 * M_PI;
-
-    for (int i = 0; i < TABLE_LENGTH; ++i)
-        wavetable_[i] = sin((i / TABLE_SZ) * TWO_PI);
-}
-
-double
-Tone::interpolate(double x) const
-{
-    int xi_0 = x;
-    int xi_1 = xi_0 + 1;
-
-    double yi_0 = wavetable_[xi_0];
-    double yi_1 =  wavetable_[xi_1];
-
-    double A = (x - xi_0);
-    double B = 1.0 - A;
-
-    return (A * yi_0) + (B * yi_1);
-}
-
-void
-Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, int nb)
-{
-    xhigher_ = 0.0;
-    xlower_ = 0.0;
-
     const double sr = (double)buffer_->getSampleRate();
-    static const double tableSize = TABLE_LENGTH;
-
-    const double dx_h = lowFrequency and sr ? tableSize / (sr / lowFrequency) : 0.0;
-    const double dx_l = highFrequency and sr ? tableSize / (sr / highFrequency) : 0.0;
-
-    double x_h = xhigher_;
-    double x_l = xlower_;
-
-    static const double DATA_AMPLITUDE = 2047;
-    const double amp =  DATA_AMPLITUDE;
-
-    for (int t = 0; t < nb; t ++) {
-        buffer[t] = amp * (interpolate(x_h) + interpolate(x_l));
-        x_h += dx_h;
-        x_l += dx_l;
-
-        while (x_h > tableSize)
-            x_h -= tableSize;
-
-        while (x_l > tableSize)
-            x_l -= tableSize;
+    const double dx_h = sr ? 2.0 * M_PI * lowFrequency / sr : 0.0;
+    const double dx_l = sr ? 2.0 * M_PI * highFrequency / sr : 0.0;
+    static constexpr double DATA_AMPLITUDE = 2048;
+    for (size_t t = 0; t < nb; t ++) {
+        buffer[t] = DATA_AMPLITUDE * (sin(t*dx_h) + sin(t*dx_l));
     }
-
-    xhigher_ = x_h;
-    xlower_ = x_l;
 }
 
 } // namespace ring
