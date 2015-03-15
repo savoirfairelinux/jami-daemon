@@ -37,7 +37,6 @@
 #include "config.h"
 #endif
 
-#include "libav_utils.h"
 #include "manager.h"
 #include "managerimpl.h"
 #include "logger.h"
@@ -52,73 +51,76 @@
 
 namespace DRing {
 
+struct Daemon : ring::ManagerImpl {};
+
 const char*
 version() noexcept
 {
     return PACKAGE_VERSION;
 }
 
-InitResult
-init(const std::map<EventHandlerKey, std::map<std::string, std::shared_ptr<CallbackWrapperBase>>>& ev_handlers,
-     enum InitFlag flags)
+Daemon*
+create_daemon(enum InitFlag flags) noexcept
 {
-    // Handle flags
-    setDebugMode(flags & DRING_FLAG_DEBUG);
-    setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
+    ::setDebugMode(flags & DRING_FLAG_DEBUG);
+    ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
 
-    // Create manager
     try {
-        // FIXME: static evil
-        static ring::ManagerImpl *manager;
-        // ensure that we haven't been in this function before
-        assert(!manager);
-        manager = &(ring::Manager::instance());
+        return static_cast<Daemon*>(&ring::Manager::instance());
     } catch (...) {
-        return InitResult::ERR_MANAGER_INIT;
+        return nullptr;
     }
+}
 
-    ring::libav_utils::sfl_avcodec_init();
-    // Register user event handlers
-    for ( const auto &entry : ev_handlers ) {
+void
+set_daemon_event_handlers(Daemon* /*daemon*/, const std::map<EventHandlerKey, std::map<std::string, std::shared_ptr<CallbackWrapperBase>>>& ev_handlers) noexcept
+{
+    for (const auto& entry : ev_handlers) {
         switch(entry.first) {
             case EventHandlerKey::CALL:
-                ::DRing::registerCallHandlers(entry.second);
+                DRing::registerCallHandlers(entry.second);
             break;
+
             case EventHandlerKey::CONFIG:
-                ::DRing::registerConfHandlers(entry.second);
+                DRing::registerConfHandlers(entry.second);
             break;
+
             case EventHandlerKey::PRESENCE:
-                ::DRing::registerPresHandlers(entry.second);
+                DRing::registerPresHandlers(entry.second);
             break;
+
             case EventHandlerKey::VIDEO:
 #ifdef RING_VIDEO
-                ::DRing::registerVideoHandlers(entry.second);
+                DRing::registerVideoHandlers(entry.second);
 #else
-            RING_ERR("Error linking video handler: daemon has no video support");
+            RING_ERR("Error: linking video handler without video support");
 #endif
             break;
         }
     }
+}
 
-    // Initialize manager now
+bool
+start_daemon(Daemon* daemon, const std::string& config_file) noexcept
+{
     try {
-        ring::Manager::instance().init("");
+        daemon->init(config_file);
     } catch (...) {
-        return InitResult::ERR_MANAGER_INIT;
+        return false;
     }
-
-    return InitResult::SUCCESS;
+    return true;
 }
 
-void fini(void) noexcept
+void
+delete_daemon(Daemon* daemon) noexcept
 {
-    // Finish manager
-    ring::Manager::instance().finish();
+    daemon->finish();
 }
 
-void poll_events()
+void
+poll_daemon_events(Daemon* daemon) noexcept
 {
-    ring::Manager::instance().pollEvents();
+    daemon->pollEvents();
 }
 
 } // namespace DRing

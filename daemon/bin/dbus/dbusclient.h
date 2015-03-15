@@ -61,6 +61,8 @@ class DBusClient {
         int initLibrary(int sflphFlags);
         void finiLibrary() noexcept;
 
+        std::unique_ptr<DRing::Daemon, decltype(DRing::delete_daemon)&> daemon_;
+
         std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
         std::unique_ptr<DBus::DefaultTimeout> timeout_;
 

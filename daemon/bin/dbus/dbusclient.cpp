@@ -69,7 +69,8 @@ class EventCallback :
 };
 
 DBusClient::DBusClient(int sflphFlags, bool persistent)
-    : dispatcher_(new DBus::BusDispatcher)
+    : daemon_(nullptr, DRing::delete_daemon)
+    , dispatcher_(new DBus::BusDispatcher)
 {
     try {
         DBus::_init_threading();
@@ -79,7 +80,9 @@ DBusClient::DBusClient(int sflphFlags, bool persistent)
         // destructor, so we must NOT delete them ourselves.
         timeout_.reset(new DBus::DefaultTimeout {10 /* ms */, true, dispatcher_.get()});
         // Poll for Deamon events
-        timeout_->expired = new EventCallback {DRing::poll_events};
+        timeout_->expired = new EventCallback {
+            [this]{ DRing::poll_daemon_events(daemon_.get()); }
+        };
 
         DBus::Connection sessionConnection {DBus::Connection::SessionBus()};
         sessionConnection.request_name("cx.ring.Ring");
@@ -122,7 +125,8 @@ DBusClient::~DBusClient()
     timeout_.reset();
 }
 
-int DBusClient::initLibrary(int sflphFlags)
+int
+DBusClient::initLibrary(int sflphFlags)
 {
     using namespace std::placeholders;
 
@@ -201,14 +205,15 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif
     };
 
-    // Initialize now
-    return (unsigned)DRing::init(evHandlers, static_cast<DRing::InitFlag>(sflphFlags));
+    daemon_.reset(DRing::create_daemon(static_cast<DRing::InitFlag>(sflphFlags)));
+    DRing::set_daemon_event_handlers(daemon_.get(), evHandlers);
+    return DRing::start_daemon(daemon_.get()) ? 0 : -1;
 }
 
 void
 DBusClient::finiLibrary() noexcept
 {
-    DRing::fini();
+    daemon_.reset();
 }
 
 int
