@@ -45,39 +45,6 @@
 
 namespace DRing {
 
-// Configuration signal type definitions
-struct ConfigurationSignal {
-        struct VolumeChanged {
-                constexpr static const char* name = "VolumeChanged";
-                using cb_type = void(const std::string& /*device*/, double /*value*/);
-        };
-        struct AccountsChanged {
-                constexpr static const char* name = "AccountsChanged";
-                using cb_type = void(void);
-        };
-        struct StunStatusFailed {
-                constexpr static const char* name = "StunStatusFailed";
-                using cb_type = void(const std::string& /*account_id*/);
-        };
-        struct RegistrationStateChanged {
-                constexpr static const char* name = "RegistrationStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, int /*state*/);
-        };
-        struct SipRegistrationStateChanged {
-                constexpr static const char* name = "SipRegistrationStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/);
-        };
-        struct VolatileDetailsChanged {
-                constexpr static const char* name = "VolatileDetailsChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
-        };
-        struct Error {
-                constexpr static const char* name = "Error";
-                using cb_type = void(int /*alert*/);
-        };
-};
-
-
 void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
@@ -169,6 +136,38 @@ std::map<std::string, std::string> validateCertificateRaw(const std::string& acc
     const std::vector<uint8_t>& certificate);
 std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
 std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
+
+// Configuration signal type definitions
+struct ConfigurationSignal {
+        struct VolumeChanged {
+                constexpr static const char* name = "VolumeChanged";
+                using cb_type = void(const std::string& /*device*/, double /*value*/);
+        };
+        struct AccountsChanged {
+                constexpr static const char* name = "AccountsChanged";
+                using cb_type = void(void);
+        };
+        struct StunStatusFailed {
+                constexpr static const char* name = "StunStatusFailed";
+                using cb_type = void(const std::string& /*account_id*/);
+        };
+        struct RegistrationStateChanged {
+                constexpr static const char* name = "RegistrationStateChanged";
+                using cb_type = void(const std::string& /*account_id*/, int /*state*/);
+        };
+        struct SipRegistrationStateChanged {
+                constexpr static const char* name = "SipRegistrationStateChanged";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/);
+        };
+        struct VolatileDetailsChanged {
+                constexpr static const char* name = "VolatileDetailsChanged";
+                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
+        };
+        struct Error {
+                constexpr static const char* name = "Error";
+                using cb_type = void(int /*alert*/);
+        };
+};
 
 } // namespace DRing
 
