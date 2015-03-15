@@ -41,22 +41,6 @@ namespace DRing {
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
-// Video signal type definitions
-struct VideoSignal {
-        struct DeviceEvent {
-                constexpr static const char* name = "DeviceEvent";
-                using cb_type = void(void);
-        };
-        struct DecodingStarted {
-                constexpr static const char* name = "DecodingStarted";
-                using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/id);
-        };
-        struct DecodingStopped {
-                constexpr static const char* name = "DecodingStopped";
-                using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
-        };
-};
-
 void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 std::vector<unsigned> getVideoCodecList(const std::string& accountID);
@@ -76,6 +60,22 @@ bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, const std::function<void(unsigned char*)>& cb);
 void registerSinkTarget(const std::string& sinkId, std::function<void(unsigned char*)>&& cb);
+
+// Video signal type definitions
+struct VideoSignal {
+        struct DeviceEvent {
+                constexpr static const char* name = "DeviceEvent";
+                using cb_type = void(void);
+        };
+        struct DecodingStarted {
+                constexpr static const char* name = "DecodingStarted";
+                using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, int /*w*/, int /*h*/, bool /*is_mixer*/id);
+        };
+        struct DecodingStopped {
+                constexpr static const char* name = "DecodingStopped";
+                using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
+        };
+};
 
 } // namespace DRing
 

@@ -37,7 +37,6 @@
 #include "config.h"
 #endif
 
-#include "libav_utils.h"
 #include "manager.h"
 #include "managerimpl.h"
 #include "logger.h"
@@ -58,65 +57,39 @@ version() noexcept
     return PACKAGE_VERSION;
 }
 
-InitResult
-init(const std::map<EventHandlerKey, std::map<std::string, std::shared_ptr<CallbackWrapperBase>>>& ev_handlers,
-     enum InitFlag flags)
+bool
+init(enum InitFlag flags) noexcept
 {
-    // Handle flags
-    setDebugMode(flags & DRING_FLAG_DEBUG);
-    setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
+    ::setDebugMode(flags & DRING_FLAG_DEBUG);
+    ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
 
-    // Create manager
     try {
-        // FIXME: static evil
-        static ring::ManagerImpl *manager;
-        // ensure that we haven't been in this function before
-        assert(!manager);
-        manager = &(ring::Manager::instance());
+        // current implementation use static variable
+        return &ring::Manager::instance() != nullptr;
     } catch (...) {
-        return InitResult::ERR_MANAGER_INIT;
+        return nullptr;
     }
-
-    ring::libav_utils::sfl_avcodec_init();
-    // Register user event handlers
-    for ( const auto &entry : ev_handlers ) {
-        switch(entry.first) {
-            case EventHandlerKey::CALL:
-                ::DRing::registerCallHandlers(entry.second);
-            break;
-            case EventHandlerKey::CONFIG:
-                ::DRing::registerConfHandlers(entry.second);
-            break;
-            case EventHandlerKey::PRESENCE:
-                ::DRing::registerPresHandlers(entry.second);
-            break;
-            case EventHandlerKey::VIDEO:
-#ifdef RING_VIDEO
-                ::DRing::registerVideoHandlers(entry.second);
-#else
-            RING_ERR("Error linking video handler: daemon has no video support");
-#endif
-            break;
-        }
-    }
-
-    // Initialize manager now
-    try {
-        ring::Manager::instance().init("");
-    } catch (...) {
-        return InitResult::ERR_MANAGER_INIT;
-    }
-
-    return InitResult::SUCCESS;
 }
 
-void fini(void) noexcept
+bool
+start(const std::string& config_file) noexcept
 {
-    // Finish manager
+    try {
+        ring::Manager::instance().init(config_file);
+    } catch (...) {
+        return false;
+    }
+    return true;
+}
+
+void
+fini() noexcept
+{
     ring::Manager::instance().finish();
 }
 
-void poll_events()
+void
+pollEvents() noexcept
 {
     ring::Manager::instance().pollEvents();
 }

@@ -40,6 +40,15 @@
 
 namespace DRing {
 
+void registerPresHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
+/* Presence subscription/Notification. */
+void publish(const std::string& accountID, bool status, const std::string& note);
+void answerServerRequest(const std::string& uri, bool flag);
+void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
+std::vector<std::map<std::string, std::string>> getSubscriptions(const std::string& accountID);
+void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
+
 // Presence signal type definitions
 struct PresenceSignal {
         struct NewServerSubscriptionRequest {
@@ -59,15 +68,6 @@ struct PresenceSignal {
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*buddy_uri*/, int /*state*/);
         };
 };
-
-void registerPresHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
-
-/* Presence subscription/Notification. */
-void publish(const std::string& accountID, bool status, const std::string& note);
-void answerServerRequest(const std::string& uri, bool flag);
-void subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag);
-std::vector<std::map<std::string, std::string>> getSubscriptions(const std::string& accountID);
-void setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris);
 
 } // namespace DRing
 
