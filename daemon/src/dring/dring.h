@@ -31,10 +31,6 @@
 #ifndef DRING_H
 #define DRING_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include <vector>
 #include <functional>
 #include <string>
