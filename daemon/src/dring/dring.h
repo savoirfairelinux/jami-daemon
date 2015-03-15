@@ -111,12 +111,12 @@ class CallbackWrapper : public CallbackWrapperBase {
         // Return user-callback reference.
         // The returned std::function can be null-initialized if no callback
         // has been set.
-        const constexpr TFunc& operator *() const noexcept {
+        constexpr const TFunc& operator *() const noexcept {
             return cb_;
         }
 
         // Return boolean true value if a non-null callback has been set
-        explicit constexpr operator bool() const noexcept {
+        constexpr explicit operator bool() const noexcept {
             return static_cast<bool>(cb_);
         }
 };
