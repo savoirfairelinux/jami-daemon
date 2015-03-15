@@ -30,18 +30,26 @@
 
 #pragma once
 
-#include "dring/callmanager_interface.h"
-#include "dring/configurationmanager_interface.h"
-#include "dring/presencemanager_interface.h"
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
+#include "callmanager_interface.h"
+#include "configurationmanager_interface.h"
+#include "presencemanager_interface.h"
 
 #ifdef RING_VIDEO
-#include "dring/videomanager_interface.h"
-#endif // RING_VIDEO
+#include "videomanager_interface.h"
+#endif
 
+#include "dring.h"
 #include "logger.h"
 
 #include <exception>
 #include <memory>
+#include <map>
+#include <utility>
+#include <string>
 
 namespace ring {
 
@@ -55,11 +63,11 @@ extern SignalHandlerMap& getSignalHandlers();
 template <typename Ts, typename ...Args>
 static void emitSignal(Args...args) {
     const auto& handlers = getSignalHandlers();
-    if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type> {handlers.at(Ts::name)}) {
+    if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
             cb(args...);
         } catch (std::exception& e) {
-            RING_ERR("Exception during emit signal %d:\n%s", Ts::name, e.what());
+            RING_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());
         }
     }
 }
