@@ -32,18 +32,14 @@
  *  as that of the covered work.
  */
 
-#ifndef CONFIGURATIONMANAGERI_H
-#define CONFIGURATIONMANAGERI_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef DRING_CONFIGURATIONMANAGERI_H
+#define DRING_CONFIGURATIONMANAGERI_H
 
 #include <vector>
 #include <map>
+#include <memory>
 #include <string>
-#include <functional>
-#include <tuple>
+#include <cstdint>
 
 #include "dring.h"
 
@@ -176,4 +172,4 @@ std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<ui
 
 } // namespace DRing
 
-#endif //CONFIGURATIONMANAGERI_H
+#endif // DRING_CONFIGURATIONMANAGERI_H

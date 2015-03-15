@@ -27,16 +27,11 @@
  *  as that of the covered work.
  */
 
-#ifndef VIDEOMANAGERI_H_
-#define VIDEOMANAGERI_H_
+#ifndef DRING_VIDEOMANAGERI_H
+#define DRING_VIDEOMANAGERI_H
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include <memory> // for weak/shared_ptr
+#include <memory>
 #include <vector>
-#include <atomic>
 #include <map>
 #include <string>
 
@@ -82,4 +77,4 @@ bool switchToCamera();
 
 } // namespace DRing
 
-#endif // VIDEOMANAGERI_H_
+#endif // DRING_VIDEOMANAGERI_H
