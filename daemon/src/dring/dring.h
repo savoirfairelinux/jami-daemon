@@ -40,19 +40,43 @@
 
 namespace DRing {
 
-enum class EventHandlerKey { CALL, CONFIG, PRESENCE, VIDEO };
-
-/* error codes returned by functions of this API */
-enum class InitResult {
-    SUCCESS=0,
-    ERR_MANAGER_INIT,
-};
-
 /* flags for initialization */
 enum InitFlag {
     DRING_FLAG_DEBUG=1,
     DRING_FLAG_CONSOLE_LOG=2,
 };
+
+/**
+ * Return the library version as string.
+ */
+const char* version() noexcept;
+
+/**
+ * Initialize globals, create underlaying daemon.
+ *
+ * @param flags  Flags to customize this initialization
+ * @returns      true if initialization succeed else false.
+ */
+bool init(enum InitFlag flags) noexcept;
+
+/**
+ * Start asynchronously daemon created by init().
+ * @returns true if daemon started successfuly
+ */
+bool start(const std::string& config_file={}) noexcept;
+
+/**
+ * Stop and freeing any resource allocated by daemon
+ */
+void fini() noexcept;
+
+/**
+ * Poll daemon events.
+ * This function has to be called by user at a fixed frequency
+ * to let daemon checks its internal ressources and io and
+ * manages events reported by them.
+ */
+void pollEvents() noexcept;
 
 /* External Callback Dynamic Utilities
  *
@@ -121,40 +145,17 @@ class CallbackWrapper : public CallbackWrapperBase {
         }
 };
 
-// Return an exportable callback object.
-// This object is a std::pair of a string and a CallbackWrapperBase shared_ptr.
-// This last wraps given callback in a ABI-compatible way.
-// Note: this version accepts callback as a rvalue.
+/**
+ * Return an exportable callback object.
+ * This object is a std::pair of a string and a CallbackWrapperBase shared_ptr.
+ * This last wraps given callback in a ABI-compatible way.
+ * Note: this version accepts callbacks as rvalue only.
+ */
 template <typename Ts>
 std::pair<std::string, std::shared_ptr<CallbackWrapperBase>>
 exportable_callback(std::function<typename Ts::cb_type>&& func) {
     return std::make_pair((const std::string&)Ts::name, std::make_shared<CallbackWrapper<typename Ts::cb_type>>(std::forward<std::function<typename Ts::cb_type>>(func)));
 }
-
-/* Return the library version */
-const char* version() noexcept;
-
-/**
- * Initializes libring.
- *
- * @param ev_handlers Event handlers
- * @param flags       Flags to customize this initialization
- * @returns           0 if successful or a negative error code
- */
-InitResult
-init(const std::map<EventHandlerKey,
-     std::map<std::string, std::shared_ptr<CallbackWrapperBase>>>& ev_handlers,
-     enum InitFlag flags);
-
-/**
- * Finalizes libring, freeing any resource allocated by the library.
- */
-void fini(void) noexcept;
-
-/**
- * Poll for Daemon events
- */
-void poll_events(void);
 
 } // namespace DRing
 
