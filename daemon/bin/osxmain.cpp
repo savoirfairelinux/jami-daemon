@@ -147,11 +147,19 @@ osxTests()
 {
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
-    DRing::init(std::map<DRing::EventHandlerKey, std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>>(),
-                static_cast<DRing::InitFlag>(ringFlags));
+    DRing::init(static_cast<DRing::InitFlag>(ringFlags));
+
+    registerCallHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerConfHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerPresHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+#ifdef RING_VIDEO
+    registerVideoHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+#endif
+    if (!DRing::start())
+            return -1;
 
     while (true) {
-        DRing::poll_events();
+        DRing::pollEvents();
         sleep(1);
     }
 
