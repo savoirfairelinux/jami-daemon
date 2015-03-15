@@ -83,6 +83,8 @@
 #include "gnutls_support.h"
 #endif
 
+#include "libav_utils.h"
+
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -210,6 +212,8 @@ ManagerImpl::ManagerImpl() :
     std::random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
     rand_.seed(seed);
+
+    ring::libav_utils::sfl_avcodec_init();
 }
 
 ManagerImpl::~ManagerImpl()
