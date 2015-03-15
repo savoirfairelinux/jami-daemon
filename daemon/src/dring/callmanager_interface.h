@@ -43,11 +43,66 @@
 
 namespace DRing {
 
-class CallManagerException: public std::runtime_error {
-    public:
-        CallManagerException(const std::string& str = "") :
-            std::runtime_error("A CallManagerException occured: " + str) {}
-};
+void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
+/* Call related methods */
+std::string placeCall(const std::string& accountID, const std::string& to);
+
+bool refuse(const std::string& callID);
+bool accept(const std::string& callID);
+bool hangUp(const std::string& callID);
+bool hold(const std::string& callID);
+bool unhold(const std::string& callID);
+bool transfer(const std::string& callID, const std::string& to);
+bool attendedTransfer(const std::string& transferID, const std::string& targetID);
+std::map<std::string, std::string> getCallDetails(const std::string& callID);
+std::vector<std::string> getCallList();
+
+/* Conference related methods */
+void removeConference(const std::string& conference_id);
+bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
+void createConfFromParticipantList(const std::vector<std::string>& participants);
+bool isConferenceParticipant(const std::string& call_id);
+bool addParticipant(const std::string& callID, const std::string& confID);
+bool addMainParticipant(const std::string& confID);
+bool detachParticipant(const std::string& callID);
+bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
+bool hangUpConference(const std::string& confID);
+bool holdConference(const std::string& confID);
+bool unholdConference(const std::string& confID);
+std::vector<std::string> getConferenceList();
+std::vector<std::string> getParticipantList(const std::string& confID);
+std::vector<std::string> getDisplayNames(const std::string& confID);
+std::string getConferenceId(const std::string& callID);
+std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
+
+/* File Playback methods */
+bool startRecordedFilePlayback(const std::string& filepath);
+void stopRecordedFilePlayback(const std::string& filepath);
+
+/* General audio methods */
+bool toggleRecording(const std::string& callID);
+/* DEPRECATED */
+void setRecording(const std::string& callID);
+
+void recordPlaybackSeek(double value);
+bool getIsRecording(const std::string& callID);
+std::string getCurrentAudioCodecName(const std::string& callID);
+void playDTMF(const std::string& key);
+void startTone(int32_t start, int32_t type);
+
+bool switchInput(const std::string& callID, const std::string& resource);
+
+/* Security related methods */
+void setSASVerified(const std::string& callID);
+void resetSASVerified(const std::string& callID);
+void setConfirmGoClear(const std::string& callID);
+void requestGoClear(const std::string& callID);
+void acceptEnrollment(const std::string& callID, bool accepted);
+
+/* Instant messaging */
+void sendTextMessage(const std::string& callID, const std::string& message);
+void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 
 // Call signal type definitions
 struct CallSignal {
@@ -144,67 +199,6 @@ struct CallSignal {
                 using cb_type = void(const std::string&, const std::map<std::string, int>&);
         };
 };
-
-void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
-
-/* Call related methods */
-std::string placeCall(const std::string& accountID, const std::string& to);
-
-bool refuse(const std::string& callID);
-bool accept(const std::string& callID);
-bool hangUp(const std::string& callID);
-bool hold(const std::string& callID);
-bool unhold(const std::string& callID);
-bool transfer(const std::string& callID, const std::string& to);
-bool attendedTransfer(const std::string& transferID, const std::string& targetID);
-std::map<std::string, std::string> getCallDetails(const std::string& callID);
-std::vector<std::string> getCallList();
-
-/* Conference related methods */
-void removeConference(const std::string& conference_id);
-bool joinParticipant(const std::string& sel_callID, const std::string& drag_callID);
-void createConfFromParticipantList(const std::vector<std::string>& participants);
-bool isConferenceParticipant(const std::string& call_id);
-bool addParticipant(const std::string& callID, const std::string& confID);
-bool addMainParticipant(const std::string& confID);
-bool detachParticipant(const std::string& callID);
-bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
-bool hangUpConference(const std::string& confID);
-bool holdConference(const std::string& confID);
-bool unholdConference(const std::string& confID);
-std::vector<std::string> getConferenceList();
-std::vector<std::string> getParticipantList(const std::string& confID);
-std::vector<std::string> getDisplayNames(const std::string& confID);
-std::string getConferenceId(const std::string& callID);
-std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
-
-/* File Playback methods */
-bool startRecordedFilePlayback(const std::string& filepath);
-void stopRecordedFilePlayback(const std::string& filepath);
-
-/* General audio methods */
-bool toggleRecording(const std::string& callID);
-/* DEPRECATED */
-void setRecording(const std::string& callID);
-
-void recordPlaybackSeek(double value);
-bool getIsRecording(const std::string& callID);
-std::string getCurrentAudioCodecName(const std::string& callID);
-void playDTMF(const std::string& key);
-void startTone(int32_t start, int32_t type);
-
-bool switchInput(const std::string& callID, const std::string& resource);
-
-/* Security related methods */
-void setSASVerified(const std::string& callID);
-void resetSASVerified(const std::string& callID);
-void setConfirmGoClear(const std::string& callID);
-void requestGoClear(const std::string& callID);
-void acceptEnrollment(const std::string& callID, bool accepted);
-
-/* Instant messaging */
-void sendTextMessage(const std::string& callID, const std::string& message);
-void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 
 } // namespace DRing
 
