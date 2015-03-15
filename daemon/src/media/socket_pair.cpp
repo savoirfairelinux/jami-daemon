@@ -181,7 +181,8 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
 }
 
 using std::string;
-static const int RTP_BUFFER_SIZE = 1472;
+static const size_t RTP_BUFFER_SIZE = 1472;
+static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
     : rtp_sock_()
@@ -265,7 +266,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
 
 MediaIOHandle* SocketPair::createIOContext()
 {
-    return new MediaIOHandle(RTP_BUFFER_SIZE, true,
+    return new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
                              &readCallback, &writeCallback, 0,
                              reinterpret_cast<void*>(this));
 }
