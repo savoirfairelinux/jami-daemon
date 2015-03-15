@@ -29,19 +29,15 @@
  *  as that of the covered work.
  */
 
-#ifndef __RING_CALLMANAGERI_H__
-#define __RING_CALLMANAGERI_H__
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef DRING_CALLMANAGERI_H
+#define DRING_CALLMANAGERI_H
 
 #include <stdexcept>
 #include <map>
+#include <memory>
 #include <vector>
 #include <string>
-#include <functional>
-#include <string>
+#include <cstdint>
 
 #include "dring.h"
 
@@ -212,4 +208,4 @@ void sendTextMessage(const std::string& callID, const std::string& message, cons
 
 } // namespace DRing
 
-#endif//CALLMANAGERI_H
+#endif // DRING_CALLMANAGERI_H

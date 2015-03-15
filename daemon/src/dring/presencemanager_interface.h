@@ -28,17 +28,13 @@
  *  as that of the covered work.
  */
 
-#ifndef PRESENCEMANAGERI_H
-#define PRESENCEMANAGERI_H
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
+#ifndef DRING_PRESENCEMANAGERI_H
+#define DRING_PRESENCEMANAGERI_H
 
 #include <vector>
 #include <map>
 #include <string>
-#include <functional>
+#include <memory>
 
 #include "dring.h"
 
