@@ -122,7 +122,8 @@ DBusClient::~DBusClient()
     timeout_.reset();
 }
 
-int DBusClient::initLibrary(int sflphFlags)
+int
+DBusClient::initLibrary(int sflphFlags)
 {
     using namespace std::placeholders;
 
@@ -201,8 +202,14 @@ int DBusClient::initLibrary(int sflphFlags)
 #endif
     };
 
-    // Initialize now
-    return (unsigned)DRing::init(evHandlers, static_cast<DRing::InitFlag>(sflphFlags));
+    if (!DRing::init(static_cast<DRing::InitFlag>(sflphFlags)))
+        return -1;
+
+    DRing::set_event_handlers(evHandlers);
+
+    if (!DRing::start())
+        return -1;
+    return 0;
 }
 
 void
