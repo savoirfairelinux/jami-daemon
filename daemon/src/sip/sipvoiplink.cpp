@@ -355,19 +355,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setupLocalSDPFromIce();
 
-    auto ac = std::static_pointer_cast<SystemAudioCodecInfo>
-        (getSystemCodecContainer()->searchCodecByName("PCMA", MEDIA_AUDIO));
-
-    if (!ac) {
-        RING_ERR("Could not instantiate codec");
-        return PJ_FALSE;
-    }
-
-    std::vector<std::shared_ptr<SystemAudioCodecInfo>> audioCodecs;
-    audioCodecs.push_back(ac);
-
-    pjsip_dialog *dialog = 0;
-
+    pjsip_dialog *dialog = nullptr;
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
         RING_ERR("Could not create uas");
         call.reset();
@@ -375,7 +363,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    pjsip_tpselector tp_sel  = link->getTransportSelector(transport->get());
+    pjsip_tpselector tp_sel  = SIPVoIPLink::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Could not set transport for dialog");
         return PJ_FALSE;
