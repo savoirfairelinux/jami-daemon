@@ -348,12 +348,14 @@ transaction_request_cb(pjsip_rx_data *rdata)
         account->getActiveAccountCodecInfoList(MEDIA_VIDEO),
         account->getSrtpKeyExchange()
     );
-    if (not call->getIceTransport()) {
-        RING_DBG("Initializing ICE transport");
-        call->initIceTransport(false);
+    auto ice_attrs = Sdp::getIceAttributes(r_sdp);
+    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
+        if (not call->getIceTransport()) {
+            RING_DBG("Initializing ICE transport");
+            call->initIceTransport(false);
+        }
+        call->setupLocalSDPFromIce();
     }
-
-    call->setupLocalSDPFromIce();
 
     pjsip_dialog *dialog = nullptr;
     if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
