@@ -28,6 +28,11 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include <cstdlib>
 #include <iostream>
 #include <cstring>
