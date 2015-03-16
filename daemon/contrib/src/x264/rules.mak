@@ -1,6 +1,7 @@
 # x264
 
-X264_SNAPURL := http://download.videolan.org/contrib/x264-git.tar.gz
+X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
+X264_GITURL := git://git.videolan.org/x264.git
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
 PKGS_FOUND += x264
@@ -24,17 +25,17 @@ ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(HOST)-"
 endif
 
-$(TARBALLS)/x264-git.tar.gz:
-	$(call download,$(X264_SNAPURL))
+$(TARBALLS)/x264-$(X264_HASH).tar.xz:
+	$(call download_git,$(X264_GITURL),master,$(X264_HASH))
 
-.sum-x264: x264-git.tar.gz
+.sum-x264: x264-$(X264_HASH).tar.xz
 	$(warning $@ not implemented)
 	touch $@
 
-x264: x264-git.tar.gz .sum-x264
-	rm -Rf $@-git
-	mkdir -p $@-git
-	$(ZCAT) "$<" | (cd $@-git && tar xv --strip-components=1)
+x264: x264-$(X264_HASH).tar.xz .sum-x264
+	rm -Rf $@-$(X264_HASH)
+	mkdir -p $@-$(X264_HASH)
+	(cd $@-$(X264_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(APPLY) $(SRC)/x264/remove-align.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
