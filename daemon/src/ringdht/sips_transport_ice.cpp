@@ -800,7 +800,7 @@ SipsIceTransport::clean()
 
     pjsip_transport_add_ref(getTransportBase());
     auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    if (state_cb) {
+    if (state_cb && state_ == TlsConnectionState::ESTABLISHED) {
         pjsip_transport_state_info state_info;
         pjsip_tls_state_info tls_info;
 
@@ -816,12 +816,9 @@ SipsIceTransport::clean()
         (*state_cb)(getTransportBase(), PJSIP_TP_STATE_DISCONNECTED, &state_info);
     }
 
-    if (trData_.base.is_shutdown or trData_.base.is_destroying) {
-        pjsip_transport_dec_ref(getTransportBase());
-        return;
-    }
+    if (not trData_.base.is_shutdown and not trData_.base.is_destroying)
+        pjsip_transport_shutdown(getTransportBase());
 
-    pjsip_transport_shutdown(getTransportBase());
     pjsip_transport_dec_ref(getTransportBase());
 }
 
