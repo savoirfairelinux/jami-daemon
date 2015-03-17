@@ -714,6 +714,8 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
+    if (not iceTransport_)
+        return false;
     if (iceTransport_->isStarted() || iceTransport_->isCompleted()) {
         RING_DBG("ICE already started");
         return true;
