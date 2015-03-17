@@ -40,7 +40,6 @@ from gi.repository import GObject
 from errors import *
 from controler import DRingCtrl
 from tester import DRingTester
-from toggle_video_preview import DRingToggleVideo
 
 def printAccountDetails(account):
     details = ctrl.getAccountDetails(account)
@@ -183,7 +182,15 @@ if __name__ == "__main__":
         DRingTester().start(ctrl)
 
     if args.toggleVideo:
-        DRingToggleVideo().start()
+        if not ctrl.videomanager:
+            print("Error: daemon without video support")
+            sys.exit(1)
+        import time
+        while True:
+            time.sleep(2)
+            ctrl.videomanager.startCamera()
+            time.sleep(2)
+            ctrl.videomanager.stopCamera()
 
 """
 

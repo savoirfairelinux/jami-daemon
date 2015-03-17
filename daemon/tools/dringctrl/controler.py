@@ -107,6 +107,8 @@ class DRingCtrl(Thread):
                 DBUS_DEAMON_PATH+'/CallManager', introspect=False)
             proxy_confmgr = bus.get_object(DBUS_DEAMON_OBJECT,
                 DBUS_DEAMON_PATH+'/ConfigurationManager', introspect=False)
+            proxy_videomgr = bus.get_object(DBUS_DEAMON_OBJECT,
+                DBUS_DEAMON_PATH+'/VideoManager', introspect=False)
 
             self.instance = dbus.Interface(proxy_instance,
                 DBUS_DEAMON_OBJECT+'.Instance')
@@ -114,6 +116,9 @@ class DRingCtrl(Thread):
                 DBUS_DEAMON_OBJECT+'.CallManager')
             self.configurationmanager = dbus.Interface(proxy_confmgr,
                 DBUS_DEAMON_OBJECT+'.ConfigurationManager')
+            if proxy_videomgr:
+                self.videomanager = dbus.Interface(proxy_videomgr,
+                    DBUS_DEAMON_OBJECT+'.VideoManager')
 
         except dbus.DBusException as e:
             raise DRingCtrlDBusError("Unable to bind to dring DBus API")
