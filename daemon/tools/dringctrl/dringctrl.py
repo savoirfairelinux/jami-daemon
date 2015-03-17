@@ -172,7 +172,7 @@ if __name__ == "__main__":
         ctrl.UnHold(args.unhold)
 
     if args.dtmf:
-        ctrl.Dtmf(dtmf)
+        ctrl.Dtmf(args.dtmf)
 
 """
 
