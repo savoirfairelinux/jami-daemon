@@ -56,9 +56,9 @@ DBusConfigurationManager::setAccountDetails(const std::string& accountID, const 
 }
 
 auto
-DBusConfigurationManager::getAccountTemplate() -> decltype(DRing::getAccountTemplate())
+DBusConfigurationManager::getAccountTemplate(const std::string& accountType) -> decltype(DRing::getAccountTemplate(accountType))
 {
-    return DRing::getAccountTemplate();
+    return DRing::getAccountTemplate(accountType);
 }
 
 auto
