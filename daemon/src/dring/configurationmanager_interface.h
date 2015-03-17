@@ -50,7 +50,7 @@ void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWr
 std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
 void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
-std::map<std::string, std::string> getAccountTemplate();
+std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 std::string addAccount(const std::map<std::string, std::string>& details);
 void removeAccount(const std::string& accoundID);
 std::vector<std::string> getAccountList();
