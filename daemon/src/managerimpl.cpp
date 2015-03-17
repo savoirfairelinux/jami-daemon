@@ -2858,6 +2858,7 @@ ManagerImpl::newOutgoingCall(const std::string& toUrl,
     return account->newOutgoingCall(finalToUrl);
 }
 
+#ifdef RING_VIDEO
 std::shared_ptr<video::SinkClient>
 ManagerImpl::createSinkClient(const std::string& id)
 {
@@ -2883,5 +2884,6 @@ ManagerImpl::getSinkClient(const std::string& id)
             return sink;
     return nullptr;
 }
+#endif // RING_VIDEO
 
 } // namespace ring
