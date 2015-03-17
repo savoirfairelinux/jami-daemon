@@ -45,10 +45,15 @@
 #include "fileutils.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
+#include "ringdht/ringaccount.h"
+#if HAVE_IAX
+#include "iax/iaxaccount.h"
+#endif
 #include "security_const.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "client/signal.h"
+#include "account_const.h"
 
 #include <dirent.h>
 
@@ -62,7 +67,6 @@ constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
 using ring::SIPAccount;
 using ring::TlsValidator;
-using ring::Account;
 using ring::DeviceType;
 using ring::HookPreference;
 
@@ -235,9 +239,17 @@ registerAllAccounts()
 
 ///This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
-getAccountTemplate()
+getAccountTemplate(const std::string& accountType)
 {
-    return SIPAccount{"dummy", false}.getAccountDetails();
+    if (accountType == Account::ProtocolNames::RING)
+        return ring::RingAccount("dummy", false).getAccountDetails();
+    else if (accountType == Account::ProtocolNames::SIP)
+        return ring::SIPAccount("dummy", false).getAccountDetails();
+#if HAVE_IAX
+    else if (accountType == Account::ProtocolNames::IAX)
+        return ring::IAXAccount("dummy").getAccountDetails();
+#endif
+    return {{}};
 }
 
 std::string
@@ -297,7 +309,7 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
     {
         RING_ERR("Could not find account %s return default codec details"
                 , accountID.c_str());
-        return Account::getDefaultCodecDetails(codecId);
+        return ring::Account::getDefaultCodecDetails(codecId);
     }
 
     auto codec = acc->searchCodecById(codecId, ring::MEDIA_ALL);
@@ -325,7 +337,7 @@ getActiveCodecList(const std::string& accountID)
     if (auto acc = ring::Manager::instance().getAccount(accountID))
         return acc->getActiveCodecs();
     RING_ERR("Could not find account %s, returning default", accountID.c_str());
-    return Account::getDefaultCodecsId();
+    return ring::Account::getDefaultCodecsId();
 }
 
 void
