@@ -796,11 +796,12 @@ SipsIceTransport::clean()
         cookie_key_.size = 0;
     }
 
+    bool event = state_ == TlsConnectionState::ESTABLISHED;
     closeTlsSession();
 
     pjsip_transport_add_ref(getTransportBase());
     auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    if (state_cb && state_ == TlsConnectionState::ESTABLISHED) {
+    if (state_cb && event) {
         pjsip_transport_state_info state_info;
         pjsip_tls_state_info tls_info;
 
