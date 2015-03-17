@@ -85,7 +85,7 @@ class SemGuardLock {
 class ShmHolder
 {
     public:
-        ShmHolder(const std::string& shm_name);
+        ShmHolder(const std::string& shm_name={});
         ~ShmHolder();
 
         std::string openedName() const noexcept {
@@ -245,7 +245,7 @@ SinkClient::start() noexcept
 {
     if (not shm_) {
         try {
-            shm_ = std::make_shared<ShmHolder>(id_);
+            shm_ = std::make_shared<ShmHolder>();
         } catch (const std::runtime_error& e) {
             strErr();
             RING_ERR("SHMHolder ctor failure: %s", e.what());
