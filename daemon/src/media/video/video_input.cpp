@@ -278,12 +278,19 @@ VideoInput::initFile(std::string path)
 std::future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
+    if (resource == currentResource_) {
+        std::promise<DeviceParams> p;
+        p.set_value(decOpts_);
+        return p.get_future();
+    }
     RING_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
         RING_ERR("Video switch already requested");
         return {};
     }
+
+    currentResource_ = resource;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);

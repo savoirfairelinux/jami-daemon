@@ -68,6 +68,8 @@ public:
 private:
     NON_COPYABLE(VideoInput);
 
+    std::string currentResource_ {};
+
     MediaDecoder *decoder_  = nullptr;
     std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ = {false};
