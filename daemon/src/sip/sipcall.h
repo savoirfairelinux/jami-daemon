@@ -134,9 +134,7 @@ class SIPCall : public Call
 
         void setContactHeader(pj_str_t *contact);
 
-        void setTransport(const std::shared_ptr<SipTransport>& t) {
-            transport_ = t;
-        }
+        void setTransport(const std::shared_ptr<SipTransport>& t);
 
         inline const std::shared_ptr<SipTransport>& getTransport() {
             return transport_;

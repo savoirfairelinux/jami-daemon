@@ -131,6 +131,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 
 SIPCall::~SIPCall()
 {
+    setTransport(nullptr);
     inv.reset(); // prevents callback usage
 }
 
@@ -181,6 +182,38 @@ SIPCall::generateMediaPorts()
 void SIPCall::setContactHeader(pj_str_t *contact)
 {
     pj_strcpy(&contactHeader_, contact);
+}
+
+void
+SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+{
+    const auto list_id = reinterpret_cast<uintptr_t>(this);
+    if (transport_)
+        transport_->removeStateListener(list_id);
+    transport_ = t;
+
+    if (transport_) {
+        std::weak_ptr<SIPCall> wthis_ = std::static_pointer_cast<SIPCall>(shared_from_this());
+        auto t = transport_;
+
+        // listen for transport destruction
+        transport_->addStateListener(list_id, [wthis_,t,list_id](pjsip_transport_state state, const pjsip_transport_state_info*) {
+            bool unreg {false};
+            if (auto this_ = wthis_.lock()) {
+                // end the call if the SIP transport was destroyed
+                if (!SipTransport::isAlive(t, state)) {
+                    RING_WARN("Ending call because underlying SIP transport was closed");
+                    Manager::instance().callFailure(*this_);
+                    this_->removeCall();
+                    unreg = true;
+                }
+            } else unreg = true;
+
+            // unregister the listener if needed
+            if (unreg)
+                t->removeStateListener(list_id);
+        });
+    }
 }
 
 /**
