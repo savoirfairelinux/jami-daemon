@@ -497,6 +497,14 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
                                                     NULL, 0)->value);
     RING_DBG("[%s] Using bitrate %d", encoderName, encoderCtx_->bit_rate);
 
+    // Use constant bitrate (video only)
+    if (is_video) {
+        RING_DBG("[%s] Using CBR", encoderName);
+        encoderCtx_->rc_min_rate = \
+            encoderCtx_->rc_max_rate = \
+            encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
+    }
+
     encoderCtx_->thread_count = std::thread::hardware_concurrency();
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx_->thread_count);
 
