@@ -729,7 +729,7 @@ void RingAccount::doRegister_()
         dht_.bootstrap(loadNodes());
         if (!hostname_.empty()) {
             std::stringstream ss(hostname_);
-            std::vector<sockaddr_storage> bootstrap;
+            std::vector<std::pair<sockaddr_storage, socklen_t>> bootstrap;
             std::string node_addr;
             while (std::getline(ss, node_addr, ';')) {
                 auto ips = ip_utils::getAddrList(node_addr);
@@ -738,17 +738,18 @@ void RingAccount::doRegister_()
                     if (resolved) {
                         if (resolved.getPort() == 0)
                             resolved.setPort(DHT_DEFAULT_PORT);
-                        bootstrap.push_back(resolved);
+                        bootstrap.emplace_back(resolved, resolved.getLength());
                     }
                 } else {
-                    for (auto& ip : ips)
+                    for (auto& ip : ips) {
                         if (ip.getPort() == 0)
                             ip.setPort(DHT_DEFAULT_PORT);
-                    bootstrap.insert(bootstrap.end(), ips.begin(), ips.end());
+                        bootstrap.emplace_back(ip, ip.getLength());
+                    }
                 }
             }
             for (auto ip : bootstrap)
-                RING_DBG("Bootstrap node: %s", IpAddr(ip).toString(true).c_str());
+                RING_DBG("Bootstrap node: %s", IpAddr(ip.first).toString(true).c_str());
             dht_.bootstrap(bootstrap);
         }
 
