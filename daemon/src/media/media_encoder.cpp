@@ -43,6 +43,7 @@
 #include <iostream>
 #include <sstream>
 #include <algorithm>
+#include <thread> // hardware_concurrency
 
 namespace ring {
 
@@ -485,6 +486,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
     encoderCtx_->bit_rate = 1000 * atoi(av_dict_get(options_, "bitrate",
                                                     NULL, 0)->value);
     RING_DBG("Using bitrate %d", encoderCtx_->bit_rate);
+    encoderCtx_->thread_count = std::thread::hardware_concurrency();
 
     if (is_video) {
         // resolution must be a multiple of two
