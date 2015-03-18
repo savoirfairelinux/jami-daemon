@@ -116,10 +116,11 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
                                            const std::string m_name,
                                            std::string m_libName,
                                            CodecType m_type,
+                                           unsigned m_bitrate,
                                            unsigned m_payloadType,
                                            unsigned m_frameRate,
                                            unsigned m_profileId)
-    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO, m_type, m_payloadType)
+    : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO, m_type, m_bitrate, m_payloadType)
     , frameRate(m_frameRate), profileId(m_profileId)
 {}
 
