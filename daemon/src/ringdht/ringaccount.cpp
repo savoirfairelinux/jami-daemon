@@ -680,6 +680,14 @@ void RingAccount::doRegister()
         doRegister_();
 
 }
+
+static constexpr const char*
+dhtStatusStr(dht::Dht::Status status) {
+    return status == dht::Dht::Status::Connected  ? "connected"  : (
+           status == dht::Dht::Status::Connecting ? "connecting" :
+                                                    "disconnected");
+}
+
 void RingAccount::doRegister_()
 {
     try {
@@ -690,7 +698,7 @@ void RingAccount::doRegister_()
         }
         auto identity = loadIdentity();
         dht_.run(dhtPortUsed_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
-            RING_WARN("Dht status : %d %d", (int)s4, (int)s6);
+            RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
             auto status = std::max(s4, s6);
             switch(status) {
             case dht::Dht::Status::Connecting:
