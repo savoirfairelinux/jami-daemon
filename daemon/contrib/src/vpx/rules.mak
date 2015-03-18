@@ -1,19 +1,25 @@
 # libvpx
 
-VPX_VERSION := v1.3.0
-VPX_URL := http://webm.googlecode.com/files/libvpx-$(VPX_VERSION).tar.bz2
+VPX_HASH := 4640a0c4804b49f1870d5a2d17df0c7d0a77af2f
+VPX_URL := http://libvpx.webm.googlecode.com/archive/$(VPX_HASH).tar.gz
+#VPX_GITURL := https://code.google.com/p/webm.libvpx
 
-$(TARBALLS)/libvpx-$(VPX_VERSION).tar.bz2:
+$(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
 	$(call download,$(VPX_URL))
 
-.sum-vpx: libvpx-$(VPX_VERSION).tar.bz2
+.sum-vpx: libvpx-$(VPX_HASH).tar.gz
+	$(warning $@ not implemented)
+	touch $@
 
-libvpx: libvpx-$(VPX_VERSION).tar.bz2 .sum-vpx
-	$(UNPACK)
-	$(APPLY) $(SRC)/vpx/libvpx-sysroot.patch
-	$(APPLY) $(SRC)/vpx/libvpx-no-cross.patch
-	$(APPLY) $(SRC)/vpx/libvpx-mac.patch
+libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
+	rm -Rf $@-$(VPX_HASH)
+	mkdir -p $@-$(VPX_HASH)
+	(cd $@-$(VPX_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(MOVE)
+
+#	$(APPLY) $(SRC)/vpx/libvpx-sysroot.patch
+#	$(APPLY) $(SRC)/vpx/libvpx-no-cross.patch
+#	$(APPLY) $(SRC)/vpx/libvpx-mac.patch
 
 DEPS_vpx =
 
@@ -72,12 +78,15 @@ endif
 
 VPX_CONF := \
 	--as=yasm \
-	--enable-runtime-cpu-detect \
 	--disable-docs \
 	--disable-examples \
 	--disable-unit-tests \
 	--disable-install-bins \
-	--disable-install-docs
+	--disable-install-docs \
+	--enable-realtime-only \
+	--enable-error-concealment \
+	--disable-runtime-cpu-detect \
+	--disable-webm-io
 
 ifndef HAVE_WIN32
 VPX_CONF += --enable-pic
