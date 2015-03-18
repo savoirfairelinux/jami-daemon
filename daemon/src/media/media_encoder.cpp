@@ -482,11 +482,17 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
     encoderCtx_ = avcodec_alloc_context3(outputEncoder_);
 #endif
 
+    const auto encoderName = encoderCtx_->av_class->item_name ?
+        encoderCtx_->av_class->item_name(encoderCtx_)
+        : "encoder?";
+
     // set some encoder settings here
     encoderCtx_->bit_rate = 1000 * atoi(av_dict_get(options_, "bitrate",
                                                     NULL, 0)->value);
-    RING_DBG("Using bitrate %d", encoderCtx_->bit_rate);
+    RING_DBG("[%s] Using bitrate %d", encoderName, encoderCtx_->bit_rate);
+
     encoderCtx_->thread_count = std::thread::hardware_concurrency();
+    RING_DBG("[%s] Using %d threads", encoderName, encoderCtx_->thread_count);
 
     if (is_video) {
         // resolution must be a multiple of two
@@ -519,7 +525,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
             encoderCtx_->sample_rate = atoi(v->value);
             encoderCtx_->time_base = (AVRational) {1, encoderCtx_->sample_rate};
         } else {
-            RING_WARN("No sample rate set");
+            RING_WARN("[%s] No sample rate set", encoderName);
             encoderCtx_->sample_rate = 8000;
         }
 
@@ -527,12 +533,12 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         if (v) {
             auto c = std::atoi(v->value);
             if (c > 2 or c < 1) {
-                RING_WARN("Clamping invalid channel value %d", c);
+                RING_WARN("[%s] Clamping invalid channel value %d", encoderName, c);
                 c = 1;
             }
             encoderCtx_->channels = c;
         } else {
-            RING_WARN("Channels not set");
+            RING_WARN("[%s] Channels not set", encoderName);
             encoderCtx_->channels = 1;
         }
 
@@ -541,9 +547,9 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         v = av_dict_get(options_, "frame_size", NULL, 0);
         if (v) {
             encoderCtx_->frame_size = atoi(v->value);
-            RING_WARN("Frame size %d", encoderCtx_->frame_size);
+            RING_WARN("[%s] Frame size %d", encoderName, encoderCtx_->frame_size);
         } else {
-            RING_WARN("Frame size not set");
+            RING_WARN("[%s] Frame size not set", encoderName);
         }
     }
 }
