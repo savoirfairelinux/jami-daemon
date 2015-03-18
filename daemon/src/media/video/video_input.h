@@ -63,10 +63,12 @@ public:
     int getPixelFormat() const;
     DeviceParams getParams() const;
 
-    std::future<DeviceParams> switchInput(const std::string& resource);
+    std::shared_future<DeviceParams> switchInput(const std::string& resource);
 
 private:
     NON_COPYABLE(VideoInput);
+
+    std::string currentResource_;
 
     MediaDecoder *decoder_  = nullptr;
     std::shared_ptr<SinkClient> sink_;
@@ -74,6 +76,7 @@ private:
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
+    std::shared_future<DeviceParams> futureDecOpts_;
 
     bool emulateRate_       = false;
     ThreadLoop loop_;
