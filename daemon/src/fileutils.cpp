@@ -311,7 +311,7 @@ get_cache_dir()
         return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
 #elif __APPLE__
         return get_home_dir() + DIR_SEPARATOR_STR
-            + "Library" + DIR_SEPARATOR_STR + "Application Support"
+            + "Library" + DIR_SEPARATOR_STR + "Caches"
             + DIR_SEPARATOR_STR + PACKAGE;
 #else
         return get_home_dir() + DIR_SEPARATOR_STR +
@@ -350,7 +350,11 @@ get_data_dir()
 {
 #ifdef __ANDROID__
     return get_program_dir();
-#endif
+#elif __APPLE__
+    return get_home_dir() + DIR_SEPARATOR_STR
+            + "Library" + DIR_SEPARATOR_STR + "Application Support"
+            + DIR_SEPARATOR_STR + PACKAGE;
+#else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
         return data_home + DIR_SEPARATOR_STR + PACKAGE;
@@ -358,6 +362,7 @@ get_data_dir()
     // $HOME/.local/share should be used."
     return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
         "share" DIR_SEPARATOR_STR + PACKAGE;
+#endif
 }
 
 }} // namespace ring::fileutils
