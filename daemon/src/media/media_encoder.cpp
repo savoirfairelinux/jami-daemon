@@ -80,7 +80,7 @@ void MediaEncoder::setDeviceOptions(const DeviceParams& args)
 void MediaEncoder::setOptions(const MediaDescription& args)
 {
     av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
-    av_dict_set(&options_, "bitrate", ring::to_string(args.bitrate).c_str(), 0);
+    av_dict_set(&options_, "bitrate", ring::to_string(args.codec->bitrate).c_str(), 0);
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args.codec);
     if (accountAudioCodec->audioformat.sample_rate)
