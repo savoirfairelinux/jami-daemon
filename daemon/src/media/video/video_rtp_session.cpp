@@ -49,6 +49,8 @@ namespace ring { namespace video {
 using std::map;
 using std::string;
 
+constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(20);
+
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
     RtpSession(callID), localVideoParams_(localVideoParams)
@@ -68,12 +70,12 @@ void VideoRtpSession::startSender()
             RING_WARN("Restarting video sender");
         }
 
-        std::future<DeviceParams> newParams;
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = videoManager.videoInput.lock()) {
-                newParams = input->switchInput(input_);
-                if (newParams.valid())
+                std::future<DeviceParams> newParams = input->switchInput(input_);
+                if (newParams.valid() &&
+                    newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
                     localVideoParams_ = newParams.get();
                 else
                     RING_WARN("No valid new video parameters.");
