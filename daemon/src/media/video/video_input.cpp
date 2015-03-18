@@ -275,15 +275,20 @@ VideoInput::initFile(std::string path)
     return true;
 }
 
-std::future<DeviceParams>
+std::shared_future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
+    if (resource == currentResource_)
+        return futureDecOpts_;
+
     RING_DBG("MRL: '%s'", resource.c_str());
 
     if (switchPending_) {
         RING_ERR("Video switch already requested");
         return {};
     }
+
+    currentResource_ = resource;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);
@@ -294,7 +299,8 @@ VideoInput::switchInput(const std::string& resource)
         switchPending_ = true;
         if (!loop_.isRunning())
             loop_.start();
-        return foundDecOpts_.get_future();
+        futureDecOpts_   = foundDecOpts_.get_future();
+        return futureDecOpts_;
     }
 
     // Supported MRL schemes
@@ -323,16 +329,17 @@ VideoInput::switchInput(const std::string& resource)
         valid = initFile(suffix);
     }
 
-    /* Unsupported MRL or failed initialization */
-    if (valid) {
-        switchPending_ = true;
-        if (!loop_.isRunning())
-            loop_.start();
-    }
-    else
+    // Unsupported MRL or failed initialization
+    if (not valid) {
         RING_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
+        return {};
+    }
 
-    return valid ? foundDecOpts_.get_future() : std::future<DeviceParams> {};
+    switchPending_ = true;
+    if (!loop_.isRunning())
+        loop_.start();
+    futureDecOpts_ = foundDecOpts_.get_future().share();
+    return futureDecOpts_;
 }
 
 int VideoInput::getWidth() const
