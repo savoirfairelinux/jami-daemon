@@ -68,12 +68,11 @@ void VideoRtpSession::startSender()
             RING_WARN("Restarting video sender");
         }
 
-        std::future<DeviceParams> newParams;
         if (not conference_) {
             videoLocal_ = getVideoCamera();
             if (auto input = videoManager.videoInput.lock()) {
-                newParams = input->switchInput(input_);
-                if (newParams.valid())
+                std::future<DeviceParams> newParams = input->switchInput(input_);
+                if (newParams.valid() && newParams.wait_for(std::chrono::milliseconds(20)) == std::future_status::ready)
                     localVideoParams_ = newParams.get();
                 else
                     RING_WARN("No valid new video parameters.");
