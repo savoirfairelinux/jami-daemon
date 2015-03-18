@@ -82,12 +82,13 @@ Controller::addAnyMapping(uint16_t port_desired,
     Mapping mapping = upnpContext_->addAnyMapping(port_desired, port_local, type,
                                                   use_same_port, unique);
     if (mapping) {
+        auto usedPort = mapping.getPortExternal();
         if (port_used)
-            *port_used = mapping.getPortExternal();
+            *port_used = usedPort;
 
         /* add to map */
         auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
-        instanceMappings.emplace(*port_used, std::move(mapping));
+        instanceMappings.emplace(usedPort, std::move(mapping));
         return true;
     }
 #endif
