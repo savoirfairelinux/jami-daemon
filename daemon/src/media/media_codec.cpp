@@ -165,6 +165,22 @@ AccountAudioCodecInfo::getCodecSpecifications()
         };
 }
 
+void
+AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
+{
+    auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
+    if (it != details.end())
+        bitrate = std::stoi(it->second);
+
+    it = details.find(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE);
+    if (it != details.end())
+        audioformat.sample_rate = std::stoi(it->second);
+
+    it = details.find(DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER);
+    if (it != details.end())
+        audioformat.nb_channels = std::stoi(it->second);
+}
+
 bool
 AccountAudioCodecInfo::isPCMG722() const
 {
@@ -190,6 +206,18 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
         {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)}
         };
+}
+
+void
+AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
+{
+    auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
+    if (it != details.end())
+        bitrate = stoi(it->second);
+
+    it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
+    if (it != details.end())
+        frameRate = stoi(it->second);
 }
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()

@@ -122,6 +122,13 @@ DBusConfigurationManager::getCodecDetails(const std::string& accountID, const un
 }
 
 auto
+DBusConfigurationManager::setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details)
+-> decltype(DRing::setCodecDetails(accountID, codecId, details))
+{
+    return DRing::setCodecDetails(accountID, codecId, details);
+}
+
+auto
 DBusConfigurationManager::getActiveCodecList(const std::string& accountID) -> decltype(DRing::getActiveCodecList(accountID))
 {
     return DRing::getActiveCodecList(accountID);

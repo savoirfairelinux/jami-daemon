@@ -289,6 +289,40 @@ getSupportedCiphers(const std::string& accountID)
 }
 
 
+bool
+setCodecDetails(const std::string& accountID,
+                const unsigned& codecId,
+                const  std::map<std::string, std::string>& details)
+{
+    auto acc = ring::Manager::instance().getAccount(accountID);
+    if (!acc)
+    {
+        RING_ERR("Could not find account %s return default codec details"
+                , accountID.c_str());
+        return false;
+    }
+
+    auto codec = acc->searchCodecById(codecId, ring::MEDIA_ALL);
+    if (!codec)
+    {
+        RING_ERR("can not find codec %d", codecId);
+        return false;
+
+    }
+    if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO)
+        if (auto foundCodec = std::static_pointer_cast<ring::AccountAudioCodecInfo>(codec)) {
+            foundCodec->setCodecSpecifications(details);
+            return true;
+        }
+
+    if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO)
+        if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec)) {
+            foundCodec->setCodecSpecifications(details);
+            return true;
+        }
+    return false;
+}
+
 std::map<std::string, std::string>
 getCodecDetails(const std::string& accountID, const unsigned& codecId)
 {
