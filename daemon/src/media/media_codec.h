@@ -116,6 +116,7 @@ struct SystemVideoCodecInfo : SystemCodecInfo
 {
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
                          std::string libName, CodecType type = CODEC_NONE,
+                         unsigned bitrate = 0,
                          unsigned payloadType = 0, unsigned frameRate = 0,
                          unsigned profileId = 0);
 
