@@ -40,6 +40,8 @@ namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
+constexpr static auto DEFAULT_VIDEO_BITRATE = 400;
+
 SystemCodecContainer::SystemCodecContainer()
 {
     initCodecConfig();
@@ -58,19 +60,23 @@ SystemCodecContainer::initCodecConfig()
         /* Define supported video codec*/
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
-                                               CODEC_ENCODER_DECODER),
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
 
-        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
-                                               "H263", "h263",
-                                               CODEC_ENCODER_DECODER),
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263P,
+                                               "H263-2000", "h263p",
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
-                                               CODEC_ENCODER_DECODER),
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
-                                               CODEC_ENCODER_DECODER),
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
 #endif
         /* Define supported audio codec*/
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
