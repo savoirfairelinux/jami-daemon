@@ -43,6 +43,7 @@
 
 #include <iostream>
 #include <unistd.h>
+#include <thread> // hardware_concurrency
 
 namespace ring {
 
@@ -177,7 +178,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
         return -1;
     }
 
-    decoderCtx_->thread_count = 1;
+    decoderCtx_->thread_count = std::thread::hardware_concurrency();
     decoderCtx_->channels = format.nb_channels;
     decoderCtx_->sample_rate = format.sample_rate;
 
