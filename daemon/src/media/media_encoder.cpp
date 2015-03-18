@@ -132,6 +132,12 @@ MediaEncoder::openOutput(const char *filename,
         forcePresetX264();
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
+        av_opt_set_int(encoderCtx_->priv_data, "error-resilient", 1, 0);
+        av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 3, 0);
+        encoderCtx_->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+        encoderCtx_->qmin = 4;
+        encoderCtx_->qmax = 56;
+        encoderCtx_->gop_size = 999999;
     }
 
     int ret;
