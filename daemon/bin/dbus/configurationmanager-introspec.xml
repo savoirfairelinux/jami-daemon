@@ -382,6 +382,15 @@
            </arg>
        </method>
 
+       <method name="setCodecDetails" tp:name-for-bindings="setCodecDetails">
+           <arg type="b" name="result" direction="out"></arg>
+           <arg type="s" name="accountID" direction="in"></arg>
+           <arg type="u" name="codecId" direction="in"></arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+           <arg type="a{ss}" name="details" direction="in" tp:type="String_String_Map">
+           </arg>
+       </method>
+
        <method name="getActiveCodecList" tp:name-for-bindings="getActiveCodecList">
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorUInt"/>
            <arg type="s" name="accountID" direction="in">
