@@ -152,6 +152,7 @@ struct AccountAudioCodecInfo : AccountCodecInfo
     ~AccountAudioCodecInfo();
 
     std::map<std::string, std::string>  getCodecSpecifications();
+    void setCodecSpecifications(const std::map<std::string, std::string>& details);
 
     /* account custom values */
     AudioFormat audioformat {AudioFormat::NONE()};
@@ -163,6 +164,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
     ~AccountVideoCodecInfo();
 
+    void setCodecSpecifications(const std::map<std::string, std::string>& details);
     std::map<std::string, std::string>  getCodecSpecifications();
 
     /* account custom values */
