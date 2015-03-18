@@ -183,6 +183,33 @@ void SIPCall::setContactHeader(pj_str_t *contact)
     pj_strcpy(&contactHeader_, contact);
 }
 
+void
+SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+{
+    auto list_id = reinterpret_cast<uintptr_t>(this);
+    if (transport_)
+        transport_->removeStateListener(list_id);
+    transport_ = t;
+    if (transport_ and isSecure()) {
+        std::weak_ptr<SIPCall> wthis_ = std::static_pointer_cast<SIPCall>(shared_from_this());
+        auto tr = transport_;
+        transport_->addStateListener(list_id, [wthis_,tr,list_id](pjsip_transport_state state, const pjsip_transport_state_info*) {
+            bool unreg {false};
+            if (auto this_ = wthis_.lock()) {
+                if (!SipTransport::isAlive(tr, state)) {
+                    RING_WARN("Ending call because underlying SIP transport was closed");
+                    Manager::instance().callFailure(*this_);
+                    this_->removeCall();
+                    unreg = true;
+                }
+            } else
+                unreg = true;
+            if (unreg)
+                tr->removeStateListener(list_id);
+        });
+    }
+}
+
 /**
  * Send a reINVITE inside an active dialog to modify its state
  * Local SDP session should be modified before calling this method
