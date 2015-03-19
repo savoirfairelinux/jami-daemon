@@ -532,7 +532,7 @@
 
        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
            <arg type="s" name="accountID"/>
-           <arg type="i" name="registrationState"/>
+           <arg type="s" name="registrationState"/>
            <arg type="i" name="registrationDetail">
                <tp:docstring>
                    The optional account-type specific message code. 0 when not available.
