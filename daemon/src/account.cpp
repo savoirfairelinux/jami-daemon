@@ -271,37 +271,28 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
 std::map<std::string, std::string>
 Account::getAccountDetails() const
 {
-    std::map<std::string, std::string> a;
-
-    a[Conf::CONFIG_ACCOUNT_ALIAS] = alias_;
-    a[Conf::CONFIG_ACCOUNT_ENABLE] = enabled_ ? "true" : "false";
-    a[Conf::CONFIG_ACCOUNT_TYPE] = getAccountType();
-    a[Conf::CONFIG_ACCOUNT_HOSTNAME] = hostname_;
-    a[Conf::CONFIG_ACCOUNT_USERNAME] = username_;
-    a[Conf::CONFIG_ACCOUNT_MAILBOX] = mailBox_;
-
-    RegistrationState state(registrationState_);
-
-    // This method should only stores user-settable fields
-    // For legacy reasons, the STATUS will be kept for some time
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(state);
-    a[Conf::CONFIG_ACCOUNT_USERAGENT] = hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT;
-    a[Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT] = hasCustomUserAgent_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_ACCOUNT_AUTOANSWER] = autoAnswerEnabled_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_RINGTONE_ENABLED] = ringtoneEnabled_ ? TRUE_STR : FALSE_STR;
-    a[Conf::CONFIG_RINGTONE_PATH] = ringtonePath_;
-    a[Conf::CONFIG_UPNP_ENABLED] = upnpEnabled_ ? TRUE_STR : FALSE_STR;
-
-    return a;
+    return {
+        {Conf::CONFIG_ACCOUNT_ALIAS,        alias_},
+        {Conf::CONFIG_ACCOUNT_ENABLE,       enabled_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_ACCOUNT_TYPE,         getAccountType()},
+        {Conf::CONFIG_ACCOUNT_HOSTNAME,     hostname_},
+        {Conf::CONFIG_ACCOUNT_USERNAME,     username_},
+        {Conf::CONFIG_ACCOUNT_MAILBOX,      mailBox_},
+        {Conf::CONFIG_ACCOUNT_USERAGENT,    hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
+        {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
+        {Conf::CONFIG_ACCOUNT_AUTOANSWER,   autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
+        {Conf::CONFIG_UPNP_ENABLED,         upnpEnabled_ ? TRUE_STR : FALSE_STR},
+    };
 }
 
 std::map<std::string, std::string>
 Account::getVolatileAccountDetails() const
 {
-    std::map<std::string, std::string> a;
-
-    a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = mapStateNumberToString(registrationState_);
-    return a;
+    return {
+        {Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)}
+    };
 }
 
 // Convert a list of payloads in a special format, readable by the server.
