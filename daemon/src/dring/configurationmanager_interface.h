@@ -154,11 +154,7 @@ struct ConfigurationSignal {
         };
         struct RegistrationStateChanged {
                 constexpr static const char* name = "RegistrationStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, int /*state*/);
-        };
-        struct SipRegistrationStateChanged {
-                constexpr static const char* name = "SipRegistrationStateChanged";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*state*/, int /*code*/);
+                using cb_type = void(const std::string& /*account_id*/, int /*state*/, int /*detailsCode*/, const std::string& /*detailsStr*/);
         };
         struct VolatileDetailsChanged {
                 constexpr static const char* name = "VolatileDetailsChanged";
