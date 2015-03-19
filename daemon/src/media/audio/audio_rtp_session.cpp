@@ -62,7 +62,6 @@ class AudioSender {
     private:
         NON_COPYABLE(AudioSender);
 
-        bool waitForDataEncode(const std::chrono::milliseconds& max_wait) const;
         bool setup(SocketPair& socketPair);
 
         std::string id_;
@@ -138,23 +137,22 @@ AudioSender::cleanup()
 void
 AudioSender::process()
 {
-    auto mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    auto& mainBuffer = Manager::instance().getRingBufferPool();
+    auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
 
     // compute nb of byte to get corresponding to 1 audio frame
     const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(mainBuffFormat.sample_rate * secondsPerPacket_).count();
-    const auto samplesAvail = Manager::instance().getRingBufferPool().availableForGet(id_);
 
-    if (samplesAvail < samplesToGet) {
-        const auto wait_ratio = 1. - std::min(.9, samplesAvail / (double)samplesToGet); // wait at least 10%
-        const auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_ * wait_ratio);
-        if (not waitForDataEncode(wait_time))
+    if (mainBuffer.availableForGet(id_) < samplesToGet) {
+        const auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_);
+        if (not mainBuffer.waitForDataAvailable(id_, samplesToGet, wait_time))
             return;
     }
 
     // get data
     micData_.setFormat(mainBuffFormat);
     micData_.resize(samplesToGet);
-    const auto samples = Manager::instance().getRingBufferPool().getData(micData_, id_);
+    const auto samples = mainBuffer.getData(micData_, id_);
     if (samples != samplesToGet) {
         RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
                 samplesToGet, id_.c_str(), samples);
@@ -179,20 +177,6 @@ AudioSender::process()
         if (audioEncoder_->encode_audio(micData_) < 0)
             RING_ERR("encoding failed");
     }
-
-    if (waitForDataEncode(std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_))) {
-        // Data available !
-    }
-}
-
-bool
-AudioSender::waitForDataEncode(const std::chrono::milliseconds& max_wait) const
-{
-    auto& mainBuffer = Manager::instance().getRingBufferPool();
-    auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
-    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(mainBuffFormat.sample_rate * secondsPerPacket_).count();
-
-    return mainBuffer.waitForDataAvailable(id_, samplesToGet, max_wait);
 }
 
 class AudioReceiveThread
