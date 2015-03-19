@@ -258,7 +258,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
         addRTCPAttribute(med); // video has its own RTCP
     }
 
-    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "recvonly" : "inactive") : "sendrecv", NULL);
+    med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "sendonly" : "inactive") : "sendrecv", NULL);
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
@@ -586,7 +586,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
         descr.addr = std::string(conn->addr.ptr, conn->addr.slen);
         descr.addr.setPort(media->desc.port);
 
-        descr.holding = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "recvonly", nullptr)
+        descr.holding = pjmedia_sdp_attr_find2(media->attr_count, media->attr, "sendonly", nullptr)
                      || pjmedia_sdp_attr_find2(media->attr_count, media->attr, "inactive", nullptr);
 
         // get codecs infos

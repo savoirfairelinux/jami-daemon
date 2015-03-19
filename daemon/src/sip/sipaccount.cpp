@@ -1751,7 +1751,7 @@ set_opt(const std::map<std::string, std::string> &details, const char *key, bool
     std::map<std::string, std::string>::const_iterator it = details.find(key);
 
     if (it != details.end())
-        val = it->second == Account::TRUE_STR;
+        val = it->second == TRUE_STR;
 }
 
 static void

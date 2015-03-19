@@ -792,5 +792,12 @@
             </tp:docstring>
             </arg>
         </signal>
+
+        <signal name="peerHold" tp:name-for-bindings="peerHold">
+            <tp:added version="2.0.0"/>
+            <arg type="s" name="callID" />
+            <arg type="b" name="peerHolding" />
+        </signal>
+
     </interface>
 </node>

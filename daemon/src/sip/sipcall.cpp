@@ -42,6 +42,7 @@
 #include "sdp.h"
 #include "manager.h"
 #include "array_size.h"
+#include "string_utils.h"
 #include "upnp/upnp_control.h"
 
 #include "audio/audio_rtp_session.h"
@@ -53,6 +54,7 @@
 #endif
 
 #include "dring/call_const.h"
+#include "client/signal.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -775,6 +777,7 @@ SIPCall::startAllMedia()
     }
     auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
+    bool peer_holding {true};
 
     for (const auto& slot : slots) {
         const auto& local = slot.first;
@@ -805,6 +808,8 @@ SIPCall::startAllMedia()
             continue;
         }
 
+        peer_holding &= remote.holding;
+
         if (isSecure() && (not local.crypto || not remote.crypto)) {
             RING_ERR("Can't perform secure call over insecure RTP transport");
             continue;
@@ -824,6 +829,10 @@ SIPCall::startAllMedia()
             ice_comp_id += 2;
         } else
             rtp->start();
+    }
+    if (peerHolding_ != peer_holding) {
+        peerHolding_ = peer_holding;
+        emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
 }
 
@@ -928,6 +937,7 @@ std::map<std::string, std::string>
 SIPCall::getDetails() const
 {
     auto details = Call::getDetails();
+    details.emplace(DRing::Call::Details::PEER_HOLDING,         peerHolding_ ? TRUE_STR : FALSE_STR);
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);

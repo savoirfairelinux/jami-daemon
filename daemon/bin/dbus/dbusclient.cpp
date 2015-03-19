@@ -174,6 +174,7 @@ DBusClient::initLibrary(int sflphFlags)
         exportable_callback<CallSignal::ZrtpNotSuppOther>(bind(&DBusCallManager::zrtpNotSuppOther, callM, _1)),
         exportable_callback<CallSignal::ZrtpNegotiationFailed>(bind(&DBusCallManager::zrtpNegotiationFailed, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RtcpReportReceived>(bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
+        exportable_callback<CallSignal::PeerHold>(bind(&DBusCallManager::peerHold, callM, _1, _2))
     };
 
     // Configuration event handlers
