@@ -303,7 +303,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void removeCall();
 
-        void initIceTransport(bool master, unsigned channel_num=4);
+        bool initIceTransport(bool master, unsigned channel_num=4);
 
         int waitForIceInitialization(unsigned timeout);
 

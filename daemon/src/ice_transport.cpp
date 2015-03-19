@@ -835,9 +835,14 @@ IceTransportFactory::createTransport(const char* name,
                                      IceTransportCompleteCb&& on_initdone_cb,
                                      IceTransportCompleteCb&& on_negodone_cb)
 {
-    return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled,
-                                          std::forward<IceTransportCompleteCb>(on_initdone_cb),
-                                          std::forward<IceTransportCompleteCb>(on_negodone_cb));
+    try {
+        return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled,
+                                              std::forward<IceTransportCompleteCb>(on_initdone_cb),
+                                              std::forward<IceTransportCompleteCb>(on_negodone_cb));
+    } catch(const std::exception& e) {
+        RING_ERR("%s",e.what());
+        return nullptr;
+    }
 }
 
 void
