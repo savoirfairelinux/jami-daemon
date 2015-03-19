@@ -284,6 +284,10 @@ SinkClient::stop() noexcept
 #endif // !HAVE_SHM
 
 SinkClient::SinkClient(const std::string& id) : id_ {id}
+#ifdef DEBUG_FPS
+    , frameCount_(0u)
+    , lastFrameDebug_(std::chrono::system_clock::now())
+#endif
 {}
 
 void
@@ -291,6 +295,17 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
                    std::shared_ptr<VideoFrame>& frame_p)
 {
     auto f = frame_p; // keep a local reference during rendering
+
+#ifdef DEBUG_FPS
+    auto currentTime = std::chrono::system_clock::now();
+    const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
+    ++frameCount_;
+    if (seconds.count() > 1) {
+        RING_DBG("%s: FPS %f", id_.c_str(), frameCount_ / seconds.count());
+        frameCount_ = 0;
+        lastFrameDebug_ = currentTime;
+    }
+#endif
 
 #if HAVE_SHM
     shm_->render_frame(*f.get());

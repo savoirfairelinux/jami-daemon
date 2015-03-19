@@ -80,6 +80,11 @@ class SinkClient : public VideoFramePassiveReader
         std::function<void(unsigned char*)> target_;
         std::vector<unsigned char> targetData_;
 
+#ifdef DEBUG_FPS
+        unsigned frameCount_;
+        std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
+#endif
+
 #if HAVE_SHM
         // using shared_ptr and not unique_ptr as ShmHolder is forwared only
         std::shared_ptr<ShmHolder> shm_;
