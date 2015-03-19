@@ -230,8 +230,9 @@ SIPCall::SIPSessionReinvite()
                       acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
                       acc.getSrtpKeyExchange(),
                       getState() == Call::HOLD);
-    initIceTransport(true);
-    setupLocalSDPFromIce();
+    if (initIceTransport(true))
+        setupLocalSDPFromIce();
+
     pjmedia_sdp_session *local_sdp = sdp_->getLocalSdpSession();
 
     pjsip_tx_data *tdata;
@@ -879,8 +880,8 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
     );
     auto ice_attrs = Sdp::getIceAttributes(offer);
     if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
-        initIceTransport(false);
-        setupLocalSDPFromIce();
+        if (initIceTransport(false))
+            setupLocalSDPFromIce();
     }
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inv.get(), sdp_->getLocalSdpSession());

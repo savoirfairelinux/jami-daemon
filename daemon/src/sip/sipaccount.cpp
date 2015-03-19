@@ -330,8 +330,9 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 bool
 SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 {
-    // Add Ice headers to local SDP
-    call->setupLocalSDPFromIce();
+    // Add Ice headers to local SDP if ice transport exist
+    if (call->getIceTransport())
+        call->setupLocalSDPFromIce();
 
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 

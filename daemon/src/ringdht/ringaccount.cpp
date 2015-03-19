@@ -305,7 +305,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 bool
 RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 {
-    call->setupLocalSDPFromIce();
+    if (call->getIceTransport())
+        call->setupLocalSDPFromIce();
+
     std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
