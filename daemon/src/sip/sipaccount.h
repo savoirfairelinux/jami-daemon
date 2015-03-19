@@ -220,6 +220,8 @@ class SIPAccount : public SIPAccountBase {
         const std::vector<std::map<std::string, std::string> > &
         getCredentials() const;
 
+        void setRegistrationState(RegistrationState state, unsigned code=0);
+
         /**
          * A client sendings a REGISTER request MAY suggest an expiration
          * interval that indicates how long the client would like the

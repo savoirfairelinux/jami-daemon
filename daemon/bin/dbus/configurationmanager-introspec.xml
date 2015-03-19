@@ -530,32 +530,17 @@
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
-       <!-- FIXME: we should rethink these two signals -->
-       <!-- Used by IAX and SIP accounts -->
        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
            <arg type="s" name="accountID"/>
-           <arg type="i" name="registration_state"/>
-       </signal>
-
-       <!-- Only used by SIP accounts, data is directly from pjsip -->
-       <signal name="sipRegistrationStateChanged" tp:name-for-bindings="sipRegistrationStateChanged">
-           <tp:docstring>
-               <p>Account state changed, Ring received a notification from registrar.</p>
-           </tp:docstring>
-           <annotation name="org.freedesktop.DBus.Deprecated" value="true"/>
-           <arg type="s" name="accountID" >
+           <arg type="i" name="registrationState"/>
+           <arg type="i" name="registrationDetail">
                <tp:docstring>
-                   The account ID
+                   The optional account-type specific message code. 0 when not available.
                </tp:docstring>
            </arg>
-           <arg type="s" name="state">
+           <arg type="s" name="registrationDetailStr">
                <tp:docstring>
-                   Description string
-               </tp:docstring>
-           </arg>
-           <arg type="i" name="code">
-               <tp:docstring>
-                   The SIP message code
+                   The optional account-type specific message string. Empty string when not available.
                </tp:docstring>
            </arg>
        </signal>
