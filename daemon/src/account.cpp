@@ -153,7 +153,7 @@ Account::setRegistrationState(RegistrationState state, unsigned detail_code, con
         // Notify the client
         emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(
             accountID_,
-            static_cast<int32_t>(registrationState_),
+            mapStateNumberToString(registrationState_),
             detail_code,
             detail_str);
 
