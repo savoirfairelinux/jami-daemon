@@ -41,6 +41,9 @@
 
 namespace ring {
 
+constexpr static const char* TRUE_STR = "true";
+constexpr static const char* FALSE_STR = "false";
+
 #ifdef __ANDROID__
 
 template <typename T>

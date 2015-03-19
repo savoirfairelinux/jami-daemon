@@ -87,9 +87,6 @@ const char * const Account::HAS_CUSTOM_USER_AGENT_KEY   = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY            = "upnpEnabled";
 
-constexpr const char* Account::TRUE_STR;
-constexpr const char* Account::FALSE_STR;
-
 Account::Account(const std::string &accountID)
     : accountID_(accountID)
     , username_()

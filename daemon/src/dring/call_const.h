@@ -43,6 +43,7 @@ constexpr static char CALL_STATE               [] = "CALL_STATE"          ;
 constexpr static char CONF_ID                  [] = "CONF_ID"             ;
 constexpr static char TIMESTAMP_START          [] = "TIMESTAMP_START"     ;
 constexpr static char ACCOUNTID                [] = "ACCOUNTID"           ;
+constexpr static char PEER_HOLDING             [] = "PEER_HOLDING"        ;
 constexpr static char TLS_PEER_CERT            [] = "TLS_PEER_CERT"       ;
 constexpr static char TLS_CIPHER               [] = "TLS_CIPHER"          ;
 

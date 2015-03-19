@@ -243,6 +243,7 @@ class SIPCall : public Call
          * The SDP session
          */
         std::unique_ptr<Sdp> sdp_;
+        bool peerHolding_ {false};
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
