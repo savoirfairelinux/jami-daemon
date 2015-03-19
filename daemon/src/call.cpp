@@ -265,12 +265,13 @@ Call::getNullDetails()
     };
 }
 
-void
+bool
 Call::initIceTransport(bool master, unsigned channel_num)
 {
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     iceTransport_ = iceTransportFactory.createTransport(getCallId().c_str(), channel_num,
                                                         master, account_.getUPnPActive());
+    return static_cast<bool>(iceTransport_);
 }
 
 int
