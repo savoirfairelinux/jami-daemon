@@ -198,6 +198,10 @@ struct CallSignal {
                 constexpr static const char* name = "RtcpReportReceived";
                 using cb_type = void(const std::string&, const std::map<std::string, int>&);
         };
+        struct PeerHold {
+                constexpr static const char* name = "PeerHold";
+                using cb_type = void(const std::string&, bool);
+        };
 };
 
 } // namespace DRing

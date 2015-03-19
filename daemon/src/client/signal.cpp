@@ -60,6 +60,7 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::ZrtpNotSuppOther>(),
         exported_callback<DRing::CallSignal::ZrtpNegotiationFailed>(),
         exported_callback<DRing::CallSignal::RtcpReportReceived>(),
+        exported_callback<DRing::CallSignal::PeerHold>(),
 
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
