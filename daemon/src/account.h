@@ -178,7 +178,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Set the registration state of the specified link
          * @param state	The registration state of underlying VoIPLink
          */
-        void setRegistrationState(RegistrationState state);
+        virtual void setRegistrationState(RegistrationState state, unsigned detail_code=0, std::string detail_str={});
 
         /* They should be treated like macro definitions by the C++ compiler */
         std::string getUsername() const {

@@ -282,7 +282,7 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state, const pjsip_tra
             transportStatus_ = PJSIP_SC_SERVICE_UNAVAILABLE;
             transportError_  = "";
         }
-        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_TSX_TRANSPORT_ERROR);
         setTransport();
     }
     else {
@@ -677,17 +677,6 @@ SIPAccount::getAccountDetails() const
         }
     }
 
-    std::string registrationStateCode;
-    std::string registrationStateDescription;
-    if (isIP2IP())
-        registrationStateDescription = "Direct IP call";
-    else {
-        registrationStateCode = ring::to_string(registrationStateDetailed_.first);
-        registrationStateDescription = registrationStateDetailed_.second;
-    }
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, registrationStateCode);
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDescription);
-
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      ring::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     ring::to_string(registrationExpire_));
@@ -698,8 +687,6 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PRESENCE_PUBLISH_SUPPORTED,      presence_ and presence_->isSupported(PRESENCE_FUNCTION_PUBLISH)? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PRESENCE_SUBSCRIBE_SUPPORTED,    presence_ and presence_->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PRESENCE_STATUS,                 presence_ and presence_->isOnline()? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_PRESENCE_NOTE,                   presence_ ? presence_->getNote() : " ");
 
     auto tlsSettings(getTlsSettings());
     a.insert(tlsSettings.begin(), tlsSettings.end());
@@ -811,7 +798,7 @@ void SIPAccount::doRegister1_()
             auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
             if (host_ips.empty()) {
                 RING_ERR("Can't resolve hostname for registration.");
-                this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                this_->setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
                 return;
             }
             this_->hostIp_ = host_ips[0];
@@ -829,7 +816,7 @@ void SIPAccount::doRegister2_()
         ipv6 = ip_utils::getInterfaceAddr(interface_).isIpv6();
 #endif
     } else if (!hostIp_) {
-        setRegistrationState(RegistrationState::ERROR_GENERIC);
+        setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
         RING_ERR("Hostname not resolved.");
         return;
     }
@@ -1084,19 +1071,19 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         stopKeepAliveTimer();
         switch (param->code) {
             case PJSIP_SC_FORBIDDEN:
-                setRegistrationState(RegistrationState::ERROR_AUTH);
+                setRegistrationState(RegistrationState::ERROR_AUTH, param->code);
                 break;
             case PJSIP_SC_NOT_FOUND:
-                setRegistrationState(RegistrationState::ERROR_HOST);
+                setRegistrationState(RegistrationState::ERROR_HOST, param->code);
                 break;
             case PJSIP_SC_REQUEST_TIMEOUT:
-                setRegistrationState(RegistrationState::ERROR_HOST);
+                setRegistrationState(RegistrationState::ERROR_HOST, param->code);
                 break;
             case PJSIP_SC_SERVICE_UNAVAILABLE:
-                setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE);
+                setRegistrationState(RegistrationState::ERROR_SERVICE_UNAVAILABLE, param->code);
                 break;
             default:
-                setRegistrationState(RegistrationState::ERROR_GENERIC);
+                setRegistrationState(RegistrationState::ERROR_GENERIC, param->code);
         }
     } else if (PJSIP_IS_STATUS_IN_CLASS(param->code, 200)) {
 
@@ -1108,7 +1095,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             /* Stop keep-alive timer if any. */
             stopKeepAliveTimer();
             RING_DBG("Unregistration success");
-            setRegistrationState(RegistrationState::UNREGISTERED);
+            setRegistrationState(RegistrationState::UNREGISTERED, param->code);
         } else {
             /* TODO Check and update SIP outbound status first, since the result
              * will determine if we should update re-registration
@@ -1127,7 +1114,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             if (isKeepAliveEnabled())
                 startKeepAliveTimer();
 
-            setRegistrationState(RegistrationState::REGISTERED);
+            setRegistrationState(RegistrationState::REGISTERED, param->code);
         }
     }
 
@@ -1149,19 +1136,7 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
             if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
                 scheduleReregistration(link_->getEndpoint());
     }
-
-    const pj_str_t *description = pjsip_get_status_text(param->code);
-
-    if (param->code && description) {
-        std::string state(description->ptr, description->slen);
-
-        emitSignal<DRing::ConfigurationSignal::SipRegistrationStateChanged>(getAccountID(), state, param->code);
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_, getVolatileAccountDetails());
-        std::pair<int, std::string> details(param->code, state);
-        // TODO: there id a race condition for this ressource when closing the application
-        setRegistrationStateDetailed(details);
-        setRegistrationExpire(param->expiration);
-    }
+    setRegistrationExpire(param->expiration);
 }
 
 void
@@ -1700,6 +1675,17 @@ const std::vector<std::map<std::string, std::string> > &
 SIPAccount::getCredentials() const
 {
     return credentials_;
+}
+
+void
+SIPAccount::setRegistrationState(RegistrationState state, unsigned details_code)
+{
+    std::string details_str;
+    const pj_str_t *description = pjsip_get_status_text(details_code);
+    if (description)
+        details_str = {description->ptr, (size_t)description->slen};
+    setRegistrationStateDetailed({details_code, details_str});
+    Account::setRegistrationState(state, details_code, details_str);
 }
 
 std::string SIPAccount::getUserAgentName() const
