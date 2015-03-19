@@ -436,7 +436,6 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
             file_tone->getNext(playbackBuff_, playbackGain_);
         }
         else {
-            RING_WARN("No tone or file_tone!");
             playbackBuff_.reset();
         }
         for (int i = 0; i < audioFormat_.nb_channels; ++i) {
