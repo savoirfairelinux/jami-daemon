@@ -86,9 +86,6 @@ class VoipLinkException : public std::runtime_error
 class Account : public Serializable, public std::enable_shared_from_this<Account>
 {
     public:
-        constexpr static const char* TRUE_STR = "true";
-        constexpr static const char* FALSE_STR = "false";
-
         Account(const std::string& accountID);
 
         /**
