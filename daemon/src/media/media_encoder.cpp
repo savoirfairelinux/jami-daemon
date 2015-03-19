@@ -140,6 +140,8 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
+    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
+        encoderCtx_->rc_buffer_size = encoderCtx_->bit_rate;
     }
 
     int ret;
