@@ -146,16 +146,20 @@ Account::freeAccount()
 }
 
 void
-Account::setRegistrationState(RegistrationState state)
+Account::setRegistrationState(RegistrationState state, unsigned detail_code, std::string detail_str)
 {
     if (state != registrationState_) {
         registrationState_ = state;
         // Notify the client
-        emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(accountID_,
-                static_cast<int32_t>(registrationState_));
+        emitSignal<DRing::ConfigurationSignal::RegistrationStateChanged>(
+            accountID_,
+            static_cast<int32_t>(registrationState_),
+            detail_code,
+            detail_str);
 
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID_,
-                getVolatileAccountDetails());
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+            accountID_,
+            getVolatileAccountDetails());
     }
 }
 
