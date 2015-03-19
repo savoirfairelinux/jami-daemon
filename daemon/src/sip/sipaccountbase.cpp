@@ -205,12 +205,7 @@ std::map<std::string, std::string>
 SIPAccountBase::getAccountDetails() const
 {
     auto a = Account::getAccountDetails();
-
-    // note: The IP2IP profile will always have IP2IP as an alias
     a.emplace(Conf::CONFIG_VIDEO_ENABLED, videoEnabled_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, isIP2IP() ? "READY" : mapStateNumberToString(registrationState_));
-
-    // Add sip specific details
 
     addRangeToDetails(a, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MIN, Conf::CONFIG_ACCOUNT_AUDIO_PORT_MAX, audioPortRange_);
 #ifdef RING_VIDEO
@@ -234,7 +229,11 @@ std::map<std::string, std::string>
 SIPAccountBase::getVolatileAccountDetails() const
 {
     auto a = Account::getVolatileAccountDetails();
-    a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, isIP2IP() ? "READY" : mapStateNumberToString(registrationState_));
+
+    // replace value from Account for IP2IP
+    if (isIP2IP())
+        a[Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS] = "READY";
+
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    ring::to_string(transportStatus_));
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
