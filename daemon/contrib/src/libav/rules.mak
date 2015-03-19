@@ -33,6 +33,7 @@ LIBAVCONF += \
 LIBAVCONF += \
 		--enable-libx264 \
 		--enable-libopus \
+		--enable-libspeex \
 		--enable-libvpx
 
 #encoders/decoders
@@ -54,20 +55,14 @@ LIBAVCONF += \
 		--enable-encoder=libvpx_vp8 \
 		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
-		--enable-decoder=h263
+		--enable-decoder=h263 \
+		--enable-encoder=libspeex \
+		--enable-decoder=libspeex
 
 # Linux
 ifdef HAVE_LINUX
 LIBAVCONF += \
 	--enable-x11grab
-endif
-
-# There is an unresolved symbol for speex when linking statically
-ifndef HAVE_DARWIN_OS
-LIBAVCONF += \
-          --enable-libspeex \
-          --enable-encoder=libspeex \
-          --enable-decoder=libspeex
 endif
 
 DEPS_libav = zlib x264 vpx $(DEPS_vpx)
