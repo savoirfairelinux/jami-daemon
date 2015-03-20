@@ -29,14 +29,14 @@
  *  as that of the covered work.
  */
 
-#ifndef __DBUSCLIENT_H__
-#define __DBUSCLIENT_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif // HAVE_CONFIG_H
 
 #include "dring.h"
+#include <memory>
 
 class DBusConfigurationManager;
 class DBusCallManager;
@@ -77,5 +77,3 @@ class DBusClient {
         std::unique_ptr<DBusVideoManager>         videoManager_;
 #endif
 };
-
-#endif
