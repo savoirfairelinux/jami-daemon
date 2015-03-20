@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,44 +27,21 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef DRING_CALL_H
+#define DRING_CALL_H
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+namespace DRing {
 
-#include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
+namespace Media {
 
-#include <string>
-#include <memory>
+namespace Details {
 
-namespace ring {
+constexpr static char MEDIA_TYPE_AUDIO               [] = "MEDIA_TYPE_AUDIO"          ;
+constexpr static char MEDIA_TYPE_VIDEO               [] = "MEDIA_TYPE_VIDEO"          ;
+}
 
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
+} //namespace DRing::Media
 
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
+} //namespace DRing
 
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-        void setMuted(const bool& isMuted);
-
-    private:
-        void startSender();
-        void startReceiver();
-
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-};
-
-} // namespace ring
-
-#endif // __AUDIO_RTP_SESSION_H__
+#endif
