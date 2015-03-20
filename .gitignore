@@ -18,6 +18,7 @@ Makefile
 .deps
 *.spec
 
+aclocal.m4
 autom4te.cache
 config.guess
 config.*
@@ -88,4 +89,8 @@ nbproject
 # Mac
 .DS_Store
 
-ringcli
+build-aux/
+configure
+bin/dbus/*.adaptor.h
+bin/dbus/cx.ring.Ring.service
+bin/dring
