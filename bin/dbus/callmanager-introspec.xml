@@ -99,6 +99,31 @@
             <arg type="b" name="unHoldSucceeded" direction="out"/>
         </method>
 
+        <method name="muteLocalMedia" tp:name-for-bindings="muteLocalMedia">
+           <arg type="s" name="callid" direction="in">
+             <tp:docstring>
+               The callid to mute
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="mediaType" direction="in">
+             <tp:docstring>
+               The type of media (AUDIO or VIDEO)
+             </tp:docstring>
+           </arg>
+           <arg type="b" name="mute" direction="in">
+               <tp:docstring>
+                   True to mute audio capture, false to unmute.
+               </tp:docstring>
+           </arg>
+           <arg type="b" name="res" direction="out">
+               <tp:docstring>
+                   True if mute succeed. False otherwise
+               </tp:docstring>
+           </arg>
+        </method>
+
+
+
         <method name="transfer" tp:name-for-bindings="transfer">
             <tp:docstring>
               Transfer a call to the given phone number.
@@ -786,5 +811,16 @@
             <arg type="b" name="peerHolding" />
         </signal>
 
+        <signal name="audioMuted" tp:name-for-bindings="audioMuted">
+            <tp:added version="2.1.0"/>
+            <arg type="s" name="callID" />
+            <arg type="b" name="audioMuted" />
+        </signal>
+
+        <signal name="videoMuted" tp:name-for-bindings="videoMuted">
+            <tp:added version="2.1.0"/>
+            <arg type="s" name="callID" />
+            <arg type="b" name="videoMuted" />
+        </signal>
     </interface>
 </node>

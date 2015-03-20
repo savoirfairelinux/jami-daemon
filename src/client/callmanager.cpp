@@ -110,6 +110,12 @@ unhold(const std::string& callID)
 }
 
 bool
+muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute)
+{
+    return ring::Manager::instance().muteMediaCall(callid, mediaType, mute);
+}
+
+bool
 transfer(const std::string& callID, const std::string& to)
 {
     return ring::Manager::instance().transferCall(callID, to);

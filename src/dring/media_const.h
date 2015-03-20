@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,57 +27,21 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef DRING_MEDIA_H
+#define DRING_MEDIA_H
 
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+namespace DRing {
 
-#include <string>
-#include <vector>
+namespace Media {
 
-#ifdef __ANDROID__
-#include <sstream>
-#endif
+namespace Details {
 
-namespace ring {
-
-constexpr static const char* TRUE_STR = "true";
-constexpr static const char* FALSE_STR = "false";
-
-constexpr static const char*
-bool_to_str(bool b) noexcept
-{
-    return b ? TRUE_STR : FALSE_STR;
+constexpr static char MEDIA_TYPE_AUDIO[] = "MEDIA_TYPE_AUDIO";
+constexpr static char MEDIA_TYPE_VIDEO[] = "MEDIA_TYPE_VIDEO";
 }
 
-#ifdef __ANDROID__
+} //namespace DRing::Media
 
-template <typename T>
-std::string to_string(T &&value)
-{
-    std::ostringstream os;
-
-    os << value;
-    return os.str();
-}
-
-#else
-
-template <typename T>
-std::string to_string(T &&value)
-{
-    return std::to_string(std::forward<T>(value));
-}
-
-#endif
-
-std::string trim(const std::string &s);
-
-std::vector<std::string>
-split_string(const std::string& s, char sep);
-
-std::vector<unsigned>
-split_string_to_unsigned(const std::string& s, char sep);
-
-} // namespace ring
+} //namespace DRing
 
 #endif

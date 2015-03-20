@@ -53,6 +53,7 @@ bool accept(const std::string& callID);
 bool hangUp(const std::string& callID);
 bool hold(const std::string& callID);
 bool unhold(const std::string& callID);
+bool muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute);
 bool transfer(const std::string& callID, const std::string& to);
 bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 std::map<std::string, std::string> getCallDetails(const std::string& callID);
@@ -200,6 +201,14 @@ struct CallSignal {
         };
         struct PeerHold {
                 constexpr static const char* name = "PeerHold";
+                using cb_type = void(const std::string&, bool);
+        };
+        struct VideoMuted {
+                constexpr static const char* name = "VideoMuted";
+                using cb_type = void(const std::string&, bool);
+        };
+        struct AudioMuted {
+                constexpr static const char* name = "AudioMuted";
                 using cb_type = void(const std::string&, bool);
         };
 };

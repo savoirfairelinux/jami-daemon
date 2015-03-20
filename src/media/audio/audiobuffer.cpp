@@ -30,6 +30,8 @@
 
 #include "audiobuffer.h"
 #include "logger.h"
+#include <string.h>
+#include <cstring> // memset
 
 namespace ring {
 
@@ -170,6 +172,13 @@ size_t AudioBuffer::interleave(AudioSample* out) const
             *out++ = samples_[j][i];
 
     return frames() * channels();
+}
+
+size_t AudioBuffer::fillWithZero(AudioSample* out) const
+{
+    const auto n = channels() * frames();
+    std::memset(out, 0, n * sizeof(*out));
+    return n;
 }
 
 size_t AudioBuffer::interleave(std::vector<AudioSample>& out) const
