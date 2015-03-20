@@ -90,6 +90,8 @@ public:
     int getWidth() const { return dstWidth_; }
     int getHeight() const { return dstHeight_; }
 
+    void setMuted(const bool& isMuted);
+
 private:
     NON_COPYABLE(MediaEncoder);
     void setOptions(const MediaDescription& args);
@@ -118,6 +120,7 @@ private:
     uint8_t *encoderBuffer_ = nullptr;
     int encoderBufferSize_ = 0;
 #endif
+    bool is_muted = false;
 
 protected:
     AVDictionary *options_ = nullptr;

@@ -225,6 +225,13 @@ void VideoRtpSession::forceKeyFrame()
         sender_->forceKeyFrame();
 }
 
+void VideoRtpSession::setMuted(const bool isMuted)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (sender_)
+        sender_->setMuted(isMuted);
+}
+
 void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
 {
     assert(conference);
