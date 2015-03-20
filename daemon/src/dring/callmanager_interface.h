@@ -53,6 +53,7 @@ bool accept(const std::string& callID);
 bool hangUp(const std::string& callID);
 bool hold(const std::string& callID);
 bool unhold(const std::string& callID);
+bool muteLocalMedia(const std::string& callid, const std::string& mediaType, const bool& mute);
 bool transfer(const std::string& callID, const std::string& to);
 bool attendedTransfer(const std::string& transferID, const std::string& targetID);
 std::map<std::string, std::string> getCallDetails(const std::string& callID);
