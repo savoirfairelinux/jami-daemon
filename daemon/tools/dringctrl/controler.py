@@ -294,7 +294,7 @@ class DRingCtrl(Thread):
     def isAccountRegistered(self, account=None):
         """Return True if the account is registered. If no account is provided, active account is used"""
 
-        return self.getAccountDetails(self._valid_account(account))['Account.registrationStatus'] in ('READY', 'REGISTERED')
+        return self.getVolatileAccountDetails(self._valid_account(account))['Account.registrationStatus'] in ('READY', 'REGISTERED')
 
     def isAccountOfType(self, account_type, account=None):
         """Return True if the account type is the given one. If no account is provided, active account is used"""
@@ -325,6 +325,14 @@ class DRingCtrl(Thread):
         account = self._valid_account(account)
         if self.isAccountExists(account):
             return self.configurationmanager.getAccountDetails(account)
+        return []
+
+    def getVolatileAccountDetails(self, account=None):
+        """Return a list of string. If no account is provided, active account is used"""
+
+        account = self._valid_account(account)
+        if self.isAccountExists(account):
+            return self.configurationmanager.getVolatileAccountDetails(account)
         return []
 
     def setActiveCodecList(self, account=None, codec_list=''):
