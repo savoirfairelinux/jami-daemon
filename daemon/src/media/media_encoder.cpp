@@ -233,7 +233,9 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
      * keeping also the input aspect ratio.
      */
     yuv422_clear_to_black(scaledFrame_); // to fill blank space left by the "keep aspect"
-    scaler_.scale_with_aspect(input, scaledFrame_);
+    // if muted, do not fill scaledFrame_ with input frame
+    if (not is_muted)
+        scaler_.scale_with_aspect(input, scaledFrame_);
 
     auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
@@ -363,19 +365,23 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             av_samples_get_buffer_size(NULL, buffer.channels(),
                                        frame->nb_samples, AV_SAMPLE_FMT_S16, 0);
 
-        int err = avcodec_fill_audio_frame(frame, buffer.channels(),
-                                           AV_SAMPLE_FMT_S16,
-                                           reinterpret_cast<const uint8_t *>(offset_ptr),
-                                           buffer_size, 0);
-        if (err < 0) {
-            char errbuf[128];
-            av_strerror(err, errbuf, sizeof(errbuf));
-            RING_ERR("Couldn't fill audio frame: %s: %d %d", errbuf,
-                     frame->nb_samples, buffer_size);
-            av_freep(&sample_data);
-            av_frame_free(&frame);
-            return -1;
+        if (not is_muted) {
+            //only fill frame if not muted
+            int err = avcodec_fill_audio_frame(frame, buffer.channels(),
+                                               AV_SAMPLE_FMT_S16,
+                                               reinterpret_cast<const uint8_t *>(offset_ptr),
+                                               buffer_size, 0);
+            if (err < 0) {
+                char errbuf[128];
+                av_strerror(err, errbuf, sizeof(errbuf));
+                RING_ERR("Couldn't fill audio frame: %s: %d %d", errbuf,
+                         frame->nb_samples, buffer_size);
+                av_freep(&sample_data);
+                av_frame_free(&frame);
+                return -1;
+            }
         }
+
         nb_frames -= frame->nb_samples;
         offset_ptr += frame->nb_samples * buffer.channels();
 
@@ -628,6 +634,10 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
             break;
     }
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+}
+void MediaEncoder::setMuted(const bool& isMuted)
+{
+    is_muted = isMuted;
 }
 
 } // namespace ring
