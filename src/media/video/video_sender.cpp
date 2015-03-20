@@ -78,4 +78,9 @@ void VideoSender::forceKeyFrame()
     ++forceKeyFrame_;
 }
 
+void VideoSender::setMuted(bool isMuted)
+{
+    videoEncoder_->setMuted(isMuted);
+}
+
 }} // namespace ring::video
