@@ -59,6 +59,8 @@ class AudioSender {
                     SocketPair& socketPair);
         ~AudioSender();
 
+        void setMuted(const bool& isMuted);
+
     private:
         NON_COPYABLE(AudioSender);
 
@@ -178,6 +180,12 @@ AudioSender::process()
             RING_ERR("encoding failed");
     }
 }
+void
+AudioSender::setMuted(const bool& isMuted)
+{
+    audioEncoder_->setMuted(isMuted);
+}
+
 
 class AudioReceiveThread
 {
@@ -460,6 +468,13 @@ AudioRtpSession::stop()
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
+}
+void
+AudioRtpSession::setMuted(const bool& isMuted)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (sender_)
+        sender_->setMuted(isMuted);
 }
 
 } // namespace ring
