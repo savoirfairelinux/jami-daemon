@@ -262,6 +262,14 @@ class AudioBuffer {
         size_t interleave(AudioSample* out) const;
 
         /**
+         * Write null data (silence) to the out buffer (fixed-point 16-bits).
+         * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
+         *
+         * @returns Number of samples writen.
+         */
+        size_t fillWithZero(AudioSample* out) const;
+
+        /**
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer is resized to hold the full content of this buffer.
          *

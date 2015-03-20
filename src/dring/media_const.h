@@ -1,6 +1,6 @@
 /*
  *  Copyright (C) 2015 Savoir-Faire Linux Inc.
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,32 +27,20 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#ifndef DRING_CALL_H
-#define DRING_CALL_H
+#ifndef DRING_MEDIA_H
+#define DRING_MEDIA_H
 
 namespace DRing {
 
-namespace Call {
+namespace Media {
 
 namespace Details {
 
-constexpr static char CALL_TYPE                [] = "CALL_TYPE"           ;
-constexpr static char PEER_NUMBER              [] = "PEER_NUMBER"         ;
-constexpr static char DISPLAY_NAME             [] = "DISPLAY_NAME"        ;
-constexpr static char CALL_STATE               [] = "CALL_STATE"          ;
-constexpr static char CONF_ID                  [] = "CONF_ID"             ;
-constexpr static char TIMESTAMP_START          [] = "TIMESTAMP_START"     ;
-constexpr static char ACCOUNTID                [] = "ACCOUNTID"           ;
-constexpr static char PEER_HOLDING             [] = "PEER_HOLDING"        ;
-constexpr static char TLS_PEER_CERT            [] = "TLS_PEER_CERT"       ;
-constexpr static char TLS_CIPHER               [] = "TLS_CIPHER"          ;
-constexpr static char AUDIO_MUTED              [] = "AUDIO_MUTED"          ;
-constexpr static char VIDEO_MUTED              [] = "VIDEO_MUTED"          ;
-
+constexpr static char MEDIA_TYPE_AUDIO               [] = "MEDIA_TYPE_AUDIO"          ;
+constexpr static char MEDIA_TYPE_VIDEO               [] = "MEDIA_TYPE_VIDEO"          ;
 }
 
-
-} //namespace DRing::Call
+} //namespace DRing::Media
 
 } //namespace DRing
 
