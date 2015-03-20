@@ -1,7 +1,0 @@
-build-aux/
-aclocal.m4
-build-aux
-configure
-bin/dbus/*.adaptor.h
-bin/dbus/cx.ring.Ring.service
-bin/dring
