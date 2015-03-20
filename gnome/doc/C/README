@@ -1,1 +1,0 @@
-xml2po -o ring-usermanual.pot ring.xml
