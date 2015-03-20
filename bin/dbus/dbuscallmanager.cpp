@@ -72,6 +72,13 @@ DBusCallManager::unhold(const std::string& callID) -> decltype(DRing::unhold(cal
 }
 
 auto
+DBusCallManager::muteLocalMedia(const std::string& callid, const std::string& mediaType, const bool& mute)
+    -> decltype(DRing::muteLocalMedia(callid, mediaType, mute))
+{
+    return DRing::muteLocalMedia(callid, mediaType, mute);
+}
+
+auto
 DBusCallManager::transfer(const std::string& callID, const std::string& to) -> decltype(DRing::transfer(callID, to))
 {
     return DRing::transfer(callID, to);
