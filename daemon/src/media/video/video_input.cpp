@@ -317,7 +317,7 @@ VideoInput::switchInput(const std::string& resource)
 
     bool valid = false;
 
-    if (prefix == "v4l2") {
+    if (prefix == "video4linux2") {
         /* Video4Linux2 */
         valid = initCamera(suffix);
     } else if (prefix == "display") {

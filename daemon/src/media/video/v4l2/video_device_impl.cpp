@@ -521,7 +521,7 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     params.input = device;
-    params.format = "v4l2";
+    params.format = "video4linux2";
     params.channel = channel_.idx;
     params.width = size_.width;
     params.height = size_.height;
