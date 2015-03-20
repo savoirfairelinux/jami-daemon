@@ -63,6 +63,8 @@ public:
     void update(Observable<std::shared_ptr<VideoFrame> >* obs,
                 std::shared_ptr<VideoFrame> &);
 
+    void setMuted(const bool &isMuted);
+
 private:
     NON_COPYABLE(VideoSender);
 

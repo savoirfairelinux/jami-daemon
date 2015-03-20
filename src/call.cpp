@@ -237,6 +237,11 @@ std::string Call::getTypeStr() const
     }
 }
 
+std::string Call::getMutedStr(bool isMuted) const
+{
+    return isMuted ? "true" : "false";
+}
+
 std::map<std::string, std::string>
 Call::getDetails() const
 {
@@ -248,6 +253,8 @@ Call::getDetails() const
         {DRing::Call::Details::CONF_ID,          confID_},
         {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
+        {DRing::Call::Details::AUDIO_MUTED,      getMutedStr(isAudioMuted_)},
+        {DRing::Call::Details::VIDEO_MUTED,      getMutedStr(isVideoMuted_)},
     };
 }
 

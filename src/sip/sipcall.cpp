@@ -54,6 +54,7 @@
 #endif
 
 #include "dring/call_const.h"
+#include "dring/media_const.h"
 #include "client/signal.h"
 
 #ifdef RING_VIDEO
@@ -851,6 +852,20 @@ SIPCall::stopAllMedia()
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
+}
+
+void
+SIPCall::muteMedia(const std::string& mediaType, const bool& isMuted)
+{
+    if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+        RING_WARN("video muting %s", getMutedStr(isMuted).c_str());
+        isAudioMuted_ = isMuted;
+        videortp_.setMuted(isVideoMuted_);
+    }else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+        RING_WARN("audio muting %s", getMutedStr(isMuted).c_str());
+        isVideoMuted_ = isMuted;
+        avformatrtp_->setMuted(isAudioMuted_);
+    }
 }
 
 void
