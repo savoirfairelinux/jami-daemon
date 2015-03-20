@@ -62,6 +62,7 @@ public:
     void stop();
 
     void forceKeyFrame();
+
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
     void enterConference(Conference* conference);

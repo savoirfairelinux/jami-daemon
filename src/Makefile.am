@@ -148,7 +148,8 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/configurationmanager_interface.h \
 		dring/presencemanager_interface.h \
 		dring/account_const.h \
-		dring/call_const.h
+		dring/call_const.h \
+		dring/media_const.h
 
 if RING_VIDEO
 nobase_include_HEADERS+= \

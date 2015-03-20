@@ -54,6 +54,7 @@
 #endif
 
 #include "dring/call_const.h"
+#include "dring/media_const.h"
 #include "client/signal.h"
 
 #ifdef RING_VIDEO
@@ -124,6 +125,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getVideoSettings())
+    , videoInput_(videoManager.videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
     , sdp_(new Sdp(id))
 {
@@ -601,6 +603,7 @@ SIPCall::offhold()
         RING_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
+
 }
 
 void
@@ -824,8 +827,6 @@ SIPCall::startAllMedia()
 
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO) {
-            if (videoInput_.empty())
-                videoInput_ = videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
             videortp_.switchInput(videoInput_);
         }
 #endif
@@ -851,6 +852,23 @@ SIPCall::stopAllMedia()
 #ifdef RING_VIDEO
     videortp_.stop();
 #endif
+}
+
+void
+SIPCall::muteMedia(const std::string& mediaType, const bool& isMuted)
+{
+    if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+        RING_WARN("video muting %s", getMutedStr(isMuted).c_str());
+        isVideoMuted_ = isMuted;
+        videoInput_ = isVideoMuted_ ? "" : videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
+        DRing::switchInput(getCallId(), videoInput_);
+        emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
+    }else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+        RING_WARN("audio muting %s", getMutedStr(isMuted).c_str());
+        isAudioMuted_ = isMuted;
+        avformatrtp_->setMuted(isAudioMuted_);
+        emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+    }
 }
 
 void
