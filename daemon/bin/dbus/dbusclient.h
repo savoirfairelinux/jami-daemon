@@ -32,6 +32,10 @@
 #ifndef __DBUSCLIENT_H__
 #define __DBUSCLIENT_H__
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif // HAVE_CONFIG_H
+
 #include "dring.h"
 
 class DBusConfigurationManager;
