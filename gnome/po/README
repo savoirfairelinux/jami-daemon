@@ -1,7 +1,0 @@
-These are translation files for GNOME.
-
-If you want to update the translations, refer to https://translations.launchpad.net/sflphone/trunk
-To merge changes from launchpad, simply request a download of launchpad-export.tgz, move it to gnome/po,
-and execute ./update_translation.sh
-
-DO NOT EDIT THESE PO FILES since they are to be replaced by the new ones from launchpad. All changes might be lost.
