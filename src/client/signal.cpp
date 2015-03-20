@@ -61,6 +61,8 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::ZrtpNegotiationFailed>(),
         exported_callback<DRing::CallSignal::RtcpReportReceived>(),
         exported_callback<DRing::CallSignal::PeerHold>(),
+        exported_callback<DRing::CallSignal::VideoMuted>(),
+        exported_callback<DRing::CallSignal::AudioMuted>(),
 
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
