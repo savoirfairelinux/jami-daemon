@@ -62,6 +62,9 @@ public:
     void stop();
 
     void forceKeyFrame();
+
+    void setMuted(const bool isMuted);
+
     void bindMixer(VideoMixer* mixer);
     void unbindMixer();
     void enterConference(Conference* conference);
