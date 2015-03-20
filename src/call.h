@@ -280,6 +280,13 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual void offhold() = 0;
 
         /**
+         * mute/unmute a media of a call
+         * @param mediaType type of media
+         * @param isMuted true for muting, false for unmuting
+         */
+        virtual void muteMedia(const std::string& mediaType, const bool& isMuted)  = 0;
+
+        /**
          * Peer Hung up a call
          */
         virtual void peerHungup() = 0;
@@ -328,6 +335,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         std::shared_ptr<IceTransport> iceTransport_ {};
 
+        bool isAudioMuted_{false};
+        bool isVideoMuted_{false};
+        std::string getMutedStr(bool isMuted) const;
+
     private:
         bool validTransition(CallState newState);
 
@@ -375,6 +386,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         time_t timestamp_start_ {0};
         time_t timestamp_stop_ {0};
+
 };
 
 } // namespace ring
