@@ -684,6 +684,19 @@ ManagerImpl::offHoldCall(const std::string& callId)
     return result;
 }
 
+bool
+ManagerImpl::muteMediaCall(const std::string& callId, const std::string& mediaType, bool is_muted)
+{
+    if (auto call = getCallFromCallID(callId)) {
+        call->muteMedia(mediaType, is_muted);
+        return true;
+    } else {
+        RING_DBG("CallID %s doesn't exist in call muting", callId.c_str());
+        return false;
+    }
+}
+
+
 //THREAD=Main
 bool
 ManagerImpl::transferCall(const std::string& callId, const std::string& to)

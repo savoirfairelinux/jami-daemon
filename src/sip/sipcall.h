@@ -207,6 +207,8 @@ class SIPCall : public Call
 
         void openPortsUPnP();
 
+        void muteMedia(const std::string& mediaType, bool isMuted);
+
         virtual std::map<std::string, std::string> getDetails() const;
 
     private:

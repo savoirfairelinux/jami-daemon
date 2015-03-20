@@ -248,6 +248,8 @@ Call::getDetails() const
         {DRing::Call::Details::CONF_ID,          confID_},
         {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
+        {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
+        {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},
     };
 }
 

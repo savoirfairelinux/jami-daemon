@@ -203,6 +203,15 @@ class ManagerImpl {
 
         /**
          * Functions which occur with a user's action
+         * Put the media of a call on mute or unmute
+         * @param callID  The call identifier
+         * @param mediaType The media type; eg : AUDIO or VIDEO
+         * @param is_muted true to mute, false to unmute
+         */
+        bool muteMediaCall(const std::string& callId, const std::string& mediaType, bool is_muted);
+
+        /**
+         * Functions which occur with a user's action
          * Transfer the call
          * @param id  The call identifier
          * @param to  The recipient of the transfer
