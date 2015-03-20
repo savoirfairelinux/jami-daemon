@@ -172,6 +172,15 @@ size_t AudioBuffer::interleave(AudioSample* out) const
     return frames() * channels();
 }
 
+size_t AudioBuffer::fillWithZero(AudioSample* out) const
+{
+    for (unsigned i=0, f=frames(), c=channels(); i < f; ++i)
+        for (unsigned j = 0; j < c; ++j)
+            *out++ = 0;
+
+    return frames() * channels();
+}
+
 size_t AudioBuffer::interleave(std::vector<AudioSample>& out) const
 {
     out.resize(capacity());
