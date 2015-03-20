@@ -233,7 +233,10 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
      * keeping also the input aspect ratio.
      */
     yuv422_clear_to_black(scaledFrame_); // to fill blank space left by the "keep aspect"
-    scaler_.scale_with_aspect(input, scaledFrame_);
+
+    // if muted, do not fill scaledFrame_ with input frame
+    if (not is_muted)
+        scaler_.scale_with_aspect(input, scaledFrame_);
 
     auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
@@ -335,7 +338,13 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
     AudioSample *offset_ptr = sample_data;
     int nb_frames = buffer.frames();
 
-    buffer.interleave(sample_data);
+    if (not is_muted) {
+        //only fill buffer with samples if not muted
+        buffer.interleave(sample_data);
+    } else {
+        //otherwise filll buffer with zero
+        buffer.fillWithZero(sample_data);
+    }
     const auto layout = buffer.channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
     const auto sample_rate = buffer.getSampleRate();
 
@@ -376,6 +385,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             av_frame_free(&frame);
             return -1;
         }
+
         nb_frames -= frame->nb_samples;
         offset_ptr += frame->nb_samples * buffer.channels();
 
@@ -628,6 +638,10 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
             break;
     }
     RING_DBG("Using profile %x and level %d", ctx->profile, ctx->level);
+}
+void MediaEncoder::setMuted(const bool& isMuted)
+{
+    is_muted = isMuted;
 }
 
 } // namespace ring
