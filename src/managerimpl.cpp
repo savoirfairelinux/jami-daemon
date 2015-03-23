@@ -2825,15 +2825,18 @@ std::shared_ptr<Call>
 ManagerImpl::newOutgoingCall(const std::string& toUrl,
                              const std::string& preferredAccountId)
 {
-    std::shared_ptr<Account> account = Manager::instance().getIP2IPAccount();
+    auto account = Manager::instance().getIP2IPAccount();
+    auto preferred = getAccount(preferredAccountId);
     std::string finalToUrl = toUrl;
 
 #if HAVE_DHT
     if (toUrl.find("ring:") != std::string::npos) {
-        RING_WARN("Ring DHT call detected");
+        if (preferred && preferred->getAccountType() == RingAccount::ACCOUNT_TYPE)
+            return preferred->newOutgoingCall(finalToUrl);
         auto dhtAcc = getAllAccounts<RingAccount>();
-        if (not dhtAcc.empty())
-            return dhtAcc.front()->newOutgoingCall(finalToUrl);
+        for (const auto& acc : dhtAcc)
+            if (acc->isEnabled())
+                return acc->newOutgoingCall(finalToUrl);
     }
 #endif
 
@@ -2841,7 +2844,7 @@ ManagerImpl::newOutgoingCall(const std::string& toUrl,
     sip_utils::stripSipUriPrefix(finalToUrl);
 
     if (!IpAddr::isValid(finalToUrl)) {
-        account = getAccount(preferredAccountId);
+        account = preferred;
         if (account)
             finalToUrl = toUrl;
         else
