@@ -812,8 +812,6 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
         // After we sent or received a ACK - The connection is established
         call->onAnswered();
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        //std::string accId(call->getAccountId());
-
         switch (inv->cause) {
                 // The call terminates normally - BYE / CANCEL
             case PJSIP_SC_OK:
