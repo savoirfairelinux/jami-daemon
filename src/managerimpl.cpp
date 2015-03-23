@@ -517,7 +517,7 @@ ManagerImpl::answerCall(const std::string& call_id)
         toggleRecordingCall(call_id);
 
     //callStateChanged(call_id, "CURRENT");
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT", 0);
 
     return result;
 }
@@ -542,7 +542,7 @@ ManagerImpl::hangupCall(const std::string& callId)
     stopTone();
 
     RING_DBG("Send call state change (HUNGUP) for id %s", callId.c_str());
-    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP", 0);
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
@@ -631,7 +631,7 @@ ManagerImpl::onHoldCall(const std::string& callId)
     if (current_call_id == callId)
         unsetCurrentCall();
 
-    emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD", 0);
 
     return result;
 }
@@ -672,7 +672,7 @@ ManagerImpl::offHoldCall(const std::string& callId)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::StateChange>(callId, "UNHOLD");
+    emitSignal<DRing::CallSignal::StateChange>(callId, "UNHOLD", 0);
 
     if (isConferenceParticipant(callId))
         switchCall(getCallFromCallID(call->getConfId()));
@@ -747,7 +747,7 @@ ManagerImpl::refuseCall(const std::string& id)
 
     removeWaitingCall(id);
 
-    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP", 0);
 
     // Disconnect streams
     removeStream(*call);
@@ -1710,7 +1710,7 @@ ManagerImpl::peerAnsweredCall(Call& call)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT", 0);
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1723,7 +1723,7 @@ ManagerImpl::peerRingingCall(Call& call)
     if (isCurrentCall(call))
         ringback();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "RINGING");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "RINGING", 0);
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
@@ -1742,7 +1742,7 @@ ManagerImpl::peerHungupCall(Call& call)
 
     call.peerHungup();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP", 0);
 
     checkAudio();
     removeWaitingCall(call_id);
@@ -1758,7 +1758,7 @@ ManagerImpl::callBusy(Call& call)
 {
     const auto call_id = call.getCallId();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "BUSY");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "BUSY", 0);
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
@@ -1771,11 +1771,11 @@ ManagerImpl::callBusy(Call& call)
 
 //THREAD=VoIP
 void
-ManagerImpl::callFailure(Call& call)
+ManagerImpl::callFailure(Call& call, int code)
 {
     const auto call_id = call.getCallId();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "FAILURE");
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "FAILURE", code);
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
