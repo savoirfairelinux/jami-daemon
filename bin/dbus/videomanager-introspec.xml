@@ -60,7 +60,7 @@
                     A media resource locator (MRL).
                     Currently, the following are supported:
                     <ul>
-                        <li>v4l2://DEVICE</li>
+                        <li>camera://DEVICE</li>
                         <li>display://DISPLAY_NAME[ WIDTHxHEIGHT]</li>
                         <li>file://IMAGE_PATH</li>
                     </ul>
