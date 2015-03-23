@@ -36,8 +36,10 @@
 
 #include <sys/socket.h>
 #include <mutex>
-#include <stdint.h>
 #include <memory>
+#include <atomic>
+
+#include <cstdint>
 
 namespace ring {
 
@@ -99,7 +101,7 @@ class SocketPair {
         socklen_t rtpDestAddrLen_;
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
-        bool interrupted_ {false};
+        std::atomic_bool interrupted_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
 };
 
