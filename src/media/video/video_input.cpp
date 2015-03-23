@@ -317,7 +317,7 @@ VideoInput::switchInput(const std::string& resource)
 
     bool valid = false;
 
-    if (prefix == "video4linux2") {
+    if (prefix == "camera") {
         /* Video4Linux2 */
         valid = initCamera(suffix);
     } else if (prefix == "display") {
@@ -326,9 +326,6 @@ VideoInput::switchInput(const std::string& resource)
     } else if (prefix == "file") {
         /* Pathname */
         valid = initFile(suffix);
-    } else if (prefix == "avfoundation") {
-        /* AVFoundation */
-        valid = initCamera(suffix);
     }
 
     // Unsupported MRL or failed initialization
