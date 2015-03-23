@@ -172,6 +172,12 @@ class SIPCall : public Call
         void updateSDPFromSTUN();
 
         /**
+         * Tell the user that the call is ringing
+         * @param
+         */
+        void onPeerRinging();
+
+        /**
          * Tell the user that the call was answered
          * @param
          */

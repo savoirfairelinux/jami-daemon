@@ -785,13 +785,6 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 ///////////////////////////////////////////////////////////////////////////////
 
 static void
-makeCallRing(SIPCall &call)
-{
-    call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call);
-}
-
-static void
 invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 {
     if (!inv)
@@ -819,7 +812,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        makeCallRing(*call);
+        call->onPeerRinging();
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
         call->onAnswered();
@@ -1121,7 +1114,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                     return;
                 } else if (msg.find("Ringing") != std::string::npos and call) {
                     if (call)
-                        makeCallRing(*call);
+                        call->onPeerRinging();
                     else
                         RING_WARN("Ringing state on non existing call");
                     sendOK(inv->dlg, r_data, tsx);

@@ -702,6 +702,13 @@ SIPCall::onAnswered()
 }
 
 void
+SIPCall::onPeerRinging()
+{
+    setConnectionState(Call::RINGING);
+    Manager::instance().peerRingingCall(*this);
+}
+
+void
 SIPCall::setupLocalSDPFromIce()
 {
     if (not iceTransport_) {
