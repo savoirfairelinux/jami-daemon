@@ -132,9 +132,9 @@ void
 VideoFrame::noise()
 {
     auto f = frame_.get();
-    auto tot = size();
-    for (int i=0 ; i<tot ; ++i)
-    {
+    if (f->data[0] == nullptr)
+        return;
+    for (std::size_t i=0 ; i < size(); ++i) {
         f->data[0][i] = std::rand() & 255;
     }
 }
