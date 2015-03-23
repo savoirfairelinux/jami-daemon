@@ -55,7 +55,6 @@ extern "C" {
 
 #ifdef __APPLE__
 #include <fcntl.h>
-#define SOCK_NONBLOCK O_NONBLOCK
 #endif
 
 namespace ring {
@@ -153,10 +152,20 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     if (res0 == 0)
         return -1;
     for (res = res0; res; res=res->ai_next) {
+#ifdef __APPLE__
+        udp_fd = socket(res->ai_family, SOCK_DGRAM, 0);
+#else
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-        if (udp_fd != -1) break;
+#endif
+#ifdef __APPLE__
+        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1) {
+#else
+        if (udp_fd != -1) {
+#endif
+           break;
+        }
         RING_ERR("socket error");
-    }
+     }
 
     if (udp_fd < 0) {
         freeaddrinfo(res0);
