@@ -420,6 +420,7 @@ RingAccount::checkIdentityPath()
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
     tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
     tlsCaListFile_ = idPath + DIR_SEPARATOR_STR "ca.crt";
+    loadIdentity();
 }
 
 std::vector<uint8_t>
