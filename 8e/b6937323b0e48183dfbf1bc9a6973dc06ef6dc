@@ -1,0 +1,7 @@
+Code-Review+2: Eloi Bail <eloi.bail@savoirfairelinux.com>
+Verified+1: Jenkins CI
+Submitted-by: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
+Submitted-at: Mon, 23 Mar 2015 16:59:11 -0400
+Reviewed-on: https://gerrit-sflphone.savoirfairelinux.com/1504
+Project: ring
+Branch: refs/heads/release-2.0.x
