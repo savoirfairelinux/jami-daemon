@@ -108,7 +108,7 @@ void sendTextMessage(const std::string& callID, const std::string& message, cons
 struct CallSignal {
         struct StateChange {
                 constexpr static const char* name = "StateChange";
-                using cb_type = void(const std::string&, const std::string&);
+                using cb_type = void(const std::string&, const std::string&, int);
         };
         struct TransferFailed {
                 constexpr static const char* name = "TransferFailed";

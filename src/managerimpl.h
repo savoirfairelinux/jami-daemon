@@ -700,7 +700,7 @@ class ManagerImpl {
         /**
          * Handle played sound when a failure occurs
          */
-        void callFailure(Call& call);
+        void callFailure(Call& call, int code=0);
 
         /**
          * Retrieve the current telephone tone

@@ -677,9 +677,9 @@ SIPCall::sendTextMessage(const std::string &message, const std::string &from)
 #endif // HAVE_INSTANT_MESSAGING
 
 void
-SIPCall::onServerFailure()
+SIPCall::onServerFailure(int code)
 {
-    Manager::instance().callFailure(*this);
+    Manager::instance().callFailure(*this, code);
     removeCall();
 }
 

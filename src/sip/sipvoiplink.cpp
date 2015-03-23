@@ -797,16 +797,11 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     }
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
-    if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
-        // Update UI with the current status code and description
-        pjsip_transaction * tsx = ev->body.tsx_state.tsx;
-        int statusCode = tsx ? tsx->status_code : 404;
-
-        if (statusCode) {
-            const pj_str_t * description = pjsip_get_status_text(statusCode);
-            std::string desc(description->ptr, description->slen);
-
-            emitSignal<DRing::CallSignal::SipCallStateChanged>(call->getCallId(), desc, statusCode);
+    if (inv->state != PJSIP_INV_STATE_CONFIRMED and ev and ev->body.tsx_state.tsx) {
+        const pjsip_transaction* tsx = ev->body.tsx_state.tsx;
+        if (tsx->status_code) {
+            const pj_str_t* description = pjsip_get_status_text(tsx->status_code);
+            RING_DBG("SIP invite session state change: %d %.*s", tsx->status_code, description->slen, description->ptr);
         }
     }
 
@@ -842,7 +837,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             default:
                 RING_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d",
                          inv->cause, ev ? ev->type : -1);
-                call->onServerFailure();
+                call->onServerFailure(inv->cause);
                 break;
         }
     }

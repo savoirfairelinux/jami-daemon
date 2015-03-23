@@ -187,7 +187,7 @@ class SIPCall : public Call
          * Handling 5XX/6XX error
          * @param
          */
-        void onServerFailure();
+        void onServerFailure(int code=0);
 
         /**
          * Peer close the connection
