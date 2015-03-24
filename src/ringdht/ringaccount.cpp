@@ -81,6 +81,7 @@ static constexpr int ICE_INIT_TIMEOUT {5};
 static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
+constexpr const std::pair<uint16_t, uint16_t> RingAccount::dhtPortRange_;
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
@@ -104,6 +105,7 @@ RingAccount::~RingAccount()
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     dht_.join();
+    releasePort(dhtPort_);
     gnutls_global_deinit();
 }
 
@@ -402,9 +404,11 @@ void RingAccount::unserialize(const YAML::Node &node)
     using yaml_utils::parseValue;
 
     SIPAccountBase::unserialize(node);
-    in_port_t port {DHT_DEFAULT_PORT};
+    in_port_t port {0};
+    if (dhtPortUsed_)
+        releasePort(dhtPortUsed_);
     parseValue(node, Conf::DHT_PORT_KEY, port);
-    dhtPort_ = port ? port : DHT_DEFAULT_PORT;
+    dhtPort_ = port ? port : acquireRandomEvenPort(dhtPortRange_);
     dhtPortUsed_ = dhtPort_;
     checkIdentityPath();
 }
@@ -497,9 +501,11 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     SIPAccountBase::setAccountDetails(details);
     if (hostname_ == "")
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
+    if (dhtPortUsed_)
+        releasePort(dhtPortUsed_);
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     if (dhtPort_ == 0)
-        dhtPort_ = DHT_DEFAULT_PORT;
+        dhtPort_ = acquireRandomEvenPort(dhtPortRange_);
     dhtPortUsed_ = dhtPort_;
     checkIdentityPath();
 }
