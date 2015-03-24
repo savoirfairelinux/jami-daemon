@@ -505,6 +505,12 @@
                 </ul>
               </tp:docstring>
             </arg>
+            <arg type="i" name="code">
+              <tp:docstring>
+                The optional account-type specific message code. 0 if not set.
+              </tp:docstring>
+              <tp:added version="2.0.0" />
+            </arg>
         </signal>
 
         <signal name="conferenceChanged" tp:name-for-bindings="conferenceChanged">
@@ -632,25 +638,6 @@
             <tp:docstring/>
             <arg type="s" name="filepath" direction="in"/>
         </method>
-
-        <signal name="sipCallStateChanged" tp:name-for-bindings="sipCallStateChanged">
-            <tp:docstring>
-              <p>Call state changed, Ring received a notification
-                from registrar concerning this call.</p>
-            </tp:docstring>
-            <arg type="s" name="callID"  />
-              <tp:docstring>
-                The call ID
-              </tp:docstring>
-            <arg type="s" name="state"  />
-              <tp:docstring>
-                Description string
-              </tp:docstring>
-            <arg type="i" name="code"  />
-              <tp:docstring>
-                The SIP or IAX2 message code
-              </tp:docstring>
-        </signal>
 
         <signal name="voiceMailNotify" tp:name-for-bindings="voiceMailNotify">
             <tp:docstring>

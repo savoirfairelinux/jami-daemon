@@ -785,13 +785,6 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 ///////////////////////////////////////////////////////////////////////////////
 
 static void
-makeCallRing(SIPCall &call)
-{
-    call.setConnectionState(Call::RINGING);
-    Manager::instance().peerRingingCall(call);
-}
-
-static void
 invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 {
     if (!inv)
@@ -805,21 +798,16 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
-        // Update UI with the current status code and description
-        pjsip_transaction * tsx = ev->body.tsx_state.tsx;
-        int statusCode = tsx ? tsx->status_code : 404;
-
-        if (statusCode) {
-            const pj_str_t * description = pjsip_get_status_text(statusCode);
-            std::string desc(description->ptr, description->slen);
-
-            emitSignal<DRing::CallSignal::SipCallStateChanged>(call->getCallId(), desc, statusCode);
+        const auto tsx = ev->body.tsx_state.tsx;
+        if (auto status_code = tsx ? tsx->status_code : 404) {
+            const pj_str_t* description = pjsip_get_status_text(status_code);
+            RING_DBG("SIP invite session state change: %d %.*s", status_code, description->slen, description->ptr);
         }
     }
 
     if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
             ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        makeCallRing(*call);
+        call->onPeerRinging();
     } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
         // After we sent or received a ACK - The connection is established
         call->onAnswered();
@@ -849,7 +837,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             default:
                 RING_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d",
                          inv->cause, ev ? ev->type : -1);
-                call->onServerFailure();
+                call->onServerFailure(inv->cause);
                 break;
         }
     }
@@ -1121,7 +1109,7 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                     return;
                 } else if (msg.find("Ringing") != std::string::npos and call) {
                     if (call)
-                        makeCallRing(*call);
+                        call->onPeerRinging();
                     else
                         RING_WARN("Ringing state on non existing call");
                     sendOK(inv->dlg, r_data, tsx);
