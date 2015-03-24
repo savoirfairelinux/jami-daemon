@@ -144,6 +144,11 @@ private:
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_;
 
+    /**
+     * To be called on a regular basis to receive packets
+     */
+    void handleEvents();
+
     // ThreadLoop
     bool setup();
     void loop();
@@ -157,6 +162,10 @@ private:
     pj_status_t flushOutputBuff();
     std::list<DelayedTxData> outputBuff_;
     std::mutex outputBuffMtx_;
+
+    std::mutex rxMtx_;
+    std::list<std::vector<uint8_t>> rxPending_;
+    std::list<std::vector<uint8_t>> rxPendingPool_;
     pjsip_rx_data rdata_;
 
     // GnuTLS <-> ICE
