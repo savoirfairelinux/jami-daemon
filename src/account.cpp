@@ -335,11 +335,6 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
               });
 
     allCodecStr_ = join_string(getActiveAccountCodecInfoIdList(MEDIA_ALL));
-
-    for (const auto& item : accountCodecInfoList_)
-        RING_DBG("[%s] order:%d,  isActive=%s, codec=%s", accountID_.c_str(),
-                 item->order, (item->isActive ? "true" : "false"),
-                 item->systemCodecInfo.to_string().c_str());
 }
 
 std::string
