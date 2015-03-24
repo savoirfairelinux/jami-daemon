@@ -865,7 +865,6 @@ SipsIceTransport::getRemoteAddress() const
 ssize_t
 SipsIceTransport::tlsSend(const void* d, size_t s)
 {
-    RING_DBG("SipsIceTransport::tlsSend %lu", s);
     return ice_->send(comp_id_, (const uint8_t*)d, s);
 }
 
@@ -891,8 +890,6 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
 int
 SipsIceTransport::waitForTlsData(unsigned ms)
 {
-    RING_DBG("SipsIceTransport::waitForTlsData %u", ms);
-
     std::unique_lock<std::mutex> l(inputBuffMtx_);
     if (tlsInputBuff_.empty()) {
         cv_.wait_for(l, std::chrono::milliseconds(ms), [&]() {
