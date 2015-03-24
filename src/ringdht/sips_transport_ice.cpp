@@ -679,6 +679,7 @@ SipsIceTransport::handleEvents()
             } else {
                 // erase eaten part, keep reminder
                 pck.erase(pck.begin(), pck.begin()+eaten);
+                break;
             }
         } else {
             rxPendingPool_.splice(rxPendingPool_.end(), rxPending_, pck_it);
@@ -757,6 +758,7 @@ SipsIceTransport::loop()
             if (rxPendingPool_.empty())
                 rxPendingPool_.emplace_back(PJSIP_MAX_PKT_LEN);
             auto& buf = rxPendingPool_.front();
+            buf.resize(PJSIP_MAX_PKT_LEN);
             const auto decrypted_size = gnutls_record_recv(session_, buf.data(), buf.size());
 
             if (decrypted_size > 0/* || transport error */) {
@@ -875,10 +877,10 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
         errno = EAGAIN;
         return -1;
     }
-    RING_DBG("SipsIceTransport::tlsRecv %lu at %lu",
-             s, clock::now().time_since_epoch().count());
     const auto& front = tlsInputBuff_.front();
     const auto n = std::min(front.size(), s);
+    RING_DBG("SipsIceTransport::tlsRecv %lu at %lu",
+             n, clock::now().time_since_epoch().count());
     std::copy_n(front.begin(), n, (uint8_t*)d);
     tlsInputBuff_.pop_front();
     if (tlsInputBuff_.empty())
