@@ -294,6 +294,7 @@ protected:
 
     static std::array<bool, HALF_MAX_PORT>& getPortsReservation() noexcept;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
+    static uint16_t acquirePort(uint16_t port);
 
 private:
     NON_COPYABLE(SIPAccountBase);

@@ -262,6 +262,12 @@ SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range
     return result;
 }
 
+uint16_t
+SIPAccountBase::acquirePort(uint16_t port)
+{
+    getPortsReservation()[port / 2] = true;
+}
+
 void
 SIPAccountBase::releasePort(uint16_t port) noexcept
 {
