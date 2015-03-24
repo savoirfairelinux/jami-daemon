@@ -247,7 +247,17 @@ SIPAccountBase::getPortsReservation() noexcept -> decltype(getPortsReservation()
     return portsInUse;
 }
 
-// returns even number in range [lower, upper]
+uint16_t
+SIPAccountBase::getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const
+{
+    std::uniform_int_distribution<uint16_t> dist(range.first/2, range.second/2);
+    uint16_t result;
+    do {
+        result = 2 * dist(rand_);
+    } while (getPortsReservation()[result / 2]);
+    return result;
+}
+
 uint16_t
 SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const
 {
@@ -260,6 +270,12 @@ SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range
 
     getPortsReservation()[result / 2] = true;
     return result;
+}
+
+uint16_t
+SIPAccountBase::acquirePort(uint16_t port)
+{
+    getPortsReservation()[port / 2] = true;
 }
 
 void
