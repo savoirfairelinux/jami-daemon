@@ -246,7 +246,7 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
     char path[1024];
     int rtp_port;
 
-    libav_utils::sfl_url_split(uri, hostname, sizeof(hostname), &rtp_port, path,
+    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &rtp_port, path,
                   sizeof(path));
 
     const int rtcp_port = rtp_port + 1;

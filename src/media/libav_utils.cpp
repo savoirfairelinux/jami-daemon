@@ -97,7 +97,7 @@ static void init_once()
 
 static std::once_flag already_called;
 
-void sfl_avcodec_init()
+void ring_avcodec_init()
 {
     std::call_once(already_called, init_once);
 }
@@ -112,7 +112,7 @@ int libav_pixel_format(int fmt)
     return fmt;
 }
 
-int sfl_pixel_format(int fmt)
+int ring_pixel_format(int fmt)
 {
     switch (fmt) {
         case PIXEL_FORMAT(YUV420P): return video::VIDEO_PIXFMT_YUV420P;
@@ -120,7 +120,7 @@ int sfl_pixel_format(int fmt)
     return fmt;
 }
 
-void sfl_url_split(const char *url,
+void ring_url_split(const char *url,
                    char *hostname, size_t hostname_size, int *port,
                    char *path, size_t path_size)
 {
