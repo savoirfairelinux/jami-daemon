@@ -66,19 +66,12 @@ class VideoDeviceMonitorImpl {
         NON_COPYABLE(VideoDeviceMonitorImpl);
 
         VideoDeviceMonitor* monitor_;
-
-        void run();
-
-        mutable std::mutex mutex_;
-        std::atomic_bool probing_;
-        std::thread thread_;
+        NSArray* observers;
 };
 
 
 VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
-    monitor_(monitor),
-    mutex_(), probing_(false),
-    thread_()
+    monitor_(monitor)
 {
     /* Enumerate existing devices */
     auto myVideoDevices = [[AVCaptureDevice devicesWithMediaType:AVMediaTypeVideo]
@@ -95,7 +88,7 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
     for ( ivideo = 0; ivideo < deviceCount; ++ivideo )
     {
         AVCaptureDevice* avf_device = [myVideoDevices objectAtIndex:ivideo];
-        RING_DBG("avcapture %lu/%lu %s %s", ivideo,
+        printf("avcapture %d/%d %s %s\n", ivideo + 1,
                                             deviceCount,
                                             [[avf_device modelID] UTF8String],
                                             [[avf_device uniqueID] UTF8String]);
@@ -110,23 +103,31 @@ VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
 
 void VideoDeviceMonitorImpl::start()
 {
-    probing_ = true;
-    //thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+    id deviceWasConnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasConnectedNotification
+                                    object:nil
+                                    queue:[NSOperationQueue mainQueue]
+                                    usingBlock:^(NSNotification *note) {
+                                      AVCaptureDevice* dev = (AVCaptureDevice*)note.object;
+                                      monitor_->addDevice([[dev uniqueID] UTF8String]);
+                                    }];
+    id deviceWasDisconnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasDisconnectedNotification
+                                        object:nil
+                                        queue:[NSOperationQueue mainQueue]
+                                        usingBlock:^(NSNotification *note) {
+                                          AVCaptureDevice* dev = (AVCaptureDevice*)note.object;
+                                          monitor_->removeDevice([[dev uniqueID] UTF8String]);
+                                        }];
+    observers = [[NSArray alloc] initWithObjects:deviceWasConnectedObserver, deviceWasDisconnectedObserver, nil];
 }
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
-    probing_ = false;
-    if (thread_.joinable())
-        thread_.join();
-}
+    NSNotificationCenter *notificationCenter = [NSNotificationCenter defaultCenter];
+    for (id observer in observers)
+        [notificationCenter removeObserver:observer];
 
-void VideoDeviceMonitorImpl::run()
-{
-    while (probing_) {
-        //TODO: Enable detection of new devices
-        sleep(1);
-    }
+    [observers release];
 }
 
 VideoDeviceMonitor::VideoDeviceMonitor() :

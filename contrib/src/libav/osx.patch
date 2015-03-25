@@ -242,10 +242,10 @@ index 5dbe277..8439b5b 100644
      REGISTER_INDEV   (FBDEV,            fbdev);
 diff --git a/libavdevice/avfoundation_dec.m b/libavdevice/avfoundation_dec.m
 new file mode 100644
-index 0000000..581f845
+index 0000000..f1b9c03
 --- /dev/null
 +++ b/libavdevice/avfoundation_dec.m
-@@ -0,0 +1,449 @@
+@@ -0,0 +1,447 @@
 +/*
 + * AVFoundation input device
 + * Copyright (c) 2015 Luca Barbato
@@ -406,7 +406,7 @@ index 0000000..581f845
 +
 +@end
 +
-+NSString *pat = @"(\b[A-Z0-9]+\b)";
++NSString *pat = @"\\[[^\\].]*\\]";
 +
 +static int setup_stream(AVFormatContext *s, AVCaptureDevice *device)
 +{
@@ -491,7 +491,6 @@ index 0000000..581f845
 +    // Take stream info from the first frame.
 +    while (ctx->frames_captured < 1) {
 +        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, YES);
-+        av_log(s, AV_LOG_ERROR, "Waiting for incoming frame\n");
 +    }
 +
 +    lock_frames(ctx);
@@ -586,8 +585,7 @@ index 0000000..581f845
 +        if (matches.count > 0) {
 +            for (NSTextCheckingResult *match in matches) {
 +                NSRange range = [match rangeAtIndex:0];
-+                NSString *uniqueID = [filename substringWithRange:range];
-+                av_log(s, AV_LOG_INFO, "opening device with ID: %s\n",[uniqueID UTF8String]);
++                NSString *uniqueID = [filename substringWithRange:NSMakeRange(range.location + 1, range.length-2)];                av_log(s, AV_LOG_INFO, "opening device with ID: %s\n",[uniqueID UTF8String]);
 +                if (!(device = [AVCaptureDevice deviceWithUniqueID:uniqueID])) {
 +                    // report error
 +                    av_log(s, AV_LOG_ERROR, "Device with name %s not found",[filename UTF8String]);
