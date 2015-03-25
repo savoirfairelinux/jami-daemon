@@ -241,8 +241,9 @@ int MediaDecoder::setupFromVideoData()
 
     // find the first video stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO) {
             streamIndex_ = i;
+        }
 
     if (streamIndex_ == -1) {
         RING_ERR("Could not find video stream");
@@ -250,7 +251,8 @@ int MediaDecoder::setupFromVideoData()
     }
 
     // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    avStream_ = inputCtx_->streams[streamIndex_];
+    decoderCtx_ = avStream_->codec;
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
@@ -427,6 +429,9 @@ int MediaDecoder::getWidth() const
 
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
+//TODO : Shall we use float fps
+int MediaDecoder::getFps() const
+{ return (int) (avStream_->avg_frame_rate.num / avStream_->avg_frame_rate.den); }
 
 int MediaDecoder::getPixelFormat() const
 { return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }

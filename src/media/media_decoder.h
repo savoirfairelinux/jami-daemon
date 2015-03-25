@@ -99,6 +99,7 @@ class MediaDecoder {
 
         int getWidth() const;
         int getHeight() const;
+        int getFps() const;
         int getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);
@@ -109,6 +110,7 @@ class MediaDecoder {
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
+        AVStream *avStream_ = nullptr;
         std::unique_ptr<Resampler> resampler_;
         int streamIndex_ = -1;
         bool emulateRate_ = false;
