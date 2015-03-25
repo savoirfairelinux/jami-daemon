@@ -185,6 +185,7 @@ VideoInput::createDecoder()
     }
     decOpts_.width = decoder_->getWidth();
     decOpts_.height = decoder_->getHeight();
+    decOpts_.framerate = decoder_->getFps();
     foundDecOpts_.set_value(decOpts_);
 }
 
@@ -266,9 +267,6 @@ VideoInput::initFile(std::string path)
         decOpts_.framerate = 1;
     } else {
         RING_WARN("Guessing file type for %s", path.c_str());
-        // FIXME: proper parsing of FPS etc. should be done in
-        // MediaDecoder, not here.
-        decOpts_.framerate = 25;
     }
 
     return true;
