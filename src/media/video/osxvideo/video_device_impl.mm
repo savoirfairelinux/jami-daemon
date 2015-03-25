@@ -154,13 +154,13 @@ std::vector<std::string>
 VideoDeviceImpl::getRateList(const std::string& channel, const std::string& size) const
 {
     auto format = [avDevice_ activeFormat];
-    auto frameRate = (AVFrameRateRange*)
-                    [format.videoSupportedFrameRateRanges objectAtIndex:0];
-
     std::vector<std::string> v;
-    std::stringstream ss;
-    ss << frameRate.maxFrameRate;
-    v.push_back(ss.str());
+
+    for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
+      std::stringstream ss;
+        ss << frameRateRange.maxFrameRate;
+        v.push_back(ss.str());
+    }
     return v;
 }
 
@@ -169,14 +169,12 @@ VideoDeviceImpl::getSizeList(const std::string& channel) const
 {
     std::vector<std::string> v;
 
-    auto format = [avDevice_ activeFormat];
-    auto dimensions =
-                CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-
-    std::stringstream ss;
-    ss << dimensions.width << "x" << dimensions.height;
-    v.push_back(ss.str());
-
+    for (AVCaptureDeviceFormat* format in avDevice_.formats) {
+      std::stringstream ss;
+      auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
+        ss << dimensions.width << "x" << dimensions.height;
+        v.push_back(ss.str());
+    }
     return v;
 }
 
