@@ -70,7 +70,7 @@ VideoFrame::size() const noexcept
 int
 VideoFrame::format() const noexcept
 {
-    return libav_utils::sfl_pixel_format(frame_->format);
+    return libav_utils::ring_pixel_format(frame_->format);
 }
 
 int

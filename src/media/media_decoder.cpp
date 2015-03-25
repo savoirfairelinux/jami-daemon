@@ -429,7 +429,7 @@ int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
 int MediaDecoder::getPixelFormat() const
-{ return libav_utils::sfl_pixel_format(decoderCtx_->pix_fmt); }
+{ return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt); }
 
 void
 MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,

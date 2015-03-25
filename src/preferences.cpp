@@ -247,7 +247,7 @@ HookPreference::HookPreference() :
     , numberEnabled_(false)
     , sipEnabled_(false)
     , urlCommand_("x-www-browser")
-    , urlSipField_("X-sflphone-url")
+    , urlSipField_("X-ring-url")
 {}
 
 HookPreference::HookPreference(const std::map<std::string, std::string> &settings) :
