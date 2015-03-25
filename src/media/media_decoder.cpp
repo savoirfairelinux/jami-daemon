@@ -250,7 +250,8 @@ int MediaDecoder::setupFromVideoData()
     }
 
     // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    avStream_ = inputCtx_->streams[streamIndex_];
+    decoderCtx_ = avStream_->codec;
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
@@ -427,6 +428,13 @@ int MediaDecoder::getWidth() const
 
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
+
+//TODO : use of float fps is more accurate
+int MediaDecoder::getFps() const
+{ return (avStream_->avg_frame_rate.den != 0 ?
+        (int)(avStream_->avg_frame_rate.num / avStream_->avg_frame_rate.den)
+        : 0);
+}
 
 int MediaDecoder::getPixelFormat() const
 { return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt); }
