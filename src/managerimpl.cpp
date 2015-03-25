@@ -214,7 +214,7 @@ ManagerImpl::ManagerImpl() :
     std::seed_seq seed {rdev(), rdev()};
     rand_.seed(seed);
 
-    ring::libav_utils::sfl_avcodec_init();
+    ring::libav_utils::ring_avcodec_init();
 }
 
 ManagerImpl::~ManagerImpl()
