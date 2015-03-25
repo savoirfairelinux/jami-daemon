@@ -78,6 +78,9 @@ private:
     std::promise<DeviceParams> foundDecOpts_;
     std::shared_future<DeviceParams> futureDecOpts_;
 
+    std::atomic_bool decOptsFound_ {false};
+    void foundDecOpts(const DeviceParams& params);
+
     bool emulateRate_       = false;
     ThreadLoop loop_;
 
