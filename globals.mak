@@ -1,9 +1,7 @@
 # Global variables
 
 src=$(abs_top_srcdir)
-sfllibdir=$(DESTDIR)$(libdir)/ring
-sflcodecdir=$(sfllibdir)/codecs
-sflplugindir=$(sfllibdir)/plugins
+ringlibdir=$(DESTDIR)$(libdir)/ring
 
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
@@ -30,8 +28,6 @@ AM_CPPFLAGS = \
 	$(SIP_CFLAGS) \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/ring\" \
-	-DCODECS_DIR=\""$(sflcodecdir)"\" \
-	-DPLUGINS_DIR=\""$(sflplugindir)"\" \
 	-DENABLE_TRACE \
 	$(SPEEXCODEC) \
 	$(GSMCODEC) \
