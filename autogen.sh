@@ -24,7 +24,7 @@ fi
 # Workaround for http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=565663
 mkdir -p m4
 
-HOOKS_DIR="../.git/hooks"
+HOOKS_DIR=".git/hooks"
 # install pre-commit hook for doing clean commits
 if [ -d "$HOOKS_DIR" ];
 then
