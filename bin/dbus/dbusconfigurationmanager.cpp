@@ -32,6 +32,7 @@
 #include "configurationmanager_interface.h"
 
 #include "media/audio/audiolayer.h"
+#include "config.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
@@ -278,7 +279,6 @@ DBusConfigurationManager::setAudioManager(const std::string& api) -> decltype(DR
     return DRing::setAudioManager(api);
 }
 
-//FIXME
 std::vector<std::string>
 DBusConfigurationManager::getSupportedAudioManagers()
 {
