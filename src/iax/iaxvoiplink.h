@@ -38,7 +38,6 @@
 #endif
 
 #include "audio/audiobuffer.h"
-#include "audio/codecs/audiocodec.h" // for RAW_BUFFER_SIZE
 #include "ring_types.h"
 
 #include <iax/iax-client.h>
@@ -46,6 +45,9 @@
 #include <mutex>
 #include <memory>
 #include <random>
+
+#define RAW_BUFFER_SIZE (120 * 48000 / 1000)
+
 
 namespace ring {
 
