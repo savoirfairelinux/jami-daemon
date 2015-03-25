@@ -1,9 +1,9 @@
-# Filename: sflphone-common/astylerc
+# Filename: astylerc
 # Purpose:  config file for astyle
-#            http://astyle.sourceforge.net/astyle.html
+#           http://astyle.sourceforge.net/astyle.html
 # Author:  Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
-#           Savoir-faire Linux Inc
-#          http://www.sflphone.org
+#          Savoir-faire Linux Inc
+#          http://www.ring.cx
 
 style=stroustrup    # stroustrup style http://astyle.sourceforge.net/astyle.html#_style=stroustrup
 indent=spaces=4     # Use spaces instead of tabs for indentation

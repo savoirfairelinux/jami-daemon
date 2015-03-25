@@ -34,27 +34,31 @@ Ring is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
 - fully compatible with Asterisk (SIP and IAX protocols)
+- de-centralized call (P2P-DHT)
 - customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
-it is easy to provide different user interfaces. SFLPhone comes with
-a GTK graphical user interface and even scripts to control the daemon from
+it is easy to provide different user interfaces. Ring comes with
+a various graphical user interfaces and even scripts to control the daemon from
 the shell.
 
-SFLPhone is currently used by the support team of Savoir-Faire Linux Inc.
+Ring is currently used by the support team of Savoir-Faire Linux Inc.
 
 More information is available on the project homepage:
-  http://www.sflphone.org/
+  http://www.ring.cx/
+
+This source tree contains the daemon application only, DRing, that handles
+the business logic of Ring. UI are located in differents repositories.
+Check our client subprojects here:
+https://projects.savoirfairelinux.com/projects/ring
 
 
 Short description of content of source tree
 -------------------------------------------
 
-- src/ is the core of SFLphone. It contains main.cpp, the entry point and
-  managerimpl.cpp.
-  The ManagerImpl class is the intermediary between all the layers of the daemon.
-- src/client/dbus, the D-Bus xml interfaces, and c++ bindings
-- src/client/android, the JNI interfaces (Java bindings)
+- src/ is the core of DRing.
+- bin/ contains applications main code.
+- bin/dbus, the D-Bus xml interfaces, and c++ bindings
 
 
 About Savoir-Faire Linux
@@ -64,25 +68,21 @@ Savoir-Faire Linux is a consulting company based in Montreal, Quebec.
 For more information, please check out our website:
 http://www.savoirfairelinux.com/
 
+
 How to compile on Linux
 -----------------------
 
-# Compile the dependencies
+1) Compile the dependencies first
+
 cd ../contrib/
 mkdir native
 cd native
 ../bootstrap
 make
 
-# Then the daemon
-cd ../../daemon
-./autogen.sh
-./configure
-make
-make install
+2) Then the dring application
 
-# And the GNOME client
-cd ring-client-gnome
+cd ../../
 ./autogen.sh
 ./configure
 make
@@ -93,10 +93,12 @@ Done !
 More details available here:
 https://projects.savoirfairelinux.com/projects/ring/wiki/How_to_build
 
+
 How to compile on OSX
 ---------------------
+
 # These first steps are only necessary if you don't use a package manager.
-cd daemon/extras/tools
+cd extras/tools
 ./bootstrap
 make
 export PATH=$PATH:/location/of/ring/daemon/extras/tools/build/bin
@@ -113,7 +115,7 @@ cd native
 make -j
 
 # Then the daemon
-cd ../../daemon
+cd ../../
 ./autogen.sh
 ./configure --without-alsa --without-pulse --without-dbus --disable-video
 make
@@ -123,51 +125,19 @@ add to ./configure: --prefix=<prefix_path>
 
 Do a little dance!
 
+
 Common Issues
-------------
+-------------
 
 autopoint not found: When using Homebrew, autopoint is not find even when
 gettext is installed, because symlinks are not created.
 Run: 'brew link --force gettext' to fix it.
 
-How to cross-compile for Windows 64bit (from Linux)
----------------------------------------------------
-
-# First, make sure you can compile the linux version.
-# Install a few tools.
-sudo apt-get install mingw-w64 cmake build-essential g++ automake autoconf
-gnu-standards autoconf-doc libtool gettext autoconf-archive pkg-config
-
-# On certain distributions, mingw-w64 doesn't select POSIX threads by default.
-You need to use the POSIX version. To do so, run the following commands and
-select POSIX threads.
-sudo update-alternatives --config x86_64-w64-mingw32-gcc
-sudo update-alternatives --config x86_64-w64-mingw32-g++
-
-# Compile the dependencies
-cd ring/daemon/contrib/
-mkdir win64 && cd win64
-../bootstrap --host=x86_64-w64-mingw32
-make
-# make -j seems to have problems!?
-
-Cross fingers and pray to the great cross-compiler in the sky!
-...
-Profit!
-
-# Compile the daemon
-./autogen.sh
-./configure --host=x86_64-w64-mingw32
-            --without-alsa
-            --without-pulse
-            --without-dbus
-            --disable-video
-make
 
 Clang compatibility (developers only)
 -------------------------------------
 
-It is possible to compile sflphone with Clang by setting CC and CXX variables
+It is possible to compile dring with Clang by setting CC and CXX variables
 to 'clang' and 'clang++' respectively when calling ./configure.
 
 Currently it is not possible to use the DBus interface mechanism, and the
@@ -175,29 +145,30 @@ interaction between daemon and client will not work; for each platform where
 dbus is not available the client should implement all the methods in the
 *_stub.cpp files.
 
-SIP/IAx2 accounts
+
+SIP accounts
 ---------------------
 
-You may register an existing SIP/IAX2 account through the account wizard in both
+You may register an existing SIP account through the account wizard in both
 clients (KDE and GNOME).
 By doing this, you will be able to call other accounts known to this server.
 
 
-Contributing to SFLPhone
+Contributing to Ring
 ------------------------
 
 Of course we love patches. And contributions. And spring rolls.
 
-Development website: http://projects.savoirfairelinux.net/wiki/sflphone
+Development website: http://projects.savoirfairelinux.com/projects/ring/wiki
 
 Do not hesitate to join us and post comments, suggestions, questions
-and general feedback on the SFLphone mailing-list:
-http://lists.savoirfairelinux.net/mailman/listinfo/sflphone
+and general feedback on the Ring mailing-list:
+http://lists.savoirfairelinux.net/mailman/listinfo/ring
 
 Bug reports:
-https://projects.savoirfairelinux.com/projects/ring/wiki/BugReports
+http://projects.savoirfairelinux.com/projects/ring/wiki/BugReports
 
 IRC (on #freenode):
 #sflphone
 
-  -- The SFLPhone Team
+  -- The Ring Team

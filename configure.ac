@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([Ring],[2.0.0],[sflphoneteam@savoirfairelinux.com],[ring])
 
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014]])
+AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2015]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files

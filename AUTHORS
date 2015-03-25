@@ -1,20 +1,23 @@
 Current authors
 ---------------
 
-Guillaume Roguez <guillaume dot roguez at savoirfairelinux dot com>
-
 Adrien Béraud <adrien dot beraud at savoirfairelinux dot com>
-
-Emmanuel Lepage <emmanuel dot lepage at savoirfairelinux dot com>
-
 Alexandre Lision <alexandre dot lision at savoirfairelinux dot com>
-
+Guillaume Roguez <guillaume dot roguez at savoirfairelinux dot com>
+Edric Milaret <edric dot ladent-milaret at savoirfairelinux dot com>
+Eloi BAIL <eloi dot bail at savoirfairelinux dot com>
+Emmanuel Lepage <emmanuel dot lepage at savoirfairelinux dot com>
 Stepan Salenikovich <stepan dot salenikovich at savoirfairelinux dot com>
 
 Former authors
 --------------
 
+Philippe Groarke <philippe.groarke@savoirfairelinux.com>
+    - audio fixes
+    - windows port startup
+
 Tristan Matthews <tristan dot matthews at savoirfairelinux dot com>
+    - Many portions of code
 
 Emmanuel Milou <emmanuel dot milou at savoirfairelinux dot com>
 	- ALSA implementation ( replaces portaudio )
