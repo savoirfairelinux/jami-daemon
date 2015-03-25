@@ -52,7 +52,7 @@ print_title()
 {
     std::cout << "Ring Daemon " << DRing::version()
               << ", by Savoir-Faire Linux 2004-2015" << std::endl
-              << "http://www.sflphone.org/" << std::endl;
+              << "http://www.ring.cx/" << std::endl;
 }
 
 static void
