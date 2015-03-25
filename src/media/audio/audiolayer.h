@@ -238,7 +238,7 @@ class AudioLayer {
         bool isStarted_;
 
         /**
-         * Sample Rate SFLphone should send sound data to the sound card
+         * Sample Rate Ring should send sound data to the sound card
          */
         AudioFormat audioFormat_;
 

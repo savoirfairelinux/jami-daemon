@@ -148,7 +148,7 @@ class RingAccount : public SIPAccountBase {
         std::string getToUri(const std::string& username) const;
 
         /**
-         * In the current version of SFLPhone, "srv" uri is obtained in the preformated
+         * In the current version of Ring, "srv" uri is obtained in the preformated
          * way: hostname:port. This method adds the correct scheme and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
          *

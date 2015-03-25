@@ -37,15 +37,15 @@
 
 namespace ring { namespace libav_utils {
 
-    void sfl_avcodec_init();
+    void ring_avcodec_init();
 
     int libav_pixel_format(int fmt);
-    int sfl_pixel_format(int fmt);
+    int ring_pixel_format(int fmt);
 
     const char *const DEFAULT_H264_PROFILE_LEVEL_ID = "profile-level-id=428014";
     const char *const MAX_H264_PROFILE_LEVEL_ID = "profile-level-id=640034";
 
-    void sfl_url_split(const char *url,
+    void ring_url_split(const char *url,
                       char *hostname, size_t hostname_size, int *port,
                       char *path, size_t path_size);
 

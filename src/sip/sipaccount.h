@@ -383,7 +383,7 @@ class SIPAccount : public SIPAccountBase {
         std::string getToUri(const std::string& username) const;
 
         /**
-         * In the current version of SFLPhone, "srv" uri is obtained in the preformated
+         * In the current version of Ring, "srv" uri is obtained in the preformated
          * way: hostname:port. This method adds the correct scheme and append
          * the ;transport= parameter at the end of the uri, in accordance with RFC3261.
          *
@@ -628,7 +628,7 @@ class SIPAccount : public SIPAccountBase {
          * If username is not provided, as it happens for Direct ip calls,
          * fetch the Real Name field of the user that is currently
          * running this program.
-         * @return std::string The login name under which SFLPhone is running.
+         * @return std::string The login name under which Ring is running.
          */
         static std::string getLoginName();
 

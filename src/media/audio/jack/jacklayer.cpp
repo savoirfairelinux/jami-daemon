@@ -268,7 +268,7 @@ JackLayer::ringbuffer_worker()
 
         // wait until process() signals more data
         // FIXME: this checks for spurious wakes, but the predicate
-        // is rather arbitrary. We should wait until sflphone has/needs data
+        // is rather arbitrary. We should wait until ring has/needs data
         // and jack has/needs data.
         data_ready_.wait(lock, [&] {
             // Note: lock is released while waiting, and held when woken

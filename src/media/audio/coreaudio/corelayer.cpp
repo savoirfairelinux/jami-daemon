@@ -486,7 +486,7 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
                 &size));
 
 
-    // Add them to sflphone ringbuffer.
+    // Add them to Ring ringbuffer.
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     bool resample = info.mSampleRate != mainBufferFormat.sample_rate;
 
