@@ -154,7 +154,7 @@ void
 VideoInput::createDecoder()
 {
     if (decOpts_.input.empty()) {
-        foundDecOpts_.set_value(decOpts_);
+        foundDecOpts(decOpts_);
         return;
     }
 
@@ -170,7 +170,7 @@ VideoInput::createDecoder()
         delete decoder_;
         decoder_ = nullptr;
         //foundDecOpts_.set_exception(std::runtime_error("Could not open input"));
-        foundDecOpts_.set_value(decOpts_);
+        foundDecOpts(decOpts_);
         return;
     }
 
@@ -180,12 +180,12 @@ VideoInput::createDecoder()
         delete decoder_;
         decoder_ = nullptr;
         //foundDecOpts_.set_exception(std::runtime_error("Could not read data"));
-        foundDecOpts_.set_value(decOpts_);
+        foundDecOpts(decOpts_);
         return;
     }
     decOpts_.width = decoder_->getWidth();
     decOpts_.height = decoder_->getHeight();
-    foundDecOpts_.set_value(decOpts_);
+    foundDecOpts(decOpts_);
 }
 
 void
@@ -288,6 +288,7 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     currentResource_ = resource;
+    decOptsFound_ = false;
 
     std::promise<DeviceParams> p;
     foundDecOpts_.swap(p);
@@ -352,5 +353,14 @@ int VideoInput::getPixelFormat() const
 
 DeviceParams VideoInput::getParams() const
 { return decOpts_; }
+
+void
+VideoInput::foundDecOpts(const DeviceParams& params)
+{
+    if (not decOptsFound_) {
+        decOptsFound_ = true;
+        foundDecOpts_.set_value(params);
+    }
+}
 
 }} // namespace ring::video
