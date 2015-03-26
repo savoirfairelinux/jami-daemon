@@ -369,9 +369,9 @@ distclean: clean
 	unlink Makefile
 
 # TODO: set up the correct url
-#PREBUILT_URL=$(URL)/contrib/$(HOST)/sflphone-contrib-$(HOST)-latest.tar.bz2
+#PREBUILT_URL=$(URL)/contrib/$(HOST)/ring-contrib-$(HOST)-latest.tar.bz2
 
-sflphone-contrib-$(HOST)-latest.tar.bz2:
+ring-contrib-$(HOST)-latest.tar.bz2:
 	$(call download,$(PREBUILT_URL))
 
 prebuilt: sflphone-contrib-$(HOST)-latest.tar.bz2
@@ -388,7 +388,7 @@ package: install
 		cd share; rm -Rf man doc gtk-doc info lua projectM gettext; cd ..; \
 		rm -Rf man sbin etc lib/lua lib/sidplay
 	cd tmp/$(notdir $(PREFIX)) && $(abspath $(SRC))/change_prefix.sh $(PREFIX) @@CONTRIB_PREFIX@@
-	(cd tmp && tar c $(notdir $(PREFIX))/) | bzip2 -c > ../sflphone-contrib-$(HOST)-$(DATE).tar.bz2
+	(cd tmp && tar c $(notdir $(PREFIX))/) | bzip2 -c > ../ring-contrib-$(HOST)-$(DATE).tar.bz2
 
 list:
 	@echo All packages:
