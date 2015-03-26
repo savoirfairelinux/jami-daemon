@@ -164,6 +164,7 @@ private:
     std::mutex outputBuffMtx_;
 
     std::mutex rxMtx_;
+    std::condition_variable_any rxCv_;
     std::list<std::vector<uint8_t>> rxPending_;
     std::list<std::vector<uint8_t>> rxPendingPool_;
     pjsip_rx_data rdata_;
