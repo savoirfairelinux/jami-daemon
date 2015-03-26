@@ -107,6 +107,7 @@ int libav_pixel_format(int fmt)
 {
     switch (fmt) {
         case video::VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
+        case video::VIDEO_PIXFMT_ARGB: return PIXEL_FORMAT(ARGB);
         case video::VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
     }
     return fmt;
