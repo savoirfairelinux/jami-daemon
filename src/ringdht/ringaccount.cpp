@@ -205,7 +205,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                     callvid
                 },
             [=](bool ok) { // Put complete callback
-                if (!ok) {
+                if (ok) {
+                    RING_WARN("ICE descriptor put on the DHT");
+                } else  {
                     RING_WARN("Can't put ICE descriptor on DHT");
                     if (auto call = weak_call.lock()) {
                         call->setConnectionState(Call::DISCONNECTED);
