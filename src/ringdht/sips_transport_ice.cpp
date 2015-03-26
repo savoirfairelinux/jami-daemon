@@ -659,32 +659,35 @@ SipsIceTransport::setup()
 void
 SipsIceTransport::handleEvents()
 {
-    std::lock_guard<std::mutex> l(rxMtx_);
-    while (not rxPending_.empty()) {
-        auto pck_it = rxPending_.begin();
-        auto& pck = *pck_it;
-        pj_pool_reset(rdata_.tp_info.pool);
-        pj_gettimeofday(&rdata_.pkt_info.timestamp);
-        rdata_.pkt_info.len = pck.size();
-        std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
-        auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
-        if (eaten != rdata_.pkt_info.len) {
-            // partial sip packet received
-            auto npck_it = std::next(pck_it);
-            if (npck_it != rxPending_.end()) {
-                // drop current packet, merge reminder with next one
-                auto& npck = *npck_it;
-                npck.insert(npck.begin(), pck.begin()+eaten, pck.end());
-                rxPendingPool_.splice(rxPendingPool_.end(), rxPending_, pck_it);
+    {
+        std::lock_guard<std::mutex> l(rxMtx_);
+        while (not rxPending_.empty()) {
+            auto pck_it = rxPending_.begin();
+            auto& pck = *pck_it;
+            pj_pool_reset(rdata_.tp_info.pool);
+            pj_gettimeofday(&rdata_.pkt_info.timestamp);
+            rdata_.pkt_info.len = pck.size();
+            std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
+            auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
+            if (eaten != rdata_.pkt_info.len) {
+                // partial sip packet received
+                auto npck_it = std::next(pck_it);
+                if (npck_it != rxPending_.end()) {
+                    // drop current packet, merge reminder with next one
+                    auto& npck = *npck_it;
+                    npck.insert(npck.begin(), pck.begin()+eaten, pck.end());
+                    rxPendingPool_.splice(rxPendingPool_.end(), rxPending_, pck_it);
+                } else {
+                    // erase eaten part, keep reminder
+                    pck.erase(pck.begin(), pck.begin()+eaten);
+                    break;
+                }
             } else {
-                // erase eaten part, keep reminder
-                pck.erase(pck.begin(), pck.begin()+eaten);
-                break;
+                rxPendingPool_.splice(rxPendingPool_.end(), rxPending_, pck_it);
             }
-        } else {
-            rxPendingPool_.splice(rxPendingPool_.end(), rxPending_, pck_it);
         }
     }
+    rxCv_.notify_all();
 }
 
 void
@@ -766,7 +769,7 @@ SipsIceTransport::loop()
                 rxPending_.splice(rxPending_.end(), rxPendingPool_, rxPendingPool_.begin());
             } else if (decrypted_size == 0) {
                 /* EOF */
-                shutdown();
+                tlsThread_.stop();
                 break;
             } else if (decrypted_size == GNUTLS_E_AGAIN or
                        decrypted_size == GNUTLS_E_INTERRUPTED) {
@@ -820,6 +823,13 @@ SipsIceTransport::clean()
         gnutls_free(cookie_key_.data);
         cookie_key_.data = nullptr;
         cookie_key_.size = 0;
+    }
+    {
+        // make sure all incoming packets are reported before closing
+        std::unique_lock<std::mutex> l(rxMtx_);
+        rxCv_.wait(l, [&](){
+            return rxPending_.empty();
+        });
     }
     rxPendingPool_.clear();
 
