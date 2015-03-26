@@ -28,11 +28,14 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
 
 #include "media/audio/audiolayer.h"
-#include "config.h"
 
 DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/ConfigurationManager")
