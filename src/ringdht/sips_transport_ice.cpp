@@ -138,6 +138,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                        const pj_sockaddr_t *rem_addr, int addr_len,
                        void *token, pjsip_transport_callback callback) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
+        RING_DBG("SipsIceTransport@%p: send %lu", this_, tdata->buf.end-tdata->buf.start);
         return this_->send(tdata, rem_addr, addr_len, token, callback);
     };
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
@@ -198,8 +199,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
             std::lock_guard<std::mutex> l(inputBuffMtx_);
             tlsInputBuff_.emplace_back(buf, buf+len);
             canRead_ = true;
-            RING_DBG("Ice: got data at %lu",
-                     clock::now().time_since_epoch().count());
         }
         cv_.notify_all();
         return len;
@@ -611,8 +610,6 @@ SipsIceTransport::onHandshakeComplete(pj_status_t status)
 int
 SipsIceTransport::verifyCertificate()
 {
-    RING_DBG("SipsIceTransport::verifyCertificate");
-
     /* Support only x509 format */
     if (gnutls_certificate_type_get(session_) != GNUTLS_CRT_X509) {
         verifyStatus_ = PJ_SSL_CERT_EINVALID_FORMAT;
@@ -667,6 +664,7 @@ SipsIceTransport::handleEvents()
         pj_gettimeofday(&rdata_.pkt_info.timestamp);
         rdata_.pkt_info.len = pck.size();
         std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
+        RING_WARN("SIP: receiving %lu bytes:\n%.*s", pck.size(), pck.size(), pck.data());
         auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
         if (eaten != rdata_.pkt_info.len) {
             // partial sip packet received
@@ -865,7 +863,6 @@ SipsIceTransport::getRemoteAddress() const
 ssize_t
 SipsIceTransport::tlsSend(const void* d, size_t s)
 {
-    RING_DBG("SipsIceTransport::tlsSend %lu", s);
     return ice_->send(comp_id_, (const uint8_t*)d, s);
 }
 
@@ -879,8 +876,6 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
     }
     const auto& front = tlsInputBuff_.front();
     const auto n = std::min(front.size(), s);
-    RING_DBG("SipsIceTransport::tlsRecv %lu at %lu",
-             n, clock::now().time_since_epoch().count());
     std::copy_n(front.begin(), n, (uint8_t*)d);
     tlsInputBuff_.pop_front();
     if (tlsInputBuff_.empty())
@@ -891,8 +886,6 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
 int
 SipsIceTransport::waitForTlsData(unsigned ms)
 {
-    RING_DBG("SipsIceTransport::waitForTlsData %u", ms);
-
     std::unique_lock<std::mutex> l(inputBuffMtx_);
     if (tlsInputBuff_.empty()) {
         cv_.wait_for(l, std::chrono::milliseconds(ms), [&]() {
