@@ -83,7 +83,8 @@ class ClutterSHMSrc : public SHMSrc {
                     height_,
                     ROW_STRIDE,
                     BPP,
-                    CLUTTER_TEXTURE_RGB_FLAG_BGR,
+                    //CLUTTER_TEXTURE_RGB_FLAG_BGR,
+                    CLUTTER_TEXTURE_RGB_FLAG_NONE,
                     NULL);
             buffer_gen_ = shm_area_->buffer_gen;
             shm_unlock();
