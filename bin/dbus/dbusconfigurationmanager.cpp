@@ -28,6 +28,10 @@
  *  as that of the covered work.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
 
@@ -278,7 +282,6 @@ DBusConfigurationManager::setAudioManager(const std::string& api) -> decltype(DR
     return DRing::setAudioManager(api);
 }
 
-//FIXME
 std::vector<std::string>
 DBusConfigurationManager::getSupportedAudioManagers()
 {

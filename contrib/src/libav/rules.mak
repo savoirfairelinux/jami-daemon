@@ -4,7 +4,12 @@ LIBAV_GITURL := git://git.libav.org/libav.git
 
 PKGS += libav
 
+#disable everything
+#ensure to add this option first
 LIBAVCONF = \
+		--disable-everything
+
+LIBAVCONF += \
 		--cc="$(CC)" \
 		--pkg-config="$(PKG_CONFIG)" \
 		--enable-zlib \
@@ -12,9 +17,6 @@ LIBAVCONF = \
 		--enable-swscale \
 		--enable-protocols
 
-#disable everything
-LIBAVCONF += \
-		--disable-everything
 
 #enable muxers/demuxers
 LIBAVCONF += \

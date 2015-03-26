@@ -98,7 +98,6 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     fileutils::check_dir(idPath_.c_str());
     caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
     caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
-    checkIdentityPath();
 }
 
 RingAccount::~RingAccount()
@@ -413,8 +412,10 @@ void RingAccount::unserialize(const YAML::Node &node)
 void
 RingAccount::checkIdentityPath()
 {
-    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty())
+    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
+        loadIdentity();
         return;
+    }
 
     const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
@@ -456,9 +457,11 @@ RingAccount::loadIdentity()
         tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
         tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
 
+        username_ = id.second->getId().toString();
         return {ca.second, id};
     }
 
+    username_ = dht_cert.getId().toString();
     return {
         std::make_shared<dht::crypto::Certificate>(std::move(ca_cert)),
         {

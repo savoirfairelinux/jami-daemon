@@ -73,7 +73,7 @@ class EventCallback :
         const std::function<void()> callback_;
 };
 
-DBusClient::DBusClient(int sflphFlags, bool persistent)
+DBusClient::DBusClient(int flags, bool persistent)
     : dispatcher_(new DBus::BusDispatcher)
 {
     try {
@@ -106,7 +106,7 @@ DBusClient::DBusClient(int sflphFlags, bool persistent)
         throw std::runtime_error {"cannot initialize DBus stuff"};
     }
 
-    if (initLibrary(sflphFlags) < 0)
+    if (initLibrary(flags) < 0)
         throw std::runtime_error {"cannot initialize libring"};
 
     instanceManager_->started();
@@ -128,7 +128,7 @@ DBusClient::~DBusClient()
 }
 
 int
-DBusClient::initLibrary(int sflphFlags)
+DBusClient::initLibrary(int flags)
 {
     using namespace std::placeholders;
 
@@ -203,7 +203,7 @@ DBusClient::initLibrary(int sflphFlags)
     };
 #endif
 
-    if (!DRing::init(static_cast<DRing::InitFlag>(sflphFlags)))
+    if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
 
     registerCallHandlers(callEvHandlers);

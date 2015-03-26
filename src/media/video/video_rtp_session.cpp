@@ -74,11 +74,16 @@ void VideoRtpSession::startSender()
             videoLocal_ = getVideoCamera();
             if (auto input = videoManager.videoInput.lock()) {
                 auto newParams = input->switchInput(input_);
-                if (newParams.valid() &&
-                    newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
-                    localVideoParams_ = newParams.get();
-                else
-                    RING_WARN("No valid new video parameters.");
+                try {
+                    if (newParams.valid() &&
+                        newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
+                        localVideoParams_ = newParams.get();
+                    else
+                        RING_ERR("No valid new video parameters.");
+                } catch (const std::exception& e) {
+                    RING_ERR("Exception during retriving video parameters: %s",
+                             e.what());
+                }
             } else {
                 RING_WARN("Can't lock video input");
             }

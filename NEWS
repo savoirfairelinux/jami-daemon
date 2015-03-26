@@ -1,3 +1,13 @@
+DRing (2.0.0) / 2015-03-31
+	* Project renaming
+	* First release under this name
+	* Ring account (DHT) introduced
+	* Complete SIP/SDP protocol handling re-write
+	* Encrypted communication through TLS/SRTP
+	* NAT-traversal: ICE, UPnP
+	* UI are separate repository
+	* And a lot more...
+
 SFLphoned (1.0.2) / 2012-07-02
 	* Stable version
 	* Update Contact header from 200 OK

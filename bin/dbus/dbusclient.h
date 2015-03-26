@@ -55,14 +55,14 @@ namespace DBus {
 
 class DBusClient {
     public:
-        DBusClient(int sflphFlags, bool persistent);
+        DBusClient(int flags, bool persistent);
         ~DBusClient();
 
         int event_loop() noexcept;
         int exit() noexcept;
 
     private:
-        int initLibrary(int sflphFlags);
+        int initLibrary(int flags);
         void finiLibrary() noexcept;
 
         std::unique_ptr<DBus::BusDispatcher>  dispatcher_;
