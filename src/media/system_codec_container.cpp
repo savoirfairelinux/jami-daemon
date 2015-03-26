@@ -40,7 +40,7 @@ namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
-constexpr static auto DEFAULT_VIDEO_BITRATE = 400;
+constexpr static auto DEFAULT_VIDEO_BITRATE = 800; // in Kbits/second
 
 SystemCodecContainer::SystemCodecContainer()
 {
