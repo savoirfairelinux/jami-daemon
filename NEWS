@@ -1,4 +1,12 @@
-DRing (2.0.0) / 2015-03-31
+DRing (2.0.1) / 2015-03-27
+    * Add FPS calculation for streamed files
+	* Set defaults video bitrate to 800 Kb/s
+    * Use RGBA for direct rendering (MacOSX)
+	* MacOSX: force video device format on supported values
+    * SecureSIP: fix race condition and incoming packet handling
+    * minor documentation fixes
+
+DRing (2.0.0) / 2015-03-25
 	* Project renaming
 	* First release under this name
 	* Ring account (DHT) introduced
