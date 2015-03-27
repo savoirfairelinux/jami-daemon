@@ -161,12 +161,20 @@ private:
     ssize_t trySend(pjsip_tx_data_op_key* tdata);
     pj_status_t flushOutputBuff();
     std::list<DelayedTxData> outputBuff_;
+    std::list<std::vector<uint8_t>> txBuff_;
     std::mutex outputBuffMtx_;
 
     std::mutex rxMtx_;
+    std::condition_variable_any rxCv_;
     std::list<std::vector<uint8_t>> rxPending_;
-    std::list<std::vector<uint8_t>> rxPendingPool_;
     pjsip_rx_data rdata_;
+
+    // data buffer pool
+    std::list<std::vector<uint8_t>> buffPool_;
+    std::mutex buffPoolMtx_;
+    void getBuff(decltype(buffPool_)& l, const uint8_t* b, const uint8_t* e);
+    void getBuff(decltype(buffPool_)& l, const size_t s);
+    void putBuff(decltype(buffPool_)&& l);
 
     // GnuTLS <-> ICE
     ssize_t tlsSend(const void*, size_t);
