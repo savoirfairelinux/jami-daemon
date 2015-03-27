@@ -1071,7 +1071,7 @@ SipsIceTransport::getBuff(decltype(buffPool_)& l, const uint8_t* b, const uint8_
     if (buffPool_.empty())
         l.emplace_back(b, e);
     else {
-        l.splice(l.end(), buffPool_, buffPool_.cbegin());
+        l.splice(l.end(), buffPool_, buffPool_.begin());
         auto& buf = l.back();
         buf.resize(std::distance(b, e));
         std::copy(b, e, buf.begin());
@@ -1085,7 +1085,7 @@ SipsIceTransport::getBuff(decltype(buffPool_)& l, const size_t s)
     if (buffPool_.empty())
         l.emplace_back(s);
     else {
-        l.splice(l.end(), buffPool_, buffPool_.cbegin());
+        l.splice(l.end(), buffPool_, buffPool_.begin());
         auto& buf = l.back();
         buf.resize(s);
     }
