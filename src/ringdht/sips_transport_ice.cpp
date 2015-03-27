@@ -302,11 +302,19 @@ SipsIceTransport::startTlsSession()
 
     gnutls_dtls_set_mtu(session_, DTLS_MTU);
 
-    gnutls_transport_set_push_function(session_, [](gnutls_transport_ptr_t t,
-                                                    const void* d ,
-                                                    size_t s) -> ssize_t {
+    gnutls_transport_set_vec_push_function(session_, [](gnutls_transport_ptr_t t,
+                                                    const giovec_t* iov,
+                                                    int iovcnt) -> ssize_t {
         auto this_ = reinterpret_cast<SipsIceTransport*>(t);
-        return this_->tlsSend(d, s);
+        ssize_t sent = 0;
+        for (int i=0; i<iovcnt; i++) {
+            const giovec_t& dat = *(iov+i);
+            auto ret = this_->tlsSend(dat.iov_base, dat.iov_len);
+            if (ret < 0)
+                return ret;
+            sent += ret;
+        }
+        return sent;
     });
     gnutls_transport_set_pull_function(session_, [](gnutls_transport_ptr_t t,
                                                     void* d,
