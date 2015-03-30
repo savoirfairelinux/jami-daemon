@@ -329,7 +329,7 @@ void
 sendTextMessage(const std::string& callID, const std::string& message, const std::string& from)
 {
 #if HAVE_INSTANT_MESSAGING
-   ring::Manager::instance().sendTextMessage(callID, message, from);
+   ring::Manager::instance().sendCallTextMessage(callID, message, from);
 #endif
 }
 
@@ -337,7 +337,7 @@ void
 sendTextMessage(const std::string& callID, const std::string& message)
 {
 #if HAVE_INSTANT_MESSAGING
-    ring::Manager::instance().sendTextMessage(callID, message, "Me");
+    ring::Manager::instance().sendCallTextMessage(callID, message, "Me");
 #else
     RING_ERR("Could not send \"%s\" text message to %s since Ring daemon does not support it, please recompile with instant messaging support", message.c_str(), callID.c_str());
 #endif
