@@ -41,6 +41,7 @@
 
 #include "noncopyable.h"
 #include "media_buffer.h"
+#include "media_device.h"
 
 #include <map>
 #include <memory>
@@ -56,7 +57,6 @@ namespace ring {
 
 class AudioBuffer;
 class MediaIOHandle;
-class DeviceParams;
 class MediaDescription;
 
 class MediaEncoderException : public std::runtime_error {
@@ -87,8 +87,8 @@ public:
     /* getWidth and getHeight return size of the encoded frame.
      * Values have meaning only after openOutput call.
      */
-    int getWidth() const { return dstWidth_; }
-    int getHeight() const { return dstHeight_; }
+    int getWidth() const { return device_.width; }
+    int getHeight() const { return device_.height; }
 
 private:
     NON_COPYABLE(MediaEncoder);
@@ -112,8 +112,6 @@ private:
     uint8_t *scaledFrameBuffer_ = nullptr;
     int scaledFrameBufferSize_ = 0;
     int streamIndex_ = -1;
-    int dstWidth_ = 0;
-    int dstHeight_ = 0;
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
     uint8_t *encoderBuffer_ = nullptr;
     int encoderBufferSize_ = 0;
@@ -121,6 +119,7 @@ private:
 
 protected:
     AVDictionary *options_ = nullptr;
+    DeviceParams device_;
 };
 
 } // namespace ring

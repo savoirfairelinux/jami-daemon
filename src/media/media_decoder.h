@@ -41,6 +41,7 @@
 
 #include "audio/audiobuffer.h"
 
+#include "rational.h"
 #include "noncopyable.h"
 
 #include <map>
@@ -99,7 +100,7 @@ class MediaDecoder {
 
         int getWidth() const;
         int getHeight() const;
-        int getFps() const;
+        rational<unsigned> getFps() const;
         int getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);

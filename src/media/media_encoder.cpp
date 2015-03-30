@@ -30,7 +30,6 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "media_device.h"
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"
@@ -70,12 +69,14 @@ MediaEncoder::~MediaEncoder()
 
 void MediaEncoder::setDeviceOptions(const DeviceParams& args)
 {
-    if (args.width)
-        av_dict_set(&options_, "width", ring::to_string(args.width).c_str(), 0);
-    if (args.height)
-        av_dict_set(&options_, "height", ring::to_string(args.height).c_str(), 0);
-    if (args.framerate)
-        av_dict_set(&options_, "framerate", ring::to_string(args.framerate).c_str(), 0);
+    device_ = args;
+    if (device_.width)
+        av_dict_set(&options_, "width", ring::to_string(device_.width).c_str(), 0);
+    if (device_.height)
+        av_dict_set(&options_, "height", ring::to_string(device_.height).c_str(), 0);
+    if (not device_.framerate)
+        device_.framerate = 30;
+    av_dict_set(&options_, "framerate", ring::to_string(device_.framerate.real()).c_str(), 0);
 }
 
 void MediaEncoder::setOptions(const MediaDescription& args)
@@ -514,18 +515,15 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
 
     if (is_video) {
         // resolution must be a multiple of two
-        auto width_param = av_dict_get(options_, "width", NULL, 0);
-        char *width = width_param ? width_param->value : nullptr;
-        dstWidth_ = encoderCtx_->width = width ? atoi(width) : 0;
-        auto height_param = av_dict_get(options_, "height", NULL, 0);
-        char *height = height_param ? height_param->value : nullptr;
-        dstHeight_ = encoderCtx_->height = height ? atoi(height) : 0;
+        encoderCtx_->width = device_.width;
+        encoderCtx_->height = device_.height;
 
-        auto framerate_param = av_dict_get(options_, "framerate", NULL, 0);
-        const char *framerate =  framerate_param ? framerate_param->value : nullptr;
-        const int DEFAULT_FPS = 30;
-        const int fps = framerate ? atoi(framerate) : DEFAULT_FPS;
-        encoderCtx_->time_base = (AVRational) {1, fps};
+        // time base = 1/FPS
+        encoderCtx_->time_base = AVRational {
+            (int) device_.framerate.denominator(),
+            (int) device_.framerate.numerator()
+        };
+
         // emit one intra frame every gop_size frames
         encoderCtx_->max_b_frames = 0;
         encoderCtx_->pix_fmt = PIXEL_FORMAT(YUV420P); // TODO: option me !

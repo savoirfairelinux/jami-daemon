@@ -83,7 +83,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
         av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
     }
     if (params.framerate)
-        av_dict_set(&options_, "framerate", ring::to_string(params.framerate).c_str(), 0);
+        av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
     if (params.channel)
         av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
@@ -429,12 +429,11 @@ int MediaDecoder::getWidth() const
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
-int  // TODO : use of float fps is more accurate
+rational<unsigned>
 MediaDecoder::getFps() const
 {
-    return (avStream_->avg_frame_rate.den != 0 ?
-            (int)(avStream_->avg_frame_rate.num / avStream_->avg_frame_rate.den)
-            : 0);
+    return {(unsigned)avStream_->avg_frame_rate.num,
+            (unsigned)avStream_->avg_frame_rate.den};
 }
 
 int MediaDecoder::getPixelFormat() const
