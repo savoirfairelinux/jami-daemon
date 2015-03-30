@@ -52,10 +52,11 @@ std::map<std::string, std::string> getVolatileAccountDetails(const std::string& 
 void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 std::string addAccount(const std::map<std::string, std::string>& details);
-void removeAccount(const std::string& accoundID);
+void removeAccount(const std::string& accountID);
 std::vector<std::string> getAccountList();
-void sendRegister(const std::string& accoundID, bool enable);
+void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
+void sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -148,6 +149,12 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "AccountsChanged";
                 using cb_type = void(void);
         };
+        struct Error {
+                constexpr static const char* name = "Error";
+                using cb_type = void(int /*alert*/);
+        };
+
+        // TODO: move those to AccountSignal in next API breakage
         struct StunStatusFailed {
                 constexpr static const char* name = "StunStatusFailed";
                 using cb_type = void(const std::string& /*account_id*/);
@@ -160,9 +167,9 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "VolatileDetailsChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
         };
-        struct Error {
-                constexpr static const char* name = "Error";
-                using cb_type = void(int /*alert*/);
+        struct IncomingMessage {
+                constexpr static const char* name = "IncomingMessage";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
         };
 };
 
