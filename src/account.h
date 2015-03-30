@@ -152,6 +152,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * This is why no newIncomingCall() method exist here.
          */
 
+        /**
+         * If supported, send a text message from this account.
+         */
+        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */) {};
+
         std::vector<std::shared_ptr<Call>> getCalls();
 
         /**

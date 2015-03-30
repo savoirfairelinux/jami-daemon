@@ -394,7 +394,7 @@ class ManagerImpl {
          * @param message	The content of the message
         * @param from	        The sender of this message (could be another participant of a conference)
          */
-        bool sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+        bool sendCallTextMessage(const std::string& callID, const std::string& message, const std::string& from);
 #endif // HAVE_INSTANT_MESSAGING
 
         /**
@@ -412,6 +412,8 @@ class ManagerImpl {
          *		 true for registration request
          */
         void sendRegister(const std::string& accountId, bool enable);
+
+        void sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
 
         /**
          * Get account list

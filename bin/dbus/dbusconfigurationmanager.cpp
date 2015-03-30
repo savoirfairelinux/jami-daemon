@@ -95,6 +95,12 @@ DBusConfigurationManager::registerAllAccounts(void)
     DRing::registerAllAccounts();
 }
 
+void
+DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+{
+    DRing::sendAccountTextMessage(accountID, to, message);
+}
+
 auto
 DBusConfigurationManager::getTlsDefaultSettings() -> decltype(DRing::getTlsDefaultSettings())
 {
