@@ -1626,7 +1626,7 @@ ManagerImpl::incomingMessage(const std::string& callID,
 
 //THREAD=VoIP
 bool
-ManagerImpl::sendTextMessage(const std::string& callID,
+ManagerImpl::sendCallTextMessage(const std::string& callID,
                              const std::string& message,
                              const std::string& from)
 {
@@ -2813,6 +2813,15 @@ ManagerImpl::sendRegister(const std::string& accountID, bool enable)
         acc->doRegister();
     } else
         acc->doUnregister();
+}
+
+void
+ManagerImpl::sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+{
+    const auto acc = getAccount(accountID);
+    if (!acc)
+        return;
+    acc->sendTextMessage(to, message);
 }
 
 std::shared_ptr<AudioLayer>

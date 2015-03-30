@@ -74,6 +74,7 @@ class DBusConfigurationManager :
         std::vector<std::string> getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
+        void sendTextMessage(const std::string& accoundID, const std::string& to, const std::string& message);
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
         std::vector<unsigned> getCodecList();
