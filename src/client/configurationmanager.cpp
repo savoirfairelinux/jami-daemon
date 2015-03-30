@@ -237,6 +237,12 @@ registerAllAccounts()
     ring::Manager::instance().registerAccounts();
 }
 
+void
+sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+{
+    ring::Manager::instance().sendTextMessage(accountID, to, message);
+}
+
 ///This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)

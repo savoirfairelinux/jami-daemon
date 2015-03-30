@@ -3,7 +3,8 @@
     <interface name="cx.ring.Ring.ConfigurationManager">
 
         <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
-            Used to handle the configuration stuff: accounts settings, account registration, user preferences, ...
+            Used to handle the configuration stuff: accounts settings, user preferences, ...
+            TODO: move runtime account stuff in accountmanager
         </tp:docstring>
 
         <method name="getAccountTemplate" tp:name-for-bindings="getAccountTemplate">
@@ -234,6 +235,28 @@
                </tp:docstring>
            </arg>
        </method>
+
+      <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="to" direction="in">
+          </arg>
+          <arg type="s" name="message" direction="in">
+          </arg>
+       </method>
+
+       <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
+            <tp:docstring>
+                Notify clients that a new text message has been received at the account level.
+            </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="from">
+           </arg>
+           <arg type="s" name="message">
+           </arg>
+       </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">
            <tp:docstring>
