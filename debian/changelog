@@ -1,0 +1,6 @@
+ring-daemon (2.0.1-1) unstable; urgency=medium
+
+  [ Thibault Cohen]
+  * New upstream version
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Tue, 17 Mar 2015 10:50:19 -0400

@@ -1,0 +1,46 @@
+Source: ring-daemon
+Section: comm
+Priority: extra
+Maintainer: Thibault Cohen <thibault.cohen@savoirfairelinux.com>
+Build-Depends: debhelper (>= 9),
+# ring-daemon
+ autoconf, automake, libpulse-dev, libsamplerate0-dev, libtool, libdbus-1-dev,
+ libasound2-dev, libexpat1-dev, libpcre3-dev, libyaml-cpp-dev, libboost-dev,
+ libdbus-c++-dev, libsndfile1-dev, libsrtp-dev, libxext-dev,
+ libxfixes-dev, yasm, autopoint, unbound-anchor, git-core, libspeex-dev,
+ libspeexdsp-dev, autotools-dev, chrpath, check, astyle, 
+ uuid-dev, libudev-dev, libgnutls28-dev,
+Standards-Version: 3.9.6
+Homepage: http://www.sflphone.org
+Vcs-Git: https://gerrit-ring.savoirfairelinux.com/ring
+Vcs-Browser: https://gerrit-ring.savoirfairelinux.com/#/admin/projects/ring
+
+Package: ring-daemon
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: SIP and IAX2 compatible VoIP phone - core daemon
+ SFLphone is a SIP/IAX2 compatible softphone for Linux. The SFLphone project's
+ goal is to create a robust enterprise-class desktop phone. While it can serve
+ home users very well, it is designed with a hundred-calls-a-day receptionist
+ in mind.
+ .
+ It features a flexible client/server architecture where the GTK+ client talks
+ to the daemon through DBus and is capable of handling multiple VoIP connections
+ at once.
+ .
+ This is the daemon package required by all SFLphone clients.
+
+Package: ring-daemon-dev
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: SIP and IAX2 compatible VoIP phone - core daemon
+ SFLphone is a SIP/IAX2 compatible softphone for Linux. The SFLphone project's
+ goal is to create a robust enterprise-class desktop phone. While it can serve
+ home users very well, it is designed with a hundred-calls-a-day receptionist
+ in mind.
+ .
+ It features a flexible client/server architecture where the GTK+ client talks
+ to the daemon through DBus and is capable of handling multiple VoIP connections
+ at once.
+ .
+ This package contains ring daemon headers.
