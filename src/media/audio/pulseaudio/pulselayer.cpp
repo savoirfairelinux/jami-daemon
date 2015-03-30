@@ -118,6 +118,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 #if PA_CHECK_VERSION(1, 0, 0)
     pa_proplist *pl = pa_proplist_new();
     pa_proplist_sets(pl, PA_PROP_MEDIA_ROLE, "phone");
+    pa_proplist_sets(pl, PA_PROP_FILTER_WANT, "echo-cancel");
 
     context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME, pl);
 
@@ -126,6 +127,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
 #else
     setenv("PULSE_PROP_media.role", "phone", 1);
+    setenv("PULSE_PROP_filter.want", "echo-cancel", 1);
     context_ = pa_context_new(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME);
 #endif
 
