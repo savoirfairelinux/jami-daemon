@@ -885,7 +885,6 @@ SipsIceTransport::getRemoteAddress() const
 ssize_t
 SipsIceTransport::tlsSend(const void* d, size_t s)
 {
-    RING_DBG("SipsIceTransport::tlsSend %lu", s);
     return ice_->send(comp_id_, (const uint8_t*)d, s);
 }
 
@@ -899,8 +898,6 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
     }
     const auto& front = tlsInputBuff_.front();
     const auto n = std::min(front.size(), s);
-    RING_DBG("SipsIceTransport::tlsRecv %lu at %lu",
-             n, clock::now().time_since_epoch().count());
     std::copy_n(front.begin(), n, (uint8_t*)d);
     tlsInputBuff_.pop_front();
     if (tlsInputBuff_.empty())
@@ -911,8 +908,6 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
 int
 SipsIceTransport::waitForTlsData(unsigned ms)
 {
-    RING_DBG("SipsIceTransport::waitForTlsData %u", ms);
-
     std::unique_lock<std::mutex> l(inputBuffMtx_);
     if (tlsInputBuff_.empty()) {
         cv_.wait_for(l, std::chrono::milliseconds(ms), [&]() {
