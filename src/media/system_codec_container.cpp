@@ -79,6 +79,12 @@ SystemCodecContainer::initCodecConfig()
                                                DEFAULT_VIDEO_BITRATE),
 #endif
         /* Define supported audio codec*/
+
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_OPUS,
+                                               "opus", "libopus",
+                                               CODEC_ENCODER_DECODER,
+                                               0, 48000, 2, 104),
+
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
                                                "PCMA", "pcm_alaw",
                                                CODEC_ENCODER_DECODER,
@@ -88,11 +94,6 @@ SystemCodecContainer::initCodecConfig()
                                                "PCMU" ,"pcm_mulaw",
                                                CODEC_ENCODER_DECODER,
                                                64, 8000, 1, 0),
-
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_OPUS,
-                                               "opus", "libopus",
-                                               CODEC_ENCODER_DECODER,
-                                               0, 48000, 2, 104),
 
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_ADPCM_G722,
                                                "G722", "g722",
