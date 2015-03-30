@@ -1,0 +1,36 @@
+#!/usr/bin/make -f
+
+# Uncomment this to turn on verbose mode.
+export DH_VERBOSE=1
+
+%:
+	dh $@ 
+
+override_dh_auto_configure:
+	mkdir -p contrib/native && cd contrib/native && ../bootstrap --disable-ogg --disable-flac --disable-vorbis --disable-vorbisenc --disable-speex --disable-sndfile --disable-speexdsp --disable-gnutls && make list && make -j 2
+	@echo "Contribs built"
+	#./autogen.sh && ./configure --prefix=/usr --with-contrib=yes CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
+	./autogen.sh && ./configure --prefix=/usr CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
+	dh_auto_configure
+
+override_dh_auto_test:
+
+override_dh_auto_build:
+	make -j2
+
+override_dh_auto_clean:
+	# [ -d daemon/contrib/native ] && cd daemon/contrib/native && $(MAKE) distclean
+	[ ! -f Makefile ] || $(MAKE) distclean
+	dh_auto_clean
+
+override_dh_auto_install:
+	# RING daemon
+	make DESTDIR=$(CURDIR)/debian/ring-daemon install
+	# Dev
+	# TODO include or not a and la file
+	find $(CURDIR)/debian/ring-daemon/ -name libring.a -delete
+	find $(CURDIR)/debian/ring-daemon/ -name libring.la -delete
+	mkdir -p $(CURDIR)/debian/ring-daemon-dev/usr/include/dring
+	mv $(CURDIR)/debian/ring-daemon/usr/include/dring/* $(CURDIR)/debian/ring-daemon-dev/usr/include/dring
+	rm -rf  $(CURDIR)/debian/ring-daemon/usr/include/
+	dh_auto_install
