@@ -1,0 +1,9 @@
+sflphone for Debian
+-------------------
+
+Once you have created an account on sip.sflphone.org, you can use the Echo Test
+number to make sure your sound settings are all good:
+
+  Dial *100
+
+ -- Francois Marier <francois@debian.org>  Thu, 06 Aug 2009 15:25:17 +1200

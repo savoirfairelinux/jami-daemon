@@ -1,0 +1,2 @@
+?package(sflphone-gnome):needs="X11" section="Applications/Network/Communication"\
+  title="SFLphone" command="/usr/bin/sflphone-client-gnome"

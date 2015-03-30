@@ -1,0 +1,2 @@
+version=3
+http://www.sflphone.org/download/source-code https://projects.savoirfairelinux.com/attachments/download/[0-9]+/sflphone-([0-9.]+)\.tar\.gz debian svn-upgrade
