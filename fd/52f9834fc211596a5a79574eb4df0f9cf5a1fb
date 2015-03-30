@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI
+Code-Review+2: Eloi Bail <eloi.bail@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Mon, 30 Mar 2015 17:52:51 -0400
+Reviewed-on: https://gerrit-sflphone.savoirfairelinux.com/1606
+Project: ring
+Branch: refs/heads/release-2.0.x
