@@ -130,6 +130,13 @@ MediaEncoder::openOutput(const char *filename,
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
+    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_HEVC) {
+
+        forcePresetHEVC();
+        //force profile
+        encoderCtx_->profile = FF_PROFILE_HEVC_MAIN;
+        encoderCtx_->level = 0x01;
+
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
@@ -140,6 +147,18 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
+    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP9) {
+        // Using information given on this page:
+        // http://www.webmproject.org/docs/encoder-parameters/
+        /*
+        av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
+        av_opt_set_int(encoderCtx_->priv_data, "error-resilient", 1, 0);
+        av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 3, 0);
+        encoderCtx_->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
+        encoderCtx_->qmin = 4;
+        encoderCtx_->qmax = 56;
+        encoderCtx_->gop_size = 999999;
+        */
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         encoderCtx_->rc_buffer_size = encoderCtx_->bit_rate;
     }
@@ -505,8 +524,8 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
     // Use constant bitrate (video only)
     if (is_video) {
         RING_DBG("[%s] Using CBR", encoderName);
-        encoderCtx_->rc_min_rate = \
-            encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
+        /*encoderCtx_->rc_min_rate = \
+            encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;*/
     }
 
     encoderCtx_->thread_count = std::thread::hardware_concurrency();
@@ -580,6 +599,56 @@ void MediaEncoder::forcePresetX264()
     const char *tune = "zerolatency";
     if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
         RING_WARN("Failed to set x264 tune '%s'", tune);
+}
+
+void MediaEncoder::forcePresetHEVC()
+{
+    const char *speedPreset = "ultrafast";
+    if (av_opt_set(encoderCtx_->priv_data, "preset", speedPreset, 0))
+        RING_WARN("Failed to set x265 preset '%s'", speedPreset);
+    /*
+    char *tune = "zerolatency";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    */
+    /*
+    char *tune = "psnr";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    tune = "ssim";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+    */
+    char* tune = "zerolatency";
+    if (av_opt_set(encoderCtx_->priv_data, "tune", tune, 0))
+        RING_WARN("Failed to set x265 tune '%s'", tune);
+
+    tune = "40";
+    if (av_opt_set(encoderCtx_->priv_data, "crf", tune, 0))
+        RING_WARN("Failed to set x265 crf '%s'", tune);
+
+    tune = "crf-min=30";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 crf '%s'", tune);
+    tune = "crf-max=50";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 crf '%s'", tune);
+
+    tune = "rd=0";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 rd '%s'", tune);
+    tune = "ctu=16";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 ctu '%s'", tune);
+    tune = "min-cu-size=16";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 ctu min '%s'", tune);
+
+    tune = "aq-strength=3";
+    if (av_opt_set(encoderCtx_->priv_data, "x265-params", tune, 0))
+        RING_WARN("Failed to set x265 aq-strengh '%s'", tune);
+
+
 }
 
 void MediaEncoder::extractProfileLevelID(const std::string &parameters,

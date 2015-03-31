@@ -40,7 +40,7 @@ namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
-constexpr static auto DEFAULT_VIDEO_BITRATE = 800; // in Kbits/second
+constexpr static auto DEFAULT_VIDEO_BITRATE = 400; // in Kbits/second
 
 SystemCodecContainer::SystemCodecContainer()
 {
@@ -63,8 +63,19 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                DEFAULT_VIDEO_BITRATE),
 
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_HEVC,
+                                               "H265", "libx265",
+                                               CODEC_ENCODER_DECODER,
+                                               0),
+
+
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
                                                "H263", "h263",
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
+
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP9,
+                                               "VP9", "libvpx",
                                                CODEC_ENCODER_DECODER,
                                                DEFAULT_VIDEO_BITRATE),
 

@@ -96,6 +96,7 @@ private:
     void setScaleDest(void *data, int width, int height, int pix_fmt);
     void prepareEncoderContext(bool is_video);
     void forcePresetX264();
+    void forcePresetHEVC();
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
     AVCodec *outputEncoder_ = nullptr;
