@@ -198,9 +198,11 @@ FFMPEGCONF += \
 	--enable-hwaccel=vp8_mediacodec \
 	--enable-hwaccel=h264_mediacodec \
 	--enable-hwaccel=mpeg4_mediacodec \
+	--enable-hwaccel=hevc_mediacodec \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=h264_mediacodec \
-	--enable-decoder=mpeg4_mediacodec
+	--enable-decoder=mpeg4_mediacodec \
+	--enable-decoder=hevc_mediacodec
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
@@ -224,9 +226,11 @@ FFMPEGCONF += \
 	--enable-hwaccel=h263_vaapi \
 	--enable-hwaccel=vp8_vaapi \
 	--enable-hwaccel=mjpeg_vaapi \
+	--enable-hwaccel=hevc_vaapi \
 	--enable-encoder=h264_vaapi \
 	--enable-encoder=vp8_vaapi \
 	--enable-encoder=mjpeg_vaapi \
+	--enable-encoder=hevc_vaapi \
 	--enable-cuvid \
 	--enable-ffnvcodec \
 	--enable-nvdec \
@@ -248,7 +252,9 @@ FFMPEGCONF += \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
 	--enable-hwaccel=mpeg4_videotoolbox \
+	--enable-hwaccel=hevc_videotoolbox \
 	--enable-encoder=h264_videotoolbox \
+	--enable-encoder=hevc_videotoolbox \
 	--disable-securetransport
 endif
 
@@ -258,7 +264,9 @@ FFMPEGCONF += \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
 	--enable-hwaccel=mpeg4_videotoolbox \
+	--enable-hwaccel=hevc_videotoolbox \
 	--enable-encoder=h264_videotoolbox \
+	--enable-encoder=hevc_videotoolbox \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--arch=$(ARCH) \
