@@ -39,7 +39,7 @@
 #include "pres_sub_server.h"
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 #include <thread>
 #include <sstream>

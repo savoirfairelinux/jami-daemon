@@ -35,7 +35,7 @@
 #include "media_buffer.h"
 #include "logger.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 #include "manager.h"
 #include "sinkclient.h"
 #include "logger.h"

@@ -51,7 +51,7 @@
 #include "sipvoiplink.h"
 #include "sip_utils.h"
 #include "manager.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 #include "logger.h"
 
