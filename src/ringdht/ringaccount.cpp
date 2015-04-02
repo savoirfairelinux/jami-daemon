@@ -738,8 +738,8 @@ void RingAccount::doRegister_()
 
         // Listen for incoming calls
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        auto listenKey = "callto:"+dht_.getId().toString();
-        RING_WARN("Listening on %s : %s", listenKey.c_str(), dht::InfoHash::get(listenKey).toString().c_str());
+        auto listenKey = dht::InfoHash::get("callto:"+dht_.getId().toString());
+        RING_WARN("Listening on callto:%s : %s", dht_.getId().toString().c_str(), listenKey.toString().c_str());
         dht_.listen (
             listenKey,
             [shared,listenKey] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
@@ -787,8 +787,8 @@ void RingAccount::doRegister_()
                                 ),
                                 reply_vid
                             },
-                            [weak_call,ice,shared,listenKey,reply_vid](bool ok) {
-                                auto& this_ = *std::static_pointer_cast<RingAccount>(shared).get();
+                            [weak_call,shared,listenKey,reply_vid](bool ok) {
+                                auto& this_ = *shared.get();
                                 if (!ok) {
                                     RING_WARN("Can't put ICE descriptor on DHT");
                                     if (auto call = weak_call.lock()) {
@@ -977,7 +977,7 @@ RingAccount::loadNodes() const
             std::string id, ipstr;
             if (!(iss >> id >> ipstr)) { break; }
             IpAddr ip {ipstr};
-            dht::Dht::NodeExport e {{id}, ip, ip.getLength()};
+            dht::Dht::NodeExport e {dht::InfoHash(id), ip, ip.getLength()};
             nodes.push_back(e);
         }
     }
@@ -994,7 +994,7 @@ RingAccount::loadValues() const
         try {
             std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
             std::istreambuf_iterator<char> begin(ifs), end;
-            values.emplace_back(dht::Dht::ValuesExport{{fname}, std::vector<uint8_t>{begin, end}});
+            values.emplace_back(dht::Dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
             RING_ERR("Error reading value: %s", e.what());
         }
