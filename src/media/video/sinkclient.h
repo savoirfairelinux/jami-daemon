@@ -46,6 +46,8 @@
 #include <vector>
 #include <memory>
 
+#define DEBUG_FPS
+
 namespace ring { namespace video {
 
 #if HAVE_SHM
