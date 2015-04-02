@@ -77,7 +77,7 @@
 #include "conference.h"
 #include "ice_transport.h"
 
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 #if HAVE_TLS
 #include "gnutls_support.h"

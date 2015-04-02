@@ -39,8 +39,8 @@
 #include "logger.h"
 #include "manager.h"
 #include "system_codec_container.h"
-#include "client/signal.h"
 #include "video/sinkclient.h"
+#include "client/ring_signal.h"
 
 #include <functional>
 #include <memory>

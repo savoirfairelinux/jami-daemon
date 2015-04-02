@@ -3,7 +3,7 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libclient.la
 
 noinst_HEADERS = \
-	signal.h
+	ring_signal.h
 
 PRESENCE_SRC = presencemanager.cpp
 
@@ -13,7 +13,7 @@ noinst_HEADERS += videomanager.h
 endif
 
 libclient_la_SOURCES = \
-	signal.cpp \
+	ring_signal.cpp \
 	callmanager.cpp \
 	configurationmanager.cpp \
 	$(PRESENCE_SRC) \
