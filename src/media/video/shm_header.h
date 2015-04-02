@@ -38,16 +38,20 @@
 
 #include <semaphore.h>
 
+// Implementation note: double-buffering
+// Shared memory is divided in two regions, each representing one frame.
+// First byte of each frame is warranted to by aligned on 16 bytes.
+// One region is marked readable: this region can be safely read.
+// The other region is writeable: only the producer can use it.
+
 struct SHMHeader {
-    sem_t notification;
-    sem_t mutex;
-
-    unsigned buffer_gen;
-    int buffer_size;
-    /* The header will be aligned on 16-byte boundaries */
-    char padding[8];
-
-    char data[];
+    sem_t mutex; // Lock it before any operations on following fields.
+    sem_t frameGenMutex; // unlocked by producer when frameGen modified
+    unsigned frameGen; // monotonically incremented when a producer changes readOffset
+    unsigned frameSize; // size in bytes of 1 frame
+    unsigned readOffset; // offset of readable frame in data
+    unsigned writeOffset; // offset of writable frame in data
+    char data[]; // the whole shared memory
 };
 
 #endif
