@@ -44,7 +44,7 @@
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
 
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"

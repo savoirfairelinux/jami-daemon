@@ -52,8 +52,8 @@
 #include "security_const.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
-#include "client/signal.h"
 #include "account_const.h"
+#include "client/ring_signal.h"
 
 #include <dirent.h>
 

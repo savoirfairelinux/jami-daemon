@@ -38,7 +38,7 @@
 #include "sippresence.h"
 #include "logger.h"
 #include "pres_sub_server.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 namespace ring {
 

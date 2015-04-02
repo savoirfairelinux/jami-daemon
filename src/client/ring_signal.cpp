@@ -28,7 +28,7 @@
  *  as that of the covered work.
  */
 
-#include "signal.h"
+#include "ring_signal.h"
 
 namespace ring {
 
