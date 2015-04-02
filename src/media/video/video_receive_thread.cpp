@@ -144,9 +144,7 @@ void VideoReceiveThread::process()
 void VideoReceiveThread::cleanup()
 {
     if (detach(sink_.get()))
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
-                                                        sink_->openedName(),
-                                                        false);
+        sink_->emitShmClose(false);
     sink_->stop();
 
     videoDecoder_.reset();
@@ -206,9 +204,7 @@ void VideoReceiveThread::enterConference()
         return;
 
     if (detach(sink_.get())) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
-                                                        sink_->openedName(),
-                                                        false);
+        sink_->emitShmClose(false);
         RING_DBG("RX: shm sink <%s> detached", sink_->openedName().c_str());
     }
 }

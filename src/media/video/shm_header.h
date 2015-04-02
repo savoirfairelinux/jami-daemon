@@ -37,17 +37,24 @@
 #define SHM_HEADER_H_
 
 #include <semaphore.h>
+//SHM flipflop:
+// data memory is divided in two to store 2 frames (flip and flop)
+// each frame has its own mutex
+// frameReaderPtr will point to the correct data address (flip or flop)
 
 struct SHMHeader {
     sem_t notification;
-    sem_t mutex;
+    bool flipFlopShm; //tell if frame is stored at begining of shm data
+    sem_t mutex_flip;
+    sem_t mutex_flop;
 
     unsigned buffer_gen;
-    int buffer_size;
-    /* The header will be aligned on 16-byte boundaries */
-    char padding[8];
-
-    char data[];
+    unsigned frame_size;
+    bool isValid;
+    char* frameReaderPtr;
+    char* alignData = (char*) ((unsigned long) (&data[0] + 15) & ~15);
+    /* The header will be aligned on 16-byte boundaries see alignData*/
+    char data[]; // never use directly this pointer. Only use alignData
 };
 
 #endif

@@ -48,6 +48,8 @@
 #include "media_buffer.h"
 #include "logger.h"
 #include "noncopyable.h"
+#include "client/signal.h"
+#include "dring/videomanager_interface.h"
 
 #include <sys/mman.h>
 #include <fcntl.h>
@@ -94,6 +96,7 @@ class ShmHolder
 
         void render_frame(VideoFrame& src);
 
+        SHMHeader* shm_area_ {static_cast<SHMHeader*>(MAP_FAILED)};
     private:
         bool resize_area(std::size_t desired_length);
         void alloc_area(std::size_t desired_length) noexcept;
@@ -101,8 +104,8 @@ class ShmHolder
         std::string shm_name_;
         std::string opened_name_;
         std::size_t shm_area_len_ {0};
-        SHMHeader* shm_area_ {static_cast<SHMHeader*>(MAP_FAILED)};
         int fd_ {-1};
+        char* getShmAreaDataPtr();
 };
 
 void
@@ -159,9 +162,15 @@ ShmHolder::ShmHolder(const std::string& shm_name) : shm_name_ {shm_name}
     if (::sem_init(&shm_area_->notification, 1, 0) != 0)
         throw std::runtime_error {"sem_init: notification initialization failed"};
 
-    if (::sem_init(&shm_area_->mutex, 1, 1) != 0)
+    if (::sem_init(&shm_area_->mutex_flip, 1, 1) != 0)
         throw std::runtime_error {"sem_init: mutex initialization failed"};
+
+    if (::sem_init(&shm_area_->mutex_flop, 1, 1) != 0)
+        throw std::runtime_error {"sem_init: mutex initialization failed"};
+
+    shm_area_->isValid = true;
 }
+
 
 ShmHolder::~ShmHolder()
 {
@@ -208,6 +217,18 @@ ShmHolder::resize_area(size_t desired_length)
     return true;
 }
 
+char*
+ShmHolder::getShmAreaDataPtr()
+{
+    if (shm_area_->flipFlopShm)
+        shm_area_->frameReaderPtr = shm_area_->alignData;
+    else
+        shm_area_->frameReaderPtr = &shm_area_->alignData[shm_area_->frame_size];
+
+    shm_area_->flipFlopShm = not shm_area_->flipFlopShm;
+    return shm_area_->frameReaderPtr;
+}
+
 void
 ShmHolder::render_frame(VideoFrame& src)
 {
@@ -218,20 +239,44 @@ ShmHolder::render_frame(VideoFrame& src)
     const int height = src.height();
     const int format = VIDEO_PIXFMT_BGRA;
     const auto bytes = videoFrameSize(format, width, height);
+    // check if bytes keep the same size
+    if ((shm_area_->frame_size != 0) && (bytes != shm_area_->frame_size)) {
+        RING_WARN("trying to render a frame of different size: %dx%d",width, format);
+        return;
+    }
 
-    if (!resize_area(sizeof(SHMHeader) + bytes)) {
+    if (!resize_area(sizeof(SHMHeader) + (bytes * 2))) {
         RING_ERR("Could not resize area");
         return;
     }
 
-    SemGuardLock lk{shm_area_->mutex};
+    if (shm_area_->flipFlopShm)
+        SemGuardLock lk{shm_area_->mutex_flip};
+    else
+        SemGuardLock lk{shm_area_->mutex_flop};
 
-    dst.setFromMemory(shm_area_->data, format, width, height);
+    dst.setFromMemory(getShmAreaDataPtr(), format, width, height);
     scaler.scale(src, dst);
 
-    shm_area_->buffer_size = bytes;
+    shm_area_->frame_size = bytes;
     ++shm_area_->buffer_gen;
     sem_post(&shm_area_->notification);
+}
+
+void
+SinkClient::emitShmClose(bool isMixer)
+{
+    //set this shm to invalid
+    shm_->shm_area_->isValid = false;
+
+    //notify shm readers
+    if (shm_->shm_area_ != MAP_FAILED)
+        ::sem_post(&shm_->shm_area_->notification);
+
+    //emit signal
+    emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
+                                                    shm_->openedName(),
+                                                    isMixer);
 }
 
 std::string

@@ -75,6 +75,8 @@ class SinkClient : public VideoFramePassiveReader
             target_ = std::forward<T>(cb);
         }
 
+        void emitShmClose(bool isMixer);
+
     private:
         const std::string id_;
         std::function<void(unsigned char*)> target_;

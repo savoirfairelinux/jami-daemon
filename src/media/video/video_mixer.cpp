@@ -209,9 +209,7 @@ void VideoMixer::start_sink()
 void VideoMixer::stop_sink()
 {
     if (this->detach(sink_.get())) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
-                                                        sink_->openedName(),
-                                                        true);
+        sink_->emitShmClose(true);
         sink_->stop();
     }
 }

@@ -199,9 +199,7 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
-    emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
-                                                    sink_->openedName(),
-                                                    false);
+    sink_->emitShmClose(false);
     flushFrames();
     delete decoder_;
     decoder_ = nullptr;
