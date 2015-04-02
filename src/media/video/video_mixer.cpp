@@ -195,7 +195,7 @@ void VideoMixer::start_sink()
 {
     if (sink_->start()) {
         if (this->attach(sink_.get())) {
-            emitSignal<DRing::VideoSignal::DecodingStarted>(id_,
+            emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
                                                             sink_->openedName(),
                                                             width_, height_,
                                                             true);
@@ -208,12 +208,11 @@ void VideoMixer::start_sink()
 
 void VideoMixer::stop_sink()
 {
-    if (this->detach(sink_.get())) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(id_,
-                                                        sink_->openedName(),
-                                                        true);
-        sink_->stop();
-    }
+    this->detach(sink_.get());
+    emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
+                                                    sink_->openedName(),
+                                                    true);
+    sink_->stop();
 }
 
 int VideoMixer::getWidth() const
