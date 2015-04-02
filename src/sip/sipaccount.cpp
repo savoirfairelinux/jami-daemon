@@ -55,7 +55,7 @@
 #include "config/yamlparser.h"
 #include "logger.h"
 #include "manager.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"

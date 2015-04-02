@@ -47,7 +47,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#include "client/signal.h"
+#include "client/ring_signal.h"
 #include "account_schema.h"
 #include "string_utils.h"
 #include "config/yamlparser.h"

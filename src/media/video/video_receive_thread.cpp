@@ -36,7 +36,7 @@
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/signal.h"
+#include "client/ring_signal.h"
 #include "sinkclient.h"
 #include "logger.h"
 
