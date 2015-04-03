@@ -186,10 +186,10 @@ VideoInput::createDecoder()
     decOpts_.width = decoder_->getWidth();
     decOpts_.height = decoder_->getHeight();
     decOpts_.framerate = decoder_->getFps();
-    RING_INFO("create decoder with video params : size=%dX%d, fps=%d",
+    RING_INFO("create decoder with video params : size=%dX%d, fps=%lf",
             decOpts_.width,
             decOpts_.height,
-            decOpts_.framerate);
+            decOpts_.framerate.real());
     foundDecOpts(decOpts_);
 }
 
