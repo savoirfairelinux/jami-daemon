@@ -28,15 +28,13 @@ LIBAVCONF += \
 		--enable-parser=h263 \
 		--enable-parser=h264 \
 		--enable-parser=mpeg4video \
-		--enable-parser=opus \
-		--enable-parser=vp8
+		--enable-parser=opus
 
 #librairies
 LIBAVCONF += \
 		--enable-libx264 \
 		--enable-libopus \
-		--enable-libspeex \
-		--enable-libvpx
+		--enable-libspeex
 
 #encoders/decoders
 LIBAVCONF += \
@@ -54,20 +52,24 @@ LIBAVCONF += \
 		--enable-decoder=libopus \
 		--enable-encoder=mpeg4 \
 		--enable-decoder=mpeg4 \
-		--enable-encoder=libvpx_vp8 \
-		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
 		--enable-decoder=h263 \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex
 
 # Linux
-ifdef HAVE_LINUX
+ifndef HAVE_ANDROID
 LIBAVCONF += \
-	--enable-x11grab
+		--enable-parser=vp8 \
+		--enable-libvpx \
+		--enable-encoder=libvpx_vp8 \
+		--enable-decoder=vp8
 endif
 
-DEPS_libav = zlib x264 vpx $(DEPS_vpx)
+DEPS_libav = zlib x264 opus speex
+ifndef HAVE_ANDROID
+DEPS_libav += vpx $(DEPS_vpx)
+endif
 
 ifdef HAVE_CROSS_COMPILE
 LIBAVCONF += --enable-cross-compile
