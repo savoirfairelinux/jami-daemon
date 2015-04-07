@@ -4,6 +4,7 @@
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,6 +134,11 @@ class DBusConfigurationManager :
         std::map<std::string, std::string> validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
         std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
+
+        std::vector<std::string> getCertificateList();
+        std::string addCertificate(const std::vector<uint8_t>& certificate);
+        bool addCertificateRemote(const std::string& accountId, const std::string& certId);
+        bool banCertificate(const std::string& certId);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
