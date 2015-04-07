@@ -394,6 +394,31 @@ DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& c
     return DRing::getCertificateDetailsRaw(certificate);
 }
 
+std::vector<std::string>
+DBusConfigurationManager::getPinnedCertificates() {
+    return DRing::getPinnedCertificates();
+}
+
+std::string
+DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate) {
+    return DRing::pinCertificate(certificate);
+}
+
+std::string
+DBusConfigurationManager::pinCertificatePath(const std::string& certPath) {
+    return DRing::pinCertificate(certPath);
+}
+
+bool
+DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId, const std::string& certId) {
+    return DRing::pinRemoteCertificate(accountId, certId);
+}
+
+bool
+DBusConfigurationManager::setCertificateStatus(const std::string& accountId, const std::string& certId, const uint8_t& status) {
+    return DRing::setCertificateStatus(accountId, certId, (DRing::Certificate::Status )status);
+}
+
 void
 DBusConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {

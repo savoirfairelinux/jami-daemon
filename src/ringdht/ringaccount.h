@@ -41,6 +41,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "dring/security_const.h"
 
 #include <opendht/dhtrunner.h>
 
@@ -241,6 +242,9 @@ class RingAccount : public SIPAccountBase {
         void registerCA(const dht::crypto::Certificate&);
         bool unregisterCA(const dht::InfoHash&);
         std::vector<std::string> getRegistredCAs();
+
+        bool findCertificate(const std::string& pk_id);
+        bool setCertificateStatus(const std::string& cert_id, const DRing::Certificate::Status status);
 
     private:
 

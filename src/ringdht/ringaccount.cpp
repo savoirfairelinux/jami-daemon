@@ -62,7 +62,7 @@
 
 #include "config/yamlparser.h"
 
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 
 #include <opendht/securedht.h>
 #include <yaml-cpp/yaml.h>
@@ -868,6 +868,18 @@ RingAccount::unregisterCA(const dht::InfoHash& crt_id)
         } catch (const std::exception&) {}
     }
     return deleted;
+}
+
+bool
+RingAccount::findCertificate(const std::string& pk_id)
+{
+    return false;
+}
+
+bool
+RingAccount::setCertificateStatus(const std::string& cert_id, const DRing::Certificate::Status status)
+{
+    return false;
 }
 
 void

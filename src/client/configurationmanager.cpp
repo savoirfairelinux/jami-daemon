@@ -39,7 +39,8 @@
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
-#include "sip/tlsvalidator.h"
+#include "security/tlsvalidator.h"
+#include "security/certstore.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -220,6 +221,45 @@ getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
     RING_WARN("TLS not supported");
 #endif
     return {{}};
+}
+
+std::vector<std::string>
+getPinnedCertificates()
+{
+#if HAVE_TLS && HAVE_DHT
+    return ring::tls::CertificateStore::instance().getPinnedCertificates();
+#else
+    RING_WARN("TLS not supported");
+#endif
+    return {};
+}
+
+std::string
+pinCertificate(const std::vector<uint8_t>& certificate)
+{
+    return ring::tls::CertificateStore::instance().pinCertificate(certificate);
+}
+
+std::string
+pinCertificate(const std::string& path)
+{
+    return ring::tls::CertificateStore::instance().pinCertificate(path);
+}
+
+bool
+pinRemoteCertificate(const std::string& accountId, const std::string& certPkId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->findCertificate(certPkId);
+    return false;
+}
+
+bool
+setCertificateStatus(const std::string& accountId, const std::string& certId, Certificate::Status status)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->setCertificateStatus(certId, status);
+    return false;
 }
 
 void
@@ -640,7 +680,8 @@ setHookSettings(const std::map<std::string,
     ring::Manager::instance().hookPreference = HookPreference(settings);
 }
 
-void setAccountsOrder(const std::string& order)
+void
+setAccountsOrder(const std::string& order)
 {
     ring::Manager::instance().setAccountsOrder(order);
 }

@@ -42,6 +42,7 @@
 #include <cstdint>
 
 #include "dring.h"
+#include "security_const.h"
 
 namespace DRing {
 
@@ -139,6 +140,13 @@ std::map<std::string, std::string> validateCertificateRaw(const std::string& acc
 std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
 std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
 
+std::vector<std::string> getPinnedCertificates();
+std::string pinCertificate(const std::vector<uint8_t>& certificate);
+std::string pinCertificate(const std::string& path);
+
+bool pinRemoteCertificate(const std::string& accountId, const std::string& cert_pk_id);
+bool setCertificateStatus(const std::string& account, const std::string& certId, Certificate::Status status);
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -170,6 +178,14 @@ struct ConfigurationSignal {
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
+        };
+        struct CertificatePinned {
+                constexpr static const char* name = "CertificatePinned";
+                using cb_type = void(const std::string& /*certId*/);
+        };
+        struct CertificateExpired {
+                constexpr static const char* name = "CertificateExpired";
+                using cb_type = void(const std::string& /*certId*/);
         };
 };
 
