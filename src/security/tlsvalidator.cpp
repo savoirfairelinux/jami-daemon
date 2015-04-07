@@ -61,7 +61,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-namespace ring {
+namespace ring { namespace tls {
 
 //Map the internal ring Enum class of the exported names
 
@@ -217,8 +217,8 @@ TlsValidator::TlsValidator(const std::string& certificate, const std::string& pr
     , certificateFound_(false)
 {
     try {
-        x509crt_ = {fileutils::loadFile(certificatePath_)};
-        certificateContent_ = x509crt_.getPacked();
+        x509crt_ = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(certificatePath_));
+        certificateContent_ = x509crt_->getPacked();
         certificateFound_ = true;
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
@@ -238,9 +238,20 @@ TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
     , certificateFound_(true)
 {
     try {
-        x509crt_ = {certificate_raw};
-        certificateContent_ = x509crt_.getPacked();
-        certificateFound_ = true;
+        x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
+        certificateContent_ = x509crt_->getPacked();
+    } catch (const std::exception& e) {
+        throw TlsValidatorException("Can't load certificate");
+    }
+}
+
+TlsValidator::TlsValidator(const std::shared_ptr<dht::crypto::Certificate>& crt)
+    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
+    , certificateFound_(true)
+{
+    try {
+        x509crt_ = crt;
+        certificateContent_ = x509crt_->getPacked();
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
     }
@@ -423,7 +434,7 @@ unsigned int TlsValidator::compareToCa()
         return caValidationOutput_;
 
     const int err = gnutls_x509_crt_verify(
-        x509crt_.cert, &caCert_->x509crt_.cert, 1, 0, &caValidationOutput_);
+        x509crt_->cert, &caCert_->x509crt_->cert, 1, 0, &caValidationOutput_);
 
     if (err)
         return GNUTLS_CERT_SIGNER_NOT_FOUND;
@@ -952,7 +963,7 @@ bool TlsValidator::hasCa() const
 TlsValidator::CheckResult TlsValidator::getPublicSignature()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_signature(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_signature(x509crt_->cert, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -961,7 +972,7 @@ TlsValidator::CheckResult TlsValidator::getPublicSignature()
  */
 TlsValidator::CheckResult TlsValidator::getVersionNumber()
 {
-    int version = gnutls_x509_crt_get_version(x509crt_.cert);
+    int version = gnutls_x509_crt_get_version(x509crt_->cert);
     if (version < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
@@ -979,7 +990,7 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
 // gnutls_x509_crl_iter_crt_serial
 // gnutls_x509_crt_get_authority_key_gn_serial
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_serial(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_serial(x509crt_->cert, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -989,7 +1000,7 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
 TlsValidator::CheckResult TlsValidator::getIssuer()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_issuer_unique_id(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_issuer_unique_id(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -999,7 +1010,7 @@ TlsValidator::CheckResult TlsValidator::getIssuer()
 TlsValidator::CheckResult TlsValidator::getSubjectKeyAlgorithm()
 {
     gnutls_pk_algorithm_t algo = (gnutls_pk_algorithm_t) gnutls_x509_crt_get_pk_algorithm(
-        x509crt_.cert, nullptr);
+        x509crt_->cert, nullptr);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1019,7 +1030,7 @@ TlsValidator::CheckResult TlsValidator::getCN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1030,7 +1041,7 @@ TlsValidator::CheckResult TlsValidator::getN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1041,7 +1052,7 @@ TlsValidator::CheckResult TlsValidator::getO()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1052,7 +1063,7 @@ TlsValidator::CheckResult TlsValidator::getO()
  */
 TlsValidator::CheckResult TlsValidator::getSignatureAlgorithm()
 {
-    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(x509crt_.cert);
+    gnutls_sign_algorithm_t algo = (gnutls_sign_algorithm_t) gnutls_x509_crt_get_signature_algorithm(x509crt_->cert);
 
     if (algo < 0)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
@@ -1069,7 +1080,7 @@ TlsValidator::CheckResult TlsValidator::getSignatureAlgorithm()
 TlsValidator::CheckResult TlsValidator::getMd5Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_.cert, GNUTLS_DIG_MD5, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_MD5, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1081,7 +1092,7 @@ TlsValidator::CheckResult TlsValidator::getMd5Fingerprint()
 TlsValidator::CheckResult TlsValidator::getSha1Fingerprint()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_fingerprint(x509crt_.cert, GNUTLS_DIG_SHA1, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_fingerprint(x509crt_->cert, GNUTLS_DIG_SHA1, copy_buffer, &resultSize);
     return checkBinaryError(err, copy_buffer, resultSize);
 }
 
@@ -1092,7 +1103,7 @@ TlsValidator::CheckResult TlsValidator::getPublicKeyId()
 {
     static unsigned char unsigned_copy_buffer[4096];
     size_t resultSize = sizeof(unsigned_copy_buffer);
-    int err = gnutls_x509_crt_get_key_id(x509crt_.cert,0,unsigned_copy_buffer,&resultSize);
+    int err = gnutls_x509_crt_get_key_id(x509crt_->cert,0,unsigned_copy_buffer,&resultSize);
 
     // TODO check for GNUTLS_E_SHORT_MEMORY_BUFFER and increase the buffer size
     // TODO get rid of the cast, display a HEX or something, need research
@@ -1107,7 +1118,7 @@ TlsValidator::CheckResult TlsValidator::getPublicKeyId()
 TlsValidator::CheckResult TlsValidator::getIssuerDN()
 {
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_issuer_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_issuer_dn(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1121,7 +1132,7 @@ TlsValidator::CheckResult TlsValidator::getExpirationDate()
     if (not certificateFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    time_t expiration = gnutls_x509_crt_get_expiration_time(x509crt_.cert);
+    time_t expiration = gnutls_x509_crt_get_expiration_time(x509crt_->cert);
 
     return formatDate(expiration);
 }
@@ -1136,7 +1147,7 @@ TlsValidator::CheckResult TlsValidator::getActivationDate()
     if (not certificateFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    time_t expiration = gnutls_x509_crt_get_activation_time(x509crt_.cert);
+    time_t expiration = gnutls_x509_crt_get_activation_time(x509crt_->cert);
 
     return formatDate(expiration);
 }
@@ -1154,4 +1165,4 @@ TlsValidator::CheckResult TlsValidator::outgoingServer()
 }
 
 
-} //namespace ring
+}} //namespace ring
