@@ -62,7 +62,7 @@
 
 #include "config/yamlparser.h"
 
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 
 #include <opendht/securedht.h>
 #include <yaml-cpp/yaml.h>
