@@ -24,6 +24,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
+#include <mutex>
 
 namespace ring {
 namespace tls {
@@ -34,14 +37,30 @@ class CertificateStore {
 public:
     static CertificateStore& instance();
 
-    std::vector<std::string> getCertificateList() { return {}; }
+    CertificateStore();
 
-    std::string addCertificate(const std::vector<uint8_t>&) { return {}; }
-    std::string addCertificate(const crypto::Certificate&) { return {}; }
+    std::vector<std::string> getCertificateList() const;
+    std::shared_ptr<crypto::Certificate> getCertificate(const std::string&) const;
 
-    bool banCertificate(const std::string&) { return false; }
+    std::string addCertificate(const std::vector<uint8_t>&);
+    std::string addCertificate(crypto::Certificate&&);
+    std::string addCertificate(std::shared_ptr<crypto::Certificate> crt);
 
+    bool removeCertificate(const std::string& id);
+
+    bool banCertificate(const std::string&);
+    bool isBanned(const std::string& id) const;
 private:
+
+    void loadCertificates();
+    void loadBannedCertificates();
+
+    const std::string certPath_;
+    const std::string bannedCertPath_;
+
+    std::map<std::string, std::shared_ptr<crypto::Certificate>> certs_;
+    std::set<std::string> bannedCerts_;
+    mutable std::mutex lock_;
 };
 
 }} // namespace ring::tls

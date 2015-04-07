@@ -67,7 +67,8 @@ namespace DRing {
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
 using ring::SIPAccount;
-using ring::TlsValidator;
+using ring::tls::TlsValidator;
+using ring::tls::CertificateStore;
 using ring::DeviceType;
 using ring::HookPreference;
 
@@ -195,7 +196,7 @@ getCertificateDetails(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate,""}.getSerializedDetails();
+        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }

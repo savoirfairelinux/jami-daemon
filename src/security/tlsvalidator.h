@@ -30,12 +30,10 @@
 
 #include <string>
 #include <vector>
+#include <memory>
 
-namespace ring { namespace tls {
+namespace ring {namespace tls {
 class GnuTlsGlobalInit;
-}} // namespace ring::tls
-
-namespace ring {
 
 class TlsValidatorException : public std::runtime_error {
     public:
@@ -149,6 +147,8 @@ public:
 
     TlsValidator(const std::vector<uint8_t>& certificate_raw);
 
+    TlsValidator(const std::shared_ptr<dht::crypto::Certificate>&);
+
     ~TlsValidator();
 
     bool hasCa() const;
@@ -237,7 +237,7 @@ private:
     std::vector<uint8_t> certificateContent_;
     std::vector<uint8_t> privateKeyContent_;
 
-    dht::crypto::Certificate x509crt_;
+    std::shared_ptr<dht::crypto::Certificate> x509crt_;
 
     bool certificateFound_;
     bool privateKeyFound_ {false};
@@ -271,6 +271,6 @@ public:
 
 }; // TlsValidator
 
-} // namespace ring
+}} // namespace ring::tls
 
 #endif
