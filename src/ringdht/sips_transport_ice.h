@@ -188,7 +188,7 @@ private:
 
     pj_status_t tryHandshake();
     void certGetCn(const pj_str_t* gen_name, pj_str_t* cn);
-    void certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci, const gnutls_datum_t& cert);
+    void certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci, const gnutls_datum_t* cert, size_t crt_raw_num);
     void certUpdate();
     bool onHandshakeComplete(pj_status_t status);
     int verifyCertificate();
