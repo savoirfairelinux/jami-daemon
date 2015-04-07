@@ -954,7 +954,11 @@ SIPCall::getDetails() const
         if (tlsInfos.cipher and not cipher)
             RING_WARN("Unknown cipher: %d", tlsInfos.cipher);
         details.emplace(DRing::Call::Details::TLS_CIPHER,       cipher ? cipher : "");
-        details.emplace(DRing::Call::Details::TLS_PEER_CERT,    tlsInfos.peerCert.toString());
+
+        std::ostringstream crtStream;
+        for (const auto& crt : tlsInfos.peerCert)
+            crtStream << crt.toString();
+        details.emplace(DRing::Call::Details::TLS_PEER_CERT,    crtStream.str());
     }
     return details;
 }

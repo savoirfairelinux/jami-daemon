@@ -66,6 +66,9 @@ namespace ring {
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
+    const char *const DHT_CONTACTS = "dhtContacts";
+    const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
+    const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 }
 
 namespace tls {
@@ -79,6 +82,8 @@ class RingAccount : public SIPAccountBase {
         constexpr static const char * const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
         constexpr static const char * const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
+        constexpr static const char* const DHT_TYPE_NS = "cx.ring";
+
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
         const char* getAccountType() const {
@@ -238,16 +243,27 @@ class RingAccount : public SIPAccountBase {
             return false;
         }
 
-        void registerCA(const dht::crypto::Certificate&);
-        bool unregisterCA(const dht::InfoHash&);
-        std::vector<std::string> getRegistredCAs();
+        bool findCertificate(const std::string& id);
+
+
+        std::vector<std::string> getContacts() const;
+        void setContacts(const std::vector<std::string>& contacts);
+        void addContact(const std::string& contact);
+        bool hasContact(const dht::InfoHash& c) const;
+        bool hasContact(const std::string& c) const { return hasContact(dht::InfoHash(c)); }
+
+        /* contact requests */
+        std::map<std::string, std::string> getContactRequests() const;
+        bool acceptContactRequest(const std::string& from);
+        bool discardContactRequest(const std::string& from);
+
+        void sendContactRequest(const std::string& to);
 
     private:
 
         void doRegister_();
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
-        //const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
 
         NON_COPYABLE(RingAccount);
 
@@ -268,7 +284,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
-        void regenerateCAList();
+        //void regenerateCAList();
 
         /**
          * Maps require port via UPnP
@@ -303,6 +319,15 @@ class RingAccount : public SIPAccountBase {
         std::string caPath_ {};
         std::string caListPath_ {};
 
+        std::vector<dht::InfoHash> contacts_;
+
+        struct ContactRequest {
+            dht::InfoHash from;
+            std::chrono::system_clock::time_point received;
+        };
+
+        std::vector<ContactRequest> contactsRequests_;
+
         /**
          * Validate the values for privkeyPath_ and certPath_.
          * If one of these fields is empty, reset them to the default values.
@@ -329,6 +354,8 @@ class RingAccount : public SIPAccountBase {
          * Initializes tls settings from configuration file.
          */
         void initTlsConfiguration();
+
+        bool dhtPublicInCalls_ {false};
 
         /**
          * DHT port preference
