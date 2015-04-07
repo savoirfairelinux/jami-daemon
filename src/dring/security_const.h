@@ -34,6 +34,12 @@ namespace DRing {
 
 namespace Certificate {
 
+enum Status {
+    UNDEFINED = 0,
+    ALLOWED,
+    BANNED
+};
+
 /**
 * Those constantes are used by the ConfigurationManager.validateCertificate method
 */

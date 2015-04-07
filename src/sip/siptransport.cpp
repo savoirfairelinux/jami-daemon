@@ -140,14 +140,24 @@ SipTransport::stateCallback(pjsip_transport_state state,
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t)tlsInfo->verify_status;
         const auto& peer_crt = tlsInfo->remote_cert_info->cert_raw;
-        if (peer_crt.ptr && peer_crt.slen)
-            tlsInfos_.peerCert = {std::vector<uint8_t>(peer_crt.ptr, peer_crt.ptr + peer_crt.slen)};
+        if (peer_crt.ptr && peer_crt.slen > 0) {
+            const gnutls_datum_t peer_crt_dat {(uint8_t*)peer_crt.ptr, (unsigned)peer_crt.slen};
+            gnutls_x509_crt_t* crt_list = nullptr;
+            unsigned crt_num = 0;
+
+            auto ret = gnutls_x509_crt_list_import2(&crt_list, &crt_num, &peer_crt_dat, GNUTLS_X509_FMT_DER, 0);
+            tlsInfos_.peerCert.resize(crt_num);
+            std::transform(crt_list, crt_list+crt_num, tlsInfos_.peerCert.begin(), [](gnutls_x509_crt_t crt){
+                return dht::crypto::Certificate(crt);
+            });
+            gnutls_free(crt_list);
+        }
         else
-            tlsInfos_.peerCert = {};
+            tlsInfos_.peerCert.clear();
     } else {
         tlsInfos_.proto = PJ_SSL_SOCK_PROTO_DEFAULT;
         tlsInfos_.cipher = PJ_TLS_UNKNOWN_CIPHER;
-        tlsInfos_.peerCert = {};
+        tlsInfos_.peerCert.clear();
     }
 #endif
 
