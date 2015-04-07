@@ -109,7 +109,7 @@ struct TlsInfos {
     pj_ssl_cipher cipher;
     pj_ssl_sock_proto proto;
     pj_ssl_cert_verify_flag_t verifyStatus;
-    dht::crypto::Certificate peerCert;
+    std::shared_ptr<dht::crypto::Certificate> peerCert;
 };
 
 using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;

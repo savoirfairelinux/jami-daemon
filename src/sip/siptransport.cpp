@@ -139,11 +139,14 @@ SipTransport::stateCallback(pjsip_transport_state state,
         tlsInfos_.proto = (pj_ssl_sock_proto)tlsInfo->proto;
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t)tlsInfo->verify_status;
-        const auto& peer_crt = tlsInfo->remote_cert_info->cert_raw;
-        if (peer_crt.ptr && peer_crt.slen)
-            tlsInfos_.peerCert = {std::vector<uint8_t>(peer_crt.ptr, peer_crt.ptr + peer_crt.slen)};
-        else
-            tlsInfos_.peerCert = {};
+
+        const auto& peers = tlsInfo->remote_cert_info->raw_chain;
+        std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
+        bits.reserve(peers.cnt);
+        std::transform(peers.cert_raw, peers.cert_raw+peers.cnt, bits.begin(), [](pj_str_t crt){
+            return std::make_pair((uint8_t*)crt.ptr, (uint8_t*)(crt.ptr+crt.slen));
+        });
+        tlsInfos_.peerCert = std::make_shared<dht::crypto::Certificate>(bits);
     } else {
         tlsInfos_.proto = PJ_SSL_SOCK_PROTO_DEFAULT;
         tlsInfos_.cipher = PJ_TLS_UNKNOWN_CIPHER;
