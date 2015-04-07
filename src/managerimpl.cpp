@@ -80,7 +80,7 @@
 #include "client/signal.h"
 
 #if HAVE_TLS
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 #endif
 
 #include "libav_utils.h"
