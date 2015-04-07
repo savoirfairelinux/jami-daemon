@@ -139,6 +139,11 @@ std::map<std::string, std::string> validateCertificateRaw(const std::string& acc
 std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
 std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
 
+std::vector<std::string> getCertificateList();
+std::string addCertificate(const std::vector<uint8_t>& certificate);
+bool addCertificateRemote(const std::string& accountId, const std::string& certId);
+bool banCertificate(const std::string& certId);
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -170,6 +175,14 @@ struct ConfigurationSignal {
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
+        };
+        struct CertificateAdded {
+                constexpr static const char* name = "CertificateAdded";
+                using cb_type = void(const std::string& /*certId*/);
+        };
+        struct CertificateExpired {
+                constexpr static const char* name = "CertificateExpired";
+                using cb_type = void(const std::string& /*certId*/);
         };
 };
 
