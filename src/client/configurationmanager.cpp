@@ -39,7 +39,8 @@
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
-#include "sip/tlsvalidator.h"
+#include "security/tlsvalidator.h"
+#include "security/certstore.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -217,6 +218,31 @@ getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
     RING_WARN("TLS not supported");
 #endif
     return {{}};
+}
+
+std::vector<std::string> getCertificateList()
+{
+#if HAVE_TLS && HAVE_DHT
+    return ring::tls::CertificateStore::instance().getCertificateList();
+#else
+    RING_WARN("TLS not supported");
+#endif
+    return {};
+}
+
+std::string addCertificate(const std::vector<uint8_t>& certificate)
+{
+    return ring::tls::CertificateStore::instance().addCertificate(certificate);
+}
+
+bool addCertificateRemote(const std::string& /*accountId*/, const std::string& /*certId*/)
+{
+    return false;
+}
+
+bool banCertificate(const std::string& certId)
+{
+    return ring::tls::CertificateStore::instance().banCertificate(certId);
 }
 
 void
@@ -637,7 +663,8 @@ setHookSettings(const std::map<std::string,
     ring::Manager::instance().hookPreference = HookPreference(settings);
 }
 
-void setAccountsOrder(const std::string& order)
+void
+setAccountsOrder(const std::string& order)
 {
     ring::Manager::instance().setAccountsOrder(order);
 }

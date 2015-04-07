@@ -599,6 +599,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/v4l2/Makefile \
                  src/media/video/osxvideo/Makefile \
                  src/media/video/test/Makefile \
+                 src/security/Makefile \
                  src/upnp/Makefile \
                  test/Makefile \
                  ringtones/Makefile \
