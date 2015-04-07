@@ -4,6 +4,7 @@
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -133,6 +134,17 @@ class DBusConfigurationManager :
         std::map<std::string, std::string> validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
         std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
+        std::vector<std::string> getPinnedCertificates();
+        std::string pinCertificate(const std::vector<uint8_t>& certificate);
+        std::string pinCertificatePath(const std::string& path);
+
+        bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
+        bool setCertificateStatus(const std::string& account, const std::string& certId, const uint8_t& status);
+        std::vector<std::string> getCertificatesByStatus(const std::string& account, const uint8_t& status);
+        std::map<std::string, std::string> getTrustRequests(const std::string& accountId);
+        bool acceptTrustRequest(const std::string& accountId, const std::string& from);
+        bool discardTrustRequest(const std::string& accountId, const std::string& from);
+        void sendTrustRequest(const std::string& accountId, const std::string& to);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
