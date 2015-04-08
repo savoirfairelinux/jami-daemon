@@ -33,7 +33,7 @@ This is the daemon headers.
 %prep
 %setup -q
 git init
-git remote add origin ssh://tcohen@gerrit-sflphone.savoirfairelinux.com:29420/ring
+git remote add origin https://gerrit-ring.savoirfairelinux.com/ring`
 git fetch --all
 git git checkout packaging
 git merge origin master --no-edit
