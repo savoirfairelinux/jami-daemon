@@ -32,6 +32,8 @@ This is the daemon headers.
 
 %prep
 %setup -q
+git fetch --all
+git merge origin master --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
