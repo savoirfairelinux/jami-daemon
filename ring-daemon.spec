@@ -32,7 +32,10 @@ This is the daemon headers.
 
 %prep
 %setup -q
+git init
+git remote add origin ssh://tcohen@gerrit-sflphone.savoirfairelinux.com:29420/ring
 git fetch --all
+git git checkout packaging
 git merge origin master --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
