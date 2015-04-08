@@ -33,10 +33,12 @@ This is the daemon headers.
 %prep
 %setup -q
 git init
-git remote add origin https://gerrit-ring.savoirfairelinux.com/ring`
+git remote add origin https://gerrit-ring.savoirfairelinux.com/ring
 git fetch --all
-git git checkout packaging
-git merge origin master --no-edit
+git checkout packaging -f
+git config user.name "joulupukki"
+git config user.email "joulupukki@localhost"
+git merge origin/master --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
