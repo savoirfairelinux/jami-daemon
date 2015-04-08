@@ -333,7 +333,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * DHT port preference
          */
-        in_port_t dhtPort_ {DHT_DEFAULT_PORT};
+        in_port_t dhtPort_ {};
 
         /**
          * DHT port actually used,
@@ -341,7 +341,7 @@ class RingAccount : public SIPAccountBase {
          * selected in the configuration in the case that UPnP is used and the
          * configured port is already used by another client
          */
-        UsedPort dhtPortUsed_ {DHT_DEFAULT_PORT};
+        UsedPort dhtPortUsed_ {};
 
         /**
          * The TLS settings, used only if tls is chosen as a sip transport.
