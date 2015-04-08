@@ -1,5 +1,12 @@
 #!/usr/bin/make -f
 
+
+PKD  = $(abspath $(dir $(MAKEFILE_LIST)))
+#PKG  = $(word 2,$(shell dpkg-parsechangelog -l$(PKD)/changelog --show-field=Source))
+PKG  = $(shell dpkg-parsechangelog -l$(PKD)/changelog --show-field=Source)
+VER ?= $(shell dpkg-parsechangelog -l$(PKD)/changelog | perl -ne 'print $$1 if m{^Version:\s+(?:\d+:)?(\d.*)(?:\-\d+.*)};')
+DISTRIB_RELEASE = $(shell grep -hPo "DISTRIB_RELEASE=\K.*" /etc/*ease)
+
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
@@ -34,3 +41,12 @@ override_dh_auto_install:
 	mv $(CURDIR)/debian/ring-daemon/usr/include/dring/* $(CURDIR)/debian/ring-daemon-dev/usr/include/dring
 	rm -rf  $(CURDIR)/debian/ring-daemon/usr/include/
 	dh_auto_install
+
+get-orig-source:
+	# Daemon
+	git fetch --all
+	git merge origin master --no-edit
+	# Packing
+	@echo "# Packing ... "
+	find . | sort \
+	| XZ_OPT="-6v" tar -caf "../$(PKG)_$(VER)$(DTYPE).orig.tar.xz" -T- --owner=root --group=root --mode=a+rX
