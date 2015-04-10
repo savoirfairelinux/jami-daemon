@@ -99,7 +99,7 @@ static unsigned
 extractInt(const std::map<std::string, std::string>& settings, const std::string& key) {
     auto i = settings.find(key);
     if (i != settings.cend())
-        return std::stoi(i->second);
+        return ring::stoi(i->second);
     return 0;
 }
 

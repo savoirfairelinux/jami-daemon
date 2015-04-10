@@ -2,6 +2,7 @@
  *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,21 +53,42 @@ bool_to_str(bool b) noexcept
 
 #ifdef __ANDROID__
 
+// Rationale:
+// Some strings functions are not available on Android NDK as explained here:
+// http://stackoverflow.com/questions/17950814/how-to-use-stdstoul-and-stdstoull-in-android/18124627#18124627
+// We implement them by ourself as well as possible here.
+
 template <typename T>
-std::string to_string(T &&value)
+std::string
+to_string(T &&value)
 {
     std::ostringstream os;
-
     os << value;
     return os.str();
+}
+
+int
+stoi(const std::string& str)
+{
+    int v;
+    std::istringstream os(str);
+    os >> v;
+    return v;
 }
 
 #else
 
 template <typename T>
-std::string to_string(T &&value)
+inline std::string
+to_string(T &&value)
 {
     return std::to_string(std::forward<T>(value));
+}
+
+static inline int
+stoi(const std::string& str)
+{
+    return std::stoi(str);
 }
 
 #endif
