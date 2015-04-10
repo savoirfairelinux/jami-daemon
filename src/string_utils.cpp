@@ -2,6 +2,7 @@
  *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,6 +37,14 @@
 
 namespace ring {
 
+#ifndef __ANDROID__
+int
+stoi(const std::string& str)
+{
+    return std::stoi(str);
+}
+#endif
+
 std::string
 trim(const std::string &s)
 {
@@ -65,7 +74,7 @@ split_string_to_unsigned(const std::string &s, char delim)
 
     while (std::getline(ss, token, delim))
         if (not token.empty())
-            result.emplace_back(std::stoi(token));
+            result.emplace_back(ring::stoi(token));
     return result;
 }
 
