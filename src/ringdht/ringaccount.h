@@ -79,7 +79,7 @@ class RingAccount : public SIPAccountBase {
         constexpr static const char * const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
         constexpr static const char * const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
-        constexpr static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE {4000, 8888};
+        /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
         const char* getAccountType() const {
             return ACCOUNT_TYPE;
