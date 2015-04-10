@@ -27,6 +27,7 @@ install-sh
 missing
 stamp-h1
 ltmain.sh
+INSTALL
 
 # Binary translation files
 *.mo
