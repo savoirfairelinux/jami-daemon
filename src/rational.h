@@ -31,6 +31,8 @@
 
 #pragma once
 
+#include <cstdlib> // std::abs
+
 namespace ring {
 
 /**

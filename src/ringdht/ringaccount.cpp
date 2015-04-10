@@ -81,7 +81,7 @@ static constexpr int ICE_INIT_TIMEOUT {5};
 static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
-constexpr const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE;
+/* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
