@@ -33,7 +33,9 @@
 #include "media_codec.h"
 #include "account_const.h"
 
-#include <string.h>
+#include "string_utils.h"
+
+#include <string>
 #include <sstream>
 
 namespace ring {
@@ -103,9 +105,9 @@ SystemAudioCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, ring::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, ring::to_string(audioformat.nb_channels)}
         };
 }
 
@@ -134,8 +136,8 @@ SystemVideoCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, ring::to_string(frameRate)}
         };
 }
 
@@ -161,9 +163,9 @@ AccountAudioCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, std::to_string(audioformat.sample_rate)},
-        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, std::to_string(audioformat.nb_channels)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE, ring::to_string(audioformat.sample_rate)},
+        {DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER, ring::to_string(audioformat.nb_channels)}
         };
 }
 
@@ -172,15 +174,15 @@ AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 {
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
-        bitrate = std::stoi(it->second);
+        bitrate = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE);
     if (it != details.end())
-        audioformat.sample_rate = std::stoi(it->second);
+        audioformat.sample_rate = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER);
     if (it != details.end())
-        audioformat.nb_channels = std::stoi(it->second);
+        audioformat.nb_channels = ring::stoi(it->second);
 }
 
 bool
@@ -205,8 +207,8 @@ AccountVideoCodecInfo::getCodecSpecifications()
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
-        {DRing::Account::ConfProperties::CodecInfo::BITRATE, std::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, std::to_string(frameRate)}
+        {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, ring::to_string(frameRate)}
         };
 }
 
@@ -215,11 +217,11 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
 {
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
-        bitrate = stoi(it->second);
+        bitrate = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
-        frameRate = stoi(it->second);
+        frameRate = ring::stoi(it->second);
 }
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()
