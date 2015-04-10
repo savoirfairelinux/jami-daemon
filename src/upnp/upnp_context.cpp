@@ -921,7 +921,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
         IXML_Document* action_ptr = nullptr;
         UpnpAddToAction(&action_ptr, "GetGenericPortMappingEntry", igd->getServiceType().c_str(),
-                        "NewPortMappingIndex", std::to_string(entry_idx).c_str());
+                        "NewPortMappingIndex", ring::to_string(entry_idx).c_str());
         action.reset(action_ptr);
 
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
@@ -1059,7 +1059,7 @@ UPnPContext::addPortMapping(const IGD* igd, const Mapping& mapping, int* error_c
         std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
         RING_WARN("UPnP: %s returned with error: %s: %s",
                   action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
-        *error_code = std::stoi(errorCode);
+        *error_code = ring::stoi(errorCode);
         return false;
     }
     return true;
