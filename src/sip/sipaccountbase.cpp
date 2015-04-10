@@ -276,6 +276,7 @@ uint16_t
 SIPAccountBase::acquirePort(uint16_t port)
 {
     getPortsReservation()[port / 2] = true;
+    return port;
 }
 
 void
