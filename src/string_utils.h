@@ -2,6 +2,7 @@
  *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -55,6 +56,13 @@ std::string to_string(T &&value)
     return os.str();
 }
 
+int stoi(const std::string& str) {
+    int v;
+    std::istringstream os(str);
+    os >> v;
+    return v;
+}
+
 #else
 
 template <typename T>
@@ -62,6 +70,8 @@ std::string to_string(T &&value)
 {
     return std::to_string(std::forward<T>(value));
 }
+
+int stoi(const std::string& str);
 
 #endif
 

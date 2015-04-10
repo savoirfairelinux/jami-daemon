@@ -36,6 +36,7 @@
 
 #include "noncopyable.h"
 #include "ip_utils.h"
+#include "string_utils.h"
 
 namespace ring { namespace upnp {
 
@@ -72,9 +73,9 @@ public:
     friend bool operator!= (Mapping &cRedir1, Mapping &cRedir2);
 
     uint16_t      getPortExternal()    const { return port_external_; };
-    std::string   getPortExternalStr() const { return std::to_string(port_external_); };
+    std::string   getPortExternalStr() const { return ring::to_string(port_external_); };
     uint16_t      getPortInternal()    const { return port_internal_; };
-    std::string   getPortInternalStr() const { return std::to_string(port_internal_); };
+    std::string   getPortInternalStr() const { return ring::to_string(port_internal_); };
     PortType      getType()            const { return type_; };
     std::string   getTypeStr()         const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
     std::string   getDescription()     const { return description_; };
