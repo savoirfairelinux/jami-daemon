@@ -237,7 +237,6 @@
        </method>
 
       <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
-          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
           <arg type="s" name="accountID" direction="in">
           </arg>
           <arg type="s" name="to" direction="in">
@@ -256,7 +255,91 @@
            </arg>
            <arg type="s" name="message">
            </arg>
-       </signal>
+      </signal>
+
+      <method name="getContacts" tp:name-for-bindings="getContacts">
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="as" name="list" direction="out">
+              <tp:docstring>
+                  A list of contact IDs
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="setContacts" tp:name-for-bindings="setContacts">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="as" name="contacts" direction="in">
+              <tp:docstring>
+                  A list of contact IDs
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="addContact" tp:name-for-bindings="addContact">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="contact" direction="in">
+              <tp:docstring>
+                  A contact ID
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="getContactRequests" tp:name-for-bindings="getContactRequests">
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+              <tp:docstring>
+                  A list of contact request details.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="acceptContactRequest" tp:name-for-bindings="acceptContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+      <method name="discardContactRequest" tp:name-for-bindings="discardContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <signal name="incomingContactRequest" tp:name-for-bindings="incomingContactRequest">
+            <tp:docstring>
+                Notify clients that a new contact request has been received.
+            </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="from">
+           </arg>
+           <arg type="t" name="receiveTime">
+           </arg>
+      </signal>
+
+      <method name="sendContactRequest" tp:name-for-bindings="sendContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="to" direction="in">
+          </arg>
+      </method>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">
            <tp:docstring>

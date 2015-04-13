@@ -144,6 +144,18 @@ std::string addCertificate(const std::vector<uint8_t>& certificate);
 bool addCertificateRemote(const std::string& accountId, const std::string& certId);
 bool banCertificate(const std::string& certId);
 
+/* contacts */
+std::vector<std::string> getContacts(const std::string& accountId);
+void setContacts(const std::string& accountId, const std::vector<std::string>& contacts);
+void addContact(const std::string& accountId, const std::string& contact);
+
+/* contact requests */
+std::map<std::string, std::string> getContactRequests(const std::string& accountId);
+bool acceptContactRequest(const std::string& accountId, const std::string& from);
+bool discardContactRequest(const std::string& accountId, const std::string& from);
+
+void sendContactRequest(const std::string& accountId, const std::string& to);
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -175,6 +187,10 @@ struct ConfigurationSignal {
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
+        };
+        struct IncomingContactRequest {
+                constexpr static const char* name = "IncomingContactRequest";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, time_t received);
         };
         struct CertificateAdded {
                 constexpr static const char* name = "CertificateAdded";
