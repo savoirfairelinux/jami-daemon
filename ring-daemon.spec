@@ -69,6 +69,7 @@ make -j %{?_smp_mflags}
 %install
 mkdir -p %{buildroot}/ring-daemon
 make DESTDIR=%{buildroot} install
+mkdir -p %{buildroot}/%{_sysconfdir}/yum.repo.d/
 echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
 echo 'name=Fedora $releasever - $basearch - ring' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
 echo 'baseurl=http://nightly.yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
