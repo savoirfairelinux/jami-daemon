@@ -29,6 +29,13 @@ Group:          Applications/Internet
 Ring is free software for distributed and secured communication.
 This is the daemon headers.
 
+%package repository
+Summary:        Free software for distributed and secured communication.
+Group:          Applications/Internet
+
+%description repository
+Ring is free software for distributed and secured communication.
+This is the ring repository
 
 %prep
 %setup -q
@@ -62,6 +69,14 @@ make -j %{?_smp_mflags}
 %install
 mkdir -p %{buildroot}/ring-daemon
 make DESTDIR=%{buildroot} install
+cat << EOF > %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+[ring]
+name=Fedora $releasever - $basearch - ring
+baseurl=http://nightly.yum.ring.cx/fedora_$releasever
+enabled=1
+gpgcheck=0
+EOF
+
 
 %files
 %defattr(-,root,root,-)
@@ -75,6 +90,9 @@ make DESTDIR=%{buildroot} install
 %{_libdir}/libring.la
 %{_libdir}/libring.a
 /usr/include/dring/
+
+%files repository
+%config %{_sysconfdir}/yum.repo.d/ring-nightly.repo
 
 %changelog
 * Fri Mar 27 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.0.1-1
