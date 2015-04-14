@@ -1,5 +1,5 @@
 %define name        ring-daemon
-%define version     2.0.1
+%define version     2.1.0
 %define release     1
 
 Name:               %{name}
@@ -94,5 +94,8 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
 %config %{_sysconfdir}/yum.repo.d/ring-nightly.repo
 
 %changelog
+* Tue Apr 14 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-1
+- New upstream version
+
 * Fri Mar 27 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.0.1-1
 - New upstream version
