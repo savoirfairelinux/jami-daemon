@@ -63,6 +63,8 @@
 #include <chrono>
 #endif
 
+#include "errno.h"
+
 namespace ring {
 
 #ifdef RING_VIDEO
@@ -204,9 +206,10 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
             {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(t, state)) {
+                    if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != DISCONNECTED) {
                         RING_WARN("Ending call because underlying SIP transport was closed");
-                        Manager::instance().callFailure(*this_);
+                        this_->setConnectionState(Call::DISCONNECTED);
+                        Manager::instance().callFailure(*this_, ECONNRESET);
                         this_->removeCall();
                     }
                 } else // should not happen
@@ -778,7 +781,7 @@ SIPCall::startAllMedia()
 {
     if (isSecure() && not transport_->isSecure()) {
         RING_ERR("Can't perform secure call over insecure SIP transport");
-        Manager::instance().callFailure(*this);
+        Manager::instance().callFailure(*this, EMEDIUMTYPE);
         removeCall();
         return;
     }
@@ -873,7 +876,7 @@ SIPCall::onMediaUpdate()
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
                 RING_DBG("ice init failed (or timeout)");
                 this_->setConnectionState(Call::DISCONNECTED);
-                Manager::instance().callFailure(*this_); // signal client
+                Manager::instance().callFailure(*this_, ETIMEDOUT); // signal client
                 this_->removeCall();
                 return false;
             }
