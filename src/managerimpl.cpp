@@ -2498,6 +2498,8 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
         return;
 
     // Unregister before modifying any account information
+    // FIXME: inefficient api, don't pass details (not as ref nor copy)
+    // let client requiests them we needed.
     account->doUnregister([&](bool /* transport_free */) {
         account->setAccountDetails(details);
         // Serialize configuration to disk once it is done
@@ -2509,7 +2511,8 @@ ManagerImpl::setAccountDetails(const std::string& accountID,
             account->doUnregister();
 
         // Update account details to the client side
-        emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
+        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
+                                                                       details);
     });
 }
 
