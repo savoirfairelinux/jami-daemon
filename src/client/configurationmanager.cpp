@@ -147,7 +147,10 @@ setTlsSettings(const std::map<std::string, std::string>& details)
     if (auto sipaccount = static_cast<SIPAccount*>(account.get())) {
         sipaccount->setTlsSettings(details);
         ring::Manager::instance().saveConfig();
-        ring::emitSignal<ConfigurationSignal::AccountsChanged>();
+        // FIXME: inefficient api, don't pass details (not as ref nor copy)
+        // let client requiests them we needed.
+        ring::emitSignal<ConfigurationSignal::VolatileDetailsChanged>(account->getAccountID(),
+                                                                      details);
     }
 
     RING_DBG("No valid account in set TLS settings");
