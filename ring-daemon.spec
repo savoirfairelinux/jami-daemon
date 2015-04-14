@@ -42,10 +42,10 @@ This is the ring repository
 git init
 git remote add origin https://gerrit-ring.savoirfairelinux.com/ring
 git fetch --all
-git checkout packaging -f
+git checkout packaging-releases -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
-git merge origin/master --no-edit
+git merge origin/release-2.1.x --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do

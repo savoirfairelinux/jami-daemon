@@ -49,7 +49,7 @@ override_dh_auto_install:
 get-orig-source:
 	# Daemon
 	git fetch --all
-	git merge origin master --no-edit
+	git merge origin release-2.1.x --no-edit
 	# Packing
 	@echo "# Packing ... "
 	find . | sort \
