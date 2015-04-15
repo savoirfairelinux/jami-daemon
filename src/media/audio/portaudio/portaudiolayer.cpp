@@ -36,7 +36,7 @@
 #include "audio/ringbuffer.h"
 
 namespace ring {
-//FIXME: We should use WASAPi or DirectSound
+
 PortAudioLayer::PortAudioLayer(const AudioPreference &pref)
     : AudioLayer(pref)
     , indexIn_(pref.getAlsaCardin())
@@ -133,9 +133,8 @@ PortAudioLayer::stopStream()
 
     RING_DBG("Stop PortAudio Streams");
 
-    //FIX ME : Abort or Stop ??
     for (int i = 0; i < Direction::End; i++) {
-        auto err = Pa_AbortStream(streams[i]);
+        auto err = Pa_StopStream(streams[i]);
         if(err != paNoError)
             this->handleError(err);
 
@@ -349,11 +348,19 @@ PortAudioLayer::init()
         this->handleError(err);
         this->terminate();
     }
-    //FIXME: Maybe find a better way
-    const PaDeviceInfo *outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
+
+    indexOut_ = indexRing_ = Pa_GetDefaultOutputDevice();
+    indexIn_ = Pa_GetDefaultInputDevice();
+
+    const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
     audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-    audioFormat_.sample_rate = 48000;
+    audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
     hardwareFormatAvailable(audioFormat_);
+
+    const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_);
+    audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+    audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
+    hardwareInputFormatAvailable(audioInputFormat_);
 }
 
 void
@@ -373,19 +380,15 @@ PortAudioLayer::initStream()
     RING_DBG("Open PortAudio Output Stream");
     PaStreamParameters outputParameters;
     outputParameters.device = indexOut_;
-    RING_DBG("Index Device: %d", indexOut_);
+
     if (outputParameters.device == paNoDevice) {
-        //TODO Should we fallback to default output device ?
         RING_ERR("Error: No valid output device. There will be no sound.");
     }
+
     const auto outputDeviceInfo =
         Pa_GetDeviceInfo(outputParameters.device);
-    RING_DBG("Default Sample Rate : %d", outputDeviceInfo->defaultSampleRate);
     outputParameters.channelCount =
         audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-    //FIX ME : Default is 0....
-    audioFormat_.sample_rate = 48000;
-
     outputParameters.sampleFormat = paInt16;
     outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
     outputParameters.hostApiSpecificStreamInfo = NULL;
@@ -394,7 +397,7 @@ PortAudioLayer::initStream()
         &streams[Direction::Output],
         NULL,
         &outputParameters,
-        audioFormat_.sample_rate,
+        outputDeviceInfo->defaultSampleRate,
         paFramesPerBufferUnspecified,
         paNoFlag,
         &PortAudioLayer::paOutputCallback,
@@ -406,14 +409,11 @@ PortAudioLayer::initStream()
     PaStreamParameters inputParameters;
     inputParameters.device = indexIn_;
     if (inputParameters.device == paNoDevice) {
-        //TODO Should we fallback to default output device ?
         RING_ERR("Error: No valid input device. There will be no mic.");
     }
 
     const auto inputDeviceInfo =
         Pa_GetDeviceInfo(inputParameters.device);
-    //FIX ME : Default is 0....
-    audioInputFormat_.sample_rate = 48000;
     inputParameters.channelCount =
         audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
     inputParameters.sampleFormat = paInt16;
@@ -424,7 +424,7 @@ PortAudioLayer::initStream()
         &streams[Direction::Input],
         &inputParameters,
         NULL,
-        audioInputFormat_.sample_rate,
+        inputDeviceInfo->defaultSampleRate,
         paFramesPerBufferUnspecified,
         paNoFlag,
         &PortAudioLayer::paInputCallback,
@@ -436,9 +436,6 @@ PortAudioLayer::initStream()
         if (err != paNoError)
             this->handleError(err);
     }
-
-    hardwareFormatAvailable(audioFormat_);
-    hardwareInputFormatAvailable(audioInputFormat_);
 
     flushUrgent();
     flushMain();
