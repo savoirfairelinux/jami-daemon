@@ -11,6 +11,7 @@ ifeq ($(call need_pkg,"portaudio >= 2.0"),)
 PKGS_FOUND += portaudio
 endif
 
+PORTAUDIOCONF := --with-winapi=directx
 
 $(TARBALLS)/portaudio-$(PORTAUDIO_VERSION).tgz:
 	$(call download,$(PORTAUDIO_URL))
@@ -21,6 +22,6 @@ portaudio: portaudio-$(PORTAUDIO_VERSION).tgz .sum-portaudio
 	$(UNPACK)
 
 .portaudio: portaudio
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(PORTAUDIOCONF)
 	cd $< && $(MAKE) install
 	touch $@
