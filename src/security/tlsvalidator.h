@@ -119,6 +119,7 @@ public:
         ISSUER_DN                      ,
         NEXT_EXPECTED_UPDATE_DATE      ,
         OUTGOING_SERVER                , /** The hostname/outgoing server used for this certificate               */
+        ISSUER_CERTIFICATE_IDENTIFIER  ,
         COUNT__
     };
 
@@ -211,6 +212,7 @@ public:
     CheckResult getVersionNumber();
     CheckResult getSerialNumber();
     CheckResult getIssuer();
+    CheckResult getIssuerCertificateIdentifier();
     CheckResult getSubjectKeyAlgorithm();
     CheckResult getCN();
     CheckResult getN();

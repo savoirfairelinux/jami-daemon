@@ -103,24 +103,25 @@ const CallbackMatrix1D<TlsValidator::CertificateCheck, TlsValidator, TlsValidato
 }};
 
 const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValidator::CheckResult> TlsValidator::getterCallback = {{
-    /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate         ,
-    /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate         ,
-    /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword ,
-    /* PUBLIC_SIGNATURE             */  &TlsValidator::getPublicSignature        ,
-    /* VERSION_NUMBER               */  &TlsValidator::getVersionNumber          ,
-    /* SERIAL_NUMBER                */  &TlsValidator::getSerialNumber           ,
-    /* ISSUER                       */  &TlsValidator::getIssuer                 ,
-    /* SUBJECT_KEY_ALGORITHM        */  &TlsValidator::getSubjectKeyAlgorithm    ,
-    /* CN                           */  &TlsValidator::getCN                     ,
-    /* N                            */  &TlsValidator::getN                      ,
-    /* O                            */  &TlsValidator::getO                      ,
-    /* SIGNATURE_ALGORITHM          */  &TlsValidator::getSignatureAlgorithm     ,
-    /* MD5_FINGERPRINT              */  &TlsValidator::getMd5Fingerprint         ,
-    /* SHA1_FINGERPRINT             */  &TlsValidator::getSha1Fingerprint        ,
-    /* PUBLIC_KEY_ID                */  &TlsValidator::getPublicKeyId            ,
-    /* ISSUER_DN                    */  &TlsValidator::getIssuerDN               ,
-    /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
-    /* OUTGOING_SERVER              */  &TlsValidator::outgoingServer            ,
+    /* EXPIRATION_DATE              */  &TlsValidator::getExpirationDate             ,
+    /* ACTIVATION_DATE              */  &TlsValidator::getActivationDate             ,
+    /* REQUIRE_PRIVATE_KEY_PASSWORD */  &TlsValidator::requirePrivateKeyPassword     ,
+    /* PUBLIC_SIGNATURE             */  &TlsValidator::getPublicSignature            ,
+    /* VERSION_NUMBER               */  &TlsValidator::getVersionNumber              ,
+    /* SERIAL_NUMBER                */  &TlsValidator::getSerialNumber               ,
+    /* ISSUER                       */  &TlsValidator::getIssuer                     ,
+    /* SUBJECT_KEY_ALGORITHM        */  &TlsValidator::getSubjectKeyAlgorithm        ,
+    /* CN                           */  &TlsValidator::getCN                         ,
+    /* N                            */  &TlsValidator::getN                          ,
+    /* O                            */  &TlsValidator::getO                          ,
+    /* SIGNATURE_ALGORITHM          */  &TlsValidator::getSignatureAlgorithm         ,
+    /* MD5_FINGERPRINT              */  &TlsValidator::getMd5Fingerprint             ,
+    /* SHA1_FINGERPRINT             */  &TlsValidator::getSha1Fingerprint            ,
+    /* PUBLIC_KEY_ID                */  &TlsValidator::getPublicKeyId                ,
+    /* ISSUER_DN                    */  &TlsValidator::getIssuerDN                   ,
+    /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN                   , // TODO
+    /* OUTGOING_SERVER              */  &TlsValidator::outgoingServer                ,
+    /* ISSUER_CERTIFICATE_IDENTIFIER*/  &TlsValidator::getIssuerCertificateIdentifier,
 }};
 
 const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
@@ -192,6 +193,7 @@ const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certificate
     /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN                    ,
     /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE    ,
     /* OUTGOING_SERVER              */ DRing::Certificate::DetailsNames::OUTGOING_SERVER              ,
+    /* ISSUER_CERTIFICATE_IDENTIFIER*/ DRing::Certificate::DetailsNames::ISSUER_CERTIFICATE_IDENTIFIER,
 
 }};
 
@@ -1004,6 +1006,40 @@ TlsValidator::CheckResult TlsValidator::getIssuer()
     size_t resultSize = sizeof(copy_buffer);
     int err = gnutls_x509_crt_get_issuer_unique_id(x509crt_->cert, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
+}
+
+/**
+ * @warning Temporary hack to get the chain of trust in good enough
+ * shape to implement the whole pipeline. This doesn't support DHT,
+ * doesn't use the local certificate cache and is blocking.
+ */
+TlsValidator::CheckResult TlsValidator::getIssuerCertificateIdentifier()
+{
+    size_t resultSize = sizeof(copy_buffer);
+
+    gnutls_certificate_credentials_t certCred;
+    int err = gnutls_certificate_allocate_credentials(&certCred);
+
+    TlsValidator::CheckResult res = checkError(err, copy_buffer, resultSize);
+
+    if (res.first == TlsValidator::CheckValues::FAILED)
+       return res;
+
+    gnutls_x509_crt_t *issuer_x509 = nullptr;
+
+    err = gnutls_certificate_get_issuer(certCred, x509crt_->cert, issuer_x509, 0/*GNUTLS_TL_GET_COPY*/);
+
+    res = checkError(err, copy_buffer, resultSize);
+
+    if (res.first == TlsValidator::CheckValues::FAILED/* || issuer_x509 == nullptr*/)
+       return res;
+
+    static unsigned char unsigned_copy_buffer[4096];
+    size_t binResultSize = sizeof(unsigned_copy_buffer);
+
+    err = gnutls_x509_crt_get_fingerprint(*issuer_x509,GNUTLS_DIG_SHA1,unsigned_copy_buffer,&binResultSize);
+
+    return checkBinaryError(err, (char*) unsigned_copy_buffer, binResultSize);
 }
 
 /**

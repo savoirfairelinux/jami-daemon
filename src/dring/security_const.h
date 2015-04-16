@@ -65,24 +65,25 @@ namespace ChecksNames {
 * Those constants are used by the ConfigurationManager.getCertificateDetails method
 */
 namespace DetailsNames {
-    constexpr static char EXPIRATION_DATE             [] = "EXPIRATION_DATE"              ;
-    constexpr static char ACTIVATION_DATE             [] = "ACTIVATION_DATE"              ;
-    constexpr static char REQUIRE_PRIVATE_KEY_PASSWORD[] = "REQUIRE_PRIVATE_KEY_PASSWORD" ;
-    constexpr static char PUBLIC_SIGNATURE            [] = "PUBLIC_SIGNATURE"             ;
-    constexpr static char VERSION_NUMBER              [] = "VERSION_NUMBER"               ;
-    constexpr static char SERIAL_NUMBER               [] = "SERIAL_NUMBER"                ;
-    constexpr static char ISSUER                      [] = "ISSUER"                       ;
-    constexpr static char SUBJECT_KEY_ALGORITHM       [] = "SUBJECT_KEY_ALGORITHM"        ;
-    constexpr static char CN                          [] = "CN"                           ;
-    constexpr static char N                           [] = "N"                            ;
-    constexpr static char O                           [] = "O"                            ;
-    constexpr static char SIGNATURE_ALGORITHM         [] = "SIGNATURE_ALGORITHM"          ;
-    constexpr static char MD5_FINGERPRINT             [] = "MD5_FINGERPRINT"              ;
-    constexpr static char SHA1_FINGERPRINT            [] = "SHA1_FINGERPRINT"             ;
-    constexpr static char PUBLIC_KEY_ID               [] = "PUBLIC_KEY_ID"                ;
-    constexpr static char ISSUER_DN                   [] = "ISSUER_DN"                    ;
-    constexpr static char NEXT_EXPECTED_UPDATE_DATE   [] = "NEXT_EXPECTED_UPDATE_DATE"    ;
-    constexpr static char OUTGOING_SERVER             [] = "OUTGOING_SERVER"              ;
+    constexpr static char EXPIRATION_DATE              [] = "EXPIRATION_DATE"              ;
+    constexpr static char ACTIVATION_DATE              [] = "ACTIVATION_DATE"              ;
+    constexpr static char REQUIRE_PRIVATE_KEY_PASSWORD [] = "REQUIRE_PRIVATE_KEY_PASSWORD" ;
+    constexpr static char PUBLIC_SIGNATURE             [] = "PUBLIC_SIGNATURE"             ;
+    constexpr static char VERSION_NUMBER               [] = "VERSION_NUMBER"               ;
+    constexpr static char SERIAL_NUMBER                [] = "SERIAL_NUMBER"                ;
+    constexpr static char ISSUER                       [] = "ISSUER"                       ;
+    constexpr static char SUBJECT_KEY_ALGORITHM        [] = "SUBJECT_KEY_ALGORITHM"        ;
+    constexpr static char CN                           [] = "CN"                           ;
+    constexpr static char N                            [] = "N"                            ;
+    constexpr static char O                            [] = "O"                            ;
+    constexpr static char SIGNATURE_ALGORITHM          [] = "SIGNATURE_ALGORITHM"          ;
+    constexpr static char MD5_FINGERPRINT              [] = "MD5_FINGERPRINT"              ;
+    constexpr static char SHA1_FINGERPRINT             [] = "SHA1_FINGERPRINT"             ;
+    constexpr static char PUBLIC_KEY_ID                [] = "PUBLIC_KEY_ID"                ;
+    constexpr static char ISSUER_DN                    [] = "ISSUER_DN"                    ;
+    constexpr static char NEXT_EXPECTED_UPDATE_DATE    [] = "NEXT_EXPECTED_UPDATE_DATE"    ;
+    constexpr static char OUTGOING_SERVER              [] = "OUTGOING_SERVER"              ;
+    constexpr static char ISSUER_CERTIFICATE_IDENTIFIER[] = "ISSUER_CERTIFICATE_IDENTIFIER";
 } //namespace DRing::Certificate::CheckValuesNames
 
 /**
