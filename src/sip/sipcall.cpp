@@ -204,8 +204,9 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
             {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(t, state)) {
+                    if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != DISCONNECTED) {
                         RING_WARN("Ending call because underlying SIP transport was closed");
+                        this_->setConnectionState(Call::DISCONNECTED);
                         Manager::instance().callFailure(*this_);
                         this_->removeCall();
                     }
