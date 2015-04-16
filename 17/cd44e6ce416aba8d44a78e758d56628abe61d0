@@ -1,0 +1,7 @@
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Verified+1: Jenkins CI
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Thu, 16 Apr 2015 14:22:34 -0400
+Reviewed-on: https://gerrit-sflphone.savoirfairelinux.com/1699
+Project: ring
+Branch: refs/heads/release-2.1.x
