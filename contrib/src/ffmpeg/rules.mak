@@ -63,11 +63,14 @@ FFMPEGCONF += \
 	--enable-indev=dshow \
 	--enable-dxva2
 
-# There is an unresolved symbol for speex when linking statically
+# There is unresolved symbols for speex and opus when linking statically
 ifndef HAVE_WIN32
 FFMPEGCONF += \
+		  --enable-libopus \
+          --enable-encoder=libopus \
+          --enable-decoder=libopus \
+          --enable-parser=opus \
           --enable-libspeex \
-          --enable-libopus \
           --enable-encoder=libspeex \
           --enable-decoder=libspeex
 endif
@@ -89,7 +92,7 @@ endif
 
 # Windows
 ifdef HAVE_WIN32
-FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
+FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack --enable-cross-compile
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 

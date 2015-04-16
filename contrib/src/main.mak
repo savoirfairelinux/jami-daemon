@@ -41,13 +41,7 @@ ifeq ($(ARCH)-$(HAVE_WIN32),x86_64-1)
 HAVE_WIN64 := 1
 endif
 
-ifdef HAVE_CROSS_COMPILE
-PKG_CONFIG ?= $(HOST)-pkg-config --static
-PKG_CONFIG_PATH_CUSTOM = $(PREFIX)/lib/pkgconfig
-export PKG_CONFIG_PATH_CUSTOM
-else
 PKG_CONFIG ?= pkg-config
-endif
 
 PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(PREFIX)/lib/pkgconfig
 export PKG_CONFIG_PATH
@@ -197,7 +191,16 @@ endif
 ACLOCAL_AMFLAGS += -I$(PREFIX)/share/aclocal
 export ACLOCAL_AMFLAGS
 
-
+PKG_CONFIG ?= pkg-config
+ifdef HAVE_CROSS_COMPILE
+# This inhibits .pc file from within the cross-compilation toolchain sysroot.
+PKG_CONFIG = pkg-config --static
+PKG_CONFIG_PATH := /usr/share/pkgconfig
+PKG_CONFIG_LIBDIR := /usr/$(HOST)/lib/pkgconfig
+export PKG_CONFIG_LIBDIR
+endif
+PKG_CONFIG_PATH := $(PKG_CONFIG_PATH):$(PREFIX)/lib/pkgconfig
+export PKG_CONFIG_PATH
 
 ifndef GIT
 ifeq ($(shell git --version >/dev/null 2>&1 || echo FAIL),)

@@ -74,6 +74,8 @@ case "${host_os}" in
     AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
     AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
     CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601"
+    CFLAGS += "-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4"
+    CXXFLAGS += "-Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4"
     LDFLAGS+="-no-undefined -avoid-version -Wl,--nxcompat -Wl,--dynamicbase"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
@@ -214,10 +216,10 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   CFLAGS="${CFLAGS} -I${CONTRIB_DIR}/include"
   CXXFLAGS="${CXXFLAGS} -I${CONTRIB_DIR}/include"
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
+  PKG_CONFIG="pkg-config"
   AS_IF([test "${SYS}" = "mingw32"],[
-        PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
-        AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
-        export PKG_CONFIG_PATH_CUSTOM
+        export PKG_CONFIG_LIBDIR="/usr/${host}/lib/pkgconfig"
+        export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
   ])
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
   LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
