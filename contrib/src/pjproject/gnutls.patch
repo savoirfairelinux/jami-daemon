@@ -83,7 +83,7 @@ index 084ab0a..d4f4639 100755
 +$as_echo "Using SSL prefix... $with_ssl" >&6; }
 +    fi
 +    if test "x$ssl_backend" = "xgnutls"; then
-+        for ac_prog in $host-pkg-config pkg-config "python pkgconfig.py"
++        for ac_prog in pkg-config "python pkgconfig.py"
 +do
 +  # Extract the first word of "$ac_prog", so it can be a program name with args.
 +set dummy $ac_prog; ac_word=$2
@@ -351,7 +351,7 @@ index 67cf24f..c6cbf82 100644
 +    fi
 +    if test "x$ssl_backend" = "xgnutls"; then
 +        AC_CHECK_PROGS(PKG_CONFIG,
-+                       $host-pkg-config pkg-config "python pkgconfig.py",
++                       pkg-config "python pkgconfig.py",
 +                       none)
 +        AC_MSG_RESULT([checking for GnuTLS installations..])
 +        AC_SUBST(gnutls_h_present)
