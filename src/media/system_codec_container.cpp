@@ -63,11 +63,6 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                DEFAULT_VIDEO_BITRATE),
 
-        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
-                                               "H263", "h263",
-                                               CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
-
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
@@ -75,6 +70,11 @@ SystemCodecContainer::initCodecConfig()
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
+                                               CODEC_ENCODER_DECODER,
+                                               DEFAULT_VIDEO_BITRATE),
+
+        std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
+                                               "H263", "h263",
                                                CODEC_ENCODER_DECODER,
                                                DEFAULT_VIDEO_BITRATE),
 #endif
@@ -85,16 +85,6 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                0, 48000, 2, 104),
 
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
-                                               "PCMA", "pcm_alaw",
-                                               CODEC_ENCODER_DECODER,
-                                               64, 8000, 1, 8),
-
-        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_MULAW,
-                                               "PCMU" ,"pcm_mulaw",
-                                               CODEC_ENCODER_DECODER,
-                                               64, 8000, 1, 0),
-
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_ADPCM_G722,
                                                "G722", "g722",
                                                CODEC_ENCODER_DECODER,
@@ -103,7 +93,7 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
                                                CODEC_ENCODER_DECODER,
-                                               0, 8000, 1, 110),
+                                               0, 32000, 1, 112),
 
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
@@ -113,7 +103,17 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_SPEEX,
                                                "speex", "libspeex",
                                                CODEC_ENCODER_DECODER,
-                                               0, 32000, 1, 112),
+                                               0, 8000, 1, 110),
+
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
+                                               "PCMA", "pcm_alaw",
+                                               CODEC_ENCODER_DECODER,
+                                               64, 8000, 1, 8),
+
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_MULAW,
+                                               "PCMU" ,"pcm_mulaw",
+                                               CODEC_ENCODER_DECODER,
+                                               64, 8000, 1, 0),
     };
 
     checkInstalledCodecs();
