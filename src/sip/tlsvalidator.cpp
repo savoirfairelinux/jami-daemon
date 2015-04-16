@@ -1021,7 +1021,7 @@ TlsValidator::CheckResult TlsValidator::getCN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_.cert, GNUTLS_OID_X520_COMMON_NAME, 0, 0, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1032,7 +1032,7 @@ TlsValidator::CheckResult TlsValidator::getN()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_.cert, GNUTLS_OID_X520_NAME, 0, 0, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
@@ -1043,7 +1043,7 @@ TlsValidator::CheckResult TlsValidator::getO()
 {
     // TODO split, cache
     size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_dn(x509crt_.cert, copy_buffer, &resultSize);
+    int err = gnutls_x509_crt_get_dn_by_oid(x509crt_.cert, GNUTLS_OID_X520_ORGANIZATION_NAME, 0, 0, copy_buffer, &resultSize);
     return checkError(err, copy_buffer, resultSize);
 }
 
