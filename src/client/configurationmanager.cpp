@@ -273,6 +273,61 @@ sendAccountTextMessage(const std::string& accountID, const std::string& to, cons
     ring::Manager::instance().sendTextMessage(accountID, to, message);
 }
 
+/* contacts */
+std::vector<std::string>
+getContacts(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getContacts();
+    return {};
+}
+
+void
+setContacts(const std::string& accountId, const std::vector<std::string>& contacts)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->setContacts(contacts);
+}
+
+void
+addContact(const std::string& accountId, const std::string& contact)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->addContact(contact);
+}
+
+/* contact requests */
+std::map<std::string, std::string>
+getContactRequests(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getContactRequests();
+    return {{}};
+}
+
+bool
+acceptContactRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->acceptContactRequest(from);
+    return false;
+}
+
+bool
+discardContactRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->discardContactRequest(from);
+    return false;
+}
+
+void
+sendContactRequest(const std::string& accountId, const std::string& to)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->sendContactRequest(to);
+}
+
 ///This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
