@@ -414,6 +414,48 @@ DBusConfigurationManager::banCertificate(const std::string& certId) {
     return DRing::banCertificate(certId);
 }
 
+std::vector<std::string>
+DBusConfigurationManager::getContacts(const std::string& accountId)
+{
+    return DRing::getContacts(accountId);
+}
+
+void
+DBusConfigurationManager::setContacts(const std::string& accountId, const std::vector<std::string>& contacts)
+{
+    DRing::setContacts(accountId, contacts);
+}
+
+void
+DBusConfigurationManager::addContact(const std::string& accountId, const std::string& contact)
+{
+    DRing::addContact(accountId, contact);
+}
+
+auto
+DBusConfigurationManager::getContactRequests(const std::string& accountId) -> decltype(DRing::getContactRequests(accountId))
+{
+    return DRing::getContactRequests(accountId);
+}
+
+bool
+DBusConfigurationManager::acceptContactRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::acceptContactRequest(accountId, from);
+}
+
+bool
+DBusConfigurationManager::discardContactRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::discardContactRequest(accountId, from);
+}
+
+void
+DBusConfigurationManager::sendContactRequest(const std::string& accountId, const std::string& to)
+{
+    DRing::sendContactRequest(accountId, to);
+}
+
 void
 DBusConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
 {

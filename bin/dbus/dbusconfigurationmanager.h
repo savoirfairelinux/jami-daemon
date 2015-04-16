@@ -134,11 +134,17 @@ class DBusConfigurationManager :
         std::map<std::string, std::string> validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
         std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
-
         std::vector<std::string> getCertificateList();
         std::string addCertificate(const std::vector<uint8_t>& certificate);
         bool addCertificateRemote(const std::string& accountId, const std::string& certId);
         bool banCertificate(const std::string& certId);
+        std::vector<std::string> getContacts(const std::string& accountId);
+        void setContacts(const std::string& accountId, const std::vector<std::string>& contacts);
+        void addContact(const std::string& accountId, const std::string& contact);
+        std::map<std::string, std::string> getContactRequests(const std::string& accountId);
+        bool acceptContactRequest(const std::string& accountId, const std::string& from);
+        bool discardContactRequest(const std::string& accountId, const std::string& from);
+        void sendContactRequest(const std::string& accountId, const std::string& to);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
