@@ -24,6 +24,8 @@
 
 #include <string>
 #include <vector>
+#include <map>
+#include <set>
 
 namespace ring {
 namespace tls {
@@ -34,15 +36,24 @@ class CertificateStore {
 public:
     static CertificateStore& instance();
 
-    std::vector<std::string> getPinnedCertificates() { return {}; }
+    CertificateStore();
 
-    std::string pinCertificate(const std::vector<uint8_t>&) { return {}; }
-    std::string pinCertificate(const std::string&) { return {}; }
-    std::string pinCertificate(const crypto::Certificate&) { return {}; }
+    std::vector<std::string> getPinnedCertificates() const;
+    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
 
-    bool unpinCertificate(const std::string&) { return false; }
+    std::string pinCertificate(const std::vector<uint8_t>& crt);
+    std::string pinCertificate(const std::string& path);
+    std::string pinCertificate(crypto::Certificate&& crt);
+    std::string pinCertificate(std::shared_ptr<crypto::Certificate> crt);
+
+    bool unpinCertificate(const std::string&);
 
 private:
+
+    void loadCertificates(const std::string& path);
+
+    const std::string certPath_;
+    std::map<std::string, std::shared_ptr<crypto::Certificate>> certs_;
 };
 
 }} // namespace ring::tls

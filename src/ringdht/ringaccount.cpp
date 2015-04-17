@@ -62,6 +62,7 @@
 
 #include "config/yamlparser.h"
 
+#include "security/certstore.h"
 #include "security/gnutls_support.h"
 
 #include <opendht/securedht.h>
@@ -531,7 +532,6 @@ RingAccount::handleEvents()
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            regenerateCAList();
             auto id = loadIdentity();
             auto remote_h = c->id;
             tls::TlsParams tlsParams {
@@ -849,6 +849,7 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
         released_cb(false);
 }
 
+/*
 void
 RingAccount::registerCA(const dht::crypto::Certificate& crt)
 {
@@ -869,17 +870,22 @@ RingAccount::unregisterCA(const dht::InfoHash& crt_id)
     }
     return deleted;
 }
+*/
 
 bool
-RingAccount::findCertificate(const std::string& pk_id)
+RingAccount::findCertificate(const std::string& crt_id)
 {
-    return false;
-}
-
-bool
-RingAccount::setCertificateStatus(const std::string& cert_id, const DRing::Certificate::Status status)
-{
-    return false;
+    dht_.get(dht::InfoHash(crt_id), [](const std::vector<std::shared_ptr<dht::Value>>& vals) {
+        for (const auto& v : vals) {
+            try {
+                tls::CertificateStore::instance().pinCertificate(dht::crypto::Certificate(v->data));
+            } catch (const std::exception& e) {
+                continue;
+            }
+            return true;
+        }
+    });
+    return true;
 }
 
 void
@@ -902,6 +908,7 @@ RingAccount::loadTreatedCalls()
     }
 }
 
+
 void
 RingAccount::saveTreatedCalls() const
 {
@@ -915,33 +922,6 @@ RingAccount::saveTreatedCalls() const
         }
         for (auto& c : treatedCalls_)
             file << std::hex << c << "\n";
-    }
-}
-
-std::vector<std::string>
-RingAccount::getRegistredCAs()
-{
-    return fileutils::readDirectory(caPath_);
-}
-
-void
-RingAccount::regenerateCAList()
-{
-    std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
-    if (!list.is_open()) {
-        RING_ERR("Could write CA list");
-        return;
-    }
-    auto cas = getRegistredCAs();
-    {
-        std::ifstream file(tlsCaListFile_, std::ios::binary);
-        list << file.rdbuf();
-    }
-    for (const auto& ca : cas) {
-        std::ifstream file(ca, std::ios::binary);
-        if (!file)
-            continue;
-        list << file.rdbuf();
     }
 }
 
@@ -1020,8 +1000,6 @@ RingAccount::loadValues() const
 void
 RingAccount::initTlsConfiguration()
 {
-    regenerateCAList();
-
 }
 
 static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
