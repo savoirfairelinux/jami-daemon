@@ -237,7 +237,6 @@
        </method>
 
       <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
-          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
           <arg type="s" name="accountID" direction="in">
           </arg>
           <arg type="s" name="to" direction="in">
@@ -256,7 +255,7 @@
            </arg>
            <arg type="s" name="message">
            </arg>
-       </signal>
+      </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">
            <tp:docstring>
@@ -786,7 +785,7 @@
                 The new status of the certificate for the specified account.
                   UNDEFINED (0): forget any previous certificate state for this account.
                   ALLOWED (1) : consider the certificate as trusted for this account.
-                  BANNED (1) : consider the certificate as banned for this account.
+                  BANNED (2) : consider the certificate as banned for this account.
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Boolean"/>
@@ -795,6 +794,27 @@
                <p>True if the certificate state was succesfully set.</p>
               </tp:docstring>
            </arg>
+       </method>
+
+       <method name="getCertificatesByStatus" tp:name-for-bindings="getCertificatesByStatus">
+           <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+               <p>An account ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="y" name="status" direction="in">
+              <tp:docstring>
+                The queried status of the certificates.
+                  ALLOWED (1) : consider the certificate as trusted for this account.
+                  BANNED (2) : consider the certificate as banned for this account.
+              </tp:docstring>
+           </arg>
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+          <arg type="as" name="list" direction="out">
+              <tp:docstring>
+                  A list of certificates with the provided status
+              </tp:docstring>
+          </arg>
        </method>
 
        <signal name="certificatePinned" tp:name-for-bindings="certificateAdded">
@@ -812,6 +832,59 @@
            <arg type="s" name="certId">
            </arg>
        </signal>
+
+      <method name="getTrustRequests" tp:name-for-bindings="getContactRequests">
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+              <tp:docstring>
+                  A list of contact request details.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="acceptTrustRequest" tp:name-for-bindings="acceptContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+      <method name="discardTrustRequest" tp:name-for-bindings="discardContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <signal name="incomingTrustRequest" tp:name-for-bindings="incomingContactRequest">
+            <tp:docstring>
+                Notify clients that a new contact request has been received.
+            </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="from">
+           </arg>
+           <arg type="t" name="receiveTime">
+           </arg>
+      </signal>
+
+      <method name="sendTrustRequest" tp:name-for-bindings="sendContactRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="to" direction="in">
+          </arg>
+      </method>
 
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
            <arg type="s" name="interface" direction="in">

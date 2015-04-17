@@ -416,7 +416,36 @@ DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId, con
 
 bool
 DBusConfigurationManager::setCertificateStatus(const std::string& accountId, const std::string& certId, const uint8_t& status) {
-    return DRing::setCertificateStatus(accountId, certId, (DRing::Certificate::Status )status);
+    return DRing::setCertificateStatus(accountId, certId, (DRing::Certificate::Status)status);
+}
+
+std::vector<std::string>
+DBusConfigurationManager::getCertificatesByStatus(const std::string& account, const uint8_t& status) {
+    return DRing::getCertificatesByStatus(account, (DRing::Certificate::Status)status);
+}
+
+auto
+DBusConfigurationManager::getTrustRequests(const std::string& accountId) -> decltype(DRing::getTrustRequests(accountId))
+{
+    return DRing::getTrustRequests(accountId);
+}
+
+bool
+DBusConfigurationManager::acceptTrustRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::acceptTrustRequest(accountId, from);
+}
+
+bool
+DBusConfigurationManager::discardTrustRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::discardTrustRequest(accountId, from);
+}
+
+void
+DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const std::string& to)
+{
+    DRing::sendTrustRequest(accountId, to);
 }
 
 void

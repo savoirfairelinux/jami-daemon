@@ -70,6 +70,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(),
         exported_callback<DRing::ConfigurationSignal::CertificatePinned>(),
         exported_callback<DRing::ConfigurationSignal::CertificateExpired>(),
+        exported_callback<DRing::ConfigurationSignal::IncomingContactRequest>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 
         /* Presence */

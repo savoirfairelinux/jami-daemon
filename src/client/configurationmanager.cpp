@@ -265,6 +265,16 @@ setCertificateStatus(const std::string& accountId, const std::string& certId, Ce
     return false;
 }
 
+std::vector<std::string>
+getCertificatesByStatus(const std::string& accountId, Certificate::Status status)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getCertificatesByStatus(status);
+    else if (auto acc = ring::Manager::instance().getAccount<ring::SIPAccount>(accountId))
+        return acc->getCertificatesByStatus(status);
+    return {};
+}
+
 void
 setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
@@ -287,6 +297,38 @@ void
 sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
 {
     ring::Manager::instance().sendTextMessage(accountID, to, message);
+}
+
+/* contact requests */
+std::map<std::string, std::string>
+getTrustRequests(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getContactRequests();
+    return {{}};
+}
+
+bool
+acceptTrustRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->acceptContactRequest(from);
+    return false;
+}
+
+bool
+discardTrustRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->discardContactRequest(from);
+    return false;
+}
+
+void
+sendTrustRequest(const std::string& accountId, const std::string& to)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->sendContactRequest(to);
 }
 
 ///This function is used as a base for new accounts for clients that support it

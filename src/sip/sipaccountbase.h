@@ -231,6 +231,13 @@ public:
         certificateStatus_[cert_id] = status;
         return true;
     }
+    std::vector<std::string> getCertificatesByStatus(DRing::Certificate::Status status) {
+        std::vector<std::string> ret;
+        for (const auto& i : certificateStatus_)
+            if (i.second == status)
+                ret.emplace_back(i.first);
+        return ret;
+    }
 
 protected:
     virtual void serialize(YAML::Emitter &out);
