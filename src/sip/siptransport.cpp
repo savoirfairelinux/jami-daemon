@@ -136,7 +136,7 @@ SipTransport::stateCallback(pjsip_transport_state state,
     auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
     if (isSecure() && extInfo && extInfo->ssl_sock_info && extInfo->ssl_sock_info->established) {
         auto tlsInfo = extInfo->ssl_sock_info;
-        tlsInfos_.proto = tlsInfo->proto;
+        tlsInfos_.proto = (pj_ssl_sock_proto)tlsInfo->proto;
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t)tlsInfo->verify_status;
         const auto& peer_crt = tlsInfo->remote_cert_info->cert_raw;
