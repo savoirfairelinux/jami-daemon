@@ -372,7 +372,7 @@ SipsIceTransport::certGetCn(const pj_str_t* gen_name, pj_str_t* cn)
  * issuer and the serial number. */
 void
 SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
-                              const gnutls_datum_t& crt_raw)
+                              const gnutls_datum_t* crt_raw, size_t crt_raw_num)
 {
     char buf[512] = { 0 };
     size_t bufsize = sizeof(buf);
@@ -382,9 +382,9 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
     int i, ret, seq = 0;
     pj_ssl_cert_name_type type;
 
-    pj_assert(pool && ci && crt_raw.data);
+    pj_assert(pool && ci && crt_raw);
 
-    dht::crypto::Certificate crt(Blob(crt_raw.data, crt_raw.data + crt_raw.size));
+    dht::crypto::Certificate crt(Blob(crt_raw[0].data, crt_raw[0].data + crt_raw[0].size));
 
     /* Get issuer */
     gnutls_x509_crt_get_issuer_dn(crt.cert, buf, &bufsize);
@@ -401,8 +401,12 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
     std::memset(ci, 0, sizeof(pj_ssl_cert_info));
 
     /* Full raw certificate */
-    const pj_str_t raw_crt_pjstr {(char*)crt_raw.data, (long int) crt_raw.size};
-    pj_strdup(pool, &ci->cert_raw, &raw_crt_pjstr);
+    ci->raw_chain.cert_raw = (pj_str_t*)pj_pool_calloc(pool, crt_raw_num, sizeof(*ci->raw_chain.cert_raw));
+    ci->raw_chain.cnt = crt_raw_num;
+    for (size_t i=0; i < crt_raw_num; ++i) {
+        const pj_str_t cert = {(char*)crt_raw[i].data, (pj_ssize_t)crt_raw[i].size};
+        pj_strdup(pool, ci->raw_chain.cert_raw+i, &cert);
+    }
 
     /* Version */
     ci->version = gnutls_x509_crt_get_version(crt.cert);
@@ -485,13 +489,13 @@ SipsIceTransport::certUpdate()
 {
     /* Get active local certificate */
     if(const auto local_raw = gnutls_certificate_get_ours(session_))
-        certGetInfo(pool_.get(), &localCertInfo_, *local_raw);
+        certGetInfo(pool_.get(), &localCertInfo_, local_raw, 1);
     else
         std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
     unsigned int certslen = 0;
     if (const auto remote_raw = gnutls_certificate_get_peers(session_, &certslen))
-        certGetInfo(pool_.get(), &remoteCertInfo_, *remote_raw);
+        certGetInfo(pool_.get(), &remoteCertInfo_, remote_raw, certslen);
     else
         std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 }
