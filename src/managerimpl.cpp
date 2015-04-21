@@ -86,6 +86,8 @@
 #include "libav_utils.h"
 #include "video/sinkclient.h"
 
+#include "audio/echocanceller/echocancellerfactory.h"
+
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -189,6 +191,24 @@ setGnuTlsLogLevel()
 }
 #endif // HAVE_TLS
 
+// cppcheck-suppress unusedFunction
+RING_PLUGIN_EXIT(pluginExit) {}
+
+// cppcheck-suppress unusedFunction
+RING_PLUGIN_INIT_STATIC(initWebRtc, pluginAPI)
+{
+    static RING_PluginObjectFactory objectFactory = {
+        {RING_PLUGIN_ABI_VERSION, RING_PLUGIN_API_VERSION},
+        nullptr,
+        createEchoCanceller,
+        destroyEchoCanceller};
+
+    if (!pluginAPI->registerObjectFactory(pluginAPI, "EchoCanceller", &objectFactory))
+        return nullptr;
+
+    return pluginExit;
+}
+
 void
 ManagerImpl::loadDefaultAccountMap()
 {
@@ -215,6 +235,8 @@ ManagerImpl::ManagerImpl() :
     rand_.seed(seed);
 
     ring::libav_utils::ring_avcodec_init();
+
+    pluginManager_->registerPlugin(initWebRtc);
 }
 
 ManagerImpl::~ManagerImpl()

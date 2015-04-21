@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Author:  Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,48 +27,48 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef WEBRTC_AUDIO_PROCESSING__H
+#define WEBRTC_AUDIO_PROCESSING__H
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+#include "echocanceller.h"
 
-#include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
-#include "config.h"
+#include <webrtc_audio_processing/audio_processing.h>
+#include <webrtc_audio_processing/module_common_types.h>
+#include <fstream>
 
+#define BLOCK_SIZE_US
 
-#include <string>
-#include <memory>
+#define DEFAULT_HIGH_PASS_FILTER true
+#define DEFAULT_NOISE_SUPPRESSION true
+#define DEFAULT_ANALOG_GAIN_CONTROL false
+#define DEFAULT_DIGITAL_GAIN_CONTROL true
+//#define DEFAULT_MOBILE true
+#define DEFAULT_MOBILE false
+#define DEFAULT_ROUTING_MODE "speakerphone"
+#define DEFAULT_COMFORT_NOISE true
+#define DEFAULT_DRIFT_COMPENSATION true
+//#define DEFAULT_DRIFT_COMPENSATION false
 
-namespace ring {
-
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
-class AudioProcessing;
-
-
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
-
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-
-    private:
-        void startSender();
-        void startReceiver();
-
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-
+struct WebRtcEchoParams {
+    webrtc::AudioProcessing *apm {nullptr};
 };
 
-} // namespace ring
+class WebrtcAudioProcessing : public EchoCanceller {
+    public:
+        WebrtcAudioProcessing();
+        ~WebrtcAudioProcessing();
+        EchoCanceller * clone();
 
-#endif // __AUDIO_RTP_SESSION_H__
+        void setPlaybackSamples(const int16_t * in_samples, int16_t * out_samples, long* captureVolume);
+
+        void setCapturedSamples(const int16_t * in_samples);
+
+        void setDrift(const float val);
+
+        bool initWebRtcAudioProcessing();
+
+    private:
+        WebRtcEchoParams webRtcEchoParams_;
+        std::ofstream fDebug_;
+};
+#endif // WEBRTC_AUDIO_PROCESSING__H

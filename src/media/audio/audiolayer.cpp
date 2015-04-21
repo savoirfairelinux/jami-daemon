@@ -35,6 +35,7 @@
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "plugin_manager.h"
 
 #include <ctime>
 
@@ -56,6 +57,10 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , lastNotificationTime_(0)
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
+    auto echotmp = Manager::instance().pluginManager_->createObject("EchoCanceller");
+
+   echoCanceller_.reset(static_cast<WebrtcAudioProcessing*>(echotmp.release()));
+
 }
 
 AudioLayer::~AudioLayer()

@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Author:  Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,47 +28,22 @@
  *  as that of the covered work.
  */
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+#include "echocanceller.h"
 
-#include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
-#include "config.h"
+//namespace ring {
 
+EchoCanceller::EchoCanceller(EchoCancellerId id)
+{
+    id_ = id;
+}
 
-#include <string>
-#include <memory>
+EchoCanceller::~EchoCanceller()
+{}
 
-namespace ring {
+EchoCancellerId
+EchoCanceller::getId()
+{
+    return id_;
+}
 
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
-class AudioProcessing;
-
-
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
-
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-
-    private:
-        void startSender();
-        void startReceiver();
-
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-
-};
-
-} // namespace ring
-
-#endif // __AUDIO_RTP_SESSION_H__
+//} // end namespace ring

@@ -168,6 +168,7 @@ class CoreLayer : public AudioLayer {
 
         /** Non-interleaved audio buffers */
         AudioBuffer playbackBuff_;
+        AudioBuffer playbackBuffProcessed_;
         ::AudioBufferList* captureBuff_; // CoreAudio buffer.
 
         /** Interleaved buffer */

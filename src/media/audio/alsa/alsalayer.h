@@ -251,6 +251,7 @@ class AlsaLayer : public AudioLayer {
 
         /** Interleaved buffer */
         std::vector<AudioSample> playbackIBuff_;
+        std::vector<AudioSample> playbackIBuffProcessed_;
         std::vector<AudioSample> captureIBuff_;
 
         bool is_playback_prepared_;
@@ -262,6 +263,14 @@ class AlsaLayer : public AudioLayer {
 
         AlsaThread *audioThread_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+
+        void setAlsaCaptureVolume(long volume);
+        void getAlsaCaptureVolume(long* volume);
+        long currentVolume_;
+        unsigned sizeDataRead_;
+        unsigned sizeDataWrited_;
+
+        std::ofstream fDebug_;
 };
 
 } // namespace ring

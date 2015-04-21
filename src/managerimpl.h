@@ -61,6 +61,7 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
+
 namespace ring {
 
 namespace Conf {
@@ -96,7 +97,6 @@ typedef std::set<std::string> CallIDSet;
 /** Manager (controller) of Ring daemon */
 class ManagerImpl {
     private:
-        std::unique_ptr<PluginManager> pluginManager_;
 
     public:
         ManagerImpl();
@@ -755,6 +755,8 @@ class ManagerImpl {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        std::unique_ptr<PluginManager> pluginManager_;
+
 
     private:
         void removeAccounts();
@@ -962,6 +964,7 @@ class ManagerImpl {
 
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 #endif // RING_VIDEO
+
 
     private:
         NON_COPYABLE(ManagerImpl);

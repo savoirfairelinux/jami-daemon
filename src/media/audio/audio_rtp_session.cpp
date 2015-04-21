@@ -49,6 +49,9 @@
 #include "manager.h"
 #include <sstream>
 
+
+
+
 namespace ring {
 
 class AudioSender {
@@ -100,6 +103,7 @@ AudioSender::~AudioSender()
 {
     loop_.join();
 }
+
 
 bool
 AudioSender::setup(SocketPair& socketPair)

@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Author:  Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,48 +27,48 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+#ifndef ECHO_CANCELLER__H
+#define ECHO_CANCELLER__H
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
-
-#include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
-#include "config.h"
-
-
-#include <string>
 #include <memory>
+#include "audio/audiobuffer.h"
+//namespace DRing::EchoCancellerPlugin {
 
-namespace ring {
-
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
-class AudioProcessing;
-
-
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
-
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-
-    private:
-        void startSender();
-        void startReceiver();
-
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-
+enum EchoCancellerId : unsigned {
+    ECHO_CANCELLER_NONE = 0,
+    ECHO_CANCELLER_WEBRTC = 1,
 };
 
-} // namespace ring
+struct EchoCancellerParams {
+    bool hasDriftCompensation {false};
+    bool hasAGC {false};
+    unsigned blocksize_capture {0};
+    unsigned blocksize_playback {0};
+    unsigned bytesPerSample {0};
+    unsigned currentVolume {0};
+    std::shared_ptr<ring::AudioFormat> audioFormat ;
+};
 
-#endif // __AUDIO_RTP_SESSION_H__
+
+class EchoCanceller
+{
+    public:
+        EchoCanceller(EchoCancellerId id);
+        ~EchoCanceller();
+
+        virtual EchoCanceller * clone() = 0;
+        virtual void setPlaybackSamples(const int16_t * in_samples, int16_t * out_samples, long* captureVolume) = 0;
+        virtual void setCapturedSamples(const int16_t * in_samples) = 0;
+        virtual void setDrift(const float val) = 0;
+
+        EchoCancellerId getId();
+
+        EchoCancellerParams ecParams;
+
+    protected:
+        EchoCancellerId id_;
+
+
+};
+//}// namespace ring
+#endif

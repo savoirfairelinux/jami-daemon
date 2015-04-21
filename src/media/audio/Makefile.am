@@ -98,3 +98,13 @@ if BUILD_PORTAUDIO
 libaudio_la_LIBADD += ./portaudio/libportaudiolayer.la
 libaudio_la_LDFLAGS += @PORTAUDIO_LIBS@
 endif
+
+#if HAVE_WEBRTC_AUDIO_PROCESSING
+# The webrtc code is split off into a helper library to avoid having automake
+# link module-echo-cancel with C++ (which it does if there are any C++ deps,
+# even conditional ones).
+#libwebrtc_util_la_SOURCES = modules/echo-cancel/webrtc.cc
+SUBDIRS += echocanceller
+libaudio_la_CXXFLAGS += ./echocanceller/libechocancellerlayer.la $(AM_CXXFLAGS) $(SERVER_CFLAGS) $(WEBRTC_CFLAGS) -DHAVE_WEBRTC=1
+libaudio_la_LIBADD +=  $(WEBRTC_LIBS)
+#endif

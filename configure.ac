@@ -564,6 +564,20 @@ AS_IF([test "x$with_upnp" = "xyes"],
 AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}"; then echo 1; else echo 0; fi`,
 	[Define if you have shared memory support])
 
+AC_ARG_ENABLE([webrtc-aec],
+    AS_HELP_STRING([--enable-webrtc-aec], [Enable the optional WebRTC-based echo canceller]))
+
+AS_IF([test "x$enable_webrtc_aec" != "xno"],
+      [AC_DEFINE([HAVE_WEBRTC_AUDIO_PROCESSING], 1, [Define to enable webrtc echo canceller])
+       PKG_CHECK_MODULES([WEBRTC], webrtc-audio-processing,
+                         AC_DEFINE([HAVE_WEBRTC_AUDIO_PROCESSING], 1, [Define to enable webrtc echo canceller])
+                         AM_CONDITIONAL(HAVE_WEBRTC_AUDIO_PROCESSING, true),
+                         AC_DEFINE([HAVE_WEBRTC_AUDIO_PROCESSING], 0, [Define to enable webrtc echo canceller])
+                         AM_CONDITIONAL(HAVE_WEBRTC_AUDIO_PROCESSING, false)
+                         AC_MSG_WARN([Missing webrtc echo canceller]))],
+      [AC_DEFINE([HAVE_WEBRTC_AUDIO_PROCESSING], 0, [Define to enable webrtc echo canceller])
+       AM_CONDITIONAL(HAVE_WEBRTC_AUDIO_PROCESSING, false)])
+
 # DOXYGEN
 # required dependency(ies): doxygen
 # check for doxygen, mostly stolen from http://log4cpp.sourceforge.net/
@@ -605,6 +619,7 @@ AC_CONFIG_FILES([Makefile \
                  src/media/audio/Makefile \
                  src/media/audio/pulseaudio/Makefile \
                  src/media/audio/alsa/Makefile \
+                 src/media/audio/echocanceller/Makefile \
                  src/media/audio/opensl/Makefile \
                  src/media/audio/jack/Makefile \
                  src/media/audio/coreaudio/Makefile \

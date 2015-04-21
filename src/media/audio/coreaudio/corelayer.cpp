@@ -363,6 +363,10 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
+    if (echoCanceller_) {
+        std::vector<AudioSample*> listSamples;
+        std::vector<AudioSample*> listSamplesProcessed;
+    }
 
     // Checks for resampling
     AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
@@ -380,8 +384,20 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
 
         playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
-        for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+        if (echoCanceller_) {
+            playbackBuffProcessed (playbackBuff_, true);
+            listSamples = playbackBuff_.getDataRaw();
+            listSamplesProcessed = playbackBuffProcessed.getDataRaw();
+        }
+        for (int i = 0; i < audioFormat_.nb_channels; ++i) {
+            if (echoCanceller_) {
+                echoCanceller_->setPlaybackedSamples(listSamples[i], listSamplesProcessed[i]);
+                playbackBuffProcessed_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+            } else {
+                playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+            }
+
+        }
 
         Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
     }
@@ -406,16 +422,40 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
                 playbackBuff_, RingBufferPool::DEFAULT_ID);
         playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
 
+
         if (resample) {
             AudioBuffer resampledOutput(readableSamples, audioFormat_);
             resampler_->resample(playbackBuff_, resampledOutput);
 
+            if (echoCanceller_) {
+                playbackBuffProcessed (resampledOutput, true);
+                listSamples = resampledOutput.getDataRaw();
+                listSamplesProcessed = playbackBuffProcessed.getDataRaw();
+            }
+
             for (int i = 0; i < audioFormat_.nb_channels; ++i)
-                resampledOutput.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+                if (echoCanceller_) {
+                    echoCanceller_->setPlaybackedSamples(listSamples[i], listSamplesProcessed[i]);
+                    playbackBuffProcessed_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+                } else {
+                    resampledOutput.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+                }
 
         } else {
-            for (int i = 0; i < audioFormat_.nb_channels; ++i)
+
+            if (echoCanceller_) {
+                playbackBuffProcessed (playbackBuff_, true);
+                listSamples = playbackBuff_.getDataRaw();
+                listSamplesProcessed = playbackBuffProcessed.getDataRaw();
+            }
+
+            for (int i = 0; i < audioFormat_.nb_channels; ++i) {
+                if (echoCanceller_) {
+                    echoCanceller_->setPlaybackedSamples(listSamples[i], listSamplesProcessed[i]);
+                    playbackBuffProcessed_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
+                } else {
                 playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+            }
         }
     }
 
@@ -510,6 +550,8 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
         inputResampler_->resample(inBuff, out);
         dcblocker_.process(out);
         mainRingBuffer_->put(out);
+        if (echoCanceller_)
+            echoCanceller_->setCapturedSamples(inBuff);
     } else {
         dcblocker_.process(inBuff);
         mainRingBuffer_->put(inBuff);

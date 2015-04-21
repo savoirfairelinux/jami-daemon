@@ -39,6 +39,8 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 
+#include "audio/echocanceller/webrtcaudioprocessing.h"
+
 #include <sys/time.h>
 #include <mutex>
 #include <vector>
@@ -272,6 +274,9 @@ class AudioLayer {
          * Manage input sampling rate conversions
          */
         std::unique_ptr<Resampler> inputResampler_;
+
+        std::unique_ptr<WebrtcAudioProcessing> echoCanceller_;
+
 
     private:
 

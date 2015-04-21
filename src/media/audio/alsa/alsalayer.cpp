@@ -136,6 +136,10 @@ void AlsaThread::run()
 {
     initAudioLayer();
     alsa_->isStarted_ = true;
+    //alsa_->setAlsaCaptureVolume(80);
+    long toto;
+    alsa_->getAlsaCaptureVolume(&toto);
+    RING_DBG("############################ CURRENT VOLUME = %d ",toto);
 
     while (alsa_->isStarted_ and running_) {
         alsa_->audioCallback();
@@ -154,6 +158,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0, audioFormat_)
     , playbackIBuff_(1024)
+    , playbackIBuffProcessed_(1024)
     , captureIBuff_(1024)
     , is_playback_prepared_(false)
     , is_capture_prepared_(false)
@@ -163,6 +168,10 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
     , is_capture_open_(false)
     , audioThread_(nullptr)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+    , currentVolume_(0)
+    , sizeDataRead_(0)
+    , sizeDataWrited_(0)
+    ,fDebug_("debug_alsalayer.log")
 {}
 
 AlsaLayer::~AlsaLayer()
@@ -211,6 +220,9 @@ AlsaLayer::startStream()
 
     if (is_playback_running_ and is_capture_running_)
         return;
+    /*if (echoCanceller_)
+        echoCanceller_->ecParams.blocksize = 1024;
+        */
 
     if (audioThread_ == NULL) {
         audioThread_ = new AlsaThread(this);
@@ -530,7 +542,7 @@ AlsaLayer::buildDeviceTopo(const std::string &plugin, int card)
 static bool
 safeUpdate(snd_pcm_t *handle, int &samples)
 {
-    samples = snd_pcm_avail_update(handle);
+    samples = std::min((int)snd_pcm_avail_update(handle), 160 );
 
     if (samples < 0) {
         samples = snd_pcm_recover(handle, samples, 0);
@@ -688,7 +700,8 @@ void AlsaLayer::capture()
     if (toGetFrames <= 0)
         return;
 
-    const int framesPerBufferAlsa = 2048;
+    //const int framesPerBufferAlsa = 2048;
+    const int framesPerBufferAlsa = (audioFormat_.sample_rate / 100);
     toGetFrames = std::min(framesPerBufferAlsa, toGetFrames);
     captureIBuff_.resize(toGetFrames * audioFormat_.nb_channels);
 
@@ -696,8 +709,20 @@ void AlsaLayer::capture()
         RING_ERR("ALSA MIC : Couldn't read!");
         return;
     }
+    fDebug_ << "read frames=" << toGetFrames << "\n";
+
+    if(echoCanceller_)
+    {
+        echoCanceller_->ecParams.blocksize_capture = captureIBuff_.size();
+        echoCanceller_->setCapturedSamples((int16_t*) captureIBuff_.data());
+        sizeDataRead_ = captureIBuff_.size();
+        //echoCanceller_->ecParams.blocksize_capture = toGetFrames;
+        fDebug_ << "capture frames=" << captureIBuff_.size() << "\n";
+    }
 
     captureBuff_.deinterleave(captureIBuff_, audioFormat_);
+
+
     captureBuff_.applyGain(isCaptureMuted_ ? 0.0 : captureGain_);
 
     if (audioFormat_.nb_channels != mainBufferFormat.nb_channels) {
@@ -708,6 +733,7 @@ void AlsaLayer::capture()
         AudioBuffer rsmpl_in(outFrames, mainBufferFormat);
         resampler_->resample(captureBuff_, rsmpl_in);
         dcblocker_.process(rsmpl_in);
+        RING_DBG("ELOI : too bad we resample audioFormat_.sample_rate = %d , mainBufferFormat.sample_rate=%d", audioFormat_.sample_rate, mainBufferFormat.sample_rate);
         mainRingBuffer_->put(rsmpl_in);
     } else {
         dcblocker_.process(captureBuff_);
@@ -747,6 +773,7 @@ void AlsaLayer::playback(int maxFrames)
         unsigned maxNbFramesToGet = maxFrames;
 
         if (resample) {
+            RING_DBG("ELOI : too bad we resample audioFormat_.sample_rate = %d , mainBufferFormat.sample_rate=%d", audioFormat_.sample_rate, mainBufferFormat.sample_rate);
             resampleFactor = static_cast<double>(audioFormat_.sample_rate) / mainBufferFormat.sample_rate;
             maxNbFramesToGet = maxFrames / resampleFactor;
         }
@@ -767,10 +794,33 @@ void AlsaLayer::playback(int maxFrames)
             AudioBuffer rsmpl_out(outFrames, audioFormat_);
             resampler_->resample(playbackBuff_, rsmpl_out);
             rsmpl_out.interleave(playbackIBuff_);
-            write(playbackIBuff_.data(), outFrames, playbackHandle_);
+
+            if(echoCanceller_) {
+                //getAlsaCaptureVolume(&currentVolume_);
+                echoCanceller_->ecParams.blocksize_playback = playbackIBuff_.size();
+                echoCanceller_->setPlaybackSamples((int16_t*) playbackIBuff_.data(), (int16_t*) playbackIBuffProcessed_.data(), &currentVolume_);
+                //setAlsaCaptureVolume(currentVolume_);
+                write(playbackIBuffProcessed_.data(), outFrames, playbackHandle_);
+                sizeDataWrited_ = playbackIBuff_.size();
+
+            }else{
+                write(playbackIBuff_.data(), outFrames, playbackHandle_);
+            }
         } else {
             playbackBuff_.interleave(playbackIBuff_);
-            write(playbackIBuff_.data(), framesToGet, playbackHandle_);
+            if(echoCanceller_) {
+                fDebug_ << "playback frames=" << playbackIBuff_.size() << " framesToGet=" << framesToGet << "\n";
+                echoCanceller_->ecParams.blocksize_playback = playbackIBuff_.size();
+                //echoCanceller_->ecParams.blocksize_playback = framesToGet;
+                echoCanceller_->setPlaybackSamples((int16_t*) playbackIBuff_.data(), (int16_t*) playbackIBuffProcessed_.data(), &currentVolume_);
+
+                write(playbackIBuffProcessed_.data(), framesToGet, playbackHandle_);
+                //write(playbackIBuffProcessed_.data(), playbackIBuff_.size(), playbackHandle_);
+                sizeDataWrited_ = framesToGet;
+            }else{
+                //write(playbackIBuff_.data(), framesToGet, playbackHandle_);
+                write(playbackIBuff_.data(), framesToGet, playbackHandle_);
+            }
         }
     }
 }
@@ -778,7 +828,7 @@ void AlsaLayer::playback(int maxFrames)
 void AlsaLayer::audioCallback()
 {
     if (!playbackHandle_ or !captureHandle_)
-        return;
+    return;
 
     notifyIncomingCall();
 
@@ -788,6 +838,7 @@ void AlsaLayer::audioCallback()
 
     if (not safeUpdate(playbackHandle_, playbackAvailFrames))
         return;
+
 
     unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
@@ -828,7 +879,16 @@ void AlsaLayer::audioCallback()
 
     // Additionally handle the mic's audio stream
     if (is_capture_running_)
+    {
         capture();
+        // calcul drift if echoCanceller used
+        if (echoCanceller_) {
+            //RING_DBG("sizeDataWrited_ = %d, sizeDataRead_=%d drift=%f \n", sizeDataWrited_, sizeDataRead_, ((sizeDataWrited_ - sizeDataRead_) / sizeDataRead_));
+            //echoCanceller_->setDrift((sizeDataWrited_ - sizeDataRead_) / sizeDataRead_);
+        }
+    }
+
+
 }
 
 void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
@@ -849,6 +909,55 @@ void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceT
         default:
             break;
     }
+}
+void
+AlsaLayer::getAlsaCaptureVolume(long* volume)
+{
+    long min, max;
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+    const char *card = "default";
+    const char *selem_name = "Capture";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+
+    snd_mixer_selem_get_capture_volume(elem, SND_MIXER_SCHN_UNKNOWN, volume);
+    snd_mixer_close(handle);
+    //RING_DBG("getCaptureVolume : %l", *volume);
+}
+
+void
+AlsaLayer::setAlsaCaptureVolume(long volume)
+{
+    long min, max;
+    snd_mixer_t *handle;
+    snd_mixer_selem_id_t *sid;
+    const char *card = "default";
+    const char *selem_name = "Capture";
+
+    snd_mixer_open(&handle, 0);
+    snd_mixer_attach(handle, card);
+    snd_mixer_selem_register(handle, NULL, NULL);
+    snd_mixer_load(handle);
+
+    snd_mixer_selem_id_alloca(&sid);
+    snd_mixer_selem_id_set_index(sid, 0);
+    snd_mixer_selem_id_set_name(sid, selem_name);
+    snd_mixer_elem_t* elem = snd_mixer_find_selem(handle, sid);
+
+    snd_mixer_selem_get_capture_volume_range(elem, &min, &max);
+    printf("ELOI : min = %d , max=%d volume=%d \n", min, max, volume);
+    snd_mixer_selem_set_capture_volume_all(elem, volume * max / 100);
+
+    snd_mixer_close(handle);
 }
 
 } // namespace ring
