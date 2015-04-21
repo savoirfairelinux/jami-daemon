@@ -46,7 +46,7 @@ git fetch --all
 git checkout packaging-releases -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
-git merge origin/%{daemon_tag} --no-edit
+git merge %{daemon_tag} --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
