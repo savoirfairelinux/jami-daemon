@@ -1,6 +1,7 @@
 %define name        ring-daemon
 %define version     2.1.0
 %define release     1
+%define daemon_tag  %{version}
 
 Name:               %{name}
 Version:            %{version}
@@ -40,12 +41,12 @@ This is the ring repository
 %prep
 %setup -q
 git init
-git remote add origin https://gerrit-ring.savoirfairelinux.com/ring
+git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 git fetch --all
 git checkout packaging-releases -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
-git merge origin/release-2.1.x --no-edit
+git merge origin/%{daemon_tag} --no-edit
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
