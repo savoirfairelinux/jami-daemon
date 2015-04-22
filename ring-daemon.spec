@@ -1,6 +1,7 @@
 %define name        ring-daemon
-%define version     2.0.1
+%define version     2.1.0
 %define release     1
+%define daemon_tag  master
 
 Name:               %{name}
 Version:            %{version}
@@ -40,12 +41,13 @@ This is the ring repository
 %prep
 %setup -q
 git init
-git remote add origin https://gerrit-ring.savoirfairelinux.com/ring
+git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 git fetch --all
-git checkout packaging -f
+git checkout packaging-releases -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
-git merge origin/master --no-edit
+git merge %{daemon_tag} --no-edit
+rm -rf .git
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
@@ -94,5 +96,8 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
 %config %{_sysconfdir}/yum.repo.d/ring-nightly.repo
 
 %changelog
+* Tue Apr 14 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-1
+- New upstream version
+
 * Fri Mar 27 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.0.1-1
 - New upstream version

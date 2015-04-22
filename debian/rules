@@ -8,6 +8,8 @@ VER ?= $(shell dpkg-parsechangelog -l$(PKD)/changelog | perl -ne 'print $$1 if m
 DISTRIB_ID = $(shell grep -hPo "^ID=\K.*" /etc/*ease)
 DISTRIB_VERSION_ID = $(shell grep -hPo "^VERSION_ID=\K.*" /etc/*ease)
 
+DAEMON_TAG = master
+
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
 
@@ -48,8 +50,14 @@ override_dh_auto_install:
 
 get-orig-source:
 	# Daemon
+	git init
+	git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 	git fetch --all
-	git merge origin master --no-edit
+	git checkout packaging-releases -f
+	git config user.name "joulupukki"
+	git config user.email "joulupukki@localhost"
+	git merge $(DAEMON_TAG) --no-edit
+	rm -rf .git
 	# Packing
 	@echo "# Packing ... "
 	find . | sort \
