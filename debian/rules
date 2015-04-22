@@ -57,6 +57,7 @@ get-orig-source:
 	git config user.name "joulupukki"
 	git config user.email "joulupukki@localhost"
 	git merge $(DAEMON_TAG) --no-edit
+	rm -rf .git
 	# Packing
 	@echo "# Packing ... "
 	find . | sort \
