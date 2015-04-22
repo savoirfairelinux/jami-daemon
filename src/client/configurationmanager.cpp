@@ -120,7 +120,7 @@ getTlsDefaultSettings()
         {ring::Conf::CONFIG_TLS_CERTIFICATE_FILE, ""},
         {ring::Conf::CONFIG_TLS_PRIVATE_KEY_FILE, ""},
         {ring::Conf::CONFIG_TLS_PASSWORD, ""},
-        {ring::Conf::CONFIG_TLS_METHOD, "TLSv1"},
+        {ring::Conf::CONFIG_TLS_METHOD, "Default"},
         {ring::Conf::CONFIG_TLS_CIPHERS, ""},
         {ring::Conf::CONFIG_TLS_SERVER_NAME, ""},
         {ring::Conf::CONFIG_TLS_VERIFY_SERVER, "true"},
@@ -295,7 +295,7 @@ getCodecList()
 std::vector<std::string>
 getSupportedTlsMethod()
 {
-    return {"Default", "TLSv1", "SSLv3", "SSLv23"};
+    return SIPAccount::getSupportedTlsProtocols();
 }
 
 std::vector<std::string>
@@ -303,7 +303,7 @@ getSupportedCiphers(const std::string& accountID)
 {
 #if HAVE_TLS
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
-        return sipaccount->getSupportedCiphers();
+        return SIPAccount::getSupportedTlsCiphers();
     RING_ERR("SIP account %s doesn't exist", accountID.c_str());
 #endif
     return {};

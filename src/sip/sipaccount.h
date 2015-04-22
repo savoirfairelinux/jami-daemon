@@ -342,7 +342,8 @@ class SIPAccount : public SIPAccountBase {
             return stunServerName_;
         }
 
-        const std::vector<std::string>& getSupportedCiphers() const;
+        static const std::vector<std::string>& getSupportedTlsCiphers();
+        static const std::vector<std::string>& getSupportedTlsProtocols();
 
         /**
          * @return pj_uint8_t structure, filled from the configuration
@@ -594,17 +595,13 @@ class SIPAccount : public SIPAccountBase {
 
 #if HAVE_TLS
 
-        static const CipherArray TLSv1_DEFAULT_CIPHER_LIST;
-        static const CipherArray SSLv3_DEFAULT_CIPHER_LIST;
-        static const CipherArray SSLv23_DEFAULT_CIPHER_LIST;
-
         /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
          * @param method The string representation
          * @return pjsip_ssl_method The corresponding value in the enum
          */
-        static pjsip_ssl_method sslMethodStringToPjEnum(const std::string& method);
+        static pj_uint32_t tlsProtocolFromString(const std::string& method);
 
         /**
          * Initializes tls settings from configuration file.
