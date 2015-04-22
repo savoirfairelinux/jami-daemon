@@ -111,8 +111,6 @@ void setAccountsOrder(const std::string& order);
 std::map<std::string, std::string> getHookSettings();
 void setHookSettings(const std::map<std::string, std::string>& settings);
 
-std::map<std::string, std::string> getTlsSettings();
-void setTlsSettings(const std::map<std::string, std::string>& details);
 std::map<std::string, std::string> getIp2IpDetails();
 
 std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);

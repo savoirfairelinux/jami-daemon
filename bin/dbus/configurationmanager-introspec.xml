@@ -635,18 +635,6 @@
            </arg>
        </method>
 
-       <method name="getTlsSettings" tp:name-for-bindings="getTlsSettings">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="details" direction="out">
-           </arg>
-       </method>
-
-       <method name="setTlsSettings" tp:name-for-bindings="setTlsSettings">
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
-           <arg type="a{ss}" name="details" direction="in">
-           </arg>
-       </method>
-
        <method name="validateCertificate" tp:name-for-bindings="validateCertificate">
            <arg type="s" name="accountId" direction="in"></arg>
            <arg type="s" name="certificatePath" direction="in">

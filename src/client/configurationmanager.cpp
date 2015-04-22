@@ -131,33 +131,6 @@ getTlsDefaultSettings()
 }
 
 std::map<std::string, std::string>
-getTlsSettings()
-{
-    auto account = ring::Manager::instance().getIP2IPAccount();
-    if (auto sipaccount = static_cast<SIPAccount*>(account.get()))
-        return sipaccount->getTlsSettings();
-    RING_ERR("Could not find IP2IP account");
-    return std::map<std::string, std::string>();
-}
-
-void
-setTlsSettings(const std::map<std::string, std::string>& details)
-{
-    auto account = ring::Manager::instance().getIP2IPAccount();
-    if (auto sipaccount = static_cast<SIPAccount*>(account.get())) {
-        sipaccount->setTlsSettings(details);
-        ring::Manager::instance().saveConfig();
-        // FIXME: inefficient api, don't pass details (not as ref nor copy)
-        // let client requiests them we needed.
-        ring::emitSignal<ConfigurationSignal::VolatileDetailsChanged>(account->getAccountID(),
-                                                                      details);
-    }
-
-    RING_DBG("No valid account in set TLS settings");
-    return;
-}
-
-std::map<std::string, std::string>
 validateCertificate(const std::string&,
                     const std::string& certificate,
                     const std::string& privateKey)
