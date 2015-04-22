@@ -21,14 +21,6 @@ libsiplink_la_SOURCES = \
         base64.h \
         base64.c
 
-if BUILD_TLS
-# These files depend on opendht
-if USE_DHT
-libsiplink_la_SOURCES += tlsvalidator.cpp \
-                         tlsvalidator.h
-endif
-endif
-
 libsiplink_la_SOURCES+=sippresence.cpp \
                        sippresence.h \
                        pres_sub_server.cpp\
@@ -41,7 +33,6 @@ libsiplink_la_SOURCES+= sdes_negotiator.cpp \
             sdes_negotiator.h \
             pattern.cpp \
             pattern.h
-
 
 libsiplink_la_CXXFLAGS += @PCRE_CFLAGS@
 endif
