@@ -92,18 +92,9 @@ using yaml_utils::parseVectorMap;
 
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
-static const char *const VALID_TLS_METHODS[] = {"Default", "TLSv1", "SSLv3", "SSLv23"};
+static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1", "SSLv3"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
-
-#if HAVE_TLS
-
-// Empty cypher list will use default cypher list for the transport type on GnuTLS
-const CipherArray SIPAccount::TLSv1_DEFAULT_CIPHER_LIST = {};
-const CipherArray SIPAccount::SSLv3_DEFAULT_CIPHER_LIST = {};
-const CipherArray SIPAccount::SSLv23_DEFAULT_CIPHER_LIST = {};
-
-#endif
 
 static void
 registration_cb(pjsip_regc_cbparam *param)
@@ -559,7 +550,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     std::string tmpMethod(tlsMethod_);
     parseValue(tlsMap, Conf::METHOD_KEY, tmpMethod);
-    validate(tlsMethod_, tmpMethod, VALID_TLS_METHODS);
+    validate(tlsMethod_, tmpMethod, VALID_TLS_PROTOS);
 
     parseValue(tlsMap, Conf::SERVER_KEY, tlsServerName_);
     parseValue(tlsMap, Conf::REQUIRE_CERTIF_KEY, tlsRequireClientCertificate_);
@@ -623,7 +614,7 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseInt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
     auto iter = details.find(Conf::CONFIG_TLS_METHOD);
     if (iter != details.end())
-        validate(tlsMethod_, iter->second, VALID_TLS_METHODS);
+        validate(tlsMethod_, iter->second, VALID_TLS_PROTOS);
     parseString(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
     parseString(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
     parseBool(details, Conf::CONFIG_TLS_VERIFY_SERVER, tlsVerifyServer_);
@@ -1179,21 +1170,20 @@ SIPAccount::sendUnregister()
 }
 
 #if HAVE_TLS
-pjsip_ssl_method SIPAccount::sslMethodStringToPjEnum(const std::string& method)
+pj_uint32_t
+SIPAccount::tlsProtocolFromString(const std::string& method)
 {
     if (method == "Default")
-        return PJSIP_SSL_UNSPECIFIED_METHOD;
-
+        return PJSIP_SSL_DEFAULT_PROTO;
+    if (method == "TLSv1.2")
+        return PJ_SSL_SOCK_PROTO_TLS1_2;
+    if (method == "TLSv1.1")
+        return PJ_SSL_SOCK_PROTO_TLS1_2 | PJ_SSL_SOCK_PROTO_TLS1_1;
     if (method == "TLSv1")
-        return PJSIP_TLSV1_METHOD;
-
+        return PJ_SSL_SOCK_PROTO_TLS1_2 | PJ_SSL_SOCK_PROTO_TLS1_1 | PJ_SSL_SOCK_PROTO_TLS1;
     if (method == "SSLv3")
-        return PJSIP_SSLV3_METHOD;
-
-    if (method == "SSLv23")
-        return PJSIP_SSLV23_METHOD;
-
-    return PJSIP_SSL_UNSPECIFIED_METHOD;
+        return PJ_SSL_SOCK_PROTO_SSL3;
+    return PJSIP_SSL_DEFAULT_PROTO;
 }
 
 /**
@@ -1216,7 +1206,7 @@ void SIPAccount::trimCiphers()
 void SIPAccount::initTlsConfiguration()
 {
     pjsip_tls_setting_default(&tlsSetting_);
-    tlsSetting_.method = sslMethodStringToPjEnum(tlsMethod_);
+    tlsSetting_.proto = tlsProtocolFromString(tlsMethod_);
 
     // Determine the cipher list supported on this machine
     CipherArray avail_ciphers(256);
@@ -1242,11 +1232,6 @@ void SIPAccount::initTlsConfiguration()
         }
     }
 #endif
-    if (ciphers_.empty()) {
-        ciphers_ = (tlsSetting_.method == PJSIP_TLSV1_METHOD) ? TLSv1_DEFAULT_CIPHER_LIST : (
-                   (tlsSetting_.method == PJSIP_SSLV3_METHOD) ? SSLv3_DEFAULT_CIPHER_LIST : (
-                   (tlsSetting_.method == PJSIP_SSLV23_METHOD) ? SSLv23_DEFAULT_CIPHER_LIST : CipherArray {} ));
-    }
     ciphers_.erase(std::remove_if(ciphers_.begin(), ciphers_.end(), [&](pj_ssl_cipher c) {
         return std::find(avail_ciphers.cbegin(), avail_ciphers.cend(), c) == avail_ciphers.cend();
     }), ciphers_.end());
@@ -1542,7 +1527,7 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 }
 
 const std::vector<std::string>&
-SIPAccount::getSupportedCiphers() const
+SIPAccount::getSupportedTlsCiphers()
 {
     //Currently, both OpenSSL and GNUTLS implementations are static
     //reloading this for each account is unnecessary
@@ -1563,6 +1548,13 @@ SIPAccount::getSupportedCiphers() const
         }
     }
     return availCiphers;
+}
+
+const std::vector<std::string>&
+SIPAccount::getSupportedTlsProtocols()
+{
+    static std::vector<std::string> availProtos {VALID_TLS_PROTOS, VALID_TLS_PROTOS+RING_ARRAYSIZE(VALID_TLS_PROTOS)};
+    return availProtos;
 }
 
 void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
