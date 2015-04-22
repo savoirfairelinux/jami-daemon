@@ -365,12 +365,6 @@ DBusConfigurationManager::setHookSettings(const std::map<std::string, std::strin
 }
 
 auto
-DBusConfigurationManager::getTlsSettings() -> decltype(DRing::getTlsSettings())
-{
-    return DRing::getTlsSettings();
-}
-
-auto
 DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey) -> decltype(DRing::validateCertificate(accountId, certificate, privateKey))
 {
    return DRing::validateCertificate(accountId, certificate, privateKey);
@@ -392,12 +386,6 @@ auto
 DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& certificate) -> decltype(DRing::getCertificateDetailsRaw(certificate))
 {
     return DRing::getCertificateDetailsRaw(certificate);
-}
-
-void
-DBusConfigurationManager::setTlsSettings(const std::map<std::string, std::string>& details)
-{
-    DRing::setTlsSettings(details);
 }
 
 auto
