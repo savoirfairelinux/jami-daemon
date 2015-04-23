@@ -42,6 +42,7 @@
 #include <cstdint>
 
 #include "dring.h"
+#include "security_const.h"
 
 namespace DRing {
 
@@ -137,6 +138,25 @@ std::map<std::string, std::string> validateCertificateRaw(const std::string& acc
 std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
 std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
 
+std::vector<std::string> getPinnedCertificates();
+
+std::string pinCertificate(const std::vector<uint8_t>& certificate, bool local);
+bool unpinCertificate(const std::string& certId);
+
+void pinCertificatePath(const std::string& path);
+unsigned unpinCertificatePath(const std::string& path);
+
+bool pinRemoteCertificate(const std::string& accountId, const std::string& certId);
+bool setCertificateStatus(const std::string& account, const std::string& certId, Certificate::Status status);
+std::vector<std::string> getCertificatesByStatus(const std::string& account, Certificate::Status status);
+
+/* contact requests */
+std::map<std::string, std::string> getTrustRequests(const std::string& accountId);
+bool acceptTrustRequest(const std::string& accountId, const std::string& from);
+bool discardTrustRequest(const std::string& accountId, const std::string& from);
+
+void sendTrustRequest(const std::string& accountId, const std::string& to);
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -168,6 +188,22 @@ struct ConfigurationSignal {
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
+        };
+        struct IncomingTrustRequest {
+                constexpr static const char* name = "IncomingTrustRequest";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, time_t received);
+        };
+        struct CertificatePinned {
+                constexpr static const char* name = "CertificatePinned";
+                using cb_type = void(const std::string& /*certId*/);
+        };
+        struct CertificatePathPinned {
+                constexpr static const char* name = "CertificatePathPinned";
+                using cb_type = void(const std::vector<std::string>& /*certId*/);
+        };
+        struct CertificateExpired {
+                constexpr static const char* name = "CertificateExpired";
+                using cb_type = void(const std::string& /*certId*/);
         };
 };
 

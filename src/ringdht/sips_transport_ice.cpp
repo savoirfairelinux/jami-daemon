@@ -32,7 +32,7 @@
 #include "ice_transport.h"
 #include "manager.h"
 #include "logger.h"
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>

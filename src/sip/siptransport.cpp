@@ -132,6 +132,8 @@ void
 SipTransport::stateCallback(pjsip_transport_state state,
                             const pjsip_transport_state_info *info)
 {
+    connected = state == PJSIP_TP_STATE_CONNECTED;
+
 #if HAVE_TLS
     auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
     if (isSecure() && extInfo && extInfo->ssl_sock_info && extInfo->ssl_sock_info->established) {
@@ -140,15 +142,14 @@ SipTransport::stateCallback(pjsip_transport_state state,
         tlsInfos_.cipher = tlsInfo->cipher;
         tlsInfos_.verifyStatus = (pj_ssl_cert_verify_flag_t)tlsInfo->verify_status;
         const auto& peers = tlsInfo->remote_cert_info->raw_chain;
-        const auto& peer_crt = peers.cert_raw[0];
-        if (peer_crt.ptr && peer_crt.slen)
-            tlsInfos_.peerCert = {std::vector<uint8_t>(peer_crt.ptr, peer_crt.ptr + peer_crt.slen)};
-        else
-            tlsInfos_.peerCert = {};
+        std::vector<std::pair<const uint8_t*, const uint8_t*>> bits;
+        bits.reserve(peers.cnt);
+        std::transform(peers.cert_raw, peers.cert_raw+peers.cnt, bits.begin(), [](const pj_str_t& crt){
+            return std::make_pair((uint8_t*)crt.ptr, (uint8_t*)(crt.ptr+crt.slen));
+        });
+        tlsInfos_.peerCert = std::make_shared<dht::crypto::Certificate>(bits);
     } else {
-        tlsInfos_.proto = PJ_SSL_SOCK_PROTO_DEFAULT;
-        tlsInfos_.cipher = PJ_TLS_UNKNOWN_CIPHER;
-        tlsInfos_.peerCert = {};
+        tlsInfos_ = {};
     }
 #endif
 
