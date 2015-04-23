@@ -214,6 +214,14 @@ expand_path(const std::string &path)
 #endif
 }
 
+bool isDirectory(const std::string& path)
+{
+    struct stat s;
+    if (stat(path.c_str(), &s) == 0)
+        return s.st_mode & S_IFDIR;
+    return false;
+}
+
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
