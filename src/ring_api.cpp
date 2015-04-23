@@ -38,7 +38,6 @@
 #endif
 
 #include "manager.h"
-#include "managerimpl.h"
 #include "logger.h"
 #include "dring.h"
 #include "callmanager_interface.h"
