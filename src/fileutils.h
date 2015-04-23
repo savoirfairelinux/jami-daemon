@@ -67,6 +67,8 @@ namespace ring { namespace fileutils {
     bool recursive_mkdir(const std::string& path);
 #endif
 
+    bool isDirectory(const std::string& path);
+
     /**
      * Read content of the directory.
      * The result is a list of full paths of files in the directory,
