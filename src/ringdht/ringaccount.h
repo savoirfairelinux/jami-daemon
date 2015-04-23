@@ -43,6 +43,7 @@
 #include "ring_types.h" // enable_if_base_of
 
 #include <opendht/dhtrunner.h>
+#include <opendht/default_types.h>
 
 #include <pjsip/sip_types.h>
 
@@ -67,6 +68,9 @@ namespace ring {
 namespace Conf {
     const char *const DHT_PORT_KEY = "dhtPort";
     const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
+    const char *const DHT_CONTACTS = "dhtContacts";
+    const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
+    const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 }
 
 namespace tls {
@@ -80,6 +84,8 @@ class RingAccount : public SIPAccountBase {
         constexpr static const char * const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
         constexpr static const char * const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
+        constexpr static const char* const DHT_TYPE_NS = "cx.ring";
+
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
         const char* getAccountType() const {
@@ -239,16 +245,31 @@ class RingAccount : public SIPAccountBase {
             return false;
         }
 
-        void registerCA(const dht::crypto::Certificate&);
-        bool unregisterCA(const dht::InfoHash&);
-        std::vector<std::string> getRegistredCAs();
+        bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::Status status) {
+            if (not tls::CertificateStore::instance().getCertificate(cert_id)) {
+                findCertificate(cert_id);
+            }
+            return trust_.setCertificateStatus(cert_id, status);
+        }
+        std::vector<std::string> getCertificatesByStatus(tls::TrustStore::Status status) {
+            return trust_.getCertificatesByStatus(status);
+        }
+
+        bool findCertificate(const std::string& id);
+
+        /* contact requests */
+        std::map<std::string, std::string> getTrustRequests() const;
+        bool acceptTrustRequest(const std::string& from);
+        bool discardTrustRequest(const std::string& from);
+
+        void sendTrustRequest(const std::string& to);
 
     private:
 
         void doRegister_();
+        void incomingCall(dht::IceCandidates&& msg);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
-        //const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
 
         NON_COPYABLE(RingAccount);
 
@@ -269,7 +290,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
-        void regenerateCAList();
+        //void regenerateCAList();
 
         /**
          * Maps require port via UPnP
@@ -278,19 +299,27 @@ class RingAccount : public SIPAccountBase {
 
         dht::DhtRunner dht_ {};
 
+        dht::InfoHash callKey_;
+
         struct PendingCall {
             std::chrono::steady_clock::time_point start;
             std::shared_ptr<IceTransport> ice;
             std::weak_ptr<SIPCall> call;
             std::future<size_t> listen_key;
             dht::InfoHash call_key;
-            dht::InfoHash id;
+            dht::InfoHash from;
         };
+
+        /**
+         * DHT calls waiting for authorization
+         */
+        std::list<dht::IceCandidates> pendingUntrustedCalls_ {};
 
         /**
          * DHT calls waiting for ICE negotiation
          */
         std::list<PendingCall> pendingCalls_ {};
+
         /**
          * Incoming DHT calls that are not yet actual SIP calls.
          */
@@ -303,6 +332,18 @@ class RingAccount : public SIPAccountBase {
         std::string dataPath_ {};
         std::string caPath_ {};
         std::string caListPath_ {};
+
+        //std::vector<dht::InfoHash> contacts_;
+        //TrustStore trust_;
+
+        struct TrustRequest {
+            dht::InfoHash from;
+            std::chrono::system_clock::time_point received;
+        };
+
+        std::vector<TrustRequest> trustRequests_;
+
+        tls::TrustStore trust_;
 
         /**
          * Validate the values for privkeyPath_ and certPath_.
@@ -330,6 +371,8 @@ class RingAccount : public SIPAccountBase {
          * Initializes tls settings from configuration file.
          */
         void initTlsConfiguration();
+
+        bool dhtPublicInCalls_ {false};
 
         /**
          * DHT port preference
