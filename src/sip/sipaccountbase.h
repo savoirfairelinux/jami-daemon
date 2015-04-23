@@ -41,6 +41,7 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "security/certstore.h"
 
 #include <pjsip/sip_types.h>
 #include <opendht/value.h>
@@ -226,6 +227,13 @@ public:
 #endif
     static void releasePort(uint16_t port) noexcept;
 
+    bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::Status status) {
+        return trust_.setCertificateStatus(cert_id, status);
+    }
+    std::vector<std::string> getCertificatesByStatus(tls::TrustStore::Status status) {
+        return trust_.getCertificatesByStatus(status);
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
@@ -331,6 +339,8 @@ protected:
     static uint16_t acquirePort(uint16_t port);
     uint16_t getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
+
+    tls::TrustStore trust_;
 
 private:
     NON_COPYABLE(SIPAccountBase);

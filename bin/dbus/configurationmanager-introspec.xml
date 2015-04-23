@@ -237,7 +237,6 @@
        </method>
 
       <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
-          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
           <arg type="s" name="accountID" direction="in">
           </arg>
           <arg type="s" name="to" direction="in">
@@ -256,7 +255,7 @@
            </arg>
            <arg type="s" name="message">
            </arg>
-       </signal>
+      </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">
            <tp:docstring>
@@ -701,6 +700,219 @@
               </tp:docstring>
            </arg>
        </method>
+
+       <method name="getPinnedCertificates" tp:name-for-bindings="getPinnedCertificates">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="certIds" direction="out">
+              <tp:docstring>
+               <p>A list of all known certificate IDs</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="pinCertificate" tp:name-for-bindings="pinCertificate">
+           <arg type="ay" name="certificateRaw" direction="in">
+              <tp:docstring>
+               <p>A raw certificate (PEM or DER encoded) to be pinned.</p>
+              </tp:docstring>
+           </arg>
+           <arg type="b" name="local" direction="in">
+              <tp:docstring>
+               <p>True to save the certificate in the daemon local store.</p>
+              </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="String"/>
+           <arg type="s" name="certId" direction="out">
+              <tp:docstring>
+               <p>ID of the pinned certificate or empty string on failure.</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="unpinCertificate" tp:name-for-bindings="unpinCertificate">
+           <arg type="s" name="certId" direction="in">
+              <tp:docstring>
+               <p>A certificate ID to unpin.</p>
+              </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+              <tp:docstring>
+               <p>True if a certificate was unpinned.</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="pinCertificatePath" tp:name-for-bindings="pinCertificatePath">
+           <arg type="s" name="certPath" direction="in">
+              <tp:docstring>
+               <p>A certificate path to be pinned (assumed non-local).</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="unpinCertificatePath" tp:name-for-bindings="unpinCertificatePath">
+           <arg type="s" name="certPath" direction="in">
+              <tp:docstring>
+               <p>Certificates path.</p>
+              </tp:docstring>
+           </arg>
+           <arg type="u" name="unpinned" direction="out">
+              <tp:docstring>
+               <p>Number of unpinned certificates.</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="pinRemoteCertificate" tp:name-for-bindings="pinRemoteCertificate">
+           <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+               <p>An account ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="certId" direction="in">
+              <tp:docstring>
+               <p>A certificate public key ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+              <tp:docstring>
+               <p>True if the search started</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setCertificateStatus" tp:name-for-bindings="setCertificateStatus">
+           <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+               <p>An account ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="certId" direction="in">
+              <tp:docstring>
+               <p>A certificate ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="status" direction="in">
+              <tp:docstring>
+                The new status of the certificate for the specified account.
+                  UNDEFINED : forget any previous certificate state for this account.
+                  ALLOWED   : consider the certificate as trusted for this account.
+                  BANNED    : consider the certificate as banned for this account.
+              </tp:docstring>
+           </arg>
+           <arg type="b" name="success" direction="out">
+              <tp:docstring>
+               <p>True if the certificate state was succesfully set.</p>
+              </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getCertificatesByStatus" tp:name-for-bindings="getCertificatesByStatus">
+           <arg type="s" name="accountId" direction="in">
+              <tp:docstring>
+               <p>An account ID</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="status" direction="in">
+              <tp:docstring>
+                The queried certificate status.
+                  ALLOWED : trusted certificate for this account.
+                  BANNED  : banned certificate for this account.
+              </tp:docstring>
+           </arg>
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+          <arg type="as" name="list" direction="out">
+              <tp:docstring>
+                  A list of certificate ids with the provided status
+              </tp:docstring>
+          </arg>
+       </method>
+
+       <signal name="certificatePinned" tp:name-for-bindings="certificatePinned">
+            <tp:docstring>
+                Notify clients that a certificate have been added to the store.
+            </tp:docstring>
+           <arg type="s" name="certId">
+           </arg>
+       </signal>
+       <signal name="certificatePathPinned" tp:name-for-bindings="certificatePathPinned">
+            <tp:docstring>
+                Notify clients that a certificate path have been added to the store.
+            </tp:docstring>
+           <arg type="s" name="path">
+              <tp:docstring>
+                  Pinned path.
+              </tp:docstring>
+           </arg>
+           <arg type="as" name="certIds">
+              <tp:docstring>
+                  A list of certificate ids.
+              </tp:docstring>
+           </arg>
+       </signal>
+       <signal name="certificateExpired" tp:name-for-bindings="certificateExpired">
+            <tp:docstring>
+                Notify clients that a certificate expired.
+            </tp:docstring>
+           <arg type="s" name="certId">
+              <tp:docstring>
+                  A certificate id.
+              </tp:docstring>
+           </arg>
+       </signal>
+
+      <method name="getTrustRequests" tp:name-for-bindings="getTrustRequests">
+          <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+              <tp:docstring>
+                  A list of contact request details.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <method name="acceptTrustRequest" tp:name-for-bindings="acceptTrustRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+      <method name="discardTrustRequest" tp:name-for-bindings="discardTrustRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="from" direction="in">
+          </arg>
+          <arg type="b" name="success" direction="out" tp:type="Boolean">
+              <tp:docstring>
+                  True if the operation succeeded.
+              </tp:docstring>
+          </arg>
+      </method>
+
+      <signal name="incomingTrustRequest" tp:name-for-bindings="incomingTrustRequest">
+            <tp:docstring>
+                Notify clients that a new contact request has been received.
+            </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="from">
+           </arg>
+           <arg type="t" name="receiveTime">
+           </arg>
+      </signal>
+
+      <method name="sendTrustRequest" tp:name-for-bindings="sendTrustRequest">
+          <arg type="s" name="accountID" direction="in">
+          </arg>
+          <arg type="s" name="to" direction="in">
+          </arg>
+      </method>
 
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
            <arg type="s" name="interface" direction="in">
