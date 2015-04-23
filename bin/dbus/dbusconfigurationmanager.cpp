@@ -388,6 +388,72 @@ DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& c
     return DRing::getCertificateDetailsRaw(certificate);
 }
 
+std::vector<std::string>
+DBusConfigurationManager::getPinnedCertificates() {
+    return DRing::getPinnedCertificates();
+}
+
+std::string
+DBusConfigurationManager::pinCertificate(const std::vector<uint8_t>& certificate, const bool& local) {
+    return DRing::pinCertificate(certificate, local);
+}
+
+void
+DBusConfigurationManager::pinCertificatePath(const std::string& certPath) {
+    return DRing::pinCertificatePath(certPath);
+}
+
+bool
+DBusConfigurationManager::unpinCertificate(const std::string& certId)
+{
+    return DRing::unpinCertificate(certId);
+}
+
+unsigned
+DBusConfigurationManager::unpinCertificatePath(const std::string& p)
+{
+    return DRing::unpinCertificatePath(p);
+}
+
+bool
+DBusConfigurationManager::pinRemoteCertificate(const std::string& accountId, const std::string& certId) {
+    return DRing::pinRemoteCertificate(accountId, certId);
+}
+
+bool
+DBusConfigurationManager::setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& status) {
+    return DRing::setCertificateStatus(accountId, certId, status);
+}
+
+std::vector<std::string>
+DBusConfigurationManager::getCertificatesByStatus(const std::string& account, const std::string& status) {
+    return DRing::getCertificatesByStatus(account, status);
+}
+
+auto
+DBusConfigurationManager::getTrustRequests(const std::string& accountId) -> decltype(DRing::getTrustRequests(accountId))
+{
+    return DRing::getTrustRequests(accountId);
+}
+
+bool
+DBusConfigurationManager::acceptTrustRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::acceptTrustRequest(accountId, from);
+}
+
+bool
+DBusConfigurationManager::discardTrustRequest(const std::string& accountId, const std::string& from)
+{
+    return DRing::discardTrustRequest(accountId, from);
+}
+
+void
+DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const std::string& to)
+{
+    DRing::sendTrustRequest(accountId, to);
+}
+
 auto
 DBusConfigurationManager::getIp2IpDetails() -> decltype(DRing::getIp2IpDetails())
 {
