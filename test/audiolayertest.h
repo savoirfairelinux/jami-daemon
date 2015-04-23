@@ -46,7 +46,7 @@
 
 namespace ring {
 
-class ManagerImpl;
+class Manager;
 class PulseLayer;
 
 } // namespace ring
@@ -71,7 +71,7 @@ class AudioLayerTest: public CppUnit::TestFixture {
     private:
         NON_COPYABLE(AudioLayerTest);
 
-        ManagerImpl* manager_;
+        Manager* manager_;
         PulseLayer* pulselayer_;
         int layer_;
 };
