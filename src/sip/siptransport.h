@@ -106,10 +106,10 @@ private:
 };
 
 struct TlsInfos {
-    pj_ssl_cipher cipher;
-    pj_ssl_sock_proto proto;
-    pj_ssl_cert_verify_flag_t verifyStatus;
-    dht::crypto::Certificate peerCert;
+    pj_ssl_cipher cipher {PJ_TLS_UNKNOWN_CIPHER};
+    pj_ssl_sock_proto proto {PJ_SSL_SOCK_PROTO_DEFAULT};
+    pj_ssl_cert_verify_flag_t verifyStatus {};
+    std::shared_ptr<dht::crypto::Certificate> peerCert {};
 };
 
 using SipTransportStateCallback = std::function<void(pjsip_transport_state, const pjsip_transport_state_info*)>;
@@ -146,6 +146,9 @@ class SipTransport
 
         static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
+        /** Only makes sense for connection-oriented transports */
+        bool isConnected() const { return connected; } ;
+
     private:
         NON_COPYABLE(SipTransport);
 
@@ -156,6 +159,7 @@ class SipTransport
         std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
         std::mutex stateListenersMutex_;
 
+        bool connected {false};
         TlsInfos tlsInfos_;
 };
 
