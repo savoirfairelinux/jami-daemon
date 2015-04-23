@@ -8,7 +8,7 @@ VER ?= $(shell dpkg-parsechangelog -l$(PKD)/changelog | perl -ne 'print $$1 if m
 DISTRIB_ID = $(shell grep -hPo "^ID=\K.*" /etc/*ease)
 DISTRIB_VERSION_ID = $(shell grep -hPo "^VERSION_ID=\K.*" /etc/*ease)
 
-DAEMON_TAG = master
+DAEMON_TAG = origin/master
 
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
@@ -53,7 +53,7 @@ get-orig-source:
 	git init
 	git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 	git fetch --all
-	git checkout packaging-releases -f
+	git checkout packaging -f
 	git config user.name "joulupukki"
 	git config user.email "joulupukki@localhost"
 	git merge $(DAEMON_TAG) --no-edit

@@ -1,7 +1,7 @@
 %define name        ring-daemon
 %define version     2.1.0
 %define release     1
-%define daemon_tag  master
+%define daemon_tag  origin/master
 
 Name:               %{name}
 Version:            %{version}
@@ -43,7 +43,7 @@ This is the ring repository
 git init
 git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 git fetch --all
-git checkout packaging-releases -f
+git checkout packaging -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
 git merge %{daemon_tag} --no-edit
