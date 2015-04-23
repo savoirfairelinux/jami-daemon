@@ -172,7 +172,7 @@ start:
 static void
 notify()
 {
-    if (!ManagerImpl::initialized) {
+    if (!Manager::initialized) {
         RING_WARN("Manager not initialized yet");
         return;
     }
