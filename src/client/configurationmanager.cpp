@@ -39,7 +39,8 @@
 #include "account_schema.h"
 #include "manager.h"
 #if HAVE_TLS && HAVE_DHT
-#include "sip/tlsvalidator.h"
+#include "security/tlsvalidator.h"
+#include "security/certstore.h"
 #endif
 #include "logger.h"
 #include "fileutils.h"
@@ -49,7 +50,7 @@
 #if HAVE_IAX
 #include "iax/iaxaccount.h"
 #endif
-#include "security_const.h"
+//#include "security_const.h"
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
@@ -66,7 +67,8 @@ namespace DRing {
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
 using ring::SIPAccount;
-using ring::TlsValidator;
+using ring::tls::TlsValidator;
+using ring::tls::CertificateStore;
 using ring::DeviceType;
 using ring::HookPreference;
 
@@ -170,7 +172,7 @@ getCertificateDetails(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate,""}.getSerializedDetails();
+        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }
@@ -195,6 +197,67 @@ getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
     return {{}};
 }
 
+std::vector<std::string>
+getPinnedCertificates()
+{
+#if HAVE_TLS && HAVE_DHT
+    return ring::tls::CertificateStore::instance().getPinnedCertificates();
+#else
+    RING_WARN("TLS not supported");
+#endif
+    return {};
+}
+
+std::string
+pinCertificate(const std::vector<uint8_t>& certificate, bool local)
+{
+    return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
+}
+
+void
+pinCertificatePath(const std::string& path)
+{
+    ring::tls::CertificateStore::instance().pinCertificatePath(path);
+}
+
+bool
+unpinCertificate(const std::string& certId)
+{
+    return ring::tls::CertificateStore::instance().unpinCertificate(certId);
+}
+
+unsigned
+unpinCertificatePath(const std::string& path)
+{
+    return ring::tls::CertificateStore::instance().unpinCertificatePath(path);
+}
+
+bool
+pinRemoteCertificate(const std::string& accountId, const std::string& certId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->findCertificate(certId);
+    return false;
+}
+
+bool
+setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
+{
+    auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->setCertificateStatus(certId, status);
+    return false;
+}
+
+std::vector<std::string>
+getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
+{
+     auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getCertificatesByStatus(status);
+    return {};
+}
+
 void
 setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
@@ -217,6 +280,38 @@ void
 sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
 {
     ring::Manager::instance().sendTextMessage(accountID, to, message);
+}
+
+/* contact requests */
+std::map<std::string, std::string>
+getTrustRequests(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getTrustRequests();
+    return {{}};
+}
+
+bool
+acceptTrustRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->acceptTrustRequest(from);
+    return false;
+}
+
+bool
+discardTrustRequest(const std::string& accountId, const std::string& from)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->discardTrustRequest(from);
+    return false;
+}
+
+void
+sendTrustRequest(const std::string& accountId, const std::string& to)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->sendTrustRequest(to);
 }
 
 ///This function is used as a base for new accounts for clients that support it
@@ -613,7 +708,8 @@ setHookSettings(const std::map<std::string,
     ring::Manager::instance().hookPreference = HookPreference(settings);
 }
 
-void setAccountsOrder(const std::string& order)
+void
+setAccountsOrder(const std::string& order)
 {
     ring::Manager::instance().setAccountsOrder(order);
 }
