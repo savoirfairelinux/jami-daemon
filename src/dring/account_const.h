@@ -134,6 +134,13 @@ constexpr static const char ENABLED            [] = "STUN.enable";
 
 } //namespace DRing::Account::ConfProperties::STUN
 
+namespace TURN {
+
+constexpr static const char SERVER             [] = "TURN.server";
+constexpr static const char ENABLED            [] = "TURN.enable";
+
+} //namespace DRing::Account::ConfProperties::TURN
+
 namespace Presence {
 
 constexpr static const char SUPPORT_PUBLISH    [] = "Account.presencePublishSupported";
