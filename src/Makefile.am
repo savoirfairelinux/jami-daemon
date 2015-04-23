@@ -24,7 +24,7 @@ IM_LIBA=./im/libim.la
 IM_LIB=@EXPAT_LIBS@
 endif
 
-# Redefine the USE_IAX variable here, so that it could be used in managerimpl
+# Redefine the USE_IAX variable here, so that it could be used in manager
 if USE_IAX
 IAX_SUBDIR=iax
 IAX_CXXFLAG=-DUSE_IAX
@@ -105,7 +105,6 @@ libring_la_SOURCES = conference.cpp \
 		account_factory.cpp \
 		call_factory.cpp \
 		preferences.cpp \
-		managerimpl.cpp \
 		manager.cpp \
 		call.cpp \
 		account.cpp \
@@ -128,7 +127,6 @@ libring_la_SOURCES = conference.cpp \
 		account_factory.h \
 		call_factory.h \
 		preferences.h \
-		managerimpl.h \
 		manager.h \
 		account.h \
 		call.h \
