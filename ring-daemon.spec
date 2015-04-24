@@ -1,6 +1,6 @@
 %define name        ring-daemon
 %define version     2.1.0
-%define release     1
+%define release     2
 %define daemon_tag  %{version}
 
 Name:               %{name}
@@ -72,11 +72,11 @@ make -j %{?_smp_mflags}
 mkdir -p %{buildroot}/ring-daemon
 make DESTDIR=%{buildroot} install
 mkdir -p %{buildroot}/%{_sysconfdir}/yum.repo.d/
-echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
-echo 'name=Fedora $releasever - $basearch - ring' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
-echo 'baseurl=http://nightly.yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
-echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
-echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
+echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+echo 'name=Fedora $releasever - $basearch - ring' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+echo 'baseurl=http://yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
 
 
 %files
@@ -96,6 +96,9 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring-nightly.repo
 %config %{_sysconfdir}/yum.repo.d/ring-nightly.repo
 
 %changelog
+* Fri Apr 24 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-2
+- Fix repository url
+
 * Tue Apr 14 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-1
 - New upstream version
 
