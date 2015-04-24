@@ -45,7 +45,7 @@ override_dh_auto_install:
 	rm -rf  $(CURDIR)/debian/ring-daemon/usr/include/
 	# Add repository file
 	mkdir -p $(CURDIR)/debian/ring-repository/etc/apt/sources.list.d/
-	echo "deb http://nightly.apt.ring.cx/$(DISTRIB_ID)_$(DISTRIB_VERSION_ID) ring main" > $(CURDIR)/debian/ring-repository/etc/apt/sources.list.d/ring-nightly.list
+	echo "deb [arch=amd64] http://apt.ring.cx/$(DISTRIB_ID)_$(DISTRIB_VERSION_ID) ring main" > $(CURDIR)/debian/ring-repository/etc/apt/sources.list.d/ring.list
 	dh_auto_install
 
 get-orig-source:
