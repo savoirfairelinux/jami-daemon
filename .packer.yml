@@ -1,18 +1,26 @@
 ubuntu_14.04:
     debian: debian
     ccache: true
+    type: docker
 ubuntu_14.10:
     debian: debian
     ccache: true
+    type: docker
 ubuntu_15.04:
     debian: debian
     ccache: true
+    type: docker
 fedora_20:
     spec: ring-daemon.spec
     ccache: true
+    type: docker
 fedora_21:
     spec: ring-daemon.spec
     ccache: true
+    type: docker
 debian_8:
     debian: debian
     ccache: true
+    type: docker
+osx:
+    type: osx
