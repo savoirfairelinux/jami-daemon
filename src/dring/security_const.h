@@ -34,6 +34,12 @@ namespace DRing {
 
 namespace Certificate {
 
+namespace Status {
+    constexpr static char UNDEFINED [] = "UNDEFINED";
+    constexpr static char ALLOWED   [] = "ALLOWED";
+    constexpr static char BANNED    [] = "BANNED";
+} //namespace Dring::Certificate::Status
+
 /**
 * Those constantes are used by the ConfigurationManager.validateCertificate method
 */
@@ -109,6 +115,13 @@ namespace CheckValuesNames {
 } //namespace DRing::Certificate::CheckValuesNames
 
 } //namespace DRing::Certificate
+
+namespace TlsTransport {
+constexpr static char TLS_PEER_CERT        [] = "TLS_PEER_CERT"   ;
+constexpr static char TLS_PEER_CA_NUM      [] = "TLS_PEER_CA_NUM" ;
+constexpr static char TLS_PEER_CA_         [] = "TLS_PEER_CA_"    ;
+constexpr static char TLS_CIPHER           [] = "TLS_CIPHER"      ;
+} //namespace DRing::TlsTransport
 
 } //namespace DRing
 
