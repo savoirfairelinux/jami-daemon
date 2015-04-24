@@ -1,3 +1,10 @@
+ring-daemon (2.1.0-2) unstable; urgency=medium
+
+  [ Thibault Cohen]
+  * Improve ring-daemon-repository package
+
+ -- Thibault Cohen <thibault.cohen@savoirfairelinux.com>  Fri, 24 Apr 2015 16:46:35 -0400
+
 ring-daemon (2.1.0-1) unstable; urgency=medium
 
   [ Thibault Cohen]
