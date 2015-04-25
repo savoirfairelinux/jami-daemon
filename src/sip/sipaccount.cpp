@@ -348,9 +348,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     }
 
     pj_str_t pjContact = getContactHeader(transport->get());
-    const std::string debugContactHeader(pj_strbuf(&pjContact), pj_strlen(&pjContact));
-    RING_DBG("contact header: %s / %s -> %s",
-          debugContactHeader.c_str(), from.c_str(), toUri.c_str());
+    RING_DBG("contact header: %.*s / %s -> %s",
+          pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str());
 
     pjsip_dialog *dialog = NULL;
 
@@ -1430,8 +1429,10 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     if (!t)
         RING_ERR("Transport not created yet");
 
-    if (contact_.slen and contactOverwritten_)
+    if (contact_.slen and contactOverwritten_) {
+        RING_WARN("getContactHeader: reusing old contact %.*s", contact_.slen, contact_.ptr);
         return contact_;
+    }
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
@@ -1479,10 +1480,6 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         }
     }
 
-    // UDP does not require the transport specification
-    std::string scheme;
-    std::string transport;
-
 #if HAVE_IPV6
     /* Enclose IPv6 address in square brackets */
     if (IpAddr::isIpv6(address)) {
@@ -1490,22 +1487,23 @@ SIPAccount::getContactHeader(pjsip_transport* t)
     }
 #endif
 
-    if (transportType != PJSIP_TRANSPORT_UDP and transportType != PJSIP_TRANSPORT_UDP6) {
-        scheme = "sips:";
-        transport = ";transport=" + std::string(pjsip_transport_get_type_name(transportType));
-    } else
-        scheme = "sip:";
+    const char* scheme = "sip";
+    const char* transport = "";
+    if (PJSIP_TRANSPORT_IS_SECURE(t)) {
+        scheme = "sips";
+        transport = ";transport=tls";
+    }
 
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "%s%s<%s%s%s%s:%d%s>",
+                                     "%s%s<%s:%s%s%s:%d%s>",
                                      displayName_.c_str(),
                                      (displayName_.empty() ? "" : " "),
-                                     scheme.c_str(),
+                                     scheme,
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
                                      address.c_str(),
                                      port,
-                                     transport.c_str());
+                                     transport);
     return contact_;
 }
 
@@ -2026,24 +2024,17 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * Build new Contact header
      */
     {
-        char *tmp;
-        char transport_param[32];
-        int len;
-
-        /* Don't add transport parameter if it's UDP */
-        if (tp->key.type != PJSIP_TRANSPORT_UDP and
-            tp->key.type != PJSIP_TRANSPORT_UDP6) {
-            pj_ansi_snprintf(transport_param, sizeof(transport_param),
-                 ";transport=%s",
-                 pjsip_transport_get_type_name(
-                     (pjsip_transport_type_e)tp->key.type));
-        } else {
-            transport_param[0] = '\0';
+        const char* scheme = "sip";
+        const char* transport_param = "";
+        if (PJSIP_TRANSPORT_IS_SECURE(tp)) {
+            scheme = "sips";
+            transport_param = ";transport=tls";
         }
 
-        tmp = (char*) pj_pool_alloc(pool, PJSIP_MAX_URL_SIZE);
-        len = pj_ansi_snprintf(tmp, PJSIP_MAX_URL_SIZE,
-                "<sip:%s%s%s:%d%s>",
+        char* tmp = (char*) pj_pool_alloc(pool, PJSIP_MAX_URL_SIZE);
+        int len = pj_ansi_snprintf(tmp, PJSIP_MAX_URL_SIZE,
+                "<%s:%s%s%s:%d%s>",
+                scheme,
                 username_.c_str(),
                 (not username_.empty() ?  "@" : ""),
                 via_addrstr.c_str(),
