@@ -41,6 +41,7 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "security/certstore.h"
 
 #include <pjsip/sip_types.h>
 #include <opendht/value.h>
