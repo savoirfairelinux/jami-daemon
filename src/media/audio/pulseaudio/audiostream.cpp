@@ -90,7 +90,12 @@ AudioStream::AudioStream(pa_context *c,
         }
     }
 
-    pa_stream_set_state_callback(audiostream_, stream_state_callback, NULL);
+    pa_stream_set_state_callback(audiostream_, [](pa_stream* s, void* user_data){
+        static_cast<AudioStream*>(user_data)->stateChanged(s);
+    }, this);
+    pa_stream_set_moved_callback(audiostream_, [](pa_stream* s, void* user_data){
+        static_cast<AudioStream*>(user_data)->moved(s);
+    }, this);
 }
 
 AudioStream::~AudioStream()
@@ -110,8 +115,14 @@ AudioStream::~AudioStream()
     pa_stream_unref(audiostream_);
 }
 
+void AudioStream::moved(pa_stream* s)
+{
+    audiostream_ = s;
+    RING_DBG("Stream %d to %d", pa_stream_get_index(s), pa_stream_get_device_index(s));
+}
+
 void
-AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
+AudioStream::stateChanged(pa_stream* s)
 {
     UNUSED char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
@@ -140,7 +151,7 @@ AudioStream::stream_state_callback(pa_stream* s, void* /*user_data*/)
 
         case PA_STREAM_FAILED:
         default:
-            RING_ERR("Sink/Source doesn't exists: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
+            RING_ERR("Stream failure: %s" , pa_strerror(pa_context_errno(pa_stream_get_context(s))));
             break;
     }
 }

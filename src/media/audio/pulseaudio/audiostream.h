@@ -67,7 +67,7 @@ class AudioStream {
          * Accessor: Get the pulseaudio stream object
          * @return pa_stream* The stream
          */
-        pa_stream* pulseStream() {
+        pa_stream* stream() {
             return audiostream_;
         }
 
@@ -78,12 +78,15 @@ class AudioStream {
         inline size_t sampleSize() const {
             return pa_sample_size(sampleSpec());
         }
+        inline size_t frameSize() const {
+            return pa_frame_size(sampleSpec());
+        }
 
         inline uint8_t channels() const {
             return sampleSpec()->channels;
         }
 
-        inline AudioFormat getFormat() const {
+        inline AudioFormat format() const {
             auto s = sampleSpec();
             return AudioFormat(s->rate, s->channels);
         }
@@ -96,7 +99,8 @@ class AudioStream {
         /**
          * Mandatory asynchronous callback on the audio stream state
          */
-        static void stream_state_callback(pa_stream* s, void* user_data);
+        void stateChanged(pa_stream* s);
+        void moved(pa_stream* s);
 
         /**
          * The pulse audio object
