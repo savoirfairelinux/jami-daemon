@@ -177,8 +177,6 @@ Account::loadDefaultCodecs()
             // instantiate AccountAudioCodecInfo initialized with our system codec
             auto codec = std::make_shared <AccountAudioCodecInfo>(*audioCodec);
             accountCodecInfoList_.push_back(codec);
-            RING_DBG("[%s] loading audio codec = %s", accountID_.c_str(),
-                     codec->systemCodecInfo.name.c_str());
         }
 
         if (systemCodec->mediaType & MEDIA_VIDEO) {
@@ -187,8 +185,6 @@ Account::loadDefaultCodecs()
             // instantiate AccountVideoCodecInfo initialized with our system codec
             auto codec = std::make_shared<AccountVideoCodecInfo>(*videoCodec);
             accountCodecInfoList_.push_back(codec);
-            RING_DBG("[%s] loading video codec = %s", accountID_.c_str(),
-                     codec->systemCodecInfo.name.c_str());
         }
     }
 }

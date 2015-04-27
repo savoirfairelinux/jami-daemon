@@ -1061,7 +1061,6 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
         RING_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
-        RING_DBG("No match for account %s in request with username %s", dht_.getId().toString().c_str(), userName.c_str());
         return MatchRank::NONE;
     }
 }
