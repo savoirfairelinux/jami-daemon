@@ -182,17 +182,17 @@ class PulseLayer : public AudioLayer {
         /**
          * A stream object to handle the pulseaudio playback stream
          */
-        AudioStream* playback_ {nullptr};
+        std::unique_ptr<AudioStream> playback_;
 
         /**
          * A stream object to handle the pulseaudio capture stream
          */
-        AudioStream* record_ {nullptr};
+         std::unique_ptr<AudioStream> record_;
 
         /**
          * A special stream object to handle specific playback stream for ringtone
          */
-        AudioStream* ringtone_ {nullptr};
+         std::unique_ptr<AudioStream> ringtone_;
 
         /**
          * Contains the list of playback devices
@@ -212,6 +212,9 @@ class PulseLayer : public AudioLayer {
 
         AudioBuffer playbackBuffer_;
         AudioBuffer playbackResampleBuffer_;
+
+        AudioBuffer ringtoneBuffer_;
+        AudioBuffer ringtoneResampleBuffer_;
 
         /** PulseAudio server defaults */
         AudioFormat defaultAudioFormat_ {AudioFormat::MONO()};
