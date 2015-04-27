@@ -72,10 +72,12 @@ class AudioLoop {
          * Accessor to the size of the buffer
          * @return unsigned int The size
          */
-        size_t getSize() {
+        size_t getSize() const {
             return buffer_->frames();
         }
-
+        AudioFormat getFormat() const {
+            return buffer_->getFormat();
+        }
     protected:
         /** The data buffer */
         AudioBuffer * buffer_;
