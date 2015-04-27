@@ -108,7 +108,6 @@ libring_la_SOURCES = conference.cpp \
 		call.cpp \
 		account.cpp \
 		logger.c \
-		numbercleaner.cpp \
 		fileutils.cpp \
 		threadloop.cpp \
 		ip_utils.h \
@@ -130,7 +129,6 @@ libring_la_SOURCES = conference.cpp \
 		account.h \
 		call.h \
 		logger.h \
-		numbercleaner.h \
 		fileutils.h \
 		noncopyable.h \
 		utf8_utils.h \
