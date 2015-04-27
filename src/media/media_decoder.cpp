@@ -265,7 +265,6 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
-    decoderCtx_->thread_count = 1;
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
