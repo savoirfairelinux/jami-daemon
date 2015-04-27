@@ -520,6 +520,7 @@
                 The acceptable states are:
                 <ul>
                   <li>INCOMING: Initial state of incoming calls</li>
+                  <li>CONNECTING: Peer found, contacting him</li>
                   <li>RINGING: Initial state of received outgoing call</li>
                   <li>CURRENT: The normal active state of an answered call</li>
                   <li>HUNGUP: Notify that the call has been hungup by peer</li>
