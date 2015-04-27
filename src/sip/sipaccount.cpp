@@ -713,7 +713,23 @@ SIPAccount::getVolatileAccountDetails() const
     }
 
 #if HAVE_TLS
-    //TODO
+    if (transport_ and transport_->isSecure() and transport_->isConnected()) {
+        const auto& tlsInfos = transport_->getTlsInfos();
+        auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+        if (tlsInfos.cipher and not cipher)
+            RING_WARN("Unknown cipher: %d", tlsInfos.cipher);
+        a.emplace(DRing::TlsTransport::TLS_CIPHER,         cipher ? cipher : "");
+        a.emplace(DRing::TlsTransport::TLS_PEER_CERT,      tlsInfos.peerCert->toString());
+        auto ca = tlsInfos.peerCert->issuer;
+        unsigned n = 0;
+        while (ca) {
+            std::ostringstream name_str;
+            name_str << DRing::TlsTransport::TLS_PEER_CA_ << n++;
+            a.emplace(name_str.str(),                      ca->toString());
+            ca = ca->issuer;
+        }
+        a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    std::to_string(n));
+    }
 #endif
 
     return a;
