@@ -58,7 +58,6 @@
 
 #include "im/instant_messaging.h"
 
-#include "numbercleaner.h"
 #include "config/yamlparser.h"
 
 #if HAVE_ALSA
@@ -436,8 +435,7 @@ Manager::outgoingCall(const std::string& preferred_account_id,
                           const std::string& conf_id)
 {
     std::string current_call_id(getCurrentCallId());
-    std::string prefix(hookPreference.getNumberAddPrefix());
-    std::string to_cleaned(NumberCleaner::clean(to, prefix));
+    std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
     try {
