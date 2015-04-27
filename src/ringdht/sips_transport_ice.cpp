@@ -32,7 +32,7 @@
 #include "ice_transport.h"
 #include "manager.h"
 #include "logger.h"
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
@@ -623,8 +623,6 @@ SipsIceTransport::onHandshakeComplete(pj_status_t status)
 int
 SipsIceTransport::verifyCertificate()
 {
-    RING_DBG("SipsIceTransport::verifyCertificate");
-
     /* Support only x509 format */
     if (gnutls_certificate_type_get(session_) != GNUTLS_CRT_X509) {
         verifyStatus_ = PJ_SSL_CERT_EINVALID_FORMAT;
@@ -736,8 +734,7 @@ SipsIceTransport::loop()
                                         &trData_.base.key.rem_addr,
                                         trData_.base.addr_len, &prestate_, this,
                                         [](gnutls_transport_ptr_t t,
-                                           const void* d ,
-                                           size_t s) -> ssize_t {
+                                           const void* d, size_t s) -> ssize_t {
                     auto this_ = reinterpret_cast<SipsIceTransport*>(t);
                     return this_->tlsSend(d, s);
                 });
