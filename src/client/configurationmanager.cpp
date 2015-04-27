@@ -661,8 +661,13 @@ void
 setCredentials(const std::string& accountID,
                const std::vector<std::map<std::string, std::string>>& details)
 {
-    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
-        sipaccount->setCredentials(details);
+    if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
+        sipaccount->doUnregister([&](bool /* transport_free */) {
+            sipaccount->setCredentials(details);
+            if (sipaccount->isEnabled())
+                sipaccount->doRegister();
+        });
+    }
 }
 
 } // namespace DRing
