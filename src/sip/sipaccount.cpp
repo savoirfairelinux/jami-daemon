@@ -1653,25 +1653,19 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
     size_t i = 0;
 
     for (const auto &item : credentials_) {
-        map<string, string>::const_iterator val = item.find(Conf::CONFIG_ACCOUNT_PASSWORD);
-        const std::string password = val != item.end() ? val->second : "";
-        int dataType = (md5HashingEnabled and password.length() == 32)
-                       ? PJSIP_CRED_DATA_DIGEST
-                       : PJSIP_CRED_DATA_PLAIN_PASSWD;
-
-        val = item.find(Conf::CONFIG_ACCOUNT_USERNAME);
-
+        auto val = item.find(Conf::CONFIG_ACCOUNT_USERNAME);
         if (val != item.end())
             cred_[i].username = pj_str((char*) val->second.c_str());
 
-        cred_[i].data = pj_str((char*) password.c_str());
-
         val = item.find(Conf::CONFIG_ACCOUNT_REALM);
-
         if (val != item.end())
             cred_[i].realm = pj_str((char*) val->second.c_str());
 
-        cred_[i].data_type = dataType;
+        val = item.find(Conf::CONFIG_ACCOUNT_PASSWORD);
+        cred_[i].data = pj_str((char*) (val != item.end() ? val->second.c_str() : ""));
+        cred_[i].data_type = (md5HashingEnabled and cred_[i].data.slen == 32)
+                           ? PJSIP_CRED_DATA_DIGEST
+                           : PJSIP_CRED_DATA_PLAIN_PASSWD;
         cred_[i].scheme = pj_str((char*) "digest");
         ++i;
     }
