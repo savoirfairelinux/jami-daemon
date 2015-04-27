@@ -468,7 +468,7 @@ void PulseLayer::writeToSpeaker()
     pa_stream *s = playback_->pulseStream();
     const pa_sample_spec* sample_spec = pa_stream_get_sample_spec(s);
     size_t sample_size = pa_frame_size(sample_spec);
-    const AudioFormat format(playback_->getFormat());
+    const AudioFormat format(sample_spec->rate, sample_spec->channels);
 
     // available bytes to be written in pulseaudio internal buffer
     int ret = pa_stream_writable_size(s);
@@ -554,9 +554,10 @@ void PulseLayer::writeToSpeaker()
 
     pa_stream_begin_write(s, (void**)&data, &resampledBytes);
 
-    playbackBuffer_.setFormat(format);
+    playbackBuffer_.setFormat(mainBufferAudioFormat);
     playbackBuffer_.resize(readableSamples);
     Manager::instance().getRingBufferPool().getData(playbackBuffer_, RingBufferPool::DEFAULT_ID);
+    playbackBuffer_.setChannelNum(format.nb_channels, true);
 
     if (resample) {
         AudioBuffer rsmpl_out(nResampled, format);
