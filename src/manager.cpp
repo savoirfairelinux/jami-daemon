@@ -78,6 +78,7 @@
 #include "ice_transport.h"
 
 #include "client/ring_signal.h"
+#include "dring/call_const.h"
 
 #if HAVE_TLS
 #include "security/gnutls_support.h"
@@ -685,7 +686,7 @@ Manager::offHoldCall(const std::string& callId)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::StateChange>(callId, "UNHOLD", 0);
+    emitSignal<DRing::CallSignal::StateChange>(callId, DRing::Call::StateEvent::UNHOLD, 0);
 
     if (isConferenceParticipant(callId))
         switchCall(getCallFromCallID(call->getConfId()));
