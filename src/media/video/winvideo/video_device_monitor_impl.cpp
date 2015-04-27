@@ -105,17 +105,17 @@ VideoDeviceMonitorImpl::run()
     hr = CoCreateInstance(CLSID_SystemDeviceEnum, NULL,
         CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&pDevEnum));
 
-    IEnumMoniker *pEnum;
+    IEnumMoniker *pEnum = nullptr;
     if (SUCCEEDED(hr)) {
         hr = pDevEnum->CreateClassEnumerator(
             CLSID_VideoInputDeviceCategory,
             &pEnum, 0);
-        if (FAILED(hr)) {
+        pDevEnum->Release();
+        if (FAILED(hr) || pEnum == nullptr) {
             RING_ERR("No webcam found.");
             hr = VFW_E_NOT_FOUND;
         }
-        pDevEnum->Release();
-        if (hr != VFW_E_NOT_FOUND) {
+        if (hr != VFW_E_NOT_FOUND && pEnum != nullptr) {
             IMoniker *pMoniker = NULL;
             unsigned deviceID = 0;
             while (pEnum->Next(1, &pMoniker, NULL) == S_OK)
