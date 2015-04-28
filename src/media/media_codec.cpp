@@ -134,6 +134,8 @@ AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
 {
     if (sysCodecInfo.minQuality != SystemCodecInfo::DEFAULT_NO_QUALITY)
         quality = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
+    else
+        quality = SystemCodecInfo::DEFAULT_NO_QUALITY;
 }
 
 AccountCodecInfo::~AccountCodecInfo()
