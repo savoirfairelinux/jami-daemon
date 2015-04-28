@@ -119,7 +119,13 @@ MediaEncoder::openOutput(const char *filename,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
     /* find the video encoder */
-    outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+        //For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-2000)
+        //H263-2000 can manage all frame sizes while H263 don't
+        //AV_CODEC_ID_H263 decoder will be used for decoding
+        outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
+    else
+        outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
     if (!outputEncoder_) {
         RING_ERR("Encoder \"%s\" not found!", args.codec->systemCodecInfo.name.c_str());
         throw MediaEncoderException("No output encoder");
@@ -142,6 +148,8 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
+        encoderCtx_->rc_buffer_size = encoderCtx_->bit_rate;
+    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
         encoderCtx_->rc_buffer_size = encoderCtx_->bit_rate;
     }
 

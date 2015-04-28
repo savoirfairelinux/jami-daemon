@@ -74,7 +74,7 @@ SystemCodecContainer::initCodecConfig()
                                                DEFAULT_VIDEO_BITRATE),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
-                                               "H263", "h263",
+                                               "H263-2000", "h263",
                                                CODEC_ENCODER_DECODER,
                                                DEFAULT_VIDEO_BITRATE),
 #endif

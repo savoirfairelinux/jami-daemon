@@ -54,14 +54,23 @@ FFMPEGCONF += \
 		--enable-encoder=libvpx_vp8 \
 		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
+		--enable-encoder=h263p \
 		--enable-decoder=h263 \
 		--enable-encoder=mjpeg \
 		--enable-decoder=mjpeg \
 		--enable-decoder=mjpegb \
 
+ifdef HAVE_WIN32
 FFMPEGCONF += \
 	--enable-indev=dshow \
 	--enable-dxva2
+endif
+
+ifdef HAVE_LINUX
+FFMPEGCONF += \
+	--enable-indev=v4l2 \
+	--enable-indev=x11grab
+endif
 
 # There is an unresolved symbol for speex when linking statically
 ifndef HAVE_WIN32
