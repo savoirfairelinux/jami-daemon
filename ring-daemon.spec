@@ -71,12 +71,12 @@ make -j %{?_smp_mflags}
 %install
 mkdir -p %{buildroot}/ring-daemon
 make DESTDIR=%{buildroot} install
-mkdir -p %{buildroot}/%{_sysconfdir}/yum.repo.d/
-echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
-echo 'name=Fedora $releasever - $basearch - ring' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
-echo 'baseurl=http://yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
-echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
-echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
+mkdir -p %{buildroot}/%{_sysconfdir}/yum.repos.d/
+echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
+echo 'name=Fedora $releasever - $basearch - ring' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
+echo 'baseurl=http://yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
+echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
+echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
 
 
 %files
@@ -93,7 +93,7 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repo.d/ring.repo
 /usr/include/dring/
 
 %files repository
-%config %{_sysconfdir}/yum.repo.d/ring-nightly.repo
+%config %{_sysconfdir}/yum.repos.d/ring-nightly.repo
 
 %changelog
 * Fri Apr 24 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-2
