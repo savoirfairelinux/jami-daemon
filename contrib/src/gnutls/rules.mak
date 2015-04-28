@@ -48,12 +48,18 @@ GNUTLS_CONF := \
 
 DEPS_gnutls = nettle $(DEPS_nettle) iconv $(DEPS_iconv)
 
+
+#Workaround for localtime_r function
+ifdef HAVE_WIN32
+CFLAGS="-D_POSIX_C_SOURCE"
+endif
+
 .gnutls: gnutls
 	$(RECONF)
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) gl_cv_header_working_stdint_h=yes ./configure $(GNUTLS_CONF)
 else
-	cd $< && $(HOSTVARS) ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) CFLAGS=$(CFLAGS) ./configure $(GNUTLS_CONF)
 endif
 	cd $</gl && $(MAKE) install
 	cd $</lib && $(MAKE) install
