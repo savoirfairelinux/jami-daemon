@@ -217,7 +217,7 @@ class SIPAccount : public SIPAccountBase {
 
         void setCredentials(const std::vector<std::map<std::string, std::string> >& details);
 
-        const std::vector<std::map<std::string, std::string> > &
+        std::vector<std::map<std::string, std::string>>
         getCredentials() const;
 
         void setRegistrationState(RegistrationState state, unsigned code=0);
@@ -579,7 +579,16 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Map of credential for this account
          */
-        std::vector< std::map<std::string, std::string > > credentials_;
+        struct Credentials {
+            std::string realm {};
+            std::string username {};
+            std::string password {};
+            std::string password_h {};
+            Credentials(const std::string& r, const std::string& u, const std::string& p)
+             : realm(r), username(u), password(p) {}
+            void computePasswordHash();
+        };
+        std::vector<Credentials> credentials_;
 
         std::shared_ptr<SipTransport> transport_ {};
 
@@ -659,9 +668,8 @@ class SIPAccount : public SIPAccountBase {
          */
         std::string serviceRoute_;
 
-
         /**
-         * Credential information stored for further registration.
+         * Credential information stored for further registration. Points to credentials_ members.
          */
         std::vector<pjsip_cred_info> cred_;
 
