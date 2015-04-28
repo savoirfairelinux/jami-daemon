@@ -173,7 +173,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
         return -1;
     }
 
-    // find the decoder for the video stream
+    // find the decoder for the audio stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
         RING_ERR("Unsupported codec");
