@@ -81,7 +81,7 @@
 #include "dring/call_const.h"
 
 #if HAVE_TLS
-#include "gnutls_support.h"
+#include "security/gnutls_support.h"
 #endif
 
 #include "libav_utils.h"
