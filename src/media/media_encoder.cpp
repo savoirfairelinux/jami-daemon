@@ -134,7 +134,13 @@ MediaEncoder::openOutput(const char *filename,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
     /* find the video encoder */
-    outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+        //For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
+        //H263-1998 can manage all frame sizes while H263 don't
+        //AV_CODEC_ID_H263 decoder will be used for decoding
+        outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
+    else
+        outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
     if (!outputEncoder_) {
         RING_ERR("Encoder \"%s\" not found!", args.codec->systemCodecInfo.name.c_str());
         throw MediaEncoderException("No output encoder");
@@ -191,6 +197,14 @@ MediaEncoder::openOutput(const char *filename,
         // Use CBR (set bitrate)
         encoderCtx_->rc_buffer_size = maxBitrate;
         encoderCtx_->bit_rate = encoderCtx_->rc_min_rate = encoderCtx_->rc_max_rate =  maxBitrate;
+        RING_DBG("Using Max bitrate %d", maxBitrate);
+    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
+        encoderCtx_->bit_rate = encoderCtx_->rc_max_rate =  maxBitrate;
+        encoderCtx_->rc_buffer_size = maxBitrate;
+        // on libav there are video artifcats if multithreading is enabled
+        // see https://bugzilla.libav.org/show_bug.cgi?id=912
+        // TODO: this is a workaround !
+        encoderCtx_->thread_count = 1;
         RING_DBG("Using Max bitrate %d", maxBitrate);
     }
 
