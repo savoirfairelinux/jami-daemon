@@ -62,9 +62,11 @@
 
 #include "config/yamlparser.h"
 
-#include "gnutls_support.h"
+#include "security/certstore.h"
+#include "security/gnutls_support.h"
 
 #include <opendht/securedht.h>
+
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
@@ -72,6 +74,7 @@
 #include <memory>
 #include <sstream>
 #include <cctype>
+#include <cstdarg>
 
 namespace ring {
 
@@ -148,7 +151,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
 
-    RING_DBG("Calling DHT peer %s", toUrl.c_str());
+    RING_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
@@ -167,6 +170,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
+
+    // for now, we automatically trust all explicitly called peers
+    setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
 
     manager.addTask([=] {
         static std::uniform_int_distribution<dht::Value::Id> udist;
@@ -196,13 +202,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         shared_this->dht_.putEncrypted(
             callkey, toH,
             dht::Value {
-                dht::DhtMessage::TYPE,
-                dht::DhtMessage(
-                    dht::DhtMessage::Service::ICE_CANDIDATES,
-                    ice->getLocalAttributesAndCandidates()
-                    ),
-                    callvid
-                },
+                dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
+                callvid
+            },
             [=](bool ok) { // Put complete callback
                 if (!ok) {
                     RING_WARN("Can't put ICE descriptor on DHT");
@@ -211,31 +213,22 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                         Manager::instance().callFailure(*call); // signal client
                         call->removeCall();
                     }
-                }
+                } else
+                    RING_WARN("Succesfully put ICE descriptor on DHT");
                 shared_this->dht_.cancelPut(callkey, callvid);
-            });
+            }
+        );
 
-        auto listenKey = shared_this->dht_.listen(
+        auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
             callkey,
-            [=] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
-                RING_DBG("Outcall listen callback (%d values)", vals.size());
-                for (const auto& v : vals) {
-                    if (v->recipient != shared_this->dht_.getId()) {
-                        RING_DBG("Ignoring non encrypted or bad type value %s",
-                                 v->toString().c_str());
-                        continue;
-                    }
-                    if (v->id != replyvid)
-                        continue;
-                    dht::DhtMessage msg {v->data};
-                    RING_WARN("ICE request replied from DHT peer %s",
-                              toH.toString().c_str());
-                    ice->start(msg.getMessage());
-                    return false;
-                }
-                return true;
-            },
-            dht::DhtMessage::ServiceFilter(dht::DhtMessage::Service::ICE_CANDIDATES)
+            [=] (dht::IceCandidates&& msg) {
+                RING_DBG("Outcall listen callback");
+                if (msg.id != replyvid)
+                    return true;
+                RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
+                ice->start(msg.ice_data);
+                return false;
+            }
         );
 
         shared_this->pendingCalls_.emplace_back(PendingCall{
@@ -389,6 +382,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
     out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
+    out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -407,6 +401,9 @@ void RingAccount::unserialize(const YAML::Node &node)
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
+
+    parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+
     checkIdentityPath();
 }
 
@@ -531,9 +528,8 @@ RingAccount::handleEvents()
         }
         auto ice = c->ice.get();
         if (ice->isRunning()) {
-            regenerateCAList();
             auto id = loadIdentity();
-            auto remote_h = c->id;
+            auto remote_h = c->from;
             tls::TlsParams tlsParams {
                 .ca_list = caListPath_,
                 .id = id.second,
@@ -586,7 +582,7 @@ RingAccount::handleEvents()
                 pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
             } else {
                 RING_DBG("ICE succeeded : removing pending outgoing call");
-                createOutgoingCall(call, c->id.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+                createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 dht_.cancelListen(c->call_key, c->listen_key.get());
                 c = pendingCalls_.erase(c);
             }
@@ -690,7 +686,7 @@ void RingAccount::doRegister_()
 
 #if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
-            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); }
+            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
         );
@@ -739,87 +735,89 @@ void RingAccount::doRegister_()
 
         // Listen for incoming calls
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        auto listenKey = dht::InfoHash::get("callto:"+dht_.getId().toString());
-        RING_WARN("Listening on callto:%s : %s", dht_.getId().toString().c_str(), listenKey.toString().c_str());
-        dht_.listen (
-            listenKey,
-            [shared,listenKey] (const std::vector<std::shared_ptr<dht::Value>>& vals) {
+        callKey_ = dht::InfoHash::get("callto:"+dht_.getId().toString());
+        RING_DBG("Listening on callto:%s : %s", dht_.getId().toString().c_str(), callKey_.toString().c_str());
+        dht_.listen<dht::IceCandidates>(
+            callKey_,
+            [shared] (dht::IceCandidates&& msg) {
+                // callback for incoming call
                 auto& this_ = *shared.get();
-                for (const auto& v : vals) {
-                    std::shared_ptr<SIPCall> call;
-                    try {
-                        if (v->recipient != this_.dht_.getId()) {
-                            RING_DBG("Ignoring non encrypted value %s.", v->toString().c_str());
-                            continue;
-                        }
-                        auto remote_id = v->owner.getId();
-                        if (remote_id == this_.dht_.getId())
-                            continue;
-                        dht::DhtMessage msg {v->data};
-                        auto res = this_.treatedCalls_.insert(v->id);
-                        this_.saveTreatedCalls();
-                        if (!res.second)
-                            continue;
-                        auto from = remote_id.toString();
-                        auto from_vid = v->id;
-                        auto reply_vid = from_vid+1;
-                        RING_WARN("Received incoming DHT call request from %s", from.c_str());
-                        call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(this_, Manager::instance().getNewCallID(), Call::INCOMING);
-                        auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-                        auto ice = iceTransportFactory.createTransport(
-                            ("sip:"+call->getCallId()).c_str(),
-                            ICE_COMPONENTS,
-                            false,
-                            this_.getUPnPActive()
-                        );
-                        if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
-                            throw std::runtime_error("Can't initialize ICE..");
-
-                        std::weak_ptr<SIPCall> weak_call = call;
-
-                        this_.dht_.putEncrypted(
-                            listenKey,
-                            remote_id,
-                            dht::Value {
-                                dht::DhtMessage::TYPE,
-                                dht::DhtMessage(
-                                    dht::DhtMessage::Service::ICE_CANDIDATES,
-                                    ice->getLocalAttributesAndCandidates()
-                                ),
-                                reply_vid
-                            },
-                            [weak_call,shared,listenKey,reply_vid](bool ok) {
-                                auto& this_ = *shared.get();
-                                if (!ok) {
-                                    RING_WARN("Can't put ICE descriptor on DHT");
-                                    if (auto call = weak_call.lock()) {
-                                        call->setConnectionState(Call::DISCONNECTED);
-                                        Manager::instance().callFailure(*call);
-                                        call->removeCall();
-                                    }
-                                }
-                                this_.dht_.cancelPut(listenKey, reply_vid);
-                            }
-                        );
-                        ice->start(msg.getMessage());
-                        call->setPeerNumber(from);
-                        call->initRecFilename(from);
-                        {
-                            std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                            this_.pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, remote_id});
-                        }
-                        return true;
-                    } catch (const std::exception& e) {
-                        RING_ERR("ICE/DHT error: %s", e.what());
-                        if (call) {
-                            call->setConnectionState(Call::DISCONNECTED);
-                            Manager::instance().callFailure(*call);
-                        }
-                    }
+                if (msg.from == this_.dht_.getId())
+                    return true;
+                // quick check in case we already explicilty banned this public key
+                auto trustStatus = this_.trust_.getCertificateStatus(msg.from.toString());
+                if (trustStatus == tls::TrustStore::Status::BANNED) {
+                    RING_WARN("Discarding incoming DHT call request from banned peer %s", msg.from.toString().c_str());
+                    return true;
                 }
+                auto res = this_.treatedCalls_.insert(msg.id);
+                this_.saveTreatedCalls();
+                if (!res.second)
+                    return true;
+
+                if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::Status::ALLOWED) {
+                    auto from_h = msg.from;
+                    auto from_vid = msg.id;
+                    {
+                        std::lock_guard<std::mutex> lock(this_.callsMutex_);
+                        this_.pendingUntrustedCalls_.emplace_back(std::move(msg));
+                    }
+                    this_.dht_.findCertificate(
+                        from_h,
+                        [shared,from_h,from_vid](const std::shared_ptr<dht::crypto::Certificate> cert) {
+                            auto& this_ = *shared.get();
+                            auto pending = std::find_if(this_.pendingUntrustedCalls_.begin(), this_.pendingUntrustedCalls_.end(), [&](dht::IceCandidates& p){
+                                return p.from == from_h && p.id == from_vid;
+                            });
+                            if (cert) {
+                                tls::CertificateStore::instance().pinCertificate(cert);
+                                if (this_.trust_.isTrusted(*cert) and cert->getId() == from_h) {
+                                    this_.incomingCall(std::move(*pending));
+                                } else {
+                                    RING_WARN("Discarding incoming DHT call from untrusted peer %f.", from_h.toString().c_str());
+                                }
+                            } else {
+                                RING_WARN("Can't find certificate of %f for incoming call.", from_h.toString().c_str());
+                            }
+                            this_.pendingUntrustedCalls_.erase(pending);
+                        }
+                    );
+                    return true;
+                }
+                // public incoming calls allowed or we explicitly authorised this public key
+                this_.incomingCall(std::move(msg));
                 return true;
-            },
-            dht::DhtMessage::ServiceFilter(dht::DhtMessage::Service::ICE_CANDIDATES)
+            }
+        );
+
+        auto inboxKey = dht::InfoHash::get("inbox:"+dht_.getId().toString());
+        dht_.listen<dht::TrustRequest>(
+            inboxKey,
+            [shared](dht::TrustRequest&& v) {
+                auto& this_ = *shared.get();
+                if (v.service != DHT_TYPE_NS)
+                    return true;
+                // if the invite exists, update it
+                auto req = this_.trustRequests_.begin();
+                for (;req != this_.trustRequests_.end(); ++req)
+                    if (req->from == v.from) {
+                        req->received = std::chrono::system_clock::now();
+                        break;
+                    }
+                if (req == this_.trustRequests_.end()) {
+                    this_.trustRequests_.emplace_back(TrustRequest{
+                        .from = v.from,
+                        .received = std::chrono::system_clock::now()
+                    });
+                    req = std::prev(this_.trustRequests_.end());
+                }
+                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
+                    this_.getAccountID(),
+                    req->from.toString(),
+                    std::chrono::system_clock::to_time_t(req->received)
+                );
+                return true;
+            }
         );
     }
     catch (const std::exception& e) {
@@ -828,6 +826,51 @@ void RingAccount::doRegister_()
     }
 }
 
+void RingAccount::incomingCall(dht::IceCandidates&& msg)
+{
+    auto from = msg.from.toString();
+    auto reply_vid = msg.id+1;
+    RING_WARN("Received incoming DHT call request from %s", from.c_str());
+    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::INCOMING);
+    auto ice = Manager::instance().getIceTransportFactory().createTransport(
+        ("sip:"+call->getCallId()).c_str(),
+        ICE_COMPONENTS,
+        false,
+        getUPnPActive()
+    );
+    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
+        throw std::runtime_error("Can't initialize ICE..");
+
+    std::weak_ptr<SIPCall> weak_call = call;
+    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    dht_.putEncrypted(
+        callKey_,
+        msg.from,
+        dht::Value {
+            dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
+            reply_vid
+        },
+        [weak_call,shared,reply_vid](bool ok) {
+            auto& this_ = *shared.get();
+            if (!ok) {
+                RING_WARN("Can't put ICE descriptor on DHT");
+                if (auto call = weak_call.lock()) {
+                    call->setConnectionState(Call::DISCONNECTED);
+                    Manager::instance().callFailure(*call);
+                    call->removeCall();
+                }
+            }
+            this_.dht_.cancelPut(this_.callKey_, reply_vid);
+        }
+    );
+    ice->start(msg.ice_data);
+    call->setPeerNumber(from);
+    call->initRecFilename(from);
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, msg.from});
+    }
+}
 
 void RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
@@ -849,25 +892,32 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
         released_cb(false);
 }
 
-void
-RingAccount::registerCA(const dht::crypto::Certificate& crt)
+bool
+RingAccount::findCertificate(const std::string& crt_id)
 {
-    fileutils::saveFile(caPath_ + DIR_SEPARATOR_STR + crt.getPublicKey().getId().toString(), crt.getPacked());
+    dht_.findCertificate(dht::InfoHash(crt_id), [=](const std::shared_ptr<dht::crypto::Certificate> crt) {
+        if (crt)
+            tls::CertificateStore::instance().pinCertificate(std::move(crt));
+    });
+    return true;
 }
 
 bool
-RingAccount::unregisterCA(const dht::InfoHash& crt_id)
+RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::Status status)
 {
-    auto cas = getRegistredCAs();
-    bool deleted = false;
-    for (const auto& ca_path : cas) {
-        try {
-            dht::crypto::Certificate tmp_crt(fileutils::loadFile(ca_path));
-            if (tmp_crt.getPublicKey().getId() == crt_id)
-                deleted &= remove(ca_path.c_str()) == 0;
-        } catch (const std::exception&) {}
+    if (not tls::CertificateStore::instance().getCertificate(cert_id)) {
+        findCertificate(cert_id);
     }
-    return deleted;
+    bool done = trust_.setCertificateStatus(cert_id, status);
+    if (done)
+        emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
+    return done;
+}
+
+std::vector<std::string>
+RingAccount::getCertificatesByStatus(tls::TrustStore::Status status)
+{
+    return trust_.getCertificatesByStatus(status);
 }
 
 void
@@ -903,33 +953,6 @@ RingAccount::saveTreatedCalls() const
         }
         for (auto& c : treatedCalls_)
             file << std::hex << c << "\n";
-    }
-}
-
-std::vector<std::string>
-RingAccount::getRegistredCAs()
-{
-    return fileutils::readDirectory(caPath_);
-}
-
-void
-RingAccount::regenerateCAList()
-{
-    std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
-    if (!list.is_open()) {
-        RING_ERR("Could write CA list");
-        return;
-    }
-    auto cas = getRegistredCAs();
-    {
-        std::ifstream file(tlsCaListFile_, std::ios::binary);
-        list << file.rdbuf();
-    }
-    for (const auto& ca : cas) {
-        std::ifstream file(ca, std::ios::binary);
-        if (!file)
-            continue;
-        list << file.rdbuf();
     }
 }
 
@@ -1008,8 +1031,6 @@ RingAccount::loadValues() const
 void
 RingAccount::initTlsConfiguration()
 {
-    regenerateCAList();
-
 }
 
 static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
@@ -1114,12 +1135,48 @@ RingAccount::supportPresence(int /* function */, bool /* enabled*/)
 {
 }
 
-/*
-void RingAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
+/* trust requests */
+std::map<std::string, std::string>
+RingAccount::getTrustRequests() const
 {
-    if (allowViaRewrite_ && via_addr_.host.slen > 0)
-        pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
+    std::map<std::string, std::string> ret;
+    for (const auto& r : trustRequests_)
+        ret.emplace(r.from.toString(), ring::to_string(std::chrono::system_clock::to_time_t(r.received)));
+    return ret;
 }
-*/
+
+
+bool
+RingAccount::acceptTrustRequest(const std::string& from)
+{
+    dht::InfoHash f(from);
+    for (auto i = trustRequests_.begin(); i != trustRequests_.end(); ++i) {
+        if (i->from == f) {
+            trust_.setCertificateStatus(from, tls::TrustStore::Status::ALLOWED);
+            trustRequests_.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+RingAccount::discardTrustRequest(const std::string& from)
+{
+    dht::InfoHash f(from);
+    for (auto i = trustRequests_.begin(); i != trustRequests_.end(); ++i) {
+        if (i->from == f) {
+            trustRequests_.erase(i);
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+RingAccount::sendTrustRequest(const std::string& to)
+{
+    dht_.putEncrypted(dht::InfoHash::get("inbox:"+to), dht::InfoHash(to), dht::TrustRequest(DHT_TYPE_NS));
+}
 
 } // namespace ring
