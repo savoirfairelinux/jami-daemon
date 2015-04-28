@@ -184,6 +184,11 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&DBusConfigurationManager::registrationStateChanged, confM, _1, _2, _3, _4)),
         exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&DBusConfigurationManager::volatileAccountDetailsChanged, confM, _1, _2)),
         exportable_callback<ConfigurationSignal::Error>(bind(&DBusConfigurationManager::errorAlert, confM, _1)),
+        exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::CertificatePinned>(bind(&DBusConfigurationManager::certificatePinned, confM, _1 )),
+        exportable_callback<ConfigurationSignal::CertificatePathPinned>(bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2 )),
+        exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
+        exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
     };
 
     // Presence event handlers
