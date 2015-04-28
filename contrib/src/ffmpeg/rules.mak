@@ -58,19 +58,14 @@ FFMPEGCONF += \
 		--enable-encoder=mjpeg \
 		--enable-decoder=mjpeg \
 		--enable-decoder=mjpegb \
+		--enable-libspeex \
+		--enable-libopus \
+		--enable-encoder=libspeex \
+		--enable-decoder=libspeex
 
 FFMPEGCONF += \
 	--enable-indev=dshow \
 	--enable-dxva2
-
-# There is an unresolved symbol for speex when linking statically
-ifndef HAVE_WIN32
-FFMPEGCONF += \
-          --enable-libspeex \
-          --enable-libopus \
-          --enable-encoder=libspeex \
-          --enable-decoder=libspeex
-endif
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
