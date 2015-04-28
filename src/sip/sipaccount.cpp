@@ -422,7 +422,7 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
     // each credential is a map, and we can have multiple credentials
-    out << YAML::Key << Conf::CRED_KEY << YAML::Value << credentials_;
+    out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
 
     out << YAML::Key << PRESENCE_MODULE_ENABLED_KEY << YAML::Value << (presence_ and presence_->isEnabled());
@@ -528,9 +528,11 @@ void SIPAccount::unserialize(const YAML::Node &node)
     stunServerName_ = pj_str((char*) stunServer_.data());
 
     const auto &credsNode = node[Conf::CRED_KEY];
-    const auto creds = parseVectorMap(credsNode, {Conf::CONFIG_ACCOUNT_PASSWORD,
-            Conf::CONFIG_ACCOUNT_REALM, Conf::CONFIG_ACCOUNT_USERNAME});
-    setCredentials(creds);
+    setCredentials(parseVectorMap(credsNode, {
+        Conf::CONFIG_ACCOUNT_REALM,
+        Conf::CONFIG_ACCOUNT_USERNAME,
+        Conf::CONFIG_ACCOUNT_PASSWORD
+    }));
 
     // get zrtp submap
     const auto &zrtpMap = node[Conf::ZRTP_KEY];
@@ -643,38 +645,20 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     }
 }
 
-static std::string retrievePassword(const std::map<std::string, std::string>& map, const std::string &username)
-{
-    std::map<std::string, std::string>::const_iterator map_iter_username;
-    std::map<std::string, std::string>::const_iterator map_iter_password;
-    map_iter_username = map.find(Conf::CONFIG_ACCOUNT_USERNAME);
-
-    if (map_iter_username != map.end()) {
-        if (map_iter_username->second == username) {
-            map_iter_password = map.find(Conf::CONFIG_ACCOUNT_PASSWORD);
-
-            if (map_iter_password != map.end()) {
-                return map_iter_password->second;
-            }
-        }
-    }
-
-    return "";
-}
-
 std::map<std::string, std::string>
 SIPAccount::getAccountDetails() const
 {
     auto a = SIPAccountBase::getAccountDetails();
 
-    a[Conf::CONFIG_ACCOUNT_PASSWORD] = "";
+    std::string password {};
     if (hasCredentials()) {
-        for (const auto &vect_item : credentials_) {
-            const std::string password = retrievePassword(vect_item, username_);
-            if (not password.empty())
-                a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD, password);
-        }
+        for (const auto &cred : credentials_)
+            if (cred.username == username_) {
+                password = cred.password;
+                break;
+            }
     }
+    a.emplace(Conf::CONFIG_ACCOUNT_PASSWORD,                std::move(password));
 
     a.emplace(Conf::CONFIG_LOCAL_PORT,                      ring::to_string(localPort_));
     a.emplace(Conf::CONFIG_ACCOUNT_ROUTESET,                serviceRoute_);
@@ -1578,10 +1562,8 @@ void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_en
         sipAccount->doRegister();
 }
 
-static std::string
-computeMd5HashFromCredential(const std::string& username,
-                             const std::string& password,
-                             const std::string& realm)
+void
+SIPAccount::Credentials::computePasswordHash()
 {
 #define MD5_APPEND(pms,buf,len) pj_md5_update(pms, (const pj_uint8_t*)buf, len)
 
@@ -1604,77 +1586,58 @@ computeMd5HashFromCredential(const std::string& username,
     for (int i = 0; i < 16; ++i)
         pj_val_to_hex_digit(digest[i], &hash[2 * i]);
 
-    return std::string(hash, 32);
+    password_h = {hash, 32};
 }
 
 void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::string> >& creds)
 {
-    // we can not authenticate without credentials
     if (creds.empty()) {
         RING_ERR("Cannot authenticate with empty credentials list");
         return;
     }
-
-    using std::vector;
-    using std::string;
-    using std::map;
+    credentials_.clear();
+    cred_.clear();
 
     bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
 
-    credentials_ = creds;
+    credentials_.reserve(creds.size());
+    cred_.reserve(creds.size());
+    for (const auto& cred : creds) {
+        auto realm = cred.find(Conf::CONFIG_ACCOUNT_REALM);
+        auto user = cred.find(Conf::CONFIG_ACCOUNT_USERNAME);
+        auto passw = cred.find(Conf::CONFIG_ACCOUNT_PASSWORD);
+        credentials_.emplace_back(realm != cred.end() ? realm->second : "",
+                                  user  != cred.end() ? user->second  : "",
+                                  passw != cred.end() ? passw->second : "");
+        auto& c = credentials_.back();
+        if (md5HashingEnabled)
+            c.computePasswordHash();
 
-    /* md5 hashing */
-    for (auto &it : credentials_) {
-        map<string, string>::const_iterator val = it.find(Conf::CONFIG_ACCOUNT_USERNAME);
-        const std::string username = val != it.end() ? val->second : "";
-        val = it.find(Conf::CONFIG_ACCOUNT_REALM);
-        const std::string realm(val != it.end() ? val->second : "");
-        val = it.find(Conf::CONFIG_ACCOUNT_PASSWORD);
-        const std::string password(val != it.end() ? val->second : "");
-
-        if (md5HashingEnabled) {
-            // TODO: Fix this.
-            // This is an extremly weak test in order to check
-            // if the password is a hashed value. This is done
-            // because deleteCredential() is called before this
-            // method. Therefore, we cannot check if the value
-            // is different from the one previously stored in
-            // the configuration file. This is to avoid to
-            // re-hash a hashed password.
-
-            if (password.length() != 32)
-                it[Conf::CONFIG_ACCOUNT_PASSWORD] = computeMd5HashFromCredential(username, password, realm);
-        }
-    }
-
-    // Create the credential array
-    cred_.resize(credentials_.size());
-
-    size_t i = 0;
-
-    for (const auto &item : credentials_) {
-        auto val = item.find(Conf::CONFIG_ACCOUNT_USERNAME);
-        if (val != item.end())
-            cred_[i].username = pj_str((char*) val->second.c_str());
-
-        val = item.find(Conf::CONFIG_ACCOUNT_REALM);
-        if (val != item.end())
-            cred_[i].realm = pj_str((char*) val->second.c_str());
-
-        val = item.find(Conf::CONFIG_ACCOUNT_PASSWORD);
-        cred_[i].data = pj_str((char*) (val != item.end() ? val->second.c_str() : ""));
-        cred_[i].data_type = (md5HashingEnabled and cred_[i].data.slen == 32)
-                           ? PJSIP_CRED_DATA_DIGEST
-                           : PJSIP_CRED_DATA_PLAIN_PASSWD;
-        cred_[i].scheme = pj_str((char*) "digest");
-        ++i;
+        cred_.emplace_back(pjsip_cred_info {
+            .realm    = pj_str((char*) c.realm.c_str()),
+            .scheme = pj_str((char*) "digest"),
+            .username = pj_str((char*) c.username.c_str()),
+            .data_type = (c.password_h.empty()
+                           ? PJSIP_CRED_DATA_PLAIN_PASSWD
+                           : PJSIP_CRED_DATA_DIGEST),
+            .data = pj_str((char*) (c.password_h.empty() ? c.password.c_str() : c.password_h.c_str()))
+        });
     }
 }
 
-const std::vector<std::map<std::string, std::string> > &
+std::vector<std::map<std::string, std::string>>
 SIPAccount::getCredentials() const
 {
-    return credentials_;
+    std::vector<std::map<std::string, std::string>> ret;
+    ret.reserve(credentials_.size());
+    for (const auto& c : credentials_) {
+        ret.emplace_back(std::map<std::string, std::string>{
+            {Conf::CONFIG_ACCOUNT_REALM,    c.realm},
+            {Conf::CONFIG_ACCOUNT_USERNAME, c.username},
+            {Conf::CONFIG_ACCOUNT_PASSWORD, c.password}
+        });
+    }
+    return ret;
 }
 
 void
