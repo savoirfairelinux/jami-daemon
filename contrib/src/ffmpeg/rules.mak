@@ -54,6 +54,7 @@ FFMPEGCONF += \
 		--enable-encoder=libvpx_vp8 \
 		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
+		--enable-encoder=h263p \
 		--enable-decoder=h263 \
 		--enable-encoder=mjpeg \
 		--enable-decoder=mjpeg \
