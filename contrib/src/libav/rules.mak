@@ -54,6 +54,7 @@ LIBAVCONF += \
 		--enable-decoder=mpeg4 \
 		--enable-encoder=h263 \
 		--enable-decoder=h263 \
+		--enable-encoder=h263p \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex
 
