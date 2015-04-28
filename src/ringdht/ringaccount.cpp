@@ -45,6 +45,7 @@
 #include "ice_transport.h"
 
 #include "client/ring_signal.h"
+#include "dring/call_const.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -230,6 +231,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                     dht::DhtMessage msg {v->data};
                     RING_WARN("ICE request replied from DHT peer %s",
                               toH.toString().c_str());
+                    call->setConnectionState(Call::PROGRESSING);
+                    emitSignal<DRing::CallSignal::StateChange>(call->getCallId(), DRing::Call::StateEvent::CONNECTING, 0);
                     ice->start(msg.getMessage());
                     return false;
                 }
