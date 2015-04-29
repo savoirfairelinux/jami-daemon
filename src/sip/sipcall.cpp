@@ -964,23 +964,29 @@ std::map<std::string, std::string>
 SIPCall::getDetails() const
 {
     auto details = Call::getDetails();
-    details.emplace(DRing::Call::Details::PEER_HOLDING,          peerHolding_ ? TRUE_STR : FALSE_STR);
+    details.emplace(DRing::Call::Details::PEER_HOLDING,
+                    peerHolding_ ? TRUE_STR : FALSE_STR);
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
-        auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
-        if (tlsInfos.cipher and not cipher)
-            RING_WARN("Unknown cipher: %d", tlsInfos.cipher);
-        details.emplace(DRing::TlsTransport::TLS_CIPHER,         cipher ? cipher : "");
-        details.emplace(DRing::TlsTransport::TLS_PEER_CERT,      tlsInfos.peerCert->toString());
-        auto ca = tlsInfos.peerCert->issuer;
-        unsigned n = 0;
-        while (ca) {
-            std::ostringstream name_str;
-            name_str << DRing::TlsTransport::TLS_PEER_CA_ << n++;
-            details.emplace(name_str.str(),                      ca->toString());
-            ca = ca->issuer;
+        const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
+        details.emplace(DRing::TlsTransport::TLS_CIPHER, cipher ? cipher : "");
+        if (tlsInfos.peerCert) {
+            details.emplace(DRing::TlsTransport::TLS_PEER_CERT,
+                            tlsInfos.peerCert->toString());
+            auto ca = tlsInfos.peerCert->issuer;
+            unsigned n = 0;
+            while (ca) {
+                std::ostringstream name_str;
+                name_str << DRing::TlsTransport::TLS_PEER_CA_ << n++;
+                details.emplace(name_str.str(), ca->toString());
+                ca = ca->issuer;
+            }
+            details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,
+                            std::to_string(n));
+        } else {
+            details.emplace(DRing::TlsTransport::TLS_PEER_CERT, "");
+            details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM, "");
         }
-        details.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    std::to_string(n));
     }
     return details;
 }
