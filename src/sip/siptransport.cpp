@@ -132,7 +132,7 @@ void
 SipTransport::stateCallback(pjsip_transport_state state,
                             const pjsip_transport_state_info *info)
 {
-    connected = state == PJSIP_TP_STATE_CONNECTED;
+    connected_ = state == PJSIP_TP_STATE_CONNECTED;
 
 #if HAVE_TLS
     auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);

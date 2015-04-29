@@ -147,7 +147,7 @@ class SipTransport
         static bool isAlive(const std::shared_ptr<SipTransport>&, pjsip_transport_state state);
 
         /** Only makes sense for connection-oriented transports */
-        bool isConnected() const { return connected; } ;
+        bool isConnected() const noexcept { return connected_; }
 
     private:
         NON_COPYABLE(SipTransport);
@@ -159,7 +159,7 @@ class SipTransport
         std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
         std::mutex stateListenersMutex_;
 
-        bool connected {false};
+        bool connected_ {false};
         TlsInfos tlsInfos_;
 };
 
