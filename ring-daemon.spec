@@ -93,7 +93,7 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring.repo
 /usr/include/dring/
 
 %files repository
-%config %{_sysconfdir}/yum.repos.d/ring-nightly.repo
+%config %{_sysconfdir}/yum.repos.d/ring.repo
 
 %changelog
 * Fri Apr 24 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-2
