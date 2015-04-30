@@ -59,7 +59,7 @@ endif
 ifdef HAVE_ANDROID
 	cd $< && $(HOSTVARS) gl_cv_header_working_stdint_h=yes ./configure $(GNUTLS_CONF)
 else
-	cd $< && $(HOSTVARS) CFLAGS=$(CFLAGS) ./configure $(GNUTLS_CONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS)" ./configure $(GNUTLS_CONF)
 endif
 	cd $</gl && $(MAKE) install
 	cd $</lib && $(MAKE) install
