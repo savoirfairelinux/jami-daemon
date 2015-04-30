@@ -102,7 +102,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath_.c_str());
     caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
-    //DEPRECATED? caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
+    caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
 }
 
 RingAccount::~RingAccount()
@@ -709,6 +709,7 @@ void RingAccount::doRegister_()
         Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
 
+        regenerateCAList();
         dht_.bootstrap(loadNodes());
         if (!hostname_.empty()) {
             std::stringstream ss(hostname_);
@@ -1049,6 +1050,7 @@ RingAccount::loadValues() const
 void
 RingAccount::initTlsConfiguration()
 {
+    regenerateCAList();
 }
 
 static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
@@ -1198,6 +1200,28 @@ RingAccount::sendTrustRequest(const std::string& to)
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS));
+}
+
+void
+RingAccount::regenerateCAList()
+{
+    std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
+    if (!list.is_open()) {
+        RING_ERR("Could write CA list");
+        return;
+    }
+
+    {
+        std::ifstream file(tlsCaListFile_, std::ios::binary);
+        list << file.rdbuf();
+    }
+
+    for (const auto& ca : fileutils::readDirectory(caPath_)) {
+        std::ifstream file(ca, std::ios::binary);
+        if (!file)
+            continue;
+        list << file.rdbuf();
+    }
 }
 
 } // namespace ring

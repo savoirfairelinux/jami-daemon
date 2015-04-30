@@ -370,7 +370,8 @@ TrustStore::setStoreCertStatus(const crypto::Certificate& crt,
              status == TrustStore::Status::ALLOWED ? "ALLOWED" : "BANNED");
 }
 
-/*
+
+#if 0
 void
 TrustStore::generateCAList(const std::string& out_path)
 {
@@ -380,6 +381,7 @@ TrustStore::generateCAList(const std::string& out_path)
         ss << cert.second.first->toString();
     auto res = ss.str();
     fileutils::saveFile(out_path, {std::begin(res), std::end(res)});
-}*/
+}
+#endif
 
 }} // namespace ring::tls

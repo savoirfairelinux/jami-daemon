@@ -291,6 +291,8 @@ class RingAccount : public SIPAccountBase {
          */
         bool mapPortUPnP();
 
+        void regenerateCAList();
+
         dht::DhtRunner dht_ {};
 
         dht::InfoHash callKey_;
