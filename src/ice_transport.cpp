@@ -770,62 +770,56 @@ IceTransportFactory::~IceTransportFactory()
     pj_caching_pool_destroy(&cp_);
 }
 
+static void
+handleIOEvents(pj_ice_strans_cfg& cfg, unsigned max_msec)
+{
+    // By tests, never seen more than two events per 500ms
+    static constexpr auto MAX_NET_EVENTS = 2;
+
+    pj_time_val max_timeout = {0, 0};
+    pj_time_val timeout = {0, 0};
+    unsigned net_event_count = 0;
+
+    max_timeout.msec = max_msec;
+
+    timeout.sec = timeout.msec = 0;
+    pj_timer_heap_poll(cfg.stun_cfg.timer_heap, &timeout);
+
+    // timeout limitation
+    if (timeout.msec >= 1000)
+        timeout.msec = 999;
+    if (PJ_TIME_VAL_GT(timeout, max_timeout))
+        timeout = max_timeout;
+
+    do {
+        auto n_events = pj_ioqueue_poll(cfg.stun_cfg.ioqueue, &timeout);
+
+        // timeout
+        if (not n_events)
+            return;
+
+        // error
+        if (n_events < 0) {
+            RING_ERR("IceIOQueue: error %d", pj_get_netos_error());
+            std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
+            return;
+        }
+
+        net_event_count += n_events;
+        timeout.sec = timeout.msec = 0;
+    } while (net_event_count < MAX_NET_EVENTS);
+}
+
 int
 IceTransportFactory::processThread()
 {
     register_thread();
     while (!thread_quit_flag_) {
-        handleEvents(500, NULL);
+        handleIOEvents(ice_cfg_, 500); // limit polling to 500ms
     }
 
     return 0;
 }
-
-int
-IceTransportFactory::handleEvents(unsigned max_msec, unsigned *p_count)
-{
-    enum { MAX_NET_EVENTS = 1 };
-    pj_time_val max_timeout = {0, 0};
-    pj_time_val timeout = {0, 0};
-    unsigned count = 0, net_event_count = 0;
-    int c;
-
-    max_timeout.msec = max_msec;
-
-    timeout.sec = timeout.msec = 0;
-    c = pj_timer_heap_poll(ice_cfg_.stun_cfg.timer_heap, &timeout);
-    if (c > 0)
-        count += c;
-
-    pj_assert(timeout.sec >= 0 && timeout.msec >= 0);
-    if (timeout.msec >= 1000) timeout.msec = 999;
-
-    if (PJ_TIME_VAL_GT(timeout, max_timeout))
-        timeout = max_timeout;
-
-    do {
-        c = pj_ioqueue_poll(ice_cfg_.stun_cfg.ioqueue, &timeout);
-        if (c < 0) {
-            pj_status_t err = pj_get_netos_error();
-            std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
-            if (p_count)
-                *p_count = count;
-            return err;
-        } else if (c == 0) {
-            break;
-        } else {
-            net_event_count += c;
-            timeout.sec = timeout.msec = 0;
-        }
-    } while (c > 0 && net_event_count < MAX_NET_EVENTS);
-
-    count += net_event_count;
-    if (p_count)
-        *p_count = count;
-
-    return PJ_SUCCESS;
-}
-
 
 std::shared_ptr<IceTransport>
 IceTransportFactory::createTransport(const char* name,

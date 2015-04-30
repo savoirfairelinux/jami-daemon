@@ -271,8 +271,6 @@ class IceTransportFactory {
         pj_pool_factory* getPoolFactory() { return &cp_.factory; }
 
     private:
-        int handleEvents(unsigned max_msec, unsigned *p_count);
-
         pj_caching_pool cp_;
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         std::thread thread_;
