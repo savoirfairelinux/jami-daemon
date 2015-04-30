@@ -102,7 +102,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath_.c_str());
     caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
-    caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
+    //DEPRECATED? caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
 }
 
 RingAccount::~RingAccount()
