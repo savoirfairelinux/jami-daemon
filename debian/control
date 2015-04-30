@@ -15,13 +15,6 @@ Build-Depends: debhelper (>= 9),
  libspeexdsp-dev, autotools-dev, chrpath, check, astyle,
  uuid-dev, libudev-dev, libgnutls28-dev,
 
-
-Package: ring-repository
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
-Description: Ring repository
- Ring is free software for distributed and secured communication.
-
 Package: ring-daemon
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}
