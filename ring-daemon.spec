@@ -30,14 +30,6 @@ Group:          Applications/Internet
 Ring is free software for distributed and secured communication.
 This is the daemon headers.
 
-%package repository
-Summary:        Free software for distributed and secured communication.
-Group:          Applications/Internet
-
-%description repository
-Ring is free software for distributed and secured communication.
-This is the ring repository
-
 %prep
 %setup -q
 git init
@@ -85,15 +77,13 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
 %{_datadir}/ring/ringtones
 %{_datadir}/dbus-1/services/cx.ring.Ring.service
 %doc %{_mandir}/man1/dring*
+%config %{_sysconfdir}/yum.repos.d/ring-nightly.repo
 
 %files devel
 %defattr(-,root,root,-)
 %{_libdir}/libring.la
 %{_libdir}/libring.a
 /usr/include/dring/
-
-%files repository
-%config %{_sysconfdir}/yum.repos.d/ring-nightly.repo
 
 %changelog
 * Tue Apr 14 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-1
