@@ -404,7 +404,6 @@ recursive_mkdir(const std::string& path)
     if (mkdir(path.data()) != 0) {
         if (errno == ENOENT) {
             recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_STR)));
-        } else if (errno != EEXIST) {
             if (mkdir(path.data()) != 0) {
                 RING_ERR("Could not create directory.");
                 return false;
