@@ -1,3 +1,10 @@
+ring-daemon (2.3.0-1) unstable; urgency=medium
+
+  [ Guillaume Roguez ]
+  * New upstream version
+
+ -- Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>  Fri,  1 May 2015 16:35:43 -0400
+
 ring-daemon (2.1.0-1) unstable; urgency=medium
 
   [ Thibault Cohen]
