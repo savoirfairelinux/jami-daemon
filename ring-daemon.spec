@@ -1,5 +1,5 @@
 %define name        ring-daemon
-%define version     2.1.0
+%define version     2.3.0
 %define release     1
 %define daemon_tag  origin/master
 
@@ -86,6 +86,9 @@ echo 'gpgcheck=0' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
 /usr/include/dring/
 
 %changelog
+* Fri May  1 2015 Guillaume Roguez <guillaume.roguez@savoirfairelinux.com> - 2.3.0-1
+- New upstream version
+
 * Tue Apr 14 2015 Thibault Cohen <thibault.cohen@savoirfairelinux.com> - 2.1.0-1
 - New upstream version
 
