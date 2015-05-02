@@ -17,10 +17,10 @@ export DH_VERBOSE=1
 	dh $@
 
 override_dh_auto_configure:
-	mkdir -p contrib/native && cd contrib/native && ../bootstrap --disable-ogg --disable-flac --disable-vorbis --disable-vorbisenc --disable-speex --disable-sndfile --disable-speexdsp --disable-gnutls && make list && make -j 2
+	mkdir -p contrib/native && cd contrib/native && ../bootstrap --disable-ogg --disable-flac --disable-vorbis --disable-vorbisenc --disable-speex --disable-sndfile --disable-speexdsp && make list && make -j 2
 	@echo "Contribs built"
 	#./autogen.sh && ./configure --prefix=/usr --with-contrib=yes CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
-	./autogen.sh && ./configure --prefix=/usr CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
+	./autogen.sh && ./configure --prefix=/usr
 	dh_auto_configure
 
 override_dh_auto_test:
