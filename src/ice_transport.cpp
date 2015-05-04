@@ -800,7 +800,12 @@ handleIOEvents(pj_ice_strans_cfg& cfg, unsigned max_msec)
 
         // error
         if (n_events < 0) {
-            RING_ERR("IceIOQueue: error %d", pj_get_netos_error());
+            const auto err = pj_get_os_error();
+            char err_msg[128];
+            pj_strerror(err, err_msg, sizeof(err_msg));
+            err_msg[sizeof(err_msg)-1] = '\0';
+            // Kept as debug as some errors are "normal" in regular context
+            RING_DBG("IceIOQueue: error %d - %s", err, err_msg);
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             return;
         }
