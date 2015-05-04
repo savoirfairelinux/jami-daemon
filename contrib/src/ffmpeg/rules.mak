@@ -63,6 +63,21 @@ FFMPEGCONF += \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex
 
+#encoders/decoders for images
+FFMPEGCONF += \
+		--enable-encoder=gif \
+		--enable-decoder=gif \
+		--enable-encoder=jpegls \
+		--enable-decoder=jpegls \
+		--enable-encoder=ljpeg \
+		--enable-decoder=jpeg2000 \
+		--enable-encoder=png \
+		--enable-decoder=png \
+		--enable-encoder=bmp \
+		--enable-decoder=bmp \
+		--enable-encoder=tiff \
+		--enable-decoder=tiff
+
 FFMPEGCONF += \
 	--enable-indev=dshow \
 	--enable-dxva2
