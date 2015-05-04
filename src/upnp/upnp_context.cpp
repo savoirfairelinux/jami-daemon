@@ -122,7 +122,7 @@ UPnPContext::UPnPContext()
     /* TODO: allow user to specify interface to be used
      *       by selecting the IP
      */
-
+#
 #ifdef UPNP_ENABLE_IPV6
     /* TODO: test if ipv6 support works properly, eg: what if router doesn't support ipv6? */
     RING_DBG("UPnP: using IPv6");
