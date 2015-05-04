@@ -74,6 +74,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::CertificatePathPinned>(),
         exported_callback<DRing::ConfigurationSignal::CertificateExpired>(),
         exported_callback<DRing::ConfigurationSignal::CertificateStateChanged>(),
+        exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 
