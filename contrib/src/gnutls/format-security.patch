@@ -1,0 +1,18 @@
+diff -rU0 gnutls-old/lib/x509/output.c gnutls/lib/x509/output.c
+--- gnutls-old/lib/x509/output.c
++++ gnutls/lib/x509/output.c
+@@ -1140 +1140 @@
+-					addf(str, _("\t\tP: "));
++					adds(str, _("\t\tP: "));
+@@ -1145 +1145 @@
+-					addf(str, _("\t\tQ: "));
++					adds(str, _("\t\tQ: "));
+@@ -1150 +1150 @@
+-					addf(str, _("\t\tG: "));
++					adds(str, _("\t\tG: "));
+diff -rU0 gnutls-old/lib/x509/ocsp_output.c gnutls/lib/x509/ocsp_output.c
+--- gnutls-old/lib/x509/ocsp_output.c
++++ gnutls/lib/x509/ocsp_output.c
+@@ -291 +291 @@
+-					addf(str, _("\tResponder Key ID: "));
++					adds(str, _("\tResponder Key ID: "));
