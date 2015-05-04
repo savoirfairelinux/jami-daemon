@@ -185,8 +185,8 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "VolatileDetailsChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
         };
-        struct IncomingMessage {
-                constexpr static const char* name = "IncomingMessage";
+        struct IncomingAccountMessage {
+                constexpr static const char* name = "IncomingAccountMessage";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
         };
         struct IncomingTrustRequest {
