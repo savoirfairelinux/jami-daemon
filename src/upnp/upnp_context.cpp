@@ -164,8 +164,8 @@ UPnPContext::UPnPContext()
 
 UPnPContext::~UPnPContext()
 {
-    /* make sure everything is unregistered, freed, and UpnpFinish() is called */
 
+    /* make sure everything is unregistered, freed, and UpnpFinish() is called */
     {
         std::lock_guard<std::mutex> lock(validIGDMutex_);
         for( auto const &it : validIGDs_) {
@@ -178,8 +178,10 @@ UPnPContext::~UPnPContext()
 
     if (deviceRegistered_)
         UpnpUnRegisterRootDevice( deviceHandle_ );
-
+// FIXME : on windows thread have already been destroyed at this point resulting in a deadlock
+#ifndef _WIN32
     UpnpFinish();
+#endif
 }
 
 void
@@ -283,7 +285,11 @@ static uint16_t
 generateRandomPort()
 {
     /* obtain a random number from hardware */
+#ifndef _WIN32
     static std::random_device rd;
+#else
+    static std::default_random_engine rd(std::chrono::system_clock::now().time_since_epoch().count());
+#endif
     /* seed the generator */
     static std::mt19937 gen(rd());
     /* define the range */
