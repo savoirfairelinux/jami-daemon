@@ -246,10 +246,11 @@
           </arg>
        </method>
 
-       <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
-            <tp:docstring>
-                Notify clients that a new text message has been received at the account level.
-            </tp:docstring>
+       <signal name="incomingAccountMessage" tp:name-for-bindings="incomingAccountMessage">
+		   <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new text message has been received at the account level.
+           </tp:docstring>
            <arg type="s" name="accountID">
            </arg>
            <arg type="s" name="from">
