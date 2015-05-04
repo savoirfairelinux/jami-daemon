@@ -12,17 +12,12 @@ $(TARBALLS)/libupnp-$(UPNP_VERSION).tar.bz2:
 
 .sum-upnp: libupnp-$(UPNP_VERSION).tar.bz2
 
-ifdef HAVE_WIN32
-DEPS_upnp += pthreads $(DEPS_pthreads)
-LIBUPNP_ECFLAGS = -DPTW32_STATIC_LIB
-endif
-
 upnp: libupnp-$(UPNP_VERSION).tar.bz2 .sum-upnp
 	$(UNPACK)
 ifdef HAVE_WIN32
-	$(APPLY) $(SRC)/upnp/libupnp-configure.patch
 	$(APPLY) $(SRC)/upnp/libupnp-win32.patch
 	$(APPLY) $(SRC)/upnp/libupnp-win64.patch
+	$(APPLY) $(SRC)/upnp/threadpool.patch
 endif
 	$(APPLY) $(SRC)/upnp/libupnp-ipv6.patch
 	$(APPLY) $(SRC)/upnp/miniserver.patch
@@ -33,7 +28,9 @@ endif
 .upnp: upnp
 ifdef HAVE_WIN32
 	$(RECONF)
+	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure --disable-samples --without-documentation --disable-blocking_tcp_connections $(HOSTCONF)
+else
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure --disable-samples --without-documentation --disable-blocking_tcp_connections $(HOSTCONF)
 endif
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB $(LIBUPNP_ECFLAGS)" ./configure --disable-samples --without-documentation --disable-blocking_tcp_connections $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
