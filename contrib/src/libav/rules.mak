@@ -57,6 +57,20 @@ LIBAVCONF += \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex
 
+#encoders/decoders for images
+LIBAVCONF += \
+		--enable-encoder=gif \
+		--enable-decoder=gif \
+		--enable-encoder=jpegls \
+		--enable-decoder=jpegls \
+		--enable-encoder=ljpeg \
+		--enable-decoder=jpeg2000 \
+		--enable-encoder=png \
+		--enable-decoder=png \
+		--enable-encoder=bmp \
+		--enable-decoder=bmp \
+		--enable-encoder=tiff \
+		--enable-decoder=tiff
 # Linux
 ifndef HAVE_ANDROID
 LIBAVCONF += \
