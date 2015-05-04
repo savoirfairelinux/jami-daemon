@@ -13,7 +13,7 @@ Build-Depends: debhelper (>= 9),
  libdbus-c++-dev, libsndfile1-dev, libsrtp-dev, libxext-dev,
  libxfixes-dev, yasm, autopoint, unbound-anchor, git-core, libspeex-dev,
  libspeexdsp-dev, autotools-dev, chrpath, check, astyle,
- uuid-dev, libudev-dev, libgnutls28-dev,
+ uuid-dev, libudev-dev
 
 Package: ring-daemon
 Architecture: any
