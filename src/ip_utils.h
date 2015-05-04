@@ -34,17 +34,16 @@
 
 #include <pjlib.h>
 
+#ifdef HAVE_CONFIG
+ #include <config.h>
+#endif
+
 #ifdef _WIN32
     #include <ws2tcpip.h>
-    #include <config.h>
-    #include <winsock2.h>
 
     //define in mingw
     #ifdef interface
     #undef interface
-    #endif
-    #ifdef s_addr
-    #undef s_addr
     #endif
 #else
     #include <arpa/inet.h>
