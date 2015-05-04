@@ -15,7 +15,7 @@ BuildRequires:      autoconf automake pulseaudio-libs-devel libsamplerate-devel
 BuildRequires:      libtool dbus-devel expat-devel pcre-devel yaml-cpp-devel
 BuildRequires:      boost-devel dbus-c++-devel dbus-devel libsndfile-devel libsrtp-devel
 BuildRequires:      libXext-devel libXfixes-devel yasm git speex-devel
-BuildRequires:      chrpath check astyle uuid-c++-devel gnutls-devel
+BuildRequires:      chrpath check astyle uuid-c++-devel gnutls-devel gettext-devel
 BuildRequires:      gcc-c++ which alsa-lib-devel systemd-devel libuuid-devel uuid-devel
 
 %description
