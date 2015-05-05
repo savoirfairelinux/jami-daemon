@@ -132,7 +132,11 @@ static void
 randomFill(std::vector<uint8_t>& dest)
 {
     std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
+#ifndef _WIN32
     std::random_device rdev;
+#else
+    std::default_random_engine rdev(std::chrono::system_clock::now().time_since_epoch().count());
+#endif
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }
 
