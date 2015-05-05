@@ -225,8 +225,15 @@ Manager::Manager() :
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
+#ifndef _WIN32
     std::random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
+#else
+    int seed_data[std::mt19937::state_size];
+    std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
+    std::generate_n(seed_data, std::mt19937::state_size, std::ref(dre));
+    std::seed_seq seed(std::begin(seed_data), std::end(seed_data));
+#endif
     rand_.seed(seed);
 
     ring::libav_utils::ring_avcodec_init();
