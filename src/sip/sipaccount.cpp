@@ -1329,9 +1329,9 @@ std::string SIPAccount::getLoginName()
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
 #else
-    LPWSTR username[UNLEN+1];
-    DWORD username_len = UNLEN+1;
-    return GetUserName(*username, &username_len) ? std::string((char*)*username) : "";
+    TCHAR username[UNLEN + 1];
+    DWORD size = UNLEN + 1;
+    return  GetUserName((TCHAR*)username, &size) ? std::string((char*)username) : "";
 #endif
 }
 
