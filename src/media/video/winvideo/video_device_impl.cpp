@@ -237,9 +237,11 @@ VideoDeviceImpl::applySettings(VideoSettings settings)
 {
     if (!settings.video_size.empty()) {
         auto pmt = capMap_[settings.video_size];
-        ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = settings.framerate;
-        if (FAILED(cInterface->streamConf_->SetFormat(capMap_[settings.video_size]))) {
-            RING_ERR("Could not set settings.");
+        if (pmt != nullptr) {
+            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = settings.framerate;
+            if (FAILED(cInterface->streamConf_->SetFormat(capMap_[settings.video_size]))) {
+             RING_ERR("Could not set settings.");
+            }
         }
     }
 }
