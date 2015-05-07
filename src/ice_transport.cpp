@@ -257,6 +257,11 @@ bool
 IceTransport::start(const Attribute& rem_attrs,
                     const std::vector<IceCandidate>& rem_candidates)
 {
+    if (not isInitialized()) {
+        RING_ERR("ICE: not initialized transport");
+        return false;
+    }
+
     // pj_ice_strans_start_ice crashes if remote candidates array is empty
     if (rem_candidates.empty()) {
         RING_ERR("ICE start failed: no remote candidates");
@@ -334,7 +339,7 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
 bool
 IceTransport::stop()
 {
-    if (not pj_ice_strans_has_sess(icest_.get())) {
+    if (not isInitialized()) {
         RING_ERR("Session not created yet");
         return false;
     }
@@ -352,31 +357,33 @@ IceTransport::stop()
 bool
 IceTransport::isInitialized() const
 {
-    return pj_ice_strans_has_sess(icest_.get());
+    if (auto icest = icest_.get())
+        return pj_ice_strans_has_sess(icest);
+    return false;
 }
 
 bool
 IceTransport::isStarted() const
 {
-    return pj_ice_strans_sess_is_running(icest_.get());
+    return isInitialized() and pj_ice_strans_sess_is_running(icest_.get());
 }
 
 bool
 IceTransport::isCompleted() const
 {
-    return pj_ice_strans_sess_is_complete(icest_.get());
+    return isInitialized() and pj_ice_strans_sess_is_complete(icest_.get());
 }
 
 bool
 IceTransport::isRunning() const
 {
-    return pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_RUNNING;
+    return isInitialized() and pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_RUNNING;
 }
 
 bool
 IceTransport::isFailed() const
 {
-    return pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_FAILED;
+    return isInitialized() and pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_FAILED;
 }
 
 IpAddr
@@ -390,8 +397,10 @@ IceTransport::getLocalAddress(unsigned comp_id) const
 IpAddr
 IceTransport::getRemoteAddress(unsigned comp_id) const
 {
-    if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1))
-        return sess->rcand->addr;
+    if (isInitialized()) {
+        if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1))
+            return sess->rcand->addr;
+    }
     return {};
 }
 
@@ -651,6 +660,11 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
+    if (not isInitialized()) {
+        RING_ERR("ICE: not initialized transport");
+        return -1;
+    }
+
     register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
