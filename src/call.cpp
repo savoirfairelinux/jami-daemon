@@ -243,7 +243,7 @@ Call::getDetails() const
     return {
         {DRing::Call::Details::CALL_TYPE,        ring::to_string(type_)},
         {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
-        {DRing::Call::Details::DISPLAY_NAME,     displayName_},
+        {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
         {DRing::Call::Details::CALL_STATE,       getStateStr()},
         {DRing::Call::Details::CONF_ID,          confID_},
         {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
