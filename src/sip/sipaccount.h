@@ -326,18 +326,6 @@ class SIPAccount : public SIPAccountBase {
             return tlsListenerPort_;
         }
 
-        /**
-         * @return pj_str_t , filled from the configuration
-         * file, that can be used directly by PJSIP to initialize
-         * an alternate UDP transport.
-         */
-        std::string getStunServer() const {
-            return stunServer_;
-        }
-        void setStunServer(const std::string &srv) {
-            stunServer_ = srv;
-        }
-
         pj_str_t getStunServerName() const {
             return stunServerName_;
         }
@@ -683,18 +671,6 @@ class SIPAccount : public SIPAccountBase {
          * Allocate a vector to be used by pjsip to store the supported ciphers on this system.
          */
         CipherArray ciphers_;
-
-        /**
-         * Determine if STUN public address resolution is required to register this account. In this case a
-         * STUN server hostname must be specified.
-         */
-        bool stunEnabled_ {false};
-
-        /**
-         * The stun server hostname (optional), used to provide the public IP address in case the softphone
-         * stay behind a NAT.
-         */
-        std::string stunServer_ {};
 
         /**
          * The STUN server name (hostname)

@@ -123,6 +123,11 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << VIDEO_ENABLED_KEY << YAML::Value << videoEnabled_;
     out << YAML::Key << Conf::VIDEO_PORT_MAX_KEY << YAML::Value << videoPortRange_.second;
     out << YAML::Key << Conf::VIDEO_PORT_MIN_KEY << YAML::Value << videoPortRange_.first;
+
+    out << YAML::Key << Conf::STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
+    out << YAML::Key << Conf::STUN_SERVER_KEY << YAML::Value << stunServer_;
+    out << YAML::Key << Conf::TURN_ENABLED_KEY << YAML::Value << turnEnabled_;
+    out << YAML::Key << Conf::TURN_SERVER_KEY << YAML::Value << turnServer_;
 }
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
@@ -165,6 +170,14 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
     unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
+
+    // ICE - STUN/TURN
+    if (not isIP2IP()) {
+        parseValue(node, Conf::STUN_ENABLED_KEY, stunEnabled_);
+        parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
+        parseValue(node, Conf::TURN_ENABLED_KEY, turnEnabled_);
+        parseValue(node, Conf::TURN_SERVER_KEY, turnServer_);
+    }
 }
 
 void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> &details)
@@ -199,6 +212,12 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
     parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+
+    // ICE - STUN/TURN
+    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
+    parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
+    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
+    parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
 }
 
 std::map<std::string, std::string>
@@ -218,10 +237,16 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_PUBLISHED_SAMEAS_LOCAL,  publishedSameasLocal_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_PUBLISHED_ADDRESS,       publishedIpAddress_);
 
+    a.emplace(Conf::CONFIG_STUN_ENABLE, stunEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
+    a.emplace(Conf::CONFIG_TURN_ENABLE, turnEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TURN_SERVER, turnServer_);
+
     a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE,        tlsCaListFile_);
     a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,    tlsCertificateFile_);
     a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,    tlsPrivateKeyFile_);
     a.emplace(Conf::CONFIG_TLS_PASSWORD,            tlsPassword_);
+
     return a;
 }
 

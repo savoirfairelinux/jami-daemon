@@ -79,6 +79,8 @@ static const char *const CONFIG_UPNP_ENABLED                    = "Account.upnpE
 // SIP specific parameters
 static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
 static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
+static const char *const CONFIG_TURN_SERVER                     = "TURN.server";
+static const char *const CONFIG_TURN_ENABLE                     = "TURN.enable";
 
 // SRTP specific parameters
 static const char *const CONFIG_SRTP_ENABLE                     = "SRTP.enable";
