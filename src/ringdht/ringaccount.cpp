@@ -163,7 +163,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     // Create an ICE transport for SIP channel
     auto& tfactory = manager.getIceTransportFactory();
     auto ice = tfactory.createTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS, true, getUPnPActive());
+                                        ICE_COMPONENTS, true, getIceOptions());
     if (not ice) {
         call->removeCall();
         return nullptr;
@@ -840,11 +840,7 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
     RING_WARN("Received incoming DHT call request from %s", from.c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::INCOMING);
     auto ice = Manager::instance().getIceTransportFactory().createTransport(
-        ("sip:"+call->getCallId()).c_str(),
-        ICE_COMPONENTS,
-        false,
-        getUPnPActive()
-    );
+        ("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
     if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
         throw std::runtime_error("Can't initialize ICE..");
 

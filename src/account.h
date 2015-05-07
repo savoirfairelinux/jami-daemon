@@ -68,6 +68,7 @@ namespace ring {
 
 class Call;
 class SystemCodecContainer;
+class IceTransportOptions;
 
 class VoipLinkException : public std::runtime_error
 {
@@ -270,6 +271,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * If use UPnP is set to false, the address will be empty.
          */
         IpAddr getUPnPIpAddress() const;
+
+        virtual const IceTransportOptions getIceOptions() const noexcept;
 
     private:
         NON_COPYABLE(Account);
