@@ -136,8 +136,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * not protected by mutex (when created)
          * @return std::string The peer display name
          */
-        void setDisplayName(const std::string& name) {
-            displayName_ = name;
+        void setPeerDisplayName(const std::string& name) {
+            peerDisplayName_ = name;
         }
 
         /**
@@ -145,8 +145,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * not protected by mutex (when created)
          * @return std::string The peer name
          */
-        const std::string& getDisplayName() const {
-            return displayName_;
+        const std::string& getPeerDisplayName() const {
+            return peerDisplayName_;
         }
 
         /**
@@ -380,8 +380,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         /** Number of the peer */
         std::string peerNumber_ {};
 
-        /** Display Name */
-        std::string displayName_ {};
+        /** Peer Display Name */
+        std::string peerDisplayName_ {};
 
         time_t timestamp_start_ {0};
         time_t timestamp_stop_ {0};
