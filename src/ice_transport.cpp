@@ -96,21 +96,21 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
         RING_WARN("null IceTransport");
 }
 
-IceTransport::IceTransport(const char* name, int component_count,
-                           bool master, bool upnp_enabled,
-                           IceTransportCompleteCb on_initdone_cb,
-                           IceTransportCompleteCb on_negodone_cb)
+
+IceTransport::IceTransport(const char* name, int component_count, bool master,
+                           const IceTransportOptions& options)
     : pool_(nullptr, pj_pool_release)
-    , on_initdone_cb_(on_initdone_cb)
-    , on_negodone_cb_(on_negodone_cb)
+    , on_initdone_cb_(options.onInitDone)
+    , on_negodone_cb_(options.onNegoDone)
     , component_count_(component_count)
     , compIO_(component_count)
     , initiator_session_(master)
 {
-    if (upnp_enabled)
+    if (options.upnpEnable)
         upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    config_ = iceTransportFactory.getIceCfg();
 
     pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
                                "IceTransport.pool", 512, 512, NULL));
@@ -122,11 +122,37 @@ IceTransport::IceTransport(const char* name, int component_count,
     icecb.on_rx_data = cb_on_rx_data;
     icecb.on_ice_complete = cb_on_ice_complete;
 
+    /* STUN */
+    if (not options.stunServer.empty()) {
+        RING_DBG("ICE: STUN='%s'", options.stunServer.c_str());
+        const auto n = options.stunServer.rfind(':');
+        if (n != std::string::npos) {
+            const auto p = options.stunServer.c_str();
+            pj_strset(&config_.stun.server, (char*)p, n-1);
+            config_.stun.port = (pj_uint16_t)std::atoi(p+n+1);
+        } else {
+            pj_cstr(&config_.stun.server, options.stunServer.c_str());
+            config_.stun.port = PJ_STUN_PORT;
+        }
+    }
+
+    /* TURN */
+    if (not options.turnServer.empty()) {
+        RING_DBG("ICE: TURN='%s'", options.turnServer.c_str());
+        const auto n = options.turnServer.rfind(':');
+        if (n != std::string::npos) {
+            const auto p = options.turnServer.c_str();
+            pj_strset(&config_.turn.server, (char*)p, n-1);
+            config_.turn.port = (pj_uint16_t)std::atoi(p+n+1);
+        } else {
+            pj_cstr(&config_.turn.server, options.turnServer.c_str());
+            config_.turn.port = PJ_STUN_PORT;
+        }
+    }
+
     pj_ice_strans* icest = nullptr;
-    pj_status_t status = pj_ice_strans_create(name,
-                                              iceTransportFactory.getIceCfg(),
-                                              component_count, this, &icecb,
-                                              &icest);
+    pj_status_t status = pj_ice_strans_create(name, &config_, component_count,
+                                              this, &icecb, &icest);
     if (status != PJ_SUCCESS || icest == nullptr)
         throw std::runtime_error("pj_ice_strans_create() failed");
 }
@@ -762,10 +788,6 @@ IceTransportFactory::IceTransportFactory()
     ice_cfg_.turn.cfg.max_pkt_size = 8192;
     //ice_cfg_.stun.max_host_cands = icedemo.opt.max_host;
     ice_cfg_.opt.aggressive = PJ_FALSE;
-
-    // TODO: STUN server candidate
-
-    // TODO: TURN server candidate
 }
 
 IceTransportFactory::~IceTransportFactory()
@@ -841,17 +863,13 @@ IceTransportFactory::processThread()
 }
 
 std::shared_ptr<IceTransport>
-IceTransportFactory::createTransport(const char* name,
-                                     int component_count,
+IceTransportFactory::createTransport(const char* name, int component_count,
                                      bool master,
-                                     bool upnp_enabled,
-                                     IceTransportCompleteCb&& on_initdone_cb,
-                                     IceTransportCompleteCb&& on_negodone_cb)
+                                     const IceTransportOptions& options)
 {
     try {
-        return std::make_shared<IceTransport>(name, component_count, master, upnp_enabled,
-                                              std::forward<IceTransportCompleteCb>(on_initdone_cb),
-                                              std::forward<IceTransportCompleteCb>(on_negodone_cb));
+        return std::make_shared<IceTransport>(name, component_count, master,
+                                              options);
     } catch(const std::exception& e) {
         RING_ERR("%s",e.what());
         return nullptr;
