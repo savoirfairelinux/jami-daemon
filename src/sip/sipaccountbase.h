@@ -86,6 +86,8 @@ namespace Conf {
 
     const char *const STUN_ENABLED_KEY = "stunEnabled";
     const char *const STUN_SERVER_KEY = "stunServer";
+    const char *const TURN_ENABLED_KEY = "turnEnabled";
+    const char *const TURN_SERVER_KEY = "turnServer";
     const char *const CRED_KEY = "credential";
     const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
     const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";
@@ -227,6 +229,19 @@ public:
 #endif
     static void releasePort(uint16_t port) noexcept;
 
+    /**
+     * @return pj_str_t , filled from the configuration
+     * file, that can be used directly by PJSIP to initialize
+     * an alternate UDP transport.
+     */
+    std::string getStunServer() const {
+        return stunServer_;
+    }
+
+    void setStunServer(const std::string &srv) {
+        stunServer_ = srv;
+    }
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
@@ -270,6 +285,30 @@ protected:
      * Published port, used only if defined by the user
      */
     pj_uint16_t publishedPort_ {sip_utils::DEFAULT_SIP_PORT};
+
+    /**
+     * Determine if STUN public address resolution is required to register this account. In this case a
+     * STUN server hostname must be specified.
+     */
+    bool stunEnabled_ {false};
+
+    /**
+     * The STUN server hostname (optional), used to provide the public IP address in case the softphone
+     * stay behind a NAT.
+     */
+    std::string stunServer_ {};
+
+    /**
+     * Determine if TURN public address resolution is required to register this account. In this case a
+     * TURN server hostname must be specified.
+     */
+    bool turnEnabled_ {false};
+
+    /**
+     * The TURN server hostname (optional), used to provide the public IP address in case the softphone
+     * stay behind a NAT.
+     */
+    std::string turnServer_ {};
 
     std::string tlsCaListFile_;
     std::string tlsCertificateFile_;
