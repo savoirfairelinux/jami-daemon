@@ -242,6 +242,8 @@ public:
         stunServer_ = srv;
     }
 
+    const IceTransportOptions getIceOptions() const noexcept override;
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);
