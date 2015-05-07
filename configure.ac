@@ -264,6 +264,7 @@ if test "${HAVE_ANDROID}" = "1"; then
 fi
 AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
 
+if test "${SYS}" != "mingw32"; then
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
@@ -275,9 +276,11 @@ AS_IF([test "x$with_alsa" = "xyes"], [
 	]);
 
 AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
+fi
 AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 
+if test "${SYS}" != "mingw32"; then
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
 AC_ARG_WITH([pulse],
@@ -290,6 +293,7 @@ AS_IF([test "x$with_pulse" = "xyes"], [
       ]);
 
 AC_DEFINE_UNQUOTED([HAVE_PULSE], `if test "x$with_pulse" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have pulseaudio])
+fi
 AM_CONDITIONAL(BUILD_PULSE, test "x$with_pulse" = "xyes")
 
 AC_ARG_WITH([jack],
@@ -340,6 +344,7 @@ AS_IF([test "x$enable_coverage" = "xyes"], [
 
 # DBUSCPP
 dnl Check for dbuscpp, the C++ bindings for D-Bus
+if test "${SYS}" != "mingw32"; then
 AC_ARG_WITH([dbus],
     [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
     [],
@@ -361,7 +366,7 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
-
+fi
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
@@ -447,6 +452,7 @@ CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
 
+if test "${SYS}" != "mingw32"; then
 # GSM CODEC
 # required dependency(ies): libgsm
 dnl check for libgsm1 (doesn't use pkg-config)
@@ -463,6 +469,7 @@ AS_IF([test "x$with_gsm" != xno],
     ])
 
 AC_DEFINE_UNQUOTED([HAVE_GSM], `if test "x$with_gsm" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libgsm])
+fi
 AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
 
 
