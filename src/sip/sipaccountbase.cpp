@@ -39,6 +39,7 @@
 
 #include "account_schema.h"
 #include "manager.h"
+#include "ice_transport.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
@@ -323,5 +324,16 @@ SIPAccountBase::generateVideoPort() const
     return acquireRandomEvenPort(videoPortRange_);
 }
 #endif
+
+const IceTransportOptions
+SIPAccountBase::getIceOptions() const noexcept
+{
+    auto opts = Account::getIceOptions();
+    if (stunEnabled_)
+        opts.stunServer = stunServer_;
+    if (turnEnabled_)
+        opts.turnServer = turnServer_;
+    return opts;
+}
 
 } // namespace ring
