@@ -59,6 +59,14 @@ using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
+struct IceTransportOptions {
+        bool upnpEnable {false};
+        IceTransportCompleteCb onInitDone {};
+        IceTransportCompleteCb onNegoDone {};
+        std::string stunServer {};
+        std::string turnServer {};
+};
+
 class IceTransport {
     public:
         using Attribute = struct {
@@ -69,11 +77,8 @@ class IceTransport {
         /**
          * Constructor
          */
-        IceTransport(const char* name, int component_count,
-                     bool master,
-                     bool upnp_enabled = false,
-                     IceTransportCompleteCb on_initdone_cb={},
-                     IceTransportCompleteCb on_negodone_cb={});
+        IceTransport(const char* name, int component_count, bool master,
+                     const IceTransportOptions& options = {});
 
         /**
          * Destructor
@@ -215,6 +220,7 @@ class IceTransport {
         pj_sockaddr remoteAddr_;
         std::condition_variable iceCV_ {};
         mutable std::mutex iceMutex_ {};
+        pj_ice_strans_cfg config_;
 
         struct Packet {
                 Packet(void *pkt, pj_size_t size);
@@ -258,16 +264,14 @@ class IceTransportFactory {
         std::shared_ptr<IceTransport> createTransport(const char* name,
                                                       int component_count,
                                                       bool master,
-                                                      bool upnp_enabled = false,
-                                                      IceTransportCompleteCb&& on_initdone_cb={},
-                                                      IceTransportCompleteCb&& on_negodone_cb={});
+                                                      const IceTransportOptions& options = {});
 
         int processThread();
 
         /**
          * PJSIP specifics
          */
-        const pj_ice_strans_cfg* getIceCfg() const { return &ice_cfg_; }
+        pj_ice_strans_cfg getIceCfg() const { return ice_cfg_; }
         pj_pool_factory* getPoolFactory() { return &cp_.factory; }
 
     private:
