@@ -237,7 +237,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     const auto& account_id = account->getAccountID();
-    std::string displayName(sip_utils::parseDisplayName(rdata->msg_info.msg_buf));
+    auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.msg_buf);
     pjsip_msg_body *body = rdata->msg_info.msg->body;
 
     if (method->id == PJSIP_OTHER_METHOD) {
@@ -335,7 +335,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setConnectionState(Call::PROGRESSING);
     call->setPeerNumber(peerNumber);
-    call->setDisplayName(displayName);
+    call->setPeerDisplayName(peerDisplayName);
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
