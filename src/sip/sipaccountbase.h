@@ -86,6 +86,8 @@ namespace Conf {
 
     const char *const STUN_ENABLED_KEY = "stunEnabled";
     const char *const STUN_SERVER_KEY = "stunServer";
+    const char *const TURN_ENABLED_KEY = "turnEnabled";
+    const char *const TURN_SERVER_KEY = "turnServer";
     const char *const CRED_KEY = "credential";
     const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
     const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";

@@ -691,10 +691,22 @@ class SIPAccount : public SIPAccountBase {
         bool stunEnabled_ {false};
 
         /**
-         * The stun server hostname (optional), used to provide the public IP address in case the softphone
+         * The STUN server hostname (optional), used to provide the public IP address in case the softphone
          * stay behind a NAT.
          */
         std::string stunServer_ {};
+
+        /**
+         * Determine if TURN public address resolution is required to register this account. In this case a
+         * TURN server hostname must be specified.
+         */
+        bool turnEnabled_ {false};
+
+        /**
+         * The TURN server hostname (optional), used to provide the public IP address in case the softphone
+         * stay behind a NAT.
+         */
+        std::string turnServer_ {};
 
         /**
          * The STUN server name (hostname)

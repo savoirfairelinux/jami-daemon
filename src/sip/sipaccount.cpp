@@ -434,6 +434,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
 
     out << YAML::Key << Conf::STUN_ENABLED_KEY << YAML::Value << stunEnabled_;
     out << YAML::Key << Conf::STUN_SERVER_KEY << YAML::Value << stunServer_;
+    out << YAML::Key << Conf::TURN_ENABLED_KEY << YAML::Value << turnEnabled_;
+    out << YAML::Key << Conf::TURN_SERVER_KEY << YAML::Value << turnServer_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -520,9 +522,13 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     if (not isIP2IP()) parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
 
-    // stun enabled
-    if (not isIP2IP()) parseValue(node, Conf::STUN_ENABLED_KEY, stunEnabled_);
-    if (not isIP2IP()) parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
+    // stun/turn servers
+    if (not isIP2IP()) {
+        parseValue(node, Conf::STUN_ENABLED_KEY, stunEnabled_);
+        parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
+        parseValue(node, Conf::TURN_ENABLED_KEY, turnEnabled_);
+        parseValue(node, Conf::TURN_SERVER_KEY, turnServer_);
+    }
 
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
@@ -594,6 +600,9 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
 
     parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
     parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
+    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
+    parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
+
     parseInt(details, Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE, registrationExpire_);
 
     if (registrationExpire_ < MIN_REGISTRATION_TIME)
@@ -665,6 +674,8 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_EXPIRE,     ring::to_string(registrationExpire_));
     a.emplace(Conf::CONFIG_STUN_ENABLE,                     stunEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_STUN_SERVER,                     stunServer_);
+    a.emplace(Conf::CONFIG_TURN_ENABLE,                     turnEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_TURN_SERVER,                     turnServer_);
     a.emplace(Conf::CONFIG_KEEP_ALIVE_ENABLED,              keepAliveEnabled_ ? TRUE_STR : FALSE_STR);
 
     a.emplace(Conf::CONFIG_PRESENCE_ENABLED,                presence_ and presence_->isEnabled()? TRUE_STR : FALSE_STR);
