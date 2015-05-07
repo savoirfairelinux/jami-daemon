@@ -52,6 +52,7 @@
 #include "string_utils.h"
 #include "config/yamlparser.h"
 #include "system_codec_container.h"
+#include "ice_transport.h"
 
 #include <yaml-cpp/yaml.h>
 
@@ -530,6 +531,14 @@ Account::getActiveAccountCodecInfoList(MediaType mediaType) const
     }
 
     return accountCodecList;
+}
+
+const IceTransportOptions
+Account::getIceOptions() const noexcept
+{
+    IceTransportOptions opts;
+    opts.upnpEnable = getUPnPActive();
+    return opts;
 }
 
 } // namespace ring
