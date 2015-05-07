@@ -419,7 +419,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
                 call->setPeerNumber(event->ies.calling_number);
 
             if (event->ies.calling_name)
-                call->setDisplayName(std::string(event->ies.calling_name));
+                call->setPeerDisplayName(std::string(event->ies.calling_name));
 
             // if peerNumber exist append it to the name string
             if (event->ies.calling_number)

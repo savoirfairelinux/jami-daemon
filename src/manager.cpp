@@ -1622,7 +1622,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     std::string from("<" + number + ">");
 
-    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getDisplayName() + " " + from);
+    emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
 }
 
 //THREAD=VoIP
