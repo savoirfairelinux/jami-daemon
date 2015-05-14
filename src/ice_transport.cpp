@@ -560,7 +560,7 @@ IceTransport::onReceiveData(unsigned comp_id, void *pkt, pj_size_t size)
     if (!size)
         return;
     auto& io = compIO_[comp_id-1];
-    std::unique_lock<std::mutex> lk(io.mutex);
+    std::lock_guard<std::mutex> lk(io.mutex);
     if (io.cb) {
         io.cb((uint8_t*)pkt, size);
     } else {
@@ -629,7 +629,7 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
 {
     register_thread();
     auto& io = compIO_[comp_id];
-    std::unique_lock<std::mutex> lk(io.mutex);
+    std::lock_guard<std::mutex> lk(io.mutex);
 
     if (io.queue.empty())
         return 0;
@@ -646,7 +646,7 @@ void
 IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 {
     auto& io = compIO_[comp_id];
-    std::unique_lock<std::mutex> lk(io.mutex);
+    std::lock_guard<std::mutex> lk(io.mutex);
     io.cb = cb;
 
     if (cb) {
@@ -684,7 +684,7 @@ ssize_t
 IceTransport::getNextPacketSize(int comp_id)
 {
     auto& io = compIO_[comp_id];
-    std::unique_lock<std::mutex> lk(io.mutex);
+    std::lock_guard<std::mutex> lk(io.mutex);
     if (io.queue.empty()) {
         return 0;
     }
