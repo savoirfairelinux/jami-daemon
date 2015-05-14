@@ -82,7 +82,7 @@ namespace ring {
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
-static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
+static constexpr int ICE_NEGOTIATION_TIMEOUT {300};
 
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
@@ -687,11 +687,11 @@ void RingAccount::doRegister_()
             }
         });
 
-#if 0 // enable if dht_ logging is needed
+#if 1 // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+            [](char const* m, va_list args){ /*vlogger(LOG_WARNING, m, args);*/ },
+            [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
         );
 #endif
 
