@@ -266,11 +266,19 @@ size_t RingBuffer::waitForDataAvailable(const std::string &call_id, const size_t
     size_t getl = 0;
     if (deadline == std::chrono::high_resolution_clock::time_point()) {
         not_empty_.wait(l, [=, &getl] {
-                getl =  (endPos_ + buffer_size - read_ptr->second) % buffer_size;
+                // Re-find read_ptr: it may be destroyed during the wait
+                const auto read_ptr = readoffsets_.find(call_id);
+                if (read_ptr == readoffsets_.end())
+                    return true;
+                getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
                 return getl >= min_data_length;
         });
     } else {
         not_empty_.wait_until(l, deadline, [=, &getl]{
+                // Re-find read_ptr: it may be destroyed during the wait
+                const auto read_ptr = readoffsets_.find(call_id);
+                if (read_ptr == readoffsets_.end())
+                    return true;
                 getl = (endPos_ + buffer_size - read_ptr->second) % buffer_size;
                 return getl >= min_data_length;
         });
