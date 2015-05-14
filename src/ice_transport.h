@@ -218,7 +218,7 @@ class IceTransport {
 
         struct Packet {
                 Packet(void *pkt, pj_size_t size);
-                std::unique_ptr<char> data;
+                std::unique_ptr<char[]> data;
                 size_t datalen;
         };
         struct ComponentIO {
