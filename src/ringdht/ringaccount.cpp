@@ -509,6 +509,22 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
+
+    /* these settings cannot be changed (read only), but clients should still be
+     * able to read what they are */
+    a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE, sip_utils::getKeyExchangeName(getSrtpKeyExchange()));
+    a.emplace(Conf::CONFIG_SRTP_ENABLE,       isSrtpEnabled() ? TRUE_STR : FALSE_STR);
+    a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, getSrtpFallback() ? TRUE_STR : FALSE_STR);
+
+    a.emplace(Conf::CONFIG_TLS_METHOD,                     "Automatic");
+    a.emplace(Conf::CONFIG_TLS_CIPHERS,                    "");
+    a.emplace(Conf::CONFIG_TLS_SERVER_NAME,                "");
+    a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER,              TRUE_STR);
+    a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT,              TRUE_STR);
+    a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
+    /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
+    a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
+
     return a;
 }
 
