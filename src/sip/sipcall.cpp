@@ -1008,6 +1008,7 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
     // prevent this from getting accessed in callbacks
     // RING_WARN: this is not thread-safe!
     inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
+    pjsip_dlg_dec_lock(inv->dlg);
 }
 
 } // namespace ring

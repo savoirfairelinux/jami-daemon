@@ -345,6 +345,8 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         return PJ_FALSE;
     }
 
+    pjsip_dlg_inc_lock(inv->dlg);
+    inv->mod_data[link_->getModId()] = call.get();
     call->inv.reset(inv);
 
 /*
@@ -352,7 +354,6 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
     if (hasServiceRoute())
         pjsip_dlg_set_route_set(dialog, sip_utils::createRouteSet(getServiceRoute(), call->inv->pool));
 */
-    call->inv->mod_data[link_->getModId()] = (void*)call.get();
 
     pjsip_tx_data *tdata;
 
@@ -369,7 +370,6 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-        call->inv.reset();
         RING_ERR("Unable to send invite message for this call");
         return false;
     }
