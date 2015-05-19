@@ -375,6 +375,8 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return PJ_FALSE;
     }
 
+    pjsip_dlg_inc_lock(inv->dlg);
+    inv->mod_data[link_->getModId()] = call.get();
     call->inv.reset(inv);
 
     updateDialogViaSentBy(dialog);
@@ -386,8 +388,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         RING_ERR("Could not initialize credentials for invite session authentication");
         return false;
     }
-
-    call->inv->mod_data[link_->getModId()] = call.get();
 
     pjsip_tx_data *tdata;
 
@@ -403,7 +403,6 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
     }
 
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-        call->inv.reset();
         RING_ERR("Unable to send invite message for this call");
         return false;
     }

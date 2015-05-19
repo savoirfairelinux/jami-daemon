@@ -379,6 +379,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
+    pjsip_dlg_inc_lock(inv->dlg);
     inv->mod_data[mod_ua_.id] = call.get();
     call->inv.reset(inv);
 
@@ -411,7 +412,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         // Always answer the new INVITE with 200 if the replaced call is in early or confirmed state.
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_OK, NULL, NULL, &response) == PJ_SUCCESS) {
             if (pjsip_inv_send_msg(call->inv.get(), response) != PJ_SUCCESS)
-                call->inv.reset();
+                call->inv.reset(); // FIXME: not sure if we need to continue
         }
 
         // Get the INVITE session associated with the replaced dialog.
@@ -419,8 +420,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
         // Disconnect the "replaced" INVITE session.
         if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata) {
-            if (pjsip_inv_send_msg(replaced_inv, tdata))
-                call->inv.reset();
+            pjsip_inv_send_msg(replaced_inv, tdata);
         }
     } else { // Proceed with normal call flow
         if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
@@ -430,7 +430,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
             RING_ERR("Could not send msg for invite");
-            call->inv.reset();
             return PJ_FALSE;
         }
 
@@ -447,7 +446,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
             RING_ERR("Could not send msg for invite");
-            call->inv.reset();
             return PJ_FALSE;
         }
 
