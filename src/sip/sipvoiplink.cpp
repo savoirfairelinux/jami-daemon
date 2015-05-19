@@ -424,19 +424,19 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     } else { // Proceed with normal call flow
         if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not answer invite");
+            RING_ERR("Could not create answer TRYING");
             return PJ_FALSE;
         }
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not send msg for invite");
+            RING_ERR("Could not send msg TRYING");
             return PJ_FALSE;
         }
 
         call->setConnectionState(Call::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not answer invite");
+            RING_ERR("Could not create answer RINGING");
             return PJ_FALSE;
         }
 
@@ -445,7 +445,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         sip_utils::addContactHeader(&contactStr, tdata);
 
         if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not send msg for invite");
+            RING_ERR("Could not send msg RINGING");
             return PJ_FALSE;
         }
 
