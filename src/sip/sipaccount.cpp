@@ -1476,7 +1476,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
 
     const char* scheme = "sip";
     const char* transport = "";
-    if (PJSIP_TRANSPORT_IS_SECURE(t)) {
+    if (t && PJSIP_TRANSPORT_IS_SECURE(t)) {
         scheme = "sips";
         transport = ";transport=tls";
     }
