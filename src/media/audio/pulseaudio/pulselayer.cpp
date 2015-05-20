@@ -537,8 +537,8 @@ void PulseLayer::readFromMic()
     if (pa_stream_peek(record_->stream() , (const void**) &data , &bytes) < 0 or !data)
         return;
 
-    size_t sample_size = playback_->frameSize();
-    const AudioFormat format = playback_->format();
+    size_t sample_size = record_->frameSize();
+    const AudioFormat format = record_->format();
     assert(format.nb_channels);
     assert(sample_size);
     const size_t samples = bytes / sample_size;
