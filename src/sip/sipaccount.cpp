@@ -1412,13 +1412,15 @@ std::string SIPAccount::getServerUri() const
 pj_str_t
 SIPAccount::getContactHeader(pjsip_transport* t)
 {
-    if (!t && transport_)
-        t = transport_->get();
-    if (!t)
-        RING_ERR("Transport not created yet");
-
     if (contact_.slen and contactOverwritten_)
         return contact_;
+
+    if (!t && transport_)
+        t = transport_->get();
+    if (!t) {
+        RING_ERR("Transport not created yet");
+        return {};
+    }
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
     pjsip_transport_type_e transportType = transportType_;
