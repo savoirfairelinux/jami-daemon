@@ -860,12 +860,14 @@ void
 SIPCall::muteMedia(const std::string& mediaType, bool isMuted)
 {
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+#ifdef RING_VIDEO
         RING_WARN("video muting %s", bool_to_str(isMuted));
         isVideoMuted_ = isMuted;
         videoInput_ = isVideoMuted_ ? "" : videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
         emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
-    }else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
+#endif
+    } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         RING_WARN("audio muting %s", bool_to_str(isMuted));
         isAudioMuted_ = isMuted;
         avformatrtp_->setMuted(isAudioMuted_);
