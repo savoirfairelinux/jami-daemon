@@ -34,7 +34,11 @@
 
 #include "noncopyable.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+#pragma GCC diagnostic ignored "-Wshadow"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
 
 #include <cstdlib>
 #include <cstdint>

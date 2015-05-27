@@ -220,7 +220,7 @@ class SIPAccount : public SIPAccountBase {
         std::vector<std::map<std::string, std::string>>
         getCredentials() const;
 
-        void setRegistrationState(RegistrationState state, unsigned code=0);
+        virtual void setRegistrationState(RegistrationState state, unsigned code=0, const std::string& detail_str={}) override;
 
         /**
          * A client sendings a REGISTER request MAY suggest an expiration

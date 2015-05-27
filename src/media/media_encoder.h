@@ -114,7 +114,7 @@ private:
     uint8_t *scaledFrameBuffer_ = nullptr;
     int scaledFrameBufferSize_ = 0;
     int streamIndex_ = -1;
-#if (LIBAVCODEC_VERSION_MAJOR < 54)
+#if defined(LIBAVCODEC_VERSION_MAJOR) && (LIBAVCODEC_VERSION_MAJOR < 54)
     uint8_t *encoderBuffer_ = nullptr;
     int encoderBufferSize_ = 0;
 #endif

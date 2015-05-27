@@ -72,6 +72,9 @@
 
 namespace ring {
 
+bool
+utf8_validate_c_str(const char *str, ssize_t max_len, const char **end);
+
 static const char *
 fast_validate(const char *str)
 {
