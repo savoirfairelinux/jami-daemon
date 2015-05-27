@@ -31,9 +31,13 @@
 #ifndef _AUDIO_BUFFER_H
 #define _AUDIO_BUFFER_H
 
+#if __cplusplus >= 201103L
+ #undef isblank
+#endif
+
+#include <sstream>
 #include <vector>
 #include <string>
-#include <sstream>
 #include <cstddef> // for size_t
 
 #include "ring_types.h"

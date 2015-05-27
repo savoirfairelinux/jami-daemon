@@ -55,7 +55,11 @@
 #endif
 #endif /* HAVE_OPENSL */
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
+
 #include "config/yamlparser.h"
 #include "hooks/urlhook.h"
 #include "sip/sip_utils.h"

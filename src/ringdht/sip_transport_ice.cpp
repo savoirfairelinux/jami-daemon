@@ -228,7 +228,7 @@ SipIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
     return PJ_SUCCESS;
 }
 
-ssize_t
+void
 SipIceTransport::onRecv()
 {
     rdata_.pkt_info.len += ice_->recv(comp_id_,

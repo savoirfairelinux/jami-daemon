@@ -33,7 +33,10 @@
 #include <cassert>
 #include <sstream>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
 
 #include "manager.h"
 #include "client/videomanager.h"

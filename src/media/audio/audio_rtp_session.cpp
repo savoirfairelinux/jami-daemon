@@ -303,6 +303,8 @@ AudioReceiveThread::process()
             loop_.stop();
             break;
 
+        case MediaDecoder::Status::Success:
+        case MediaDecoder::Status::EOFError:
         default:
             break;
     }

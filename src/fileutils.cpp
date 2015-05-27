@@ -332,7 +332,7 @@ get_cache_dir()
     } else {
 #ifdef __ANDROID__
         return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
-#elif __APPLE__
+#elif defined(__APPLE__)
         return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Caches"
             + DIR_SEPARATOR_STR + PACKAGE;
@@ -382,7 +382,7 @@ get_data_dir()
 {
 #ifdef __ANDROID__
     return get_program_dir();
-#elif __APPLE__
+#elif defined(__APPLE__)
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
             + DIR_SEPARATOR_STR + PACKAGE;
