@@ -38,6 +38,7 @@
 #endif
 
 #include "audio/audiobuffer.h" // for AudioFormat
+#include <cctype>
 #include "ip_utils.h"
 
 #include <string>

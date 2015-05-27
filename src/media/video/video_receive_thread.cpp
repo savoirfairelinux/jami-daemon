@@ -191,7 +191,8 @@ bool VideoReceiveThread::decodeFrame()
             RING_ERR("fatal error, read failed");
             loop_.stop();
 
-        default:
+        case MediaDecoder::Status::Success:
+        case MediaDecoder::Status::EOFError:
             break;
     }
 

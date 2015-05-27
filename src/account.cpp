@@ -54,7 +54,10 @@
 #include "system_codec_container.h"
 #include "ice_transport.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
 
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"

@@ -98,7 +98,7 @@ void strErr();
 #define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
                                                   LOG_FORMAT(M, ##__VA_ARGS__))
 
-#elif _WIN32
+#elif defined(_WIN32)
 
 #include "winsyslog.h"
 
