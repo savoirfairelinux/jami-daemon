@@ -230,6 +230,7 @@ TrustStore::statusToStr(TrustStore::Status s)
             return DRing::Certificate::Status::ALLOWED;
         case Status::BANNED:
             return DRing::Certificate::Status::BANNED;
+        case Status::UNDEFINED:
         default:
             return DRing::Certificate::Status::UNDEFINED;
     }

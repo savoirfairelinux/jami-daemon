@@ -42,7 +42,11 @@
 #include "ice_transport.h"
 
 #include "config/yamlparser.h"
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
 
 #include "client/ring_signal.h"
 #include "string_utils.h"

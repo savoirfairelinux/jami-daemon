@@ -484,6 +484,10 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
             break;
         }
 
+        case PJSIP_EVSUB_STATE_NULL:
+        case PJSIP_EVSUB_STATE_SENT:
+        case PJSIP_EVSUB_STATE_PENDING:
+        case PJSIP_EVSUB_STATE_UNKNOWN:
         default:
             break;
     }

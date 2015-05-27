@@ -92,7 +92,7 @@ struct SipIceTransport
                          int addr_len, void *token,
                          pjsip_transport_callback callback);
 
-        ssize_t onRecv();
+        void onRecv();
 };
 
 } // namespace ring

@@ -49,7 +49,10 @@
 
 #include "sippresence.h"
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
+#pragma GCC diagnostic pop
 
 #include "account_schema.h"
 #include "config/yamlparser.h"
@@ -126,7 +129,7 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , ciphers_(100)
     , tlsMethod_("TLSv1")
     , tlsCiphers_()
-    , tlsServerName_(0, 0)
+    , tlsServerName_("")
     , tlsVerifyServer_(false)
     , tlsVerifyClient_(true)
     , tlsRequireClientCertificate_(true)
@@ -1650,7 +1653,7 @@ SIPAccount::getCredentials() const
 }
 
 void
-SIPAccount::setRegistrationState(RegistrationState state, unsigned details_code)
+SIPAccount::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& detail_str)
 {
     std::string details_str;
     const pj_str_t *description = pjsip_get_status_text(details_code);
