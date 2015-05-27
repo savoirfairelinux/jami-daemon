@@ -66,7 +66,7 @@ init(enum InitFlag flags) noexcept
         // current implementation use static variable
         return &ring::Manager::instance() != nullptr;
     } catch (...) {
-        return nullptr;
+        return false;
     }
 }
 
