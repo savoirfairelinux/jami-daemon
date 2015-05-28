@@ -344,7 +344,6 @@ AS_IF([test "x$enable_coverage" = "xyes"], [
 
 # DBUSCPP
 dnl Check for dbuscpp, the C++ bindings for D-Bus
-if test "${SYS}" != "mingw32"; then
 AC_ARG_WITH([dbus],
     [AS_HELP_STRING([--without-dbus], [disable support for dbus])],
     [],
@@ -366,7 +365,6 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
-fi
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
