@@ -366,9 +366,9 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
-fi
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
+fi
 
 
 dnl Check for libav
