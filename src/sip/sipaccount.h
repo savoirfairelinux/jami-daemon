@@ -768,6 +768,12 @@ class SIPAccount : public SIPAccountBase {
          */
         pjsip_host_port via_addr_;
 
+        /**
+         * Temporary storage for getUPnPIpAddress().toString()
+         * Used only by useUPnPAddressPortInVIA().
+         */
+        std::string upnpIpAddr_;
+
         char contactBuffer_[PJSIP_MAX_URL_SIZE];
         pj_str_t contact_;
         int contactRewriteMethod_;

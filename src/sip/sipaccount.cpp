@@ -474,8 +474,9 @@ void SIPAccount::usePublishedAddressPortInVIA()
 
 void SIPAccount::useUPnPAddressPortInVIA()
 {
-    via_addr_.host.ptr = (char *) getUPnPIpAddress().toString().c_str();
-    via_addr_.host.slen = getUPnPIpAddress().toString().size();
+    upnpIpAddr_ = getUPnPIpAddress().toString();
+    via_addr_.host.ptr = (char *) upnpIpAddr_.c_str();
+    via_addr_.host.slen = upnpIpAddr_.size();
     via_addr_.port = publishedPortUsed_;
 }
 
