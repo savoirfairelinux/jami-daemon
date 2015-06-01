@@ -38,6 +38,8 @@
 
 #ifdef __ANDROID__
 #include <sstream>
+#else
+#include <cstdlib>
 #endif
 
 namespace ring {

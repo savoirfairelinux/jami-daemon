@@ -37,6 +37,15 @@
 
 namespace ring {
 
+#ifndef __ANDROID__
+
+int
+stoi(const std::string& str) {
+    return std::stoi(str);
+}
+
+#endif
+
 std::string
 trim(const std::string &s)
 {

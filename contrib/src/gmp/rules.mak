@@ -12,6 +12,7 @@ gmp: gmp-$(GMP_VERSION).tar.bz2 .sum-gmp
 	$(UNPACK)
 	$(APPLY) $(SRC)/gmp/thumb.patch
 	$(APPLY) $(SRC)/gmp/clang.patch
+	$(APPLY) $(SRC)/gmp/decimalpoint.patch
 	$(MOVE)
 
 .gmp: gmp
