@@ -6,7 +6,9 @@ PKGS += iconv
 # iconv cannot be detect with pkg-config, but it is mandated by POSIX.
 # Hard-code based on the operating system.
 ifndef HAVE_WIN32
+ifndef HAVE_ANDROID
 PKGS_FOUND += iconv
+endif
 endif
 
 $(TARBALLS)/libiconv-$(LIBICONV_VERSION).tar.gz:
