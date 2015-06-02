@@ -56,7 +56,7 @@ endElementCallback(void * /*userData*/, const char * /*name*/)
 bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
 {
     std::ofstream File;
-    std::string filename = "im:" + id;
+    std::string filename = "im_" + id;
     File.open(filename.c_str(), static_cast<std::ios_base::openmode>(mode));
 
     if (!File.good() || !File.is_open())
