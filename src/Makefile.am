@@ -5,8 +5,13 @@ RING_VIDEO_LIBS=
 if RING_VIDEO
 RING_VIDEO_LIBS+=./media/video/libvideo.la
 if HAVE_LINUX
+if HAVE_ANDROID
+RING_VIDEO_LIBS+= \
+                ./media/video/androidvideo/libandroidvideo.la
+else
 RING_VIDEO_LIBS+= \
                 ./media/video/v4l2/libv4l2.la
+endif
 endif
 if HAVE_OSX
 RING_VIDEO_LIBS+= \
