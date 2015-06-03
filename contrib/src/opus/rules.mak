@@ -16,6 +16,7 @@ $(TARBALLS)/opus-$(OPUS_VERSION).tar.gz:
 
 opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(UNPACK)
+	$(APPLY) $(SRC)/opus/export.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
