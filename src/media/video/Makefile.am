@@ -3,8 +3,13 @@ include $(top_srcdir)/globals.mak
 SUBDIRS= test
 
 if HAVE_LINUX
+if HAVE_ANDROID
 SUBDIRS+= \
-    v4l2
+	androidvideo
+else
+SUBDIRS+= \
+	v4l2
+endif
 endif
 
 if HAVE_OSX

@@ -569,7 +569,7 @@ AS_IF([test "x$with_upnp" = "xyes"],
          AC_DEFINE([HAVE_LIBUPNP], 0, [Define if you have libupnp])])
       ])
 
-AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}"; then echo 1; else echo 0; fi`,
+AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
 	[Define if you have shared memory support])
 
 # DOXYGEN
@@ -623,6 +623,7 @@ AC_CONFIG_FILES([Makefile \
                  src/hooks/Makefile \
                  src/media/video/Makefile \
                  src/media/video/v4l2/Makefile \
+                 src/media/video/androidvideo/Makefile \
                  src/media/video/osxvideo/Makefile \
                  src/media/video/winvideo/Makefile \
                  src/media/video/test/Makefile \
