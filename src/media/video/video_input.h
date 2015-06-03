@@ -92,6 +92,7 @@ private:
     bool initCamera(const std::string& device);
     bool initX11(std::string display);
     bool initFile(std::string path);
+    bool initGdiGrab(std::string params);
 
     // for ThreadLoop
     bool setup();

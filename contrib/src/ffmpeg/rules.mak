@@ -80,6 +80,7 @@ FFMPEGCONF += \
 
 FFMPEGCONF += \
 	--enable-indev=dshow \
+	--enable-indev=gdigrab \
 	--enable-dxva2
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)

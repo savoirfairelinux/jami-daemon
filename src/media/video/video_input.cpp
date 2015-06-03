@@ -48,6 +48,9 @@
 
 namespace ring { namespace video {
 
+static constexpr unsigned default_grab_width = 640;
+static constexpr unsigned default_grab_height = 480;
+
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
     , sink_ {Manager::instance().createSinkClient("local")}
@@ -241,8 +244,32 @@ VideoInput::initX11(std::string display)
     } else {
         decOpts_.input = display;
         //decOpts_.video_size = "vga";
-        decOpts_.width = 640;
-        decOpts_.height = 480;
+        decOpts_.width = default_grab_width;
+        decOpts_.height = default_grab_height;
+    }
+
+    return true;
+}
+
+bool
+VideoInput::initGdiGrab(std::string params)
+{
+    size_t space = params.find(' ');
+    clearOptions();
+    decOpts_.format = "gdigrab";
+    decOpts_.input = "desktop";
+    decOpts_.framerate = 30;
+
+    if (space != std::string::npos) {
+        std::istringstream iss(params.substr(space + 1));
+        char sep;
+        unsigned w, h;
+        iss >> w >> sep >> h;
+        decOpts_.width = round2pow(w, 3);
+        decOpts_.height = round2pow(h, 3);
+    } else {
+        decOpts_.width = default_grab_width;
+        decOpts_.height = default_grab_height;
     }
 
     return true;
@@ -329,6 +356,8 @@ VideoInput::switchInput(const std::string& resource)
     } else if (prefix == "file") {
         /* Pathname */
         valid = initFile(suffix);
+    } else if (prefix == "windisplay") {
+        valid = initGdiGrab(suffix);
     }
 
     // Unsupported MRL or failed initialization
