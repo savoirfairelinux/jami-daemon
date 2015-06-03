@@ -1134,8 +1134,10 @@ RingAccount::getContactHeader(pjsip_transport* t)
     if (!t) {
         RING_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s@ring.dht>",
-                                     username_.c_str());
+                                         "%s%s<sips:%s@ring.dht>",
+                                         displayName_.c_str(),
+                                         (displayName_.empty() ? "" : " "),
+                                         username_.c_str());
         return contact_;
     }
 
@@ -1143,7 +1145,9 @@ RingAccount::getContactHeader(pjsip_transport* t)
     auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
     auto address = tlsTr->getLocalAddress();
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "<sips:%s%s%s;transport=tls>",
+                                     "%s%s<sips:%s%s%s;transport=tls>",
+                                     displayName_.c_str(),
+                                     (displayName_.empty() ? "" : " "),
                                      username_.c_str(),
                                      (username_.empty() ? "" : "@"),
                                      address.toString(true).c_str());

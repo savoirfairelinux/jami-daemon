@@ -254,6 +254,7 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     // Account setting common to SIP and IAX
     parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
+    parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
@@ -277,6 +278,7 @@ Account::getAccountDetails() const
 {
     return {
         {Conf::CONFIG_ACCOUNT_ALIAS,        alias_},
+        {Conf::CONFIG_ACCOUNT_DISPLAYNAME,  displayName_},
         {Conf::CONFIG_ACCOUNT_ENABLE,       enabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_ACCOUNT_TYPE,         getAccountType()},
         {Conf::CONFIG_ACCOUNT_HOSTNAME,     hostname_},
