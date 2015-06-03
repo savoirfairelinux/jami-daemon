@@ -31,7 +31,9 @@
 
 #pragma once
 
+#include <utility> // std::swap
 #include <cstdlib> // std::abs
+#include <iostream>
 
 namespace ring {
 
