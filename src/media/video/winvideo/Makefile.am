@@ -8,4 +8,4 @@ libwinvideo_la_SOURCES = \
 
 AM_OBJCXXFLAGS = -std=c++11
 
-libwinvideo_la_LIBADD = -ldxguid -lole32 -luuid -lstrmiids -loleaut32
+libwinvideo_la_LIBADD = -ldxguid -lole32 -luuid -lstrmiids -loleaut32 -lgdi32
