@@ -388,7 +388,7 @@ AS_IF([test "x$enable_video" != "xno"],
       [
         AC_DEFINE(RING_VIDEO, [], [Video support enabled])
         AM_CONDITIONAL(RING_VIDEO, true)
-        AS_IF([test "$SYS" = linux],[
+        AS_IF([test "$SYS" = linux && test -z "$HAVE_ANDROID_FALSE"],[
             PKG_CHECK_MODULES(UDEV, libudev,, AC_MSG_ERROR([Missing libudev development files]))
         ],[
         ])

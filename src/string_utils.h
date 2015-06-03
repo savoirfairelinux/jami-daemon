@@ -59,7 +59,7 @@ bool_to_str(bool b) noexcept
 // We implement them by ourself as well as possible here.
 
 template <typename T>
-std::string
+inline std::string
 to_string(T &&value)
 {
     std::ostringstream os;
@@ -67,7 +67,7 @@ to_string(T &&value)
     return os.str();
 }
 
-int
+static inline int
 stoi(const std::string& str)
 {
     int v;
