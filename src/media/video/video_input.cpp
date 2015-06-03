@@ -249,6 +249,29 @@ VideoInput::initX11(std::string display)
 }
 
 bool
+VideoInput::initGdiGrab(std::string params) {
+    size_t space = params.find(' ');
+    clearOptions();
+    decOpts_.format = "gdigrab";
+    decOpts_.input = "desktop";
+    decOpts_.framerate = 30;
+
+    if (space != std::string::npos) {
+        std::istringstream iss(params.substr(space + 1));
+        char sep;
+        unsigned w, h;
+        iss >> w >> sep >> h;
+        decOpts_.width = round2pow(w, 3);
+        decOpts_.height = round2pow(h, 3);
+    } else {
+        decOpts_.width = 640;
+        decOpts_.height = 480;
+    }
+
+    return true;
+}
+
+bool
 VideoInput::initFile(std::string path)
 {
     size_t dot = path.find_last_of('.');
@@ -329,6 +352,8 @@ VideoInput::switchInput(const std::string& resource)
     } else if (prefix == "file") {
         /* Pathname */
         valid = initFile(suffix);
+    } else if (prefix == "windisplay") {
+        valid = initGdiGrab(suffix);
     }
 
     // Unsupported MRL or failed initialization
