@@ -1,6 +1,6 @@
 [gerrit]
 host=gerrit-ring.savoirfairelinux.com
 port=29420
-project=sflphone.git
+project=ring-daemon.git
 defaultremote=origin
 defaultbranch=master
