@@ -214,10 +214,10 @@ endif
 SVN ?= $(error subversion client (svn) not found!)
 
 ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = curl -f -L -- "$(1)" > "$@"
+download = curl -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
-	wget --passive -c -p -O $@.tmp "$(1)" && \
+	wget --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
 	touch $@.tmp && \
 	mv $@.tmp $@
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
