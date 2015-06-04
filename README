@@ -105,7 +105,7 @@ export PATH=$PATH:/location/of/ring/daemon/extras/tools/build/bin
 
 # Or, use your favorite package manager to install the necessary tools
 (macports or brew).
-automake libtool check gettext libtoolize yasm ...
+automake, pkg-config, libtool, gettext, yasm
 
 # Compile the dependencies
 cd contrib
@@ -117,7 +117,7 @@ make -j
 # Then the daemon
 cd ../../
 ./autogen.sh
-./configure --without-alsa --without-pulse --without-dbus --disable-video
+./configure --without-alsa --without-pulse --without-dbus --prefix=<install_path>
 make
 
 If you want to link against libringclient and native client easiest way is to
