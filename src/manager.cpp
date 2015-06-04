@@ -2506,7 +2506,7 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
         return account->getVolatileAccountDetails();
     } else {
         RING_ERR("Could not get volatile account details on a non-existing accountID %s", accountID.c_str());
-        return {{}};
+        return {};
     }
 }
 

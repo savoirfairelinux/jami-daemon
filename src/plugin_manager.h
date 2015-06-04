@@ -147,18 +147,18 @@ class PluginManager
             nullptr, // set by PluginManager constructor
             registerObjectFactory_, invokeService_,
         };
-        PluginMap           dynPluginMap_ = {{}}; // Only dynamic loaded plugins
+        PluginMap           dynPluginMap_ = {}; // Only dynamic loaded plugins
         ExitFuncVec         exitFuncVec_ = {};
-        ObjectFactoryMap    exactMatchMap_ = {{}};
+        ObjectFactoryMap    exactMatchMap_ = {};
         ObjectFactoryVec    wildCardVec_ = {};
 
         // Storage used during plugin initialisation.
         // Will be copied into previous ones only if the initialisation success.
-        ObjectFactoryMap    tempExactMatchMap_ = {{}};
+        ObjectFactoryMap    tempExactMatchMap_ = {};
         ObjectFactoryVec    tempWildCardVec_ = {};
 
         // registered services
-        std::map<std::string, ServiceFunction> services_ {{}};
+        std::map<std::string, ServiceFunction> services_ {};
 };
 
 } // namespace ring

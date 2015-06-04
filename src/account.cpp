@@ -390,7 +390,7 @@ Account::getDefaultCodecDetails(const unsigned& codecId)
             return videoCodec->getCodecSpecifications();
         }
     }
-    return {{}};
+    return {};
 }
 
 #define find_iter()                                    \
