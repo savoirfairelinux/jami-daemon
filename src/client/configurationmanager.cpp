@@ -162,7 +162,7 @@ validateCertificateRaw(const std::string&,
     }
 #else
     RING_WARN("TLS not supported");
-    return {{}};
+    return {};
 #endif
 }
 
@@ -178,7 +178,7 @@ getCertificateDetails(const std::string& certificate)
 #else
     RING_WARN("TLS not supported");
 #endif
-    return {{}};
+    return {};
 }
 
 std::map<std::string, std::string>
@@ -193,7 +193,7 @@ getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
 #else
     RING_WARN("TLS not supported");
 #endif
-    return {{}};
+    return {};
 }
 
 std::vector<std::string>
@@ -287,7 +287,7 @@ getTrustRequests(const std::string& accountId)
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->getTrustRequests();
-    return {{}};
+    return {};
 }
 
 bool
@@ -325,7 +325,7 @@ getAccountTemplate(const std::string& accountType)
     else if (accountType == Account::ProtocolNames::IAX)
         return ring::IAXAccount("dummy").getAccountDetails();
 #endif
-    return {{}};
+    return {};
 }
 
 std::string
@@ -426,7 +426,7 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
     if (!codec)
     {
         ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-        return {{}};
+        return {};
     }
 
     if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO)
@@ -438,7 +438,7 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
             return foundCodec->getCodecSpecifications();
 
     ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
-    return {{}};
+    return {};
 }
 
 std::vector<unsigned>
