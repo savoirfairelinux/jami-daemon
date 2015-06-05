@@ -21,7 +21,7 @@ DATE := $(shell date +%Y%m%d)
 VPATH := $(TARBALLS)
 
 # Common download locations
-GNU := http://ftp.gnu.org/gnu
+GNU := http://ftpmirror.gnu.org/
 SF := http://heanet.dl.sourceforge.net/sourceforge
 CONTRIB_VIDEOLAN ?= http://downloads.videolan.org/pub/contrib
 GNUTELEPHONY := https://github.com/dyfet
