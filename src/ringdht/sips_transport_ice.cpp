@@ -212,10 +212,34 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 SipsIceTransport::~SipsIceTransport()
 {
     RING_DBG("~SipsIceTransport");
+    auto event = state_ == TlsConnectionState::ESTABLISHED;
     shutdown();
     ice_->setOnRecv(comp_id_, nullptr);
     tlsThread_.join();
     Manager::instance().unregisterEventHandler((uintptr_t)this);
+
+    pjsip_transport_add_ref(getTransportBase());
+    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
+    if (state_cb && event) {
+        pjsip_transport_state_info state_info;
+        pjsip_tls_state_info tls_info;
+
+        /* Init transport state info */
+        std::memset(&state_info, 0, sizeof(state_info));
+        std::memset(&tls_info, 0, sizeof(tls_info));
+        pj_ssl_sock_info ssl_info;
+        getInfo(&ssl_info);
+        tls_info.ssl_sock_info = &ssl_info;
+        state_info.ext_info = &tls_info;
+        state_info.status = PJ_SUCCESS;
+
+        (*state_cb)(getTransportBase(), PJSIP_TP_STATE_DISCONNECTED, &state_info);
+    }
+
+    if (not trData_.base.is_shutdown and not trData_.base.is_destroying)
+        pjsip_transport_shutdown(getTransportBase());
+
+    pjsip_transport_dec_ref(getTransportBase());
 
     pj_lock_destroy(trData_.base.lock);
     pj_atomic_destroy(trData_.base.ref_cnt);
@@ -852,31 +876,7 @@ SipsIceTransport::clean()
         buffPool_.clear();
     }
 
-    bool event = state_ == TlsConnectionState::ESTABLISHED;
     closeTlsSession();
-
-    pjsip_transport_add_ref(getTransportBase());
-    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    if (state_cb && event) {
-        pjsip_transport_state_info state_info;
-        pjsip_tls_state_info tls_info;
-
-        /* Init transport state info */
-        std::memset(&state_info, 0, sizeof(state_info));
-        std::memset(&tls_info, 0, sizeof(tls_info));
-        pj_ssl_sock_info ssl_info;
-        getInfo(&ssl_info);
-        tls_info.ssl_sock_info = &ssl_info;
-        state_info.ext_info = &tls_info;
-        state_info.status = PJ_SUCCESS;
-
-        (*state_cb)(getTransportBase(), PJSIP_TP_STATE_DISCONNECTED, &state_info);
-    }
-
-    if (not trData_.base.is_shutdown and not trData_.base.is_destroying)
-        pjsip_transport_shutdown(getTransportBase());
-
-    pjsip_transport_dec_ref(getTransportBase());
 }
 
 IpAddr
