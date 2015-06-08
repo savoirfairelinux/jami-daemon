@@ -30,7 +30,7 @@
 
 #include "opensllayer.h"
 
-#include "client/configurationmanager.h"
+#include "client/ring_signal.h"
 
 #include "manager.h"
 #include "audio/resampler.h"
@@ -115,8 +115,10 @@ OpenSLLayer::startStream()
 
     RING_DBG("Start OpenSL audio layer");
 
-    std::vector<int32_t> hw_infos = Manager::instance().getConfigurationManager()->getHardwareAudioFormat();
-    hardwareFormat_ = AudioFormat(hw_infos[0], 1);  // Mono on Android
+    std::vector<int32_t> hw_infos;
+    emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
+    hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
+    //hardwareFormat_ = AudioFormat(44100, 1);
     hardwareBuffSize_ = hw_infos[1];
 
     for(auto& buf : playbackBufferStack_)
