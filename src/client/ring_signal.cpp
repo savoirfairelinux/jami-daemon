@@ -77,6 +77,9 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
+#ifdef __ANDROID__
+        exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
+#endif
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
