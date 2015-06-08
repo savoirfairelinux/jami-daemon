@@ -228,6 +228,10 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 int
 SIPCall::SIPSessionReinvite()
 {
+    // Do nothing if no invitation processed yet
+    if (not inv)
+        return PJ_SUCCESS;
+
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
