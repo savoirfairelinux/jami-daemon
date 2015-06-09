@@ -35,6 +35,8 @@
 #include "logger.h"
 #include "noncopyable.h"
 
+#include "client/ring_signal.h"
+
 #include <algorithm>
 #include <mutex>
 #include <sstream>
@@ -49,15 +51,18 @@ using std::vector;
 using std::string;
 
 class VideoDeviceMonitorImpl {
+    /*
+     * This class is instantiated in VideoDeviceMonitor's constructor. The
+     * daemon has a global VideoManager, and it contains a VideoDeviceMonitor.
+     * So, when the library is loaded on Android, VideoDeviceMonitorImpl will
+     * be instantiated before we get a chance to register callbacks. At this
+     * point, if we use emitSignal to get a list of cameras, it will simply
+     * do nothing.
+     * To work around this issue, functions have been added in the video
+     * manager interface to allow to add/remove devices from Java code.
+     * To conclude, this class is just an empty stub.
+     */
     public:
-        /*
-         * This is the only restriction to the pImpl design:
-         * as the Linux implementation has a thread, it needs a way to notify
-         * devices addition and deletion.
-         *
-         * This class should maybe inherit from VideoDeviceMonitor instead of
-         * being its pImpl.
-         */
         VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor);
         ~VideoDeviceMonitorImpl();
 
@@ -67,52 +72,24 @@ class VideoDeviceMonitorImpl {
         NON_COPYABLE(VideoDeviceMonitorImpl);
 
         VideoDeviceMonitor* monitor_;
-
-        void run();
-        std::thread thread_;
-        mutable std::mutex mutex_;
-/*
-        udev *udev_;
-        udev_monitor *udev_mon_;*/
-        bool probing_;
 };
 
 VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
-    monitor_(monitor),
-    thread_(), mutex_(),
-    probing_(false)
+    monitor_(monitor)
 {}
 
 void VideoDeviceMonitorImpl::start()
 {
-    probing_ = true;
-    thread_ = std::thread(&VideoDeviceMonitorImpl::run, this);
 }
 
 VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 {
-    probing_ = false;
-    if (thread_.joinable())
-        thread_.join();
-}
-
-void VideoDeviceMonitorImpl::run()
-{
-    /*if (!udev_mon_) {
-        probing_ = false;
-        return;
-    }
-
-    const int udev_fd = udev_monitor_get_fd(udev_mon_);*/
-    while (probing_) {
-    }
 }
 
 VideoDeviceMonitor::VideoDeviceMonitor() :
     preferences_(), devices_(),
     monitorImpl_(new VideoDeviceMonitorImpl(this))
 {
-    monitorImpl_->start();
 }
 
 VideoDeviceMonitor::~VideoDeviceMonitor()
