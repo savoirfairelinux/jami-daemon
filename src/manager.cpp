@@ -1535,6 +1535,8 @@ Manager::playDtmf(char code)
         return;
     }
 
+    audiodriver_->startStream();
+
     // number of data sampling in one pulselen depends on samplerate
     // size (n sampling) = time_ms * sampling/s
     //                     ---------------------
@@ -1551,7 +1553,6 @@ Manager::playDtmf(char code)
         // put the size in bytes...
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
-        audiodriver_->startStream();
 
         // FIXME: do real synchronization
         int tries = 10;
@@ -1961,7 +1962,8 @@ Manager::playRingtone(const std::string& accountID)
             RING_ERR("no audio layer in ringtone");
             return;
         }
-
+        // start audio if not started AND flush all buffers (main and urgent)
+        audiodriver_->startStream();
         audioLayerSmplr = audiodriver_->getSampleRate();
     }
 
@@ -1987,10 +1989,6 @@ Manager::playRingtone(const std::string& accountID)
         ringback();
         return;
     }
-
-    std::lock_guard<std::mutex> lock(audioLayerMutex_);
-    // start audio if not started AND flush all buffers (main and urgent)
-    audiodriver_->startStream();
 }
 
 AudioLoop*
@@ -2236,6 +2234,7 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
             return false;
         }
 
+        audiodriver_->startStream();
         sampleRate = audiodriver_->getSampleRate();
     }
 
@@ -2256,11 +2255,6 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
             return false;
         }
     } // release toneMutex
-
-    {
-        std::lock_guard<std::mutex> lock(audioLayerMutex_);
-        audiodriver_->startStream();
-    }
 
     return true;
 }
