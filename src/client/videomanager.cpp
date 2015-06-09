@@ -172,6 +172,20 @@ registerSinkTarget(const std::string& sinkId,
     registerSinkTarget_(sinkId, cb);
 }
 
+#ifdef __ANDROID__
+void
+addVideoDevice(const std::string &node)
+{
+    videoManager.videoDeviceMonitor.addDevice(node);
+}
+
+void
+removeVideoDevice(const std::string &node)
+{
+    videoManager.videoDeviceMonitor.removeDevice(node);
+}
+#endif
+
 } // namespace DRing
 
 namespace ring {
