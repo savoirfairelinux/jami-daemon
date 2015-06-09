@@ -30,13 +30,13 @@ LIBAVCONF += \
 		--enable-parser=h263 \
 		--enable-parser=h264 \
 		--enable-parser=mpeg4video \
-		--enable-parser=opus
+#		--enable-parser=opus
 
 #librairies
-LIBAVCONF += \
-		--enable-libx264 \
-		--enable-libopus \
-		--enable-libspeex
+#LIBAVCONF += \
+#		--enable-libx264 \
+#		--enable-libopus \
+#		--enable-libspeex
 
 #encoders/decoders
 LIBAVCONF += \
@@ -50,14 +50,14 @@ LIBAVCONF += \
 		--enable-decoder=pcm_alaw \
 		--enable-encoder=pcm_mulaw \
 		--enable-decoder=pcm_mulaw \
-		--enable-encoder=libopus \
-		--enable-decoder=libopus \
 		--enable-encoder=mpeg4 \
 		--enable-decoder=mpeg4 \
 		--enable-encoder=h263 \
 		--enable-decoder=h263 \
-		--enable-encoder=libspeex \
-		--enable-decoder=libspeex
+#		--enable-encoder=libopus \
+#		--enable-decoder=libopus \
+#		--enable-encoder=libspeex \
+#		--enable-decoder=libspeex
 
 #encoders/decoders for images
 LIBAVCONF += \
