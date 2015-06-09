@@ -209,6 +209,12 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "CertificateStateChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/);
         };
+#ifdef __ANDROID__
+        struct GetHardwareAudioFormat {
+                constexpr static const char* name = "GetHardwareAudioFormat";
+                using cb_type = void(std::vector<int32_t>* /* params_ret */);
+        };
+#endif
 };
 
 } // namespace DRing
