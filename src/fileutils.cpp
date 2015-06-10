@@ -39,6 +39,10 @@
 #include "logger.h"
 #include "intrin.h"
 
+#ifdef __ANDROID__
+#include "client/ring_signal.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -88,22 +92,6 @@ bool check_dir(const char *path)
         closedir(dir);
 
     return true;
-}
-
-#ifdef __ANDROID__
-static char *program_dir = "/data/data/cx.ring";
-#else
-static char *program_dir = NULL;
-#endif
-
-void set_program_dir(char *program_path)
-{
-    program_dir = dirname(program_path);
-}
-
-const char *get_program_dir()
-{
-    return program_dir;
 }
 
 #ifndef _WIN32
@@ -322,6 +310,12 @@ FileHandle::~FileHandle()
     }
 }
 
+#ifdef __ANDROID__
+static std::string files_path;
+static std::string cache_path;
+static std::string config_path;
+#endif
+
 std::string
 get_cache_dir()
 {
@@ -331,7 +325,11 @@ get_cache_dir()
         return cache_home;
     } else {
 #ifdef __ANDROID__
-        return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
+        std::vector<std::string> paths;
+        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
+        if (not paths.empty())
+            cache_path = paths[0];
+        return cache_path;
 #elif defined(__APPLE__)
         return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Caches"
@@ -347,7 +345,11 @@ std::string
 get_home_dir()
 {
 #if defined __ANDROID__
-    return get_program_dir();
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    if (not paths.empty())
+        files_path = paths[0];
+    return files_path;
 #elif defined _WIN32
     WCHAR path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
@@ -356,7 +358,7 @@ get_home_dir()
         WideCharToMultiByte(CP_ACP, 0, path, -1, tmp, MAX_PATH, &DefChar, nullptr);
         return std::string(tmp);
     }
-    return get_program_dir();
+    return "";
 #else
 
     // 1) try getting user's home directory from the environment
@@ -381,7 +383,11 @@ std::string
 get_data_dir()
 {
 #ifdef __ANDROID__
-    return get_program_dir();
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    if (not paths.empty())
+        files_path = paths[0];
+    return files_path;
 #elif defined(__APPLE__)
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
@@ -394,6 +400,42 @@ get_data_dir()
     // $HOME/.local/share should be used."
     return get_home_dir() + DIR_SEPARATOR_STR ".local" DIR_SEPARATOR_STR
         "share" DIR_SEPARATOR_STR + PACKAGE;
+#endif
+}
+
+std::string
+get_config_dir()
+{
+#ifdef __ANDROID__
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("config", &paths);
+    if (not paths.empty())
+        config_path = paths[0];
+    return config_path;
+#else
+#ifdef __APPLE__
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
+        + "Library" + DIR_SEPARATOR_STR + "Application Support"
+        + DIR_SEPARATOR_STR + PACKAGE;
+#else
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
+                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
+#endif
+
+    const std::string xdg_env(XDG_CONFIG_HOME);
+    if (not xdg_env.empty())
+        configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
+
+#ifndef _WIN32
+    if (mkdir(configdir.data(), 0700) != 0) {
+#else
+    if (fileutils::recursive_mkdir(configdir.data()) != true) {
+#endif
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", configdir.c_str());
+    }
+    return configdir;
 #endif
 }
 

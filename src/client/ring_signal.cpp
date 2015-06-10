@@ -79,6 +79,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
+        exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
 
         /* Presence */
