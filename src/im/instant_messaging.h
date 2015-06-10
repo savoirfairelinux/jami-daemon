@@ -143,6 +143,15 @@ std::string findTextUriList(const std::string &text);
  */
 std::string findTextMessage(const std::string &text);
 
+/**
+ * Retrive the plain text message in formated text data according to RFC 5365
+ *
+ * @param html The formated text message as retreived in the SIP message
+ *
+ * @return A string containing the actual message
+ */
+std::string findHtmlMessage(const std::string &html);
+
 }} // namespace ring::InstantMessaging
 
 #endif // __INSTANT_MESSAGING_H_

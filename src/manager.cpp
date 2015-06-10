@@ -1659,6 +1659,38 @@ Manager::incomingMessage(const std::string& callID,
         emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, message);
 }
 
+void
+Manager::incomingMessage2(const std::string& callID,
+                             const std::string& from,
+                             const std::map<std::string, std::string>& messages)
+{
+    if (isConferenceParticipant(callID)) {
+        auto conf = getConferenceFromCallID(callID);
+
+        ParticipantSet participants(conf->getParticipantList());
+
+        //FIXME
+        /*for (const auto &item_p : participants) {
+
+            if (item_p == callID)
+                continue;
+
+            RING_DBG("Send message to %s", item_p.c_str());
+
+            if (auto call = getCallFromCallID(item_p)) {
+                call->sendTextMessage(message, from);
+            } else {
+                RING_ERR("Failed to get call while sending instant message");
+                return;
+            }
+        }*/
+
+        // in case of a conference we must notify client using conference id
+        emitSignal<DRing::CallSignal::IncomingMessages>(conf->getConfID(), from, messages);
+    } else
+        emitSignal<DRing::CallSignal::IncomingMessages>(callID, from, messages);
+}
+
 //THREAD=VoIP
 bool
 Manager::sendCallTextMessage(const std::string& callID,
