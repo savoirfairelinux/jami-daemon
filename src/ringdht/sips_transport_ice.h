@@ -49,6 +49,7 @@
 #include <condition_variable>
 #include <chrono>
 #include <future>
+#include <queue>
 
 namespace ring {
 class IceTransport;
@@ -112,7 +113,7 @@ private:
         clock::time_point timeout;
     };
 
-    TransportData trData_;
+    TransportData trData_; // uplink to this (used in C callbacks)
     const std::shared_ptr<IceTransport> ice_;
     const int comp_id_;
 
@@ -143,6 +144,16 @@ private:
     gnutls_priority_t priority_cache;
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_;
+
+    struct ChangeStateEventData {
+        pj_ssl_sock_info ssl_info;
+        pjsip_transport_state_info state_info;
+        pjsip_tls_state_info tls_info;
+        decltype(PJSIP_TP_STATE_DISCONNECTED) state;
+    };
+
+    std::mutex stateChangeEventsMutex_;
+    std::queue<ChangeStateEventData> stateChangeEvents_;
 
     /**
      * To be called on a regular basis to receive packets

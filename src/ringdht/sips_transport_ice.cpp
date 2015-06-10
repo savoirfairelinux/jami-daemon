@@ -617,28 +617,23 @@ SipsIceTransport::onHandshakeComplete(pj_status_t status)
                   pj_strerror(status, errmsg, sizeof(errmsg)).ptr);
     }
 
-    pj_ssl_sock_info ssl_info;
-    getInfo(&ssl_info);
+    ChangeStateEventData eventData;
+    getInfo(&eventData.ssl_info);
 
     if (status != PJ_SUCCESS)
         shutdown(); // to be done after getInfo() call
 
-    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    pjsip_transport_state_info state_info;
-    pjsip_tls_state_info tls_info;
+    // push event to handleEvents()
+    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
+        eventData.tls_info.ssl_sock_info = &eventData.ssl_info;
+        eventData.state_info.ext_info = &eventData.tls_info;
+        eventData.state_info.status = eventData.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
+        eventData.state = (status != PJ_SUCCESS) ? PJSIP_TP_STATE_DISCONNECTED : PJSIP_TP_STATE_CONNECTED;
 
-    /* Init transport state info */
-    std::memset(&state_info, 0, sizeof(state_info));
-    std::memset(&tls_info, 0, sizeof(tls_info));
-    tls_info.ssl_sock_info = &ssl_info;
-    state_info.ext_info = &tls_info;
-    state_info.status = ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
-
-    /* Notify application */
-    if (state_cb) {
-        const auto state = (status != PJ_SUCCESS) ?
-            PJSIP_TP_STATE_DISCONNECTED :  PJSIP_TP_STATE_CONNECTED;
-        (*state_cb)(getTransportBase(), state, &state_info);
+        {
+            std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
+            stateChangeEvents_.push(eventData);
+        }
     }
 
     return status == PJ_SUCCESS;
@@ -693,6 +688,22 @@ SipsIceTransport::setup()
 void
 SipsIceTransport::handleEvents()
 {
+    // Process state changes first
+    decltype(stateChangeEvents_) eventDataQueue = stateChangeEvents_;
+    {
+        std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
+        eventDataQueue = std::move(stateChangeEvents_);
+    }
+    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
+        // application notification
+        while (not eventDataQueue.empty()) {
+            const auto& data = eventDataQueue.front();
+            (*state_cb)(&trData_.base, data.state, &data.state_info);
+            eventDataQueue.pop();
+        }
+    }
+
+    // Handle incomming data from network
     decltype(rxPending_) rx;
     {
         std::lock_guard<std::mutex> l(rxMtx_);
