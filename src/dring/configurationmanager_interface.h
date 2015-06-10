@@ -210,9 +210,17 @@ struct ConfigurationSignal {
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/);
         };
 #ifdef __ANDROID__
+        /**
+         * These are special getters for Android so the daemon can retreive
+         * some informations only accessible through Java APIs
+         */
         struct GetHardwareAudioFormat {
                 constexpr static const char* name = "GetHardwareAudioFormat";
                 using cb_type = void(std::vector<int32_t>* /* params_ret */);
+        };
+        struct GetAppDataPath {
+                constexpr static const char* name = "GetAppDataPath";
+                using cb_type = void(const std::string& name, std::string* /* path_ret */);
         };
 #endif
 };

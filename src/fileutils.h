@@ -58,8 +58,6 @@ namespace ring { namespace fileutils {
     std::string get_home_dir();
     std::string get_cache_dir();
     bool check_dir(const char *path);
-    void set_program_dir(char *program_path);
-    const char *get_program_dir();
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
 

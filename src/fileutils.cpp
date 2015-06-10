@@ -39,6 +39,10 @@
 #include "logger.h"
 #include "intrin.h"
 
+#ifdef __ANDROID__
+#include "client/ring_signal.h"
+#endif
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -88,22 +92,6 @@ bool check_dir(const char *path)
         closedir(dir);
 
     return true;
-}
-
-#ifdef __ANDROID__
-static char *program_dir = "/data/data/cx.ring";
-#else
-static char *program_dir = NULL;
-#endif
-
-void set_program_dir(char *program_path)
-{
-    program_dir = dirname(program_path);
-}
-
-const char *get_program_dir()
-{
-    return program_dir;
 }
 
 #ifndef _WIN32
@@ -322,6 +310,11 @@ FileHandle::~FileHandle()
     }
 }
 
+#ifdef __ANDROID__
+static std::string files_path;
+static std::string cache_path;
+#endif
+
 std::string
 get_cache_dir()
 {
@@ -331,7 +324,9 @@ get_cache_dir()
         return cache_home;
     } else {
 #ifdef __ANDROID__
-        return get_home_dir() + DIR_SEPARATOR_STR + PACKAGE;
+        cache_path.clear();
+        emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &cache_path);
+        return cache_path;
 #elif defined(__APPLE__)
         return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Caches"
@@ -347,7 +342,9 @@ std::string
 get_home_dir()
 {
 #if defined __ANDROID__
-    return get_program_dir();
+    files_path.clear();
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &files_path);
+    return files_path;
 #elif defined _WIN32
     WCHAR path[MAX_PATH];
     if (SUCCEEDED(SHGetFolderPathW(nullptr, CSIDL_PROFILE, nullptr, 0, path))) {
@@ -356,7 +353,7 @@ get_home_dir()
         WideCharToMultiByte(CP_ACP, 0, path, -1, tmp, MAX_PATH, &DefChar, nullptr);
         return std::string(tmp);
     }
-    return get_program_dir();
+    return "";
 #else
 
     // 1) try getting user's home directory from the environment
@@ -381,7 +378,9 @@ std::string
 get_data_dir()
 {
 #ifdef __ANDROID__
-    return get_program_dir();
+    files_path.clear();
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &files_path);
+    return files_path;
 #elif defined(__APPLE__)
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
