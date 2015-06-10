@@ -2017,33 +2017,8 @@ Manager::getTelephoneFile()
 std::string
 Manager::retrieveConfigPath() const
 {
-#ifdef __ANDROID__
-    std::string configdir = "/data/data/cx.ring";
-#elif __APPLE__
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
-        + "Library" + DIR_SEPARATOR_STR + "Application Support"
-        + DIR_SEPARATOR_STR + PACKAGE;
-#else
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
-                            ".config" + DIR_SEPARATOR_STR + PACKAGE;
-#endif
-
-    const std::string xdg_env(XDG_CONFIG_HOME);
-    if (not xdg_env.empty())
-        configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
-
-#ifndef _WIN32
-    if (mkdir(configdir.data(), 0700) != 0) {
-#else
-    if (fileutils::recursive_mkdir(configdir.data()) != true) {
-#endif
-        // If directory creation failed
-        if (errno != EEXIST)
-            RING_DBG("Cannot create directory: %s!", configdir.c_str());
-    }
-
     static const char * const PROGNAME = "dring";
-    return configdir + DIR_SEPARATOR_STR + PROGNAME + ".yml";
+    return fileutils::get_config_dir() + DIR_SEPARATOR_STR + PROGNAME + ".yml";
 }
 
 /**
