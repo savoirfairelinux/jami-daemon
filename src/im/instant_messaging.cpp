@@ -165,6 +165,13 @@ std::string InstantMessaging::appendUriList(const std::string &text, UriList& li
     return "--boundary Content-Type: text/plain" + text +
            "--boundary Content-Type: application/resource-lists+xml" +
            "Content-Disposition: recipient-list" + generateXmlUriList(list) +
+           "--boundary--"
+
+           +
+
+           "--boundary Content-Type: text/html" + text +
+           "--boundary Content-Type: application/resource-lists+xml" +
+           "Content-Disposition: recipient-list" + generateXmlUriList(list) +
            "--boundary--";
 }
 
@@ -208,6 +215,21 @@ std::string InstantMessaging::findTextMessage(const std::string &text)
     const size_t end = text.find("--boundary", begin);
     if (end == std::string::npos)
         throw InstantMessageException("Could not find end of text \"boundary\" while parsing sip message for text");
+
+    return text.substr(begin, end - begin);
+}
+
+std::string InstantMessaging::findHtmlMessage(const std::string &text)
+{
+    std::string ctype = "Content-Type: text/html";
+    const size_t pos = text.find(ctype);
+    if (pos == std::string::npos)
+      return {};
+    const size_t begin = pos + ctype.size();
+
+    const size_t end = text.find("--boundary", begin);
+    if (end == std::string::npos)
+        return {};
 
     return text.substr(begin, end - begin);
 }
