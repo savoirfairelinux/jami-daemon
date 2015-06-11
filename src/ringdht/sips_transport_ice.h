@@ -147,8 +147,8 @@ private:
 
     struct ChangeStateEventData {
         pj_ssl_sock_info ssl_info;
-        pjsip_transport_state_info state_info;
         pjsip_tls_state_info tls_info;
+        pjsip_transport_state_info state_info;
         decltype(PJSIP_TP_STATE_DISCONNECTED) state;
     };
 

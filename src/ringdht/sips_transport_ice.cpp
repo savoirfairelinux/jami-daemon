@@ -624,16 +624,12 @@ SipsIceTransport::onHandshakeComplete(pj_status_t status)
         shutdown(); // to be done after getInfo() call
 
     // push event to handleEvents()
-    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
-        eventData.tls_info.ssl_sock_info = &eventData.ssl_info;
-        eventData.state_info.ext_info = &eventData.tls_info;
-        eventData.state_info.status = eventData.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
-        eventData.state = (status != PJ_SUCCESS) ? PJSIP_TP_STATE_DISCONNECTED : PJSIP_TP_STATE_CONNECTED;
+    eventData.state_info.status = eventData.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
+    eventData.state = (status != PJ_SUCCESS) ? PJSIP_TP_STATE_DISCONNECTED : PJSIP_TP_STATE_CONNECTED;
 
-        {
-            std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
-            stateChangeEvents_.push(eventData);
-        }
+    {
+        std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
+        stateChangeEvents_.emplace(eventData);
     }
 
     return status == PJ_SUCCESS;
@@ -697,8 +693,10 @@ SipsIceTransport::handleEvents()
     if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
         // application notification
         while (not eventDataQueue.empty()) {
-            const auto& data = eventDataQueue.front();
-            (*state_cb)(&trData_.base, data.state, &data.state_info);
+            auto& evdata = eventDataQueue.front();
+            evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
+            evdata.state_info.ext_info = &evdata.tls_info;
+            (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
             eventDataQueue.pop();
         }
     }
