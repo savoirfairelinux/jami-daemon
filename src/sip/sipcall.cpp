@@ -843,7 +843,20 @@ SIPCall::startAllMedia()
             ice_comp_id += 2;
         } else
             rtp->start();
+
+        switch (local.type) {
+#ifdef RING_VIDEO
+            case MEDIA_VIDEO:
+                isVideoMuted_ = videoInput_.empty(); //not rtp->isSending();
+                break;
+#endif
+            case MEDIA_AUDIO:
+                isAudioMuted_ = not rtp->isSending();
+                break;
+            default: break;
+        }
     }
+
     if (peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
@@ -861,19 +874,21 @@ SIPCall::stopAllMedia()
 }
 
 void
-SIPCall::muteMedia(const std::string& mediaType, bool isMuted)
+SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef RING_VIDEO
-        RING_WARN("video muting %s", bool_to_str(isMuted));
-        isVideoMuted_ = isMuted;
+        if (mute == isVideoMuted_) return;
+        RING_WARN("video muting %s", bool_to_str(mute));
+        isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
         emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
-        RING_WARN("audio muting %s", bool_to_str(isMuted));
-        isAudioMuted_ = isMuted;
+        if (mute == isAudioMuted_) return;
+        RING_WARN("audio muting %s", bool_to_str(mute));
+        isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
         emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
     }

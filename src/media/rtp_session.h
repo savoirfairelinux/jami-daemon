@@ -29,11 +29,11 @@
  *  as that of the covered work.
  */
 
-#ifndef __RTP_SESSION_H__
-#define __RTP_SESSION_H__
+#pragma once
 
 #include "socket_pair.h"
 #include "sip/sip_utils.h"
+#include "media/media_codec.h"
 
 #include <string>
 #include <memory>
@@ -57,6 +57,9 @@ public:
         receive_ = receive;
     }
 
+    bool isSending() { return send_.enabled; }
+    bool isReceiving() { return receive_.enabled; }
+
 protected:
     std::recursive_mutex mutex_;
     std::unique_ptr<SocketPair> socketPair_;
@@ -71,5 +74,3 @@ protected:
 };
 
 } // namespace ring
-
-#endif // __RTP_SESSION_H__
