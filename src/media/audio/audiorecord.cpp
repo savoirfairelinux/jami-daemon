@@ -74,14 +74,10 @@ createFilename()
 
     out << timeinfo->tm_hour;
 
-    out << ':';
-
     if (timeinfo->tm_min < 10) // 01 02 03, not 1 2 3
         out << 0;
 
     out << timeinfo->tm_min;
-
-    out << ':';
 
     if (timeinfo->tm_sec < 10) // 01 02 03,  not 1 2 3
         out << 0;
