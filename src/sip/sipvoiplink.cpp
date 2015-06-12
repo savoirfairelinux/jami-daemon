@@ -1213,8 +1213,23 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         return;
     }
 
+    // extract port if name is in form "server:port"
+    int port;
+    pj_ssize_t name_size;
+    const auto n = name.rfind(':');
+    if (n != std::string::npos) {
+        port = std::atoi(name.c_str() + n + 1);
+        name_size = n;
+    } else {
+        port = 0;
+        name_size = name.size();
+    }
+    RING_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
+
     pjsip_host_info host_info {
-        0, type, {{(char*)name.data(), (pj_ssize_t)name.size()}, 0},
+        .flag = 0,
+        .type = type,
+        .addr = {{(char*)name.c_str(), name_size}, port},
     };
 
     auto token = std::hash<std::string>()(name + to_string(type));
