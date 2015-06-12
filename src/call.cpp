@@ -94,6 +94,7 @@ Call::validTransition(CallState newState)
         case CallState::INACTIVE:
             switch (newState) {
                 case CallState::INACTIVE:
+                case CallState::HOLD:
                     return false;
                 default:
                     return true;
