@@ -208,9 +208,9 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
             {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != DISCONNECTED) {
+                    if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         RING_WARN("Ending call because underlying SIP transport was closed");
-                        this_->setConnectionState(Call::DISCONNECTED);
+                        this_->setConnectionState(ConnectionState::DISCONNECTED);
                         Manager::instance().callFailure(*this_, ECONNRESET);
                         this_->removeCall();
                     }
@@ -236,7 +236,7 @@ SIPCall::SIPSessionReinvite()
     sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
                       acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
                       acc.getSrtpKeyExchange(),
-                      getState() == Call::HOLD);
+                      getState() == CallState::HOLD);
     if (initIceTransport(true))
         setupLocalSDPFromIce();
 
@@ -331,8 +331,8 @@ void SIPCall::answer()
         throw std::runtime_error("Could not send invite request answer (200 OK)");
     }
 
-    setConnectionState(CONNECTED);
-    setState(ACTIVE);
+    setConnectionState(ConnectionState::CONNECTED);
+    setState(CallState::ACTIVE);
 }
 
 static void
@@ -391,7 +391,7 @@ SIPCall::hangup(int reason)
 void
 SIPCall::refuse()
 {
-    if (!isIncoming() or getConnectionState() == Call::CONNECTED or !inv)
+    if (!isIncoming() or getConnectionState() == ConnectionState::CONNECTED or !inv)
         return;
 
     stopAllMedia();
@@ -584,12 +584,12 @@ SIPCall::attendedTransfer(const std::string& to)
 void
 SIPCall::onhold()
 {
-    if (not setState(Call::HOLD))
+    if (not setState(CallState::HOLD))
         return;
 
     stopAllMedia();
 
-    if (getConnectionState() == Call::CONNECTED) {
+    if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS)
             RING_WARN("Reinvite failed");
     }
@@ -615,12 +615,12 @@ SIPCall::offhold()
 void
 SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 {
-    if (not setState(Call::ACTIVE))
+    if (not setState(CallState::ACTIVE))
         return;
 
     sdp_cb();
 
-    if (getConnectionState() == Call::CONNECTED) {
+    if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS) {
             RING_WARN("Reinvite failed, resuming hold");
             onhold();
@@ -703,9 +703,9 @@ SIPCall::onClosed()
 void
 SIPCall::onAnswered()
 {
-    if (getConnectionState() != Call::CONNECTED) {
-        setConnectionState(Call::CONNECTED);
-        setState(Call::ACTIVE);
+    if (getConnectionState() != ConnectionState::CONNECTED) {
+        setConnectionState(ConnectionState::CONNECTED);
+        setState(CallState::ACTIVE);
         Manager::instance().peerAnsweredCall(*this);
     }
 }
@@ -713,7 +713,7 @@ SIPCall::onAnswered()
 void
 SIPCall::onPeerRinging()
 {
-    setConnectionState(Call::RINGING);
+    setConnectionState(ConnectionState::RINGING);
     Manager::instance().peerRingingCall(*this);
 }
 
@@ -898,7 +898,7 @@ SIPCall::onMediaUpdate()
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
                 RING_DBG("ice init failed (or timeout)");
-                this_->setConnectionState(Call::DISCONNECTED);
+                this_->setConnectionState(ConnectionState::DISCONNECTED);
                 Manager::instance().callFailure(*this_, ETIMEDOUT); // signal client
                 this_->removeCall();
                 return false;
@@ -923,7 +923,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
         acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
         acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
         acc.getSrtpKeyExchange(),
-        getState() == Call::HOLD
+        getState() == CallState::HOLD
     );
     auto ice_attrs = Sdp::getIceAttributes(offer);
     if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
@@ -1002,7 +1002,7 @@ SIPCall::setSecure(bool sec)
 {
     if (srtpEnabled_)
         return;
-    if (sec && getConnectionState() != DISCONNECTED) {
+    if (sec && getConnectionState() != ConnectionState::DISCONNECTED) {
         throw std::runtime_error("Can't enable security since call is already connected");
     }
     srtpEnabled_ = sec;

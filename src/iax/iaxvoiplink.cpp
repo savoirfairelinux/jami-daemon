@@ -152,7 +152,7 @@ void
 IAXVoIPLink::sendAudioFromMic()
 {
     for (const auto currentCall : Manager::instance().callFactory.getAllCalls<IAXCall>()) {
-        if (currentCall->getState() != Call::ACTIVE)
+        if (currentCall->getState() != Call::CallState::ACTIVE)
             continue;
 
         int codecType = currentCall->getAudioCodecPayload();
@@ -216,8 +216,8 @@ IAXVoIPLink::sendAudioFromMic()
 void
 IAXVoIPLink::handleReject(IAXCall& call)
 {
-    call.setConnectionState(Call::CONNECTED);
-    call.setState(Call::MERROR);
+    call.setConnectionState(Call::ConnectionState::CONNECTED);
+    call.setState(Call::CallState::MERROR);
     Manager::instance().callFailure(call);
     call.removeCall();
 }
@@ -232,11 +232,11 @@ IAXVoIPLink::handleAccept(iax_event* event, IAXCall& call)
 void
 IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
 {
-    if (call.getConnectionState() == Call::CONNECTED)
+    if (call.getConnectionState() == Call::ConnectionState::CONNECTED)
         return;
 
-    call.setConnectionState(Call::CONNECTED);
-    call.setState(Call::ACTIVE);
+    call.setConnectionState(Call::ConnectionState::CONNECTED);
+    call.setState(Call::CallState::ACTIVE);
 
     if (event->ies.format)
         call.format = event->ies.format;
@@ -250,8 +250,8 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
 void
 IAXVoIPLink::handleBusy(IAXCall& call)
 {
-    call.setConnectionState(Call::CONNECTED);
-    call.setState(Call::BUSY);
+    call.setConnectionState(Call::ConnectionState::CONNECTED);
+    call.setState(Call::CallState::BUSY);
 
     Manager::instance().callBusy(call);
     call.removeCall();
@@ -269,7 +269,7 @@ IAXVoIPLink::handleMessage(iax_event* event, IAXCall& call)
 void
 IAXVoIPLink::handleRinging(IAXCall& call)
 {
-    call.setConnectionState(Call::RINGING);
+    call.setConnectionState(Call::ConnectionState::RINGING);
     Manager::instance().peerRingingCall(call);
 }
 
@@ -413,7 +413,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             }
 
             call->session = event->session;
-            call->setConnectionState(Call::PROGRESSING);
+            call->setConnectionState(Call::ConnectionState::PROGRESSING);
 
             if (event->ies.calling_number)
                 call->setPeerNumber(event->ies.calling_number);

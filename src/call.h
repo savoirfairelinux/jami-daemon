@@ -77,12 +77,12 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Audio should be transmitted when ConnectionState = Connected AND
          * CallState = Active.
          */
-        enum ConnectionState {DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED};
+        enum class ConnectionState {DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__};
 
         /**
          * The Call State.
          */
-        enum CallState {INACTIVE, ACTIVE, HOLD, BUSY, MERROR};
+        enum class CallState {INACTIVE, ACTIVE, HOLD, BUSY, MERROR, COUNT__};
 
         virtual ~Call();
 
@@ -369,10 +369,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         Account& account_;
 
         /** Disconnected/Progressing/Trying/Ringing/Connected */
-        ConnectionState connectionState_ {Call::DISCONNECTED};
+        ConnectionState connectionState_ {ConnectionState::DISCONNECTED};
 
         /** Inactive/Active/Hold/Busy/Error */
-        CallState callState_ {Call::INACTIVE};
+        CallState callState_ {CallState::INACTIVE};
 
         /** Direct IP-to-IP or classic call */
         bool isIPToIP_ {false};

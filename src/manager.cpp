@@ -1613,7 +1613,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     }
 
     if (not hasCurrentCall()) {
-        call.setConnectionState(Call::RINGING);
+        call.setConnectionState(Call::ConnectionState::RINGING);
         playRingtone(accountId);
     }
 
