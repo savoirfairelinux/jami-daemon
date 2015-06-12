@@ -150,8 +150,8 @@ IAXCall::answer()
         iax_answer(session);
     }
 
-    setState(Call::ACTIVE);
-    setConnectionState(Call::CONNECTED);
+    setState(Call::CallState::ACTIVE);
+    setConnectionState(Call::ConnectionState::CONNECTED);
 
     Manager::instance().getRingBufferPool().flushAllBuffers();
 }
@@ -204,7 +204,7 @@ IAXCall::onhold()
         iax_quelch_moh(session, true);
     }
 
-    setState(Call::HOLD);
+    setState(Call::CallState::HOLD);
 }
 
 void
@@ -217,7 +217,7 @@ IAXCall::offhold()
         iax_unquelch(session);
     }
 
-    setState(Call::ACTIVE);
+    setState(Call::CallState::ACTIVE);
 
     Manager::instance().startAudioDriverStream();
 }

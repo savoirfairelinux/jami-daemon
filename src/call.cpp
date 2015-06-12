@@ -42,6 +42,7 @@
 #include "map_utils.h"
 #include "call_factory.h"
 #include "string_utils.h"
+#include "enumclass_utils.h"
 
 namespace ring {
 
@@ -90,25 +91,25 @@ bool
 Call::validTransition(CallState newState)
 {
     switch (callState_) {
-        case INACTIVE:
+        case CallState::INACTIVE:
             switch (newState) {
-                case INACTIVE:
+                case CallState::INACTIVE:
                     return false;
                 default:
                     return true;
             }
 
-        case ACTIVE:
+        case CallState::ACTIVE:
             switch (newState) {
-                case HOLD:
+                case CallState::HOLD:
                     return true;
                 default:
                     return false;
             }
 
-        case HOLD:
+        case CallState::HOLD:
             switch (newState) {
-                case ACTIVE:
+                case CallState::ACTIVE:
                     return true;
                 default:
                     return false;
@@ -124,11 +125,8 @@ Call::setState(CallState state)
 {
     std::lock_guard<std::mutex> lock(callMutex_);
     if (not validTransition(state)) {
-        static const char *states[] = {"INACTIVE", "ACTIVE", "HOLD", "BUSY", "ERROR"};
-        assert(callState_ < RING_ARRAYSIZE(states) and state < RING_ARRAYSIZE(states));
-
-        RING_ERR("Invalid call state transition from %s to %s",
-              states[callState_], states[state]);
+        assert((int)callState_ < enum_class_size<CallState>() && (int)state < enum_class_size<CallState>());
+        //RING_ERR("Invalid call state transition from %s to %s", states[callState_], states[state]);
         return false;
     }
 
@@ -147,31 +145,31 @@ std::string
 Call::getStateStr() const
 {
     switch (getState()) {
-        case ACTIVE:
+        case CallState::ACTIVE:
             switch (getConnectionState()) {
-                case RINGING:
+                case ConnectionState::RINGING:
                     return isIncoming() ? "INCOMING" : "RINGING";
-                case CONNECTED:
+                case ConnectionState::CONNECTED:
                 default:
                     return "CURRENT";
             }
 
-        case HOLD:
+        case CallState::HOLD:
             return "HOLD";
-        case BUSY:
+        case CallState::BUSY:
             return "BUSY";
-        case INACTIVE:
+        case CallState::INACTIVE:
 
             switch (getConnectionState()) {
-                case RINGING:
+                case ConnectionState::RINGING:
                     return isIncoming() ? "INCOMING" : "RINGING";
-                case CONNECTED:
+                case ConnectionState::CONNECTED:
                     return "CURRENT";
                 default:
                     return "INACTIVE";
             }
 
-        case MERROR:
+        case CallState::MERROR:
         default:
             return "FAILURE";
     }

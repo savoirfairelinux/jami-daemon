@@ -333,7 +333,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     /* fallback on local address */
     if (not addrSdp) addrSdp = addrToUse;
 
-    call->setConnectionState(Call::PROGRESSING);
+    call->setConnectionState(Call::ConnectionState::PROGRESSING);
     call->setPeerNumber(peerNumber);
     call->setPeerDisplayName(peerDisplayName);
     call->initRecFilename(peerNumber);
@@ -433,7 +433,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
-        call->setConnectionState(Call::TRYING);
+        call->setConnectionState(Call::ConnectionState::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             RING_ERR("Could not create answer RINGING");
@@ -449,7 +449,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
-        call->setConnectionState(Call::RINGING);
+        call->setConnectionState(Call::ConnectionState::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
     }

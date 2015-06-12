@@ -145,8 +145,8 @@ IAXAccount::newOutgoingCall(const std::string& toUrl)
 
     iaxOutgoingInvite(call.get());
 
-    call->setConnectionState(Call::PROGRESSING);
-    call->setState(Call::ACTIVE);
+    call->setConnectionState(Call::ConnectionState::PROGRESSING);
+    call->setState(Call::CallState::ACTIVE);
 
     return call;
 }

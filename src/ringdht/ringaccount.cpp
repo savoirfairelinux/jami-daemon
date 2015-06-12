@@ -181,8 +181,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
             RING_DBG("ice init failed (or timeout)");
-            call->setConnectionState(Call::DISCONNECTED);
-            call->setState(Call::MERROR);
+            call->setConnectionState(Call::ConnectionState::DISCONNECTED);
+            call->setState(Call::CallState::MERROR);
             Manager::instance().callFailure(*call); // signal client
             call->removeCall();
             return false;
@@ -199,7 +199,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
         std::weak_ptr<SIPCall> weak_call = call;
 
-        call->setConnectionState(Call::TRYING);
+        call->setConnectionState(Call::ConnectionState::TRYING);
         shared_this->dht_.putEncrypted(
             callkey, toH,
             dht::Value {
@@ -210,7 +210,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 if (!ok) {
                     RING_WARN("Can't put ICE descriptor on DHT");
                     if (auto call = weak_call.lock()) {
-                        call->setConnectionState(Call::DISCONNECTED);
+                        call->setConnectionState(Call::ConnectionState::DISCONNECTED);
                         Manager::instance().callFailure(*call); // signal client
                         call->removeCall();
                     }
@@ -227,7 +227,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 if (msg.id != replyvid)
                     return true;
                 RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
-                call->setConnectionState(Call::PROGRESSING);
+                call->setConnectionState(Call::ConnectionState::PROGRESSING);
                 emitSignal<DRing::CallSignal::StateChange>(call->getCallId(), DRing::Call::StateEvent::CONNECTING, 0);
                 ice->start(msg.ice_data);
                 return false;
@@ -374,8 +374,8 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         return false;
     }
 
-    call->setConnectionState(Call::PROGRESSING);
-    call->setState(Call::ACTIVE);
+    call->setConnectionState(Call::ConnectionState::PROGRESSING);
+    call->setState(Call::CallState::ACTIVE);
 
     return true;
 }
@@ -593,7 +593,7 @@ RingAccount::handleEvents()
             };
             auto tr = link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, tlsParams);
             call->setTransport(tr);
-            call->setConnectionState(Call::PROGRESSING);
+            call->setConnectionState(Call::ConnectionState::PROGRESSING);
             if (c->call_key == dht::InfoHash()) {
                 RING_DBG("ICE succeeded : moving incomming call to pending sip call");
                 auto in = c;
@@ -609,7 +609,7 @@ RingAccount::handleEvents()
             RING_WARN("ICE timeout : removing pending call");
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
-            call->setConnectionState(Call::DISCONNECTED);
+            call->setConnectionState(Call::ConnectionState::DISCONNECTED);
             Manager::instance().callFailure(*call);
             c = pendingCalls_.erase(c);
             call->removeCall();
@@ -874,7 +874,7 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor on DHT");
                 if (auto call = weak_call.lock()) {
-                    call->setConnectionState(Call::DISCONNECTED);
+                    call->setConnectionState(Call::ConnectionState::DISCONNECTED);
                     Manager::instance().callFailure(*call);
                     call->removeCall();
                 }
