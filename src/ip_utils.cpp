@@ -126,7 +126,7 @@ ip_utils::getLocalAddr(pj_uint16_t family)
 #if HAVE_IPV6
     RING_WARN("Could not get preferred address familly (%s)", (family == pj_AF_INET6()) ? "IPv6" : "IPv4");
     family = (family == pj_AF_INET()) ? pj_AF_INET6() : pj_AF_INET();
-    status = pj_gethostip(family, ip_addr);
+    status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) return ip_addr;
 #endif
     RING_ERR("Could not get local IP");
