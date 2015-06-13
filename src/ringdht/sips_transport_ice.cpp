@@ -193,18 +193,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                          "SECURE192:-VERS-TLS-ALL:+VERS-DTLS1.0:%SERVER_PRECEDENCE",
                          nullptr);
 
-    ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
-        {
-            std::lock_guard<std::mutex> l(inputBuffMtx_);
-            tlsInputBuff_.emplace_back(buf, buf+len);
-            canRead_ = true;
-            RING_DBG("Ice: got data at %lu",
-                     clock::now().time_since_epoch().count());
-        }
-        cv_.notify_all();
-        return len;
-    });
-
     tlsThread_.start();
     Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
 }
@@ -214,7 +202,6 @@ SipsIceTransport::~SipsIceTransport()
     RING_DBG("~SipsIceTransport");
     auto event = state_ == TlsConnectionState::ESTABLISHED;
     shutdown();
-    ice_->setOnRecv(comp_id_, nullptr);
     tlsThread_.join();
     Manager::instance().unregisterEventHandler((uintptr_t)this);
 
@@ -669,18 +656,6 @@ SipsIceTransport::verifyCertificate()
     return GNUTLS_E_SUCCESS;
 }
 
-bool
-SipsIceTransport::setup()
-{
-    RING_WARN("Starting GnuTLS thread");
-    if (is_server_) {
-        gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
-        state_ = TlsConnectionState::COOKIE;
-        return true;
-    }
-    return startTlsSession() == PJ_SUCCESS;
-}
-
 void
 SipsIceTransport::handleEvents()
 {
@@ -701,7 +676,7 @@ SipsIceTransport::handleEvents()
         }
     }
 
-    // Handle incomming data from network
+    // Handle stream GnuTLS -> SIP transport
     decltype(rxPending_) rx;
     {
         std::lock_guard<std::mutex> l(rxMtx_);
@@ -735,6 +710,49 @@ SipsIceTransport::handleEvents()
     }
     putBuff(std::move(rx));
     rxCv_.notify_all();
+
+    // Report status GnuTLS -> SIP transport
+    decltype(outputAckBuff_) ackBuf;
+    {
+        std::lock_guard<std::mutex> l(outputBuffMtx_);
+        ackBuf = std::move(outputAckBuff_);
+    }
+    for (const auto& pair: ackBuf) {
+        const auto& f = pair.first;
+        f.tdata_op_key->tdata = nullptr;
+        RING_ERR("status: %d", pair.second);
+        if (f.tdata_op_key->callback)
+            f.tdata_op_key->callback(getTransportBase(), f.tdata_op_key->token,
+                                     pair.second);
+    }
+    cv_.notify_all();
+}
+
+bool
+SipsIceTransport::setup()
+{
+    RING_WARN("Starting GnuTLS thread");
+
+    if (is_server_) {
+        gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
+        state_ = TlsConnectionState::COOKIE;
+        return true;
+    }
+
+    // permit incoming packets
+    ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
+        {
+            std::lock_guard<std::mutex> l(inputBuffMtx_);
+            tlsInputBuff_.emplace_back(buf, buf+len);
+            canRead_ = true;
+            RING_DBG("Ice: got data at %lu",
+                     clock::now().time_since_epoch().count());
+        }
+        cv_.notify_all();
+        return len;
+        });
+
+    return startTlsSession() == PJ_SUCCESS;
 }
 
 void
@@ -855,34 +873,42 @@ void
 SipsIceTransport::clean()
 {
     RING_WARN("Ending GnuTLS thread");
+
+    // Forbid GnuTLS <-> ICE IOs
+    ice_->setOnRecv(comp_id_, nullptr);
     tlsInputBuff_.clear();
     canRead_ = false;
-
-    while (not outputBuff_.empty()) {
-        auto& f = outputBuff_.front();
-        f.tdata_op_key->tdata = nullptr;
-        if (f.tdata_op_key->callback)
-            f.tdata_op_key->callback(getTransportBase(),
-                                     f.tdata_op_key->token,
-                                     -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN));
-        outputBuff_.pop_front();
-    }
     canWrite_ = false;
-    if (cookie_key_.data) {
-        gnutls_free(cookie_key_.data);
-        cookie_key_.data = nullptr;
-        cookie_key_.size = 0;
+
+    {
+        // Reply all SIP transport send requests with ENOTCONN status error
+        std::unique_lock<std::mutex> l(outputBuffMtx_);
+
+        for (const auto& f : outputBuff_) {
+            f.tdata_op_key->tdata = nullptr;
+            if (f.tdata_op_key->callback)
+                outputAckBuff_.emplace_back(std::move(f), -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN)); // see handleEvents()
+        }
+        outputBuff_.clear();
+
+        // make sure that all callbacks are called before closing
+        cv_.wait(l, [&](){
+                return outputAckBuff_.empty();
+            });
     }
+
     {
         // make sure all incoming packets are reported before closing
         std::unique_lock<std::mutex> l(rxMtx_);
         rxCv_.wait(l, [&](){
-            return rxPending_.empty();
-        });
+                return rxPending_.empty();
+            });
     }
-    {
-        std::lock_guard<std::mutex> lk(buffPoolMtx_);
-        buffPool_.clear();
+
+    if (cookie_key_.data) {
+        gnutls_free(cookie_key_.data);
+        cookie_key_.data = nullptr;
+        cookie_key_.size = 0;
     }
 
     closeTlsSession();
@@ -941,8 +967,8 @@ SipsIceTransport::waitForTlsData(unsigned ms)
 
 pj_status_t
 SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
-                      int addr_len, void *token,
-                      pjsip_transport_callback callback)
+                       int addr_len, void *token,
+                       pjsip_transport_callback callback)
 {
     // Sanity check
     PJ_ASSERT_RETURN(tdata, PJ_EINVAL);
@@ -987,32 +1013,40 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 pj_status_t
 SipsIceTransport::flushOutputBuff()
 {
-    ssize_t status = PJ_SUCCESS;
+    ssize_t status;
 
     // send delayed data first
-    while (true) {
+    for (;;) {
+        bool fatal = true;
         DelayedTxData f;
+
         {
             std::lock_guard<std::mutex> l(outputBuffMtx_);
             if (outputBuff_.empty())
                 break;
-            else {
-                f = outputBuff_.front();
-                outputBuff_.pop_front();
-            }
+            f = std::move(outputBuff_.front());
+            outputBuff_.pop_front();
         }
-        if (f.timeout != clock::time_point() && f.timeout < clock::now())
-            continue;
-        status = trySend(f.tdata_op_key);
+
+        // Too late?
+        if (f.timeout != clock::time_point() && f.timeout < clock::now()) {
+            status = -PJ_ETIMEDOUT;
+            fatal = false;
+        } else {
+            status = trySend(f.tdata_op_key);
+            fatal = status < 0;
+        }
+
         f.tdata_op_key->tdata = nullptr;
-        if (f.tdata_op_key->callback)
-            f.tdata_op_key->callback(getTransportBase(),
-                                     f.tdata_op_key->token, status);
-        if (status < 0)
-            break;
+
+        if (f.tdata_op_key->callback) {
+            std::lock_guard<std::mutex> l(outputBuffMtx_);
+            outputAckBuff_.emplace_back(std::move(f), status); // see handleEvents()
+        }
+
+        if (fatal)
+            return status;
     }
-    if (status < 0)
-        return status;
 
     decltype(txBuff_) tx;
     {

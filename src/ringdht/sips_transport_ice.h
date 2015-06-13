@@ -50,6 +50,7 @@
 #include <chrono>
 #include <future>
 #include <queue>
+#include <utility>
 
 namespace ring {
 class IceTransport;
@@ -172,6 +173,7 @@ private:
     ssize_t trySend(pjsip_tx_data_op_key* tdata);
     pj_status_t flushOutputBuff();
     std::list<DelayedTxData> outputBuff_;
+    std::list<std::pair<DelayedTxData, ssize_t>> outputAckBuff_; // acknowledged outputBuff_
     std::list<std::vector<uint8_t>> txBuff_;
     std::mutex outputBuffMtx_;
 
