@@ -846,12 +846,10 @@ void SIPAccount::doRegister2_()
     }
 
     // Init STUN settings for this account if the user selected it
-    if (stunEnabled_) {
-        transportType_ = PJSIP_TRANSPORT_START_OTHER;
+    if (stunEnabled_)
         initStunConfiguration();
-    } else {
+    else
         stunServerName_ = pj_str((char*) stunServer_.c_str());
-    }
 
     // In our definition of the ip2ip profile (aka Direct IP Calls),
     // no registration should be performed
