@@ -258,7 +258,7 @@ Call::getNullDetails()
     return {
         {DRing::Call::Details::CALL_TYPE,        "0"},
         {DRing::Call::Details::PEER_NUMBER,      ""},
-        {DRing::Call::Details::DISPLAY_NAME,     "Unknown"},
+        {DRing::Call::Details::DISPLAY_NAME,     ""},
         {DRing::Call::Details::CALL_STATE,       "UNKNOWN"},
         {DRing::Call::Details::CONF_ID,          ""},
         {DRing::Call::Details::TIMESTAMP_START,  ""},
