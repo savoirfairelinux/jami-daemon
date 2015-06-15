@@ -733,24 +733,24 @@ SipsIceTransport::setup()
 {
     RING_WARN("Starting GnuTLS thread");
 
+    // permit incoming packets
+    ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
+            {
+                std::lock_guard<std::mutex> l(inputBuffMtx_);
+                tlsInputBuff_.emplace_back(buf, buf+len);
+                canRead_ = true;
+                RING_DBG("Ice: got data at %lu",
+                         clock::now().time_since_epoch().count());
+            }
+            cv_.notify_all();
+            return len;
+        });
+
     if (is_server_) {
         gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
         state_ = TlsConnectionState::COOKIE;
         return true;
     }
-
-    // permit incoming packets
-    ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
-        {
-            std::lock_guard<std::mutex> l(inputBuffMtx_);
-            tlsInputBuff_.emplace_back(buf, buf+len);
-            canRead_ = true;
-            RING_DBG("Ice: got data at %lu",
-                     clock::now().time_since_epoch().count());
-        }
-        cv_.notify_all();
-        return len;
-        });
 
     return startTlsSession() == PJ_SUCCESS;
 }
