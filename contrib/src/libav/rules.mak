@@ -90,7 +90,7 @@ endif
 ifdef HAVE_CROSS_COMPILE
 LIBAVCONF += --enable-cross-compile
 ifndef HAVE_DARWIN_OS
-LIBAVCONF += --cross-prefix=$(HOST)-
+LIBAVCONF += --cross-prefix=$(CROSS_COMPILE)
 endif
 endif
 
@@ -186,7 +186,7 @@ libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 
 .libav: libav
 	cd $< && $(HOSTVARS) ./configure \
-		--extra-ldflags="$(LDFLAGS)" $(LIBAVCONF) \
+		$(LIBAVCONF) \
 		--prefix="$(PREFIX)" --enable-static --disable-shared
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@

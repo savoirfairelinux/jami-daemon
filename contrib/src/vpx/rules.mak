@@ -20,7 +20,7 @@ libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
 DEPS_vpx =
 
 ifdef HAVE_CROSS_COMPILE
-VPX_CROSS := $(HOST)-
+VPX_CROSS := $(CROSS_COMPILE)
 else
 VPX_CROSS :=
 endif
@@ -96,7 +96,7 @@ endif
 ifdef HAVE_ANDROID
 # vpx configure.sh overrides our sysroot and it looks for it itself, and
 # uses that path to look for the compiler (which we already know)
-VPX_CONF += --sdk-path=$(shell dirname $(shell which $(HOST)-gcc))
+VPX_CONF += --sdk-path=$(shell dirname $(shell which $(CROSS_COMPILE)gcc))
 # needed for cpu-features.h
 VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
 endif
