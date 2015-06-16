@@ -42,7 +42,7 @@ HAVE_WIN64 := 1
 endif
 
 ifdef HAVE_CROSS_COMPILE
-PKG_CONFIG ?= $(HOST)-pkg-config --static
+PKG_CONFIG ?= $(CROSS_COMPILE)pkg-config --static
 PKG_CONFIG_PATH_CUSTOM = $(PREFIX)/lib/pkgconfig
 export PKG_CONFIG_PATH_CUSTOM
 else
@@ -81,22 +81,22 @@ STRIP := strip
 endif
 else
 ifneq ($(findstring $(origin CC),undefined default),)
-CC := $(HOST)-gcc
+CC := $(CROSS_COMPILE)gcc
 endif
 ifneq ($(findstring $(origin CXX),undefined default),)
-CXX := $(HOST)-g++
+CXX := $(CROSS_COMPILE)g++
 endif
 ifneq ($(findstring $(origin LD),undefined default),)
-LD := $(HOST)-ld
+LD := $(CROSS_COMPILE)ld
 endif
 ifneq ($(findstring $(origin AR),undefined default),)
-AR := $(HOST)-ar
+AR := $(CROSS_COMPILE)ar
 endif
 ifneq ($(findstring $(origin RANLIB),undefined default),)
-RANLIB := $(HOST)-ranlib
+RANLIB := $(CROSS_COMPILE)ranlib
 endif
 ifneq ($(findstring $(origin STRIP),undefined default),)
-STRIP := $(HOST)-strip
+STRIP := $(CROSS_COMPILE)strip
 endif
 endif
 
@@ -430,7 +430,7 @@ else
 endif
 endif
 ifdef HAVE_CROSS_COMPILE
-	echo "set(_CMAKE_TOOLCHAIN_PREFIX $(HOST)-)" >> $@
+	echo "set(_CMAKE_TOOLCHAIN_PREFIX $(CROSS_COMPILE))" >> $@
 ifdef HAVE_ANDROID
 # cmake will overwrite our --sysroot with a native (host) one on Darwin
 # Set it to "" right away to short-circuit this behaviour
