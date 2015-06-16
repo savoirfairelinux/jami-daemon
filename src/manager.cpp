@@ -563,7 +563,7 @@ Manager::hangupCall(const std::string& callId)
     stopTone();
 
     RING_DBG("Send call state change (HUNGUP) for id %s", callId.c_str());
-    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP", 0);
+    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP", ECONNABORTED);
 
     /* We often get here when the call was hungup before being created */
     auto call = getCallFromCallID(callId);
@@ -781,7 +781,7 @@ Manager::refuseCall(const std::string& id)
 
     removeWaitingCall(id);
 
-    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP", 0);
+    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP", ECONNABORTED);
 
     // Disconnect streams
     removeStream(*call);
@@ -1777,7 +1777,7 @@ Manager::peerHungupCall(Call& call)
 
     call.peerHungup();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP", 0);
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP", ECONNREFUSED);
 
     checkAudio();
     removeWaitingCall(call_id);
