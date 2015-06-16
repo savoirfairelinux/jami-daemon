@@ -42,7 +42,11 @@ HAVE_WIN64 := 1
 endif
 
 ifdef HAVE_CROSS_COMPILE
+ifdef HAVE_ANDROID
+PKG_CONFIG ?= pkg-config --static
+else
 PKG_CONFIG ?= $(HOST)-pkg-config --static
+endif
 PKG_CONFIG_PATH_CUSTOM = $(PREFIX)/lib/pkgconfig
 export PKG_CONFIG_PATH_CUSTOM
 else
