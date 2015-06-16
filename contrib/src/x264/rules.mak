@@ -23,7 +23,7 @@ else
 X264CONF += --enable-win32thread
 endif
 ifdef HAVE_CROSS_COMPILE
-X264CONF += --cross-prefix="$(HOST)-"
+X264CONF += --cross-prefix="$(CROSS_COMPILE)"
 endif
 
 $(TARBALLS)/x264-$(X264_HASH).tar.xz:
