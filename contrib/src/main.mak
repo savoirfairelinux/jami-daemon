@@ -42,7 +42,11 @@ HAVE_WIN64 := 1
 endif
 
 ifdef HAVE_CROSS_COMPILE
+ifdef HAVE_WIN32
 PKG_CONFIG ?= $(CROSS_COMPILE)pkg-config --static
+else
+PKG_CONFIG ?= pkg-config --static
+endif
 PKG_CONFIG_PATH_CUSTOM = $(PREFIX)/lib/pkgconfig
 export PKG_CONFIG_PATH_CUSTOM
 else
@@ -175,7 +179,7 @@ cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 EXTRA_CFLAGS += -I$(PREFIX)/include
 CPPFLAGS := $(CPPFLAGS) $(EXTRA_CFLAGS)
 CFLAGS := $(CFLAGS) $(EXTRA_CFLAGS) -g
-CXXFLAGS := $(CXXFLAGS) $(EXTRA_CFLAGS) $(EXTRA_CXXFLAGS) -g
+CXXFLAGS := $(CXXFLAGS) $(EXTRA_CXXFLAGS) -g
 EXTRA_LDFLAGS += -L$(PREFIX)/lib
 LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 # Do not export those! Use HOSTVARS.
