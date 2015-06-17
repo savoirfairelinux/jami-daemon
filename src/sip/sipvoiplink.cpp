@@ -812,14 +812,15 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
     } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
         switch (inv->cause) {
                 // The call terminates normally - BYE / CANCEL
+
+            case PJSIP_SC_DECLINE: //When the peer manually refuse the call
+                if (inv->role != PJSIP_ROLE_UAC)
+                    break;
+
             case PJSIP_SC_OK:
             case PJSIP_SC_REQUEST_TERMINATED:
                 call->onClosed();
                 break;
-
-            case PJSIP_SC_DECLINE:
-                if (inv->role != PJSIP_ROLE_UAC)
-                    break;
 
             case PJSIP_SC_NOT_FOUND:
             case PJSIP_SC_REQUEST_TIMEOUT:
