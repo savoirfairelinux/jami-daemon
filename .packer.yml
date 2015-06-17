@@ -22,3 +22,23 @@ debian_8:
     debian: debian
     ccache: true
     type: docker
+ubuntu_14.04_i386:
+    debian: debian
+    ccache: true
+    type: docker
+ubuntu_14.10_i386:
+    debian: debian
+    ccache: true
+    type: docker
+ubuntu_15.04_i386:
+    debian: debian
+    ccache: true
+    type: docker
+fedora_21_i386:
+    spec: ring-daemon.spec
+    ccache: true
+    type: docker
+debian_8_i386:
+    debian: debian
+    ccache: true
+    type: docker
