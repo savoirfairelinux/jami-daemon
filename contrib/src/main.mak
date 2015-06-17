@@ -104,8 +104,8 @@ endif
 endif
 
 ifdef HAVE_ANDROID
-CC :=  $(HOST)-gcc --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
-CXX := $(HOST)-g++ --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
+CC :=  $(CROSS_COMPILE)gcc --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
+CXX := $(CROSS_COMPILE)g++ --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
 endif
 
 ifdef HAVE_MACOSX
@@ -116,14 +116,14 @@ AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_CFLAGS += -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
+EXTRA_CPPFLAGS += -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
 EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc++
 EXTRA_LDFLAGS += -Wl,-syslibroot,$(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -isysroot $(MACOSX_SDK) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
 ifeq ($(ARCH),x86_64)
-EXTRA_CFLAGS += -m64
+EXTRA_CPPFLAGS += -m64
 EXTRA_LDFLAGS += -m64
 else
-EXTRA_CFLAGS += -m32
+EXTRA_CPPFLAGS += -m32
 EXTRA_LDFLAGS += -m32
 endif
 
@@ -165,20 +165,20 @@ endif
 
 ifdef HAVE_SOLARIS
 ifeq ($(ARCH),x86_64)
-EXTRA_CFLAGS += -m64
+EXTRA_CPPFLAGS += -m64
 EXTRA_LDFLAGS += -m64
 else
-EXTRA_CFLAGS += -m32
+EXTRA_CPPFLAGS += -m32
 EXTRA_LDFLAGS += -m32
 endif
 endif
 
 cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 
-EXTRA_CFLAGS += -I$(PREFIX)/include
-CPPFLAGS := $(CPPFLAGS) $(EXTRA_CFLAGS)
-CFLAGS := $(CFLAGS) $(EXTRA_CFLAGS) -g
-CXXFLAGS := $(CXXFLAGS) $(EXTRA_CFLAGS) $(EXTRA_CXXFLAGS) -g
+EXTRA_CPPFLAGS += -I$(PREFIX)/include
+CPPFLAGS := $(CPPFLAGS) $(EXTRA_CPPFLAGS)
+CFLAGS := $(CFLAGS) $(EXTRA_CFLAGS)
+CXXFLAGS := $(CXXFLAGS) $(EXTRA_CXXFLAGS)
 EXTRA_LDFLAGS += -L$(PREFIX)/lib
 LDFLAGS := $(LDFLAGS) $(EXTRA_LDFLAGS)
 # Do not export those! Use HOSTVARS.
