@@ -24,7 +24,6 @@ VPATH := $(TARBALLS)
 GNU := http://ftpmirror.gnu.org/
 SF := http://heanet.dl.sourceforge.net/sourceforge
 CONTRIB_VIDEOLAN ?= http://downloads.videolan.org/pub/contrib
-GNUTELEPHONY := https://github.com/dyfet
 
 #
 # Machine-dependent variables
@@ -380,7 +379,7 @@ distclean: clean
 ring-contrib-$(HOST)-latest.tar.bz2:
 	$(call download,$(PREBUILT_URL))
 
-prebuilt: sflphone-contrib-$(HOST)-latest.tar.bz2
+prebuilt: ring-contrib-$(HOST)-latest.tar.bz2
 	-$(UNPACK)
 	mv $(HOST) $(TOPDST)
 	cd $(TOPDST)/$(HOST) && $(SRC)/change_prefix.sh
