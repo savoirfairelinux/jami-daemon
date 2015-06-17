@@ -1204,6 +1204,43 @@ int SIPVoIPLink::getModId()
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 { sdp_create_offer_cb(inv, p_offer); }
 
+// Thread-safe DNS resolver callback mapping
+class SafeResolveCallbackMap {
+    public:
+        using ResolveCallback = std::function<void(pj_status_t, const pjsip_server_addresses*)>;
+
+        void registerCallback(uintptr_t key, ResolveCallback&& cb) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            cbMap_.emplace(key, std::move(cb));
+        }
+
+        void process(uintptr_t key, pj_status_t status, const pjsip_server_addresses* addr) {
+            std::lock_guard<std::mutex> lk(mutex_);
+            auto it = cbMap_.find(key);
+            if (it != cbMap_.end()) {
+                it->second(status, addr);
+                cbMap_.erase(it);
+            }
+        }
+
+    private:
+        std::mutex mutex_;
+        std::map<uintptr_t, ResolveCallback> cbMap_;
+};
+
+static SafeResolveCallbackMap&
+getResolveCallbackMap()
+{
+    static SafeResolveCallbackMap map;
+    return map;
+}
+
+static void
+resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses* addr)
+{
+    getResolveCallbackMap().process((uintptr_t)token, status, addr);
+}
+
 void
 SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
@@ -1232,10 +1269,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
         .addr = {{(char*)name.c_str(), name_size}, port},
     };
 
-    auto token = std::hash<std::string>()(name + to_string(type));
-    {
-        std::lock_guard<std::mutex> lock(resolveMutex_);
-        resolveCallbacks_[token] = [cb](pj_status_t s, const pjsip_server_addresses* r) {
+    const auto token = std::hash<std::string>()(name + to_string(type));
+    getResolveCallbackMap().registerCallback(token,
+        [cb](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
                     sip_utils::sip_strerror(s);
@@ -1251,24 +1287,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
                 RING_ERR("Error resolving address: %s", e.what());
                 cb({});
             }
-        };
-    }
+        });
 
     pjsip_endpt_resolve(endpt_, pool_, &host_info, (void*)token, resolver_callback);
-}
-
-void
-SIPVoIPLink::resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr)
-{
-    if (auto link = getSIPVoIPLink()) {
-        std::lock_guard<std::mutex> lock(link->resolveMutex_);
-        auto it = link->resolveCallbacks_.find((uintptr_t)token);
-        if (it != link->resolveCallbacks_.end()) {
-            it->second(status, addr);
-            link->resolveCallbacks_.erase(it);
-        }
-    } else
-        RING_ERR("no more VoIP link");
 }
 
 #define RETURN_IF_NULL(A, M, ...) \
