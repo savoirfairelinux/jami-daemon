@@ -584,11 +584,8 @@ SIPVoIPLink::SIPVoIPLink()
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    // ready to handle events
-    // Implementation note: we don't use std::bind(xxx, this) here
-    // as handleEvents needs a valid instance to be called.
-    Manager::instance().registerEventHandler((uintptr_t)this,
-                                             [this]{ handleEvents(); });
+    // Run the VoIP events handling loop (PJSIP IO/timers)
+    voipThread_ = std::thread([this]{ voipTask(); });
 
     RING_DBG("SIPVoIPLink@%p", this);
 }
@@ -607,22 +604,52 @@ SIPVoIPLink::~SIPVoIPLink()
     sipTransportBroker->shutdown();
 
     const int MAX_TIMEOUT_ON_LEAVING = 5;
+    RING_DBG("waiting for SIP tx layer termination (%us)", MAX_TIMEOUT_ON_LEAVING);
     for (int timeout = 0;
          pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
          timeout++)
         sleep(1);
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
-    handleEvents();
+
+    // Wake up event handler by fire a small timer
+    RING_DBG("request SIP thread termination");
+    voipThreadRunning_ = false;
+    pj_timer_entry timer;
+    pj_time_val tv {.sec=0, .msec=1};
+    pj_timer_entry_init(&timer, 0, this, [](pj_timer_heap_t* timer_heap,
+                                            struct pj_timer_entry* entry){});
+    pjsip_endpt_schedule_timer(endpt_, &timer, &tv);
+    if (voipThread_.joinable())
+        voipThread_.join();
 
     sipTransportBroker.reset();
-
     pjsip_endpt_destroy(endpt_);
     pj_pool_release(pool_);
     pj_caching_pool_destroy(cp_);
 
-    RING_DBG("destroying SIPVoIPLink@%p", this);
+    RING_WARN("destroying SIPVoIPLink@%p", this);
+}
+
+void
+SIPVoIPLink::voipTask()
+{
+    // We have to register the external thread so it could access the pjsip frameworks
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+    static thread_local pj_thread_desc desc;
+    static thread_local pj_thread_t *this_thread;
+#else
+    static __thread pj_thread_desc desc;
+    static __thread pj_thread_t *this_thread;
+#endif
+    pj_thread_register(NULL, desc, &this_thread);
+    RING_DBG("registered SIP VoIP thread %p (process=%u)", this_thread, pj_getpid());
+
+    while (voipThreadRunning_) {
+        handleEvents(); // fully blocking call
+    }
+
+    RING_WARN("end of SIP VoIP thread");
 }
 
 std::shared_ptr<SIPAccountBase>
@@ -671,25 +698,11 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     return result;
 }
 
-// Called from EventThread::run (not main thread)
+// Called from SIP VoIP thread
 void
 SIPVoIPLink::handleEvents()
 {
-    // We have to register the external thread so it could access the pjsip frameworks
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
-#endif
-        RING_DBG("Registering thread");
-        pj_thread_register(NULL, desc, &this_thread);
-    }
-
-    static const pj_time_val timeout = {0, 0}; // polling
-    auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
+    auto ret = pjsip_endpt_handle_events(endpt_, nullptr); // blocking call
     if (ret != PJ_SUCCESS)
         sip_utils::sip_strerror(ret);
 
@@ -729,18 +742,16 @@ void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 }
 
 #ifdef RING_VIDEO
-// Called from a video thread
+// Called outside of SIP thread
 void
 SIPVoIPLink::enqueueKeyframeRequest(const std::string &id)
 {
     if (auto link = getSIPVoIPLink()) {
         std::lock_guard<std::mutex> lock(link->keyframeRequestsMutex_);
         link->keyframeRequests_.push(id);
-    } else
-        RING_ERR("no more VoIP link");
+    }
 }
 
-// Called from SIP event thread
 void
 SIPVoIPLink::dequeKeyframeRequests()
 {
@@ -754,7 +765,6 @@ SIPVoIPLink::dequeKeyframeRequests()
     }
 }
 
-// Called from SIP event thread
 void
 SIPVoIPLink::requestKeyframe(const std::string &callID)
 {

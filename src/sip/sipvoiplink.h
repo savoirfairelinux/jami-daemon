@@ -58,6 +58,8 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <thread>
+#include <atomic>
 
 namespace ring {
 
@@ -86,11 +88,6 @@ class SIPVoIPLink {
         SIPVoIPLink();
         ~SIPVoIPLink();
 
-        /**
-         * Event listener. Each event send by the call manager is received and handled from here
-         */
-        void handleEvents();
-
         /* Returns a list of all callIDs */
         std::vector<std::string> getCallIDs();
 
@@ -114,7 +111,6 @@ class SIPVoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-    public:
         static void createSDPOffer(pjsip_inv_session *inv,
                                    pjmedia_sdp_session **p_offer);
 
@@ -181,6 +177,12 @@ class SIPVoIPLink {
         NON_COPYABLE(SIPVoIPLink);
 
         static pj_caching_pool* cp_;
+
+        // SIP thread members
+        std::thread voipThread_;
+        std::atomic_bool voipThreadRunning_ {true};
+        void voipTask();
+        void handleEvents();
 
 #ifdef RING_VIDEO
         void dequeKeyframeRequests();
