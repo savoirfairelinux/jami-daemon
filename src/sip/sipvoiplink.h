@@ -129,7 +129,6 @@ class SIPVoIPLink {
 
         typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
         void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb);
-        static void resolver_callback(pj_status_t status, void *token, const struct pjsip_server_addresses *addr);
 
         /**
          * Guess the account related to an incoming SIP call.
@@ -181,17 +180,14 @@ class SIPVoIPLink {
     private:
         NON_COPYABLE(SIPVoIPLink);
 
+        static pj_caching_pool* cp_;
+
 #ifdef RING_VIDEO
         void dequeKeyframeRequests();
         void requestKeyframe(const std::string &callID);
         std::mutex keyframeRequestsMutex_ {};
         std::queue<std::string> keyframeRequests_ {};
 #endif
-
-        static pj_caching_pool* cp_;
-
-        std::mutex resolveMutex_ {};
-        std::map<uintptr_t, std::function<void(pj_status_t, const pjsip_server_addresses*)>> resolveCallbacks_;
 
         friend class SIPTest;
 };
