@@ -1,30 +1,9 @@
 #!/bin/sh
-
 set -e
 
-available()
-{
-  command -v "$1" >/dev/null/ 2>&1
-}
-
-DISTRIB_ID = $(shell grep -hPo "^ID=\K.*" /etc/*ease)
-DISTRIB_VERSION_ID = $(shell grep -hPo "^VERSION_ID=\K.*" /etc/*ease)
-
-
-case "$1" in
-
-configure)
- if [ "$RET" = true ]; then
-  if [ ! -f /etc/apt/sources.list.d/ring-nightly.list ]; then
-   cat >/etc/apt/sources.list.d/ring-nightly.list <<EOF
-
-   deb [arch=amd64] http://nightly.apt.ring.cx/$(DISTRIB_ID)_$(DISTRIB_VERSION_ID) ring main
-   EOF
-  fi
- fi
- if available apt-key
- then
-   apt-key add - >/dev/null <<EOF
+if hash apt-key
+then
+    apt-key add - >/dev/null <<EOF
 -----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: GnuPG v2
 
@@ -62,20 +41,5 @@ HUFCGSHO3/kzxSlkE1PBUX3IZ8PSFijyopBnWUhlSXuyRjte8OR7Fl/Rlf0IaOD1
 4sRdAfS333T4Uifq4uOu
 =s2aQ
 -----END PGP PUBLIC KEY BLOCK-----
-
 EOF
-    fi
-  ;;
-
-  abort-upgrade|abort-remove|abort-deconfigure)
-    exit 0
-  ;;
-
-  *)
-    echo "postinst called with unknown argument \`$1'" >&2
-    exit 1
-  ;;
-
-esac
-
-exit 0
+fi
