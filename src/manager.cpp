@@ -153,6 +153,7 @@ setSipLogLevel()
     }
 
     pj_log_set_level(level);
+    RING_INFO("PJSIP log level at %u", pj_log_get_level());
 }
 
 #if HAVE_TLS

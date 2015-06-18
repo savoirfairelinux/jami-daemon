@@ -45,6 +45,7 @@
 
 #include <pjsip/sip_types.h>
 #include <opendht/value.h>
+#include <logger.h>
 
 #include <array>
 #include <vector>
@@ -176,6 +177,7 @@ public:
     void setPublishedAddress(const IpAddr& ip_addr) {
         publishedIp_ = ip_addr;
         publishedIpAddress_ = ip_addr.toString();
+        RING_ERR("publish ip changed");
     }
 
     /**

@@ -470,6 +470,8 @@ void SIPAccount::usePublishedAddressPortInVIA()
     via_addr_.host.ptr = (char *) publishedIpAddress_.c_str();
     via_addr_.host.slen = publishedIpAddress_.size();
     via_addr_.port = publishedPort_;
+    RING_ERR("via: %p pub", via_addr_.host.ptr);
+    RING_DBG("%s", via_addr_.host.ptr);
 }
 
 void SIPAccount::useUPnPAddressPortInVIA()
@@ -478,6 +480,7 @@ void SIPAccount::useUPnPAddressPortInVIA()
     via_addr_.host.ptr = (char *) upnpIpAddr_.c_str();
     via_addr_.host.slen = upnpIpAddr_.size();
     via_addr_.port = publishedPortUsed_;
+    RING_ERR("via: %p upnp", via_addr_.host.ptr);
 }
 
 template <typename T>
@@ -1875,6 +1878,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
      * from the response.
      */
     if (allowViaRewrite_ and (via_addr_.host.slen == 0 or via_tp_ != tp)) {
+        RING_ERR("via: %p", via_addr_.host.ptr);
+        RING_ERR("via: %s", via_addr_.host.ptr);
+        RING_ERR("via: %p", via_addr->ptr);
+        RING_ERR("via: %s", via_addr->ptr);
         if (pj_strcmp(&via_addr_.host, via_addr))
             pj_strdup(pool, &via_addr_.host, via_addr);
 
