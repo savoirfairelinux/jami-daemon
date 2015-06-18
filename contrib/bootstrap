@@ -105,6 +105,7 @@ cat >&3 << EOF
 # Any change will be overwritten if ../bootstrap is run again.
 BUILD := $BUILD
 HOST := $HOST
+CROSS_COMPILE ?= $HOST-
 PKGS_DISABLE := $PKGS_DISABLE
 PKGS_ENABLE := $PKGS_ENABLE
 EOF
