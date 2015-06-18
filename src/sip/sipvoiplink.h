@@ -58,6 +58,8 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <thread>
+#include <atomic>
 
 namespace ring {
 
@@ -86,11 +88,6 @@ class SIPVoIPLink {
         SIPVoIPLink();
         ~SIPVoIPLink();
 
-        /**
-         * Event listener. Each event send by the call manager is received and handled from here
-         */
-        void handleEvents();
-
         /* Returns a list of all callIDs */
         std::vector<std::string> getCallIDs();
 
@@ -114,7 +111,6 @@ class SIPVoIPLink {
          */
         void createDefaultSipUdpTransport();
 
-    public:
         static void createSDPOffer(pjsip_inv_session *inv,
                                    pjmedia_sdp_session **p_offer);
 
@@ -177,10 +173,24 @@ class SIPVoIPLink {
             return tp;
         }
 
+        /**
+         * Reserved for internal usage
+         */
+        void registerSIPThreadWakeUpSocket_();
+
     private:
         NON_COPYABLE(SIPVoIPLink);
 
         static pj_caching_pool* cp_;
+
+        // SIP thread members
+        std::thread voipThread_;
+        std::atomic_bool voipThreadRunning_ {true};
+        pj_sock_t voipTWakeUpSock_ = PJ_INVALID_SOCKET;
+        pj_ioqueue_key_t* voipTWakeUpKey_ = nullptr;
+        char voipTWakeUpBuf_;
+        pj_ioqueue_op_key_t voipTWakeUpReadOp_;
+        void voipTask();
 
 #ifdef RING_VIDEO
         void dequeKeyframeRequests();
