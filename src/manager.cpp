@@ -1777,7 +1777,11 @@ Manager::peerHungupCall(Call& call)
 
     call.peerHungup();
 
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP", ECONNREFUSED);
+    const auto st = call.getState();
+    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP",
+        (st == Call::CallState::ACTIVE || st == Call::CallState::HOLD) ?
+            ECONNABORTED : ECONNREFUSED
+    );
 
     checkAudio();
     removeWaitingCall(call_id);
