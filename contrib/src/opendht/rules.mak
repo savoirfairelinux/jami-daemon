@@ -26,6 +26,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz .sum-opendht
 
 .opendht: opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --disable-tools $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
