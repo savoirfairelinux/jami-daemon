@@ -190,7 +190,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
         throw std::runtime_error("Can't register PJSIP transport.");
 
     gnutls_priority_init(&priority_cache,
-                         "SECURE192:-VERS-TLS-ALL:+VERS-DTLS1.0:%SERVER_PRECEDENCE",
+                         "SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE",
                          nullptr);
 
     tlsThread_.start();
@@ -578,6 +578,7 @@ SipsIceTransport::tryHandshake()
         status = PJ_EPENDING;
     } else {
         /* Fatal error invalidates session, no fallback */
+        RING_ERR("TLS fatal error : %s", gnutls_strerror(ret));
         status = PJ_EINVAL;
     }
     last_err_ = ret;
