@@ -99,8 +99,6 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     /*  ~/.local/{appname}/{accountID}    */
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     fileutils::check_dir(idPath_.c_str());
-    caPath_ = idPath_ + DIR_SEPARATOR_STR "certs";
-    caListPath_ = idPath_ + DIR_SEPARATOR_STR "ca_list.pem";
 }
 
 RingAccount::~RingAccount()
@@ -549,7 +547,7 @@ RingAccount::handleEvents()
             auto id = loadIdentity();
             auto remote_h = c->from;
             tls::TlsParams tlsParams {
-                .ca_list = caListPath_,
+                .ca_list = "",
                 .id = id.second,
                 .dh_params = dhParams_,
                 .timeout = std::chrono::seconds(30),
@@ -702,6 +700,16 @@ void RingAccount::doRegister_()
             }
         });
 
+        dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
+            auto& store = tls::CertificateStore::instance();
+            auto cert = store.getCertificate(pk_id.toString());
+            std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
+            if (cert)
+                ret.emplace_back(std::move(cert));
+            RING_DBG("Query for local certificate store: %s: %d found.", pk_id.toString().c_str(), ret.size());
+            return ret;
+        });
+
 #if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
@@ -724,7 +732,6 @@ void RingAccount::doRegister_()
         Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
 
-        regenerateCAList();
         dht_.bootstrap(loadNodes());
         if (!hostname_.empty()) {
             std::stringstream ss(hostname_);
@@ -1058,12 +1065,6 @@ RingAccount::loadValues() const
     return values;
 }
 
-void
-RingAccount::initTlsConfiguration()
-{
-    regenerateCAList();
-}
-
 static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
 getNewDhParams()
 {
@@ -1097,12 +1098,6 @@ RingAccount::generateDhParams()
     dhParams_ = task.get_future();
     std::thread task_td(std::move(task));
     task_td.detach();
-}
-
-void RingAccount::loadConfig()
-{
-    RING_WARN("RingAccount::loadConfig()");
-    initTlsConfiguration();
 }
 
 MatchRank
@@ -1215,28 +1210,6 @@ RingAccount::sendTrustRequest(const std::string& to)
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS));
-}
-
-void
-RingAccount::regenerateCAList()
-{
-    std::ofstream list(caListPath_, std::ios::trunc | std::ios::binary);
-    if (!list.is_open()) {
-        RING_ERR("Could write CA list");
-        return;
-    }
-
-    {
-        std::ifstream file(tlsCaListFile_, std::ios::binary);
-        list << file.rdbuf();
-    }
-
-    for (const auto& ca : fileutils::readDirectory(caPath_)) {
-        std::ifstream file(ca, std::ios::binary);
-        if (!file)
-            continue;
-        list << file.rdbuf();
-    }
 }
 
 } // namespace ring
