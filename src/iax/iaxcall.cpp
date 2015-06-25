@@ -194,7 +194,7 @@ IAXCall::attendedTransfer(const std::string& /*targetID*/)
     return false; // TODO
 }
 
-void
+bool
 IAXCall::onhold()
 {
     Manager::instance().getRingBufferPool().unBindAll(getCallId());
@@ -204,12 +204,14 @@ IAXCall::onhold()
         iax_quelch_moh(session, true);
     }
 
-    setState(Call::CallState::HOLD);
+    return setState(Call::CallState::HOLD);
 }
 
-void
+bool
 IAXCall::offhold()
 {
+    bool success = false;
+
     Manager::instance().addStream(*this);
 
     {
@@ -217,9 +219,10 @@ IAXCall::offhold()
         iax_unquelch(session);
     }
 
-    setState(Call::CallState::ACTIVE);
+    if (success = setState(Call::CallState::ACTIVE))
+        Manager::instance().startAudioDriverStream();
 
-    Manager::instance().startAudioDriverStream();
+    return success;
 }
 
 void
