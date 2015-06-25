@@ -36,6 +36,8 @@
 #include "logger.h"
 #include "system_codec_container.h"
 
+#include <sstream>
+
 namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
@@ -126,31 +128,30 @@ SystemCodecContainer::checkInstalledCodecs()
     std::string codecName;
     CodecType codecType;
 
+    std::stringstream enc_ss;
+    std::stringstream dec_ss;
+
     for (const auto& codecIt: availableCodecList_) {
         codecId = (AVCodecID)codecIt->avcodecId;
         codecName = codecIt->name;
         codecType = codecIt->codecType;
 
-        RING_INFO("Checking codec %s", codecName.c_str());
-
         if (codecType & CODEC_ENCODER) {
-            if (avcodec_find_encoder(codecId) != nullptr) {
-                RING_INFO("### Found encoder %s", codecIt->to_string().c_str());
-            } else {
-                RING_ERR("Can not find encoder for codec  %s", codecName.c_str());
+            if (avcodec_find_encoder(codecId) != nullptr)
+                enc_ss << codecName << " ";
+            else
                 codecIt->codecType = (CodecType)((unsigned)codecType & ~CODEC_ENCODER);
-            }
         }
 
         if (codecType & CODEC_DECODER) {
-            if (avcodec_find_decoder(codecId) != nullptr) {
-                RING_INFO("### Found decoder %s", codecIt->to_string().c_str());
-            } else {
-                RING_ERR("Can not find decoder for codec  %s", codecName.c_str());
+            if (avcodec_find_decoder(codecId) != nullptr)
+                dec_ss << codecName << " ";
+            else
                 codecIt->codecType = (CodecType)((unsigned)codecType & ~CODEC_DECODER);
-            }
         }
     }
+    RING_INFO("Found encoders : %s", enc_ss.str().c_str());
+    RING_INFO("Found decoders : %s", dec_ss.str().c_str());
 }
 
 std::vector<std::shared_ptr<SystemCodecInfo>>
