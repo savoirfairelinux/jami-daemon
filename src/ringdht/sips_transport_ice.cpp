@@ -284,16 +284,15 @@ SipsIceTransport::startTlsSession()
         if (ret < 0)
             throw std::runtime_error("Can't load CA.");
         RING_WARN("Loaded %s", param_.ca_list.c_str());
-
-        if (param_.id.first) {
-            /* Load certificate, key and pass */
-            ret = gnutls_certificate_set_x509_key(certCred,
-                                                  &param_.id.second->cert, 1,
-                                                  param_.id.first->x509_key);
-            if (ret < 0)
-                throw std::runtime_error("Can't load certificate : "
-                                         + std::string(gnutls_strerror(ret)));
-        }
+    }
+    if (param_.id.first) {
+        /* Load certificate, key and pass */
+        ret = gnutls_certificate_set_x509_key(certCred,
+                                              &param_.id.second->cert, 1,
+                                              param_.id.first->x509_key);
+        if (ret < 0)
+            throw std::runtime_error("Can't load certificate : "
+                                     + std::string(gnutls_strerror(ret)));
     }
 
     /* Finally set credentials for this session */

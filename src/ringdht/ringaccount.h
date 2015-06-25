@@ -118,7 +118,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Actually useless, since config loading is done in init()
          */
-        void loadConfig();
+        void loadConfig() {}
 
         /**
          * Connect to the DHT.
@@ -291,8 +291,6 @@ class RingAccount : public SIPAccountBase {
          */
         bool mapPortUPnP();
 
-        void regenerateCAList();
-
         dht::DhtRunner dht_ {};
 
         dht::InfoHash callKey_;
@@ -326,8 +324,6 @@ class RingAccount : public SIPAccountBase {
         std::string idPath_ {};
         std::string cachePath_ {};
         std::string dataPath_ {};
-        std::string caPath_ {};
-        std::string caListPath_ {};
 
         struct TrustRequest {
             dht::InfoHash from;
@@ -359,11 +355,6 @@ class RingAccount : public SIPAccountBase {
         std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity> loadIdentity();
         std::vector<dht::Dht::NodeExport> loadNodes() const;
         std::vector<dht::Dht::ValuesExport> loadValues() const;
-
-        /**
-         * Initializes tls settings from configuration file.
-         */
-        void initTlsConfiguration();
 
         bool dhtPublicInCalls_ {true};
 
