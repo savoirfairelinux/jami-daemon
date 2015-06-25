@@ -404,9 +404,9 @@ AC_ARG_WITH([tls],
   [],
   [with_tls=check])
 AS_CASE(["$with_tls"],
-  [yes], [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.1], [HAVE_GNUTLS=1])],
+  [yes], [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3], [HAVE_GNUTLS=1])],
   [no], [HAVE_GNUTLS=0],
-  [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.1], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])])
+  [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])])
 
 AC_DEFINE_UNQUOTED([HAVE_TLS], `if test $HAVE_GNUTLS -eq 1; then echo 1; else echo 0; fi`, [Define if you have tls support])
 AM_CONDITIONAL(BUILD_TLS, test "$HAVE_GNUTLS" -eq 1)

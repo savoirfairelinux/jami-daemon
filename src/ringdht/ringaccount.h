@@ -73,10 +73,6 @@ const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
 const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 }
 
-namespace tls {
-class GnuTlsGlobalInit;
-} // namespace tls
-
 class IceTransport;
 
 class RingAccount : public SIPAccountBase {
@@ -411,8 +407,6 @@ class RingAccount : public SIPAccountBase {
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};
         pjsip_transport *via_tp_ {nullptr};
-
-        std::unique_ptr<tls::GnuTlsGlobalInit> gtlsGIG_;
 };
 
 } // namespace ring

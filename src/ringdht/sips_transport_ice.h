@@ -58,8 +58,6 @@ class IceTransport;
 
 namespace ring { namespace tls {
 
-class GnuTlsGlobalInit;
-
 enum class TlsConnectionState {
     DISCONNECTED,
     COOKIE,
@@ -105,7 +103,6 @@ struct SipsIceTransport
     }
 
 private:
-    std::unique_ptr<GnuTlsGlobalInit> gtlsGIG_;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> rxPool_;
 

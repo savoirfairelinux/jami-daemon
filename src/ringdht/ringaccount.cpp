@@ -64,7 +64,6 @@
 #include "config/yamlparser.h"
 
 #include "security/certstore.h"
-#include "security/gnutls_support.h"
 
 #include <opendht/securedht.h>
 
@@ -89,7 +88,6 @@ constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
-    , gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();

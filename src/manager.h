@@ -68,10 +68,6 @@ class YamlParser;
 class YamlEmitter;
 }
 
-namespace tls {
-class GnuTlsGlobalInit;
-}
-
 namespace video {
 class SinkClient;
 }
@@ -1012,8 +1008,6 @@ class Manager {
 
         /* ICE support */
         std::unique_ptr<IceTransportFactory> ice_tf_;
-
-        std::unique_ptr<tls::GnuTlsGlobalInit> gnutlGIG_;
 
         /* Sink ID mapping */
         std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;

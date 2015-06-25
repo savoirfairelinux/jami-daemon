@@ -42,8 +42,6 @@
 #include "logger.h"
 #include "security_const.h"
 
-#include "gnutls_support.h"
-
 #include <sstream>
 #include <iomanip>
 
@@ -213,8 +211,7 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
 
 
 TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey)
-    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
-    , certificatePath_(certificate)
+    : certificatePath_(certificate)
     , privateKeyPath_(privatekey)
     , certificateFound_(false)
 {
@@ -236,8 +233,7 @@ TlsValidator::TlsValidator(const std::string& certificate, const std::string& pr
 }
 
 TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
-    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
-    , certificateFound_(true)
+    : certificateFound_(true)
 {
     try {
         x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
@@ -248,8 +244,7 @@ TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
 }
 
 TlsValidator::TlsValidator(const std::shared_ptr<dht::crypto::Certificate>& crt)
-    : gtlsGIG_ {tls::GnuTlsGlobalInit::make_guard()}
-    , certificateFound_(true)
+    : certificateFound_(true)
 {
     try {
         if (not crt)
