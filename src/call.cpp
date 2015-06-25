@@ -124,10 +124,11 @@ Call::validTransition(CallState newState)
 bool
 Call::setState(CallState state)
 {
+
     std::lock_guard<std::mutex> lock(callMutex_);
     if (not validTransition(state)) {
         assert((int)callState_ < enum_class_size<CallState>() && (int)state < enum_class_size<CallState>());
-        //RING_ERR("Invalid call state transition from %s to %s", states[callState_], states[state]);
+        RING_ERR("Invalid attempted call state transition from %d to %d", callState_, state);
         return false;
     }
 

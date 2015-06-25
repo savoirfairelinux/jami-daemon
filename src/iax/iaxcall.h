@@ -127,9 +127,9 @@ class IAXCall : public Call
 
         bool attendedTransfer(const std::string& to);
 
-        void onhold();
+        bool onhold();
 
-        void offhold();
+        bool offhold();
 
         //TODO: implement mute for IAX
         void muteMedia(const std::string& mediaType, bool isMuted) {}
