@@ -218,7 +218,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
             callkey,
             [=] (dht::IceCandidates&& msg) {
-                RING_DBG("Outcall listen callback");
                 if (msg.id != replyvid)
                     return true;
                 RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
@@ -876,13 +875,14 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
         [weak_call,shared,reply_vid](bool ok) {
             auto& this_ = *shared.get();
             if (!ok) {
-                RING_WARN("Can't put ICE descriptor on DHT");
+                RING_WARN("Can't put ICE descriptor reply on DHT");
                 if (auto call = weak_call.lock()) {
                     call->setConnectionState(Call::ConnectionState::DISCONNECTED);
                     Manager::instance().callFailure(*call);
                     call->removeCall();
                 }
-            }
+            } else
+                RING_DBG("Succesfully put ICE descriptor reply on DHT");
             this_.dht_.cancelPut(this_.callKey_, reply_vid);
         }
     );
