@@ -496,6 +496,7 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     if (hostname_ == "")
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
+    parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
@@ -506,6 +507,7 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
+    a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, ring::to_string(dhtPublicInCalls_));
 
     /* these settings cannot be changed (read only), but clients should still be
      * able to read what they are */
