@@ -21,9 +21,9 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/gnutls/no-create-time-h.patch
 endif
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/gnutls/gnutls-pkgconfig-osx.patch
-endif
+#ifdef HAVE_MACOSX
+#	$(APPLY) $(SRC)/gnutls/gnutls-pkgconfig-osx.patch
+#endif
 	$(APPLY) $(SRC)/gnutls/gnutls-no-egd.patch
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
 	$(APPLY) $(SRC)/gnutls/downgrade-automake-requirement.patch
