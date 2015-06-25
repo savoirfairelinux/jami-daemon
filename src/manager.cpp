@@ -622,32 +622,36 @@ Manager::onHoldCall(const std::string& callId)
 {
     bool result = true;
 
-    stopTone();
 
     std::string current_call_id(getCurrentCallId());
 
     if (auto call = getCallFromCallID(callId)) {
         try {
-            call->onhold();
-            removeStream(*call); // Unbind calls in main buffer
+            if (result = call->onhold()) {
+                stopTone();
+                removeStream(*call); // Unbind calls in main buffer
+            }
         } catch (const VoipLinkException &e) {
             RING_ERR("%s", e.what());
             result = false;
         }
+
     } else {
         RING_DBG("CallID %s doesn't exist in call onHold", callId.c_str());
         return false;
     }
 
-    // Remove call from teh queue if it was still there
-    removeWaitingCall(callId);
+    if (result) {
+        // Remove call from the queue if it was still there
+        removeWaitingCall(callId);
 
-    // keeps current call id if the action is not holding this call or a new outgoing call
-    // this could happen in case of a conference
-    if (current_call_id == callId)
-        unsetCurrentCall();
+        // keeps current call id if the action is not holding this call
+        // or a new outgoing call. This could happen in case of a conference
+        if (current_call_id == callId)
+            unsetCurrentCall();
 
-    emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD", 0);
+        emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD", 0);
+    }
 
     return result;
 }

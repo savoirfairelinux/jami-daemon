@@ -585,42 +585,48 @@ SIPCall::attendedTransfer(const std::string& to)
     return transferCommon(&dst);
 }
 
-void
+bool
 SIPCall::onhold()
 {
     if (not setState(CallState::HOLD))
-        return;
+        return false;
 
     stopAllMedia();
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS)
             RING_WARN("Reinvite failed");
+            // TODO: are we still on hold if the reinvite fails?
     }
+
+    return true;
 }
 
-void
+bool
 SIPCall::offhold()
 {
+    bool success = false;
     auto& account = getSIPAccount();
 
     try {
         if (account.isStunEnabled())
-            internalOffHold([&] { updateSDPFromSTUN(); });
+            success = internalOffHold([&] { updateSDPFromSTUN(); });
         else
-            internalOffHold([] {});
+            success = internalOffHold([] {});
 
     } catch (const SdpException &e) {
         RING_ERR("%s", e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
+
+    return success;
 }
 
-void
+bool
 SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 {
     if (not setState(CallState::ACTIVE))
-        return;
+        return false;
 
     sdp_cb();
 
@@ -628,8 +634,11 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
         if (SIPSessionReinvite() != PJ_SUCCESS) {
             RING_WARN("Reinvite failed, resuming hold");
             onhold();
+            return false;
         }
     }
+
+    return true;
 }
 
 void
