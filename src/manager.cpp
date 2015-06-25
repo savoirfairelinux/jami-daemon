@@ -80,10 +80,6 @@
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
 
-#if HAVE_TLS
-#include "security/gnutls_support.h"
-#endif
-
 #include "libav_utils.h"
 #include "video/sinkclient.h"
 
@@ -221,7 +217,6 @@ Manager::Manager() :
     , ringbufferpool_(new RingBufferPool)
     , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
-    , gnutlGIG_ {tls::GnuTlsGlobalInit::make_guard()}
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits

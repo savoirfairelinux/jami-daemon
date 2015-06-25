@@ -147,7 +147,6 @@ libring_la_SOURCES = conference.cpp \
 		string_utils.cpp \
 		rw_mutex.h \
 		ring_api.cpp \
-		gnutls_support.h \
 		rational.h
 
 if HAVE_WIN32

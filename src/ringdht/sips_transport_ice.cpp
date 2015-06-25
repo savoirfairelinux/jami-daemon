@@ -32,7 +32,6 @@
 #include "ice_transport.h"
 #include "manager.h"
 #include "logger.h"
-#include "security/gnutls_support.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
@@ -67,8 +66,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    const TlsParams& param,
                                    const std::shared_ptr<ring::IceTransport>& ice,
                                    int comp_id)
-    : gtlsGIG_ {GnuTlsGlobalInit::make_guard()}
-    , pool_  {nullptr, pj_pool_release}
+    : pool_  {nullptr, pj_pool_release}
     , rxPool_ (nullptr, pj_pool_release)
     , trData_ ()
     , ice_ (ice)
