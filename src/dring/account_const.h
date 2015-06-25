@@ -204,6 +204,7 @@ constexpr static const char NEGOTIATION_TIMEOUT_SEC    [] = "TLS.negotiationTime
 namespace DHT {
 
 constexpr static const char PORT               [] = "DHT.port";
+constexpr static const char PUBLIC_IN_CALLS    [] = "DHT.PublicInCalls";
 
 } //namespace DRing::Account::DHT
 
