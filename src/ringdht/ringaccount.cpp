@@ -107,7 +107,6 @@ RingAccount::~RingAccount()
 {
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     dht_.join();
-    gnutls_global_deinit();
 }
 
 std::shared_ptr<SIPCall>
