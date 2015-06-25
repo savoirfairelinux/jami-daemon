@@ -116,6 +116,11 @@ SystemCodecContainer::initCodecConfig()
                                                "PCMU" ,"pcm_mulaw",
                                                CODEC_ENCODER_DECODER,
                                                64, 8000, 1, 0),
+
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_GSM,
+                                               "GSM" ,"libgsm",
+                                               CODEC_ENCODER_DECODER,
+                                               64, 13000, 1, 0),
     };
 
     checkInstalledCodecs();
