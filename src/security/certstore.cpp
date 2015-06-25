@@ -58,7 +58,7 @@ CertificateStore::loadLocalCertificates(const std::string& path)
             auto id = crt.getId().toString();
             if (id != f)
                 throw std::logic_error({});
-            certs_.emplace(crt.getId().toString(), std::make_shared<crypto::Certificate>(std::move(crt)));
+            certs_.emplace(id, std::make_shared<crypto::Certificate>(std::move(crt)));
             ++n;
         } catch (const std::exception& e) {
             remove((path+DIR_SEPARATOR_CH+f).c_str());
@@ -304,6 +304,9 @@ TrustStore::getCertificatesByStatus(TrustStore::Status status)
 bool
 TrustStore::isTrusted(const crypto::Certificate& crt)
 {
+    if (getCertificateStatus(crt.getId().toString()) == Status::ALLOWED)
+        return true;
+
     updateKnownCerts();
     auto crts = getChain(crt);
     unsigned result = 0;
@@ -361,6 +364,9 @@ void
 TrustStore::setStoreCertStatus(const crypto::Certificate& crt,
                                TrustStore::Status status)
 {
+    if (not crt.isCA())
+        return;
+
     if (status == Status::ALLOWED)
         gnutls_x509_trust_list_add_cas(trust_, &crt.cert, 1, 0);
     else if (status == Status::BANNED)
