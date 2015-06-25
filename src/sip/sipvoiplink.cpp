@@ -1359,7 +1359,8 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
                    "Transport is NULL in findLocalAddress, using local address %s:%d",
                    addr.c_str(), port);
 
-    IpAddr mapped_addr;
+    IpAddr mapped_addr {addr};
+    mapped_addr.setPort(port);
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort,
                                     *stunServerName, stunPort};
@@ -1373,19 +1374,22 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
            RING_ERR("No response from STUN server %.*s",
                     stunServerName->slen, stunServerName->ptr);
            return;
+
         case PJLIB_UTIL_ESTUNSYMMETRIC:
            RING_ERR("Different mapped addresses are returned by servers.");
            return;
+
         case PJ_SUCCESS:
             port = mapped_addr.getPort();
             addr = mapped_addr.toString();
-        default:
-           break;
-    }
+            // to default case
 
-    RING_WARN("Using address %s provided by STUN server %.*s",
-              IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen,
-              stunServerName->ptr);
+        default: // use given address, silent any not handled error
+            RING_DBG("Using address '%s' from STUN server %.*s: %s",
+                     mapped_addr.toString(true).c_str(),
+                     stunServerName->slen, stunServerName->ptr);
+            break;
+    }
 }
 #undef RETURN_IF_NULL
 } // namespace ring
