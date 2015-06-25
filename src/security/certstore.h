@@ -46,7 +46,7 @@ public:
 
     std::vector<std::string> getPinnedCertificates() const;
     std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
-    std::shared_ptr<crypto::Certificate> getCertificateByPublicKey(const std::string& pk_id) const;
+    //std::shared_ptr<crypto::Certificate> getCertificateByPublicKey(const std::string& pk_id) const;
 
     std::string pinCertificate(const std::vector<uint8_t>& crt, bool local = true) noexcept;
     std::string pinCertificate(crypto::Certificate&& crt, bool local = true);
