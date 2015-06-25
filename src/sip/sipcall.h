@@ -152,9 +152,9 @@ class SIPCall : public Call
 
         bool attendedTransfer(const std::string& to);
 
-        void onhold();
+        bool onhold();
 
-        void offhold();
+        bool offhold();
 
         void switchInput(const std::string& resource);
 
@@ -221,7 +221,7 @@ class SIPCall : public Call
          */
         bool transferCommon(pj_str_t *dst);
 
-        void internalOffHold(const std::function<void()> &SDPUpdateFunc);
+        bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
         int SIPSessionReinvite();
 
