@@ -1450,11 +1450,10 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         port = publishedPort_;
         RING_DBG("Using published address %s and port %d", address.c_str(), port);
     } else if (stunEnabled_) {
-        link_->findLocalAddressFromSTUN(
-            t,
-            &stunServerName_,
-            stunPort_,
-            address, port);
+        auto success = link_->findLocalAddressFromSTUN(t, &stunServerName_,
+                                                       stunPort_, address, port);
+        if (not success)
+            emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
         setPublishedAddress(address);
         publishedPort_ = port;
         usePublishedAddressPortInVIA();
@@ -1502,11 +1501,11 @@ SIPAccount::getHostPortFromSTUN(pj_pool_t *pool)
 {
     std::string addr;
     pj_uint16_t port;
-    link_->findLocalAddressFromSTUN(
-        transport_ ? transport_->get() : nullptr,
-        &stunServerName_,
-        stunPort_,
+    auto success = link_->findLocalAddressFromSTUN(
+        transport_ ? transport_->get() : nullptr, &stunServerName_, stunPort_,
         addr, port);
+    if (not success)
+        emitSignal<DRing::ConfigurationSignal::StunStatusFailed>(getAccountID());
     pjsip_host_port result;
     pj_strdup2(pool, &result.host, addr.c_str());
     result.host.slen = addr.length();

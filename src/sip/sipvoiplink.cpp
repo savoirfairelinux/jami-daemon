@@ -1296,6 +1296,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 #define RETURN_IF_NULL(A, M, ...) \
     if ((A) == NULL) { RING_WARN(M, ##__VA_ARGS__); return; }
 
+#define RETURN_FALSE_IF_NULL(A, M, ...) \
+    if ((A) == NULL) { RING_WARN(M, ##__VA_ARGS__); return false; }
+
 void
 SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
                                            pjsip_transport_type_e transportType,
@@ -1340,7 +1343,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     port = param.ret_port;
 }
 
-void
+bool
 SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
                                       pj_str_t* stunServerName,
                                       int stunPort,
@@ -1358,13 +1361,13 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
     auto localIp = ip_utils::getLocalAddr(pj_AF_INET());
     if (not localIp) {
         RING_WARN("Failed to find local IP");
-        return;
+        return false;
     }
 
     addr = localIp.toString();
 
     // Update address and port with active transport
-    RETURN_IF_NULL(transport,
+    RETURN_FALSE_IF_NULL(transport,
                    "Transport is NULL in findLocalAddress, using local address %s:%u",
                    addr.c_str(), port);
 
@@ -1383,11 +1386,11 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
         case PJLIB_UTIL_ESTUNNOTRESPOND:
            RING_ERR("No response from STUN server %.*s",
                     stunServerName->slen, stunServerName->ptr);
-           return;
+           return false;
 
         case PJLIB_UTIL_ESTUNSYMMETRIC:
            RING_ERR("Different mapped addresses are returned by servers.");
-           return;
+           return false;
 
         case PJ_SUCCESS:
             port = pj_sockaddr_in_get_port(&mapped_addr);
@@ -1395,13 +1398,14 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
             RING_DBG("STUN server %.*s replied '%s:%u'",
                      stunServerName->slen, stunServerName->ptr,
                      addr.c_str(), port);
-            return;
+            return true;
 
         default: // use given address, silent any not handled error
             RING_WARN("Error from STUN server %.*s, using source address",
                       stunServerName->slen, stunServerName->ptr);
-            return;
+            return false;
     }
 }
 #undef RETURN_IF_NULL
+#undef RETURN_FALSE_IF_NULL
 } // namespace ring
