@@ -1347,45 +1347,61 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
                                       std::string& addr,
                                       pj_uint16_t& port) const
 {
+    // WARN: this code use pjstun_get_mapped_addr2 that works
+    // in IPv4 only.
+    // WARN: this function is blocking (network request).
+
     // Initialize the sip port with the default SIP port
     port = sip_utils::DEFAULT_SIP_PORT;
 
-    // Initialize the sip address with the hostname
-    const pj_str_t* pjMachineName = pj_gethostname();
-    addr = std::string(pjMachineName->ptr, pjMachineName->slen);
+    // Get Local IP address
+    auto localIp = ip_utils::getLocalAddr(pj_AF_INET());
+    if (not localIp) {
+        RING_WARN("Failed to find local IP");
+        return;
+    }
+
+    addr = localIp.toString();
 
     // Update address and port with active transport
     RETURN_IF_NULL(transport,
-                   "Transport is NULL in findLocalAddress, using local address %s:%d",
+                   "Transport is NULL in findLocalAddress, using local address %s:%u",
                    addr.c_str(), port);
 
-    IpAddr mapped_addr;
+    RING_DBG("STUN mapping of '%s:%u'", addr.c_str(), port);
+
+    pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort,
                                     *stunServerName, stunPort};
     const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_->factory,
                                                            &stunOpt, 1,
                                                            &sipSocket,
-                                                           &static_cast<pj_sockaddr_in&>(mapped_addr));
+                                                           &mapped_addr);
 
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
            RING_ERR("No response from STUN server %.*s",
                     stunServerName->slen, stunServerName->ptr);
            return;
+
         case PJLIB_UTIL_ESTUNSYMMETRIC:
            RING_ERR("Different mapped addresses are returned by servers.");
            return;
-        case PJ_SUCCESS:
-            port = mapped_addr.getPort();
-            addr = mapped_addr.toString();
-        default:
-           break;
-    }
 
-    RING_WARN("Using address %s provided by STUN server %.*s",
-              IpAddr(mapped_addr).toString(true).c_str(), stunServerName->slen,
-              stunServerName->ptr);
+        case PJ_SUCCESS:
+            port = pj_sockaddr_in_get_port(&mapped_addr);
+            addr = IpAddr((const pj_sockaddr&)mapped_addr).toString();
+            RING_DBG("STUN server %.*s replied '%s:%u'",
+                     stunServerName->slen, stunServerName->ptr,
+                     addr.c_str(), port);
+            return;
+
+        default: // use given address, silent any not handled error
+            RING_WARN("Error from STUN server %.*s, using source address",
+                      stunServerName->slen, stunServerName->ptr);
+            return;
+    }
 }
 #undef RETURN_IF_NULL
 } // namespace ring
