@@ -90,27 +90,30 @@ constexpr static const char STATE_DESC                [] = "Transport.statusDesc
 
 namespace ConfProperties {
 
-constexpr static const char ID                    [] = "Account.id";
-constexpr static const char TYPE                  [] = "Account.type";
-constexpr static const char ALIAS                 [] = "Account.alias";
-constexpr static const char DISPLAYNAME           [] = "Account.DisplayName";
-constexpr static const char ENABLED               [] = "Account.enable";
-constexpr static const char MAILBOX               [] = "Account.mailbox";
-constexpr static const char DTMF_TYPE             [] = "Account.dtmfType";
-constexpr static const char AUTOANSWER            [] = "Account.autoAnswer";
-constexpr static const char HOSTNAME              [] = "Account.hostname";
-constexpr static const char USERNAME              [] = "Account.username";
-constexpr static const char ROUTE                 [] = "Account.routeset";
-constexpr static const char PASSWORD              [] = "Account.password";
-constexpr static const char REALM                 [] = "Account.realm";
-constexpr static const char LOCAL_INTERFACE       [] = "Account.localInterface";
-constexpr static const char PUBLISHED_SAMEAS_LOCAL[] = "Account.publishedSameAsLocal";
-constexpr static const char LOCAL_PORT            [] = "Account.localPort";
-constexpr static const char PUBLISHED_PORT        [] = "Account.publishedPort";
-constexpr static const char PUBLISHED_ADDRESS     [] = "Account.publishedAddress";
-constexpr static const char USER_AGENT            [] = "Account.useragent";
-constexpr static const char UPNP_ENABLED          [] = "Account.upnpEnabled";
-constexpr static const char HAS_CUSTOM_USER_AGENT [] = "Account.hasCustomUserAgent";
+constexpr static const char ID                      [] = "Account.id";
+constexpr static const char TYPE                    [] = "Account.type";
+constexpr static const char ALIAS                   [] = "Account.alias";
+constexpr static const char DISPLAYNAME             [] = "Account.displayName";
+constexpr static const char ENABLED                 [] = "Account.enable";
+constexpr static const char MAILBOX                 [] = "Account.mailbox";
+constexpr static const char DTMF_TYPE               [] = "Account.dtmfType";
+constexpr static const char AUTOANSWER              [] = "Account.autoAnswer";
+constexpr static const char ACTIVE_CALL_LIMIT       [] = "Account.activeCallLimit";
+constexpr static const char HOSTNAME                [] = "Account.hostname";
+constexpr static const char USERNAME                [] = "Account.username";
+constexpr static const char ROUTE                   [] = "Account.routeset";
+constexpr static const char PASSWORD                [] = "Account.password";
+constexpr static const char REALM                   [] = "Account.realm";
+constexpr static const char LOCAL_INTERFACE         [] = "Account.localInterface";
+constexpr static const char PUBLISHED_SAMEAS_LOCAL  [] = "Account.publishedSameAsLocal";
+constexpr static const char LOCAL_PORT              [] = "Account.localPort";
+constexpr static const char PUBLISHED_PORT          [] = "Account.publishedPort";
+constexpr static const char PUBLISHED_ADDRESS       [] = "Account.publishedAddress";
+constexpr static const char USER_AGENT              [] = "Account.useragent";
+constexpr static const char UPNP_ENABLED            [] = "Account.upnpEnabled";
+constexpr static const char HAS_CUSTOM_USER_AGENT   [] = "Account.hasCustomUserAgent";
+constexpr static const char ALLOW_CERT_FROM_HISTORY [] = "Account.allowCertFromHistory";
+constexpr static const char ALLOW_CERT_FROM_CONTACT [] = "Account.allowCertFromContact";
 
 
 namespace Audio {
