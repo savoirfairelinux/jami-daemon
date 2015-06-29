@@ -308,6 +308,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const HOSTNAME_KEY;
         static const char * const ACCOUNT_ENABLE_KEY;
         static const char * const ACCOUNT_AUTOANSWER_KEY;
+        static const char * const ACCOUNT_ACTIVE_CALL_LIMIT_KEY;
         static const char * const MAILBOX_KEY;
         static const char * const USER_AGENT_KEY;
         static const char * const HAS_CUSTOM_USER_AGENT_KEY;
@@ -346,6 +347,15 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /* If true, automatically answer calls to this account */
         bool autoAnswerEnabled_;
+
+        /**
+         * The number of concurrent calls for the account
+         * -1: Unlimited
+         *  0: Do not disturb
+         *  1: Single call
+         *  +: Multi line
+         */
+        int activeCallLimit_ {-1} ;
 
         /*
          * The general, protocol neutral registration
