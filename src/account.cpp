@@ -66,30 +66,31 @@
 
 namespace ring {
 
-const char * const Account::ALL_CODECS_KEY              = "allCodecs";
-const char * const Account::VIDEO_CODEC_ENABLED         = "enabled";
-const char * const Account::VIDEO_CODEC_NAME            = "name";
-const char * const Account::VIDEO_CODEC_PARAMETERS      = "parameters";
-const char * const Account::VIDEO_CODEC_BITRATE         = "bitrate";
-const char * const Account::RINGTONE_PATH_KEY           = "ringtonePath";
-const char * const Account::RINGTONE_ENABLED_KEY        = "ringtoneEnabled";
-const char * const Account::VIDEO_ENABLED_KEY           = "videoEnabled";
-const char * const Account::DISPLAY_NAME_KEY            = "displayName";
-const char * const Account::ALIAS_KEY                   = "alias";
-const char * const Account::TYPE_KEY                    = "type";
-const char * const Account::ID_KEY                      = "id";
-const char * const Account::USERNAME_KEY                = "username";
-const char * const Account::AUTHENTICATION_USERNAME_KEY = "authenticationUsername";
-const char * const Account::PASSWORD_KEY                = "password";
-const char * const Account::HOSTNAME_KEY                = "hostname";
-const char * const Account::ACCOUNT_ENABLE_KEY          = "enable";
-const char * const Account::ACCOUNT_AUTOANSWER_KEY      = "autoAnswer";
-const char * const Account::MAILBOX_KEY                 = "mailbox";
-const char * const Account::DEFAULT_USER_AGENT          = PACKAGE_NAME "/" PACKAGE_VERSION;
-const char * const Account::USER_AGENT_KEY              = "useragent";
-const char * const Account::HAS_CUSTOM_USER_AGENT_KEY   = "hasCustomUserAgent";
-const char * const Account::PRESENCE_MODULE_ENABLED_KEY = "presenceModuleEnabled";
-const char * const Account::UPNP_ENABLED_KEY            = "upnpEnabled";
+const char * const Account::ALL_CODECS_KEY                = "allCodecs";
+const char * const Account::VIDEO_CODEC_ENABLED           = "enabled";
+const char * const Account::VIDEO_CODEC_NAME              = "name";
+const char * const Account::VIDEO_CODEC_PARAMETERS        = "parameters";
+const char * const Account::VIDEO_CODEC_BITRATE           = "bitrate";
+const char * const Account::RINGTONE_PATH_KEY             = "ringtonePath";
+const char * const Account::RINGTONE_ENABLED_KEY          = "ringtoneEnabled";
+const char * const Account::VIDEO_ENABLED_KEY             = "videoEnabled";
+const char * const Account::DISPLAY_NAME_KEY              = "displayName";
+const char * const Account::ALIAS_KEY                     = "alias";
+const char * const Account::TYPE_KEY                      = "type";
+const char * const Account::ID_KEY                        = "id";
+const char * const Account::USERNAME_KEY                  = "username";
+const char * const Account::AUTHENTICATION_USERNAME_KEY   = "authenticationUsername";
+const char * const Account::PASSWORD_KEY                  = "password";
+const char * const Account::HOSTNAME_KEY                  = "hostname";
+const char * const Account::ACCOUNT_ENABLE_KEY            = "enable";
+const char * const Account::ACCOUNT_AUTOANSWER_KEY        = "autoAnswer";
+const char * const Account::ACCOUNT_ACTIVE_CALL_LIMIT_KEY = "activeCallLimit";
+const char * const Account::MAILBOX_KEY                   = "mailbox";
+const char * const Account::DEFAULT_USER_AGENT            = PACKAGE_NAME "/" PACKAGE_VERSION;
+const char * const Account::USER_AGENT_KEY                = "useragent";
+const char * const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent";
+const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
+const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
 
 Account::Account(const std::string &accountID)
     : accountID_(accountID)
@@ -109,6 +110,7 @@ Account::Account(const std::string &accountID)
     , hasCustomUserAgent_(false)
     , mailBox_()
     , upnp_(new upnp::Controller())
+    , activeCallLimit_(-1)
 {
 #ifndef _WIN32
     std::random_device rdev;
@@ -210,6 +212,7 @@ Account::serialize(YAML::Emitter &out)
     out << YAML::Key << ALL_CODECS_KEY << YAML::Value << allCodecStr_;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
+    out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
     out << YAML::Key << RINGTONE_ENABLED_KEY << YAML::Value << ringtoneEnabled_;
     out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
     out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
@@ -229,6 +232,7 @@ Account::unserialize(const YAML::Node &node)
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
     parseValue(node, USERNAME_KEY, username_);
     parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
+    parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
     //parseValue(node, PASSWORD_KEY, password_);
 
     parseValue(node, MAILBOX_KEY, mailBox_);
@@ -261,6 +265,7 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
     parseBool(details, Conf::CONFIG_ACCOUNT_AUTOANSWER, autoAnswerEnabled_);
+    parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
     parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
@@ -287,6 +292,7 @@ Account::getAccountDetails() const
         {Conf::CONFIG_ACCOUNT_USERAGENT,    hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_ ? userAgent_ : DEFAULT_USER_AGENT},
         {Conf::CONFIG_ACCOUNT_AUTOANSWER,   autoAnswerEnabled_ ? TRUE_STR : FALSE_STR},
+        {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   ring::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
         {Conf::CONFIG_UPNP_ENABLED,         upnpEnabled_ ? TRUE_STR : FALSE_STR},

@@ -46,6 +46,7 @@
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
+#include "dring/account_const.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -87,7 +88,8 @@ constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID), via_addr_()
+    : SIPAccountBase(accountID), via_addr_(), allowPeersFromHistory_(false),
+      allowPeersFromContact_(false)
 {
     fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -380,6 +382,8 @@ void RingAccount::serialize(YAML::Emitter &out)
     SIPAccountBase::serialize(out);
     out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
     out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
+    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
+    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -395,6 +399,8 @@ void RingAccount::unserialize(const YAML::Node &node)
 
     SIPAccountBase::unserialize(node);
     parseValue(node, Conf::DHT_PORT_KEY, dhtPort_);
+    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
+    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
@@ -475,25 +481,15 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
         fileutils::saveFile(path + ".crt", id.second->getPacked());
 }
 
-template <typename T>
-static void
-parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
-{
-    const auto iter = details.find(key);
-    if (iter == details.end()) {
-        RING_ERR("Couldn't find key %s", key);
-        return;
-    }
-    i = atoi(iter->second.c_str());
-}
-
 void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
-    if (hostname_ == "")
+    if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+    parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
+    parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
@@ -518,6 +514,8 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_VERIFY_SERVER,              TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_VERIFY_CLIENT,              TRUE_STR);
     a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
+    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_?TRUE_STR:FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_?TRUE_STR:FALSE_STR);
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
 
