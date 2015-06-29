@@ -683,7 +683,7 @@ Manager::offHoldCall(const std::string& callId)
     try {
         call = getCallFromCallID(callId);
         if (call)
-            call->offhold();
+            result = call->offhold();
         else
             result = false;
     } catch (const VoipLinkException &e) {
@@ -691,14 +691,16 @@ Manager::offHoldCall(const std::string& callId)
         return false;
     }
 
-    emitSignal<DRing::CallSignal::StateChange>(callId, DRing::Call::StateEvent::UNHOLD, 0);
+    if (result) {
+        emitSignal<DRing::CallSignal::StateChange>(callId, DRing::Call::StateEvent::UNHOLD, 0);
 
-    if (isConferenceParticipant(callId))
-        switchCall(getCallFromCallID(call->getConfId()));
-    else
-        switchCall(call);
+        if (isConferenceParticipant(callId))
+            switchCall(getCallFromCallID(call->getConfId()));
+        else
+            switchCall(call);
 
-    addStream(*call);
+        addStream(*call);
+    }
 
     return result;
 }
