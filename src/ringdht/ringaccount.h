@@ -71,6 +71,8 @@ const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
 const char *const DHT_CONTACTS = "dhtContacts";
 const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
 const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
+const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
+const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
 }
 
 class IceTransport;
@@ -388,6 +390,8 @@ class RingAccount : public SIPAccountBase {
         std::shared_future<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>> dhParams_;
         std::mutex dhParamsMtx_;
         std::condition_variable dhParamsCv_;
+        bool allowPeersFromHistory_;
+        bool allowPeersFromContact_;
 
         /**
          * Optional: "received" parameter from VIA header
