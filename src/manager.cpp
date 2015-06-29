@@ -65,7 +65,6 @@
 #endif
 
 #include "audio/sound/tonelist.h"
-#include "audio/sound/audiofile.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
 #include "manager.h"
@@ -210,10 +209,11 @@ Manager::Manager() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false),
-    currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO()),
-    toneMutex_(), telephoneTone_(), audiofile_(), audioLayerMutex_(),
-    waitingCalls_(), waitingCallsMutex_(), path_()
+    hasTriedToRegister_(false)
+    , toneCtrl_(preferences)
+    , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO())
+    , audioLayerMutex_()
+    , waitingCalls_(), waitingCallsMutex_(), path_()
     , ringbufferpool_(new RingBufferPool)
     , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
@@ -328,10 +328,7 @@ Manager::init(const std::string &config_file)
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
         if (audiodriver_) {
-            {
-                std::lock_guard<std::mutex> toneLock(toneMutex_);
-                telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), audiodriver_->getSampleRate()));
-            }
+            toneCtrl_.setSampleRate(audiodriver_->getSampleRate());
             dtmfKey_.reset(new DTMF(getRingBufferPool().getInternalSamplingRate()));
         }
     }
@@ -1858,11 +1855,7 @@ Manager::playATone(Tone::TONEID toneId)
         audiodriver_->startStream();
     }
 
-    {
-        std::lock_guard<std::mutex> lock(toneMutex_);
-        if (telephoneTone_)
-            telephoneTone_->setCurrentTone(toneId);
-    }
+    toneCtrl_.play(toneId);
 }
 
 /**
@@ -1874,16 +1867,7 @@ Manager::stopTone()
     if (not voipPreferences.getPlayTones())
         return;
 
-    std::lock_guard<std::mutex> lock(toneMutex_);
-    if (telephoneTone_)
-        telephoneTone_->setCurrentTone(Tone::TONE_NULL);
-
-    if (audiofile_) {
-        std::string filepath(audiofile_->getFilePath());
-
-        emitSignal<DRing::CallSignal::RecordPlaybackStopped>(filepath);
-        audiofile_.reset();
-    }
+    toneCtrl_.stop();
 }
 
 /**
@@ -1922,13 +1906,6 @@ Manager::ringback()
     playATone(Tone::TONE_RINGTONE);
 }
 
-// Caller must hold toneMutex
-void
-Manager::updateAudioFile(const std::string &file, int sampleRate)
-{
-    audiofile_.reset(new AudioFile(file, sampleRate));
-}
-
 /**
  * Multi Thread
  */
@@ -1948,7 +1925,6 @@ Manager::playRingtone(const std::string& accountID)
     }
 
     std::string ringchoice = account->getRingtonePath();
-
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
@@ -1956,7 +1932,6 @@ Manager::playRingtone(const std::string& accountID)
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
     }
 
-    int audioLayerSmplr = 8000;
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
@@ -1966,48 +1941,23 @@ Manager::playRingtone(const std::string& accountID)
         }
         // start audio if not started AND flush all buffers (main and urgent)
         audiodriver_->startStream();
-        audioLayerSmplr = audiodriver_->getSampleRate();
+        toneCtrl_.setSampleRate(audiodriver_->getSampleRate());
     }
 
-    bool doFallback = false;
-
-    {
-        std::lock_guard<std::mutex> m(toneMutex_);
-
-        if (audiofile_) {
-            emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audiofile_->getFilePath());
-            audiofile_.reset();
-        }
-
-        try {
-            updateAudioFile(ringchoice, audioLayerSmplr);
-        } catch (const AudioFileException &e) {
-            RING_WARN("Ringtone error: %s", e.what());
-            doFallback = true; // do ringback once lock is out of scope
-        }
-    } // leave mutex
-
-    if (doFallback) {
+    if (not toneCtrl_.setAudioFile(ringchoice))
         ringback();
-        return;
-    }
 }
 
 AudioLoop*
 Manager::getTelephoneTone()
 {
-    std::lock_guard<std::mutex> m(toneMutex_);
-    if (telephoneTone_)
-        return telephoneTone_->getCurrentTone();
-    else
-        return nullptr;
+    return toneCtrl_.getTelephoneTone();
 }
 
 AudioLoop*
 Manager::getTelephoneFile()
 {
-    std::lock_guard<std::mutex> m(toneMutex_);
-    return audiofile_.get();
+    return toneCtrl_.getTelephoneFile();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -2202,7 +2152,6 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
 {
     RING_DBG("Start recorded file playback %s", filepath.c_str());
 
-    int sampleRate;
     {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
@@ -2212,51 +2161,31 @@ Manager::startRecordedFilePlayback(const std::string& filepath)
         }
 
         audiodriver_->startStream();
-        sampleRate = audiodriver_->getSampleRate();
+        toneCtrl_.setSampleRate(audiodriver_->getSampleRate());
     }
 
-    {
-        std::lock_guard<std::mutex> m(toneMutex_);
-
-        if (audiofile_) {
-            emitSignal<DRing::CallSignal::RecordPlaybackStopped>(audiofile_->getFilePath());
-            audiofile_.reset();
-        }
-
-        try {
-            updateAudioFile(filepath, sampleRate);
-            if (not audiofile_)
-                return false;
-        } catch (const AudioFileException &e) {
-            RING_WARN("Audio file error: %s", e.what());
-            return false;
-        }
-    } // release toneMutex
-
-    return true;
+    return toneCtrl_.setAudioFile(filepath);
 }
 
-void Manager::recordingPlaybackSeek(const double value)
+void
+Manager::recordingPlaybackSeek(const double value)
 {
-    std::lock_guard<std::mutex> m(toneMutex_);
-    if (audiofile_)
-        audiofile_.get()->seek(value);
+    toneCtrl_.seek(value);
 }
 
-void Manager::stopRecordedFilePlayback(const std::string& filepath)
+void
+Manager::stopRecordedFilePlayback(const std::string& filepath)
 {
+    // TODO: argument is uneeded (API change)
+
     RING_DBG("Stop recorded file playback %s", filepath.c_str());
 
     checkAudio();
-
-    {
-        std::lock_guard<std::mutex> m(toneMutex_);
-        audiofile_.reset();
-    }
-    emitSignal<DRing::CallSignal::RecordPlaybackStopped>(filepath);
+    toneCtrl_.stopAudioFile();
 }
 
-void Manager::setHistoryLimit(int days)
+void
+Manager::setHistoryLimit(int days)
 {
     RING_DBG("Set history limit");
     preferences.setHistoryLimit(days);
@@ -2389,15 +2318,13 @@ Manager::audioFormatUsed(AudioFormat format)
     if (currentFormat == format)
         return format;
 
-    RING_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(), format.toString().c_str());
+    RING_DBG("Audio format changed: %s -> %s", currentFormat.toString().c_str(),
+             format.toString().c_str());
 
     ringbufferpool_->setInternalAudioFormat(format);
-
-    {
-        std::lock_guard<std::mutex> toneLock(toneMutex_);
-        telephoneTone_.reset(new TelephoneTone(preferences.getZoneToneChoice(), format.sample_rate));
-    }
+    toneCtrl_.setSampleRate(format.sample_rate);
     dtmfKey_.reset(new DTMF(format.sample_rate));
+
     return format;
 }
 

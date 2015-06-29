@@ -56,7 +56,7 @@
 #include "call_factory.h"
 
 #include "audio/audiolayer.h"
-#include "audio/sound/tone.h"  // for Tone::TONEID declaration
+#include "audio/tonecontrol.h"
 
 #include "preferences.h"
 #include "noncopyable.h"
@@ -75,7 +75,6 @@ class SinkClient;
 class PluginManager;
 class AudioFile;
 class DTMF;
-class TelephoneTone;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -793,6 +792,9 @@ class Manager {
 
         void switchCall(std::shared_ptr<Call> call);
 
+        /** Application wide tone controler */
+        ToneControl toneCtrl_;
+
         /*
          * Play one tone
          * @return false if the driver is uninitialize
@@ -813,13 +815,6 @@ class Manager {
 
         /** Buffer to generate DTMF */
         AudioBuffer dtmfBuf_;
-
-        /////////////////////
-        // Protected by Mutex
-        /////////////////////
-        std::mutex toneMutex_;
-        std::unique_ptr<TelephoneTone> telephoneTone_;
-        std::unique_ptr<AudioFile> audiofile_;
 
         // To handle volume control
         // short speakerVolume_;
