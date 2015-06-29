@@ -35,6 +35,9 @@
 
 #include <string>
 #include <vector>
+#include <map>
+
+#include <logger.h>
 
 #ifdef __ANDROID__
 #include <sstream>
@@ -49,6 +52,23 @@ constexpr static const char*
 bool_to_str(bool b) noexcept
 {
     return b ? TRUE_STR : FALSE_STR;
+}
+
+
+
+/**
+ * Extract numeric values from a sting map
+ */
+template <typename T>
+inline void
+parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
+{
+    const auto iter = details.find(key);
+    if (iter == details.end()) {
+        RING_ERR("Couldn't find key %s", key);
+        return;
+    }
+    i = atoi(iter->second.c_str());
 }
 
 #ifdef __ANDROID__
