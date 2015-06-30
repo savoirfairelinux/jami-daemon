@@ -45,6 +45,7 @@ constexpr static char BUSY                     [] = "BUSY"               ;
 constexpr static char FAILURE                  [] = "FAILURE"            ;
 constexpr static char HOLD                     [] = "HOLD"               ;
 constexpr static char UNHOLD                   [] = "UNHOLD"             ;
+constexpr static char INACTIVE                 [] = "INACTIVE"           ;
 
 }
 
