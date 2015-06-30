@@ -134,7 +134,7 @@ class IAXCall : public Call
         //TODO: implement mute for IAX
         void muteMedia(const std::string& mediaType, bool isMuted) {}
 
-        void peerHungup();
+        void peerHangup();
 
         void carryingDTMFdigits(char code);
 
