@@ -77,7 +77,7 @@ class SinkClient : public VideoFramePassiveReader
 
     private:
         const std::string id_;
-        std::function<void(unsigned char*)> target_;
+        std::function<void(std::shared_ptr<std::vector<unsigned char> >, int, int)> target_;
         std::vector<unsigned char> targetData_;
 
 #ifdef DEBUG_FPS
