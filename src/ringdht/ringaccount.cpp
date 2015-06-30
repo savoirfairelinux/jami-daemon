@@ -170,8 +170,13 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
 
+    std::weak_ptr<SIPCall> weak_call = call;
     manager.addTask([=] {
         static std::uniform_int_distribution<dht::Value::Id> udist;
+        auto call = weak_call.lock();
+
+        if (not call)
+            return false;
 
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
@@ -188,8 +193,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         const dht::Value::Id replyvid = callvid + 1;
         const auto toH = dht::InfoHash(toUri);
         const auto callkey = dht::InfoHash::get("callto:" + toUri);
-
-        std::weak_ptr<SIPCall> weak_call = call;
 
         call->setState(Call::ConnectionState::TRYING);
         shared_this->dht_.putEncrypted(
@@ -215,8 +218,10 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 if (msg.id != replyvid)
                     return true;
                 RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
-                call->setState(Call::ConnectionState::PROGRESSING);
-                ice->start(msg.ice_data);
+                if (auto call = weak_call.lock()) {
+                    call->setState(Call::ConnectionState::PROGRESSING);
+                    call->getIceTransport()->start(msg.ice_data);
+                }
                 return false;
             }
         );
