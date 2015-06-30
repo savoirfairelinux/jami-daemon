@@ -380,10 +380,10 @@ class Manager {
         void peerRingingCall(Call& call);
 
         /**
-         * Put the call in Hungup state, remove the call from the list
+         * Put the call in Hangup state, remove the call from the list
          * @param id  The call identifier
          */
-        void peerHungupCall(Call& call);
+        void peerHangupCall(Call& call);
 
 #if HAVE_INSTANT_MESSAGING
         /**

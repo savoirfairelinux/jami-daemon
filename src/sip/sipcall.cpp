@@ -210,7 +210,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                     // end the call if the SIP transport is shut down
                     if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         RING_WARN("Ending call because underlying SIP transport was closed");
-                        this_->setConnectionState(ConnectionState::DISCONNECTED);
+                        this_->setState(ConnectionState::DISCONNECTED);
                         Manager::instance().callFailure(*this_, ECONNRESET);
                         this_->removeCall();
                     }
@@ -335,8 +335,7 @@ void SIPCall::answer()
         throw std::runtime_error("Could not send invite request answer (200 OK)");
     }
 
-    setConnectionState(ConnectionState::CONNECTED);
-    setState(CallState::ACTIVE);
+    setState(CallState::ACTIVE, ConnectionState::CONNECTED);
 }
 
 static void
@@ -389,6 +388,7 @@ SIPCall::hangup(int reason)
     sendEndSessionMsg(inv.get(), status, &contactStr);
 
     inv.reset();
+    setState(Call::ConnectionState::DISCONNECTED, reason);
     removeCall();
 }
 
@@ -406,6 +406,7 @@ SIPCall::refuse()
     sendEndSessionMsg(inv.get(), PJSIP_SC_DECLINE, &contactStr);
 
     inv.reset();
+    setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
     removeCall();
 }
 
@@ -651,7 +652,7 @@ SIPCall::switchInput(const std::string& resource)
 }
 
 void
-SIPCall::peerHungup()
+SIPCall::peerHangup()
 {
     // Stop all RTP streams
     stopAllMedia();
@@ -659,9 +660,7 @@ SIPCall::peerHungup()
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    // User hangup current call. Notify peer
     pjsip_tx_data *tdata = NULL;
-
     if (pjsip_inv_end_session(inv.get(), 404, NULL, &tdata) != PJ_SUCCESS || !tdata)
         return;
 
@@ -672,6 +671,8 @@ SIPCall::peerHungup()
         inv.reset();
         sip_utils::sip_strerror(ret);
     }
+
+    Call::peerHangup();
 }
 
 void
@@ -707,7 +708,7 @@ SIPCall::onServerFailure(int code)
 void
 SIPCall::onClosed()
 {
-    Manager::instance().peerHungupCall(*this);
+    Manager::instance().peerHangupCall(*this);
     removeCall();
     Manager::instance().checkAudio();
 }
@@ -716,8 +717,7 @@ void
 SIPCall::onAnswered()
 {
     if (getConnectionState() != ConnectionState::CONNECTED) {
-        setConnectionState(ConnectionState::CONNECTED);
-        setState(CallState::ACTIVE);
+        setState(CallState::ACTIVE, ConnectionState::CONNECTED);
         Manager::instance().peerAnsweredCall(*this);
     }
 }
@@ -725,7 +725,7 @@ SIPCall::onAnswered()
 void
 SIPCall::onPeerRinging()
 {
-    setConnectionState(ConnectionState::RINGING);
+    setState(ConnectionState::RINGING);
     Manager::instance().peerRingingCall(*this);
 }
 
@@ -925,7 +925,7 @@ SIPCall::onMediaUpdate()
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
                 RING_DBG("ice init failed (or timeout)");
-                this_->setConnectionState(ConnectionState::DISCONNECTED);
+                this_->setState(ConnectionState::DISCONNECTED);
                 Manager::instance().callFailure(*this_, ETIMEDOUT); // signal client
                 this_->removeCall();
                 return false;

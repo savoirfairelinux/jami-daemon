@@ -158,7 +158,7 @@ class SIPCall : public Call
 
         void switchInput(const std::string& resource);
 
-        void peerHungup();
+        void peerHangup();
 
         void carryingDTMFdigits(char code);
 
