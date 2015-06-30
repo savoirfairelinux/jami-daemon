@@ -158,7 +158,7 @@ class SIPCall : public Call
 
         void switchInput(const std::string& resource);
 
-        void peerHungup();
+        void peerHangup();
 
         void carryingDTMFdigits(char code);
 
@@ -184,10 +184,10 @@ class SIPCall : public Call
         void onAnswered();
 
         /**
-         * Handling 5XX/6XX error
-         * @param
+         * To call in case of server/internal error
+         * @param cause Optionnal error code
          */
-        void onServerFailure(int code=0);
+        void onFailure(signed cause=0);
 
         /**
          * Peer close the connection

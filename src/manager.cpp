@@ -529,9 +529,6 @@ Manager::answerCall(const std::string& call_id)
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
 
-    //callStateChanged(call_id, "CURRENT");
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT", 0);
-
     return result;
 }
 
@@ -554,10 +551,7 @@ Manager::hangupCall(const std::string& callId)
 
     stopTone();
 
-    RING_DBG("Send call state change (HUNGUP) for id %s", callId.c_str());
-    emitSignal<DRing::CallSignal::StateChange>(callId, "HUNGUP", ECONNABORTED);
-
-    /* We often get here when the call was hungup before being created */
+    /* We often get here when the call was hangup before being created */
     auto call = getCallFromCallID(callId);
     if (not call) {
         RING_WARN("Could not hang up non-existant call %s", callId.c_str());
@@ -645,8 +639,6 @@ Manager::onHoldCall(const std::string& callId)
         // or a new outgoing call. This could happen in case of a conference
         if (current_call_id == callId)
             unsetCurrentCall();
-
-        emitSignal<DRing::CallSignal::StateChange>(callId, "HOLD", 0);
     }
 
     return result;
@@ -689,8 +681,6 @@ Manager::offHoldCall(const std::string& callId)
     }
 
     if (result) {
-        emitSignal<DRing::CallSignal::StateChange>(callId, DRing::Call::StateEvent::UNHOLD, 0);
-
         if (isConferenceParticipant(callId))
             switchCall(getCallFromCallID(call->getConfId()));
         else
@@ -777,8 +767,6 @@ Manager::refuseCall(const std::string& id)
     checkAudio();
 
     removeWaitingCall(id);
-
-    emitSignal<DRing::CallSignal::StateChange>(id, "HUNGUP", ECONNABORTED);
 
     // Disconnect streams
     removeStream(*call);
@@ -1610,7 +1598,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     }
 
     if (not hasCurrentCall()) {
-        call.setConnectionState(Call::ConnectionState::RINGING);
+        call.setState(Call::ConnectionState::RINGING);
         playRingtone(accountId);
     }
 
@@ -1741,8 +1729,6 @@ Manager::peerAnsweredCall(Call& call)
 
     if (audioPreference.getIsAlwaysRecording())
         toggleRecordingCall(call_id);
-
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "CURRENT", 0);
 }
 
 //THREAD=VoIP Call=Outgoing
@@ -1754,16 +1740,14 @@ Manager::peerRingingCall(Call& call)
 
     if (isCurrentCall(call))
         ringback();
-
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "RINGING", 0);
 }
 
 //THREAD=VoIP Call=Outgoing/Ingoing
 void
-Manager::peerHungupCall(Call& call)
+Manager::peerHangupCall(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("Peer hungup call %s", call_id.c_str());
+    RING_DBG("Peer hangup call %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
@@ -1772,13 +1756,7 @@ Manager::peerHungupCall(Call& call)
         unsetCurrentCall();
     }
 
-    call.peerHungup();
-
-    const auto st = call.getState();
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "HUNGUP",
-        (st == Call::CallState::ACTIVE || st == Call::CallState::HOLD) ?
-            ECONNABORTED : ECONNREFUSED
-    );
+    call.peerHangup();
 
     checkAudio();
     removeWaitingCall(call_id);
@@ -1792,26 +1770,20 @@ Manager::peerHungupCall(Call& call)
 void
 Manager::callBusy(Call& call)
 {
-    const auto call_id = call.getCallId();
-
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "BUSY", 0);
-
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
     }
 
     checkAudio();
-    removeWaitingCall(call_id);
+    removeWaitingCall(call.getCallId());
 }
 
 //THREAD=VoIP
 void
-Manager::callFailure(Call& call, int code)
+Manager::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
-
-    emitSignal<DRing::CallSignal::StateChange>(call_id, "FAILURE", code);
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);

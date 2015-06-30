@@ -523,7 +523,7 @@
                   <li>CONNECTING: Peer found, contacting him</li>
                   <li>RINGING: Initial state of received outgoing call</li>
                   <li>CURRENT: The normal active state of an answered call</li>
-                  <li>HUNGUP: Notify that the call has been hungup by peer</li>
+                  <li>HANGUP: Notify that the call has been hangup by peer</li>
                   <li>BUSY</li>
                   <li>FAILURE: Error when processing a call</li>
                   <li>HOLD</li>
