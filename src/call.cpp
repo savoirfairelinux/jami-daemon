@@ -228,11 +228,11 @@ void Call::time_stop()
 std::string Call::getTypeStr() const
 {
     switch (type_) {
-        case INCOMING:
+        case CallType::INCOMING:
             return "incoming";
-        case OUTGOING:
+        case CallType::OUTGOING:
             return "outgoing";
-        case MISSED:
+        case CallType::MISSED:
             return "missed";
         default:
             return "";
@@ -243,7 +243,7 @@ std::map<std::string, std::string>
 Call::getDetails() const
 {
     return {
-        {DRing::Call::Details::CALL_TYPE,        ring::to_string(type_)},
+        {DRing::Call::Details::CALL_TYPE,        ring::to_string((unsigned)type_)},
         {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
         {DRing::Call::Details::CALL_STATE,       getStateStr()},

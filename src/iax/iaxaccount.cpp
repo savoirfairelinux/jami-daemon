@@ -129,7 +129,7 @@ IAXAccount::newIncomingCall(const std::string& from UNUSED)
 {
     auto& manager = Manager::instance();
     return manager.callFactory.newCall<IAXCall, IAXAccount>(*this, manager.getNewCallID(),
-                                                            Call::INCOMING);
+                                                            Call::CallType::INCOMING);
 }
 
 template <>
@@ -138,7 +138,7 @@ IAXAccount::newOutgoingCall(const std::string& toUrl)
 {
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<IAXCall, IAXAccount>(*this, manager.getNewCallID(),
-                                                                 Call::OUTGOING);
+                                                                 Call::CallType::OUTGOING);
 
     call->setPeerNumber(toUrl);
     call->initRecFilename(toUrl);

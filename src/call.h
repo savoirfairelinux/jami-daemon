@@ -67,7 +67,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * This determines if the call originated from the local user (OUTGOING)
          * or from some remote peer (INCOMING, MISSED).
          */
-        enum CallType {INCOMING, OUTGOING, MISSED};
+        enum class CallType : unsigned {INCOMING, OUTGOING, MISSED};
 
         /**
          * Tell where we're at with the call. The call gets Connected when we know
@@ -154,7 +154,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * @return true if yes false otherwise
          */
         bool isIncoming() const {
-            return type_ == INCOMING;
+            return type_ == CallType::INCOMING;
         }
 
         /**
