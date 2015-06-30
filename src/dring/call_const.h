@@ -40,11 +40,12 @@ constexpr static char INCOMING                 [] = "INCOMING"           ;
 constexpr static char CONNECTING               [] = "CONNECTING"         ;
 constexpr static char RINGING                  [] = "RINGING"            ;
 constexpr static char CURRENT                  [] = "CURRENT"            ;
-constexpr static char HUNGUP                   [] = "HUNGUP"             ;
+constexpr static char HANGUP                   [] = "HANGUP"             ;
 constexpr static char BUSY                     [] = "BUSY"               ;
 constexpr static char FAILURE                  [] = "FAILURE"            ;
 constexpr static char HOLD                     [] = "HOLD"               ;
 constexpr static char UNHOLD                   [] = "UNHOLD"             ;
+constexpr static char INACTIVE                 [] = "INACTIVE"           ;
 
 }
 
