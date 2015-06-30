@@ -404,8 +404,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    call->setConnectionState(Call::ConnectionState::PROGRESSING);
-    call->setState(Call::CallState::ACTIVE);
+    call->setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
 
     return true;
 }
