@@ -709,7 +709,7 @@ class Manager {
         /**
          * Handle played sound when a failure occurs
          */
-        void callFailure(Call& call, int code=0);
+        void callFailure(Call& call);
 
         /**
          * Retrieve the current telephone tone
