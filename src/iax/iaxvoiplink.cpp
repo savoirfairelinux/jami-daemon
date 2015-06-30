@@ -216,8 +216,7 @@ IAXVoIPLink::sendAudioFromMic()
 void
 IAXVoIPLink::handleReject(IAXCall& call)
 {
-    call.setConnectionState(Call::ConnectionState::CONNECTED);
-    call.setState(Call::CallState::MERROR);
+    call.setState(Call::CallState::MERROR, Call::ConnectionState::DISCONNECTED);
     Manager::instance().callFailure(call);
     call.removeCall();
 }
@@ -235,8 +234,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
     if (call.getConnectionState() == Call::ConnectionState::CONNECTED)
         return;
 
-    call.setConnectionState(Call::ConnectionState::CONNECTED);
-    call.setState(Call::CallState::ACTIVE);
+    call.setState(Call::CallState::ACTIVE, Call::ConnectionState::CONNECTED);
 
     if (event->ies.format)
         call.format = event->ies.format;
@@ -250,8 +248,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
 void
 IAXVoIPLink::handleBusy(IAXCall& call)
 {
-    call.setConnectionState(Call::ConnectionState::CONNECTED);
-    call.setState(Call::CallState::BUSY);
+    call.setState(Call::CallState::BUSY, Call::ConnectionState::CONNECTED);
 
     Manager::instance().callBusy(call);
     call.removeCall();
@@ -269,7 +266,7 @@ IAXVoIPLink::handleMessage(iax_event* event, IAXCall& call)
 void
 IAXVoIPLink::handleRinging(IAXCall& call)
 {
-    call.setConnectionState(Call::ConnectionState::RINGING);
+    call.setState(Call::ConnectionState::RINGING);
     Manager::instance().peerRingingCall(call);
 }
 
@@ -413,7 +410,7 @@ void IAXVoIPLink::iaxHandlePrecallEvent(iax_event* event)
             }
 
             call->session = event->session;
-            call->setConnectionState(Call::ConnectionState::PROGRESSING);
+            call->setState(Call::ConnectionState::PROGRESSING);
 
             if (event->ies.calling_number)
                 call->setPeerNumber(event->ies.calling_number);
