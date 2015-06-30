@@ -151,7 +151,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
-                                                                  Call::OUTGOING);
+                                                                  Call::CallType::OUTGOING);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
@@ -859,7 +859,7 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
     auto from = msg.from.toString();
     auto reply_vid = msg.id+1;
     RING_WARN("Received incoming DHT call request from %s", from.c_str());
-    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::INCOMING);
+    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = Manager::instance().getIceTransportFactory().createTransport(
         ("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
     if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
