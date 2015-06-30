@@ -532,7 +532,7 @@ RingAccount::handleEvents()
     while (c != pendingCalls_.end()) {
         auto call = c->call.lock();
         if (not call) {
-            RING_WARN("Removing deleted call from pending calls");
+            RING_DBG("Removing deleted call from pending calls");
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             c = pendingCalls_.erase(c);
@@ -588,18 +588,21 @@ RingAccount::handleEvents()
             call->setTransport(tr);
             call->setState(Call::ConnectionState::PROGRESSING);
             if (c->call_key == dht::InfoHash()) {
-                RING_DBG("ICE succeeded : moving incomming call to pending sip call");
+                RING_DBG("[call:%s] ICE succeeded : moving incomming call to pending sip call",
+                         call->getCallId().c_str());
                 auto in = c;
                 ++c;
                 pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
             } else {
-                RING_DBG("ICE succeeded : removing pending outgoing call");
+                RING_DBG("[call:%s] ICE succeeded : removing pending outgoing call",
+                         call->getCallId().c_str());
                 createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
                 dht_.cancelListen(c->call_key, c->listen_key.get());
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
-            RING_WARN("ICE timeout : removing pending call");
+            RING_WARN("[call:%s] ICE timeout : removing pending call (%d)",
+                      call->getCallId().c_str(), call.use_count());
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
             call->onFailure();
