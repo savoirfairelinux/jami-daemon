@@ -480,18 +480,6 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
         fileutils::saveFile(path + ".crt", id.second->getPacked());
 }
 
-template <typename T>
-static void
-parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
-{
-    const auto iter = details.find(key);
-    if (iter == details.end()) {
-        RING_ERR("Couldn't find key %s", key);
-        return;
-    }
-    i = atoi(iter->second.c_str());
-}
-
 void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);

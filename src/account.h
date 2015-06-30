@@ -42,6 +42,7 @@
 #include "registration_states.h"
 #include "ip_utils.h"
 #include "media_codec.h"
+#include "logger.h"
 
 #include <functional>
 #include <string>
@@ -290,6 +291,17 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
+
+        template<class T>
+        static inline void
+        parseInt(const std::map<std::string, std::string>& details, const char* key, T i) {
+            const auto& iter = details.find(key);
+            if (iter == details.end()) {
+                RING_ERR("Couldn't find key \"%s\"", key);
+                return;
+            }
+            i = atoi(iter->second.c_str());
+        }
 
         friend class ConfigurationTest;
 
