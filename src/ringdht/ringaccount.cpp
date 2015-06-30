@@ -504,7 +504,7 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
-    a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, ring::to_string(dhtPublicInCalls_));
+    a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
 
     /* these settings cannot be changed (read only), but clients should still be
      * able to read what they are */
