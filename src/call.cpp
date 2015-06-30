@@ -35,6 +35,7 @@
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
+#include "client/ring_signal.h"
 
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
@@ -43,6 +44,8 @@
 #include "call_factory.h"
 #include "string_utils.h"
 #include "enumclass_utils.h"
+
+#include "errno.h"
 
 namespace ring {
 
@@ -73,22 +76,22 @@ Call::getAccountId() const
     return account_.getAccountID();
 }
 
-void
-Call::setConnectionState(ConnectionState state)
-{
-    std::lock_guard<std::mutex> lock(callMutex_);
-    connectionState_ = state;
-}
-
 Call::ConnectionState
 Call::getConnectionState() const
 {
-    std::lock_guard<std::mutex> lock(callMutex_);
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return connectionState_;
 }
 
+Call::CallState
+Call::getState() const
+{
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    return callState_;
+}
+
 bool
-Call::validTransition(CallState newState)
+Call::validStateTransition(CallState newState)
 {
     switch (callState_) {
         case CallState::INACTIVE:
@@ -122,81 +125,117 @@ Call::validTransition(CallState newState)
 }
 
 bool
-Call::setState(CallState state)
+Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
+             callState_, call_state, connectionState_, cnx_state, code);
 
-    std::lock_guard<std::mutex> lock(callMutex_);
-    if (not validTransition(state)) {
-        assert((int)callState_ < enum_class_size<CallState>()
-               && (int)state < enum_class_size<CallState>());
-        RING_ERR("Invalid attempted call state transition from %d to %d",
-                 callState_, state);
-        return false;
+    if (callState_ != call_state) {
+        if (not validStateTransition(call_state)) {
+            RING_ERR("[call:%s] invalid call state transition from %u to %u",
+                     id_.c_str(), callState_, call_state);
+            return false;
+        }
+    } else if (connectionState_ == cnx_state)
+        return true; // no changes as no-op
+
+    // Emit client state only if changed
+    auto old_client_state = getStateStr();
+    callState_ = call_state;
+    connectionState_ = cnx_state;
+    auto new_client_state = getStateStr();
+
+    if (old_client_state != new_client_state) {
+        RING_DBG("[call:%s] emit client call state change %s, code %d",
+                 id_.c_str(), new_client_state.c_str(), code);
+        emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
     }
 
-    callState_ = state;
     return true;
 }
 
-Call::CallState
-Call::getState() const
+bool
+Call::setState(CallState call_state, signed code)
 {
-    std::lock_guard<std::mutex> lock(callMutex_);
-    return callState_;
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    return setState(call_state, connectionState_, code);
+}
+
+bool
+Call::setState(ConnectionState cnx_state, signed code)
+{
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
+    return setState(callState_, cnx_state, code);
 }
 
 std::string
 Call::getStateStr() const
 {
+    using namespace DRing::Call;
+
     switch (getState()) {
         case CallState::ACTIVE:
             switch (getConnectionState()) {
+                case ConnectionState::PROGRESSING:
+                    return StateEvent::CONNECTING;
+
                 case ConnectionState::RINGING:
-                    return isIncoming() ? "INCOMING" : "RINGING";
+                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
+
+                case ConnectionState::DISCONNECTED:
+                    return StateEvent::HUNGUP;
+
                 case ConnectionState::CONNECTED:
                 default:
-                    return "CURRENT";
+                    return StateEvent::CURRENT;
             }
 
         case CallState::HOLD:
-            return "HOLD";
-        case CallState::BUSY:
-            return "BUSY";
-        case CallState::INACTIVE:
+            return StateEvent::HOLD;
 
+        case CallState::BUSY:
+            return StateEvent::BUSY;
+
+        case CallState::INACTIVE:
             switch (getConnectionState()) {
+                case ConnectionState::PROGRESSING:
+                    return StateEvent::CONNECTING;
+
                 case ConnectionState::RINGING:
-                    return isIncoming() ? "INCOMING" : "RINGING";
+                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
+
                 case ConnectionState::CONNECTED:
-                    return "CURRENT";
+                    return StateEvent::CURRENT;
+
                 default:
-                    return "INACTIVE";
+                    return StateEvent::INACTIVE;
             }
 
         case CallState::MERROR:
         default:
-            return "FAILURE";
+            return StateEvent::FAILURE;
     }
 }
 
 IpAddr
 Call::getLocalIp() const
 {
-    std::lock_guard<std::mutex> lock(callMutex_);
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return localAddr_;
 }
 
 unsigned int
 Call::getLocalAudioPort() const
 {
-    std::lock_guard<std::mutex> lock(callMutex_);
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return localAudioPort_;
 }
 
 unsigned int
 Call::getLocalVideoPort() const
 {
-    std::lock_guard<std::mutex> lock(callMutex_);
+    std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return localVideoPort_;
 }
 
@@ -307,6 +346,15 @@ std::unique_ptr<IceSocket>
 Call::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(iceTransport_, compId)};
+}
+
+void
+Call::peerHungup()
+{
+    const auto state = getState();
+    const auto aborted = state == CallState::ACTIVE or state == CallState::HOLD;
+    setState(ConnectionState::DISCONNECTED,
+             aborted ? ECONNABORTED : ECONNREFUSED);
 }
 
 } // namespace ring

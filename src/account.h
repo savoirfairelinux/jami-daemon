@@ -97,7 +97,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /**
          * Free all ressources related to this account.
-         *   ***Current calls using this account are HUNG-UP***
+         *   ***Current calls using this account are HANG-UP***
          */
         void freeAccount();
 

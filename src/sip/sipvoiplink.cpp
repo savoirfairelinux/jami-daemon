@@ -338,7 +338,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     /* fallback on local address */
     if (not addrSdp) addrSdp = addrToUse;
 
-    call->setConnectionState(Call::ConnectionState::PROGRESSING);
+    call->setState(Call::ConnectionState::PROGRESSING);
     call->setPeerNumber(peerNumber);
     call->setPeerDisplayName(peerDisplayName);
     call->initRecFilename(peerNumber);
@@ -438,7 +438,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
-        call->setConnectionState(Call::ConnectionState::TRYING);
+        call->setState(Call::ConnectionState::TRYING);
 
         if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
             RING_ERR("Could not create answer RINGING");
@@ -454,7 +454,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             return PJ_FALSE;
         }
 
-        call->setConnectionState(Call::ConnectionState::RINGING);
+        call->setState(Call::ConnectionState::RINGING);
 
         Manager::instance().incomingCall(*call, account_id);
     }
@@ -842,7 +842,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
             default:
                 RING_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d",
                          inv->cause, ev ? ev->type : -1);
-                call->onServerFailure(inv->cause);
+                call->onFailure(inv->cause);
                 break;
         }
     }
@@ -985,7 +985,6 @@ sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
 
         RING_WARN("Could not negotiate offer");
         call->hangup(reason);
-        Manager::instance().callFailure(*call);
         return;
     }
 
