@@ -228,7 +228,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 if (auto call = weak_call.lock()) {
                     call->setConnectionState(Call::ConnectionState::PROGRESSING);
                     emitSignal<DRing::CallSignal::StateChange>(call->getCallId(), DRing::Call::StateEvent::CONNECTING, 0);
-                    call->getIceTransport()->start(msg.ice_data);
+                    ice->start(msg.ice_data);
                 }
                 return false;
             }
