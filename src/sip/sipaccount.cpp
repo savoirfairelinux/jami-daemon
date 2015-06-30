@@ -175,7 +175,7 @@ std::shared_ptr<SIPCall>
 SIPAccount::newIncomingCall(const std::string& from UNUSED)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::INCOMING);
+    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::INCOMING);
 }
 
 template <>
@@ -187,7 +187,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     int family;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::OUTGOING);
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::OUTGOING);
 
     if (isIP2IP()) {
         bool ipv6 = false;
