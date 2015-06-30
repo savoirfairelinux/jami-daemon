@@ -93,7 +93,7 @@ namespace ConfProperties {
 constexpr static const char ID                    [] = "Account.id";
 constexpr static const char TYPE                  [] = "Account.type";
 constexpr static const char ALIAS                 [] = "Account.alias";
-constexpr static const char DISPLAYNAME           [] = "Account.DisplayName";
+constexpr static const char DISPLAYNAME           [] = "Account.displayName";
 constexpr static const char ENABLED               [] = "Account.enable";
 constexpr static const char MAILBOX               [] = "Account.mailbox";
 constexpr static const char DTMF_TYPE             [] = "Account.dtmfType";
