@@ -564,18 +564,6 @@ void SIPAccount::unserialize(const YAML::Node &node)
     parseValue(srtpMap, Conf::RTP_FALLBACK_KEY, srtpFallback_);
 }
 
-template <typename T>
-static void
-parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
-{
-    const auto iter = details.find(key);
-    if (iter == details.end()) {
-        RING_ERR("Couldn't find key %s", key);
-        return;
-    }
-    i = atoi(iter->second.c_str());
-}
-
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);

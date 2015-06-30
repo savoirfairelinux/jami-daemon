@@ -101,18 +101,6 @@ addRangeToDetails(std::map<std::string, std::string> &a, const char *minKey,
     a.emplace(maxKey, ring::to_string(range.second));
 }
 
-template <typename T>
-static void
-parseInt(const std::map<std::string, std::string> &details, const char *key, T &i)
-{
-    const auto iter = details.find(key);
-    if (iter == details.end()) {
-        RING_ERR("Couldn't find key %s", key);
-        return;
-    }
-    i = atoi(iter->second.c_str());
-}
-
 void SIPAccountBase::serialize(YAML::Emitter &out)
 {
     Account::serialize(out);
