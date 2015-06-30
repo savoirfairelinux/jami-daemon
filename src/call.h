@@ -77,12 +77,16 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Audio should be transmitted when ConnectionState = Connected AND
          * CallState = Active.
          */
-        enum class ConnectionState {DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__};
+        enum class ConnectionState : unsigned {
+            DISCONNECTED, TRYING, PROGRESSING, RINGING, CONNECTED, COUNT__
+        };
 
         /**
          * The Call State.
          */
-        enum class CallState {INACTIVE, ACTIVE, HOLD, BUSY, MERROR, COUNT__};
+        enum class CallState : unsigned {
+            INACTIVE, ACTIVE, HOLD, BUSY, MERROR, COUNT__
+        };
 
         virtual ~Call();
 
@@ -158,29 +162,27 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         }
 
         /**
-         * Set the connection state of the call (protected by mutex)
-         * @param state The connection state
-         */
-        void setConnectionState(ConnectionState state);
-
-        /**
-         * Get the connection state of the call (protected by mutex)
-         * @return ConnectionState The connection state
-         */
-        ConnectionState getConnectionState() const;
-
-        /**
          * Set the state of the call (protected by mutex)
-         * @param state The call state
+         * @param call_state The call state
+         * @param cnx_state The call connection state
+         * @param code Optionnal state dependent error code (used to report more information)
          * @return true if the requested state change was valid, false otherwise
          */
-        bool setState(CallState state);
+        bool setState(CallState call_state, signed code=0);
+        bool setState(CallState call_state, ConnectionState cnx_state, signed code=0);
+        bool setState(ConnectionState cnx_state, signed code=0);
 
         /**
          * Get the call state of the call (protected by mutex)
          * @return CallState  The call state
          */
         CallState getState() const;
+
+        /**
+         * Get the connection state of the call (protected by mutex)
+         * @return ConnectionState The connection state
+         */
+        ConnectionState getConnectionState() const;
 
         std::string getStateStr() const;
 
@@ -287,9 +289,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual void muteMedia(const std::string& mediaType, bool isMuted)  = 0;
 
         /**
-         * Peer Hung up a call
+         * Peer has hung up a call
          */
-        virtual void peerHungup() = 0;
+        virtual void peerHungup();
 
         /**
          * Send DTMF
@@ -341,11 +343,12 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         bool isVideoMuted_{false};
 
     private:
-        bool validTransition(CallState newState);
+        bool validStateTransition(CallState newState);
 
         std::string getTypeStr() const;
+
         /** Protect every attribute that can be changed by two threads */
-        mutable std::mutex callMutex_ {};
+        mutable std::recursive_mutex callMutex_ {};
 
         // Informations about call socket / audio
 

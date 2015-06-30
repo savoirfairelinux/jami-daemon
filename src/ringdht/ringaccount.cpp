@@ -175,10 +175,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
             RING_DBG("ice init failed (or timeout)");
-            call->setConnectionState(Call::ConnectionState::DISCONNECTED);
-            call->setState(Call::CallState::MERROR);
-            Manager::instance().callFailure(*call); // signal client
-            call->removeCall();
+            call->onFailure();
             return false;
         }
 
@@ -191,7 +188,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         const auto toH = dht::InfoHash(toUri);
         const auto callkey = dht::InfoHash::get("callto:" + toUri);
 
-        call->setConnectionState(Call::ConnectionState::TRYING);
+        std::weak_ptr<SIPCall> weak_call = call;
+
+        call->setState(Call::ConnectionState::TRYING);
         shared_this->dht_.putEncrypted(
             callkey, toH,
             dht::Value {
@@ -201,11 +200,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             [=](bool ok) { // Put complete callback
                 if (!ok) {
                     RING_WARN("Can't put ICE descriptor on DHT");
-                    if (auto call = weak_call.lock()) {
-                        call->setConnectionState(Call::ConnectionState::DISCONNECTED);
-                        Manager::instance().callFailure(*call); // signal client
-                        call->removeCall();
-                    }
+                    if (auto call = weak_call.lock())
+                        call->onFailure();
                 } else
                     RING_DBG("Succesfully put ICE descriptor on DHT");
                 shared_this->dht_.cancelPut(callkey, callvid);
@@ -218,11 +214,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 if (msg.id != replyvid)
                     return true;
                 RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
-                if (auto call = weak_call.lock()) {
-                    call->setConnectionState(Call::ConnectionState::PROGRESSING);
-                    emitSignal<DRing::CallSignal::StateChange>(call->getCallId(), DRing::Call::StateEvent::CONNECTING, 0);
-                    ice->start(msg.ice_data);
-                }
+                call->setState(Call::ConnectionState::PROGRESSING);
+                ice->start(msg.ice_data);
                 return false;
             }
         );
@@ -367,8 +360,7 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         return false;
     }
 
-    call->setConnectionState(Call::ConnectionState::PROGRESSING);
-    call->setState(Call::CallState::ACTIVE);
+    call->setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
 
     return true;
 }
@@ -581,7 +573,7 @@ RingAccount::handleEvents()
             };
             auto tr = link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, tlsParams);
             call->setTransport(tr);
-            call->setConnectionState(Call::ConnectionState::PROGRESSING);
+            call->setState(Call::ConnectionState::PROGRESSING);
             if (c->call_key == dht::InfoHash()) {
                 RING_DBG("[call:%s] ICE succeeded : moving incomming call to pending sip call",
                          call->getCallId().c_str());
@@ -600,10 +592,8 @@ RingAccount::handleEvents()
                       call->getCallId().c_str(), call.use_count());
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
-            call->setConnectionState(Call::ConnectionState::DISCONNECTED);
-            Manager::instance().callFailure(*call);
+            call->onFailure();
             c = pendingCalls_.erase(c);
-            call->removeCall();
         } else
             ++c;
     }
@@ -868,11 +858,8 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
             auto& this_ = *shared.get();
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
-                if (auto call = weak_call.lock()) {
-                    call->setConnectionState(Call::ConnectionState::DISCONNECTED);
-                    Manager::instance().callFailure(*call);
-                    call->removeCall();
-                }
+                if (auto call = weak_call.lock())
+                    call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
             this_.dht_.cancelPut(this_.callKey_, reply_vid);
