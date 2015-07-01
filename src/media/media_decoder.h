@@ -49,6 +49,8 @@
 #include <memory>
 #include <chrono>
 
+// Flag to dump frames to /tmp/stream_reception.mkv
+#define DUMP_FRAMES_TO_FILE 1
 class AVCodecContext;
 class AVStream;
 class AVDictionary;
@@ -92,7 +94,16 @@ class MediaDecoder {
         int setupFromVideoData();
         Status decode(VideoFrame&, video::VideoPacket&);
         Status flush(VideoFrame&);
- #endif // RING_VIDEO
+#ifdef DUMP_FRAMES_TO_FILE
+        const char *debugFilename_ = nullptr;
+        AVFormatContext *outputDebugFileCtx_ = nullptr;
+        AVStream *streamDebug_ = nullptr;
+
+        uint64_t currentPts = 0;
+        unsigned cptFrame_ = 0;
+        float incTs_ = 0;
+#endif // DUMP_FRAMES_TO_FILE
+#endif // RING_VIDEO
 
         int setupFromAudioData(const AudioFormat format);
         Status decode(const AudioFrame&);

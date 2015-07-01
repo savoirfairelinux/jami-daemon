@@ -65,6 +65,7 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+
 namespace ring {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
@@ -206,6 +207,11 @@ SocketPair::SocketPair(const char *uri, int localPort)
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+#if DEBUG_RTP_DATA
+    , rtpHeaderMutex_()
+    , rtpReceivedDataDbgFile_ ("/tmp/rtpReceivedData.log", std::ofstream::out)
+    , rtpSentDataDbgFile_ ("/tmp/rtpSentData.log", std::ofstream::out)
+#endif
 {
     openSockets(uri, localPort);
 }
@@ -219,6 +225,11 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+#if DEBUG_RTP_DATA
+    , rtpHeaderMutex_()
+    , rtpReceivedDataDbgFile_ ("/tmp/rtpReceivedData.log", std::ofstream::out)
+    , rtpSentDataDbgFile_ ("/tmp/rtpSentData.log", std::ofstream::out)
+#endif
     , rtcpInfo_(new RtcpInfo())
 {
     rtp_sock_->getIceTransport()->setOnRecv(rtp_sock_->getCompId(), [this](uint8_t* buf, size_t len) {
@@ -228,6 +239,10 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                 dataBuff_.emplace_back(buf, buf+len);
                 canRead_ = true;
                 cv_.notify_all();
+#if DEBUG_RTP_DATA
+                if (rtpReceivedDataDbgFile_ )
+                    rtpReceivedDataDbgFile_.write((char*)buf,len);
+#endif
             }
             return len;
         });
@@ -252,6 +267,8 @@ SocketPair::~SocketPair()
     canRead_ = false;
     if (rtpHandle_ >= 0)
         closeSockets();
+    rtpReceivedDataDbgFile_.close();
+    rtpSentDataDbgFile_.close();
     cv_.notify_all();
 }
 
@@ -376,6 +393,7 @@ start:
             if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
                 goto start; // XXX: see libavformat/srtpproto.c
 
+
         return result;
     }
 
@@ -392,6 +410,24 @@ start_ice:
         errno = EAGAIN;
         return -1;
     }
+#if DEBUG_RTP_DATA
+        if (addRtpHeadersInfo(buf,buf_size, RTP_RECEIVE)) {
+            if (mustRestartChronoReceive_) {
+                mustRestartChronoReceive_ = false;
+                firstPacketReceiveTime_ = std::chrono::high_resolution_clock::now();
+                currentPacketReceiveTime_ = firstPacketReceiveTime_;
+            } else {
+                currentPacketReceiveTime_ = std::chrono::high_resolution_clock::now();
+            }
+            auto elapsedSeconds =
+                std::chrono::duration_cast<std::chrono::seconds>
+                (currentPacketReceiveTime_ - firstPacketReceiveTime_).count();
+
+            if (elapsedSeconds >= REFRESH_DUMP_PERIOD)
+                // dump map each second
+                dumpRtpMap(REFRESH_DUMP_PERIOD, RTP_RECEIVE);
+        }
+#endif
 
     return result;
 }
@@ -420,10 +456,144 @@ SocketPair::readRtcpData(void *buf, int buf_size)
     return result;
 }
 
+#if DEBUG_RTP_DATA
+bool
+SocketPair::addRtpHeadersInfo(void* buf, int buf_size, RTP_DIRECTION direction)
+{
+    std::lock_guard<std::mutex> lk(rtpHeaderMutex_);
+    rtpHeader* header = (rtpHeader *) buf;
+
+    // only filter with PT=96 (h264)
+    if (header->pt != 96)
+        return false;
+
+    std::multimap<std::string,unsigned>* mapRtp;
+
+    uint32_t* current_ssrc = nullptr;
+    uint16_t* firstSessionSeq = nullptr;
+    uint16_t *lastSessionSeq = nullptr;
+
+    if (direction == RTP_SEND) {
+        mapRtp = &mapRtpSend_;
+        current_ssrc = &current_ssrcSend_;
+        firstSessionSeq = &firstSessionSeqSend_;
+        lastSessionSeq = &lastSessionSeqSend_;
+    } else {
+        mapRtp = &mapRtpReceive_;
+        current_ssrc = &current_ssrcReceive_;
+        firstSessionSeq = &firstSessionSeqReceive_;
+        lastSessionSeq = &lastSessionSeqReceive_;
+    }
+
+    unsigned ver = (unsigned) header->version;
+    unsigned marker = (unsigned) header->m;
+    uint16_t seq = ntohs(header->seq);
+    unsigned ts = (unsigned) header->ts;
+
+    // check if we have a new ssrc (=new source)
+    if ((header->ssrc != *current_ssrc)) {
+        RING_ERR("New RTP ssrc %d", *current_ssrc);
+        dumpRtpMap(REFRESH_DUMP_PERIOD, direction);
+        *firstSessionSeq = seq;
+        *current_ssrc = (uint32_t) header->ssrc;
+    }else{
+        //check if we missed frames
+        auto diffSeq = seq - *lastSessionSeq;
+        if ( diffSeq > 1) {
+            RING_ERR("Missing %u frames in %s between [%hu-%hu] "
+                    , diffSeq - 1
+                    , (direction == RTP_SEND) ? "emission" : "reception"
+                    , seq, *lastSessionSeq);
+        }
+    }
+
+    *lastSessionSeq = seq;
+
+    mapRtp->emplace(std::make_pair(rtp_version_, ver));
+    mapRtp->emplace(std::make_pair(rtp_marker_, marker));
+    mapRtp->emplace(std::make_pair(rtp_seq_, seq));
+    mapRtp->emplace(std::make_pair(rtp_ts_, ts));
+
+    return true;
+}
+
+void
+SocketPair::dumpRtpMap(unsigned period, RTP_DIRECTION direction)
+{
+
+    uint32_t* current_ssrc = nullptr;
+    uint16_t* firstSessionSeq = nullptr;
+    uint16_t* lastSessionSeq = nullptr;
+
+    if (period == 0)
+        return;
+
+    std::multimap<std::string,unsigned>* mapRtp;
+    if (direction == RTP_SEND) {
+        mapRtp = &mapRtpSend_;
+        current_ssrc = &current_ssrcSend_;
+        firstSessionSeq = &firstSessionSeqSend_;
+        lastSessionSeq = &lastSessionSeqSend_;
+    } else {
+        mapRtp = &mapRtpReceive_;
+        current_ssrc = &current_ssrcReceive_;
+        firstSessionSeq = &firstSessionSeqReceive_;
+        lastSessionSeq = &lastSessionSeqReceive_;
+    }
+
+
+    auto cptFrameMarked = 0;
+    auto cptFrame = 0;
+    auto rangeSeq = mapRtp->equal_range(rtp_seq_);
+    auto rangeMarker = mapRtp->equal_range(rtp_marker_);
+    for(auto itr = rangeMarker.first; itr != rangeMarker.second; ++itr)
+        if(itr->second == 1)
+            cptFrameMarked++;
+
+    for(auto itr = rangeSeq.first; itr != rangeSeq.second; ++itr)
+        cptFrame++;
+
+    printf("## %s : STATS / SEC  \n", (direction == RTP_SEND) ? "SEND" : "RECEIVE");
+    printf("# marked frame: %u \n",cptFrameMarked / period);
+    printf("# first seq: %hu \n", *firstSessionSeq);
+    printf("# last seq: %hu \n", *lastSessionSeq);
+    printf("# total seq: %u \n", cptFrame / period);
+    printf("#");
+
+    mapRtp->clear();
+    if (direction == RTP_SEND)
+        mustRestartChronoSend_ = true;
+    else
+        mustRestartChronoReceive_ = true;
+}
+#endif
+
 int
 SocketPair::writeRtpData(void* buf, int buf_size)
 {
     auto data = static_cast<const uint8_t *>(buf);
+
+#if DEBUG_RTP_DATA
+    if (addRtpHeadersInfo(buf,buf_size, RTP_SEND)) {
+        if (mustRestartChronoSend_) {
+            mustRestartChronoSend_ = false;
+            firstPacketSendTime_ = std::chrono::high_resolution_clock::now();
+            currentPacketSendTime_ = firstPacketSendTime_;
+        } else {
+            currentPacketSendTime_ = std::chrono::high_resolution_clock::now();
+        }
+        auto elapsedSeconds =
+            std::chrono::duration_cast<std::chrono::seconds>
+            (currentPacketSendTime_ - firstPacketSendTime_).count();
+
+        if (elapsedSeconds >= REFRESH_DUMP_PERIOD)
+            // dump map each second
+            dumpRtpMap(REFRESH_DUMP_PERIOD, RTP_SEND);
+    }
+    if (rtpSentDataDbgFile_ )
+        rtpSentDataDbgFile_.write((char*)buf,buf_size);
+#endif
+
 
     if (rtpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtpHandle_);
