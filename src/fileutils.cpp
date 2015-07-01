@@ -234,7 +234,7 @@ loadFile(const std::string& path)
 }
 
 void
-saveFile(const std::string& path, const std::vector<uint8_t>& data)
+saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
@@ -242,6 +242,9 @@ saveFile(const std::string& path, const std::vector<uint8_t>& data)
         return;
     }
     file.write((char*)data.data(), data.size());
+#ifndef _WIN32
+    chmod(path.c_str(), mode);
+#endif
 }
 
 static size_t
