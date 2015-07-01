@@ -65,9 +65,7 @@ namespace ring { namespace fileutils {
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
 
-#ifdef _WIN32
-    bool recursive_mkdir(const std::string& path);
-#endif
+    bool recursive_mkdir(const std::string& path, mode_t mode=755);
 
     bool isDirectory(const std::string& path);
 
