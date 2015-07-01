@@ -47,6 +47,9 @@
 #include <memory>
 #include <string>
 
+// Flag to dump frames to /tmp/toto.mkv
+//#define DUMP_FRAMES_TO_FILE 1
+
 class AVCodecContext;
 class AVStream;
 class AVFormatContext;
@@ -119,6 +122,15 @@ private:
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
+#ifdef RING_VIDEO
+#ifdef DUMP_FRAMES_TO_FILE
+    const char *debugFilename_ = nullptr;
+    AVFormatContext *outputDebugFileCtx_ = nullptr;
+    AVStream *streamDebug_ = nullptr;
+
+    uint64_t currentPts = 0;
+#endif // DUMP_FRAMES_TO_FILE
+#endif // RING_VIDEO
 
 protected:
     AVDictionary *options_ = nullptr;
