@@ -80,11 +80,7 @@ bool check_dir(const char *path)
     DIR *dir = opendir(path);
 
     if (!dir) { // doesn't exist
-#ifndef _WIN32
-        if (mkdir(path, 0755) != 0) {   // couldn't create the dir
-#else
-        if (recursive_mkdir(path) != true) {
-#endif
+        if (recursive_mkdir(path, 0755) != true) {
             perror(path);
             return false;
         }
@@ -435,11 +431,7 @@ get_config_dir()
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 
-#ifndef _WIN32
-    if (mkdir(configdir.data(), 0700) != 0) {
-#else
-    if (fileutils::recursive_mkdir(configdir.data()) != true) {
-#endif
+    if (fileutils::recursive_mkdir(configdir.data(), 0700) != true) {
         // If directory creation failed
         if (errno != EEXIST)
             RING_DBG("Cannot create directory: %s!", configdir.c_str());
@@ -448,14 +440,21 @@ get_config_dir()
 #endif
 }
 
-#ifdef _WIN32
 bool
-recursive_mkdir(const std::string& path)
+recursive_mkdir(const std::string& path, mode_t mode)
 {
+#ifndef _WIN32
+    if (mkdir(path.data(), mode) != 0) {
+#else
     if (mkdir(path.data()) != 0) {
+#endif
         if (errno == ENOENT) {
-            recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_STR)));
+            recursive_mkdir(path.substr(0, path.find_last_of(DIR_SEPARATOR_STR)), mode);
+#ifndef _WIN32
+            if (mkdir(path.data(), mode) != 0) {
+#else
             if (mkdir(path.data()) != 0) {
+#endif
                 RING_ERR("Could not create directory.");
                 return false;
             }
@@ -463,6 +462,5 @@ recursive_mkdir(const std::string& path)
     }
     return true;
 }
-#endif // !_WIN32
 
 }} // namespace ring::fileutils
