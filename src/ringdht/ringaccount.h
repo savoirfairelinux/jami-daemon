@@ -354,7 +354,7 @@ class RingAccount : public SIPAccountBase {
          * and certPath_ a valid certificate file, load and returns them.
          * Otherwise, generate a new identity and returns it.
          */
-        std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity> loadIdentity();
+        dht::crypto::Identity loadIdentity();
         std::vector<dht::Dht::NodeExport> loadNodes() const;
         std::vector<dht::Dht::ValuesExport> loadValues() const;
 
