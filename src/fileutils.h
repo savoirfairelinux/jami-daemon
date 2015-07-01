@@ -45,10 +45,12 @@
 
 
 #ifndef _WIN32
+#include <sys/stat.h>           // mode_t
 #define DIR_SEPARATOR_STR "/"   // Directory separator char
-#define DIR_SEPARATOR_CH  '/'  // Directory separator string
+#define DIR_SEPARATOR_CH  '/'   // Directory separator string
 #else
-#define DIR_SEPARATOR_STR "\\"   // Directory separator char
+#define mode_t unsigned
+#define DIR_SEPARATOR_STR "\\"  // Directory separator char
 #define DIR_SEPARATOR_CH  '\\'  // Directory separator string
 #endif
 
@@ -77,7 +79,7 @@ namespace ring { namespace fileutils {
     std::vector<std::string> readDirectory(const std::string &dir);
 
     std::vector<uint8_t> loadFile(const std::string& path);
-    void saveFile(const std::string& path, const std::vector<uint8_t>& data);
+    void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=755);
 
     struct FileHandle {
         int fd;
