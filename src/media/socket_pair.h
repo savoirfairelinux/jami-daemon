@@ -53,6 +53,9 @@ using socklen_t = int;
 #include <atomic>
 
 #include <cstdint>
+#include <map>
+
+#define DEBUG_RTP_DATA_SENT 1
 
 namespace ring {
 
@@ -116,7 +119,66 @@ class SocketPair {
         socklen_t rtcpDestAddrLen_;
         std::atomic_bool interrupted_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
+
+        bool addRtpHeadersInfo(void* buf, int buf_size);
+        void dumpRtpMap(unsigned period);
+
+#if DEBUG_RTP_DATA_SENT
+
+#ifdef WORDS_BIGENDIAN
+#define RTP_BIG_ENDIAN 1
+#else
+#define RTP_LITTLE_ENDIAN 1
+#endif
+
+        typedef struct {
+#if RTP_BIG_ENDIAN
+            const unsigned version:2;   /* protocol version */
+            unsigned int p:1;           /* padding flag */
+            unsigned int x:1;           /* header extension flag */
+            unsigned int cc:4;          /* CSRC count */
+            unsigned int m:1;           /* marker bit */
+            unsigned int pt:7;          /* payload type */
+            //unsigned int seq:16;      /* sequence number */
+#elif RTP_LITTLE_ENDIAN
+            //unsigned int seq:16;      /* sequence number */
+            unsigned int cc:4;          /* CSRC count */
+            unsigned int x:1;           /* header extension flag */
+            unsigned int p:1;           /* padding flag */
+            unsigned version:2;         /* protocol version */
+            unsigned int pt:7;          /* payload type */
+            unsigned int m:1;           /* marker bit */
+#else
+#error Define one of RTP_LITTLE_ENDIAN or RTP_BIG_ENDIAN
+#endif
+            unsigned int seq:16;        /* sequence number */
+            uint32_t ts;                /* timestamp */
+            uint32_t ssrc;              /* synchronization source */
+            uint32_t csrc[1];           /* optional CSRC list */
+        } rtpHeader;
+
+        std::multimap<std::string,unsigned> mapRtp_;
+
+        const std::string rtp_version_   = "VERSION";
+        const std::string rtp_pt_        = "PT";
+        const std::string rtp_marker_    = "MARKER";
+        const std::string rtp_seq_       = "SEQ";
+        const std::string rtp_ts_        = "TS";
+
+        bool mustRestartChrono_ = false;
+        std::chrono::high_resolution_clock::time_point firstPacketSendTime_;
+        std::chrono::high_resolution_clock::time_point currentPacketSendTime_;
+
+        unsigned totalMarkedFrame_ = 0;
+        uint32_t current_ssrc_ = 0;
+        unsigned firstSessionSeq_ = 0;
+        unsigned lastSessionSeq_ = 0;
+
+#endif // DEBUG_RTP_DATA_SENT
+
 };
+
+
 
 } // namespace ring
 

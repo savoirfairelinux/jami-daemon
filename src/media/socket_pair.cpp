@@ -59,6 +59,7 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+
 namespace ring {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
@@ -360,10 +361,99 @@ SocketPair::readRtcpData(void *buf, int buf_size)
     return result;
 }
 
+#if DEBUG_RTP_DATA_SENT
+bool
+SocketPair::addRtpHeadersInfo(void* buf, int buf_size)
+{
+    rtpHeader* header = (rtpHeader *) buf;
+
+    unsigned ver = (unsigned) header->version;
+    unsigned marker = (unsigned) header->m;
+    unsigned seq = (unsigned) header->seq;
+    unsigned ts = (unsigned) header->ts;
+
+    // only filter with PT=96 (h264)
+    if (header->pt == 96) {
+        if ((header->ssrc != current_ssrc_)) {
+            RING_ERR("New RTP ssrc %d", current_ssrc_);
+            dumpRtpMap(1);
+            firstSessionSeq_ = seq;
+            totalMarkedFrame_ = 0;
+            current_ssrc_ = (uint32_t) header->ssrc;
+        }
+        /*else{
+            //check if we missed frames
+            if (header->seq - (lastSessionSeq_ + 1 ) > 0)
+                //RING_ERR("Missing %d frames", header->seq - (lastSessionSeq_ + 1));
+        }*/
+
+        lastSessionSeq_ = seq;
+
+        mapRtp_.emplace(std::make_pair(rtp_version_, ver));
+        mapRtp_.emplace(std::make_pair(rtp_marker_, marker));
+        mapRtp_.emplace(std::make_pair(rtp_seq_, seq));
+        mapRtp_.emplace(std::make_pair(rtp_ts_, ts));
+        return true;
+    }
+    return false;
+}
+
+void
+SocketPair::dumpRtpMap(unsigned period)
+{
+    if (period == 0)
+        return;
+
+    auto cptFrameMarked = 0;
+    auto cptFrame = 0;
+    auto rangeSeq = mapRtp_.equal_range(rtp_seq_);
+    auto rangeMarker = mapRtp_.equal_range(rtp_marker_);
+    for(auto itr = rangeMarker.first; itr != rangeMarker.second; ++itr)
+        if(itr->second == 1)
+            cptFrameMarked++;
+
+    for(auto itr = rangeSeq.first; itr != rangeSeq.second; ++itr)
+        cptFrame++;
+
+    totalMarkedFrame_ += cptFrameMarked;
+
+    printf("## STATS / SEC  \n");
+    printf("# marked frame: %u \n",cptFrameMarked / period);
+    printf("# first seq: %u \n", firstSessionSeq_);
+    printf("# last seq: %u \n", lastSessionSeq_);
+    printf("# total seq: %u \n", cptFrame / period);
+    printf("# total marked frame: %d\n", totalMarkedFrame_);
+    printf("#");
+
+    mapRtp_.clear();
+    mustRestartChrono_ = true;
+}
+#endif
+
 int
 SocketPair::writeRtpData(void* buf, int buf_size)
 {
     auto data = static_cast<const uint8_t *>(buf);
+
+#if DEBUG_RTP_DATA_SENT
+    if (addRtpHeadersInfo(buf,buf_size)) {
+        if (mustRestartChrono_) {
+            mustRestartChrono_ = false;
+            firstPacketSendTime_ = std::chrono::high_resolution_clock::now();
+            currentPacketSendTime_ = firstPacketSendTime_;
+        } else {
+            currentPacketSendTime_ = std::chrono::high_resolution_clock::now();
+        }
+        auto elapsedSeconds =
+            std::chrono::duration_cast<std::chrono::seconds>
+            (currentPacketSendTime_ - firstPacketSendTime_).count();
+
+        if (elapsedSeconds >= 1)
+            // dump map each second
+            dumpRtpMap(1);
+    }
+#endif
+
 
     if (rtpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtpHandle_);
