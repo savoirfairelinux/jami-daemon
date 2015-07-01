@@ -90,16 +90,9 @@ constexpr const char * const RingAccount::ACCOUNT_TYPE;
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
 {
-    fileutils::check_dir(fileutils::get_cache_dir().c_str());
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
-
-    /*  ~/.local/{appname}    */
-    fileutils::check_dir(fileutils::get_data_dir().c_str());
-
-    /*  ~/.local/{appname}/{accountID}    */
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-    fileutils::check_dir(idPath_.c_str());
 }
 
 RingAccount::~RingAccount()
@@ -451,7 +444,7 @@ RingAccount::loadIdentity()
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
         fileutils::check_dir(idPath_.c_str());
 
-        fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize());
+        fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 600);
 
         // save the chain including CA
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
@@ -473,9 +466,9 @@ void
 RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
     if (id.first)
-        fileutils::saveFile(path + ".key", id.first->serialize());
+        fileutils::saveFile(path + ".key", id.first->serialize(), 600);
     if (id.second)
-        fileutils::saveFile(path + ".crt", id.second->getPacked());
+        fileutils::saveFile(path + ".crt", id.second->getPacked(), 600);
 }
 
 void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
