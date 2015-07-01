@@ -49,10 +49,22 @@ namespace ring {
 
 using std::string;
 
+static void
+print_averror(const char *funcname, int err)
+{
+    char errbuf[64];
+    av_strerror(err, errbuf, sizeof(errbuf));
+    RING_ERR("%s failed: %s", funcname, errbuf);
+}
+
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE)
 {
+#if DUMP_FRAMES_TO_FILE
+    outputDebugFileCtx_ = avformat_alloc_context();
+    debugFilename_ = "/tmp/stream_reception.mkv";
+#endif
 }
 
 MediaDecoder::~MediaDecoder()
@@ -67,6 +79,14 @@ MediaDecoder::~MediaDecoder()
         av_close_input_file(inputCtx_);
 #endif
     }
+#if DUMP_FRAMES_TO_FILE
+    if (outputDebugFileCtx_ and outputDebugFileCtx_->priv_data)
+        av_write_trailer(outputDebugFileCtx_);
+
+    if (!(outputDebugFileCtx_->flags & AVFMT_NOFILE))
+        /* Close the output file. */
+        avio_close(outputDebugFileCtx_->pb);
+#endif
 }
 
 int MediaDecoder::openInput(const DeviceParams& params)
@@ -282,6 +302,44 @@ int MediaDecoder::setupFromVideoData()
         RING_ERR("Could not open codec");
         return -1;
     }
+#if DUMP_FRAMES_TO_FILE
+    if (decoderCtx_->codec_id == AV_CODEC_ID_H264) {
+        outputDebugFileCtx_->oformat = av_guess_format(NULL, debugFilename_, NULL);
+        strncpy(outputDebugFileCtx_->filename, debugFilename_, sizeof(outputDebugFileCtx_->filename));
+
+
+        av_dump_format(outputDebugFileCtx_, 0, debugFilename_, 1);
+
+
+        /* open the output file, if needed */
+        if (!(outputDebugFileCtx_->oformat->flags & AVFMT_NOFILE)) {
+            if (avio_open(&outputDebugFileCtx_->pb, debugFilename_, AVIO_FLAG_WRITE) < 0) {
+                fprintf(stderr, "Could not open '%s'\n", debugFilename_);
+                return -1;
+            }
+
+        }
+    incTs_ = ((float)decoderCtx_->time_base.num /  (float)decoderCtx_->time_base.den) * 1000;
+    }
+
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
+    if (decoderCtx_->codec_id == AV_CODEC_ID_H264) {
+        streamDebug_ = av_new_stream(outputDebugFileCtx_, 0);
+    }
+#else
+    if (decoderCtx_->codec_id == AV_CODEC_ID_H264) {
+        streamDebug_ = avformat_new_stream(outputDebugFileCtx_, 0);
+    }
+#endif
+    if (decoderCtx_->codec_id == AV_CODEC_ID_H264) {
+        streamDebug_->codec = decoderCtx_;
+        avcodec_copy_context(streamDebug_->codec, decoderCtx_);
+        if (avformat_write_header(outputDebugFileCtx_, NULL)) {
+            RING_ERR("Could not write header for output file... check codec parameters");
+        }
+    }
+
+#endif
 
     return 0;
 }
@@ -306,8 +364,32 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
+#if DUMP_FRAMES_TO_FILE
+    AVPacket pkt_file;
+    if (decoderCtx_->codec_id == AV_CODEC_ID_H264) {
+        av_init_packet(&pkt_file);
+        if (av_packet_ref(&pkt_file, inpacket) < 0)
+            RING_ERR("can not copy frame");
+
+        pkt_file.stream_index = streamDebug_->index;
+
+        av_packet_rescale_ts(&pkt_file,
+                outputDebugFileCtx_->streams[streamDebug_->index]->codec->time_base,
+                outputDebugFileCtx_->streams[streamDebug_->index]->time_base);
+
+        pkt_file.pts = pkt_file.dts = cptFrame_ * incTs_;
+        cptFrame_++;
+        auto ret = av_interleaved_write_frame(outputDebugFileCtx_, &pkt_file);
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
+
+        av_packet_unref(&pkt_file);
+    }
+#endif //DUMP_FRAMES_TO_FILE
+
     auto frame = result.pointer();
     int frameFinished = 0;
+
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
     if (len <= 0)
