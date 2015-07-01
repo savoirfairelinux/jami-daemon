@@ -59,6 +59,7 @@ extern "C" {
 #include <fcntl.h>
 #endif
 
+
 namespace ring {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
@@ -316,6 +317,7 @@ start:
             if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
                 goto start; // XXX: see libavformat/srtpproto.c
 
+
         return result;
     }
 
@@ -332,6 +334,24 @@ start_ice:
         errno = EAGAIN;
         return -1;
     }
+#if DEBUG_RTP_DATA
+        if (addRtpHeadersInfo(buf,buf_size, RTP_RECEIVE)) {
+            if (mustRestartChronoReceive_) {
+                mustRestartChronoReceive_ = false;
+                firstPacketReceiveTime_ = std::chrono::high_resolution_clock::now();
+                currentPacketReceiveTime_ = firstPacketReceiveTime_;
+            } else {
+                currentPacketReceiveTime_ = std::chrono::high_resolution_clock::now();
+            }
+            auto elapsedSeconds =
+                std::chrono::duration_cast<std::chrono::seconds>
+                (currentPacketReceiveTime_ - firstPacketReceiveTime_).count();
+
+            if (elapsedSeconds >= 1)
+                // dump map each second
+                dumpRtpMap(1, RTP_RECEIVE);
+        }
+#endif
 
     return result;
 }
@@ -360,10 +380,146 @@ SocketPair::readRtcpData(void *buf, int buf_size)
     return result;
 }
 
+#if DEBUG_RTP_DATA
+bool
+SocketPair::addRtpHeadersInfo(void* buf, int buf_size, RTP_DIRECTION direction)
+{
+    rtpHeader* header = (rtpHeader *) buf;
+
+    std::multimap<std::string,unsigned>* mapRtp;
+
+    unsigned* totalMarkedFrame = nullptr;
+    uint32_t* current_ssrc = nullptr;
+    unsigned* firstSessionSeq = nullptr;
+    unsigned* lastSessionSeq = nullptr;
+
+    if (direction == RTP_SEND) {
+        mapRtp = &mapRtpSend_;
+        totalMarkedFrame = &totalMarkedFrameSend_ ;
+        current_ssrc = &current_ssrcSend_;
+        firstSessionSeq = &firstSessionSeqSend_;
+        lastSessionSeq = &lastSessionSeqSend_;
+    } else {
+        mapRtp = &mapRtpReceive_;
+        totalMarkedFrame = &totalMarkedFrameReceive_ ;
+        current_ssrc = &current_ssrcReceive_;
+        firstSessionSeq = &firstSessionSeqReceive_;
+        lastSessionSeq = &lastSessionSeqReceive_;
+    }
+
+    unsigned ver = (unsigned) header->version;
+    unsigned marker = (unsigned) header->m;
+    unsigned seq = (unsigned) header->seq;
+    unsigned ts = (unsigned) header->ts;
+
+    // only filter with PT=96 (h264)
+    if (header->pt == 96) {
+        if ((header->ssrc != *current_ssrc)) {
+            RING_ERR("New RTP ssrc %d", *current_ssrc);
+            dumpRtpMap(1, direction);
+            *firstSessionSeq = seq;
+            *totalMarkedFrame = 0;
+            *current_ssrc = (uint32_t) header->ssrc;
+        }
+        /*else{
+            //check if we missed frames
+            if (header->seq - (lastSessionSeq_ + 1 ) > 0)
+                //RING_ERR("Missing %d frames", header->seq - (lastSessionSeq_ + 1));
+        }*/
+
+        *lastSessionSeq = seq;
+
+        mapRtp->emplace(std::make_pair(rtp_version_, ver));
+        mapRtp->emplace(std::make_pair(rtp_marker_, marker));
+        mapRtp->emplace(std::make_pair(rtp_seq_, seq));
+        mapRtp->emplace(std::make_pair(rtp_ts_, ts));
+
+        return true;
+    }
+    return false;
+}
+
+void
+SocketPair::dumpRtpMap(unsigned period, RTP_DIRECTION direction)
+{
+
+    unsigned* totalMarkedFrame = nullptr;
+    uint32_t* current_ssrc = nullptr;
+    unsigned* firstSessionSeq = nullptr;
+    unsigned* lastSessionSeq = nullptr;
+
+    if (period == 0)
+        return;
+
+    std::multimap<std::string,unsigned>* mapRtp;
+    if (direction == RTP_SEND) {
+        mapRtp = &mapRtpSend_;
+        totalMarkedFrame = &totalMarkedFrameSend_ ;
+        current_ssrc = &current_ssrcSend_;
+        firstSessionSeq = &firstSessionSeqSend_;
+        lastSessionSeq = &lastSessionSeqSend_;
+    } else {
+        mapRtp = &mapRtpReceive_;
+        totalMarkedFrame = &totalMarkedFrameReceive_ ;
+        current_ssrc = &current_ssrcReceive_;
+        firstSessionSeq = &firstSessionSeqReceive_;
+        lastSessionSeq = &lastSessionSeqReceive_;
+    }
+
+
+    auto cptFrameMarked = 0;
+    auto cptFrame = 0;
+    auto rangeSeq = mapRtp->equal_range(rtp_seq_);
+    auto rangeMarker = mapRtp->equal_range(rtp_marker_);
+    for(auto itr = rangeMarker.first; itr != rangeMarker.second; ++itr)
+        if(itr->second == 1)
+            cptFrameMarked++;
+
+    for(auto itr = rangeSeq.first; itr != rangeSeq.second; ++itr)
+        cptFrame++;
+
+    totalMarkedFrame += cptFrameMarked;
+
+    printf("## %s : STATS / SEC  \n", (direction == RTP_SEND) ? "SEND" : "RECEIVE");
+    printf("# marked frame: %u \n",cptFrameMarked / period);
+    printf("# first seq: %u \n", firstSessionSeq);
+    printf("# last seq: %u \n", lastSessionSeq);
+    printf("# total seq: %u \n", cptFrame / period);
+    printf("# total marked frame: %d\n", totalMarkedFrame);
+    printf("#");
+
+    mapRtp->clear();
+    if (direction == RTP_SEND)
+        mustRestartChronoSend_ = true;
+    else
+        mustRestartChronoReceive_ = true;
+}
+#endif
+
 int
 SocketPair::writeRtpData(void* buf, int buf_size)
 {
     auto data = static_cast<const uint8_t *>(buf);
+
+#if DEBUG_RTP_DATA
+    if (addRtpHeadersInfo(buf,buf_size, RTP_SEND)) {
+        if (mustRestartChronoSend_) {
+            mustRestartChronoSend_ = false;
+            firstPacketSendTime_ = std::chrono::high_resolution_clock::now();
+            currentPacketSendTime_ = firstPacketSendTime_;
+        } else {
+            currentPacketSendTime_ = std::chrono::high_resolution_clock::now();
+        }
+        auto elapsedSeconds =
+            std::chrono::duration_cast<std::chrono::seconds>
+            (currentPacketSendTime_ - firstPacketSendTime_).count();
+
+        if (elapsedSeconds >= 1)
+            // dump map each second
+            dumpRtpMap(1, RTP_SEND);
+    }
+#endif
+
 
     if (rtpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtpHandle_);
