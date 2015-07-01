@@ -50,12 +50,26 @@ using std::string;
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
-{}
+{
+#if DUMP_FRAMES_TO_FILE
+    outputDebugFileCtx_ = avformat_alloc_context();
+    debugFilename_ = "/tmp/toto.mkv";
+#endif
+}
 
 MediaEncoder::~MediaEncoder()
 {
     if (outputCtx_ and outputCtx_->priv_data)
         av_write_trailer(outputCtx_);
+
+#if DUMP_FRAMES_TO_FILE
+    if (outputDebugFileCtx_ and outputDebugFileCtx_->priv_data)
+        av_write_trailer(outputDebugFileCtx_);
+
+    if (!(outputDebugFileCtx_->flags & AVFMT_NOFILE))
+        /* Close the output file. */
+        avio_close(outputDebugFileCtx_->pb);
+#endif
 
     if (encoderCtx_)
         avcodec_close(encoderCtx_);
@@ -118,6 +132,25 @@ MediaEncoder::openOutput(const char *filename,
     // guarantee that buffer is NULL terminated
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
+#if DUMP_FRAMES_TO_FILE
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        outputDebugFileCtx_->oformat = av_guess_format(NULL, debugFilename_, NULL);
+        strncpy(outputDebugFileCtx_->filename, debugFilename_, sizeof(outputDebugFileCtx_->filename));
+
+
+        av_dump_format(outputDebugFileCtx_, 0, debugFilename_, 1);
+
+        /* open the output file, if needed */
+        if (!(outputDebugFileCtx_->oformat->flags & AVFMT_NOFILE)) {
+            if (avio_open(&outputDebugFileCtx_->pb, debugFilename_, AVIO_FLAG_WRITE) < 0) {
+                fprintf(stderr, "Could not open '%s'\n", debugFilename_);
+                return;
+            }
+
+        }
+    }
+#endif
+
     /* find the video encoder */
     outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
     if (!outputEncoder_) {
@@ -157,13 +190,37 @@ MediaEncoder::openOutput(const char *filename,
     // add video stream to outputformat context
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     stream_ = av_new_stream(outputCtx_, 0);
+#if DUMP_FRAMES_TO_FILE
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        streamDebug_ = av_new_stream(outputDebugFileCtx_, 0);
+    }
+#endif
 #else
     stream_ = avformat_new_stream(outputCtx_, 0);
+#if DUMP_FRAMES_TO_FILE
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        streamDebug_ = avformat_new_stream(outputDebugFileCtx_, 0);
+    }
+#endif
 #endif
     if (!stream_)
         throw MediaEncoderException("Could not allocate stream");
+#if DUMP_FRAMES_TO_FILE
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        if (!streamDebug_)
+            throw MediaEncoderException("Could not allocate stream");
+    }
+#endif
 
     stream_->codec = encoderCtx_;
+#if DUMP_FRAMES_TO_FILE
+    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        streamDebug_->codec = encoderCtx_;
+        if (avformat_write_header(outputDebugFileCtx_, NULL)) {
+            RING_ERR("Could not write header for output file... check codec parameters");
+        }
+    }
+#endif
 #ifdef RING_VIDEO
     if (args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
@@ -275,10 +332,45 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
         pkt.stream_index = stream_->index;
 
+        av_packet_rescale_ts(&pkt,
+                outputDebugFileCtx_->streams[streamDebug_->index]->codec->time_base,
+                outputDebugFileCtx_->streams[streamDebug_->index]->time_base);
+
+
+        pkt.pts = pkt.dts = (frame->pts * ( 1 / device_.framerate.real()) * 1000);
+
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
             print_averror("av_write_frame", ret);
+#if DUMP_FRAMES_TO_FILE
+        if (pkt.pts != AV_NOPTS_VALUE)
+            pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
+                                   streamDebug_->time_base);
+        if (pkt.dts != AV_NOPTS_VALUE)
+            pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
+                                   streamDebug_->time_base);
+
+        pkt.stream_index = streamDebug_->index;
+
+        av_packet_rescale_ts(&pkt,
+                outputDebugFileCtx_->streams[streamDebug_->index]->codec->time_base,
+                outputDebugFileCtx_->streams[streamDebug_->index]->time_base);
+
+
+        pkt.pts = pkt.dts = (frame->pts * ( 1 / device_.framerate.real()) * 1000);
+
+        if (pkt.dts == AV_NOPTS_VALUE)
+            RING_ERR("pkt->dts == AV_NOPTS_VALUE");
+
+        if (outputDebugFileCtx_->oformat->flags & AVFMT_NOTIMESTAMPS)
+            RING_ERR("flags & AVFMT_NOTIMESTAMPS");
+
+
+        ret = av_interleaved_write_frame(outputDebugFileCtx_, &pkt);
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
+#endif
     }
 
 #else
@@ -312,8 +404,28 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     if (ret < 0)
         print_averror("av_write_frame", ret);
 
+#if DUMP_FRAMES_TO_FILE
+    // rescale pts from encoded video framerate to rtp clock rate
+    if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
+        pkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
+                encoderCtx_->time_base, streamDebug_->time_base);
+     } else {
+         pkt.pts = 0;
+     }
+
+     // is it a key frame?
+     if (encoderCtx_->coded_frame->key_frame)
+         pkt.flags |= AV_PKT_FLAG_KEY;
+     pkt.stream_index = streamDebug_->index;
+
+        ret = av_interleaved_write_frame(outputDebugFileCtx_, &pkt);
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
+#endif
+
 #endif  // LIBAVCODEC_VERSION_MAJOR >= 54
 
+    //RING_WARN("ELOI: nb frame = %d\n", encoderCtx_->frame_number);
     av_free_packet(&pkt);
 
     return ret;
@@ -451,6 +563,12 @@ int MediaEncoder::flush()
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
             RING_ERR("write_frame failed");
+#if DUMP_FRAMES_TO_FILE
+        ret = av_interleaved_write_frame(outputDebugFileCtx_, &pkt);
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
+#endif
+
     }
 #else
     ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
@@ -468,6 +586,13 @@ int MediaEncoder::flush()
     ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0)
         RING_ERR("write_frame failed");
+
+#if DUMP_FRAMES_TO_FILE
+        ret = av_interleaved_write_frame(outputDebugFileCtx_, &pkt);
+        if (ret < 0)
+            print_averror("av_interleaved_write_frame", ret);
+#endif
+
 #endif
     av_free_packet(&pkt);
 

@@ -313,6 +313,7 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
         return Status::DecodeError;
 
     if (frameFinished) {
+        // add to the queue
         if (emulateRate_) {
             if (frame->pkt_dts != AV_NOPTS_VALUE) {
                 const auto now = std::chrono::system_clock::now();
