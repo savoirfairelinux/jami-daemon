@@ -755,8 +755,15 @@ TlsValidator::CheckResult TlsValidator::notSelfSigned()
  */
 TlsValidator::CheckResult TlsValidator::keyMatch()
 {
-    // TODO encrypt and decrypt a small string to check
-    return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    if (privateKeyContent_.empty())
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    try {
+        return TlsValidator::CheckResult(
+            dht::crypto::PrivateKey(privateKeyContent_).getPublicKey().getId() == x509crt_->getId()
+            ? CheckValues::PASSED:CheckValues::FAILED, "");
+    } catch (const std::exception&) {
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    }
 }
 
 TlsValidator::CheckResult TlsValidator::privateKeyStoragePermissions()
