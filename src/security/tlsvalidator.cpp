@@ -769,10 +769,10 @@ TlsValidator::CheckResult TlsValidator::privateKeyStoragePermissions()
     return TlsValidator::CheckResult(
         (statbuf.st_mode & S_IFREG) && /* Regular file only */
         /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ((statbuf.st_mode & S_IRUSR) /* write is not relevant */    && (statbuf.st_mode ^ S_IXUSR))
-        /* Group */ && ((statbuf.st_mode ^ S_IRGRP) && (statbuf.st_mode ^ S_IWGRP) && (statbuf.st_mode ^ S_IXGRP))
-        /* Other */ && ((statbuf.st_mode ^ S_IROTH) && (statbuf.st_mode ^ S_IWOTH) && (statbuf.st_mode ^ S_IXOTH))
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     && !(statbuf.st_mode & S_IXUSR))
+        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
 }
 
 TlsValidator::CheckResult TlsValidator::publicKeyStoragePermissions()
@@ -785,10 +785,10 @@ TlsValidator::CheckResult TlsValidator::publicKeyStoragePermissions()
     return TlsValidator::CheckResult(
         (statbuf.st_mode & S_IFREG) && /* Regular file only */
         /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ((statbuf.st_mode & S_IRUSR) /* write is not relevant */    && (statbuf.st_mode ^ S_IXUSR))
-        /* Group */ && ((statbuf.st_mode ^ S_IRGRP) && (statbuf.st_mode ^ S_IWGRP) && (statbuf.st_mode ^ S_IXGRP))
-        /* Other */ && ((statbuf.st_mode ^ S_IROTH) && (statbuf.st_mode ^ S_IWOTH) && (statbuf.st_mode ^ S_IXOTH))
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */   && !(statbuf.st_mode & S_IXUSR))
+        /* Group */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && ( /* read is not relevant */   !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
 }
 
 TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
@@ -799,11 +799,11 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     return TlsValidator::CheckResult(
-        /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ((statbuf.st_mode & S_IRUSR) /* write is not relevant */    && (statbuf.st_mode & S_IXUSR))
-        /* Group */ && ((statbuf.st_mode ^ S_IRGRP) && (statbuf.st_mode ^ S_IWGRP) && (statbuf.st_mode ^ S_IXGRP))
-        /* Other */ && ((statbuf.st_mode ^ S_IROTH) && (statbuf.st_mode ^ S_IWOTH) && (statbuf.st_mode ^ S_IXOTH))
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+        /*                          READ                      WRITE                            EXECUTE             */
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     &&  (statbuf.st_mode & S_IXUSR))
+        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
 }
 
 TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
@@ -814,11 +814,11 @@ TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     return TlsValidator::CheckResult(
-        /*                          READ                      WRITE                            EXECUTE          */
-        /* Owner */    ((statbuf.st_mode & S_IRUSR) /* write is not relevant */    && (statbuf.st_mode & S_IXUSR))
-        /* Group */ && ((statbuf.st_mode ^ S_IRGRP) && (statbuf.st_mode ^ S_IWGRP) && (statbuf.st_mode ^ S_IXGRP))
-        /* Other */ && ((statbuf.st_mode ^ S_IROTH) && (statbuf.st_mode ^ S_IWOTH) && (statbuf.st_mode ^ S_IXOTH))
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+        /*                          READ                      WRITE                            EXECUTE             */
+        /* Owner */    ( (statbuf.st_mode & S_IRUSR) /* write is not relevant */     &&  (statbuf.st_mode & S_IXUSR))
+        /* Group */ && (!(statbuf.st_mode & S_IRGRP) && !(statbuf.st_mode & S_IWGRP) && !(statbuf.st_mode & S_IXGRP))
+        /* Other */ && (!(statbuf.st_mode & S_IROTH) && !(statbuf.st_mode & S_IWOTH) && !(statbuf.st_mode & S_IXOTH))
+        ? CheckValues::PASSED:CheckValues::FAILED, "");
 }
 
 /**
