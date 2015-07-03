@@ -425,20 +425,16 @@ RingAccount::checkIdentityPath()
     const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
     tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
-    tlsCaListFile_ = idPath + DIR_SEPARATOR_STR "ca.crt";
     loadIdentity();
 }
 
-std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::crypto::Identity>
+dht::crypto::Identity
 RingAccount::loadIdentity()
 {
-    dht::crypto::Certificate ca_cert;
-
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
 
     try {
-        ca_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCaListFile_));
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_));
     }
@@ -455,24 +451,21 @@ RingAccount::loadIdentity()
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
         fileutils::check_dir(idPath_.c_str());
 
-        saveIdentity(ca, idPath_ + DIR_SEPARATOR_STR "ca");
-        tlsCaListFile_ = idPath_ + DIR_SEPARATOR_STR "ca.crt";
+        fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize());
 
+        // save the chain including CA
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
         tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
         tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
 
         username_ = id.second->getId().toString();
-        return {ca.second, id};
+        return id;
     }
 
     username_ = dht_cert.getId().toString();
     return {
-        std::make_shared<dht::crypto::Certificate>(std::move(ca_cert)),
-        {
-            std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
-            std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
-        }
+        std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
+        std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
     };
 }
 
@@ -549,7 +542,7 @@ RingAccount::handleEvents()
             auto remote_h = c->from;
             tls::TlsParams tlsParams {
                 .ca_list = "",
-                .id = id.second,
+                .id = id,
                 .dh_params = dhParams_,
                 .timeout = std::chrono::seconds(30),
                 .cert_check = [remote_h](unsigned status,
@@ -689,7 +682,7 @@ void RingAccount::doRegister_()
             dht_.join();
         }
         auto identity = loadIdentity();
-        dht_.run((in_port_t)dhtPortUsed_, identity.second, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
+        dht_.run((in_port_t)dhtPortUsed_, identity, false, [=](dht::Dht::Status s4, dht::Dht::Status s6) {
             RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
             auto status = std::max(s4, s6);
             switch(status) {
@@ -723,13 +716,6 @@ void RingAccount::doRegister_()
 #endif
 
         dht_.importValues(loadValues());
-
-        // Publish our own CA
-        dht_.put(identity.first->getPublicKey().getId(), dht::Value {
-            dht::CERTIFICATE_TYPE,
-            *identity.first,
-            1
-        });
 
         username_ = dht_.getId().toString();
 
