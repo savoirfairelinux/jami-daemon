@@ -365,13 +365,13 @@ DBusConfigurationManager::setHookSettings(const std::map<std::string, std::strin
 }
 
 auto
-DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey) -> decltype(DRing::validateCertificate(accountId, certificate, privateKey))
+DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& caList) -> decltype(DRing::validateCertificate(accountId, certificate, privateKey, caList))
 {
-   return DRing::validateCertificate(accountId, certificate, privateKey);
+   return DRing::validateCertificate(accountId, certificate, privateKey, caList);
 }
 
 std::map<std::string, std::string>
-DBusConfigurationManager::validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate)
+DBusConfigurationManager::validateCertificateRaw(const std::string& accountId, const std::vector< std::vector<uint8_t> >& certificate)
 {
     return DRing::validateCertificateRaw(accountId, certificate);
 }

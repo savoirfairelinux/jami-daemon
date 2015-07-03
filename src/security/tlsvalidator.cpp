@@ -209,8 +209,11 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
     /* NUMBER   */  {{  false  ,  false ,    true     ,  false    ,  false  , true  }},
 }};
 
+TlsValidator::TlsValidator(const std::vector<std::vector<uint8_t>>& crtChain)
+    : TlsValidator(std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
+{}
 
-TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey)
+TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey, const std::string& caList)
     : certificatePath_(certificate)
     , privateKeyPath_(privatekey)
     , certificateFound_(false)
