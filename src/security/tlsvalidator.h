@@ -167,7 +167,9 @@ public:
      * @param privatekey An optional private key file path
      */
     TlsValidator(const std::string& certificate,
-                 const std::string& privatekey = "");
+                 const std::string& privatekey = "", const std::string& caList = "");
+
+    TlsValidator(const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
     TlsValidator(const std::vector<uint8_t>& certificate_raw);
 
