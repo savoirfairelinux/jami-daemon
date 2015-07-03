@@ -128,8 +128,8 @@ class DBusConfigurationManager :
         void setShortcuts(const std::map<std::string, std::string> &shortcutsMap);
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
-        std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey);
-        std::map<std::string, std::string> validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate);
+        std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& caList);
+        std::map<std::string, std::string> validateCertificateRaw(const std::string& accountId, const std::vector < std::vector<uint8_t> >& certificate);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
         std::map<std::string, std::string> getCertificateDetailsRaw(const std::vector<uint8_t>& certificate);
         std::vector<std::string> getPinnedCertificates();
