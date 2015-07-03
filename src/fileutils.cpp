@@ -75,18 +75,20 @@
 namespace ring { namespace fileutils {
 
 // returns true if directory exists
-bool check_dir(const char *path)
+bool check_dir(const char *path, mode_t dirmode, mode_t parentmode)
 {
     DIR *dir = opendir(path);
 
     if (!dir) { // doesn't exist
-        if (recursive_mkdir(path, 0755) != true) {
+        if (not recursive_mkdir(path, parentmode)) {
             perror(path);
             return false;
         }
+#ifndef _WIN32
+        chmod(path, dirmode);
+#endif
     } else
         closedir(dir);
-
     return true;
 }
 

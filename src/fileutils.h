@@ -60,12 +60,19 @@ namespace ring { namespace fileutils {
     std::string get_config_dir();
     std::string get_data_dir();
     std::string get_cache_dir();
-    bool check_dir(const char *path);
+
+    /**
+     * Check directory existance and create it with given mode if it doesn't.
+     * @path path to check, relative or absolute
+     * @dir last directory creation mode
+     * @param parents default mode for all created directories except the last
+     */
+    bool check_dir(const char *path, mode_t dir=0755, mode_t parents=0755);
     void set_program_dir(char *program_path);
     std::string expand_path(const std::string &path);
     bool isDirectoryWritable(const std::string &directory);
 
-    bool recursive_mkdir(const std::string& path, mode_t mode=755);
+    bool recursive_mkdir(const std::string& path, mode_t mode=0755);
 
     bool isDirectory(const std::string& path);
 
@@ -77,7 +84,7 @@ namespace ring { namespace fileutils {
     std::vector<std::string> readDirectory(const std::string &dir);
 
     std::vector<uint8_t> loadFile(const std::string& path);
-    void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=755);
+    void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644);
 
     struct FileHandle {
         int fd;
