@@ -209,8 +209,12 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
     /* NUMBER   */  {{  false  ,  false ,    true     ,  false    ,  false  , true  }},
 }};
 
+TlsValidator::TlsValidator(const std::vector< std::vector<uint8_t> > caList) : TlsValidator(caList.front(), std::vector< std::vector<uint8_t> >(caList.begin()+1,caList.end() ))
+{
+   //TODO
+}
 
-TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey)
+TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey, const std::string& caList)
     : certificatePath_(certificate)
     , privateKeyPath_(privatekey)
     , certificateFound_(false)
@@ -232,7 +236,7 @@ TlsValidator::TlsValidator(const std::string& certificate, const std::string& pr
     }
 }
 
-TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
+TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw, const std::vector< std::vector<uint8_t> > caList)
     : certificateFound_(true)
 {
     try {
