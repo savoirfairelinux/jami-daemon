@@ -38,10 +38,10 @@ namespace ring {
 
 class SrcState {
     public:
-        SrcState(int nb_channels)
+        SrcState(int nb_channels, bool high_quality = false)
         {
             int err;
-            state_ = src_new(SRC_LINEAR, nb_channels, &err);
+            state_ = src_new(high_quality ? SRC_SINC_BEST_QUALITY : SRC_LINEAR, nb_channels, &err);
         }
 
         ~SrcState()
@@ -58,22 +58,22 @@ class SrcState {
         SRC_STATE *state_ {nullptr};
 };
 
-Resampler::Resampler(AudioFormat format) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), src_state_()
+Resampler::Resampler(AudioFormat format, bool quality) : floatBufferIn_(),
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), high_quality_(quality), src_state_()
 {
-    setFormat(format);
+    setFormat(format, quality);
 }
 
-Resampler::Resampler(unsigned sample_rate, unsigned channels) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), src_state_()
+Resampler::Resampler(unsigned sample_rate, unsigned channels, bool quality) : floatBufferIn_(),
+    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), high_quality_(quality), src_state_()
 {
-    setFormat(format_);
+    setFormat(format_, quality);
 }
 
 Resampler::~Resampler() = default;
 
 void
-Resampler::setFormat(AudioFormat format)
+Resampler::setFormat(AudioFormat format, bool quality)
 {
     format_ = format;
     samples_ = (format.nb_channels * format.sample_rate * 20) / 1000; // start with 20 ms buffers
@@ -81,7 +81,7 @@ Resampler::setFormat(AudioFormat format)
     floatBufferOut_.resize(samples_);
     scratchBuffer_.resize(samples_);
 
-    src_state_.reset(new SrcState(format.nb_channels));
+    src_state_.reset(new SrcState(format.nb_channels, quality));
 }
 
 void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
@@ -98,7 +98,7 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 
     if (nbChans != format_.nb_channels) {
         // change channel num if needed
-        src_state_.reset(new SrcState(nbChans));
+        src_state_.reset(new SrcState(nbChans, high_quality_));
         format_.nb_channels = nbChans;
         RING_DBG("SRC channel number changed.");
     }
