@@ -588,6 +588,7 @@ void PulseLayer::ringtoneToSpeaker()
         ringtoneBuffer_.setFormat(fileformat);
         ringtoneBuffer_.resize(samples);
         fileToPlay->getNext(ringtoneBuffer_, playbackGain_);
+        ringtoneBuffer_.setChannelNum(ringtone_->channels(), true);
         bool resample = ringtone_->format().sample_rate != fileformat.sample_rate;
         AudioBuffer* out;
         if (resample) {
