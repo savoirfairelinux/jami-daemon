@@ -52,8 +52,8 @@ class Resampler {
         * internal buffer size. Resampler must be reinitialized
         * every time these parameters change
         */
-        Resampler(AudioFormat outFormat);
-        Resampler(unsigned sample_rate, unsigned channels=1);
+        Resampler(AudioFormat outFormat, bool quality = false);
+        Resampler(unsigned sample_rate, unsigned channels=1, bool quality = false);
         // empty dtor, needed for unique_ptr
         ~Resampler();
 
@@ -61,7 +61,7 @@ class Resampler {
          * Change the converter sample rate and channel number.
          * Internal state is lost.
          */
-        void setFormat(AudioFormat format);
+        void setFormat(AudioFormat format, bool quality = false);
 
         /**
          * resample from the samplerate1 to the samplerate2
@@ -81,6 +81,7 @@ class Resampler {
 
         size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
+        bool high_quality_;
 
         std::unique_ptr<SrcState> src_state_;
 };
