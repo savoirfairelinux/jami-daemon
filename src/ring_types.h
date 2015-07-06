@@ -60,7 +60,7 @@ using enable_if_base_of = typename std::enable_if<std::is_base_of<T, U>::value, 
  * Any negative values (default) block this effect (unlimited respawn).
  * This function is thread-safe.
  */
-template <class T, signed MaxRespawn=-1>
+template <class T>
 std::shared_ptr<T>
 getGlobalInstance()
 {
@@ -70,13 +70,8 @@ getGlobalInstance()
     std::unique_lock<std::recursive_mutex> lock(mutex);
 
     if (wlink.expired()) {
-        static signed counter {MaxRespawn};
-        if (not counter)
-            return nullptr;
         auto link = std::make_shared<T>();
         wlink = link;
-        if (counter > 0)
-            --counter;
         return link;
     }
 
