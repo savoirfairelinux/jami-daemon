@@ -105,6 +105,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
         RING_DBG("Using format %s", params.format.c_str());
     }
 
+
     return ret;
 }
 
@@ -282,6 +283,10 @@ int MediaDecoder::setupFromVideoData()
         RING_ERR("Could not open codec");
         return -1;
     }
+
+    timeBetweenFrames_ = ((getFps().real() != 0) ?
+        (unsigned) ((1.0 / getFps().real()) * 1000000) : 0);
+
     return 0;
 }
 
@@ -314,22 +319,11 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 
     if (frameFinished) {
         if (emulateRate_) {
-            if (frame->pkt_dts != AV_NOPTS_VALUE) {
-                const auto now = std::chrono::system_clock::now();
-                const std::chrono::duration<double> seconds = now - lastFrameClock_;
-                const double dTB = av_q2d(inputCtx_->streams[streamIndex_]->time_base);
-                const double dts_diff = dTB * (frame->pkt_dts - lastDts_);
-                const double usDelay = 1e6 * (dts_diff - seconds.count());
-                if (usDelay > 0.0) {
 #if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-                    av_usleep(usDelay);
+            av_usleep(timeBetweenFrames_);
 #else
-                    usleep(usDelay);
+            usleep(timeBetweenFrames_);
 #endif
-                }
-                lastFrameClock_ = now;
-                lastDts_ = frame->pkt_dts;
-            }
         }
         return Status::FrameFinished;
     }
