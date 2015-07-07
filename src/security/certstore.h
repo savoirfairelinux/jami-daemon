@@ -45,12 +45,11 @@ public:
     CertificateStore();
 
     std::vector<std::string> getPinnedCertificates() const;
-    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id) const;
-    //std::shared_ptr<crypto::Certificate> getCertificateByPublicKey(const std::string& pk_id) const;
+    std::shared_ptr<crypto::Certificate> getCertificate(const std::string& cert_id);
 
-    std::string pinCertificate(const std::vector<uint8_t>& crt, bool local = true) noexcept;
-    std::string pinCertificate(crypto::Certificate&& crt, bool local = true);
-    std::string pinCertificate(std::shared_ptr<crypto::Certificate> crt, bool local = true);
+    std::vector<std::string> pinCertificate(const std::vector<uint8_t>& crt, bool local = true) noexcept;
+    std::vector<std::string> pinCertificate(crypto::Certificate&& crt, bool local = true);
+    std::vector<std::string> pinCertificate(std::shared_ptr<crypto::Certificate> crt, bool local = true);
     bool unpinCertificate(const std::string&);
 
     void pinCertificatePath(const std::string& path);
