@@ -103,7 +103,7 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
+decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
 
 /**
  * Helper function to process refer function on call transfer
