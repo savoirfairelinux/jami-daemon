@@ -339,7 +339,11 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         VideoScaler scaler;
         const int width = f->width();
         const int height = f->height();
+#ifndef __APPLE__
+        const int format = VIDEO_PIXFMT_BGRA;
+#else
         const int format = VIDEO_PIXFMT_RGBA;
+#endif
         const auto bytes = videoFrameSize(format, width, height);
 
         if (bytes > 0) {
