@@ -123,6 +123,7 @@ class MediaDecoder {
         AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
+        unsigned timeBetweenFrames_;
 
     protected:
         AVDictionary *options_ = nullptr;
