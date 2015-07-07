@@ -34,8 +34,13 @@
 
 #include <new>
 #include <cstdlib>
+#include <unistd.h>
+#include "logger.h"
 
 namespace ring {
+
+decltype(getGlobalInstance<QueueFrameInfo>)& getQueueFrame = getGlobalInstance<QueueFrameInfo>;
+
 
 MediaFrame::MediaFrame()
     : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }}
@@ -84,6 +89,7 @@ VideoFrame::height() const noexcept
 {
     return frame_->height;
 }
+
 
 void
 VideoFrame::setGeometry(int format, int width, int height) noexcept
@@ -168,6 +174,41 @@ yuv422_clear_to_black(VideoFrame& frame)
     memset(libav_frame->data[1], 128, libav_frame->linesize[1] * libav_frame->height / 2);
     memset(libav_frame->data[2], 128, libav_frame->linesize[2] * libav_frame->height / 2);
 }
+
+QueueFrameInfo::QueueFrameInfo()
+    : queueVideo (new QueueFrame)
+{
+    auto s = queueVideo->size();
+    RING_WARN("Size = %d",s);
+};
+QueueFrameInfo::~QueueFrameInfo() {};
+/*
+std::shared_ptr<VideoFrame>
+QueueFrameInfo::popVideoFrame()
+{
+    std::lock_guard<std::mutex> lk(queueMutex_);
+
+}*/
+
+bool
+QueueFrameInfo::pushVideoFrame(std::shared_ptr<VideoFrame> videoFrame) {
+    std::lock_guard<std::mutex> lk(queueMutex);
+    if (queueVideo == nullptr) {
+        RING_WARN("ELOI: queue NULLL");
+        return false;
+    }
+
+    if (queueVideo->size() >= QUEUE_VIDEO_MAX_SIZE) {
+        RING_WARN("ELOI: queue full");
+        return false;
+    }else{
+        queueVideo->emplace(videoFrame);
+        if (queueVideo->size() == 1)
+
+        return true;
+    }
+}
+
 
 #endif // RING_VIDEO
 

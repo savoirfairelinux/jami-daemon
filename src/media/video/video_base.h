@@ -33,6 +33,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "logger.h"
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -52,6 +53,7 @@ class AVDictionary;
 #ifndef AVFORMAT_AVIO_H
 class AVIOContext;
 #endif
+#include "media_buffer.h"
 
 namespace ring {
 class VideoFrame;
@@ -82,27 +84,35 @@ class Observable
         };
 
         bool attach(Observer<T>* o) {
+            RING_ERR(">%s",__FUNCTION__);
             std::lock_guard<std::mutex> lk(mutex_);
             if (o and observers_.insert(o).second) {
                 o->attached(this);
+                RING_ERR("<%s",__FUNCTION__);
                 return true;
             }
+            RING_ERR("<%s",__FUNCTION__);
             return false;
         }
 
         bool detach(Observer<T>* o) {
+            RING_ERR(">%s",__FUNCTION__);
             std::lock_guard<std::mutex> lk(mutex_);
             if (o and observers_.erase(o)) {
                 o->detached(this);
+                RING_ERR("<%s",__FUNCTION__);
                 return true;
             }
+            RING_ERR("<%s",__FUNCTION__);
             return false;
         }
 
         void notify(T& data) {
+            RING_ERR(">%s",__FUNCTION__);
             std::lock_guard<std::mutex> lk(mutex_);
             for (auto observer : observers_)
                 observer->update(this, data);
+            RING_ERR("<%s",__FUNCTION__);
         }
 
         int getObserversCount() {
@@ -129,8 +139,8 @@ public:
     virtual void detached(Observable<T>*) {};
 };
 
-struct VideoFrameActiveWriter: Observable<std::shared_ptr<VideoFrame>> {};
-struct VideoFramePassiveReader: Observer<std::shared_ptr<VideoFrame>> {};
+struct VideoFrameActiveWriter: Observable<std::unique_ptr<QueueFrame>> {};
+struct VideoFramePassiveReader: Observer<std::unique_ptr<QueueFrame>> {};
 
 /*=== VideoPacket  ===========================================================*/
 
@@ -161,6 +171,7 @@ public:
 protected:
     // getNewFrame and publishFrame must be called by the same thread only
     VideoFrame& getNewFrame();
+    std::shared_ptr<VideoFrame> getSharedFrame();
     void publishFrame();
     void flushFrames();
 

@@ -174,7 +174,7 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 bool VideoReceiveThread::decodeFrame()
 {
     VideoPacket pkt;
-    const auto ret = videoDecoder_->decode(getNewFrame(), pkt);
+    const auto ret = videoDecoder_->decode(getSharedFrame(), pkt);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:

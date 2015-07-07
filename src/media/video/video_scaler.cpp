@@ -49,18 +49,19 @@ VideoScaler::~VideoScaler()
 }
 
 void
-VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
+VideoScaler::scale(std::shared_ptr<VideoFrame> input, VideoFrame& output)
 {
-    const auto input_frame = input.pointer();
+#if 0
+    const auto input_frame = input.get();
     auto output_frame = output.pointer();
 
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,
-                                (AVPixelFormat) input_frame->format,
+                                (AVPixelFormat) input->format(),
                                 output_frame->width,
                                 output_frame->height,
-                                (AVPixelFormat) output_frame->format,
+                                (AVPixelFormat) output.format(),
                                 mode_,
                                 NULL, NULL, NULL);
     if (!ctx_) {
@@ -68,13 +69,14 @@ VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
         return;
     }
 
-    sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
+    sws_scale(ctx_, input_frame->data, input->linesize, 0,
               input_frame->height, output_frame->data,
-              output_frame->linesize);
+              output.linesize);
+#endif
 }
 
 void
-VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
+VideoScaler::scale_with_aspect(std::shared_ptr<VideoFrame> input, VideoFrame& output)
 {
     auto output_frame = output.pointer();
     scale_and_pad(input, output, 0, 0, output_frame->width,
@@ -97,12 +99,13 @@ static inline bool is_yuv_planar(const AVPixFmtDescriptor *desc)
 }
 
 void
-VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
+VideoScaler::scale_and_pad(std::shared_ptr<VideoFrame> input,
+                           VideoFrame& output,
                            unsigned xoff, unsigned yoff,
                            unsigned dest_width, unsigned dest_height,
                            bool keep_aspect)
 {
-    const auto input_frame = input.pointer();
+    const auto input_frame = input.get()->pointer();
     auto output_frame = output.pointer();
 
     /* Correct destination width/height and offset if we need to keep input

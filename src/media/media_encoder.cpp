@@ -91,6 +91,11 @@ void MediaEncoder::setDeviceOptions(const DeviceParams& args)
     if (not device_.framerate)
         device_.framerate = 30;
     av_dict_set(&options_, "framerate", ring::to_string(device_.framerate.real()).c_str(), 0);
+
+
+    theoricalPtsDiff_ = (device_.framerate.real() != 0) ?
+        (1 / device_.framerate.real() * 1000) : 0;
+
 }
 
 void MediaEncoder::setOptions(const MediaDescription& args)
@@ -197,7 +202,7 @@ MediaEncoder::openOutput(const char *filename,
 #endif
 #else
     stream_ = avformat_new_stream(outputCtx_, 0);
-#if DUMP_FRAMES_TO_FILE
+#if DUMP_FRAME_TO_FILE
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         streamDebug_ = avformat_new_stream(outputDebugFileCtx_, 0);
     }
@@ -284,7 +289,7 @@ print_averror(const char *funcname, int err)
 
 #ifdef RING_VIDEO
 int
-MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
+MediaEncoder::encode(std::shared_ptr<VideoFrame> input, bool is_keyframe,
                      int64_t frame_number)
 {
     /* Prepare a frame suitable to our encoder frame format,
@@ -332,12 +337,14 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
         pkt.stream_index = stream_->index;
 
-        av_packet_rescale_ts(&pkt,
+        /*av_packet_rescale_ts(&pkt,
                 outputDebugFileCtx_->streams[streamDebug_->index]->codec->time_base,
                 outputDebugFileCtx_->streams[streamDebug_->index]->time_base);
+                */
 
 
         pkt.pts = pkt.dts = (frame->pts * ( 1 / device_.framerate.real()) * 1000);
+        usleep(theoricalPtsDiff_);
 
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);

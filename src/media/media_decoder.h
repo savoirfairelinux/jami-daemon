@@ -90,7 +90,7 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(std::shared_ptr<VideoFrame>, video::VideoPacket&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 

@@ -286,7 +286,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(std::shared_ptr<VideoFrame> result, video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -305,7 +305,7 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
-    auto frame = result.pointer();
+    auto frame = result.get()->pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
@@ -314,6 +314,14 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 
     if (frameFinished) {
         // add to the queue
+retry:
+        if ( ! getQueueFrame()->pushVideoFrame(result))
+        {
+            usleep(1000);
+            goto retry;
+        }
+
+
         if (emulateRate_) {
             if (frame->pkt_dts != AV_NOPTS_VALUE) {
                 const auto now = std::chrono::system_clock::now();

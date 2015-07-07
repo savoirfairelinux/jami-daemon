@@ -96,7 +96,7 @@ class ShmHolder
             return openedName_;
         }
 
-        void renderFrame(VideoFrame& src) noexcept;
+        void renderFrame(std::shared_ptr<VideoFrame> src) noexcept;
 
     private:
         bool resizeArea(std::size_t desired_length) noexcept;
@@ -228,10 +228,10 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 }
 
 void
-ShmHolder::renderFrame(VideoFrame& src) noexcept
+ShmHolder::renderFrame(std::shared_ptr<VideoFrame> src) noexcept
 {
-    const auto width = src.width();
-    const auto height = src.height();
+    const auto width = src->width();
+    const auto height = src->height();
     const auto format = VIDEO_PIXFMT_BGRA;
     const auto frameSize = videoFrameSize(format, width, height);
 
@@ -314,11 +314,10 @@ SinkClient::SinkClient(const std::string& id) : id_ {id}
 {}
 
 void
-SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                   std::shared_ptr<VideoFrame>& frame_p)
+SinkClient::update(Observable<std::unique_ptr<QueueFrame>>* /*obs*/,
+                   std::unique_ptr<QueueFrame>& frameQueue)
 {
-    auto f = frame_p; // keep a local reference during rendering
-
+    std::lock_guard<std::mutex> lk(getQueueFrame()->queueMutex);
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -331,9 +330,15 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 #endif
 
 #if HAVE_SHM
-    shm_->renderFrame(*f.get());
+    //shm_->renderFrame(*f.get());
+    RING_WARN("render frame ! ");
+    //while (!frameQueue->empty()) {
+        auto frame = frameQueue->back();
+        shm_->renderFrame(frame);
+    //}
 #endif
 
+#if 0
     if (target_) {
         VideoFrame dst;
         VideoScaler scaler;
@@ -349,6 +354,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         scaler.scale(*f, dst);
         target_(data);
     }
+#endif
 }
 
 }} // namespace ring::video

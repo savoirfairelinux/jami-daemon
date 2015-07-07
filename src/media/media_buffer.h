@@ -32,8 +32,10 @@
 #pragma once
 
 #include "config.h"
+#include "ring_types.h"
 
 #include <memory>
+#include <queue>
 
 class AVFrame;
 
@@ -100,6 +102,28 @@ class VideoFrame: public MediaFrame {
 // Some helpers
 std::size_t videoFrameSize(int format, int width, int height);
 void yuv422_clear_to_black(VideoFrame& frame);
+
+//TODO : declare better !
+typedef std::queue<std::shared_ptr<VideoFrame>> QueueFrame;
+struct QueueFrameInfo
+{
+    QueueFrameInfo();
+    ~QueueFrameInfo();
+    std::unique_ptr<QueueFrame> queueVideo;
+    std::unique_ptr<QueueFrame> queueAudio;
+    const unsigned QUEUE_VIDEO_MAX_SIZE = 300;
+    const unsigned QUEUE_AUDIO_MAX_SIZE = 0;
+    //std::shared_ptr<VideoFrame> popVideoFrame();
+    bool pushVideoFrame(std::shared_ptr<VideoFrame> videoFrame);
+    std::mutex queueMutex;
+};
+
+extern decltype(getGlobalInstance<QueueFrameInfo>)& getQueueFrame;
+/*std::unique_ptr<QueueFrameInfo> my_queueFrameInfo (new QueueFrameInfo);
+std::unique_ptr<QueueFrameInfo> getQueueFrame() {
+    return my_queueFrameInfo;
+}*/
+
 
 #endif // RING_VIDEO
 

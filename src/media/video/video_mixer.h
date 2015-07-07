@@ -47,12 +47,13 @@ namespace ring { namespace video {
 class SinkClient;
 
     struct VideoMixerSource {
-        Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
-        std::unique_ptr<VideoFrame> update_frame;
-        std::unique_ptr<VideoFrame> render_frame;
-        void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
-            std::lock_guard<std::mutex> lock(mutex_);
+        Observable<std::unique_ptr<QueueFrame>>* source = nullptr;
+        std::unique_ptr<QueueFrame> update_frame;
+        std::unique_ptr<QueueFrame> render_frame;
+        void atomic_swap_render(std::shared_ptr<VideoFrame>& other) {
+            /*std::lock_guard<std::mutex> lock(mutex_);
             render_frame.swap(other);
+            */
         }
     private:
         std::mutex mutex_ = {};
@@ -73,15 +74,15 @@ public:
     int getPixelFormat() const;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame>& v);
-    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
-    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void update(Observable<std::unique_ptr<QueueFrame>>*,
+                std::unique_ptr<QueueFrame>& frameQueue);
+    void attached(Observable<std::unique_ptr<QueueFrame>>* ob);
+    void detached(Observable<std::unique_ptr<QueueFrame>>* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
 
-    void render_frame(VideoFrame& output, const VideoFrame& input, int index);
+    void render_frame(std::shared_ptr<VideoFrame> output, const VideoFrame& input, int index);
 
     void start_sink();
     void stop_sink();

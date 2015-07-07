@@ -129,7 +129,7 @@ int VideoInput::interruptCb(void *data)
 bool VideoInput::captureFrame()
 {
     VideoPacket pkt;
-    const auto ret = decoder_->decode(getNewFrame(), pkt);
+    const auto ret = decoder_->decode(getSharedFrame(), pkt);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:

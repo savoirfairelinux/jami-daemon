@@ -56,7 +56,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->print_sdp(sdp_);
 }
 
-void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
+void VideoSender::encodeAndSendVideo(std::shared_ptr<VideoFrame> input_frame)
 {
     bool is_keyframe = forceKeyFrame_ > 0;
 
@@ -67,10 +67,15 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         RING_ERR("encoding failed");
 }
 
-void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
-                         std::shared_ptr<VideoFrame> & frame_p)
+void VideoSender::update(Observable<std::unique_ptr<QueueFrame>>* /*obs*/,
+                   std::unique_ptr<QueueFrame>& frameQueue)
 {
-    encodeAndSendVideo(*frame_p);
+    std::lock_guard<std::mutex> lk(getQueueFrame()->queueMutex);
+    while (!getQueueFrame()->queueVideo->empty()) {
+        RING_WARN("encodeAndSendVideo !!!");
+        auto frame = getQueueFrame()->queueVideo->back();
+        encodeAndSendVideo(frame);
+    }
 }
 
 void VideoSender::forceKeyFrame()

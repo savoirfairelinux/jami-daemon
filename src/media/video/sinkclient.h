@@ -41,6 +41,7 @@
 
 #include "video_provider.h"
 #include "video_base.h"
+#include "media_buffer.h"
 
 #include <string>
 #include <vector>
@@ -64,8 +65,8 @@ class SinkClient : public VideoFramePassiveReader
         std::string openedName() const noexcept;
 
         // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
-                    std::shared_ptr<ring::VideoFrame>&);
+        void update(Observable<std::unique_ptr<QueueFrame>>*,
+                   std::unique_ptr<QueueFrame>& frameQueue);
 
         bool start() noexcept;
         bool stop() noexcept;
