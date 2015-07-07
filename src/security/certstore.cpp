@@ -168,7 +168,7 @@ CertificateStore::unpinCertificatePath(const std::string& path)
     return n;
 }
 
-std::string
+std::vector<std::string>
 CertificateStore::pinCertificate(const std::vector<uint8_t>& cert,
                                  bool local) noexcept
 {
@@ -178,29 +178,36 @@ CertificateStore::pinCertificate(const std::vector<uint8_t>& cert,
     return {};
 }
 
-std::string
+std::vector<std::string>
 CertificateStore::pinCertificate(crypto::Certificate&& cert, bool local)
 {
     return pinCertificate(std::make_shared<crypto::Certificate>(std::move(cert)), local);
 }
 
-std::string
+std::vector<std::string>
 CertificateStore::pinCertificate(std::shared_ptr<crypto::Certificate> cert,
                                  bool local)
 {
-    auto id = cert->getId().toString();
     bool sig {false};
+    std::vector<std::string> ids {};
     {
         std::lock_guard<std::mutex> l(lock_);
-
-        decltype(certs_)::iterator it;
-        std::tie(it, sig) = certs_.emplace(id, std::move(cert));
+        auto c = cert;
+        while (c) {
+            bool inserted;
+            auto id = c->getId().toString();
+            decltype(certs_)::iterator it;
+            std::tie(it, inserted) = certs_.emplace(id, c);
+            ids.emplace_back(id);
+            c = c->issuer;
+            sig |= inserted;
+        }
         if (sig and local)
-            fileutils::saveFile(certPath_+DIR_SEPARATOR_CH+id, it->second->getPacked());
+            fileutils::saveFile(certPath_+DIR_SEPARATOR_CH+ids.front(), cert->getPacked());
     }
-    if (sig)
+    for (const auto& id : ids)
         emitSignal<DRing::ConfigurationSignal::CertificatePinned>(id);
-    return id;
+    return ids;
 }
 
 bool
