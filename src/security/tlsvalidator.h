@@ -118,6 +118,7 @@ public:
         ISSUER_DN                      ,
         NEXT_EXPECTED_UPDATE_DATE      ,
         OUTGOING_SERVER                , /** The hostname/outgoing server used for this certificate               */
+        IS_CA                          ,
         COUNT__
     };
 
@@ -167,7 +168,9 @@ public:
      * @param privatekey An optional private key file path
      */
     TlsValidator(const std::string& certificate,
-                 const std::string& privatekey = "");
+                 const std::string& privatekey = "", const std::string& caList = "");
+
+    TlsValidator(const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
     TlsValidator(const std::vector<uint8_t>& certificate_raw);
 
@@ -220,6 +223,7 @@ public:
     CheckResult getPublicKeyId();
     CheckResult getIssuerDN();
     CheckResult outgoingServer();
+    CheckResult isCA();
 
     void setCaTlsValidator(const TlsValidator& validator);
 
@@ -257,11 +261,14 @@ private:
 
     std::string certificatePath_;
     std::string privateKeyPath_;
+    std::string caListPath_ {};
+
     std::vector<uint8_t> certificateContent_;
     std::vector<uint8_t> privateKeyContent_;
 
     std::shared_ptr<dht::crypto::Certificate> x509crt_;
 
+    bool certificateFileFound_ {false};
     bool certificateFound_;
     bool privateKeyFound_ {false};
     TlsValidator* caCert_ {nullptr};
