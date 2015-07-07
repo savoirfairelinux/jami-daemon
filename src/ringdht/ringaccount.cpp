@@ -1045,7 +1045,7 @@ RingAccount::loadValues() const
         }
         remove(file.c_str());
     }
-    RING_WARN("Loaded %lu values", values.size());
+    RING_DBG("Loaded %lu values", values.size());
     return values;
 }
 
@@ -1071,7 +1071,7 @@ getNewDhParams()
     }
 
     auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
-    RING_WARN("Generated DH params with %u bits in %lfs", bits, time_span.count());
+    RING_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return {new_params_, gnutls_dh_params_deinit};
 }
 
