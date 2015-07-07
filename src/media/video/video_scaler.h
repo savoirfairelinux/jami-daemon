@@ -45,9 +45,9 @@ public:
     VideoScaler();
     ~VideoScaler();
     void reset();
-    void scale(const VideoFrame &input, VideoFrame &output);
-    void scale_with_aspect(const VideoFrame &input, VideoFrame &output);
-    void scale_and_pad(const VideoFrame &input, VideoFrame &output,
+    void scale(std::shared_ptr<VideoFrame> input, VideoFrame& output);
+    void scale_with_aspect(std::shared_ptr<VideoFrame> input, VideoFrame& output);
+    void scale_and_pad(std::shared_ptr<VideoFrame> input, VideoFrame& output,
                        unsigned xoff, unsigned yoff,
                        unsigned dest_width, unsigned dest_height,
                        bool keep_aspect);

@@ -53,6 +53,7 @@ MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE),
     lastDts_(AV_NOPTS_VALUE)
+    , queueVideo_()
 {
 }
 
@@ -286,7 +287,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(std::shared_ptr<VideoFrame> result, video::VideoPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -305,7 +306,7 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
     if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
-    auto frame = result.pointer();
+    auto frame = result.get()->pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
@@ -332,6 +333,7 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
                 lastDts_ = frame->pkt_dts;
             }
         }
+        queueVideo_.push(result);
         return Status::FrameFinished;
     }
 
@@ -468,6 +470,11 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
     } else {
         rb.put(decBuff_);
     }
+}
+
+QueueFrame&
+MediaDecoder::getQueue() {
+    return queueVideo_;
 }
 
 } // namespace ring

@@ -60,15 +60,15 @@ public:
     void forceKeyFrame();
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* obs,
-                std::shared_ptr<VideoFrame> &);
+    void update(Observable<std::unique_ptr<QueueFrame> >* obs,
+                std::unique_ptr<QueueFrame>& frameQueue);
 
     void setMuted(bool isMuted);
 
 private:
     NON_COPYABLE(VideoSender);
 
-    void encodeAndSendVideo(VideoFrame&);
+    void encodeAndSendVideo(std::shared_ptr<VideoFrame>);
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;

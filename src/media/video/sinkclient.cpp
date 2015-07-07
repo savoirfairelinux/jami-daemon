@@ -61,6 +61,7 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+#include <thread>
 
 namespace ring { namespace video {
 
@@ -96,7 +97,7 @@ class ShmHolder
             return openedName_;
         }
 
-        void renderFrame(VideoFrame& src) noexcept;
+        void renderFrame(std::shared_ptr<VideoFrame> src) noexcept;
 
     private:
         bool resizeArea(std::size_t desired_length) noexcept;
@@ -228,10 +229,10 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 }
 
 void
-ShmHolder::renderFrame(VideoFrame& src) noexcept
+ShmHolder::renderFrame(std::shared_ptr<VideoFrame> src) noexcept
 {
-    const auto width = src.width();
-    const auto height = src.height();
+    const auto width = src->width();
+    const auto height = src->height();
     const auto format = VIDEO_PIXFMT_BGRA;
     const auto frameSize = videoFrameSize(format, width, height);
 
@@ -254,6 +255,7 @@ ShmHolder::renderFrame(VideoFrame& src) noexcept
 
         ++area_->frameGen;
         std::swap(area_->readOffset, area_->writeOffset);
+        RING_DBG("sem_post !!! width=%d, height=%d ", width, height);
         ::sem_post(&area_->frameGenMutex);
     }
 }
@@ -274,6 +276,7 @@ SinkClient::start() noexcept
             RING_ERR("SHMHolder ctor failure: %s", e.what());
         }
     }
+    runFrameRenderer_ = true;
     return static_cast<bool>(shm_);
 }
 
@@ -281,6 +284,7 @@ bool
 SinkClient::stop() noexcept
 {
     shm_.reset();
+    runFrameRenderer_ = false;
     return true;
 }
 
@@ -304,6 +308,7 @@ SinkClient::stop() noexcept
     return true;
 }
 
+
 #endif // !HAVE_SHM
 
 SinkClient::SinkClient(const std::string& id) : id_ {id}
@@ -314,11 +319,27 @@ SinkClient::SinkClient(const std::string& id) : id_ {id}
 {}
 
 void
-SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                   std::shared_ptr<VideoFrame>& frame_p)
+SinkClient::attachQueue(QueueFrame& queue)
 {
-    auto f = frame_p; // keep a local reference during rendering
+    std::thread renderer(&ring::video::SinkClient::renderThreadProcess, this, std::ref(queue));
+    renderer.detach();
+}
 
+void
+SinkClient::renderThreadProcess(QueueFrame& queue)
+{
+    // will block if queue is empty
+    while (runFrameRenderer_) {
+        auto frame = queue.pop();
+        shm_->renderFrame(frame);
+    }
+
+}
+
+void
+SinkClient::update(Observable<std::unique_ptr<QueueFrame>>* /*obs*/,
+                   std::unique_ptr<QueueFrame>& frameQueue)
+{
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
@@ -331,9 +352,14 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 #endif
 
 #if HAVE_SHM
-    shm_->renderFrame(*f.get());
+    //shm_->renderFrame(*f.get());
+    RING_WARN("render frame ! ");
+    //while (!frameQueue->empty()) {
+        //shm_->renderFrame(frame);
+    //}
 #endif
 
+#if 0
     if (target_) {
         VideoFrame dst;
         VideoScaler scaler;
@@ -349,6 +375,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         scaler.scale(*f, dst);
         target_(data);
     }
+#endif
 }
 
 }} // namespace ring::video

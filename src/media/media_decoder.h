@@ -90,7 +90,7 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(std::shared_ptr<VideoFrame>, video::VideoPacket&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
@@ -104,6 +104,7 @@ class MediaDecoder {
         int getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);
+        QueueFrame& getQueue();
 
     private:
         NON_COPYABLE(MediaDecoder);
@@ -123,6 +124,7 @@ class MediaDecoder {
         AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
+        QueueFrame queueVideo_;
 
     protected:
         AVDictionary *options_ = nullptr;

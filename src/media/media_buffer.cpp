@@ -34,8 +34,11 @@
 
 #include <new>
 #include <cstdlib>
+#include <unistd.h>
+#include "logger.h"
 
 namespace ring {
+
 
 MediaFrame::MediaFrame()
     : frame_ {av_frame_alloc(), [](AVFrame* frame){ av_frame_free(&frame); }}
@@ -84,6 +87,7 @@ VideoFrame::height() const noexcept
 {
     return frame_->height;
 }
+
 
 void
 VideoFrame::setGeometry(int format, int width, int height) noexcept
@@ -168,6 +172,7 @@ yuv422_clear_to_black(VideoFrame& frame)
     memset(libav_frame->data[1], 128, libav_frame->linesize[1] * libav_frame->height / 2);
     memset(libav_frame->data[2], 128, libav_frame->linesize[2] * libav_frame->height / 2);
 }
+
 
 #endif // RING_VIDEO
 

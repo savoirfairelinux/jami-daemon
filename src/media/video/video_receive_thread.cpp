@@ -130,6 +130,7 @@ bool VideoReceiveThread::setup()
     }
 
     EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
+    sink_->attachQueue(videoDecoder_->getQueue());
 
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
@@ -143,7 +144,6 @@ void VideoReceiveThread::process()
 
 void VideoReceiveThread::cleanup()
 {
-    detach(sink_.get());
     emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_->openedName(),
                                                     false);
     sink_->stop();
@@ -174,7 +174,7 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 bool VideoReceiveThread::decodeFrame()
 {
     VideoPacket pkt;
-    const auto ret = videoDecoder_->decode(getNewFrame(), pkt);
+    const auto ret = videoDecoder_->decode(getSharedFrame(), pkt);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -205,12 +205,13 @@ void VideoReceiveThread::enterConference()
     if (!loop_.isRunning())
         return;
 
+    /*
     if (detach(sink_.get())) {
         emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
                                                         sink_->openedName(),
                                                         true);
         RING_DBG("RX: shm sink <%s> detached", sink_->openedName().c_str());
-    }
+    }*/
 }
 
 void VideoReceiveThread::exitConference()
@@ -219,6 +220,7 @@ void VideoReceiveThread::exitConference()
         return;
 
     if (dstWidth_ > 0 && dstHeight_ > 0) {
+        /*
         if (attach(sink_.get())) {
             emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
                                                             sink_->openedName(),
@@ -227,6 +229,7 @@ void VideoReceiveThread::exitConference()
             RING_DBG("RX: shm sink <%s> started: size = %dx%d",
                      sink_->openedName().c_str(), dstWidth_, dstHeight_);
         }
+        */
     }
 }
 

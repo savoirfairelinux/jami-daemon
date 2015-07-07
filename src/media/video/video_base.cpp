@@ -62,12 +62,21 @@ VideoGenerator::getNewFrame()
     return *writableFrame_.get();
 }
 
+std::shared_ptr<VideoFrame>
+VideoGenerator::getSharedFrame()
+{
+    return std::shared_ptr<VideoFrame>(new VideoFrame());
+}
+
 void
 VideoGenerator::publishFrame()
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    lastFrame_ = std::move(writableFrame_);
-    notify(lastFrame_);
+    //lastFrame_ = std::move(writableFrame_);
+    //getQueueFrame()->pushVideoFrame(writableFrame_);
+    //if (getQueueFrame()->queueVideo->size() >= 1) {
+    //    notify(getQueueFrame()->queueVideo);
+    //}
 }
 
 void

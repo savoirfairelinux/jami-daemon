@@ -41,6 +41,7 @@
 
 #include "video_provider.h"
 #include "video_base.h"
+#include "media_buffer.h"
 
 #include <string>
 #include <vector>
@@ -64,8 +65,8 @@ class SinkClient : public VideoFramePassiveReader
         std::string openedName() const noexcept;
 
         // as VideoFramePassiveReader
-        void update(Observable<std::shared_ptr<ring::VideoFrame>>*,
-                    std::shared_ptr<ring::VideoFrame>&);
+        void update(Observable<std::unique_ptr<QueueFrame>>*,
+                   std::unique_ptr<QueueFrame>& frameQueue);
 
         bool start() noexcept;
         bool stop() noexcept;
@@ -74,6 +75,7 @@ class SinkClient : public VideoFramePassiveReader
         void registerTarget(T&& cb) noexcept {
             target_ = std::forward<T>(cb);
         }
+        void attachQueue(QueueFrame& queue);
 
     private:
         const std::string id_;
@@ -84,6 +86,8 @@ class SinkClient : public VideoFramePassiveReader
         unsigned frameCount_;
         std::chrono::time_point<std::chrono::system_clock> lastFrameDebug_;
 #endif
+        void renderThreadProcess(QueueFrame& queue);
+        bool runFrameRenderer_ = true;
 
 #if HAVE_SHM
         // using shared_ptr and not unique_ptr as ShmHolder is forwared only

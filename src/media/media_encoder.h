@@ -47,7 +47,7 @@
 #include <memory>
 #include <string>
 
-#define DUMP_FRAMES_TO_FILE 1
+//#define DUMP_FRAMES_TO_FILE 1
 
 class AVCodecContext;
 class AVStream;
@@ -79,7 +79,7 @@ public:
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
 #ifdef RING_VIDEO
-    int encode(VideoFrame &input, bool is_keyframe, int64_t frame_number);
+    int encode(std::shared_ptr<VideoFrame> input, bool is_keyframe, int64_t frame_number);
 #endif // RING_VIDEO
 
     int encode_audio(const AudioBuffer &input);
@@ -122,6 +122,7 @@ private:
 #endif
     bool is_muted = false;
 #ifdef RING_VIDEO
+    unsigned theoricalPtsDiff_= 0;
 #ifdef DUMP_FRAMES_TO_FILE
     const char *debugFilename_ = nullptr;
     AVFormatContext *outputDebugFileCtx_ = nullptr;

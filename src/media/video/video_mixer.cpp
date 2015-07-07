@@ -77,7 +77,7 @@ VideoMixer::~VideoMixer()
     loop_.join();
 }
 
-void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void VideoMixer::attached(Observable<std::unique_ptr<QueueFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
@@ -86,7 +86,7 @@ void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
     sources_.push_back(src);
 }
 
-void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void VideoMixer::detached(Observable<std::unique_ptr<QueueFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
@@ -99,11 +99,12 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
     }
 }
 
-void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                        std::shared_ptr<VideoFrame>& frame_p)
+void VideoMixer::update(Observable<std::unique_ptr<QueueFrame> >* ob,
+                        std::unique_ptr<QueueFrame>& frame_p)
 {
     auto lock(rwMutex_.read());
 
+    /*
     for (const auto& x : sources_) {
         if (x->source == ob) {
             if (!x->update_frame)
@@ -113,6 +114,7 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
             return;
         }
     }
+    */
 }
 
 void VideoMixer::process()
@@ -124,15 +126,15 @@ void VideoMixer::process()
         usleep(delay * 1e6);
     lastProcess_ = now;
 
-    VideoFrame& output = getNewFrame();
+    auto output = getSharedFrame();
     try {
-        output.reserve(VIDEO_PIXFMT_YUV420P, width_, height_);
+        output->reserve(VIDEO_PIXFMT_YUV420P, width_, height_);
     } catch (const std::bad_alloc& e) {
         RING_ERR("VideoFrame::allocBuffer() failed");
         return;
     }
 
-    yuv422_clear_to_black(output);
+    yuv422_clear_to_black(*output.get());
 
     {
         auto lock(rwMutex_.read());
@@ -143,6 +145,7 @@ void VideoMixer::process()
             if (!loop_.isRunning())
                 return;
 
+            /*
             // make rendered frame temporarily unavailable for update()
             // to avoid concurrent access.
             std::unique_ptr<VideoFrame> input;
@@ -153,6 +156,7 @@ void VideoMixer::process()
 
             x->atomic_swap_render(input);
             ++i;
+            */
         }
     }
 
@@ -160,8 +164,9 @@ void VideoMixer::process()
 }
 
 void
-VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
+VideoMixer::render_frame(std::shared_ptr<VideoFrame> output, const VideoFrame& input, int index)
 {
+    /*
     if (!width_ or !height_ or !input.pointer())
         return;
 
@@ -173,6 +178,7 @@ VideoMixer::render_frame(VideoFrame& output, const VideoFrame& input, int index)
     int yoff = (index / zoom) * cell_height;
 
     scaler_.scale_and_pad(input, output, xoff, yoff, cell_width, cell_height, true);
+    */
 }
 
 void VideoMixer::setDimensions(int width, int height)
@@ -185,7 +191,7 @@ void VideoMixer::setDimensions(int width, int height)
     // cleanup the previous frame to have a nice copy in rendering method
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
     if (previous_p)
-        yuv422_clear_to_black(*previous_p);
+        yuv422_clear_to_black(*previous_p.get());
 
     stop_sink();
     start_sink();

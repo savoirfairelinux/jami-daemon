@@ -34,6 +34,7 @@
 #endif // RING_VIDEO
 
 #include "media_decoder.h"
+#include "media_buffer.h"
 #include "manager.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
@@ -71,8 +72,7 @@ bool VideoInput::setup()
         RING_ERR("Cannot start shared memory sink");
         return false;
     }
-    if (not attach(sink_.get()))
-        RING_WARN("Failed to attach sink");
+
     return true;
 }
 
@@ -110,8 +110,7 @@ void VideoInput::cleanup()
 {
     deleteDecoder();
 
-    if (detach(sink_.get()))
-        sink_->stop();
+    sink_->stop();
 }
 
 void VideoInput::clearOptions()
@@ -129,7 +128,7 @@ int VideoInput::interruptCb(void *data)
 bool VideoInput::captureFrame()
 {
     VideoPacket pkt;
-    const auto ret = decoder_->decode(getNewFrame(), pkt);
+    const auto ret = decoder_->decode(getSharedFrame(), pkt);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -149,7 +148,6 @@ bool VideoInput::captureFrame()
             return false;
     }
 
-    publishFrame();
     return true;
 }
 
@@ -194,6 +192,8 @@ VideoInput::createDecoder()
             decOpts_.height,
             decOpts_.framerate.real());
     foundDecOpts(decOpts_);
+
+    sink_->attachQueue(decoder_->getQueue());
 }
 
 void

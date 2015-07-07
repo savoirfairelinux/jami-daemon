@@ -357,6 +357,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Vector containing all system codecs (with default parameters)
          */
         std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
+
         /**
          * Vector containing all account codecs (set of system codecs with custom parameters)
          */

@@ -98,6 +98,7 @@ private:
     bool setup();
     void process();
     void cleanup();
+
 };
 
 }} // namespace ring::video
