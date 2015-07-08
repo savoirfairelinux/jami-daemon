@@ -396,7 +396,7 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const IpAddr& remote)
+SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const IpAddr& remote, const std::string& remote_name)
 {
     if (!l || !remote)
         return nullptr;
@@ -408,13 +408,18 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
     pjsip_tpselector sel {PJSIP_TPSELECTOR_LISTENER, {
         .listener = l->get()
     }};
+
+    pjsip_tx_data tx_data;
+    tx_data.dest_info.name = pj_str_t{(char*)remote_name.data(), (pj_ssize_t)remote_name.size()};
+
     pjsip_transport *transport = nullptr;
-    pj_status_t status = pjsip_endpt_acquire_transport(
+    pj_status_t status = pjsip_endpt_acquire_transport2(
             endpt_,
             l->get()->type,
             remoteAddr.pjPtr(),
             remoteAddr.getLength(),
             &sel,
+            remote_name.empty() ? nullptr : &tx_data,
             &transport);
 
     if (!transport || status != PJ_SUCCESS) {
