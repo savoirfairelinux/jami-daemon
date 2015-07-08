@@ -935,7 +935,7 @@ SipsIceTransport::tlsRecv(void* d , size_t s)
 {
     std::lock_guard<std::mutex> l(inputBuffMtx_);
     if (tlsInputBuff_.empty()) {
-        errno = EAGAIN;
+        gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
     }
     const auto& front = tlsInputBuff_.front();
@@ -957,7 +957,7 @@ SipsIceTransport::waitForTlsData(unsigned ms)
         });
     }
     if (state_ == TlsConnectionState::DISCONNECTED) {
-        errno = EINTR;
+        gnutls_transport_set_errno(session_, EINTR);
         return -1;
     }
     return tlsInputBuff_.empty() ? 0 : tlsInputBuff_.front().size();

@@ -493,7 +493,7 @@ new file mode 100644
 index 0000000..5a383d7
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
-@@ -0,0 +1,2867 @@
+@@ -0,0 +1,2869 @@
 +/* $Id$ */
 +/*
 + * Copyright (C) 2014-2015 Savoir-Faire Linux. (http://www.savoirfairelinux.com)
@@ -531,6 +531,8 @@ index 0000000..5a383d7
 +#if GNUTLS_VERSION_NUMBER < 0x030306
 +#include <dirent.h>
 +#endif
++
++#include <errno.h>
 +
 +/* Only build when PJ_HAS_SSL_SOCK and PJ_HAS_TLS_SOCK are enabled */
 +#if defined(PJ_HAS_SSL_SOCK) && PJ_HAS_SSL_SOCK != 0 && \
@@ -1107,7 +1109,7 @@ index 0000000..5a383d7
 +    if (circ_write(&ssock->circ_buf_output, data, len) != PJ_SUCCESS) {
 +        pj_lock_release(ssock->circ_buf_output_mutex);
 +
-+        gnutls_transport_set_errno(ssock->session, PJ_ENOMEM);
++        gnutls_transport_set_errno(ssock->session, ENOMEM);
 +        return -1;
 +    }
 +
@@ -1130,7 +1132,7 @@ index 0000000..5a383d7
 +        pj_lock_release(ssock->circ_buf_input_mutex);
 +
 +        /* Data buffers not yet filled */
-+        gnutls_transport_set_errno(ssock->session, PJ_EAGAIN);
++        gnutls_transport_set_errno(ssock->session, EAGAIN);
 +        return -1;
 +    }
 +

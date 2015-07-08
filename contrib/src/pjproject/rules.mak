@@ -53,7 +53,6 @@ ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/intptr_t.patch
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
-	$(APPLY) $(SRC)/pjproject/errno.patch
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
