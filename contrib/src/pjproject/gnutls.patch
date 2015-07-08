@@ -1107,7 +1107,7 @@ index 0000000..5a383d7
 +    if (circ_write(&ssock->circ_buf_output, data, len) != PJ_SUCCESS) {
 +        pj_lock_release(ssock->circ_buf_output_mutex);
 +
-+        gnutls_transport_set_errno(ssock->session, PJ_ENOMEM);
++        gnutls_transport_set_errno(ssock->session, ENOMEM);
 +        return -1;
 +    }
 +
@@ -1130,7 +1130,7 @@ index 0000000..5a383d7
 +        pj_lock_release(ssock->circ_buf_input_mutex);
 +
 +        /* Data buffers not yet filled */
-+        gnutls_transport_set_errno(ssock->session, PJ_EAGAIN);
++        gnutls_transport_set_errno(ssock->session, EAGAIN);
 +        return -1;
 +    }
 +
