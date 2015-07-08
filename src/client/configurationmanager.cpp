@@ -134,11 +134,12 @@ getTlsDefaultSettings()
 std::map<std::string, std::string>
 validateCertificate(const std::string&,
                     const std::string& certificate,
-                    const std::string& privateKey)
+                    const std::string& privateKey,
+                    const std::string& caList)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate, privateKey}.getSerializedChecks();
+        return TlsValidator{certificate, privateKey, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -151,7 +152,7 @@ validateCertificate(const std::string&,
 
 std::map<std::string, std::string>
 validateCertificateRaw(const std::string&,
-                    const std::vector<uint8_t>& certificate_raw)
+                    const std::vector< std::vector<uint8_t> >& certificate_raw)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
@@ -207,7 +208,7 @@ getPinnedCertificates()
     return {};
 }
 
-std::string
+std::vector<std::string>
 pinCertificate(const std::vector<uint8_t>& certificate, bool local)
 {
     return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
