@@ -244,6 +244,8 @@ public:
 
     const IceTransportOptions getIceOptions() const noexcept override;
 
+    void onTextMessage(const std::string& from, const std::string& msg);
+
 protected:
     virtual void serialize(YAML::Emitter &out);
     virtual void serializeTls(YAML::Emitter &out);

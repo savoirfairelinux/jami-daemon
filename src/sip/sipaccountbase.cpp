@@ -328,4 +328,11 @@ SIPAccountBase::getIceOptions() const noexcept
     return opts;
 }
 
+void
+SIPAccountBase::onTextMessage(const std::string& from, const std::string& msg)
+{
+    RING_WARN("Text message received ! %s -> %s",  from.c_str(), msg.c_str());
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, msg);
+}
+
 } // namespace ring
