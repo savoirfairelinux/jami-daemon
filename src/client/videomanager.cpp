@@ -160,14 +160,14 @@ registerSinkTarget_(const std::string& sinkId, T&& cb)
 
 void
 registerSinkTarget(const std::string& sinkId,
-                   const std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>& cb)
+                   const std::function<void(unsigned char*)>& cb)
 {
     registerSinkTarget_(sinkId, cb);
 }
 
 void
 registerSinkTarget(const std::string& sinkId,
-                   std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>&& cb)
+                   std::function<void(unsigned char*)>&& cb)
 {
     registerSinkTarget_(sinkId, cb);
 }
