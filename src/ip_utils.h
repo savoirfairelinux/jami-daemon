@@ -67,6 +67,9 @@
 
 namespace ring {
 
+/**
+ * Binary representation of an IP address.
+ */
 class IpAddr {
 public:
     IpAddr(uint16_t family = AF_UNSPEC) : addr() {
@@ -76,6 +79,10 @@ public:
     // From a sockaddr-type structure
     IpAddr(const IpAddr& other) : addr(other.addr) {}
     IpAddr(const pj_sockaddr& ip) : addr(ip) {}
+    IpAddr(const sockaddr* ip, socklen_t len) : addr() {
+        memcpy(&addr, ip, len);
+    }
+
     IpAddr(const sockaddr_in& ip) : addr() {
         memcpy(&addr, &ip, sizeof(sockaddr_in));
     }
