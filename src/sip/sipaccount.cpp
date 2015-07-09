@@ -2106,4 +2106,79 @@ void SIPAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
 
+/**
+ * Create Accept header for MESSAGE.
+ */
+static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
+{
+    /* Create Accept header. */
+    pjsip_accept_hdr *accept;
+
+    accept = pjsip_accept_hdr_create(pool);
+    accept->values[0] = CONST_PJ_STR("text/plain");
+    accept->values[1] = CONST_PJ_STR("application/im-iscomposing+xml");
+    accept->count = 2;
+
+    return accept;
+}
+
+void
+SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
+{
+    if (to.empty() or msg.empty())
+        return;
+
+    std::string toUri;
+    if (to.find("sip:") != std::string::npos or
+        to.find("sips:") != std::string::npos)
+        toUri = to;
+    else
+        toUri = getToUri(to);
+
+    const pjsip_method msg_method = { PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE") };
+    std::string from(getFromUri());
+    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjTo = pj_str((char*) toUri.c_str());
+
+    /* Create request. */
+    pjsip_tx_data *tdata;
+    pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
+                                        &pjTo, &pjFrom, &pjTo, NULL, NULL, -1, NULL, &tdata);
+    if (status != PJ_SUCCESS) {
+        char err_msg[128];
+        err_msg[0] = '\0';
+        pj_str_t descr = pj_strerror(status, err_msg, sizeof(err_msg));
+        RING_ERR("Unable to create request: %.*s", descr.slen, descr.ptr);
+        return;
+    }
+
+    const pjsip_tpselector tp_sel = getTransportSelector();
+    pjsip_tx_data_set_transport(tdata, &tp_sel);
+
+    /* Add accept header. */
+    pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)im_create_accept(tdata->pool));
+
+    /* Set default media type if none is specified */
+    static const constexpr pj_str_t type = CONST_PJ_STR("text");
+    static const constexpr pj_str_t subtype = CONST_PJ_STR("plain");
+
+    pj_str_t message = pj_str((char*) msg.c_str());
+
+    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &message);
+    if (tdata->msg->body == NULL) {
+        RING_ERR("Unable to create msg body");
+        pjsip_tx_data_dec_ref(tdata);
+        return;
+    }
+
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, nullptr, nullptr);
+    if (status != PJ_SUCCESS) {
+        char err_msg[128];
+        err_msg[0] = '\0';
+        pj_str_t descr = pj_strerror(status, err_msg, sizeof(err_msg));
+        RING_ERR("Unable to send request: %.*s", descr.slen, descr.ptr);
+        return;
+    }
+}
+
 } // namespace ring
