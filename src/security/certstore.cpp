@@ -99,6 +99,22 @@ CertificateStore::getCertificate(const std::string& k)
     return cit->second;
 }
 
+std::shared_ptr<crypto::Certificate>
+CertificateStore::findCertificateByName(const std::string& name, crypto::Certificate::NameType type)
+{
+    std::unique_lock<std::mutex> l(lock_);
+    for (auto& i : certs_) {
+        if (i.second->getName() == name)
+            return i.second;
+        if (type != crypto::Certificate::NameType::UNKNOWN) {
+            for (const auto& alt : i.second->getAltNames())
+                if (alt.first == type and alt.second == name)
+                    return i.second;
+        }
+    }
+    return {};
+}
+
 static std::vector<crypto::Certificate>
 readCertificates(const std::string& path)
 {
