@@ -39,6 +39,7 @@
 #endif
 
 #include "fileutils.h"
+#include "string_utils.h"
 #include "logger.h"
 #include "security_const.h"
 
@@ -119,6 +120,7 @@ const CallbackMatrix1D<TlsValidator::CertificateDetails, TlsValidator, TlsValida
     /* ISSUER_DN                    */  &TlsValidator::getIssuerDN               ,
     /* NEXT_EXPECTED_UPDATE_DATE    */  &TlsValidator::getIssuerDN               , // TODO
     /* OUTGOING_SERVER              */  &TlsValidator::outgoingServer            ,
+    /* IS_CA                        */  &TlsValidator::isCA                      ,
 }};
 
 const Matrix1D<TlsValidator::CertificateCheck, TlsValidator::CheckValuesType> TlsValidator::enforcedCheckType = {{
@@ -190,6 +192,7 @@ const EnumClassNames<TlsValidator::CertificateDetails> TlsValidator::Certificate
     /* ISSUER_DN                    */ DRing::Certificate::DetailsNames::ISSUER_DN                    ,
     /* NEXT_EXPECTED_UPDATE_DATE    */ DRing::Certificate::DetailsNames::NEXT_EXPECTED_UPDATE_DATE    ,
     /* OUTGOING_SERVER              */ DRing::Certificate::DetailsNames::OUTGOING_SERVER              ,
+    /* IS_CA                        */ DRing::Certificate::DetailsNames::IS_CA                        ,
 
 }};
 
@@ -209,18 +212,28 @@ const Matrix2D<TlsValidator::CheckValuesType , TlsValidator::CheckValues , bool>
     /* NUMBER   */  {{  false  ,  false ,    true     ,  false    ,  false  , true  }},
 }};
 
+TlsValidator::TlsValidator(const std::vector<std::vector<uint8_t>>& crtChain)
+    : TlsValidator(std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
+{}
 
-TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey)
+TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey, const std::string& caList)
     : certificatePath_(certificate)
     , privateKeyPath_(privatekey)
+    , caListPath_(caList)
     , certificateFound_(false)
 {
+    std::vector<uint8_t> certificate_raw;
     try {
-        x509crt_ = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(certificatePath_));
-        certificateContent_ = x509crt_->getPacked();
-        certificateFound_ = true;
-    } catch (const std::exception& e) {
-        throw TlsValidatorException("Can't load certificate");
+        certificate_raw = fileutils::loadFile(certificatePath_);
+        certificateFileFound_ = true;
+    } catch (const std::exception& e) {}
+
+    if (not certificate_raw.empty()) {
+        try {
+            x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
+            certificateContent_ = x509crt_->getPacked();
+            certificateFound_ = true;
+        } catch (const std::exception& e) {}
     }
 
     try {
@@ -424,20 +437,45 @@ static TlsValidator::CheckResult checkBinaryError(int err, char* copy_buffer, si
  */
 unsigned int TlsValidator::compareToCa()
 {
-    // Those check can only be applied when a valid CA is present
-    if (certificateFound_ or (not caCert_) or caCert_->valid().first == CheckValues::FAILED)
-        return GNUTLS_CERT_SIGNER_NOT_FOUND;
-
     // Don't check unless the certificate changed
     if (caChecked_)
         return caValidationOutput_;
 
-    const int err = gnutls_x509_crt_verify(
-        x509crt_->cert, &caCert_->x509crt_->cert, 1, 0, &caValidationOutput_);
+    // build the certificate chain
+    std::vector<gnutls_x509_crt_t> crts {};
+    auto crt = x509crt_;
+    while (crt) {
+        crts.emplace_back(crt->cert);
+        crt = crt->issuer;
+    }
 
-    if (err)
+    // build the CA trusted list
+    gnutls_x509_trust_list_t trust;
+    gnutls_x509_trust_list_init(&trust, 0);
+
+    if (not caListPath_.empty()) {
+        if (fileutils::isDirectory(caListPath_))
+            gnutls_x509_trust_list_add_trust_dir(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+        else
+            gnutls_x509_trust_list_add_trust_file(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
+    }
+
+    auto err = gnutls_x509_trust_list_verify_crt2(
+        trust,
+        crts.data(), crts.size(),
+        nullptr, 0,
+        GNUTLS_PROFILE_TO_VFLAGS(GNUTLS_PROFILE_MEDIUM),
+        &caValidationOutput_, nullptr);
+
+    gnutls_x509_trust_list_deinit(trust, false);
+
+    if (err) {
+        RING_WARN("gnutls_x509_trust_list_verify_crt2 failed: %s", gnutls_strerror(err));
         return GNUTLS_CERT_SIGNER_NOT_FOUND;
+    }
+    RING_DBG("gnutls_x509_trust_list_verify_crt2: %d", caValidationOutput_);
 
+    caChecked_ = true;
     return caValidationOutput_;
 }
 
@@ -712,6 +750,9 @@ TlsValidator::CheckResult TlsValidator::hasPrivateKey()
  */
 TlsValidator::CheckResult TlsValidator::notExpired()
 {
+    if (exist().first == CheckValues::FAILED)
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+
     // time_t expirationTime = gnutls_x509_crt_get_expiration_time(cert);
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_EXPIRED
         ? CheckValues::FAILED:CheckValues::PASSED, "");
@@ -724,6 +765,9 @@ TlsValidator::CheckResult TlsValidator::notExpired()
  */
 TlsValidator::CheckResult TlsValidator::activated()
 {
+    if (exist().first == CheckValues::FAILED)
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+
     // time_t activationTime = gnutls_x509_crt_get_activation_time(cert);
     return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_NOT_ACTIVATED
         ? CheckValues::FAILED:CheckValues::PASSED, "");
@@ -735,6 +779,9 @@ TlsValidator::CheckResult TlsValidator::activated()
  */
 TlsValidator::CheckResult TlsValidator::strongSigning()
 {
+    if (exist().first == CheckValues::FAILED)
+        TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+
     // Doesn't seem to have the same value as
     // certtool  --infile /home/etudiant/Téléchargements/mynsauser.pem --key-inf
     // TODO figure out why
@@ -755,6 +802,9 @@ TlsValidator::CheckResult TlsValidator::notSelfSigned()
  */
 TlsValidator::CheckResult TlsValidator::keyMatch()
 {
+    if (exist().first == CheckValues::FAILED)
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
+
     if (privateKeyContent_.empty())
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
     try {
@@ -888,7 +938,7 @@ TlsValidator::CheckResult TlsValidator::expectedOwner()
  */
 TlsValidator::CheckResult TlsValidator::exist()
 {
-    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED, "");
+    return TlsValidator::CheckResult((certificateFound_ or certificateFileFound_) ? CheckValues::PASSED : CheckValues::FAILED, "");
 }
 
 /**
@@ -898,9 +948,7 @@ TlsValidator::CheckResult TlsValidator::exist()
  */
 TlsValidator::CheckResult TlsValidator::valid()
 {
-    // TODO this is wrong
-    return TlsValidator::CheckResult(compareToCa() & GNUTLS_CERT_INVALID
-        ? CheckValues::FAILED:CheckValues::PASSED, "");
+    return TlsValidator::CheckResult(certificateFound_ ? CheckValues::PASSED : CheckValues::FAILED, "");
 }
 
 /**
@@ -954,7 +1002,8 @@ TlsValidator::CheckResult TlsValidator::notRevoked()
  */
 bool TlsValidator::hasCa() const
 {
-    return caCert_ != nullptr and caCert_->certificateFound_;
+    return (x509crt_ and x509crt_->issuer);/* or
+           (caCert_ != nullptr and caCert_->certificateFound_);*/
 }
 
 //
@@ -1005,9 +1054,9 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
  */
 TlsValidator::CheckResult TlsValidator::getIssuer()
 {
-    size_t resultSize = sizeof(copy_buffer);
-    int err = gnutls_x509_crt_get_issuer_unique_id(x509crt_->cert, copy_buffer, &resultSize);
-    return checkError(err, copy_buffer, resultSize);
+    if (not x509crt_->issuer)
+        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    return TlsValidator::CheckResult(CheckValues::CUSTOM, x509crt_->issuer->getId().toString());
 }
 
 /**
@@ -1168,6 +1217,15 @@ TlsValidator::CheckResult TlsValidator::outgoingServer()
 {
     // TODO
     return TlsValidator::CheckResult(CheckValues::CUSTOM, "");
+}
+
+
+/**
+ * If the certificate is not self signed, return the issuer
+ */
+TlsValidator::CheckResult TlsValidator::isCA()
+{
+    return TlsValidator::CheckResult(CheckValues::CUSTOM, x509crt_->isCA() ? TRUE_STR : FALSE_STR);
 }
 
 

@@ -365,15 +365,15 @@ DBusConfigurationManager::setHookSettings(const std::map<std::string, std::strin
 }
 
 auto
-DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate, const std::string& privateKey) -> decltype(DRing::validateCertificate(accountId, certificate, privateKey))
+DBusConfigurationManager::validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(DRing::validateCertificate(accountId, certificate))
 {
-   return DRing::validateCertificate(accountId, certificate, privateKey);
+   return DRing::validateCertificate(accountId, certificate);
 }
 
-std::map<std::string, std::string>
-DBusConfigurationManager::validateCertificateRaw(const std::string& accountId, const std::vector<uint8_t>& certificate)
+auto
+DBusConfigurationManager::validateCertificatePath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& caList) -> decltype(DRing::validateCertificatePath(accountId, certificate, privateKey, caList))
 {
-    return DRing::validateCertificateRaw(accountId, certificate);
+   return DRing::validateCertificatePath(accountId, certificate, privateKey, caList);
 }
 
 auto
@@ -383,9 +383,9 @@ DBusConfigurationManager::getCertificateDetails(const std::string& certificate) 
 }
 
 auto
-DBusConfigurationManager::getCertificateDetailsRaw(const std::vector<uint8_t>& certificate) -> decltype(DRing::getCertificateDetailsRaw(certificate))
+DBusConfigurationManager::getCertificateDetailsPath(const std::string& certificate) -> decltype(DRing::getCertificateDetailsPath(certificate))
 {
-    return DRing::getCertificateDetailsRaw(certificate);
+    return DRing::getCertificateDetailsPath(certificate);
 }
 
 auto
