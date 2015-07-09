@@ -86,6 +86,12 @@ constexpr static const char STATE_DESC                [] = "Transport.statusDesc
 
 } //namespace DRing::VolatileProperties::Transport
 
+namespace InstantMessaging {
+
+constexpr static const char OFF_CALL                 [] = "IM.offCall";
+
+}
+
 } //namespace DRing::Account::VolatileProperties
 
 namespace ConfProperties {

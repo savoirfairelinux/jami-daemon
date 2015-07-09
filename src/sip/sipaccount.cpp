@@ -59,6 +59,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "client/ring_signal.h"
+#include "dring/account_const.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -72,15 +73,11 @@
 
 #include <unistd.h>
 
-
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
-
-#include "upnp/upnp_control.h"
-#include "ip_utils.h"
 
 #ifdef _WIN32
 #include <lmcons.h>
@@ -670,6 +667,7 @@ SIPAccount::getVolatileAccountDetails() const
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_CODE, ring::to_string(registrationStateDetailed_.first));
     a.emplace(Conf::CONFIG_ACCOUNT_REGISTRATION_STATE_DESC, registrationStateDetailed_.second);
+    a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
 
     if (presence_) {
         a.emplace(Conf::CONFIG_PRESENCE_STATUS,     presence_->isOnline() ? TRUE_STR : FALSE_STR);
