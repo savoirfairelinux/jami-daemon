@@ -1272,11 +1272,17 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 
     const auto token = std::hash<std::string>()(name + to_string(type));
     getResolveCallbackMap().registerCallback(token,
-        [cb](pj_status_t s, const pjsip_server_addresses* r) {
+        [=](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
-                    sip_utils::sip_strerror(s);
-                    throw std::runtime_error("Can't resolve address");
+                    RING_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.", name.c_str());
+                    auto ips = ip_utils::getAddrList(name.c_str());
+                    if (ips.empty()) {
+                        sip_utils::sip_strerror(s);
+                        throw std::runtime_error("Can't resolve address");
+                    } else {
+                        cb(ips);
+                    }
                 } else {
                     std::vector<IpAddr> ips;
                     ips.reserve(r->count);
