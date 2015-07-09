@@ -2350,7 +2350,8 @@ Manager::getAccountList() const
     using std::string;
     vector<string> account_order(loadAccountOrder());
 
-    // The IP2IP profile is always available, and first in the list
+    // The IP2IP profile should always be available, and first in the list;
+    // however, it is possible that it was deleted by removeAccounts()
 
     vector<string> v;
 
@@ -2365,7 +2366,8 @@ Manager::getAccountList() const
             v.push_back(account->getAccountID());
         }
     } else {
-        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        const auto& ip2ipAccountID = getIP2IPAccount() ?
+            getIP2IPAccount()->getAccountID() : std::string();
         for (const auto& id : account_order) {
             if (id.empty() or id == ip2ipAccountID)
                 continue;
@@ -2563,7 +2565,9 @@ Manager::loadAccount(const YAML::Node &node, int &errorCount,
     };
 
     if (!accountid.empty() and !accountAlias.empty()) {
-        const auto& ip2ipAccountID = getIP2IPAccount()->getAccountID();
+        const auto& ip2ipAccountID = getIP2IPAccount() ?
+            getIP2IPAccount()->getAccountID() : std::string();
+
         if (not inAccountOrder(accountid) and accountid != ip2ipAccountID) {
             RING_WARN("Dropping account %s, which is not in account order", accountid.c_str());
         } else if (accountFactory_.isSupportedType(accountType.c_str())) {
