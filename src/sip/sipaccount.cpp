@@ -855,7 +855,7 @@ void SIPAccount::doRegister2_()
         transport_.reset();
 #if HAVE_TLS
         if (isTlsEnabled()) {
-            setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_));
+            setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
         } else
 #endif
         {

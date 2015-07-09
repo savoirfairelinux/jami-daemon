@@ -185,7 +185,7 @@ public:
     getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
 
     std::shared_ptr<SipTransport>
-    getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote);
+    getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote, const std::string& remote_name = {});
 #endif
 
 #if HAVE_DHT
