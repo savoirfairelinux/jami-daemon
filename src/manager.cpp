@@ -55,6 +55,7 @@
 #include "call_factory.h"
 
 #include "sip/sip_utils.h"
+#include "sip/sipvoiplink.h"
 
 #include "im/instant_messaging.h"
 
@@ -309,6 +310,9 @@ Manager::init(const std::string &config_file)
     } else {
         // restore previous configuration
         RING_WARN("Restoring last working configuration");
+
+        // keep a reference to sipvoiplink while destroying the accounts
+        const auto sipvoiplink = getSIPVoIPLink();
 
         try {
             // remove accounts from broken configuration
