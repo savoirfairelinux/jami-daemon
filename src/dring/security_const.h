@@ -89,6 +89,7 @@ namespace DetailsNames {
     constexpr static char ISSUER_DN                   [] = "ISSUER_DN"                    ;
     constexpr static char NEXT_EXPECTED_UPDATE_DATE   [] = "NEXT_EXPECTED_UPDATE_DATE"    ;
     constexpr static char OUTGOING_SERVER             [] = "OUTGOING_SERVER"              ;
+    constexpr static char IS_CA                       [] = "IS_CA"                        ;
 } //namespace DRing::Certificate::CheckValuesNames
 
 /**

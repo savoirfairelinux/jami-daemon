@@ -133,12 +133,11 @@ getTlsDefaultSettings()
 
 std::map<std::string, std::string>
 validateCertificate(const std::string&,
-                    const std::string& certificate,
-                    const std::string& privateKey)
+                    const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate, privateKey}.getSerializedChecks();
+        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -150,12 +149,14 @@ validateCertificate(const std::string&,
 }
 
 std::map<std::string, std::string>
-validateCertificateRaw(const std::string&,
-                    const std::vector<uint8_t>& certificate_raw)
+validateCertificatePath(const std::string&,
+                    const std::string& certificate,
+                    const std::string& privateKey,
+                    const std::string& caList)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate_raw}.getSerializedChecks();
+        return TlsValidator{certificate, privateKey, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -182,11 +183,11 @@ getCertificateDetails(const std::string& certificate)
 }
 
 std::map<std::string, std::string>
-getCertificateDetailsRaw(const std::vector<uint8_t>& certificate_raw)
+getCertificateDetailsPath(const std::string& certificate)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate_raw}.getSerializedDetails();
+        return TlsValidator{ring::fileutils::loadFile(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }
@@ -207,7 +208,7 @@ getPinnedCertificates()
     return {};
 }
 
-std::string
+std::vector<std::string>
 pinCertificate(const std::vector<uint8_t>& certificate, bool local)
 {
     return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
