@@ -56,6 +56,8 @@ class AudioRtpSession : public RtpSession {
                    std::unique_ptr<IceSocket> rtcp_sock);
         void stop();
         void setMuted(bool isMuted);
+        void setSenderInitSeqVal(const uint16_t seqVal);
+        uint16_t getSenderLastSeqValue();
 
     private:
         void startSender();
@@ -64,6 +66,7 @@ class AudioRtpSession : public RtpSession {
         std::unique_ptr<AudioSender> sender_;
         std::unique_ptr<AudioReceiveThread> receiveThread_;
         std::shared_ptr<RingBuffer> ringbuffer_;
+        uint16_t initSeqVal_;
 };
 
 } // namespace ring

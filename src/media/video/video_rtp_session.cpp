@@ -91,13 +91,19 @@ void VideoRtpSession::startSender()
 
         try {
             sender_.reset(
-                new VideoSender(getRemoteRtpUri(), localVideoParams_, send_, *socketPair_)
+                new VideoSender(getRemoteRtpUri(), localVideoParams_,
+                    send_, *socketPair_, initSeqVal_)
             );
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
             send_.enabled = false;
         }
     }
+}
+
+void VideoRtpSession::restartSender()
+{
+       startSender();
 }
 
 void VideoRtpSession::startReceiver()
@@ -279,6 +285,22 @@ void VideoRtpSession::exitConference()
         videoLocal_->attach(sender_.get());
 
     conference_ = nullptr;
+}
+
+void
+VideoRtpSession::setSenderInitSeqVal(const uint16_t seqVal)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    initSeqVal_ = seqVal;
+}
+
+uint16_t
+VideoRtpSession::getSenderLastSeqValue()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (sender_)
+        return sender_->getLastSeqValue();
+    return 0;
 }
 
 }} // namespace ring::video

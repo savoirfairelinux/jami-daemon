@@ -91,6 +91,9 @@ public:
     int getHeight() const { return device_.height; }
 
     void setMuted(bool isMuted);
+    void setInitSeqVal(uint16_t seqVal);
+    uint16_t getLastSeqValue();
+
 
 private:
     NON_COPYABLE(MediaEncoder);
@@ -119,6 +122,7 @@ private:
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
+    bool* isCodecRunning = nullptr;
 
 protected:
     AVDictionary *options_ = nullptr;
