@@ -795,7 +795,7 @@ SIPCall::startIce()
 }
 
 void
-SIPCall::startAllMedia()
+SIPCall::startAllMedia(uint16_t seqVideoInitVal, uint16_t seqAudioInitVal)
 {
     if (isSecure() && not transport_->isSecure()) {
         RING_ERR("Can't perform secure call over insecure SIP transport");
@@ -846,8 +846,13 @@ SIPCall::startAllMedia()
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO) {
             videortp_.switchInput(videoInput_);
+            rtp->setSenderInitSeqVal(seqVideoInitVal);
         }
 #endif
+        if (local.type == MEDIA_AUDIO){
+            rtp->setSenderInitSeqVal(seqAudioInitVal);
+        }
+
         rtp->updateMedia(remote, local);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
@@ -873,6 +878,23 @@ SIPCall::startAllMedia()
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
+}
+
+void
+SIPCall::restartMediaSender()
+{
+    uint16_t lastSeqVideoVal, lastSeqAudioVal = 0;
+#ifdef RING_VIDEO
+    lastSeqVideoVal = videortp_.getSenderLastSeqValue() + 1;
+    lastSeqAudioVal = avformatrtp_->getSenderLastSeqValue() + 1;
+    RING_WARN("restarting video and audio streams");
+#else
+    lastSeqAudioVal = avformatrtp_->getSenderLastSeqValue() + 1;
+    RING_WARN("restarting audio streams");
+#endif
+    stopAllMedia();
+    RING_ERR("lastSeqVideoVal=%u, lastSeqAudioVal=%u", lastSeqVideoVal,lastSeqAudioVal);
+    startAllMedia(lastSeqVideoVal, lastSeqAudioVal);
 }
 
 void
@@ -932,12 +954,12 @@ SIPCall::onMediaUpdate()
             }
             if (not this_->iceTransport_->isRunning())
                 return true;
-            startAllMedia();
+            startAllMedia(0,0);
             return false;
         });
     } else {
         RING_WARN("Starting medias without ICE");
-        startAllMedia();
+        startAllMedia(0,0);
     }
 }
 
