@@ -63,8 +63,6 @@
 #include "client/videomanager.h"
 #endif
 
-#include "client/ring_signal.h"
-
 #include "pres_sub_server.h"
 
 #include "array_size.h"
@@ -223,6 +221,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
     const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
+    char tmp[PJSIP_MAX_URL_SIZE];
+    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
+    std::string peerNumber(tmp, length);
+    sip_utils::stripSipUriPrefix(peerNumber);
 
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -251,6 +253,13 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
                 if (ret == 1 and voicemail != 0)
                     Manager::instance().startVoiceMessageNotification(account_id, voicemail);
+            }
+        } else if (request.find("MESSAGE") != std::string::npos) {
+            if (body) {
+                pjsip_endpt_respond( endpt_, NULL, rdata, PJSIP_SC_OK, NULL, NULL, NULL, NULL);
+                std::string text {(char*)body->data, (char*)body->data+body->len};
+                account->onTextMessage(peerNumber, text);
+                return PJ_FALSE;
             }
         }
 
@@ -291,10 +300,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    char tmp[PJSIP_MAX_URL_SIZE];
-    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    sip_utils::stripSipUriPrefix(peerNumber);
 
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
@@ -580,6 +585,9 @@ SIPVoIPLink::SIPVoIPLink()
 
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
+
+    static const pj_str_t iscomposing = CONST_PJ_STR("application/im-iscomposing+xml");
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &iscomposing);
 
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY

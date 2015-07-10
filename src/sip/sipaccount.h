@@ -513,6 +513,8 @@ class SIPAccount : public SIPAccountBase {
 
         void onRegister(pjsip_regc_cbparam *param);
 
+        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */);
+
     private:
         void doRegister1_();
         void doRegister2_();
