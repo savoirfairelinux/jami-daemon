@@ -199,7 +199,8 @@ class SIPCall : public Call
 
         bool startIce();
 
-        void startAllMedia();
+        void startAllMedia(const uint16_t seqVideoInitVal = 0,
+                const uint16_t seqAudioInitVal = 0);
 
         void onMediaUpdate();
 
@@ -208,6 +209,8 @@ class SIPCall : public Call
         void openPortsUPnP();
 
         void muteMedia(const std::string& mediaType, bool isMuted);
+
+        void restartMediaSender();
 
         virtual std::map<std::string, std::string> getDetails() const;
 

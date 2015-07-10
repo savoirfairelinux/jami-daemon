@@ -56,10 +56,12 @@ class AudioSender {
         AudioSender(const std::string& id,
                     const std::string& dest,
                     const MediaDescription& args,
-                    SocketPair& socketPair);
+                    SocketPair& socketPair,
+                    const uint16_t seqVal);
         ~AudioSender();
 
         void setMuted(bool isMuted);
+        uint16_t getLastSeqValue();
 
     private:
         NON_COPYABLE(AudioSender);
@@ -75,6 +77,7 @@ class AudioSender {
 
         AudioBuffer micData_;
         AudioBuffer resampledData_;
+        const uint16_t seqVal_;
 
         using seconds = std::chrono::duration<double, std::ratio<1>>;
         const seconds secondsPerPacket_ {0.02}; // 20 ms
@@ -87,10 +90,12 @@ class AudioSender {
 AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
                          const MediaDescription& args,
-                         SocketPair& socketPair) :
+                         SocketPair& socketPair,
+                         const uint16_t seqVal) :
     id_(id),
     dest_(dest),
     args_(args),
+    seqVal_(seqVal),
     loop_([&] { return setup(socketPair); },
           std::bind(&AudioSender::process, this),
           std::bind(&AudioSender::cleanup, this))
@@ -113,6 +118,7 @@ AudioSender::setup(SocketPair& socketPair)
         /* Encoder setup */
         RING_WARN("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->openOutput(dest_.c_str(), args_);
+        audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_);
         audioEncoder_->startIO();
     } catch (const MediaEncoderException &e) {
@@ -184,6 +190,12 @@ void
 AudioSender::setMuted(bool isMuted)
 {
     audioEncoder_->setMuted(isMuted);
+}
+
+uint16_t
+AudioSender::getLastSeqValue()
+{
+    return audioEncoder_->getLastSeqValue();
 }
 
 
@@ -375,7 +387,7 @@ AudioRtpSession::startSender()
 
     try {
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_));
+                                      *socketPair_, initSeqVal_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         send_.enabled = false;
@@ -477,6 +489,22 @@ AudioRtpSession::setMuted(bool isMuted)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->setMuted(isMuted);
+}
+
+void
+AudioRtpSession::setSenderInitSeqVal(const uint16_t seqVal)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    initSeqVal_ = seqVal;
+}
+
+uint16_t
+AudioRtpSession::getSenderLastSeqValue()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    if (sender_)
+        return sender_->getLastSeqValue();
+    return 0;
 }
 
 } // namespace ring
