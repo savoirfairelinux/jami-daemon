@@ -342,12 +342,15 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         const int format = VIDEO_PIXFMT_RGBA;
         const auto bytes = videoFrameSize(format, width, height);
 
-        targetData_.resize(bytes);
-        auto data = targetData_.data();
+        if (bytes > 0) {
+          targetData_.resize(bytes);
+          auto data = targetData_.data();
 
-        dst.setFromMemory(data, format, width, height);
-        scaler.scale(*f, dst);
-        target_(data);
+          dst.setFromMemory(data, format, width, height);
+          scaler.scale(*f, dst);
+          auto sp = std::make_shared<std::vector<unsigned char> >(targetData_);
+          target_(sp, width, height);
+        }
     }
 }
 
