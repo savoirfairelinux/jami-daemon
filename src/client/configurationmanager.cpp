@@ -408,6 +408,14 @@ setCodecDetails(const std::string& accountID,
     if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO) {
         if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec)) {
             foundCodec->setCodecSpecifications(details);
+            RING_WARN("parameters for %s changed ",
+                    foundCodec->systemCodecInfo.name.c_str());
+            if (foundCodec->isRunning) {
+                RING_WARN("%s running. Need to restart encoding",
+                        foundCodec->systemCodecInfo.name.c_str());
+                auto call = ring::Manager::instance().getCurrentCall();
+                call->restartMediaSender();
+            }
             return true;
         }
     }

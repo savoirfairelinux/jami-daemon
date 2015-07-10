@@ -54,8 +54,10 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
-    if (outputCtx_ and outputCtx_->priv_data)
+    if (outputCtx_ and outputCtx_->priv_data) {
         av_write_trailer(outputCtx_);
+        *isCodecRunning = false;
+    }
 
     if (encoderCtx_)
         avcodec_close(encoderCtx_);
@@ -99,6 +101,27 @@ void MediaEncoder::setOptions(const MediaDescription& args)
 
     if (not args.parameters.empty())
         av_dict_set(&options_, "parameters", args.parameters.c_str(), 0);
+
+    isCodecRunning = &(args.codec->isRunning);
+}
+
+void
+MediaEncoder::setInitSeqVal(uint16_t seqVal)
+{
+    //only set not default value (!=0)
+    if (seqVal != 0)
+        av_dict_set(&options_, "seq", ring::to_string(seqVal).c_str(), 0);
+}
+
+uint16_t
+MediaEncoder::getLastSeqValue()
+{
+    int64_t  retVal;
+    auto ret = av_opt_get_int(outputCtx_->priv_data, "seq", AV_OPT_SEARCH_CHILDREN, &retVal);
+    if (ret == 0)
+        return (uint16_t) retVal;
+    else
+        return 0;
 }
 
 void
@@ -215,6 +238,7 @@ MediaEncoder::startIO()
     }
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
+    *isCodecRunning = true;
 }
 
 static void

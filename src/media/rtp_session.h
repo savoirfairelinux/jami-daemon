@@ -57,6 +57,9 @@ public:
         receive_ = receive;
     }
 
+    virtual void setSenderInitSeqVal(uint16_t seqVal) = 0;
+    virtual uint16_t getSenderLastSeqValue() = 0;
+
     bool isSending() { return send_.enabled; }
     bool isReceiving() { return receive_.enabled; }
 
