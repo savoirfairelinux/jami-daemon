@@ -963,11 +963,11 @@ SIPAccount::sendRegister()
         throw VoipLinkException("UserAgent: Unable to create regc structure.");
 
     std::string srvUri(getServerUri());
-    pj_str_t pjSrv = pj_str((char*) srvUri.c_str());
+    pj_str_t pjSrv {(char*) srvUri.data(), (pj_ssize_t) srvUri.size()};
 
     // Generate the FROM header
     std::string from(getFromUri());
-    pj_str_t pjFrom = pj_str((char*) from.c_str());
+    pj_str_t pjFrom {(char*) from.data(), (pj_ssize_t) from.size()};
 
     // Get the received header
     std::string received(getReceivedParameter());
@@ -1004,20 +1004,30 @@ SIPAccount::sendRegister()
     pjsip_hdr hdr_list;
     pj_list_init(&hdr_list);
     std::string useragent(getUserAgentName());
-    pj_str_t pJuseragent = pj_str((char*) useragent.c_str());
+    pj_str_t pJuseragent {(char*) useragent.data(), (pj_ssize_t) useragent.size()};
     const pj_str_t STR_USER_AGENT = CONST_PJ_STR("User-Agent");
 
     pjsip_generic_string_hdr *h = pjsip_generic_string_hdr_create(link_->getPool(), &STR_USER_AGENT, &pJuseragent);
     pj_list_push_back(&hdr_list, (pjsip_hdr*) h);
     pjsip_regc_add_headers(regc, &hdr_list);
-    pjsip_tx_data *tdata;
 
+    pjsip_tx_data *tdata;
     if (pjsip_regc_register(regc, PJ_TRUE, &tdata) != PJ_SUCCESS)
         throw VoipLinkException("Unable to initialize transaction data for account registration");
 
     const pjsip_tpselector tp_sel = getTransportSelector();
     if (pjsip_regc_set_transport(regc, &tp_sel) != PJ_SUCCESS)
         throw VoipLinkException("Unable to set transport");
+
+    if (hostIp_) {
+        auto ai = &tdata->dest_info;
+        ai->name = pj_strdup3(tdata->pool, hostname_.c_str());
+        ai->addr.count = 1;
+        ai->addr.entry[0].type = (pjsip_transport_type_e)tp_sel.u.transport->key.type;
+        pj_memcpy(&ai->addr.entry[0].addr, hostIp_.pjPtr(), sizeof(pj_sockaddr));
+        ai->addr.entry[0].addr_len = hostIp_.getLength();
+        ai->cur_addr = 0;
+    }
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
