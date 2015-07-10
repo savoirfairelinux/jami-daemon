@@ -325,6 +325,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             return iceTransport_;
         }
 
+        virtual void restartMediaSender(const std::string& mediaType) = 0;
+
     protected:
         /**
          * Constructor of a call

@@ -56,6 +56,9 @@ class AudioRtpSession : public RtpSession {
                    std::unique_ptr<IceSocket> rtcp_sock);
         void stop();
         void setMuted(bool isMuted);
+        //TODO: implement it for audio
+        void setSenderInitSeqVal(uint16_t seqVal) {}
+        uint16_t getSenderLastSeqValue() { return 0;}
 
     private:
         void startSender();

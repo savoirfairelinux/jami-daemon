@@ -54,7 +54,10 @@ public:
     VideoSender(const std::string& dest,
                 const DeviceParams& dev,
                 const MediaDescription& args,
-                SocketPair& socketPair);
+                SocketPair& socketPair,
+                const uint16_t seqVal);
+
+    ~VideoSender();
 
     std::string getSDP() const { return sdp_; }
     void forceKeyFrame();
@@ -64,6 +67,7 @@ public:
                 std::shared_ptr<VideoFrame> &);
 
     void setMuted(bool isMuted);
+    uint16_t getLastSeqValue();
 
 private:
     NON_COPYABLE(VideoSender);

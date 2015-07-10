@@ -53,6 +53,7 @@
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
+#include "media_const.h"
 #include "client/ring_signal.h"
 
 #include <dirent.h>
@@ -405,6 +406,14 @@ setCodecDetails(const std::string& accountID,
     if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO) {
         if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec)) {
             foundCodec->setCodecSpecifications(details);
+            RING_WARN("parameters for %s changed ",
+                    foundCodec->systemCodecInfo.name.c_str());
+            if (foundCodec->isRunning) {
+                RING_WARN("%s running. Need to restart encoding",
+                        foundCodec->systemCodecInfo.name.c_str());
+                auto call = ring::Manager::instance().getCurrentCall();
+                call->restartMediaSender(DRing::Media::Details::MEDIA_TYPE_VIDEO);
+            }
             return true;
         }
     }

@@ -795,7 +795,7 @@ SIPCall::startIce()
 }
 
 void
-SIPCall::startAllMedia()
+SIPCall::startAllMedia(uint16_t seqInitVal)
 {
     if (isSecure() && not transport_->isSecure()) {
         RING_ERR("Can't perform secure call over insecure SIP transport");
@@ -849,6 +849,7 @@ SIPCall::startAllMedia()
         }
 #endif
         rtp->updateMedia(remote, local);
+        rtp->setSenderInitSeqVal(seqInitVal);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
                        newIceSocket(ice_comp_id + 1));
@@ -872,6 +873,23 @@ SIPCall::startAllMedia()
     if (peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
+    }
+}
+void
+SIPCall::restartMediaSender(const std::string& mediaType)
+{
+    //only video for the moment
+    if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
+#ifdef RING_VIDEO
+        auto lastSeqVal = videortp_.getSenderLastSeqValue();
+        RING_WARN("restarting video sender with seq=%d", lastSeqVal + 1);
+        //videortp_.stop();
+        stopAllMedia();
+        startAllMedia(lastSeqVal + 1);
+        //bad version working: doing a reinvite
+        //DRing::switchInput(getCallId(), videoInput_);
+
+#endif
     }
 }
 
@@ -932,12 +950,12 @@ SIPCall::onMediaUpdate()
             }
             if (not this_->iceTransport_->isRunning())
                 return true;
-            startAllMedia();
+            startAllMedia(0);
             return false;
         });
     } else {
         RING_WARN("Starting medias without ICE");
-        startAllMedia();
+        startAllMedia(0);
     }
 }
 
