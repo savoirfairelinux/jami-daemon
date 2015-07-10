@@ -38,6 +38,8 @@
 #include "config.h"
 #endif
 
+#include "certstore.h"
+
 #include "fileutils.h"
 #include "string_utils.h"
 #include "logger.h"
@@ -1054,8 +1056,12 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
  */
 TlsValidator::CheckResult TlsValidator::getIssuer()
 {
-    if (not x509crt_->issuer)
+    if (not x509crt_->issuer) {
+        auto icrt = CertificateStore::instance().findCertificateByName(x509crt_->getIssuerName());
+        if (icrt)
+            return TlsValidator::CheckResult(CheckValues::CUSTOM, icrt->getId().toString());
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    }
     return TlsValidator::CheckResult(CheckValues::CUSTOM, x509crt_->issuer->getId().toString());
 }
 
