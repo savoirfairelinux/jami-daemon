@@ -633,14 +633,9 @@
 
        <method name="validateCertificate" tp:name-for-bindings="validateCertificate">
            <arg type="s" name="accountId" direction="in"></arg>
-           <arg type="s" name="certificatePath" direction="in">
+           <arg type="s" name="certificate" direction="in">
               <tp:docstring>
-               <p>A certificate path</p>
-              </tp:docstring>
-           </arg>
-           <arg type="s" name="privateKeyPath" direction="in">
-              <tp:docstring>
-               <p>An optional path a the private key for the certificate</p>
+               <p>A certificate ID</p>
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -652,11 +647,21 @@
            </arg>
        </method>
 
-       <method name="validateCertificateRaw" tp:name-for-bindings="validateCertificateRaw">
+       <method name="validateCertificatePath" tp:name-for-bindings="validateCertificate">
            <arg type="s" name="accountId" direction="in"></arg>
-           <arg type="ay" name="certificateRaw" direction="in">
+           <arg type="s" name="certificatePath" direction="in">
               <tp:docstring>
-               <p>A certificate path</p>
+               <p>A certificate path.</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="privateKeyPath" direction="in">
+              <tp:docstring>
+               <p>An optional path a the private key for the certificate</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="caListPath" direction="in">
+              <tp:docstring>
+               <p>An optional path to an assumed valid ca list</p>
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -669,9 +674,9 @@
        </method>
 
        <method name="getCertificateDetails" tp:name-for-bindings="getCertificateDetails">
-           <arg type="s" name="certificatePath" direction="in">
+           <arg type="s" name="certificate" direction="in">
               <tp:docstring>
-               <p>A certificate path</p>
+               <p>A certificate ID</p>
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -683,10 +688,10 @@
            </arg>
        </method>
 
-       <method name="getCertificateDetailsRaw" tp:name-for-bindings="getCertificateDetailsRaw">
-           <arg type="ay" name="certificateRaw" direction="in">
+       <method name="getCertificateDetailsPath" tp:name-for-bindings="getCertificateDetails">
+           <arg type="s" name="certificatePath" direction="in">
               <tp:docstring>
-               <p>A raw certificate</p>
+               <p>A certificate path</p>
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
@@ -720,10 +725,10 @@
                    <p>True to save the certificate in the daemon local store.</p>
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="String"/>
-           <arg type="s" name="certId" direction="out">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="certId" direction="out">
                <tp:docstring>
-                   <p>ID of the pinned certificate or empty string on failure.</p>
+                   <p>IDs of the pinned certificate chain (from subject to issuer) or empty string on failure.</p>
                </tp:docstring>
            </arg>
        </method>
