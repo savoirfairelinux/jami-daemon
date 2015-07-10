@@ -44,16 +44,24 @@ namespace ring { namespace video {
 using std::string;
 
 VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
-                         const MediaDescription& args, SocketPair& socketPair)
+                         const MediaDescription& args, SocketPair& socketPair,
+                         const uint16_t seqVal)
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
 {
     videoEncoder_->setDeviceOptions(dev);
     videoEncoder_->openOutput(dest.c_str(), args);
+    videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_);
     videoEncoder_->startIO();
 
     videoEncoder_->print_sdp(sdp_);
+}
+
+VideoSender::~VideoSender()
+{
+    videoEncoder_->flush();
+
 }
 
 void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
@@ -81,6 +89,12 @@ void VideoSender::forceKeyFrame()
 void VideoSender::setMuted(bool isMuted)
 {
     videoEncoder_->setMuted(isMuted);
+}
+
+uint16_t
+VideoSender::getLastSeqValue()
+{
+    return videoEncoder_->getLastSeqValue();
 }
 
 }} // namespace ring::video
