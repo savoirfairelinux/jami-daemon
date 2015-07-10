@@ -70,6 +70,10 @@ public:
         input_ = input;
     }
 
+    void restartSender();
+    void setSenderInitSeqVal(uint16_t seqVal);
+    uint16_t getSenderLastSeqValue();
+
 private:
     void setupConferenceVideoPipeline(Conference *conference);
     void startSender();
@@ -83,6 +87,7 @@ private:
     Conference* conference_ {nullptr};
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    uint16_t initSeqVal_ = 0;
 };
 
 }} // namespace ring::video

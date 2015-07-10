@@ -145,6 +145,7 @@ AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
     : systemCodecInfo(sysCodecInfo)
     , order(0)
     , isActive(true)
+    , isRunning(false)
     , payloadType(sysCodecInfo.payloadType)
     , bitrate(sysCodecInfo.bitrate)
 {}
