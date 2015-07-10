@@ -59,6 +59,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "client/ring_signal.h"
+#include "dring/account_const.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -72,15 +73,11 @@
 
 #include <unistd.h>
 
-
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cstdlib>
-
-#include "upnp/upnp_control.h"
-#include "ip_utils.h"
 
 #ifdef _WIN32
 #include <lmcons.h>
