@@ -1242,6 +1242,15 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
     getResolveCallbackMap().process((uintptr_t)token, status, addr);
 }
 
+template<typename Callback>
+static void
+runOnMainThread(Callback&& cb){
+    Manager::instance().addTask([=](){
+        cb();
+        return false;
+    });
+}
+
 void
 SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
@@ -1272,11 +1281,14 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
 
     const auto token = std::hash<std::string>()(name + to_string(type));
     getResolveCallbackMap().registerCallback(token,
-        [cb](pj_status_t s, const pjsip_server_addresses* r) {
+        [=](pj_status_t s, const pjsip_server_addresses* r) {
             try {
                 if (s != PJ_SUCCESS || !r) {
-                    sip_utils::sip_strerror(s);
-                    throw std::runtime_error("Can't resolve address");
+                    RING_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.", name.c_str());
+                    std::thread([=](){
+                        auto ips = ip_utils::getAddrList(name.c_str());
+                        runOnMainThread(std::bind(cb, ips.empty() ? std::vector<IpAddr>{} : std::move(ips)));
+                    }).detach();
                 } else {
                     std::vector<IpAddr> ips;
                     ips.reserve(r->count);
