@@ -156,7 +156,7 @@ std::map<std::string, std::string> getTrustRequests(const std::string& accountId
 bool acceptTrustRequest(const std::string& accountId, const std::string& from);
 bool discardTrustRequest(const std::string& accountId, const std::string& from);
 
-void sendTrustRequest(const std::string& accountId, const std::string& to);
+void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
 
 // Configuration signal type definitions
 struct ConfigurationSignal {
@@ -192,7 +192,7 @@ struct ConfigurationSignal {
         };
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, time_t received);
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
         };
         struct CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";

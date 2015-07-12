@@ -310,10 +310,10 @@ discardTrustRequest(const std::string& accountId, const std::string& from)
 }
 
 void
-sendTrustRequest(const std::string& accountId, const std::string& to)
+sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        acc->sendTrustRequest(to);
+        acc->sendTrustRequest(to, payload);
 }
 
 ///This function is used as a base for new accounts for clients that support it
