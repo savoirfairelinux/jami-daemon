@@ -258,7 +258,7 @@ class RingAccount : public SIPAccountBase {
         bool acceptTrustRequest(const std::string& from);
         bool discardTrustRequest(const std::string& from);
 
-        void sendTrustRequest(const std::string& to);
+        void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
 
     private:
 
@@ -330,6 +330,7 @@ class RingAccount : public SIPAccountBase {
         struct TrustRequest {
             dht::InfoHash from;
             std::chrono::system_clock::time_point received;
+            std::vector<uint8_t> payload;
         };
 
         std::vector<TrustRequest> trustRequests_;

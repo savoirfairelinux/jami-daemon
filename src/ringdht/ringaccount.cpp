@@ -819,13 +819,15 @@ void RingAccount::doRegister_()
                 if (req == this_.trustRequests_.end()) {
                     this_.trustRequests_.emplace_back(TrustRequest{
                         .from = v.from,
-                        .received = std::chrono::system_clock::now()
+                        .received = std::chrono::system_clock::now(),
+                        .payload = v.payload
                     });
                     req = std::prev(this_.trustRequests_.end());
                 }
                 emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
                     this_.getAccountID(),
                     req->from.toString(),
+                    req->payload,
                     std::chrono::system_clock::to_time_t(req->received)
                 );
                 return true;
@@ -1188,12 +1190,12 @@ RingAccount::discardTrustRequest(const std::string& from)
 }
 
 void
-RingAccount::sendTrustRequest(const std::string& to)
+RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
     setCertificateStatus(to, tls::TrustStore::Status::ALLOWED);
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
-                      dht::TrustRequest(DHT_TYPE_NS));
+                      dht::TrustRequest(DHT_TYPE_NS, payload));
 }
 
 } // namespace ring
