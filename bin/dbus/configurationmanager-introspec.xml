@@ -936,6 +936,8 @@
            </arg>
            <arg type="s" name="from">
            </arg>
+           <arg type="ay" name="payload">
+           </arg>
            <arg type="t" name="receiveTime">
            </arg>
        </signal>
@@ -945,6 +947,8 @@
            <arg type="s" name="accountID" direction="in">
            </arg>
            <arg type="s" name="to" direction="in">
+           </arg>
+           <arg type="ay" name="payload" direction="in">
            </arg>
        </method>
 
