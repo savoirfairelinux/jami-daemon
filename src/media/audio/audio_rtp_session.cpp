@@ -46,6 +46,7 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "audio/audio_input.h"
 #include "manager.h"
 #include <sstream>
 
@@ -56,7 +57,8 @@ class AudioSender {
         AudioSender(const std::string& id,
                     const std::string& dest,
                     const MediaDescription& args,
-                    SocketPair& socketPair);
+                    SocketPair& socketPair,
+                    const std::string audioInput);
         ~AudioSender();
 
         void setMuted(bool isMuted);
@@ -64,7 +66,7 @@ class AudioSender {
     private:
         NON_COPYABLE(AudioSender);
 
-        bool setup(SocketPair& socketPair);
+        bool setup(SocketPair& socketPair, const std::string audioInput);
 
         std::string id_;
         std::string dest_;
@@ -73,8 +75,10 @@ class AudioSender {
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
 
-        AudioBuffer micData_;
+        AudioBuffer rawData_;
         AudioBuffer resampledData_;
+
+        std::string audioInput_;
 
         using seconds = std::chrono::duration<double, std::ratio<1>>;
         const seconds secondsPerPacket_ {0.02}; // 20 ms
@@ -87,11 +91,13 @@ class AudioSender {
 AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
                          const MediaDescription& args,
-                         SocketPair& socketPair) :
+                         SocketPair& socketPair,
+                         const std::string audioInput):
     id_(id),
     dest_(dest),
     args_(args),
-    loop_([&] { return setup(socketPair); },
+    audioInput_(audioInput),
+    loop_([&] { return setup(socketPair, audioInput); },
           std::bind(&AudioSender::process, this),
           std::bind(&AudioSender::cleanup, this))
 {
@@ -104,10 +110,24 @@ AudioSender::~AudioSender()
 }
 
 bool
-AudioSender::setup(SocketPair& socketPair)
+AudioSender::setup(SocketPair& socketPair, const std::string input)
 {
+    // we are not sending micData but a file
+    // start an AudioInput that will write to ringBuffer
+    if (audioInput_.compare("") != 0) {
+        auto input = std::make_shared<AudioInput>();
+        input->setRingBufferId(id_);
+        input->switchInput(audioInput_);
+    }
+
     audioEncoder_.reset(new MediaEncoder);
     muxContext_.reset(socketPair.createIOContext());
+
+    if (input.empty()) {
+        RING_WARN("send audio from mic");
+    }else{
+        RING_WARN("send audio from file");
+    }
 
     try {
         /* Encoder setup */
@@ -132,13 +152,17 @@ AudioSender::cleanup()
 {
     audioEncoder_.reset();
     muxContext_.reset();
-    micData_.clear();
+    rawData_.clear();
     resampledData_.clear();
 }
 
 void
 AudioSender::process()
 {
+    if (audioInput_.compare("") != 0) {
+        return;
+    }
+
     auto& mainBuffer = Manager::instance().getRingBufferPool();
     auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
 
@@ -152,9 +176,9 @@ AudioSender::process()
     }
 
     // get data
-    micData_.setFormat(mainBuffFormat);
-    micData_.resize(samplesToGet);
-    const auto samples = mainBuffer.getData(micData_, id_);
+    rawData_.setFormat(mainBuffFormat);
+    rawData_.resize(samplesToGet);
+    const auto samples = mainBuffer.getData(rawData_, id_);
     if (samples != samplesToGet) {
         RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
                 samplesToGet, id_.c_str(), samples);
@@ -163,7 +187,7 @@ AudioSender::process()
 
     // down/upmix as needed
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
-    micData_.setChannelNum(accountAudioCodec->audioformat.nb_channels, true);
+    rawData_.setChannelNum(accountAudioCodec->audioformat.nb_channels, true);
 
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
@@ -172,11 +196,11 @@ AudioSender::process()
         }
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
-        resampler_->resample(micData_, resampledData_);
+        resampler_->resample(rawData_, resampledData_);
         if (audioEncoder_->encode_audio(resampledData_) < 0)
             RING_ERR("encoding failed");
     } else {
-        if (audioEncoder_->encode_audio(micData_) < 0)
+        if (audioEncoder_->encode_audio(rawData_) < 0)
             RING_ERR("encoding failed");
     }
 }
@@ -346,7 +370,7 @@ AudioReceiveThread::startLoop()
 }
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
-    : RtpSession(id)
+    : RtpSession(id), audioInput_("")
 {
     // don't move this into the initializer list or Cthulus will emerge
     ringbuffer_ = Manager::instance().getRingBufferPool().createRingBuffer(callID_);
@@ -375,7 +399,7 @@ AudioRtpSession::startSender()
 
     try {
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_));
+                                      *socketPair_, audioInput_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         send_.enabled = false;
@@ -477,6 +501,13 @@ AudioRtpSession::setMuted(bool isMuted)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->setMuted(isMuted);
+}
+
+void
+AudioRtpSession::switchInput(const std::string resource)
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+    audioInput_ = resource;
 }
 
 } // namespace ring

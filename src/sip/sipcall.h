@@ -238,6 +238,8 @@ class SIPCall : public Call
         std::string videoInput_;
 #endif
 
+        std::string audioInput_;
+
         bool srtpEnabled_ {false};
 
         /**
