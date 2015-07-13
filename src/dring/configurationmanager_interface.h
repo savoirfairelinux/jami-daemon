@@ -210,6 +210,10 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "CertificateStateChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*certId*/, const std::string& /*state*/);
         };
+        struct MediaParametersChanged {
+                constexpr static const char* name = "MediaParametersChanged";
+                using cb_type = void(const std::string& /*accountId*/);
+        };
 #ifdef __ANDROID__
         /**
          * These are special getters for Android so the daemon can retreive
