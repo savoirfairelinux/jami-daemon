@@ -978,5 +978,18 @@
            <arg type="a{ss}" name="shortcutsMap" direction="in">
            </arg>
        </method>
+
+       <signal name="mediaParametersChanged" tp:name-for-bindings="mediaParametersChanged">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients that a media parameter changed.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+       </signal>
+
    </interface>
 </node>
