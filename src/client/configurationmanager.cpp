@@ -401,6 +401,7 @@ setCodecDetails(const std::string& accountID,
     if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO) {
         if (auto foundCodec = std::static_pointer_cast<ring::AccountAudioCodecInfo>(codec)) {
             foundCodec->setCodecSpecifications(details);
+            ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
             return true;
         }
     }
@@ -416,6 +417,7 @@ setCodecDetails(const std::string& accountID,
                 auto call = ring::Manager::instance().getCurrentCall();
                 call->restartMediaSender();
             }
+            ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
             return true;
         }
     }
