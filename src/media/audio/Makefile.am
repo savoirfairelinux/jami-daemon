@@ -46,7 +46,8 @@ libaudio_la_SOURCES = \
 		$(RING_SPEEXDSP_SRC) \
 		dcblocker.cpp \
 		audio_rtp_session.cpp \
-		tonecontrol.cpp
+		tonecontrol.cpp \
+		audio_input.cpp
 
 libaudio_la_CXXFLAGS = -I$(top_srcdir)/src
 libaudio_la_LDFLAGS =
@@ -69,7 +70,8 @@ noinst_HEADERS = \
 		dcblocker.h \
 		resampler.h \
 		audio_rtp_session.h \
-		tonecontrol.h
+		tonecontrol.h \
+		audio_input.h
 
 libaudio_la_LIBADD = \
 	./sound/libsound.la

@@ -1,7 +1,7 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
- *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Copyright (C) 2011-2015 Savoir-Faire Linux Inc.
+ *
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -29,45 +29,74 @@
  *  as that of the covered work.
  */
 
-#ifndef AUDIO_RTP_SESSION_H__
-#define AUDIO_RTP_SESSION_H__
+#ifndef __AUDIO_INPUT_H__
+#define __AUDIO_INPUT_H__
 
+#include "noncopyable.h"
 #include "threadloop.h"
-#include "media/rtp_session.h"
-#include "media/audio/audiobuffer.h"
+#include "media/media_device.h" // DeviceParams
 
+#include <map>
+#include <atomic>
+#include <future>
 #include <string>
-#include <memory>
+
+namespace ring {
+class MediaDecoder;
+class RingBuffer;
+}
 
 namespace ring {
 
-class RingBuffer;
-class AudioSender;
-class AudioReceiveThread;
-class IceSocket;
+class AudioInput
+{
+public:
+    AudioInput();
+    ~AudioInput();
 
-class AudioRtpSession : public RtpSession {
-    public:
-        AudioRtpSession(const std::string& id);
-        virtual ~AudioRtpSession();
+    DeviceParams getParams() const;
 
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
-        void stop();
-        void setMuted(bool isMuted);
-        void switchInput(const std::string ressource);
+    std::shared_future<DeviceParams> switchInput(const std::string& resource);
+    void setRingBufferId(std::string id);
 
-    private:
-        void startSender();
-        void startReceiver();
+private:
+    NON_COPYABLE(AudioInput);
+    std::shared_ptr<RingBuffer> mainRingBuffer_;
+    std::shared_ptr<RingBuffer> ringbuffer_;
 
-        std::unique_ptr<AudioSender> sender_;
-        std::unique_ptr<AudioReceiveThread> receiveThread_;
-        std::shared_ptr<RingBuffer> ringbuffer_;
-        std::string audioInput_;
+    std::string currentResource_;
+    std::string id_;
+
+    MediaDecoder *decoder_  = nullptr;
+    std::atomic<bool> switchPending_ = {false};
+
+    DeviceParams decOpts_;
+    std::promise<DeviceParams> foundDecOpts_;
+    std::shared_future<DeviceParams> futureDecOpts_;
+
+    std::atomic_bool decOptsFound_ {false};
+    void foundDecOpts(const DeviceParams& params);
+
+    bool emulateRate_       = false;
+    ThreadLoop loop_;
+
+    void clearOptions();
+
+    void createDecoder();
+    void deleteDecoder();
+
+    bool initFile(std::string path);
+
+    // for ThreadLoop
+    bool setup();
+    void process();
+    void cleanup();
+
+    static int interruptCb(void *ctx);
+    bool captureFrame();
+
 };
 
 } // namespace ring
 
-#endif // __AUDIO_RTP_SESSION_H__
+#endif // __AUDIO_INPUT_H__

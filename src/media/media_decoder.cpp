@@ -178,6 +178,8 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     if (!inputDecoder_) {
         RING_ERR("Unsupported codec");
         return -1;
+    }else{
+        RING_ERR("ELOI found decoder for codec_id=%d", decoderCtx_->codec_id);
     }
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();

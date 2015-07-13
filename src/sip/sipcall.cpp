@@ -128,6 +128,9 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
     // The ID is used to associate video streams to calls
     , videortp_(id, getVideoSettings())
     , videoInput_(videoManager.videoDeviceMonitor.getMRLForDefaultDevice())
+    //audioInput_ empty means microphone. Otherwise means file path
+    //TODO: add a manager like done for video ?
+    , audioInput_("")
 #endif
     , sdp_(new Sdp(id))
 {
@@ -648,6 +651,7 @@ SIPCall::switchInput(const std::string& resource)
     if (SIPSessionReinvite() != PJ_SUCCESS)
         RING_WARN("Reinvite failed");
 #endif
+    audioInput_ = resource;
 }
 
 void
@@ -848,6 +852,9 @@ SIPCall::startAllMedia()
             videortp_.switchInput(videoInput_);
         }
 #endif
+        if (local.type == MEDIA_AUDIO) {
+            avformatrtp_->switchInput(audioInput_);
+        }
         rtp->updateMedia(remote, local);
         if (isIceRunning()) {
             rtp->start(newIceSocket(ice_comp_id + 0),
