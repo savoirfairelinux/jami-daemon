@@ -371,9 +371,9 @@ DBusConfigurationManager::validateCertificate(const std::string& accountId, cons
 }
 
 auto
-DBusConfigurationManager::validateCertificatePath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& caList) -> decltype(DRing::validateCertificatePath(accountId, certificate, privateKey, caList))
+DBusConfigurationManager::validateCertificatePath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass, const std::string& caList) -> decltype(DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
 {
-   return DRing::validateCertificatePath(accountId, certificate, privateKey, caList);
+   return DRing::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
 
 auto

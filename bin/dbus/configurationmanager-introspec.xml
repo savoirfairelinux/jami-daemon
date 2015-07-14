@@ -659,6 +659,11 @@
                <p>An optional path a the private key for the certificate</p>
               </tp:docstring>
            </arg>
+           <arg type="s" name="privateKeyPasswd" direction="in">
+              <tp:docstring>
+               <p>An optional private key password</p>
+              </tp:docstring>
+           </arg>
            <arg type="s" name="caListPath" direction="in">
               <tp:docstring>
                <p>An optional path to an assumed valid ca list</p>
