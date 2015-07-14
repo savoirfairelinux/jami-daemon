@@ -165,6 +165,13 @@ std::string InstantMessaging::appendUriList(const std::string &text, UriList& li
     return "--boundary Content-Type: text/plain" + text +
            "--boundary Content-Type: application/resource-lists+xml" +
            "Content-Disposition: recipient-list" + generateXmlUriList(list) +
+           "--boundary--"
+
+           +
+
+           "--boundary Content-Type: text/html" + text +
+           "--boundary Content-Type: application/resource-lists+xml" +
+           "Content-Disposition: recipient-list" + generateXmlUriList(list) +
            "--boundary--";
 }
 
@@ -196,20 +203,46 @@ std::string InstantMessaging::findTextUriList(const std::string &text)
     return text.substr(begin, end - begin);
 }
 
-std::string InstantMessaging::findTextMessage(const std::string &text)
-{
-    std::string ctype = "Content-Type: text/plain";
-    const size_t pos = text.find(ctype);
-    if (pos == std::string::npos)
-        throw InstantMessageException("Could not find Content-Type tag while parsing sip message for text");
+/*
+ * From RFC2046:
+ *
+ * MIME-Version: 1.0
+ * Content-Type: multipart/alternative; boundary=boundary42
+ *
+ * --boundary42
+ * Content-Type: text/plain; charset=us-ascii
+ *
+ *    ... plain text version of message goes here ...
+ *
+ * --boundary42
+ * Content-Type: text/html
+ *
+ *    ... RFC 1896 text/enriched version of same message
+ *       goes here ...
+ *
+ * --boundary42
+ * Content-Type: application/x-whatever
+ *
+ *    ... fanciest version of same message goes here ...
+ *
+ * --boundary42--
+ */
 
+std::string InstantMessaging::findMimePayload(const std::string &encodedPayloads, const std::string &mime)
+{
+    std::string ctype = "Content-Type: " + mime;
+    const size_t pos = encodedPayloads.find(ctype);
+    if (pos == std::string::npos)
+      return {};
     const size_t begin = pos + ctype.size();
 
-    const size_t end = text.find("--boundary", begin);
-    if (end == std::string::npos)
-        throw InstantMessageException("Could not find end of text \"boundary\" while parsing sip message for text");
+    const size_t end = encodedPayloads.find("--boundary", begin);
+    if (end == std::string::npos) {
+        RING_DBG("Could not find end of text \"boundary\" while parsing sip message for text");
+        return {};
+    }
 
-    return text.substr(begin, end - begin);
+    return encodedPayloads.substr(begin, end - begin);
 }
 
 } // namespace ring

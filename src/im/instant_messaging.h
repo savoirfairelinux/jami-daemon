@@ -135,13 +135,15 @@ std::string appendUriList(const std::string &text, UriList &list);
 std::string findTextUriList(const std::string &text);
 
 /**
- * Retrive the plain text message in formated text data according to RFC 5365
+ * Retrieve a MIME payload from the SIP container RFC5365
  *
- * @param text The formated text message as retreived in the SIP message
+ * @param mime the mime type 
+ *
+ * @param encodedPayloads a MIME encoded set of payloads
  *
  * @return A string containing the actual message
  */
-std::string findTextMessage(const std::string &text);
+std::string findMimePayload(const std::string &encodedPayloads, const std::string &mime = "text/plain");
 
 }} // namespace ring::InstantMessaging
 
