@@ -152,11 +152,12 @@ std::map<std::string, std::string>
 validateCertificatePath(const std::string&,
                     const std::string& certificate,
                     const std::string& privateKey,
+                    const std::string& privateKeyPass,
                     const std::string& caList)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate, privateKey, "", caList}.getSerializedChecks();
+        return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
@@ -183,13 +184,14 @@ getCertificateDetails(const std::string& certificate)
 }
 
 std::map<std::string, std::string>
-getCertificateDetailsPath(const std::string& certificate)
+getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
         auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
-        CertificateStore::instance().pinCertificate(crt, false);
-        return TlsValidator{crt}.getSerializedDetails();
+        TlsValidator validator {certificate, privateKey, privateKeyPassword};
+        CertificateStore::instance().pinCertificate(validator.getCertificate(), false);
+        return validator.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed");
     }
