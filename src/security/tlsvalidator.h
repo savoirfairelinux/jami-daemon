@@ -235,6 +235,10 @@ public:
 
     std::map<std::string,std::string> getSerializedDetails();
 
+    std::shared_ptr<dht::crypto::Certificate> getCertificate() const {
+        return x509crt_;
+    }
+
 private:
 
     // Enum class names
@@ -273,11 +277,10 @@ private:
     std::shared_ptr<dht::crypto::Certificate> x509crt_;
 
     bool certificateFileFound_ {false};
-    bool certificateFound_;
+    bool certificateFound_ {false};
     bool privateKeyFound_ {false};
     bool privateKeyPassword_ {false};
 
-    TlsValidator* caCert_ {nullptr};
     bool caChecked_ {false};
     unsigned int caValidationOutput_;
 
