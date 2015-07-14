@@ -162,17 +162,24 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
 
 std::string InstantMessaging::appendUriList(const std::string &text, UriList& list)
 {
-    return "--boundary Content-Type: text/plain" + text +
-           "--boundary Content-Type: application/resource-lists+xml" +
+    return "--boundary Content-Type: text/plain\n" + text +
+           "--boundary Content-Type: application/resource-lists+xml\n" +
            "Content-Disposition: recipient-list" + generateXmlUriList(list) +
-           "--boundary--";
+           "\n--boundary--"
+
+           +
+
+           "--boundary Content-Type: text/html\n" + text +
+           "--boundary Content-Type: application/resource-lists+xml\n" +
+           "Content-Disposition: recipient-list" + generateXmlUriList(list) +
+           "\n--boundary--";
 }
 
 std::string InstantMessaging::findTextUriList(const std::string &text)
 {
-    const std::string ctype("Content-Type: application/resource-lists+xml");
-    const std::string cdispo("Content-Disposition: recipient-list");
-    const std::string boundary("--boundary--");
+    static const std::string ctype("Content-Type: application/resource-lists+xml");
+    static const std::string cdispo("Content-Disposition: recipient-list");
+    static const std::string boundary("--boundary--");
 
     // init position pointer
     size_t pos = 0;
@@ -185,8 +192,12 @@ std::string InstantMessaging::findTextUriList(const std::string &text)
     if ((pos = text.find(cdispo, pos)) == std::string::npos)
         throw InstantMessageException("Could not find Content-Disposition tag while parsing sip message for recipient-list");
 
-    // xml content start after content disposition tag (plus \n\n)
-    const size_t begin = pos + cdispo.size();
+    // xml content start after content disposition tag
+    size_t begin = pos + cdispo.size();
+
+    //Remove arbitrary number of empty lines, otherwise XML_Parse will return XML_STATUS_ERROR
+    while (text[begin] == '\n' || text[begin] == '\r')
+        begin++;
 
     // find final boundary
     size_t end;
@@ -196,20 +207,100 @@ std::string InstantMessaging::findTextUriList(const std::string &text)
     return text.substr(begin, end - begin);
 }
 
-std::string InstantMessaging::findTextMessage(const std::string &text)
-{
-    std::string ctype = "Content-Type: text/plain";
-    const size_t pos = text.find(ctype);
-    if (pos == std::string::npos)
-        throw InstantMessageException("Could not find Content-Type tag while parsing sip message for text");
+/*
+ * From RFC2046:
+ *
+ * MIME-Version: 1.0
+ * Content-Type: multipart/alternative; boundary=boundary42
+ *
+ * --boundary42
+ * Content-Type: text/plain; charset=us-ascii
+ *
+ *    ... plain text version of message goes here ...
+ *
+ * --boundary42
+ * Content-Type: text/html
+ *
+ *    ... RFC 1896 text/enriched version of same message
+ *       goes here ...
+ *
+ * --boundary42
+ * Content-Type: application/x-whatever
+ *
+ *    ... fanciest version of same message goes here ...
+ *
+ * --boundary42--
+ */
 
+std::string InstantMessaging::findMimePayload(const std::string &encodedPayloads, const std::string &mime)
+{
+    const std::string ctype = "Content-Type: " + mime;
+    const size_t pos = encodedPayloads.find(ctype);
+    if (pos == std::string::npos)
+      return {};
     const size_t begin = pos + ctype.size();
 
-    const size_t end = text.find("--boundary", begin);
-    if (end == std::string::npos)
-        throw InstantMessageException("Could not find end of text \"boundary\" while parsing sip message for text");
+    const size_t end = encodedPayloads.find("--boundary", begin);
+    if (end == std::string::npos) {
+        RING_DBG("Could not find end of text \"boundary\" while parsing sip message for text");
+        return {};
+    }
 
-    return text.substr(begin, end - begin);
+    return encodedPayloads.substr(begin, end - begin);
+}
+
+std::map< std::string, std::string > InstantMessaging::parsePayloads(const std::string &encodedPayloads)
+{
+    //Constants
+    static const std::string boud  = "--boundary"           ;
+    static const std::string type  = "Content-Type: "       ;
+    static const std::string dispo = "Content-Disposition: ";
+    const size_t end = encodedPayloads.find("--boundary--");
+
+    size_t next_start = encodedPayloads.find(boud);
+
+    std::map< std::string, std::string > ret;
+
+    do {
+        size_t currentStart = next_start;
+
+        next_start = encodedPayloads.find(boud, currentStart+1);
+
+        //Get the mime type
+        size_t context_pos = encodedPayloads.find(type, currentStart+1);
+        if (context_pos == std::string::npos)
+           break;
+        else if (context_pos >= next_start)
+           continue;
+
+        context_pos += type.size();
+
+        size_t mimeTypeEnd = encodedPayloads.find('\n', context_pos+1);
+        if (encodedPayloads[context_pos-1] == '\r')
+           mimeTypeEnd--;
+
+        std::string mimeType = encodedPayloads.substr(context_pos, mimeTypeEnd - context_pos);
+        currentStart = mimeTypeEnd+1;
+
+        //Remove the disposition
+        const size_t dispoPos = encodedPayloads.find(dispo, currentStart);
+        if (dispoPos != std::string::npos && dispoPos < next_start) {
+           currentStart = encodedPayloads.find('\n', dispoPos);
+           while (encodedPayloads[currentStart] == '\n' || encodedPayloads[currentStart] == '\r')
+              currentStart++;
+        }
+
+        //Get the payload
+        std::string payload = encodedPayloads.substr(currentStart, next_start - currentStart);
+
+        std::cout << "\n\nFOUND " << mimeType << " END:" << payload << "END2" << std::endl;
+
+        //WARNING assume only one message per payload exist
+        ret[mimeType] = payload;
+
+    } while(next_start < end);
+
+    return ret;
 }
 
 } // namespace ring

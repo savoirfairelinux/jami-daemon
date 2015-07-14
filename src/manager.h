@@ -393,6 +393,15 @@ class Manager {
          */
         void incomingMessage(const std::string& callID, const std::string& from, const std::string& message);
 
+        /**
+         * Notify the client with an incoming message
+         * @param accountId     The account identifier
+         * @param messages A map if mime type as key and mime payload as value
+         */
+        void incomingMessage2(const std::string& callID,
+                             const std::string& from,
+                             const std::map<std::string, std::string>& messages);
+
 
         /**
          * Send a new text message to the call, if participate to a conference, send to all participant.

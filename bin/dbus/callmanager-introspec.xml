@@ -505,6 +505,17 @@
             <arg type="s" name="message" />
         </signal>
 
+        <signal name="incomingMessages" tp:name-for-bindings="incomingMessages">
+            <tp:docstring>
+                Notify clients that new messages have been received. The key is
+                the mime type and the value the mime payload.
+            </tp:docstring>
+            <arg type="s" name="callID" />
+            <arg type="s" name="from" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <arg type="a{ss}" name="messages" />
+        </signal>
+
         <signal name="callStateChanged" tp:name-for-bindings="callStateChanged">
             <tp:docstring>
               <p>Notify of a change in a call state.</p>
