@@ -108,6 +108,8 @@ class MediaDecoder {
     private:
         NON_COPYABLE(MediaDecoder);
 
+        rational<unsigned> getTimeBase() const;
+
         AVCodec *inputDecoder_ = nullptr;
         AVCodecContext *decoderCtx_ = nullptr;
         AVFormatContext *inputCtx_ = nullptr;
@@ -116,14 +118,11 @@ class MediaDecoder {
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
-        int64_t lastDts_;
-        std::chrono::time_point<std::chrono::system_clock> lastFrameClock_ = {};
 
         AudioBuffer decBuff_;
         AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
-        unsigned timeBetweenFrames_;
 
     protected:
         AVDictionary *options_ = nullptr;
