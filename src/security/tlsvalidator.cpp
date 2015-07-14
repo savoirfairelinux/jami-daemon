@@ -258,11 +258,11 @@ TlsValidator::TlsValidator(const std::string& certificate,
 }
 
 TlsValidator::TlsValidator(const std::vector<uint8_t>& certificate_raw)
-    : certificateFound_(true)
 {
     try {
         x509crt_ = std::make_shared<dht::crypto::Certificate>(certificate_raw);
         certificateContent_ = x509crt_->getPacked();
+        certificateFound_ = true;
     } catch (const std::exception& e) {
         throw TlsValidatorException("Can't load certificate");
     }
@@ -382,15 +382,6 @@ std::map<std::string,std::string> TlsValidator::getSerializedDetails()
         }
     }
     return ret;
-}
-
-/**
- * Set an authority
- */
-void TlsValidator::setCaTlsValidator(const TlsValidator& validator)
-{
-    caChecked_ = false;
-    caCert_ = (TlsValidator*)(&validator);
 }
 
 /**
@@ -977,8 +968,7 @@ TlsValidator::CheckResult TlsValidator::valid()
 TlsValidator::CheckResult TlsValidator::validAuthority()
 {
     // TODO Merge with either above or bellow
-    return TlsValidator::CheckResult((!caCert_) || (compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND)
-                                      // ^--- When no authority is present, then it is not invalid, it is not there at all
+    return TlsValidator::CheckResult((compareToCa() & GNUTLS_CERT_SIGNER_NOT_FOUND)
         ? CheckValues::FAILED:CheckValues::PASSED, "");
 }
 
