@@ -247,6 +247,13 @@ IAXCall::sendTextMessage(const std::string& message, const std::string& /*from*/
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
     InstantMessaging::send_iax_message(session, getCallId(), message.c_str());
 }
+
+void IAXCall::sendTextMessages(const std::map<std::string, std::string>& messages,
+                                     const std::string &from)
+{
+    for (const auto message : messages)
+        sendTextMessage(message.first, from);
+}
 #endif
 
 void

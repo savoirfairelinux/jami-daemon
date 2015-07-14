@@ -1660,10 +1660,42 @@ Manager::incomingMessage(const std::string& callID,
         emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, message);
 }
 
+void
+Manager::incomingMessage2(const std::string& callID,
+                             const std::string& from,
+                             const std::map<std::string, std::string>& messages)
+{
+    if (isConferenceParticipant(callID)) {
+        auto conf = getConferenceFromCallID(callID);
+
+        ParticipantSet participants(conf->getParticipantList());
+
+        //FIXME
+        /*for (const auto &item_p : participants) {
+
+            if (item_p == callID)
+                continue;
+
+            RING_DBG("Send message to %s", item_p.c_str());
+
+            if (auto call = getCallFromCallID(item_p)) {
+                call->sendTextMessage(message, from);
+            } else {
+                RING_ERR("Failed to get call while sending instant message");
+                return;
+            }
+        }*/
+
+        // in case of a conference we must notify client using conference id
+        emitSignal<DRing::CallSignal::IncomingMessages>(conf->getConfID(), from, messages);
+    } else
+        emitSignal<DRing::CallSignal::IncomingMessages>(callID, from, messages);
+}
+
 //THREAD=VoIP
 bool
-Manager::sendCallTextMessage(const std::string& callID,
-                             const std::string& message,
+Manager::sendCallTextMessages(const std::string& callID,
+                              const std::map<std::string, std::string>& messages,
                              const std::string& from)
 {
     if (isConference(callID)) {
@@ -1683,7 +1715,7 @@ Manager::sendCallTextMessage(const std::string& callID,
         for (const auto &participant_id : participants) {
 
             if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(message, from);
+                call->sendTextMessages(messages, from);
             } else {
                 RING_ERR("Failed to get call while sending instant message");
                 return false;
@@ -1705,7 +1737,7 @@ Manager::sendCallTextMessage(const std::string& callID,
         for (const auto &participant_id : participants) {
 
             if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(message, from);
+                call->sendTextMessages(messages, from);
             } else {
                 RING_ERR("Failed to get call while sending instant message");
                 return false;
@@ -1713,13 +1745,22 @@ Manager::sendCallTextMessage(const std::string& callID,
         }
     } else {
         if (auto call = getCallFromCallID(callID)) {
-            call->sendTextMessage(message, from);
+            call->sendTextMessages(messages, from);
         } else {
             RING_ERR("Failed to get call while sending instant message");
             return false;
         }
     }
     return true;
+}
+
+
+bool
+Manager::sendCallTextMessage(const std::string& callID,
+                             const std::string& message,
+                             const std::string& from)
+{
+    return sendCallTextMessages(callID, std::map<std::string, std::string>{ {"text/plain", message} }, from);
 }
 #endif // HAVE_INSTANT_MESSAGING
 

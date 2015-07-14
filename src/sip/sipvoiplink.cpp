@@ -1167,7 +1167,9 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
             from = from.substr(1, from.size() - 2);
 
         Manager::instance().incomingMessage(call->getCallId(), from,
-                                            InstantMessaging::findTextMessage(formattedMessage));
+                                            InstantMessaging::findMimePayload(formattedMessage));
+
+        Manager::instance().incomingMessage2(call->getCallId(), from, InstantMessaging::parsePayloads(formattedMessage));
 
         // Respond with a 200/OK
         sendOK(inv->dlg, r_data, tsx);
