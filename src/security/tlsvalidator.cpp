@@ -219,7 +219,10 @@ TlsValidator::TlsValidator(const std::vector<std::vector<uint8_t>>& crtChain)
     : TlsValidator(std::make_shared<dht::crypto::Certificate>(crtChain.begin(), crtChain.end()))
 {}
 
-TlsValidator::TlsValidator(const std::string& certificate, const std::string& privatekey, const std::string& caList)
+TlsValidator::TlsValidator(const std::string& certificate,
+                           const std::string& privatekey,
+                           const std::string& privatekeyPasswd,
+                           const std::string& caList)
     : certificatePath_(certificate)
     , privateKeyPath_(privatekey)
     , caListPath_(caList)
@@ -241,8 +244,14 @@ TlsValidator::TlsValidator(const std::string& certificate, const std::string& pr
 
     try {
         privateKeyContent_ = fileutils::loadFile(privateKeyPath_);
-        dht::crypto::PrivateKey key_tmp(privateKeyContent_);
+        dht::crypto::PrivateKey key_tmp(privateKeyContent_, privatekeyPasswd);
         privateKeyFound_ = true;
+        privateKeyPassword_ = not privatekeyPasswd.empty();
+    } catch (const dht::crypto::DecryptError&) {
+        // If we encounter a DecryptError, it means the private key exists and is encrypted,
+        // otherwise we would get some other exception.
+        privateKeyFound_ = true;
+        privateKeyPassword_ = true;
     } catch (const std::exception& e) {
         privateKeyContent_.clear();
     }
@@ -933,8 +942,7 @@ TlsValidator::CheckResult TlsValidator::publicKeySelinuxAttributes()
  */
 TlsValidator::CheckResult TlsValidator::requirePrivateKeyPassword()
 {
-    // TODO
-    return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
+    return TlsValidator::CheckResult(privateKeyPassword_ ? CheckValues::PASSED : CheckValues::FAILED, "");
 }
 /**
  * The CA and certificate provide conflicting ownership information
