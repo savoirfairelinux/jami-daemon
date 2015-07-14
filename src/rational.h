@@ -113,7 +113,7 @@ public:
     bool operator!() const { return !num_; };
 
     // Boolean conversion
-    operator bool() const { return num_; }
+    explicit operator bool() const { return num_; }
 
     // Comparison operators
     bool operator< (const rational& r) const {
@@ -137,7 +137,9 @@ template <typename I> rational<I> operator- (const rational<I>& r) { return {-r.
 
 // Reversed order operators for - and / between (types convertible to) I and rational
 template <typename I, typename II> inline rational<I> operator- (II i, const rational<I>& r);
-template <typename I, typename II> inline rational<I> operator/ (II i, const rational<I>& r);
+template <typename I, typename II> inline rational<I> operator/ (II i, const rational<I>& r) {
+    return { i * r.denominator(), r.numerator() };
+}
 
 // Absolute value
 template <typename I> rational<I> abs (const rational<I>& r) {
