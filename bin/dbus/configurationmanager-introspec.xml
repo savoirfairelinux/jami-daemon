@@ -659,6 +659,11 @@
                <p>An optional path a the private key for the certificate</p>
               </tp:docstring>
            </arg>
+           <arg type="s" name="privateKeyPasswd" direction="in">
+              <tp:docstring>
+               <p>An optional private key password</p>
+              </tp:docstring>
+           </arg>
            <arg type="s" name="caListPath" direction="in">
               <tp:docstring>
                <p>An optional path to an assumed valid ca list</p>
@@ -692,6 +697,16 @@
            <arg type="s" name="certificatePath" direction="in">
               <tp:docstring>
                <p>A certificate path</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="privateKeyPath" direction="in">
+              <tp:docstring>
+               <p>An optional path a the private key for the certificate</p>
+              </tp:docstring>
+           </arg>
+           <arg type="s" name="privateKeyPasswd" direction="in">
+              <tp:docstring>
+               <p>An optional private key password</p>
               </tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>

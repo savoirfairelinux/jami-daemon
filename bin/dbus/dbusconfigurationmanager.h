@@ -129,9 +129,9 @@ class DBusConfigurationManager :
         void setVolume(const std::string& device, const double& value);
         double getVolume(const std::string& device);
         std::map<std::string, std::string> validateCertificate(const std::string& accountId, const std::string& certificate);
-        std::map<std::string, std::string> validateCertificatePath(const std::string& accountId, const std::string& certificatePath, const std::string& privateKey, const std::string& caList);
+        std::map<std::string, std::string> validateCertificatePath(const std::string& accountId, const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPass, const std::string& caList);
         std::map<std::string, std::string> getCertificateDetails(const std::string& certificate);
-        std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath);
+        std::map<std::string, std::string> getCertificateDetailsPath(const std::string& certificatePath, const std::string& privateKey, const std::string& privateKeyPass);
         std::vector<std::string> getPinnedCertificates();
         std::vector<std::string> pinCertificate(const std::vector<uint8_t>& certificate, const bool& local);
         bool unpinCertificate(const std::string& certId);
