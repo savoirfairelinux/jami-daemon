@@ -152,11 +152,12 @@ std::map<std::string, std::string>
 validateCertificatePath(const std::string&,
                     const std::string& certificate,
                     const std::string& privateKey,
+                    const std::string& privateKeyPass,
                     const std::string& caList)
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate, privateKey, "", caList}.getSerializedChecks();
+        return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
