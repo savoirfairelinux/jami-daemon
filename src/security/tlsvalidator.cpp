@@ -1067,7 +1067,7 @@ TlsValidator::CheckResult TlsValidator::getSerialNumber()
 TlsValidator::CheckResult TlsValidator::getIssuer()
 {
     if (not x509crt_->issuer) {
-        auto icrt = CertificateStore::instance().findCertificateByName(x509crt_->getIssuerName());
+        auto icrt = CertificateStore::instance().findIssuer(x509crt_);
         if (icrt)
             return TlsValidator::CheckResult(CheckValues::CUSTOM, icrt->getId().toString());
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");

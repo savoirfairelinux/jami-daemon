@@ -99,7 +99,7 @@ CertificateStore::getCertificate(const std::string& k) const
 }
 
 std::shared_ptr<crypto::Certificate>
-CertificateStore::findCertificateByName(const std::string& name, crypto::Certificate::NameType type)
+CertificateStore::findCertificateByName(const std::string& name, crypto::Certificate::NameType type) const
 {
     std::unique_lock<std::mutex> l(lock_);
     for (auto& i : certs_) {
@@ -112,6 +112,42 @@ CertificateStore::findCertificateByName(const std::string& name, crypto::Certifi
         }
     }
     return {};
+}
+
+std::shared_ptr<crypto::Certificate>
+CertificateStore::findCertificateByUID(const std::string& uid) const
+{
+    std::unique_lock<std::mutex> l(lock_);
+    for (auto& i : certs_) {
+        if (i.second->getUID() == uid)
+            return i.second;
+    }
+    return {};
+}
+
+std::shared_ptr<crypto::Certificate>
+CertificateStore::findIssuer(std::shared_ptr<crypto::Certificate> crt) const
+{
+    std::shared_ptr<crypto::Certificate> ret {};
+    auto n = crt->getIssuerUID();
+    if (not n.empty())
+        ret = findCertificateByUID(n);
+    if (not ret) {
+        n = crt->getIssuerName();
+        if (not n.empty())
+            ret = findCertificateByName(n);
+    }
+    if (not ret)
+        return ret;
+    unsigned verify_out = 0;
+    int err = gnutls_x509_crt_verify(crt->cert, &ret->cert, 1, 0, &verify_out);
+    if (err != GNUTLS_E_SUCCESS) {
+        RING_WARN("gnutls_x509_crt_verify failed: %s", gnutls_strerror(err));
+        return {};
+    }
+    if (verify_out & GNUTLS_CERT_INVALID)
+        return {};
+    return ret;
 }
 
 static std::vector<crypto::Certificate>
