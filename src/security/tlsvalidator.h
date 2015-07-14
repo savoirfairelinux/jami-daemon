@@ -166,9 +166,13 @@ public:
      * Create a TlsValidator for a given certificate
      * @param certificate The certificate path
      * @param privatekey An optional private key file path
+     * @param privatekeyPasswd An optional private key password
+     * @param caList An optional CA list to use for certificate validation
      */
     TlsValidator(const std::string& certificate,
-                 const std::string& privatekey = "", const std::string& caList = "");
+                 const std::string& privatekey = "",
+                 const std::string& privatekeyPasswd = "",
+                 const std::string& caList = "");
 
     TlsValidator(const std::vector<std::vector<uint8_t>>& certificate_chain_raw);
 
@@ -271,6 +275,8 @@ private:
     bool certificateFileFound_ {false};
     bool certificateFound_;
     bool privateKeyFound_ {false};
+    bool privateKeyPassword_ {false};
+
     TlsValidator* caCert_ {nullptr};
     bool caChecked_ {false};
     unsigned int caValidationOutput_;
