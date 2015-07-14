@@ -51,8 +51,7 @@ using std::string;
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
-    startTime_(AV_NOPTS_VALUE),
-    lastDts_(AV_NOPTS_VALUE)
+    startTime_(AV_NOPTS_VALUE)
 {
 }
 
@@ -167,7 +166,8 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     }
 
     // Get a pointer to the codec context for the video stream
-    decoderCtx_ = inputCtx_->streams[streamIndex_]->codec;
+    avStream_ = inputCtx_->streams[streamIndex_];
+    decoderCtx_ = avStream_->codec;
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
@@ -283,9 +283,6 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
-    timeBetweenFrames_ = ((getFps().real() != 0) ?
-        (unsigned) ((1.0 / getFps().real()) * 1000000) : 0);
-
     return 0;
 }
 
@@ -311,24 +308,23 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 
     auto frame = result.pointer();
     int frameFinished = 0;
-    auto decodingStartTs = std::chrono::high_resolution_clock::now();
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, inpacket);
     if (len <= 0)
         return Status::DecodeError;
 
     if (frameFinished) {
-        if (emulateRate_) {
-        auto decodingEndTs = std::chrono::high_resolution_clock::now();
-        auto decodingDuration =
-            std::chrono::duration_cast<std::chrono::microseconds>
-            (decodingEndTs - decodingStartTs).count();
-
+        if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+            auto target = startTime_ + frame_time.real() * 1000000;
+            auto now = av_gettime();
+            if (target > now) {
 #if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-            av_usleep(timeBetweenFrames_ - decodingDuration);
+                av_usleep(target - now);
 #else
-            usleep(timeBetweenFrames_ - decodingDuration);
+                usleep(target - now);
 #endif
+            }
         }
         return Status::FrameFinished;
     }
@@ -340,7 +336,7 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 MediaDecoder::Status
 MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
-    const auto libav_frame = decodedFrame.pointer();
+    const auto frame = decodedFrame.pointer();
 
     AVPacket inpacket;
     memset(&inpacket, 0, sizeof(inpacket));
@@ -365,29 +361,23 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
         return Status::Success;
 
     int frameFinished = 0;
-    int len = avcodec_decode_audio4(decoderCtx_, libav_frame,
+    int len = avcodec_decode_audio4(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
     if (len <= 0) {
         return Status::DecodeError;
     }
 
     if (frameFinished) {
-        if (emulateRate_) {
-            if (libav_frame->pkt_dts != AV_NOPTS_VALUE) {
-                const auto now = std::chrono::system_clock::now();
-                const std::chrono::duration<double> seconds = now - lastFrameClock_;
-                const double dTB = av_q2d(inputCtx_->streams[streamIndex_]->time_base);
-                const double dts_diff = dTB * (libav_frame->pkt_dts - lastDts_);
-                const double usDelay = 1e6 * (dts_diff - seconds.count());
-                if (usDelay > 0.0) {
+        if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+            auto target = startTime_ + frame_time.real() * 1000000;
+            auto now = av_gettime();
+            if (target > now) {
 #if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-                    av_usleep(usDelay);
+                av_usleep(target - now);
 #else
-                    usleep(usDelay);
+                usleep(target - now);
 #endif
-                }
-                lastFrameClock_ = now;
-                lastDts_ = libav_frame->pkt_dts;
             }
         }
         return Status::FrameFinished;
@@ -430,6 +420,13 @@ MediaDecoder::getFps() const
 {
     return {(unsigned)avStream_->avg_frame_rate.num,
             (unsigned)avStream_->avg_frame_rate.den};
+}
+
+rational<unsigned>
+MediaDecoder::getTimeBase() const
+{
+    return {(unsigned)avStream_->time_base.num,
+            (unsigned)avStream_->time_base.den};
 }
 
 int MediaDecoder::getPixelFormat() const
