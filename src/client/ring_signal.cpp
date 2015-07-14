@@ -43,6 +43,7 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::RecordPlaybackStopped>(),
         exported_callback<DRing::CallSignal::VoiceMailNotify>(),
         exported_callback<DRing::CallSignal::IncomingMessage>(),
+        exported_callback<DRing::CallSignal::IncomingMessages>(),
         exported_callback<DRing::CallSignal::IncomingCall>(),
         exported_callback<DRing::CallSignal::RecordPlaybackFilepath>(),
         exported_callback<DRing::CallSignal::ConferenceCreated>(),
