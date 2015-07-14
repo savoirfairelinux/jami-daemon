@@ -340,6 +340,14 @@ sendTextMessage(const std::string& callID, const std::string& message, const std
 }
 
 void
+sendTextMessages(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from)
+{
+#if HAVE_INSTANT_MESSAGING
+   ring::Manager::instance().sendCallTextMessages(callID, messages, from);
+#endif
+}
+
+void
 sendTextMessage(const std::string& callID, const std::string& message)
 {
 #if HAVE_INSTANT_MESSAGING

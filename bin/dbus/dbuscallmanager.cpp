@@ -293,3 +293,9 @@ DBusCallManager::sendTextMessage(const std::string& callID, const std::string& m
 {
     DRing::sendTextMessage(callID, message);
 }
+
+void
+DBusCallManager::sendTextMessages(const std::string& callID, const std::map<std::string, std::string>& messages)
+{
+    DRing::sendTextMessages(callID, messages, "Me");
+}

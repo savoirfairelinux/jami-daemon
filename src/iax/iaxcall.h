@@ -139,8 +139,11 @@ class IAXCall : public Call
         void carryingDTMFdigits(char code);
 
 #if HAVE_INSTANT_MESSAGING
-        void sendTextMessage(const std::string& message,
+        virtual void sendTextMessage(const std::string& message,
                              const std::string& from);
+
+        virtual void sendTextMessages(const std::map<std::string, std::string>& messages,
+                                     const std::string &from);
 #endif
 
         void putAudioData(AudioBuffer& buf);
