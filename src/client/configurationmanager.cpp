@@ -156,7 +156,7 @@ validateCertificatePath(const std::string&,
 {
 #if HAVE_TLS && HAVE_DHT
     try {
-        return TlsValidator{certificate, privateKey, caList}.getSerializedChecks();
+        return TlsValidator{certificate, privateKey, "", caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
