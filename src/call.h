@@ -306,6 +306,15 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         virtual void sendTextMessage(const std::string &message,
                                      const std::string &from) = 0;
+
+        /**
+         * Send a message to a call identified by its callid
+         *
+         * @param A list of mimetype/payload pairs
+         * @param The sender of this message (could be another participant of a conference)
+         */
+        virtual void sendTextMessages(const std::map<std::string, std::string>& messages,
+                                     const std::string &from) = 0;
 #endif
 
         void removeCall();
