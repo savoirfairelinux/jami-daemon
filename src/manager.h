@@ -388,19 +388,20 @@ class Manager {
 #if HAVE_INSTANT_MESSAGING
         /**
          * Notify the client with an incoming message
-         * @param accountId	The account identifier
-         * @param message The content of the message
+         * @param accountId     The account identifier
+         * @param messages A map if mime type as key and mime payload as value
          */
-        void incomingMessage(const std::string& callID, const std::string& from, const std::string& message);
-
+        void incomingMessage(const std::string& callID,
+                             const std::string& from,
+                             const std::map<std::string, std::string>& messages);
 
         /**
          * Send a new text message to the call, if participate to a conference, send to all participant.
-         * @param callID	The call to send the message
-         * @param message	The content of the message
-        * @param from	        The sender of this message (could be another participant of a conference)
+         * @param callID        The call to send the message
+         * @param message       A list of pair of mime types and payloads
+        * @param from           The sender of this message (could be another participant of a conference)
          */
-        bool sendCallTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+        bool sendCallTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from);
 #endif // HAVE_INSTANT_MESSAGING
 
         /**
