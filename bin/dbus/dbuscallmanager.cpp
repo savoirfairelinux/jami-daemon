@@ -289,7 +289,7 @@ DBusCallManager::acceptEnrollment(const std::string& callID, const bool& accepte
 }
 
 void
-DBusCallManager::sendTextMessage(const std::string& callID, const std::string& message)
+DBusCallManager::sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages)
 {
-    DRing::sendTextMessage(callID, message);
+    DRing::sendTextMessage(callID, messages, "Me");
 }

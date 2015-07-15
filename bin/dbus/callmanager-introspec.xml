@@ -445,7 +445,8 @@
                 Send a text message to the specified call
             </tp:docstring>
             <arg type="s" name="callID" direction="in"/>
-            <arg type="s" name="message" direction="in"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+            <arg type="a{ss}" name="message" direction="in"/>
         </method>
 
         <signal name="newCallCreated" tp:name-for-bindings="newCallCreated">
@@ -498,11 +499,13 @@
 
         <signal name="incomingMessage" tp:name-for-bindings="incomingMessage">
             <tp:docstring>
-                Notify clients that a new text message has been received.
+                Notify clients that new messages have been received. The key is
+                the mime type and the value the mime payload.
             </tp:docstring>
             <arg type="s" name="callID" />
             <arg type="s" name="from" />
-            <arg type="s" name="message" />
+            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <arg type="a{ss}" name="messages" />
         </signal>
 
         <signal name="callStateChanged" tp:name-for-bindings="callStateChanged">
