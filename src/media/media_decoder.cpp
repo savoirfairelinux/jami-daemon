@@ -96,6 +96,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
         iformat,
         options_ ? &options_ : NULL);
 
+    RING_DBG("avformat_open_input returned %d", ret);
     if (ret) {
         char errbuf[64];
         av_strerror(ret, errbuf, sizeof(errbuf));

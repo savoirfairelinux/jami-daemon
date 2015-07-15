@@ -184,6 +184,22 @@ removeVideoDevice(const std::string &node)
 {
     videoManager.videoDeviceMonitor.removeDevice(node);
 }
+
+void*
+obtainFrame(int length)
+{
+    if (auto input = videoManager.videoInput.lock())
+        return (*input).obtainFrame(length);
+
+    return nullptr;
+}
+
+void
+releaseFrame(void* frame)
+{
+    if (auto input = videoManager.videoInput.lock())
+        (*input).releaseFrame(frame);
+}
 #endif
 
 } // namespace DRing

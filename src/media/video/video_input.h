@@ -37,11 +37,14 @@
 #include "noncopyable.h"
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
+#include "media/media_io_handle.h"
 
 #include <map>
 #include <atomic>
 #include <future>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 
 namespace ring {
 class MediaDecoder;
@@ -50,6 +53,22 @@ class MediaDecoder;
 namespace ring { namespace video {
 
 class SinkClient;
+
+enum VideoFrameStatus {
+    BUFFER_NOT_ALLOCATED,
+    BUFFER_AVAILABLE,
+    BUFFER_CAPTURING,
+    BUFFER_FULL,
+    BUFFER_PUBLISHED,
+};
+
+struct VideoFrameBuffer {
+    void                    *data;
+    size_t                  length;
+    enum VideoFrameStatus   status;
+
+    VideoFrameBuffer() : data(nullptr), length(0), status(BUFFER_NOT_ALLOCATED) {}
+};
 
 class VideoInput : public VideoGenerator
 {
@@ -64,6 +83,10 @@ public:
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
+#ifdef __ANDROID__
+    void* obtainFrame(int length);
+    void releaseFrame(void *frame);
+#endif
 
 private:
     NON_COPYABLE(VideoInput);
@@ -101,6 +124,18 @@ private:
 
     static int interruptCb(void *ctx);
     bool captureFrame();
+
+#ifdef __ANDROID__
+    bool setupAndroid();
+    void processAndroid();
+    void cleanupAndroid();
+
+    std::mutex mutex_;
+    std::condition_variable frame_cv_;
+
+    static void releaseBufferCb(void *opaque, void *ptr);
+    std::vector<struct VideoFrameBuffer> buffers_;
+#endif
 };
 
 }} // namespace ring::video
