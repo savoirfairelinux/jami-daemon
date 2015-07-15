@@ -126,6 +126,7 @@ int libav_pixel_format(int fmt)
         case video::VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
         case video::VIDEO_PIXFMT_RGBA: return PIXEL_FORMAT(RGBA);
         case video::VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
+        case video::VIDEO_PIXFMT_NV21: return PIXEL_FORMAT(NV21);
     }
     return fmt;
 }
