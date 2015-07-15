@@ -64,6 +64,8 @@ void registerSinkTarget(const std::string& sinkId, std::function<void(std::share
 #ifdef __ANDROID__
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
+void* obtainFrame(int length);
+void releaseFrame(void* frame);
 #endif
 
 // Video signal type definitions
@@ -84,6 +86,18 @@ struct VideoSignal {
         struct GetCameraInfo {
             constexpr static const char* name = "GetCameraInfo";
             using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<std::string> *sizes, std::vector<unsigned> *rates);
+        };
+        struct SetParameters {
+            constexpr static const char* name = "SetParameters";
+            using cb_type = void(const std::string& device, const int format, const int width, const int height, const int rate);
+        };
+        struct StartCapture {
+            constexpr static const char* name = "StartCapture";
+            using cb_type = void(const std::string& device);
+        };
+        struct StopCapture {
+            constexpr static const char* name = "StopCapture";
+            using cb_type = void(void);
         };
 #endif
 };

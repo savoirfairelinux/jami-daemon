@@ -41,20 +41,22 @@
 #include <string>
 #include <vector>
 
-#include <linux/videodev2.h>
-
 namespace ring { namespace video {
 
 /*
- * Array to match Android formats to V4L2. List formats in ascending
+ * Array to match Android formats. List formats in ascending
  * preferrence: the format with the lower index will be picked.
  */
-static const int and_v4l2_fmts[][2] {
-    { 17,           V4L2_PIX_FMT_NV21 },
-    { 842094169,    V4L2_PIX_FMT_YUV420 },
+struct android_fmt {
+    int             code;
+    std::string     name;
+    enum VideoPixelFormat ring_format;
 };
 
-#define ARRAY_SIZE(a) (sizeof(a) / sizeof(a[0]))
+static const struct android_fmt and_formats[] {
+    { 17,           "NV21",     VIDEO_PIXFMT_NV21 },
+    { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
+};
 
 class VideoDeviceImpl {
     public:
@@ -80,8 +82,7 @@ class VideoDeviceImpl {
         std::vector<std::string> sizes_;
         std::vector<unsigned> rates_;
 
-        int android_format_;
-        int v4l2_format_;
+        const struct android_fmt *fmt_;
         std::string size_;
         unsigned rate_;
 };
@@ -94,18 +95,20 @@ VideoDeviceImpl::selectFormat()
      * signal, find the matching V4L2 formats
      */
     unsigned int current, best = UINT_MAX;
-    for(const auto &iter : formats_) {
-        unsigned int i;
-        for(i = 0; i < ARRAY_SIZE(and_v4l2_fmts); i++) {
-            if (iter == and_v4l2_fmts[i][0]) {
-                current = i;
+    for(const auto &fmt : formats_) {
+        const struct android_fmt *and_fmt;
+        for(and_fmt = std::begin(and_formats);
+            and_formats < std::end(and_formats);
+            and_fmt++) {
+            if (fmt == and_fmt->code) {
+                current = and_fmt - std::begin(and_formats);
                 break;
             }
         }
 
         /* No match found, we should add it */
-        if (i == ARRAY_SIZE(and_v4l2_fmts)) {
-            RING_WARN("AndroidVideo: No format matching %d", iter);
+        if (and_fmt == std::end(and_formats)) {
+            RING_WARN("AndroidVideo: No format matching %d", fmt);
             continue;
         }
 
@@ -114,13 +117,17 @@ VideoDeviceImpl::selectFormat()
     }
 
     if (best != UINT_MAX) {
-        android_format_ = and_v4l2_fmts[best][0];
-        v4l2_format_ = and_v4l2_fmts[best][1];
+        fmt_ = &and_formats[best];
+        RING_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
+    }
+    else {
+        fmt_ = &and_formats[0];
+        RING_ERR("AndroidVideo: Could not find a known format to use");
     }
 }
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& path) :
-    name(path), formats_(), sizes_(), rates_(), android_format_(), v4l2_format_(), rate_()
+    name(path), formats_(), sizes_(), rates_(), fmt_(nullptr), rate_()
 {
     emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes_, &rates_);
 
@@ -167,8 +174,18 @@ VideoDeviceImpl::getRateList() const
 void
 VideoDeviceImpl::applySettings(VideoSettings settings)
 {
+    std::stringstream ss;
+    int width, height;
+    char sep;
+
     size_ = getSize(settings.video_size);
     rate_ = getRate(settings.framerate);
+
+    ss << size_;
+    ss >> width >> sep >> height;
+
+    /* VideoManager will cache these parameters and set them only when device is open */
+    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->code, width, height, rate_);
 }
 
 VideoSettings
@@ -186,10 +203,17 @@ DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
+    std::stringstream ss1, ss2;
+    char sep;
+
+    ss1 << fmt_->ring_format;
+    ss1 >> params.format;
+
+    ss2 << size_;
+    ss2 >> params.width >> sep >> params.height;
+
     params.input = name;
-    params.format = "android";
     params.channel =  0;
-    sscanf(size_.c_str(), "%dx%d", &params.width, &params.height);
     params.framerate = rate_;
     return params;
 }
