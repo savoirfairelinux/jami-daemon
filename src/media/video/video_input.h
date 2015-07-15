@@ -37,11 +37,14 @@
 #include "noncopyable.h"
 #include "threadloop.h"
 #include "media/media_device.h" // DeviceParams
+#include "media/media_io_handle.h"
 
 #include <map>
 #include <atomic>
 #include <future>
 #include <string>
+#include <mutex>
+#include <condition_variable>
 
 namespace ring {
 class MediaDecoder;
@@ -50,6 +53,24 @@ class MediaDecoder;
 namespace ring { namespace video {
 
 class SinkClient;
+
+enum VideoFrameStatus {
+    BUFFER_NOT_ALLOCATED,
+    BUFFER_AVAILABLE,       /* owned by us */
+    BUFFER_CAPTURING,       /* owned by Android Java Application */
+    BUFFER_FULL,            /* owned by us again */
+    BUFFER_PUBLISHED,       /* owned by libav */
+};
+
+struct VideoFrameBuffer {
+    void                    *data;
+    size_t                  length;
+    enum VideoFrameStatus   status;
+    int                     index;
+
+    VideoFrameBuffer() : data(nullptr), length(0),
+                         status(BUFFER_NOT_ALLOCATED), index(0) {}
+};
 
 class VideoInput : public VideoGenerator
 {
@@ -64,6 +85,14 @@ public:
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
+#ifdef __ANDROID__
+    /*
+     * these fonctions are used to pass buffer from/to the daemon
+     * to the Java application
+     */
+    void* obtainFrame(int length);
+    void releaseFrame(void *frame);
+#endif
 
 private:
     NON_COPYABLE(VideoInput);
@@ -101,6 +130,24 @@ private:
 
     static int interruptCb(void *ctx);
     bool captureFrame();
+
+#ifdef __ANDROID__
+    bool setupAndroid();
+    void processAndroid();
+    void cleanupAndroid();
+    int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
+    void freeOneBuffer(struct VideoFrameBuffer& b);
+    bool waitForBufferFull();
+
+    std::mutex mutex_;
+    std::condition_variable frame_cv_;
+    int capture_index_ = 0;
+    int publish_index_ = 0;
+
+    /* Get notified when libav is done with this buffer */
+    static void releaseBufferCb(void *opaque, void *ptr);
+    std::vector<struct VideoFrameBuffer> buffers_;
+#endif
 };
 
 }} // namespace ring::video

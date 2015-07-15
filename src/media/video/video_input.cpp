@@ -39,6 +39,9 @@
 #include "client/ring_signal.h"
 #include "sinkclient.h"
 #include "logger.h"
+#include "media/media_buffer.h"
+
+#include <libavformat/avio.h>
 
 #include <map>
 #include <string>
@@ -54,15 +57,86 @@ static constexpr unsigned default_grab_height = 480;
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
     , sink_ {Manager::instance().createSinkClient("local")}
+#ifndef __ANDROID__
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
+#else
+    , loop_(std::bind(&VideoInput::setupAndroid, this),
+            std::bind(&VideoInput::processAndroid, this),
+            std::bind(&VideoInput::cleanupAndroid, this))
+    , mutex_(), frame_cv_(), buffers_(8)
+#endif
 {}
 
 VideoInput::~VideoInput()
 {
     loop_.join();
 }
+
+#ifdef __ANDROID__
+bool VideoInput::setupAndroid()
+{
+    if (decOpts_.input.empty()) {
+        return false;
+    }
+
+    foundDecOpts(decOpts_);
+
+    RING_DBG("Emitting signal VideoSignal::StartCapture(%s)", decOpts_.input.c_str());
+    emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
+
+    return setup();
+}
+
+bool VideoInput::waitForBufferFull()
+{
+    for(auto& buffer : buffers_) {
+        if (buffer.status == BUFFER_FULL)
+            return true;
+    }
+
+    return false;
+}
+
+void VideoInput::processAndroid()
+{
+    int format = getPixelFormat();
+
+    std::unique_lock<std::mutex> lck(mutex_);
+
+    frame_cv_.wait(lck, [this] { return waitForBufferFull(); });
+    for (auto& buffer : buffers_) {
+        if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
+            buffer.status = BUFFER_PUBLISHED;
+
+            auto& frame = getNewFrame();
+            frame.setFromMemory(buffer.data, format, decOpts_.width, decOpts_.height,
+                                &VideoInput::releaseBufferCb, this);
+            publish_index_++;
+            lck.unlock();
+            publishFrame();
+            break;
+        }
+    }
+}
+
+void VideoInput::cleanupAndroid()
+{
+    emitSignal<DRing::VideoSignal::StopCapture>();
+
+    if (detach(sink_.get()))
+        sink_->stop();
+
+    std::lock_guard<std::mutex> lck(mutex_);
+    for (auto& buffer : buffers_) {
+        if (buffer.status == BUFFER_AVAILABLE ||
+            buffer.status == BUFFER_FULL) {
+            freeOneBuffer(buffer);
+        }
+    }
+}
+#endif
 
 bool VideoInput::setup()
 {
@@ -153,6 +227,80 @@ bool VideoInput::captureFrame()
     publishFrame();
     return true;
 }
+
+#ifdef __ANDROID__
+int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
+{
+    b.data = std::malloc(length);
+    if (b.data) {
+        b.status = BUFFER_AVAILABLE;
+        b.length = length;
+        return 0;
+    }
+
+    return -ENOMEM;
+}
+
+void VideoInput::freeOneBuffer(struct VideoFrameBuffer& b)
+{
+    std::free(b.data);
+    b.data = nullptr;
+    b.length = 0;
+    b.status = BUFFER_NOT_ALLOCATED;
+}
+
+void VideoInput::releaseBufferCb(void *opaque, void *ptr)
+{
+    VideoInput *vi = static_cast<VideoInput*>(opaque);
+    for(auto &buffer : vi->buffers_) {
+        if (buffer.data == ptr) {
+            buffer.status = BUFFER_AVAILABLE;
+        }
+    }
+}
+
+void*
+VideoInput::obtainFrame(int length)
+{
+    std::lock_guard<std::mutex> lck(mutex_);
+
+    /* allocate buffers. This is done there because it's only when the Android
+     * application requests a buffer that we know its size
+     */
+    for(auto& buffer : buffers_) {
+        if (buffer.status == BUFFER_NOT_ALLOCATED) {
+            allocateOneBuffer(buffer, length);
+        }
+    }
+
+    /* search for an available frame */
+    for(auto& buffer : buffers_) {
+        if (buffer.length == length && buffer.status == BUFFER_AVAILABLE) {
+            buffer.status = BUFFER_CAPTURING;
+            return buffer.data;
+        }
+    }
+
+    RING_WARN("No buffer found");
+    return nullptr;
+}
+
+void
+VideoInput::releaseFrame(void *ptr)
+{
+    std::lock_guard<std::mutex> lck(mutex_);
+    for(auto& frame : buffers_) {
+        if (frame.data  == ptr) {
+            if (frame.status != BUFFER_CAPTURING)
+                RING_ERR("Released a buffer with status %d, expected %d",
+                         frame.status, BUFFER_CAPTURING);
+            frame.status = BUFFER_FULL;
+            frame.index = capture_index_++;
+            frame_cv_.notify_one();
+        }
+    }
+}
+#endif
 
 void
 VideoInput::createDecoder()
@@ -376,6 +524,23 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
+#ifdef __ANDROID__
+int VideoInput::getWidth() const
+{ return decOpts_.width; }
+
+int VideoInput::getHeight() const
+{ return decOpts_.height; }
+
+int VideoInput::getPixelFormat() const
+{
+    int format;
+    std::stringstream ss;
+    ss << decOpts_.format;
+    ss >> format;
+
+    return format;
+}
+#else
 int VideoInput::getWidth() const
 { return decoder_->getWidth(); }
 
@@ -384,6 +549,7 @@ int VideoInput::getHeight() const
 
 int VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
+#endif
 
 DeviceParams VideoInput::getParams() const
 { return decOpts_; }
