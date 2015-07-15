@@ -120,6 +120,7 @@ constexpr static const char UPNP_ENABLED            [] = "Account.upnpEnabled";
 constexpr static const char HAS_CUSTOM_USER_AGENT   [] = "Account.hasCustomUserAgent";
 constexpr static const char ALLOW_CERT_FROM_HISTORY [] = "Account.allowCertFromHistory";
 constexpr static const char ALLOW_CERT_FROM_CONTACT [] = "Account.allowCertFromContact";
+constexpr static const char ALLOW_CERT_FROM_TRUSTED [] = "Account.allowCertFromTrusted";
 
 
 namespace Audio {
@@ -214,6 +215,7 @@ namespace DHT {
 
 constexpr static const char PORT               [] = "DHT.port";
 constexpr static const char PUBLIC_IN_CALLS    [] = "DHT.PublicInCalls";
+constexpr static const char ALLOW_FROM_TRUSTED [] = "DHT.AllowFromTrusted";
 
 } //namespace DRing::Account::DHT
 

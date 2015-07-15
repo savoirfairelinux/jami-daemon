@@ -381,6 +381,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_PUBLIC_IN_CALLS << YAML::Value << dhtPublicInCalls_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
+    out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -398,6 +399,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::DHT_PORT_KEY, dhtPort_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
+    parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
@@ -480,6 +482,7 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
     parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
+    parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
@@ -506,6 +509,7 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, TRUE_STR);
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_?TRUE_STR:FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_?TRUE_STR:FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_?TRUE_STR:FALSE_STR);
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
 

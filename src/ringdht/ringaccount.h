@@ -73,6 +73,7 @@ const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
 const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
 const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
+const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
 }
 
 class IceTransport;
@@ -384,6 +385,7 @@ class RingAccount : public SIPAccountBase {
         std::condition_variable dhParamsCv_;
         bool allowPeersFromHistory_;
         bool allowPeersFromContact_;
+        bool allowPeersFromTrusted_;
 
         /**
          * Optional: "received" parameter from VIA header
