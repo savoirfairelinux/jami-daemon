@@ -106,7 +106,7 @@ class DBusCallManager :
         void setConfirmGoClear(const std::string& callID);
         void requestGoClear(const std::string& callID);
         void acceptEnrollment(const std::string& callID, const bool& accepted);
-        void sendTextMessage(const std::string& callID, const std::string& message);
+        void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages);
 };
 
 #endif // __RING_CALLMANAGER_H__

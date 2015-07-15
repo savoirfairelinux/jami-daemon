@@ -102,8 +102,7 @@ void requestGoClear(const std::string& callID);
 void acceptEnrollment(const std::string& callID, bool accepted);
 
 /* Instant messaging */
-void sendTextMessage(const std::string& callID, const std::string& message);
-void sendTextMessage(const std::string& callID, const std::string& message, const std::string& from);
+void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from);
 
 // Call signal type definitions
 struct CallSignal {
@@ -129,7 +128,7 @@ struct CallSignal {
         };
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
-                using cb_type = void(const std::string&, const std::string&, const std::string&);
+                using cb_type = void(const std::string&, const std::string&, const std::map<std::string, std::string>&);
         };
         struct IncomingCall {
                 constexpr static const char* name = "IncomingCall";

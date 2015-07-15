@@ -163,8 +163,8 @@ class SIPCall : public Call
         void carryingDTMFdigits(char code);
 
 #if HAVE_INSTANT_MESSAGING
-        void sendTextMessage(const std::string& message,
-                             const std::string& from);
+        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
+                                     const std::string &from);
 #endif
 
         SIPAccountBase& getSIPAccount() const;

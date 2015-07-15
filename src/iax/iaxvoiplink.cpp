@@ -261,8 +261,8 @@ IAXVoIPLink::handleBusy(IAXCall& call)
 void
 IAXVoIPLink::handleMessage(iax_event* event, IAXCall& call)
 {
-    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        std::string((const char*) event->data));
+    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber() ,std::map<std::string, std::string>
+                                        {{"text/plain", std::string((const char*) event->data)}});
 }
 #endif
 
