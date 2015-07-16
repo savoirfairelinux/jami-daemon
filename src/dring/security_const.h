@@ -40,6 +40,11 @@ constexpr static char ALLOWED   [] = "ALLOWED";
 constexpr static char BANNED    [] = "BANNED";
 } //namespace Dring::Certificate::Status
 
+namespace TrustStatus {
+constexpr static char UNTRUSTED [] = "UNTRUSTED";
+constexpr static char TRUSTED   [] = "TRUSTED";
+} //namespace Dring::Certificate::TrustStatus
+
 /**
 * Those constantes are used by the ConfigurationManager.validateCertificate method
 */

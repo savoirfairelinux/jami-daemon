@@ -162,7 +162,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
     // TODO: for now, we automatically trust all explicitly called peers
-    setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
+    setCertificateStatus(toUri, tls::TrustStore::AllowedStatus::ALLOWED);
 
     std::weak_ptr<SIPCall> weak_call = call;
     manager.addTask([=] {
@@ -749,7 +749,7 @@ void RingAccount::doRegister_()
                     return true;
                 // quick check in case we already explicilty banned this public key
                 auto trustStatus = this_.trust_.getCertificateStatus(msg.from.toString());
-                if (trustStatus == tls::TrustStore::Status::BANNED) {
+                if (trustStatus == tls::TrustStore::AllowedStatus::BANNED) {
                     RING_WARN("Discarding incoming DHT call request from banned peer %s", msg.from.toString().c_str());
                     return true;
                 }
@@ -759,7 +759,7 @@ void RingAccount::doRegister_()
                     return true;
 
                 auto from_h = msg.from;
-                if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::Status::ALLOWED) {
+                if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::AllowedStatus::ALLOWED) {
                     auto from_vid = msg.id;
                     {
                         std::lock_guard<std::mutex> lock(this_.callsMutex_);
@@ -774,7 +774,7 @@ void RingAccount::doRegister_()
                             });
                             if (cert and pending != this_.pendingUntrustedCalls_.end()) {
                                 tls::CertificateStore::instance().pinCertificate(cert);
-                                if (this_.trust_.isTrusted(*cert) and cert->getId() == from_h) {
+                                if (this_.trust_.isAllowed(*cert) and cert->getId() == from_h) {
                                     this_.incomingCall(std::move(*pending));
                                 } else {
                                     RING_WARN("Discarding incoming DHT call from untrusted peer %s.", from_h.toString().c_str());
@@ -787,7 +787,7 @@ void RingAccount::doRegister_()
                     );
                     return true;
                 }
-                else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::Status::BANNED) {
+                else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::AllowedStatus::BANNED) {
                     this_.findCertificate(from_h.toString().c_str());
                 }
                 // public incoming calls allowed or we explicitly authorised this public key
@@ -920,7 +920,7 @@ RingAccount::findCertificate(const std::string& crt_id)
 }
 
 bool
-RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::Status status)
+RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::AllowedStatus status)
 {
     findCertificate(cert_id);
     bool done = trust_.setCertificateStatus(cert_id, status);
@@ -929,8 +929,18 @@ RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::S
     return done;
 }
 
+bool
+RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStatus status)
+{
+    findCertificate(cert_id);
+    bool done = trust_.setCertificateStatus(cert_id, status);
+    if (done)
+        emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(), cert_id, tls::statusToStr(status));
+    return done;
+}
+
 std::vector<std::string>
-RingAccount::getCertificatesByStatus(tls::TrustStore::Status status)
+RingAccount::getCertificatesByStatus(tls::TrustStore::AllowedStatus status)
 {
     return trust_.getCertificatesByStatus(status);
 }
@@ -1160,7 +1170,7 @@ RingAccount::acceptTrustRequest(const std::string& from)
     dht::InfoHash f(from);
     for (auto i = std::begin(trustRequests_); i != std::end(trustRequests_); ++i) {
         if (i->from == f) {
-            trust_.setCertificateStatus(from, tls::TrustStore::Status::ALLOWED);
+            trust_.setCertificateStatus(from, tls::TrustStore::AllowedStatus::ALLOWED);
             trustRequests_.erase(i);
             return true;
         }
@@ -1184,7 +1194,7 @@ RingAccount::discardTrustRequest(const std::string& from)
 void
 RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
-    setCertificateStatus(to, tls::TrustStore::Status::ALLOWED);
+    setCertificateStatus(to, tls::TrustStore::AllowedStatus::ALLOWED);
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS, payload));
