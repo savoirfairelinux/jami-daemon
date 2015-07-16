@@ -22,6 +22,10 @@ debian_8:
     debian: debian
     ccache: true
     type: docker
+debian_9:
+    debian: debian
+    ccache: true
+    type: docker
 ubuntu_14.04_i386:
     debian: debian
     ccache: true
