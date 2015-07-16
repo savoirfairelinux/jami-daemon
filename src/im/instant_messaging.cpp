@@ -120,7 +120,7 @@ std::vector<std::string> InstantMessaging::split_message(std::string text)
     size_t len = MAXIMUM_MESSAGE_LENGTH;
 
     while (text.length() > len - 2) {
-        messages.push_back(text.substr(len - 2) + "\n\n");
+        messages.push_back(text.substr(0, len - 2) + "\n\0");
         text = text.substr(len - 2);
     }
 
