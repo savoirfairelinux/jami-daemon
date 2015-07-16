@@ -247,8 +247,10 @@ class RingAccount : public SIPAccountBase {
             return false;
         }
 
-        bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::Status status);
-        std::vector<std::string> getCertificatesByStatus(tls::TrustStore::Status status);
+        bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::AllowedStatus status);
+        bool setCertificateStatus(const std::string& cert_id, tls::TrustStatus status);
+
+        std::vector<std::string> getCertificatesByStatus(tls::TrustStore::AllowedStatus status);
 
         bool findCertificate(const std::string& id);
         bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb = {});

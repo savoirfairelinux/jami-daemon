@@ -452,16 +452,16 @@ unsigned int TlsValidator::compareToCa()
         return caValidationOutput_;
 
     // build the certificate chain
-    std::vector<gnutls_x509_crt_t> crts {};
-    auto crt = x509crt_;
-    while (crt) {
-        crts.emplace_back(crt->cert);
-        crt = crt->issuer;
-    }
+    auto crts = getChain(*x509crt_);
 
     // build the CA trusted list
     gnutls_x509_trust_list_t trust;
     gnutls_x509_trust_list_init(&trust, 0);
+
+    auto root_cas = CertificateStore::instance().getTrustedCertificates();
+    auto err = gnutls_x509_trust_list_add_cas(trust, root_cas.data(), root_cas.size(), 0);
+    if (err)
+        RING_WARN("gnutls_x509_trust_list_add_cas failed: %s", gnutls_strerror(err));
 
     if (not caListPath_.empty()) {
         if (fileutils::isDirectory(caListPath_))
@@ -470,7 +470,7 @@ unsigned int TlsValidator::compareToCa()
             gnutls_x509_trust_list_add_trust_file(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
     }
 
-    auto err = gnutls_x509_trust_list_verify_crt2(
+    err = gnutls_x509_trust_list_verify_crt2(
         trust,
         crts.data(), crts.size(),
         nullptr, 0,
@@ -483,7 +483,6 @@ unsigned int TlsValidator::compareToCa()
         RING_WARN("gnutls_x509_trust_list_verify_crt2 failed: %s", gnutls_strerror(err));
         return GNUTLS_CERT_SIGNER_NOT_FOUND;
     }
-    RING_DBG("gnutls_x509_trust_list_verify_crt2: %d", caValidationOutput_);
 
     caChecked_ = true;
     return caValidationOutput_;
