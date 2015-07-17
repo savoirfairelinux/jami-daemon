@@ -102,7 +102,7 @@ void requestGoClear(const std::string& callID);
 void acceptEnrollment(const std::string& callID, bool accepted);
 
 /* Instant messaging */
-void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from);
+void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
 
 // Call signal type definitions
 struct CallSignal {
