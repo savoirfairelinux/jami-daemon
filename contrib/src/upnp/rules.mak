@@ -30,6 +30,7 @@ ifdef HAVE_WIN32
 	$(RECONF)
 	cd $< && $(HOSTVARS) CFLAGS="-DUPNP_STATIC_LIB" ./configure --disable-samples --without-documentation --disable-blocking_tcp_connections $(HOSTCONF)
 else
+	$(RECONF)
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -DUPNP_STATIC_LIB" ./configure --disable-samples --without-documentation --disable-blocking_tcp_connections $(HOSTCONF)
 endif
 	cd $< && $(MAKE) install
