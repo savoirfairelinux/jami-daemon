@@ -1653,7 +1653,9 @@ Manager::incomingMessage(const std::string& callID,
 bool
 Manager::sendCallTextMessage(const std::string& callID,
                               const std::map<std::string, std::string>& messages,
-                              const std::string& from)
+                              const std::string& from,
+                              bool isMixed //TODO use it
+                            )
 {
     if (isConference(callID)) {
         RING_DBG("Is a conference, send instant message to everyone");

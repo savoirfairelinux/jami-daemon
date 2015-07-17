@@ -1066,6 +1066,7 @@ static void
 transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                              pjsip_event *event)
 {
+    bool sendOk = false;
     if (!tsx or !event or !inv or tsx->role != PJSIP_ROLE_UAS or
             tsx->state != PJSIP_TSX_STATE_TRYING)
         return;
@@ -1114,11 +1115,9 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                         call->onPeerRinging();
                     else
                         RING_WARN("Ringing state on non existing call");
-                    sendOK(inv->dlg, r_data, tsx);
-                    return;
+                    sendOk = true;
                 } else if (msg.find("Ok") != std::string::npos) {
-                    sendOK(inv->dlg, r_data, tsx);
-                    return;
+                    sendOk = true;
                 }
             }
         }
@@ -1144,8 +1143,14 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
     try {
         // retreive the recipient-list of this message
-        std::string urilist = InstantMessaging::findTextUriList(formattedMessage);
-        auto list = InstantMessaging::parseXmlUriList(urilist);
+
+        ring::InstantMessaging::UriList list;
+        try {
+            std::string urilist = InstantMessaging::findTextUriList(formattedMessage);
+            list = InstantMessaging::parseXmlUriList(urilist);
+        } catch (const InstantMessaging::InstantMessageException &except) {
+            RING_DBG("No urilist found");
+        }
 
         // If no item present in the list, peer is considered as the sender
         std::string from;
@@ -1165,14 +1170,17 @@ transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
 
         Manager::instance().incomingMessage(call->getCallId(), from, InstantMessaging::parsePayloads(formattedMessage));
 
-        // Respond with a 200/OK
-        sendOK(inv->dlg, r_data, tsx);
+        sendOk = true;
 
     } catch (const InstantMessaging::InstantMessageException &except) {
         RING_ERR("%s", except.what());
     }
 #endif
+
+    // Respond with a 200/OK
+    sendOK(inv->dlg, r_data, tsx);
 }
+
 
 static void
 onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
