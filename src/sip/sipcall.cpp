@@ -698,8 +698,8 @@ void SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages
     InstantMessaging::UriEntry entry;
     entry[InstantMessaging::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
     list.push_front(entry);
-    auto msg = InstantMessaging::appendMimePayloads(messages, list);
-    InstantMessaging::send_sip_message(inv.get(), getCallId(), msg);
+    const std::vector<std::string> msgs = InstantMessaging::appendMimePayloads(messages, &list);
+    InstantMessaging::send_sip_message(inv.get(), getCallId(), msgs);
 }
 #endif // HAVE_INSTANT_MESSAGING
 
