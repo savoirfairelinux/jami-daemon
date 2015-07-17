@@ -1,18 +1,18 @@
 # UPNP
 UPNP_VERSION := 1.6.19
-UPNP_URL := http://sourceforge.net/projects/pupnp/files/pupnp/libUPnP%20$(UPNP_VERSION)/libupnp-$(UPNP_VERSION).tar.bz2/download
+UPNP_URL := https://github.com/mrjimenez/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
 ifeq ($(call need_pkg,'libupnp'),)
 PKGS_FOUND += upnp
 endif
 
-$(TARBALLS)/libupnp-$(UPNP_VERSION).tar.bz2:
+$(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:
 	$(call download,$(UPNP_URL))
 
-.sum-upnp: libupnp-$(UPNP_VERSION).tar.bz2
+.sum-upnp: pupnp-release-$(UPNP_VERSION).tar.gz
 
-upnp: libupnp-$(UPNP_VERSION).tar.bz2 .sum-upnp
+upnp: pupnp-release-$(UPNP_VERSION).tar.gz .sum-upnp
 	$(UNPACK)
 ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/upnp/libupnp-win32.patch
@@ -22,7 +22,7 @@ endif
 	$(APPLY) $(SRC)/upnp/libupnp-ipv6.patch
 	$(APPLY) $(SRC)/upnp/miniserver.patch
 	$(APPLY) $(SRC)/upnp/uuid_upnp.patch
-	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub build-aux/
+	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub
 	$(MOVE)
 
 .upnp: upnp
