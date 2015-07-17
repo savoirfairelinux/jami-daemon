@@ -52,10 +52,20 @@
 #endif
 
 #define EMPTY_MESSAGE   pj_str((char*)"")
-#define MAXIMUM_MESSAGE_LENGTH		1560			/* PJSIP's sip message limit */
 
-#define MODE_APPEND			std::ios::out || std::ios::app
-#define MODE_TEST			std::ios::out
+/* PJSIP's sip message limit, PJSIP_MAX_PKT_LEN is the total, but most
+ is used for the SIP header
+
+ Ring currently split the messages into smaller ones and send them. Obviously
+ it is invalid as some messages wont have the MIME boundary section.
+ 
+ The number set here is arbitrary, the theoretical limit is around 3000,
+ but some messages may fail.
+ */
+#define MAXIMUM_MESSAGE_LENGTH 1800
+
+#define MODE_APPEND std::ios::out || std::ios::app
+#define MODE_TEST std::ios::out
 
 namespace ring { namespace InstantMessaging {
 
@@ -81,20 +91,10 @@ typedef std::list<UriEntry> UriList;
  */
 bool saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
 
-/*
- * Send a SIP string message inside a call
- *
- * @param id	The call ID we will retrieve the invite session from
- * @param message	The string message, as sent by the client
- */
-void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
-
-void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
+void send_sip_message(pjsip_inv_session*, const std::string& id, const std::vector<std::string>& chunks);
 #if HAVE_IAX
-void send_iax_message(iax_session *session, const std::string& id, const std::string&);
+void send_iax_message(iax_session *session, const std::string& id, const std::vector<std::string>& chunks);
 #endif
-
-std::vector<std::string> split_message(std::string);
 
 /**
  * Generate Xml participant list for multi recipient based on RFC Draft 5365
@@ -104,7 +104,7 @@ std::vector<std::string> split_message(std::string);
  * @return A string containing the full XML formated information to be included in the
  *         sip instant message.
  */
-std::string generateXmlUriList(UriList &list);
+std::string generateXmlUriList(const UriList& list);
 
 /**
  * Parse the Urilist from a SIP Instant Message provided by a UriList service.
@@ -118,12 +118,13 @@ UriList parseXmlUriList(const std::string &urilist);
 /**
  * Format text message according to RFC 5365, append recipient-list to the message
  *
- * @param text to be displayed
+ * @param Key/Value MIME pairs to be sent. If a payload doesn't fit, the message will be split
  * @param list containing the recipients
  *
  * @return formated text stored into a string to be included in sip MESSAGE
  */
-std::string appendMimePayloads(const std::map<std::string,std::string> payloads, UriList& list);
+std::vector<std::string> appendMimePayloads(const std::map<std::string, std::string>& payloads,
+                                            const UriList& list = {});
 
 /**
  * Retreive the xml formated uri list in formated text data according to RFC 5365
