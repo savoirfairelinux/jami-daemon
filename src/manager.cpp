@@ -576,7 +576,7 @@ Manager::hangupCall(const std::string& callId)
         removeParticipant(callId);
     } else {
         // we are not participating in a conference, current call switched to ""
-        if (not isConference(currentCallId))
+        if (not isConference(currentCallId) and isCurrentCall(call))
             unsetCurrentCall();
     }
 
