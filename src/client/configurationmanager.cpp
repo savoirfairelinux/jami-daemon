@@ -414,8 +414,8 @@ setCodecDetails(const std::string& accountID,
             if (foundCodec->isRunning) {
                 RING_WARN("%s running. Need to restart encoding",
                         foundCodec->systemCodecInfo.name.c_str());
-                auto call = ring::Manager::instance().getCurrentCall();
-                call->restartMediaSender();
+                if (auto call = ring::Manager::instance().getCurrentCall())
+                    call->restartMediaSender();
             }
             ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
             return true;
