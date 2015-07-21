@@ -352,7 +352,7 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
         RING_ERR("UDP IPv%s Transport did not start on %s",
             listeningAddress.isIpv4() ? "4" : "6",
             listeningAddress.toString(true).c_str());
-        sip_utils::sip_strerror(status);
+        sip_utils::sip_printerror(status);
         return nullptr;
     }
 
@@ -388,8 +388,7 @@ SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_s
     pjsip_tpfactory *listener = nullptr;
     const pj_status_t status = pjsip_tls_transport_start2(endpt_, settings, listeningAddress.pjPtr(), nullptr, 1, &listener);
     if (status != PJ_SUCCESS) {
-        RING_ERR("TLS listener did not start");
-        sip_utils::sip_strerror(status);
+        RING_ERR("TLS listener did not start: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
     }
     return std::make_shared<TlsListener>(listener);
@@ -423,8 +422,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
             &transport);
 
     if (!transport || status != PJ_SUCCESS) {
-        RING_ERR("Could not get new TLS transport");
-        sip_utils::sip_strerror(status);
+        RING_ERR("Could not get new TLS transport: %s", sip_utils::sip_strerror(status).c_str());
         return nullptr;
     }
     auto ret = std::make_shared<SipTransport>(transport, l);

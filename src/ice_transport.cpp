@@ -185,11 +185,9 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
     const bool done = status == PJ_SUCCESS;
     RING_DBG("ICE %s with %s", opname, done?"success":"error");
 
-    if (!done) {
-        char errmsg[PJ_ERR_MSG_SIZE];
-        pj_strerror(status, errmsg, sizeof(errmsg));
-        RING_ERR("ICE %s failed: %s", opname, errmsg);
-    }
+    if (!done)
+        RING_ERR("ICE %s failed: %s", opname,
+                 sip_utils::sip_strerror(status).c_str());
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
@@ -254,8 +252,7 @@ IceTransport::setInitiatorSession()
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
-            RING_ERR("ICE role change failed");
-            sip_utils::sip_strerror(status);
+            RING_ERR("ICE role change failed: %s", sip_utils::sip_strerror(status).c_str());
             return false;
         }
         return true;
@@ -271,8 +268,7 @@ IceTransport::setSlaveSession()
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
-            RING_ERR("ICE role change failed");
-            sip_utils::sip_strerror(status);
+            RING_ERR("ICE role change failed: %s", sip_utils::sip_strerror(status).c_str());
             return false;
         }
         return true;
@@ -311,8 +307,7 @@ IceTransport::start(const Attribute& rem_attrs,
                                           rem_candidates.size(),
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
-        RING_ERR("ICE start failed");
-        sip_utils::sip_strerror(status);
+        RING_ERR("ICE start failed: %s", sip_utils::sip_strerror(status).c_str());
         return false;
     }
     return true;
@@ -381,8 +376,7 @@ IceTransport::stop()
 
     auto status = pj_ice_strans_stop_ice(icest_.get());
     if (status != PJ_SUCCESS) {
-        RING_ERR("ICE start failed");
-        sip_utils::sip_strerror(status);
+        RING_ERR("ICE start failed: %s", sip_utils::sip_strerror(status).c_str());
         return false;
     }
 
@@ -523,12 +517,12 @@ IceTransport::addCandidate(int comp_id, const IpAddr& localAddr,
         NULL);
 
     if (ret != PJ_SUCCESS) {
-        RING_ERR("fail to add candidate for comp_id=%d : %s : %s", comp_id
+        RING_ERR("failed to add candidate for comp_id=%d : %s : %s", comp_id
                  , localAddr.toString().c_str()
                  , publicAddr.toString().c_str());
-        sip_utils::sip_strerror(ret);
+        sip_utils::sip_printerror(ret);
     } else {
-        RING_DBG("success to add candidate for comp_id=%d : %s : %s", comp_id
+        RING_DBG("succeed to add candidate for comp_id=%d : %s : %s", comp_id
                 , localAddr.toString().c_str()
                 , publicAddr.toString().c_str());
     }
@@ -708,8 +702,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     }
     auto status = pj_ice_strans_sendto(icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status != PJ_SUCCESS) {
-        sip_utils::sip_strerror(status);
-        RING_ERR("send failed");
+        RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
         return -1;
     }
     return len;
@@ -846,11 +839,8 @@ handleIOEvents(pj_ice_strans_cfg& cfg, unsigned max_msec)
         // error
         if (n_events < 0) {
             const auto err = pj_get_os_error();
-            char err_msg[128];
-            pj_strerror(err, err_msg, sizeof(err_msg));
-            err_msg[sizeof(err_msg)-1] = '\0';
             // Kept as debug as some errors are "normal" in regular context
-            RING_DBG("IceIOQueue: error %d - %s", err, err_msg);
+            RING_DBG("IceIOQueue: error %d - %s", err, sip_utils::sip_strerror(err).c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             return;
         }

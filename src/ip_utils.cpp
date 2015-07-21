@@ -65,8 +65,8 @@ ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
     pj_cstr(&pjname, name.c_str());
     auto status = pj_getaddrinfo(family, &pjname, &addr_num, res);
     if (status != PJ_SUCCESS) {
-        RING_ERR("Error resolving %s :", name.c_str());
-        sip_utils::sip_strerror(status);
+        RING_ERR("Error resolving %s : %s", name.c_str(),
+                 sip_utils::sip_strerror(status).c_str());
         return ipList;
     }
 

@@ -670,7 +670,7 @@ SIPCall::peerHungup()
         inv->mod_data[getSIPVoIPLink()->getModId()] = NULL;
     } else {
         inv.reset();
-        sip_utils::sip_strerror(ret);
+        sip_utils::sip_printerror(ret);
     }
 }
 

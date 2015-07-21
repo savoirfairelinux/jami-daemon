@@ -528,10 +528,8 @@ SIPVoIPLink::SIPVoIPLink()
 
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
                                            tp_state_callback);
-    if (status != PJ_SUCCESS) {
-        RING_ERR("Can't set transport callback");
-        sip_utils::sip_strerror(status);
-    }
+    if (status != PJ_SUCCESS)
+        RING_ERR("Can't set transport callback: %s", sip_utils::sip_strerror(status).c_str());
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -699,7 +697,7 @@ SIPVoIPLink::handleEvents()
     static const pj_time_val timeout = {0, 0}; // polling
     auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
     if (ret != PJ_SUCCESS)
-        sip_utils::sip_strerror(ret);
+        sip_utils::sip_printerror(ret);
 
 #ifdef RING_VIDEO
     dequeKeyframeRequests();

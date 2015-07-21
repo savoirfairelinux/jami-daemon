@@ -204,13 +204,20 @@ addContactHeader(const pj_str_t *contact_str, pjsip_tx_data *tdata)
     pjsip_msg_add_hdr(tdata->msg, (pjsip_hdr*) contact);
 }
 
-
 void
-sip_strerror(pj_status_t code)
+sip_printerror(pj_status_t code)
 {
     char err_msg[PJ_ERR_MSG_SIZE];
     pj_strerror(code, err_msg, sizeof err_msg);
     RING_ERR("%d: %s", code, err_msg);
+}
+
+std::string
+sip_strerror(pj_status_t code)
+{
+    char err_msg[PJ_ERR_MSG_SIZE];
+    pj_strerror(code, err_msg, sizeof err_msg);
+    return std::string{err_msg};
 }
 
 }} // namespace ring::sip_utils

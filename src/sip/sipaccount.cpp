@@ -270,12 +270,9 @@ SIPAccount::onTransportStateChanged(pjsip_transport_state state, const pjsip_tra
     RING_DBG("Transport state changed to %s for account %s !", SipTransport::stateToStr(state), accountID_.c_str());
     if (!SipTransport::isAlive(transport_, state)) {
         if (info) {
-            char err_msg[128];
-            err_msg[0] = '\0';
-            pj_str_t descr = pj_strerror(info->status, err_msg, sizeof(err_msg));
             transportStatus_ = info->status;
-            transportError_  = std::string(descr.ptr, descr.slen);
-            RING_ERR("Transport disconnected: %.*s", descr.slen, descr.ptr);
+            transportError_  = sip_utils::sip_strerror(info->status);
+            RING_ERR("Transport disconnected: %s", transportError_.c_str());
         }
         else {
             // This is already the generic error used by pjsip.
@@ -993,7 +990,7 @@ SIPAccount::sendRegister()
 
     //RING_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire())) != PJ_SUCCESS) {
-        sip_utils::sip_strerror(status);
+        sip_utils::sip_printerror(status);
         throw VoipLinkException("Unable to initialize account registration structure");
     }
 
@@ -1032,7 +1029,7 @@ SIPAccount::sendRegister()
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_utils::sip_strerror(status);
+        sip_utils::sip_printerror(status);
         throw VoipLinkException("Unable to send account registration request");
     }
 
@@ -1147,7 +1144,7 @@ SIPAccount::sendUnregister()
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_utils::sip_strerror(status);
+        sip_utils::sip_printerror(status);
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
 
@@ -2153,10 +2150,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
     pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
                                         &pjTo, &pjFrom, &pjTo, NULL, NULL, -1, NULL, &tdata);
     if (status != PJ_SUCCESS) {
-        char err_msg[128];
-        err_msg[0] = '\0';
-        pj_str_t descr = pj_strerror(status, err_msg, sizeof(err_msg));
-        RING_ERR("Unable to create request: %.*s", descr.slen, descr.ptr);
+        RING_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
         return;
     }
 
@@ -2181,10 +2175,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
 
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, nullptr, nullptr);
     if (status != PJ_SUCCESS) {
-        char err_msg[128];
-        err_msg[0] = '\0';
-        pj_str_t descr = pj_strerror(status, err_msg, sizeof(err_msg));
-        RING_ERR("Unable to send request: %.*s", descr.slen, descr.ptr);
+        RING_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
         return;
     }
 }
