@@ -41,6 +41,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <cerrno>
 
 #define TRY(ret) do {      \
         if ((ret) != PJ_SUCCESS)                             \
@@ -698,13 +699,21 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
         RING_ERR("Can't find remote address for component %d", comp_id);
+        errno = EINVAL;
         return -1;
     }
     auto status = pj_ice_strans_sendto(icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status != PJ_SUCCESS) {
-        RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
+        if (status == PJ_EBUSY) {
+            RING_WARN("ice send busy");
+            errno = EAGAIN;
+        } else {
+            RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
+            errno = EIO;
+        }
         return -1;
     }
+
     return len;
 }
 

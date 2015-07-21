@@ -454,7 +454,7 @@ retry:
         /* RTCP payload type */
         ret = context->writeRtcpData(buf, buf_size);
         if (ret < 0) {
-            if (ret == -EAGAIN)
+            if (errno == EAGAIN)
                 goto retry;
             return ret;
         }
@@ -462,13 +462,13 @@ retry:
         /* RTP payload type */
         ret = context->writeRtpData(buf, buf_size);
         if (ret < 0) {
-            if (ret == -EAGAIN)
+            if (errno == EAGAIN)
                 goto retry;
             return ret;
         }
     }
 
-    return ret < 0 ? errno : ret;
+    return ret < 0 ? -errno : ret;
 }
 
 } // namespace ring
