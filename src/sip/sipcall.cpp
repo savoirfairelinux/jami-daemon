@@ -800,8 +800,14 @@ SIPCall::startIce()
     return iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
 }
 
+bool
+SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
+{
+    return videortp_.useCodec(codec);
+}
+
 void
-SIPCall::startAllMedia(const uint16_t seqVideoInitVal, const uint16_t seqAudioInitVal)
+SIPCall::startAllMedia()
 {
     if (isSecure() && not transport_->isSecure()) {
         RING_ERR("Can't perform secure call over insecure SIP transport");
@@ -849,14 +855,9 @@ SIPCall::startAllMedia(const uint16_t seqVideoInitVal, const uint16_t seqAudioIn
         }
 
 #ifdef RING_VIDEO
-        if (local.type == MEDIA_VIDEO) {
+        if (local.type == MEDIA_VIDEO)
             videortp_.switchInput(videoInput_);
-            rtp->setSenderInitSeqVal(seqVideoInitVal);
-        }
 #endif
-        if (local.type == MEDIA_AUDIO){
-            rtp->setSenderInitSeqVal(seqAudioInitVal);
-        }
 
         rtp->updateMedia(remote, local);
         if (isIceRunning()) {
@@ -888,18 +889,11 @@ SIPCall::startAllMedia(const uint16_t seqVideoInitVal, const uint16_t seqAudioIn
 void
 SIPCall::restartMediaSender()
 {
-    uint16_t lastSeqVideoVal, lastSeqAudioVal = 0;
+    RING_WARN("[call:%s] restarting TX media streams", getCallId().c_str());
+    avformatrtp_->restartSender();
 #ifdef RING_VIDEO
-    lastSeqVideoVal = videortp_.getSenderLastSeqValue() + 1;
-    lastSeqAudioVal = avformatrtp_->getSenderLastSeqValue() + 1;
-    RING_WARN("restarting video and audio streams");
-#else
-    lastSeqAudioVal = avformatrtp_->getSenderLastSeqValue() + 1;
-    RING_WARN("restarting audio streams");
+    videortp_.restartSender();
 #endif
-    stopAllMedia();
-    RING_ERR("lastSeqVideoVal=%u, lastSeqAudioVal=%u", lastSeqVideoVal,lastSeqAudioVal);
-    startAllMedia(lastSeqVideoVal, lastSeqAudioVal);
 }
 
 void

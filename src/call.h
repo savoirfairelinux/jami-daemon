@@ -51,6 +51,7 @@ namespace ring {
 
 class VoIPLink;
 class Account;
+class AccountVideoCodecInfo;
 
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
@@ -325,6 +326,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         std::shared_ptr<IceTransport> getIceTransport() const {
             return iceTransport_;
+        }
+
+        virtual bool useVideoCodec(const AccountVideoCodecInfo* /*codec*/) const {
+            return false;
         }
 
         virtual void restartMediaSender() = 0;

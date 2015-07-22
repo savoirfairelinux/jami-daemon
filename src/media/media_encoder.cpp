@@ -54,10 +54,8 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
-    if (outputCtx_ and outputCtx_->priv_data) {
+    if (outputCtx_ and outputCtx_->priv_data)
         av_write_trailer(outputCtx_);
-        *isCodecRunning = false;
-    }
 
     if (encoderCtx_)
         avcodec_close(encoderCtx_);
@@ -83,6 +81,8 @@ void MediaEncoder::setDeviceOptions(const DeviceParams& args)
 
 void MediaEncoder::setOptions(const MediaDescription& args)
 {
+    codec_ = args.codec;
+
     av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
     av_dict_set(&options_, "bitrate", ring::to_string(args.codec->bitrate).c_str(), 0);
 
@@ -101,8 +101,6 @@ void MediaEncoder::setOptions(const MediaDescription& args)
 
     if (not args.parameters.empty())
         av_dict_set(&options_, "parameters", args.parameters.c_str(), 0);
-
-    isCodecRunning = &(args.codec->isRunning);
 }
 
 void
@@ -238,7 +236,6 @@ MediaEncoder::startIO()
     }
 
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
-    *isCodecRunning = true;
 }
 
 static void
@@ -664,6 +661,12 @@ void
 MediaEncoder::setMuted(bool isMuted)
 {
     is_muted = isMuted;
+}
+
+bool
+MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
+{
+    return codec_.get() == codec;
 }
 
 } // namespace ring

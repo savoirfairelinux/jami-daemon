@@ -135,7 +135,7 @@ class IAXCall : public Call
         void muteMedia(const std::string& mediaType, bool isMuted) {}
 
         //TODO: implement restartMedia for IAX
-        void restartMediaSender() {}
+        void restartMediaSender() override {}
 
         void peerHungup();
 

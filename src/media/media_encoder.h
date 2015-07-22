@@ -58,6 +58,7 @@ namespace ring {
 class AudioBuffer;
 class MediaIOHandle;
 class MediaDescription;
+class AccountCodecInfo;
 
 class MediaEncoderException : public std::runtime_error {
     public:
@@ -94,6 +95,7 @@ public:
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
 
+    bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
 private:
     NON_COPYABLE(MediaEncoder);
@@ -122,11 +124,11 @@ private:
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
-    bool* isCodecRunning = nullptr;
 
 protected:
     AVDictionary *options_ = nullptr;
     DeviceParams device_;
+    std::shared_ptr<const AccountCodecInfo> codec_;
 };
 
 } // namespace ring
