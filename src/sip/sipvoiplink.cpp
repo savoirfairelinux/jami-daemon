@@ -84,13 +84,6 @@ namespace ring {
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
-/**
- * Set audio and video (SDP) configuration for a call
- * localport, localip, localexternalport
- * @param call a SIPCall valid pointer
- */
-static pj_caching_pool pool_cache;
-static pj_pool_t *pool_;
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
 
@@ -100,8 +93,6 @@ static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_
 static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
-
-pj_caching_pool* SIPVoIPLink::cp_ = &pool_cache;
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
 
@@ -490,24 +481,31 @@ pjsip_module * SIPVoIPLink::getMod()
     return &mod_ua_;
 }
 
-pj_pool_t* SIPVoIPLink::getPool() const
+pj_pool_t*
+SIPVoIPLink::getPool() noexcept
 {
-    return pool_;
+    return pool_.get();
 }
 
-SIPVoIPLink::SIPVoIPLink()
+pj_caching_pool*
+SIPVoIPLink::getCachingPool() noexcept
+{
+    return &cp_;
+}
+
+SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 {
 #define TRY(ret) do { \
     if (ret != PJ_SUCCESS) \
     throw VoipLinkException(#ret " failed"); \
 } while (0)
 
-    pj_caching_pool_init(cp_, &pj_pool_factory_default_policy, 0);
-    pool_ = pj_pool_create(&cp_->factory, PACKAGE, 4096, 4096, nullptr);
+    pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
+    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 4096, 4096, nullptr));
     if (!pool_)
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
-    TRY(pjsip_endpt_create(&cp_->factory, pj_gethostname()->ptr, &endpt_));
+    TRY(pjsip_endpt_create(&cp_.factory, pj_gethostname()->ptr, &endpt_));
 
     auto ns = ip_utils::getLocalNameservers();
     if (not ns.empty()) {
@@ -516,7 +514,7 @@ SIPVoIPLink::SIPVoIPLink()
             char hbuf[NI_MAXHOST];
             getnameinfo((sockaddr*)&ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST);
             RING_DBG("Using SIP nameserver: %s", hbuf);
-            pj_strdup2(pool_, &dns_nameservers[i], hbuf);
+            pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
         }
         pj_dns_resolver* resv;
         TRY(pjsip_endpt_create_resolver(endpt_, &resv));
@@ -524,7 +522,7 @@ SIPVoIPLink::SIPVoIPLink()
         TRY(pjsip_endpt_set_resolver(endpt_, resv));
     }
 
-    sipTransportBroker.reset(new SipTransportBroker(endpt_, *cp_, *pool_));
+    sipTransportBroker.reset(new SipTransportBroker(endpt_, cp_, *pool_));
 
     auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
                                            tp_state_callback);
@@ -625,8 +623,8 @@ SIPVoIPLink::~SIPVoIPLink()
     sipTransportBroker.reset();
 
     pjsip_endpt_destroy(endpt_);
-    pj_pool_release(pool_);
-    pj_caching_pool_destroy(cp_);
+    pool_.reset();
+    pj_caching_pool_destroy(&cp_);
 
     RING_DBG("destroying SIPVoIPLink@%p", this);
 }
@@ -663,7 +661,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {
         if (!account)
             continue;
-        const MatchRank match(account->matches(userName, server, endpt_, pool_));
+        const MatchRank match(account->matches(userName, server, endpt_, pool_.get()));
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
@@ -1306,7 +1304,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
             }
         });
 
-    pjsip_endpt_resolve(endpt_, pool_, &host_info, (void*)token, resolver_callback);
+    pjsip_endpt_resolve(endpt_, pool_.get(), &host_info, (void*)token, resolver_callback);
 }
 
 #define RETURN_IF_NULL(A, M, ...) \
@@ -1346,7 +1344,7 @@ SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
     auto tp_sel = getTransportSelector(transport);
     pjsip_tpmgr_fla2_param param = { transportType, &tp_sel, pjstring, PJ_FALSE,
                                      {nullptr, 0}, 0, nullptr };
-    if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_, &param) != PJ_SUCCESS) {
+    if (pjsip_tpmgr_find_local_addr2(tpmgr, pool_.get(), &param) != PJ_SUCCESS) {
         RING_WARN("Could not retrieve local address and port from transport, using %s :%d",
                   addr.c_str(), port);
         return;
@@ -1393,7 +1391,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
     const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort,
                                     *stunServerName, stunPort};
-    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_->factory,
+    const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory,
                                                            &stunOpt, 1,
                                                            &sipSocket,
                                                            &mapped_addr);
