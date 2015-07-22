@@ -97,4 +97,10 @@ VideoSender::getLastSeqValue()
     return videoEncoder_->getLastSeqValue();
 }
 
+bool
+VideoSender::useCodec(const ring::AccountVideoCodecInfo* codec) const
+{
+    return videoEncoder_->useCodec(codec);
+}
+
 }} // namespace ring::video

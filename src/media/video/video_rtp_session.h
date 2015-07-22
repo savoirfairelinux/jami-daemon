@@ -59,6 +59,7 @@ public:
     void start();
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock);
+    void restartSender() override;
     void stop();
 
     void forceKeyFrame();
@@ -70,9 +71,7 @@ public:
         input_ = input;
     }
 
-    void restartSender();
-    void setSenderInitSeqVal(uint16_t seqVal);
-    uint16_t getSenderLastSeqValue();
+    bool useCodec(const AccountVideoCodecInfo* codec) const;
 
 private:
     void setupConferenceVideoPipeline(Conference *conference);

@@ -395,6 +395,16 @@ AudioRtpSession::startSender()
 }
 
 void
+AudioRtpSession::restartSender()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    // continue on last sequence number
+    initSeqVal_ = sender_->getLastSeqValue() + 1;
+    startSender();
+}
+
+void
 AudioRtpSession::startReceiver()
 {
     if (not receive_.enabled or receive_.holding) {
@@ -489,22 +499,6 @@ AudioRtpSession::setMuted(bool isMuted)
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->setMuted(isMuted);
-}
-
-void
-AudioRtpSession::setSenderInitSeqVal(const uint16_t seqVal)
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    initSeqVal_ = seqVal;
-}
-
-uint16_t
-AudioRtpSession::getSenderLastSeqValue()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (sender_)
-        return sender_->getLastSeqValue();
-    return 0;
 }
 
 } // namespace ring

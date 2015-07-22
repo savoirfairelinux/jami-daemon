@@ -42,8 +42,10 @@
 #include <memory>
 #include <atomic>
 
+// Forward declarations
 namespace ring {
-    class SocketPair;
+class SocketPair;
+class AccountVideoCodecInfo;
 }
 
 namespace ring { namespace video {
@@ -68,6 +70,8 @@ public:
 
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();
+
+    bool useCodec(const AccountVideoCodecInfo* codec) const;
 
 private:
     NON_COPYABLE(VideoSender);

@@ -49,6 +49,7 @@ public:
     virtual void start() = 0;
     virtual void start(std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock) = 0;
+    virtual void restartSender() = 0;
     virtual void stop() = 0;
 
     virtual void updateMedia(const MediaDescription& send,
@@ -56,9 +57,6 @@ public:
         send_ = send;
         receive_ = receive;
     }
-
-    virtual void setSenderInitSeqVal(uint16_t seqVal) = 0;
-    virtual uint16_t getSenderLastSeqValue() = 0;
 
     bool isSending() { return send_.enabled; }
     bool isReceiving() { return receive_.enabled; }

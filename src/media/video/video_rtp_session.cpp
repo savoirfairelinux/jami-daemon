@@ -101,9 +101,19 @@ void VideoRtpSession::startSender()
     }
 }
 
-void VideoRtpSession::restartSender()
+void
+VideoRtpSession::restartSender()
 {
-       startSender();
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    // continue on last sequence number
+    initSeqVal_ = sender_->getLastSeqValue() + 1;
+    startSender();
+
+    if (sender_) {
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
+    }
 }
 
 void VideoRtpSession::startReceiver()
@@ -287,20 +297,10 @@ void VideoRtpSession::exitConference()
     conference_ = nullptr;
 }
 
-void
-VideoRtpSession::setSenderInitSeqVal(const uint16_t seqVal)
+bool
+VideoRtpSession::useCodec(const ring::AccountVideoCodecInfo* codec) const
 {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    initSeqVal_ = seqVal;
-}
-
-uint16_t
-VideoRtpSession::getSenderLastSeqValue()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (sender_)
-        return sender_->getLastSeqValue();
-    return 0;
+    return sender_->useCodec(codec);
 }
 
 }} // namespace ring::video
