@@ -181,6 +181,7 @@ class SIPVoIPLink {
         NON_COPYABLE(SIPVoIPLink);
 
         static pj_caching_pool* cp_;
+        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
 
 #ifdef RING_VIDEO
         void dequeKeyframeRequests();
