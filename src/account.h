@@ -294,7 +294,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         template<class T>
         static inline void
-        parseInt(const std::map<std::string, std::string>& details, const char* key, T i) {
+        parseInt(const std::map<std::string, std::string>& details, const char* key, T& i) {
             const auto& iter = details.find(key);
             if (iter == details.end()) {
                 RING_ERR("Couldn't find key \"%s\"", key);
