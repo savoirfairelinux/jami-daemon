@@ -202,6 +202,7 @@ SipsIceTransport::~SipsIceTransport()
     shutdown();
     tlsThread_.join();
     Manager::instance().unregisterEventHandler((uintptr_t)this);
+    handleEvents(); // process latest incoming packets
 
     pjsip_transport_add_ref(getTransportBase());
     auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
@@ -895,13 +896,7 @@ SipsIceTransport::clean()
             });
     }
 
-    {
-        // make sure all incoming packets are reported before closing
-        std::unique_lock<std::mutex> l(rxMtx_);
-        rxCv_.wait(l, [&](){
-                return rxPending_.empty();
-            });
-    }
+    // note: incoming packets (rxPending_) will be processed in destructor
 
     if (cookie_key_.data) {
         gnutls_free(cookie_key_.data);
