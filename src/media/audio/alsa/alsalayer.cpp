@@ -41,6 +41,7 @@
 
 #include <thread>
 #include <atomic>
+#include <chrono>
 
 namespace ring {
 
@@ -180,15 +181,19 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 {
     RING_DBG("Alsa: Opening %s",  dev.c_str());
 
-    static const int MAX_RETRIES = 100;
-    int err = snd_pcm_open(pcm, dev.c_str(), stream, 0);
-
-    // Retry if busy, since dmix plugin may not have released the device yet
-    for (int tries = 0; tries < MAX_RETRIES and err == -EBUSY; ++tries) {
-        const struct timespec req = {0, 100000000L};
-        nanosleep(&req, 0);
+    static const int MAX_RETRIES = 20; // times of 100ms
+    int err, tries = 0;
+    do {
         err = snd_pcm_open(pcm, dev.c_str(), stream, 0);
-    }
+        // Retry if busy, since dmix plugin may not have released the device yet
+        if (err == -EBUSY) {
+            // We're called in audioThread_ context, so if exit is requested
+            // force return now
+            if (not audioThread_->isRunning())
+                return false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    } while (err == -EBUSY and ++tries <= MAX_RETRIES);
 
     if (err < 0) {
         RING_ERR("Alsa: couldn't open device %s : %s",  dev.c_str(),
