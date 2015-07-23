@@ -168,7 +168,7 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
 AlsaLayer::~AlsaLayer()
 {
     isStarted_ = false;
-    delete audioThread_;
+    audioThread_.reset();
 
     /* Then close the audio devices */
     closeCaptureStream();
@@ -212,8 +212,8 @@ AlsaLayer::startStream()
     if (is_playback_running_ and is_capture_running_)
         return;
 
-    if (audioThread_ == NULL) {
-        audioThread_ = new AlsaThread(this);
+    if (not audioThread_) {
+        audioThread_.reset(new AlsaThread(this));
         audioThread_->start();
     } else if (!audioThread_->isRunning()) {
         audioThread_->start();
@@ -225,15 +225,14 @@ AlsaLayer::stopStream()
 {
     isStarted_ = false;
 
-    delete audioThread_;
-    audioThread_ = NULL;
+    audioThread_.reset();
 
     closeCaptureStream();
     closePlaybackStream();
 
-    playbackHandle_ = NULL;
-    captureHandle_ = NULL;
-    ringtoneHandle_ = NULL;
+    playbackHandle_ = nullptr;
+    captureHandle_ = nullptr;
+    ringtoneHandle_ = nullptr;
 
     /* Flush the ring buffers */
     flushUrgent();
@@ -395,7 +394,7 @@ bool AlsaLayer::alsa_set_params(snd_pcm_t *pcm_handle)
           (snd_pcm_stream(pcm_handle) == SND_PCM_STREAM_PLAYBACK) ? "playback" : "capture",
           audioFormat_.toString().c_str() );
 
-    snd_pcm_sw_params_t *swparams = NULL;
+    snd_pcm_sw_params_t *swparams = nullptr;
     snd_pcm_sw_params_alloca(&swparams);
 
 #define SW pcm_handle, swparams /* software parameters */

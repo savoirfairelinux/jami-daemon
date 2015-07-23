@@ -260,7 +260,7 @@ class AlsaLayer : public AudioLayer {
         bool is_playback_open_;
         bool is_capture_open_;
 
-        AlsaThread *audioThread_;
+        std::unique_ptr<AlsaThread> audioThread_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };
 
