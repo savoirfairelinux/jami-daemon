@@ -1006,7 +1006,7 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 pj_status_t
 SipsIceTransport::flushOutputBuff()
 {
-    ssize_t status;
+    ssize_t status = PJ_SUCCESS;
 
     // send delayed data first
     for (;;) {
@@ -1023,22 +1023,31 @@ SipsIceTransport::flushOutputBuff()
 
         // Too late?
         if (f.timeout != clock::time_point() && f.timeout < clock::now()) {
-            status = -PJ_ETIMEDOUT;
+            status = GNUTLS_E_TIMEDOUT;
             fatal = false;
         } else {
             status = trySend(f.tdata_op_key);
             fatal = status < 0;
+            if (fatal) {
+                if (gnutls_error_is_fatal(status))
+                    tlsThread_.stop();
+                else {
+                    // Failed but non-fatal. Retry later.
+                    std::lock_guard<std::mutex> l(outputBuffMtx_);
+                    outputBuff_.emplace_front(std::move(f));
+                }
+            }
         }
 
         f.tdata_op_key->tdata = nullptr;
 
         if (f.tdata_op_key->callback) {
             std::lock_guard<std::mutex> l(outputBuffMtx_);
-            outputAckBuff_.emplace_back(std::move(f), status); // see handleEvents()
+            outputAckBuff_.emplace_back(std::move(f), status > 0 ? status : -tls_status_from_err(status)); // see handleEvents()
         }
 
         if (fatal)
-            return status;
+            return -tls_status_from_err(status);
     }
 
     decltype(txBuff_) tx;
@@ -1051,8 +1060,9 @@ SipsIceTransport::flushOutputBuff()
         const auto& msg = *it;
         const auto nwritten = gnutls_record_send(session_, msg.data(), msg.size());
         if (nwritten <= 0) {
-            RING_ERR("gnutls_record_send: %s", gnutls_strerror(nwritten));
-            status = tls_status_from_err(nwritten);
+            status = nwritten;
+            if (gnutls_error_is_fatal(status))
+                tlsThread_.stop();
             {
                 std::lock_guard<std::mutex> l(outputBuffMtx_);
                 txBuff_.splice(txBuff_.begin(), tx, it, tx.end());
@@ -1062,7 +1072,7 @@ SipsIceTransport::flushOutputBuff()
         }
     }
     putBuff(std::move(tx));
-    return status > 0 ? PJ_SUCCESS : (pj_status_t)status;
+    return status > 0 ? PJ_SUCCESS : -tls_status_from_err(status);
 }
 
 ssize_t
@@ -1085,8 +1095,7 @@ SipsIceTransport::trySend(pjsip_tx_data_op_key *pck)
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.
              */
-            RING_ERR("gnutls_record_send: %s", gnutls_strerror(nwritten));
-            return tls_status_from_err(nwritten);
+            return nwritten;
         }
 
         /* Good, some data was encrypted and written */
@@ -1210,8 +1219,6 @@ SipsIceTransport::tls_status_from_err(int err)
         break;
     }
 
-    /* Not thread safe */
-    // tls_last_error = err;
     return status;
 }
 
