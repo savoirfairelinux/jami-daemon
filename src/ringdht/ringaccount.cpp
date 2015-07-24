@@ -507,6 +507,13 @@ std::map<std::string, std::string> RingAccount::getAccountDetails() const
     return a;
 }
 
+std::map<std::string, std::string>
+RingAccount::getVolatileAccountDetails() const
+{
+    auto a = SIPAccountBase::getVolatileAccountDetails();
+    a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+}
+
 void
 RingAccount::handleEvents()
 {
@@ -823,6 +830,18 @@ void RingAccount::doRegister_()
                     req->payload,
                     std::chrono::system_clock::to_time_t(req->received)
                 );
+                return true;
+            }
+        );
+
+        dht_.listen<dht::ImMessage>(
+            inboxKey,
+            [shared](dht::ImMessage&& v) {
+                auto& this_ = *shared.get();
+                auto from = v.from.toString();
+                auto msg = v.im_message;
+                RING_WARN("Text message received from DHT ! %s -> %s",  from.c_str(), msg.c_str());
+                emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(this_.getAccountID(), from, msg);
                 return true;
             }
         );
@@ -1151,7 +1170,6 @@ RingAccount::getTrustRequests() const
     return ret;
 }
 
-
 bool
 RingAccount::acceptTrustRequest(const std::string& from)
 {
@@ -1202,6 +1220,13 @@ RingAccount::connectivityChanged()
         }}.detach();
     } else
         dht_.connectivityChanged();
+}
+
+RingAccount::sendTextMessage(const std::string& to, const std::string& message)
+{
+    dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
+                      dht::InfoHash(to),
+                      dht::ImMessage(std::string(message)));
 }
 
 } // namespace ring
