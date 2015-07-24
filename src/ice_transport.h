@@ -60,11 +60,14 @@ using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
 struct IceTransportOptions {
-        bool upnpEnable {false};
-        IceTransportCompleteCb onInitDone {};
-        IceTransportCompleteCb onNegoDone {};
-        std::string stunServer {};
-        std::string turnServer {};
+    bool upnpEnable {false};
+    IceTransportCompleteCb onInitDone {};
+    IceTransportCompleteCb onNegoDone {};
+    std::string stunServer {};
+    std::string turnServer {};
+    std::string turnServerUserName {};  //!< credential username
+    std::string turnServerPwd {};       //!< credential password
+    std::string turnServerRealm {};     //!< non-empty for long-term credential
 };
 
 class IceTransport {

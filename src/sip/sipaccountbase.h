@@ -88,6 +88,9 @@ namespace Conf {
     const char *const STUN_SERVER_KEY = "stunServer";
     const char *const TURN_ENABLED_KEY = "turnEnabled";
     const char *const TURN_SERVER_KEY = "turnServer";
+    const char *const TURN_SERVER_UNAME_KEY = "turnServerUserName";
+    const char *const TURN_SERVER_PWD_KEY = "turnServerPassword";
+    const char *const TURN_SERVER_REALM_KEY = "turnServerRealm";
     const char *const CRED_KEY = "credential";
     const char *const AUDIO_PORT_MIN_KEY = "audioPortMin";
     const char *const AUDIO_PORT_MAX_KEY = "audioPortMax";
@@ -312,7 +315,10 @@ protected:
      * The TURN server hostname (optional), used to provide the public IP address in case the softphone
      * stay behind a NAT.
      */
-    std::string turnServer_ {};
+    std::string turnServer_;
+    std::string turnServerUserName_;
+    std::string turnServerPwd_;
+    std::string turnServerRealm_;
 
     std::string tlsCaListFile_;
     std::string tlsCertificateFile_;
