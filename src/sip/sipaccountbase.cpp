@@ -121,6 +121,9 @@ void SIPAccountBase::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::STUN_SERVER_KEY << YAML::Value << stunServer_;
     out << YAML::Key << Conf::TURN_ENABLED_KEY << YAML::Value << turnEnabled_;
     out << YAML::Key << Conf::TURN_SERVER_KEY << YAML::Value << turnServer_;
+    out << YAML::Key << Conf::TURN_SERVER_UNAME_KEY << YAML::Value << turnServerUserName_;
+    out << YAML::Key << Conf::TURN_SERVER_PWD_KEY << YAML::Value << turnServerPwd_;
+    out << YAML::Key << Conf::TURN_SERVER_REALM_KEY << YAML::Value << turnServerRealm_;
 }
 
 void SIPAccountBase::serializeTls(YAML::Emitter &out)
@@ -170,6 +173,9 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
         parseValue(node, Conf::STUN_SERVER_KEY, stunServer_);
         parseValue(node, Conf::TURN_ENABLED_KEY, turnEnabled_);
         parseValue(node, Conf::TURN_SERVER_KEY, turnServer_);
+        parseValue(node, Conf::TURN_SERVER_UNAME_KEY, turnServerUserName_);
+        parseValue(node, Conf::TURN_SERVER_PWD_KEY, turnServerPwd_);
+        parseValue(node, Conf::TURN_SERVER_REALM_KEY, turnServerRealm_);
     }
 }
 
@@ -206,11 +212,16 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
     parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
-    // ICE - STUN/TURN
-    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
+    // ICE - STUN
     parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
-    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
+    parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
+
+    // ICE - TURN
     parseBool(details, Conf::CONFIG_TURN_ENABLE, turnEnabled_);
+    parseString(details, Conf::CONFIG_TURN_SERVER, turnServer_);
+    parseString(details, Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
+    parseString(details, Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
+    parseString(details, Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
 }
 
 std::map<std::string, std::string>
@@ -234,6 +245,9 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_STUN_SERVER, stunServer_);
     a.emplace(Conf::CONFIG_TURN_ENABLE, turnEnabled_ ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_TURN_SERVER, turnServer_);
+    a.emplace(Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
+    a.emplace(Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
+    a.emplace(Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
 
     a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE,        tlsCaListFile_);
     a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,    tlsCertificateFile_);
@@ -323,8 +337,12 @@ SIPAccountBase::getIceOptions() const noexcept
     auto opts = Account::getIceOptions();
     if (stunEnabled_)
         opts.stunServer = stunServer_;
-    if (turnEnabled_)
+    if (turnEnabled_) {
         opts.turnServer = turnServer_;
+        opts.turnServerUserName = turnServerUserName_;
+        opts.turnServerPwd = turnServerPwd_;
+        opts.turnServerRealm = turnServerRealm_;
+    }
     return opts;
 }
 
