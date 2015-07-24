@@ -826,6 +826,18 @@ void RingAccount::doRegister_()
                 return true;
             }
         );
+
+        dht_.listen<dht::ImMessage>(
+            inboxKey,
+            [shared](dht::ImMessage&& v) {
+                auto& this_ = *shared.get();
+                auto from = v.from.toString();
+                auto msg = v.im_message;
+                RING_WARN("Text message received from DHT ! %s -> %s",  from.c_str(), msg.c_str());
+                emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(this_.getAccountID(), from, msg);
+                return true;
+            }
+        );
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
@@ -1161,7 +1173,6 @@ RingAccount::getTrustRequests() const
     return ret;
 }
 
-
 bool
 RingAccount::acceptTrustRequest(const std::string& from)
 {
@@ -1196,6 +1207,14 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS, payload));
+}
+
+void
+RingAccount::sendTextMessage(const std::string& to, const std::string& message)
+{
+    dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
+                      dht::InfoHash(to),
+                      dht::ImMessage(std::string(message)));
 }
 
 } // namespace ring
