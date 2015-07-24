@@ -119,6 +119,12 @@ class RingAccount : public SIPAccountBase {
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
         /**
+         * Retrieve volatile details such as recent registration errors
+         * @return std::map< std::string, std::string > The account volatile details
+         */
+        virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+
+        /**
          * Actually useless, since config loading is done in init()
          */
         void loadConfig() {}
@@ -260,6 +266,7 @@ class RingAccount : public SIPAccountBase {
         bool discardTrustRequest(const std::string& from);
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
+        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */);
 
         virtual void connectivityChanged();
 
