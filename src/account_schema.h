@@ -82,6 +82,9 @@ static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
 static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
 static const char *const CONFIG_TURN_SERVER                     = "TURN.server";
 static const char *const CONFIG_TURN_ENABLE                     = "TURN.enable";
+static const char *const CONFIG_TURN_SERVER_UNAME               = "TURN.username";
+static const char *const CONFIG_TURN_SERVER_PWD                 = "TURN.password";
+static const char *const CONFIG_TURN_SERVER_REALM               = "TURN.realm";
 
 // SRTP specific parameters
 static const char *const CONFIG_SRTP_ENABLE                     = "SRTP.enable";
