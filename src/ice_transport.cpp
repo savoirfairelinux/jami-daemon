@@ -150,8 +150,14 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
             config_.turn.port = PJ_STUN_PORT;
         }
 
-        // No authorization yet
-        //config_.turn.auth_cred.type = PJ_STUN_AUTH_STATIC;
+        // Authorization (only static plain password supported yet)
+        if (not options.turnServerPwd.empty()) {
+            config_.turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+            config_.turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+            pj_cstr(&config_.turn.auth_cred.data.static_cred.realm, options.turnServerRealm.c_str());
+            pj_cstr(&config_.turn.auth_cred.data.static_cred.username, options.turnServerUserName.c_str());
+            pj_cstr(&config_.turn.auth_cred.data.static_cred.data, options.turnServerPwd.c_str());
+        }
 
         // Only UDP yet
         config_.turn.conn_type = PJ_TURN_TP_UDP;
