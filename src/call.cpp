@@ -93,33 +93,47 @@ Call::getState() const
 bool
 Call::validStateTransition(CallState newState)
 {
+    // Notice to developper:
+    // - list only permit transition (return true)
+    // - let non permit ones as default case (return false)
     switch (callState_) {
         case CallState::INACTIVE:
             switch (newState) {
-                case CallState::INACTIVE:
-                case CallState::HOLD:
-                    return false;
-                default:
+                case CallState::ACTIVE:
+                case CallState::BUSY:
+                case CallState::MERROR:
+                    return true;
+                default: // INACTIVE, HOLD
                     return true;
             }
 
         case CallState::ACTIVE:
             switch (newState) {
                 case CallState::HOLD:
+                case CallState::MERROR:
                     return true;
-                default:
+                default: // INACTIVE, ACTIVE, BUSY
                     return false;
             }
 
         case CallState::HOLD:
             switch (newState) {
                 case CallState::ACTIVE:
+                case CallState::MERROR:
                     return true;
-                default:
+                default: // INACTIVE, HOLD, BUSY, MERROR
                     return false;
             }
 
-        default:
+        case CallState::BUSY:
+            switch (newState) {
+                case CallState::MERROR:
+                    return true;
+                default: // INACTIVE, ACTIVE, HOLD, BUSY
+                    return false;
+            }
+
+        default: // MERROR
             return false;
     }
 }
