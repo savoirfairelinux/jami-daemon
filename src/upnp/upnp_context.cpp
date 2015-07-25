@@ -639,6 +639,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
             /* delete all RING mappings first */
             removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
             validIGDs_.emplace(UDN, std::move(new_igd));
+            validIGDCondVar_.notify_all();
         }
     }
 }
