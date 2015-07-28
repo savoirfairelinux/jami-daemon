@@ -155,11 +155,6 @@ class SIPAccount : public SIPAccountBase {
         std::map<std::string, std::string> getTlsSettings() const;
 
         /**
-         * Manage the TLS settings from a client application
-         */
-        void setTlsSettings(const std::map<std::string, std::string>& details);
-
-        /**
          * Actually useless, since config loading is done in init()
          */
         void loadConfig();

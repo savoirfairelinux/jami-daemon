@@ -1700,50 +1700,6 @@ SIPAccount::getTlsSettings() const
     };
 }
 
-static void
-set_opt(const std::map<std::string, std::string> &details, const char *key, std::string &val)
-{
-    std::map<std::string, std::string>::const_iterator it = details.find(key);
-
-    if (it != details.end())
-        val = it->second;
-}
-
-static void
-set_opt(const std::map<std::string, std::string> &details, const char *key, bool &val)
-{
-    std::map<std::string, std::string>::const_iterator it = details.find(key);
-
-    if (it != details.end())
-        val = it->second == TRUE_STR;
-}
-
-static void
-set_opt(const std::map<std::string, std::string> &details, const char *key, pj_uint16_t &val)
-{
-    std::map<std::string, std::string>::const_iterator it = details.find(key);
-
-    if (it != details.end())
-        val = atoi(it->second.c_str());
-}
-
-void SIPAccount::setTlsSettings(const std::map<std::string, std::string>& details)
-{
-    assert(isIP2IP());
-    set_opt(details, Conf::CONFIG_TLS_LISTENER_PORT, tlsListenerPort_);
-    set_opt(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
-    set_opt(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    set_opt(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    set_opt(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    set_opt(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
-    set_opt(details, Conf::CONFIG_TLS_METHOD, tlsMethod_);
-    set_opt(details, Conf::CONFIG_TLS_CIPHERS, tlsCiphers_);
-    set_opt(details, Conf::CONFIG_TLS_SERVER_NAME, tlsServerName_);
-    set_opt(details, Conf::CONFIG_TLS_VERIFY_CLIENT, tlsVerifyClient_);
-    set_opt(details, Conf::CONFIG_TLS_REQUIRE_CLIENT_CERTIFICATE, tlsRequireClientCertificate_);
-    set_opt(details, Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC, tlsNegotiationTimeoutSec_);
-}
-
 bool SIPAccount::isIP2IP() const
 {
     return accountID_ == IP2IP_PROFILE;
