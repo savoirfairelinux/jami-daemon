@@ -48,6 +48,7 @@
 #include <upnp/upnptools.h>
 #endif
 
+#include "manager.h"
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
@@ -640,6 +641,10 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
             removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
             validIGDs_.emplace(UDN, std::move(new_igd));
             validIGDCondVar_.notify_all();
+            Manager::instance().runOnMainThread([]{
+                for (auto& acc : Manager::instance().getAllAccounts())
+                    acc->connectivityChanged();
+            });
         }
     }
 }
