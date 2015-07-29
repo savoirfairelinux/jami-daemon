@@ -53,6 +53,11 @@
 #include "upnp_igd.h"
 #include "intrin.h"
 
+#if HAVE_DHT
+#include <opendht/rng.h>
+using random_device = dht::crypto::random_device;
+#endif
+
 namespace ring { namespace upnp {
 
 /**
@@ -285,11 +290,7 @@ static uint16_t
 generateRandomPort()
 {
     /* obtain a random number from hardware */
-#ifndef _WIN32
-    static std::random_device rd;
-#else
-    static std::default_random_engine rd(std::chrono::system_clock::now().time_since_epoch().count());
-#endif
+    static random_device rd;
     /* seed the generator */
     static std::mt19937 gen(rd());
     /* define the range */
