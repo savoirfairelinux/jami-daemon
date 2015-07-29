@@ -79,6 +79,14 @@ Controller::addAnyMapping(uint16_t port_desired,
     if (not upnpContext_)
         return false;
 
+    auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
+    Mapping target(port_desired, port_local, type);
+    for (const auto& m : instanceMappings)
+        if (m.second == target) {
+            RING_DBG("UPnP maping already existed: %s", m.second.toString().c_str());
+            return true;
+        }
+
     Mapping mapping = upnpContext_->addAnyMapping(port_desired, port_local, type,
                                                   use_same_port, unique);
     if (mapping) {
@@ -87,7 +95,6 @@ Controller::addAnyMapping(uint16_t port_desired,
             *port_used = usedPort;
 
         /* add to map */
-        auto& instanceMappings = type == PortType::UDP ? udpMappings_ : tcpMappings_;
         instanceMappings.emplace(usedPort, std::move(mapping));
         return true;
     }
