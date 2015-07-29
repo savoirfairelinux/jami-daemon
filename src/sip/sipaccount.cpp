@@ -2135,4 +2135,10 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
     }
 }
 
+void
+SIPAccount::connectivityChanged()
+{
+    doRegister();
+}
+
 } // namespace ring

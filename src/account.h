@@ -275,6 +275,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         virtual const IceTransportOptions getIceOptions() const noexcept;
 
+        virtual void connectivityChanged() {}
+
     private:
         NON_COPYABLE(Account);
 

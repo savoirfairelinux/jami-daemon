@@ -1188,4 +1188,22 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
                       dht::TrustRequest(DHT_TYPE_NS, payload));
 }
 
+void
+RingAccount::connectivityChanged()
+{
+    if ( upnpEnabled_ ) {
+        std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+        RING_DBG("UPnP: waiting for IGD to register RING account");
+        std::thread{ [w] {
+            auto shared = w.lock();
+            if (not shared)
+                return;
+            if ( not shared->mapPortUPnP())
+                RING_WARN("UPnP: Could not successfully map DHT port with UPnP, continuing with account registration anyways.");
+            shared->dht_.connectivityChanged();
+        }}.detach();
+    } else
+        dht_.connectivityChanged();
+}
+
 } // namespace ring

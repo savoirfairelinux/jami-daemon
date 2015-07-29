@@ -510,6 +510,8 @@ class SIPAccount : public SIPAccountBase {
 
         virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */);
 
+        virtual void connectivityChanged();
+
     private:
         void doRegister1_();
         void doRegister2_();
