@@ -1244,15 +1244,6 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
     getResolveCallbackMap().process((uintptr_t)token, status, addr);
 }
 
-template<typename Callback>
-static void
-runOnMainThread(Callback&& cb){
-    Manager::instance().addTask([=](){
-        cb();
-        return false;
-    });
-}
-
 void
 SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
@@ -1289,7 +1280,7 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
                     RING_WARN("Can't resolve \"%s\" using pjsip_endpt_resolve, trying getaddrinfo.", name.c_str());
                     std::thread([=](){
                         auto ips = ip_utils::getAddrList(name.c_str());
-                        runOnMainThread(std::bind(cb, ips.empty() ? std::vector<IpAddr>{} : std::move(ips)));
+                        Manager::instance().runOnMainThread(std::bind(cb, ips.empty() ? std::vector<IpAddr>{} : std::move(ips)));
                     }).detach();
                 } else {
                     std::vector<IpAddr> ips;

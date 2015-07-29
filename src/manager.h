@@ -960,6 +960,14 @@ class Manager {
 
         void addTask(const std::function<bool()>&& task);
 
+        template<typename Callback>
+        void runOnMainThread(Callback&& cb) {
+            addTask([=]() mutable {
+                cb();
+                return false;
+            });
+        }
+
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="");
 
