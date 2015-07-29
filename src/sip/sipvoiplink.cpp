@@ -1244,15 +1244,6 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
     getResolveCallbackMap().process((uintptr_t)token, status, addr);
 }
 
-template<typename Callback>
-static void
-runOnMainThread(Callback&& cb){
-    Manager::instance().addTask([=](){
-        cb();
-        return false;
-    });
-}
-
 void
 SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
