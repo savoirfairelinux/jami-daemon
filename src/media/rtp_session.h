@@ -58,8 +58,8 @@ public:
         receive_ = receive;
     }
 
-    bool isSending() { return send_.enabled; }
-    bool isReceiving() { return receive_.enabled; }
+    bool isSending() const noexcept { return send_.enabled; }
+    bool isReceiving() const noexcept { return receive_.enabled; }
 
 protected:
     std::recursive_mutex mutex_;

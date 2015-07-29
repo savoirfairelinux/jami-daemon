@@ -803,7 +803,9 @@ SIPCall::startIce()
 bool
 SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
 {
-    return videortp_.useCodec(codec);
+    if (videortp_.isSending())
+        return videortp_.useCodec(codec);
+    return false;
 }
 
 void
@@ -839,11 +841,11 @@ SIPCall::startAllMedia()
             continue;
 
         if (!local.codec) {
-            RING_ERR("No codec defined in local media slot");
+            RING_WARN("SDP: No codec defined in local media slot");
             continue;
         }
         if (!remote.codec) {
-            RING_ERR("No codec defined in remote media slot");
+            RING_WARN("SDP: No codec defined in remote media slot");
             continue;
         }
 
