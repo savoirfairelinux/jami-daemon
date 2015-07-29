@@ -47,6 +47,11 @@
 #include "logger.h"
 #include "manager.h"
 
+#if HAVE_DHT
+#include <opendht/rng.h>
+using random_device = dht::crypto::random_device;
+#endif
+
 #include "client/ring_signal.h"
 #include "account_schema.h"
 #include "string_utils.h"
@@ -111,15 +116,8 @@ Account::Account(const std::string &accountID)
     , mailBox_()
     , upnp_(new upnp::Controller())
 {
-#ifndef _WIN32
-    std::random_device rdev;
+    random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
-#else
-    int seed_data[std::mt19937::state_size];
-    std::default_random_engine dre(std::chrono::system_clock::now().time_since_epoch().count());
-    std::generate_n(seed_data, std::mt19937::state_size, std::ref(dre));
-    std::seed_seq seed(std::begin(seed_data), std::end(seed_data));
-#endif
     rand_.seed(seed);
 
     // Initialize the codec order, used when creating a new account

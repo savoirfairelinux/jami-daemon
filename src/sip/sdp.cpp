@@ -52,6 +52,11 @@
 #include "system_codec_container.h"
 #include "intrin.h" // for UNUSED
 
+#if HAVE_DHT
+#include <opendht/rng.h>
+using random_device = dht::crypto::random_device;
+#endif
+
 #include <algorithm>
 #include <cassert>
 
@@ -132,11 +137,7 @@ static void
 randomFill(std::vector<uint8_t>& dest)
 {
     std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
-#ifndef _WIN32
-    std::random_device rdev;
-#else
-    std::default_random_engine rdev(std::chrono::system_clock::now().time_since_epoch().count());
-#endif
+    random_device rdev;
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }
 
