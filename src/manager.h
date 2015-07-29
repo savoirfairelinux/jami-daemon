@@ -50,6 +50,11 @@
 #include <atomic>
 #include <functional>
 
+#if HAVE_DHT
+#include <opendht/rng.h>
+using random_device = dht::crypto::random_device;
+#endif
+
 #include "conference.h"
 
 #include "account_factory.h"
