@@ -1009,4 +1009,13 @@ class Manager {
         std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 };
 
+// Helper to install a callback to be called once by the main event loop
+template<typename Callback>
+static void runOnMainThread(Callback&& cb) {
+    Manager::instance().addTask([=]() mutable {
+        cb();
+        return false;
+    });
+}
+
 } // namespace ring
