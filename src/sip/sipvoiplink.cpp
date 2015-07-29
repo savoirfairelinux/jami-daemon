@@ -96,11 +96,6 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
 
-/**
- * Helper function to process refer function on call transfer
- */
-static void onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata);
-
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
 {
@@ -1007,18 +1002,16 @@ outgoing_request_forked_cb(pjsip_inv_session * /*inv*/, pjsip_event * /*e*/)
 {}
 
 static bool
-handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_event *event)
+handle_media_control(SIPCall& call, pjsip_msg_body* body)
 {
     /*
      * Incoming INFO request for media control.
      */
     const pj_str_t STR_APPLICATION = CONST_PJ_STR("application");
     const pj_str_t STR_MEDIA_CONTROL_XML = CONST_PJ_STR("media_control+xml");
-    pjsip_rx_data *rdata = event->body.tsx_state.src.rdata;
-    pjsip_msg_body *body = rdata->msg_info.msg->body;
 
     if (body and body->len and pj_stricmp(&body->content_type.type, &STR_APPLICATION) == 0 and
-            pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
+        pj_stricmp(&body->content_type.subtype, &STR_MEDIA_CONTROL_XML) == 0) {
         pj_str_t control_st;
 
         /* Apply and answer the INFO request */
@@ -1028,175 +1021,134 @@ handle_media_control(pjsip_inv_session * inv, pjsip_transaction *tsx, pjsip_even
         if (pj_strstr(&control_st, &PICT_FAST_UPDATE)) {
 #ifdef RING_VIDEO
             RING_DBG("handling picture fast update request");
-            auto call = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-            if (call)
-                call->getVideoRtp().forceKeyFrame();
-
-            pjsip_tx_data *tdata;
-            pj_status_t status = pjsip_endpt_create_response(tsx->endpt, rdata,
-                                 PJSIP_SC_OK, NULL, &tdata);
-
-            if (status == PJ_SUCCESS) {
-                status = pjsip_tsx_send_msg(tsx, tdata);
-                return true;
-            }
-
-#else
-            (void) inv;
-            (void) tsx;
+            call.getVideoRtp().forceKeyFrame();
 #endif
+            return true;
         }
     }
 
     return false;
 }
 
+/**
+ * Helper function to process refer function on call transfer
+ */
 static void
-sendOK(pjsip_dialog *dlg, pjsip_rx_data *r_data, pjsip_transaction *tsx)
+transferCall(SIPCall& call, const std::string& refer_to)
 {
-    pjsip_tx_data* t_data;
+    try {
+        Manager::instance().newOutgoingCall(refer_to, call.getAccountId());
+        Manager::instance().hangupCall(call.getCallId());
+    } catch (const VoipLinkException &e) {
+        RING_ERR("SIP transfer failed: %s", e.what());
+    }
+}
 
-    if (pjsip_dlg_create_response(dlg, r_data, PJSIP_SC_OK, NULL, &t_data) == PJ_SUCCESS)
-        pjsip_dlg_send_response(dlg, tsx, t_data);
+static void
+replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
+{
+    const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
+    if (ret != PJ_SUCCESS)
+        RING_WARN("SIP: failed to reply %u to request");
 }
 
 static void
 transaction_state_changed_cb(pjsip_inv_session * inv, pjsip_transaction *tsx,
                              pjsip_event *event)
 {
-    if (!tsx or !event or !inv or tsx->role != PJSIP_ROLE_UAS or
-            tsx->state != PJSIP_TSX_STATE_TRYING)
-        return;
+    //RING_DBG("inv=%p, tsx=%p, ev=%p", inv, tsx, event);
+    // Process here only incoming request message
 
-    // Handle the refer method
-    if (pjsip_method_cmp(&tsx->method, &pjsip_refer_method) == 0) {
-        onCallTransfered(inv, event->body.tsx_state.src.rdata);
+    if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
+        RING_DBG("tsx_role=%d, tsx_state=%d, ev_type=%d, tsx_state_type=%d",
+                 tsx->role, tsx->state, event->type, event->body.tsx_state.type);
         return;
     }
 
-    if (tsx->role == PJSIP_ROLE_UAS and tsx->state == PJSIP_TSX_STATE_TRYING) {
-        if (handle_media_control(inv, tsx, event))
-            return;
+    const auto rdata = event->body.tsx_state.src.rdata;
+    if (!rdata) {
+        RING_ERR("SIP RX request without data");
+        return;
     }
+
+    const auto msg = rdata->msg_info.msg;
+    if (msg->type != PJSIP_REQUEST_MSG) {
+        RING_ERR("SIP RX request without msg");
+        return;
+    }
+
+    const std::string methodName {msg->line.req.method.name.ptr, (unsigned)msg->line.req.method.name.slen};
+    RING_DBG("SIP: rx method %d (%#s)", msg->line.req.method.id, methodName.c_str());
 
     auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr)
+    if (!call_ptr) {
+        RING_ERR("SIP RX request without call");
         return;
+    }
     auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
-    if (event->body.rx_msg.rdata) {
-        pjsip_rx_data *r_data = event->body.rx_msg.rdata;
+    // Continue by method name now
 
-        if (r_data->msg_info.msg->line.req.method.id == PJSIP_OTHER_METHOD) {
-            std::string request(pjsip_rx_data_get_info(r_data));
-            RING_DBG("%s", request.c_str());
-
-            if (request.find("NOTIFY") == std::string::npos and
-                    request.find("INFO") != std::string::npos) {
-                sendOK(inv->dlg, r_data, tsx);
+    if (methodName == "REFER") {
+        static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
+        if (auto refer_to = static_cast<pjsip_generic_string_hdr*>(pjsip_msg_find_hdr_by_name(msg, &str_refer_to, nullptr))) {
+            // RFC 3515, 2.4.2: reply bad request if no or too many refer-to header.
+            if (!pjsip_msg_find_hdr_by_name(msg, &str_refer_to, refer_to)) {
+                replyToRequest(inv, rdata, PJSIP_SC_TRYING);
+                transferCall(*call, std::string(refer_to->hvalue.ptr, refer_to->hvalue.slen));
                 return;
             }
+        }
+        replyToRequest(inv, rdata, PJSIP_SC_BAD_REQUEST);
 
-            pjsip_msg_body *body(r_data->msg_info.msg->body);
+    } else if (methodName == "INFO") {
+        if (handle_media_control(*call, msg->body))
+            replyToRequest(inv, rdata, PJSIP_SC_OK);
 
-            if (body and body->len > 0) {
-                const std::string msg(static_cast<char *>(body->data), body->len);
-                RING_DBG("%s", msg.c_str());
+    } else if (methodName == "NOTIFY") {
+        replyToRequest(inv, rdata, PJSIP_SC_OK);
+    }
 
-                if (msg.find("Not found") != std::string::npos) {
-                    RING_ERR("Received 404 Not found");
-                    sendOK(inv->dlg, r_data, tsx);
+#if HAVE_INSTANT_MESSAGING
+    else if (methodName == "MESSAGE") {
+        // Get text from message body
+        if (msg->body) {
+            const auto formattedMsgPtr = static_cast<const char*>(msg->body->data);
+            if (formattedMsgPtr) {
+                const std::string formattedMessage {formattedMsgPtr};
+
+                try {
+                    // retreive the recipient-list of this message
+                    const auto& urilist = InstantMessaging::findTextUriList(formattedMessage);
+                    auto list = InstantMessaging::parseXmlUriList(urilist);
+
+                    // If no item present in the list, peer is considered as the sender
+                    std::string from;
+                    if (list.empty()) {
+                        from = call->getPeerNumber();
+                    } else {
+                        from = list.front()[InstantMessaging::IM_XML_URI];
+                        if (from == "Me")
+                            from = call->getPeerNumber();
+                    }
+
+                    // strip < and > characters in case of an IP address
+                    if (from[0] == '<' and from[from.size() - 1] == '>')
+                        from = from.substr(1, from.size() - 2);
+
+                    const auto& messages = InstantMessaging::parsePayloads(formattedMessage);
+                    Manager::instance().incomingMessage(call->getCallId(), from, messages);
+                    replyToRequest(inv, rdata, PJSIP_SC_OK);
                     return;
-                } else if (msg.find("Ringing") != std::string::npos and call) {
-                    if (call)
-                        call->onPeerRinging();
-                    else
-                        RING_WARN("Ringing state on non existing call");
-                    sendOK(inv->dlg, r_data, tsx);
-                    return;
-                } else if (msg.find("Ok") != std::string::npos) {
-                    sendOK(inv->dlg, r_data, tsx);
+                } catch (const InstantMessaging::InstantMessageException& except) {
+                    RING_ERR("Exception during SIP message parsing: %s", except.what());
                     return;
                 }
             }
         }
-    }
-
-#if HAVE_INSTANT_MESSAGING
-    if (!call)
-        return;
-
-    // Incoming TEXT message
-    pjsip_rx_data *r_data = event->body.tsx_state.src.rdata;
-
-    // Get the message inside the transaction
-    if (!r_data or !r_data->msg_info.msg->body)
-        return;
-
-    const char *formattedMsgPtr = static_cast<const char*>(r_data->msg_info.msg->body->data);
-
-    if (!formattedMsgPtr)
-        return;
-
-    std::string formattedMessage(formattedMsgPtr, strlen(formattedMsgPtr));
-
-    try {
-        // retreive the recipient-list of this message
-        std::string urilist = InstantMessaging::findTextUriList(formattedMessage);
-        auto list = InstantMessaging::parseXmlUriList(urilist);
-
-        // If no item present in the list, peer is considered as the sender
-        std::string from;
-
-        if (list.empty()) {
-            from = call->getPeerNumber();
-        } else {
-            from = list.front()[InstantMessaging::IM_XML_URI];
-
-            if (from == "Me")
-                from = call->getPeerNumber();
-        }
-
-        // strip < and > characters in case of an IP address
-        if (from[0] == '<' && from[from.size() - 1] == '>')
-            from = from.substr(1, from.size() - 2);
-
-        Manager::instance().incomingMessage(call->getCallId(), from, InstantMessaging::parsePayloads(formattedMessage));
-
-        // Respond with a 200/OK
-        sendOK(inv->dlg, r_data, tsx);
-
-    } catch (const InstantMessaging::InstantMessageException &except) {
-        RING_ERR("%s", except.what());
-    }
-#endif
-}
-
-static void
-onCallTransfered(pjsip_inv_session *inv, pjsip_rx_data *rdata)
-{
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr)
-        return;
-    auto currentCall = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
-
-    static const pj_str_t str_refer_to = CONST_PJ_STR("Refer-To");
-    pjsip_generic_string_hdr *refer_to = static_cast<pjsip_generic_string_hdr*>
-                                         (pjsip_msg_find_hdr_by_name(rdata->msg_info.msg, &str_refer_to, NULL));
-
-    if (!refer_to) {
-        pjsip_dlg_respond(inv->dlg, rdata, 400, NULL, NULL, NULL);
         return;
     }
-
-    try {
-        Manager::instance().newOutgoingCall(std::string(refer_to->hvalue.ptr,
-                                                        refer_to->hvalue.slen),
-                                            currentCall->getAccountId());
-        Manager::instance().hangupCall(currentCall->getCallId());
-    } catch (const VoipLinkException &e) {
-        RING_ERR("%s", e.what());
-    }
+#endif // HAVE_INSTANT_MESSAGING
 }
 
 int SIPVoIPLink::getModId()
