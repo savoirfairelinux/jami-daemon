@@ -1009,4 +1009,12 @@ class Manager {
         std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 };
 
+template<typename Callback>
+static void runOnMainThread(Callback&& cb) {
+    Manager::instance().addTask([=]() mutable {
+        cb();
+        return false;
+    });
+}
+
 } // namespace ring
