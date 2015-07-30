@@ -33,6 +33,7 @@
 
 #include <string>
 #include <map>
+#include <functional>
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -126,6 +127,8 @@ public:
 /* subclasses to make it easier to differentiate and cast maps of port mappings */
 class PortMapLocal : public std::map<uint16_t, Mapping> {};
 class PortMapGlobal : public std::map<uint16_t, GlobalMapping> {};
+
+typedef std::function<void()> IGDFoundCallback;
 
 /* defines a UPnP capable Internet Gateway Device (a router) */
 class IGD {

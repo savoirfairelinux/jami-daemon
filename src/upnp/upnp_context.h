@@ -63,10 +63,8 @@ class IpAddr;
 namespace ring { namespace upnp {
 
 class UPnPContext {
-
 public:
     constexpr static unsigned SEARCH_TIMEOUT {30};
-
 
 #if HAVE_LIBUPNP
     UPnPContext();
@@ -78,6 +76,9 @@ public:
      * If timeout is not given or 0, the function pool (non-blocking).
      */
     bool hasValidIGD(std::chrono::seconds timeout = {});
+
+    size_t addIGDListener(IGDFoundCallback&& cb = {});
+    void removeIGDListener(size_t token);
 
     /**
      * tries to add mapping from and to the port_desired
@@ -176,6 +177,17 @@ private:
     std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
     mutable std::mutex validIGDMutex_;
     std::condition_variable validIGDCondVar_;
+
+    /**
+     * Map of valid IGD listeners.
+     */
+    std::map<size_t, IGDFoundCallback> igdListeners_ {};
+
+    /**
+     * Last provided token for valid IGD listeners.
+     * 0 is the invalid token.
+     */
+    size_t listenerToken_ {0};
 
     /**
      * chooses the IGD to use (currently selects the first one in the map)

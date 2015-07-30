@@ -610,15 +610,19 @@ bool RingAccount::mapPortUPnP()
          */
         uint16_t port_used;
         std::lock_guard<std::mutex> lock(upnp_mtx);
-        if (upnp_->addAnyMapping(dhtPort_, ring::upnp::PortType::UDP, false, &port_used)) {
+        bool added = upnp_->addAnyMapping(dhtPort_, ring::upnp::PortType::UDP, false, &port_used);
+        if (added) {
             if (port_used != dhtPort_)
                 RING_DBG("UPnP could not map port %u for DHT, using %u instead", dhtPort_, port_used);
             dhtPortUsed_ = port_used;
-            return true;
-        } else {
-            /* failed to map any port */
-            return false;
         }
+        std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+        upnp_->setIGDListener([w] {
+            RING_WARN("IGD Listener callback !!");
+            if (auto shared = w.lock())
+                shared->connectivityChanged();
+        });
+        return added;
     } else {
         /* not using UPnP, so return true */
         return true;
@@ -882,6 +886,7 @@ void RingAccount::doUnregister(std::function<void(bool)> released_cb)
     }
 
     /* RING_DBG("UPnP: removing port mapping for DHT account."); */
+    upnp_->setIGDListener();
     upnp_->removeMappings();
 
     Manager::instance().unregisterEventHandler((uintptr_t)this);
@@ -1186,6 +1191,29 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS, payload));
+}
+
+void
+RingAccount::connectivityChanged()
+{
+    if (not dht_.isRunning())
+        return;
+    if ( upnpEnabled_ ) {
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::thread{[shared] {
+            auto& this_ = *shared.get();
+            auto oldPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+            if (not this_.mapPortUPnP())
+                RING_WARN("UPnP: Could not map DHT port");
+            auto newPort = static_cast<in_port_t>(this_.dhtPortUsed_);
+            if (oldPort != newPort) {
+                RING_WARN("DHT port changed: restarting network");
+                this_.doRegister_();
+            } else
+                this_.dht_.connectivityChanged();
+        }}.detach();
+    } else
+        dht_.connectivityChanged();
 }
 
 } // namespace ring
