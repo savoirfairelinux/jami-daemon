@@ -695,6 +695,9 @@ SIPAccount::getVolatileAccountDetails() const
 
 bool SIPAccount::mapPortUPnP()
 {
+    // return true if not using UPnP
+    bool added = true;
+
     if (getUPnPActive()) {
         /* create port mapping from published port to local port to the local IP
          * note that since different accounts can use the same port,
@@ -704,19 +707,21 @@ bool SIPAccount::mapPortUPnP()
          * a different port, if succesfull, then we have to use that port for SIP
          */
         uint16_t port_used;
-        if (upnp_->addAnyMapping(publishedPort_, localPort_, ring::upnp::PortType::UDP, false, false, &port_used)) {
+        bool added = upnp_->addAnyMapping(publishedPort_, localPort_, ring::upnp::PortType::UDP, false, false, &port_used);
+        if (added) {
             if (port_used != publishedPort_)
                 RING_DBG("UPnP could not map published port %u for SIP, using %u instead", publishedPort_, port_used);
             publishedPortUsed_ = port_used;
-            return true;
-        } else {
-            /* failed to map any port */
-            return false;
         }
-    } else {
-        /* not using UPnP, so return true */
-        return true;
     }
+
+    std::weak_ptr<SIPAccount> w = std::static_pointer_cast<SIPAccount>(shared_from_this());
+    upnp_->setIGDListener([w] {
+        if (auto shared = w.lock())
+            shared->doRegister();
+    });
+
+    return added;
 }
 
 void SIPAccount::doRegister()
@@ -895,6 +900,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
         released_cb(true);
 
     /* RING_DBG("UPnP: removing port mapping for SIP account."); */
+    upnp_->setIGDListener();
     upnp_->removeMappings();
 }
 
