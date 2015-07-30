@@ -261,6 +261,8 @@ class RingAccount : public SIPAccountBase {
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
 
+        virtual void connectivityChanged();
+
     private:
 
         void doRegister_();

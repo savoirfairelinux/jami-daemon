@@ -217,6 +217,24 @@ UPnPContext::hasValidIGD(std::chrono::seconds timeout)
     return not validIGDs_.empty();
 }
 
+size_t
+UPnPContext::addIGDListener(IGDFoundCallback&& cb)
+{
+    std::unique_lock<std::mutex> lock(validIGDMutex_);
+    auto token = ++listenerToken_;
+    igdListeners_.emplace(token, cb);
+    return token;
+}
+
+void
+UPnPContext::removeIGDListener(size_t token)
+{
+    std::unique_lock<std::mutex> lock(validIGDMutex_);
+    auto it = igdListeners_.find(token);
+    if (it != igdListeners_.end())
+        igdListeners_.erase(it);
+}
+
 /**
  * chooses the IGD to use,
  * assumes you already have a lock on validIGDMutex_
@@ -640,6 +658,8 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
             removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
             validIGDs_.emplace(UDN, std::move(new_igd));
             validIGDCondVar_.notify_all();
+            for (auto& l : igdListeners_)
+                l.second();
         }
     }
 }
