@@ -51,8 +51,6 @@ class UPnPContext;
 
 class Controller {
 public:
-    typedef std::function<void(bool)> IGDFoundCallback;
-
     /* constructor */
     Controller();
     /* destructor */
@@ -64,6 +62,12 @@ public:
      * If timeout is not given or 0, the function pool (non-blocking).
      */
     bool hasValidIGD(std::chrono::seconds timeout = {});
+
+    /**
+     * Set or clear a listener for valid IGDs.
+     * For simplicity there is one listener per controller.
+     */
+    void setIGDListener(IGDFoundCallback&& cb = {});
 
     /**
      * tries to add mapping from and to the port_desired
@@ -119,6 +123,11 @@ private:
      */
     PortMapLocal udpMappings_;
     PortMapLocal tcpMappings_;
+
+    /**
+     * IGD listener token
+     */
+    size_t listToken_ {0};
 
     /**
      * Try to remove all mappings of the given type
