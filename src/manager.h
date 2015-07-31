@@ -401,7 +401,7 @@ class Manager {
          * @param message       A list of pair of mime types and payloads
         * @param from           The sender of this message (could be another participant of a conference)
          */
-        bool sendCallTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from);
+        bool sendCallTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
 #endif // HAVE_INSTANT_MESSAGING
 
         /**
