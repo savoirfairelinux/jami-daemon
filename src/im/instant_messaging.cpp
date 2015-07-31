@@ -32,12 +32,14 @@
 
 #include "instant_messaging.h"
 #include "logger.h"
+#include "sip/sip_utils.h"
+
 #include <expat.h>
 
 namespace ring {
 
 static void XMLCALL
-startElementCallback(void *userData, const char *name, const char **atts)
+startElementCallback(void* userData, const char* name, const char** atts)
 {
     if (strcmp(name, "entry"))
         return;
@@ -51,10 +53,12 @@ startElementCallback(void *userData, const char *name, const char **atts)
 }
 
 static void XMLCALL
-endElementCallback(void * /*userData*/, const char * /*name*/)
+endElementCallback(void * /*userData*/, const char* /*name*/)
 {}
 
-bool InstantMessaging::saveMessage(const std::string &message, const std::string &author, const std::string &id, int mode)
+bool
+InstantMessaging::saveMessage(const std::string& message, const std::string& author,
+                              const std::string& id, int mode)
 {
     std::ofstream File;
     std::string filename = "im_" + id;
@@ -69,82 +73,69 @@ bool InstantMessaging::saveMessage(const std::string &message, const std::string
     return true;
 }
 
-void InstantMessaging::sip_send(pjsip_inv_session *session, const std::string& id, const std::string& text)
+void
+InstantMessaging::sendSipMessage(pjsip_inv_session* session, const std::string& id,
+                                 const std::vector<std::string>& chunks)
 {
-    pjsip_tx_data *tdata;
+    for (const auto& text: chunks) {
+        const pjsip_method msg_method = { PJSIP_OTHER_METHOD, pj_str((char*)"MESSAGE") };
+        pjsip_tx_data* tdata;
 
-    pjsip_dialog* dialog = session->dlg;
+        auto dialog = session->dlg;
+        pjsip_dlg_inc_lock(dialog);
 
-    pjsip_dlg_inc_lock(dialog);
+        if (pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata) != PJ_SUCCESS) {
+            pjsip_dlg_dec_lock(dialog);
+            return;
+        }
 
-    pjsip_method msg_method = { PJSIP_OTHER_METHOD, pj_str((char*)"MESSAGE") };
+        //TODO multipart/mixed and multipart/related need to be handled separately
+        //Use the "is_mixed" sendMessage() API
+//         const auto type = pj_str((char*) "multipart");
+//         const auto subtype = pj_str((char*) "related");
+        const auto type = pj_str((char*) "text");
+        const auto subtype = pj_str((char*) "plain");
+        const auto message = pj_str((char*) text.c_str());
 
-    if (pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata) != PJ_SUCCESS) {
+        tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &message);
+        auto ret = pjsip_dlg_send_request(dialog, tdata, -1, nullptr);
+        if (ret != PJ_SUCCESS)
+            RING_WARN("SIP send message failed: %s", sip_utils::sip_strerror(ret).c_str());
         pjsip_dlg_dec_lock(dialog);
-        return;
+
+        saveMessage(text, "Me", id);
     }
-
-    const pj_str_t type =  pj_str((char*) "text");
-    const pj_str_t subtype = pj_str((char*) "plain");
-
-    pj_str_t message = pj_str((char*) text.c_str());
-
-    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &message);
-
-    pjsip_dlg_send_request(dialog, tdata, -1, NULL);
-    pjsip_dlg_dec_lock(dialog);
-
-    saveMessage(text, "Me", id);
-}
-
-void InstantMessaging::send_sip_message(pjsip_inv_session *session, const std::string &id, const std::string &message)
-{
-    std::vector<std::string> msgs(split_message(message));
-    for (const auto &item : msgs)
-        sip_send(session, id, item);
 }
 
 #if HAVE_IAX
-void InstantMessaging::send_iax_message(iax_session *session, const std::string &/* id */, const std::string &message)
+void
+InstantMessaging::sendIaxMessage(iax_session* session, const std::string& /* id */,
+                                 const std::vector<std::string>& chunks)
 {
-    std::vector<std::string> msgs(split_message(message));
-
-    for (const auto &item : msgs)
-        iax_send_text(session, item.c_str());
+    for (const auto& msg: chunks)
+        iax_send_text(session, msg.c_str());
 }
 #endif
 
-
-std::vector<std::string> InstantMessaging::split_message(std::string text)
-{
-    std::vector<std::string> messages;
-    size_t len = MAXIMUM_MESSAGE_LENGTH;
-
-    while (text.length() > len - 2) {
-        messages.push_back(text.substr(0, len - 2) + "\n\0");
-        text = text.substr(len - 2);
-    }
-
-    messages.push_back(text);
-
-    return messages;
-}
-
-std::string InstantMessaging::generateXmlUriList(UriList &list)
+std::string
+InstantMessaging::generateXmlUriList(const UriList& list)
 {
     std::string xmlbuffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-                                  "<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">"
-                                  "<list>";
+        "<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">"
+        "<list>";
 
-    for (auto &item : list)
-        xmlbuffer += "<entry uri=" + item[IM_XML_URI] + " cp:copyControl=\"to\" />";
-
+    for (const auto& item: list) {
+        const auto it = item.find(IM_XML_URI);
+        if (it == item.cend())
+            continue;
+        xmlbuffer += "<entry uri=" + it->second + " cp:copyControl=\"to\" />";
+    }
     return xmlbuffer + "</list></resource-lists>";
 }
 
 
 InstantMessaging::UriList
-InstantMessaging::parseXmlUriList(const std::string &urilist)
+InstantMessaging::parseXmlUriList(const std::string& urilist)
 {
     InstantMessaging::UriList list;
 
@@ -162,7 +153,9 @@ InstantMessaging::parseXmlUriList(const std::string &urilist)
 }
 
 ///See rfc2046#section-5.1.4
-static std::string buildMimeMultipartPart(const std::string &type, const std::string &dispo, const std::string &content)
+static std::string
+buildMimeMultipartPart(const std::string& type, const std::string& dispo,
+                       const std::string& content)
 {
     return
     "--boundary\n"
@@ -172,22 +165,46 @@ static std::string buildMimeMultipartPart(const std::string &type, const std::st
     content + "\n";
 }
 
-std::string InstantMessaging::appendMimePayloads(const std::map<std::string,std::string> payloads, UriList& list)
+std::vector<std::string>
+InstantMessaging::appendMimePayloads(const std::map<std::string, std::string>& payloads,
+                                     const UriList& list)
 {
-    std::string ret;
+    static const std::string footer = "--boundary--";
+    std::vector<std::string> ret;
+    std::string chunk;
 
-    for (const auto pair : payloads) {
-        ret += buildMimeMultipartPart(pair.first, {}, pair.second);
+    const auto& urilist = not list.empty() ? buildMimeMultipartPart("application/resource-lists+xml",
+                                                                    "recipient-list",
+                                                                    generateXmlUriList(list)) : "";
+
+    const size_t max_message_size = MAXIMUM_MESSAGE_LENGTH - urilist.size() - footer.size();
+
+    for (const auto& pair : payloads) {
+        const auto& m = buildMimeMultipartPart(pair.first, {}, pair.second);
+        if (m.size() > max_message_size) {
+            RING_DBG("An %s payload is too large to be sent, the maximum lenght is %d",
+                     m.c_str(), max_message_size);
+            continue;
+        }
+        if (m.size() + chunk.size() > max_message_size) {
+            RING_DBG("Some MIME payloads don't fit into the packet, splitting, max size is %d, the payload would be %d %d %d",
+                     max_message_size, m.size() + chunk.size(), m.size() , chunk.size()
+            );
+            chunk += urilist + footer;
+            ret.push_back(chunk);
+            chunk = "";
+        }
+        chunk += m;
     }
 
-    if (!list.empty())
-        ret += buildMimeMultipartPart("application/resource-lists+xml", "recipient-list", generateXmlUriList(list));
+    if (chunk.size())
+        ret.push_back(chunk);
 
-    ret += "--boundary--";
     return ret;
 }
 
-std::string InstantMessaging::findTextUriList(const std::string &text)
+std::string
+InstantMessaging::findTextUriList(const std::string& text)
 {
     static const std::string ctype("Content-Type: application/resource-lists+xml");
     static const std::string cdispo("Content-Disposition: recipient-list");
@@ -244,7 +261,8 @@ std::string InstantMessaging::findTextUriList(const std::string &text)
  * --boundary42--
  */
 
-std::string InstantMessaging::findMimePayload(const std::string &encodedPayloads, const std::string &mime)
+std::string
+InstantMessaging::findMimePayload(const std::string& encodedPayloads, const std::string& mime)
 {
     const std::string ctype = "Content-Type: " + mime;
     const size_t pos = encodedPayloads.find(ctype);
@@ -261,7 +279,8 @@ std::string InstantMessaging::findMimePayload(const std::string &encodedPayloads
     return encodedPayloads.substr(begin, end - begin);
 }
 
-std::map< std::string, std::string > InstantMessaging::parsePayloads(const std::string &encodedPayloads)
+std::map<std::string, std::string>
+InstantMessaging::parsePayloads(const std::string& encodedPayloads)
 {
     //Constants
     static const std::string boud  = "--boundary"           ;
