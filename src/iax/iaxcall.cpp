@@ -240,13 +240,13 @@ IAXCall::carryingDTMFdigits(char code)
 }
 
 #if HAVE_INSTANT_MESSAGING
-
-void IAXCall::sendTextMessage(const std::map<std::string, std::string>& messages,
-                                     const std::string &from)
+void
+IAXCall::sendTextMessage(const std::map<std::string, std::string>& messages,
+                         const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    for (const auto &message : messages)
-        InstantMessaging::send_iax_message(session, getCallId(), message.second.c_str());
+    const auto& msgs = InstantMessaging::appendMimePayloads(messages);
+    InstantMessaging::sendIaxMessage(session, getCallId(), msgs);
 }
 #endif
 

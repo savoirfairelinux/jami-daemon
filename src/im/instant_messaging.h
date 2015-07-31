@@ -51,25 +51,33 @@
 #include <iax/iax-client.h>
 #endif
 
-#define EMPTY_MESSAGE   pj_str((char*)"")
-#define MAXIMUM_MESSAGE_LENGTH		1560			/* PJSIP's sip message limit */
-
-#define MODE_APPEND			std::ios::out || std::ios::app
-#define MODE_TEST			std::ios::out
+#define MODE_APPEND std::ios::out || std::ios::app
+#define MODE_TEST std::ios::out
 
 namespace ring { namespace InstantMessaging {
 
-const std::string IM_XML_URI("uri");
-const std::string BOUNDARY("--boundary");
+/* PJSIP's sip message limit, PJSIP_MAX_PKT_LEN is the total, but most
+   is used for the SIP header
 
-class InstantMessageException : public std::runtime_error {
-    public:
-        InstantMessageException(const std::string& str="") :
-            std::runtime_error("InstantMessageException occured: " + str) {}
+   Ring currently split the messages into smaller ones and send them. Obviously
+   it is invalid as some messages wont have the MIME boundary section.
+
+   The number set here is arbitrary, the theoretical limit is around 3000,
+   but some messages may fail.
+*/
+constexpr static unsigned MAXIMUM_MESSAGE_LENGTH = 1800;
+
+constexpr static const char* IM_XML_URI = "uri";
+constexpr static const char* BOUNDARY = "--boundary";
+
+struct InstantMessageException : std::runtime_error
+{
+    InstantMessageException(const std::string& str="") :
+        std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
-typedef std::map<std::string, std::string> UriEntry;
-typedef std::list<UriEntry> UriList;
+using UriEntry = std::map<std::string, std::string>;
+using UriList = std::list<UriEntry>;
 
 /*
  * Write the text message to the right file
@@ -79,22 +87,15 @@ typedef std::list<UriEntry> UriList;
  * @param id	The current call
  * @return True if the message could have been successfully saved, False otherwise
  */
-bool saveMessage(const std::string& message, const std::string& author, const std::string& id, int mode = MODE_APPEND);
+bool saveMessage(const std::string& message, const std::string& author, const std::string& id,
+                 int mode = MODE_APPEND);
 
-/*
- * Send a SIP string message inside a call
- *
- * @param id	The call ID we will retrieve the invite session from
- * @param message	The string message, as sent by the client
- */
-void sip_send(pjsip_inv_session*, const std::string& id, const std::string&);
-
-void send_sip_message(pjsip_inv_session*, const std::string& id, const std::string&);
+void sendSipMessage(pjsip_inv_session* session, const std::string& id,
+                    const std::vector<std::string>& chunks);
 #if HAVE_IAX
-void send_iax_message(iax_session *session, const std::string& id, const std::string&);
+void sendIaxMessage(iax_session* session, const std::string& id,
+                    const std::vector<std::string>& chunks);
 #endif
-
-std::vector<std::string> split_message(std::string);
 
 /**
  * Generate Xml participant list for multi recipient based on RFC Draft 5365
@@ -104,7 +105,7 @@ std::vector<std::string> split_message(std::string);
  * @return A string containing the full XML formated information to be included in the
  *         sip instant message.
  */
-std::string generateXmlUriList(UriList &list);
+std::string generateXmlUriList(const UriList& list);
 
 /**
  * Parse the Urilist from a SIP Instant Message provided by a UriList service.
@@ -118,12 +119,13 @@ UriList parseXmlUriList(const std::string &urilist);
 /**
  * Format text message according to RFC 5365, append recipient-list to the message
  *
- * @param text to be displayed
+ * @param Key/Value MIME pairs to be sent. If a payload doesn't fit, the message will be split
  * @param list containing the recipients
  *
  * @return formated text stored into a string to be included in sip MESSAGE
  */
-std::string appendMimePayloads(const std::map<std::string,std::string> payloads, UriList& list);
+std::vector<std::string> appendMimePayloads(const std::map<std::string, std::string>& payloads,
+                                            const UriList& list = {});
 
 /**
  * Retreive the xml formated uri list in formated text data according to RFC 5365
@@ -132,25 +134,26 @@ std::string appendMimePayloads(const std::map<std::string,std::string> payloads,
  *
  * @return A string containing the XML content
  */
-std::string findTextUriList(const std::string &text);
+std::string findTextUriList(const std::string& text);
 
 /**
  * Retrieve a MIME payload from the SIP container RFC5365
  *
- * @param mime the mime type 
+ * @param mime the mime type
  *
  * @param encodedPayloads a MIME encoded set of payloads
  *
  * @return A string containing the actual message
  */
-std::string findMimePayload(const std::string &encodedPayloads, const std::string &mime = "text/plain");
+std::string findMimePayload(const std::string& encodedPayloads,
+                            const std::string& mime = "text/plain");
 
 /**
  * Retrieve all MIME payloads from encodedPayloads
  *
  * @param encodedPayloads a MIME encoded set of payloads
  */
-std::map< std::string, std::string > parsePayloads(const std::string &encodedPayloads);
+std::map< std::string, std::string > parsePayloads(const std::string& encodedPayloads);
 
 }} // namespace ring::InstantMessaging
 
