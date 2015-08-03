@@ -10,10 +10,6 @@ ubuntu_15.04:
     debian: debian
     ccache: true
     type: docker
-fedora_20:
-    spec: ring-daemon.spec
-    ccache: true
-    type: docker
 fedora_21:
     spec: ring-daemon.spec
     ccache: true
