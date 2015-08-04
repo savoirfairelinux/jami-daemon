@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
  *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -75,6 +75,7 @@ class VideoDeviceImpl {
         std::vector<std::string> sizeList_;
         std::map<std::string, std::vector<std::string> > rateList_;
         std::map<std::string, AM_MEDIA_TYPE*> capMap_;
+        void fail(const std::string& error);
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
@@ -89,9 +90,11 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
 void
 VideoDeviceImpl::setup()
 {
+    std::string error = "";
+
     HRESULT hr = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
     if (FAILED(hr))
-        return RING_ERR("Could not initialize video device.");
+        return fail("Could not initialize video device.");
 
     hr = CoCreateInstance(
         CLSID_CaptureGraphBuilder2,
@@ -100,18 +103,18 @@ VideoDeviceImpl::setup()
         IID_ICaptureGraphBuilder2,
         (void**) &cInterface->captureGraph_);
     if (FAILED(hr))
-        return RING_ERR("Could not create the Filter Graph Manager");
+        return fail("Could not create the Filter Graph Manager");
 
     hr = CoCreateInstance(CLSID_FilterGraph,
         nullptr,
         CLSCTX_INPROC_SERVER,IID_IGraphBuilder,
         (void**) &cInterface->graph_);
     if (FAILED(hr))
-      return RING_ERR("Could not add the graph builder!");
+        return fail("Could not add the graph builder!");
 
     hr = cInterface->captureGraph_->SetFiltergraph(cInterface->graph_);
     if (FAILED(hr))
-        return RING_ERR("Could not set filtergraph.");
+        return fail("Could not set filtergraph.");
 
     ICreateDevEnum *pSysDevEnum = nullptr;
     hr = CoCreateInstance(CLSID_SystemDeviceEnum,
@@ -120,7 +123,7 @@ VideoDeviceImpl::setup()
         IID_ICreateDevEnum,
         (void **)&pSysDevEnum);
     if (FAILED(hr))
-        return RING_ERR("Could not create the enumerator!");
+        return fail("Could not create the enumerator!");
 
     IEnumMoniker *pEnumCat = nullptr;
     hr = pSysDevEnum->CreateClassEnumerator(
@@ -172,7 +175,7 @@ VideoDeviceImpl::setup()
                                 cInterface->videoInputFilter_,
                                 varName.bstrVal);
                         else {
-                            RING_ERR("Could not add filter to device.");
+                            error = "Could not add filter to video device.";
                             break;
                         }
                         hr = cInterface->captureGraph_->FindInterface(
@@ -189,7 +192,7 @@ VideoDeviceImpl::setup()
                                 IID_IAMStreamConfig,
                                 (void **)&cInterface->streamConf_);
                             if (FAILED(hr)) {
-                                RING_ERR("Couldn't config the stream!");
+                                error = "Couldn't config the stream!";
                                 break;
                             }
                         }
@@ -206,6 +209,8 @@ VideoDeviceImpl::setup()
         }
         pEnumCat->Release();
         pEnumCat = nullptr;
+        if (not done)
+            return fail(error);
         if (done && SUCCEEDED(hr)) {
             int piCount;
             int piSize;
@@ -232,6 +237,11 @@ VideoDeviceImpl::setup()
     pSysDevEnum = NULL;
 }
 
+void VideoDeviceImpl::fail(const std::string& error)
+{
+    throw std::runtime_error(error);
+}
+
 void
 VideoDeviceImpl::applySettings(VideoSettings settings)
 {
@@ -240,7 +250,7 @@ VideoDeviceImpl::applySettings(VideoSettings settings)
         if (pmt != nullptr) {
             ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = settings.framerate;
             if (FAILED(cInterface->streamConf_->SetFormat(capMap_[settings.video_size]))) {
-             RING_ERR("Could not set settings.");
+                RING_ERR("Could not set settings.");
             }
         }
     }
