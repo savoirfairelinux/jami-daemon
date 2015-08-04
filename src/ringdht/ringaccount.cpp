@@ -211,7 +211,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             [=] (dht::IceCandidates&& msg) {
                 if (msg.id != replyvid)
                     return true;
-                RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
+                RING_WARN("ICE request replied from DHT peer %s\n%s", toH.toString().c_str(),
+                          std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
                 if (auto call = weak_call.lock())
                     call->setState(Call::ConnectionState::PROGRESSING);
                 ice->start(msg.ice_data);
@@ -790,6 +791,8 @@ void RingAccount::doRegister_()
                     this_.findCertificate(from_h.toString().c_str());
                 }
                 // public incoming calls allowed or we explicitly authorised this public key
+                RING_WARN("ICE incoming from DHT peer %s\n%s", from_h.toString().c_str(),
+                         std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
                 this_.incomingCall(std::move(msg));
                 return true;
             }
