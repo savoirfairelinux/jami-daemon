@@ -211,7 +211,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             [=] (dht::IceCandidates&& msg) {
                 if (msg.id != replyvid)
                     return true;
-                RING_WARN("ICE request replied from DHT peer %s", toH.toString().c_str());
+                RING_WARN("ICE request replied from DHT peer %s\n%s", toH.toString().c_str(),
+                          std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
                 if (auto call = weak_call.lock())
                     call->setState(Call::ConnectionState::PROGRESSING);
                 ice->start(msg.ice_data);
@@ -837,7 +838,8 @@ void RingAccount::incomingCall(dht::IceCandidates&& msg)
 {
     auto from = msg.from.toString();
     auto reply_vid = msg.id+1;
-    RING_WARN("Received incoming DHT call request from %s", from.c_str());
+    RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
+              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = Manager::instance().getIceTransportFactory().createTransport(
         ("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
