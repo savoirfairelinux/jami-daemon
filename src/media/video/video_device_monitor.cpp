@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
  *
@@ -189,22 +189,27 @@ VideoDeviceMonitor::addDevice(const string& node)
         return;
 
     // instantiate a new unique device
-    VideoDevice dev(node);
-    giveUniqueName(dev, devices_);
+    try {
+        VideoDevice dev(node);
+        giveUniqueName(dev, devices_);
 
-    // restore its preferences if any, or store the defaults
-    auto it = findPreferencesByName(dev.name);
-    if (it != preferences_.end())
-        dev.applySettings(*it);
-    else
-        preferences_.push_back(dev.getSettings());
+        // restore its preferences if any, or store the defaults
+        auto it = findPreferencesByName(dev.name);
+        if (it != preferences_.end())
+            dev.applySettings(*it);
+        else
+            preferences_.push_back(dev.getSettings());
 
-    // in case there is no default device on a fresh run
-    if (defaultDevice_.empty())
-        defaultDevice_ = dev.name;
+        // in case there is no default device on a fresh run
+        if (defaultDevice_.empty())
+            defaultDevice_ = dev.name;
 
-    devices_.push_back(dev);
-    notify();
+        devices_.push_back(dev);
+        notify();
+    } catch (const std::runtime_error& e) {
+        RING_ERR("%s", e.what());
+        return;
+    }
 }
 
 void
