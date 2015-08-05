@@ -149,6 +149,9 @@ namespace TURN {
 
 constexpr static const char SERVER             [] = "TURN.server";
 constexpr static const char ENABLED            [] = "TURN.enable";
+constexpr static const char SERVER_UNAME       [] = "TURN.username";
+constexpr static const char SERVER_PWD         [] = "TURN.password";
+constexpr static const char SERVER_REALM       [] = "TURN.realm";
 
 } //namespace DRing::Account::ConfProperties::TURN
 
