@@ -310,11 +310,6 @@ class RingAccount : public SIPAccountBase {
         };
 
         /**
-         * DHT calls waiting for authorization
-         */
-        std::list<dht::IceCandidates> pendingUntrustedCalls_ {};
-
-        /**
          * DHT calls waiting for ICE negotiation
          */
         std::list<PendingCall> pendingCalls_ {};
