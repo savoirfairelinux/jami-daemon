@@ -67,6 +67,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "fileutils.h"
+#include "string_utils.h"
 
 namespace ring {
 
@@ -344,7 +345,8 @@ checkSoundCard(int &card, DeviceType type)
 }
 #endif
 
-AudioLayer* AudioPreference::createAudioLayer()
+AudioLayer*
+AudioPreference::createAudioLayer()
 {
 #if HAVE_OPENSL
     return new OpenSLLayer(*this);
@@ -352,27 +354,30 @@ AudioLayer* AudioPreference::createAudioLayer()
 
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
-        if (system("jack_lsp > /dev/null") == 0) {
-            try {
-                return new JackLayer(*this);
-            } catch (const std::runtime_error &e) {
-                RING_ERR("%s", e.what());
+        try {
+            if (auto ret = system("jack_lsp > /dev/null"))
+                throw std::runtime_error("Error running jack_lsp: " + to_string(ret));
+            return new JackLayer(*this);
+        } catch (const std::runtime_error& e) {
+            RING_ERR("%s", e.what());
 #if HAVE_PULSE
-                RING_WARN("falling back to pulseaudio");
-                audioApi_ = PULSEAUDIO_API_STR;
+            RING_WARN("falling back to pulseaudio");
+            audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
-                audioApi_ = ALSA_API_STR;
+            RING_WARN("falling back to alsa");
+            audioApi_ = ALSA_API_STR;
 #elif HAVE_COREAUDIO
-                audioApi_ = COREAUDIO_API_STR;
+            RING_WARN("falling back to coreaudio");
+            audioApi_ = COREAUDIO_API_STR;
 #elif HAVE_PORTAUDIO
-                audioApi_ = PORTAUDIO_API_STR;
+            RING_WARN("falling back to portaudio");
+            audioApi_ = PORTAUDIO_API_STR;
 #else
-                throw;
-#endif
-            }
+            throw;
+#endif // HAVE_PULSE
         }
     }
-#endif
+#endif // HAVE_JACK
 
 #if HAVE_PULSE
 
