@@ -450,7 +450,6 @@ int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 
 retry:
     if (RTP_PT_IS_RTCP(buf[1])) {
-        return buf_size;
         /* RTCP payload type */
         ret = context->writeRtcpData(buf, buf_size);
         if (ret < 0) {
