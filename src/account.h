@@ -385,12 +385,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
 
         /**
-         * List of audio and video codecs obtained when parsing configuration and used
-         * to generate codec order list
-         */
-        std::string allCodecStr_;
-
-        /**
          * Ringtone .au file used for this account
          */
         std::string ringtonePath_;

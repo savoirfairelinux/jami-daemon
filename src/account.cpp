@@ -109,7 +109,6 @@ Account::Account(const std::string &accountID)
     , registrationState_(RegistrationState::UNREGISTERED)
     , systemCodecContainer_(getSystemCodecContainer())
     , accountCodecInfoList_()
-    , allCodecStr_()
     , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -201,14 +200,27 @@ Account::loadDefaultCodecs()
     }
 }
 
-void
-Account::serialize(YAML::Emitter &out)
+// Convert a list of payloads in a special format, readable by the server.
+// Required format: payloads separated by slashes.
+// @return std::string The serializable string
+static std::string
+join_string(const std::vector<unsigned> &v)
 {
+    std::ostringstream os;
+    std::copy(std::begin(v), std::end(v), std::ostream_iterator<unsigned>(os, "/"));
+    return os.str();
+}
+
+void
+Account::serialize(YAML::Emitter& out)
+{
+    const auto& activeCodecs = join_string(getActiveAccountCodecInfoIdList(MEDIA_ALL));
+
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
     out << YAML::Key << ACCOUNT_ENABLE_KEY << YAML::Value << enabled_;
     out << YAML::Key << TYPE_KEY << YAML::Value << getAccountType();
-    out << YAML::Key << ALL_CODECS_KEY << YAML::Value << allCodecStr_;
+    out << YAML::Key << ALL_CODECS_KEY << YAML::Value << activeCodecs;
     out << YAML::Key << MAILBOX_KEY << YAML::Value << mailBox_;
     out << YAML::Key << ACCOUNT_AUTOANSWER_KEY << YAML::Value << autoAnswerEnabled_;
     out << YAML::Key << ACCOUNT_ACTIVE_CALL_LIMIT_KEY << YAML::Value << activeCallLimit_;
@@ -223,7 +235,7 @@ Account::serialize(YAML::Emitter &out)
 }
 
 void
-Account::unserialize(const YAML::Node &node)
+Account::unserialize(const YAML::Node& node)
 {
     using yaml_utils::parseValue;
 
@@ -235,10 +247,11 @@ Account::unserialize(const YAML::Node &node)
     //parseValue(node, PASSWORD_KEY, password_);
 
     parseValue(node, MAILBOX_KEY, mailBox_);
-    parseValue(node, ALL_CODECS_KEY, allCodecStr_);
 
-    // Update codec list which one is used for SDP offer
-    setActiveCodecs(split_string_to_unsigned(allCodecStr_, '/'));
+    std::string activeCodecs;
+    parseValue(node, ALL_CODECS_KEY, activeCodecs);
+    setActiveCodecs(split_string_to_unsigned(activeCodecs, '/'));
+
     parseValue(node, DISPLAY_NAME_KEY, displayName_);
     parseValue(node, HOSTNAME_KEY, hostname_);
 
@@ -306,17 +319,6 @@ Account::getVolatileAccountDetails() const
     };
 }
 
-// Convert a list of payloads in a special format, readable by the server.
-// Required format: payloads separated by slashes.
-// @return std::string The serializable string
-static std::string
-join_string(const std::vector<unsigned> &v)
-{
-    std::ostringstream os;
-    std::copy(v.begin(), v.end(), std::ostream_iterator<unsigned>(os, "/"));
-    return os.str();
-}
-
 std::vector<unsigned>
 Account::getActiveCodecs() const
 {
@@ -347,8 +349,6 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
                  std::shared_ptr<AccountCodecInfo> b) {
                   return a->order < b->order;
               });
-
-    allCodecStr_ = join_string(getActiveAccountCodecInfoIdList(MEDIA_ALL));
 }
 
 std::string
