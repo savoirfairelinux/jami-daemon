@@ -67,6 +67,7 @@
 #include <algorithm>
 #include <stdexcept>
 #include "fileutils.h"
+#include "string_utils.h"
 
 namespace ring {
 
@@ -352,24 +353,26 @@ AudioLayer* AudioPreference::createAudioLayer()
 
 #if HAVE_JACK
     if (audioApi_ == JACK_API_STR) {
-        if (system("jack_lsp > /dev/null") == 0) {
-            try {
+        try {
+            auto ret = system("jack_lsp > /dev/null");
+            if (ret == 0)
                 return new JackLayer(*this);
-            } catch (const std::runtime_error &e) {
-                RING_ERR("%s", e.what());
+            else
+                throw std::runtime_error("Error running jack_lsp: " + ring::to_string(ret));
+        } catch (const std::runtime_error &e) {
+            RING_ERR("%s", e.what());
 #if HAVE_PULSE
-                RING_WARN("falling back to pulseaudio");
-                audioApi_ = PULSEAUDIO_API_STR;
+            RING_WARN("falling back to pulseaudio");
+            audioApi_ = PULSEAUDIO_API_STR;
 #elif HAVE_ALSA
-                audioApi_ = ALSA_API_STR;
+            audioApi_ = ALSA_API_STR;
 #elif HAVE_COREAUDIO
-                audioApi_ = COREAUDIO_API_STR;
+            audioApi_ = COREAUDIO_API_STR;
 #elif HAVE_PORTAUDIO
-                audioApi_ = PORTAUDIO_API_STR;
+            audioApi_ = PORTAUDIO_API_STR;
 #else
-                throw;
+            throw;
 #endif
-            }
         }
     }
 #endif
