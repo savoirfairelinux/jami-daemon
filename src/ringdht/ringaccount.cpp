@@ -87,6 +87,39 @@ static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
+/**
+ * Local ICE Transport factory helper
+ *
+ * RingAccount must use this helper than direct IceTranportFactory.
+ */
+template <class... Args>
+std::shared_ptr<IceTransport>
+RingAccount::createIceTransport(Args... args)
+{
+    // We need a public address in case of NAT'ed network
+    // Trying to use one discovered by DHT service
+    if (getPublishedAddress().empty()) {
+        const auto& addresses = dht_.getPublicAddress();
+        if (addresses.size())
+            setPublishedAddress(IpAddr{addresses[0].first});
+    }
+
+    auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
+    if (!ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
+        throw std::runtime_error("ICE transport creation failed");
+
+    auto publicAddr = getPublishedIpAddress();
+    if (publicAddr) {
+        publicAddr.setPort(1000);
+        auto localAddr = ip_utils::getLocalAddr();
+        publicAddr.setPort(1000);
+        for (unsigned comp_id = 1; comp_id <= ice->getComponentCount(); ++comp_id)
+            ice->addCandidate(comp_id, localAddr, publicAddr);
+    }
+
+    return ice;
+}
+
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
 {
@@ -150,9 +183,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     call->setSecure(isTlsEnabled());
 
     // Create an ICE transport for SIP channel
-    auto& tfactory = manager.getIceTransportFactory();
-    auto ice = tfactory.createTransport(("sip:" + call->getCallId()).c_str(),
-                                        ICE_COMPONENTS, true, getIceOptions());
+    auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
+                                  ICE_COMPONENTS, true, getIceOptions());
     if (not ice) {
         call->removeCall();
         return nullptr;
@@ -664,7 +696,8 @@ dhtStatusStr(dht::Dht::Status status) {
                                                     "disconnected");
 }
 
-void RingAccount::doRegister_()
+void
+RingAccount::doRegister_()
 {
     try {
         loadTreatedCalls();
@@ -674,20 +707,25 @@ void RingAccount::doRegister_()
         }
         auto identity = loadIdentity();
 
-        dht_.setOnStatusChanged([=](dht::Dht::Status s4, dht::Dht::Status s6) {
-            RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
-            auto status = std::max(s4, s6);
-            switch(status) {
-            case dht::Dht::Status::Connecting:
-            case dht::Dht::Status::Connected:
-                setRegistrationState(status == dht::Dht::Status::Connected ? RegistrationState::REGISTERED : RegistrationState::TRYING);
-                break;
-            case dht::Dht::Status::Disconnected:
-            default:
-                setRegistrationState(status == dht::Dht::Status::Disconnected ? RegistrationState::UNREGISTERED : RegistrationState::ERROR_GENERIC);
-                break;
-            }
-        });
+        dht_.setOnStatusChanged([this](dht::Dht::Status s4, dht::Dht::Status s6) {
+                RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
+                RegistrationState state;
+                switch (std::max(s4, s6)) {
+                    case dht::Dht::Status::Connecting:
+                        state = RegistrationState::TRYING;
+                        break;
+                    case dht::Dht::Status::Connected:
+                        state = RegistrationState::REGISTERED;
+                        break;
+                    case dht::Dht::Status::Disconnected:
+                        state = RegistrationState::UNREGISTERED;
+                        break;
+                    default:
+                        state = RegistrationState::ERROR_GENERIC;
+                        break;
+                }
+                setRegistrationState(state);
+            });
 
         dht_.run((in_port_t)dhtPortUsed_, identity, false);
 
@@ -786,7 +824,7 @@ void RingAccount::doRegister_()
                                 return;
                             }
 
-                            this_.incomingCall(std::move(msg));
+                            this_.pushIncomingCallTask(std::move(msg));
                         }
                     );
                     return true;
@@ -795,7 +833,7 @@ void RingAccount::doRegister_()
                     this_.findCertificate(msg.from.toString().c_str());
                 }
                 // public incoming calls allowed or we explicitly authorised this public key
-                this_.incomingCall(std::move(msg));
+                this_.pushIncomingCallTask(std::move(msg));
                 return true;
             }
         );
@@ -838,17 +876,22 @@ void RingAccount::doRegister_()
     }
 }
 
-void RingAccount::incomingCall(dht::IceCandidates&& msg)
+void
+RingAccount::pushIncomingCallTask(dht::IceCandidates&& msg)
+{
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    runOnMainThread([acc, msg]() {acc->incomingCall(msg); });
+}
+
+void
+RingAccount::incomingCall(const dht::IceCandidates& msg)
 {
     auto from = msg.from.toString();
     auto reply_vid = msg.id+1;
     RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
-    auto ice = Manager::instance().getIceTransportFactory().createTransport(
-        ("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
-    if (ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
-        throw std::runtime_error("Can't initialize ICE..");
+    auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
 
     std::weak_ptr<SIPCall> weak_call = call;
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());

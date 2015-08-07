@@ -176,10 +176,7 @@ public:
         return publishedIp_;
     }
 
-    void setPublishedAddress(const IpAddr& ip_addr) {
-        publishedIp_ = ip_addr;
-        publishedIpAddress_ = ip_addr.toString();
-    }
+    void setPublishedAddress(const IpAddr& ip_addr);
 
     /**
      * Get the published port, which is the port to be advertised as the port
