@@ -353,4 +353,12 @@ SIPAccountBase::onTextMessage(const std::string& from, const std::string& msg)
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, msg);
 }
 
+void
+SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr) {
+    publishedIp_ = ip_addr;
+    publishedIpAddress_ = ip_addr.toString();
+    RING_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
+             publishedIpAddress_.c_str());
+}
+
 } // namespace ring

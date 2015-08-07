@@ -266,7 +266,8 @@ class RingAccount : public SIPAccountBase {
     private:
 
         void doRegister_();
-        void incomingCall(dht::IceCandidates&& msg);
+        void pushIncomingCallTask(dht::IceCandidates&&);
+        void incomingCall(const dht::IceCandidates& msg);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
         //const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
@@ -402,6 +403,9 @@ class RingAccount : public SIPAccountBase {
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};
         pjsip_transport *via_tp_ {nullptr};
+
+        template <class... Args>
+        std::shared_ptr<IceTransport> createIceTransport(Args... args);
 };
 
 } // namespace ring
