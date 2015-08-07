@@ -138,6 +138,9 @@ class IceTransport {
             return getLocalAddress(0);
         }
 
+        bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
+
+
         /**
          * Return ICE session attributes
          */
@@ -171,7 +174,13 @@ class IceTransport {
 
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
-        unsigned getComponentCount() const {return component_count_;};
+        unsigned getComponentCount() const {return component_count_;}
+
+        /**
+         * Adds a reflective candidate to ICE session
+         * Must be called before negotiation
+         */
+        void addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr);
 
     private:
         static constexpr int MAX_CANDIDATES {32};
@@ -244,12 +253,6 @@ class IceTransport {
          * Returns the IP of each candidate for a given component in the ICE session
          */
         std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
-
-        /**
-         * Adds candidate to ICE session
-         */
-        void addCandidate(int comp_id, const IpAddr& localAddr,
-                          const IpAddr& publicAddr);
 
         /**
          * Creates UPnP port mappings and adds ICE candidates based on those mappings
