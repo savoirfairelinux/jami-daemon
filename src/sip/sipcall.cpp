@@ -1065,4 +1065,17 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
     pjsip_dlg_dec_lock(inv->dlg);
 }
 
+bool
+SIPCall::initIceTransport(bool master, unsigned channel_num)
+{
+    auto result = Call::initIceTransport(master, channel_num);
+    if (result) {
+        if (const auto& publicIP = getSIPAccount().getPublishedIpAddress()) {
+            for (unsigned compId = 1; compId <= iceTransport_->getComponentCount(); ++compId)
+                iceTransport_->registerPublicIP(compId, publicIP);
+        }
+    }
+    return result;
+}
+
 } // namespace ring

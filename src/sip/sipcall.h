@@ -215,6 +215,8 @@ class SIPCall : public Call
 
         virtual std::map<std::string, std::string> getDetails() const;
 
+        bool initIceTransport(bool master, unsigned channel_num=4) override;
+
     private:
         NON_COPYABLE(SIPCall);
 

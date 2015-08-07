@@ -402,6 +402,9 @@ class RingAccount : public SIPAccountBase {
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};
         pjsip_transport *via_tp_ {nullptr};
+
+        template <class... Args>
+        std::shared_ptr<IceTransport> createIceTransport(Args... args);
 };
 
 } // namespace ring
