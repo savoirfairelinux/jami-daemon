@@ -165,7 +165,7 @@ else # !Windows
 LIBAVCONF += --enable-pthreads
 endif
 
-ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 54.20.3 libswscale libavdevice >= 53.0.0 libavutil >= 51.0.0"),)
+ifeq ($(call need_pkg,"libavcodec >= 53.5.0 libavformat >= 54.20.3 libswscale >= 1.1.0 libavdevice >= 53.0.0 libavutil >= 52.5.0"),)
 PKGS_FOUND += libav
 endif
 
