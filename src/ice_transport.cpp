@@ -136,7 +136,8 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
         }
         RING_WARN("ICE: STUN='%s', PORT=%d", options.stunServer.c_str(),
                  config_.stun.port);
-    }
+    } else
+        config_.stun.port = 0;
 
     /* TURN */
     if (not options.turnServer.empty()) {
@@ -164,7 +165,8 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
 
         RING_WARN("ICE: TURN='%s', PORT=%d", options.turnServer.c_str(),
                  config_.turn.port);
-    }
+    } else
+        config_.turn.port = 0;
 
     pj_ice_strans* icest = nullptr;
     pj_status_t status = pj_ice_strans_create(name, &config_, component_count,
@@ -492,9 +494,35 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
     return cand_addrs;
 }
 
+bool
+IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
+{
+    // Register only if no NAT traversal methods exists
+    if (upnp_ or config_.stun.port > 0 or config_.turn.port > 0)
+        return false;
+
+    // Find the local candidate corresponding to local host,
+    // then register a rflx candidate using given public address
+    // and this local address as base. It's port is used for both address
+    // even if on the public side it have strong probabilities to not exist.
+    // But as this candidate is made after initialization, it's not used during
+    // negotiation, only to exchanged candidates between peers.
+    auto localIP = ip_utils::getLocalAddr();
+    auto pubIP = publicIP;
+    for (const auto& addr : getLocalCandidatesAddr(compId)) {
+        auto port = addr.getPort();
+        localIP.setPort(port);
+        if (addr != localIP)
+            continue;
+        pubIP.setPort(port);
+        addReflectiveCandidate(compId, addr, pubIP);
+        return true;
+    }
+    return false;
+}
+
 void
-IceTransport::addCandidate(int comp_id, const IpAddr& localAddr,
-                           const IpAddr& publicAddr)
+IceTransport::addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr)
 {
     pj_ice_sess_cand cand;
 
@@ -506,8 +534,8 @@ IceTransport::addCandidate(int comp_id, const IpAddr& localAddr,
     /* cand.foundation = ? */
     /* cand.prio = calculated by ice session */
     /* make base and addr the same since we're not going through a server */
-    pj_sockaddr_cp(&cand.base_addr, localAddr.pjPtr());
-    pj_sockaddr_cp(&cand.addr, publicAddr.pjPtr());
+    pj_sockaddr_cp(&cand.base_addr, base.pjPtr());
+    pj_sockaddr_cp(&cand.addr, addr.pjPtr());
     pj_sockaddr_cp(&cand.rel_addr, &cand.base_addr);
     pj_ice_calc_foundation(pool_.get(), &cand.foundation, cand.type, &cand.base_addr);
 
@@ -525,13 +553,11 @@ IceTransport::addCandidate(int comp_id, const IpAddr& localAddr,
 
     if (ret != PJ_SUCCESS) {
         RING_ERR("failed to add candidate for comp_id=%d : %s : %s", comp_id
-                 , localAddr.toString().c_str()
-                 , publicAddr.toString().c_str());
+                 , base.toString().c_str(), addr.toString().c_str());
         sip_utils::sip_printerror(ret);
     } else {
         RING_DBG("succeed to add candidate for comp_id=%d : %s : %s", comp_id
-                , localAddr.toString().c_str()
-                , publicAddr.toString().c_str());
+                , base.toString().c_str(), addr.toString().c_str());
     }
 }
 
@@ -559,7 +585,7 @@ IceTransport::selectUPnPIceCandidates()
                     uint16_t port_used;
                     if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
                         publicIP.setPort(port_used);
-                        addCandidate(comp_id, addr, publicIP);
+                        addReflectiveCandidate(comp_id, addr, publicIP);
                     } else
                         RING_WARN("UPnP: Could not create a port mapping for the ICE candide");
                 }
