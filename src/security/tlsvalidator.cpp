@@ -61,6 +61,8 @@
 #include <netinet/tcp.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#else
+#define close(x) closesocket(x)
 #endif
 #include <unistd.h>
 #include <fcntl.h>
