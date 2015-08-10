@@ -48,6 +48,7 @@ extern "C" {
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
 #define poll WSAPoll
+#define close(x) closesocket(x)
 #endif
 
 #ifdef __ANDROID__
