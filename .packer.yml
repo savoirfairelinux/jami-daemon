@@ -14,6 +14,12 @@ fedora_21:
     spec: ring-daemon.spec
     ccache: true
     type: docker
+fedora_22:
+    spec: ring-daemon.spec
+    deps:
+        - speexdsp-devel
+    ccache: true
+    type: docker
 debian_8:
     debian: debian
     ccache: true
