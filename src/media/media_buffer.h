@@ -64,6 +64,7 @@ class VideoFrame: public MediaFrame {
     public:
         // Construct an empty VideoFrame
         VideoFrame() = default;
+        virtual ~VideoFrame();
 
         // Reset internal buffers (return to an empty VideoFrame)
         void reset() noexcept override;
@@ -86,6 +87,8 @@ class VideoFrame: public MediaFrame {
         // Set internal pixel buffers on given memory buffer
         // This buffer must follow given specifications.
         void setFromMemory(void* ptr, int format, int width, int height) noexcept;
+        void setFromMemory(void* ptr, int format, int width, int height,
+                           std::function<void(void*, void*)> cb, void *opaque);
 
         void noise();
 
@@ -93,6 +96,9 @@ class VideoFrame: public MediaFrame {
         VideoFrame& operator =(const VideoFrame& src);
 
     private:
+        std::function<void(void*, void*)> release_buffer_cb_ = nullptr;
+        void *opaque_ {nullptr};
+        void *ptr_ {nullptr};
         bool allocated_ {false};
         void setGeometry(int format, int width, int height) noexcept;
 };
