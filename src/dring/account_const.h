@@ -57,13 +57,13 @@ constexpr static const char UNREGISTERED              [] = "UNREGISTERED";
 constexpr static const char TRYING                    [] = "TRYING";
 constexpr static const char ERROR                     [] = "ERROR";
 constexpr static const char ERROR_GENERIC             [] = "ERROR_GENERIC";
-constexpr static const char ERROR_AUTH                [] = "ERRORAUTH";
-constexpr static const char ERROR_NETWORK             [] = "ERRORNETWORK";
-constexpr static const char ERROR_HOST                [] = "ERRORHOST";
+constexpr static const char ERROR_AUTH                [] = "ERROR_AUTH";
+constexpr static const char ERROR_NETWORK             [] = "ERROR_NETWORK";
+constexpr static const char ERROR_HOST                [] = "ERROR_HOST";
 constexpr static const char ERROR_CONF_STUN           [] = "ERROR_CONF_STUN";
-constexpr static const char ERROR_EXIST_STUN          [] = "ERROREXISTSTUN";
-constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERRORSERVICEUNAVAILABLE";
-constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERRORNOTACCEPTABLE";
+constexpr static const char ERROR_EXIST_STUN          [] = "ERROR_EXIST_STUN";
+constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERROR_SERVICE_UNAVAILABLE";
+constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERROR_NOT_ACCEPTABLE";
 constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
 
 } //namespace DRing::Account
