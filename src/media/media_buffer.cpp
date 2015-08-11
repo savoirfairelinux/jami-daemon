@@ -52,6 +52,12 @@ MediaFrame::reset() noexcept
 
 #ifdef RING_VIDEO
 
+VideoFrame::~VideoFrame()
+{
+    if (release_buffer_cb_)
+        release_buffer_cb_(opaque_, ptr_);
+}
+
 void
 VideoFrame::reset() noexcept
 {
@@ -59,6 +65,7 @@ VideoFrame::reset() noexcept
 #if !USE_OLD_AVU
     allocated_ = false;
 #endif
+    release_buffer_cb_ = nullptr;
 }
 
 size_t
@@ -115,6 +122,7 @@ VideoFrame::reserve(int format, int width, int height)
     if (av_frame_get_buffer(libav_frame, 32))
         throw std::bad_alloc();
     allocated_ = true;
+    release_buffer_cb_ = nullptr;
 }
 
 void
@@ -126,6 +134,18 @@ VideoFrame::setFromMemory(void* ptr, int format, int width, int height) noexcept
         return;
     avpicture_fill((AVPicture*)frame_.get(), (uint8_t*)ptr,
                    (AVPixelFormat)frame_->format, width, height);
+}
+
+void
+VideoFrame::setFromMemory(void* ptr, int format, int width, int height,
+                          std::function<void(void*, void*)> cb, void *opaque)
+{
+    setFromMemory(ptr, format, width, height);
+    if (cb && opaque) {
+        release_buffer_cb_ = cb;
+        opaque_ = opaque;
+        ptr_ = ptr;
+    }
 }
 
 void
