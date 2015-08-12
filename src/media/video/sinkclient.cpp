@@ -261,7 +261,9 @@ ShmHolder::renderFrame(VideoFrame& src) noexcept
 std::string
 SinkClient::openedName() const noexcept
 {
-    return shm_->name();
+    if (shm_)
+        return shm_->name();
+    return {};
 }
 
 bool
