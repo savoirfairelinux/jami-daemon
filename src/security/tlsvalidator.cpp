@@ -245,17 +245,19 @@ TlsValidator::TlsValidator(const std::string& certificate,
     }
 
     try {
-        privateKeyContent_ = fileutils::loadFile(privateKeyPath_);
-        dht::crypto::PrivateKey key_tmp(privateKeyContent_, privatekeyPasswd);
+        auto privateKeyContent = fileutils::loadFile(privateKeyPath_);
+        dht::crypto::PrivateKey key_tmp(privateKeyContent, privatekeyPasswd);
         privateKeyFound_ = true;
         privateKeyPassword_ = not privatekeyPasswd.empty();
-    } catch (const dht::crypto::DecryptError&) {
+        privateKeyMatch_ = key_tmp.getPublicKey().getId() == x509crt_->getId();
+    } catch (const dht::crypto::DecryptError& d) {
         // If we encounter a DecryptError, it means the private key exists and is encrypted,
         // otherwise we would get some other exception.
+        RING_WARN("decryption error: %s", d.what());
         privateKeyFound_ = true;
         privateKeyPassword_ = true;
     } catch (const std::exception& e) {
-        privateKeyContent_.clear();
+        RING_WARN("creation failed: %s", e.what());
     }
 }
 
@@ -810,15 +812,9 @@ TlsValidator::CheckResult TlsValidator::keyMatch()
     if (exist().first == CheckValues::FAILED)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED,"");
 
-    if (privateKeyContent_.empty())
+    if (not privateKeyFound_)
         return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
-    try {
-        return TlsValidator::CheckResult(
-            dht::crypto::PrivateKey(privateKeyContent_).getPublicKey().getId() == x509crt_->getId()
-            ? CheckValues::PASSED:CheckValues::FAILED, "");
-    } catch (const std::exception&) {
-        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
-    }
+    return TlsValidator::CheckResult(privateKeyMatch_ ? CheckValues::PASSED:CheckValues::FAILED, "");
 }
 
 TlsValidator::CheckResult TlsValidator::privateKeyStoragePermissions()

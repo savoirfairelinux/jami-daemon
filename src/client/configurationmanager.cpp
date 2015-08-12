@@ -193,7 +193,7 @@ getCertificateDetailsPath(const std::string& certificate, const std::string& pri
         CertificateStore::instance().pinCertificate(validator.getCertificate(), false);
         return validator.getSerializedDetails();
     } catch(const std::runtime_error& e) {
-        RING_WARN("Certificate loading failed");
+        RING_WARN("Certificate loading failed: %s", e.what());
     }
 #else
     RING_WARN("TLS not supported");
