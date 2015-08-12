@@ -272,7 +272,6 @@ private:
     std::string caListPath_ {};
 
     std::vector<uint8_t> certificateContent_;
-    std::vector<uint8_t> privateKeyContent_;
 
     std::shared_ptr<dht::crypto::Certificate> x509crt_;
 
@@ -280,6 +279,7 @@ private:
     bool certificateFound_ {false};
     bool privateKeyFound_ {false};
     bool privateKeyPassword_ {false};
+    bool privateKeyMatch_ {false};
 
     bool caChecked_ {false};
     unsigned int caValidationOutput_;
