@@ -451,7 +451,7 @@ RingAccount::loadIdentity()
 
     try {
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_));
+        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
     }
     catch (const std::exception& e) {
         RING_ERR("Error loading identity: %s", e.what());
@@ -472,6 +472,7 @@ RingAccount::loadIdentity()
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
         tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
         tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+        tlsPassword_ = {};
 
         username_ = id.second->getId().toString();
         return id;
