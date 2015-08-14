@@ -219,6 +219,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , rtcpInfo_(new RtcpInfo())
 {
     rtp_sock_->getIceTransport()->setOnRecv(rtp_sock_->getCompId(), [this](uint8_t* buf, size_t len) {
             if (not interrupted_)
@@ -237,6 +238,8 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                 std::lock_guard<std::mutex> l(dataReceivedMutex_);
                 dataBuff_.emplace_back(buf, buf+len);
                 canRead_ = true;
+                if (RTP_PT_IS_RTCP(buf[1]))
+                    parseRtcpPacket(buf,len);
                 cv_.notify_all();
             }
             return len;
