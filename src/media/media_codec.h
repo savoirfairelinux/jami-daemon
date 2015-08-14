@@ -150,6 +150,8 @@ struct AccountCodecInfo
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
+    std::map<std::string, std::string>  getCodecSpecifications();
+
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo

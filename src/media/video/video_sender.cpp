@@ -35,6 +35,7 @@
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "account_const.h"
 
 #include <map>
 #include <unistd.h>
@@ -48,6 +49,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
                          const uint16_t seqVal)
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
+    , socketPair_(socketPair)
 {
     videoEncoder_->setDeviceOptions(dev);
     videoEncoder_->openOutput(dest.c_str(), args);
@@ -64,6 +66,31 @@ VideoSender::~VideoSender()
 
 }
 
+bool VideoSender::checkPeerPacketLoss()
+{
+    auto rtcpInfo = socketPair_.getRtcpInfo();
+
+    float packetLossRate = (rtcpInfo->fraction_lost / 256.0) * 100;
+    if ( packetLossRate > PACKET_LOSS_THRESHOLD) {
+        RING_WARN("Packet loss rate = %f need to reduce bitrate !",packetLossRate);
+        return true;
+    }
+    return false;
+}
+
+static void incBitrate(int inc)
+{
+    auto call = ring::Manager::instance().getCurrentCall();
+    auto acc = ring::Manager::instance().getAccount(call->getAccountId());
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(acc->getRunningAccountCodecInfo(MEDIA_VIDEO));
+    auto map =  codecVideo->getCodecSpecifications();
+    auto bitrate = std::stoi(map[DRing::Account::ConfProperties::CodecInfo::BITRATE]);
+    map[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(bitrate + inc);
+    codecVideo->setCodecSpecifications(map);
+    call->restartMediaSender();
+}
+
 void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
     bool is_keyframe = forceKeyFrame_ > 0;
@@ -78,6 +105,18 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
                          std::shared_ptr<VideoFrame> & frame_p)
 {
+    if ((cptBitrateChecking_ % PACKET_LOSS_CHECKING_FREQUENCY) == 0 ) {
+        if(checkPeerPacketLoss()) {
+            RING_DBG("decrease bitrate");
+            runOnMainThread(std::bind(incBitrate, -100));
+        } else {
+            RING_DBG("increase bitrate");
+            runOnMainThread(std::bind(incBitrate, 100));
+        }
+        cptBitrateChecking_ = 1;
+    }
+
+    cptBitrateChecking_++;
     encodeAndSendVideo(*frame_p);
 }
 

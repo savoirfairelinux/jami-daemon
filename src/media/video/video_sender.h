@@ -42,6 +42,8 @@
 #include <memory>
 #include <atomic>
 
+#define PACKET_LOSS_THRESHOLD 1.0
+#define PACKET_LOSS_CHECKING_FREQUENCY 100
 // Forward declarations
 namespace ring {
 class SocketPair;
@@ -77,6 +79,7 @@ private:
     NON_COPYABLE(VideoSender);
 
     void encodeAndSendVideo(VideoFrame&);
+    bool checkPeerPacketLoss();
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
@@ -85,6 +88,8 @@ private:
     std::atomic<int> forceKeyFrame_ = { 0 };
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
+    SocketPair& socketPair_;
+    unsigned cptBitrateChecking_ = 1;
 };
 
 }} // namespace ring::video
