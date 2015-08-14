@@ -956,4 +956,16 @@ IceSocket::waitForData(unsigned int timeout)
     return ice_transport_->waitForData(compId_, timeout);
 }
 
+std::shared_ptr<IceTransport>
+IceSocket::getIceTransport()
+{
+    return ice_transport_;
+}
+
+int
+IceSocket::getCompId()
+{
+    return compId_;
+}
+
 } // namespace ring

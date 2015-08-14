@@ -50,6 +50,8 @@ class IceSocket
         ssize_t send(const unsigned char* buf, size_t len);
         ssize_t getNextPacketSize() const;
         ssize_t waitForData(unsigned int timeout);
+        std::shared_ptr<IceTransport> getIceTransport();
+        int getCompId();
 };
 
 };

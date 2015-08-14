@@ -51,8 +51,11 @@ using socklen_t = int;
 #include <mutex>
 #include <memory>
 #include <atomic>
+#include <list>
+#include <vector>
 
 #include <cstdint>
+#include <condition_variable>
 
 namespace ring {
 
@@ -102,6 +105,11 @@ class SocketPair {
         int readRtcpData(void *buf, int buf_size);
         int writeRtpData(void *buf, int buf_size);
         int writeRtcpData(void *buf, int buf_size);
+
+        std::mutex dataReceivedMutex_;
+        std::condition_variable cv_;
+        std::list<std::vector<uint8_t>> dataBuff_;
+        std::atomic<bool> canRead_ {false};
 
         std::unique_ptr<IceSocket> rtp_sock_;
         std::unique_ptr<IceSocket> rtcp_sock_;
