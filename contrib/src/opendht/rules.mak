@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := d2be36b615161c2961b89fb4b969cd72aeb2c789
+OPENDHT_VERSION := 73c53cc0ec83452aa771de0236c5a46b459e3435
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -9,7 +9,7 @@ endif
 
 # Avoid building distro-provided dependencies in case opendht was built manually
 ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
-DEPS_opendht = gnutls $(DEPS_gnutls)
+DEPS_opendht = msgpack gnutls $(DEPS_gnutls)
 endif
 
 $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:

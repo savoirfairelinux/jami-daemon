@@ -393,7 +393,7 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
 
     pj_assert(pool && ci && crt_raw);
 
-    dht::crypto::Certificate crt(Blob(crt_raw[0].data, crt_raw[0].data + crt_raw[0].size));
+    dht::crypto::Certificate crt(crt_raw[0].data, crt_raw[0].size);
 
     /* Get issuer */
     gnutls_x509_crt_get_issuer_dn(crt.cert, buf, &bufsize);

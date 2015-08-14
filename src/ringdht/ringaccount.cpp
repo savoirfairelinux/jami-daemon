@@ -220,8 +220,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         shared_this->dht_.putEncrypted(
             callkey, toH,
             dht::Value {
-                dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
-                callvid
+                dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates())
             },
             [=](bool ok) { // Put complete callback
                 if (!ok) {
@@ -889,8 +888,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
         callKey_,
         msg.from,
         dht::Value {
-            dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
-            reply_vid
+            dht::IceCandidates(reply_vid, ice->getLocalAttributesAndCandidates())
         },
         [weak_call,shared,reply_vid](bool ok) {
             auto& this_ = *shared.get();
@@ -900,7 +898,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
                     call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
-            this_.dht_.cancelPut(this_.callKey_, reply_vid);
+            //this_.dht_.cancelPut(this_.callKey_, reply_vid);
         }
     );
     ice->start(msg.ice_data);
