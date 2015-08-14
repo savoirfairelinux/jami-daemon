@@ -33,8 +33,14 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "socket_pair.h"
 #include "ice_socket.h"
+#include "ice_transport.h"
 #include "libav_utils.h"
 #include "logger.h"
+
+#include <iostream>
+#include <string>
+#include <algorithm>
+#include <iterator>
 
 extern "C" {
 #include "srtp.h"
@@ -213,13 +219,61 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
-{}
+{
+    rtp_sock_->getIceTransport()->setOnRecv(rtp_sock_->getCompId(), [this](uint8_t* buf, size_t len) {
+            if (not interrupted_)
+            {
+                std::lock_guard<std::mutex> l(dataReceivedMutex_);
+                dataBuff_.emplace_back(buf, buf+len);
+                canRead_ = true;
+                cv_.notify_all();
+            }
+            return len;
+        });
+
+    rtcp_sock_->getIceTransport()->setOnRecv(rtcp_sock_->getCompId(), [this](uint8_t* buf, size_t len) {
+            if (not interrupted_)
+            {
+                std::lock_guard<std::mutex> l(dataReceivedMutex_);
+                dataBuff_.emplace_back(buf, buf+len);
+                canRead_ = true;
+                cv_.notify_all();
+            }
+            return len;
+        });
+}
 
 SocketPair::~SocketPair()
 {
     interrupted_ = true;
+    canRead_ = false;
     if (rtpHandle_ >= 0)
         closeSockets();
+    cv_.notify_all();
+}
+
+void SocketPair::parseRtcpPacket(uint8_t* buf, size_t len)
+{
+    rtcpRRHeader* header = (rtcpRRHeader *) buf;
+    if(header->pt != 201) //201 = RR PT
+        return;
+
+    auto fract = (ntohl(header->fraction_lost) & 0xff000000)  >> 24;
+    auto cumul = ntohl(header->fraction_lost) & 0x00ffffff;
+    rtcpInfo_->fraction_lost = fract;
+    rtcpInfo_->jitter = ntohl(header->jitter);
+    rtcpInfo_->ssrc = ntohl(header->ssrc);
+    rtcpInfo_->ssrc_1 = ntohl(header->ssrc_1);
+
+    RING_DBG("[RTCP-RR] ssrc=%u, ssrc_1=%u, fraction_lost=%hu / 256, jitter=%u"
+            , rtcpInfo_->ssrc
+            , rtcpInfo_->ssrc_1
+            , rtcpInfo_->fraction_lost
+            , rtcpInfo_->jitter);
+}
+std::shared_ptr<RtcpInfo> SocketPair::getRtcpInfo()
+{
+    return rtcpInfo_;
 }
 
 void SocketPair::createSRTP(const char *out_suite, const char *out_key,
@@ -231,7 +285,10 @@ void SocketPair::createSRTP(const char *out_suite, const char *out_key,
 
 void SocketPair::interrupt()
 {
+    RING_ERR("socket pair interrupted");
     interrupted_ = true;
+    canRead_ = false;
+    cv_.notify_all();
 }
 
 void SocketPair::closeSockets()
@@ -419,25 +476,32 @@ SocketPair::writeRtcpData(void *buf, int buf_size)
 int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
 {
     SocketPair *context = static_cast<SocketPair*>(opaque);
+    int len = 0;
 
-retry:
     if (context->interrupted_) {
         RING_ERR("interrupted");
         return -EINTR;
     }
 
-    if (context->waitForData() < 0) {
-        if (errno == EINTR)
-            goto retry;
-        return -EIO;
+    std::unique_lock<std::mutex> lk(context->dataReceivedMutex_);
+    if (context->dataBuff_.empty()) {
+        context->cv_.wait(lk, [&context]{
+                return context->interrupted_ or context->canRead_ or not context->dataBuff_.empty();
+            });
     }
 
-    /* RTP */
-    int len = context->readRtpData(buf, buf_size);
-    if (len < 0) {
-        if (errno == EAGAIN or errno == EINTR)
-            goto retry;
-        return -EIO;
+    if(context->canRead_) {
+        const auto& pck = context->dataBuff_.front();
+        len =  std::min((int)pck.size(), buf_size);
+        std::copy_n(pck.begin(), len, (uint8_t*) buf);
+        context->dataBuff_.pop_front();
+    }
+
+    /*keep going reading list ?*/
+    if (context->dataBuff_.empty())
+        context->canRead_ = false;
+    else {
+        context->canRead_ = true;
     }
 
     return len;
@@ -450,7 +514,6 @@ int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
 
 retry:
     if (RTP_PT_IS_RTCP(buf[1])) {
-        return buf_size;
         /* RTCP payload type */
         ret = context->writeRtcpData(buf, buf_size);
         if (ret < 0) {
