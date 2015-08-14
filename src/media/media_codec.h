@@ -88,6 +88,8 @@ struct SystemCodecInfo
     /* default codec values */
     unsigned payloadType;
     unsigned bitrate;
+    unsigned minBitrate;
+    unsigned maxBitrate;
 
     std::string to_string() const;
 };
@@ -150,6 +152,8 @@ struct AccountCodecInfo
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
+    std::map<std::string, std::string>  getCodecSpecifications();
+
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo

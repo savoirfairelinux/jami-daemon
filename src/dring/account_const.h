@@ -229,6 +229,8 @@ constexpr static const char TYPE               [] = "CodecInfo.type";
 constexpr static const char SAMPLE_RATE        [] = "CodecInfo.sampleRate";
 constexpr static const char FRAME_RATE         [] = "CodecInfo.frameRate";
 constexpr static const char BITRATE            [] = "CodecInfo.bitrate";
+constexpr static const char MIN_BITRATE        [] = "CodecInfo.min_bitrate";
+constexpr static const char MAX_BITRATE        [] = "CodecInfo.max_bitrate";
 constexpr static const char CHANNEL_NUMBER     [] = "CodecInfo.channelNumber";
 
 } //namespace DRing::Account::ConfProperties::CodecInfo
