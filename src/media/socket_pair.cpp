@@ -417,7 +417,6 @@ SocketPair::readRtcpData(void* buf, int buf_size)
         int pkt_size = pkt.size();
         int len = std::min(pkt_size, buf_size);
         std::copy_n(pkt.begin(), len, static_cast<char*>(buf));
-        RING_DBG("RTCP read %u byte(s)", len);
         return len;
     }
 

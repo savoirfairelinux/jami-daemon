@@ -41,7 +41,9 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <chrono>
 
+#define PACKET_LOSS_THRESHOLD 1.0
 // Forward declarations
 namespace ring {
 class SocketPair;
@@ -77,6 +79,8 @@ private:
     NON_COPYABLE(VideoSender);
 
     void encodeAndSendVideo(VideoFrame&);
+    float checkPeerPacketLoss();
+    void adaptBitrate();
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
@@ -85,8 +89,20 @@ private:
     std::atomic<int> forceKeyFrame_ = { 0 };
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
+    SocketPair& socketPair_;
+
+    std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
+    const std::chrono::seconds timeRTCPChecking_;
+    const std::chrono::seconds timeRecheckConnection_;
+    const unsigned MAX_BITRATE = 8000;
+    const unsigned MIN_BITRATE = 400;
+    const unsigned MAX_TRY = 5;
 };
 
+    static unsigned  currentBitrate_ = 800;
+    static unsigned cptBitrateChecking_ = 1;
+    static bool hasReachIdealBitrate_ = false;
+    static bool isPreviousBitrateOk_ = false;
 }} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__

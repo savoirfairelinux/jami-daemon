@@ -35,6 +35,7 @@
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "account_const.h"
 
 #include <map>
 #include <unistd.h>
@@ -48,6 +49,10 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
                          const uint16_t seqVal)
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
+    , socketPair_(socketPair)
+    , lastRTCPCheck_(std::chrono::system_clock::now())
+    , timeRTCPChecking_(2)
+    , timeRecheckConnection_(30)
 {
     videoEncoder_->setDeviceOptions(dev);
     videoEncoder_->openOutput(dest.c_str(), args);
@@ -56,12 +61,87 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->startIO();
 
     videoEncoder_->print_sdp(sdp_);
+
+    /*auto call = ring::Manager::instance().getCurrentCall();
+    auto acc = ring::Manager::instance().getAccount(call->getAccountId());
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(acc->getRunningAccountCodecInfo(MEDIA_VIDEO));
+    auto map =  codecVideo->getCodecSpecifications();
+    currentBitrate_= std::stoi(map[DRing::Account::ConfProperties::CodecInfo::BITRATE]);
+    */
 }
 
 VideoSender::~VideoSender()
 {
     videoEncoder_->flush();
 
+}
+
+float VideoSender::checkPeerPacketLoss()
+{
+    auto rtcpInfo = socketPair_.getRtcpInfo();
+
+    return (rtcpInfo->fraction_lost / 256.0) * 100;
+}
+
+static void changeBitrate(unsigned newBitrate)
+{
+    auto call = ring::Manager::instance().getCurrentCall();
+    auto acc = ring::Manager::instance().getAccount(call->getAccountId());
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(acc->getRunningAccountCodecInfo(MEDIA_VIDEO));
+    auto map =  codecVideo->getCodecSpecifications();
+    map[DRing::Account::ConfProperties::CodecInfo::BITRATE] = std::to_string(newBitrate);
+    codecVideo->setCodecSpecifications(map);
+    RING_WARN("change video encoder bitrate to %d",newBitrate);
+    call->restartMediaSender();
+}
+
+void VideoSender::adaptBitrate()
+{
+    bool needToCheckBitrate = false;
+    float lossRate = 0.0;
+    auto rtcpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTCPCheck_);
+    if (not hasReachIdealBitrate_) {
+        if (rtcpCheckTimer.count() >= 2)
+            needToCheckBitrate = true;
+    }else{
+        if (rtcpCheckTimer.count() >= 30)
+            needToCheckBitrate = true;
+        else
+            return;
+    }
+
+    if(cptBitrateChecking_ >= MAX_TRY) {
+        RING_WARN("reach maximal tries");
+        hasReachIdealBitrate_ = true;
+        cptBitrateChecking_ = 1;
+    }
+
+
+    if(needToCheckBitrate) {
+        cptBitrateChecking_++;
+        lastRTCPCheck_ = std::chrono::system_clock::now();
+
+
+        if((lossRate = checkPeerPacketLoss()) > PACKET_LOSS_THRESHOLD) {
+            RING_DBG("lossRate=%f decrease bitrate", lossRate);
+            if (isPreviousBitrateOk_) {
+                currentBitrate_ = 2 * currentBitrate_ - MAX_BITRATE;
+                hasReachIdealBitrate_ = true;
+            }else{
+                currentBitrate_ = (currentBitrate_ + MIN_BITRATE) / 2;
+            }
+            runOnMainThread(std::bind(changeBitrate, currentBitrate_));
+        } else {
+            RING_DBG("lossRate=%f increase bitrate", lossRate);
+            isPreviousBitrateOk_ = true;
+            currentBitrate_ = (currentBitrate_ + MAX_BITRATE) / 2;
+            if (currentBitrate_ >= MAX_BITRATE)
+                currentBitrate_ = MAX_BITRATE;
+            runOnMainThread(std::bind(changeBitrate, currentBitrate_));
+        }
+    }
 }
 
 void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
@@ -78,6 +158,7 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
                          std::shared_ptr<VideoFrame> & frame_p)
 {
+    adaptBitrate();
     encodeAndSendVideo(*frame_p);
 }
 

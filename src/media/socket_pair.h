@@ -99,6 +99,7 @@ class SocketPair {
         */
         void createSRTP(const char* out_suite, const char* out_params,
                         const char* in_suite, const char* in_params);
+        std::shared_ptr<RtcpInfo> getRtcpInfo();
 
 private:
         NON_COPYABLE(SocketPair);
@@ -111,7 +112,6 @@ private:
         int readRtcpData(void* buf, int buf_size);
         int writeData(uint8_t* buf, int buf_size);
         void parseRtcpPacket(uint8_t* buf, size_t len);
-        std::shared_ptr<RtcpInfo> getRtcpInfo();
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;

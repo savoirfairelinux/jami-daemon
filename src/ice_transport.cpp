@@ -738,7 +738,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     auto status = pj_ice_strans_sendto(icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
     if (status != PJ_SUCCESS) {
         if (status == PJ_EBUSY) {
-            RING_WARN("ice send busy");
+            //RING_WARN("ice send busy");
             errno = EAGAIN;
         } else {
             RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
