@@ -45,7 +45,12 @@
 #include "string_utils.h"
 #include "enumclass_utils.h"
 
+#include "account_const.h"
+
 #include "errno.h"
+
+#define MAX_ADAPTATIVE_BITRATE_ITERATION 5 // 5 tries in a row (each 4 seconds)
+#define PACKET_LOSS_THRESHOLD 1.0 // 1% of packet loss is fine
 
 namespace ring {
 
@@ -56,6 +61,22 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
 {
     time(&timestamp_start_);
     account_.attachCall(id_);
+
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(account_.getRunningAccountCodecInfo(MEDIA_VIDEO));
+    if ( codecVideo) {
+        videoBitrateInfo_ = {
+            (unsigned) std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE]),
+            (unsigned) std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE]),
+            (unsigned) std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE]),
+            0,
+            MAX_ADAPTATIVE_BITRATE_ITERATION,
+            PACKET_LOSS_THRESHOLD
+        };
+    }else{
+        videoBitrateInfo_ = {0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    }
+
 }
 
 Call::~Call()
@@ -369,6 +390,41 @@ Call::peerHungup()
     const auto aborted = state == CallState::ACTIVE or state == CallState::HOLD;
     setState(ConnectionState::DISCONNECTED,
              aborted ? ECONNABORTED : ECONNREFUSED);
+}
+
+VideoBitrateInfo
+Call::getVideoBitrateInfo() {
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(account_.getRunningAccountCodecInfo(MEDIA_VIDEO));
+    if (codecVideo) {
+        videoBitrateInfo_ = {
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
+            videoBitrateInfo_.cptBitrateChecking++,
+            videoBitrateInfo_.maxBitrateChecking,
+            videoBitrateInfo_.packetLostThreshold,
+        };
+    } else {
+        videoBitrateInfo_ = {0,0,0,0,0,0};
+    }
+    return videoBitrateInfo_;
+}
+
+void
+Call::setVideoBitrateInfo(VideoBitrateInfo info) {
+    videoBitrateInfo_ = info;
+    auto codecVideo =
+        std::static_pointer_cast<ring::AccountVideoCodecInfo>(account_.getRunningAccountCodecInfo(MEDIA_VIDEO));
+
+    if (codecVideo) {
+        codecVideo->setCodecSpecifications(
+            {
+            {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMax)}
+            });
+    }
 }
 
 } // namespace ring

@@ -41,13 +41,18 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <chrono>
 
 #define KEY_FRAME_PERIOD 5
 
+#define PACKET_LOSS_THRESHOLD 1.0
+#define RTCP_CHECKING_INTERVAL 4
+#define RTCP_LONG_CHECKING_INTERVAL 30
 // Forward declarations
 namespace ring {
 class SocketPair;
 class AccountVideoCodecInfo;
+class Call;
 }
 
 namespace ring { namespace video {
@@ -79,6 +84,8 @@ private:
     NON_COPYABLE(VideoSender);
 
     void encodeAndSendVideo(VideoFrame&);
+    float checkPeerPacketLoss();
+    void adaptBitrate();
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
@@ -87,15 +94,14 @@ private:
     std::atomic<int> forceKeyFrame_ = { 0 };
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
+    SocketPair& socketPair_;
+    std::shared_ptr<Call> call_;
 
     std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
     std::chrono::time_point<std::chrono::system_clock>  lastLongRTCPCheck_;
-    const unsigned MAX_BITRATE = 6000;
-    const unsigned MIN_BITRATE = 400;
-    const unsigned MAX_TRY = 5;
+
     unsigned keyFrameFreq_;
 };
-
 }} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__
