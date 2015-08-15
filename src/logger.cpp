@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -32,17 +33,94 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <time.h>
+#include <sys/time.h>
+
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <ios>
+#include <mutex>
+#include <thread>
 
 #include "logger.h"
 
-static int consoleLog;
-static int debugMode;
+#ifdef __linux__
+#include <syslog.h>
+#include <unistd.h>
+#include <sys/syscall.h>
+#endif // __linux__
 
 #ifdef WIN32
 #include "winsyslog.h"
 #endif
 
-void logger(const int level, const char* format, ...)
+#define BLACK "\033[22;30m"
+#define GREEN "\033[22;32m"
+#define BROWN "\033[22;33m"
+#define BLUE "\033[22;34m"
+#define MAGENTA "\033[22;35m"
+#define GREY "\033[22;37m"
+#define DARK_GREY "\033[01;30m"
+#define LIGHT_RED "\033[01;31m"
+#define LIGHT_SCREEN "\033[01;32m"
+#define LIGHT_BLUE "\033[01;34m"
+#define LIGHT_MAGENTA "\033[01;35m"
+#define LIGHT_CYAN "\033[01;36m"
+#define WHITE "\033[01;37m"
+#define END_COLOR "\033[0m"
+
+#ifndef _WIN32
+#define RED "\033[22;31m"
+#define YELLOW "\033[01;33m"
+#define CYAN "\033[22;36m"
+#else
+#define RED FOREGROUND_RED
+#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN
+#define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN
+#endif
+
+static int consoleLog;
+static int debugMode;
+static std::mutex logMutex;
+
+static std::string
+getHeader(const char* ctx)
+{
+#ifdef __linux__
+    auto tid = syscall(__NR_gettid) & 0xffff;
+#else
+    auto tid = std::this_thread::get_id();
+#endif // __linux__
+
+    // Timestamp
+    unsigned int secs, milli;
+    struct timeval tv;
+    if (!gettimeofday(&tv, NULL)) {
+        secs = tv.tv_sec;
+        milli = tv.tv_usec / 1000; // suppose that milli < 1000
+    } else {
+        secs = time(NULL);
+        milli = 0;
+    }
+
+    std::ostringstream out;
+    out << std::left
+        << '[' << secs
+        << '.' << milli
+        << '|' << tid;
+
+    // Context
+    if (ctx)
+        out << "|" << std::setw(24) << ctx;
+
+    out << "] ";
+
+    return out.str();
+}
+
+void
+logger(const int level, const char* format, ...)
 {
     if (!debugMode && level == LOG_DEBUG)
         return;
@@ -53,8 +131,11 @@ void logger(const int level, const char* format, ...)
     va_end(ap);
 }
 
-void vlogger(const int level, const char *format, va_list ap)
+void
+vlogger(const int level, const char *format, va_list ap)
 {
+    std::lock_guard<std::mutex> lk {logMutex};
+
 #ifdef WIN32
     HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
@@ -66,8 +147,10 @@ void vlogger(const int level, const char *format, va_list ap)
 
     if (consoleLog) {
 #ifndef _WIN32
-        const char *color_prefix = "";
+        const char* color_header = CYAN;
+        const char* color_prefix = "";
 #else
+        WORD color_header = CYAN;
         WORD color_prefix = FOREGROUND_GREEN;
 #endif
 
@@ -81,10 +164,23 @@ void vlogger(const int level, const char *format, va_list ap)
         }
 
 #ifndef _WIN32
-        fputs(color_prefix, stderr);
+        fputs(color_header, stderr);
 #else
         GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
         saved_attributes = consoleInfo.wAttributes;
+        SetConsoleTextAttribute(hConsole, color_header);
+#endif
+
+        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
+        std::string ctx(format, sep - format);
+        format = sep + 2;
+        fputs(getHeader(ctx.c_str()).c_str(), stderr);
+
+#ifndef _WIN32
+        fputs(END_COLOR, stderr);
+        fputs(color_prefix, stderr);
+#else
+        SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
 
@@ -102,22 +198,36 @@ void vlogger(const int level, const char *format, va_list ap)
     }
 }
 
-void setConsoleLog(int c)
+void
+setConsoleLog(int c)
 {
+    if (c)
+        closelog();
+    else {
+#ifdef _WIN32
+        openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
+#else
+        openlog(LOGFILE, LOG_NDELAY, LOG_USER);
+#endif /* _WIN32 */
+    }
+
     consoleLog = c;
 }
 
-void setDebugMode(int d)
+void
+setDebugMode(int d)
 {
     debugMode = d;
 }
 
-int getDebugMode(void)
+int
+getDebugMode(void)
 {
     return debugMode;
 }
 
-void strErr(void)
+void
+strErr(void)
 {
 #ifdef __GLIBC__
     RING_ERR("%m");

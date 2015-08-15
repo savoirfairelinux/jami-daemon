@@ -40,8 +40,6 @@
 #define WINLOG_MASK(pri)    (1 << (pri))
 #define WINLOG_UPTO(pri)    ((1 << ((pri)+1)) - 1)
 
-#define LOGFILE "ringcli"
-
 /*
  * Option flags for openlog.
  *
