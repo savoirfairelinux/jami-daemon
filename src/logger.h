@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef H_LOGGER
-#define H_LOGGER
+#pragma once
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,11 +37,13 @@ extern "C" {
 
 #include <stdarg.h>
 
+#define LOGFILE "dring"
+
 /**
  * Print something, coloring it depending on the level
  */
-void logger(const int level, const char *format, ...);
-void vlogger(const int level, const char *format, va_list);
+void logger(const int level, const char* format, ...);
+void vlogger(const int level, const char* format, va_list);
 
 /**
  * Allow writing on the console
@@ -63,19 +65,11 @@ int getDebugMode(void);
  */
 void strErr();
 
-#ifdef __linux__
+#define STR(EXP) #EXP
+#define XSTR(X) STR(X)
 
-#include <unistd.h>
-#include <sys/syscall.h>
-
-#define LOG_FORMAT(M, ...) "%s:%d:0x%x: " M, FILE_NAME, __LINE__, \
-                            syscall(__NR_gettid) & 0xffff, \
-                           ##__VA_ARGS__
-#else
-
-#define LOG_FORMAT(M, ...) "%s:%d: " M, FILE_NAME , __LINE__, \
-                            ##__VA_ARGS__
-#endif
+// Do not remove the "| " in following without modifying vlogger() code
+#define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
 
 #ifdef __ANDROID__
 
@@ -86,8 +80,7 @@ void strErr();
 #endif /* APP_NAME */
 
 // Avoid printing whole path on android
-#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 \
-                                          : __FILE__)
+#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
 // because everyone likes reimplementing the wheel
 #define LOG_ERR     ANDROID_LOG_ERROR
@@ -95,8 +88,7 @@ void strErr();
 #define LOG_INFO    ANDROID_LOG_INFO
 #define LOG_DEBUG   ANDROID_LOG_DEBUG
 
-#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, \
-                                                  LOG_FORMAT(M, ##__VA_ARGS__))
+#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
 
 #elif defined(_WIN32)
 
@@ -122,36 +114,10 @@ void strErr();
 #endif /* __ANDROID__ _WIN32 */
 
 #define RING_ERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define RING_WARN(M, ...)    LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define RING_INFO(M, ...)    LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define RING_WARN(M, ...)  LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define RING_INFO(M, ...)  LOGGER(M, LOG_INFO, ##__VA_ARGS__)
 #define RING_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
-
-#define BLACK "\033[22;30m"
-#define GREEN "\033[22;32m"
-#define BROWN "\033[22;33m"
-#define BLUE "\033[22;34m"
-#define MAGENTA "\033[22;35m"
-#define CYAN "\033[22;36m"
-#define GREY "\033[22;37m"
-#define DARK_GREY "\033[01;30m"
-#define LIGHT_RED "\033[01;31m"
-#define LIGHT_SCREEN "\033[01;32m"
-#define LIGHT_BLUE "\033[01;34m"
-#define LIGHT_MAGENTA "\033[01;35m"
-#define LIGHT_CYAN "\033[01;36m"
-#define WHITE "\033[01;37m"
-#define END_COLOR "\033[0m"
-
-#ifndef _WIN32
-#define RED "\033[22;31m"
-#define YELLOW "\033[01;33m"
-#else
-#define RED FOREGROUND_RED
-#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN
-#endif
 
 #ifdef __cplusplus
 }
 #endif
-
-#endif // H_LOGGER
