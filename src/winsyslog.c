@@ -74,9 +74,6 @@ void closelog(void)
     CONST CHAR *arr[1];
     char tmp[1024];
 
-    if (!loghdl)
-        openlog(LOGFILE, WINLOG_PID, WINLOG_MAIL);
-
     vsprintf(tmp, format, arglist);
 
     arr[0] = tmp;
