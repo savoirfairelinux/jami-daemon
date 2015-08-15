@@ -112,7 +112,7 @@ libring_la_SOURCES = conference.cpp \
 		manager.cpp \
 		call.cpp \
 		account.cpp \
-		logger.c \
+		logger.cpp \
 		fileutils.cpp \
 		threadloop.cpp \
 		ip_utils.h \
