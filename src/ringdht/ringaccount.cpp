@@ -193,7 +193,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
 
     std::weak_ptr<SIPCall> weak_call = call;
-    manager.addTask([=] {
+    runOnMainThread([=] {
         static std::uniform_int_distribution<dht::Value::Id> udist;
         auto call = weak_call.lock();
 
@@ -212,7 +212,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
         /* Next step: sent the ICE data to peer through DHT */
         const dht::Value::Id callvid  = udist(shared_this->rand_);
-        const dht::Value::Id replyvid = callvid + 1;
         const auto toH = dht::InfoHash(toUri);
         const auto callkey = dht::InfoHash::get("callto:" + toUri);
 
@@ -220,8 +219,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         shared_this->dht_.putEncrypted(
             callkey, toH,
             dht::Value {
-                dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
-                callvid
+                dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates())
             },
             [=](bool ok) { // Put complete callback
                 if (!ok) {
@@ -237,7 +235,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
             callkey,
             [=] (dht::IceCandidates&& msg) {
-                if (msg.id != replyvid)
+                if (msg.id != callvid or msg.from != toH)
                     return true;
                 RING_WARN("ICE request replied from DHT peer %s\n%s", toH.toString().c_str(),
                           std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
@@ -254,7 +252,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             std::move(listenKey),
             callkey, toH
         });
-        return false;
     });
 
     return call;
@@ -877,8 +874,7 @@ void
 RingAccount::incomingCall(dht::IceCandidates&& msg)
 {
     auto from = msg.from.toString();
-    auto reply_vid = msg.id+1;
-    RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
+    RING_WARN("ICE incoming (id %lu) from DHT peer %s\n%s", msg.id, from.c_str(),
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
@@ -889,10 +885,9 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
         callKey_,
         msg.from,
         dht::Value {
-            dht::IceCandidates(ice->getLocalAttributesAndCandidates()),
-            reply_vid
+            dht::IceCandidates(msg.id, ice->getLocalAttributesAndCandidates())
         },
-        [weak_call,shared,reply_vid](bool ok) {
+        [weak_call,shared](bool ok) {
             auto& this_ = *shared.get();
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
@@ -900,7 +895,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
                     call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
-            this_.dht_.cancelPut(this_.callKey_, reply_vid);
+            //this_.dht_.cancelPut(this_.callKey_, reply_vid);
         }
     );
     ice->start(msg.ice_data);
