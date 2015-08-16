@@ -117,7 +117,7 @@ std::map<std::string, std::string> getIp2IpDetails();
 std::vector<std::map<std::string, std::string>> getCredentials(const std::string& accountID);
 void setCredentials(const std::string& accountID, const std::vector<std::map<std::string, std::string>>& details);
 
-std::string getAddrFromInterfaceName(const std::string& interface);
+std::string getAddrFromInterfaceName(const std::string& iface);
 
 std::vector<std::string> getAllIpInterface();
 std::vector<std::string> getAllIpInterfaceByName();
