@@ -70,6 +70,7 @@ extern "C" {
 #include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
+#include <libavutil/log.h>
 }
 
 #include "libav_utils.h"

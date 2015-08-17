@@ -80,8 +80,25 @@ avcodecManageMutex(void **data, enum AVLockOp op)
     return AVERROR(ret);
 }
 
+static constexpr const char* AVLOGLEVEL = "AVLOGLEVEL";
 
-static void init_once()
+static void
+setAvLogLevel()
+{
+    char* envvar = getenv(AVLOGLEVEL);
+    signed level = AV_LOG_ERROR;
+
+    if (envvar != nullptr) {
+        if (not (std::istringstream(envvar) >> level))
+            level = AV_LOG_ERROR;
+
+        level = std::max(AV_LOG_QUIET, std::min(level, AV_LOG_DEBUG));
+    }
+    av_log_set_level(level);
+}
+
+static void
+init_once()
 {
     av_register_all();
     avdevice_register_all();
@@ -92,7 +109,7 @@ static void init_once()
     av_lockmgr_register(avcodecManageMutex);
 
     if (getDebugMode())
-        av_log_set_level(AV_LOG_VERBOSE);
+        setAvLogLevel();
 }
 
 static std::once_flag already_called;
