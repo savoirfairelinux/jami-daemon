@@ -138,7 +138,7 @@ class CallFactory {
          * Return call pointer associated to given ID. Type can optionally be specified.
          */
         template <class T = Call>
-        std::shared_ptr<T> getCall(const std::string& id) {
+        std::shared_ptr<T> getCall(const std::string& id) const {
             std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
             const auto map = getMap_<T>();
@@ -155,7 +155,7 @@ class CallFactory {
          * Return all calls. Type can optionally be specified.
          */
         template <class T = Call>
-        std::vector<std::shared_ptr<T> > getAllCalls() {
+        std::vector<std::shared_ptr<T> > getAllCalls() const {
             std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
             std::vector<std::shared_ptr<T> > v;
 
@@ -230,10 +230,10 @@ template <> bool
 CallFactory::empty<Call>() const;
 
 template <> std::shared_ptr<Call>
-CallFactory::getCall<Call>(const std::string& id);
+CallFactory::getCall<Call>(const std::string& id) const;
 
 template <> std::vector<std::shared_ptr<Call> >
-CallFactory::getAllCalls<Call>();
+CallFactory::getAllCalls<Call>() const;
 
 template <> std::vector<std::string>
 CallFactory::getCallIDs<Call>() const;

@@ -103,7 +103,7 @@ CallFactory::empty<Call>() const
 }
 
 template <> std::shared_ptr<Call>
-CallFactory::getCall<Call>(const std::string& id)
+CallFactory::getCall<Call>(const std::string& id) const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
 
@@ -118,7 +118,7 @@ CallFactory::getCall<Call>(const std::string& id)
 }
 
 template <> std::vector<std::shared_ptr<Call> >
-CallFactory::getAllCalls<Call>()
+CallFactory::getAllCalls<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
     std::vector<std::shared_ptr<Call> > v;
