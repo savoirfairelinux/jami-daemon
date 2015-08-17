@@ -101,10 +101,9 @@ class CallFactory {
             }
 
             auto call = std::make_shared<ConcreteCall>(account, id, type);
-
-            {
+            if (call) {
                 std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-                callMaps_[account.getAccountType()].insert(std::make_pair(id, call));
+                callMaps_[call.getLinkType()].insert(std::make_pair(id, call));
             }
 
             return call;
