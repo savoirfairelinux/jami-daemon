@@ -97,6 +97,10 @@ class SIPCall : public Call
             return *sdp_;
         }
 
+        const char* getCallLinkType() const override {
+            return LINK_TYPE;
+        }
+
         /**
          * Returns a pointer to the AudioRtpSession object
          */

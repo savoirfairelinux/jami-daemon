@@ -92,6 +92,10 @@ class IAXCall : public Call
         IAXCall(IAXAccount& account, const std::string& id, Call::CallType type);
 
     public:
+        const char* getCallLinkType() const override {
+            return LINK_TYPE;
+        }
+
         /**
          * @return int  The bitwise list of supported formats
          */

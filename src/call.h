@@ -126,6 +126,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             return type_;
         }
 
+        virtual const char* getCallLinkType() const = 0;
+
         /**
          * Set the peer number (destination on outgoing)
          * not protected by mutex (when created)

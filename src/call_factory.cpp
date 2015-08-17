@@ -47,10 +47,10 @@ CallFactory::removeCall(Call& call)
 
     const auto& id = call.getCallId();
     RING_DBG("Removing call %s", id.c_str());
-    const auto& account = call.getAccount();
-    auto& map = callMaps_.at(account.getAccountType());
+    const auto& linkType = call.getCallLinkType();
+    auto& map = callMaps_.at(linkType);
     map.erase(id);
-    RING_DBG("Remaining %u %s call(s)", map.size(), account.getAccountType());
+    RING_DBG("Remaining %u %s call(s)", map.size(), linkType);
 }
 
 void
