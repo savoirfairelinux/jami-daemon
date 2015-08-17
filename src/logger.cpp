@@ -135,16 +135,12 @@ logger(const int level, const char* format, ...)
 void
 vlogger(const int level, const char *format, va_list ap)
 {
-    std::lock_guard<std::mutex> lk {logMutex};
-
-#ifdef WIN32
-    HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-    CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-    WORD saved_attributes;
-#endif
-
     if (!debugMode && level == LOG_DEBUG)
         return;
+
+    // syslog is supposed to thread-safe, but not all implementations (Android?)
+    // follow strictly POSIX rules... so we lock our mutex in any cases.
+    std::lock_guard<std::mutex> lk {logMutex};
 
     if (consoleLog) {
 #ifndef _WIN32
@@ -153,6 +149,9 @@ vlogger(const int level, const char *format, va_list ap)
 #else
         WORD color_header = CYAN;
         WORD color_prefix = FOREGROUND_GREEN;
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+        WORD saved_attributes;
 #endif
 
         switch (level) {
