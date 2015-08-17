@@ -96,11 +96,11 @@ static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
-        RING_WARN("DTMF over RTP not supported yet");
+        RING_WARN("[call:%s] DTMF over RTP not supported yet", call.getCallId().c_str());
         return;
     } else if (dtmf != SIPAccount::SIPINFO_STR) {
-        RING_WARN("Unknown DTMF type %s, defaulting to %s instead",
-             dtmf.c_str(), SIPAccount::SIPINFO_STR);
+        RING_WARN("[call:%s] Unknown DTMF type %s, defaulting to %s instead",
+                  call.getCallId().c_str(), dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
 
     int duration = Manager::instance().voipPreferences.getPulseLength();
@@ -209,7 +209,8 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
                     if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
-                        RING_WARN("Ending call because underlying SIP transport was closed");
+                        RING_WARN("[call:%s] Ending call because underlying SIP transport was closed",
+                                  this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
                     }
                 } else // should not happen
@@ -271,7 +272,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pjsip_tx_data *tdata;
 
     if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        RING_ERR("Could not create dialog");
+        RING_ERR("[call:%s] Could not create dialog", getCallId().c_str());
         return;
     }
 
@@ -292,7 +293,8 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::updateSDPFromSTUN()
 {
-    RING_WARN("SIPCall::updateSDPFromSTUN() not implemented", __func__);
+    RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str(),
+              __func__);
 }
 
 void SIPCall::answer()
@@ -303,7 +305,8 @@ void SIPCall::answer()
         throw VoipLinkException("No invite session for this call");
 
     if (!inv->neg) {
-        RING_WARN("Negotiator is NULL, we've received an INVITE without an SDP");
+        RING_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
+                  getCallId().c_str());
         pjmedia_sdp_session *dummy = 0;
         getSIPVoIPLink()->createSDPOffer(inv.get(), &dummy);
 
@@ -324,7 +327,7 @@ void SIPCall::answer()
 
     // contactStr must stay in scope as long as tdata
     if (contactHeader_.slen) {
-        RING_DBG("Answering with contact header: %.*s", contactHeader_.slen, contactHeader_.ptr);
+        RING_DBG("[call:%s] Answering with contact header: %.*s", getCallId().c_str(), contactHeader_.slen, contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
@@ -346,7 +349,7 @@ sendEndSessionMsg(pjsip_inv_session* inv, int status, const pj_str_t* contact_st
     sip_utils::addContactHeader(contact_str, tdata);
 
     if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS) {
-        RING_ERR("pjsip error: failed to sind end session message");
+        RING_ERR("pjsip error: failed to send end session message");
         return;
     }
 }
@@ -369,7 +372,7 @@ SIPCall::hangup(int reason)
 
         if (printed >= 0) {
             buf[printed] = '\0';
-            RING_DBG("Route header %s", buf);
+            RING_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
         }
 
         route = route->next;
@@ -545,7 +548,7 @@ SIPCall::transfer(const std::string& to)
 
     toUri = account.getToUri(to);
     pj_cstr(&dst, toUri.c_str());
-    RING_DBG("Transferring to %.*s", dst.slen, dst.ptr);
+    RING_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))
         throw VoipLinkException("Couldn't transfer");
@@ -594,7 +597,7 @@ SIPCall::onhold()
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS)
-            RING_WARN("Reinvite failed");
+            RING_WARN("[call:%s] Reinvite failed", getCallId().c_str());
     }
 
     return true;
@@ -613,7 +616,7 @@ SIPCall::offhold()
             success = internalOffHold([] {});
 
     } catch (const SdpException &e) {
-        RING_ERR("%s", e.what());
+        RING_ERR("[call:%s] %s", getCallId().c_str(), e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
 
@@ -630,7 +633,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS) {
-            RING_WARN("Reinvite failed, resuming hold");
+            RING_WARN("[call:%s] Reinvite failed, resuming hold", getCallId().c_str());
             onhold();
             return false;
         }
@@ -645,7 +648,7 @@ SIPCall::switchInput(const std::string& resource)
 #ifdef RING_VIDEO
     videoInput_ = resource;
     if (SIPSessionReinvite() != PJ_SUCCESS)
-        RING_WARN("Reinvite failed");
+        RING_WARN("[call:%s] Reinvite failed", getCallId().c_str());
 #endif
 }
 
@@ -739,12 +742,12 @@ void
 SIPCall::setupLocalSDPFromIce()
 {
     if (not iceTransport_) {
-        RING_WARN("null icetransport: no attributes added to SDP");
+        RING_WARN("[call:%s] null icetransport, no attributes added to SDP", getCallId().c_str());
         return;
     }
 
     if (waitForIceInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-        RING_ERR("ICE init failed, ICE will not be used for medias");
+        RING_ERR("[call:%s] Local ICE init failed", getCallId().c_str());
         return;
     }
 
@@ -769,7 +772,7 @@ SIPCall::getAllRemoteCandidates()
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
             if (iceTransport_->getCandidateFromSDP(line, cand)) {
-                RING_ERR("Remote candidate: %s", line.c_str());
+                RING_DBG("[call:%s] add remote ICE candidate: %s", getCallId().c_str(), line.c_str());
                 out.emplace_back(cand);
             }
         }
@@ -789,12 +792,12 @@ SIPCall::startIce()
     if (not iceTransport_)
         return false;
     if (iceTransport_->isStarted() || iceTransport_->isCompleted()) {
-        RING_DBG("ICE already started");
+        RING_DBG("[call:%s] ICE already started", getCallId().c_str());
         return true;
     }
     auto rem_ice_attrs = sdp_->getIceAttributes();
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-        RING_ERR("ICE empty attributes");
+        RING_ERR("[call:%s] ICE empty attributes", getCallId().c_str());
         return false;
     }
     return iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
@@ -812,20 +815,24 @@ void
 SIPCall::startAllMedia()
 {
     if (isSecure() && not transport_->isSecure()) {
-        RING_ERR("Can't perform secure call over insecure SIP transport");
+        RING_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
+                 getCallId().c_str());
         onFailure(EPROTONOSUPPORT);
         return;
     }
     auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
+    int slotN = -1;
 
     for (const auto& slot : slots) {
+        ++slotN;
         const auto& local = slot.first;
         const auto& remote = slot.second;
 
         if (local.type != remote.type) {
-            RING_ERR("Inconsistent media types between local and remote for SDP media slot");
+            RING_ERR("[call:%s] [SDP:slot#%u] Inconsistent media types between local and remote",
+                     getCallId().c_str(), slotN);
             continue;
         }
 
@@ -841,18 +848,21 @@ SIPCall::startAllMedia()
             continue;
 
         if (!local.codec) {
-            RING_WARN("SDP: No codec defined in local media slot");
+            RING_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(),
+                      slotN);
             continue;
         }
         if (!remote.codec) {
-            RING_WARN("SDP: No codec defined in remote media slot");
+            RING_WARN("[call:%s] [SDP:slot#%u] Missing remote codec", getCallId().c_str(),
+                      slotN);
             continue;
         }
 
         peer_holding &= remote.holding;
 
         if (isSecure() && (not local.crypto || not remote.crypto)) {
-            RING_ERR("Can't perform secure call over insecure RTP transport");
+            RING_ERR("[call:%s] [SDP:slot#%u] Can't perform secure call over insecure RTP transport",
+                     getCallId().c_str(), slotN);
             continue;
         }
 
@@ -891,7 +901,7 @@ SIPCall::startAllMedia()
 void
 SIPCall::restartMediaSender()
 {
-    RING_WARN("[call:%s] restarting TX media streams", getCallId().c_str());
+    RING_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
     avformatrtp_->restartSender();
 #ifdef RING_VIDEO
     videortp_.restartSender();
@@ -901,7 +911,7 @@ SIPCall::restartMediaSender()
 void
 SIPCall::stopAllMedia()
 {
-    RING_DBG("SIPCall %s: stopping all medias", getCallId().c_str());
+    RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
     avformatrtp_->stop();
 #ifdef RING_VIDEO
     videortp_.stop();
@@ -914,7 +924,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef RING_VIDEO
         if (mute == isVideoMuted_) return;
-        RING_WARN("video muting %s", bool_to_str(mute));
+        RING_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
@@ -922,7 +932,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (mute == isAudioMuted_) return;
-        RING_WARN("audio muting %s", bool_to_str(mute));
+        RING_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
         emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
@@ -932,7 +942,6 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
 void
 SIPCall::onMediaUpdate()
 {
-    RING_WARN("SIPCall::onMediaUpdate");
     stopAllMedia();
     openPortsUPnP();
 
@@ -942,12 +951,12 @@ SIPCall::onMediaUpdate()
         auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
         Manager::instance().addTask([=] {
             if (ice != this_->iceTransport_) {
-                RING_ERR("ICE transport replaced");
+                RING_WARN("[call:%s] ICE transport replaced", getCallId().c_str());
                 return false;
             }
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
-                RING_DBG("ice init failed (or timeout)");
+                RING_DBG("[call:%s] ICE init failed (or timeout)", getCallId().c_str());
                 this_->onFailure(ETIMEDOUT);
                 return false;
             }
@@ -957,7 +966,7 @@ SIPCall::onMediaUpdate()
             return false;
         });
     } else {
-        RING_WARN("Starting medias without ICE");
+        RING_WARN("[call:%s] ICE not used for media", getCallId().c_str());
         startAllMedia();
     }
 }
@@ -994,7 +1003,7 @@ SIPCall::openPortsUPnP()
          *       the newly selected port should possibly be checked against the list of used ports and marked
          *       as used, the old port should be "released"
          */
-        RING_DBG("UPnP: openening ports via upnp for SDP session.");
+        RING_DBG("[call:%s] opening ports via UPNP for SDP session", getCallId().c_str());
         uint16_t audio_port_used;
         if (upnp_->addAnyMapping(sdp_->getLocalAudioPort(), upnp::PortType::UDP, true, &audio_port_used)) {
             uint16_t control_port_used;

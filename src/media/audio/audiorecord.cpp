@@ -92,7 +92,7 @@ AudioRecord::AudioRecord() : fileHandle_(nullptr)
     , filename_(createFilename())
     , savePath_()
 {
-    RING_WARN("Generate filename for this call %s ", filename_.c_str());
+    RING_DBG("Generate filename for this call %s ", filename_.c_str());
 }
 
 AudioRecord::~AudioRecord()

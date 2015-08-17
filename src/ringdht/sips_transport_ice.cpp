@@ -146,7 +146,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
-        RING_WARN("SipsIceTransport@%p: destroy", this_);
+        RING_DBG("SipsIceTransport@%p: destroy", this_);
         delete this_;
         return PJ_SUCCESS;
     };
@@ -284,7 +284,7 @@ SipsIceTransport::startTlsSession()
                                                          GNUTLS_X509_FMT_DER);
         if (ret < 0)
             throw std::runtime_error("Can't load CA.");
-        RING_WARN("Loaded %s", param_.ca_list.c_str());
+        RING_DBG("Loaded %s", param_.ca_list.c_str());
     }
     if (param_.id.first) {
         /* Load certificate, key and pass */
@@ -592,15 +592,15 @@ SipsIceTransport::onHandshakeComplete(pj_status_t status)
 {
     /* Update certificates info on successful handshake */
     if (status == PJ_SUCCESS) {
-        RING_WARN("Handshake success on remote %s",
+        RING_DBG("Handshake success on remote %s",
                    remote_.toString(true).c_str());
         certUpdate();
     } else {
         /* Handshake failed destroy ourself silently. */
         char errmsg[PJ_ERR_MSG_SIZE];
-        RING_WARN("Handshake failed on remote %s: %s",
-                  remote_.toString(true).c_str(),
-                  pj_strerror(status, errmsg, sizeof(errmsg)).ptr);
+        RING_ERR("Handshake failed on remote %s: %s",
+                 remote_.toString(true).c_str(),
+                 pj_strerror(status, errmsg, sizeof(errmsg)).ptr);
     }
 
     ChangeStateEventData eventData;
@@ -719,7 +719,7 @@ SipsIceTransport::handleEvents()
     for (const auto& pair: ackBuf) {
         const auto& f = pair.first;
         f.tdata_op_key->tdata = nullptr;
-        RING_ERR("status: %d", pair.second);
+        RING_DBG("status: %d", pair.second);
         if (f.tdata_op_key->callback)
             f.tdata_op_key->callback(getTransportBase(), f.tdata_op_key->token,
                                      pair.second);
@@ -730,7 +730,7 @@ SipsIceTransport::handleEvents()
 bool
 SipsIceTransport::setup()
 {
-    RING_WARN("Starting GnuTLS thread");
+    RING_DBG("Starting GnuTLS thread");
 
     // permit incoming packets
     ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
@@ -738,8 +738,7 @@ SipsIceTransport::setup()
                 std::lock_guard<std::mutex> l(inputBuffMtx_);
                 tlsInputBuff_.emplace_back(buf, buf+len);
                 canRead_ = true;
-                RING_DBG("Ice: got data at %lu",
-                         clock::now().time_since_epoch().count());
+                RING_DBG("TLS(ice): rx %uB", len);
             }
             cv_.notify_all();
             return len;
@@ -871,7 +870,7 @@ SipsIceTransport::loop()
 void
 SipsIceTransport::clean()
 {
-    RING_WARN("Ending GnuTLS thread");
+    RING_DBG("Ending GnuTLS thread");
 
     // Forbid GnuTLS <-> ICE IOs
     ice_->setOnRecv(comp_id_, nullptr);
@@ -1107,7 +1106,7 @@ SipsIceTransport::trySend(pjsip_tx_data_op_key *pck)
 void
 SipsIceTransport::shutdown()
 {
-    RING_WARN("%s", __PRETTY_FUNCTION__);
+    RING_DBG("%s", __PRETTY_FUNCTION__);
     state_ = TlsConnectionState::DISCONNECTED;
     tlsThread_.stop();
     cv_.notify_all();
