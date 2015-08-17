@@ -104,7 +104,7 @@ class CallFactory {
 
             {
                 std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-                callMaps_[account.getAccountType()].insert(std::make_pair(id, call));
+                callMaps_[T::LINK_TYPE].insert(std::make_pair(id, call));
             }
 
             return call;
