@@ -566,17 +566,20 @@ RingAccount::handleEvents()
                 .cert_check = [remote_h](unsigned status,
                                          const gnutls_datum_t* cert_list,
                                          unsigned cert_num) -> pj_status_t {
-                    RING_WARN("TLS certificate check for %s",
-                              remote_h.toString().c_str());
-
                     if (status & GNUTLS_CERT_EXPIRED ||
-                        status & GNUTLS_CERT_NOT_ACTIVATED)
+                        status & GNUTLS_CERT_NOT_ACTIVATED) {
+                        RING_ERR("Expired certificate for %s", remote_h.toString().c_str());
                         return PJ_SSL_CERT_EVALIDITY_PERIOD;
-                    else if (status & GNUTLS_CERT_INSECURE_ALGORITHM)
+                    } else if (status & GNUTLS_CERT_INSECURE_ALGORITHM) {
+                        RING_ERR("Untrusted certificate for %s", remote_h.toString().c_str());
                         return PJ_SSL_CERT_EUNTRUSTED;
+                    }
 
-                    if (cert_num == 0)
+                    if (cert_num == 0) {
+                        RING_ERR("Unknown TLS certificate error for %s",
+                                  remote_h.toString().c_str());
                         return PJ_SSL_CERT_EUNKNOWN;
+                    }
 
                     try {
                         std::vector<uint8_t> crt_blob(cert_list[0].data,
@@ -590,13 +593,15 @@ RingAccount::handleEvents()
 
                         if (tls_id != remote_h) {
                             RING_ERR("Certificate public key (ID %s) doesn't match expectation (%s)",
-                                      tls_id.toString().c_str(),
-                                      remote_h.toString().c_str());
+                                      tls_id.toString().c_str(), remote_h.toString().c_str());
                             return PJ_SSL_CERT_EUNTRUSTED;
                         }
                     } catch (const std::exception& e) {
+                        RING_ERR("TLS certificate exception for %s: %s",
+                                 remote_h.toString().c_str(), e.what());
                         return PJ_SSL_CERT_EUNKNOWN;
                     }
+                    RING_DBG("Certificate verified for %s", remote_h.toString().c_str());
                     return PJ_SUCCESS;
                 }
             };

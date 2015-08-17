@@ -73,6 +73,7 @@ bool VideoInput::setup()
     }
     if (not attach(sink_.get()))
         RING_WARN("Failed to attach sink");
+    RING_DBG("VideoInput ready to capture");
     return true;
 }
 

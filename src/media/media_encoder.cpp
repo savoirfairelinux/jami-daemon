@@ -594,7 +594,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         v = av_dict_get(options_, "frame_size", NULL, 0);
         if (v) {
             encoderCtx_->frame_size = atoi(v->value);
-            RING_WARN("[%s] Frame size %d", encoderName, encoderCtx_->frame_size);
+            RING_DBG("[%s] Frame size %d", encoderName, encoderCtx_->frame_size);
         } else {
             RING_WARN("[%s] Frame size not set", encoderName);
         }

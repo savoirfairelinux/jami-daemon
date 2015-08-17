@@ -85,6 +85,8 @@ void Conference::add(const std::string &participant_id)
 #ifdef RING_VIDEO
         if (auto call = Manager::instance().callFactory.getCall<SIPCall>(participant_id))
             call->getVideoRtp().enterConference(this);
+        else
+            RING_ERR("no call associate to participant %s", participant_id.c_str());
 #endif // RING_VIDEO
     }
 }

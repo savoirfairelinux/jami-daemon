@@ -29,6 +29,7 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
+
 #include <iostream>
 #include <thread>
 #include <cstring>
@@ -47,7 +48,11 @@ print_title()
     std::cout
         << "Ring Daemon " << DRing::version()
         << ", by Savoir-Faire Linux 2004-2015" << std::endl
-        << "http://www.ring.cx/" << std::endl;
+        << "http://www.ring.cx/" << std::endl
+#ifdef RING_VIDEO
+        << "[Video support enabled]" << std::endl
+#endif
+        << std::endl;
 }
 
 static void
@@ -201,10 +206,6 @@ main(int argc, char *argv [])
     signal(SIGINT, signal_handler);
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
-
-#ifdef RING_VIDEO
-    std::cerr << "Warning: built with video support" << std::endl;
-#endif
 
     return run();
 }

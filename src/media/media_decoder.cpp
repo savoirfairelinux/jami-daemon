@@ -184,8 +184,8 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     decoderCtx_->channels = format.nb_channels;
     decoderCtx_->sample_rate = format.sample_rate;
 
-    RING_WARN("Audio decoding using %s with %s",
-        inputDecoder_->name, format.toString().c_str());
+    RING_DBG("Audio decoding using %s with %s",
+             inputDecoder_->name, format.toString().c_str());
 
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");

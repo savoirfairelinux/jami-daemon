@@ -116,7 +116,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     try {
         /* Encoder setup */
-        RING_WARN("audioEncoder_->openOutput %s", dest_.c_str());
+        RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->openOutput(dest_.c_str(), args_);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_);
@@ -128,7 +128,7 @@ AudioSender::setup(SocketPair& socketPair)
 
     std::string sdp;
     audioEncoder_->print_sdp(sdp);
-    RING_WARN("\n%s", sdp.c_str());
+    RING_DBG("\n%s", sdp.c_str());
 
     return true;
 }

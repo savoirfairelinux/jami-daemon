@@ -254,11 +254,15 @@ void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
         if (videoLocal_)
             videoLocal_->detach(sender_.get());
         videoMixer_->attach(sender_.get());
+    } else {
+        RING_WARN("[call:%s] no sender", callID_.c_str(), conference->getConfID().c_str());
     }
 
     if (receiveThread_) {
         receiveThread_->enterConference();
         receiveThread_->attach(videoMixer_.get());
+    } else {
+        RING_WARN("[call:%s] no receiver", callID_.c_str(), conference->getConfID().c_str());
     }
 }
 
@@ -268,6 +272,8 @@ void VideoRtpSession::enterConference(Conference* conference)
 
     exitConference();
 
+    RING_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
+             conference->getConfID().c_str());
     conference_ = conference;
 
     if (send_.enabled or receiveThread_)
@@ -278,6 +284,8 @@ void VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    RING_DBG("[call:%s] exitConference (conf: %s)", callID_.c_str(),
+             conference_->getConfID().c_str());
 
     if (videoMixer_) {
         if (sender_)
