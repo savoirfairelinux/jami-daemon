@@ -282,6 +282,7 @@ SinkClient::start() noexcept
 bool
 SinkClient::stop() noexcept
 {
+    setFrameSize(0, 0);
     shm_.reset();
     return true;
 }
@@ -303,12 +304,13 @@ SinkClient::start() noexcept
 bool
 SinkClient::stop() noexcept
 {
+    setFrameSize(0, 0);
     return true;
 }
 
 #endif // !HAVE_SHM
 
-SinkClient::SinkClient(const std::string& id) : id_ {id}
+SinkClient::SinkClient(const std::string& id, bool mixer) : id_ {id}, mixer_(mixer)
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
@@ -357,6 +359,20 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
           auto sp = std::make_shared<std::vector<unsigned char> >(targetData_);
           target_(sp, width, height);
         }
+    }
+}
+
+void
+SinkClient::setFrameSize(int width, int height)
+{
+    if (width > 0 and height > 0) {
+        RING_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
+                 getId().c_str(), openedName().c_str(), width, height, mixer_);
+        emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
+    } else {
+        RING_ERR("Stop sink <%s / %s>, mixer=%u",
+                 getId().c_str(), openedName().c_str(), mixer_);
+        emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
     }
 }
 

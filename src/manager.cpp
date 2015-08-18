@@ -2792,7 +2792,7 @@ Manager::newOutgoingCall(const std::string& toUrl,
 
 #ifdef RING_VIDEO
 std::shared_ptr<video::SinkClient>
-Manager::createSinkClient(const std::string& id)
+Manager::createSinkClient(const std::string& id, bool mixer)
 {
     const auto& iter = sinkMap_.find(id);
     if (iter != std::end(sinkMap_)) {
@@ -2802,7 +2802,7 @@ Manager::createSinkClient(const std::string& id)
             return nullptr;
     }
 
-    auto sink = std::make_shared<video::SinkClient>(id);
+    auto sink = std::make_shared<video::SinkClient>(id, mixer);
     sinkMap_.emplace(id, sink);
     return sink;
 }

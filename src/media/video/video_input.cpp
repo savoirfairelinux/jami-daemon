@@ -29,18 +29,18 @@
  *  as that of the covered work.
  */
 
-#ifdef RING_VIDEO
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "video_input.h"
-#endif // RING_VIDEO
 
 #include "media_decoder.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/ring_signal.h"
 #include "sinkclient.h"
 #include "logger.h"
 
-#include <map>
 #include <string>
 #include <sstream>
 #include <cassert>
@@ -94,17 +94,6 @@ void VideoInput::process()
 
     captureFrame();
 
-    if (newDecoderCreated) {
-        /* Signal the client about the new sink */
-        emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
-                                                        sink_->openedName(),
-                                                        decoder_->getWidth(),
-                                                        decoder_->getHeight(),
-                                                        false);
-        RING_DBG("LOCAL: shm sink <%s> started: size = %dx%d",
-                 sink_->openedName().c_str(), decoder_->getWidth(),
-                 decoder_->getHeight());
-    }
 }
 
 void VideoInput::cleanup()
@@ -195,6 +184,9 @@ VideoInput::createDecoder()
             decOpts_.height,
             decOpts_.framerate.real());
     foundDecOpts(decOpts_);
+
+    /* Signal the client about readable sink */
+    sink_->setFrameSize(decoder_->getWidth(), decoder_->getHeight());
 }
 
 void
@@ -203,9 +195,6 @@ VideoInput::deleteDecoder()
     if (not decoder_)
         return;
 
-    emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
-                                                    sink_->openedName(),
-                                                    false);
     flushFrames();
     delete decoder_;
     decoder_ = nullptr;
