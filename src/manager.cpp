@@ -383,47 +383,45 @@ Manager::finish() noexcept
 bool
 Manager::isCurrentCall(const Call& call) const
 {
-    return currentCall_.get() == &call;
+    return currentCall_ == call.getCallId();
 }
 
 bool
 Manager::hasCurrentCall() const
 {
-    return static_cast<bool>(currentCall_);
+    return not currentCall_.empty();
 }
 
 std::shared_ptr<Call>
 Manager::getCurrentCall() const
 {
-    return currentCall_;
+    return getCallFromCallID(currentCall_);
 }
 
 const std::string
 Manager::getCurrentCallId() const
 {
-    return currentCall_ ? currentCall_->getCallId() : "";
+    return currentCall_;
 }
 
-/**
- * Set current call ID to empty string
- */
 void
 Manager::unsetCurrentCall()
 {
-    currentCall_.reset();
+    currentCall_ = "";
 }
 
-/**
- * Switch of current call id
- * @param id The new callid
- */
+void
+Manager::switchCall(const std::string& id)
+{
+    std::lock_guard<std::mutex> m(currentCallMutex_);
+    RING_DBG("----- Switch current call id to '%s' -----", not id.empty() ? id.c_str() : "none");
+    currentCall_ = id;
+}
+
 void
 Manager::switchCall(std::shared_ptr<Call> call)
 {
-    std::lock_guard<std::mutex> m(currentCallMutex_);
-    RING_DBG("----- Switch current call id to '%s' -----",
-          call ? call->getCallId().c_str() : "<nullptr>");
-    currentCall_ = call;
+    switchCall(call->getCallId());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -520,7 +518,7 @@ Manager::answerCall(const std::string& call_id)
 
     // if we dragged this call into a conference already
     if (isConferenceParticipant(call_id))
-        switchCall(callFactory.getCall(call->getConfId()));
+        switchCall(call->getConfId());
     else
         switchCall(call);
 
@@ -654,7 +652,7 @@ Manager::offHoldCall(const std::string& callId)
 
     stopTone();
 
-    const std::string currentCallId(getCurrentCallId());
+    const auto currentCallId = getCurrentCallId();
 
     // Place current call on hold if it isn't
     if (hasCurrentCall()) {
@@ -684,7 +682,7 @@ Manager::offHoldCall(const std::string& callId)
 
     if (result) {
         if (isConferenceParticipant(callId))
-            switchCall(getCallFromCallID(call->getConfId()));
+            switchCall(call->getConfId());
         else
             switchCall(call);
 
@@ -964,7 +962,7 @@ Manager::addParticipant(const std::string& callId,
     addMainParticipant(conferenceId);
 
     auto conf = iter->second;
-    switchCall(getCallFromCallID(conf->getConfID()));
+    switchCall(conf->getConfID());
 
     // Add coresponding IDs in conf and call
     call->setConfId(conf->getConfID());
@@ -1037,12 +1035,12 @@ Manager::addMainParticipant(const std::string& conference_id)
         emitSignal<DRing::CallSignal::ConferenceChanged>(conference_id, conf->getStateStr());
     }
 
-    switchCall(getCallFromCallID(conference_id));
+    switchCall(conference_id);
     return true;
 }
 
 std::shared_ptr<Call>
-Manager::getCallFromCallID(const std::string& callID)
+Manager::getCallFromCallID(const std::string& callID) const
 {
     return callFactory.getCall(callID);
 }
@@ -1137,7 +1135,7 @@ Manager::joinParticipant(const std::string& callId1,
         RING_WARN("Call state not recognized");
 
     // Switch current call id to this conference
-    switchCall(getCallFromCallID(conf->getConfID()));
+    switchCall(conf->getConfID());
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
