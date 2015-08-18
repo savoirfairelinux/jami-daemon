@@ -247,9 +247,19 @@ pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 bool
 setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
 {
-    auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
-    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        return acc->setCertificateStatus(certId, status);
+    try {
+        if (accountId.empty()) {
+            ring::tls::CertificateStore::instance().setTrustedCertificate(certId, ring::tls::trustStatusFromStr(ststr.c_str()));
+        } else if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId)) {
+            try {
+                auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+                return acc->setCertificateStatus(certId, status);
+            } catch (const std::out_of_range&) {
+                auto status = ring::tls::trustStatusFromStr(ststr.c_str());
+                return acc->setCertificateStatus(certId, status);
+            }
+        }
+    } catch (const std::out_of_range&) {}
     return false;
 }
 
