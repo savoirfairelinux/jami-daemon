@@ -161,11 +161,8 @@ AudioSender::process()
     micData_.setFormat(mainBuffFormat);
     micData_.resize(samplesToGet);
     const auto samples = mainBuffer.getData(micData_, id_);
-    if (samples != samplesToGet) {
-        RING_ERR("Asked for %d samples from bindings on call '%s', got %d",
-                samplesToGet, id_.c_str(), samples);
+    if (samples != samplesToGet)
         return;
-    }
 
     // down/upmix as needed
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
