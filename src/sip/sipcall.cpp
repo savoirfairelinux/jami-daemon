@@ -297,7 +297,33 @@ SIPCall::updateSDPFromSTUN()
               __func__);
 }
 
-void SIPCall::answer()
+void
+SIPCall::terminateSipSession(int status)
+{
+    if (inv and inv->state != PJSIP_INV_STATE_DISCONNECTED) {
+        RING_DBG("[call:%s] Terminate SIP session", getCallId().c_str());
+
+        pjsip_tx_data* tdata = nullptr;
+        auto ret = pjsip_inv_end_session(inv.get(), status, nullptr, &tdata);
+        if (ret == PJ_SUCCESS) {
+            if (tdata) {
+                auto contact = getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr);
+                sip_utils::addContactHeader(&contact, tdata);
+                ret = pjsip_inv_send_msg(inv.get(), tdata);
+                if (ret != PJ_SUCCESS)
+                    RING_ERR("[call:%s] failed to send terminate msg, SIP error %d (%s)",
+                             getCallId().c_str(), sip_utils::sip_strerror(ret).c_str());
+            }
+        } else
+            RING_ERR("[call:%s] failed to terminate INVITE@%p, SIP error %d (%s)",
+                     getCallId().c_str(), inv.get(), sip_utils::sip_strerror(ret).c_str());
+    }
+
+    inv.reset();
+}
+
+void
+SIPCall::answer()
 {
     auto& account = getSIPAccount();
 
@@ -339,21 +365,6 @@ void SIPCall::answer()
     setState(CallState::ACTIVE, ConnectionState::CONNECTED);
 }
 
-static void
-sendEndSessionMsg(pjsip_inv_session* inv, int status, const pj_str_t* contact_str)
-{
-    pjsip_tx_data* tdata = nullptr;
-    if (pjsip_inv_end_session(inv, status, nullptr, &tdata) != PJ_SUCCESS || !tdata)
-        return;
-
-    sip_utils::addContactHeader(contact_str, tdata);
-
-    if (pjsip_inv_send_msg(inv, tdata) != PJ_SUCCESS) {
-        RING_ERR("pjsip error: failed to send end session message");
-        return;
-    }
-}
-
 void
 SIPCall::hangup(int reason)
 {
@@ -381,14 +392,11 @@ SIPCall::hangup(int reason)
     const int status = reason ? reason :
                        inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
                        PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                       inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE :
-                       0;
-    const pj_str_t contactStr(getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr));
+                       inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
 
     // Notify the peer
-    sendEndSessionMsg(inv.get(), status, &contactStr);
+    terminateSipSession(status);
 
-    inv.reset();
     setState(Call::ConnectionState::DISCONNECTED, reason);
     removeCall();
 }
@@ -401,12 +409,9 @@ SIPCall::refuse()
 
     stopAllMedia();
 
-    const pj_str_t contactStr(getSIPAccount().getContactHeader(transport_ ? transport_->get() : nullptr));
-
     // Notify the peer
-    sendEndSessionMsg(inv.get(), PJSIP_SC_DECLINE, &contactStr);
+    terminateSipSession(PJSIP_SC_DECLINE);
 
-    inv.reset();
     setState(Call::ConnectionState::DISCONNECTED, ECONNABORTED);
     removeCall();
 }
@@ -473,16 +478,8 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
                 return;
 
             if (status_line.code / 100 == 2) {
-                pjsip_tx_data *tdata;
-
-                if (!call->inv)
-                    return;
-
-                if (pjsip_inv_end_session(call->inv.get(), PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS) {
-                    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS)
-                        call->inv.reset();
-                }
-
+                if (call->inv)
+                    call->terminateSipSession(PJSIP_SC_GONE);
                 Manager::instance().hangupCall(call->getCallId());
                 pjsip_evsub_set_mod_data(sub, mod_ua_id, NULL);
             }
@@ -661,23 +658,7 @@ SIPCall::peerHungup()
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    pjsip_tx_data *tdata = NULL;
-    pj_status_t ret;
-
-    ret = pjsip_inv_end_session(inv.get(), 404, nullptr, &tdata);
-    if (ret == PJ_SUCCESS and tdata) {
-       ret = pjsip_inv_send_msg(inv.get(), tdata);
-       if (ret == PJ_SUCCESS) {
-           // Make sure user data is nullptr in callbacks
-           inv->mod_data[getSIPVoIPLink()->getModId()] = nullptr;
-           goto terminate;
-       }
-    }
-
-    // error case
-    inv.reset();
-
-terminate:
+    terminateSipSession(PJSIP_SC_NOT_FOUND);
     Call::peerHungup();
 }
 
