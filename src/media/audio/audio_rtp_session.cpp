@@ -424,37 +424,7 @@ AudioRtpSession::startReceiver()
 }
 
 void
-AudioRtpSession::start()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    if (not receive_.enabled and not receive_.enabled) {
-       stop();
-       return;
-    }
-
-    try {
-        socketPair_.reset(
-            new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort())
-        );
-        if (send_.crypto and receive_.crypto) {
-            socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
-                                    receive_.crypto.getSrtpKeyInfo().c_str(),
-                                    send_.crypto.getCryptoSuite().c_str(),
-                                    send_.crypto.getSrtpKeyInfo().c_str());
-        }
-    } catch (const std::runtime_error &e) {
-        RING_ERR("Socket creation failed on port %d: %s", receive_.addr.getPort(), e.what());
-        return;
-    }
-
-    startSender();
-    startReceiver();
-}
-
-void
-AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
-                       std::unique_ptr<IceSocket> rtcp_sock)
+AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -464,16 +434,19 @@ AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     }
 
     try {
-        socketPair_.reset(new SocketPair(std::move(rtp_sock),
-                                         std::move(rtcp_sock)));
+        if (rtp_sock and rtcp_sock)
+            socketPair_.reset(new SocketPair(std::move(rtp_sock), std::move(rtcp_sock)));
+        else
+            socketPair_.reset(new SocketPair(getRemoteRtpUri().c_str(), receive_.addr.getPort()));
+
         if (send_.crypto and receive_.crypto) {
             socketPair_->createSRTP(receive_.crypto.getCryptoSuite().c_str(),
                                     receive_.crypto.getSrtpKeyInfo().c_str(),
                                     send_.crypto.getCryptoSuite().c_str(),
                                     send_.crypto.getSrtpKeyInfo().c_str());
         }
-    } catch (const std::runtime_error &e) {
-        RING_ERR("Socket creation failed");
+    } catch (const std::runtime_error& e) {
+        RING_ERR("Socket creation failed: %s", e.what());
         return;
     }
 

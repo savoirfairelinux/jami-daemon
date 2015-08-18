@@ -56,11 +56,10 @@ public:
                     const DeviceParams& localVideoParams);
     ~VideoRtpSession();
 
-    void start();
-    void start(std::unique_ptr<IceSocket> rtp_sock,
-               std::unique_ptr<IceSocket> rtcp_sock);
+    void start(std::unique_ptr<IceSocket> rtp_sock = nullptr,
+               std::unique_ptr<IceSocket> rtcp_sock = nullptr) override;
     void restartSender() override;
-    void stop();
+    void stop() override;
 
     void forceKeyFrame();
     void bindMixer(VideoMixer* mixer);
