@@ -552,12 +552,13 @@ IceTransport::addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAd
         NULL);
 
     if (ret != PJ_SUCCESS) {
-        RING_ERR("failed to add candidate for comp_id=%d : %s : %s", comp_id
-                 , base.toString().c_str(), addr.toString().c_str());
-        sip_utils::sip_printerror(ret);
+        RING_ERR("pj_ice_sess_add_cand failed with error %d: %s", ret,
+                 sip_utils::sip_strerror(ret).c_str());
+        RING_ERR("failed to add candidate for comp_id=%d : %s : %s", comp_id,
+                 base.toString().c_str(), addr.toString().c_str());
     } else {
-        RING_DBG("succeed to add candidate for comp_id=%d : %s : %s", comp_id
-                , base.toString().c_str(), addr.toString().c_str());
+        RING_DBG("succeed to add candidate for comp_id=%d : %s : %s", comp_id,
+                 base.toString().c_str(), addr.toString().c_str());
     }
 }
 

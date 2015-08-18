@@ -690,7 +690,8 @@ SIPVoIPLink::handleEvents()
     static const pj_time_val timeout = {0, 0}; // polling
     auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
     if (ret != PJ_SUCCESS)
-        sip_utils::sip_printerror(ret);
+        RING_ERR("pjsip_endpt_handle_events failed with error %d: %s",
+                 sip_utils::sip_strerror(ret).c_str());
 
 #ifdef RING_VIDEO
     dequeKeyframeRequests();

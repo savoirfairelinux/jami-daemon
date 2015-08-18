@@ -79,7 +79,6 @@ std::string getHostFromUri(const std::string& sipUri);
 
 void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
-void sip_printerror(pj_status_t code);
 std::string sip_strerror(pj_status_t code);
 
 }} // namespace ring::sip_utils
