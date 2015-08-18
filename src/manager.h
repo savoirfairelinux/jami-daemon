@@ -774,7 +774,7 @@ class Manager {
         /**
          * Get the Call referred to by callID. If the Call does not exist, return NULL
          */
-        std::shared_ptr<Call> getCallFromCallID(const std::string &callID);
+        std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
 
         /**
          * Process remaining participant given a conference and the current call id.
@@ -791,6 +791,7 @@ class Manager {
 
         void unsetCurrentCall();
 
+        void switchCall(const std::string& id);
         void switchCall(std::shared_ptr<Call> call);
 
         /** Application wide tone controler */
@@ -803,7 +804,7 @@ class Manager {
         void playATone(Tone::TONEID toneId);
 
         /** Current Call ID */
-        std::shared_ptr<Call> currentCall_ = nullptr;
+        std::string currentCall_;
 
         /** Protected current call access */
         std::mutex currentCallMutex_;
