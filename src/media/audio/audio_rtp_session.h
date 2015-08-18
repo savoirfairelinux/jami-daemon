@@ -51,11 +51,10 @@ class AudioRtpSession : public RtpSession {
         AudioRtpSession(const std::string& id);
         virtual ~AudioRtpSession();
 
-        void start();
-        void start(std::unique_ptr<IceSocket> rtp_sock,
-                   std::unique_ptr<IceSocket> rtcp_sock);
+        void start(std::unique_ptr<IceSocket> rtp_sock = nullptr,
+                   std::unique_ptr<IceSocket> rtcp_sock = nullptr) override;
         void restartSender() override;
-        void stop();
+        void stop() override;
         void setMuted(bool isMuted);
 
     private:
