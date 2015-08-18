@@ -35,7 +35,6 @@
 #include "media_buffer.h"
 #include "logger.h"
 #include "client/videomanager.h"
-#include "client/ring_signal.h"
 #include "manager.h"
 #include "sinkclient.h"
 #include "logger.h"
@@ -50,7 +49,7 @@ static const double FRAME_DURATION = 1/30.;
 VideoMixer::VideoMixer(const std::string &id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
-    , sink_ {Manager::instance().createSinkClient(id)}
+    , sink_ (Manager::instance().createSinkClient(id, true))
     , loop_([]{return true;},
             std::bind(&VideoMixer::process, this),
             []{})
@@ -187,31 +186,27 @@ void VideoMixer::setDimensions(int width, int height)
     if (previous_p)
         yuv422_clear_to_black(*previous_p);
 
-    stop_sink();
     start_sink();
 }
 
-void VideoMixer::start_sink()
+void
+VideoMixer::start_sink()
 {
-    if (sink_->start()) {
-        if (this->attach(sink_.get())) {
-            emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
-                                                            sink_->openedName(),
-                                                            width_, height_,
-                                                            true);
-            RING_DBG("MX: shm sink <%s> started: size = %dx%d",
-                  sink_->openedName().c_str(), width_, height_);
-        }
-    } else
-        RING_WARN("MX: sink startup failed");
+    stop_sink();
+
+    if (not sink_->start()) {
+        RING_ERR("MX: sink startup failed");
+        return;
+    }
+
+    if (this->attach(sink_.get()))
+        sink_->setFrameSize(width_, height_);
 }
 
-void VideoMixer::stop_sink()
+void
+VideoMixer::stop_sink()
 {
     this->detach(sink_.get());
-    emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
-                                                    sink_->openedName(),
-                                                    true);
     sink_->stop();
 }
 

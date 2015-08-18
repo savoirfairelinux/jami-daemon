@@ -55,7 +55,7 @@ class ShmHolder;
 class SinkClient : public VideoFramePassiveReader
 {
     public:
-        SinkClient(const std::string& id="");
+        SinkClient(const std::string& id="", bool mixer=false);
 
         const std::string& getId() const noexcept {
             return id_;
@@ -70,6 +70,8 @@ class SinkClient : public VideoFramePassiveReader
         bool start() noexcept;
         bool stop() noexcept;
 
+        void setFrameSize(int width, int height);
+
         template <class T>
         void registerTarget(T&& cb) noexcept {
             target_ = std::forward<T>(cb);
@@ -77,6 +79,7 @@ class SinkClient : public VideoFramePassiveReader
 
     private:
         const std::string id_;
+        const bool mixer_;
         std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)> target_;
         std::vector<unsigned char> targetData_;
 
