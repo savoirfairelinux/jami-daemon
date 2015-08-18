@@ -676,7 +676,6 @@ SIPCall::peerHungup()
 
     // error case
     inv.reset();
-    sip_utils::sip_printerror(ret);
 
 terminate:
     Call::peerHungup();
