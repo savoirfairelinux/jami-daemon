@@ -995,7 +995,8 @@ SIPAccount::sendRegister()
 
     //RING_DBG("pjsip_regc_init from:%s, srv:%s, contact:%s", from.c_str(), srvUri.c_str(), std::string(pj_strbuf(&pjContact), pj_strlen(&pjContact)).c_str());
     if ((status = pjsip_regc_init(regc, &pjSrv, &pjFrom, &pjFrom, 1, &pjContact, getRegistrationExpire())) != PJ_SUCCESS) {
-        sip_utils::sip_printerror(status);
+        RING_ERR("pjsip_regc_init failed with error %d: %s", status,
+                 sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to initialize account registration structure");
     }
 
@@ -1034,7 +1035,8 @@ SIPAccount::sendRegister()
 
     // pjsip_regc_send increment the transport ref count by one,
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_utils::sip_printerror(status);
+        RING_ERR("pjsip_regc_init failed with error %d: %s", status,
+                 sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send account registration request");
     }
 
@@ -1149,7 +1151,8 @@ SIPAccount::sendUnregister()
 
     pj_status_t status;
     if ((status = pjsip_regc_send(regc, tdata)) != PJ_SUCCESS) {
-        sip_utils::sip_printerror(status);
+        RING_ERR("pjsip_regc_send failed with error %d: %s", status,
+                 sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
 
