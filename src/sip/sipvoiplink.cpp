@@ -466,12 +466,14 @@ tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
 
 /*************************************************************************************************/
 
-pjsip_endpoint * SIPVoIPLink::getEndpoint()
+pjsip_endpoint*
+SIPVoIPLink::getEndpoint()
 {
     return endpt_;
 }
 
-pjsip_module * SIPVoIPLink::getMod()
+pjsip_module*
+SIPVoIPLink::getMod()
 {
     return &mod_ua_;
 }
@@ -698,7 +700,8 @@ SIPVoIPLink::handleEvents()
 #endif
 }
 
-void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
+void
+SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
     RING_DBG("Register new keep alive timer %d with delay %d", timer.id, delay.sec);
 
@@ -723,7 +726,8 @@ void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &del
     }
 }
 
-void SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
+void
+SIPVoIPLink::cancelKeepAliveTimer(pj_timer_entry& timer)
 {
     pjsip_endpt_cancel_timer(endpt_, &timer);
 }
@@ -782,87 +786,88 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
 
-static void
-invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
+static std::shared_ptr<SIPCall>
+getCallFromInvite(pjsip_inv_session* inv)
 {
-    if (!inv)
+    if (auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]))
+        return std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
+    return nullptr;
+}
+
+static void
+invite_session_state_changed_cb(pjsip_inv_session* inv, pjsip_event* ev)
+{
+    auto call = getCallFromInvite(inv);
+    if (not call)
         return;
 
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr) {
-        RING_WARN("invite_session_state_changed_cb: can't find related call");
+    if (ev->type != PJSIP_EVENT_TSX_STATE and ev->type != PJSIP_EVENT_TX_MSG) {
+        RING_WARN("[call:%s] INVITE@%p state changed to %d (%s): unwaited event type %d",
+                  call->getCallId().c_str(), inv, inv->state, pjsip_inv_state_name(inv->state),
+                  ev->type);
         return;
     }
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
-    if (ev and inv->state != PJSIP_INV_STATE_CONFIRMED) {
-        const auto tsx = ev->body.tsx_state.tsx;
-        if (auto status_code = tsx ? tsx->status_code : 404) {
-            const pj_str_t* description = pjsip_get_status_text(status_code);
-            RING_DBG("SIP invite session state change: %d %.*s", status_code, description->slen, description->ptr);
-        }
-    }
+    const auto tsx = ev->body.tsx_state.tsx;
+    const auto status_code = tsx ? tsx->status_code : PJSIP_SC_NOT_FOUND;
+    const pj_str_t* description = pjsip_get_status_text(status_code);
 
-    if (inv->state == PJSIP_INV_STATE_EARLY and ev and ev->body.tsx_state.tsx and
-            ev->body.tsx_state.tsx->role == PJSIP_ROLE_UAC) {
-        call->onPeerRinging();
-    } else if (inv->state == PJSIP_INV_STATE_CONFIRMED and ev) {
-        // After we sent or received a ACK - The connection is established
-        call->onAnswered();
-    } else if (inv->state == PJSIP_INV_STATE_DISCONNECTED) {
-        switch (inv->cause) {
+    RING_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d, tsx@%p status %d (%.*s)",
+             call->getCallId().c_str(), inv, inv->state, pjsip_inv_state_name(inv->state),
+             inv->cause, tsx, status_code, description->slen, description->ptr);
+
+    switch (inv->state) {
+        case PJSIP_INV_STATE_EARLY:
+            if (status_code == PJSIP_SC_RINGING)
+                call->onPeerRinging();
+            break;
+
+        case PJSIP_INV_STATE_CONFIRMED:
+            // After we sent or received a ACK - The connection is established
+            call->onAnswered();
+            break;
+
+        case PJSIP_INV_STATE_DISCONNECTED:
+            switch (inv->cause) {
+                // When the peer manually refuse the call
+                case PJSIP_SC_DECLINE:
+                case PJSIP_SC_BUSY_EVERYWHERE:
+                case PJSIP_SC_BUSY_HERE:
+                    if (inv->role != PJSIP_ROLE_UAC)
+                        break;
+                    // close call
+
                 // The call terminates normally - BYE / CANCEL
-
-            case PJSIP_SC_DECLINE: //When the peer manually refuse the call
-                if (inv->role != PJSIP_ROLE_UAC)
+                case PJSIP_SC_OK:
+                case PJSIP_SC_REQUEST_TERMINATED:
+                    call->onClosed();
                     break;
 
-            case PJSIP_SC_OK:
-            case PJSIP_SC_REQUEST_TERMINATED:
-                call->onClosed();
-                break;
+                // Error/unhandled conditions
+                default:
+                    call->onFailure(inv->cause);
+                    break;
+            }
+            break;
 
-            case PJSIP_SC_NOT_FOUND:
-            case PJSIP_SC_REQUEST_TIMEOUT:
-            case PJSIP_SC_NOT_ACCEPTABLE_HERE:  /* no compatible codecs */
-            case PJSIP_SC_NOT_ACCEPTABLE_ANYWHERE:
-            case PJSIP_SC_UNSUPPORTED_MEDIA_TYPE:
-            case PJSIP_SC_UNAUTHORIZED:
-            case PJSIP_SC_FORBIDDEN:
-            case PJSIP_SC_REQUEST_PENDING:
-            case PJSIP_SC_ADDRESS_INCOMPLETE:
-            default:
-                RING_WARN("PJSIP_INV_STATE_DISCONNECTED: %d %d",
-                         inv->cause, ev ? ev->type : -1);
-                call->onFailure(inv->cause);
-                break;
-        }
+        default:
+            break;
     }
 }
 
 static void
 sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer)
 {
-    if (!inv)
-        return;
-
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr)
-        return;
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
-    call->onReceiveOffer(offer);
+    if (auto call = getCallFromInvite(inv))
+        call->onReceiveOffer(offer);
 }
 
 static void
 sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 {
-    if (!inv or !p_offer)
+    auto call = getCallFromInvite(inv);
+    if (not call)
         return;
-
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr)
-        return;
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     const auto& account = call->getSIPAccount();
     auto family = pj_AF_INET();
@@ -958,40 +963,31 @@ get_active_local_sdp(pjsip_inv_session *inv)
 
 // This callback is called after SDP offer/answer session has completed.
 static void
-sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status)
+sdp_media_update_cb(pjsip_inv_session* inv, pj_status_t status)
 {
-    if (!inv)
+    auto call = getCallFromInvite(inv);
+    if (not call)
         return;
 
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr) {
-        RING_DBG("Call declined by peer, SDP negotiation stopped");
-        return;
-    }
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
+    RING_DBG("[call:%s] INVITE@%p media update: status %d",
+             call->getCallId().c_str(), inv, status);
 
     if (status != PJ_SUCCESS) {
         const int reason = inv->state != PJSIP_INV_STATE_NULL and
                            inv->state != PJSIP_INV_STATE_CONFIRMED ?
                            PJSIP_SC_UNSUPPORTED_MEDIA_TYPE : 0;
 
-        RING_WARN("Could not negotiate offer");
+        RING_WARN("[call:%s] SDP offer failed, reason %d", call->getCallId().c_str(), reason);
         call->hangup(reason);
         return;
     }
 
-    if (!inv->neg) {
-        RING_WARN("No negotiator for this session");
-        return;
-    }
-
+    // Fetch SDP data from request
     const auto localSDP = get_active_local_sdp(inv);
     const auto remoteSDP = get_active_remote_sdp(inv);
 
-    // Update our sdp manager
+    // Update our SDP manager
     auto& sdp = call->getSDP();
-
-    // Set active SDP sessions
     sdp.setActiveLocalSdpSession(localSDP);
     sdp.setActiveRemoteSdpSession(remoteSDP);
 
@@ -1152,39 +1148,34 @@ onRequestMessage(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, S
 static void
 transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjsip_event* event)
 {
-    //RING_DBG("inv=%p, tsx=%p, ev=%p", inv, tsx, event);
-    // We process here only incoming request message
+    auto call = getCallFromInvite(inv);
+    if (not call)
+        return;
 
-    if (tsx->role != PJSIP_ROLE_UAS or tsx->state != PJSIP_TSX_STATE_TRYING
+    // We process here only incoming request message
+    if (tsx->role != PJSIP_ROLE_UAS
+        or tsx->state != PJSIP_TSX_STATE_TRYING
         or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
-        RING_DBG("tsx_role=%d, tsx_state=%d, ev_type=%d, tsx_state_type=%d",
+        RING_DBG("[INVITE:%p] tsx_role=%d, tsx_state=%d, ev_type=%d, tsx_state_type=%d", inv,
                  tsx->role, tsx->state, event->type, event->body.tsx_state.type);
         return;
     }
 
     const auto rdata = event->body.tsx_state.src.rdata;
     if (!rdata) {
-        RING_ERR("SIP RX request without rx data");
+        RING_ERR("[INVITE:%p] SIP RX request without rx data", inv);
         return;
     }
 
     const auto msg = rdata->msg_info.msg;
     if (msg->type != PJSIP_REQUEST_MSG) {
-        RING_ERR("SIP RX request without msg");
+        RING_ERR("[INVITE:%p] SIP RX request without msg", inv);
         return;
     }
-
-    // Try to obtain associated SIPCall
-    auto call_ptr = static_cast<SIPCall*>(inv->mod_data[mod_ua_.id]);
-    if (!call_ptr) {
-        RING_ERR("SIP RX request without call");
-        return;
-    }
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
 
     // Using method name to dispatch
     const std::string methodName {msg->line.req.method.name.ptr, (unsigned)msg->line.req.method.name.slen};
-    RING_DBG("RX SIP method %d (%#s)", msg->line.req.method.id, methodName.c_str());
+    RING_DBG("[INVITE:%p] RX SIP method %d (%#s)", inv, msg->line.req.method.id, methodName.c_str());
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1202,13 +1193,17 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         onRequestMessage(inv, rdata, msg, *call);
 }
 
-int SIPVoIPLink::getModId()
+int
+SIPVoIPLink::getModId()
 {
     return mod_ua_.id;
 }
 
 void SIPVoIPLink::createSDPOffer(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
-{ sdp_create_offer_cb(inv, p_offer); }
+{
+    assert(inv and p_offer);
+    sdp_create_offer_cb(inv, p_offer);
+}
 
 // Thread-safe DNS resolver callback mapping
 class SafeResolveCallbackMap {
