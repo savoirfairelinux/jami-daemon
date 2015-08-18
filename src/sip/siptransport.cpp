@@ -349,10 +349,11 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
         ? pjsip_udp_transport_start (endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress),  nullptr, 1, &transport)
         : pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
     if (status != PJ_SUCCESS) {
+        RING_ERR("pjsip_udp_transport_start* failed with error %d: %s", status,
+                 sip_utils::sip_strerror(status).c_str());
         RING_ERR("UDP IPv%s Transport did not start on %s",
             listeningAddress.isIpv4() ? "4" : "6",
             listeningAddress.toString(true).c_str());
-        sip_utils::sip_printerror(status);
         return nullptr;
     }
 
