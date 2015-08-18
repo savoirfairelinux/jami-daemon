@@ -962,7 +962,7 @@ class Manager {
         void addTask(const std::function<bool()>&& task);
 
 #ifdef RING_VIDEO
-        std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="");
+        std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
 
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 #endif // RING_VIDEO

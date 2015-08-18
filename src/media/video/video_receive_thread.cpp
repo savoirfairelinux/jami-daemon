@@ -36,7 +36,6 @@
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
-#include "client/ring_signal.h"
 #include "sinkclient.h"
 #include "logger.h"
 
@@ -140,8 +139,6 @@ void VideoReceiveThread::process()
 void VideoReceiveThread::cleanup()
 {
     detach(sink_.get());
-    emitSignal<DRing::VideoSignal::DecodingStopped>(id_, sink_->openedName(),
-                                                    false);
     sink_->stop();
 
     videoDecoder_.reset();
@@ -201,12 +198,8 @@ void VideoReceiveThread::enterConference()
     if (!loop_.isRunning())
         return;
 
-    if (detach(sink_.get())) {
-        emitSignal<DRing::VideoSignal::DecodingStopped>(sink_->getId(),
-                                                        sink_->openedName(),
-                                                        true);
-        RING_DBG("RX: shm sink <%s> detached", sink_->openedName().c_str());
-    }
+    detach(sink_.get());
+    sink_->setFrameSize(0, 0);
 }
 
 void VideoReceiveThread::exitConference()
@@ -214,16 +207,8 @@ void VideoReceiveThread::exitConference()
     if (!loop_.isRunning())
         return;
 
-    if (dstWidth_ > 0 && dstHeight_ > 0) {
-        if (attach(sink_.get())) {
-            emitSignal<DRing::VideoSignal::DecodingStarted>(sink_->getId(),
-                                                            sink_->openedName(),
-                                                            dstWidth_,
-                                                            dstHeight_, false);
-            RING_DBG("RX: shm sink <%s> started: size = %dx%d",
-                     sink_->openedName().c_str(), dstWidth_, dstHeight_);
-        }
-    }
+    if (dstWidth_ > 0 and dstHeight_ > 0 and attach(sink_.get()))
+        sink_->setFrameSize(dstWidth_, dstHeight_);
 }
 
 void VideoReceiveThread::setRequestKeyFrameCallback(
