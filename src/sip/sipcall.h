@@ -217,6 +217,7 @@ class SIPCall : public Call
 
         bool initIceTransport(bool master, unsigned channel_num=4) override;
 
+        void terminateSipSession(int status);
     private:
         NON_COPYABLE(SIPCall);
 
