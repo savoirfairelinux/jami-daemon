@@ -38,6 +38,18 @@ namespace ring { namespace tls {
 
 namespace crypto = dht::crypto;
 
+enum class TrustStatus {
+    UNTRUSTED = 0,
+    TRUSTED
+};
+TrustStatus trustStatusFromStr(const char* str);
+const char* statusToStr(TrustStatus s);
+
+
+/**
+ * Global certificate store.
+ * Stores system root CAs and any other encountred certificate
+ */
 class CertificateStore {
 public:
     static CertificateStore& instance();
@@ -56,8 +68,11 @@ public:
     std::vector<std::string> pinCertificate(std::shared_ptr<crypto::Certificate> crt, bool local = true);
     bool unpinCertificate(const std::string&);
 
-    void pinCertificatePath(const std::string& path);
+    void pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb = {});
     unsigned unpinCertificatePath(const std::string&);
+
+    bool setTrustedCertificate(const std::string& id, TrustStatus status);
+    std::vector<gnutls_x509_crt_t> getTrustedCertificates() const;
 
 private:
     NON_COPYABLE(CertificateStore);
@@ -69,42 +84,67 @@ private:
     mutable std::mutex lock_;
     std::map<std::string, std::shared_ptr<crypto::Certificate>> certs_;
     std::map<std::string, std::vector<std::weak_ptr<crypto::Certificate>>> paths_;
+
+    // globally trusted certificates (root CAs)
+    std::vector<std::shared_ptr<crypto::Certificate>> trustedCerts_;
 };
 
-
+/**
+ * Keeps track of the allowed and trust status of certificates
+ * Trusted is the status of top certificates we trust to build our
+ * certificate chain: root CAs and other configured CAs.
+ *
+ * Allowed is the status of certificates we accept for incoming
+ * connections.
+ */
 class TrustStore {
 public:
     TrustStore();
     virtual ~TrustStore();
 
-    enum class Status {
+    enum class PermissionStatus {
         UNDEFINED = 0,
         ALLOWED,
         BANNED
     };
 
-    static Status statusFromStr(const char* str);
-    static const char* statusToStr(Status s);
+    static PermissionStatus statusFromStr(const char* str);
+    static const char* statusToStr(PermissionStatus s);
 
-    bool setCertificateStatus(const std::string& cert_id, const Status status);
-    bool setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert, const Status status, bool local = true);
-    Status getCertificateStatus(const std::string& cert_id) const;
-    std::vector<std::string> getCertificatesByStatus(Status status);
+    bool setCertificateStatus(const std::string& cert_id, const PermissionStatus status);
+    bool setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
 
-    bool isTrusted(const crypto::Certificate& crt);
+    bool setCertificateStatus(const std::string& cert_id, const TrustStatus status);
+    bool setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert, TrustStatus status, bool local = true);
+
+    PermissionStatus getCertificateStatus(const std::string& cert_id) const;
+    TrustStatus getCertificateTrustStatus(const std::string& cert_id) const;
+
+    std::vector<std::string> getCertificatesByStatus(PermissionStatus status);
+
+    bool isAllowed(const crypto::Certificate& crt);
+
+    std::vector<gnutls_x509_crt_t> getTrustedCertificates() const;
 
 private:
     NON_COPYABLE(TrustStore);
 
-    static std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt);
-
     void updateKnownCerts();
-    void setStoreCertStatus(const crypto::Certificate& crt, Status status);
+    void setStoreCertStatus(const crypto::Certificate& crt, PermissionStatus status);
+
+    static bool matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_trust_list_st* store);
+
+    struct Status {
+        bool allowed : 1;
+        bool trusted : 1;
+    };
 
     // unknown certificates with known status
     std::map<std::string, Status> unknownCertStatus_;
     std::map<std::string, std::pair<std::shared_ptr<crypto::Certificate>, Status>> certStatus_;
-    gnutls_x509_trust_list_st* trust_;
+    gnutls_x509_trust_list_st* allowed_;
 };
+
+std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt);
 
 }} // namespace ring::tls
