@@ -73,7 +73,7 @@ public:
     bool useCodec(const AccountVideoCodecInfo* codec) const;
 
 private:
-    void setupConferenceVideoPipeline(Conference *conference);
+    void setupConferenceVideoPipeline(Conference& conference);
     void startSender();
     void startReceiver();
 
