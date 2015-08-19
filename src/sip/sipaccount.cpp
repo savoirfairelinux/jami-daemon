@@ -1422,7 +1422,7 @@ SIPAccount::getContactHeader(pjsip_transport* t)
         t = transport_->get();
     if (!t) {
         RING_ERR("Transport not created yet");
-        return {};
+        return {nullptr, 0};
     }
 
     // The transport type must be specified, in our case START_OTHER refers to stun transport
@@ -1652,10 +1652,11 @@ SIPAccount::getCredentials() const
 }
 
 void
-SIPAccount::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& detail_str)
+SIPAccount::setRegistrationState(RegistrationState state, unsigned details_code,
+                                 const std::string& /*detail_str*/)
 {
     std::string details_str;
-    const pj_str_t *description = pjsip_get_status_text(details_code);
+    const pj_str_t* description = pjsip_get_status_text(details_code);
     if (description)
         details_str = {description->ptr, (size_t)description->slen};
     setRegistrationStateDetailed({details_code, details_str});
