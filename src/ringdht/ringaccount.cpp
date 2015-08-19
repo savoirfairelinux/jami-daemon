@@ -879,7 +879,7 @@ void
 RingAccount::incomingCall(dht::IceCandidates&& msg)
 {
     auto from = msg.from.toString();
-    RING_WARN("ICE incoming (id %lu) from DHT peer %s\n%s", msg.id, from.c_str(),
+    RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
