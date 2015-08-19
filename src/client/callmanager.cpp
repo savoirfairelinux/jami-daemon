@@ -43,6 +43,8 @@
 #include "logger.h"
 #include "manager.h"
 
+#define CLIENT_CALL() RING_DBG("client> %s", __func__)
+
 namespace DRing {
 
 void
@@ -64,6 +66,7 @@ registerCallHandlers(const std::map<std::string,
 std::string
 placeCall(const std::string& accountID, const std::string& to)
 {
+    CLIENT_CALL();
     // Check if a destination number is available
     if (to.empty()) {
         RING_DBG("No number entered - Call stopped");
@@ -76,187 +79,217 @@ placeCall(const std::string& accountID, const std::string& to)
 bool
 refuse(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().refuseCall(callID);
 }
 
 bool
 accept(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().answerCall(callID);
 }
 
 bool
 hangUp(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().hangupCall(callID);
 }
 
 bool
 hangUpConference(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().hangupConference(confID);
 }
 
 bool
 hold(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().onHoldCall(callID);
 }
 
 bool
 unhold(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().offHoldCall(callID);
 }
 
 bool
 muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().muteMediaCall(callid, mediaType, mute);
 }
 
 bool
 transfer(const std::string& callID, const std::string& to)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().transferCall(callID, to);
 }
 
 bool
 attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().attendedTransfer(transferID, targetID);
 }
 
 bool
-joinParticipant(const std::string& sel_callID,
-                             const std::string& drag_callID)
+joinParticipant(const std::string& sel_callID, const std::string& drag_callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
 createConfFromParticipantList(const std::vector<std::string>& participants)
 {
-   ring::Manager::instance().createConfFromParticipantList(participants);
+    CLIENT_CALL();
+    ring::Manager::instance().createConfFromParticipantList(participants);
 }
 
 bool
 isConferenceParticipant(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().isConferenceParticipant(callID);
 }
 
 void
 removeConference(const std::string& conference_id)
 {
-   ring::Manager::instance().removeConference(conference_id);
+    CLIENT_CALL();
+    ring::Manager::instance().removeConference(conference_id);
 }
 
 bool
 addParticipant(const std::string& callID, const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().addParticipant(callID, confID);
 }
 
 bool
 addMainParticipant(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().addMainParticipant(confID);
 }
 
 bool
 detachParticipant(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().detachParticipant(callID);
 }
 
 bool
 joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool
 holdConference(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().holdConference(confID);
 }
 
 bool
 unholdConference(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
 getConferenceDetails(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getConferenceDetails(callID);
 }
 
 std::vector<std::string>
 getConferenceList()
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getConferenceList();
 }
 
 std::vector<std::string>
 getParticipantList(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getParticipantList(confID);
 }
 
 std::vector<std::string>
 getDisplayNames(const std::string& confID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getDisplayNames(confID);
 }
 
 std::string
 getConferenceId(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getConferenceId(callID);
 }
 
 bool
 startRecordedFilePlayback(const std::string& filepath)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().startRecordedFilePlayback(filepath);
 }
 
 void
 stopRecordedFilePlayback(const std::string& filepath)
 {
-   ring::Manager::instance().stopRecordedFilePlayback(filepath);
+    CLIENT_CALL();
+    ring::Manager::instance().stopRecordedFilePlayback(filepath);
 }
 
 bool
 toggleRecording(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().toggleRecordingCall(callID);
 }
 
 void
 setRecording(const std::string& callID)
 {
+    CLIENT_CALL();
     toggleRecording(callID);
 }
 
 void
 recordPlaybackSeek(double value)
 {
-   ring::Manager::instance().recordingPlaybackSeek(value);
+    CLIENT_CALL();
+    ring::Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
 getIsRecording(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().isRecording(callID);
 }
 
 std::string
 getCurrentAudioCodecName(const std::string&)
 {
+    CLIENT_CALL();
     RING_WARN("Deprecated");
     return "";
 }
@@ -264,18 +297,21 @@ getCurrentAudioCodecName(const std::string&)
 std::map<std::string, std::string>
 getCallDetails(const std::string& callID)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getCallDetails(callID);
 }
 
 std::vector<std::string>
 getCallList()
 {
+    CLIENT_CALL();
     return ring::Manager::instance().getCallList();
 }
 
 void
 playDTMF(const std::string& key)
 {
+    CLIENT_CALL();
     auto code = key.data()[0];
     ring::Manager::instance().playDtmf(code);
 
@@ -286,6 +322,7 @@ playDTMF(const std::string& key)
 void
 startTone(int32_t start, int32_t type)
 {
+    CLIENT_CALL();
     if (start) {
         if (type == 0)
            ring::Manager::instance().playTone();
@@ -298,44 +335,51 @@ startTone(int32_t start, int32_t type)
 bool
 switchInput(const std::string& callID, const std::string& resource)
 {
+    CLIENT_CALL();
     return ring::Manager::instance().switchInput(callID, resource);
 }
 
 void
 setSASVerified(const std::string& /*callID*/)
 {
+    CLIENT_CALL();
     RING_ERR("ZRTP not supported");
 }
 
 void
 resetSASVerified(const std::string& /*callID*/)
 {
+    CLIENT_CALL();
     RING_ERR("ZRTP not supported");
 }
 
 void
 setConfirmGoClear(const std::string& /*callID*/)
 {
+    CLIENT_CALL();
     RING_ERR("ZRTP not supported");
 }
 
 void
 requestGoClear(const std::string& /*callID*/)
 {
+    CLIENT_CALL();
     RING_ERR("ZRTP not supported");
 }
 
 void
 acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
 {
+    CLIENT_CALL();
     RING_ERR("ZRTP not supported");
 }
 
 void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
+    CLIENT_CALL();
 #if HAVE_INSTANT_MESSAGING
-   ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
+    ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
 #endif
 }
 
