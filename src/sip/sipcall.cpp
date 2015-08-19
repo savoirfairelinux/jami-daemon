@@ -229,32 +229,42 @@ int
 SIPCall::SIPSessionReinvite()
 {
     // Do nothing if no invitation processed yet
-    if (not inv)
+    if (not inv or inv->invite_tsx)
         return PJ_SUCCESS;
+
+    RING_DBG("[call:%s] Processing reINVITE (state=%s)", getCallId().c_str(),
+             pjsip_inv_state_name(inv->state));
 
     // Generate new ports to receive the new media stream
     // LibAV doesn't discriminate SSRCs and will be confused about Seq changes on a given port
     generateMediaPorts();
     sdp_->clearIce();
     auto& acc = getSIPAccount();
-    sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                      acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
-                      acc.getSrtpKeyExchange(),
-                      getState() == CallState::HOLD);
+    if (not sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
+                              acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+                              acc.getSrtpKeyExchange(),
+                              getState() == CallState::HOLD))
+        return !PJ_SUCCESS;
+
     if (initIceTransport(true))
         setupLocalSDPFromIce();
 
-    pjmedia_sdp_session *local_sdp = sdp_->getLocalSdpSession();
-
-    pjsip_tx_data *tdata;
-
-    if (local_sdp and inv and inv->pool_prov
-        and pjsip_inv_reinvite(inv.get(), NULL, local_sdp, &tdata) == PJ_SUCCESS) {
-        if (pjsip_inv_send_msg(inv.get(), tdata) == PJ_SUCCESS)
+    pjsip_tx_data* tdata;
+    auto local_sdp = sdp_->getLocalSdpSession();
+    auto result = pjsip_inv_reinvite(inv.get(), nullptr, local_sdp, &tdata);
+    if (result == PJ_SUCCESS) {
+        if (!tdata)
             return PJ_SUCCESS;
-        else
-            inv.reset();
-    }
+        result = pjsip_inv_send_msg(inv.get(), tdata);
+        if (result == PJ_SUCCESS)
+            return PJ_SUCCESS;
+        RING_ERR("[call:%s] Failed to send REINVITE msg (pjsip: %s)", getCallId().c_str(),
+                 sip_utils::sip_strerror(result).c_str());
+        // Canceling internals without sending (anyways the send has just failed!)
+        pjsip_inv_cancel_reinvite(inv.get(), &tdata);
+    } else
+        RING_ERR("[call:%s] Failed to create REINVITE msg (pjsip: %s)", getCallId().c_str(),
+                 sip_utils::sip_strerror(result).c_str());
 
     return !PJ_SUCCESS;
 }
@@ -631,7 +641,7 @@ SIPCall::internalOffHold(const std::function<void()>& sdp_cb)
 
     if (getConnectionState() == ConnectionState::CONNECTED) {
         if (SIPSessionReinvite() != PJ_SUCCESS) {
-            RING_WARN("[call:%s] Reinvite failed, resuming hold", getCallId().c_str());
+            RING_WARN("[call:%s] resuming hold", getCallId().c_str());
             onhold();
             return false;
         }
@@ -645,8 +655,7 @@ SIPCall::switchInput(const std::string& resource)
 {
 #ifdef RING_VIDEO
     videoInput_ = resource;
-    if (SIPSessionReinvite() != PJ_SUCCESS)
-        RING_WARN("[call:%s] Reinvite failed", getCallId().c_str());
+    SIPSessionReinvite();
 #endif
 }
 
