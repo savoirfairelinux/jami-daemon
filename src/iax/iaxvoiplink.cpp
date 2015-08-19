@@ -239,7 +239,7 @@ IAXVoIPLink::handleAnswerTransfer(iax_event* event, IAXCall& call)
     if (event->ies.format)
         call.format = event->ies.format;
 
-    Manager::instance().addStream(call);
+    Manager::instance().addAudio(call);
     Manager::instance().peerAnsweredCall(call);
     Manager::instance().startAudioDriverStream();
     Manager::instance().getRingBufferPool().flushAllBuffers();
