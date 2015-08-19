@@ -352,15 +352,19 @@ PortAudioLayer::init()
     indexOut_ = indexRing_ = Pa_GetDefaultOutputDevice();
     indexIn_ = Pa_GetDefaultInputDevice();
 
-    const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
-    audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-    audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
-    hardwareFormatAvailable(audioFormat_);
+    if (indexOut_ != paNoDevice) {
+        const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
+        audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
+        audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
+        hardwareFormatAvailable(audioFormat_);
+    }
 
-    const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_);
-    audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-    audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
-    hardwareInputFormatAvailable(audioInputFormat_);
+    if (indexIn_ != paNoDevice) {
+        const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_);
+        audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+        audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
+        hardwareInputFormatAvailable(audioInputFormat_);
+    }
 }
 
 void
@@ -383,56 +387,58 @@ PortAudioLayer::initStream()
 
     if (outputParameters.device == paNoDevice) {
         RING_ERR("Error: No valid output device. There will be no sound.");
+    } else {
+        const auto outputDeviceInfo =
+            Pa_GetDeviceInfo(outputParameters.device);
+        outputParameters.channelCount =
+            audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
+        outputParameters.sampleFormat = paInt16;
+        outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
+        outputParameters.hostApiSpecificStreamInfo = NULL;
+
+        auto err = Pa_OpenStream(
+            &streams[Direction::Output],
+            NULL,
+            &outputParameters,
+            outputDeviceInfo->defaultSampleRate,
+            paFramesPerBufferUnspecified,
+            paNoFlag,
+            &PortAudioLayer::paOutputCallback,
+            this);
+        if(err != paNoError)
+            this->handleError(err);
     }
-
-    const auto outputDeviceInfo =
-        Pa_GetDeviceInfo(outputParameters.device);
-    outputParameters.channelCount =
-        audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-    outputParameters.sampleFormat = paInt16;
-    outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
-    outputParameters.hostApiSpecificStreamInfo = NULL;
-
-    PaError err = Pa_OpenStream(
-        &streams[Direction::Output],
-        NULL,
-        &outputParameters,
-        outputDeviceInfo->defaultSampleRate,
-        paFramesPerBufferUnspecified,
-        paNoFlag,
-        &PortAudioLayer::paOutputCallback,
-        this);
-    if(err != paNoError)
-        this->handleError(err);
 
     RING_DBG("Open PortAudio Input Stream");
     PaStreamParameters inputParameters;
     inputParameters.device = indexIn_;
     if (inputParameters.device == paNoDevice) {
         RING_ERR("Error: No valid input device. There will be no mic.");
+    } else {
+        const auto inputDeviceInfo =
+            Pa_GetDeviceInfo(inputParameters.device);
+        inputParameters.channelCount =
+            audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+        inputParameters.sampleFormat = paInt16;
+        inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
+        inputParameters.hostApiSpecificStreamInfo = NULL;
+
+        auto err = Pa_OpenStream(
+            &streams[Direction::Input],
+            &inputParameters,
+            NULL,
+            inputDeviceInfo->defaultSampleRate,
+            paFramesPerBufferUnspecified,
+            paNoFlag,
+            &PortAudioLayer::paInputCallback,
+            this);
+        if(err != paNoError)
+            this->handleError(err);
     }
-
-    const auto inputDeviceInfo =
-        Pa_GetDeviceInfo(inputParameters.device);
-    inputParameters.channelCount =
-        audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-    inputParameters.sampleFormat = paInt16;
-    inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
-    inputParameters.hostApiSpecificStreamInfo = NULL;
-
-    err = Pa_OpenStream(
-        &streams[Direction::Input],
-        &inputParameters,
-        NULL,
-        inputDeviceInfo->defaultSampleRate,
-        paFramesPerBufferUnspecified,
-        paNoFlag,
-        &PortAudioLayer::paInputCallback,
-        this);
 
     RING_DBG("Start PortAudio Streams");
     for (int i = 0; i < Direction::End; i++) {
-        err = Pa_StartStream(streams[i]);
+        auto err = Pa_StartStream(streams[i]);
         if (err != paNoError)
             this->handleError(err);
     }
