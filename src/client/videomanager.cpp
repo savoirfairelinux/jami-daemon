@@ -47,6 +47,8 @@
 #include <string>
 #include <vector>
 
+#define CLIENT_CALL() RING_DBG("client> %s", __func__)
+
 namespace DRing {
 
 using ring::videoManager;
@@ -71,24 +73,28 @@ registerVideoHandlers(const std::map<std::string,
 std::vector<std::string>
 getDeviceList()
 {
+    CLIENT_CALL();
     return videoManager.videoDeviceMonitor.getDeviceList();
 }
 
 VideoCapabilities
 getCapabilities(const std::string& name)
 {
+    CLIENT_CALL();
     return videoManager.videoDeviceMonitor.getCapabilities(name);
 }
 
 std::string
 getDefaultDevice()
 {
+    CLIENT_CALL();
     return videoManager.videoDeviceMonitor.getDefaultDevice();
 }
 
 void
 setDefaultDevice(const std::string& name)
 {
+    CLIENT_CALL();
     RING_DBG("Setting default device to %s", name.c_str());
     videoManager.videoDeviceMonitor.setDefaultDevice(name);
 }
@@ -96,6 +102,7 @@ setDefaultDevice(const std::string& name)
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
+    CLIENT_CALL();
     return videoManager.videoDeviceMonitor.getSettings(name).to_map();
 }
 
@@ -103,12 +110,14 @@ void
 applySettings(const std::string& name,
               const std::map<std::string, std::string>& settings)
 {
+    CLIENT_CALL();
     videoManager.videoDeviceMonitor.applySettings(name, settings);
 }
 
 void
 startCamera()
 {
+    CLIENT_CALL();
     videoManager.videoPreview = ring::getVideoCamera();
     videoManager.started = switchToCamera();
 }
@@ -116,6 +125,7 @@ startCamera()
 void
 stopCamera()
 {
+    CLIENT_CALL();
     if (switchInput(""))
         videoManager.started = false;
     videoManager.videoPreview.reset();
@@ -124,6 +134,7 @@ stopCamera()
 bool
 switchInput(const std::string& resource)
 {
+    CLIENT_CALL();
     if (auto call = ring::Manager::instance().getCurrentCall()) {
         // TODO remove this part when clients are updated to use CallManager::switchInput
         call->switchInput(resource);
@@ -139,12 +150,14 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
+    CLIENT_CALL();
     return switchInput(videoManager.videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
 hasCameraStarted()
 {
+    CLIENT_CALL();
     return videoManager.started;
 }
 
@@ -152,6 +165,7 @@ template <class T>
 static void
 registerSinkTarget_(const std::string& sinkId, T&& cb)
 {
+    CLIENT_CALL();
     if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
         sink->registerTarget(std::forward<T>(cb));
     else
@@ -162,6 +176,7 @@ void
 registerSinkTarget(const std::string& sinkId,
                    const std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>& cb)
 {
+    CLIENT_CALL();
     registerSinkTarget_(sinkId, cb);
 }
 
@@ -169,6 +184,7 @@ void
 registerSinkTarget(const std::string& sinkId,
                    std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>&& cb)
 {
+    CLIENT_CALL();
     registerSinkTarget_(sinkId, cb);
 }
 
@@ -176,12 +192,14 @@ registerSinkTarget(const std::string& sinkId,
 void
 addVideoDevice(const std::string &node)
 {
+    CLIENT_CALL();
     videoManager.videoDeviceMonitor.addDevice(node);
 }
 
 void
 removeVideoDevice(const std::string &node)
 {
+    CLIENT_CALL();
     videoManager.videoDeviceMonitor.removeDevice(node);
 }
 #endif
