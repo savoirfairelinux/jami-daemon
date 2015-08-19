@@ -67,42 +67,37 @@ VideoInput::~VideoInput()
 bool
 VideoInput::setup()
 {
-    /* Sink setup */
-    if (!sink_->start()) {
-        RING_ERR("Cannot start shared memory sink");
+    if (not attach(sink_.get())) {
+        RING_ERR("attach sink failed");
         return false;
     }
-    if (not attach(sink_.get()))
-        RING_WARN("Failed to attach sink");
+
+    if (!sink_->start())
+        RING_ERR("start sink failed");
+
     RING_DBG("VideoInput ready to capture");
     return true;
 }
 
-void VideoInput::process()
+void
+VideoInput::process()
 {
-    bool newDecoderCreated = false;
-
-    if (switchPending_.exchange(false)) {
-        deleteDecoder();
+    if (switchPending_)
         createDecoder();
-        newDecoderCreated = true;
-    }
 
-    if (not decoder_) {
+    if (not captureFrame()) {
         loop_.stop();
         return;
     }
-
-    captureFrame();
-
 }
 
-void VideoInput::cleanup()
+void
+VideoInput::cleanup()
 {
-    deleteDecoder();
-
-    if (detach(sink_.get()))
-        sink_->stop();
+    deleteDecoder(); // do it first to let a chance to last frame to be displayed
+    detach(sink_.get());
+    sink_->stop();
+    RING_DBG("VideoInput closed");
 }
 
 void
@@ -112,80 +107,85 @@ VideoInput::clearOptions()
     emulateRate_ = false;
 }
 
-int VideoInput::interruptCb(void *data)
+bool
+VideoInput::isCapturing() const noexcept
 {
-    VideoInput *context = static_cast<VideoInput*>(data);
-    return not context->loop_.isRunning();
+    return loop_.isRunning();
 }
 
 bool
 VideoInput::captureFrame()
 {
+    // Return true if capture could continue, false if must be stop
+
+    if (not decoder_)
+        return false;
+
     VideoPacket pkt;
     const auto ret = decoder_->decode(getNewFrame(), pkt);
 
     switch (ret) {
-        case MediaDecoder::Status::FrameFinished:
-            break;
-
         case MediaDecoder::Status::ReadError:
         case MediaDecoder::Status::DecodeError:
-            loop_.stop();
-            // fallthrough
-        case MediaDecoder::Status::Success:
             return false;
 
-            // Play in loop
+        // End of streamed file
         case MediaDecoder::Status::EOFError:
-            deleteDecoder();
             createDecoder();
-            return false;
-    }
+            return static_cast<bool>(decoder_);
 
-    publishFrame();
-    return true;
+        case MediaDecoder::Status::FrameFinished:
+            publishFrame();
+
+        // continue decoding
+        case MediaDecoder::Status::Success:
+        default:
+            return true;
+    }
 }
 
 void
 VideoInput::createDecoder()
 {
+    deleteDecoder();
+
+    switchPending_ = false;
+
     if (decOpts_.input.empty()) {
         foundDecOpts(decOpts_);
         return;
     }
 
-    decoder_ = new MediaDecoder();
+    auto decoder = std::unique_ptr<MediaDecoder>(new MediaDecoder());
 
     if (emulateRate_)
-        decoder_->emulateRate();
+        decoder->emulateRate();
 
-    decoder_->setInterruptCallback(interruptCb, this);
+    decoder->setInterruptCallback(
+        [](void* data) -> int { return not static_cast<VideoInput*>(data)->isCapturing(); },
+        this);
 
-    if (decoder_->openInput(decOpts_) < 0) {
+    if (decoder->openInput(decOpts_) < 0) {
         RING_ERR("Could not open input \"%s\"", decOpts_.input.c_str());
-        delete decoder_;
-        decoder_ = nullptr;
-        //foundDecOpts_.set_exception(std::runtime_error("Could not open input"));
         foundDecOpts(decOpts_);
         return;
     }
 
     /* Data available, finish the decoding */
-    if (decoder_->setupFromVideoData() < 0) {
+    if (decoder->setupFromVideoData() < 0) {
         RING_ERR("decoder IO startup failed");
-        delete decoder_;
-        decoder_ = nullptr;
-        //foundDecOpts_.set_exception(std::runtime_error("Could not read data"));
         foundDecOpts(decOpts_);
         return;
     }
-    decOpts_.width = decoder_->getWidth();
-    decOpts_.height = decoder_->getHeight();
-    decOpts_.framerate = decoder_->getFps();
-    RING_INFO("create decoder with video params : size=%dX%d, fps=%lf",
-            decOpts_.width,
-            decOpts_.height,
-            decOpts_.framerate.real());
+
+    decOpts_.width = decoder->getWidth();
+    decOpts_.height = decoder->getHeight();
+    decOpts_.framerate = decoder->getFps();
+
+    RING_DBG("created decoder with video params : size=%dX%d, fps=%lf",
+             decOpts_.width, decOpts_.height, decOpts_.framerate.real());
+
+    decoder_ = std::move(decoder);
     foundDecOpts(decOpts_);
 
     /* Signal the client about readable sink */
@@ -197,10 +197,8 @@ VideoInput::deleteDecoder()
 {
     if (not decoder_)
         return;
-
     flushFrames();
-    delete decoder_;
-    decoder_ = nullptr;
+    decoder_.reset();
 }
 
 bool

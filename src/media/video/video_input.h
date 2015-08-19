@@ -71,7 +71,7 @@ private:
 
     std::string currentResource_;
 
-    MediaDecoder *decoder_  = nullptr;
+    std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
     std::atomic<bool> switchPending_ {false};
 
@@ -100,8 +100,8 @@ private:
     void process();
     void cleanup();
 
-    static int interruptCb(void *ctx);
     bool captureFrame();
+    bool isCapturing() const noexcept;
 };
 
 }} // namespace ring::video
