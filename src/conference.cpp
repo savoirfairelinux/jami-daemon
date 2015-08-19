@@ -53,7 +53,7 @@ Conference::Conference()
     , confState_(ACTIVE_ATTACHED)
     , participants_()
 #ifdef RING_VIDEO
-    , videoMixer_(nullptr)
+    , videoMixer_()
 #endif
 {
     Recordable::initRecFilename(id_);
@@ -69,17 +69,20 @@ Conference::~Conference()
 #endif // RING_VIDEO
 }
 
-Conference::ConferenceState Conference::getState() const
+Conference::ConferenceState
+Conference::getState() const
 {
     return confState_;
 }
 
-void Conference::setState(ConferenceState state)
+void
+Conference::setState(ConferenceState state)
 {
     confState_ = state;
 }
 
-void Conference::add(const std::string &participant_id)
+void
+Conference::add(const std::string& participant_id)
 {
     if (participants_.insert(participant_id).second) {
 #ifdef RING_VIDEO
@@ -91,7 +94,8 @@ void Conference::add(const std::string &participant_id)
     }
 }
 
-void Conference::remove(const std::string &participant_id)
+void
+Conference::remove(const std::string& participant_id)
 {
     if (participants_.erase(participant_id)) {
 #ifdef RING_VIDEO
@@ -101,7 +105,8 @@ void Conference::remove(const std::string &participant_id)
     }
 }
 
-void Conference::bindParticipant(const std::string &participant_id)
+void
+Conference::bindParticipant(const std::string& participant_id)
 {
     auto &rbPool = Manager::instance().getRingBufferPool();
 
@@ -115,7 +120,8 @@ void Conference::bindParticipant(const std::string &participant_id)
     rbPool.flush(RingBufferPool::DEFAULT_ID);
 }
 
-std::string Conference::getStateStr() const
+std::string
+Conference::getStateStr() const
 {
     switch (confState_) {
         case ACTIVE_ATTACHED:
@@ -135,7 +141,8 @@ std::string Conference::getStateStr() const
     }
 }
 
-ParticipantSet Conference::getParticipantList() const
+ParticipantSet
+Conference::getParticipantList() const
 {
     return participants_;
 }
@@ -153,7 +160,8 @@ Conference::getDisplayNames() const
     return result;
 }
 
-bool Conference::toggleRecording()
+bool
+Conference::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
     auto& rbPool = Manager::instance().getRingBufferPool();
@@ -178,12 +186,14 @@ bool Conference::toggleRecording()
     return startRecording;
 }
 
-std::string Conference::getConfID() const {
+std::string
+Conference::getConfID() const {
     return id_;
 }
 
 #ifdef RING_VIDEO
-std::shared_ptr<video::VideoMixer> Conference::getVideoMixer()
+std::shared_ptr<video::VideoMixer>
+Conference::getVideoMixer()
 {
     if (!videoMixer_)
         videoMixer_.reset(new video::VideoMixer(id_));

@@ -117,34 +117,34 @@ class IAXCall : public Call
         int format;
         iax_session* session;
 
-        void answer();
+        void answer() override;
 
-        void hangup(int reason);
+        void hangup(int reason) override;
 
-        void refuse();
+        void refuse() override;
 
-        void transfer(const std::string& to);
+        void transfer(const std::string& to) override;
 
-        bool attendedTransfer(const std::string& to);
+        bool attendedTransfer(const std::string& to) override;
 
-        bool onhold();
+        bool onhold() override;
 
-        bool offhold();
+        bool offhold() override;
 
         //TODO: implement mute for IAX
-        void muteMedia(const std::string& mediaType, bool isMuted) {}
+        void muteMedia(const std::string&, bool) override {}
 
         //TODO: implement restartMedia for IAX
         void restartMediaSender() override {}
 
-        void peerHungup();
+        void peerHungup() override;
 
-        void carryingDTMFdigits(char code);
+        void carryingDTMFdigits(char code) override;
 
 #if HAVE_INSTANT_MESSAGING
 
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
-                                     const std::string &from);
+        void sendTextMessage(const std::map<std::string, std::string>& messages,
+                             const std::string &from) override;
 #endif
 
         void putAudioData(AudioBuffer& buf);
