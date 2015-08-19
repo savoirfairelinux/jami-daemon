@@ -32,6 +32,7 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "video_receive_thread.h"
+
 #include "media/media_decoder.h"
 #include "socket_pair.h"
 #include "manager.h"
