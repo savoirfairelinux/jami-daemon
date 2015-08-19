@@ -11,7 +11,7 @@ Group:              Applications/Internet
 License:            GPLv3
 URL:                http://ring.cx/
 Source:             daemon
-BuildRequires:      make autoconf automake pulseaudio-libs-devel libsamplerate-devel
+BuildRequires:      make autoconf automake cmake pulseaudio-libs-devel libsamplerate-devel
 BuildRequires:      libtool dbus-devel expat-devel pcre-devel yaml-cpp-devel
 BuildRequires:      boost-devel dbus-c++-devel dbus-devel libsndfile-devel libsrtp-devel
 BuildRequires:      libXext-devel libXfixes-devel yasm git speex-devel
