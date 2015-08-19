@@ -1,11 +1,11 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yun Liu <yun.liu@savoirfairelinux.com>
  *  Author: Pierre-Luc Bacon <pierre-luc.bacon@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
- *  Author : Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -34,8 +34,7 @@
  *  as that of the covered work.
  */
 
-#ifndef SIPVOIPLINK_H_
-#define SIPVOIPLINK_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -45,12 +44,8 @@
 #include "ip_utils.h"
 #include "noncopyable.h"
 
-#include <pjsip.h>
 #include <pjlib.h>
-#include <pjsip_ua.h>
-#include <pjlib-util.h>
-#include <pjnath.h>
-#include <pjnath/stun_config.h>
+#include <pjsip/sip_transport.h> // pjsip_tpselector
 
 #ifdef RING_VIDEO
 #include <queue>
@@ -59,6 +54,9 @@
 #include <mutex>
 #include <memory>
 
+class pjsip_inv_session;
+class pjmedia_sdp_session;
+
 namespace ring {
 
 class SIPCall;
@@ -66,7 +64,7 @@ class SIPAccountBase;
 class SIPVoIPLink;
 class SipTransportBroker;
 
-typedef std::map<std::string, std::shared_ptr<SIPCall> > SipCallMap;
+using SipCallMap = std::map<std::string, std::shared_ptr<SIPCall>>;
 
 extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
 
@@ -107,7 +105,7 @@ class SIPVoIPLink {
         /**
          * Get the memory pool factory since each calls has its own memory pool
          */
-        pj_caching_pool *getMemoryPoolFactory();
+        pj_caching_pool* getMemoryPoolFactory();
 
         /**
          * Create the default UDP transport according ot Ip2Ip profile settings
@@ -115,8 +113,7 @@ class SIPVoIPLink {
         void createDefaultSipUdpTransport();
 
     public:
-        static void createSDPOffer(pjsip_inv_session *inv,
-                                   pjmedia_sdp_session **p_offer);
+        static void createSDPOffer(pjsip_inv_session* inv, pjmedia_sdp_session** p_offer);
 
         /**
          * Instance that maintain and manage transport (UDP, TLS)
@@ -124,11 +121,11 @@ class SIPVoIPLink {
         std::unique_ptr<SipTransportBroker> sipTransportBroker;
 
 #ifdef RING_VIDEO
-        static void enqueueKeyframeRequest(const std::string &callID);
+        static void enqueueKeyframeRequest(const std::string& callID);
 #endif
 
-        typedef std::function<void(std::vector<IpAddr>)> SrvResolveCallback;
-        void resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb);
+        using SrvResolveCallback = std::function<void(std::vector<IpAddr>)>;
+        void resolveSrvName(const std::string& name, pjsip_transport_type_e type, SrvResolveCallback cb);
 
         /**
          * Guess the account related to an incoming SIP call.
@@ -138,10 +135,9 @@ class SIPVoIPLink {
                      const std::string& server,
                      const std::string& fromUri) const;
 
-        int getModId();
-        pjsip_endpoint * getEndpoint();
-        pjsip_module * getMod();
-
+        int getModId() const noexcept;
+        pjsip_endpoint* getEndpoint() const noexcept;
+        pjsip_module* getMod() noexcept;
         pj_caching_pool* getCachingPool() noexcept;
         pj_pool_t* getPool() noexcept;
 
@@ -169,9 +165,8 @@ class SIPVoIPLink {
          * @param transport     A transport associated with an account
          * @return          	A transport selector structure
          */
-        static inline pjsip_tpselector getTransportSelector(pjsip_transport *transport) {
-            pjsip_tpselector tp = {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
-            return tp;
+        static inline pjsip_tpselector getTransportSelector(pjsip_transport* transport) {
+            return {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
         }
 
     private:
@@ -182,14 +177,10 @@ class SIPVoIPLink {
 
 #ifdef RING_VIDEO
         void dequeKeyframeRequests();
-        void requestKeyframe(const std::string &callID);
-        std::mutex keyframeRequestsMutex_ {};
-        std::queue<std::string> keyframeRequests_ {};
+        void requestKeyframe(const std::string& callID);
+        std::mutex keyframeRequestsMutex_;
+        std::queue<std::string> keyframeRequests_;
 #endif
-
-        friend class SIPTest;
 };
 
 } // namespace ring
-
-#endif // SIPVOIPLINK_H_
