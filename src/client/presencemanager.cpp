@@ -46,6 +46,8 @@
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
 
+#define CLIENT_CALL() RING_DBG("client> %s", __func__)
+
 namespace DRing {
 
 using ring::SIPAccount;
@@ -77,6 +79,7 @@ registerPresHandlers(const std::map<std::string,
 void
 subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 {
+    CLIENT_CALL();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
@@ -95,6 +98,7 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 void
 publish(const std::string& accountID, bool status, const std::string& note)
 {
+    CLIENT_CALL();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
@@ -112,6 +116,7 @@ publish(const std::string& accountID, bool status, const std::string& note)
 void
 answerServerRequest(const std::string& uri, bool flag)
 {
+    CLIENT_CALL();
     auto account = ring::Manager::instance().getIP2IPAccount();
     if (auto sipaccount = static_cast<SIPAccount *>(account.get())) {
         RING_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
@@ -131,6 +136,7 @@ answerServerRequest(const std::string& uri, bool flag)
 std::vector<std::map<std::string, std::string> >
 getSubscriptions(const std::string& accountID)
 {
+    CLIENT_CALL();
     std::vector<std::map<std::string, std::string>> ret;
 
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
@@ -155,6 +161,7 @@ getSubscriptions(const std::string& accountID)
 void
 setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
+    CLIENT_CALL();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
             for (const auto &u : uris)
