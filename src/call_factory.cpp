@@ -117,11 +117,11 @@ CallFactory::getCall<Call>(const std::string& id) const
     return nullptr;
 }
 
-template <> std::vector<std::shared_ptr<Call> >
+template <> std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls<Call>() const
 {
     std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
-    std::vector<std::shared_ptr<Call> > v;
+    std::vector<std::shared_ptr<Call>> v;
 
     for (const auto& itemmap : callMaps_) {
         const auto& map = itemmap.second;

@@ -31,8 +31,7 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_INPUT_H__
-#define __VIDEO_INPUT_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "threadloop.h"
@@ -43,6 +42,7 @@
 #include <atomic>
 #include <future>
 #include <string>
+#include <memory>
 
 namespace ring {
 class MediaDecoder;
@@ -73,7 +73,7 @@ private:
 
     std::unique_ptr<MediaDecoder> decoder_;
     std::shared_ptr<SinkClient> sink_;
-    std::atomic<bool> switchPending_ = {false};
+    std::atomic<bool> switchPending_ {false};
 
     DeviceParams decOpts_;
     std::promise<DeviceParams> foundDecOpts_;
@@ -82,7 +82,7 @@ private:
     std::atomic_bool decOptsFound_ {false};
     void foundDecOpts(const DeviceParams& params);
 
-    bool emulateRate_       = false;
+    bool emulateRate_ {false};
     ThreadLoop loop_;
 
     void clearOptions();
@@ -105,5 +105,3 @@ private:
 };
 
 }} // namespace ring::video
-
-#endif // __VIDEO_INPUT_H__

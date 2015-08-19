@@ -204,7 +204,7 @@ class CallFactory {
 
         std::atomic_bool allowNewCall_{true};
 
-        std::map<std::string, CallMap<Call> > callMaps_{};
+        std::map<std::string, CallMap<Call>> callMaps_{};
 
         template <class T>
         const CallMap<Call>* getMap_() const {
@@ -231,7 +231,7 @@ CallFactory::empty<Call>() const;
 template <> std::shared_ptr<Call>
 CallFactory::getCall<Call>(const std::string& id) const;
 
-template <> std::vector<std::shared_ptr<Call> >
+template <> std::vector<std::shared_ptr<Call>>
 CallFactory::getAllCalls<Call>() const;
 
 template <> std::vector<std::string>

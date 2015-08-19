@@ -93,7 +93,7 @@ class SIPCall : public Call
         /**
          * Return the SDP's manager of this call
          */
-        Sdp& getSDP() {
+        Sdp& getSDP() noexcept {
             return *sdp_;
         }
 
@@ -104,7 +104,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the AudioRtpSession object
          */
-        AudioRtpSession& getAVFormatRTP() const {
+        AudioRtpSession& getAVFormatRTP() const noexcept {
             return *avformatrtp_;
         }
 
@@ -112,7 +112,7 @@ class SIPCall : public Call
         /**
          * Returns a pointer to the VideoRtp object
          */
-        video::VideoRtpSession& getVideoRtp () {
+        video::VideoRtpSession& getVideoRtp() noexcept {
             return videortp_;
         }
 #endif
@@ -121,14 +121,14 @@ class SIPCall : public Call
          * The invite session to be reused in case of transfer
          */
         struct InvSessionDeleter {
-                void operator()(pjsip_inv_session*) const noexcept;
+            void operator()(pjsip_inv_session*) const noexcept;
         };
 
         std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
 
         void setSecure(bool sec);
 
-        bool isSecure() const {
+        bool isSecure() const noexcept {
             return srtpEnabled_;
         }
 
@@ -136,39 +136,39 @@ class SIPCall : public Call
 
         void generateMediaPorts();
 
-        void setContactHeader(pj_str_t *contact);
+        void setContactHeader(pj_str_t* contact);
 
         void setTransport(const std::shared_ptr<SipTransport>& t);
 
-        inline const std::shared_ptr<SipTransport>& getTransport() {
+        const std::shared_ptr<SipTransport>& getTransport() const noexcept {
             return transport_;
         }
 
-        void sendSIPInfo(const char *const body, const char *const subtype);
+        void sendSIPInfo(const char* const body, const char* const subtype);
 
-        void answer();
+        void answer() override;
 
-        void hangup(int reason);
+        void hangup(int reason) override;
 
-        void refuse();
+        void refuse() override;
 
-        void transfer(const std::string& to);
+        void transfer(const std::string& to) override;
 
-        bool attendedTransfer(const std::string& to);
+        bool attendedTransfer(const std::string& to) override;
 
-        bool onhold();
+        bool onhold() override;
 
-        bool offhold();
+        bool offhold() override;
 
-        void switchInput(const std::string& resource);
+        void switchInput(const std::string& resource) override;
 
-        void peerHungup();
+        void peerHungup() override;
 
-        void carryingDTMFdigits(char code);
+        void carryingDTMFdigits(char code) override;
 
 #if HAVE_INSTANT_MESSAGING
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
-                                     const std::string &from);
+        void sendTextMessage(const std::map<std::string, std::string>& messages,
+                             const std::string& from) override;
 #endif
 
         SIPAccountBase& getSIPAccount() const;
@@ -207,7 +207,7 @@ class SIPCall : public Call
 
         void onMediaUpdate();
 
-        void onReceiveOffer(const pjmedia_sdp_session *offer);
+        void onReceiveOffer(const pjmedia_sdp_session* offer);
 
         void openPortsUPnP();
 
@@ -222,6 +222,7 @@ class SIPCall : public Call
         bool initIceTransport(bool master, unsigned channel_num=4) override;
 
         void terminateSipSession(int status);
+
     private:
         NON_COPYABLE(SIPCall);
 

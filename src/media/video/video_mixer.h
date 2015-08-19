@@ -29,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef __VIDEO_MIXER_H__
-#define __VIDEO_MIXER_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "video_base.h"
@@ -46,17 +45,17 @@ namespace ring { namespace video {
 
 class SinkClient;
 
-    struct VideoMixerSource {
-        Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
-        std::unique_ptr<VideoFrame> update_frame;
-        std::unique_ptr<VideoFrame> render_frame;
-        void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            render_frame.swap(other);
-        }
-    private:
-        std::mutex mutex_ = {};
-    };
+struct VideoMixerSource {
+    Observable<std::shared_ptr<VideoFrame>>* source;
+    std::unique_ptr<VideoFrame> update_frame;
+    std::unique_ptr<VideoFrame> render_frame;
+    void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        render_frame.swap(other);
+    }
+private:
+    std::mutex mutex_;
+};
 
 class VideoMixer :
         public VideoGenerator,
@@ -73,10 +72,9 @@ public:
     int getPixelFormat() const;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame>& v);
-    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
-    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void update(Observable<std::shared_ptr<VideoFrame>>* ob, std::shared_ptr<VideoFrame>& v);
+    void attached(Observable<std::shared_ptr<VideoFrame>>* ob);
+    void detached(Observable<std::shared_ptr<VideoFrame>>* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
@@ -89,19 +87,17 @@ private:
     void process();
 
     const std::string id_;
-    int width_ = 0;
-    int height_ = 0;
-    std::list<VideoMixerSource *> sources_ = {};
-    rw_mutex rwMutex_ = {};
+    int width_ {0};
+    int height_ {0};
+    std::list<VideoMixerSource*> sources_;
+    rw_mutex rwMutex_;
 
     std::shared_ptr<SinkClient> sink_;
 
     ThreadLoop loop_;
-    std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
-    VideoScaler scaler_ = {};
+    std::chrono::time_point<std::chrono::system_clock> lastProcess_;
+    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    VideoScaler scaler_;
 };
 
 }} // namespace ring::video
-
-#endif // __VIDEO_MIXER_H__
