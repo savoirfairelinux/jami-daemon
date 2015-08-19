@@ -1338,10 +1338,9 @@ void
 Manager::addAudio(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("Add audio stream %s", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
-        RING_DBG("Add stream to conference");
+        RING_DBG("[conf:%s] Attach local audio", call_id.c_str());
 
         // bind to conference participant
         ConferenceMap::iterator iter = conferenceMap_.find(call_id);
@@ -1350,7 +1349,7 @@ Manager::addAudio(Call& call)
             conf->bindParticipant(call_id);
         }
     } else {
-        RING_DBG("Add stream to call");
+        RING_DBG("[call:%s] Attach audio", call_id.c_str());
 
         // bind to main
         getRingBufferPool().bindCallID(call_id, RingBufferPool::DEFAULT_ID);
@@ -1370,7 +1369,7 @@ void
 Manager::removeAudio(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("Remove audio stream %s", call_id.c_str());
+    RING_DBG("[call:%s] Remove local audio", call_id.c_str());
     getRingBufferPool().unBindAll(call_id);
 }
 
@@ -1709,7 +1708,7 @@ void
 Manager::peerAnsweredCall(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("Peer answered call %s", call_id.c_str());
+    RING_DBG("[call:%s] Peer answered", call_id.c_str());
 
     // The if statement is usefull only if we sent two calls at the same time.
     if (isCurrentCall(call))
@@ -1731,8 +1730,7 @@ Manager::peerAnsweredCall(Call& call)
 void
 Manager::peerRingingCall(Call& call)
 {
-    const auto call_id = call.getCallId();
-    RING_DBG("Peer call %s ringing", call_id.c_str());
+    RING_DBG("[call:%s] Peer ringing", call.getCallId().c_str());
 
     if (isCurrentCall(call))
         ringback();
@@ -1743,7 +1741,7 @@ void
 Manager::peerHungupCall(Call& call)
 {
     const auto call_id = call.getCallId();
-    RING_DBG("Peer has hungup call %s", call_id.c_str());
+    RING_DBG("[call:%s] Peer hungup", call_id.c_str());
 
     if (isConferenceParticipant(call_id)) {
         removeParticipant(call_id);
@@ -1766,6 +1764,8 @@ Manager::peerHungupCall(Call& call)
 void
 Manager::callBusy(Call& call)
 {
+    RING_DBG("[call:%s] Busy", call.getCallId().c_str());
+
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
         unsetCurrentCall();
@@ -1780,6 +1780,7 @@ void
 Manager::callFailure(Call& call)
 {
     const auto call_id = call.getCallId();
+    RING_DBG("[call:%s] Failed", call.getCallId().c_str());
 
     if (isCurrentCall(call)) {
         playATone(Tone::TONE_BUSY);
