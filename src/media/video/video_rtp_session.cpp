@@ -195,7 +195,6 @@ void VideoRtpSession::stop()
     sender_.reset();
     socketPair_.reset();
     videoLocal_.reset();
-    conference_ = nullptr;
 }
 
 void VideoRtpSession::forceKeyFrame()
