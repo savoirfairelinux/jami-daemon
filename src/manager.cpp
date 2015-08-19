@@ -665,13 +665,12 @@ Manager::offHoldCall(const std::string& callId)
         }
     }
 
-    std::shared_ptr<Call> call;
+    std::shared_ptr<Call> call = getCallFromCallID(callId);
+    if (!call)
+        return false;
+
     try {
-        call = getCallFromCallID(callId);
-        if (call)
-            result = call->offhold();
-        else
-            result = false;
+        result = call->offhold();
     } catch (const VoipLinkException &e) {
         RING_ERR("%s", e.what());
         return false;
