@@ -654,17 +654,14 @@ Manager::offHoldCall(const std::string& callId)
     const auto currentCallId = getCurrentCallId();
 
     // Place current call on hold if it isn't
-    if (hasCurrentCall()) {
+    if (hasCurrentCall() and currentCallId != callId) {
         if (not isConference(currentCallId) and not isConferenceParticipant(currentCallId)) {
             RING_DBG("Has current call (%s), put on hold", currentCallId.c_str());
-            //FIXME: ebail
-            // if 2 consecutive offHoldCall done, the second one should be ignored (already offhold)
-            // this call put the call onHold
             onHoldCall(currentCallId);
-        } else if (isConference(currentCallId) && callId != currentCallId) {
+        } else if (isConference(currentCallId) and not isConferenceParticipant(callId)) {
             holdConference(currentCallId);
-        } else if (isConference(currentCallId) and not isConferenceParticipant(callId))
             detachParticipant(RingBufferPool::DEFAULT_ID);
+        }
     }
 
     std::shared_ptr<Call> call;
