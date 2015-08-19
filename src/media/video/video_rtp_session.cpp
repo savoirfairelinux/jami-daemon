@@ -166,7 +166,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 
     // Setup video pipeline
     if (conference_)
-        setupConferenceVideoPipeline(conference_);
+        setupConferenceVideoPipeline(*conference_);
     else if (sender_) {
         if (videoLocal_)
             videoLocal_->attach(sender_.get());
@@ -204,12 +204,11 @@ void VideoRtpSession::forceKeyFrame()
         sender_->forceKeyFrame();
 }
 
-void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
+void VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 {
-    assert(conference);
-
-    videoMixer_ = std::move(conference->getVideoMixer());
-    assert(videoMixer_.get());
+    RING_DBG("[call:%s] Setup video pipeline on conference %s", callID_.c_str(),
+             conference.getConfID().c_str());
+    videoMixer_ = conference.getVideoMixer();
     videoMixer_->setDimensions(localVideoParams_.width, localVideoParams_.height);
 
     if (sender_) {
@@ -217,16 +216,14 @@ void VideoRtpSession::setupConferenceVideoPipeline(Conference* conference)
         if (videoLocal_)
             videoLocal_->detach(sender_.get());
         videoMixer_->attach(sender_.get());
-    } else {
-        RING_WARN("[call:%s] no sender", callID_.c_str(), conference->getConfID().c_str());
-    }
+    } else
+        RING_WARN("[call:%s] no sender", callID_.c_str());
 
     if (receiveThread_) {
         receiveThread_->enterConference();
         receiveThread_->attach(videoMixer_.get());
-    } else {
-        RING_WARN("[call:%s] no receiver", callID_.c_str(), conference->getConfID().c_str());
-    }
+    } else
+        RING_WARN("[call:%s] no receiver", callID_.c_str());
 }
 
 void VideoRtpSession::enterConference(Conference* conference)
@@ -235,17 +232,20 @@ void VideoRtpSession::enterConference(Conference* conference)
 
     exitConference();
 
+    conference_ = conference;
     RING_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
              conference->getConfID().c_str());
-    conference_ = conference;
 
     if (send_.enabled or receiveThread_)
-        setupConferenceVideoPipeline(conference);
+        setupConferenceVideoPipeline(*conference_);
 }
 
 void VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    if (!conference_)
+        return;
 
     RING_DBG("[call:%s] exitConference (conf: %s)", callID_.c_str(),
              conference_->getConfID().c_str());
