@@ -79,6 +79,9 @@ void strErr();
 #define APP_NAME "libdring"
 #endif /* APP_NAME */
 
+#undef LOG_FORMAT
+#define LOG_FORMAT(M, ...) "%s:%d | " M, FILE_NAME, __LINE__, ##__VA_ARGS__
+
 // Avoid printing whole path on android
 #define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
 
