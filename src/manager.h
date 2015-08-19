@@ -329,9 +329,9 @@ class Manager {
          */
         bool joinConference(const std::string& conf_id1, const std::string& conf_id2);
 
-        void addStream(Call& call);
+        void addAudio(Call& call);
 
-        void removeStream(Call& call);
+        void removeAudio(Call& call);
 
         /**
          * Save config to file
