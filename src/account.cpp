@@ -154,7 +154,8 @@ Account::freeAccount()
 }
 
 void
-Account::setRegistrationState(RegistrationState state, unsigned detail_code, const std::string& detail_str)
+Account::setRegistrationState(RegistrationState state, unsigned detail_code,
+                              const std::string& detail_str)
 {
     if (state != registrationState_) {
         registrationState_ = state;
