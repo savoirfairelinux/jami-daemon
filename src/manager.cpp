@@ -522,8 +522,7 @@ Manager::answerCall(const std::string& call_id)
     else
         switchCall(call);
 
-    // Connect streams
-    addStream(*call);
+    addAudio(*call);
 
     // Start recording if set in preference
     if (audioPreference.getIsAlwaysRecording())
@@ -560,7 +559,7 @@ Manager::hangupCall(const std::string& callId)
     }
 
     // Disconnect streams
-    removeStream(*call);
+    removeAudio(*call);
 
     if (isConferenceParticipant(callId)) {
         removeParticipant(callId);
@@ -620,7 +619,7 @@ Manager::onHoldCall(const std::string& callId)
     if (auto call = getCallFromCallID(callId)) {
         try {
             if (result = call->onhold())
-                removeStream(*call); // Unbind calls in main buffer
+                removeAudio(*call); // Unbind calls in main buffer
         } catch (const VoipLinkException &e) {
             RING_ERR("%s", e.what());
             result = false;
@@ -686,7 +685,7 @@ Manager::offHoldCall(const std::string& callId)
         else
             switchCall(call);
 
-        addStream(*call);
+        addAudio(*call);
     }
 
     return result;
@@ -769,7 +768,7 @@ Manager::refuseCall(const std::string& id)
     removeWaitingCall(id);
 
     // Disconnect streams
-    removeStream(*call);
+    removeAudio(*call);
 
     return true;
 }
@@ -988,8 +987,7 @@ Manager::addParticipant(const std::string& callId,
     if (participants.empty())
         RING_ERR("Participant list is empty for this conference");
 
-    // Connect stream
-    addStream(*call);
+    addAudio(*call);
     return true;
 }
 
@@ -1272,7 +1270,7 @@ Manager::removeParticipant(const std::string& call_id)
     conf->remove(call_id);
     call->setConfId("");
 
-    removeStream(*call);
+    removeAudio(*call);
 
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
@@ -1341,7 +1339,7 @@ Manager::joinConference(const std::string& conf_id1,
 }
 
 void
-Manager::addStream(Call& call)
+Manager::addAudio(Call& call)
 {
     const auto call_id = call.getCallId();
     RING_DBG("Add audio stream %s", call_id.c_str());
@@ -1373,7 +1371,7 @@ Manager::addStream(Call& call)
 }
 
 void
-Manager::removeStream(Call& call)
+Manager::removeAudio(Call& call)
 {
     const auto call_id = call.getCallId();
     RING_DBG("Remove audio stream %s", call_id.c_str());
@@ -1721,8 +1719,7 @@ Manager::peerAnsweredCall(Call& call)
     if (isCurrentCall(call))
         stopTone();
 
-    // Connect audio streams
-    addStream(call);
+    addAudio(call);
 
     if (audiodriver_) {
         std::lock_guard<std::mutex> lock(audioLayerMutex_);
@@ -1766,7 +1763,7 @@ Manager::peerHungupCall(Call& call)
     if (not incomingCallsWaiting())
         stopTone();
 
-    removeStream(call);
+    removeAudio(call);
 }
 
 //THREAD=VoIP
