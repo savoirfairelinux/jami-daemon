@@ -356,7 +356,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 
           dst.setFromMemory(data, format, width, height);
           scaler.scale(*f, dst);
-          auto sp = std::make_shared<std::vector<unsigned char> >(targetData_);
+          auto sp = std::make_shared<std::vector<unsigned char>>(targetData_);
           target_(sp, width, height);
         }
     }

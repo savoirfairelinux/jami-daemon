@@ -427,12 +427,10 @@ Manager::switchCall(std::shared_ptr<Call> call)
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
-/* Main Thread */
 
 std::string
-Manager::outgoingCall(const std::string& preferred_account_id,
-                          const std::string& to,
-                          const std::string& conf_id)
+Manager::outgoingCall(const std::string& preferred_account_id, const std::string& to,
+                      const std::string& conf_id)
 {
     std::string current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
@@ -473,7 +471,6 @@ Manager::outgoingCall(const std::string& preferred_account_id,
     return call_id;
 }
 
-//THREAD=Main : for outgoing Call
 bool
 Manager::answerCall(const std::string& call_id)
 {
@@ -542,7 +539,6 @@ Manager::checkAudio()
     }
 }
 
-//THREAD=Main
 bool
 Manager::hangupCall(const std::string& callId)
 {
@@ -607,7 +603,6 @@ Manager::hangupConference(const std::string& id)
     return true;
 }
 
-//THREAD=Main
 bool
 Manager::onHoldCall(const std::string& callId)
 {
@@ -619,8 +614,9 @@ Manager::onHoldCall(const std::string& callId)
 
     if (auto call = getCallFromCallID(callId)) {
         try {
-            if (result = call->onhold())
-                removeStream(*call); // Unbind calls in main buffer
+            result = call->onhold();
+            if (result)
+                removeAudio(*call); // Unbind calls in main buffer
         } catch (const VoipLinkException &e) {
             RING_ERR("%s", e.what());
             result = false;
@@ -738,8 +734,7 @@ Manager::transferSucceeded()
 }
 
 bool
-Manager::attendedTransfer(const std::string& transferID,
-                              const std::string& targetID)
+Manager::attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
     if (auto call = getCallFromCallID(transferID))
         return call->attendedTransfer(targetID);
@@ -747,7 +742,6 @@ Manager::attendedTransfer(const std::string& transferID,
     return false;
 }
 
-//THREAD=Main : Call:Incoming
 bool
 Manager::refuseCall(const std::string& id)
 {
@@ -921,8 +915,7 @@ Manager::isConferenceParticipant(const std::string& call_id)
 }
 
 bool
-Manager::addParticipant(const std::string& callId,
-                            const std::string& conferenceId)
+Manager::addParticipant(const std::string& callId, const std::string& conferenceId)
 {
     RING_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
     ConferenceMap::iterator iter = conferenceMap_.find(conferenceId);
@@ -1046,8 +1039,7 @@ Manager::getCallFromCallID(const std::string& callID) const
 }
 
 bool
-Manager::joinParticipant(const std::string& callId1,
-                             const std::string& callId2)
+Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
     if (callId1 == callId2) {
         RING_ERR("Cannot join participant %s to itself", callId1.c_str());
@@ -1145,7 +1137,7 @@ Manager::joinParticipant(const std::string& callId1,
 }
 
 void
-Manager::createConfFromParticipantList(const std::vector< std::string > &participantList)
+Manager::createConfFromParticipantList(const std::vector< std::string>& participantList)
 {
     // we must at least have 2 participant for a conference
     if (participantList.size() <= 1) {
@@ -1280,7 +1272,7 @@ Manager::removeParticipant(const std::string& call_id)
 }
 
 void
-Manager::processRemainingParticipants(Conference &conf)
+Manager::processRemainingParticipants(Conference& conf)
 {
     const std::string current_call_id(getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
@@ -1318,8 +1310,7 @@ Manager::processRemainingParticipants(Conference &conf)
 }
 
 bool
-Manager::joinConference(const std::string& conf_id1,
-                            const std::string& conf_id2)
+Manager::joinConference(const std::string& conf_id1, const std::string& conf_id2)
 {
     if (conferenceMap_.find(conf_id1) == conferenceMap_.end()) {
         RING_ERR("Not a valid conference ID: %s", conf_id1.c_str());
@@ -1350,7 +1341,7 @@ Manager::addStream(Call& call)
         RING_DBG("Add stream to conference");
 
         // bind to conference participant
-        ConferenceMap::iterator iter = conferenceMap_.find(call_id);
+        const auto iter = conferenceMap_.find(call_id);
         if (iter != conferenceMap_.end() and iter->second) {
             auto conf = iter->second;
             conf->bindParticipant(call_id);
@@ -1373,7 +1364,7 @@ Manager::addStream(Call& call)
 }
 
 void
-Manager::removeStream(Call& call)
+Manager::removeAudio(Call& call)
 {
     const auto call_id = call.getCallId();
     RING_DBG("Remove audio stream %s", call_id.c_str());
@@ -1445,7 +1436,6 @@ void Manager::pollEvents()
     }
 }
 
-//THREAD=Main
 void
 Manager::saveConfig()
 {
@@ -1490,7 +1480,6 @@ Manager::saveConfig()
     }
 }
 
-//THREAD=Main | VoIPLink
 void
 Manager::playDtmf(char code)
 {
@@ -1576,7 +1565,7 @@ Manager::removeWaitingCall(const std::string& id)
 ///////////////////////////////////////////////////////////////////////////////
 // Management of event peer IP-phone
 ////////////////////////////////////////////////////////////////////////////////
-// SipEvent Thread
+
 void
 Manager::incomingCall(Call &call, const std::string& accountId)
 {
@@ -1611,13 +1600,11 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
 }
 
-//THREAD=VoIP
 #if HAVE_INSTANT_MESSAGING
 
 void
-Manager::incomingMessage(const std::string& callID,
-                             const std::string& from,
-                             const std::map<std::string, std::string>& messages)
+Manager::incomingMessage(const std::string& callID, const std::string& from,
+                         const std::map<std::string, std::string>& messages)
 {
     if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
@@ -1710,7 +1697,6 @@ Manager::sendCallTextMessage(const std::string& callID,
 
 #endif // HAVE_INSTANT_MESSAGING
 
-//THREAD=VoIP CALL=Outgoing
 void
 Manager::peerAnsweredCall(Call& call)
 {
@@ -1734,7 +1720,6 @@ Manager::peerAnsweredCall(Call& call)
         toggleRecordingCall(call_id);
 }
 
-//THREAD=VoIP Call=Outgoing
 void
 Manager::peerRingingCall(Call& call)
 {
@@ -1745,7 +1730,6 @@ Manager::peerRingingCall(Call& call)
         ringback();
 }
 
-//THREAD=VoIP Call=Outgoing/Ingoing
 void
 Manager::peerHungupCall(Call& call)
 {
@@ -1769,7 +1753,6 @@ Manager::peerHungupCall(Call& call)
     removeStream(call);
 }
 
-//THREAD=VoIP
 void
 Manager::callBusy(Call& call)
 {
@@ -1782,7 +1765,6 @@ Manager::callBusy(Call& call)
     removeWaitingCall(call.getCallId());
 }
 
-//THREAD=VoIP
 void
 Manager::callFailure(Call& call)
 {
@@ -1803,10 +1785,8 @@ Manager::callFailure(Call& call)
     removeWaitingCall(call_id);
 }
 
-//THREAD=VoIP
 void
-Manager::startVoiceMessageNotification(const std::string& accountId,
-                                           int nb_msg)
+Manager::startVoiceMessageNotification(const std::string& accountId, int nb_msg)
 {
     emitSignal<DRing::CallSignal::VoiceMailNotify>(accountId, nb_msg);
 }
@@ -1835,9 +1815,6 @@ Manager::playATone(Tone::TONEID toneId)
     toneCtrl_.play(toneId);
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::stopTone()
 {
@@ -1847,45 +1824,30 @@ Manager::stopTone()
     toneCtrl_.stop();
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::playTone()
 {
     playATone(Tone::TONE_DIALTONE);
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::playToneWithMessage()
 {
     playATone(Tone::TONE_CONGESTION);
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::congestion()
 {
     playATone(Tone::TONE_CONGESTION);
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::ringback()
 {
     playATone(Tone::TONE_RINGTONE);
 }
 
-/**
- * Multi Thread
- */
 void
 Manager::playRingtone(const std::string& accountID)
 {
@@ -1940,9 +1902,7 @@ Manager::getTelephoneFile()
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
 ///////////////////////////////////////////////////////////////////////////////
-/**
- * Initialization: Main Thread
- */
+
 std::string
 Manager::retrieveConfigPath() const
 {
@@ -2269,9 +2229,6 @@ Manager::setAGCState(bool state)
     audioPreference.setAGCState(state);
 }
 
-/**
- * Initialization: Main Thread
- */
 void
 Manager::initAudioDriver()
 {

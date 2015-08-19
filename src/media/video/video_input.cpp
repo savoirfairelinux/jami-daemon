@@ -53,10 +53,10 @@ static constexpr unsigned default_grab_height = 480;
 
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
-    , sink_ {Manager::instance().createSinkClient("local")}
-    , loop_(std::bind(&VideoInput::setup, this),
-            std::bind(&VideoInput::process, this),
-            std::bind(&VideoInput::cleanup, this))
+    , sink_(Manager::instance().createSinkClient("local"))
+    , loop_([this]{ return setup(); },
+            [this]{ process(); },
+            [this]{ cleanup(); })
 {}
 
 VideoInput::~VideoInput()
@@ -64,7 +64,8 @@ VideoInput::~VideoInput()
     loop_.join();
 }
 
-bool VideoInput::setup()
+bool
+VideoInput::setup()
 {
     /* Sink setup */
     if (!sink_->start()) {
@@ -104,7 +105,8 @@ void VideoInput::cleanup()
         sink_->stop();
 }
 
-void VideoInput::clearOptions()
+void
+VideoInput::clearOptions()
 {
     decOpts_ = {};
     emulateRate_ = false;
@@ -116,7 +118,8 @@ int VideoInput::interruptCb(void *data)
     return not context->loop_.isRunning();
 }
 
-bool VideoInput::captureFrame()
+bool
+VideoInput::captureFrame()
 {
     VideoPacket pkt;
     const auto ret = decoder_->decode(getNewFrame(), pkt);
@@ -365,16 +368,20 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
-int VideoInput::getWidth() const
+int
+VideoInput::getWidth() const
 { return decoder_->getWidth(); }
 
-int VideoInput::getHeight() const
+int
+VideoInput::getHeight() const
 { return decoder_->getHeight(); }
 
-int VideoInput::getPixelFormat() const
+int
+VideoInput::getPixelFormat() const
 { return decoder_->getPixelFormat(); }
 
-DeviceParams VideoInput::getParams() const
+DeviceParams
+VideoInput::getParams() const
 { return decOpts_; }
 
 void

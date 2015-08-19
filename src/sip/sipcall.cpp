@@ -93,7 +93,7 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 static void
-dtmfSend(SIPCall &call, char code, const std::string &dtmf)
+dtmfSend(SIPCall& call, char code, const std::string& dtmf)
 {
     if (dtmf == SIPAccount::OVERRTP_STR) {
         RING_WARN("[call:%s] DTMF over RTP not supported yet", call.getCallId().c_str());
@@ -185,7 +185,8 @@ SIPCall::generateMediaPorts()
 #endif
 }
 
-void SIPCall::setContactHeader(pj_str_t *contact)
+void
+SIPCall::setContactHeader(pj_str_t* contact)
 {
     pj_strcpy(&contactHeader_, contact);
 }
@@ -259,7 +260,7 @@ SIPCall::SIPSessionReinvite()
 }
 
 void
-SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
+SIPCall::sendSIPInfo(const char* const body, const char* const subtype)
 {
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
@@ -417,7 +418,7 @@ SIPCall::refuse()
 }
 
 static void
-transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
+transfer_client_cb(pjsip_evsub* sub, pjsip_event* event)
 {
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -497,7 +498,7 @@ transfer_client_cb(pjsip_evsub *sub, pjsip_event *event)
 }
 
 bool
-SIPCall::transferCommon(pj_str_t *dst)
+SIPCall::transferCommon(pj_str_t* dst)
 {
     if (not inv or not inv->dlg)
         return false;
@@ -747,10 +748,9 @@ SIPCall::getAllRemoteCandidates()
 {
     std::vector<IceCandidate> rem_candidates;
 
-    auto addSDPCandidates = [this](unsigned sdpMediaId,
-                                   std::vector<IceCandidate>& out) {
+    auto addSDPCandidates = [this](unsigned sdpMediaId, std::vector<IceCandidate>& out) {
         IceCandidate cand;
-        for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
+        for (const auto& line: sdp_->getIceCandidates(sdpMediaId)) {
             if (iceTransport_->getCandidateFromSDP(line, cand)) {
                 RING_DBG("[call:%s] add remote ICE candidate: %s", getCallId().c_str(), line.c_str());
                 out.emplace_back(cand);
