@@ -216,6 +216,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , rtcpInfo_()
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -239,6 +240,42 @@ SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+}
+
+void
+SocketPair::parseRtcpPacket(uint8_t* buf, size_t len)
+{
+    if (len < sizeof(rtcpRRHeader))
+        return;
+
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    if(header->pt != 201) //201 = RR PT
+        return;
+
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex);
+    {
+        auto fract = (ntohl(header->fraction_lost) & 0xff000000)  >> 24;
+        rtcpInfo_.fraction_lost = fract;
+        rtcpInfo_.jitter = ntohl(header->jitter);
+        rtcpInfo_.ssrc = ntohl(header->ssrc);
+        rtcpInfo_.ssrc_1 = ntohl(header->ssrc_1);
+        rtcpInfo_.cumul_lost = ntohl(header->fraction_lost) & 0x00ffffff;
+    }
+
+    RING_DBG("[RTCP-RR] ssrc=%u, ssrc_1=%u, fraction_lost=%hu / 256, jitter=%u, cumul_lost=%u"
+             , rtcpInfo_.ssrc
+             , rtcpInfo_.ssrc_1
+             , rtcpInfo_.fraction_lost
+             , rtcpInfo_.jitter
+             , rtcpInfo_.cumul_lost);
+}
+
+RtcpInfo
+SocketPair::getRtcpInfo()
+{
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex);
+    auto copy_rtcpInfo = rtcpInfo_;
+    return copy_rtcpInfo;
 }
 
 void
@@ -408,7 +445,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (len == 0) {
             len = readRtpData(buf, buf_size);
             fromRTCP = false;
-        }
+        } else
+            parseRtcpPacket(buf, len);
 
         if (len < 0)
             return len;
