@@ -29,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef SOCKET_PAIR_H_
-#define SOCKET_PAIR_H_
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -48,11 +47,13 @@
 using socklen_t = int;
 #endif
 
+#include <cstdint>
 #include <mutex>
 #include <memory>
 #include <atomic>
-
-#include <cstdint>
+#include <list>
+#include <vector>
+#include <condition_variable>
 
 namespace ring {
 
@@ -61,7 +62,7 @@ class SRTPProtoContext;
 
 class SocketPair {
     public:
-        SocketPair(const char *uri, int localPort);
+        SocketPair(const char* uri, int localPort);
         SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                    std::unique_ptr<IceSocket> rtcp_sock);
         ~SocketPair();
@@ -70,7 +71,7 @@ class SocketPair {
 
         MediaIOHandle* createIOContext();
 
-        void openSockets(const char *uri, int localPort);
+        void openSockets(const char* uri, int localPort);
         void closeSockets();
 
         /*
@@ -89,24 +90,28 @@ class SocketPair {
 
            Will throw an std::runtime_error on failure, should be handled at a higher level
         */
-        void createSRTP(const char *out_suite, const char *out_params, const char *in_suite, const char *in_params);
+        void createSRTP(const char* out_suite, const char* out_params,
+                        const char* in_suite, const char* in_params);
 
     private:
         NON_COPYABLE(SocketPair);
 
-        static int readCallback(void *opaque, uint8_t *buf, int buf_size);
-        static int writeCallback(void *opaque, uint8_t *buf, int buf_size);
+        int readCallback(uint8_t* buf, int buf_size);
+        int writeCallback(uint8_t* buf, int buf_size);
 
         int waitForData();
-        int readRtpData(void *buf, int buf_size);
-        int readRtcpData(void *buf, int buf_size);
-        int writeRtpData(void *buf, int buf_size);
-        int writeRtcpData(void *buf, int buf_size);
+        int readRtpData(void* buf, int buf_size);
+        int readRtcpData(void* buf, int buf_size);
+        int writeRtpData(void* buf, int buf_size);
+        int writeRtcpData(void* buf, int buf_size);
+
+        std::mutex dataReceivedMutex_;
+        std::condition_variable cv_;
+        std::list<std::vector<uint8_t>> dataBuff_;
+        std::atomic<bool> canRead_ {false};
 
         std::unique_ptr<IceSocket> rtp_sock_;
         std::unique_ptr<IceSocket> rtcp_sock_;
-
-        std::mutex rtcpWriteMutex_;
 
         int rtpHandle_ {-1};
         int rtcpHandle_ {-1};
@@ -119,5 +124,3 @@ class SocketPair {
 };
 
 } // namespace ring
-
-#endif  // SOCKET_PAIR_H_
