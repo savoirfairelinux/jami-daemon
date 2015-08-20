@@ -87,6 +87,8 @@ static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
+static std::uniform_int_distribution<dht::Value::Id> udist;
+
 /**
  * Local ICE Transport factory helper
  *
@@ -194,7 +196,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     std::weak_ptr<SIPCall> weak_call = call;
     runOnMainThread([=] {
-        static std::uniform_int_distribution<dht::Value::Id> udist;
         auto call = weak_call.lock();
 
         if (not call)
@@ -212,15 +213,16 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
         /* Next step: sent the ICE data to peer through DHT */
         const dht::Value::Id callvid  = udist(shared_this->rand_);
+        const dht::Value::Id vid  = udist(shared_this->rand_);
         const auto toH = dht::InfoHash(toUri);
         const auto callkey = dht::InfoHash::get("callto:" + toUri);
+        dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
+        val.id = vid;
 
         call->setState(Call::ConnectionState::TRYING);
         shared_this->dht_.putEncrypted(
             callkey, toH,
-            dht::Value {
-                dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates())
-            },
+            std::move(val),
             [=](bool ok) { // Put complete callback
                 if (!ok) {
                     RING_WARN("Can't put ICE descriptor on DHT");
@@ -228,7 +230,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                         call->onFailure();
                 } else
                     RING_DBG("Succesfully put ICE descriptor on DHT");
-                shared_this->dht_.cancelPut(callkey, callvid);
+                shared_this->dht_.cancelPut(callkey, vid);
             }
         );
 
@@ -883,19 +885,24 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
+    const auto vid = udist(rand_);
+    dht::Value val { dht::IceCandidates(msg.id, ice->getLocalAttributesAndCandidates()) };
+    val.id = vid;
 
     std::weak_ptr<SIPCall> weak_call = call;
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         msg.from,
-        { dht::IceCandidates(msg.id, ice->getLocalAttributesAndCandidates()) },
-        [weak_call](bool ok) {
+        std::move(val),
+        [weak_call, shared_this, vid](bool ok) {
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
                 if (auto call = weak_call.lock())
                     call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
+            shared_this->dht_.cancelPut(shared_this->callKey_, vid);
         }
     );
     ice->start(msg.ice_data);
