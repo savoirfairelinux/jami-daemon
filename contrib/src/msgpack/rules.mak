@@ -8,7 +8,8 @@ PKGS_FOUND += msgpack
 endif
 
 MSGPACK_CMAKECONF := -DMSGPACK_CXX11=ON \
-                     -DMSGPACK_BUILD_EXAMPLES=OFF
+                     -DMSGPACK_BUILD_EXAMPLES=OFF \
+					 -DCMAKE_INSTALL_LIBDIR=lib
 
 $(TARBALLS)/msgpack-c-$(MSGPACK_VERSION).tar.gz:
 	$(call download,$(MSGPACK_URL))
