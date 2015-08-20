@@ -216,6 +216,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , listRtcpHeader_()
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -239,6 +240,32 @@ SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+}
+
+void
+SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
+{
+    if (len < sizeof(rtcpRRHeader))
+        return;
+
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    if(header->pt != 201) //201 = RR PT
+        return;
+
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex);
+
+    if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
+        RING_WARN("Need to drop RTCP packets");
+        listRtcpHeader_.pop_front();
+    }
+
+    listRtcpHeader_.push_back(*header);
+}
+
+std::list<rtcpRRHeader>&
+SocketPair::getRtcpInfo()
+{
+    return listRtcpHeader_;
 }
 
 void
@@ -408,7 +435,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (len == 0) {
             len = readRtpData(buf, buf_size);
             fromRTCP = false;
-        }
+        } else
+            saveRtcpPacket(buf, len);
 
         if (len < 0)
             return len;
