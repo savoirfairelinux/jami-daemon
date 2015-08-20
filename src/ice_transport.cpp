@@ -956,4 +956,12 @@ IceSocket::waitForData(unsigned int timeout)
     return ice_transport_->waitForData(compId_, timeout);
 }
 
+void
+IceSocket::setOnRecv(IceRecvCb cb)
+{
+    if (!ice_transport_.get())
+        return;
+    return ice_transport_->setOnRecv(compId_, cb);
+}
+
 } // namespace ring
