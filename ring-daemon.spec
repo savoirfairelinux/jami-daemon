@@ -17,6 +17,7 @@ BuildRequires:      boost-devel dbus-c++-devel dbus-devel libsndfile-devel libsr
 BuildRequires:      libXext-devel libXfixes-devel yasm git speex-devel
 BuildRequires:      chrpath check astyle uuid-c++-devel gettext-devel
 BuildRequires:      gcc-c++ which alsa-lib-devel systemd-devel libuuid-devel uuid-devel
+BuildRequires:      gnutls-devel nettle-devel opus-devel
 
 %description
 Ring is free software for distributed and secured communication.
