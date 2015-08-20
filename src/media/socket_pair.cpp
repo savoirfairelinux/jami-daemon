@@ -219,6 +219,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , listRtcpHeader_()
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -242,6 +243,36 @@ SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+}
+
+void
+SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
+{
+    if (len < sizeof(rtcpRRHeader))
+        return;
+
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+    if(header->pt != 201) //201 = RR PT
+        return;
+
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+
+    if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
+        RING_WARN("Need to drop RTCP packets");
+        listRtcpHeader_.pop_front();
+    }
+
+    listRtcpHeader_.push_back(*header);
+}
+
+std::vector<rtcpRRHeader>
+SocketPair::getRtcpInfo()
+{
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    std::vector<rtcpRRHeader> vect(listRtcpHeader_.size());
+    std::copy_n(listRtcpHeader_.begin(), listRtcpHeader_.size(), vect.begin());
+    listRtcpHeader_.clear();
+    return vect;
 }
 
 void
@@ -422,6 +453,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // Priority to RTCP as its less invasive in bandwidth
     if (datatype & static_cast<int>(DataType::RTCP)) {
         len = readRtcpData(buf, buf_size);
+        saveRtcpPacket(buf, len);
         fromRTCP = true;
     }
 
