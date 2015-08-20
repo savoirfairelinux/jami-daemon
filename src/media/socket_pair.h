@@ -60,6 +60,13 @@ namespace ring {
 class IceSocket;
 class SRTPProtoContext;
 
+struct RtcpInfo {
+    uint8_t fraction_lost = 0;
+    uint32_t ssrc = 0;
+    uint32_t ssrc_1 = 0;
+    uint32_t jitter = 0;
+};
+
 class SocketPair {
     public:
         SocketPair(const char* uri, int localPort);
@@ -93,7 +100,7 @@ class SocketPair {
         void createSRTP(const char* out_suite, const char* out_params,
                         const char* in_suite, const char* in_params);
 
-    private:
+private:
         NON_COPYABLE(SocketPair);
 
         int readCallback(uint8_t* buf, int buf_size);
@@ -103,6 +110,8 @@ class SocketPair {
         int readRtpData(void* buf, int buf_size);
         int readRtcpData(void* buf, int buf_size);
         int writeData(uint8_t* buf, int buf_size);
+        void parseRtcpPacket(uint8_t* buf, size_t len);
+        std::shared_ptr<RtcpInfo> getRtcpInfo();
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;
@@ -120,6 +129,31 @@ class SocketPair {
         socklen_t rtcpDestAddrLen_;
         std::atomic_bool interrupted_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
+
+        std::shared_ptr<RtcpInfo> rtcpInfo_;
+
 };
+
+
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2; /* protocol version */
+    uint32_t p:1;       /* padding flag */
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+
+#else
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+    uint32_t p:1;       /* padding flag */
+    uint32_t version:2; /* protocol version */
+#endif
+    uint32_t pt:8;      /* payload type */
+    uint32_t len:16;    /* length of RTCP packet */
+    uint32_t ssrc;      /* synchronization source identifier of packet send */
+    uint32_t ssrc_1;    /* synchronization source identifier of first source */
+    uint32_t fraction_lost; /* 8 bits of fraction, 24 bits of total packets lost */
+    uint32_t last_seq;  /*last sequence number */
+    uint32_t jitter;    /*jitter */
+} rtcpRRHeader;
+
 
 } // namespace ring
