@@ -102,13 +102,12 @@ class SocketPair {
         int waitForData();
         int readRtpData(void* buf, int buf_size);
         int readRtcpData(void* buf, int buf_size);
-        int writeRtpData(void* buf, int buf_size);
-        int writeRtcpData(void* buf, int buf_size);
+        int writeData(uint8_t* buf, int buf_size);
 
-        std::mutex dataReceivedMutex_;
+        std::mutex dataBuffMutex_;
         std::condition_variable cv_;
-        std::list<std::vector<uint8_t>> dataBuff_;
-        std::atomic<bool> canRead_ {false};
+        std::list<std::vector<uint8_t>> rtpDataBuff_;
+        std::list<std::vector<uint8_t>> rtcpDataBuff_;
 
         std::unique_ptr<IceSocket> rtp_sock_;
         std::unique_ptr<IceSocket> rtcp_sock_;
