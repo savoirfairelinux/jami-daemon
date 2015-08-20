@@ -3,6 +3,7 @@
  *  Copyright (c) 2002 Fabrice Bellard
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -66,90 +67,89 @@ static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 8192;
 
 class SRTPProtoContext {
-    public:
-        SRTPProtoContext(const char* out_suite, const char* out_key,
-                         const char* in_suite, const char* in_key) {
-            if (out_suite && out_key) {
-                // XXX: see srtp_open from libavformat/srtpproto.c
-                if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
-                    srtp_close();
-                    throw std::runtime_error("Could not set crypto on output");
-                }
-            }
-
-            if (in_suite && in_key) {
-                if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
-                    srtp_close();
-                    throw std::runtime_error("Could not set crypto on input");
-                }
+public:
+    SRTPProtoContext(const char* out_suite, const char* out_key,
+                     const char* in_suite, const char* in_key) {
+        if (out_suite && out_key) {
+            // XXX: see srtp_open from libavformat/srtpproto.c
+            if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
+                srtp_close();
+                throw std::runtime_error("Could not set crypto on output");
             }
         }
 
-        ~SRTPProtoContext() {
-            srtp_close();
+        if (in_suite && in_key) {
+            if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
+                srtp_close();
+                throw std::runtime_error("Could not set crypto on input");
+            }
         }
+    }
 
-        SRTPContext srtp_out {};
-        SRTPContext srtp_in {};
-        uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
+    ~SRTPProtoContext() {
+        srtp_close();
+    }
 
-    private:
-        void srtp_close() noexcept {
-            ff_srtp_free(&srtp_out);
-            ff_srtp_free(&srtp_in);
-        }
+    SRTPContext srtp_out {};
+    SRTPContext srtp_in {};
+    uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
+
+private:
+    void srtp_close() noexcept {
+        ff_srtp_free(&srtp_out);
+        ff_srtp_free(&srtp_in);
+    }
 };
 
 static int
 ff_network_wait_fd(int fd)
 {
     struct pollfd p = { fd, POLLOUT, 0 };
-    int ret;
-    ret = poll(&p, 1, NET_POLL_TIMEOUT);
+    auto ret = poll(&p, 1, NET_POLL_TIMEOUT);
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
-static struct
-addrinfo* udp_resolve_host(const char *node, int service)
+static struct addrinfo*
+udp_resolve_host(const char* node, int service)
 {
-    struct addrinfo hints, *res = 0;
-    int error;
-    char sport[16];
-
+    struct addrinfo hints;
     memset(&hints, 0, sizeof(hints));
+
+    char sport[16];
     snprintf(sport, sizeof(sport), "%d", service);
 
     hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_family   = AF_UNSPEC;
+    hints.ai_family = AF_UNSPEC;
     hints.ai_flags = AI_PASSIVE;
-    if ((error = getaddrinfo(node, sport, &hints, &res))) {
-        res = NULL;
-        RING_ERR("%s\n", gai_strerror(error));
+
+    struct addrinfo* res = nullptr;
+    if (auto error = getaddrinfo(node, sport, &hints, &res)) {
+        res = nullptr;
+        RING_ERR("getaddrinfo failed: %s\n", gai_strerror(error));
     }
 
     return res;
 }
 
 static unsigned
-udp_set_url(struct sockaddr_storage *addr, const char *hostname, int port)
+udp_set_url(struct sockaddr_storage* addr, const char* hostname, int port)
 {
-    struct addrinfo *res0;
-    int addr_len;
-
-    res0 = udp_resolve_host(hostname, port);
-    if (res0 == 0) return 0;
+    auto res0 = udp_resolve_host(hostname, port);
+    if (res0 == 0)
+        return 0;
     memcpy(addr, res0->ai_addr, res0->ai_addrlen);
-    addr_len = res0->ai_addrlen;
+    auto addr_len = res0->ai_addrlen;
     freeaddrinfo(res0);
 
     return addr_len;
 }
 
 static int
-udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
+udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
 {
     int udp_fd = -1;
-    struct addrinfo *res0 = NULL, *res = NULL;
+    struct addrinfo* res0 = nullptr;
+    struct addrinfo* res = nullptr;
 
     res0 = udp_resolve_host(0, local_port);
     if (res0 == 0)
@@ -157,13 +157,13 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     for (res = res0; res; res=res->ai_next) {
 #ifdef __APPLE__
         udp_fd = socket(res->ai_family, SOCK_DGRAM, 0);
-        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1) {
+        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1)
 #else
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-        if (udp_fd != -1) {
+        if (udp_fd != -1)
 #endif
            break;
-        }
+
         RING_ERR("socket error");
      }
 
@@ -189,14 +189,12 @@ udp_socket_create(sockaddr_storage *addr, socklen_t *addr_len, int local_port)
     return udp_fd;
 }
 
-using std::string;
 static const size_t RTP_BUFFER_SIZE = 1472;
 static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
     : rtp_sock_()
     , rtcp_sock_()
-    , rtcpWriteMutex_()
     , rtpDestAddr_()
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
@@ -209,7 +207,6 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
-    , rtcpWriteMutex_()
     , rtpDestAddr_()
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
@@ -223,19 +220,21 @@ SocketPair::~SocketPair()
         closeSockets();
 }
 
-void SocketPair::createSRTP(const char *out_suite, const char *out_key,
-                            const char *in_suite, const char *in_key)
+void
+SocketPair::createSRTP(const char* out_suite, const char* out_key,
+                       const char* in_suite, const char* in_key)
 {
-    srtpContext_.reset(new SRTPProtoContext(out_suite, out_key,
-                                            in_suite, in_key));
+    srtpContext_.reset(new SRTPProtoContext(out_suite, out_key, in_suite, in_key));
 }
 
-void SocketPair::interrupt()
+void
+SocketPair::interrupt()
 {
     interrupted_ = true;
 }
 
-void SocketPair::closeSockets()
+void
+SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
         strErr();
@@ -243,14 +242,14 @@ void SocketPair::closeSockets()
         strErr();
 }
 
-void SocketPair::openSockets(const char *uri, int local_rtp_port)
+void
+SocketPair::openSockets(const char* uri, int local_rtp_port)
 {
     char hostname[256];
     char path[1024];
     int rtp_port;
 
-    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &rtp_port, path,
-                  sizeof(path));
+    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &rtp_port, path, sizeof(path));
 
     const int rtcp_port = rtp_port + 1;
     const int local_rtcp_port = local_rtp_port + 1;
@@ -270,14 +269,16 @@ void SocketPair::openSockets(const char *uri, int local_rtp_port)
     }
 
     RING_WARN("SocketPair: local{%d,%d}, remote{%d,%d}",
-             local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
+              local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
 }
 
-MediaIOHandle* SocketPair::createIOContext()
+MediaIOHandle*
+SocketPair::createIOContext()
 {
     return new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
-                             &readCallback, &writeCallback, 0,
-                             reinterpret_cast<void*>(this));
+                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
+                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
+                             0, reinterpret_cast<void*>(this));
 }
 
 int
@@ -301,9 +302,9 @@ SocketPair::waitForData()
 }
 
 int
-SocketPair::readRtpData(void *buf, int buf_size)
+SocketPair::readRtpData(void* buf, int buf_size)
 {
-    auto data = static_cast<uint8_t *>(buf);
+    auto data = static_cast<uint8_t*>(buf);
 
     if (rtpHandle_ >= 0) {
         // work with system socket
@@ -311,8 +312,8 @@ SocketPair::readRtpData(void *buf, int buf_size)
         socklen_t from_len = sizeof(from);
 
 start:
-        int result = recvfrom(rtpHandle_, (char*)buf, buf_size, 0,
-                              (struct sockaddr *)&from, &from_len);
+        int result = recvfrom(rtpHandle_, static_cast<char*>(buf), buf_size, 0,
+                              reinterpret_cast<struct sockaddr *>(&from), &from_len);
         if (result > 0 and srtpContext_ and srtpContext_->srtp_in.aes)
             if (ff_srtp_decrypt(&srtpContext_->srtp_in, data, &result) < 0)
                 goto start; // XXX: see libavformat/srtpproto.c
@@ -338,7 +339,7 @@ start_ice:
 }
 
 int
-SocketPair::readRtcpData(void *buf, int buf_size)
+SocketPair::readRtcpData(void* buf, int buf_size)
 {
     if (rtcpHandle_ >= 0) {
         // work with system socket
@@ -364,7 +365,7 @@ SocketPair::readRtcpData(void *buf, int buf_size)
 int
 SocketPair::writeRtpData(void* buf, int buf_size)
 {
-    auto data = static_cast<const uint8_t *>(buf);
+    auto data = static_cast<const uint8_t*>(buf);
 
     if (rtpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtpHandle_);
@@ -401,10 +402,8 @@ SocketPair::writeRtpData(void* buf, int buf_size)
 }
 
 int
-SocketPair::writeRtcpData(void *buf, int buf_size)
+SocketPair::writeRtcpData(void* buf, int buf_size)
 {
-    std::lock_guard<std::mutex> lock(rtcpWriteMutex_);
-
     if (rtcpHandle_ >= 0) {
         auto ret = ff_network_wait_fd(rtcpHandle_);
         if (ret < 0)
@@ -417,24 +416,23 @@ SocketPair::writeRtcpData(void *buf, int buf_size)
     return rtcp_sock_->send(static_cast<unsigned char*>(buf), buf_size);
 }
 
-int SocketPair::readCallback(void *opaque, uint8_t *buf, int buf_size)
+int
+SocketPair::readCallback(uint8_t* buf, int buf_size)
 {
-    SocketPair *context = static_cast<SocketPair*>(opaque);
-
 retry:
-    if (context->interrupted_) {
+    if (interrupted_) {
         RING_ERR("interrupted");
         return -EINTR;
     }
 
-    if (context->waitForData() < 0) {
+    if (waitForData() < 0) {
         if (errno == EINTR)
             goto retry;
         return -EIO;
     }
 
     /* RTP */
-    int len = context->readRtpData(buf, buf_size);
+    int len = readRtpData(buf, buf_size);
     if (len < 0) {
         if (errno == EAGAIN or errno == EINTR)
             goto retry;
@@ -444,16 +442,15 @@ retry:
     return len;
 }
 
-int SocketPair::writeCallback(void *opaque, uint8_t *buf, int buf_size)
+int
+SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
-    SocketPair *context = static_cast<SocketPair*>(opaque);
     int ret;
 
 retry:
     if (RTP_PT_IS_RTCP(buf[1])) {
-        return buf_size;
         /* RTCP payload type */
-        ret = context->writeRtcpData(buf, buf_size);
+        ret = writeRtcpData(buf, buf_size);
         if (ret < 0) {
             if (errno == EAGAIN)
                 goto retry;
@@ -461,7 +458,7 @@ retry:
         }
     } else {
         /* RTP payload type */
-        ret = context->writeRtpData(buf, buf_size);
+        ret = writeRtpData(buf, buf_size);
         if (ret < 0) {
             if (errno == EAGAIN)
                 goto retry;
