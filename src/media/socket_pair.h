@@ -53,12 +53,34 @@ using socklen_t = int;
 #include <atomic>
 #include <list>
 #include <vector>
+#include <queue>
 #include <condition_variable>
+
 
 namespace ring {
 
 class IceSocket;
 class SRTPProtoContext;
+
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2; /* protocol version */
+    uint32_t p:1;       /* padding flag */
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+
+#else
+    uint32_t rc:5;      /* reception report count must be 201 for report */
+    uint32_t p:1;       /* padding flag */
+    uint32_t version:2; /* protocol version */
+#endif
+    uint32_t pt:8;      /* payload type */
+    uint32_t len:16;    /* length of RTCP packet */
+    uint32_t ssrc;      /* synchronization source identifier of packet send */
+    uint32_t ssrc_1;    /* synchronization source identifier of first source */
+    uint32_t fraction_lost; /* 8 bits of fraction, 24 bits of total packets lost */
+    uint32_t last_seq;  /*last sequence number */
+    uint32_t jitter;    /*jitter */
+} rtcpRRHeader;
 
 class SocketPair {
     public:
@@ -96,6 +118,7 @@ class SocketPair {
         void pause(bool enable);
 
     private:
+        std::vector<rtcpRRHeader> getRtcpInfo();
         NON_COPYABLE(SocketPair);
 
         int readCallback(uint8_t* buf, int buf_size);
@@ -105,6 +128,7 @@ class SocketPair {
         int readRtpData(void* buf, int buf_size);
         int readRtcpData(void* buf, int buf_size);
         int writeData(uint8_t* buf, int buf_size);
+        void saveRtcpPacket(uint8_t* buf, size_t len);
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;
@@ -123,6 +147,13 @@ class SocketPair {
         std::atomic_bool interrupted_ {false};
         std::atomic_bool pauseWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
+
+        std::list<rtcpRRHeader> listRtcpHeader_;
+        std::mutex rtcpInfo_mutex_;
+        static constexpr unsigned MAX_LIST_SIZE {20};
 };
+
+
+
 
 } // namespace ring
