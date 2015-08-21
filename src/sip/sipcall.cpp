@@ -303,8 +303,7 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::updateSDPFromSTUN()
 {
-    RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str(),
-              __func__);
+    RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str());
 }
 
 void
@@ -321,11 +320,11 @@ SIPCall::terminateSipSession(int status)
                 sip_utils::addContactHeader(&contact, tdata);
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
-                    RING_ERR("[call:%s] failed to send terminate msg, SIP error %d (%s)",
+                    RING_ERR("[call:%s] failed to send terminate msg, SIP error (%s)",
                              getCallId().c_str(), sip_utils::sip_strerror(ret).c_str());
             }
         } else
-            RING_ERR("[call:%s] failed to terminate INVITE@%p, SIP error %d (%s)",
+            RING_ERR("[call:%s] failed to terminate INVITE@%p, SIP error (%s)",
                      getCallId().c_str(), inv.get(), sip_utils::sip_strerror(ret).c_str());
     }
 
@@ -363,7 +362,8 @@ SIPCall::answer()
 
     // contactStr must stay in scope as long as tdata
     if (contactHeader_.slen) {
-        RING_DBG("[call:%s] Answering with contact header: %.*s", getCallId().c_str(), contactHeader_.slen, contactHeader_.ptr);
+        RING_DBG("[call:%s] Answering with contact header: %.*s",
+                 getCallId().c_str(), (int)contactHeader_.slen, contactHeader_.ptr);
         sip_utils::addContactHeader(&contactHeader_, tdata);
     }
 
@@ -555,7 +555,7 @@ SIPCall::transfer(const std::string& to)
 
     toUri = account.getToUri(to);
     pj_cstr(&dst, toUri.c_str());
-    RING_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), dst.slen, dst.ptr);
+    RING_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int)dst.slen, dst.ptr);
 
     if (!transferCommon(&dst))
         throw VoipLinkException("Couldn't transfer");

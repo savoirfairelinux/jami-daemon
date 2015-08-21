@@ -345,7 +345,7 @@ PresSubClient::PresSubClient(const std::string& uri, SIPPresence *pres) :
 
 PresSubClient::~PresSubClient()
 {
-    RING_DBG("Destroying pres_client object with uri %.*s", uri_.slen, uri_.ptr);
+    RING_DBG("Destroying pres_client object with uri %.*s", (int)uri_.slen, uri_.ptr);
     rescheduleTimer(PJ_FALSE, 0);
     unsubscribe();
     pj_pool_release(pool_);
@@ -394,7 +394,7 @@ void PresSubClient::rescheduleTimer(bool reschedule, unsigned msec)
         pj_time_val delay;
 
         RING_WARN("pres_client  %.*s will resubscribe in %u ms (reason: %.*s)",
-             uri_.slen, uri_.ptr, msec, (int) term_reason_.slen, term_reason_.ptr);
+                  (int)uri_.slen, uri_.ptr, msec, (int)term_reason_.slen, term_reason_.ptr);
         pj_timer_entry_init(&timer_, 0, this, &pres_client_timer_cb);
         delay.sec = 0;
         delay.msec = msec;
@@ -489,7 +489,7 @@ bool PresSubClient::unsubscribe()
     }
 
     /* Unsubscribe means send a subscribe with timeout=0s*/
-    RING_WARN("pres_client %.*s: unsubscribing..", uri_.slen, uri_.ptr);
+    RING_WARN("pres_client %.*s: unsubscribing..", (int)uri_.slen, uri_.ptr);
     retStatus = pjsip_pres_initiate(sub_, 0, &tdata);
 
     if (retStatus == PJ_SUCCESS) {
@@ -500,7 +500,7 @@ bool PresSubClient::unsubscribe()
     if (retStatus != PJ_SUCCESS and sub_) {
         pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to unsubscribe presence", retStatus);
+        RING_WARN("Unable to unsubscribe presence (%d)", retStatus);
         unlock();
         return false;
     }
@@ -517,7 +517,7 @@ bool PresSubClient::subscribe()
 
     if (sub_ and dlg_) { //do not bother if already subscribed
         pjsip_evsub_terminate(sub_, PJ_FALSE);
-        RING_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", uri_.slen, uri_.ptr);
+        RING_DBG("PreseSubClient %.*s: already subscribed. Refresh it.", (int)uri_.slen, uri_.ptr);
     }
 
     //subscribe
@@ -532,7 +532,7 @@ bool PresSubClient::subscribe()
     pres_callback.on_rx_notify = &pres_client_evsub_on_rx_notify;
 
     SIPAccount * acc = pres_->getAccount();
-    RING_DBG("PresSubClient %.*s: subscribing ", uri_.slen, uri_.ptr);
+    RING_DBG("PresSubClient %.*s: subscribing ", (int)uri_.slen, uri_.ptr);
 
 
     /* Create UAC dialog */
@@ -558,7 +558,7 @@ bool PresSubClient::subscribe()
 
     if (status != PJ_SUCCESS) {
         sub_ = NULL;
-        RING_WARN("Unable to create presence client", status);
+        RING_WARN("Unable to create presence client (%d)", status);
 
         /* This should destroy the dialog since there's no session
          * referencing it
@@ -591,7 +591,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to create initial SUBSCRIBE", status);
+        RING_WARN("Unable to create initial SUBSCRIBE (%d)", status);
         return false;
     }
 
@@ -605,7 +605,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to send initial SUBSCRIBE", status);
+        RING_WARN("Unable to send initial SUBSCRIBE (%d)", status);
         return false;
     }
 

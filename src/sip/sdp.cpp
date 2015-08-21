@@ -608,7 +608,8 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             if (pjmedia_sdp_attr_get_rtpmap(rtpMapAttribute, &rtpmap) != PJ_SUCCESS ||
                 rtpmap.enc_name.slen == 0)
             {
-                RING_ERR("Could not find payload type %s in SDP", media->desc.fmt[j]);
+                RING_ERR("Could not find payload type %.*s in SDP",
+                        (int)media->desc.fmt[j].slen, media->desc.fmt[j].ptr);
                 descr.enabled = false;
                 continue;
             }

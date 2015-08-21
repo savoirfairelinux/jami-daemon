@@ -333,7 +333,8 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
     }
 
     RING_DBG("contact header: %.*s / %s -> %s / %.*s",
-          pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(), pjTarget.slen, pjTarget.ptr);
+             (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
+             (int)pjTarget.slen, pjTarget.ptr);
 
     pjsip_dialog *dialog = NULL;
     if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, &pjTarget, &dialog) != PJ_SUCCESS) {
@@ -621,7 +622,7 @@ RingAccount::handleEvents()
                 c = pendingCalls_.erase(c);
             }
         } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
-            RING_WARN("[call:%s] ICE timeout : removing pending call (%d)",
+            RING_WARN("[call:%s] ICE timeout : removing pending call (%ld)",
                       call->getCallId().c_str(), call.use_count());
             if (c->call_key != dht::InfoHash())
                 dht_.cancelListen(c->call_key, c->listen_key.get());
@@ -736,7 +737,7 @@ RingAccount::doRegister_()
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
             if (cert)
                 ret.emplace_back(std::move(cert));
-            RING_DBG("Query for local certificate store: %s: %d found.", pk_id.toString().c_str(), ret.size());
+            RING_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
             return ret;
         });
 

@@ -89,7 +89,7 @@ SipTransport::SipTransport(pjsip_transport* t)
     // Set pointer here, right after the successful pjsip_transport_add_ref
     transport_.reset(t);
 
-    RING_DBG("SipTransport@%p {tr=%p {rc=%u}}",
+    RING_DBG("SipTransport@%p {tr=%p {rc=%ld}}",
              this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 
@@ -102,7 +102,7 @@ SipTransport::SipTransport(pjsip_transport* t,
 
 SipTransport::~SipTransport()
 {
-    RING_DBG("~SipTransport@%p {tr=%p {rc=%u}}",
+    RING_DBG("~SipTransport@%p {tr=%p {rc=%ld}}",
              this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 

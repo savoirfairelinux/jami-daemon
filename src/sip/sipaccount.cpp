@@ -346,7 +346,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
 
     pj_str_t pjContact = getContactHeader(transport->get());
     RING_DBG("contact header: %.*s / %s -> %s",
-          pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str());
+             (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str());
 
     pjsip_dialog *dialog = NULL;
 
@@ -981,7 +981,7 @@ SIPAccount::sendRegister()
     if (transport_) {
         if (getUPnPActive() or not getPublishedSameasLocal() or (not received.empty() and received != getPublishedAddress())) {
             pjsip_host_port *via = getViaAddr();
-            RING_DBG("Setting VIA sent-by to %.*s:%d", via->host.slen, via->host.ptr, via->port);
+            RING_DBG("Setting VIA sent-by to %.*s:%d", (int)via->host.slen, via->host.ptr, via->port);
 
             if (pjsip_regc_set_via_sent_by(regc, via, transport_->get()) != PJ_SUCCESS)
                 throw VoipLinkException("Unable to set the \"sent-by\" field");
@@ -1233,7 +1233,7 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
 
-    RING_DBG("Using %u ciphers", ciphers_.size());
+    RING_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
     tlsSetting_.ciphers = &ciphers_.front();
 
@@ -2063,7 +2063,7 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 
     pj_time_val_normalize(&delay);
 
-    RING_WARN("Scheduling re-registration retry in %u seconds..", delay.sec);
+    RING_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;

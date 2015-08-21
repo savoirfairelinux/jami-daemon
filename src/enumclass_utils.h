@@ -198,7 +198,7 @@ template<class Row, typename Value, typename Accessor>
 const Value Matrix1D<Row,Value,Accessor>::operator[](Row v) const {
     assert(size_t(v) <= enum_class_size<Row>()+1 && size_t(v)>=0); //COUNT__ is also valid
     if (size_t(v) >= enum_class_size<Row>()) {
-        RING_ERR("State Machine Out of Bounds %d\n", size_t(v));
+        RING_ERR("State Machine Out of Bounds %zu\n", size_t(v));
         assert(false);
         throw v;
     }

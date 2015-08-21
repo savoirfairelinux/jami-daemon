@@ -600,7 +600,7 @@ SIPVoIPLink::~SIPVoIPLink()
     // may be called and another instance of SIPVoIPLink can be re-created!
 
     if (not Manager::instance().callFactory.empty<SIPCall>())
-        RING_ERR("%d SIP calls remains!",
+        RING_ERR("%zu SIP calls remains!",
                  Manager::instance().callFactory.callCount<SIPCall>());
 
     sipTransportBroker->shutdown();
@@ -690,7 +690,7 @@ SIPVoIPLink::handleEvents()
     static const pj_time_val timeout = {0, 0}; // polling
     auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
     if (ret != PJ_SUCCESS)
-        RING_ERR("pjsip_endpt_handle_events failed with error %d: %s",
+        RING_ERR("pjsip_endpt_handle_events failed with error %s",
                  sip_utils::sip_strerror(ret).c_str());
 
 #ifdef RING_VIDEO
@@ -700,7 +700,7 @@ SIPVoIPLink::handleEvents()
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    RING_DBG("Register new keep alive timer %d with delay %d", timer.id, delay.sec);
+    RING_DBG("Register new keep alive timer %d with delay %ld", timer.id, delay.sec);
 
     if (timer.id == -1)
         RING_WARN("Timer already scheduled");
@@ -813,7 +813,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
 
         RING_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d, tsx@%p status %d (%.*s)",
                  call->getCallId().c_str(), inv, inv->state, pjsip_inv_state_name(inv->state),
-                 inv->cause, tsx, status_code, description->slen, description->ptr);
+                 inv->cause, tsx, status_code, (int)description->slen, description->ptr);
     } else {
         status_code = 0;
         RING_DBG("[call:%s] INVITE@%p state changed to %d (%s): cause=%d (TX_MSG)",
@@ -1055,7 +1055,7 @@ replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
 {
     const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
     if (ret != PJ_SUCCESS)
-        RING_WARN("SIP: failed to reply %u to request");
+        RING_WARN("SIP: failed to reply %d to request", status_code);
 }
 
 static void
@@ -1180,7 +1180,7 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
 
     // Using method name to dispatch
     const std::string methodName {msg->line.req.method.name.ptr, (unsigned)msg->line.req.method.name.slen};
-    RING_DBG("[INVITE:%p] RX SIP method %d (%#s)", inv, msg->line.req.method.id, methodName.c_str());
+    RING_DBG("[INVITE:%p] RX SIP method %d (%s)", inv, msg->line.req.method.id, methodName.c_str());
 
 #ifdef DEBUG_SIP_REQUEST_MSG
     char msgbuf[1000];
@@ -1392,7 +1392,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
     switch (stunStatus) {
         case PJLIB_UTIL_ESTUNNOTRESPOND:
            RING_ERR("No response from STUN server %.*s",
-                    stunServerName->slen, stunServerName->ptr);
+                    (int)stunServerName->slen, stunServerName->ptr);
            return false;
 
         case PJLIB_UTIL_ESTUNSYMMETRIC:
@@ -1403,13 +1403,13 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
             port = pj_sockaddr_in_get_port(&mapped_addr);
             addr = IpAddr((const pj_sockaddr&)mapped_addr).toString();
             RING_DBG("STUN server %.*s replied '%s:%u'",
-                     stunServerName->slen, stunServerName->ptr,
+                     (int)stunServerName->slen, stunServerName->ptr,
                      addr.c_str(), port);
             return true;
 
         default: // use given address, silent any not handled error
             RING_WARN("Error from STUN server %.*s, using source address",
-                      stunServerName->slen, stunServerName->ptr);
+                      (int)stunServerName->slen, stunServerName->ptr);
             return false;
     }
 }
