@@ -42,7 +42,7 @@ extern "C" {
 /**
  * Print something, coloring it depending on the level
  */
-void logger(const int level, const char* format, ...);
+void logger(const int level, const char* format, ...) __attribute__((format(printf, 2, 3)));
 void vlogger(const int level, const char* format, va_list);
 
 /**
