@@ -103,7 +103,7 @@ void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
         RING_DBG("SRC channel number changed.");
     }
     if (nbChans != dataOut.channels()) {
-        RING_DBG("Output buffer had the wrong number of channels (in: %d, out: %d).", nbChans, dataOut.channels());
+        RING_DBG("Output buffer had the wrong number of channels (in: %zu, out: %u).", nbChans, dataOut.channels());
         dataOut.setChannelNum(nbChans);
     }
 

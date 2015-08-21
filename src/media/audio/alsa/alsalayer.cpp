@@ -822,7 +822,7 @@ void AlsaLayer::audioCallback()
         playbackBuff_.resize(ringtoneAvailFrames);
 
         if (file_tone) {
-            RING_DBG("playback gain %d", playbackGain_);
+            RING_DBG("playback gain %f", playbackGain_);
             file_tone->getNext(playbackBuff_, playbackGain_);
         }
 

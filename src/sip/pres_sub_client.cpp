@@ -500,7 +500,7 @@ bool PresSubClient::unsubscribe()
     if (retStatus != PJ_SUCCESS and sub_) {
         pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to unsubscribe presence", retStatus);
+        RING_WARN("Unable to unsubscribe presence (%d)", retStatus);
         unlock();
         return false;
     }
@@ -558,7 +558,7 @@ bool PresSubClient::subscribe()
 
     if (status != PJ_SUCCESS) {
         sub_ = NULL;
-        RING_WARN("Unable to create presence client", status);
+        RING_WARN("Unable to create presence client (%d)", status);
 
         /* This should destroy the dialog since there's no session
          * referencing it
@@ -591,7 +591,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to create initial SUBSCRIBE", status);
+        RING_WARN("Unable to create initial SUBSCRIBE (%d)", status);
         return false;
     }
 
@@ -605,7 +605,7 @@ bool PresSubClient::subscribe()
         if (sub_)
             pjsip_pres_terminate(sub_, PJ_FALSE);
         sub_ = NULL;
-        RING_WARN("Unable to send initial SUBSCRIBE", status);
+        RING_WARN("Unable to send initial SUBSCRIBE (%d)", status);
         return false;
     }
 
