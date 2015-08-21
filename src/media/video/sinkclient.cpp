@@ -104,7 +104,7 @@ class ShmHolder
 
         void unMapShmArea() noexcept {
             if (area_ != MAP_FAILED and ::munmap(area_, areaSize_) < 0) {
-                RING_ERR("ShmHolder[%s]: munmap(%u) failed with errno %d",
+                RING_ERR("ShmHolder[%s]: munmap(%zu) failed with errno %d",
                          openedName_.c_str(), areaSize_, errno);
             }
         }
@@ -186,13 +186,13 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     // full area size: +15 to take care of maximum padding size
     const auto areaSize = sizeof(SHMHeader) + 2 * frameSize + 15;
-    RING_DBG("ShmHolder[%s]: new sizes: f=%u, a=%u", openedName_.c_str(),
+    RING_DBG("ShmHolder[%s]: new sizes: f=%zu, a=%zu", openedName_.c_str(),
              frameSize, areaSize);
 
     unMapShmArea();
 
     if (::ftruncate(fd_, areaSize) < 0) {
-        RING_ERR("ShmHolder[%s]: ftruncate(%u) failed with errno %d",
+        RING_ERR("ShmHolder[%s]: ftruncate(%zu) failed with errno %d",
                  openedName_.c_str(), areaSize, errno);
         return false;
     }
@@ -203,7 +203,7 @@ ShmHolder::resizeArea(std::size_t frameSize) noexcept
 
     if (area_ == MAP_FAILED) {
         areaSize_ = 0;
-        RING_ERR("ShmHolder[%s]: mmap(%u) failed with errno %d",
+        RING_ERR("ShmHolder[%s]: mmap(%zu) failed with errno %d",
                  openedName_.c_str(), areaSize, errno);
         return false;
     }

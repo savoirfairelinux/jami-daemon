@@ -50,7 +50,7 @@ CallFactory::removeCall(Call& call)
     const auto& linkType = call.getLinkType();
     auto& map = callMaps_.at(linkType);
     map.erase(id);
-    RING_DBG("Remaining %u %s call(s)", map.size(), linkType);
+    RING_DBG("Remaining %zu %s call(s)", map.size(), linkType);
 }
 
 void

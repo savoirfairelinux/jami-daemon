@@ -107,7 +107,7 @@ AccountFactory::removeAccount(Account& account)
     RING_DBG("Removing account %s", id.c_str());
     auto& map = accountMaps_.at(account.getAccountType());
     map.erase(id);
-    RING_DBG("Remaining %u %s account(s)", map.size(), account_type);
+    RING_DBG("Remaining %zu %s account(s)", map.size(), account_type);
 }
 
 void

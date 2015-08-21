@@ -791,7 +791,7 @@ void
 Manager::removeConference(const std::string& conference_id)
 {
     RING_DBG("Remove conference %s", conference_id.c_str());
-    RING_DBG("number of participants: %u", conferenceMap_.size());
+    RING_DBG("number of participants: %zu", conferenceMap_.size());
     ConferenceMap::iterator iter = conferenceMap_.find(conference_id);
 
     std::shared_ptr<Conference> conf;
@@ -1212,7 +1212,7 @@ Manager::detachParticipant(const std::string& call_id)
         removeParticipant(call_id);
 
     } else {
-        RING_DBG("Unbind main participant from conference %d");
+        RING_DBG("Unbind main participant from conference");
         getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
 
         if (not isConference(current_call_id)) {
@@ -1279,7 +1279,7 @@ Manager::processRemainingParticipants(Conference &conf)
     const std::string current_call_id(getCurrentCallId());
     ParticipantSet participants(conf.getParticipantList());
     const size_t n = participants.size();
-    RING_DBG("Process remaining %d participant(s) from conference %s",
+    RING_DBG("Process remaining %zu participant(s) from conference %s",
           n, conf.getConfID().c_str());
 
     if (n > 1) {
