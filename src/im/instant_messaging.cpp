@@ -182,12 +182,12 @@ InstantMessaging::appendMimePayloads(const std::map<std::string, std::string>& p
     for (const auto& pair : payloads) {
         const auto& m = buildMimeMultipartPart(pair.first, {}, pair.second);
         if (m.size() > max_message_size) {
-            RING_DBG("An %s payload is too large to be sent, the maximum lenght is %d",
+            RING_DBG("An %s payload is too large to be sent, the maximum lenght is %zu",
                      m.c_str(), max_message_size);
             continue;
         }
         if (m.size() + chunk.size() > max_message_size) {
-            RING_DBG("Some MIME payloads don't fit into the packet, splitting, max size is %d, the payload would be %d %d %d",
+            RING_DBG("Some MIME payloads don't fit into the packet, splitting, max size is %zu, the payload would be %zu %zu %zu",
                      max_message_size, m.size() + chunk.size(), m.size() , chunk.size()
             );
             chunk += urilist + footer;

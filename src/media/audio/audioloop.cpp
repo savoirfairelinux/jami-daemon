@@ -75,7 +75,7 @@ AudioLoop::getNext(AudioBuffer& output, double gain)
         RING_ERR("Audio loop size is 0");
         return;
     } else if (pos >= buf_samples) {
-        RING_ERR("Invalid loop position %d", pos);
+        RING_ERR("Invalid loop position %zu", pos);
         return;
     }
 

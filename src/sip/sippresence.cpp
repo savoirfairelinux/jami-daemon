@@ -239,7 +239,7 @@ void SIPPresence::addPresSubClient(PresSubClient *c)
 {
     if (sub_client_list_.size() < MAX_N_SUB_CLIENT) {
         sub_client_list_.push_back(c);
-        RING_DBG("New Presence_subscription_client added (list[%i]).", sub_client_list_.size());
+        RING_DBG("New Presence_subscription_client added (list[%zu]).", sub_client_list_.size());
     } else {
         RING_WARN("Max Presence_subscription_client is reach.");
         // let the client alive //delete c;
@@ -322,7 +322,7 @@ void SIPPresence::fillDoc(pjsip_tx_data *tdata, const pres_msg_data *msg_data)
     while (hdr && hdr != &msg_data->hdr_list) {
         pjsip_hdr *new_hdr;
         new_hdr = (pjsip_hdr*) pjsip_hdr_clone(tdata->pool, hdr);
-        RING_DBG("adding header", new_hdr->name.ptr);
+        RING_DBG("adding header %p", new_hdr->name.ptr);
         pjsip_msg_add_hdr(tdata->msg, new_hdr);
         hdr = hdr->next;
     }
@@ -420,7 +420,7 @@ SIPPresence::send_publish(SIPPresence * pres)
     pj_str_t from = pj_strdup3(pres->pool_, acc->getFromUri().c_str());
 
     if (status != PJ_SUCCESS) {
-        RING_ERR("Error creating PUBLISH request", status);
+        RING_ERR("Error creating PUBLISH request %d", status);
         goto on_error;
     }
 

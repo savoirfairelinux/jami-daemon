@@ -1233,7 +1233,7 @@ void SIPAccount::initTlsConfiguration()
     pj_cstr(&tlsSetting_.privkey_file, tlsPrivateKeyFile_.c_str());
     pj_cstr(&tlsSetting_.password, tlsPassword_.c_str());
 
-    RING_DBG("Using %u ciphers", ciphers_.size());
+    RING_DBG("Using %zu ciphers", ciphers_.size());
     tlsSetting_.ciphers_num = ciphers_.size();
     tlsSetting_.ciphers = &ciphers_.front();
 
@@ -2063,7 +2063,7 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 
     pj_time_val_normalize(&delay);
 
-    RING_WARN("Scheduling re-registration retry in %u seconds..", delay.sec);
+    RING_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
     if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;

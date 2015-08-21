@@ -94,7 +94,7 @@ size_t RingBuffer::getLength(const std::string &call_id) const
 void
 RingBuffer::debug()
 {
-    RING_DBG("Start=%d; End=%d; BufferSize=%d", getSmallestReadOffset(), endPos_, buffer_.frames());
+    RING_DBG("Start=%zu; End=%zu; BufferSize=%zu", getSmallestReadOffset(), endPos_, buffer_.frames());
 }
 
 size_t RingBuffer::getReadOffset(const std::string &call_id) const
@@ -230,7 +230,7 @@ size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
     const size_t sample_num = buf.frames();
     size_t toCopy = std::min(sample_num, len);
     if (toCopy and toCopy != sample_num) {
-        RING_DBG("Partial get: %d/%d", toCopy, sample_num);
+        RING_DBG("Partial get: %zu/%zu", toCopy, sample_num);
     }
 
     const size_t copied = toCopy;
@@ -314,7 +314,7 @@ RingBuffer::discard(size_t toDiscard)
     for (auto & r : readoffsets_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
         if (dst < toDiscard) {
-            RING_DBG("%s : discarding: %d frames", r.first.c_str(), toDiscard - dst);
+            RING_DBG("%s : discarding: %zu frames", r.first.c_str(), toDiscard - dst);
             r.second = (r.second + toDiscard - dst) % buffer_size;
         }
     }
