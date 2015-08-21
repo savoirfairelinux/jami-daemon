@@ -309,7 +309,7 @@ IceTransport::start(const Attribute& rem_attrs,
     }
 
     pj_str_t ufrag, pwd;
-    RING_DBG("ICE negotiation starting (%u remote candidates)", rem_candidates.size());
+    RING_DBG("ICE negotiation starting (%zu remote candidates)", rem_candidates.size());
     auto status = pj_ice_strans_start_ice(icest_.get(),
                                           pj_cstr(&ufrag, rem_attrs.ufrag.c_str()),
                                           pj_cstr(&pwd, rem_attrs.pwd.c_str()),
