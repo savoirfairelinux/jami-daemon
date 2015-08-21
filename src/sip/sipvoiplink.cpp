@@ -600,7 +600,7 @@ SIPVoIPLink::~SIPVoIPLink()
     // may be called and another instance of SIPVoIPLink can be re-created!
 
     if (not Manager::instance().callFactory.empty<SIPCall>())
-        RING_ERR("%d SIP calls remains!",
+        RING_ERR("%zu SIP calls remains!",
                  Manager::instance().callFactory.callCount<SIPCall>());
 
     sipTransportBroker->shutdown();
@@ -690,7 +690,7 @@ SIPVoIPLink::handleEvents()
     static const pj_time_val timeout = {0, 0}; // polling
     auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
     if (ret != PJ_SUCCESS)
-        RING_ERR("pjsip_endpt_handle_events failed with error %d: %s",
+        RING_ERR("pjsip_endpt_handle_events failed with error %s",
                  sip_utils::sip_strerror(ret).c_str());
 
 #ifdef RING_VIDEO
@@ -700,7 +700,7 @@ SIPVoIPLink::handleEvents()
 
 void SIPVoIPLink::registerKeepAliveTimer(pj_timer_entry &timer, pj_time_val &delay)
 {
-    RING_DBG("Register new keep alive timer %d with delay %d", timer.id, delay.sec);
+    RING_DBG("Register new keep alive timer %d with delay %ld", timer.id, delay.sec);
 
     if (timer.id == -1)
         RING_WARN("Timer already scheduled");
@@ -1055,7 +1055,7 @@ replyToRequest(pjsip_inv_session* inv, pjsip_rx_data* rdata, int status_code)
 {
     const auto ret = pjsip_dlg_respond(inv->dlg, rdata, status_code, nullptr, nullptr, nullptr);
     if (ret != PJ_SUCCESS)
-        RING_WARN("SIP: failed to reply %u to request");
+        RING_WARN("SIP: failed to reply to request");
 }
 
 static void

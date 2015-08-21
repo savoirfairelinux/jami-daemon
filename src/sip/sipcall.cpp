@@ -303,8 +303,8 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
 void
 SIPCall::updateSDPFromSTUN()
 {
-    RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented", getCallId().c_str(),
-              __func__);
+    RING_WARN("[call:%s] SIPCall::updateSDPFromSTUN() not implemented",
+              getCallId().c_str());
 }
 
 void
@@ -321,11 +321,11 @@ SIPCall::terminateSipSession(int status)
                 sip_utils::addContactHeader(&contact, tdata);
                 ret = pjsip_inv_send_msg(inv.get(), tdata);
                 if (ret != PJ_SUCCESS)
-                    RING_ERR("[call:%s] failed to send terminate msg, SIP error %d (%s)",
+                    RING_ERR("[call:%s] failed to send terminate msg, SIP error (%s)",
                              getCallId().c_str(), sip_utils::sip_strerror(ret).c_str());
             }
         } else
-            RING_ERR("[call:%s] failed to terminate INVITE@%p, SIP error %d (%s)",
+            RING_ERR("[call:%s] failed to terminate INVITE@%p, SIP error (%s)",
                      getCallId().c_str(), inv.get(), sip_utils::sip_strerror(ret).c_str());
     }
 

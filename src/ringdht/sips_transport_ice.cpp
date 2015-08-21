@@ -719,7 +719,7 @@ SipsIceTransport::handleEvents()
     for (const auto& pair: ackBuf) {
         const auto& f = pair.first;
         f.tdata_op_key->tdata = nullptr;
-        RING_DBG("status: %d", pair.second);
+        RING_DBG("status: %ld", pair.second);
         if (f.tdata_op_key->callback)
             f.tdata_op_key->callback(getTransportBase(), f.tdata_op_key->token,
                                      pair.second);
@@ -738,7 +738,7 @@ SipsIceTransport::setup()
                 std::lock_guard<std::mutex> l(inputBuffMtx_);
                 tlsInputBuff_.emplace_back(buf, buf+len);
                 canRead_ = true;
-                RING_DBG("TLS(ice): rx %uB", len);
+                RING_DBG("TLS(ice): rx %luB", len);
             }
             cv_.notify_all();
             return len;
