@@ -73,7 +73,9 @@ createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
 
 void stripSipUriPrefix(std::string& sipUri);
 
-std::string parseDisplayName(const char * buffer);
+std::string parseDisplayName(const pjsip_name_addr* sip_name_addr);
+std::string parseDisplayName(const pjsip_from_hdr* header);
+std::string parseDisplayName(const pjsip_contact_hdr* header);
 
 std::string getHostFromUri(const std::string& sipUri);
 

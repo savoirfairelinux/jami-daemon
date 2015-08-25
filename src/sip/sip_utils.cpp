@@ -101,56 +101,34 @@ createRouteSet(const std::string &route, pj_pool_t *hdr_pool)
     return route_set;
 }
 
-// FIXME: replace with regex
 std::string
-parseDisplayName(const char * buffer)
+parseDisplayName(const pjsip_name_addr* sip_name_addr)
 {
-    // Start in From: in short and long form
-    const char* from_header = strstr(buffer, "\nFrom: ");
-    if (!from_header)
-        from_header = strstr(buffer, "\nf: ");
-    if (!from_header)
-        return "";
+    if (not sip_name_addr->display.ptr or not sip_name_addr->display.slen)
+        return {};
 
-    std::string temp(from_header);
-
-    // Cut at end of line
-    temp = temp.substr(0, temp.find("\n", 1));
-
-    size_t begin_displayName = temp.find("\"");
-    size_t end_displayName;
-    if (begin_displayName != std::string::npos) {
-      // parse between quotes
-      end_displayName = temp.find("\"", begin_displayName + 1);
-      if (end_displayName == std::string::npos)
-          return "";
-    } else {
-      // parse without quotes
-      end_displayName = temp.find("<");
-      if (end_displayName != std::string::npos) {
-          begin_displayName = temp.find_first_not_of(" ", temp.find(":"));
-          if (begin_displayName == std::string::npos)
-              return "";
-
-          // omit trailing/leading spaces
-          begin_displayName++;
-          end_displayName--;
-          if (end_displayName == begin_displayName)
-              return "";
-      } else {
-          return "";
-      }
-    }
-
-    std::string displayName = temp.substr(begin_displayName + 1,
-                                          end_displayName - begin_displayName - 1);
+    std::string displayName {sip_name_addr->display.ptr,
+            static_cast<size_t>(sip_name_addr->display.slen)};
 
     // Filter out invalid UTF-8 characters to avoid getting kicked from D-Bus
-    if (not utf8_validate(displayName)) {
+    if (not utf8_validate(displayName))
         return utf8_make_valid(displayName);
-    }
 
     return displayName;
+}
+
+std::string
+parseDisplayName(const pjsip_from_hdr* header)
+{
+    // PJSIP return a pjsip_name_addr for To, From and Contact headers
+    return parseDisplayName(reinterpret_cast<pjsip_name_addr*>(header->uri));
+}
+
+std::string
+parseDisplayName(const pjsip_contact_hdr* header)
+{
+    // PJSIP return a pjsip_name_addr for To, From and Contact headers
+    return parseDisplayName(reinterpret_cast<pjsip_name_addr*>(header->uri));
 }
 
 void

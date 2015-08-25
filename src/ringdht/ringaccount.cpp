@@ -1133,7 +1133,10 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
 
 std::string RingAccount::getFromUri() const
 {
-    return "<sip:" + dht_.getId().toString() + "@ring.dht>";
+    const std::string uri = "<sip:" + dht_.getId().toString() + "@ring.dht>";
+    if (not displayName_.empty())
+        return "\"" + displayName_ + "\" " + uri;
+    return uri;
 }
 
 std::string RingAccount::getToUri(const std::string& to) const
