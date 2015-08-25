@@ -194,14 +194,16 @@ transaction_request_cb(pjsip_rx_data *rdata)
         RING_ERR("Missing From, To or Via fields");
         return PJ_FALSE;
     }
-    const pjsip_sip_uri *sip_to_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.to->uri);
-    const pjsip_sip_uri *sip_from_uri = (pjsip_sip_uri *) pjsip_uri_get_uri(rdata->msg_info.from->uri);
+
+    const auto sip_to_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.to->uri));
+    const auto sip_from_uri = reinterpret_cast<pjsip_sip_uri*>(pjsip_uri_get_uri(rdata->msg_info.from->uri));
     const pjsip_host_port& sip_via = rdata->msg_info.via->sent_by;
 
     if (!sip_to_uri or !sip_from_uri or !sip_via.host.ptr) {
         RING_ERR("NULL uri");
         return PJ_FALSE;
     }
+
     std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
     std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
     std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
@@ -225,7 +227,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     const auto& account_id = account->getAccountID();
-    auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.msg_buf);
     pjsip_msg_body *body = rdata->msg_info.msg->body;
 
     if (method->id == PJSIP_OTHER_METHOD) {
@@ -286,7 +287,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-
     if (not remote_user.empty() and not remote_hostname.empty())
         peerNumber = remote_user + "@" + remote_hostname;
 
@@ -323,6 +323,16 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     /* fallback on local address */
     if (not addrSdp) addrSdp = addrToUse;
+
+    // Try to obtain display name from From: header first, fallback on Contact:
+    auto peerDisplayName = sip_utils::parseDisplayName(rdata->msg_info.from);
+    if (peerDisplayName.empty()) {
+        if (auto hdr = static_cast<const pjsip_contact_hdr*>(pjsip_msg_find_hdr(rdata->msg_info.msg,
+                                                                                PJSIP_H_CONTACT,
+                                                                                nullptr))) {
+            peerDisplayName = sip_utils::parseDisplayName(hdr);
+        }
+    }
 
     call->setState(Call::ConnectionState::PROGRESSING);
     call->setPeerNumber(peerNumber);
