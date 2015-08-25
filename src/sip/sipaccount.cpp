@@ -1355,7 +1355,10 @@ std::string SIPAccount::getFromUri() const
         hostname = IpAddr(hostname).toString(false, true);
 #endif
 
-    return "<" + scheme + username + "@" + hostname + transport + ">";
+    const std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
+    if (not displayName_.empty())
+        return "\"" + displayName_ + "\" " + uri;
+    return uri;
 }
 
 std::string SIPAccount::getToUri(const std::string& username) const
