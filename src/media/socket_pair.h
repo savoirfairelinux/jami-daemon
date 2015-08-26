@@ -120,6 +120,9 @@ class SocketPair {
         socklen_t rtcpDestAddrLen_;
         std::atomic_bool interrupted_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
+
+        uint8_t previousBuf_[2000];
+        size_t previousBufSize_ {0};
 };
 
 } // namespace ring

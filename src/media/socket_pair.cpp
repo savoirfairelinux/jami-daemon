@@ -442,6 +442,11 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         buf = srtpContext_->encryptbuf;
     }
 
+    if (interrupted_) {
+        errno = EINTR;
+        return -errno;
+    }
+
     // System sockets?
     if (rtpHandle_ >= 0) {
         int fd;
@@ -477,11 +482,30 @@ int
 SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
+    auto buf_to_send = buf;
+    auto size_to_send = buf_size;
+
+    // First try to send current buffer or last buffer in case of EAGAIN error
     do {
-        if (interrupted_)
-            return -EINTR;
-        ret = writeData(buf, buf_size);
+        ret = writeData(buf_to_send, size_to_send);
+        if (ret < 0 and errno == EAGAIN and previousBufSize_) {
+            buf_to_send = previousBuf_;
+            size_to_send = previousBufSize_;
+        } else if (ret == 0 and buf_to_send == previousBuf_) {
+            // loop again, but on current buffer; prevent fallback on succeed previous buffer
+            errno = EAGAIN;
+            ret = -errno;
+            previousBufSize_ = 0;
+            buf_to_send = buf;
+            size_to_send = buf_size;
+        }
     } while (ret < 0 and errno == EAGAIN);
+
+    // If current buffer has been +supposed+ to be sent, make a copy for next iteration
+    if (ret == 0) {
+        previousBufSize_ = buf_size;
+        std::copy_n(previousBuf_, buf_size, buf);
+    }
 
     return ret < 0 ? -errno : ret;
 }
