@@ -146,29 +146,29 @@ class SIPCall : public Call
 
         void sendSIPInfo(const char *const body, const char *const subtype);
 
-        void answer();
+        void answer() override;
 
-        void hangup(int reason);
+        void hangup(int reason) override;
 
-        void refuse();
+        void refuse() override;
 
-        void transfer(const std::string& to);
+        void transfer(const std::string& to) override;
 
-        bool attendedTransfer(const std::string& to);
+        bool attendedTransfer(const std::string& to) override;
 
-        bool onhold();
+        bool onhold() override;
 
-        bool offhold();
+        bool offhold() override;
 
-        void switchInput(const std::string& resource);
+        void switchInput(const std::string& resource) override;
 
-        void peerHungup();
+        void peerHungup() override;
 
-        void carryingDTMFdigits(char code);
+        void carryingDTMFdigits(char code) override;
 
 #if HAVE_INSTANT_MESSAGING
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
-                                     const std::string &from);
+        void sendTextMessage(const std::map<std::string, std::string>& messages,
+                             const std::string &from) override;
 #endif
 
         SIPAccountBase& getSIPAccount() const;
