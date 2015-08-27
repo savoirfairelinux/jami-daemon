@@ -30,8 +30,8 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-
 #include "video_mixer.h"
+
 #include "media_buffer.h"
 #include "logger.h"
 #include "client/videomanager.h"
@@ -50,8 +50,8 @@ VideoMixer::VideoMixer(const std::string &id)
     : VideoGenerator::VideoGenerator()
     , id_(id)
     , sink_ (Manager::instance().createSinkClient(id, true))
-    , loop_([]{return true;},
-            std::bind(&VideoMixer::process, this),
+    , loop_([]{ return true; },
+            [this]{ process(); },
             []{})
 {
     // Local video camera is the main participant
@@ -76,16 +76,18 @@ VideoMixer::~VideoMixer()
     loop_.join();
 }
 
-void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void
+VideoMixer::attached(Observable<std::shared_ptr<VideoFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
-    VideoMixerSource* src = new VideoMixerSource;
+    auto src = new VideoMixerSource;
     src->source = ob;
     sources_.push_back(src);
 }
 
-void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
+void
+VideoMixer::detached(Observable<std::shared_ptr<VideoFrame>>* ob)
 {
     auto lock(rwMutex_.write());
 
@@ -98,8 +100,9 @@ void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
     }
 }
 
-void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                        std::shared_ptr<VideoFrame>& frame_p)
+void
+VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
+                   std::shared_ptr<VideoFrame>& frame_p)
 {
     auto lock(rwMutex_.read());
 
@@ -114,7 +117,8 @@ void VideoMixer::update(Observable<std::shared_ptr<VideoFrame> >* ob,
     }
 }
 
-void VideoMixer::process()
+void
+VideoMixer::process()
 {
     const auto now = std::chrono::system_clock::now();
     const std::chrono::duration<double> diff = now - lastProcess_;
@@ -210,13 +214,16 @@ VideoMixer::stop_sink()
     sink_->stop();
 }
 
-int VideoMixer::getWidth() const
+int
+VideoMixer::getWidth() const
 { return width_; }
 
-int VideoMixer::getHeight() const
+int
+VideoMixer::getHeight() const
 { return height_; }
 
-int VideoMixer::getPixelFormat() const
+int
+VideoMixer::getPixelFormat() const
 { return VIDEO_PIXFMT_YUV420P; }
 
 }} // namespace ring::video
