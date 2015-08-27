@@ -50,6 +50,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     , videoEncoder_(new MediaEncoder)
 {
     videoEncoder_->setDeviceOptions(dev);
+    keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest.c_str(), args);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_);
@@ -66,10 +67,13 @@ VideoSender::~VideoSender()
 
 void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
-    bool is_keyframe = forceKeyFrame_ > 0;
+    bool is_keyframe = forceKeyFrame_ > 0 \
+        or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
-    if (is_keyframe)
+    if (is_keyframe) {
+        RING_DBG("keyframe requested");
         --forceKeyFrame_;
+    }
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
