@@ -618,7 +618,8 @@ Manager::onHoldCall(const std::string& callId)
 
     if (auto call = getCallFromCallID(callId)) {
         try {
-            if (result = call->onhold())
+            result = call->onhold();
+            if (result)
                 removeAudio(*call); // Unbind calls in main buffer
         } catch (const VoipLinkException &e) {
             RING_ERR("%s", e.what());

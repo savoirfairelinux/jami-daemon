@@ -136,7 +136,7 @@ class IAXCall : public Call
         bool offhold();
 
         //TODO: implement mute for IAX
-        void muteMedia(const std::string& mediaType, bool isMuted) {}
+        void muteMedia(const std::string& /*mediaType*/, bool /*isMuted*/) {}
 
         //TODO: implement restartMedia for IAX
         void restartMediaSender() override {}
