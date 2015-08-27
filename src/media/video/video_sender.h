@@ -42,6 +42,8 @@
 #include <memory>
 #include <atomic>
 
+#define KEY_FRAME_PERIOD 5
+
 // Forward declarations
 namespace ring {
 class SocketPair;
@@ -85,6 +87,13 @@ private:
     std::atomic<int> forceKeyFrame_ = { 0 };
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
+
+    std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
+    std::chrono::time_point<std::chrono::system_clock>  lastLongRTCPCheck_;
+    const unsigned MAX_BITRATE = 6000;
+    const unsigned MIN_BITRATE = 400;
+    const unsigned MAX_TRY = 5;
+    unsigned keyFrameFreq_;
 };
 
 }} // namespace ring::video
