@@ -199,17 +199,17 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         auto call = weak_call.lock();
 
         if (not call)
-            return false;
+            return;
 
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
             RING_DBG("ice init failed (or timeout)");
             call->onFailure();
-            return false;
+            return;
         }
 
         if (not ice->isInitialized())
-            return true;
+            return;
 
         /* Next step: sent the ICE data to peer through DHT */
         const dht::Value::Id callvid  = udist(shared_this->rand_);
