@@ -259,6 +259,11 @@ class IceTransport {
         void selectUPnPIceCandidates();
 
         std::unique_ptr<upnp::Controller> upnp_;
+
+        // IO/Timer events are handled by following thread
+        std::thread thread_;
+        std::atomic_bool threadTerminateFlags_ {false};
+        void handleEvents(unsigned max_msec);
 };
 
 class IceTransportFactory {
@@ -271,8 +276,6 @@ class IceTransportFactory {
                                                       bool master,
                                                       const IceTransportOptions& options = {});
 
-        int processThread();
-
         /**
          * PJSIP specifics
          */
@@ -282,9 +285,7 @@ class IceTransportFactory {
     private:
         pj_caching_pool cp_;
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        std::thread thread_;
         pj_ice_strans_cfg ice_cfg_;
-        pj_bool_t thread_quit_flag_ {PJ_FALSE};
 };
 
 };
