@@ -147,8 +147,8 @@ class IAXCall : public Call
 
 #if HAVE_INSTANT_MESSAGING
 
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
-                                     const std::string &from);
+        void sendTextMessage(const std::map<std::string, std::string>& messages,
+                             const std::string &from) override;
 #endif
 
         void putAudioData(AudioBuffer& buf);
