@@ -41,11 +41,13 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <chrono>
 
 // Forward declarations
 namespace ring {
 class SocketPair;
 class AccountVideoCodecInfo;
+class Call;
 }
 
 namespace ring { namespace video {
@@ -77,6 +79,8 @@ private:
     NON_COPYABLE(VideoSender);
 
     void encodeAndSendVideo(VideoFrame&);
+    float checkPeerPacketLoss();
+    void adaptBitrate();
 
     // encoder MUST be deleted before muxContext
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
@@ -85,8 +89,22 @@ private:
     std::atomic<int> forceKeyFrame_ = { 0 };
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
-};
 
+    SocketPair& socketPair_;
+    std::shared_ptr<Call> call_;
+
+    std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
+    std::chrono::time_point<std::chrono::system_clock>  lastLongRTCPCheck_;
+
+    unsigned keyFrameFreq_;
+
+    //interval in seconds between keyframes
+    static constexpr unsigned KEY_FRAME_PERIOD {5};
+    //interval in seconds between RTCP checkings
+    static constexpr unsigned RTCP_CHECKING_INTERVAL {4};
+    //long interval in seconds between RTCP checkings
+    static constexpr unsigned RTCP_LONG_CHECKING_INTERVAL {30};
+};
 }} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__
