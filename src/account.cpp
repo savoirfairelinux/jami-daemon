@@ -550,6 +550,23 @@ Account::getActiveAccountCodecInfoList(MediaType mediaType) const
     return accountCodecList;
 }
 
+std::shared_ptr<AccountCodecInfo>
+Account::getRunningAccountCodecInfo(MediaType mediaType) const
+{
+    auto call = Manager::instance().getCurrentCall();
+    if (not call)
+        return {};
+
+    if (mediaType != MEDIA_NONE) {
+        for (auto& codecIt: accountCodecInfoList_) {
+            if ((call->useVideoCodec(static_cast<AccountVideoCodecInfo*>(codecIt.get()))) &&
+                (codecIt->systemCodecInfo.mediaType & mediaType ))
+                return codecIt;
+        }
+    }
+    return {};
+}
+
 const IceTransportOptions
 Account::getIceOptions() const noexcept
 {

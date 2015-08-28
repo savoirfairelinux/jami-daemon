@@ -115,9 +115,9 @@ class SocketPair {
                         const char* in_suite, const char* in_params);
 
         void stopSendOp(bool state = true);
+        std::vector<rtcpRRHeader> getRtcpInfo();
 
     private:
-        std::vector<rtcpRRHeader> getRtcpInfo();
         NON_COPYABLE(SocketPair);
 
         int readCallback(uint8_t* buf, int buf_size);

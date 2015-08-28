@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "account_const.h"
 
 #include <map>
 #include <unistd.h>
@@ -48,6 +50,10 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
                          const uint16_t seqVal)
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
+    , socketPair_(socketPair)
+    , call_(ring::Manager::instance().getCurrentCall())
+    , lastRTCPCheck_(std::chrono::system_clock::now())
+    , lastLongRTCPCheck_(std::chrono::system_clock::now())
 {
     videoEncoder_->setDeviceOptions(dev);
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
@@ -65,7 +71,121 @@ VideoSender::~VideoSender()
 
 }
 
-void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
+float
+VideoSender::checkPeerPacketLoss()
+{
+    auto rtcpInfoVect = socketPair_.getRtcpInfo();
+    auto totalLost = 0;
+    auto fract = 0;
+    auto vectSize = rtcpInfoVect.size();
+
+    for (auto it : rtcpInfoVect) {
+        fract = (ntohl(it.fraction_lost) & 0xff000000)  >> 24;
+        totalLost += fract;
+    }
+
+    if (vectSize != 0)
+        return (float)( 100 * totalLost) / (float)(256.0 * vectSize);
+    else
+        return NO_PACKET_LOSS_CALCULATED;
+}
+
+static void restartMediaEncoder(std::shared_ptr<Call> call)
+{
+    call->restartMediaSender();
+}
+
+void
+VideoSender::adaptBitrate()
+{
+    bool needToCheckBitrate = false;
+    float packetLostRate = 0.0;
+
+    VideoBitrateInfo videoBitrateInfo;
+
+    auto rtcpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTCPCheck_);
+    auto rtcpLongCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastLongRTCPCheck_);
+
+    if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
+        needToCheckBitrate = true;
+        lastRTCPCheck_ = std::chrono::system_clock::now();
+        videoBitrateInfo = call_->getVideoBitrateInfo();
+    }
+
+    if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
+        needToCheckBitrate = true;
+        lastLongRTCPCheck_ = std::chrono::system_clock::now();
+        videoBitrateInfo = call_->getVideoBitrateInfo();
+        // we force iterative bitrate adaptation
+        videoBitrateInfo.cptBitrateChecking = 0;
+    }
+
+
+    if (needToCheckBitrate) {
+        videoBitrateInfo.cptBitrateChecking++;
+        auto oldBitrate = videoBitrateInfo.videoBitrateCurrent;
+
+        //  packetLostRate is not already available. Do nothing
+        if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
+            // we force iterative bitrate adaptation
+            videoBitrateInfo.cptBitrateChecking = 0;
+
+        // too much packet lost : decrease bitrate
+        } else if (packetLostRate  >= videoBitrateInfo.packetLostThreshold) {
+
+            // calculate new bitrate by dichotomie
+            videoBitrateInfo.videoBitrateCurrent =
+                ( videoBitrateInfo.videoBitrateCurrent + videoBitrateInfo.videoBitrateMin) / 2;
+
+            // boundaries low
+            if ( videoBitrateInfo.videoBitrateCurrent < videoBitrateInfo.videoBitrateMin)
+                videoBitrateInfo.videoBitrateCurrent = videoBitrateInfo.videoBitrateMin;
+
+            RING_WARN("packetLostRate=%f >= %f -> decrease bitrate to %d",
+                    packetLostRate,
+                    videoBitrateInfo.packetLostThreshold,
+                    videoBitrateInfo.videoBitrateCurrent);
+
+            // we force iterative bitrate adaptation
+            videoBitrateInfo.cptBitrateChecking = 0;
+            call_->setVideoBitrateInfo(videoBitrateInfo);
+
+            // asynchronous A/V media restart
+            if (videoBitrateInfo.videoBitrateCurrent != oldBitrate)
+                runOnMainThread(std::bind(restartMediaEncoder, call_));
+
+        // no packet lost: increase bitrate
+        } else if (videoBitrateInfo.cptBitrateChecking <= videoBitrateInfo.maxBitrateChecking) {
+
+            // calculate new bitrate by dichotomie
+            videoBitrateInfo.videoBitrateCurrent =
+                ( videoBitrateInfo.videoBitrateCurrent + videoBitrateInfo.videoBitrateMax) / 2;
+
+            // boundaries high
+            if ( videoBitrateInfo.videoBitrateCurrent > videoBitrateInfo.videoBitrateMax)
+                videoBitrateInfo.videoBitrateCurrent = videoBitrateInfo.videoBitrateMax;
+
+            RING_WARN("[%u/%u] packetLostRate=%f < %f -> try to increase bitrate to %d",
+                    videoBitrateInfo.cptBitrateChecking,
+                    videoBitrateInfo.maxBitrateChecking,
+                    packetLostRate,
+                    videoBitrateInfo.packetLostThreshold,
+                    videoBitrateInfo.videoBitrateCurrent);
+
+            call_->setVideoBitrateInfo(videoBitrateInfo);
+
+            // asynchronous A/V media restart
+            if (videoBitrateInfo.videoBitrateCurrent != oldBitrate)
+                runOnMainThread(std::bind(restartMediaEncoder, call_));
+
+        }else{
+            //nothing we reach maximal tries
+        }
+    }
+}
+
+void
+VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
     bool is_keyframe = forceKeyFrame_ > 0 \
         or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
@@ -79,18 +199,22 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         RING_ERR("encoding failed");
 }
 
-void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
+void
+VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
                          std::shared_ptr<VideoFrame> & frame_p)
 {
+    adaptBitrate();
     encodeAndSendVideo(*frame_p);
 }
 
-void VideoSender::forceKeyFrame()
+void
+VideoSender::forceKeyFrame()
 {
     ++forceKeyFrame_;
 }
 
-void VideoSender::setMuted(bool isMuted)
+void
+VideoSender::setMuted(bool isMuted)
 {
     videoEncoder_->setMuted(isMuted);
 }
