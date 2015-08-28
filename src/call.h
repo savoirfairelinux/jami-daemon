@@ -57,6 +57,15 @@ class VoIPLink;
 class Account;
 class AccountVideoCodecInfo;
 
+struct VideoBitrateInfo {
+    unsigned videoBitrateCurrent;
+    unsigned videoBitrateMin;
+    unsigned videoBitrateMax;
+    unsigned cptBitrateChecking;
+    unsigned maxBitrateChecking;
+    float packetLostThreshold;
+};
+
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
 /*
@@ -344,6 +353,14 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaSender() = 0;
 
+        /**
+         * Encoding information for current call used for adaptative bitrate
+         */
+
+        VideoBitrateInfo getVideoBitrateInfo();
+
+        void setVideoBitrateInfo(VideoBitrateInfo info);
+
     protected:
         /**
          * Constructor of a call
@@ -406,7 +423,11 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         time_t timestamp_start_ {0};
         time_t timestamp_stop_ {0};
 
+        VideoBitrateInfo videoBitrateInfo_;
+        static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5}; // 5 tries in a row (each 4 seconds)
+        static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 };
+
 
 } // namespace ring
 

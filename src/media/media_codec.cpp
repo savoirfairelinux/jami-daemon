@@ -62,6 +62,8 @@ SystemCodecInfo::SystemCodecInfo(unsigned avcodecId, const std::string name,
     , mediaType(mediaType)
     , payloadType(payloadType)
     , bitrate(bitrate)
+    , minBitrate(SystemCodecInfo::DEFAULT_MIN_BITRATE)
+    , maxBitrate(SystemCodecInfo::DEFAULT_MAX_BITRATE)
 {}
 
 SystemCodecInfo::~SystemCodecInfo()
@@ -137,8 +139,10 @@ SystemVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::NAME, name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, ring::to_string(frameRate)}
-        };
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, ring::to_string(frameRate)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(minBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(maxBitrate)},
+    };
 }
 
 AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
@@ -208,6 +212,8 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(bitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(systemCodecInfo.maxBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(systemCodecInfo.minBitrate)},
         {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, ring::to_string(frameRate)}
         };
 }

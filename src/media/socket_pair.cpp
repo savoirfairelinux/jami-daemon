@@ -505,11 +505,21 @@ int
 SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
-    do {
+
+    // First try to send current buffer or last buffer in case of EAGAIN error
+    for(;;) {
         if (interrupted_)
             return -EINTR;
         ret = writeData(buf, buf_size);
-    } while (ret < 0 and errno == EAGAIN);
+
+        if (ret >= 0 or errno != EAGAIN)
+            break;
+
+        // pjsip is not able to write packets at this rate
+        // we need to give him some time hopping that next packets
+        // would success to be written
+        usleep(100);
+    }
 
     return ret < 0 ? -errno : ret;
 }
