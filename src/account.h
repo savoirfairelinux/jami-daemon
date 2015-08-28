@@ -212,7 +212,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
         std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
-
         std::string getRingtonePath() const {
             return ringtonePath_;
         }
