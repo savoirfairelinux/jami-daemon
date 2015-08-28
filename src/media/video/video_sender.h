@@ -82,7 +82,8 @@ private:
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
-    std::atomic<int> forceKeyFrame_ = { 0 };
+    static constexpr int KEYFRAMES_AT_START {3}; // Number of keyframes to enforce at stream startup
+    std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
 };
