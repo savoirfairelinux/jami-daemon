@@ -47,6 +47,7 @@ class VoIPLink;
 class Account;
 class AccountVideoCodecInfo;
 
+
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
 /*
@@ -394,6 +395,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         time_t timestamp_start_ {0};
 };
+
 
 } // namespace ring
 

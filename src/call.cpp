@@ -35,7 +35,10 @@
 #include "string_utils.h"
 #include "enumclass_utils.h"
 
+#include "account_const.h"
+
 #include "errno.h"
+
 
 namespace ring {
 
@@ -355,5 +358,6 @@ Call::peerHungup()
     setState(ConnectionState::DISCONNECTED,
              aborted ? ECONNABORTED : ECONNREFUSED);
 }
+
 
 } // namespace ring

@@ -32,6 +32,7 @@
 
 namespace ring {
 class Conference;
+class Call;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -39,6 +40,15 @@ namespace ring { namespace video {
 class VideoMixer;
 class VideoSender;
 class VideoReceiveThread;
+
+struct VideoBitrateInfo {
+    unsigned videoBitrateCurrent;
+    unsigned videoBitrateMin;
+    unsigned videoBitrateMax;
+    unsigned cptBitrateChecking;
+    unsigned maxBitrateChecking;
+    float packetLostThreshold;
+};
 
 class VideoRtpSession : public RtpSession {
 public:
@@ -69,6 +79,9 @@ private:
 
     std::string input_;
     DeviceParams localVideoParams_;
+    //std::shared_ptr<Call> call_;
+    std::chrono::time_point<std::chrono::system_clock>  lastRTCPCheck_;
+    std::chrono::time_point<std::chrono::system_clock>  lastLongRTCPCheck_;
 
     std::unique_ptr<VideoSender> sender_;
     std::unique_ptr<VideoReceiveThread> receiveThread_;
@@ -76,6 +89,31 @@ private:
     std::shared_ptr<VideoMixer> videoMixer_;
     std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
     uint16_t initSeqVal_ = 0;
+
+    float checkPeerPacketLoss();
+    void adaptBitrate();
+    void storeVideoBitrateInfo();
+    void getVideoBitrateInfo();
+
+
+    //interval in seconds between RTCP checkings
+    const unsigned RTCP_CHECKING_INTERVAL {4};
+    //long interval in seconds between RTCP checkings
+    const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
+    //not packet loss can be calculated as no data in input
+    static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
+    //bitrate info struct
+    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    //5 tries in a row
+    static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
+    //packet loss threshold
+    static constexpr float PACKET_LOSS_THRESHOLD {1.0};
+
+    ThreadLoop rtcpCheckerThread_;
+    bool setupRtcpChecker();
+    void processRtcpChecker();
+    void cleanupRtcpChecker();
+
 };
 
 }} // namespace ring::video

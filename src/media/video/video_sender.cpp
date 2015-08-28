@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <eloi.bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -38,6 +39,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
                          const uint16_t seqVal)
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
+    , socketPair_(socketPair)
 {
     videoEncoder_->setDeviceOptions(dev);
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
@@ -55,7 +57,9 @@ VideoSender::~VideoSender()
 
 }
 
-void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
+
+void
+VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
     bool is_keyframe = forceKeyFrame_ > 0 \
         or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
@@ -69,18 +73,21 @@ void VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
         RING_ERR("encoding failed");
 }
 
-void VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
+void
+VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
                          std::shared_ptr<VideoFrame> & frame_p)
 {
     encodeAndSendVideo(*frame_p);
 }
 
-void VideoSender::forceKeyFrame()
+void
+VideoSender::forceKeyFrame()
 {
     ++forceKeyFrame_;
 }
 
-void VideoSender::setMuted(bool isMuted)
+void
+VideoSender::setMuted(bool isMuted)
 {
     videoEncoder_->setMuted(isMuted);
 }

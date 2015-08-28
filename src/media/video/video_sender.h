@@ -31,11 +31,13 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <chrono>
 
 // Forward declarations
 namespace ring {
 class SocketPair;
 class AccountVideoCodecInfo;
+class Call;
 }
 
 namespace ring { namespace video {
@@ -79,8 +81,11 @@ private:
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
-};
 
+    SocketPair& socketPair_;
+    std::shared_ptr<Call> call_;
+
+};
 }} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__
