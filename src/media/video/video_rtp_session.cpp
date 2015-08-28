@@ -29,10 +29,16 @@
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
 #include "logger.h"
+#include "string_utils.h"
+#include "call.h"
+
+#include "account_const.h"
 
 #include <sstream>
 #include <map>
 #include <string>
+#include <thread>
+#include <chrono>
 
 namespace ring { namespace video {
 
@@ -44,6 +50,11 @@ constexpr static auto NEWPARAMS_TIMEOUT = std::chrono::milliseconds(1000);
 VideoRtpSession::VideoRtpSession(const string &callID,
                                  const DeviceParams& localVideoParams) :
     RtpSession(callID), localVideoParams_(localVideoParams)
+    , lastRTCPCheck_(std::chrono::system_clock::now())
+    , lastLongRTCPCheck_(std::chrono::system_clock::now())
+    , rtcpCheckerThread_(std::bind(&VideoRtpSession::setupRtcpChecker, this),
+            std::bind(&VideoRtpSession::processRtcpChecker, this),
+            std::bind(&VideoRtpSession::cleanupRtcpChecker, this))
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -93,6 +104,8 @@ void VideoRtpSession::startSender()
             RING_ERR("%s", e.what());
             send_.enabled = false;
         }
+        if (not rtcpCheckerThread_.isRunning())
+            rtcpCheckerThread_.start();
     }
 }
 
@@ -171,6 +184,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
 void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
+    rtcpCheckerThread_.join();
 
     if (videoLocal_)
         videoLocal_->detach(sender_.get());
@@ -266,5 +280,167 @@ VideoRtpSession::useCodec(const ring::AccountVideoCodecInfo* codec) const
 {
     return sender_->useCodec(codec);
 }
+
+
+float
+VideoRtpSession::checkPeerPacketLoss()
+{
+    auto rtcpInfoVect = socketPair_->getRtcpInfo();
+    unsigned totalLost = 0;
+    unsigned fract = 0;
+    auto vectSize = rtcpInfoVect.size();
+
+    for (const auto& it : rtcpInfoVect) {
+        fract = (ntohl(it.fraction_lost) & 0xff000000)  >> 24;
+        totalLost += fract;
+    }
+
+    if (vectSize != 0)
+        return (float)( 100 * totalLost) / (256.0 * vectSize);
+    else
+        return NO_PACKET_LOSS_CALCULATED;
+}
+
+void
+VideoRtpSession::adaptBitrate()
+{
+    bool needToCheckBitrate = false;
+    bool mediaRestartNeeded = false;
+    float packetLostRate = 0.0;
+
+    auto rtcpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTCPCheck_);
+    auto rtcpLongCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastLongRTCPCheck_);
+
+    if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
+        needToCheckBitrate = true;
+        lastRTCPCheck_ = std::chrono::system_clock::now();
+    }
+
+    if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
+        needToCheckBitrate = true;
+        lastLongRTCPCheck_ = std::chrono::system_clock::now();
+        //we force iterative bitrate adaptation
+        videoBitrateInfo_.cptBitrateChecking = 0;
+    }
+
+
+    if (needToCheckBitrate) {
+        videoBitrateInfo_.cptBitrateChecking++;
+        auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
+
+        //packetLostRate is not already available. Do nothing
+        if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
+            //we force iterative bitrate adaptation
+            videoBitrateInfo_.cptBitrateChecking = 0;
+
+        //too much packet lost : decrease bitrate
+        } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
+
+            //calculate new bitrate by dichotomie
+            videoBitrateInfo_.videoBitrateCurrent =
+                (videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMin) / 2;
+
+            //boundaries low
+            if (videoBitrateInfo_.videoBitrateCurrent < videoBitrateInfo_.videoBitrateMin)
+                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMin;
+
+            RING_WARN("packetLostRate=%f >= %f -> decrease bitrate to %d",
+                    packetLostRate,
+                    videoBitrateInfo_.packetLostThreshold,
+                    videoBitrateInfo_.videoBitrateCurrent);
+
+            //we force iterative bitrate adaptation
+            videoBitrateInfo_.cptBitrateChecking = 0;
+
+            //asynchronous A/V media restart
+            if (videoBitrateInfo_.videoBitrateCurrent != oldBitrate)
+                mediaRestartNeeded = true;
+
+        //no packet lost: increase bitrate
+        } else if (videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) {
+
+            //calculate new bitrate by dichotomie
+            videoBitrateInfo_.videoBitrateCurrent =
+                ( videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMax) / 2;
+
+            //boundaries high
+            if (videoBitrateInfo_.videoBitrateCurrent > videoBitrateInfo_.videoBitrateMax)
+                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMax;
+
+            RING_WARN("[%u/%u] packetLostRate=%f < %f -> try to increase bitrate to %d",
+                    videoBitrateInfo_.cptBitrateChecking,
+                    videoBitrateInfo_.maxBitrateChecking,
+                    packetLostRate,
+                    videoBitrateInfo_.packetLostThreshold,
+                    videoBitrateInfo_.videoBitrateCurrent);
+
+
+            //asynchronous A/V media restart
+            if (videoBitrateInfo_.videoBitrateCurrent != oldBitrate)
+                mediaRestartNeeded = true;
+
+            if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
+                lastLongRTCPCheck_ = std::chrono::system_clock::now();
+
+        } else {
+            //nothing we reach maximal tries
+        }
+    }
+    if (mediaRestartNeeded) {
+        storeVideoBitrateInfo();
+        runOnMainThread(std::bind([&]{
+            auto call = Manager::instance().callFactory.getCall(callID_);
+            if (call)
+                call->restartMediaSender();
+            }));
+    }
+}
+
+void
+VideoRtpSession::getVideoBitrateInfo() {
+    auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+    if (codecVideo) {
+        videoBitrateInfo_ = {
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
+            (unsigned)(std::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
+            videoBitrateInfo_.cptBitrateChecking,
+            videoBitrateInfo_.maxBitrateChecking,
+            videoBitrateInfo_.packetLostThreshold,
+        };
+    } else {
+        videoBitrateInfo_ = {0,0,0,0,0,0};
+    }
+}
+
+void
+VideoRtpSession::storeVideoBitrateInfo() {
+    auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+
+    if (codecVideo) {
+        codecVideo->setCodecSpecifications({
+            {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMax)}
+        });
+    }
+}
+bool
+VideoRtpSession::setupRtcpChecker()
+{
+    getVideoBitrateInfo();
+    return true;
+}
+
+void
+VideoRtpSession::processRtcpChecker()
+{
+    adaptBitrate();
+    rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
+}
+
+void
+VideoRtpSession::cleanupRtcpChecker()
+{}
 
 }} // namespace ring::video
