@@ -66,6 +66,9 @@ struct SystemCodecInfo
 
     virtual ~SystemCodecInfo();
 
+    static constexpr unsigned DEFAULT_MIN_BITRATE {250};
+    static constexpr unsigned DEFAULT_MAX_BITRATE {4000};
+
     /* generic codec information */
     unsigned id; /* id of the codec used with dbus */
     unsigned  avcodecId;  /* read as AVCodecID libav codec identifier */
@@ -77,8 +80,8 @@ struct SystemCodecInfo
     /* default codec values */
     unsigned payloadType;
     unsigned bitrate;
-
-    std::string to_string() const;
+    unsigned minBitrate = DEFAULT_MIN_BITRATE;
+    unsigned maxBitrate = DEFAULT_MAX_BITRATE;
 };
 
 /*
@@ -139,6 +142,8 @@ struct AccountCodecInfo
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
+    std::map<std::string, std::string>  getCodecSpecifications();
+
 };
 
 struct AccountAudioCodecInfo : AccountCodecInfo
