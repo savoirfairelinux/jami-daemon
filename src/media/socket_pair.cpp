@@ -41,6 +41,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <thread>
 
 extern "C" {
 #include "srtp.h"
@@ -509,11 +510,20 @@ int
 SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
-    do {
+
+    for(;;) {
         if (interrupted_)
             return -EINTR;
         ret = writeData(buf, buf_size);
-    } while (ret < 0 and errno == EAGAIN);
+
+        if (ret >= 0 or errno != EAGAIN)
+            break;
+
+        // pjsip is not able to write packets at this rate
+        // we need to give him some time hopping that next packets
+        // would success to be written
+        std::this_thread::sleep_for(std::chrono::microseconds(100));
+    }
 
     return ret < 0 ? -errno : ret;
 }
