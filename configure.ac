@@ -76,7 +76,7 @@ case "${host_os}" in
 
     AC_DEFINE([WIN32_LEAN_AND_MEAN],, [Define to limit the scope of <windows.h>.])
 
-    CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601"
+    CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
     LDFLAGS+="-no-undefined -avoid-version -Wl,--nxcompat -Wl,--dynamicbase"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
