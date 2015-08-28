@@ -80,7 +80,6 @@ private:
     int64_t frameNumber_ = 0;
     std::string sdp_ = "";
 };
-
 }} // namespace ring::video
 
 #endif // __VIDEO_SENDER_H__
