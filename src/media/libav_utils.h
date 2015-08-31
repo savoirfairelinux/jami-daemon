@@ -49,6 +49,7 @@ namespace ring { namespace libav_utils {
                       char *hostname, size_t hostname_size, int *port,
                       char *path, size_t path_size);
 
+    void print_averror(const char *funcname, int err);
 }} // namespace ring::libav_utils
 
 #endif // __LIBAV_UTILS_H__
