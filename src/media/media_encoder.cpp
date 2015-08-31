@@ -30,6 +30,7 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "libav_utils.h"
 #include "media_codec.h"
 #include "media_encoder.h"
 #include "media_buffer.h"
@@ -240,13 +241,6 @@ MediaEncoder::startIO()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 }
 
-static void
-print_averror(const char *funcname, int err)
-{
-    char errbuf[64];
-    av_strerror(err, errbuf, sizeof(errbuf));
-    RING_ERR("%s failed: %s", funcname, errbuf);
-}
 
 #ifdef RING_VIDEO
 int
@@ -283,7 +277,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     int got_packet;
     int ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
     if (ret < 0) {
-        print_averror("avcodec_encode_video2", ret);
+        libav_utils::print_averror("avcodec_encode_video2", ret);
         av_free_packet(&pkt);
         return ret;
     }
@@ -301,7 +295,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
-            print_averror("av_write_frame", ret);
+            libav_utils::print_averror("av_write_frame", ret);
     }
 
 #else
@@ -309,7 +303,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     int ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
                                    encoderBufferSize_, frame);
     if (ret < 0) {
-        print_averror("avcodec_encode_video", ret);
+        libav_utils::print_averror("avcodec_encode_video", ret);
         av_free_packet(&pkt);
         return ret;
     }
@@ -333,7 +327,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     // write the compressed frame
     ret = av_write_frame(outputCtx_, &pkt);
     if (ret < 0)
-        print_averror("av_write_frame", ret);
+        libav_utils::print_averror("av_write_frame", ret);
 
 #endif  // LIBAVCODEC_VERSION_MAJOR >= 54
 
@@ -419,7 +413,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         int got_packet;
         int ret = avcodec_encode_audio2(encoderCtx_, &pkt, frame, &got_packet);
         if (ret < 0) {
-            print_averror("avcodec_encode_audio2", ret);
+            libav_utils::print_averror("avcodec_encode_audio2", ret);
             av_free_packet(&pkt);
             av_freep(&sample_data);
             av_frame_free(&frame);
@@ -439,7 +433,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0)
-                print_averror("av_write_frame", ret);
+                libav_utils::print_averror("av_write_frame", ret);
         }
 
         av_free_packet(&pkt);
