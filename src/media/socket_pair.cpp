@@ -417,7 +417,7 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
             auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
             if (err < 0)
-                RING_WARN("decrypt error %d", err);
+                libav_utils::print_averror("ff_srtp_decrypt", err);
         }
 
         return len;

@@ -146,4 +146,12 @@ void ring_url_split(const char *url,
                  path, path_size, url);
 }
 
+void
+print_averror(const char *funcname, int err)
+{
+    char errbuf[64];
+    av_strerror(err, errbuf, sizeof(errbuf));
+    RING_ERR("%s failed: %s", funcname, errbuf);
+}
+
 }} // namespace ring::libav_utils
