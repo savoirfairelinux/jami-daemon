@@ -223,6 +223,11 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
+#ifdef CHECK_RTP_SEQ
+        // check sequence number
+        checkRtpHeaders(buf,len, RTP_RECEIVE);
+#endif
+        rtpHeader* header = (rtpHeader *) buf;
         rtpDataBuff_.emplace_back(buf, buf+len);
         cv_.notify_one();
         return len;
@@ -244,6 +249,58 @@ SocketPair::~SocketPair()
     interrupt();
     closeSockets();
 }
+
+#ifdef CHECK_RTP_SEQ
+void
+SocketPair::checkRtpHeaders(void* buf, int buf_size, RTP_DIRECTION direction)
+{
+    rtpHeader* header = (rtpHeader *) buf;
+
+    // only filter with PT=96 (h264)
+    if (header->pt != 96)
+        return;
+
+
+    uint32_t* current_ssrc = nullptr;
+    uint16_t* firstSessionSeq = nullptr;
+    uint16_t *lastSessionSeq = nullptr;
+
+    if (direction == RTP_SEND) {
+        current_ssrc = &current_ssrcSend_;
+        firstSessionSeq = &firstSessionSeqSend_;
+        lastSessionSeq = &lastSessionSeqSend_;
+    } else {
+        current_ssrc = &current_ssrcReceive_;
+        firstSessionSeq = &firstSessionSeqReceive_;
+        lastSessionSeq = &lastSessionSeqReceive_;
+    }
+
+    /*unsigned ver = (unsigned) header->version;
+    unsigned marker = (unsigned) header->m;
+    unsigned ts = (unsigned) header->ts;
+    */
+
+    uint16_t seq = ntohs(header->seq);
+
+    // check if we have a new ssrc (=new source)
+    if ((header->ssrc != *current_ssrc)) {
+        RING_ERR("New RTP ssrc %d", *current_ssrc);
+        *firstSessionSeq = seq;
+        *current_ssrc = (uint32_t) header->ssrc;
+    }else{
+        //check if we missed frames
+        auto diffSeq = seq - *lastSessionSeq;
+        if ( diffSeq > 1) {
+            RING_ERR("Missing %u frames in %s between [%hu-%hu] "
+                    , diffSeq - 1
+                    , (direction == RTP_SEND) ? "emission" : "reception"
+                    , seq, *lastSessionSeq);
+        }
+    }
+
+    *lastSessionSeq = seq;
+}
+#endif
 
 void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
@@ -514,7 +571,13 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
     if (isRTCP)
         return rtcp_sock_->send(buf, buf_size);
     else
+    {
+#ifdef CHECK_RTP_SEQ
+        // check sequence number
+        checkRtpHeaders(buf,buf_size, RTP_SEND);
+#endif
         return rtp_sock_->send(buf, buf_size);
+    }
 }
 
 int
