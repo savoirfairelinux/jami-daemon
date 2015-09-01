@@ -30,6 +30,7 @@
 #define ICE_SOCKET_H
 
 #include <memory>
+#include <functional>
 
 namespace ring {
 
