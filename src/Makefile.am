@@ -105,7 +105,9 @@ if USE_DHT
 libring_la_CFLAGS += $(OPENDHT_CFLAGS)
 endif
 
-libring_la_SOURCES = conference.cpp \
+libring_la_SOURCES = \
+		buildinfo.cpp \
+		conference.cpp \
 		account_factory.cpp \
 		call_factory.cpp \
 		preferences.cpp \
@@ -168,3 +170,5 @@ if RING_VIDEO
 nobase_include_HEADERS+= \
 		dring/videomanager_interface.h
 endif
+
+.PHONY: buildinfo.cpp
