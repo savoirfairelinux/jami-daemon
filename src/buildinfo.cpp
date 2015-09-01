@@ -1,6 +1,5 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
- *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -28,63 +27,20 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-#include <string>
-#include <vector>
-#include <map>
-#include <cstdlib>
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
 
-#include "manager.h"
-#include "logger.h"
 #include "dring.h"
-#include "callmanager_interface.h"
-#include "configurationmanager_interface.h"
-#include "presencemanager_interface.h"
-
-#ifdef RING_VIDEO
-#include "client/videomanager.h"
-#endif // RING_VIDEO
+#include <string>
 
 namespace DRing {
 
-bool
-init(enum InitFlag flags) noexcept
+const char*
+version() noexcept
 {
-    ::setDebugMode(flags & DRING_FLAG_DEBUG);
-    ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
-
-    try {
-        // current implementation use static variable
-        return &ring::Manager::instance() != nullptr;
-    } catch (...) {
-        return false;
-    }
-}
-
-bool
-start(const std::string& config_file) noexcept
-{
-    try {
-        ring::Manager::instance().init(config_file);
-    } catch (...) {
-        return false;
-    }
-    return true;
-}
-
-void
-fini() noexcept
-{
-    ring::Manager::instance().finish();
-}
-
-void
-pollEvents() noexcept
-{
-    ring::Manager::instance().pollEvents();
+    return RING_DIRTY_REPO[0] ? PACKAGE_VERSION "-" RING_REVISION "-" RING_DIRTY_REPO : PACKAGE_VERSION "-" RING_REVISION;
 }
 
 } // namespace DRing
