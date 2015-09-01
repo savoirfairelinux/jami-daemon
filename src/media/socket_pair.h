@@ -82,6 +82,28 @@ typedef struct {
     uint32_t jitter;    /*jitter */
 } rtcpRRHeader;
 
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    const unsigned version:2;   /* protocol version */
+    unsigned int p:1;           /* padding flag */
+    unsigned int x:1;           /* header extension flag */
+    unsigned int cc:4;          /* CSRC count */
+    unsigned int m:1;           /* marker bit */
+    unsigned int pt:7;          /* payload type */
+#else
+    unsigned int cc:4;          /* CSRC count */
+    unsigned int x:1;           /* header extension flag */
+    unsigned int p:1;           /* padding flag */
+    unsigned version:2;         /* protocol version */
+    unsigned int pt:7;          /* payload type */
+    unsigned int m:1;           /* marker bit */
+#endif
+    unsigned int seq:16;        /* sequence number */
+    uint32_t ts;                /* timestamp */
+    uint32_t ssrc;              /* synchronization source */
+    uint32_t csrc[1];           /* optional CSRC list */
+} rtpHeader;
+
 class SocketPair {
     public:
         SocketPair(const char* uri, int localPort);
@@ -148,6 +170,21 @@ private:
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
         static constexpr unsigned MAX_LIST_SIZE {20};
+
+#ifdef CHECK_RTP_SEQ
+        enum RTP_DIRECTION: unsigned {
+            RTP_SEND,
+            RTP_RECEIVE
+        };
+
+        uint32_t current_ssrcSend_ = 0;
+        uint16_t firstSessionSeqSend_ = 0;
+        uint16_t lastSessionSeqSend_ = 0;
+
+        uint32_t current_ssrcReceive_ = 0;
+        uint16_t firstSessionSeqReceive_ = 0;
+        uint16_t lastSessionSeqReceive_ = 0;
+#endif //CHECK_RTP_SEQ
 };
 
 
