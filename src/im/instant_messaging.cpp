@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Emmanuel Lepage <elv1313@gmail.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
@@ -29,12 +29,13 @@
  *  shall include the source code for the parts of OpenSSL used as well
  *  as that of the covered work.
  */
-
 #include "instant_messaging.h"
+
 #include "logger.h"
 #include "sip/sip_utils.h"
 
 #include <expat.h>
+#include <pjsip_ua.h>
 
 namespace ring {
 
