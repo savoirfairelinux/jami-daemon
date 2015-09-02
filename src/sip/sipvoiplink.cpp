@@ -96,7 +96,7 @@ static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event 
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 
-decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink, 1>;
+decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
 
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
