@@ -429,19 +429,6 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 {
     bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
 
-    // Encrypt?
-    if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
-        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, buf,
-                                   buf_size, srtpContext_->encryptbuf,
-                                   sizeof(srtpContext_->encryptbuf));
-        if (buf_size < 0) {
-            RING_WARN("encrypt error %d", buf_size);
-            return buf_size;
-        }
-
-        buf = srtpContext_->encryptbuf;
-    }
-
     // System sockets?
     if (rtpHandle_ >= 0) {
         int fd;
@@ -477,6 +464,20 @@ int
 SocketPair::writeCallback(uint8_t* buf, int buf_size)
 {
     int ret;
+    bool isRTCP = RTP_PT_IS_RTCP(buf[1]);
+
+    // Encrypt?
+    if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
+        buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, buf,
+                                   buf_size, srtpContext_->encryptbuf,
+                                   sizeof(srtpContext_->encryptbuf));
+        if (buf_size < 0) {
+            RING_WARN("encrypt error %d", buf_size);
+            return buf_size;
+        }
+
+        buf = srtpContext_->encryptbuf;
+    }
     do {
         if (interrupted_)
             return -EINTR;
