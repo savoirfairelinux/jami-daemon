@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *
@@ -29,16 +29,10 @@
  *  as that of the covered work.
  */
 
-#ifndef __INSTANT_MESSAGING_H__
-#define __INSTANT_MESSAGING_H__
+#pragma once
 
 #include <string>
 #include <vector>
-#include <pjsip.h>
-#include <pjlib.h>
-#include <pjsip_ua.h>
-#include <pjlib-util.h>
-
 #include <map>
 #include <list>
 #include <stdexcept>
@@ -49,8 +43,7 @@
 #include <iax/iax-client.h>
 #endif
 
-#define MODE_APPEND std::ios::out || std::ios::app
-#define MODE_TEST std::ios::out
+struct pjsip_inv_session;
 
 namespace ring { namespace InstantMessaging {
 
@@ -66,7 +59,6 @@ namespace ring { namespace InstantMessaging {
 constexpr static unsigned MAXIMUM_MESSAGE_LENGTH = 1800;
 
 constexpr static const char* IM_XML_URI = "uri";
-constexpr static const char* BOUNDARY = "--boundary";
 
 struct InstantMessageException : std::runtime_error
 {
@@ -143,5 +135,3 @@ std::string findMimePayload(const std::string& encodedPayloads,
 std::map< std::string, std::string > parsePayloads(const std::string& encodedPayloads);
 
 }} // namespace ring::InstantMessaging
-
-#endif // __INSTANT_MESSAGING_H_
