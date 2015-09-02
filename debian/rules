@@ -21,6 +21,7 @@ override_dh_auto_configure:
 	@echo "Contribs built"
 	#./autogen.sh && ./configure --prefix=/usr --with-contrib=yes CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
 	./autogen.sh && ./configure --prefix=/usr
+	rm -rf .git
 	dh_auto_configure
 
 override_dh_auto_test:
@@ -53,12 +54,12 @@ get-orig-source:
 	git init
 	git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 	git fetch --all
-	git checkout packaging -f
+	git checkout $(DAEMON_TAG) -f
 	git config user.name "joulupukki"
 	git config user.email "joulupukki@localhost"
-	git merge $(DAEMON_TAG) --no-edit
-	rm -rf .git
+	git merge origin/packaging --no-commit
+	git reset HEAD
 	# Packing
 	@echo "# Packing ... "
 	find . | sort \
-	| XZ_OPT="-6v" tar -caf "../$(PKG)_$(VER)$(DTYPE).orig.tar.xz" -T- --owner=root --group=root --mode=a+rX
+	| XZ_OPT="-6v" tar -caf "../$(PKG)_$(VER)$(DTYPE).orig.tar.xz" --exclude=".git" -T- --owner=root --group=root --mode=a+rX
