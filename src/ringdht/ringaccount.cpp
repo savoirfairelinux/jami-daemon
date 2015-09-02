@@ -195,21 +195,21 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
 
     std::weak_ptr<SIPCall> weak_call = call;
-    runOnMainThread([=] {
+    manager.addTask([shared_this, weak_call, ice, iceInitTimeout, toUri] {
         auto call = weak_call.lock();
 
         if (not call)
-            return;
+            return false;
 
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
             RING_DBG("ice init failed (or timeout)");
             call->onFailure();
-            return;
+            return false;
         }
 
         if (not ice->isInitialized())
-            return;
+            return true; // process task again!
 
         /* Next step: sent the ICE data to peer through DHT */
         const dht::Value::Id callvid  = udist(shared_this->rand_);
@@ -254,6 +254,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             std::move(listenKey),
             callkey, toH
         });
+
+        return false;
     });
 
     return call;
