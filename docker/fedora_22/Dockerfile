@@ -1,0 +1,7 @@
+FROM fedora:22
+
+RUN yum upgrade -y
+RUN yum install rpm-build tar rsync git make autoconf automake cmake speexdsp-devel pulseaudio-libs-devel \
+ libsamplerate-devel libtool dbus-devel expat-devel pcre-devel yaml-cpp-devel boost-devel dbus-c++-devel dbus-devel \
+  libsndfile-devel libsrtp-devel libXext-devel libXfixes-devel yasm git speex-devel chrpath check astyle uuid-c++-devel \
+   gettext-devel gcc-c++ which alsa-lib-devel systemd-devel libuuid-devel uuid-devel gnutls-devel nettle-devel opus-devel speexdsp-devel -y

@@ -1,0 +1,168 @@
+{
+    "BuildType" : "Docker",
+    "BuildInstructions" : {
+        "fedora_21" : [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "cd ..",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
+        ],
+        "fedora_21_i386" : [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "cd ..",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/i686/* /output"
+        ],
+        "fedora_22": [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "cd ..",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
+        ],
+        "debian_8": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "debian_8_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "debian_9": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_14.04": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_14.04_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_14.10": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_14.10_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_15.04": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_15.04_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ]
+    },
+    "UpdateInstructions" : {
+        "fedora_21" : ["yum upgrade -y"],
+        "fedora_21_i386" : ["yum upgrade -y"],
+        "fedora_22": ["yum upgrade -y"],
+        "debian_8": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_14.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_15.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_14.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
+
+    },
+    "ReviewType": "",
+    "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
+    "Package" : {
+        "fedora_21" : "",
+        "fedora_21_i386" : "",
+        "fedora_22": "",
+        "debian_8": "",
+        "debian_8_i386": "",
+        "debian_9": "",
+        "ubuntu_14.04": "",
+        "ubuntu_14.10": "",
+        "ubuntu_15.04": "",
+        "ubuntu_14.04_i386": "",
+        "ubuntu_14.10_i386": "",
+        "ubuntu_15.04_i386": ""
+    },
+    "ReloadProjectCmd" : [
+        "git checkout packaging",
+        "git pull",
+        "git reset --hard origin/packaging"
+    ],
+    "AutoDeploySchedule": {
+        "fedora_21" : "@midnight",
+        "fedora_21_i386" : "@midnight",
+        "fedora_22": "@midnight",
+        "debian_8": "@midnight",
+        "debian_8_i386": "@midnight",
+        "debian_9": "@midnight",
+        "ubuntu_14.04": "@midnight",
+        "ubuntu_14.10": "@midnight",
+        "ubuntu_15.04": "@midnight",
+        "ubuntu_14.04_i386": "@midnight",
+        "ubuntu_14.10_i386": "@midnight",
+        "ubuntu_15.04_i386": "@midnight"
+    },
+    "DeployScript": "ring-nightly-sign-deploy.sh",
+    "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@savoirfairelinux.com"]
+}
