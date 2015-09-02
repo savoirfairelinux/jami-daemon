@@ -79,17 +79,6 @@ struct InstantMessageException : std::runtime_error
 using UriEntry = std::map<std::string, std::string>;
 using UriList = std::list<UriEntry>;
 
-/*
- * Write the text message to the right file
- * The call ID is associated to a file descriptor, so it is easy then to retrieve the right file
- *
- * @param message	The text message
- * @param id	The current call
- * @return True if the message could have been successfully saved, False otherwise
- */
-bool saveMessage(const std::string& message, const std::string& author, const std::string& id,
-                 int mode = MODE_APPEND);
-
 void sendSipMessage(pjsip_inv_session* session, const std::string& id,
                     const std::vector<std::string>& chunks);
 #if HAVE_IAX
