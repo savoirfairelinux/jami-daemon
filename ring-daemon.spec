@@ -36,11 +36,11 @@ This is the daemon headers.
 git init
 git remote add origin https://gerrit-ring.savoirfairelinux.com/ring-daemon
 git fetch --all
-git checkout packaging -f
+git checkout %{daemon_tag} -f
 git config user.name "joulupukki"
 git config user.email "joulupukki@localhost"
-git merge %{daemon_tag} --no-edit
-rm -rf .git
+git merge origin/packaging --no-commit
+git reset HEAD
 # Apply all patches
 for patch_file in $(cat debian/patches/series | grep -v "^#")
 do
@@ -59,6 +59,7 @@ cd ../..
 echo "Contribs built"
 ./autogen.sh
 %configure --prefix=/usr CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
+rm -rf .git
 make -j %{?_smp_mflags}
 
 %install
