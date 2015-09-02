@@ -123,6 +123,28 @@ static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
         iv[i] ^= salt[i];
 }
 
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    const unsigned version:2;   /* protocol version */
+    unsigned int p:1;           /* padding flag */
+    unsigned int x:1;           /* header extension flag */
+    unsigned int cc:4;          /* CSRC count */
+    unsigned int m:1;           /* marker bit */
+    unsigned int pt:7;          /* payload type */
+#else
+    unsigned int cc:4;          /* CSRC count */
+    unsigned int x:1;           /* header extension flag */
+    unsigned int p:1;           /* padding flag */
+    unsigned version:2;         /* protocol version */
+    unsigned int pt:7;          /* payload type */
+    unsigned int m:1;           /* marker bit */
+#endif
+    unsigned int seq:16;        /* sequence number */
+    uint32_t ts;                /* timestamp */
+    uint32_t ssrc;              /* synchronization source */
+    uint32_t csrc[1];           /* optional CSRC list */
+} rtpHeader;
+
 int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 {
     uint8_t iv[16] = { 0 }, hmac[20];
@@ -176,9 +198,24 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
         av_hmac_update(s->hmac, rocbuf, 4);
     }
 
+    unsigned i = 0;
+    rtpHeader* header = (rtpHeader *) buf;
+    printf("------------------ buff [seq=%d]-----------------\n",ntohs(header->seq));
+    for (i = 0; i < hmac_size; i++) {
+        printf("%x ", *(buf + i));
+    }
+    printf(" \n-------------------------------------\n");
+
     av_hmac_final(s->hmac, hmac, sizeof(hmac));
     if (memcmp(hmac, buf + len - hmac_size, hmac_size)) {
         av_log(NULL, AV_LOG_WARNING, "HMAC mismatch\n");
+
+        printf("------------------ hmac [seq=%d]-----------------\n",ntohs(header->seq));
+        for ( i = 0; i < hmac_size; i++) {
+            printf("%x ", hmac[i]);
+        }
+        printf(" \n-------------------------------------\n");
+
         return AVERROR_INVALIDDATA;
     }
 
