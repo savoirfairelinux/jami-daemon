@@ -56,23 +56,6 @@ static void XMLCALL
 endElementCallback(void * /*userData*/, const char* /*name*/)
 {}
 
-bool
-InstantMessaging::saveMessage(const std::string& message, const std::string& author,
-                              const std::string& id, int mode)
-{
-    std::ofstream File;
-    std::string filename = "im_" + id;
-    File.open(filename.c_str(), static_cast<std::ios_base::openmode>(mode));
-
-    if (!File.good() || !File.is_open())
-        return false;
-
-    File << "[" << author << "] " << message << '\n';
-    File.close();
-
-    return true;
-}
-
 void
 InstantMessaging::sendSipMessage(pjsip_inv_session* session, const std::string& id,
                                  const std::vector<std::string>& chunks)
@@ -102,8 +85,6 @@ InstantMessaging::sendSipMessage(pjsip_inv_session* session, const std::string& 
         if (ret != PJ_SUCCESS)
             RING_WARN("SIP send message failed: %s", sip_utils::sip_strerror(ret).c_str());
         pjsip_dlg_dec_lock(dialog);
-
-        saveMessage(text, "Me", id);
     }
 }
 
