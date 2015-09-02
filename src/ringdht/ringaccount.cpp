@@ -195,7 +195,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     setCertificateStatus(toUri, tls::TrustStore::Status::ALLOWED);
 
     std::weak_ptr<SIPCall> weak_call = call;
-    runOnMainThread([=] {
+    manager.addTask([shared_this, weak_call, ice, iceInitTimeout, toUri] {
         auto call = weak_call.lock();
 
         if (not call)
