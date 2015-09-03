@@ -599,6 +599,11 @@ AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, ad
 AS_IF([test "x$enable_debug" = "xyes"],
       [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -O0"])
 
+dnl Define revision strings
+RING_DIRTY_REPO=`git diff-index --quiet HEAD || echo dirty`
+RING_REVISION=`git log -1 --format="%h" --abbrev=10`
+CPPFLAGS="${CPPFLAGS} -DRING_REVISION=\\\"${RING_REVISION}\\\" -DRING_DIRTY_REPO=\\\"${RING_DIRTY_REPO}\\\""
+
 dnl What Makefiles to generate
 
 #TODO: split this list across where the relevant check is performed
