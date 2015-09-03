@@ -5,9 +5,9 @@
             "mkdir -p /sources",
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
             "cd ..",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
-            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
@@ -15,9 +15,9 @@
             "mkdir -p /sources",
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
             "cd ..",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
-            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/i686/* /output"
         ],
@@ -25,9 +25,9 @@
             "mkdir -p /sources",
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
             "cd ..",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
-            "tar -cf /sources/daemon /ring-daemon --exclude=\".git\"",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
