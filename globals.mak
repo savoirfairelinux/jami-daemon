@@ -18,8 +18,8 @@ if BUILD_GSM
 GSMCODEC=-DHAVE_GSM_CODEC
 endif
 
-RING_DIRTY_REPO ?= $(shell git diff-index --quiet HEAD || echo dirty)
-RING_REVISION ?= $(shell git log -1 --format="%h" --abbrev=10)
+RING_DIRTY_REPO:=$(shell git diff-index --quiet HEAD 2>/dev/null || echo dirty)
+RING_REVISION:=$(shell git log -1 --format="%h" --abbrev=10 2>/dev/null)
 
 # Preprocessor flags
 AM_CPPFLAGS = \
@@ -32,8 +32,8 @@ AM_CPPFLAGS = \
 	-DPREFIX=\"$(prefix)\" \
 	-DPROGSHAREDIR=\"${datadir}/ring\" \
 	-DENABLE_TRACE \
-	-DRING_REVISION=\"${RING_REVISION}\" \
-	-DRING_DIRTY_REPO=\"${RING_DIRTY_REPO}\" \
+	-DRING_REVISION=\"$(RING_REVISION)\" \
+	-DRING_DIRTY_REPO=\"$(RING_DIRTY_REPO)\" \
 	$(SPEEXCODEC) \
 	$(GSMCODEC) \
 	$(OPUSCODEC)
