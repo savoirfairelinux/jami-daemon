@@ -59,8 +59,8 @@ cd ../..
 echo "Contribs built"
 ./autogen.sh
 %configure --prefix=/usr CFLAGS="$(CFLAGS) -fPIC" LDFLAGS="-Wl,-z,defs"
-rm -rf .git
 make -j %{?_smp_mflags}
+rm -rf .git
 
 %install
 mkdir -p %{buildroot}/ring-daemon
