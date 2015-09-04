@@ -194,7 +194,7 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
     return udp_fd;
 }
 
-static const size_t RTP_BUFFER_SIZE = 1472;
+static const size_t RTP_BUFFER_SIZE = 1460;
 static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
