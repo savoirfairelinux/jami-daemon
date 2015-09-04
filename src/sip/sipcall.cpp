@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -25,7 +25,7 @@
  *  If you modify this program, or any covered work, by linking or
  *  combining it with the OpenSSL project's OpenSSL library (or a
  *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-faire Linux Inc.
  *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
  *  shall include the source code for the parts of OpenSSL used as well
@@ -678,20 +678,18 @@ SIPCall::carryingDTMFdigits(char code)
 }
 
 #if HAVE_INSTANT_MESSAGING
-void
+bool
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
-                         const std::string& from)
+                         const std::string& /* from */)
 {
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    /* Send IM message */
-    InstantMessaging::UriList list;
-    InstantMessaging::UriEntry entry;
-    entry[InstantMessaging::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
-    list.push_front(entry);
-    const auto& msgs = InstantMessaging::appendMimePayloads(messages, list);
-    InstantMessaging::sendSipMessage(inv.get(), getCallId(), msgs);
+    //TODO: for now we ignore the "from" (the previous implementation for sending this info was
+    //      buggy and verbose), another way to send the original message sender will be implemented
+    //      in the future
+
+    return InstantMessaging::sendSipMessage(inv.get(), messages);
 }
 #endif // HAVE_INSTANT_MESSAGING
 
