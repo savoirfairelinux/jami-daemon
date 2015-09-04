@@ -40,6 +40,7 @@
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
 #include "sip/siptransport.h"
+#include "sip/sip_utils.h"
 
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
@@ -78,6 +79,8 @@
 #include <cstdarg>
 
 namespace ring {
+
+using sip_utils::CONST_PJ_STR;
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
