@@ -167,7 +167,7 @@ class SIPCall : public Call
         void carryingDTMFdigits(char code) override;
 
 #if HAVE_INSTANT_MESSAGING
-        void sendTextMessage(const std::map<std::string, std::string>& messages,
+        bool sendTextMessage(const std::map<std::string, std::string>& messages,
                              const std::string &from) override;
 #endif
 

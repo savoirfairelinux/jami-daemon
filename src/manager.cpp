@@ -1663,7 +1663,8 @@ Manager::sendCallTextMessage(const std::string& callID,
         for (const auto &participant_id : participants) {
 
             if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(messages, from);
+                if (!call->sendTextMessage(messages, from))
+                    RING_WARN("Failed to send message to conference participant");
             } else {
                 RING_ERR("Failed to get call while sending instant message");
                 return false;
@@ -1685,7 +1686,8 @@ Manager::sendCallTextMessage(const std::string& callID,
         for (const auto &participant_id : participants) {
 
             if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(messages, from);
+                if (!call->sendTextMessage(messages, from))
+                    RING_WARN("Failed to send message to conference participant");
             } else {
                 RING_ERR("Failed to get call while sending instant message");
                 return false;
@@ -1693,7 +1695,10 @@ Manager::sendCallTextMessage(const std::string& callID,
         }
     } else {
         if (auto call = getCallFromCallID(callID)) {
-            call->sendTextMessage(messages, from);
+            if (!call->sendTextMessage(messages, from)) {
+                RING_ERR("Failed to send instant message");
+                return false;
+            }
         } else {
             RING_ERR("Failed to get call while sending instant message");
             return false;

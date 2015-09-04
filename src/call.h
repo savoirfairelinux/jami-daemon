@@ -316,8 +316,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          *
          * @param A list of mimetype/payload pairs
          * @param The sender of this message (could be another participant of a conference)
+         *
+         * @return Returns true if the message was sent succesfully.
          */
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
+        virtual bool sendTextMessage(const std::map<std::string, std::string>& messages,
                                      const std::string &from) = 0;
 #endif
 
