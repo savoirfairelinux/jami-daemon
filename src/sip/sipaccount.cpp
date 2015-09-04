@@ -89,6 +89,7 @@ namespace ring {
 
 using yaml_utils::parseValue;
 using yaml_utils::parseVectorMap;
+using sip_utils::CONST_PJ_STR;
 
 static const int MIN_REGISTRATION_TIME = 60;
 static const int DEFAULT_REGISTRATION_TIME = 3600;
@@ -356,7 +357,7 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
-    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
+    auto subj_hdr_name = CONST_PJ_STR("Subject");
     pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 
     pj_list_push_back(&dialog->inv_hdr, subj_hdr);
@@ -1544,7 +1545,7 @@ SIPAccount::getSupportedTlsCiphers()
 const std::vector<std::string>&
 SIPAccount::getSupportedTlsProtocols()
 {
-    static std::vector<std::string> availProtos {VALID_TLS_PROTOS, VALID_TLS_PROTOS+RING_ARRAYSIZE(VALID_TLS_PROTOS)};
+    static std::vector<std::string> availProtos {VALID_TLS_PROTOS, VALID_TLS_PROTOS + arraySize(VALID_TLS_PROTOS)};
     return availProtos;
 }
 

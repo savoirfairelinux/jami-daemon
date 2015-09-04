@@ -82,6 +82,8 @@
 
 namespace ring {
 
+using sip_utils::CONST_PJ_STR;
+
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
 static pjsip_endpoint *endpt_;

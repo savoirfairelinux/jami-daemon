@@ -40,6 +40,7 @@
 #include "pres_sub_client.h"
 #include "sipvoiplink.h"
 #include "client/ring_signal.h"
+#include "sip_utils.h"
 
 #include <thread>
 #include <sstream>
@@ -48,6 +49,8 @@
 #define MAX_N_SUB_CLIENT 50
 
 namespace ring {
+
+using sip_utils::CONST_PJ_STR;
 
 SIPPresence::SIPPresence(SIPAccount *acc)
     : publish_sess_()
