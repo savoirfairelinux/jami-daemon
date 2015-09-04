@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author : Laurielle Lea <laurielle.lea@savoirfairelinux.com>
@@ -24,7 +24,7 @@
  *  If you modify this program, or any covered work, by linking or
  *  combining it with the OpenSSL project's OpenSSL library (or a
  *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
+ *  terms of the OpenSSL or SSLeay licenses, Savoir-faire Linux Inc.
  *  grants you additional permission to convey the resulting work.
  *  Corresponding Source for a non-source form of such a combination
  *  shall include the source code for the parts of OpenSSL used as well
@@ -316,8 +316,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          *
          * @param A list of mimetype/payload pairs
          * @param The sender of this message (could be another participant of a conference)
+         *
+         * @return Returns true if the message was sent succesfully.
          */
-        virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
+        virtual bool sendTextMessage(const std::map<std::string, std::string>& messages,
                                      const std::string &from) = 0;
 #endif
 
