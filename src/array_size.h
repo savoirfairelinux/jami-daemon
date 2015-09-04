@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,16 +28,15 @@
  *  as that of the covered work.
  */
 
-#ifndef ARRAY_SIZE_H_
-#define ARRAY_SIZE_H_
+#pragma once
 
-// Returns the number of elements in a, calculated at compile-time
-#define RING_ARRAYSIZE(a) \
-      ((sizeof(a) / sizeof(*(a))) / \
-         static_cast<size_t>(!(sizeof(a) % sizeof(*(a)))))
+#include <cstdlib>
 
-/* Only use this macro with string literals or character arrays, will not work
- * as expected with char pointers */
-#define CONST_PJ_STR(X) {(char *) (X), RING_ARRAYSIZE(X) - 1}
+namespace ring {
 
-#endif // ARRAY_SIZE_H_
+// Returns the number of elements in given-by-reference array of type T.
+// Borrowed from Scott Meyers in "Effective Modern C++".
+template<typename T, std::size_t N>
+constexpr std::size_t arraySize(T (&)[N]) noexcept { return N; }
+
+} // namespace ring

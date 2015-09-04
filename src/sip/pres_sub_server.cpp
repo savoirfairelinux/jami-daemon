@@ -39,8 +39,11 @@
 #include "logger.h"
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
+#include "sip_utils.h"
 
 namespace ring {
+
+using sip_utils::CONST_PJ_STR;
 
 /* Callback called when *server* subscription state has changed. */
 void

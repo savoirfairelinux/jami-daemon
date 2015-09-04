@@ -83,6 +83,14 @@ void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
 std::string sip_strerror(pj_status_t code);
 
+// Helper function that return a constant pj_str_t from an array of any types
+// that may be staticaly casted into char pointer.
+// Per convention, the input array is supposed to be null terminated.
+template<typename T, std::size_t N>
+constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept {
+    return {const_cast<char*>(a), N-1};
+}
+
 }} // namespace ring::sip_utils
 
 #endif // SIP_UTILS_H_
