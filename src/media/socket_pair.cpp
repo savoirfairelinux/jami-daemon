@@ -261,6 +261,12 @@ SocketPair::interrupt()
 }
 
 void
+SocketPair::stopSendOp()
+{
+    pauseWrite_ = true;
+}
+
+void
 SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
@@ -494,7 +500,7 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     }
 
     do {
-        if (interrupted_)
+        if (interrupted_ || pauseWrite_)
             return -EINTR;
         ret = writeData(buf, buf_size);
     } while (ret < 0 and errno == EAGAIN);
