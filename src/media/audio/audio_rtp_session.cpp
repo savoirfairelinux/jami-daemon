@@ -382,7 +382,14 @@ AudioRtpSession::startSender()
     if (sender_)
         RING_WARN("Restarting audio sender");
 
+
+    // be sure to not send any packets before saving last RTP seq value
+    socketPair_->stopSendOp();
+    if (sender_)
+        initSeqVal_ = sender_->getLastSeqValue() + 1;
     try {
+        sender_.reset();
+        socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
                                       *socketPair_, initSeqVal_));
     } catch (const MediaEncoderException &e) {
@@ -395,9 +402,6 @@ void
 AudioRtpSession::restartSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    // continue on last sequence number
-    initSeqVal_ = sender_->getLastSeqValue() + 1;
     startSender();
 }
 
