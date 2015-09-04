@@ -89,6 +89,11 @@ void VideoRtpSession::startSender()
             }
         }
 
+
+        // be sure to not send any packets before saving last RTP seq value
+        socketPair_->pauseSendOp(true);
+        if (sender_)
+            initSeqVal_ = sender_->getLastSeqValue() + 1;
         try {
             sender_.reset(
                 new VideoSender(getRemoteRtpUri(), localVideoParams_,
@@ -98,6 +103,7 @@ void VideoRtpSession::startSender()
             RING_ERR("%s", e.what());
             send_.enabled = false;
         }
+        socketPair_->pauseSendOp(false);
     }
 }
 
@@ -106,8 +112,6 @@ VideoRtpSession::restartSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
-    // continue on last sequence number
-    initSeqVal_ = sender_->getLastSeqValue() + 1;
     startSender();
 
     if (sender_) {
