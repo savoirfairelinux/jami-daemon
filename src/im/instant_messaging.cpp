@@ -35,7 +35,6 @@
 #include "logger.h"
 #include "sip/sip_utils.h"
 
-#include <expat.h>
 #include <pjsip_ua.h>
 #include <pjsip.h>
 
@@ -313,68 +312,5 @@ InstantMessaging::sendIaxMessage(iax_session* session, const std::string& /* id 
         iax_send_text(session, msg.c_str());
 }
 #endif
-
-
-/*
- * The following functions are for creating and parsing XML URI lists which are appended to
- * instant messages in order to be able to send a message to multiple recipients as defined in
- * RFC 5365
- *
- * These functions are not currently used, but are left for now, along with the Expat library
- * dependance, in case this functionality is implemented later. Note that it may be possible to
- * replace the Expat XML parser library by using the pjsip xml functions.
- */
-
-static void XMLCALL
-startElementCallback(void* userData, const char* name, const char** atts)
-{
-    if (strcmp(name, "entry"))
-        return;
-
-    InstantMessaging::UriEntry entry = InstantMessaging::UriEntry();
-
-    for (const char **att = atts; *att; att += 2)
-        entry.insert(std::pair<std::string, std::string> (*att, *(att+1)));
-
-    static_cast<InstantMessaging::UriList *>(userData)->push_back(entry);
-}
-
-static void XMLCALL
-endElementCallback(void * /*userData*/, const char* /*name*/)
-{}
-
-std::string
-InstantMessaging::generateXmlUriList(const UriList& list)
-{
-    std::string xmlbuffer = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>"
-        "<resource-lists xmlns=\"urn:ietf:params:xml:ns:resource-lists\" xmlns:cp=\"urn:ietf:params:xml:ns:copycontrol\">"
-        "<list>";
-
-    for (const auto& item: list) {
-        const auto it = item.find(IM_XML_URI);
-        if (it == item.cend())
-            continue;
-        xmlbuffer += "<entry uri=" + it->second + " cp:copyControl=\"to\" />";
-    }
-    return xmlbuffer + "</list></resource-lists>";
-}
-
-InstantMessaging::UriList
-InstantMessaging::parseXmlUriList(const std::string& urilist)
-{
-    InstantMessaging::UriList list;
-
-    XML_Parser parser = XML_ParserCreate(NULL);
-    XML_SetUserData(parser, &list);
-    XML_SetElementHandler(parser, startElementCallback, endElementCallback);
-
-    if (XML_Parse(parser, urilist.c_str(), urilist.size(), 1) == XML_STATUS_ERROR) {
-        RING_ERR("%s at line %lu\n", XML_ErrorString(XML_GetErrorCode(parser)),
-               XML_GetCurrentLineNumber(parser));
-        throw InstantMessageException("Error while parsing uri-list xml content");
-    }
-
-    return list;
-}
 
 } // namespace ring

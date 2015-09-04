@@ -50,17 +50,6 @@ struct pjsip_msg;
 
 namespace ring { namespace InstantMessaging {
 
-constexpr static const char* IM_XML_URI = "uri";
-
-struct InstantMessageException : std::runtime_error
-{
-    InstantMessageException(const std::string& str="") :
-        std::runtime_error("InstantMessageException occured: " + str) {}
-};
-
-using UriEntry = std::map<std::string, std::string>;
-using UriList = std::list<UriEntry>;
-
 /**
  * Constructs and sends a SIP message.
  *
@@ -96,24 +85,5 @@ std::map<std::string, std::string> parseSipMessage(pjsip_msg* msg);
 void sendIaxMessage(iax_session* session, const std::string& id,
                     const std::vector<std::string>& chunks);
 #endif
-
-/**
- * Generate Xml participant list for multi recipient based on RFC Draft 5365
- *
- * @param A UriList of UriEntry
- *
- * @return A string containing the full XML formated information to be included in the
- *         sip instant message.
- */
-std::string generateXmlUriList(const UriList& list);
-
-/**
- * Parse the Urilist from a SIP Instant Message provided by a UriList service.
- *
- * @param A XML formated string as obtained from a SIP instant message.
- *
- * @return An UriList of UriEntry containing parsed XML information as a map.
- */
-UriList parseXmlUriList(const std::string &urilist);
 
 }} // namespace ring::InstantMessaging
