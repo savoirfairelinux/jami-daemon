@@ -261,6 +261,12 @@ SocketPair::interrupt()
 }
 
 void
+SocketPair::stopSendOp(bool state)
+{
+    noWrite_ = state;
+}
+
+void
 SocketPair::closeSockets()
 {
     if (rtcpHandle_ > 0 and close(rtcpHandle_))
@@ -463,9 +469,14 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         if (ret < 0)
             return ret;
 
+        if (noWrite_)
+            return buf_size;
         return sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
                       reinterpret_cast<sockaddr*>(&dest_addr), dest_addr_len);
     }
+
+    if (noWrite_)
+        return buf_size;
 
     // IceSocket
     if (isRTCP)
