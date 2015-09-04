@@ -678,20 +678,18 @@ SIPCall::carryingDTMFdigits(char code)
 }
 
 #if HAVE_INSTANT_MESSAGING
-void
+bool
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
-                         const std::string& from)
+                         const std::string& /* from */)
 {
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    /* Send IM message */
-    InstantMessaging::UriList list;
-    InstantMessaging::UriEntry entry;
-    entry[InstantMessaging::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
-    list.push_front(entry);
-    const auto& msgs = InstantMessaging::appendMimePayloads(messages, list);
-    InstantMessaging::sendSipMessage(inv.get(), getCallId(), msgs);
+    //TODO: for now we ignore the "from" (the previous implementation for sending this info was
+    //      buggy and verbose), another way to send the original message sender will be implemented
+    //      in the future
+
+    return InstantMessaging::sendSipMessage(inv.get(), messages);
 }
 #endif // HAVE_INSTANT_MESSAGING
 
