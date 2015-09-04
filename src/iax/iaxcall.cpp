@@ -245,8 +245,8 @@ IAXCall::sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& /*from*/)
 {
     std::lock_guard<std::mutex> lock(IAXVoIPLink::mutexIAX);
-    const auto& msgs = InstantMessaging::appendMimePayloads(messages);
-    InstantMessaging::sendIaxMessage(session, getCallId(), msgs);
+    //TODO: implement multipart messages for IAX
+    // InstantMessaging::sendIaxMessage(session, getCallId(), msgs);
 }
 #endif
 
