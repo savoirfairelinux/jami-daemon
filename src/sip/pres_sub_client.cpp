@@ -44,7 +44,6 @@
 #include <pjsip-simple/evsub.h>
 #include <unistd.h>
 
-#include "array_size.h"
 #include "pres_sub_client.h"
 #include "sipaccount.h"
 #include "sippresence.h"
@@ -58,6 +57,8 @@
 #define PRES_TIMER 300 // 5min
 
 namespace ring {
+
+using sip_utils::CONST_PJ_STR;
 
 int PresSubClient::modId_ = 0; // used to extract data structure from event_subscription
 

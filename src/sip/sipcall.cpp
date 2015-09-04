@@ -41,9 +41,9 @@
 #include "logger.h" // for _debug
 #include "sdp.h"
 #include "manager.h"
-#include "array_size.h"
 #include "string_utils.h"
 #include "upnp/upnp_control.h"
+#include "sip_utils.h"
 
 #include "audio/audio_rtp_session.h"
 
@@ -67,6 +67,8 @@
 #include "errno.h"
 
 namespace ring {
+
+using sip_utils::CONST_PJ_STR;
 
 #ifdef RING_VIDEO
 static DeviceParams
