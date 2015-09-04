@@ -71,6 +71,8 @@ namespace ring {
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
 
+enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
+
 class SRTPProtoContext {
 public:
     SRTPProtoContext(const char* out_suite, const char* out_key,
@@ -293,8 +295,8 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
         throw std::runtime_error("Socket creation failed");
     }
 
-    RING_WARN("SocketPair: local{%d,%d}, remote{%d,%d}",
-              local_rtp_port, local_rtcp_port, rtp_port, rtcp_port);
+    RING_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
+              local_rtp_port, local_rtcp_port, hostname, rtp_port, rtcp_port);
 }
 
 MediaIOHandle*
@@ -322,9 +324,17 @@ SocketPair::waitForData()
             struct pollfd p[2] = { {rtpHandle_, POLLIN, 0},
                                    {rtcpHandle_, POLLIN, 0} };
             ret = poll(p, 2, NET_POLL_TIMEOUT);
-        } while (ret < 0 and errno == EAGAIN);
+            if (ret > 0) {
+                ret = 0;
+                if (p[0].revents & POLLIN)
+                    ret |= static_cast<int>(DataType::RTP);
+                if (p[1].revents & POLLIN)
+                    ret |= static_cast<int>(DataType::RTCP);
+            }
+        } while (!ret or (ret < 0 and errno == EAGAIN));
 
         return ret;
+
     }
 
     // work with IceSocket
@@ -338,7 +348,7 @@ SocketPair::waitForData()
         return -1;
     }
 
-    return 0;
+    return static_cast<int>(DataType::RTP) | static_cast<int>(DataType::RTCP);
 }
 
 int
@@ -396,33 +406,38 @@ SocketPair::readRtcpData(void* buf, int buf_size)
 int
 SocketPair::readCallback(uint8_t* buf, int buf_size)
 {
-    while (1) {
-        auto ret = waitForData();
-        if (ret < 0)
-            return ret;
+    auto datatype = waitForData();
+    if (datatype < 0)
+        return datatype;
 
-        // Priority to RTCP as its less invasive in bandwidth
-        auto len = readRtcpData(buf, buf_size);
-        bool fromRTCP = true;
+    int len = 0;
+    bool fromRTCP = false;
 
-        // No RTCP... try RTP
-        if (len == 0) {
-            len = readRtpData(buf, buf_size);
-            fromRTCP = false;
-        }
+    // Priority to RTCP as its less invasive in bandwidth
+    if (datatype & static_cast<int>(DataType::RTCP)) {
+        len = readRtcpData(buf, buf_size);
+        fromRTCP = true;
+    }
 
-        if (len < 0)
-            return len;
+    // No RTCP... try RTP
+    if (!len and (datatype & static_cast<int>(DataType::RTP))) {
+        len = readRtpData(buf, buf_size);
+        fromRTCP = false;
+    }
 
-        // SRTP decrypt
-        if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
-            auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
-            if (err < 0)
-                RING_WARN("decrypt error %d", err);
-        }
-
+    if (len <= 0) {
+        RING_WARN("read error = %d %d %u", len, errno, fromRTCP);
         return len;
     }
+
+    // SRTP decrypt
+    if (not fromRTCP and srtpContext_ and srtpContext_->srtp_in.aes) {
+        auto err = ff_srtp_decrypt(&srtpContext_->srtp_in, buf, &len);
+        if (err < 0)
+            RING_WARN("decrypt error %d", err);
+    }
+
+    return len;
 }
 
 int
