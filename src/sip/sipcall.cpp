@@ -685,13 +685,20 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    /* Send IM message */
-    InstantMessaging::UriList list;
-    InstantMessaging::UriEntry entry;
-    entry[InstantMessaging::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
-    list.push_front(entry);
-    const auto& msgs = InstantMessaging::appendMimePayloads(messages, list);
-    InstantMessaging::sendSipMessage(inv.get(), getCallId(), msgs);
+    /* test multipart */
+    auto multipart_msg = messages;
+    multipart_msg["x-ring/ring.profile.vcard; id=343292;part=3;of=1042"] = "adf;kja;sdfjoqwkwjf;lasdfa;sjkdfowiadf23402";
+    InstantMessaging::sendSipMessage(inv.get(), multipart_msg);
+
+    // InstantMessaging::sendSipMessage(inv.get(), messages);
+
+    // /* Send IM message */
+    // InstantMessaging::UriList list;
+    // InstantMessaging::UriEntry entry;
+    // entry[InstantMessaging::IM_XML_URI] = std::string("\"" + from + "\"");  // add double quotes for xml formating
+    // list.push_front(entry);
+    // const auto& msgs = InstantMessaging::appendMimePayloads(messages, list);
+    // InstantMessaging::sendSipMessage(inv.get(), getCallId(), msgs);
 }
 #endif // HAVE_INSTANT_MESSAGING
 

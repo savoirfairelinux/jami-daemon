@@ -44,6 +44,8 @@
 #endif
 
 struct pjsip_inv_session;
+struct pjsip_rx_data;
+struct pjsip_msg;
 
 namespace ring { namespace InstantMessaging {
 
@@ -71,6 +73,30 @@ using UriList = std::list<UriEntry>;
 
 void sendSipMessage(pjsip_inv_session* session, const std::string& id,
                     const std::vector<std::string>& chunks);
+
+/**
+ * Constructs and sends a SIP message.
+ *
+ * The expected format of the map key is:
+ *     type/subtype[; *[; arg=value]]
+ *     eg: "text/plain; id=1234;part=2;of=1001"
+ *     note: all whitespace is optional
+ *
+ * If the map contains more than one pair, then a multipart/mixed message type will be created
+ * containing multiple message parts. Note that all of the message parts must be able to fit into
+ * one message... they will not be split into multple messages.
+ *
+ * @param session SIP session
+ * @param payloads a map where the mime type and optional parameters are the key
+ *                 and the message payload is the value
+ *
+ * @return boolean indicating whether or not the message was successfully sent
+ */
+bool sendSipMessage(pjsip_inv_session* session,
+                    const std::map<std::string, std::string>& payloads);
+
+std::map<std::string, std::string> parseSipMessage(pjsip_rx_data* rdata, pjsip_msg* msg);
+
 #if HAVE_IAX
 void sendIaxMessage(iax_session* session, const std::string& id,
                     const std::vector<std::string>& chunks);
