@@ -93,6 +93,8 @@ class SocketPair {
         void createSRTP(const char* out_suite, const char* out_params,
                         const char* in_suite, const char* in_params);
 
+        void stopSendOp();
+
     private:
         NON_COPYABLE(SocketPair);
 
@@ -119,6 +121,7 @@ class SocketPair {
         sockaddr_storage rtcpDestAddr_;
         socklen_t rtcpDestAddrLen_;
         std::atomic_bool interrupted_ {false};
+        std::atomic_bool pauseWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
 };
 
