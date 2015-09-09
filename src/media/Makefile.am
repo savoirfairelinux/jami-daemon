@@ -17,7 +17,8 @@ libmedia_la_SOURCES = \
 	media_io_handle.cpp \
 	media_codec.cpp \
 	system_codec_container.cpp \
-	srtp.c
+	srtp.c \
+	vaapi_hw_decoder.cpp
 
 noinst_HEADERS = \
 	rtp_session.h \
@@ -31,7 +32,9 @@ noinst_HEADERS = \
 	media_device.h \
 	media_codec.h \
 	system_codec_container.h \
-	srtp.h
+	srtp.h \
+	media_hw_decoder.h \
+	vaapi_hw_decoder.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
