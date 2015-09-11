@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -44,19 +45,10 @@
 #endif
 
 struct pjsip_inv_session;
+struct pjsip_rx_data;
+struct pjsip_msg;
 
 namespace ring { namespace InstantMessaging {
-
-/* PJSIP's sip message limit, PJSIP_MAX_PKT_LEN is the total, but most
-   is used for the SIP header
-
-   Ring currently split the messages into smaller ones and send them. Obviously
-   it is invalid as some messages wont have the MIME boundary section.
-
-   The number set here is arbitrary, the theoretical limit is around 3000,
-   but some messages may fail.
-*/
-constexpr static unsigned MAXIMUM_MESSAGE_LENGTH = 1800;
 
 constexpr static const char* IM_XML_URI = "uri";
 
@@ -69,8 +61,36 @@ struct InstantMessageException : std::runtime_error
 using UriEntry = std::map<std::string, std::string>;
 using UriList = std::list<UriEntry>;
 
-void sendSipMessage(pjsip_inv_session* session, const std::string& id,
-                    const std::vector<std::string>& chunks);
+/**
+ * Constructs and sends a SIP message.
+ *
+ * The expected format of the map key is:
+ *     type/subtype[; *[; arg=value]]
+ *     eg: "text/plain; id=1234;part=2;of=1001"
+ *     note: all whitespace is optional
+ *
+ * If the map contains more than one pair, then a multipart/mixed message type will be created
+ * containing multiple message parts. Note that all of the message parts must be able to fit into
+ * one message... they will not be split into multiple messages.
+ *
+ * @param session SIP session
+ * @param payloads a map where the mime type and optional parameters are the key
+ *                 and the message payload is the value
+ *
+ * Exception: throw InstantMessageException if no message sent
+ */
+void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::string>& payloads);
+
+/**
+ * Parses given SIP message into a map where the key is the contents of the Content-Type header
+ * (along with any parameters) and the value is the message payload.
+ *
+ * @param msg received SIP message
+ *
+ * @return map of content types and message payloads
+ */
+std::map<std::string, std::string> parseSipMessage(const pjsip_msg* msg);
+
 #if HAVE_IAX
 void sendIaxMessage(iax_session* session, const std::string& id,
                     const std::vector<std::string>& chunks);
@@ -93,45 +113,6 @@ std::string generateXmlUriList(const UriList& list);
  *
  * @return An UriList of UriEntry containing parsed XML information as a map.
  */
-UriList parseXmlUriList(const std::string &urilist);
-
-/**
- * Format text message according to RFC 5365, append recipient-list to the message
- *
- * @param Key/Value MIME pairs to be sent. If a payload doesn't fit, the message will be split
- * @param list containing the recipients
- *
- * @return formated text stored into a string to be included in sip MESSAGE
- */
-std::vector<std::string> appendMimePayloads(const std::map<std::string, std::string>& payloads,
-                                            const UriList& list = {});
-
-/**
- * Retreive the xml formated uri list in formated text data according to RFC 5365
- *
- * @param text The formated text message as retreived in the SIP message
- *
- * @return A string containing the XML content
- */
-std::string findTextUriList(const std::string& text);
-
-/**
- * Retrieve a MIME payload from the SIP container RFC5365
- *
- * @param mime the mime type
- *
- * @param encodedPayloads a MIME encoded set of payloads
- *
- * @return A string containing the actual message
- */
-std::string findMimePayload(const std::string& encodedPayloads,
-                            const std::string& mime = "text/plain");
-
-/**
- * Retrieve all MIME payloads from encodedPayloads
- *
- * @param encodedPayloads a MIME encoded set of payloads
- */
-std::map< std::string, std::string > parsePayloads(const std::string& encodedPayloads);
+UriList parseXmlUriList(const std::string& urilist);
 
 }} // namespace ring::InstantMessaging

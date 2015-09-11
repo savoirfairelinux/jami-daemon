@@ -1607,31 +1607,39 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
 //THREAD=VoIP
 #if HAVE_INSTANT_MESSAGING
+void
+Manager::sendTextMessageToConference(const Conference& conf,
+                                     const std::map<std::string, std::string>& messages,
+                                     const std::string& from) const noexcept
+{
+    ParticipantSet participants(conf.getParticipantList());
+    for (const auto& call_id: participants) {
+        try {
+            auto call = getCallFromCallID(call_id);
+            if (not call)
+                throw std::runtime_error("no associated call");
+            call->sendTextMessage(messages, from);
+        } catch (const std::exception& e) {
+            RING_ERR("Failed to send message to conference participant %s: %s",
+                     call_id.c_str(), e.what());
+        }
+    }
+}
 
 void
 Manager::incomingMessage(const std::string& callID,
-                             const std::string& from,
-                             const std::map<std::string, std::string>& messages)
+                         const std::string& from,
+                         const std::map<std::string, std::string>& messages)
 {
     if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
-
-        ParticipantSet participants(conf->getParticipantList());
-
-        for (const auto &item_p : participants) {
-
-            if (item_p == callID)
-                continue;
-
-            RING_DBG("Send message to %s", item_p.c_str());
-
-            if (auto call = getCallFromCallID(item_p)) {
-                call->sendTextMessage(messages, from);
-            } else {
-                RING_ERR("Failed to get call while sending instant message");
-                return;
-            }
+        if (not conf) {
+            RING_ERR("no conference associated to ID %s", callID.c_str());
+            return;
         }
+
+        RING_DBG("Is a conference, send incoming message to everyone");
+        sendTextMessageToConference(*conf, messages, from);
 
         // in case of a conference we must notify client using conference id
         emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages);
@@ -1639,69 +1647,46 @@ Manager::incomingMessage(const std::string& callID,
         emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, messages);
 }
 
-//THREAD=VoIP
-bool
+void
 Manager::sendCallTextMessage(const std::string& callID,
                              const std::map<std::string, std::string>& messages,
                              const std::string& from,
                              bool /*isMixed TODO: use it */)
 {
     if (isConference(callID)) {
+        const auto& it = conferenceMap_.find(callID);
+        if (it == conferenceMap_.cend() or not it->second) {
+            RING_ERR("no conference associated to ID %s", callID.c_str());
+            return;
+        }
+
         RING_DBG("Is a conference, send instant message to everyone");
-        ConferenceMap::iterator it = conferenceMap_.find(callID);
+        sendTextMessageToConference(*it->second, messages, from);
 
-        if (it == conferenceMap_.end())
-            return false;
-
-        auto conf = it->second;
-
-        if (!conf)
-            return false;
-
-        ParticipantSet participants(conf->getParticipantList());
-
-        for (const auto &participant_id : participants) {
-
-            if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(messages, from);
-            } else {
-                RING_ERR("Failed to get call while sending instant message");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    if (isConferenceParticipant(callID)) {
-        RING_DBG("Call is participant in a conference, send instant message to everyone");
+    } else if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
-
-        if (!conf)
-            return false;
-
-        ParticipantSet participants(conf->getParticipantList());
-
-        for (const auto &participant_id : participants) {
-
-            if (auto call = getCallFromCallID(participant_id)) {
-                call->sendTextMessage(messages, from);
-            } else {
-                RING_ERR("Failed to get call while sending instant message");
-                return false;
-            }
+        if (not conf) {
+            RING_ERR("no conference associated to call ID %s", callID.c_str());
+            return;
         }
+
+        RING_DBG("Call is participant in a conference, send instant message to everyone");
+        sendTextMessageToConference(*conf, messages, from);
+
     } else {
-        if (auto call = getCallFromCallID(callID)) {
+        auto call = getCallFromCallID(callID);
+        if (not call) {
+            RING_ERR("Failed to send message to %s: inexistant call ID", call->getCallId().c_str());
+            return;
+        }
+
+        try {
             call->sendTextMessage(messages, from);
-        } else {
-            RING_ERR("Failed to get call while sending instant message");
-            return false;
+        } catch (const InstantMessaging::InstantMessageException& e) {
+            RING_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
         }
     }
-    return true;
 }
-
 #endif // HAVE_INSTANT_MESSAGING
 
 //THREAD=VoIP CALL=Outgoing
