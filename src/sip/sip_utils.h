@@ -45,6 +45,7 @@
 #include <cstring> // strcmp
 
 struct pjsip_msg;
+struct pjsip_dialog;
 
 namespace ring { namespace sip_utils {
 
@@ -90,6 +91,20 @@ template<typename T, std::size_t N>
 constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept {
     return {const_cast<char*>(a), N-1};
 }
+
+// PJSIP dialog locking in RAII way
+// Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
+// The lock is kept until the local variable is deleted
+class PJDialogLock {
+public:
+    explicit PJDialogLock(pjsip_dialog* dialog);
+    ~PJDialogLock();
+    PJDialogLock() = delete;
+    PJDialogLock(const PJDialogLock&) = delete; // enough to disable all cp/mv stuff
+
+private:
+    pjsip_dialog* dialog_;
+};
 
 }} // namespace ring::sip_utils
 

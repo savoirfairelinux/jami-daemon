@@ -1117,48 +1117,19 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
 }
 
 static void
-onRequestMessage(pjsip_inv_session* inv, pjsip_rx_data* rdata, pjsip_msg* msg, SIPCall& call)
+onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg,
+                 SIPCall& call)
 {
 #if HAVE_INSTANT_MESSAGING
     if (!msg->body)
         return;
 
-    const auto formattedMsgPtr = static_cast<const char*>(msg->body->data);
-    if (!formattedMsgPtr)
-        return;
+    //TODO: for now we assume that the "from" is the message sender, this may not be true in the
+    //      case of conferences; a content type containing this info will be added to the messages
+    //      in the future
+    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
+                                        InstantMessaging::parseSipMessage(msg));
 
-    const std::string formattedMessage {formattedMsgPtr};
-
-    // retreive the recipient-list of this message
-    InstantMessaging::UriList list;
-    try {
-        const auto& urilist = InstantMessaging::findTextUriList(formattedMessage);
-        auto list = InstantMessaging::parseXmlUriList(urilist);
-    } catch (const InstantMessaging::InstantMessageException& e) {
-        RING_DBG("[call:%s] Empty urilist", call.getCallId().c_str());
-    }
-
-    // If no item present in the list, peer is considered as the sender
-    std::string from;
-    if (list.empty()) {
-        from = call.getPeerNumber();
-    } else {
-        from = list.front()[InstantMessaging::IM_XML_URI];
-        if (from == "Me")
-            from = call.getPeerNumber();
-    }
-
-    // strip < and > characters in case of an IP address
-    if (from[0] == '<' and from[from.size() - 1] == '>')
-        from = from.substr(1, from.size() - 2);
-
-    try {
-        const auto& messages = InstantMessaging::parsePayloads(formattedMessage);
-        Manager::instance().incomingMessage(call.getCallId(), from, messages);
-        replyToRequest(inv, rdata, PJSIP_SC_OK);
-    } catch (const InstantMessaging::InstantMessageException& except) {
-        RING_ERR("Exception during SIP message parsing: %s", except.what());
-    }
 #endif // HAVE_INSTANT_MESSAGING
 }
 

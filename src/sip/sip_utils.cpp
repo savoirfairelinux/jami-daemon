@@ -190,4 +190,15 @@ sip_strerror(pj_status_t code)
     return std::string{err_msg};
 }
 
+PJDialogLock::PJDialogLock(pjsip_dialog* dialog)
+    : dialog_(dialog)
+{
+    pjsip_dlg_inc_lock(dialog_);
+}
+
+PJDialogLock::~PJDialogLock()
+{
+    pjsip_dlg_dec_lock(dialog_);
+}
+
 }} // namespace ring::sip_utils

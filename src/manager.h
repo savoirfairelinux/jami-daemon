@@ -399,9 +399,11 @@ class Manager {
          * Send a new text message to the call, if participate to a conference, send to all participant.
          * @param callID        The call to send the message
          * @param message       A list of pair of mime types and payloads
-        * @param from           The sender of this message (could be another participant of a conference)
+         * @param from           The sender of this message (could be another participant of a conference)
          */
-        bool sendCallTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
+        void sendCallTextMessage(const std::string& callID,
+                                 const std::map<std::string, std::string>& messages,
+                                 const std::string& from, bool isMixed);
 #endif // HAVE_INSTANT_MESSAGING
 
         /**
@@ -1008,6 +1010,12 @@ class Manager {
 
         /* Sink ID mapping */
         std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
+
+#if HAVE_INSTANT_MESSAGING
+        void sendTextMessageToConference(const Conference& conf,
+                                         const std::map<std::string, std::string>& messages,
+                                         const std::string& from) const noexcept;
+#endif
 };
 
 // Helper to install a callback to be called once by the main event loop
