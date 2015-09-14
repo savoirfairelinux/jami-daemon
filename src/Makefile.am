@@ -26,7 +26,6 @@ endif
 if BUILD_INSTANT_MESSAGING
 INSTANT_MESSAGING_SUBDIR = im
 IM_LIBA=./im/libim.la
-IM_LIB=@EXPAT_LIBS@
 endif
 
 # Redefine the USE_IAX variable here, so that it could be used in manager
