@@ -412,16 +412,10 @@ AC_DEFINE_UNQUOTED([HAVE_TLS], `if test $HAVE_GNUTLS -eq 1; then echo 1; else ec
 AM_CONDITIONAL(BUILD_TLS, test "$HAVE_GNUTLS" -eq 1)
 
 # Instant Messaging
-# required dependency(ies): libxpat
 AC_ARG_WITH([instant_messaging],
     [AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging])],
     [],
     [with_instant_messaging=yes])
-    AS_IF([test "x$with_instant_messaging" = "xyes"], [
-        PKG_CHECK_MODULES([EXPAT], expat >= 2.0.0, [with_instant_messaging=yes],
-           dnl Fallback to older version
-           [with_instant_messaging=no])
-    ]);
 
 AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
 AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
