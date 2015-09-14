@@ -132,6 +132,7 @@ OpenSLLayer::startStream()
         startAudioPlayback();
         startAudioCapture();
         isStarted_ = true;
+        startedCv_.notify_all();
     });
     launcher.detach();
 }

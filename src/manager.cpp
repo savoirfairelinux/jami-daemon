@@ -1505,9 +1505,6 @@ Manager::playDtmf(char code)
 
     std::lock_guard<std::mutex> lock(audioLayerMutex_);
 
-    // numbers of int = length in milliseconds / 1000 (number of seconds)
-    //                = number of seconds * SAMPLING_RATE by SECONDS
-
     // fast return, no sound, so no dtmf
     if (not audiodriver_ or not dtmfKey_) {
         RING_DBG("No audio layer...");
@@ -1515,6 +1512,10 @@ Manager::playDtmf(char code)
     }
 
     audiodriver_->startStream();
+    if (not audiodriver_->waitForStart(std::chrono::seconds(1))) {
+        RING_ERR("Failed to start audio layer...");
+        return;
+    }
 
     // number of data sampling in one pulselen depends on samplerate
     // size (n sampling) = time_ms * sampling/s
@@ -1533,12 +1534,6 @@ Manager::playDtmf(char code)
         // so size * 1 channel (mono) * sizeof (bytes for the data)
         // audiolayer->flushUrgent();
 
-        // FIXME: do real synchronization
-        int tries = 10;
-        while (not audiodriver_->isStarted() and tries--) {
-            RING_WARN("Audio layer not ready yet");
-            usleep(10000);
-        }
         audiodriver_->putUrgent(dtmfBuf_);
     }
 

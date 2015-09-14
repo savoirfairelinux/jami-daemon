@@ -42,6 +42,8 @@
 #include <sys/time.h>
 #include <mutex>
 #include <vector>
+#include <atomic>
+#include <condition_variable>
 
 /**
  * @file  audiolayer.h
@@ -107,6 +109,13 @@ class AudioLayer {
          * Determine wether or not the audio layer is active (i.e. stream opened)
          */
         bool isStarted() const {
+            return isStarted_;
+        }
+
+        template< class Rep, class Period >
+        bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const {
+            std::unique_lock<std::mutex> lk(mutex_);
+            startedCv_.wait_for(lk, rel_time, [&]{return isStarted_.load();});
             return isStarted_;
         }
 
@@ -236,7 +245,8 @@ class AudioLayer {
         /**
          * Whether or not the audio layer stream is started
          */
-        bool isStarted_;
+        std::atomic_bool isStarted_;
+        mutable std::condition_variable startedCv_;
 
         /**
          * Sample Rate Ring should send sound data to the sound card
@@ -256,7 +266,7 @@ class AudioLayer {
         /**
          * Lock for the entire audio layer
          */
-        std::mutex mutex_;
+        mutable std::mutex mutex_;
 
         /**
          * Remove audio offset that can be introduced by certain cheap audio device
