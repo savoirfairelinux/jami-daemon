@@ -170,4 +170,6 @@ nobase_include_HEADERS+= \
 		dring/videomanager_interface.h
 endif
 
-.PHONY: buildinfo.cpp
+buildinfo.cpp: FORCE;
+
+FORCE:
