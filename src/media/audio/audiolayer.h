@@ -77,6 +77,13 @@ class AudioLayer {
     private:
         NON_COPYABLE(AudioLayer);
 
+    protected:
+        enum class Status {
+            Idle,
+            Starting,
+            Started
+        };
+
     public:
 
         AudioLayer(const AudioPreference &);
@@ -108,15 +115,15 @@ class AudioLayer {
         /**
          * Determine wether or not the audio layer is active (i.e. stream opened)
          */
-        bool isStarted() const {
-            return isStarted_;
+        inline bool isStarted() const {
+            return status_ == Status::Started;
         }
 
         template< class Rep, class Period >
         bool waitForStart(const std::chrono::duration<Rep, Period>& rel_time) const {
             std::unique_lock<std::mutex> lk(mutex_);
-            startedCv_.wait_for(lk, rel_time, [&]{return isStarted_.load();});
-            return isStarted_;
+            startedCv_.wait_for(lk, rel_time, [&]{return isStarted();});
+            return isStarted();
         }
 
         /**
@@ -245,7 +252,7 @@ class AudioLayer {
         /**
          * Whether or not the audio layer stream is started
          */
-        std::atomic_bool isStarted_;
+        Status status_ {Status::Idle};
         mutable std::condition_variable startedCv_;
 
         /**
@@ -266,12 +273,12 @@ class AudioLayer {
         /**
          * Lock for the entire audio layer
          */
-        mutable std::mutex mutex_;
+        mutable std::mutex mutex_ {};
 
         /**
          * Remove audio offset that can be introduced by certain cheap audio device
          */
-        DcBlocker dcblocker_;
+        DcBlocker dcblocker_ {};
 
         /**
          * Manage sampling rate conversion

@@ -87,9 +87,6 @@ OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
 // Destructor
 OpenSLLayer::~OpenSLLayer()
 {
-    isStarted_ = false;
-
-    /* Then close the audio devices */
     stopAudioPlayback();
     stopAudioCapture();
 }
@@ -110,12 +107,17 @@ OpenSLLayer::startStream()
 {
     dcblocker_.reset();
 
-    if (isStarted_)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Idle)
+            return;
+        status_ = Status::Starting;
+    }
 
     RING_DBG("Start OpenSL audio layer");
 
     std::vector<int32_t> hw_infos;
+    hw_infos.reserve(4);
     emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
     hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
@@ -131,7 +133,11 @@ OpenSLLayer::startStream()
         init();
         startAudioPlayback();
         startAudioCapture();
-        isStarted_ = true;
+        RING_WARN("OpenSL audio layer started");
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            status_ = Status::Started;
+        }
         startedCv_.notify_all();
     });
     launcher.detach();
@@ -140,15 +146,17 @@ OpenSLLayer::startStream()
 void
 OpenSLLayer::stopStream()
 {
-    if (not isStarted_)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Started)
+            return;
+        status_ = Status::Idle;
+    }
 
-    RING_DBG("Stop OpenSL audio layer");
+    RING_WARN("Stop OpenSL audio layer");
 
     stopAudioPlayback();
     stopAudioCapture();
-
-    isStarted_ = false;
 
     flushMain();
     flushUrgent();
