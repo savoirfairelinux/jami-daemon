@@ -45,13 +45,12 @@ PortAudioLayer::PortAudioLayer(const AudioPreference &pref)
     , playbackBuff_(0, audioFormat_)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
-    isStarted_ = false;
-    this->init();
+    init();
 }
 
 PortAudioLayer::~PortAudioLayer()
 {
-    this->terminate();
+    terminate();
 }
 
 std::vector<std::string>
@@ -118,17 +117,19 @@ PortAudioLayer::getIndexRingtone() const
 void
 PortAudioLayer::startStream()
 {
-    if (isRunning_)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Idle)
+            return;
+        status_ = Status::Started;
+    }
     this->initStream();
-    isRunning_ = isStarted_ = true;
 }
 
 void
 PortAudioLayer::stopStream()
 {
-
-    if (!isRunning_)
+    if (status_ != Status::Started)
         return;
 
     RING_DBG("Stop PortAudio Streams");
@@ -143,7 +144,10 @@ PortAudioLayer::stopStream()
             this->handleError(err);
     }
 
-    isRunning_ = isStarted_ = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        status_ = Status::Idle;
+    }
 
     /* Flush the ring buffers */
     flushUrgent();
