@@ -123,6 +123,11 @@ class MediaDecoder {
         AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
+        // Jitter buffer options: they are default values set in libav
+        // maximum of packet jitter buffer can queue
+        const unsigned JITTER_BUFFER_MAX_SIZE_ {500};
+        // maximum time a packet can be queued (in ms)
+        const unsigned JITTER_BUFFER_MAX_DELAY_ {100000};
 
     protected:
         AVDictionary *options_ = nullptr;
