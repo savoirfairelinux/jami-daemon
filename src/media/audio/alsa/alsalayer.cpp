@@ -136,9 +136,13 @@ void AlsaThread::initAudioLayer(void)
 void AlsaThread::run()
 {
     initAudioLayer();
-    alsa_->isStarted_ = true;
+    {
+        std::lock_guard<std::mutex> lock(alsa_->mutex_);
+        alsa_->status_ = AudioLayer::Status::Started;
+    }
+    alsa_->startedCv_.notify_all();
 
-    while (alsa_->isStarted_ and running_) {
+    while (alsa_->status_ == AudioLayer::Status::Started and running_) {
         alsa_->audioCallback();
     }
 }
@@ -168,7 +172,6 @@ AlsaLayer::AlsaLayer(const AudioPreference &pref)
 
 AlsaLayer::~AlsaLayer()
 {
-    isStarted_ = false;
     audioThread_.reset();
 
     /* Then close the audio devices */
@@ -212,6 +215,13 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
 void
 AlsaLayer::startStream()
 {
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Idle)
+            return;
+        status_ = Status::Starting;
+    }
+
     dcblocker_.reset();
 
     if (is_playback_running_ and is_capture_running_)
@@ -228,8 +238,6 @@ AlsaLayer::startStream()
 void
 AlsaLayer::stopStream()
 {
-    isStarted_ = false;
-
     audioThread_.reset();
 
     closeCaptureStream();
@@ -242,6 +250,8 @@ AlsaLayer::stopStream()
     /* Flush the ring buffers */
     flushUrgent();
     flushMain();
+
+    status_ = Status::Idle;
 }
 
 /*

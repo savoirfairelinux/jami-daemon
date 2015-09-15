@@ -178,9 +178,6 @@ class CoreLayer : public AudioLayer {
         AudioUnit inputUnit_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
-        bool is_playback_running_;
-        bool is_capture_running_;
-
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
 

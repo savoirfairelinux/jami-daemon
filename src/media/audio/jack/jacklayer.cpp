@@ -257,7 +257,7 @@ JackLayer::ringbuffer_worker()
         std::unique_lock<std::mutex> lock(ringbuffer_thread_mutex_);
 
         // may have changed, we don't want to wait for a notification we won't get
-        if (not workerAlive_)
+        if (status_ != Status::Started)
             return;
 
         // FIXME this is all kinds of evil
@@ -273,7 +273,7 @@ JackLayer::ringbuffer_worker()
         data_ready_.wait(lock, [&] {
             // Note: lock is released while waiting, and held when woken
             // up, so this predicate is called while holding the lock
-            return not workerAlive_
+            return status_ != Status::Started
             or ringbuffer_ready_for_read(in_ringbuffers_[0]);
         });
     }
@@ -320,7 +320,7 @@ JackLayer::JackLayer(const AudioPreference &p) :
     out_ringbuffers_(),
     in_ringbuffers_(),
     ringbuffer_thread_(),
-    workerAlive_(false),
+    //workerAlive_(false),
     ringbuffer_thread_mutex_(),
     data_ready_(),
     playbackBuffer_(0, audioFormat_),
@@ -477,26 +477,22 @@ JackLayer::process_playback(jack_nframes_t frames, void *arg)
 void
 JackLayer::startStream()
 {
-    if (isStarted_)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Idle)
+            return;
+        status_ = Status::Started;
+    }
 
     dcblocker_.reset();
     const auto hardwareFormat = AudioFormat(playbackBuffer_.getSampleRate(), out_ports_.size());
     hardwareFormatAvailable(hardwareFormat);
 
-    workerAlive_ = true;
-    assert(not ringbuffer_thread_.joinable());
-    ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
-
     if (jack_activate(playbackClient_) or jack_activate(captureClient_)) {
         RING_ERR("Could not activate JACK client");
-        workerAlive_ = false;
-        ringbuffer_thread_.join();
-        isStarted_ = false;
         return;
-    } else {
-        isStarted_ = true;
     }
+    ringbuffer_thread_ = std::thread(&JackLayer::ringbuffer_worker, this);
 
     connectPorts(playbackClient_, JackPortIsInput, out_ports_);
     connectPorts(captureClient_, JackPortIsOutput, in_ports_);
@@ -516,16 +512,16 @@ void
 JackLayer::stopStream()
 {
     {
-        std::lock_guard<std::mutex> lock(ringbuffer_thread_mutex_);
-        workerAlive_ = false;
-        data_ready_.notify_one();
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Started)
+            return;
+        status_ = Status::Idle;
     }
+    data_ready_.notify_one();
 
     if (jack_deactivate(playbackClient_) or jack_deactivate(captureClient_)) {
         RING_ERR("JACK client could not deactivate");
     }
-
-    isStarted_ = false;
 
     if (ringbuffer_thread_.joinable())
         ringbuffer_thread_.join();

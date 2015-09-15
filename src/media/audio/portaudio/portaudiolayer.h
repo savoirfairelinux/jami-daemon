@@ -84,8 +84,6 @@ public:
 
     std::shared_ptr<RingBuffer> mainRingBuffer_;
 
-    bool isRunning_;
-
     enum Direction {Input=0, Output=1, End=2};
     PaStream*   streams[(int)Direction::End];
 
