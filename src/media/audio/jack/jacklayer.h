@@ -57,7 +57,6 @@ class JackLayer : public AudioLayer {
         std::vector<jack_ringbuffer_t *> out_ringbuffers_;
         std::vector<jack_ringbuffer_t *> in_ringbuffers_;
         std::thread ringbuffer_thread_;
-        bool workerAlive_;
         std::mutex ringbuffer_thread_mutex_;
         std::condition_variable data_ready_;
         AudioBuffer playbackBuffer_;

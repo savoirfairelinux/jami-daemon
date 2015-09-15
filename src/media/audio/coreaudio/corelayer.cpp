@@ -50,15 +50,11 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
     , captureBuff_(0)
-    , is_playback_running_(false)
-    , is_capture_running_(false)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
 CoreLayer::~CoreLayer()
 {
-    isStarted_ = false;
-
     if (captureBuff_) {
         for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i)
             free(captureBuff_->mBuffers[i].mData);
@@ -166,11 +162,6 @@ void CoreLayer::initAudioLayerPlayback()
     // Initialize
     checkErr(AudioUnitInitialize(outputUnit_));
     checkErr(AudioOutputUnitStart(outputUnit_));
-
-    is_playback_running_ = true;
-    is_capture_running_ = true;
-
-    initAudioFormat();
 }
 
 void CoreLayer::initAudioLayerCapture()
@@ -304,10 +295,15 @@ void CoreLayer::initAudioLayerCapture()
 void CoreLayer::startStream()
 {
     RING_DBG("START STREAM");
-    dcblocker_.reset();
 
-    if (is_playback_running_ and is_capture_running_)
-        return;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Idle)
+            return;
+        status_ = Status::Started;
+    }
+
+    dcblocker_.reset();
 
     initAudioLayerPlayback();
     initAudioLayerCapture();
@@ -328,7 +324,12 @@ void CoreLayer::stopStream()
 {
     RING_DBG("STOP STREAM");
 
-    isStarted_ = is_playback_running_ = is_capture_running_ = false;
+    {
+        std::lock_guard<std::mutex> lock(mutex_);
+        if (status_ != Status::Started)
+            return;
+        status_ = Status::Idle;
+    }
 
     destroyAudioLayer();
 
@@ -339,11 +340,6 @@ void CoreLayer::stopStream()
 
 
 //// PRIVATE /////
-
-
-void CoreLayer::initAudioFormat()
-{
-}
 
 
 OSStatus CoreLayer::outputCallback(void* inRefCon,
