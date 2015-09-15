@@ -137,7 +137,8 @@ PulseLayer::PulseLayer(AudioPreference &pref)
         pa_threaded_mainloop_wait(mainloop_);
     }
 
-    isStarted_ = true;
+    // No one had the opportunity to lock the mutex or listen on the CV yet.
+    status_ = Status::Started;
 }
 
 PulseLayer::~PulseLayer()
