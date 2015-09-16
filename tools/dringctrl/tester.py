@@ -31,15 +31,11 @@
 import sys
 import os
 import time
+import configparser
+
 from threading import Thread
 from random import shuffle
 from errors import *
-
-
-
-
-WITH_HOLD = True
-WITHOUT_HOLD = False
 
 ALL_TEST_NAME = {
         'TestConfig': 'testConfig',
@@ -51,21 +47,15 @@ ALL_TEST_NAME = {
 
 class DRingTester():
 
-    DHT_ACCOUNT_ID = ''
-    SIP_ACCOUNT_ID = ''
-    # Dht Client
-    SIP_TEST_ACCOUNT = 'sf1'
-    # Dht Client
-    DHT_TEST_ACCOUNT = '280ca11317ec90a939c86fbfa06532dbb8a08f8a'
-    # Ring Client
-    RING_TEST_ACCOUNT = '192.168.50.143'
-    # Polycom Client
-    POLYCOM_TEST_ACCOUNT = '192.168.40.38'
-    FILE_TEST = '/home/eloi/Videos/Mad_Max_Fury_Road_2015_Trailer_F4_5.1-1080p-HDTN.mp4'
-
-    minBitrate = 400
-    maxBitrate = 4000
-    incBitrate = 100
+# init to default values
+    dhtAccountId = ''
+    sipAccountId = ''
+    dhtTestAccount = ''
+    sipTestAccount = ''
+    inputFile = ''
+    minBitrate = 0
+    maxBitrate = 0
+    incBitrate = 0
 
     def testConfig(self, ctrl):
         print("**[BEGIN] test config")
@@ -124,18 +114,19 @@ class DRingTester():
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.DHT_ACCOUNT_ID)
+            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
 
-            callId = ctrl.Call(self.DHT_TEST_ACCOUNT)
+            callId = ctrl.Call(self.dhtTestAccount)
 
             # switch to file input
-            ctrl.switchInput(callId,'file://'+self.FILE_TEST)
+            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             time.sleep(delay)
 
             ctrl.HangUp(callId)
             count += 1
 
+        print("**[SUCCESS] DHT Call Test")
         print("**[END] DHT Call Test")
 
 # testLoopCallDhtWithHold
@@ -143,18 +134,18 @@ class DRingTester():
 # perform stress hold/unhold between each call
 
     def testLoopCallDhtWithHold(self, ctrl, nbIteration, delay):
-        print("**[BEGIN] DHT Call Test")
+        print("**[BEGIN] DHT Call Test With Hold")
 
         count = 0
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.DHT_ACCOUNT_ID)
+            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
 
-            callId = ctrl.Call(self.DHT_TEST_ACCOUNT)
+            callId = ctrl.Call(self.dhtTestAccount)
 
             # switch to file input
-            ctrl.switchInput(callId,'file://'+self.FILE_TEST)
+            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             delayHold = 5
             nbHold = delay / (delayHold * 2)
@@ -168,7 +159,8 @@ class DRingTester():
             ctrl.HangUp(callId)
             count += 1
 
-        print("**[END] DHT Call Test")
+        print("**[SUCCESS] DHT Call Test With Hold")
+        print("**[END] DHT Call Test With Hold")
 
 
 # testLoopCallDhtWithIncBitrate
@@ -184,14 +176,14 @@ class DRingTester():
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.DHT_ACCOUNT_ID)
+            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
             print("setting video bitrate to "+str(currBitrate))
-            ctrl.setCodecBitrate(self.DHT_ACCOUNT_ID, currBitrate)
+            ctrl.setCodecBitrate(self.dhtAccountId, currBitrate)
 
-            callId = ctrl.Call(self.DHT_TEST_ACCOUNT)
+            callId = ctrl.Call(self.dhtTestAccount)
 
             # switch to file input
-            ctrl.switchInput(callId,'file://'+self.FILE_TEST)
+            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             time.sleep(delay)
 
@@ -202,22 +194,24 @@ class DRingTester():
             if (currBitrate > self.maxBitrate):
                 currBitrate = self.minBitrate
 
+        print("**[SUCESS] VIDEO Bitrate Test")
         print("**[END] VIDEO Bitrate Test")
 
 # testSimultaneousLoopCallDht
 # perform <nbIteration> simultaneous DHT calls using <delay> between each call
 
     def testSimultaneousLoopCallDht(self, ctrl, nbIteration, delay):
+        print("**[BEGIN] Simultaneous DHT call test")
         count = 0
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
-            self.setRandomActiveCodecs(ctrl, self.DHT_ACCOUNT_ID)
+            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
 
             # do all the calls
             currCall = 0
             NB_SIMULTANEOUS_CALL = 10;
             while currCall <= NB_SIMULTANEOUS_CALL:
-                ctrl.Call(self.DHT_TEST_ACCOUNT)
+                ctrl.Call(self.dhtTestAccount)
                 time.sleep(1)
                 currCall = currCall + 1
 
@@ -229,7 +223,8 @@ class DRingTester():
 
             count += 1
 
-        print("**[END] Call Test for account:" + localAccount)
+        print("**[SUCESS] Simultaneous DHT call test")
+        print("**[END] Simultaneous DHT call test")
 
 
 
@@ -243,36 +238,22 @@ class DRingTester():
             return
 
         #getConfig
-        self.DHT_ACCOUNT_ID = ctrl.getAllAccounts('RING')[0]
-        self.SIP_ACCOUNT_ID = ctrl.getAllAccounts('SIP')[0]
+        self.dhtAccountId = ctrl.getAllAccounts('RING')[0]
+        self.sipAccountId = ctrl.getAllAccounts('SIP')[0]
+
+        config = configparser.ConfigParser()
+        config.read('test_config.ini')
+        self.dhtTestAccount = str(config['dht']['testAccount'])
+        self.sipTestAccount = str(config['sip']['testAccount'])
+        self.inputFile = str(config['video']['inputFile'])
+        self.minBitrate = int(config['video']['minBitrate'])
+        self.maxBitrate = int(config['video']['maxBitrate'])
+        self.incBitrate = int(config['video']['incBitrate'])
+
+        testNbIteration = config['iteration']['nbIteration']
+        delay = config['iteration']['delay']
+
         TEST_NB_ITERATION = 100
         TEST_DELAY = 30
 
-        getattr(self, ALL_TEST_NAME[testName])(ctrl,TEST_NB_ITERATION, TEST_DELAY)
-
-
-
-"""
-
-        # DHT tests
-        dhtAccount = ctrl.getAllAccounts('RING')[0]
-        self.startDynamicBitrateCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, 250, 4000, 100)
-        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, WITHOUT_HOLD)
-        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, WITH_HOLD)
-
-        # RING IP2IP tests
-        self.startCallTests(ctrl, 'IP2IP', RING_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
-        self.startCallTests(ctrl, 'IP2IP', RING_TEST_ACCOUNT, 1000, 20, WITH_HOLD)
-
-
-
-        # Polycom IP2IP tests
-        self.startCallTests(ctrl, 'IP2IP', POLYCOM_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
-        self.startCallTests(ctrl, 'IP2IP', POLYCOM_TEST_ACCOUNT, 1000, 20, WITH_HOLD)
-
-        # SIP tests
-        sipAccount = ctrl.getAllAccounts('SIP')[0]
-        # self.startSimultaneousCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 10, 40, WITHOUT_HOLD,10)
-        self.startCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 1000, 20, WITH_HOLD)
-        self.startCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
-"""
+        getattr(self, ALL_TEST_NAME[testName])(ctrl,int(testNbIteration), int(delay))
