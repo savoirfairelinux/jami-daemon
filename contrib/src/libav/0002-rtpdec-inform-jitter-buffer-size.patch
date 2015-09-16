@@ -1,0 +1,33 @@
+From d555bd69e792e42d94bd909b30d9bfef01db4e25 Mon Sep 17 00:00:00 2001
+From: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+Date: Tue, 15 Sep 2015 11:38:22 -0400
+Subject: [PATCH 2/3] rtpdec: inform jitter buffer size
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+This commit print as AV_LOG_VERBOSE the jitter buffer
+size. It might be the default value or the value set by application.
+
+Signed-off-by: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+Signed-off-by: Martin Storsjö <martin@martin.st>
+---
+ libavformat/rtpdec.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/libavformat/rtpdec.c b/libavformat/rtpdec.c
+index 5706f16..34c77f8 100644
+--- a/libavformat/rtpdec.c
++++ b/libavformat/rtpdec.c
+@@ -513,6 +513,10 @@ RTPDemuxContext *ff_rtp_parse_open(AVFormatContext *s1, AVStream *st,
+     s->ic                  = s1;
+     s->st                  = st;
+     s->queue_size          = queue_size;
++
++    av_log(s->st ? s->st->codec : NULL, AV_LOG_VERBOSE,
++            "setting jitter buffer size to %d\n", s->queue_size);
++
+     rtp_init_statistics(&s->statistics, 0);
+     if (st) {
+         switch (st->codec->codec_id) {
+2.1.4
