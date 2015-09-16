@@ -1,4 +1,4 @@
-FROM debian:jessie
+FROM debian:9
 
 RUN apt-get update && ( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )
 RUN apt-get install -y devscripts debianutils debhelper build-essential tar rsync git  autoconf automake libpulse-dev libsamplerate0-dev libtool libdbus-1-dev \
