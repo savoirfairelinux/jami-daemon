@@ -39,9 +39,9 @@ from errors import *
 # Dht Client
 SIP_TEST_ACCOUNT = 'sf1'
 # Dht Client
-DHT_TEST_ACCOUNT = '6c8d591e7c55b348338209bb6f9f638688d50034'
+DHT_TEST_ACCOUNT = '280ca11317ec90a939c86fbfa06532dbb8a08f8a'
 # Ring Client
-RING_TEST_ACCOUNT = '192.168.48.125'
+RING_TEST_ACCOUNT = '192.168.50.143'
 # RING_TEST_ACCOUNT = '192.168.48.158'
 # Polycom Client
 POLYCOM_TEST_ACCOUNT = '192.168.40.38'
@@ -98,8 +98,10 @@ class DRingTester():
             print("[%s/%s]" % (count, nbIteration))
             self.setRandomActiveCodecs(ctrl, localAccount)
 
-            ctrl.Call(destAccount)
-            callId = ctrl.getAllCalls()[0]
+            callId = ctrl.Call(destAccount)
+
+            # switch to file input
+            ctrl.switchInput(callId,'file:///home/eloi/Videos/Mad_Max_Fury_Road_2015_Trailer_F4_5.1-1080p-HDTN.mp4')
 
             if withHold:
                 delayHold = 5
@@ -157,6 +159,35 @@ class DRingTester():
 
         print("**[END] Call Test for account:" + localAccount)
 
+    def startDynamicBitrateCallTests(self, ctrl, localAccount, destAccount, nbIteration,
+                       delay, minBitrate, maxBitrate, incBitrate):
+        print("**[BEGIN] Call Test for account:" + localAccount)
+        if localAccount == 'IP2IP':
+            ctrl.setAccount(localAccount)
+
+        count = 0
+        currBitrate = minBitrate
+        while count < nbIteration:
+            print("[%s/%s]" % (count, nbIteration))
+            self.setRandomActiveCodecs(ctrl, localAccount)
+            ctrl.setCodecBitrate(localAccount, currBitrate)
+
+            print("calling " + destAccount)
+            callId = ctrl.Call(destAccount)
+
+            # switch to file input
+            ctrl.switchInput(callId,'file:///home/eloi/Videos/Mad_Max_Fury_Road_2015_Trailer_F4_5.1-1080p-HDTN.mp4')
+
+            time.sleep(delay)
+
+            ctrl.HangUp(callId)
+            count += 1
+            currBitrate += incBitrate
+            if (currBitrate > maxBitrate):
+                currBitrate = minBitrate
+
+        print("**[END] Call Test for account:" + localAccount)
+
     def start(self, ctrl):
         # testConfig
         if not (self.testConfig(ctrl)):
@@ -165,9 +196,17 @@ class DRingTester():
         else:
             print(("testConfig [OK]"))
 
+        # DHT tests
+        dhtAccount = ctrl.getAllAccounts('RING')[0]
+        self.startDynamicBitrateCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, 250, 4000, 100)
+        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, WITHOUT_HOLD)
+        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 100, 60, WITH_HOLD)
+
         # RING IP2IP tests
         self.startCallTests(ctrl, 'IP2IP', RING_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
         self.startCallTests(ctrl, 'IP2IP', RING_TEST_ACCOUNT, 1000, 20, WITH_HOLD)
+
+
 
         # Polycom IP2IP tests
         self.startCallTests(ctrl, 'IP2IP', POLYCOM_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
@@ -175,13 +214,6 @@ class DRingTester():
 
         # SIP tests
         sipAccount = ctrl.getAllAccounts('SIP')[0]
-        self.registerAccount(ctrl, sipAccount)
         # self.startSimultaneousCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 10, 40, WITHOUT_HOLD,10)
         self.startCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 1000, 20, WITH_HOLD)
         self.startCallTests(ctrl, sipAccount, SIP_TEST_ACCOUNT, 1000, 20, WITHOUT_HOLD)
-
-        # DHT tests
-        dhtAccount = ctrl.getAllAccounts('RING')[0]
-        self.registerAccount(ctrl, dhtAccount)
-        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 10, 60, WITHOUT_HOLD)
-        self.startCallTests(ctrl, dhtAccount, DHT_TEST_ACCOUNT, 10, 60, WITH_HOLD)
