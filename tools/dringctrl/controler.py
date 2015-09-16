@@ -457,6 +457,13 @@ class DRingCtrl(Thread):
         account = self._valid_account(account)
         return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
 
+    def setCodecBitrate(self, account, bitrate):
+        """ Change bitrate for all codecs  on given account"""
+
+        for codecId in self.configurationmanager.getActiveCodecList(account):
+            details = self.configurationmanager.getCodecDetails(account, codecId)
+            details['CodecInfo.bitrate'] = str(bitrate)
+            self.configurationmanager.setCodecDetails(account, codecId, details)
     #
     # Call management
     #
@@ -598,6 +605,11 @@ class DRingCtrl(Thread):
         """ Hang up each call for this conference """
 
         self.callmanager.hangUpConference(confId)
+
+    def switchInput(self, callid, inputName):
+        """switch to input if exist"""
+
+        return self.callmanager.switchInput(callid, inputName)
 
 
     def run(self):

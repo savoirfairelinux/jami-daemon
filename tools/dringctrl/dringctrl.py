@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
     parser.add_argument('--toggleVideo', help='Launch toggle video  tests', action='store_true')
 
-    parser.add_argument('--test', help='Launch automatic tests', action='store_true')
+    parser.add_argument('--test', help=' '.join(str(test) for test in DRingTester().getTestName() ), metavar='<testName>')
 
     args = parser.parse_args()
 
@@ -179,7 +179,7 @@ if __name__ == "__main__":
         ctrl.Dtmf(args.dtmf)
 
     if args.test:
-        DRingTester().start(ctrl)
+        DRingTester().start(ctrl, args.test)
 
     if args.toggleVideo:
         if not ctrl.videomanager:
