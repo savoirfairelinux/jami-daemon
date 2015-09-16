@@ -122,6 +122,9 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+	$(APPLY) $(SRC)/ffmpeg/0001-rtpdec-add-a-trace-when-jitter-buffer-is-full.patch
+	$(APPLY) $(SRC)/ffmpeg/0002-rtpdec-inform-jitter-buffer-size.patch
+	$(APPLY) $(SRC)/ffmpeg/0003-rtsp-warning-when-max_delay-reached.patch
 	$(MOVE)
 
 .ffmpeg: ffmpeg
