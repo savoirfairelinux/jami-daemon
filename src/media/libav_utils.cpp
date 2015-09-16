@@ -86,7 +86,7 @@ static void
 setAvLogLevel()
 {
     char* envvar = getenv(AVLOGLEVEL);
-    signed level = AV_LOG_ERROR;
+    signed level = AV_LOG_WARNING;
 
     if (envvar != nullptr) {
         if (not (std::istringstream(envvar) >> level))
