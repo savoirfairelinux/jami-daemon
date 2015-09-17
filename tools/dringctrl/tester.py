@@ -40,7 +40,7 @@ from errors import *
 ALL_TEST_NAME = {
         'TestConfig': 'testConfig',
         'LoopCallDht': 'testLoopCallDht',
-        'VideoBirtateDHT': 'testLoopCallDhtWithIncBitrate',
+        'VideoBitrateDHT': 'testLoopCallDhtWithIncBitrate',
         'SimultenousDHTCall' : 'testSimultaneousLoopCallDht',
         'DhtCallHold' : 'testLoopCallDhtWithHold'
         }
@@ -56,6 +56,8 @@ class DRingTester():
     minBitrate = 0
     maxBitrate = 0
     incBitrate = 0
+    codecAudio = ''
+    codecVideo = ''
 
     def testConfig(self, ctrl):
         print("**[BEGIN] test config")
@@ -85,12 +87,68 @@ class DRingTester():
         print("registering:" + account)
         ctrl.setAccountRegistered(account, True)
 
-    def setRandomActiveCodecs(self, ctrl, account):
+    def setActiveCodecs(self, ctrl, account):
         codecList = ctrl.getAllCodecs()
         shuffle(codecList)
-        ctrl.setActiveCodecList(account, str(codecList)[1:-1])
-        print("New active list for " + account)
-        print(ctrl.getActiveCodecs(account))
+        codecVideoId = codecAudioId = 0
+        nameCodecAudio = nameCodecVideo = ''
+
+        if (self.codecVideo == 'H264'):
+            codecVideoId = 1
+            nameCodecVideo = 'H264'
+        elif (self.codecVideo == 'VP8'):
+            codecVideoId = 2
+            nameCodecVideo = 'VP8'
+        elif (self.codecVideo == 'MPEG4'):
+            codecVideoId = 3
+            nameCodecVideo = 'MPEG4'
+        elif (self.codecVideo == 'H263'):
+            codecVideoId = 4
+            nameCodecVideo = 'H263'
+        elif (self.codecVideo == 'RANDOM'):
+            for aCodec in codecList:
+                detail = ctrl.getCodecDetails(account, aCodec)
+                if ( detail['CodecInfo.type'] == 'VIDEO'):
+                    codecVideoId = aCodec
+                    nameCodecVideo =  detail['CodecInfo.name']
+                    break
+
+
+        if (self.codecAudio == 'OPUS'):
+            codecAudioId = 5
+            nameCodecAudio = 'OPUS'
+        if (self.codecAudio == 'G722'):
+            codecAudioId = 6
+            nameCodecAudio = 'G722'
+        if (self.codecAudio == 'SPEEX32'):
+            codecAudioId = 7
+            nameCodecAudio = 'SPEEX32'
+        elif (self.codecAudio == 'SPEEX16'):
+            codecAudioId = 8
+            nameCodecAudio = 'SPEEX16'
+        elif (self.codecAudio == 'SPEEX8'):
+            codecAudioId = 9
+            nameCodecAudio = 'SPEEX8'
+        elif (self.codecAudio == 'PCMA'):
+            codecAudioId = 10
+            nameCodecAudio = 'PCMA'
+        elif (self.codecAudio == 'PCMU'):
+            codecAudioId = 11
+            nameCodecAudio = 'PCMU'
+        elif (self.codecAudio == 'RANDOM'):
+            for aCodec in codecList:
+                detail = ctrl.getCodecDetails(account, aCodec)
+                if ( detail['CodecInfo.type'] == 'AUDIO'):
+                    codecAudioId = aCodec
+                    nameCodecAudio = detail['CodecInfo.name']
+                    break
+
+        if (codecAudioId == 0 or codecVideoId == 0):
+            print ("please configure at least one A/V codec !")
+            return
+
+        print ("selecting codecs audio= "+nameCodecAudio + " video= "+nameCodecVideo)
+        ctrl.setActiveCodecList(account, (str(codecVideoId)+","+ str(codecAudioId)))
 
     def holdToggle(self, ctrl, callId, delay):
         time.sleep(delay)
@@ -111,10 +169,13 @@ class DRingTester():
         print("**[BEGIN] DHT Call Test")
 
         count = 0
+        currBitrate = self.minBitrate
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
+            self.setActiveCodecs(ctrl, self.dhtAccountId)
+            print("setting video bitrate to "+str(currBitrate))
+            ctrl.setCodecBitrate(self.dhtAccountId, currBitrate)
 
             callId = ctrl.Call(self.dhtTestAccount)
 
@@ -140,7 +201,7 @@ class DRingTester():
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
+            self.setActiveCodecs(ctrl, self.dhtAccountId)
 
             callId = ctrl.Call(self.dhtTestAccount)
 
@@ -176,7 +237,7 @@ class DRingTester():
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
 
-            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
+            self.setActiveCodecs(ctrl, self.dhtAccountId)
             print("setting video bitrate to "+str(currBitrate))
             ctrl.setCodecBitrate(self.dhtAccountId, currBitrate)
 
@@ -205,7 +266,7 @@ class DRingTester():
         count = 0
         while count < nbIteration:
             print("[%s/%s]" % (count, nbIteration))
-            self.setRandomActiveCodecs(ctrl, self.dhtAccountId)
+            self.setActiveCodecs(ctrl, self.dhtAccountId)
 
             # do all the calls
             currCall = 0
@@ -245,15 +306,14 @@ class DRingTester():
         config.read('test_config.ini')
         self.dhtTestAccount = str(config['dht']['testAccount'])
         self.sipTestAccount = str(config['sip']['testAccount'])
-        self.inputFile = str(config['video']['inputFile'])
-        self.minBitrate = int(config['video']['minBitrate'])
-        self.maxBitrate = int(config['video']['maxBitrate'])
-        self.incBitrate = int(config['video']['incBitrate'])
+        self.inputFile = str(config['codec']['inputFile'])
+        self.minBitrate = int(config['codec']['minBitrate'])
+        self.maxBitrate = int(config['codec']['maxBitrate'])
+        self.incBitrate = int(config['codec']['incBitrate'])
+        self.codecAudio = str(config['codec']['codecAudio'])
+        self.codecVideo = str(config['codec']['codecVideo'])
 
         testNbIteration = config['iteration']['nbIteration']
         delay = config['iteration']['delay']
-
-        TEST_NB_ITERATION = 100
-        TEST_DELAY = 30
 
         getattr(self, ALL_TEST_NAME[testName])(ctrl,int(testNbIteration), int(delay))
