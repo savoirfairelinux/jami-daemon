@@ -451,6 +451,11 @@ class DRingCtrl(Thread):
 
         return [int(x) for x in self.configurationmanager.getCodecList()]
 
+    def getCodecDetails(self, account, codecId):
+        """ Return codec details"""
+        codecId=dbus.UInt32(codecId)
+        return self.configurationmanager.getCodecDetails(account, codecId)
+
     def getActiveCodecs(self, account=None):
         """ Return all active codecs on given account"""
 
