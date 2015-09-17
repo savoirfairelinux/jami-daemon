@@ -84,7 +84,7 @@ void MediaEncoder::setOptions(const MediaDescription& args)
     codec_ = args.codec;
 
     av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
-    av_dict_set(&options_, "bitrate", ring::to_string(args.codec->bitrate).c_str(), 0);
+    av_dict_set(&options_, "max_rate", ring::to_string(args.codec->bitrate).c_str(), 0);
 
     if (args.codec->systemCodecInfo.mediaType == MEDIA_AUDIO) {
         auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args.codec);
@@ -149,11 +149,17 @@ MediaEncoder::openOutput(const char *filename,
     }
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
+    auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
+    RING_DBG("Using max bitrate %d", maxBitrate );
 
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
+        // set some encoder settings here
+        // For H264 : define max bitrate in rc_max_rate
+        encoderCtx_->rc_max_rate = maxBitrate;
+
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
@@ -164,8 +170,11 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
+        // For VP8 : define max bitrate in bit_rate
+        encoderCtx_->bit_rate = maxBitrate;
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
-        encoderCtx_->rc_buffer_size = encoderCtx_->bit_rate;
+        // For VP8 : define max bitrate in bit_rate
+        encoderCtx_->bit_rate = maxBitrate;
     }
 
     int ret;
@@ -529,20 +538,11 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
     if (encoderName == nullptr)
         encoderName = "encoder?";
 
-    // set some encoder settings here
-    encoderCtx_->bit_rate = 1000 * atoi(av_dict_get(options_, "bitrate",
-                                                    NULL, 0)->value);
-    RING_DBG("[%s] Using bitrate %d", encoderName, encoderCtx_->bit_rate);
-
-    // Use constant bitrate (video only)
-    if (is_video) {
-        RING_DBG("[%s] Using CBR", encoderName);
-        encoderCtx_->rc_min_rate = \
-            encoderCtx_->rc_max_rate = encoderCtx_->bit_rate;
-    }
 
     encoderCtx_->thread_count = std::thread::hardware_concurrency();
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx_->thread_count);
+
+    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
 
     if (is_video) {
         // resolution must be a multiple of two
