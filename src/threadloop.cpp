@@ -34,26 +34,42 @@
 
 namespace ring {
 
-void ThreadLoop::mainloop()
+void
+ThreadLoop::mainloop(const std::function<bool()> setup,
+                     const std::function<void()> process,
+                     const std::function<void()> cleanup)
 {
     try {
-        if (setup_()) {
-            while (running_)
-                process_();
-            cleanup_();
+        if (setup()) {
+            while (state_ == RUNNING)
+                process();
+            cleanup();
         } else {
             RING_ERR("setup failed");
         }
-    } catch (const ThreadLoopException &e) {
+    } catch (const ThreadLoopException& e) {
         RING_ERR("%s", e.what());
     }
 }
 
-ThreadLoop::ThreadLoop(const std::function<bool()> &setup,
-                       const std::function<void()> &process,
-                       const std::function<void()> &cleanup)
-    : setup_(setup), process_(process), cleanup_(cleanup)
+ThreadLoop::ThreadLoop(const std::function<bool()>& setup,
+                       const std::function<void()>& process,
+                       const std::function<void()>& cleanup)
+    : setup_(setup)
+    , process_(process)
+    , cleanup_(cleanup)
+	, thread_()
 {}
+
+ThreadLoop::ThreadLoop(ThreadLoop&& other)
+	: setup_(std::move(other.setup_))
+    , process_(std::move(other.process_))
+    , cleanup_(std::move(other.cleanup_))
+	, state_(other.state_.load())
+	, thread_(std::move(other.thread_))
+{
+    other.state_ = READY;
+}
 
 ThreadLoop::~ThreadLoop()
 {
@@ -63,24 +79,35 @@ ThreadLoop::~ThreadLoop()
     }
 }
 
-void ThreadLoop::start()
+void
+ThreadLoop::start()
 {
-    if (!running_.exchange(true)) {
-        // a previous stop() call may be pending
-        if (thread_.joinable())
-            thread_.join();
-        thread_ = std::thread(&ThreadLoop::mainloop, this);
-    } else {
-        RING_ERR("Thread already started");
-    }
+	const auto s = state_.load();
+
+	if (s == RUNNING) {
+		RING_ERR("already started");
+		return;
+	}
+
+	// stop pending but not processed by thread yet?
+	if (s == STOPPING and thread_.joinable()) {
+		RING_DBG("stop pending");
+		thread_.join();
+	}
+
+	state_ = RUNNING;
+	thread_ = std::thread(&ThreadLoop::mainloop, this, setup_, process_, cleanup_);
 }
 
-void ThreadLoop::stop()
+void
+ThreadLoop::stop()
 {
-    running_ = false;
+    if (state_ == RUNNING)
+        state_ = STOPPING;
 }
 
-void ThreadLoop::join()
+void
+ThreadLoop::join()
 {
     stop();
     if (thread_.joinable())
@@ -93,9 +120,10 @@ void ThreadLoop::exit()
     throw ThreadLoopException();
 }
 
-bool ThreadLoop::isRunning() const
+bool
+ThreadLoop::isRunning() const noexcept
 {
-    return running_;
+    return thread_.joinable() and state_ == RUNNING;
 }
 
 } // namespace ring
