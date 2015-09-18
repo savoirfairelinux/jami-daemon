@@ -211,13 +211,13 @@ class SIPCall : public Call
 
         void openPortsUPnP();
 
-        void muteMedia(const std::string& mediaType, bool isMuted);
+        void muteMedia(const std::string& mediaType, bool isMuted) override;
 
         void restartMediaSender() override;
 
         bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
 
-        virtual std::map<std::string, std::string> getDetails() const;
+        virtual std::map<std::string, std::string> getDetails() const override;
 
         bool initIceTransport(bool master, unsigned channel_num=4) override;
 

@@ -97,7 +97,7 @@ class SIPAccount : public SIPAccountBase {
 
         ~SIPAccount();
 
-        const char* getAccountType() const {
+        const char* getAccountType() const override {
             return ACCOUNT_TYPE;
         }
 
@@ -116,32 +116,32 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Returns true if this is the IP2IP account
          */
-        bool isIP2IP() const;
+        bool isIP2IP() const override;
 
         /**
          * Serialize internal state of this account for configuration
          * @param out Emitter to which state will be saved
          */
-        virtual void serialize(YAML::Emitter &out);
+        virtual void serialize(YAML::Emitter &out) override;
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const YAML::Node &node);
+        virtual void unserialize(const YAML::Node &node) override;
 
         /**
          * Return an map containing the internal state of this account. Client application can use this method to manage
          * account info.
          * @return A map containing the account information.
          */
-        virtual std::map<std::string, std::string> getAccountDetails() const;
+        virtual std::map<std::string, std::string> getAccountDetails() const override;
 
         /**
          * Retrieve volatile details such as recent registration errors
          * @return std::map< std::string, std::string > The account volatile details
          */
-        virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+        virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
         /**
          * Return the information for the default IP to IP account
@@ -157,17 +157,17 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Actually useless, since config loading is done in init()
          */
-        void loadConfig();
+        void loadConfig() override;
 
         /**
          * Initialize the SIP voip link with the account parameters and send registration
          */
-        void doRegister();
+        void doRegister() override;
 
         /**
          * Send unregistration.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
+        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
 
         /**
          * Start the keep alive function, once started, the account will be registered periodically
@@ -321,7 +321,7 @@ class SIPAccount : public SIPAccountBase {
             return tlsListenerPort_;
         }
 
-        pj_str_t getStunServerName() const {
+        pj_str_t getStunServerName() const override {
             return stunServerName_;
         }
 
@@ -333,7 +333,7 @@ class SIPAccount : public SIPAccountBase {
          * file, that can be used directly by PJSIP to initialize
          * an alternate UDP transport.
          */
-        pj_uint16_t getStunPort() const {
+        pj_uint16_t getStunPort() const override {
             return stunPort_;
         }
 
@@ -341,7 +341,7 @@ class SIPAccount : public SIPAccountBase {
          * @return bool Tells if current transport for that
          * account is set to OTHER.
          */
-        bool isStunEnabled() const {
+        bool isStunEnabled() const override {
             return stunEnabled_;
         }
 
@@ -364,7 +364,7 @@ class SIPAccount : public SIPAccountBase {
          * @return pj_str_t "To" uri based on @param username
          * @param username A string formatted as : "username"
          */
-        std::string getToUri(const std::string& username) const;
+        std::string getToUri(const std::string& username) const override;
 
         /**
          * In the current version of Ring, "srv" uri is obtained in the preformated
@@ -380,7 +380,7 @@ class SIPAccount : public SIPAccountBase {
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        pj_str_t getContactHeader(pjsip_transport* = nullptr);
+        pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
 
         std::string getServiceRoute() const {
@@ -389,15 +389,15 @@ class SIPAccount : public SIPAccountBase {
 
         bool hasServiceRoute() const { return not serviceRoute_.empty(); }
 
-        virtual bool isTlsEnabled() const {
+        virtual bool isTlsEnabled() const override {
             return tlsEnable_;
         }
 
-        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
+        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override {
             return srtpKeyExchange_;
         }
 
-        virtual bool getSrtpFallback() const {
+        virtual bool getSrtpFallback() const override {
             return srtpFallback_;
         }
 
@@ -483,7 +483,7 @@ class SIPAccount : public SIPAccountBase {
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl);
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) override;
 
         /**
          * Create outgoing SIPCall.
@@ -504,11 +504,11 @@ class SIPAccount : public SIPAccountBase {
          *      This type can be any base class of SIPCall class (included).
          */
         std::shared_ptr<SIPCall>
-        newIncomingCall(const std::string& from);
+        newIncomingCall(const std::string& from) override;
 
         void onRegister(pjsip_regc_cbparam *param);
 
-        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */);
+        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */) override;
 
     private:
         void doRegister1_();
@@ -518,7 +518,7 @@ class SIPAccount : public SIPAccountBase {
          * Set the internal state for this account, mainly used to manage account details from the client application.
          * @param The map containing the account information.
          */
-        void setAccountDetails(const std::map<std::string, std::string> &details);
+        void setAccountDetails(const std::map<std::string, std::string> &details) override;
 
         NON_COPYABLE(SIPAccount);
 

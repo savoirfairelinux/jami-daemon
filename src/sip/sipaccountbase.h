@@ -247,19 +247,19 @@ public:
     void onTextMessage(const std::string& from, const std::string& msg);
 
 protected:
-    virtual void serialize(YAML::Emitter &out);
+    virtual void serialize(YAML::Emitter &out) override;
     virtual void serializeTls(YAML::Emitter &out);
-    virtual void unserialize(const YAML::Node &node);
+    virtual void unserialize(const YAML::Node &node) override;
 
-    virtual void setAccountDetails(const std::map<std::string, std::string> &details);
+    virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
 
-    virtual std::map<std::string, std::string> getAccountDetails() const;
+    virtual std::map<std::string, std::string> getAccountDetails() const override;
 
     /**
      * Retrieve volatile details such as recent registration errors
      * @return std::map< std::string, std::string > The account volatile details
      */
-    virtual std::map<std::string, std::string> getVolatileAccountDetails() const;
+    virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
 
     /**
      * Voice over IP Link contains a listener thread and calls
