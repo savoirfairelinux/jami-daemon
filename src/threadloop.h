@@ -29,8 +29,7 @@
  *  as that of the covered work.
  */
 
-#ifndef __THREADLOOP_H__
-#define __THREADLOOP_H__
+#pragma once
 
 #include <atomic>
 #include <thread>
@@ -50,17 +49,22 @@ struct ThreadLoopException : public std::runtime_error {
 
 class ThreadLoop {
 public:
-    ThreadLoop(const std::function<bool()> &setup,
-               const std::function<void()> &process,
-               const std::function<void()> &cleanup);
+	enum ThreadState {READY, RUNNING, STOPPING};
+
+    ThreadLoop(const std::function<bool()>& setup,
+               const std::function<void()>& process,
+               const std::function<void()>& cleanup);
+
+    ThreadLoop(ThreadLoop&&);
+
     ~ThreadLoop();
 
     void start();
-
     void exit();
     void stop();
     void join();
-    bool isRunning() const;
+
+    bool isRunning() const noexcept;
 
 private:
     // These must be provided by users of ThreadLoop
@@ -68,12 +72,12 @@ private:
     std::function<void()> process_;
     std::function<void()> cleanup_;
 
-    void mainloop();
+    void mainloop(const std::function<bool()> setup,
+                  const std::function<void()> process,
+                  const std::function<void()> cleanup);
 
-    std::atomic<bool> running_ = {false};
-    std::thread thread_ = {};
+    std::atomic<ThreadState> state_ {READY};
+    std::thread thread_;
 };
 
 } // namespace ring
-
-#endif // __THREADLOOP_H__
