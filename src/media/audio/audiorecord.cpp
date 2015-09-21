@@ -78,7 +78,6 @@ createFilename()
 
 AudioRecord::AudioRecord() : fileHandle_(nullptr)
     , sndFormat_(AudioFormat::MONO())
-    , recordingEnabled_(false)
     , filename_(createFilename())
     , savePath_()
 {
@@ -199,7 +198,8 @@ bool AudioRecord::toggleRecording()
     return recordingEnabled_;
 }
 
-void AudioRecord::stopRecording()
+void
+AudioRecord::stopRecording() const noexcept
 {
     RING_DBG("Stop recording");
     recordingEnabled_ = false;
