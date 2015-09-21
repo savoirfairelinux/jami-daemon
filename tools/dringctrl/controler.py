@@ -452,13 +452,14 @@ class DRingCtrl(Thread):
         account = self._valid_account(account)
         return [int(x) for x in self.configurationmanager.getActiveCodecList(account)]
 
-    def setCodecBitrate(self, account, bitrate):
+    def setVideoCodecBitrate(self, account, bitrate):
         """ Change bitrate for all codecs  on given account"""
 
         for codecId in self.configurationmanager.getActiveCodecList(account):
             details = self.configurationmanager.getCodecDetails(account, codecId)
             details['CodecInfo.bitrate'] = str(bitrate)
-            self.configurationmanager.setCodecDetails(account, codecId, details)
+            if details['CodecInfo.type'] == 'VIDEO':
+                self.configurationmanager.setCodecDetails(account, codecId, details)
     #
     # Call management
     #
