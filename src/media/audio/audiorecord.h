@@ -24,6 +24,7 @@
 #include "audiobuffer.h"
 #include "noncopyable.h"
 
+#include <atomic>
 #include <memory>
 #include <string>
 #include <cstdlib>
@@ -33,7 +34,6 @@ class SndfileHandle;
 namespace ring {
 
 class AudioRecord {
-
     public:
         AudioRecord();
         ~AudioRecord();
@@ -88,7 +88,7 @@ class AudioRecord {
         /**
          * Stop recording flag
          */
-        void stopRecording();
+        void stopRecording() const noexcept;
 
         /**
          * Record a chunk of data in an openend file
@@ -97,7 +97,8 @@ class AudioRecord {
          */
         void recData(AudioBuffer& buffer);
 
-    protected:
+    private:
+        NON_COPYABLE(AudioRecord);
 
         /**
          * Open an existing raw file, used when the call is set on hold
@@ -128,7 +129,7 @@ class AudioRecord {
         /**
          * Recording flage
          */
-        bool recordingEnabled_;
+        mutable std::atomic<bool> recordingEnabled_ {false};
 
         /**
          * Filename for this recording
@@ -139,9 +140,6 @@ class AudioRecord {
          * Path for this recording
          */
         std::string savePath_;
-
-    private:
-        NON_COPYABLE(AudioRecord);
 };
 
 } // namespace ring
