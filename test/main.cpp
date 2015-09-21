@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -15,17 +16,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 
 #include "logger.h"
@@ -62,7 +52,7 @@ void cleanup()
 int main(int argc, char* argv[])
 {
     atexit(cleanup);
-    printf("\nRing Daemon Test Suite, by Savoir-Faire Linux 2004-2015\n\n");
+    printf("\nRing Daemon Test Suite, by Savoir-faire Linux 2004-2015\n\n");
     setConsoleLog(true);
     setDebugMode(true);
     ring::fileutils::FileHandle f(ring::fileutils::create_pidfile());

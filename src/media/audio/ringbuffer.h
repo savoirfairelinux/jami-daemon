@@ -1,5 +1,6 @@
 /*
- *  Copyright (C) 2007-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2007-2015 Savoir-faire Linux Inc.
+ *
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *  Author: Laurielle Lea <laurielle.lea@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>

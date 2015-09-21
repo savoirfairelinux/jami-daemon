@@ -3,7 +3,7 @@
 print "\
 #                               --SFLPhone--                                #\n\
 #                                                                           #\n\
-# copyright:   Savoir-Faire Linux (2013)                                    #\n\
+# copyright:   Savoir-faire Linux (2013)                                    #\n\
 # author:      Patrick keroulas <patrick.keroulas@savoirfairelinux.com>     #\n\
 # description: This script sends a sequence of methods to the daemon        #\n\
 #              through the dbus to test the presence feature of SFLPhone.   #\n\

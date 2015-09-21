@@ -10,7 +10,7 @@ print "\
 #                                                                            #\n\
 #                              _Version 2.0_                                 #\n\
 #                                                                            #\n\
-# copyright:   Savoir-Faire Linux (2012-2013)                                #\n\
+# copyright:   Savoir-faire Linux (2012-2013)                                #\n\
 # author:      Emmanuel Lepage Vallee <emmanuel.lepage@savoirfairelinux.com> #\n\
 # description: This script perform stress tests to trigger rare race         #\n\
 #               conditions or ASSERT caused by excessive load. This script   #\n\
