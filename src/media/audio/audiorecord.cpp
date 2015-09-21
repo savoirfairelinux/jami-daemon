@@ -76,17 +76,12 @@ createFilename()
     return out.str();
 }
 
-AudioRecord::AudioRecord() : fileHandle_(nullptr)
-    , sndFormat_(AudioFormat::MONO())
+AudioRecord::AudioRecord()
+    : sndFormat_(AudioFormat::MONO())
     , filename_(createFilename())
     , savePath_()
 {
     RING_DBG("Generate filename for this call %s ", filename_.c_str());
-}
-
-AudioRecord::~AudioRecord()
-{
-    delete fileHandle_;
 }
 
 void AudioRecord::setSndFormat(AudioFormat format)
@@ -141,21 +136,26 @@ std::string AudioRecord::getFilename() const
     return savePath_;
 }
 
-bool AudioRecord::openFile()
+bool
+AudioRecord::openFile()
 {
+    fileHandle_.reset(); // do it before calling fileExists()
+
     bool result = false;
-    delete fileHandle_;
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
     RING_DBG("Opening file %s with format %s", savePath_.c_str(), sndFormat_.toString().c_str());
-    fileHandle_ = new SndfileHandle(savePath_.c_str(), access, SF_FORMAT_WAV | SF_FORMAT_PCM_16, sndFormat_.nb_channels, sndFormat_.sample_rate);
+    fileHandle_.reset(new SndfileHandle (savePath_.c_str(),
+                                         access,
+                                         SF_FORMAT_WAV | SF_FORMAT_PCM_16,
+                                         sndFormat_.nb_channels,
+                                         sndFormat_.sample_rate));
 
     // check overloaded boolean operator
     if (!*fileHandle_) {
         RING_WARN("Could not open WAV file!");
-        delete fileHandle_;
-        fileHandle_ = 0;
+        fileHandle_.reset();
         return false;
     }
 
@@ -165,15 +165,17 @@ bool AudioRecord::openFile()
     return result;
 }
 
-void AudioRecord::closeFile()
+void
+AudioRecord::closeFile()
 {
-    delete fileHandle_;
-    fileHandle_ = 0;
+    stopRecording(); // needed as recData accesses to fileHandle_
+    fileHandle_.reset();
 }
 
-bool AudioRecord::isOpenFile() const
+bool
+AudioRecord::isOpenFile() const noexcept
 {
-    return fileHandle_ != 0;
+    return static_cast<bool>(fileHandle_);
 }
 
 bool AudioRecord::fileExists() const
@@ -204,15 +206,11 @@ AudioRecord::stopRecording() const noexcept
     recordingEnabled_ = false;
 }
 
-void AudioRecord::recData(AudioBuffer& buffer)
+void
+AudioRecord::recData(AudioBuffer& buffer)
 {
     if (not recordingEnabled_)
         return;
-
-    if (fileHandle_ == 0) {
-        RING_DBG("Can't record data, a file has not yet been opened!");
-        return;
-    }
 
     auto interleaved = buffer.interleave();
     const int nSamples = interleaved.size();

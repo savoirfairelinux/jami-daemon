@@ -36,7 +36,6 @@ namespace ring {
 class AudioRecord {
     public:
         AudioRecord();
-        ~AudioRecord();
 
         void setSndFormat(AudioFormat format);
         void setRecordingOptions(AudioFormat format, const std::string &path);
@@ -68,7 +67,7 @@ class AudioRecord {
         /**
          * Check if a file is already opened
          */
-        bool isOpenFile() const;
+        bool isOpenFile() const noexcept;
 
         /**
          * Check if a file already exists
@@ -115,11 +114,10 @@ class AudioRecord {
          */
         void closeWavFile();
 
-
         /**
          * Pointer to the recorded file
          */
-        SndfileHandle *fileHandle_;
+        std::shared_ptr<SndfileHandle> fileHandle_;
 
         /**
          * Number of channels
