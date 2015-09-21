@@ -175,7 +175,7 @@ class DRingTester():
 
             self.setActiveCodecs(ctrl, self.dhtAccountId)
             print("setting video bitrate to "+str(currBitrate))
-            ctrl.setCodecBitrate(self.dhtAccountId, currBitrate)
+            ctrl.setVideoCodecBitrate(self.dhtAccountId, currBitrate)
 
             callId = ctrl.Call(self.dhtTestAccount)
 
@@ -239,7 +239,7 @@ class DRingTester():
 
             self.setActiveCodecs(ctrl, self.dhtAccountId)
             print("setting video bitrate to "+str(currBitrate))
-            ctrl.setCodecBitrate(self.dhtAccountId, currBitrate)
+            ctrl.setVideoCodecBitrate(self.dhtAccountId, currBitrate)
 
             callId = ctrl.Call(self.dhtTestAccount)
 
