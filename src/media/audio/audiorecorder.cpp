@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,74 +22,70 @@
 #include "audiorecorder.h"
 #include "audiorecord.h"
 #include "ringbufferpool.h"
-#include "logger.h"
+#include "audiobuffer.h"
 
 #include <chrono>
+#include <thread>
 #include <sstream>
-#include <unistd.h>
+#include <algorithm> // std::min
 
 namespace ring {
 
-int AudioRecorder::count_ = 0;
+static constexpr std::size_t BUFFER_LENGTH {10000};
+static constexpr std::chrono::milliseconds SLEEP_TIME {20};
 
-AudioRecorder::AudioRecorder(AudioRecord  *arec, RingBufferPool &rbp)
-    : recorderId_(), ringBufferPool_(rbp), arecord_(arec), running_(false)
-    , thread_()
+AudioRecorder::AudioRecorder(AudioRecord* arec, RingBufferPool& rbp)
+    : ringBufferPool_(rbp)
+    , buffer_(new AudioBuffer(BUFFER_LENGTH, ringBufferPool_.getInternalAudioFormat()))
+    , arecord_(arec)
+    , thread_(
+        [this] { return true; },
+        [this] { process(); },
+        [] {})
 {
-    ++count_;
-
-    std::string id("processid_");
+    std::string id("processd_");
 
     // convert count into string
     std::string s;
     std::ostringstream out;
-    out << count_;
+    out << nextProcessID();
     s = out.str();
 
     recorderId_ = id.append(s);
 }
 
-AudioRecorder::~AudioRecorder()
+unsigned
+AudioRecorder::nextProcessID() noexcept
 {
-    running_ = false;
-
-    if (thread_.joinable())
-        thread_.join();
+    static unsigned id = 0;
+    return ++id;
 }
 
-void AudioRecorder::init() {
-    if (!arecord_->isRecording()) {
+void
+AudioRecorder::init() {
+    if (!arecord_->isRecording())
         arecord_->setSndFormat(ringBufferPool_.getInternalAudioFormat());
-    }
 }
 
-void AudioRecorder::start()
+void
+AudioRecorder::start()
 {
-    if (running_) return;
-    running_ = true;
-    thread_ = std::thread(&AudioRecorder::run, this);
+    if (thread_.isRunning())
+        return;
+    thread_.start();
 }
 
-/**
- * Reimplementation of run()
- */
-void AudioRecorder::run()
+void
+AudioRecorder::process()
 {
-    static const size_t BUFFER_LENGTH = 10000;
-    static const std::chrono::milliseconds SLEEP_TIME(20); // 20 ms
+    auto availableSamples = ringBufferPool_.availableForGet(recorderId_);
+    buffer_->resize(std::min(availableSamples, BUFFER_LENGTH));
+    ringBufferPool_.getData(*buffer_, recorderId_);
 
-    AudioBuffer buffer(BUFFER_LENGTH, ringBufferPool_.getInternalAudioFormat());
+    if (availableSamples > 0)
+        arecord_->recData(*buffer_);
 
-    while (running_) {
-        const size_t availableSamples = ringBufferPool_.availableForGet(recorderId_);
-        buffer.resize(std::min(availableSamples, BUFFER_LENGTH));
-        ringBufferPool_.getData(buffer, recorderId_);
-
-        if (availableSamples > 0)
-            arecord_->recData(buffer);
-
-        std::this_thread::sleep_for(SLEEP_TIME);
-    }
+    std::this_thread::sleep_for(SLEEP_TIME);
 }
 
 } // namespace ring
