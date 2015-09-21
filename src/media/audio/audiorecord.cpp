@@ -188,14 +188,13 @@ bool AudioRecord::isRecording() const
     return recordingEnabled_;
 }
 
-bool AudioRecord::toggleRecording()
+bool
+AudioRecord::toggleRecording()
 {
-    if (isOpenFile()) {
+    if (isOpenFile())
         recordingEnabled_ = !recordingEnabled_;
-    } else {
-        openFile();
+    else if (openFile())
         recordingEnabled_ = true;
-    }
 
     return recordingEnabled_;
 }
