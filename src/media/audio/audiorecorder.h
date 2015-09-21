@@ -18,52 +18,49 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef AUDIORECORDER_H_
-#define AUDIORECORDER_H_
+#pragma once
 
+#include "threadloop.h"
 #include "noncopyable.h"
 
-#include <thread>
-#include <atomic>
 #include <string>
+#include <memory>
 
 namespace ring {
 
 class RingBufferPool;
 class AudioRecord;
+class AudioBuffer;
 
 class AudioRecorder {
+public:
+    AudioRecorder(AudioRecord* arec, RingBufferPool& rbp);
 
-    public:
-        AudioRecorder(AudioRecord  *arec, RingBufferPool &rbp);
-        ~AudioRecorder();
-        std::string getRecorderID() const {
-            return recorderId_;
-        }
+    std::string getRecorderID() const noexcept {
+        return recorderId_;
+    }
 
-        /**
-         * Set the record to the current audio format.
-         * Should be called before start() at least once.
-         */
-        void init();
+    /**
+     * Set the record to the current audio format.
+     * Should be called before start() at least once.
+     */
+    void init();
 
-        /**
-         * Call to start recording.
-         */
-        void start();
+    /**
+     * Call to start recording.
+     */
+    void start();
 
-    private:
-        NON_COPYABLE(AudioRecorder);
-        void run();
+private:
+    NON_COPYABLE(AudioRecorder);
+    static unsigned nextProcessID() noexcept;
+    void process();
 
-        static int count_;
-        std::string recorderId_;
-        RingBufferPool &ringBufferPool_;
-        AudioRecord *arecord_;
-        std::atomic<bool> running_;
-        std::thread thread_;
+    std::string recorderId_;
+    RingBufferPool& ringBufferPool_;
+    std::unique_ptr<AudioBuffer> buffer_;
+    AudioRecord* arecord_;
+    ThreadLoop thread_;
 };
 
 } // namespace ring
-
-#endif
