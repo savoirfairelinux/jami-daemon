@@ -15,7 +15,7 @@ Written by
 Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
 Philippe Proulx <philippe.proulx@savoirfairelinux.com> and
 Adrien Béraud <adrien.beraud@savoirfairelinux.com>
-on behalf of Savoir-Faire Linux.
+on behalf of Savoir-faire Linux.
 ---
  {a => b}/aconfigure                           |  194 +-
  {a => b}/aconfigure.ac                        |  109 +-
@@ -496,7 +496,7 @@ index 0000000..5a383d7
 @@ -0,0 +1,2869 @@
 +/* $Id$ */
 +/*
-+ * Copyright (C) 2014-2015 Savoir-Faire Linux. (http://www.savoirfairelinux.com)
++ * Copyright (C) 2014-2015 Savoir-faire Linux. (http://www.savoirfairelinux.com)
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by

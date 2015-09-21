@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([Ring],[2.3.0],[ring@lists.savoirfairelinux.net],[ring])
 
-AC_COPYRIGHT([[Copyright (c) Savoir-Faire Linux 2004-2015]])
+AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2015]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files

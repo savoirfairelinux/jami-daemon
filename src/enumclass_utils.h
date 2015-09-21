@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2014-2015 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2014-2015 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Lepage <emmanuel.lepage@savoirfairelinux.com>
  *
@@ -16,7 +16,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
- *
  */
 #ifndef ENUM_CLASS_UTILS_H
 #define ENUM_CLASS_UTILS_H
