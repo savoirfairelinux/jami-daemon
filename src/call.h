@@ -233,7 +233,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         unsigned int getLocalVideoPort() const;
 
-        void time_stop();
         virtual std::map<std::string, std::string> getDetails() const;
         static std::map<std::string, std::string> getNullDetails();
 
@@ -394,8 +393,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         std::string peerDisplayName_ {};
 
         time_t timestamp_start_ {0};
-        time_t timestamp_stop_ {0};
-
 };
 
 } // namespace ring

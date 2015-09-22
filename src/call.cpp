@@ -263,11 +263,6 @@ Call::toggleRecording()
     return startRecording;
 }
 
-void Call::time_stop()
-{
-    time(&timestamp_stop_);
-}
-
 std::string Call::getTypeStr() const
 {
     switch (type_) {
