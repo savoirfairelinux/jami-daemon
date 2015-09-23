@@ -169,8 +169,6 @@ class DRingTester():
 
             callId = ctrl.Call(self.dhtTestAccount)
 
-            # switch to file input
-            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             time.sleep(delay)
 
@@ -194,9 +192,6 @@ class DRingTester():
             self.setActiveCodecs(ctrl, self.dhtAccountId)
 
             callId = ctrl.Call(self.dhtTestAccount)
-
-            # switch to file input
-            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             delayHold = 5
             nbHold = delay / (delayHold * 2)
@@ -232,9 +227,6 @@ class DRingTester():
             ctrl.setVideoCodecBitrate(self.dhtAccountId, currBitrate)
 
             callId = ctrl.Call(self.dhtTestAccount)
-
-            # switch to file input
-            ctrl.switchInput(callId,'file://'+self.inputFile)
 
             time.sleep(delay)
 
