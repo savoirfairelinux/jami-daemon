@@ -36,6 +36,30 @@ VideoScaler::~VideoScaler()
     sws_freeContext(ctx_);
 }
 
+int
+VideoScaler::correctPixFmt(int input_pix_fmt) {
+
+    //https://ffmpeg.org/pipermail/ffmpeg-user/2014-February/020152.html
+    int pix_fmt;
+    switch (input_pix_fmt) {
+    case AV_PIX_FMT_YUVJ420P :
+        pix_fmt = AV_PIX_FMT_YUV420P;
+        break;
+    case AV_PIX_FMT_YUVJ422P  :
+        pix_fmt = AV_PIX_FMT_YUV422P;
+        break;
+    case AV_PIX_FMT_YUVJ444P   :
+        pix_fmt = AV_PIX_FMT_YUV444P;
+        break;
+    case AV_PIX_FMT_YUVJ440P :
+        pix_fmt = AV_PIX_FMT_YUV440P;
+    default:
+        pix_fmt = input_pix_fmt;
+        break;
+    }
+    return pix_fmt;
+}
+
 void
 VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
 {
@@ -45,7 +69,7 @@ VideoScaler::scale(const VideoFrame& input, VideoFrame& output)
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,
-                                (AVPixelFormat) input_frame->format,
+                                (AVPixelFormat) correctPixFmt(input_frame->format),
                                 output_frame->width,
                                 output_frame->height,
                                 (AVPixelFormat) output_frame->format,
@@ -118,7 +142,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
     ctx_ = sws_getCachedContext(ctx_,
                                 input_frame->width,
                                 input_frame->height,
-                                (AVPixelFormat) input_frame->format,
+                                (AVPixelFormat) correctPixFmt(input_frame->format),
                                 dest_width,
                                 dest_height,
                                 (AVPixelFormat) output_frame->format,
