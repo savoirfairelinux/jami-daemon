@@ -112,6 +112,7 @@ class MediaDecoder {
         AudioBuffer resamplingBuff_;
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
+        int correctPixFmt(int input_pix_fmt);
 
         // Jitter buffer options: they are default values set in libav
         // maximum of packet jitter buffer can queue
