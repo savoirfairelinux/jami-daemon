@@ -140,26 +140,28 @@ hasCameraStarted()
 
 template <class T>
 static void
-registerSinkTarget_(const std::string& sinkId, T&& cb)
+registerSinkTarget_(const std::string& sinkId, std::vector<unsigned char>* frameBuffer, T&& cb)
 {
     if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
-        sink->registerTarget(std::forward<T>(cb));
+        sink->registerTarget(std::forward<T>(cb), frameBuffer);
     else
         RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
 void
 registerSinkTarget(const std::string& sinkId,
-                   const std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>& cb)
+                   std::vector<unsigned char>* frameBuffer,
+                   const std::function<void(int, int)>& cb)
 {
-    registerSinkTarget_(sinkId, cb);
+    registerSinkTarget_(sinkId, frameBuffer, cb);
 }
 
 void
 registerSinkTarget(const std::string& sinkId,
-                   std::function<void(std::shared_ptr<std::vector<unsigned char> >&, int, int)>&& cb)
+                   std::vector<unsigned char>* frameBuffer,
+                   std::function<void(int, int)>&& cb)
 {
-    registerSinkTarget_(sinkId, cb);
+    registerSinkTarget_(sinkId, frameBuffer, cb);
 }
 
 #ifdef __ANDROID__
