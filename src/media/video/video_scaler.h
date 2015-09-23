@@ -34,6 +34,7 @@ public:
     VideoScaler();
     ~VideoScaler();
     void reset();
+    int correctPixFmt(int input_pix_fmt);
     void scale(const VideoFrame &input, VideoFrame &output);
     void scale_with_aspect(const VideoFrame &input, VideoFrame &output);
     void scale_and_pad(const VideoFrame &input, VideoFrame &output,
