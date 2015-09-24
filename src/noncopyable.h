@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef NON_COPYABLE_H_
-#define NON_COPYABLE_H_
+#pragma once
 
 /**
  * @file noncopyable.h
@@ -27,10 +26,11 @@
  *        Useful to avoid shallow copying (i.e. classes with pointer members)
  *        Usage: For a class named MyClass, the macro call
  *        NON_COPYABLE(MyClass) should go in the private section of MyClass
+ *        WARNING: Since C++11 using this macro make the class also non-movable by default!
+ *        You shall re-implement yourself (or at least using declare with =default)
+ *        move-constructor and move-assignable function members if they are needed.
  */
 
 #define NON_COPYABLE(ClassName) \
     ClassName(const ClassName&) = delete; \
     ClassName& operator=(const ClassName&) = delete
-
-#endif  // NON_COPYABLE_H_
