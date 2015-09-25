@@ -139,6 +139,7 @@ MediaEncoder::openOutput(const char *filename,
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
+    encoderCtx_->rc_buffer_size = maxBitrate;
     RING_DBG("Using max bitrate %d", maxBitrate );
 
     /* let x264 preset override our encoder settings */
@@ -530,7 +531,6 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
     encoderCtx_->thread_count = std::thread::hardware_concurrency();
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx_->thread_count);
 
-    encoderCtx_->rc_buffer_size = encoderCtx_->rc_max_rate;
 
     if (is_video) {
         // resolution must be a multiple of two
