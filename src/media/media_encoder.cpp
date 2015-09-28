@@ -155,6 +155,7 @@ MediaEncoder::openOutput(const char *filename,
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
         av_opt_set_int(encoderCtx_->priv_data, "error-resilient", 1, 0);
         av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 3, 0);
+        av_opt_set_int(encoderCtx_->priv_data, "lag-in-frames", 0, 0);
         encoderCtx_->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
