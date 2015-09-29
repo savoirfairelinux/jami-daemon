@@ -1,7 +1,7 @@
 # libvpx
 
-VPX_HASH := 4640a0c4804b49f1870d5a2d17df0c7d0a77af2f
-VPX_URL := http://libvpx.webm.googlecode.com/archive/$(VPX_HASH).tar.gz
+VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
+VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
@@ -83,6 +83,10 @@ VPX_CONF := \
 	--enable-error-concealment \
 	--disable-runtime-cpu-detect \
 	--disable-webm-io
+
+ifdef HAVE_WIN32
+VPX_CONF +=	--disable-ssse3
+endif
 
 ifndef HAVE_WIN32
 VPX_CONF += --enable-pic
