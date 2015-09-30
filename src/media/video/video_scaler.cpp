@@ -73,8 +73,8 @@ static inline bool is_yuv_planar(const AVPixFmtDescriptor *desc)
 {
     unsigned used_bit_mask = (1u << desc->nb_components) - 1;
 
-    if (not (desc->flags & PIX_FMT_PLANAR)
-        or desc->flags & PIX_FMT_RGB)
+    if (not (desc->flags & AV_PIX_FMT_FLAG_PLANAR)
+        or desc->flags & AV_PIX_FMT_FLAG_RGB)
         return false;
 
     /* handle formats that do not use all planes */
