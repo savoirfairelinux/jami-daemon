@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2015 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <Eloi.Bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,8 @@
 #include <thread>
 #include <functional>
 #include <stdexcept>
+#include <condition_variable>
+#include <mutex>
 
 namespace ring {
 
@@ -46,14 +49,16 @@ public:
 
     ThreadLoop(ThreadLoop&&);
 
-    ~ThreadLoop();
+    virtual ~ThreadLoop();
 
     void start();
     void exit();
-    void stop();
+    virtual void stop();
     void join();
 
     bool isRunning() const noexcept;
+    bool isStopping() const noexcept;
+    std::thread::id get_id() const noexcept;
 
 private:
     // These must be provided by users of ThreadLoop
@@ -67,6 +72,32 @@ private:
 
     std::atomic<ThreadState> state_ {READY};
     std::thread thread_;
+};
+
+class InterruptedThreadLoop : public ThreadLoop {
+public:
+
+    InterruptedThreadLoop(const std::function<bool()>& setup,
+                          const std::function<void()>& process,
+                          const std::function<void()>& cleanup)
+        : ThreadLoop::ThreadLoop(setup, process, cleanup) {}
+
+    void stop() override;
+
+    template <typename Rep, typename Period>
+    void
+    wait_for(const std::chrono::duration<Rep, Period>& rel_time)
+    {
+        if (std::this_thread::get_id() != get_id())
+            throw std::runtime_error("can not call wait_for outside thread context");
+
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait_for(lk, rel_time, [this](){return isStopping();});
+    }
+
+private:
+    std::mutex mutex_;
+    std::condition_variable cv_;
 };
 
 } // namespace ring

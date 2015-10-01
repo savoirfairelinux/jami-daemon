@@ -115,4 +115,23 @@ ThreadLoop::isRunning() const noexcept
     return thread_.joinable() and state_ == RUNNING;
 }
 
+bool
+ThreadLoop::isStopping() const noexcept
+{
+    return state_ == STOPPING;
+}
+
+std::thread::id
+ThreadLoop::get_id() const noexcept
+{
+    return thread_.get_id();
+}
+
+void
+InterruptedThreadLoop::stop()
+{
+    ThreadLoop::stop();
+    std::lock_guard<std::mutex> lk(mutex_);
+    cv_.notify_one();
+}
 } // namespace ring
