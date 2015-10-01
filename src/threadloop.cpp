@@ -115,4 +115,35 @@ ThreadLoop::isRunning() const noexcept
     return thread_.joinable() and state_ == RUNNING;
 }
 
+InterruptedThreadLoop::InterruptedThreadLoop(const std::function<bool()>& setup,
+                       const std::function<void()>& process,
+                       const std::function<void()>& cleanup)
+: ThreadLoop(setup, process, cleanup)
+{}
+
+
+InterruptedThreadLoop::~InterruptedThreadLoop()
+{}
+
+void
+InterruptedThreadLoop::start()
+{ThreadLoop::start();}
+
+void
+InterruptedThreadLoop::exit()
+{ThreadLoop::exit();}
+
+void
+InterruptedThreadLoop::join()
+{ThreadLoop::join();}
+
+bool InterruptedThreadLoop::isRunning() const noexcept
+{return ThreadLoop::isRunning();}
+
+void
+InterruptedThreadLoop::stop()
+{
+    std::unique_lock<std::mutex> lk(mutex_);
+    interrupted_ = true;
+}
 } // namespace ring

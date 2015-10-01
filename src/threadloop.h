@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2015 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <Eloi.Bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,8 @@
 #include <thread>
 #include <functional>
 #include <stdexcept>
+#include <condition_variable>
+#include <mutex>
 
 namespace ring {
 
@@ -67,6 +70,34 @@ private:
 
     std::atomic<ThreadState> state_ {READY};
     std::thread thread_;
+};
+
+class InterruptedThreadLoop : ThreadLoop {
+public:
+    InterruptedThreadLoop(const std::function<bool()>& setup,
+                          const std::function<void()>& process,
+                          const std::function<void()>& cleanup);
+
+    ~InterruptedThreadLoop();
+
+    void start();
+    void exit();
+    void join();
+    bool isRunning() const noexcept;
+    void stop();
+
+    template <typename Rep, typename Period>
+    void
+    wait_for(const std::chrono::duration<Rep, Period>& rel_time)
+    {
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait_for(lk, rel_time, [&](){return interrupted_;});
+    }
+
+private:
+    std::mutex mutex_;
+    std::condition_variable cv_;
+    bool interrupted_ {false};
 };
 
 } // namespace ring
