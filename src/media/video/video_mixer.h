@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_MIXER_H__
-#define __VIDEO_MIXER_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "video_base.h"
@@ -40,8 +39,8 @@ class VideoMixer:
         public VideoFramePassiveReader
 {
 public:
-    VideoMixer(const std::string &id);
-    virtual ~VideoMixer();
+    VideoMixer(const std::string& id);
+    ~VideoMixer();
 
     void setDimensions(int width, int height);
 
@@ -50,15 +49,14 @@ public:
     int getPixelFormat() const;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame> >* ob,
-                std::shared_ptr<VideoFrame>& v);
-    void attached(Observable<std::shared_ptr<VideoFrame> >* ob);
-    void detached(Observable<std::shared_ptr<VideoFrame> >* ob);
+    void update(Observable<std::shared_ptr<VideoFrame>>* ob, std::shared_ptr<VideoFrame>& v);
+    void attached(Observable<std::shared_ptr<VideoFrame>>* ob);
+    void detached(Observable<std::shared_ptr<VideoFrame>>* ob);
 
 private:
     NON_COPYABLE(VideoMixer);
 
-    class VideoMixerSource;
+    struct VideoMixerSource;
 
     void render_frame(VideoFrame& output, const VideoFrame& input, int index);
 
@@ -71,16 +69,15 @@ private:
     int width_ = 0;
     int height_ = 0;
     std::list<std::unique_ptr<VideoMixerSource>> sources_;
-    rw_mutex rwMutex_ = {};
+    rw_mutex rwMutex_;
 
     std::shared_ptr<SinkClient> sink_;
 
-    ThreadLoop loop_;
-    std::chrono::time_point<std::chrono::system_clock> lastProcess_ = {};
-    std::shared_ptr<VideoFrameActiveWriter> videoLocal_ = nullptr;
-    VideoScaler scaler_ = {};
+    std::chrono::time_point<std::chrono::system_clock> lastProcess_;
+    std::shared_ptr<VideoFrameActiveWriter> videoLocal_;
+    VideoScaler scaler_;
+
+    ThreadLoop loop_; // as to be last member
 };
 
 }} // namespace ring::video
-
-#endif // __VIDEO_MIXER_H__
