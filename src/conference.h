@@ -30,11 +30,13 @@
 
 #include "audio/recordable.h"
 
-#ifdef RING_VIDEO
-#include "video/video_mixer.h"
-#endif
-
 namespace ring {
+
+#ifdef RING_VIDEO
+namespace video {
+class VideoMixer;
+}
+#endif
 
 typedef std::set<std::string> ParticipantSet;
 
