@@ -30,6 +30,7 @@
 #include "sip/sipcall.h"
 #include "client/videomanager.h"
 #include "video/video_input.h"
+#include "video/video_mixer.h"
 #endif
 
 #include "call_factory.h"
