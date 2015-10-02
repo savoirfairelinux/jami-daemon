@@ -198,6 +198,11 @@ VideoMixer::start_sink()
 {
     stop_sink();
 
+    if (width_ == 0 or height_ == 0) {
+        RING_WARN("MX: unable to start with zero-sized output");
+        return;
+    }
+
     if (not sink_->start()) {
         RING_ERR("MX: sink startup failed");
         return;
