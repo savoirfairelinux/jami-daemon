@@ -33,6 +33,18 @@
 
 namespace ring { namespace video {
 
+struct VideoMixer::VideoMixerSource {
+    Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
+    std::unique_ptr<VideoFrame> update_frame;
+    std::unique_ptr<VideoFrame> render_frame;
+    void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
+        std::lock_guard<std::mutex> lock(mutex_);
+        render_frame.swap(other);
+    }
+private:
+    std::mutex mutex_ = {};
+};
+
 static const double FRAME_DURATION = 1/30.;
 
 VideoMixer::VideoMixer(const std::string &id)
@@ -69,19 +81,18 @@ void VideoMixer::attached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     auto lock(rwMutex_.write());
 
-    VideoMixerSource* src = new VideoMixerSource;
+    auto src = std::unique_ptr<VideoMixerSource>(new VideoMixerSource);
     src->source = ob;
-    sources_.push_back(src);
+    sources_.emplace_back(std::move(src));
 }
 
 void VideoMixer::detached(Observable<std::shared_ptr<VideoFrame> >* ob)
 {
     auto lock(rwMutex_.write());
 
-    for (auto x : sources_) {
+    for (const auto& x : sources_) {
         if (x->source == ob) {
             sources_.remove(x);
-            delete x;
             break;
         }
     }

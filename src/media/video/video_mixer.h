@@ -35,19 +35,7 @@ namespace ring { namespace video {
 
 class SinkClient;
 
-    struct VideoMixerSource {
-        Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
-        std::unique_ptr<VideoFrame> update_frame;
-        std::unique_ptr<VideoFrame> render_frame;
-        void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
-            std::lock_guard<std::mutex> lock(mutex_);
-            render_frame.swap(other);
-        }
-    private:
-        std::mutex mutex_ = {};
-    };
-
-class VideoMixer :
+class VideoMixer:
         public VideoGenerator,
         public VideoFramePassiveReader
 {
@@ -70,6 +58,8 @@ public:
 private:
     NON_COPYABLE(VideoMixer);
 
+    class VideoMixerSource;
+
     void render_frame(VideoFrame& output, const VideoFrame& input, int index);
 
     void start_sink();
@@ -80,7 +70,7 @@ private:
     const std::string id_;
     int width_ = 0;
     int height_ = 0;
-    std::list<VideoMixerSource *> sources_ = {};
+    std::list<std::unique_ptr<VideoMixerSource>> sources_;
     rw_mutex rwMutex_ = {};
 
     std::shared_ptr<SinkClient> sink_;
