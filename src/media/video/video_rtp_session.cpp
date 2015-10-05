@@ -344,11 +344,6 @@ VideoRtpSession::adaptBitrate()
             if (videoBitrateInfo_.videoBitrateCurrent < videoBitrateInfo_.videoBitrateMin)
                 videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMin;
 
-            RING_WARN("packetLostRate=%f >= %f -> decrease bitrate to %d",
-                    packetLostRate,
-                    videoBitrateInfo_.packetLostThreshold,
-                    videoBitrateInfo_.videoBitrateCurrent);
-
             //we force iterative bitrate adaptation
             videoBitrateInfo_.cptBitrateChecking = 0;
 
@@ -367,14 +362,6 @@ VideoRtpSession::adaptBitrate()
             if (videoBitrateInfo_.videoBitrateCurrent > videoBitrateInfo_.videoBitrateMax)
                 videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMax;
 
-            RING_WARN("[%u/%u] packetLostRate=%f < %f -> try to increase bitrate to %d",
-                    videoBitrateInfo_.cptBitrateChecking,
-                    videoBitrateInfo_.maxBitrateChecking,
-                    packetLostRate,
-                    videoBitrateInfo_.packetLostThreshold,
-                    videoBitrateInfo_.videoBitrateCurrent);
-
-
             //asynchronous A/V media restart
             if (videoBitrateInfo_.videoBitrateCurrent != oldBitrate)
                 mediaRestartNeeded = true;
@@ -390,6 +377,13 @@ VideoRtpSession::adaptBitrate()
     if (mediaRestartNeeded) {
         storeVideoBitrateInfo();
         const auto& cid = callID_;
+
+        RING_WARN("[%u/%u] packetLostRate=%f -> change bitrate to %d",
+                videoBitrateInfo_.cptBitrateChecking,
+                videoBitrateInfo_.maxBitrateChecking,
+                packetLostRate,
+                videoBitrateInfo_.videoBitrateCurrent);
+
         runOnMainThread([cid]{
             if (auto call = Manager::instance().callFactory.getCall(cid))
                 call->restartMediaSender();
