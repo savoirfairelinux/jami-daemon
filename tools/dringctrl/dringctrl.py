@@ -69,6 +69,9 @@ if __name__ == "__main__":
     parser.add_argument('--sacl', help='Set active codecs for active account',
                         metavar='<codec list>', type=str)
 
+    parser.add_argument('--gacd', help='Get active codecs details for the account',
+                        metavar='<account>',type=str)
+
     #parser.add_argument('--gcc', help='Get current callid', action='store_true')
     parser.add_argument('--gcl', help='Get call list', action='store_true')
 
@@ -116,6 +119,12 @@ if __name__ == "__main__":
     if args.gaad:
         for account in ctrl.getAllAccounts():
             printAccountDetails(account)
+
+    if args.gacd:
+        for codecId in ctrl.getActiveCodecs(args.gacd):
+            print("# codec",codecId,"-------------")
+            print(ctrl.getCodecDetails(args.gacd, codecId))
+            print("#-- ")
 
     if args.sac:
         ctrl.setAccount(args.sac)
