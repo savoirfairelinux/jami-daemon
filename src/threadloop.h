@@ -66,11 +66,13 @@ private:
     std::function<void()> process_;
     std::function<void()> cleanup_;
 
-    void mainloop(const std::function<bool()> setup,
+    void mainloop(std::thread::id& tid,
+                  const std::function<bool()> setup,
                   const std::function<void()> process,
                   const std::function<void()> cleanup);
 
     std::atomic<ThreadState> state_ {READY};
+    std::thread::id threadId_;
     std::thread thread_;
 };
 

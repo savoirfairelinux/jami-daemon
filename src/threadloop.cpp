@@ -24,10 +24,12 @@
 namespace ring {
 
 void
-ThreadLoop::mainloop(const std::function<bool()> setup,
+ThreadLoop::mainloop(std::thread::id& tid,
+                     const std::function<bool()> setup,
                      const std::function<void()> process,
                      const std::function<void()> cleanup)
 {
+    tid = std::this_thread::get_id();
     try {
         if (setup()) {
             while (state_ == RUNNING)
@@ -37,7 +39,9 @@ ThreadLoop::mainloop(const std::function<bool()> setup,
             RING_ERR("setup failed");
         }
     } catch (const ThreadLoopException& e) {
-        RING_ERR("%s", e.what());
+        RING_ERR("[threadloop:%p] ThreadLoopException: %s", this, e.what());
+    } catch (const std::exception& e) {
+        RING_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
     }
 }
 
@@ -85,7 +89,8 @@ ThreadLoop::start()
     }
 
     state_ = RUNNING;
-    thread_ = std::thread(&ThreadLoop::mainloop, this, setup_, process_, cleanup_);
+    thread_ = std::thread(&ThreadLoop::mainloop, this, std::ref(threadId_), setup_, process_, cleanup_);
+    threadId_ = thread_.get_id();
 }
 
 void
@@ -124,7 +129,7 @@ ThreadLoop::isStopping() const noexcept
 std::thread::id
 ThreadLoop::get_id() const noexcept
 {
-    return thread_.get_id();
+    return threadId_;
 }
 
 void
