@@ -1,4 +1,4 @@
-FROM debian:8
+FROM debian:jessie
 
 RUN apt-get update && ( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )
 RUN apt-get install -y devscripts debianutils debhelper build-essential tar \
