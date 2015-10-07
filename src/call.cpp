@@ -196,6 +196,8 @@ Call::getStateStr() const
             }
 
         case CallState::HOLD:
+            if(getConnectionState() == ConnectionState::DISCONNECTED)
+                return StateEvent::HUNGUP;
             return StateEvent::HOLD;
 
         case CallState::BUSY:
