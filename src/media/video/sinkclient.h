@@ -26,6 +26,7 @@
 
 #include "video_provider.h"
 #include "video_base.h"
+#include "video_scaler.h"
 
 #include <string>
 #include <vector>
@@ -66,6 +67,7 @@ class SinkClient : public VideoFramePassiveReader
     private:
         const std::string id_;
         const bool mixer_;
+        VideoScaler scaler_;
         std::function<void(int, int)> target_;
         std::vector<unsigned char>* targetData_ {nullptr}; // filled by registerTarget, user owned
 
