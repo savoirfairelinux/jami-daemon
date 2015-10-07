@@ -37,6 +37,8 @@ namespace ring { namespace video {
 class ShmHolder;
 #endif // HAVE_SHM
 
+class VideoScaler;
+
 class SinkClient : public VideoFramePassiveReader
 {
     public:
@@ -66,6 +68,7 @@ class SinkClient : public VideoFramePassiveReader
     private:
         const std::string id_;
         const bool mixer_;
+        std::unique_ptr<VideoScaler> scaler_;
         std::function<void(int, int)> target_;
         std::vector<unsigned char>* targetData_ {nullptr}; // filled by registerTarget, user owned
 
