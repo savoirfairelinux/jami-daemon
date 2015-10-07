@@ -66,6 +66,7 @@ using random_device = std::random_device;
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
+#include "video/video_scaler.h"
 #endif
 
 #include "conference.h"
