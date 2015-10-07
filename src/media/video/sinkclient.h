@@ -39,6 +39,8 @@ namespace ring { namespace video {
 class ShmHolder;
 #endif // HAVE_SHM
 
+class VideoScaler;
+
 class SinkClient : public VideoFramePassiveReader
 {
     public:
@@ -68,6 +70,7 @@ class SinkClient : public VideoFramePassiveReader
         const bool mixer_;
         bool started_ {false}; // used to arbitrate client's stop signal.
         DRing::SinkTarget target_;
+        std::unique_ptr<VideoScaler> scaler_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;

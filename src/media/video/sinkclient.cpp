@@ -30,13 +30,13 @@
 #include "shm_header.h"
 #endif // HAVE_SHM
 
-#include "video_scaler.h"
 #include "media_buffer.h"
 #include "logger.h"
 #include "noncopyable.h"
 #include "client/ring_signal.h"
 #include "dring/videomanager_interface.h"
 #include "libav_utils.h"
+#include "video_scaler.h"
 
 #ifndef _WIN32
 #include <sys/mman.h>
@@ -297,11 +297,14 @@ SinkClient::stop() noexcept
 
 #endif // !HAVE_SHM
 
-SinkClient::SinkClient(const std::string& id, bool mixer) : id_ {id}, mixer_(mixer)
+SinkClient::SinkClient(const std::string& id, bool mixer)
+    : id_ {id}
+    , mixer_(mixer)
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
 #endif
+    , scaler_(new VideoScaler())
 {}
 
 void
@@ -327,7 +330,6 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 
     if (target_.pull) {
         VideoFrame dst;
-        VideoScaler scaler;
         const int width = f->width();
         const int height = f->height();
 #ifndef __APPLE__
