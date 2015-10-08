@@ -120,6 +120,8 @@ VideoRtpSession::restartSender()
         if (videoLocal_)
             videoLocal_->attach(sender_.get());
     }
+
+    setupVideoPipeline();
 }
 
 void VideoRtpSession::startReceiver()
@@ -170,15 +172,7 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     startSender();
     startReceiver();
 
-    // Setup video pipeline
-    if (conference_)
-        setupConferenceVideoPipeline(*conference_);
-    else if (sender_) {
-        if (videoLocal_)
-            videoLocal_->attach(sender_.get());
-    } else {
-        videoLocal_.reset();
-    }
+    setupVideoPipeline();
 }
 
 void VideoRtpSession::stop()
@@ -209,6 +203,19 @@ void VideoRtpSession::forceKeyFrame()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
         sender_->forceKeyFrame();
+}
+
+void
+VideoRtpSession::setupVideoPipeline()
+{
+    if (conference_)
+        setupConferenceVideoPipeline(*conference_);
+    else if (sender_) {
+        if (videoLocal_)
+            videoLocal_->attach(sender_.get());
+    } else {
+        videoLocal_.reset();
+    }
 }
 
 void VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
