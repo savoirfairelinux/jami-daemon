@@ -120,6 +120,9 @@ VideoRtpSession::restartSender()
         if (videoLocal_)
             videoLocal_->attach(sender_.get());
     }
+
+    if (conference_)
+        setupConferenceVideoPipeline(*conference_);
 }
 
 void VideoRtpSession::startReceiver()
