@@ -116,9 +116,9 @@ AudioSender::setup(SocketPair& socketPair)
         return false;
     }
 
-    std::string sdp;
-    audioEncoder_->print_sdp(sdp);
-    RING_DBG("\n%s", sdp.c_str());
+#ifdef DEBUG_SDP
+    audioEncoder_->print_sdp();
+#endif
 
     return true;
 }

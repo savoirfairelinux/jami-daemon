@@ -47,13 +47,12 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->setIOContext(muxContext_);
     videoEncoder_->startIO();
 
-    videoEncoder_->print_sdp(sdp_);
+    videoEncoder_->print_sdp();
 }
 
 VideoSender::~VideoSender()
 {
     videoEncoder_->flush();
-
 }
 
 

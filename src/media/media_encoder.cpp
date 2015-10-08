@@ -33,9 +33,10 @@
 #include <algorithm>
 #include <thread> // hardware_concurrency
 
-namespace ring {
+// Define following line if you need to debug libav SDP
+//#define DEBUG_SDP 1
 
-using std::string;
+namespace ring {
 
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
@@ -496,21 +497,25 @@ int MediaEncoder::flush()
     return ret;
 }
 
-void MediaEncoder::print_sdp(std::string &sdp_)
+std::string
+MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
     const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
+    std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
     std::istringstream iss(sdp);
-    string line;
-    sdp_ = "";
+    std::string line;
     while (std::getline(iss, line)) {
         /* strip windows line ending */
         line = line.substr(0, line.length() - 1);
-        sdp_ += line + "\n";
+        result += line + "\n";
     }
-    RING_DBG("Sending SDP: \n%s", sdp_.c_str());
+#ifdef DEBUG_SDP
+    RING_DBG("Sending SDP:\n%s", result.c_str());
+#endif
+    return result;
 }
 
 void MediaEncoder::prepareEncoderContext(bool is_video)
