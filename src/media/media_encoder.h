@@ -72,7 +72,7 @@ public:
 
     int encode_audio(const AudioBuffer &input);
     int flush();
-    void print_sdp(std::string &sdp_);
+    std::string print_sdp();
 
     /* getWidth and getHeight return size of the encoded frame.
      * Values have meaning only after openOutput call.
