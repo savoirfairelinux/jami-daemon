@@ -62,48 +62,48 @@ template <typename T> class Observable;
 template <typename T>
 class Observable
 {
-    public:
-        Observable() : observers_(), mutex_() {}
-        virtual ~Observable() {
-            std::lock_guard<std::mutex> lk(mutex_);
-            for (auto &o : observers_)
-                o->detached(this);
-        };
+public:
+    Observable() : observers_(), mutex_() {}
+    virtual ~Observable() {
+        std::lock_guard<std::mutex> lk(mutex_);
+        for (auto& o : observers_)
+            o->detached(this);
+    };
 
-        bool attach(Observer<T>* o) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            if (o and observers_.insert(o).second) {
-                o->attached(this);
-                return true;
-            }
-            return false;
+    bool attach(Observer<T>* o) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (o and observers_.insert(o).second) {
+            o->attached(this);
+            return true;
         }
+        return false;
+    }
 
-        bool detach(Observer<T>* o) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            if (o and observers_.erase(o)) {
-                o->detached(this);
-                return true;
-            }
-            return false;
+    bool detach(Observer<T>* o) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        if (o and observers_.erase(o)) {
+            o->detached(this);
+            return true;
         }
+        return false;
+    }
 
-        void notify(T& data) {
-            std::lock_guard<std::mutex> lk(mutex_);
-            for (auto observer : observers_)
-                observer->update(this, data);
-        }
+    void notify(T data) {
+        std::lock_guard<std::mutex> lk(mutex_);
+        for (auto observer : observers_)
+            observer->update(this, data);
+    }
 
-        int getObserversCount() {
-            std::lock_guard<std::mutex> lk(mutex_);
-            return observers_.size();
-        }
+    int getObserversCount() {
+        std::lock_guard<std::mutex> lk(mutex_);
+        return observers_.size();
+    }
 
-    private:
-        NON_COPYABLE(Observable<T>);
+private:
+    NON_COPYABLE(Observable<T>);
 
-        std::set<Observer<T>*> observers_;
-        std::mutex mutex_; // lock observers_
+    std::set<Observer<T>*> observers_;
+    std::mutex mutex_; // lock observers_
 };
 
 /*=== Observer =============================================================*/
@@ -113,7 +113,7 @@ class Observer
 {
 public:
     virtual ~Observer() {};
-    virtual void update(Observable<T>*, T&) = 0;
+    virtual void update(Observable<T>*, T) = 0;
     virtual void attached(Observable<T>*) {};
     virtual void detached(Observable<T>*) {};
 };
@@ -124,14 +124,14 @@ struct VideoFramePassiveReader: Observer<std::shared_ptr<VideoFrame>> {};
 /*=== VideoPacket  ===========================================================*/
 
 class VideoPacket {
-    public:
-        VideoPacket();
-        ~VideoPacket();
-        AVPacket* get() { return packet_; };
+public:
+    VideoPacket();
+    ~VideoPacket();
+    AVPacket* get() const noexcept { return packet_; };
 
-    private:
-        NON_COPYABLE(VideoPacket);
-        AVPacket *packet_;
+private:
+    NON_COPYABLE(VideoPacket);
+    AVPacket* packet_;
 };
 
 /*=== VideoGenerator =========================================================*/

@@ -100,8 +100,7 @@ VideoMixer::detached(Observable<std::shared_ptr<VideoFrame>>* ob)
 }
 
 void
-VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
-                   std::shared_ptr<VideoFrame>& frame_p)
+VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob, std::shared_ptr<VideoFrame> frame_p)
 {
     auto lock(rwMutex_.read());
 
@@ -109,7 +108,7 @@ VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
         if (x->source == ob) {
             if (!x->update_frame)
                 x->update_frame.reset(new VideoFrame);
-            *x->update_frame = *frame_p;
+            *x->update_frame = *frame_p; // copy frame content, it will be destroyed after return
             x->atomic_swap_render(x->update_frame);
             return;
         }
