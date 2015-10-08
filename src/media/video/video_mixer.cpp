@@ -34,9 +34,9 @@ namespace ring { namespace video {
 
 struct VideoMixer::VideoMixerSource {
     Observable<std::shared_ptr<VideoFrame>>* source = nullptr;
-    std::unique_ptr<VideoFrame> update_frame;
-    std::unique_ptr<VideoFrame> render_frame;
-    void atomic_swap_render(std::unique_ptr<VideoFrame>& other) {
+    std::shared_ptr<VideoFrame> update_frame;
+    std::shared_ptr<VideoFrame> render_frame;
+    void atomic_swap_render(std::shared_ptr<VideoFrame>& other) noexcept {
         std::lock_guard<std::mutex> lock(mutex_);
         render_frame.swap(other);
     }
@@ -107,9 +107,7 @@ VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
 
     for (const auto& x : sources_) {
         if (x->source == ob) {
-            if (!x->update_frame)
-                x->update_frame.reset(new VideoFrame);
-            *x->update_frame = *frame_p;
+            x->update_frame = frame_p; // incref source frame
             x->atomic_swap_render(x->update_frame);
             return;
         }
@@ -141,20 +139,18 @@ VideoMixer::process()
 
         int i = 0;
         for (const auto& x : sources_) {
-            /* thread stop pending? */
+            // thread stop pending
             if (!loop_.isRunning())
                 return;
 
-            // make rendered frame temporarily unavailable for update()
-            // to avoid concurrent access.
-            std::unique_ptr<VideoFrame> input;
+            // fetch "to render" frame
+            std::shared_ptr<VideoFrame> input;
             x->atomic_swap_render(input);
 
             if (input)
                 render_frame(output, *input, i);
 
-            x->atomic_swap_render(input);
-            ++i;
+            ++i; // source index
         }
     }
 
