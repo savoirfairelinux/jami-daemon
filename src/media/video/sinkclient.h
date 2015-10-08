@@ -66,6 +66,7 @@ class SinkClient : public VideoFramePassiveReader
     private:
         const std::string id_;
         const bool mixer_;
+        bool started_ {false}; // used to arbitrate client's stop signal.
         std::function<void(int, int)> target_;
         std::vector<unsigned char>* targetData_ {nullptr}; // filled by registerTarget, user owned
 

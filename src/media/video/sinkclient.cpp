@@ -353,10 +353,12 @@ SinkClient::setFrameSize(int width, int height)
         RING_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
                  getId().c_str(), openedName().c_str(), width, height, mixer_);
         emitSignal<DRing::VideoSignal::DecodingStarted>(getId(), openedName(), width, height, mixer_);
-    } else {
+        started_ = true;
+    } else if (started_) {
         RING_ERR("Stop sink <%s / %s>, mixer=%u",
                  getId().c_str(), openedName().c_str(), mixer_);
         emitSignal<DRing::VideoSignal::DecodingStopped>(getId(), openedName(), mixer_);
+        started_ = false;
     }
 }
 
