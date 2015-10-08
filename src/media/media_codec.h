@@ -67,7 +67,7 @@ struct SystemCodecInfo
     virtual ~SystemCodecInfo();
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {250};
-    static constexpr unsigned DEFAULT_MAX_BITRATE {4000};
+    static constexpr unsigned DEFAULT_MAX_BITRATE {2000};
 
     /* generic codec information */
     unsigned id; /* id of the codec used with dbus */
