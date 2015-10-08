@@ -74,6 +74,7 @@ public:
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);
+    void setupVideoPipeline();
     void startSender();
     void startReceiver();
 
