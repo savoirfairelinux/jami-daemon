@@ -2,6 +2,8 @@
  *  Copyright (C) 2012-2015 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -26,6 +28,7 @@
 
 #include "video_provider.h"
 #include "video_base.h"
+#include <videomanager_interface.h>
 
 #include <string>
 #include <vector>
@@ -57,17 +60,14 @@ class SinkClient : public VideoFramePassiveReader
 
         void setFrameSize(int width, int height);
 
-        template <class T>
-        void registerTarget(T&& cb, std::vector<unsigned char>& frameBuffer) noexcept {
-            target_ = std::forward<T>(cb);
-            targetData_ = &frameBuffer;
+        void registerTarget(const DRing::SinkTarget& target) noexcept {
+            target_ = target;
         }
 
     private:
         const std::string id_;
         const bool mixer_;
-        std::function<void(int, int)> target_;
-        std::vector<unsigned char>* targetData_ {nullptr}; // filled by registerTarget, user owned
+        DRing::SinkTarget target_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;
