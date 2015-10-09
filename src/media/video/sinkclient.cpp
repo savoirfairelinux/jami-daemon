@@ -323,7 +323,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
     shm_->renderFrame(*f.get());
 #endif
 
-    if (targetData_) {
+    if (target_.pull) {
         VideoFrame dst;
         VideoScaler scaler;
         const int width = f->width();
@@ -336,12 +336,15 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         const auto bytes = videoFrameSize(format, width, height);
 
         if (bytes > 0) {
-          targetData_->resize(bytes);
-          auto data = targetData_->data();
-
-          dst.setFromMemory(data, format, width, height);
-          scaler.scale(*f, dst);
-          target_(width, height);
+            if (auto buffer_ptr = target_.pull()) {
+                buffer_ptr->format = format;
+                buffer_ptr->width = width;
+                buffer_ptr->height = height;
+                buffer_ptr->data.resize(bytes);
+                dst.setFromMemory(buffer_ptr->data.data(), format, width, height);
+                scaler.scale(*f, dst);
+                target_.push(std::move(buffer_ptr));
+            }
         }
     }
 }

@@ -29,6 +29,19 @@
 
 namespace DRing {
 
+struct FrameBuffer {
+   std::vector<unsigned char> data;
+   int format;
+   int width;
+   int height;
+};
+
+struct SinkTarget {
+   using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
+   std::function<FrameBufferPtr()> pull;
+   std::function<void(FrameBufferPtr)> push;
+};
+
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
 void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
@@ -48,8 +61,8 @@ void stopCamera();
 bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
-void registerSinkTarget(const std::string& sinkId, std::vector<unsigned char>& frameBuffer, const std::function<void(int, int)>& cb);
-void registerSinkTarget(const std::string& sinkId, std::vector<unsigned char>& frameBuffer, std::function<void(int, int)>&& cb);
+void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+
 #ifdef __ANDROID__
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
