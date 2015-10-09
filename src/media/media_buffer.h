@@ -26,6 +26,10 @@
 
 class AVFrame;
 
+namespace DRing {
+class FrameBuffer; //  from dring/videomanager_interface.h
+}
+
 namespace ring {
 
 class MediaFrame {
@@ -74,7 +78,8 @@ class VideoFrame: public MediaFrame {
 
         // Set internal pixel buffers on given memory buffer
         // This buffer must follow given specifications.
-        void setFromMemory(void* ptr, int format, int width, int height) noexcept;
+        void setFromMemory(uint8_t* data, int format, int width, int height);
+        void setFromMemory(DRing::FrameBuffer& framebuffer);
 
         void noise();
 
