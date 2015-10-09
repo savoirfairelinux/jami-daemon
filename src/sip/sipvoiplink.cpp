@@ -205,6 +205,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, length);
     sip_utils::stripSipUriPrefix(peerNumber);
+    if (not remote_user.empty() and not remote_hostname.empty())
+        peerNumber = remote_user + "@" + remote_hostname;
 
     auto link = getSIPVoIPLink();
     if (not link) {
