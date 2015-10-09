@@ -1,6 +1,8 @@
 /*
  *  Copyright (C) 2012-2015 Savoir-faire Linux Inc.
  *
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
  *  the Free Software Foundation; either version 3 of the License, or
@@ -24,10 +26,27 @@
 #include <map>
 #include <string>
 #include <functional>
+#include <cstdint>
+#include <cstdlib>
 
 #include "dring.h"
 
 namespace DRing {
+
+/* FrameBuffer is a generic video frame container */
+struct FrameBuffer {
+    uint8_t* ptr {nullptr};     // data as a plain raw pointer
+    std::size_t ptrSize {0};      // size in byte of ptr array
+    int format {0};             // as listed by AVPixelFormat (avutils/pixfmt.h)
+    int width {0};              // frame width
+    int height {0};             // frame height
+};
+
+struct SinkTarget {
+    using FrameBufferPtr = std::unique_ptr<FrameBuffer>;
+    std::function<FrameBufferPtr(std::size_t bytes)> pull;
+    std::function<void(FrameBufferPtr)> push;
+};
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
 
@@ -48,8 +67,8 @@ void stopCamera();
 bool hasCameraStarted();
 bool switchInput(const std::string& resource);
 bool switchToCamera();
-void registerSinkTarget(const std::string& sinkId, std::vector<unsigned char>& frameBuffer, const std::function<void(int, int)>& cb);
-void registerSinkTarget(const std::string& sinkId, std::vector<unsigned char>& frameBuffer, std::function<void(int, int)>&& cb);
+void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
+
 #ifdef __ANDROID__
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);

@@ -20,6 +20,7 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_buffer.h"
+#include "dring/videomanager_interface.h"
 
 #include <new>
 #include <cstdlib>
@@ -107,7 +108,7 @@ VideoFrame::reserve(int format, int width, int height)
 }
 
 void
-VideoFrame::setFromMemory(void* ptr, int format, int width, int height) noexcept
+VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height)
 {
     reset();
     setGeometry(format, width, height);
@@ -115,6 +116,16 @@ VideoFrame::setFromMemory(void* ptr, int format, int width, int height) noexcept
         return;
     avpicture_fill((AVPicture*)frame_.get(), (uint8_t*)ptr,
                    (AVPixelFormat)frame_->format, width, height);
+}
+
+void
+VideoFrame::setFromMemory(DRing::FrameBuffer& framebuffer)
+{
+    reset();
+    setGeometry(libav_utils::ring_pixel_format(framebuffer.format),
+                framebuffer.width, framebuffer.height);
+    avpicture_fill((AVPicture*)frame_.get(), (uint8_t*)framebuffer.ptr,
+                   (AVPixelFormat)framebuffer.format, framebuffer.width, framebuffer.height);
 }
 
 void
