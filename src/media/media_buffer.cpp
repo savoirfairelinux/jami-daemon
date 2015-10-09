@@ -20,6 +20,7 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_buffer.h"
+#include "dring/videomanager_interface.h"
 
 #include <new>
 #include <cstdlib>
@@ -107,7 +108,7 @@ VideoFrame::reserve(int format, int width, int height)
 }
 
 void
-VideoFrame::setFromMemory(void* ptr, int format, int width, int height) noexcept
+VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height)
 {
     reset();
     setGeometry(format, width, height);
