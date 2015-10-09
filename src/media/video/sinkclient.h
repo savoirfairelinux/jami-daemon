@@ -24,7 +24,6 @@
 #include "config.h"
 #endif
 
-#include "video_provider.h"
 #include "video_base.h"
 
 #include <string>
