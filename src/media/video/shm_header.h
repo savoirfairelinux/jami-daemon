@@ -21,6 +21,7 @@
 #ifndef SHM_HEADER_H_
 #define SHM_HEADER_H_
 
+#include <cstdint>
 #include <semaphore.h>
 
 // Implementation note: double-buffering
@@ -37,7 +38,7 @@ struct SHMHeader {
     unsigned mapSize;           // size to map if you need to see all data
     unsigned readOffset;        // offset of readable frame in data
     unsigned writeOffset;       // offset of writable frame in data
-    char data[];                // the whole shared memory
+    uint8_t data[];             // the whole shared memory
 };
 
 #endif
