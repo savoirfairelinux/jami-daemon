@@ -26,6 +26,7 @@
 
 #include "video_provider.h"
 #include "video_base.h"
+#include <videomanager_interface.h>
 
 #include <string>
 #include <vector>
@@ -57,17 +58,15 @@ class SinkClient : public VideoFramePassiveReader
 
         void setFrameSize(int width, int height);
 
-        template <class T>
-        void registerTarget(T&& cb, std::vector<unsigned char>& frameBuffer) noexcept {
-            target_ = std::forward<T>(cb);
-            targetData_ = &frameBuffer;
+        void registerTarget(const DRing::SinkTarget& target) noexcept {
+            target_ = target;
         }
 
     private:
         const std::string id_;
         const bool mixer_;
-        std::function<void(int, int)> target_;
-        std::vector<unsigned char>* targetData_ {nullptr}; // filled by registerTarget, user owned
+        bool started_ {false}; // used to arbitrate client's stop signal.
+        DRing::SinkTarget target_;
 
 #ifdef DEBUG_FPS
         unsigned frameCount_;
