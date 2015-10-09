@@ -76,6 +76,8 @@ static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
 static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 
+static constexpr const char * const RING_URI_PREFIX = "ring:";
+
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
@@ -150,7 +152,7 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    auto dhtf = toUrl.find("ring:");
+    auto dhtf = toUrl.find(RING_URI_PREFIX);
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
     } else {
@@ -468,11 +470,11 @@ RingAccount::loadIdentity()
         tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
         tlsPassword_ = {};
 
-        username_ = id.second->getId().toString();
+        username_ = RING_URI_PREFIX+id.second->getId().toString();
         return id;
     }
 
-    username_ = dht_cert.getId().toString();
+    username_ = RING_URI_PREFIX+dht_cert.getId().toString();
     return {
         std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
         std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
@@ -744,8 +746,6 @@ RingAccount::doRegister_()
 #endif
 
         dht_.importValues(loadValues());
-
-        username_ = dht_.getId().toString();
 
         Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
