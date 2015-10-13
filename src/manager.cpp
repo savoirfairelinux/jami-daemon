@@ -265,7 +265,7 @@ Manager::init(const std::string &config_file)
     setSipLogLevel();
     PJSIP_TRY(pjlib_util_init());
     PJSIP_TRY(pjnath_init());
-#undef TRY
+#undef PJSIP_TRY
 
     RING_DBG("pjsip version %s for %s initialized",
              pj_get_version(), PJ_OS_NAME);
@@ -2288,7 +2288,7 @@ Manager::getAccountList() const
 
     using std::vector;
     using std::string;
-    vector<string> account_order(loadAccountOrder());
+    const vector<string> account_order(loadAccountOrder());
 
     // The IP2IP profile should always be available, and first in the list;
     // however, it is possible that it was deleted by removeAccounts()
