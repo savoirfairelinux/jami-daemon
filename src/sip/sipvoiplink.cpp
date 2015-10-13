@@ -205,6 +205,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
     std::string peerNumber(tmp, length);
     sip_utils::stripSipUriPrefix(peerNumber);
+    if (not remote_user.empty() and not remote_hostname.empty())
+        peerNumber = remote_user + "@" + remote_hostname;
 
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -278,9 +280,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (!call) {
         return PJ_FALSE;
     }
-
-    if (not remote_user.empty() and not remote_hostname.empty())
-        peerNumber = remote_user + "@" + remote_hostname;
 
     // RING_DBG("transaction_request_cb viaHostname %s toUsername %s addrToUse %s addrSdp %s peerNumber: %s" ,
     // viaHostname.c_str(), toUsername.c_str(), addrToUse.toString().c_str(), addrSdp.toString().c_str(), peerNumber.c_str());
