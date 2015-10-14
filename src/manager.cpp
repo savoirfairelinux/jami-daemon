@@ -2381,7 +2381,7 @@ Manager::setAccountDetails(const std::string& accountID,
         // Serialize configuration to disk once it is done
         saveConfig();
 
-        if (account->isEnabled()) {
+        if (account->isUsable()) {
             account->doRegister();
         } else
             account->doUnregister();
@@ -2667,7 +2667,7 @@ Manager::registerAccounts()
 
         a->loadConfig();
 
-        if (a->isEnabled()) {
+        if (a->isUsable()) {
             a->doRegister();
         }
     }
@@ -2707,6 +2707,21 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to, co
     if (!acc)
         return;
     acc->sendTextMessage(to, message);
+}
+
+void
+Manager::setAccountActive(const std::string& accountID, bool active)
+{
+    const auto acc = getAccount(accountID);
+    if (!acc)
+        return;
+    acc->setActive(active);
+    if (acc->isEnabled()) {
+        if (active)
+            acc->doRegister();
+        else
+        acc->doUnregister();
+    }
 }
 
 std::shared_ptr<AudioLayer>
