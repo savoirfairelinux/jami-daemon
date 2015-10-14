@@ -668,8 +668,8 @@ bool RingAccount::mapPortUPnP()
 
 void RingAccount::doRegister()
 {
-    if (not isEnabled()) {
-        RING_WARN("Account must be enabled to register, ignoring");
+    if (not isUsable()) {
+        RING_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 

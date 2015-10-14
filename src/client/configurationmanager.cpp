@@ -259,6 +259,12 @@ setAccountDetails(const std::string& accountID, const std::map<std::string, std:
 }
 
 void
+setAccountActive(const std::string& accountID, bool enable)
+{
+    ring::Manager::instance().setAccountActive(accountID, enable);
+}
+
+void
 sendRegister(const std::string& accountID, bool enable)
 {
     ring::Manager::instance().sendRegister(accountID, enable);

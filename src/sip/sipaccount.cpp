@@ -716,8 +716,8 @@ bool SIPAccount::mapPortUPnP()
 
 void SIPAccount::doRegister()
 {
-    if (not isEnabled()) {
-        RING_WARN("Account must be enabled to register, ignoring");
+    if (not isUsable()) {
+        RING_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -943,8 +943,8 @@ void SIPAccount::stopKeepAliveTimer()
 void
 SIPAccount::sendRegister()
 {
-    if (not isEnabled()) {
-        RING_WARN("Account must be enabled to register, ignoring");
+    if (not isUsable()) {
+        RING_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -2024,7 +2024,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
 void
 SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 {
-    if (!isEnabled())
+    if (!isUsable())
         return;
 
     /* Cancel any re-registration timer */
