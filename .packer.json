@@ -84,26 +84,6 @@
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
-        "ubuntu_14.10": [
-            "mkdir -p /sources/ring-daemon",
-            "cd /sources/ring-daemon",
-            "/ring-daemon/debian/rules get-orig-source",
-            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
-            "dch --release --distribution \"unstable\" debian/changelog",
-            "dpkg-buildpackage -uc -us",
-            "cd .. ",
-            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ],
-        "ubuntu_14.10_i386": [
-            "mkdir -p /sources/ring-daemon",
-            "cd /sources/ring-daemon",
-            "/ring-daemon/debian/rules get-orig-source",
-            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
-            "dch --release --distribution \"unstable\" debian/changelog",
-            "dpkg-buildpackage -uc -us",
-            "cd .. ",
-            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ],
         "ubuntu_15.04": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
@@ -133,12 +113,9 @@
         "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_14.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_14.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
-
     },
     "ReviewType": "",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
