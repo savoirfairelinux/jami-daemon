@@ -83,6 +83,28 @@ constexpr const char * const RingAccount::ACCOUNT_TYPE;
 
 static std::uniform_int_distribution<dht::Value::Id> udist;
 
+static const std::string
+parseRingUri(const std::string& toUrl)
+{
+    auto dhtf = toUrl.find("ring:");
+    if (dhtf != std::string::npos) {
+        dhtf = dhtf+5;
+    } else {
+        dhtf = toUrl.find("sips:");
+        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
+    }
+    while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
+        dhtf++;
+
+    if (toUrl.length() - dhtf < 40)
+        throw std::invalid_argument("id must be a ring infohash");
+
+    const std::string toUri = toUrl.substr(dhtf, 40);
+    if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
+        throw std::invalid_argument("id must be a ring infohash");
+    return toUri;
+}
+
 /**
  * Local ICE Transport factory helper
  *
@@ -152,20 +174,7 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    auto dhtf = toUrl.find(RING_URI_PREFIX);
-    if (dhtf != std::string::npos) {
-        dhtf = dhtf+5;
-    } else {
-        dhtf = toUrl.find("sips:");
-        dhtf = (dhtf == std::string::npos) ? 0 : dhtf+5;
-    }
-    if (toUrl.length() - dhtf < 40)
-        throw std::invalid_argument("id must be a ring infohash");
-
-    const std::string toUri = toUrl.substr(dhtf, 40);
-    if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
-        throw std::invalid_argument("id must be a ring infohash");
-
+    const std::string toUri = parseRingUri(toUrl);
     RING_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto& manager = Manager::instance();
@@ -1273,8 +1282,9 @@ RingAccount::connectivityChanged()
 void
 RingAccount::sendTextMessage(const std::string& to, const std::string& message)
 {
-    dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
-                      dht::InfoHash(to),
+    const std::string& toUri = parseRingUri(to);
+    dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
+                      dht::InfoHash(toUri),
                       dht::ImMessage(std::string(message)));
 }
 
