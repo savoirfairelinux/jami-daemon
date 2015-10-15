@@ -84,7 +84,7 @@
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
-        "ubuntu_14.10": [
+        "ubuntu_15.04": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
@@ -94,7 +94,7 @@
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
-        "ubuntu_14.10_i386": [
+        "ubuntu_15.04_i386": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
@@ -133,10 +133,8 @@
         "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_14.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_14.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
 
     },
