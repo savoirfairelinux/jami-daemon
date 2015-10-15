@@ -109,6 +109,8 @@ VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
         if (x->source == ob) {
             if (!x->update_frame)
                 x->update_frame.reset(new VideoFrame);
+            else
+                x->update_frame->reset();
             *x->update_frame = *frame_p;
             x->atomic_swap_render(x->update_frame);
             return;
