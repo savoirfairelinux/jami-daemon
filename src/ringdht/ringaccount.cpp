@@ -716,6 +716,7 @@ RingAccount::doRegister_()
 {
     try {
         loadTreatedCalls();
+        loadTreatedMessages();
         if (dht_.isRunning()) {
             RING_ERR("DHT already running (stopping it first).");
             dht_.join();
@@ -887,8 +888,13 @@ RingAccount::doRegister_()
             inboxKey,
             [shared](dht::ImMessage&& v) {
                 auto& this_ = *shared.get();
+                auto res = this_.treatedMessages_.insert(v.id);
+                this_.saveTreatedMessages();
+                if (!res.second)
+                    return true;
+
                 auto from = v.from.toString();
-                auto msg = v.im_message;
+                auto msg = v.msg;
                 RING_DBG("Text message received from DHT ! %s -> %s",  from.c_str(), msg.c_str());
                 emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(this_.getAccountID(), from, msg);
                 return true;
@@ -999,40 +1005,61 @@ RingAccount::getCertificatesByStatus(tls::TrustStore::Status status)
     return trust_.getCertificatesByStatus(status);
 }
 
+std::set<dht::Value::Id>
+loadIdList(const std::string& path)
+{
+    std::set<dht::Value::Id> ids;
+    std::ifstream file(path);
+    if (!file.is_open()) {
+        RING_WARN("Could not load %s", path.c_str());
+        return ids;
+    }
+    std::string line;
+    while (std::getline(file, line)) {
+        std::istringstream iss(line);
+        dht::Value::Id vid;
+        if (!(iss >> std::hex >> vid)) { break; }
+        ids.insert(vid);
+    }
+    return ids;
+}
+
+void
+saveIdList(const std::string& path, const std::set<dht::Value::Id>& ids)
+{
+    std::ofstream file(path, std::ios::trunc);
+    if (!file.is_open()) {
+        RING_ERR("Could not save to %s", path.c_str());
+        return;
+    }
+    for (auto& c : ids)
+        file << std::hex << c << "\n";
+}
+
 void
 RingAccount::loadTreatedCalls()
 {
-    std::string treatedcallPath = cachePath_+DIR_SEPARATOR_STR "treatedCalls";
-    {
-        std::ifstream file(treatedcallPath);
-        if (!file.is_open()) {
-            RING_WARN("Could not load treated calls from %s", treatedcallPath.c_str());
-            return;
-        }
-        std::string line;
-        while (std::getline(file, line)) {
-            std::istringstream iss(line);
-            dht::Value::Id vid;
-            if (!(iss >> std::hex >> vid)) { break; }
-            treatedCalls_.insert(vid);
-        }
-    }
+    treatedCalls_ = loadIdList(cachePath_+DIR_SEPARATOR_STR "treatedCalls");
 }
 
 void
 RingAccount::saveTreatedCalls() const
 {
     fileutils::check_dir(cachePath_.c_str());
-    std::string treatedcallPath = cachePath_+DIR_SEPARATOR_STR "treatedCalls";
-    {
-        std::ofstream file(treatedcallPath, std::ios::trunc);
-        if (!file.is_open()) {
-            RING_ERR("Could not save treated calls to %s", treatedcallPath.c_str());
-            return;
-        }
-        for (auto& c : treatedCalls_)
-            file << std::hex << c << "\n";
-    }
+    saveIdList(cachePath_+DIR_SEPARATOR_STR "treatedCalls", treatedCalls_);
+}
+
+void
+RingAccount::loadTreatedMessages()
+{
+    treatedMessages_ = loadIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages");
+}
+
+void
+RingAccount::saveTreatedMessages() const
+{
+    fileutils::check_dir(cachePath_.c_str());
+    saveIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages", treatedMessages_);
 }
 
 void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
@@ -1283,9 +1310,10 @@ void
 RingAccount::sendTextMessage(const std::string& to, const std::string& message)
 {
     const std::string& toUri = parseRingUri(to);
+    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
                       dht::InfoHash(toUri),
-                      dht::ImMessage(std::string(message)));
+                      dht::ImMessage(udist(rand_), std::string(message), now));
 }
 
 } // namespace ring
