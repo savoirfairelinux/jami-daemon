@@ -1,5 +1,5 @@
 # MSGPACK
-MSGPACK_VERSION := 294aa52c3ad8392ea54331d0ed89299f6a32a798
+MSGPACK_VERSION := 63971da5a4817f6d3c9d009f0e0de2bc55dbc74b
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
 PKGS += msgpack
