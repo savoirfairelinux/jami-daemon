@@ -315,6 +315,7 @@ class RingAccount : public SIPAccountBase {
          */
         std::list<PendingCall> pendingSipCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
+        std::set<dht::Value::Id> treatedMessages_ {};
         mutable std::mutex callsMutex_ {};
 
         std::string idPath_ {};
@@ -343,6 +344,9 @@ class RingAccount : public SIPAccountBase {
 
         void loadTreatedCalls();
         void saveTreatedCalls() const;
+
+        void loadTreatedMessages();
+        void saveTreatedMessages() const;
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),
