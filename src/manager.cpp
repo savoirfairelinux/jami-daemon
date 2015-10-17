@@ -1661,7 +1661,7 @@ Manager::sendCallTextMessage(const std::string& callID,
     } else {
         auto call = getCallFromCallID(callID);
         if (not call) {
-            RING_ERR("Failed to send message to %s: inexistant call ID", call->getCallId().c_str());
+            RING_ERR("Failed to send message to %s: inexistant call ID", callID.c_str());
             return;
         }
 
