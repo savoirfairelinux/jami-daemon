@@ -135,7 +135,7 @@
         "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
+        "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
     },
