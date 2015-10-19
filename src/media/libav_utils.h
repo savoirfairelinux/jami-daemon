@@ -18,12 +18,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __LIBAV_UTILS_H__
-#define __LIBAV_UTILS_H__
+#pragma once
 
 #include <vector>
 #include <map>
 #include <string>
+
+struct AVPixFmtDescriptor;
 
 namespace ring { namespace libav_utils {
 
@@ -39,6 +40,6 @@ namespace ring { namespace libav_utils {
                       char *hostname, size_t hostname_size, int *port,
                       char *path, size_t path_size);
 
-}} // namespace ring::libav_utils
+bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
-#endif // __LIBAV_UTILS_H__
+}} // namespace ring::libav_utils

@@ -151,12 +151,29 @@ videoFrameSize(int format, int width, int height)
 void
 yuv422_clear_to_black(VideoFrame& frame)
 {
-    auto libav_frame = frame.pointer();
+    const auto libav_frame = frame.pointer();
+    const auto desc = av_pix_fmt_desc_get((AVPixelFormat)libav_frame->format);
+    if (not desc)
+        return;
 
-    memset(libav_frame->data[0], 0, libav_frame->linesize[0] * libav_frame->height);
-    // 128 is the black level for U/V channels
-    memset(libav_frame->data[1], 128, libav_frame->linesize[1] * libav_frame->height / 2);
-    memset(libav_frame->data[2], 128, libav_frame->linesize[2] * libav_frame->height / 2);
+    if (not libav_utils::is_yuv_planar(*desc)) {
+        auto stride = libav_frame->linesize[0];
+        for (int y = 0; y < libav_frame->height; ++y) {
+            auto src = &libav_frame->data[0][y * stride];
+            for (int x = 0; x < libav_frame->width; ++x) {
+                src[0] = 0;
+                src[1] = 128;
+                src[2] = 0;
+                src[3] = 128;
+                src += 4;
+            }
+        }
+    } else {
+        memset(libav_frame->data[0], 0, libav_frame->linesize[0] * libav_frame->height);
+        // 128 is the black level for U/V channels
+        memset(libav_frame->data[1], 128, libav_frame->linesize[1] * (libav_frame->height >> desc->log2_chroma_w));
+        memset(libav_frame->data[2], 128, libav_frame->linesize[2] * (libav_frame->height >> desc->log2_chroma_h));
+    }
 }
 
 #endif // RING_VIDEO

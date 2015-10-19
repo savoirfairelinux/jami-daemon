@@ -69,21 +69,6 @@ VideoScaler::scale_with_aspect(const VideoFrame& input, VideoFrame& output)
                   output_frame->height, true);
 }
 
-static inline bool is_yuv_planar(const AVPixFmtDescriptor *desc)
-{
-    unsigned used_bit_mask = (1u << desc->nb_components) - 1;
-
-    if (not (desc->flags & AV_PIX_FMT_FLAG_PLANAR)
-        or desc->flags & AV_PIX_FMT_FLAG_RGB)
-        return false;
-
-    /* handle formats that do not use all planes */
-    for (unsigned i = 0; i < desc->nb_components; ++i)
-        used_bit_mask &= ~(1u << desc->comp[i].plane);
-
-    return not used_bit_mask;
-}
-
 void
 VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
                            unsigned xoff, unsigned yoff,
