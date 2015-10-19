@@ -103,7 +103,7 @@
             "dpkg-buildpackage -uc -us",
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ]
+        ],
         "ubuntu_15.10": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
@@ -123,7 +123,7 @@
             "dpkg-buildpackage -uc -us",
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ]
+        ],
     },
     "UpdateInstructions" : {
         "fedora_21" : ["yum upgrade -y"],
@@ -153,12 +153,12 @@
         "ubuntu_15.10": "",
         "ubuntu_14.04_i386": "",
         "ubuntu_15.04_i386": "",
-        "ubuntu_15.10_i386": ""
+        "ubuntu_15.10_i386": "",
     },
     "ReloadProjectCmd" : [
         "git checkout packaging",
         "git reset --hard origin/packaging",
-        "git pull"
+        "git pull",
     ],
     "AutoDeploySchedule": {
         "fedora_21" : "@midnight",
@@ -172,7 +172,7 @@
         "ubuntu_15.10": "@midnight",
         "ubuntu_14.04_i386": "@midnight",
         "ubuntu_15.04_i386": "@midnight",
-        "ubuntu_15.10_i386": "@midnight"
+        "ubuntu_15.10_i386": "@midnight",
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
