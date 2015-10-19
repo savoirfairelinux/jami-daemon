@@ -136,4 +136,18 @@ void ring_url_split(const char *url,
                  path, path_size, url);
 }
 
+bool
+is_yuv_planar(const AVPixFmtDescriptor& desc)
+{
+    if (not (desc.flags & AV_PIX_FMT_FLAG_PLANAR) or desc.flags & AV_PIX_FMT_FLAG_RGB)
+        return false;
+
+    /* handle formats that do not use all planes */
+    unsigned used_bit_mask = (1u << desc.nb_components) - 1;
+    for (unsigned i = 0; i < desc.nb_components; ++i)
+        used_bit_mask &= ~(1u << desc.comp[i].plane);
+
+    return not used_bit_mask;
+}
+
 }} // namespace ring::libav_utils
