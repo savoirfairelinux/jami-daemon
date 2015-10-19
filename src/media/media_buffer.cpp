@@ -19,11 +19,13 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
+#include "libav_utils.h"
 #include "media_buffer.h"
 #include "dring/videomanager_interface.h"
 
-#include <new>
+#include <new> // std::bad_alloc
 #include <cstdlib>
+#include <cstring> // std::memset
 
 namespace ring {
 
@@ -151,12 +153,48 @@ videoFrameSize(int format, int width, int height)
 void
 yuv422_clear_to_black(VideoFrame& frame)
 {
-    auto libav_frame = frame.pointer();
+    const auto libav_frame = frame.pointer();
+    const auto desc = av_pix_fmt_desc_get((AVPixelFormat)libav_frame->format);
+    if (not desc)
+        return;
 
-    memset(libav_frame->data[0], 0, libav_frame->linesize[0] * libav_frame->height);
-    // 128 is the black level for U/V channels
-    memset(libav_frame->data[1], 128, libav_frame->linesize[1] * libav_frame->height / 2);
-    memset(libav_frame->data[2], 128, libav_frame->linesize[2] * libav_frame->height / 2);
+    if (not libav_utils::is_yuv_planar(*desc)) {
+        // not planar
+        auto stride = libav_frame->linesize[0];
+        if (libav_frame->width % 2 or (sizeof(unsigned long) == 4)) {
+            // non even width (32bits write x-loop) or 32bits machines
+            for (int y = 0; y < libav_frame->height; ++y) {
+                auto src = &libav_frame->data[0][y * stride];
+                for (int x = 0; x < libav_frame->width; ++x) {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+                    *((uint32_t*)src) = 0x80008000;
+#else
+                    *((uint32_t*)src) = 0x00800080;
+#endif
+                    src += 4;
+                }
+            }
+        } else {
+            // even width (64bits write x-loop)
+            for (int y = 0; y < libav_frame->height; ++y) {
+                auto src = &libav_frame->data[0][y * stride];
+                for (int x = 0; x < libav_frame->width / 2; ++x) {
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+                    *((uint64_t*)src) = 0x8000800080008000;
+#else
+                    *((uint64_t*)src) = 0x0080008000800080;
+#endif
+                    src += 8;
+                }
+            }
+        }
+    } else {
+        // planar
+        std::memset(libav_frame->data[0], 0, libav_frame->linesize[0] * libav_frame->height);
+        // 128 is the black level for U/V channels
+        std::memset(libav_frame->data[1], 128, libav_frame->linesize[1] * (libav_frame->height >> desc->log2_chroma_w));
+        std::memset(libav_frame->data[2], 128, libav_frame->linesize[2] * (libav_frame->height >> desc->log2_chroma_h));
+    }
 }
 
 #endif // RING_VIDEO
