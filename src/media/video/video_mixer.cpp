@@ -128,7 +128,7 @@ VideoMixer::process()
 
     VideoFrame& output = getNewFrame();
     try {
-        output.reserve(VIDEO_PIXFMT_YUV420P, width_, height_);
+        output.reserve(VIDEO_PIXFMT_YUYV422, width_, height_);
     } catch (const std::bad_alloc& e) {
         RING_ERR("VideoFrame::allocBuffer() failed");
         return;
@@ -229,6 +229,6 @@ VideoMixer::getHeight() const
 
 int
 VideoMixer::getPixelFormat() const
-{ return VIDEO_PIXFMT_YUV420P; }
+{ return VIDEO_PIXFMT_YUYV422; }
 
 }} // namespace ring::video

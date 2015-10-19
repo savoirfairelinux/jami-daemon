@@ -115,7 +115,7 @@ int libav_pixel_format(int fmt)
     switch (fmt) {
         case video::VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
         case video::VIDEO_PIXFMT_RGBA: return PIXEL_FORMAT(RGBA);
-        case video::VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
+        case video::VIDEO_PIXFMT_YUYV422: return PIXEL_FORMAT(YUYV422);
     }
     return fmt;
 }
@@ -123,7 +123,7 @@ int libav_pixel_format(int fmt)
 int ring_pixel_format(int fmt)
 {
     switch (fmt) {
-        case PIXEL_FORMAT(YUV420P): return video::VIDEO_PIXFMT_YUV420P;
+        case PIXEL_FORMAT(YUYV422): return video::VIDEO_PIXFMT_YUYV422;
     }
     return fmt;
 }
