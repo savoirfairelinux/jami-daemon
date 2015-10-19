@@ -50,7 +50,7 @@ namespace ring { namespace video {
 
 enum VideoPixelFormat {
     VIDEO_PIXFMT_BGRA = -1,
-    VIDEO_PIXFMT_YUV420P = -2,
+    VIDEO_PIXFMT_YUYV422 = -2,
     VIDEO_PIXFMT_RGBA = -3,
 };
 
