@@ -116,17 +116,19 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
 
     // Make an offset'ed copy of output data from xoff and yoff
     const AVPixFmtDescriptor *out_desc = av_pix_fmt_desc_get((AVPixelFormat)output_frame->format);
-    if (is_yuv_planar(out_desc)) {
-        unsigned x_shift = out_desc->log2_chroma_w;
-        unsigned y_shift = out_desc->log2_chroma_h;
-
-        tmp_data_[0] = output_frame->data[0] + yoff * output_frame->linesize[0] + xoff;
-        tmp_data_[1] = output_frame->data[1] + (yoff >> y_shift) * output_frame->linesize[1] + (xoff >> x_shift);
-        tmp_data_[2] = output_frame->data[2] + (yoff >> y_shift) * output_frame->linesize[2] + (xoff >> x_shift);
-        tmp_data_[3] = nullptr;
-    } else {
-        memcpy(tmp_data_, output_frame->data, sizeof(tmp_data_));
-        tmp_data_[0] += yoff * output_frame->linesize[0] + xoff;
+    memset(tmp_data_, 0, sizeof(tmp_data_));
+    for (int i = 0; i < 4 && output_frame->linesize[i]; i++) {
+        unsigned x_shift=xoff, y_shift=yoff;
+        if (i == 1 || i == 2) {
+            x_shift = -((-x_shift) >> out_desc->log2_chroma_w);
+            y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
+        }
+#if LIBAVUTIL_VERSION_MAJOR < 56
+        auto x_step = out_desc->comp[i].step_minus1 + 1; // using deprecated api
+#else
+        auto x_step = out_desc->comp[i].step;
+#endif
+        tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i] + x_shift * x_step;
     }
 
     sws_scale(ctx_, input_frame->data, input_frame->linesize, 0,
