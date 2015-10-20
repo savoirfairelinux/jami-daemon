@@ -115,12 +115,6 @@ VideoRtpSession::restartSender()
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
     startSender();
-
-    if (sender_) {
-        if (videoLocal_)
-            videoLocal_->attach(sender_.get());
-    }
-
     setupVideoPipeline();
 }
 
@@ -218,12 +212,12 @@ VideoRtpSession::setupVideoPipeline()
     }
 }
 
-void VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
+void
+VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
 {
     RING_DBG("[call:%s] Setup video pipeline on conference %s", callID_.c_str(),
              conference.getConfID().c_str());
     videoMixer_ = conference.getVideoMixer();
-    videoMixer_->setDimensions(localVideoParams_.width, localVideoParams_.height);
 
     if (sender_) {
         // Swap sender from local video to conference video mixer
@@ -240,7 +234,8 @@ void VideoRtpSession::setupConferenceVideoPipeline(Conference& conference)
         RING_WARN("[call:%s] no receiver", callID_.c_str());
 }
 
-void VideoRtpSession::enterConference(Conference* conference)
+void
+VideoRtpSession::enterConference(Conference* conference)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -250,8 +245,11 @@ void VideoRtpSession::enterConference(Conference* conference)
     RING_DBG("[call:%s] enterConference (conf: %s)", callID_.c_str(),
              conference->getConfID().c_str());
 
-    if (send_.enabled or receiveThread_)
+    if (send_.enabled or receiveThread_) {
+        videoMixer_ = conference->getVideoMixer();
+        videoMixer_->setDimensions(localVideoParams_.width, localVideoParams_.height);
         setupConferenceVideoPipeline(*conference_);
+    }
 }
 
 void VideoRtpSession::exitConference()
