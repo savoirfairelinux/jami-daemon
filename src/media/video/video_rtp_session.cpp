@@ -114,6 +114,10 @@ VideoRtpSession::restartSender()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
+    // ensure that start has been called before restart
+    if (not socketPair_)
+        return;
+
     startSender();
     setupVideoPipeline();
 }
