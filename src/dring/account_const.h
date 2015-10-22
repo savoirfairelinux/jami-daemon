@@ -60,6 +60,8 @@ constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
 
 namespace VolatileProperties {
 
+constexpr static const char ACTIVE                    [] = "Account.active";
+
 // Volatile parameters
 namespace Registration {
 

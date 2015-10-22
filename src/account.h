@@ -156,16 +156,31 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * @return true if enabled
          *	     false otherwise
          */
-        bool isEnabled() const {
+        bool isEnabled() const noexcept {
             return enabled_;
         }
+        void setEnabled(bool enable) noexcept {
+            enabled_ = enable;
+        }
 
-        bool isVideoEnabled() const {
+        /**
+         * Tell if the account is activated
+         * (can currently be used).
+         */
+        bool isActive() const noexcept {
+            return active_;
+        }
+
+        void setActive(bool active) noexcept {
+            active_ = active;
+        }
+
+        bool isVideoEnabled() const noexcept {
             return videoEnabled_;
         }
 
-        void setEnabled(bool enable) {
-            enabled_ = enable;
+        bool isUsable() const noexcept {
+            return enabled_ and active_;
         }
 
         /**
@@ -340,11 +355,18 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::string alias_;
 
         /**
-         * Tells if the link is enabled, active.
+         * Tells if the account is enabled.
          * This implies the link will be initialized on startup.
          * Modified by the configuration (key: ENABLED)
          */
         bool enabled_;
+
+        /**
+         * Tells if the account is active now.
+         * This allows doRegister to be called.
+         * When an account is unactivated, doUnregister must be called.
+         */
+        bool active_ {true};
 
         /* If true, automatically answer calls to this account */
         bool autoAnswerEnabled_;
