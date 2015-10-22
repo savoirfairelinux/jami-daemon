@@ -490,6 +490,8 @@ class Manager {
         void setAccountDetails(const std::string& accountID,
                                const std::map<std::string, ::std::string > &details);
 
+        void setAccountActive(const std::string& accountID, bool active);
+
         /**
          * Add a new account, and give it a new account ID automatically
          * @param details The new account parameters
