@@ -77,10 +77,10 @@ DISTCLEAN_PKG += cmake-$(CMAKE_VERSION).tar.gz
 
 # libtool
 
-libtool-$(LIBTOOL_VERSION).tar.gz:
+libtool-$(LIBTOOL_VERSION).tar.xz:
 	$(call download,$(LIBTOOL_URL))
 
-libtool: libtool-$(LIBTOOL_VERSION).tar.gz
+libtool: libtool-$(LIBTOOL_VERSION).tar.xz
 	$(UNPACK)
 	$(MOVE)
 
@@ -91,7 +91,7 @@ libtool: libtool-$(LIBTOOL_VERSION).tar.gz
 	touch $@
 
 CLEAN_PKG += libtool
-DISTCLEAN_PKG += libtool-$(LIBTOOL_VERSION).tar.gz
+DISTCLEAN_PKG += libtool-$(LIBTOOL_VERSION).tar.xz
 CLEAN_FILE += .libtool
 
 # GNU tar (with xz support)
