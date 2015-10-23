@@ -76,7 +76,7 @@ class RingAccount : public SIPAccountBase {
 
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
 
-        const char* getAccountType() const {
+        const char* getAccountType() const override {
             return ACCOUNT_TYPE;
         }
 
@@ -92,20 +92,20 @@ class RingAccount : public SIPAccountBase {
          * Serialize internal state of this account for configuration
          * @param YamlEmitter the configuration engine which generate the configuration file
          */
-        virtual void serialize(YAML::Emitter &out);
+        virtual void serialize(YAML::Emitter &out) override;
 
         /**
          * Populate the internal state for this account based on info stored in the configuration file
          * @param The configuration node for this account
          */
-        virtual void unserialize(const YAML::Node &node);
+        virtual void unserialize(const YAML::Node &node) override;
 
         /**
          * Return an map containing the internal state of this account. Client application can use this method to manage
          * account info.
          * @return A map containing the account information.
          */
-        virtual std::map<std::string, std::string> getAccountDetails() const;
+        virtual std::map<std::string, std::string> getAccountDetails() const override;
 
         /**
          * Retrieve volatile details such as recent registration errors
@@ -116,17 +116,17 @@ class RingAccount : public SIPAccountBase {
         /**
          * Actually useless, since config loading is done in init()
          */
-        void loadConfig() {}
+        void loadConfig() override {}
 
         /**
          * Connect to the DHT.
          */
-        void doRegister();
+        void doRegister() override;
 
         /**
          * Disconnect from the DHT.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>());
+        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
 
         /**
          * @return pj_str_t "From" uri based on account information.
@@ -147,7 +147,7 @@ class RingAccount : public SIPAccountBase {
          * @return pj_str_t "To" uri based on @param username
          * @param username A string formatted as : "username"
          */
-        std::string getToUri(const std::string& username) const;
+        std::string getToUri(const std::string& username) const override;
 
         /**
          * In the current version of Ring, "srv" uri is obtained in the preformated
@@ -163,7 +163,7 @@ class RingAccount : public SIPAccountBase {
          * Get the contact header for
          * @return pj_str_t The contact header based on account information
          */
-        pj_str_t getContactHeader(pjsip_transport* = nullptr);
+        pj_str_t getContactHeader(pjsip_transport* = nullptr) override;
 
         void setReceivedParameter(const std::string &received) {
             receivedParameter_ = received;
@@ -204,7 +204,7 @@ class RingAccount : public SIPAccountBase {
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl);
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) override;
 
         /**
          * Create outgoing SIPCall.
@@ -225,9 +225,9 @@ class RingAccount : public SIPAccountBase {
          *      This type can be any base class of SIPCall class (included).
          */
         virtual std::shared_ptr<SIPCall>
-        newIncomingCall(const std::string& from = {});
+        newIncomingCall(const std::string& from = {}) override;
 
-        virtual bool isTlsEnabled() const {
+        virtual bool isTlsEnabled() const override {
             return true;
         }
 
@@ -235,11 +235,11 @@ class RingAccount : public SIPAccountBase {
             return true;
         }
 
-        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const {
+        virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override {
             return sip_utils::KeyExchangeProtocol::SDES;
         }
 
-        virtual bool getSrtpFallback() const {
+        virtual bool getSrtpFallback() const override {
             return false;
         }
 
@@ -277,7 +277,7 @@ class RingAccount : public SIPAccountBase {
          * Set the internal state for this account, mainly used to manage account details from the client application.
          * @param The map containing the account information.
          */
-        virtual void setAccountDetails(const std::map<std::string, std::string> &details);
+        virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
 
         /**
          * Start a SIP Call
