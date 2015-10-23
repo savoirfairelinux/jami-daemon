@@ -71,11 +71,11 @@ fi
 }
 
 check autoconf 2.69
-check automake 1.14
-check m4 1.4.16
-check libtool 2.4
+check automake 1.15
+check m4 1.4.17
+check libtool 2.4.6
 check pkg-config
-check cmake 2.8.8
+check cmake 3.2.2
 check yasm
 check_tar
 check_sed
