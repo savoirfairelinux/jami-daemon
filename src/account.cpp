@@ -304,7 +304,8 @@ std::map<std::string, std::string>
 Account::getVolatileAccountDetails() const
 {
     return {
-        {Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)}
+        {Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
+        {DRing::Account::VolatileProperties::ACTIVE, enabled_ ? TRUE_STR : FALSE_STR}
     };
 }
 

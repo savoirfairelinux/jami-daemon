@@ -49,6 +49,12 @@ DBusConfigurationManager::setAccountDetails(const std::string& accountID, const 
     DRing::setAccountDetails(accountID, details);
 }
 
+void
+DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
+{
+    DRing::setAccountActive(accountID, active);
+}
+
 auto
 DBusConfigurationManager::getAccountTemplate(const std::string& accountType) -> decltype(DRing::getAccountTemplate(accountType))
 {
