@@ -716,8 +716,8 @@ bool SIPAccount::mapPortUPnP()
 
 void SIPAccount::doRegister()
 {
-    if (not isEnabled()) {
-        RING_WARN("Account must be enabled to register, ignoring");
+    if (not isUsable()) {
+        RING_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -943,8 +943,8 @@ void SIPAccount::stopKeepAliveTimer()
 void
 SIPAccount::sendRegister()
 {
-    if (not isEnabled()) {
-        RING_WARN("Account must be enabled to register, ignoring");
+    if (not isUsable()) {
+        RING_WARN("Account must be enabled and active to register, ignoring");
         return;
     }
 
@@ -1130,6 +1130,7 @@ SIPAccount::sendUnregister()
 
     // Make sure to cancel any ongoing timers before unregister
     stopKeepAliveTimer();
+    setRegister(false);
 
     pjsip_regc *regc = getRegistrationInfo();
     if (!regc)
@@ -1145,8 +1146,6 @@ SIPAccount::sendUnregister()
                  sip_utils::sip_strerror(status).c_str());
         throw VoipLinkException("Unable to send request to unregister sip account");
     }
-
-    setRegister(false);
 }
 
 #if HAVE_TLS
@@ -2024,7 +2023,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
 void
 SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 {
-    if (!isEnabled())
+    if (!isUsable())
         return;
 
     /* Cancel any re-registration timer */
