@@ -1,0 +1,19 @@
+#!/bin/sh
+# postrm script for sflphone
+#
+# see: dh_installdeb(1)
+
+set -e
+
+package=sflphone-gnome
+
+case "$1" in
+    install|upgrade)
+        ## Clean up the previous manpage
+        if [ -f /usr/share/man/man1/sflphone-gtk.1 ]; then
+            rm /usr/share/man/man1/sflphone-gtk.1
+        fi
+    ;;
+esac
+
+exit 0

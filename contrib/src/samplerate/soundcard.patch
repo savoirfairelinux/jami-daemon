@@ -1,0 +1,14 @@
+--- a/examples/audio_out.c.orig	2014-06-18 16:52:04.269479958 -0400
++++ b/examples/audio_out.c	2014-06-18 16:52:36.789478998 -0400
+@@ -44,7 +44,11 @@
+ 
+ #include <fcntl.h>
+ #include <sys/ioctl.h>
++#if defined (__ANDROID__)
++#include <linux/soundcard.h>
++#else
+ #include <sys/soundcard.h>
++#endif
+ 
+ #define	LINUX_MAGIC		MAKE_MAGIC ('L', 'i', 'n', 'u', 'x', 'O', 'S', 'S')
+ 

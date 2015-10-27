@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://telify/content/dialog.css" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://telify/locale/lang.dtd">
+
+<dialog id="dlgTelifyConfig"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	buttons="accept,cancel,help"
+	onload="objTelifyConfig.initConfig()"
+	ondialogaccept="objTelifyConfig.onAccept()"
+	ondialogcancel=""
+	ondialoghelp="objTelifyConfig.onHelp()"
+	title="&dialog.config.title;">
+
+	<stringbundleset id="stringbundleset">
+		<stringbundle id="idTelifyStringBundle" src="chrome://telify/locale/lang.properties"/>
+	</stringbundleset>
+
+	<script type='application/x-javascript' src='chrome://telify/content/util.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/pref.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/config.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/locale/locale.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/locale/custom_preset.js'></script>
+	
+	<hbox>
+
+		<groupbox style="padding-bottom:8px;">
+		<caption label="&dialog.config.general;"/>
+			<grid>
+				<columns>
+					<column flex="1"/>
+					<column flex="2"/>
+				</columns>
+				<rows>
+					<row align="center">
+						<label value="&dialog.config.hreftype;:"/>
+						<menulist id="idTelifyPref_hreftype" onselect="objTelifyConfig.hrefTypeChanged(this.value)">
+							<menupopup>
+								<menuitem label="&dialog.config.hreftype0;" value="0"/>
+								<menuitem label="&dialog.config.hreftype1;" value="1"/>
+								<menuitem label="&dialog.config.hreftype2;" value="2"/>
+								<menuitem label="&dialog.config.hreftype3;" value="3"/>
+								<menuitem label="&dialog.config.hreftype_custom;" value="9"/>
+							</menupopup>
+						</menulist>
+					</row>
+
+					<row align="center">
+						<label value="&dialog.config.dialcc;:"/>
+						<menulist id="idTelifyPref_dialcc">
+							<menupopup>
+								<menuitem label="&dialog.config.dialcc_menu;" value="0"/>
+								<menuitem label="&dialog.config.dialcc_direct;" value="1"/>
+							</menupopup>
+						</menulist>
+					</row>
+
+					<row align="center">
+						<label value="&dialog.config.highlight;:"/>
+						<menulist id="idTelifyPref_highlight">
+							<menupopup>
+								<menuitem label="&dialog.config.highlight0;" value="0"/>
+								<menuitem label="&dialog.config.highlight1;" value="25"/>
+								<menuitem label="&dialog.config.highlight2;" value="50"/>
+								<menuitem label="&dialog.config.highlight3;" value="100"/>
+							</menupopup>
+						</menulist>
+					</row>
+					<row align="center">
+						<label value="&dialog.config.num_history;:"/>
+						<menulist id="idTelifyPref_num_history">
+							<menupopup>
+								<menuitem label="3" value="3"/>
+								<menuitem label="4" value="4"/>
+								<menuitem label="5" value="5"/>
+								<menuitem label="6" value="6"/>
+								<menuitem label="7" value="7"/>
+								<menuitem label="8" value="8"/>
+								<menuitem label="9" value="9"/>
+								<menuitem label="10" value="10"/>
+							</menupopup>
+						</menulist>
+					</row>
+					<row align="center">
+						<label value="&dialog.config.statusicon;:"/>
+						<menulist id="idTelifyPref_statusicon">
+							<menupopup>
+								<menuitem label="&dialog.config.statusicon0;" value="0" />
+								<menuitem label="&dialog.config.statusicon1;" value="1" />
+							</menupopup>
+						</menulist>
+					</row>
+					<row align="center">
+						<label value="&dialog.config.idd_prefix;"/>
+						<menulist id="idTelifyPref_idd_prefix" editable="true">
+							<menupopup>
+								<menuitem label="" value=""/>
+								<menuitem label="00" value="00"/>
+								<menuitem label="001" value="001"/>
+								<menuitem label="011" value="011"/>
+								<menuitem label="0011" value="0011"/>
+							</menupopup>
+						</menulist>
+					</row>
+				</rows>
+			</grid>
+		</groupbox>
+
+		<groupbox style="padding-bottom:8px;">
+		<caption label="&dialog.config.about;"/>
+			<vbox style="width:96px;">
+				<spacer style="height:0px;"/>
+				<hbox>
+					<image src="chrome://telify/content/icon96.png" style="width:96px;height:96px;margin-left:0px;"/>
+					<spacer/>
+				</hbox>
+				<spacer style="height:4px;"/>
+				<label id="idTelifyPref_version_label" value="" style="font-weight:bold;"/>
+				<label value="www.codepad.de" href="http://www.codepad.de" class="text-link"/>
+				<spacer flex="1"/>
+			</vbox>
+		</groupbox>
+
+	</hbox>
+	
+	<groupbox id="idTelifyPref_custom_group" style="padding-bottom:8px;">
+	<caption id="idTelifyPref_custom_caption" label="&dialog.config.custom;"/>
+	<vbox>
+		<description id="idTelifyPref_url_result" class="urlresult">
+		</description>
+
+		<menulist id="idTelifyPref_url_input" editable="true"
+			oninput="objTelifyConfig.urlChanged(this.value)" onselect="objTelifyConfig.tmplChanged(this.value)">
+			<menupopup id="idTelifyPref_url_popup">
+			</menupopup>
+		</menulist>
+
+		<grid>
+			<columns>
+				<column flex="0"/>
+				<column flex="2"/>
+				<column flex="3"/>
+			</columns>
+			<rows>
+				<row align="center" id="idTelifyPref_param1_row" style="margin-top:4px;">
+					<label id="idTelifyPref_param1_caption"/>
+					<textbox id="idTelifyPref_param1_value" emptytext="&dialog.config.replaces; $1 &dialog.config.in_template;" 
+						oninput="objTelifyConfig.paramChanged(1, this.value)"/>
+					<spacer flex="2"/>
+				</row>
+				<row align="center" id="idTelifyPref_param2_row">
+					<label id="idTelifyPref_param2_caption"/>
+					<textbox id="idTelifyPref_param2_value" emptytext="&dialog.config.replaces; $2 &dialog.config.in_template;" 
+						oninput="objTelifyConfig.paramChanged(2, this.value)"/>
+				</row>
+				<row align="center" id="idTelifyPref_param3_row">
+					<label id="idTelifyPref_param3_caption"/>
+					<textbox id="idTelifyPref_param3_value" emptytext="&dialog.config.replaces; $3 &dialog.config.in_template;" 
+						oninput="objTelifyConfig.paramChanged(3, this.value)"/>
+				</row>
+				<row align="center" style="margin-top:4px;">
+					<label value="&dialog.config.opentype;:"/>
+					<menulist id="idTelifyPref_opentype">
+						<menupopup>
+							<menuitem label="&dialog.config.opentype0;" value="0"/>
+							<menuitem label="&dialog.config.opentype1;" value="1"/>
+							<menuitem label="&dialog.config.opentype2;" value="2"/>
+							<menuitem label="&dialog.config.opentype3;" value="3"/>
+						</menupopup>
+					</menulist>
+				</row>
+			</rows>
+		</grid>
+
+		
+	</vbox>
+	</groupbox>
+	
+</dialog>

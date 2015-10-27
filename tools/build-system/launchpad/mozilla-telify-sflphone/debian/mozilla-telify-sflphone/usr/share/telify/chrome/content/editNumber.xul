@@ -1,0 +1,45 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="chrome://global/skin/global.css" type="text/css"?>
+<?xml-stylesheet href="chrome://telify/content/dialog.css" type="text/css"?>
+
+<!DOCTYPE dialog SYSTEM "chrome://telify/locale/lang.dtd">
+
+<dialog id="dlgTelifyEditNumber"
+	xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+	buttons="accept,cancel"
+	buttonlabelaccept="&dialog.edit.dial;"
+	onload="objTelifyEditNumber.initNumberEdit()"
+	ondialogaccept="objTelifyEditNumber.setNumberEditReturnValue(true)"
+	ondialogcancel="objTelifyEditNumber.setNumberEditReturnValue(false)"
+	title="&dialog.edit.title;">
+
+	<stringbundleset id="stringbundleset">
+		<stringbundle id="idTelifyStringBundle" src="chrome://telify/locale/lang.properties"/>
+	</stringbundleset>
+
+	<script type='application/x-javascript' src='chrome://telify/content/jshashtable.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/util.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/pref.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/country_data.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/locale/country_locale.js'></script>
+	<script type='application/x-javascript' src='chrome://telify/content/editNumber.js'></script>
+
+	<vbox>
+		<hbox align="center">
+			<textbox id="idTelifyInputCC" class="telInputCC" oninput="objTelifyEditNumber.ccChanged()" onkeypress="objTelifyEditNumber.checkKey(event,'+0123456789')"/>
+			<label value="&#8211;"/>
+			<textbox id="idTelifyInputNr" flex="1" onkeypress="objTelifyEditNumber.checkKey(event,'0123456789')"/>
+		</hbox>
+		<listbox id="idTelifyCountryCodeList" flex="1" width="280" height="250" onselect="objTelifyEditNumber.updateListSelection()">
+			<listhead>
+				<listheader id="idTelifyColCode" class="telInputCC" label="&dialog.edit.code;" onclick="objTelifyEditNumber.sortCountryCodeList(0)"/>
+				<listheader id="idTelifyColCountry" label="&dialog.edit.country;" onclick="objTelifyEditNumber.sortCountryCodeList(1)"/>
+			</listhead>
+			<listcols>
+				<listcol flex="0"/>
+				<listcol flex="1"/>
+			</listcols>
+		</listbox>
+	</vbox>
+
+</dialog>

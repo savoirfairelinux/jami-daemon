@@ -1,0 +1,39 @@
+<!ENTITY menu.edit_number "Telefonnummer bearbeiten">
+<!ENTITY menu.selection "Rufnummernauswahl">
+<!ENTITY menu.config "Einstellungen">
+<!ENTITY menu.onlinehelp "Online-Hilfe">
+<!ENTITY dialog.edit.title "Telefonnummer bearbeiten">
+<!ENTITY dialog.edit.code "Vorwahl">
+<!ENTITY dialog.edit.country "Land">
+<!ENTITY dialog.edit.dial "W&#228;hlen">
+<!ENTITY dialog.config.title "Telify-Einstellungen">
+<!ENTITY dialog.config.general "Allgemeine Einstellungen">
+<!ENTITY dialog.config.custom "Eigene URL">
+<!ENTITY dialog.config.about "Info">
+<!ENTITY dialog.config.replaces "Ersetzt">
+<!ENTITY dialog.config.in_template "in der Vorlage">
+<!ENTITY dialog.config.empty_url "Vorlage unten eingeben oder aus der Liste ausw&#228;hlen">
+<!ENTITY dialog.config.idd_prefix "Ersetze '+' durch">
+<!ENTITY dialog.config.hreftype "Verwendetes Protokoll">
+<!ENTITY dialog.config.hreftype0 "tel:">
+<!ENTITY dialog.config.hreftype1 "callto:">
+<!ENTITY dialog.config.hreftype2 "skype:">
+<!ENTITY dialog.config.hreftype3 "sip:">
+<!ENTITY dialog.config.hreftype_custom "Eigene URL">
+<!ENTITY dialog.config.dialcc "Bei vorhandener Landesvorwahl">
+<!ENTITY dialog.config.dialcc_menu "&#214;ffne Menu">
+<!ENTITY dialog.config.dialcc_direct "W&#228;hle direkt">
+<!ENTITY dialog.config.highlight "Texthervorhebung">
+<!ENTITY dialog.config.highlight0 "Keine">
+<!ENTITY dialog.config.highlight1 "Leicht">
+<!ENTITY dialog.config.highlight2 "Mittel">
+<!ENTITY dialog.config.highlight3 "Stark">
+<!ENTITY dialog.config.num_history "Anzahl der Nummerneintr&#228;ge">
+<!ENTITY dialog.config.statusicon "Status-Icon anzeigen">
+<!ENTITY dialog.config.statusicon0 "Nein">
+<!ENTITY dialog.config.statusicon1 "Ja">
+<!ENTITY dialog.config.opentype "&#214;ffne Link">
+<!ENTITY dialog.config.opentype0 "im Hintergrund">
+<!ENTITY dialog.config.opentype1 "in einem neuen Fenster">
+<!ENTITY dialog.config.opentype2 "in einem neuen Tab ohne Fokus">
+<!ENTITY dialog.config.opentype3 "in einem neuen Tab mit Fokus">

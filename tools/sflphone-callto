@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# This script can be used as a callto: (or other) protocol handler in
+# Mozilla Firefox-based browser.
+# In Firefox use Preferences > Applications and set the callto handler
+# to this script.
+
+# The sflphone daemon config file
+RESFILE=~/.config/sflphone/sflphoned.yml
+
+# Parse sflphonedrc and get default account id string
+if [ -f "$RESFILE" ]; then
+
+# Test if a SFLphone client is already open, if not open a new one
+# Opening a new client will start sflphoned if not already running
+SFLPHONEC=`ps -A | grep ring-client`
+if [ "$SFLPHONEC" = "" ]; then
+    ring-client-gnome&
+fi
+
+# FIXME: this doesn't check if account is enabled, and is unreadable/unmaintainable.
+# D-Bus API should be fixed so that we can simply dial and let the daemon worry
+# about which account (default account? most recently used?) should place the
+# call.
+#
+# Use first ID
+ACCOUNTID=`grep order $RESFILE | sed -e 's/order: IP2IP\///' -e 's/\/.*//' | tr -d ' '`
+
+else
+    echo Fatal: Can't find sflphoned.yml config file.
+    exit 1
+fi
+
+# Check 1st argument (phone number)
+if [ -z $1 ]; then
+    echo "Error: argument 1 (phone number) not provided."
+    exit 1
+fi
+
+# Cleanup destination, keeping numbers only
+TO="`echo $1 | sed -e 's/[^0123456789]//g'`"
+
+# Generate call id.
+CALLID=${RANDOM}$$
+
+dbus-send                                           \
+    --type="method_call"                            \
+    --dest="org.sflphone.SFLphone"                  \
+    "/org/sflphone/SFLphone/CallManager"            \
+    "org.sflphone.SFLphone.CallManager.placeCall"   \
+    string:"$ACCOUNTID"                             \
+    string:"$CALLID"                                \
+    string:"$TO"
+
+exit 0
+
+# EOF

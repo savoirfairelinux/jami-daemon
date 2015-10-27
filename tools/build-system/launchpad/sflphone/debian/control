@@ -1,0 +1,12 @@
+Package: sflphone
+Section: gnome
+Priority: optional
+Architecture: all
+Depends: sflphone-gnome, sflphone-gnome
+Maintainer: Savoir-faire Linux Inc <emmanuel.milou@savoirfairelinux.com>
+Description: metapackage providing the GNOME client for SFLphone
+ Provide a GNOME client for SFLphone.
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.

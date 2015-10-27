@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+ <head>
+  <title>$spec.title &mdash v$spec.version</title>
+  <link rel="stylesheet" href="style.css" type="text/css"/>
+ </head>
+ <body>
+  <div class="header">
+   <h1>$spec.title</h1>
+   <a href="#interfaces">Interfaces</a>
+   (<a href="interfaces.html">Compact</a>)
+   | <a href="generic-types.html">Generic Types</a>
+   | <a href="errors.html">Errors</a>
+   | <a href="fullindex.html">Full Index</a>
+  </div>
+
+  <div class="main">
+  <h3 class="version">Version $spec.version</h3>
+  <p class="copyrights">
+   #echo '<br/>'.join($spec.copyrights)
+  </p>
+  $spec.license
+
+  <a name="interfaces"></a>
+  <h3>Interfaces</h3>
+  <ul>
+  #def output($items)
+   #for $item in $items
+    #if $item.__class__.__name__ == 'Section'
+     <li class="chapter">$item.short_name</li>
+     $item.get_docstring()
+     <ul>
+      $output($item.items)
+     </ul>
+    #else
+     #if $item.causes_havoc
+      <li class="causes-havoc">
+     #elif $item.deprecated
+      <li class="deprecated">
+     #else
+      <li>
+     #end if
+      <a href="$item.get_url()">$item.name</a>
+      #if $item.causes_havoc
+       (unstable)
+      #elif $item.deprecated
+       (deprecated)
+      #end if
+     </li>
+    #end if
+   #end for
+  #end def
+  $output($spec.items)
+  </ul>
+
+  <a name="other"></a>
+  <h3>Other</h3>
+  <ul>
+   <li><a href="generic-types.html">Generic Types</a></li>
+   <li><a href="errors.html">Errors</a></li>
+  </ul>
+
+  </div>
+ </body>
+</html>

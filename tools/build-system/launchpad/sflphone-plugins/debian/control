@@ -1,0 +1,20 @@
+Source: sflphone-plugins
+Maintainer: SavoirFaireLinux Inc <julien.bonjean@savoirfairelinux.com>
+Section: gnome
+Priority: optional
+Build-Depends: debhelper, libgcc1, autoconf, automake, libtool, libgconf2-dev, libgtk-3-dev, libebook1.2-dev, libedataserver1.2-dev
+Standards-Version: 3.7.3
+
+Package: sflphone-plugins
+Priority: optional
+Architecture: any
+Depends: sflphone-gnome (=${source:Version}) | sflphone-gnome-video (=${source:Version}), ${shlibs:Depends}, ${misc:Depends}
+Replaces: sflphone
+Conflicts: sflphone
+Homepage: http://www.sflphone.org
+Description: Evolution addressbook plugin for SFLphone
+ Integrate evolution addressbook functionality to SFLphone.
+ SFLphone is meant to be a robust enterprise-class desktop phone.
+ SFLphone is released under the GNU General Public License.
+ SFLphone is being developed by the global community, and maintained by
+ Savoir-faire Linux, a Montreal, Quebec, Canada-based Linux consulting company.

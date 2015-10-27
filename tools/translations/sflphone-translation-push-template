@@ -1,0 +1,38 @@
+#!/bin/bash
+#
+# Script to push up-to-date template file to Launchpad.
+#
+# Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+
+set -x
+
+# This is an environment variable provided by Jenkins. It points to the repository's root
+cd ${WORKSPACE}
+
+WORKING_DIR=${WORKSPACE}/gnome/po
+BZR_DIR=${WORKING_DIR}/tmp
+BZR=bzr
+BZR_BRANCH="lp:sflphone"
+
+# Clone Bazaar branch that contains Launchpad translations
+cd ${WORKING_DIR}
+if [ -e $BZR_DIR ] ; then
+  # Remove the directory first
+  rm -rf $BZR_DIR
+fi
+$BZR branch $BZR_BRANCH $BZR_DIR
+
+# Update the template file with the latest strings
+cd ${WORKSPACE}/gnome
+./autogen.sh
+./configure --prefix=/usr
+cd ${WORKING_DIR}
+make sflphone.pot
+
+# Add the new template file to the Bazaar repository
+cp sflphone.pot $BZR_DIR/sflphone
+cd $BZR_DIR/sflphone
+$BZR commit sflphone.pot --message "[Translations] Update POT file"
+$BZR push $BZR_BRANCH
+
+exit 0;

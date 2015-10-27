@@ -1,0 +1,10 @@
+To push packages for a new Ubuntu distribution on launchpad, you'll need to
+modify the following files:
+
+tools/build-system/launchpad/dput.conf
+tools/build-system/setenv.sh
+
+See commit 1b19e3869aa5e4632b8b043f47024297218ed2c5 for an example.
+
+In addition, you'll have to modify the sflphone-package-manager job on Jenkins, specifically
+Configure->Build->Execute Shell (add new distro).

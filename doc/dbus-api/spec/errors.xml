@@ -1,0 +1,417 @@
+<?xml version="1.0" ?>
+<tp:errors xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0" namespace="org.freedesktop.Telepathy.Error">
+  <tp:error name="Network Error">
+    <tp:docstring>
+    Raised when there is an error reading from or writing to the network.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Not Implemented">
+    <tp:docstring>
+    Raised when the requested method, channel, etc is not available on this connection.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Invalid Argument">
+    <tp:docstring>
+    Raised when one of the provided arguments is invalid.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Not Available">
+    <tp:docstring>
+    Raised when the requested functionality is temporarily unavailable.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Permission Denied">
+    <tp:docstring>
+    The user is not permitted to perform the requested operation.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Disconnected">
+    <tp:docstring>
+      The connection is not currently connected and cannot be used.
+      This error may also be raised when operations are performed on a
+      Connection for which
+      <tp:dbus-ref namespace="org.freedesktop.Telepathy.Connection">StatusChanged</tp:dbus-ref>
+      has signalled status Disconnected for reason None.
+
+      <tp:rationale>
+        The second usage corresponds to None in the
+        <tp:type>Connection_Status_Reason</tp:type> enum; if a better reason
+        is available, the corresponding error should be used instead.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Invalid Handle">
+    <tp:docstring>
+    The handle specified is unknown on this channel or connection.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Channel.Banned">
+    <tp:docstring>
+    You are banned from the channel.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Channel.Full">
+    <tp:docstring>
+    The channel is full.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Channel.Invite Only">
+    <tp:docstring>
+    The requested channel is invite-only.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Not Yours">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      <p>The requested channel or other resource already exists, and another
+        user interface in this session is responsible for it.</p>
+
+      <p>User interfaces SHOULD handle this error unobtrusively, since it
+        indicates that some other user interface is already processing the
+        channel.</p>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cancelled">
+    <tp:docstring>
+      Raised by an ongoing request if it is cancelled by user request before
+      it has completed, or when operations are performed on an object which
+      the user has asked to close (for instance, a Connection where the user
+      has called Disconnect, or a Channel where the user has called Close).
+
+      <tp:rationale>
+        The second form can be used to correspond to the Requested member in
+        the <tp:type>Connection_Status_Reason</tp:type> enum, or to
+        to represent the situation where disconnecting a Connection,
+        closing a Channel, etc. has been requested by the user but this
+        request has not yet been acted on, for instance because the
+        service will only act on the request when it has finished processing
+        an event queue.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Authentication Failed">
+    <tp:docstring>
+      Raised when authentication with a service was unsuccessful.
+      <tp:rationale>
+        This corresponds to Authentication_Failed in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Encryption Not Available">
+    <tp:docstring>
+      Raised if a user request insisted that encryption should be used,
+      but encryption was not actually available.
+
+      <tp:rationale>
+        This corresponds to part of Encryption_Error in the
+        <tp:type>Connection_Status_Reason</tp:type> enum. It's been separated
+        into a distinct error here because the two concepts that were part
+        of EncryptionError seem to be things that could reasonably appear
+        differently in the UI.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Encryption Error">
+    <tp:docstring>
+      Raised if encryption appears to be available, but could not actually be
+      used (for instance if SSL/TLS negotiation fails).
+      <tp:rationale>
+        This corresponds to part of Encryption_Error in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Not Provided">
+    <tp:docstring>
+      Raised if the server did not provide a SSL/TLS certificate. This error
+      MUST NOT be used to represent the absence of a client certificate
+      provided by the Telepathy connection manager.
+      <tp:rationale>
+        This corresponds to Cert_Not_Provided in the
+        <tp:type>Connection_Status_Reason</tp:type> enum. That error
+        explicitly applied only to server SSL certificates, so this one
+        is similarly limited; having the CM present a client certificate
+        is a possible future feature, but it should have its own error
+        handling.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Untrusted">
+    <tp:docstring>
+      Raised if the server provided a SSL/TLS certificate signed by an
+      untrusted certifying authority. This error SHOULD NOT be used to
+      represent a self-signed certificate: see the Self Signed error for that.
+      <tp:rationale>
+        This corresponds to Cert_Untrusted in the
+        <tp:type>Connection_Status_Reason</tp:type> enum, with a clarification
+        to avoid ambiguity.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Expired">
+    <tp:docstring>
+      Raised if the server provided an expired SSL/TLS certificate.
+      <tp:rationale>
+        This corresponds to Cert_Expired in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Not Activated">
+    <tp:docstring>
+      Raised if the server provided an SSL/TLS certificate that will become
+      valid at some point in the future.
+      <tp:rationale>
+        This corresponds to Cert_Not_Activated in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Fingerprint Mismatch">
+    <tp:docstring>
+      Raised if the server provided an SSL/TLS certificate that did not have
+      the expected fingerprint.
+      <tp:rationale>
+        This corresponds to Cert_Fingerprint_Mismatch in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Hostname Mismatch">
+    <tp:docstring>
+      Raised if the server provided an SSL/TLS certificate that did not match
+      its hostname.
+      <tp:rationale>
+        This corresponds to Cert_Hostname_Mismatch in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Self Signed">
+    <tp:docstring>
+      Raised if the server provided an SSL/TLS certificate that is self-signed
+      and untrusted.
+      <tp:rationale>
+        This corresponds to Cert_Hostname_Mismatch in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Cert.Invalid">
+    <tp:docstring>
+      Raised if the server provided an SSL/TLS certificate that is
+      unacceptable in some way that does not have a more specific error.
+      <tp:rationale>
+        This corresponds to Cert_Other_Error in the
+        <tp:type>Connection_Status_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Not Capable">
+    <tp:docstring>
+    Raised when requested functionality is unavailable due to contact
+    not having required capabilities.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Offline">
+    <tp:docstring>
+      Raised when requested functionality is unavailable because a contact is
+      offline.
+
+      <tp:rationale>
+        This corresponds to Offline in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Channel.Kicked">
+    <tp:docstring>
+      Used to represent a user being ejected from a channel by another user,
+      for instance being kicked from a chatroom.
+
+      <tp:rationale>
+        This corresponds to Kicked in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Busy">
+    <tp:docstring>
+      Used to represent a user being removed from a channel because of a
+      "busy" indication. This error SHOULD NOT be used to represent a server
+      or other infrastructure being too busy to process a request - for that,
+      see ServerBusy.
+
+      <tp:rationale>
+        This corresponds to Busy in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="No Answer">
+    <tp:docstring>
+      Used to represent a user being removed from a channel because they did
+      not respond, e.g. to a StreamedMedia call.
+
+      <tp:rationale>
+        This corresponds to No_Answer in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Does Not Exist">
+    <tp:docstring>
+      Raised when the requested user does not, in fact, exist.
+
+      <tp:rationale>
+        This corresponds to Invalid_Contact in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum, but can also be
+        used to represent other things not existing (like chatrooms, perhaps).
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Terminated">
+    <tp:docstring>
+      Raised when a channel is terminated for an unspecified reason. In
+      particular, this error SHOULD be used whenever normal termination of
+      a 1-1 StreamedMedia call by the remote user is represented as a D-Bus
+      error name.
+
+      <tp:rationale>
+        This corresponds to None in the
+        <tp:type>Channel_Group_Change_Reason</tp:type> enum.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Connection Refused">
+    <tp:docstring>
+      Raised when a connection is refused.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Connection Failed">
+    <tp:docstring>
+      Raised when a connection can't be established.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Connection Lost">
+    <tp:docstring>
+      Raised when a connection is broken.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Already Connected">
+    <tp:docstring>
+      Raised when the user attempts to connect to an account but they are
+      already connected (perhaps from another client or computer), and the
+      protocol or account settings do not allow this.
+
+      <tp:rationale>
+        XMPP can have this behaviour if the user chooses the same resource
+        in both clients (it is server-dependent whether the result is
+        AlreadyConnected on the new connection, ConnectionReplaced on the
+        old connection, or two successful connections).
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Connection Replaced">
+    <tp:docstring>
+      Raised by an existing connection to an account if it is replaced by
+      a new connection (perhaps from another client or computer).
+
+      <tp:rationale>
+        In MSNP, when connecting twice with the same Passport, the new
+        connection "wins" and the old one is automatically disconnected.
+        XMPP can also have this behaviour if the user chooses the same
+        resource in two clients (it is server-dependent whether the result is
+        AlreadyConnected on the new connection, ConnectionReplaced on the
+        old connection, or two successful connections).
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Registration Exists">
+    <tp:docstring>
+      Raised during in-band registration if the server indicates that the
+      requested account already exists.
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Service Busy">
+    <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
+      Raised if a server or some other piece of infrastructure cannot process
+      the request, e.g. due to resource limitations. Clients MAY try again
+      later.
+
+      <tp:rationale>
+        This is not the same error as Busy, which indicates that a
+        <em>user</em> is busy.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:error name="Resource Unavailable">
+    <tp:docstring>
+      Raised if a request cannot be satisfied because a process local to the
+      user has insufficient resources. Clients MAY try again
+      later.
+
+      <tp:rationale>
+        For instance, the <tp:dbus-ref
+          namespace="org.freedesktop.Telepathy">ChannelDispatcher</tp:dbus-ref>
+        might raise this error for some or all channel requests if it has
+        detected that there is not enough free memory.
+      </tp:rationale>
+    </tp:docstring>
+  </tp:error>
+
+  <tp:copyright>Copyright © 2005-2009 Collabora Limited</tp:copyright>
+  <tp:copyright>Copyright © 2005-2009 Nokia Corporation</tp:copyright>
+  <tp:license xmlns="http://www.w3.org/1999/xhtml">
+<p>This library is free software; you can redistribute it and/or
+modify it under the terms of the GNU Lesser General Public
+License as published by the Free Software Foundation; either
+version 2.1 of the License, or (at your option) any later version.</p>
+
+<p>This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+Lesser General Public License for more details.</p>
+
+<p>You should have received a copy of the GNU Lesser General Public
+License along with this library; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.</p>
+  </tp:license>
+</tp:errors>

@@ -1,0 +1,27 @@
+= Coding standards =
+
+Please follow our coding standards when developing
+http://projects.savoirfairelinux.com/projects/ring-daemon/wiki/Daemon_Coding_Rules
+
+= Gerrit workflow =
+
+We are now using Gerrit as a code review tool.
+Wiki documentation: http://projects.savoirfairelinux.com/projects/ring/wiki/WorkingWithGerrit
+
+== commit messages ==
+
+Use Issue: followed by the ticket number
+
+== commit-msg hook ==
+
+You may want to install the commit-msg hook that inserts a Change-Id on commit messages:
+$ gitdir=$(git rev-parse --git-dir); scp -p -P 29420 username@gerrit-ring.savoirfairelinux.com:hooks/commit-msg ${gitdir}/hooks/
+
+Other documentation source:
+
+* http://strongspace.com/rtyler/public/gerrit-jenkins-notes.pdf
+* https://wiki.jenkins-ci.org/display/JENKINS/Gerrit+Trigger
+
+Thank you team!
+
+Test

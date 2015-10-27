@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd" "">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+ <head>
+  <title>Generic Types</title>
+  <link rel="stylesheet" href="style.css" type="text/css"/>
+ </head>
+ <body>
+  <div class="header">
+  <h1>Generic Types</h1>
+   <a href="index.html">Interface Index</a>
+   (<a href="interfaces.html">Compact</a>)
+   | <a href="#summary">Summary</a>
+   | <a href="#types">Types</a>
+  </div>
+  <div class="main">
+    <div class="summary">
+     <a name="summary"></a>
+     <h3>Generic Types</h3>
+     <table class="summary">
+      #for $type in $spec.generic_types
+       #if $type.deprecated
+        <tr class="deprecated">
+       #else
+        <tr>
+       #end if
+       <td><a href="$type.get_url()">$type.short_name</a></td>
+       <td>$type.get_type_name()</td>
+       <td>$type.dbus_type</td>
+       <td>
+        #if $type.deprecated: (deprecated)
+       </td>
+      </tr>
+      #end for
+     </table>
+    </div>
+
+   <div class="outset types type">
+    <a name="types"></a>
+    <h1>Generic Types</h1>
+    #for $type in $spec.generic_types
+     <div class="inset type">
+      <a name="$type.name"></a>
+      <span class="permalink">$type.get_type_name() (<a href="$type.get_url()">Permalink</a>)</span>
+      <h2>
+       $type.short_name &mdash; $type.dbus_type
+      </h2>
+
+      $type.get_added()
+      $type.get_deprecated()
+      $type.get_docstring()
+      $type.get_breakdown()
+     </div>
+    #end for
+   </div>
+   </div>
+
+ </body>
+</html>

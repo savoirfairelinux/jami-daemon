@@ -1,0 +1,16 @@
+#!/bin/sh
+# postrm script for sflphone
+#
+# see: dh_installdeb(1)
+
+set -e
+
+package=sflphone
+
+case "$1" in
+    install|upgrade)
+        # Clear the old dbus-c++ and iax2 if presents
+    ;;
+esac
+
+exit 0

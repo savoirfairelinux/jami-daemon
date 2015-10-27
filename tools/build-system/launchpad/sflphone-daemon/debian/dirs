@@ -1,0 +1,9 @@
+usr/bin
+usr/lib
+usr/lib/sflphone
+usr/share/applications
+usr/share/dbus-1/services
+usr/share/sflphone/ringtones
+usr/share/locale
+usr/share/doc
+usr/share/man

@@ -1,0 +1,10 @@
+--- a/programs/sndfile-play.c.orig	2014-06-26 18:33:49.000000000 -0400
++++ b/programs/sndfile-play.c	2014-06-26 18:33:52.000000000 -0400
+@@ -63,7 +63,6 @@
+ 	#include 	<sys/soundcard.h>
+ 
+ #elif (defined (__MACH__) && defined (__APPLE__))
+-	#include <Carbon.h>
+ 	#include <CoreAudio/AudioHardware.h>
+ 
+ #elif defined (HAVE_SNDIO_H)

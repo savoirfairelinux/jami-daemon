@@ -1,0 +1,56 @@
+#!/bin/bash
+# postinst script for sflphone-daemon
+#
+# see: dh_installdeb(1)
+
+# Script to copy and move, if exists, configuration file sflphonedrc and history in the XDG directory
+# Freedesktop specifications: http://standards.freedesktop.org/basedir-spec/latest/
+
+set -e
+
+INST_CONFIG="$HOME/.sflphone/sflphonedrc";
+INST_DATA="$HOME/.sflphone/history";
+INST_CACHE="$HOME/.sflphone/sfl.pid";
+
+NEW_INST_CONFIG=
+NEW_INST_DATA=
+NEW_INST_CACHE=
+
+# Set the XDG CONFIG directory to the default one or to the path set in the environment variable
+if [ -z $XDG_CONFIG_HOME ]; then
+	NEW_INST_CONFIG=$HOME"/.config/sflphone/";  # This is the standard path
+else
+	NEW_INST_CONFIG=$XDG_CONFIG_HOME;
+fi;
+
+# Set the XDG DATA directory to the default one or to the path set in the environment variable
+if [ -z $XDG_DATA_HOME ]; then
+	NEW_INST_DATA=$HOME"/.local/share/sflphone/";  # This is the standard path
+else
+	NEW_INST_DATA=$XDG_DATA_HOME;
+fi;
+
+# Move the configuration file
+if [ -f $INST_CONFIG ] ; then
+	echo "Moving the configuration file into $NEW_INST_CONFIG directory";
+	if [ ! -d $NEW_INST_CONFIG ]; then
+		mkdir $NEW_INST_CONFIG;
+	fi
+	mv $INST_CONFIG $NEW_INST_CONFIG;
+fi
+
+# Move the history
+if [ -f $INST_DATA ] ; then
+	echo "Moving the history file into $NEW_INST_DATA directory";
+	if [ ! -d $NEW_INST_DATA ]; then
+		mkdir $NEW_INST_DATA;
+	fi
+	mv $INST_DATA $NEW_INST_DATA;
+fi
+
+# Remove the directory
+# rmdir $HOME"/.sflphone";
+
+echo "You may remove the $HOME/.sflphone, the application won't use it anymore, but the XDG directories instead. Thank you.";
+
+exit 0

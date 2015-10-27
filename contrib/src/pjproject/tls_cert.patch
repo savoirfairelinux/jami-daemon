@@ -1,0 +1,10 @@
+--- a/pjlib/include/pj/ssl_sock.h
++++ b/pjlib/include/pj/ssl_sock.h
+@@ -181,6 +181,8 @@ typedef struct pj_ssl_cert_info {
+     } subj_alt_name;               /**< Subject alternative
+                                         name extension         */
+ 
++    pj_str_t cert_raw;
++
+ } pj_ssl_cert_info;
+

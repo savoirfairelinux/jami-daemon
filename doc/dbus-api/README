@@ -1,0 +1,7 @@
+SFLphone D-Bus API documentation. Generated with xsltproc.
+
+Wiki reference: https://projects.savoirfairelinux.com/wiki/sflphone/Dbus-API
+
+Run Makefile to generate the HTML API documentation, from the xml interfaces in *sflphone-common/src/dbus*.
+
+The documentation is generated in *sflphone-common/doc/dbus-api/doc/spec*
