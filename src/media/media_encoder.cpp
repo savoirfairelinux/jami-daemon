@@ -2,6 +2,7 @@
  *  Copyright (C) 2013-2015 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <Eloi.Bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,6 +76,7 @@ void MediaEncoder::setOptions(const MediaDescription& args)
 
     av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
     av_dict_set(&options_, "max_rate", ring::to_string(args.codec->bitrate).c_str(), 0);
+    av_dict_set(&options_, "crf", ring::to_string(args.codec->quality).c_str(), 0);
 
     if (args.codec->systemCodecInfo.mediaType == MEDIA_AUDIO) {
         auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args.codec);
@@ -140,17 +142,30 @@ MediaEncoder::openOutput(const char *filename,
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
-    encoderCtx_->rc_buffer_size = maxBitrate;
-    RING_DBG("Using max bitrate %d", maxBitrate );
+    auto crf = atoi(av_dict_get(options_, "crf", NULL, 0)->value);
+
 
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
-        // For H264 : define max bitrate in rc_max_rate
-        encoderCtx_->rc_max_rate = maxBitrate;
+        // For H264 :
+        // 1- if quality is set use it
+        // 2- otherwise set rc_max_rate and rc_buffer_size
+        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+            av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
+            RING_DBG("Using quality factor %d", crf);
+        } else {
+            encoderCtx_->rc_buffer_size = maxBitrate;
+            encoderCtx_->rc_max_rate = maxBitrate;
+            RING_DBG("Using max bitrate %d", maxBitrate );
+        }
 
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
+        // For VP8 :
+        // 1- if quality is set use it
+        // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
+        // 2- otherwise set rc_max_rate and rc_buffer_size
         // Using information given on this page:
         // http://www.webmproject.org/docs/encoder-parameters/
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
@@ -161,11 +176,22 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
-        // For VP8 : define max bitrate in bit_rate
+
+        encoderCtx_->rc_buffer_size = maxBitrate;
         encoderCtx_->bit_rate = maxBitrate;
+        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+            av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
+            RING_DBG("Using quality factor %d", crf);
+        } else {
+            RING_DBG("Using Max bitrate %d", maxBitrate);
+        }
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
-        // For MPEG4 : define max bitrate in bit_rate
-        encoderCtx_->bit_rate = maxBitrate;
+        // For MPEG4 :
+        // No CRF avaiable.
+        // Use CBR (set bitrate)
+        encoderCtx_->rc_buffer_size = maxBitrate;
+        encoderCtx_->bit_rate = encoderCtx_->rc_min_rate = encoderCtx_->rc_max_rate =  maxBitrate;
+        RING_DBG("Using Max bitrate %d", maxBitrate);
     }
 
     int ret;
