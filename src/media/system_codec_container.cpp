@@ -46,18 +46,32 @@ SystemCodecContainer::~SystemCodecContainer()
 void
 SystemCodecContainer::initCodecConfig()
 {
+#ifdef RING_VIDEO
+    auto minH264 = SystemCodecInfo::DEFAULT_H264_MIN_QUALITY;
+    auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
+    auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
+    auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
+#endif
     availableCodecList_ = {
 #ifdef RING_VIDEO
         /* Define supported video codec*/
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               DEFAULT_VIDEO_BITRATE,
+                                               minH264,
+                                               maxH264),
+                                               //SystemCodecInfo::DEFAULT_H264_MIN_QUALITY,
+                                               //SystemCodecInfo::DEFAULT_H264_MAX_QUALITY),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               DEFAULT_VIDEO_BITRATE,
+                                               minVP8,
+                                               maxVP8),
+                                               //SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY,
+                                               //SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
