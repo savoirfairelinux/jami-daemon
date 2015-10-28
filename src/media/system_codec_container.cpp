@@ -52,12 +52,16 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               DEFAULT_VIDEO_BITRATE,
+                                               DEFAULT_H264_MIN_QUALITY
+                                               DEFAULT_H264_MAX_QUALITY),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               DEFAULT_VIDEO_BITRATE,
+                                               DEFAULT_VP8_MIN_QUALITY,
+                                               DEFAULT_VP8_MAX_QUALITY),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",

@@ -94,11 +94,13 @@ SystemVideoCodecInfo::SystemVideoCodecInfo(unsigned m_avcodecId,
                                            std::string m_libName,
                                            CodecType m_type,
                                            unsigned m_bitrate,
+                                           unsigned m_minQuality,
+                                           unsigned m_maxQuality,
                                            unsigned m_payloadType,
                                            unsigned m_frameRate,
                                            unsigned m_profileId)
     : SystemCodecInfo(m_avcodecId, m_name, m_libName, MEDIA_VIDEO,
-                      m_type, m_bitrate, m_payloadType)
+                      m_type, m_bitrate, m_payloadType, m_minQuality, m_maxQuality)
     , frameRate(m_frameRate), profileId(m_profileId)
 {}
 
@@ -187,6 +189,9 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::BITRATE, to_string(bitrate)},
         {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, to_string(systemCodecInfo.maxBitrate)},
         {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, to_string(systemCodecInfo.minBitrate)},
+        {DRing::Account::ConfProperties::CodecInfo::QUALITY, to_string(quality)},
+        {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, to_string(systemCodecInfo.maxQuality)},
+        {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, to_string(systemCodecInfo.minQuality)},
         {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)}
         };
 }
@@ -201,6 +206,10 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
         frameRate = ring::stoi(it->second);
+
+    it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
+    if (it != details.end())
+        quality = ring::stoi(it->second);
 }
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()

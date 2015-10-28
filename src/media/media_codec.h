@@ -62,12 +62,20 @@ struct SystemCodecInfo
     SystemCodecInfo(unsigned avcodecId, const std::string name,
                     std::string libName, MediaType mediaType,
                     CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
-                    unsigned payloadType = 0);
+                    unsigned payloadType = 0,
+                    unsigned minQuality = DEFAULT_NO_QUALITY,
+                    unsigned maxQuality = DEFAULT_NO_QUALITY);
 
     virtual ~SystemCodecInfo();
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {250};
     static constexpr unsigned DEFAULT_MAX_BITRATE {2000};
+
+    static constexpr unsigned DEFAULT_H264_MIN_QUALITY {51};
+    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {1};
+    static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {63};
+    static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {4};
+    static constexpr unsigned DEFAULT_NO_QUALITY {0};
 
     /* generic codec information */
     unsigned id; /* id of the codec used with dbus */
@@ -114,6 +122,8 @@ struct SystemVideoCodecInfo : SystemCodecInfo
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
                          std::string libName, CodecType type = CODEC_NONE,
                          unsigned bitrate = 0,
+                         unsigned minQuality = DEFAULT_NO_QUALITY,
+                         unsigned maxQuality = DEFAULT_NO_QUALITY,
                          unsigned payloadType = 0, unsigned frameRate = 0,
                          unsigned profileId = 0);
 
@@ -142,6 +152,7 @@ struct AccountCodecInfo
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
+    unsigned quality;
     std::map<std::string, std::string>  getCodecSpecifications();
 
 };
