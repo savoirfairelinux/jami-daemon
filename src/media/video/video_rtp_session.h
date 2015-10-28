@@ -45,6 +45,9 @@ struct VideoBitrateInfo {
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
     unsigned videoBitrateMax;
+    unsigned videoQualityCurrent;
+    unsigned videoQualityMin;
+    unsigned videoQualityMax;
     unsigned cptBitrateChecking;
     unsigned maxBitrateChecking;
     float packetLostThreshold;
@@ -92,19 +95,28 @@ private:
     uint16_t initSeqVal_ = 0;
 
     float checkPeerPacketLoss();
-    void adaptBitrate();
+    unsigned getLowerQuality();
+    unsigned getLowerBitrate();
+    void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
     void getVideoBitrateInfo();
 
 
-    //interval in seconds between RTCP checkings
+    // interval in seconds between RTCP checkings
     const unsigned RTCP_CHECKING_INTERVAL {4};
-    //long interval in seconds between RTCP checkings
+    // long interval in seconds between RTCP checkings
     const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
-    //not packet loss can be calculated as no data in input
+    // no packet loss can be calculated as no data in input
     static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
-    //bitrate info struct
-    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    // bitrate and quality info struct
+    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    // previous quality and bitrate used if quality or bitrate need to be decreased
+    std::list<unsigned> histoQuality_ {};
+    std::list<unsigned> histoBitrate_ {};
+    // max size of quality and bitrate historic
+    static constexpr unsigned MAX_SIZE_HISTO_QUALITY_ {30};
+    static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
+
     //5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     //packet loss threshold
