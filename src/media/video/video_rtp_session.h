@@ -45,6 +45,9 @@ struct VideoBitrateInfo {
     unsigned videoBitrateCurrent;
     unsigned videoBitrateMin;
     unsigned videoBitrateMax;
+    unsigned videoQualityCurrent;
+    unsigned videoQualityMin;
+    unsigned videoQualityMax;
     unsigned cptBitrateChecking;
     unsigned maxBitrateChecking;
     float packetLostThreshold;
@@ -92,7 +95,7 @@ private:
     uint16_t initSeqVal_ = 0;
 
     float checkPeerPacketLoss();
-    void adaptBitrate();
+    void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
     void getVideoBitrateInfo();
 
@@ -104,7 +107,7 @@ private:
     //not packet loss can be calculated as no data in input
     static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
     //bitrate info struct
-    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
     //5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     //packet loss threshold

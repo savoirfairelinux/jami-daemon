@@ -62,12 +62,26 @@ struct SystemCodecInfo
     SystemCodecInfo(unsigned avcodecId, const std::string name,
                     std::string libName, MediaType mediaType,
                     CodecType codecType = CODEC_NONE, unsigned bitrate = 0,
-                    unsigned payloadType = 0);
+                    unsigned payloadType = 0,
+                    unsigned m_minQuality = DEFAULT_NO_QUALITY,
+                    unsigned m_maxQuality = DEFAULT_NO_QUALITY);
 
     virtual ~SystemCodecInfo();
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {250};
     static constexpr unsigned DEFAULT_MAX_BITRATE {2000};
+
+#ifdef RING_VIDEO
+    static const unsigned DEFAULT_H264_MIN_QUALITY {50};
+    static const unsigned DEFAULT_H264_MAX_QUALITY {25};
+    static const unsigned DEFAULT_VP8_MIN_QUALITY {50};
+    static const unsigned DEFAULT_VP8_MAX_QUALITY {20};
+#endif
+
+    static const unsigned DEFAULT_QUALITY {35};
+
+    // indicates that the codec does not use quality factor
+    static const unsigned DEFAULT_NO_QUALITY {0};
 
     /* generic codec information */
     unsigned id; /* id of the codec used with dbus */
@@ -82,6 +96,8 @@ struct SystemCodecInfo
     unsigned bitrate;
     unsigned minBitrate = DEFAULT_MIN_BITRATE;
     unsigned maxBitrate = DEFAULT_MAX_BITRATE;
+    unsigned minQuality = DEFAULT_NO_QUALITY;
+    unsigned maxQuality = DEFAULT_NO_QUALITY;
 };
 
 /*
@@ -114,7 +130,10 @@ struct SystemVideoCodecInfo : SystemCodecInfo
     SystemVideoCodecInfo(unsigned avcodecId, const std::string name,
                          std::string libName, CodecType type = CODEC_NONE,
                          unsigned bitrate = 0,
-                         unsigned payloadType = 0, unsigned frameRate = 0,
+                         unsigned m_minQuality = 0,
+                         unsigned m_maxQuality = 0,
+                         unsigned payloadType = 0,
+                         unsigned frameRate = 0,
                          unsigned profileId = 0);
 
     ~SystemVideoCodecInfo();
@@ -142,6 +161,7 @@ struct AccountCodecInfo
     /* account custom values */
     unsigned payloadType;
     unsigned bitrate;
+    unsigned quality;
     std::map<std::string, std::string>  getCodecSpecifications();
 
 };
