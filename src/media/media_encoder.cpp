@@ -75,6 +75,7 @@ void MediaEncoder::setOptions(const MediaDescription& args)
 
     av_dict_set(&options_, "payload_type", ring::to_string(args.payload_type).c_str(), 0);
     av_dict_set(&options_, "max_rate", ring::to_string(args.codec->bitrate).c_str(), 0);
+    av_dict_set(&options_, "crf", ring::to_string(args.codec->quality).c_str(), 0);
 
     if (args.codec->systemCodecInfo.mediaType == MEDIA_AUDIO) {
         auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args.codec);
@@ -140,15 +141,21 @@ MediaEncoder::openOutput(const char *filename,
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
-    encoderCtx_->rc_buffer_size = maxBitrate;
-    RING_DBG("Using max bitrate %d", maxBitrate );
+    auto crf = atoi(av_dict_get(options_, "crf", NULL, 0)->value);
+
 
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
         // For H264 : define max bitrate in rc_max_rate
-        encoderCtx_->rc_max_rate = maxBitrate;
+        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+            av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
+        } else {
+            encoderCtx_->rc_buffer_size = maxBitrate;
+            RING_DBG("Using max bitrate %d", maxBitrate );
+            encoderCtx_->rc_max_rate = maxBitrate;
+        }
 
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // Using information given on this page:
@@ -161,8 +168,15 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->qmin = 4;
         encoderCtx_->qmax = 56;
         encoderCtx_->gop_size = 999999;
-        // For VP8 : define max bitrate in bit_rate
-        encoderCtx_->bit_rate = maxBitrate;
+        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+            av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
+            // bitrate needs to be provided to VP8 to have crf working
+            // In this case, the target bitrate becomes the maximum allowed bitrate
+            encoderCtx_->bit_rate = SystemCodecInfo::DEFAULT_MAX_BITRATE * 1000;
+        } else {
+            // For VP8 : define max bitrate in bit_rate
+            encoderCtx_->bit_rate = maxBitrate;
+        }
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 : define max bitrate in bit_rate
         encoderCtx_->bit_rate = maxBitrate;
