@@ -310,10 +310,44 @@ VideoRtpSession::checkPeerPacketLoss()
         return NO_PACKET_LOSS_CALCULATED;
 }
 
-void
-VideoRtpSession::adaptBitrate()
+unsigned
+VideoRtpSession::getLowerQuality()
 {
-    bool needToCheckBitrate = false;
+    // if lower quality was stored we return it
+    unsigned quality = videoBitrateInfo_.videoQualityCurrent;
+    while ( not histoQuality_.empty()) {
+        quality = histoQuality_.back();
+        histoQuality_.pop_back();
+        if (quality > videoBitrateInfo_.videoQualityCurrent)
+            return quality;
+    }
+
+    // if no appropriate quality found, calculate it with dichotomie
+    quality = (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMin) / 2;
+    return quality;
+}
+
+unsigned
+VideoRtpSession::getLowerBitrate()
+{
+    // if a lower bitrate was stored we return it
+    unsigned bitrate = videoBitrateInfo_.videoBitrateCurrent;
+    while ( not histoBitrate_.empty()) {
+        bitrate = histoBitrate_.back();
+        histoBitrate_.pop_back();
+        if (bitrate < videoBitrateInfo_.videoBitrateCurrent)
+            return bitrate;
+    }
+
+    // if no appropriate bitrate found, calculate it with dichotomie
+    bitrate = (videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMin) / 2;
+    return bitrate;
+}
+
+void
+VideoRtpSession::adaptQualityAndBitrate()
+{
+    bool needToCheckQuality = false;
     bool mediaRestartNeeded = false;
     float packetLostRate = 0.0;
 
@@ -321,65 +355,87 @@ VideoRtpSession::adaptBitrate()
     auto rtcpLongCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastLongRTCPCheck_);
 
     if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
-        needToCheckBitrate = true;
+        needToCheckQuality = true;
         lastRTCPCheck_ = std::chrono::system_clock::now();
     }
 
     if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
-        needToCheckBitrate = true;
+        needToCheckQuality = true;
         lastLongRTCPCheck_ = std::chrono::system_clock::now();
-        //we force iterative bitrate adaptation
+        // we force iterative bitrate adaptation
         videoBitrateInfo_.cptBitrateChecking = 0;
     }
 
 
-    if (needToCheckBitrate) {
-        videoBitrateInfo_.cptBitrateChecking++;
-        auto oldBitrate = videoBitrateInfo_.videoBitrateCurrent;
+    if (needToCheckQuality) {
 
-        //packetLostRate is not already available. Do nothing
+        videoBitrateInfo_.cptBitrateChecking++;
+
+        // packetLostRate is not already available. Do nothing
         if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
-            //we force iterative bitrate adaptation
+            // we force iterative bitrate adaptation
             videoBitrateInfo_.cptBitrateChecking = 0;
 
-        //too much packet lost : decrease bitrate
+        // too much packet lost : decrease quality and bitrate
         } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
 
-            //calculate new bitrate by dichotomie
-            videoBitrateInfo_.videoBitrateCurrent =
-                (videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMin) / 2;
+            // calculate new quality by dichotomie
+            videoBitrateInfo_.videoQualityCurrent = getLowerQuality();
 
-            //boundaries low
+            // calculate new bitrate by dichotomie
+            videoBitrateInfo_.videoBitrateCurrent =  getLowerBitrate();
+
+            // boundaries low
+            if (videoBitrateInfo_.videoQualityCurrent > videoBitrateInfo_.videoQualityMin)
+                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMin;
+
             if (videoBitrateInfo_.videoBitrateCurrent < videoBitrateInfo_.videoBitrateMin)
                 videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMin;
 
-            //we force iterative bitrate adaptation
+
+            // we force iterative bitrate and quality adaptation
             videoBitrateInfo_.cptBitrateChecking = 0;
 
-            //asynchronous A/V media restart
-            if (videoBitrateInfo_.videoBitrateCurrent != oldBitrate)
+            // asynchronous A/V media restart
+            // we give priority to quality
+            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
+                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
+                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
+                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
                 mediaRestartNeeded = true;
 
-        //no packet lost: increase bitrate
+
+        // no packet lost: increase quality and bitrate
         } else if (videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) {
 
-            //calculate new bitrate by dichotomie
+            // calculate new quality by dichotomie
+            videoBitrateInfo_.videoQualityCurrent =
+                (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMax) / 2;
+
+            // calculate new bitrate by dichotomie
             videoBitrateInfo_.videoBitrateCurrent =
                 ( videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMax) / 2;
 
-            //boundaries high
+            // boundaries high
+            if (videoBitrateInfo_.videoQualityCurrent < videoBitrateInfo_.videoQualityMax)
+                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMax;
+
             if (videoBitrateInfo_.videoBitrateCurrent > videoBitrateInfo_.videoBitrateMax)
                 videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMax;
 
-            //asynchronous A/V media restart
-            if (videoBitrateInfo_.videoBitrateCurrent != oldBitrate)
+            // asynchronous A/V media restart
+            // we give priority to quality
+            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
+                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
+                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
+                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
                 mediaRestartNeeded = true;
 
             if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
                 lastLongRTCPCheck_ = std::chrono::system_clock::now();
 
         } else {
-            //nothing we reach maximal tries
+            // nothing we reach maximal tries
         }
     }
 
@@ -387,10 +443,11 @@ VideoRtpSession::adaptBitrate()
         storeVideoBitrateInfo();
         const auto& cid = callID_;
 
-        RING_WARN("[%u/%u] packetLostRate=%f -> change bitrate to %d",
+        RING_WARN("[%u/%u] packetLostRate=%f -> change quality to %d bitrate to %d",
                 videoBitrateInfo_.cptBitrateChecking,
                 videoBitrateInfo_.maxBitrateChecking,
                 packetLostRate,
+                videoBitrateInfo_.videoQualityCurrent,
                 videoBitrateInfo_.videoBitrateCurrent);
 
         runOnMainThread([cid]{
@@ -399,7 +456,6 @@ VideoRtpSession::adaptBitrate()
             });
     }
 }
-
 void
 VideoRtpSession::getVideoBitrateInfo() {
     auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
@@ -408,12 +464,15 @@ VideoRtpSession::getVideoBitrateInfo() {
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::BITRATE])),
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE])),
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE])),
+            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::QUALITY])),
+            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY])),
+            (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY])),
             videoBitrateInfo_.cptBitrateChecking,
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
         };
     } else {
-        videoBitrateInfo_ = {0,0,0,0,0,0};
+        videoBitrateInfo_ = {0,0,0,0,0,0,0,0,0};
     }
 }
 
@@ -425,8 +484,25 @@ VideoRtpSession::storeVideoBitrateInfo() {
         codecVideo->setCodecSpecifications({
             {DRing::Account::ConfProperties::CodecInfo::BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateCurrent)},
             {DRing::Account::ConfProperties::CodecInfo::MIN_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMin)},
-            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMax)}
+            {DRing::Account::ConfProperties::CodecInfo::MAX_BITRATE, ring::to_string(videoBitrateInfo_.videoBitrateMax)},
+            {DRing::Account::ConfProperties::CodecInfo::QUALITY, ring::to_string(videoBitrateInfo_.videoQualityCurrent)},
+            {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, ring::to_string(videoBitrateInfo_.videoQualityMin)},
+            {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, ring::to_string(videoBitrateInfo_.videoQualityMax)}
         });
+
+        if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY_) {
+            RING_WARN("quality historic full. Need to drop data");
+            histoQuality_.pop_front();
+        }
+
+        if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE_) {
+            RING_WARN("bitrate historic full. Need to drop data");
+            histoBitrate_.pop_front();
+        }
+
+        histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
+        histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
+
     }
 }
 bool
@@ -439,7 +515,7 @@ VideoRtpSession::setupRtcpChecker()
 void
 VideoRtpSession::processRtcpChecker()
 {
-    adaptBitrate();
+    adaptQualityAndBitrate();
     rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
 }
 
