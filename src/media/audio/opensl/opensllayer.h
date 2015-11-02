@@ -24,8 +24,11 @@
 #include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 #include <vector>
+#include <thread>
 
 #include "audio/audiolayer.h"
+#include "audio_player.h"
+#include "audio_recorder.h"
 
 class AudioPreference;
 
@@ -35,7 +38,6 @@ class AudioPreference;
 
 namespace ring {
 
-class OpenSLThread;
 class RingBuffer;
 
 #define ANDROID_BUFFER_QUEUE_LENGTH 2U
@@ -87,13 +89,13 @@ class OpenSLLayer : public AudioLayer {
 
         void init();
 
-        void initAudioEngine() const;
+        void initAudioEngine();
 
         void shutdownAudioEngine();
 
-        void initAudioPlayback() const;
+        void initAudioPlayback();
 
-        void initAudioCapture() const;
+        void initAudioCapture();
 
         void startAudioPlayback();
 
@@ -110,6 +112,8 @@ class OpenSLLayer : public AudioLayer {
         virtual std::string getAudioDeviceName(int, DeviceType) const {
             return "";
         }
+
+        bool engineService(uint32_t msg, void* data);
 
     private:
         typedef std::vector<AudioBuffer> AudioBufferStack;
@@ -145,7 +149,7 @@ class OpenSLLayer : public AudioLayer {
          *                     0 for the first available card on the system, 1 ...
          */
         virtual int getIndexCapture() const {
-            return indexIn_;
+            return 0;
         }
 
         /**
@@ -154,7 +158,7 @@ class OpenSLLayer : public AudioLayer {
          *                     0 for the first available card on the system, 1 ...
          */
         virtual int getIndexPlayback() const {
-            return indexOut_;
+            return 0;
         }
 
         /**
@@ -163,26 +167,10 @@ class OpenSLLayer : public AudioLayer {
          *                 0 for the first available card on the system, 1 ...
          */
         virtual int getIndexRingtone() const {
-            return indexRing_;
+            return 0;
         }
 
-        AudioBuffer &getNextPlaybackBuffer(void) {
-            return playbackBufferStack_[playbackBufferIndex_];
-        }
-
-        AudioBuffer &getNextRecordBuffer(void) {
-            return recordBufferStack_[recordBufferIndex_];
-        }
-
-        void incrementPlaybackIndex(void) {
-            playbackBufferIndex_ = (playbackBufferIndex_ + 1) % NB_BUFFER_PLAYBACK_QUEUE;
-        }
-
-        void incrementRecordIndex(void) {
-            recordBufferIndex_ = (recordBufferIndex_ + 1) % NB_BUFFER_CAPTURE_QUEUE;
-        }
-
-        void CheckErr( SLresult res ) const;
+        uint32_t dbgEngineGetBufCount();
 
         void playback(SLAndroidSimpleBufferQueueItf queue);
         void capture(SLAndroidSimpleBufferQueueItf queue);
@@ -190,73 +178,47 @@ class OpenSLLayer : public AudioLayer {
         void dumpAvailableEngineInterfaces();
         friend class OpenSLThread;
 
-        static const int NB_BUFFER_PLAYBACK_QUEUE;
-
-        static const int NB_BUFFER_CAPTURE_QUEUE;
-
-        /**
-         * Number of audio cards on which capture stream has been opened
-         */
-        int indexIn_;
-
-        /**
-         * Number of audio cards on which playback stream has been opened
-         */
-        int indexOut_;
-
-        /**
-         * Number of audio cards on which ringtone stream has been opened
-         */
-        int indexRing_;
-
         NON_COPYABLE(OpenSLLayer);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
-        OpenSLThread *audioThread_;
-
         /**
          * OpenSL standard object interface
          */
-        SLObjectItf engineObject_;
+        SLObjectItf engineObject_ {nullptr};
 
         /**
          * OpenSL sound engine interface
          */
-        SLEngineItf engineInterface_;
+        SLEngineItf engineInterface_ {nullptr};
 
-        /**
-         * Output mix interface
-         */
-        SLObjectItf outputMixer_;
-        SLObjectItf playerObject_;
-        SLObjectItf recorderObject_;
+        std::unique_ptr<opensl::AudioPlayer> player_ {};
+        std::unique_ptr<opensl::AudioRecorder> recorder_ {};
 
+        AudioQueue     freePlayBufQueue_ {BUF_COUNT};
+        AudioQueue     playBufQueue_ {BUF_COUNT};
 
-        SLOutputMixItf outputMixInterface_;
-        SLPlayItf playerInterface_;
+        std::thread    playThread;
+        std::mutex     playMtx;
+        std::condition_variable playCv;
 
-        SLRecordItf recorderInterface_;
+        AudioQueue     freeRecBufQueue_ {BUF_COUNT};    //Owner of the queue
+        AudioQueue     recBufQueue_ {BUF_COUNT};     //Owner of the queue
 
-        SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf;
-        SLAudioInputDescriptor AudioInputDescriptor;
+        std::thread    recThread;
+        std::mutex     recMtx;
+        std::condition_variable recCv;
 
-        /**
-         * OpenSL playback buffer
-         */
-        SLAndroidSimpleBufferQueueItf playbackBufferQueue_;
-        SLAndroidSimpleBufferQueueItf recorderBufferQueue_;
+        sample_buf  *bufs_;
 
-        int playbackBufferIndex_;
-        int recordBufferIndex_;
+        SLAudioIODeviceCapabilitiesItf AudioIODeviceCapabilitiesItf {nullptr};
+        SLAudioInputDescriptor AudioInputDescriptor {nullptr};
 
-        bool bufferIsFilled_;
-        AudioFormat hardwareFormat_;
-        size_t hardwareBuffSize_;
+        AudioFormat hardwareFormat_ {AudioFormat::MONO()};
+        size_t hardwareBuffSize_ {BUFFER_SIZE};
 
-        AudioBufferStack playbackBufferStack_;
-        AudioBufferStack recordBufferStack_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
+
 };
 
 }

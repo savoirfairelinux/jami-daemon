@@ -109,4 +109,107 @@ void AudioLayer::notifyIncomingCall()
     putUrgent(buf);
 }
 
+
+AudioBuffer AudioLayer::getToPlay(AudioFormat format, size_t writableSamples)
+{
+    /*size_t sample_size = format.getBytesPerFrame();
+    if (writableBytes == 0)
+        return {};
+
+    const size_t writableSamples = writableBytes / sample_size;*/
+
+    notifyIncomingCall();
+
+    size_t urgentSamples = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+    //size_t urgentBytes = urgentSamples * sample_size;
+
+    if (urgentSamples > writableSamples) {
+        urgentSamples = writableSamples;
+        //urgentBytes = urgentSamples * sample_size;
+    }
+
+    //AudioSample* data = nullptr;
+    AudioBuffer playbackBuffer_;
+
+    if (urgentSamples) {
+        playbackBuffer_.setFormat(format);
+        playbackBuffer_.resize(urgentSamples);
+        //pa_stream_begin_write(playback_->stream(), (void**)&data, &urgentBytes);
+        urgentRingBuffer_.get(playbackBuffer_, RingBufferPool::DEFAULT_ID); // retrive only the first sample_spec->channels channels
+        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        //playbackBuffer_.interleave(data);
+        //pa_stream_write(playback_->stream(), data, urgentBytes, nullptr, 0, PA_SEEK_RELATIVE);
+        // Consume the regular one as well (same amount of samples)
+        Manager::instance().getRingBufferPool().discard(urgentSamples, RingBufferPool::DEFAULT_ID);
+        return std::move(playbackBuffer_);
+    }
+
+    // FIXME: not thread safe! we only lock the mutex when we get the
+    // pointer, we have no guarantee that it will stay safe to use
+    AudioLoop *toneToPlay = Manager::instance().getTelephoneTone();
+    if (toneToPlay) {
+        //if (playback_->isReady()) {
+            //pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
+            playbackBuffer_.setFormat(format);
+            playbackBuffer_.resize(writableSamples);
+            toneToPlay->getNext(playbackBuffer_, playbackGain_); // retrive only n_channels
+            //playbackBuffer_.interleave(data);
+            //pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);
+        //}
+
+        return std::move(playbackBuffer_);
+    }
+
+    flushUrgent(); // flush remaining samples in _urgentRingBuffer
+
+    size_t availSamples = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
+
+    if (availSamples == 0) {
+        /*pa_stream_begin_write(playback_->stream(), (void**)&data, &writableBytes);
+        memset(data, 0, writableBytes);
+        pa_stream_write(playback_->stream(), data, writableBytes, nullptr, 0, PA_SEEK_RELATIVE);*/
+        //playbackBuffer_.resize(writableSamples);
+        return std::move(playbackBuffer_);
+    }
+
+    // how many samples we want to read from the buffer
+    size_t readableSamples = writableSamples;
+
+    double resampleFactor = 1.;
+
+    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
+    bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
+
+    if (resample) {
+        resampleFactor = (double) audioFormat_.sample_rate / mainBufferAudioFormat.sample_rate;
+        readableSamples = (double) readableSamples / resampleFactor;
+    }
+
+    readableSamples = std::min(readableSamples, availSamples);
+    size_t nResampled = (double) readableSamples * resampleFactor;
+    //size_t resampledBytes =  nResampled * sample_size;
+
+    //pa_stream_begin_write(playback_->stream(), (void**)&data, &resampledBytes);
+
+    playbackBuffer_.setFormat(mainBufferAudioFormat);
+    playbackBuffer_.resize(readableSamples);
+    Manager::instance().getRingBufferPool().getData(playbackBuffer_, RingBufferPool::DEFAULT_ID);
+    playbackBuffer_.setChannelNum(format.nb_channels, true);
+
+    if (resample) {
+        AudioBuffer rsmpl_out(nResampled, format);
+        resampler_->resample(playbackBuffer_, rsmpl_out);
+        rsmpl_out.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        return std::move(rsmpl_out);
+        /*rsmpl_out.interleave(data);
+        pa_stream_write(playback_->stream(), data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);*/
+    } else {
+        playbackBuffer_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        /*playbackBuffer_.interleave(data);
+        pa_stream_write(playback_->stream(), data, resampledBytes, nullptr, 0, PA_SEEK_RELATIVE);*/
+        return std::move(playbackBuffer_);
+    }
+}
+
+
 } // namespace ring

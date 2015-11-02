@@ -219,6 +219,9 @@ class AudioLayer {
          */
         void hardwareInputFormatAvailable(AudioFormat capture);
 
+
+        AudioBuffer getToPlay(AudioFormat format, size_t writableSamples);
+
         /**
          * True if capture is not to be used
          */
