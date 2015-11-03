@@ -177,7 +177,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
 
-    gnutls_priority_init(&priority_cache,
+    gnutls_priority_init(&priority_cache_,
                          "SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE",
                          nullptr);
 
@@ -219,6 +219,8 @@ SipsIceTransport::~SipsIceTransport()
 
     pj_lock_destroy(trData_.base.lock);
     pj_atomic_destroy(trData_.base.ref_cnt);
+
+    gnutls_priority_deinit(priority_cache_);
 }
 
 pj_status_t
@@ -237,7 +239,7 @@ SipsIceTransport::startTlsSession()
     gnutls_session_set_ptr(session_, this);
     gnutls_transport_set_ptr(session_, this);
 
-    gnutls_priority_set(session_, priority_cache);
+    gnutls_priority_set(session_, priority_cache_);
 
     /* Allocate credentials for handshaking and transmission */
     gnutls_certificate_credentials_t certCred;
