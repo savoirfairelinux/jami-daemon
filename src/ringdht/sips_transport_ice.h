@@ -129,7 +129,7 @@ private:
 
     gnutls_session_t session_ {nullptr};
     std::unique_ptr<gnutls_certificate_credentials_st, decltype(gnutls_certificate_free_credentials)&> xcred_;
-    gnutls_priority_t priority_cache;
+    gnutls_priority_t priority_cache_ {};
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_;
 
