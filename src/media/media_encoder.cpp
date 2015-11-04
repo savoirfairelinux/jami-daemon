@@ -140,7 +140,6 @@ MediaEncoder::openOutput(const char *filename,
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
-    encoderCtx_->rc_buffer_size = maxBitrate;
     RING_DBG("Using max bitrate %d", maxBitrate );
 
     /* let x264 preset override our encoder settings */
@@ -148,6 +147,7 @@ MediaEncoder::openOutput(const char *filename,
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
         // For H264 : define max bitrate in rc_max_rate
+        encoderCtx_->rc_buffer_size = maxBitrate;
         encoderCtx_->rc_max_rate = maxBitrate;
 
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
