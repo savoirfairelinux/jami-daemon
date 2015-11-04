@@ -133,12 +133,12 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
     RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
-             callState_, call_state, connectionState_, cnx_state, code);
+             (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_, (unsigned)cnx_state, code);
 
     if (callState_ != call_state) {
         if (not validStateTransition(call_state)) {
             RING_ERR("[call:%s] invalid call state transition from %u to %u",
-                     id_.c_str(), callState_, call_state);
+                     id_.c_str(), (unsigned)callState_, (unsigned)call_state);
             return false;
         }
     } else if (connectionState_ == cnx_state)
