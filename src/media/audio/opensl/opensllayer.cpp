@@ -22,11 +22,11 @@
 
 #include "client/ring_signal.h"
 
-#include "manager.h"
 #include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/dcblocker.h"
+#include "manager.h"
 #include "logger.h"
 #include "array_size.h"
 
@@ -45,40 +45,17 @@
 
 namespace ring {
 
-const int OpenSLLayer::NB_BUFFER_PLAYBACK_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
-const int OpenSLLayer::NB_BUFFER_CAPTURE_QUEUE = ANDROID_BUFFER_QUEUE_LENGTH;
-
 // Constructor
 OpenSLLayer::OpenSLLayer(const AudioPreference &pref)
-    : AudioLayer(pref)
-    , indexIn_(0)
-    , indexOut_(0)
-    , indexRing_(0)
-    , audioThread_(nullptr)
-    , engineObject_(nullptr)
-    , engineInterface_(nullptr)
-    , outputMixer_(nullptr)
-    , playerObject_(nullptr)
-    , recorderObject_(nullptr)
-    , playerInterface_(nullptr)
-    , recorderInterface_(nullptr)
-    , playbackBufferQueue_(nullptr)
-    , recorderBufferQueue_(nullptr)
-    , playbackBufferIndex_(0)
-    , recordBufferIndex_(0)
-    , hardwareFormat_(AudioFormat::MONO())
-    , hardwareBuffSize_(BUFFER_SIZE)
-    , playbackBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
-    , recordBufferStack_(ANDROID_BUFFER_QUEUE_LENGTH, AudioBuffer(hardwareBuffSize_, AudioFormat::MONO()))
-    , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
-{
-}
+    : AudioLayer(pref),
+     audioInputDescriptor_(),
+     mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
+{}
 
 // Destructor
 OpenSLLayer::~OpenSLLayer()
 {
-    stopAudioPlayback();
-    stopAudioCapture();
+    shutdownAudioEngine();
 }
 
 void
@@ -111,12 +88,6 @@ OpenSLLayer::startStream()
     emitSignal<DRing::ConfigurationSignal::GetHardwareAudioFormat>(&hw_infos);
     hardwareFormat_ = AudioFormat(hw_infos[0], 1); // Mono on Android
     hardwareBuffSize_ = hw_infos[1];
-
-    for(auto& buf : playbackBufferStack_)
-        buf.resize(hardwareBuffSize_);
-    for(auto& buf : recordBufferStack_)
-        buf.resize(hardwareBuffSize_);
-
     hardwareFormatAvailable(hardwareFormat_);
 
     std::thread launcher([this](){
@@ -153,67 +124,35 @@ OpenSLLayer::stopStream()
 }
 
 void
-OpenSLLayer::initAudioEngine() const
+OpenSLLayer::initAudioEngine()
 {
     SLresult result;
 
-    RING_DBG("Create Audio Engine\n");
-    result = slCreateEngine((const SLObjectItf_ * const **)&engineObject_, 0, nullptr, 0, nullptr, nullptr);
-    assert(SL_RESULT_SUCCESS == result);
+    result = slCreateEngine(&engineObject_, 0, nullptr, 0, nullptr, nullptr);
+    SLASSERT(result);
 
-    RING_DBG("Realize Audio Engine\n");
     result = (*engineObject_)->Realize(engineObject_, SL_BOOLEAN_FALSE);
-    assert(SL_RESULT_SUCCESS == result);
+    SLASSERT(result);
 
-    RING_DBG("Create Audio Engine Interface\n");
-    result = (*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE,
-                                            (void *)&engineInterface_);
-    assert(SL_RESULT_SUCCESS == result);
+    result = (*engineObject_)->GetInterface(engineObject_, SL_IID_ENGINE, &engineInterface_);
+    SLASSERT(result);
 
-    RING_DBG("Create Output Mixer\n");
-    result = (*engineInterface_)->CreateOutputMix(engineInterface_,
-                                                  (const SLObjectItf_ * const **)&outputMixer_,
-                                                  0, nullptr, nullptr);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Realize Output Mixer\n");
-    result = (*outputMixer_)->Realize(outputMixer_, SL_BOOLEAN_FALSE);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Audio Engine Initialization Done\n");
+    uint32_t bufSize = hardwareBuffSize_ * hardwareFormat_.getBytesPerFrame();
+    bufs_ = allocateSampleBufs(BUF_COUNT*2, bufSize);
+    for(int i=0; i<BUF_COUNT; i++) {
+        freePlayBufQueue_.push(&bufs_[i]);
+    }
+    for(int i=BUF_COUNT; i<2*BUF_COUNT; i++) {
+        freeRecBufQueue_.push(&bufs_[i]);
+    }
 }
 
 void
 OpenSLLayer::shutdownAudioEngine()
 {
-
-    // destroy buffer queue audio player object, and invalidate all associated interfaces
-    RING_DBG("Shutdown audio player\n");
-
-    if (playerObject_ != nullptr) {
-        (*playerObject_)->Destroy(playerObject_);
-        playerObject_ = nullptr;
-        playerInterface_ = nullptr;
-        playbackBufferQueue_ = nullptr;
-    }
-
-    // destroy output mix object, and invalidate all associated interfaces
-    RING_DBG("Shutdown audio mixer\n");
-
-    if (outputMixer_ != nullptr) {
-        (*outputMixer_)->Destroy(outputMixer_);
-        outputMixer_ = nullptr;
-    }
-
-    if (recorderObject_ != nullptr) {
-        (*recorderObject_)->Destroy(recorderObject_);
-        recorderObject_ = nullptr;
-        recorderInterface_ = nullptr;
-        recorderBufferQueue_ = nullptr;
-    }
-
     // destroy engine object, and invalidate all associated interfaces
-    RING_DBG("Shutdown audio engine\n");
+    RING_DBG("Shutdown audio engine");
+    stopStream();
     if (engineObject_ != nullptr) {
         (*engineObject_)->Destroy(engineObject_);
         engineObject_ = nullptr;
@@ -221,317 +160,158 @@ OpenSLLayer::shutdownAudioEngine()
     }
 }
 
-void
-OpenSLLayer::initAudioPlayback() const
-{
-    assert(nullptr != engineObject_);
-    assert(nullptr != engineInterface_);
-    assert(nullptr != outputMixer_);
+uint32_t
+OpenSLLayer::dbgEngineGetBufCount() {
+    uint32_t count = player_->dbgGetDevBufCount();
+    count += recorder_->dbgGetDevBufCount();
+    count += freeRecBufQueue_.size();
+    count += recBufQueue_.size();
 
-    SLresult result;
-
-    // Initialize the location of the buffer queue
-    RING_DBG("Create playback queue\n");
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocation = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-                                                            NB_BUFFER_PLAYBACK_QUEUE
-                                                            };
-
-    // Initnialize the audio format for this queue
-    RING_DBG("Setting audio format\n");
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM,
-                                    1,
-                                    audioFormat_.sample_rate * 1000,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_SPEAKER_FRONT_CENTER,
-                                    SL_BYTEORDER_LITTLEENDIAN
-                                   };
-
-    // Create the audio source
-    RING_DBG("Set Audio Sources\n");
-    SLDataSource audioSource = {&bufferLocation, &audioFormat};
-
-    RING_DBG("Get Output Mixer interface\n");
-    result = (*outputMixer_)->GetInterface(outputMixer_, SL_IID_OUTPUTMIX,
-                                           (void *)&outputMixInterface_);
-    CheckErr(result);
-
-    // Cofiguration fo the audio sink as an output mixer
-    RING_DBG("Set output mixer location\n");
-    SLDataLocator_OutputMix mixerLocation = {SL_DATALOCATOR_OUTPUTMIX, outputMixer_};
-    SLDataSink audioSink = {&mixerLocation, nullptr};
-
-    const SLInterfaceID ids[] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-                                 SL_IID_VOLUME,
-                                 SL_IID_ANDROIDCONFIGURATION,
-                                 SL_IID_PLAY};
-    const SLboolean req[] = {SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE, SL_BOOLEAN_TRUE};
-
-    const unsigned nbInterface = arraySize(ids);
-
-    // create audio player
-    RING_DBG("Create audio player\n");
-    result = (*engineInterface_)->CreateAudioPlayer(engineInterface_,
-                                                    (const SLObjectItf_ * const **)&playerObject_,
-                                                    &audioSource,
-                                                    &audioSink,
-                                                    nbInterface,
-                                                    ids, req);
-    assert(SL_RESULT_SUCCESS == result);
-
-    SLAndroidConfigurationItf playerConfig;
-    SLint32 streamType = SL_ANDROID_STREAM_VOICE;
-
-
-    result = (*playerObject_)->GetInterface(playerObject_,
-                                            SL_IID_ANDROIDCONFIGURATION,
-                                            (void *)&playerConfig);
-
-    if (result == SL_RESULT_SUCCESS && playerConfig) {
-        result = (*playerConfig)->SetConfiguration(
-                     playerConfig, SL_ANDROID_KEY_STREAM_TYPE,
-                     &streamType, sizeof(SLint32));
+    RING_ERR("Buf Disrtibutions: PlayerDev=%d, RecDev=%d, FreeQ=%d, "
+                 "RecQ=%d",
+         player_->dbgGetDevBufCount(),
+         recorder_->dbgGetDevBufCount(),
+         freeRecBufQueue_.size(),
+         recBufQueue_.size());
+    if(count != BUF_COUNT) {
+        RING_ERR("====Lost Bufs among the queue(supposed = %d, found = %d)",
+             BUF_COUNT, count);
     }
+    return count;
+}
 
-    RING_DBG("Realize audio player\n");
-    result = (*playerObject_)->Realize(playerObject_, SL_BOOLEAN_FALSE);
-    assert(SL_RESULT_SUCCESS == result);
-
-    if (result != SL_RESULT_SUCCESS) {
-        RING_ERR("Unable to set android player configuration");
+bool
+OpenSLLayer::engineService(uint32_t msg, void* data) {
+    playCv.notify_one();
+    recCv.notify_one();
+    switch (msg) {
+        case ENGINE_SERVICE_MSG_KICKSTART_PLAYER:
+            player_->playAudioBuffers(PLAY_KICKSTART_BUFFER_COUNT);
+            // we only allow it to call once, so tell caller do not call
+            // anymore
+            return false;
+        case ENGINE_SERVICE_MSG_RETRIEVE_DUMP_BUFS:
+            *(static_cast<uint32_t*>(data)) = dbgEngineGetBufCount();
+            break;
+        default:
+            //assert(false);
+            return false;
     }
-
-    // create audio interface
-    RING_DBG("Create audio player interface\n");
-    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_PLAY,
-                                            (void *)&playerInterface_);
-    assert(SL_RESULT_SUCCESS == result);
-
-    // create the buffer queue interface
-    RING_DBG("Create buffer queue interface\n");
-    result = (*playerObject_)->GetInterface(playerObject_, SL_IID_BUFFERQUEUE,
-                                            (void *)&playbackBufferQueue_);
-    assert(SL_RESULT_SUCCESS == result);
-
-    // register the buffer queue on the buffer object
-    RING_DBG("Register audio callback\n");
-    result = (*playbackBufferQueue_)->RegisterCallback(playbackBufferQueue_,
-                                                       audioPlaybackCallback,
-                                                       (void *)this);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Audio Playback Initialization Done\n");
+    return true;
 }
 
 void
-OpenSLLayer::initAudioCapture() const
+OpenSLLayer::initAudioPlayback()
 {
-    SLresult result;
-
-    // configure audio source
-    RING_DBG("Configure audio source\n");
-    SLDataLocator_IODevice deviceLocator = {SL_DATALOCATOR_IODEVICE,
-                                            SL_IODEVICE_AUDIOINPUT,
-                                            SL_DEFAULTDEVICEID_AUDIOINPUT,
-                                            nullptr
-                                           };
-
-    SLDataSource audioSource = {&deviceLocator,
-                                nullptr
-                               };
-
-    // configure audio sink
-    RING_DBG("Configure audio sink\n");
-
-    SLDataLocator_AndroidSimpleBufferQueue bufferLocator = {SL_DATALOCATOR_ANDROIDSIMPLEBUFFERQUEUE,
-                                           NB_BUFFER_CAPTURE_QUEUE
-                                                           };
-
-    RING_DBG("Capture-> Sampling Rate: %d", audioFormat_.sample_rate);
-    RING_DBG("Capture-> getInternalSamplingRate: %d", Manager::instance().getRingBufferPool().getInternalSamplingRate());
-    SLDataFormat_PCM audioFormat = {SL_DATAFORMAT_PCM, 1,
-                                    audioFormat_.sample_rate * 1000,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_PCMSAMPLEFORMAT_FIXED_16,
-                                    SL_SPEAKER_FRONT_CENTER,
-                                    SL_BYTEORDER_LITTLEENDIAN
-                                   };
-
-    SLDataSink audioSink = {&bufferLocator,
-                            &audioFormat
-                           };
-
-    // create audio recorder
-    // (requires the RECORD_AUDIO permission)
-    RING_DBG("Create audio recorder\n");
-    const SLInterfaceID id[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-                                SL_IID_ANDROIDCONFIGURATION};
-    const SLboolean req[2] ={SL_BOOLEAN_TRUE,
-                             SL_BOOLEAN_TRUE};
-    SLAndroidConfigurationItf recorderConfig;
-
-    if (engineInterface_ != nullptr) {
-        result = (*engineInterface_)->CreateAudioRecorder(engineInterface_,
-                                                          (const SLObjectItf_ * const **)&recorderObject_,
-                                                          &audioSource,
-                                                          &audioSink,
-                                                          2, id, req);
-    }
-
-    if (SL_RESULT_SUCCESS != result) {
-        RING_DBG("Error: could not create audio recorder");
-        return;
-    }
-
-    /* Set Android configuration */
-    result = (*recorderObject_)->GetInterface(recorderObject_,
-                                                SL_IID_ANDROIDCONFIGURATION,
-                                                (void *)&recorderConfig);
-    if (result == SL_RESULT_SUCCESS) {
-       SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
-       result = (*recorderConfig)->SetConfiguration(
-                recorderConfig, SL_ANDROID_KEY_RECORDING_PRESET,
-                &streamType, sizeof(SLint32));
-    }
-
-    if (result != SL_RESULT_SUCCESS) {
-        RING_DBG("Warning: Unable to set android recorder configuration");
-        return;
-    }
-
-    // realize the audio recorder
-    RING_DBG("Realize the audio recorder\n");
-    result = (*recorderObject_)->Realize(recorderObject_, SL_BOOLEAN_FALSE);
-
-    if (SL_RESULT_SUCCESS != result) {
-        RING_DBG("Error: could not realize audio recorder");
-        return;
-    }
-
-    // get the record interface
-    RING_DBG("Create the record interface\n");
-    result = (*recorderObject_)->GetInterface(recorderObject_,
-                                              SL_IID_RECORD,
-                                              (void *)&recorderInterface_);
-    assert(SL_RESULT_SUCCESS == result);
-
-    // get the buffer queue interface
-    RING_DBG("Create the buffer queue interface\n");
-    result = (*recorderObject_)->GetInterface(recorderObject_, SL_IID_ANDROIDSIMPLEBUFFERQUEUE,
-             (void *)&recorderBufferQueue_);
-    assert(SL_RESULT_SUCCESS == result);
-
-    // register callback on the buffer queue
-    RING_DBG("Register the audio capture callback\n");
-    result = (*recorderBufferQueue_)->RegisterCallback(recorderBufferQueue_,
-                                                       audioCaptureCallback,
-                                                       (void *)this);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Audio capture initialized\n");
+    using namespace std::placeholders;
+    player_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_));
+    player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
+    player_->registerCallback(std::bind(&OpenSLLayer::engineService, this, _1, _2));
 }
 
+void
+OpenSLLayer::initAudioCapture()
+{
+    using namespace std::placeholders;
+    recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
+    recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
+    recorder_->registerCallback(std::bind(&OpenSLLayer::engineService, this, _1, _2));
+
+    RING_DBG("Audio capture initialized");
+}
 
 void
 OpenSLLayer::startAudioPlayback()
 {
-    assert(nullptr != playbackBufferQueue_);
+    RING_DBG("Start audio playback");
 
-    RING_DBG("Start audio playback\n");
-
-    SLresult result;
-
-    for (int i = 0; i < NB_BUFFER_PLAYBACK_QUEUE; i++) {
-        AudioBuffer &buffer = getNextPlaybackBuffer();
-        incrementPlaybackIndex();
-
-        buffer.reset();
-
-        result = (*playbackBufferQueue_)->Enqueue(playbackBufferQueue_, buffer.getChannel(0)->data(), buffer.frames());
-
-        if (SL_RESULT_SUCCESS != result) {
-            RING_DBG("Error could not enqueue initial buffers\n");
+    player_->start();
+    playThread = std::thread([&]() {
+        std::unique_lock<std::mutex> lck(playMtx);
+        while (player_) {
+            playCv.wait(lck);
+            while (true) {
+                sample_buf *buf;
+                if(!freePlayBufQueue_.front(&buf)) {
+                    if (player_)
+                        player_->playAudioBuffers(PLAY_KICKSTART_BUFFER_COUNT);
+                    break;
+                }
+                const AudioBuffer& dat = getToPlay(hardwareFormat_, hardwareBuffSize_);
+                if (dat.size() == 0)
+                    break;
+                freePlayBufQueue_.pop();
+                buf->size_ = dat.interleave((AudioSample*)buf->buf_) * hardwareFormat_.getBytesPerFrame();
+                playBufQueue_.push(buf);
+            }
         }
-    }
+    });
 
-    result = (*playerInterface_)->SetPlayState(playerInterface_, SL_PLAYSTATE_PLAYING);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Audio playback started\n");
+    RING_DBG("Audio playback started");
 }
 
 void
 OpenSLLayer::startAudioCapture()
 {
-    assert(nullptr != playbackBufferQueue_);
+    RING_DBG("Start audio capture");
 
-    RING_DBG("Start audio capture\n");
+    recorder_->start();
+    recThread = std::thread([&]() {
+        std::unique_lock<std::mutex> lck(recMtx);
+        while (recorder_) {
+            recCv.wait(lck);
+            while (true) {
+                sample_buf *buf;
+                if(!recBufQueue_.front(&buf))
+                    break;
+                recBufQueue_.pop();
+                if (buf->size_ > 0) {
+                    AudioBuffer dat {(const AudioSample*)buf->buf_, buf->size_ / hardwareFormat_.getBytesPerFrame(), hardwareFormat_};
+                    audioCaptureFillBuffer(dat);
+                }
+                buf->size_ = 0;
+                freeRecBufQueue_.push(buf);
+            }
+        }
+    });
 
-    SLresult result;
-
-
-    // in case already recording, stop recording and clear buffer queue
-    if (recorderInterface_ != nullptr) {
-        result = (*recorderInterface_)->SetRecordState(recorderInterface_, SL_RECORDSTATE_STOPPED);
-        assert(SL_RESULT_SUCCESS == result);
-    }
-
-    RING_DBG("Clearing recorderBufferQueue\n");
-    result = (*recorderBufferQueue_)->Clear(recorderBufferQueue_);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("getting next record buffer\n");
-    // enqueue an empty buffer to be filled by the recorder
-    // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    AudioBuffer &buffer = getNextRecordBuffer();
-    incrementRecordIndex();
-
-    buffer.reset();
-
-    RING_DBG("Enqueue record buffer\n");
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames());
-
-    // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
-    // which for this code example would indicate a programming error
-    if (SL_RESULT_SUCCESS != result) {
-        RING_DBG("Error could not enqueue buffers in audio capture\n");
-        return;
-    }
-
-    // start recording
-    result = (*recorderInterface_)->SetRecordState(recorderInterface_, SL_RECORDSTATE_RECORDING);
-    assert(SL_RESULT_SUCCESS == result);
-
-    RING_DBG("Audio capture started\n");
+    RING_DBG("Audio capture started");
 }
 
 void
 OpenSLLayer::stopAudioPlayback()
 {
-    RING_DBG("Stop audio playback\n");
+    RING_DBG("Stop audio playback");
 
-    if (playerInterface_ != nullptr) {
-        SLresult result;
-        result = (*playerInterface_)->SetPlayState(playerInterface_, SL_PLAYSTATE_STOPPED);
-        assert(SL_RESULT_SUCCESS == result);
+    {
+        std::lock_guard<std::mutex> lck(playMtx);
+        player_->stop();
+        player_.reset();
+    }
+    if (playThread.joinable()) {
+        playCv.notify_all();
+        playThread.join();
     }
 
-    RING_DBG("Audio playback stopped\n");
+    RING_DBG("Audio playback stopped");
 }
 
 void
 OpenSLLayer::stopAudioCapture()
 {
-    RING_DBG("Stop audio capture\n");
+    RING_DBG("Stop audio capture");
 
-    if (recorderInterface_ != nullptr) {
-        SLresult result;
-        result = (*recorderInterface_)->SetRecordState(recorderInterface_, SL_RECORDSTATE_STOPPED);
-        assert(SL_RESULT_SUCCESS == result);
+    {
+        std::lock_guard<std::mutex> lck(recMtx);
+        recorder_->stop();
+        recorder_.reset();
+    }
+    if (recThread.joinable()) {
+        recCv.notify_all();
+        recThread.join();
     }
 
-    RING_DBG("Audio capture stopped\n");
-
+    RING_DBG("Audio capture stopped");
 }
 
 std::vector<std::string>
@@ -539,12 +319,10 @@ OpenSLLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> captureDeviceList;
 
-
-
-// Although OpenSL ES specification allows enumerating
-// available output (and also input) devices, NDK implementation is not mature enough to
-// obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
-// to obtain such an information)-> SL_FEATURE_UNSUPPORTED
+    // Although OpenSL ES specification allows enumerating
+    // available output (and also input) devices, NDK implementation is not mature enough to
+    // obtain or select proper one (SLAudioIODeviceCapabilitiesItf, the official interface
+    // to obtain such an information)-> SL_FEATURE_UNSUPPORTED
 
     SLuint32 InputDeviceIDs[MAX_NUMBER_INPUT_DEVICES];
     SLint32 numInputs = 0;
@@ -553,41 +331,39 @@ OpenSLLayer::getCaptureDeviceList() const
 
     SLresult res;
 
-    initAudioEngine();
-    initAudioPlayback();
-    initAudioCapture();
-
-
     // Get the Audio IO DEVICE CAPABILITIES interface, implicit
     RING_DBG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
 
     res = (*engineObject_)->GetInterface(engineObject_, SL_IID_AUDIOIODEVICECAPABILITIES, (void*)&AudioIODeviceCapabilitiesItf);
-    CheckErr(res);
+    if (res != SL_RESULT_SUCCESS)
+        return captureDeviceList;
 
     RING_DBG("Get the Audio IO DEVICE CAPABILITIES interface, implicit");
     numInputs = MAX_NUMBER_INPUT_DEVICES;
 
     res = (*AudioIODeviceCapabilitiesItf)->GetAvailableAudioInputs(AudioIODeviceCapabilitiesItf, &numInputs, InputDeviceIDs);
-    CheckErr(res);
+    if (res != SL_RESULT_SUCCESS)
+        return captureDeviceList;
 
     // Search for either earpiece microphone or headset microphone input
     // device - with a preference for the latter
     for (int i = 0; i < numInputs; i++) {
         res = (*AudioIODeviceCapabilitiesItf)->QueryAudioInputCapabilities(AudioIODeviceCapabilitiesItf,
                                                                            InputDeviceIDs[i],
-                                                                           (SLAudioInputDescriptor *)&AudioInputDescriptor);
-        CheckErr(res);
+                                                                           (SLAudioInputDescriptor_ *)&audioInputDescriptor_);
+        if (res != SL_RESULT_SUCCESS)
+            return captureDeviceList;
 
-        if (AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
-            AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER and
-            AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HEADSET) {
+        if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_ATTACHED_WIRED and
+            audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
+            audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HEADSET) {
             RING_DBG("SL_DEVCONNECTION_ATTACHED_WIRED : mic_deviceID: %d", InputDeviceIDs[i] );
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
             break;
-        } else if (AudioInputDescriptor.deviceConnection == SL_DEVCONNECTION_INTEGRATED and
-                   AudioInputDescriptor.deviceScope == SL_DEVSCOPE_USER and
-                   AudioInputDescriptor.deviceLocation == SL_DEVLOCATION_HANDSET) {
+        } else if (audioInputDescriptor_.deviceConnection == SL_DEVCONNECTION_INTEGRATED and
+                   audioInputDescriptor_.deviceScope == SL_DEVSCOPE_USER and
+                   audioInputDescriptor_.deviceLocation == SL_DEVLOCATION_HANDSET) {
             RING_DBG("SL_DEVCONNECTION_INTEGRATED : mic_deviceID: %d", InputDeviceIDs[i] );
             mic_deviceID = InputDeviceIDs[i];
             mic_available = SL_BOOLEAN_TRUE;
@@ -595,133 +371,26 @@ OpenSLLayer::getCaptureDeviceList() const
         }
     }
 
-    if (!mic_available) {
-        // Appropriate error message here
-        RING_ERR("No mic available quitting");
-        exit(1);
-    }
-
+    if (!mic_available)
+        RING_ERR("No mic available");
 
     return captureDeviceList;
-}
-
-/* Checks for error. If any errors exit the application! */
-void
-OpenSLLayer::CheckErr( SLresult res ) const
-{
-    if (res != SL_RESULT_SUCCESS) {
-        // Debug printing to be placed here
-        exit(1);
-    }
 }
 
 std::vector<std::string>
 OpenSLLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> playbackDeviceList;
-
     return playbackDeviceList;
 }
 
 void
-OpenSLLayer::audioPlaybackCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
-{
-    assert(nullptr != context);
-    //auto start = std::chrono::high_resolution_clock::now();
-    static_cast<OpenSLLayer*>(context)->playback(queue);
-    //auto end = std::chrono::high_resolution_clock::now();
-    //auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start);
-    //RING_DBG("Took %d us\n", elapsed/1000);
-}
-
-void
-OpenSLLayer::playback(SLAndroidSimpleBufferQueueItf queue)
-{
-    assert(nullptr != queue);
-    notifyIncomingCall();
-
-    AudioBuffer &buffer = getNextPlaybackBuffer();
-    size_t urgentSamplesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
-    bufferIsFilled_ = false;
-    if (urgentSamplesToGet > 0) {
-        bufferIsFilled_ = audioPlaybackFillWithUrgent(buffer, std::min(urgentSamplesToGet, hardwareBuffSize_));
-    } else {
-        auto& main_buffer = Manager::instance().getRingBufferPool();
-        buffer.resize(hardwareBuffSize_);
-        size_t samplesToGet = audioPlaybackFillWithVoice(buffer);
-        if (samplesToGet == 0) {
-            bufferIsFilled_ = audioPlaybackFillWithToneOrRingtone(buffer);
-        } else {
-            bufferIsFilled_ = true;
-        }
-    }
-
-    if (bufferIsFilled_) {
-        SLresult result = (*queue)->Enqueue(queue, buffer.getChannel(0)->data(), buffer.frames()*sizeof(AudioSample));
-        if (SL_RESULT_SUCCESS != result) {
-            RING_DBG("Error could not enqueue buffers in playback callback\n");
-        }
-        incrementPlaybackIndex();
-    } else {
-        RING_DBG("Error buffer not filled in audio playback\n");
-    }
-}
-
-void
-OpenSLLayer::audioCaptureCallback(SLAndroidSimpleBufferQueueItf queue, void *context)
-{
-    assert(nullptr != context);
-    static_cast<OpenSLLayer*>(context)->capture(queue);
-}
-
-void
-OpenSLLayer::capture(SLAndroidSimpleBufferQueueItf queue)
-{
-    assert(nullptr != queue);
-
-    AudioBuffer &old_buffer = getNextRecordBuffer();
-    incrementRecordIndex();
-    AudioBuffer &buffer = getNextRecordBuffer();
-
-    SLresult result;
-    // enqueue an empty buffer to be filled by the recorder
-    // (for streaming recording, we enqueue at least 2 empty buffers to start things off)
-    result = (*recorderBufferQueue_)->Enqueue(recorderBufferQueue_, buffer.getChannel(0)->data(), buffer.frames()*sizeof(AudioSample));
-
-    audioCaptureFillBuffer(old_buffer);
-
-    // the most likely other result is SL_RESULT_BUFFER_INSUFFICIENT,
-    // which for this code example would indicate a programming error
-    assert(SL_RESULT_SUCCESS == result);
-}
-
-
-
-void
-OpenSLLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
-{
-#ifdef OUTSIDE_TESTING
-
-    switch (type) {
-        case Device::PLAYBACK:
-            break;
-
-        case Device::CAPTURE:
-            break;
-
-        case Device::RINGTONE:
-            break;
-    }
-
-#endif
-}
+OpenSLLayer::updatePreference(AudioPreference& /*preference*/, int /*index*/, DeviceType /*type*/)
+{}
 
 void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
 {
     RingBufferPool &mbuffer = Manager::instance().getRingBufferPool();
-
-    //const unsigned mainBufferSampleRate = mbuffer.getInternalSamplingRate();
     const AudioFormat mainBufferFormat = mbuffer.getInternalAudioFormat();
     const bool resample = mainBufferFormat.sample_rate != audioFormat_.sample_rate;
 
@@ -739,66 +408,17 @@ void OpenSLLayer::audioCaptureFillBuffer(AudioBuffer &buffer)
     }
 }
 
-bool OpenSLLayer::audioPlaybackFillWithToneOrRingtone(AudioBuffer &buffer)
-{
-    buffer.resize(hardwareBuffSize_);
-    AudioLoop *tone = Manager::instance().getTelephoneTone();
-    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
-
-    // In case of a dtmf, the pointers will be set to nullptr once the dtmf length is
-    // reached. For this reason we need to fill audio buffer with zeros if pointer is nullptr
-    if (tone) {
-        tone->getNext(buffer, playbackGain_);
-    } else if (file_tone) {
-        file_tone->getNext(buffer, playbackGain_);
-    } else {
-        buffer.reset();
-    }
-
-    return true;
-}
-
-bool OpenSLLayer::audioPlaybackFillWithUrgent(AudioBuffer &buffer, size_t samplesToGet)
-{
-    // Urgent data (dtmf, incoming call signal) come first.
-    samplesToGet = std::min(samplesToGet, hardwareBuffSize_);
-    buffer.resize(samplesToGet);
-    urgentRingBuffer_.get(buffer, RingBufferPool::DEFAULT_ID);
-    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
-    // Consume the regular one as well (same amount of samples)
-    Manager::instance().getRingBufferPool().discard(samplesToGet, RingBufferPool::DEFAULT_ID);
-
-    return true;
-}
-
-size_t OpenSLLayer::audioPlaybackFillWithVoice(AudioBuffer &buffer)
-{
-    RingBufferPool &mainBuffer = Manager::instance().getRingBufferPool();
-    size_t got = mainBuffer.getAvailableData(buffer, RingBufferPool::DEFAULT_ID);
-    buffer.resize(got);
-    buffer.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-    if (audioFormat_.sample_rate != mainBuffer.getInternalSamplingRate()) {
-        RING_DBG("OpenSLLayer::audioPlaybackFillWithVoice sample_rate != mainBuffer.getInternalSamplingRate() \n");
-        AudioBuffer out(buffer, false);
-        out.setSampleRate(audioFormat_.sample_rate);
-        resampler_->resample(buffer, out);
-        buffer = out;
-    }
-    return buffer.size();
-}
-
 void dumpAvailableEngineInterfaces()
 {
     SLresult result;
-    RING_DBG("Engine Interfaces\n");
+    RING_DBG("Engine Interfaces");
     SLuint32 numSupportedInterfaces;
     result = slQueryNumSupportedEngineInterfaces(&numSupportedInterfaces);
     assert(SL_RESULT_SUCCESS == result);
     result = slQueryNumSupportedEngineInterfaces(NULL);
     assert(SL_RESULT_PARAMETER_INVALID == result);
 
-    RING_DBG("Engine number of supported interfaces %lu\n", numSupportedInterfaces);
+    RING_DBG("Engine number of supported interfaces %u", numSupportedInterfaces);
     for(SLuint32 i=0; i< numSupportedInterfaces; i++){
         SLInterfaceID  pInterfaceId;
         slQuerySupportedEngineInterfaces(i, &pInterfaceId);
