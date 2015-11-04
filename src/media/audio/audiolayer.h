@@ -219,6 +219,9 @@ class AudioLayer {
          */
         void hardwareInputFormatAvailable(AudioFormat capture);
 
+
+        const AudioBuffer& getToPlay(AudioFormat format, size_t writableSamples);
+
         /**
          * True if capture is not to be used
          */
@@ -238,6 +241,12 @@ class AudioLayer {
          * Gain applied to playback signal
          */
         double playbackGain_;
+
+        /**
+         * Buffers for audio processing
+         */
+        AudioBuffer playbackBuffer_;
+        AudioBuffer playbackResampleBuffer_;
 
         /**
          * Whether or not the audio layer stream is started
