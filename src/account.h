@@ -279,6 +279,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         virtual const IceTransportOptions getIceOptions() const noexcept;
 
+        virtual std::string sendFile(const std::string& /*peer_uri*/, const std::string& /*filename*/) {
+            return {}; // not supported by default
+        }
+
     private:
         NON_COPYABLE(Account);
 
