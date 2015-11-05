@@ -1008,6 +1008,11 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
     details.emplace(DRing::Call::Details::PEER_HOLDING,
                     peerHolding_ ? TRUE_STR : FALSE_STR);
+
+    auto& acc = getSIPAccount();
+    // If Video is not enabled return an empty string
+    details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
+
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
