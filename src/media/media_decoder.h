@@ -21,6 +21,7 @@
 #ifndef __MEDIA_DECODER_H__
 #define __MEDIA_DECODER_H__
 
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "config.h"
 
 #ifdef RING_VIDEO
@@ -79,7 +80,7 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(VideoFrame&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
