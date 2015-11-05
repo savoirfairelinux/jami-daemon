@@ -1008,6 +1008,9 @@ SIPCall::getDetails() const
     auto details = Call::getDetails();
     details.emplace(DRing::Call::Details::PEER_HOLDING,
                     peerHolding_ ? TRUE_STR : FALSE_STR);
+
+    details.emplace(DRing::Call::Details::INPUT_SOURCE,videoInput_);
+
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);

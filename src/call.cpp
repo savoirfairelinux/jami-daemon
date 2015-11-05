@@ -306,6 +306,7 @@ Call::getNullDetails()
         {DRing::Call::Details::CONF_ID,          ""},
         {DRing::Call::Details::TIMESTAMP_START,  ""},
         {DRing::Call::Details::ACCOUNTID,        ""},
+        {DRing::Call::Details::INPUT_SOURCE,     ""},
     };
 }
 
