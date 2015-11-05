@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __MEDIA_DECODER_H__
-#define __MEDIA_DECODER_H__
+#pragma once
 
 #include "config.h"
 
@@ -43,6 +42,7 @@ class AVStream;
 class AVDictionary;
 class AVFormatContext;
 class AVCodec;
+class AVPacket;
 
 namespace ring {
 
@@ -79,7 +79,7 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(VideoFrame&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
@@ -120,10 +120,10 @@ class MediaDecoder {
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
 
+        std::unique_ptr<AVPacket> mediaPacket;
+
     protected:
         AVDictionary *options_ = nullptr;
 };
 
 } // namespace ring
-
-#endif // __MEDIA_DECODER_H__
