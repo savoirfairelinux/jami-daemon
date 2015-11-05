@@ -102,7 +102,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     , on_negodone_cb_(options.onNegoDone)
     , component_count_(component_count)
     , compIO_(component_count)
-    , initiator_session_(master)
+    , initiatorSession_(master)
     , thread_()
 {
     if (options.upnpEnable)
@@ -248,33 +248,27 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
                          pj_status_t status)
 {
     const char *opname =
-        op == PJ_ICE_STRANS_OP_INIT? "initialization" :
+        op == PJ_ICE_STRANS_OP_INIT ? "initialization" :
         op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
-    if (!icest_.get())
-        icest_.reset(ice_st);
-
     const bool done = status == PJ_SUCCESS;
-    RING_DBG("ICE %s with %s", opname, done?"success":"error");
-
-    if (!done)
-        RING_ERR("ICE %s failed: %s", opname,
-                 sip_utils::sip_strerror(status).c_str());
+    if (done)
+        RING_DBG("ICE %s success", opname);
+    else
+        RING_ERR("ICE %s failed: %s", opname, sip_utils::sip_strerror(status).c_str());
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
-        if (op == PJ_ICE_STRANS_OP_INIT) {
-            iceTransportInitDone_ = done;
-            if (iceTransportInitDone_) {
-                if (initiator_session_)
-                    setInitiatorSession();
-                else
-                    setSlaveSession();
-                selectUPnPIceCandidates();
-            }
-        } else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
-            iceTransportNegoDone_ = done;
-        }
+        if (!icest_.get())
+            icest_.reset(ice_st);
+    }
+
+    if (done and op == PJ_ICE_STRANS_OP_INIT) {
+        if (initiatorSession_)
+            setInitiatorSession();
+        else
+            setSlaveSession();
+        selectUPnPIceCandidates();
     }
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
@@ -282,6 +276,7 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
     else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_)
         on_negodone_cb_(*this, done);
 
+    // Unlock waitForXXX APIs
     iceCV_.notify_all();
 }
 
@@ -304,7 +299,7 @@ IceTransport::getDefaultCanditates()
 bool
 IceTransport::createIceSession(pj_ice_sess_role role)
 {
-    if (pj_ice_strans_init_ice(icest_.get(), role, NULL, NULL) != PJ_SUCCESS) {
+    if (pj_ice_strans_init_ice(icest_.get(), role, nullptr, nullptr) != PJ_SUCCESS) {
         RING_ERR("pj_ice_strans_init_ice() failed");
         return false;
     }
@@ -320,7 +315,7 @@ bool
 IceTransport::setInitiatorSession()
 {
     RING_DBG("ICE as master");
-    initiator_session_ = true;
+    initiatorSession_ = true;
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
@@ -336,7 +331,7 @@ bool
 IceTransport::setSlaveSession()
 {
     RING_DBG("ICE as slave");
-    initiator_session_ = false;
+    initiatorSession_ = false;
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
@@ -353,7 +348,7 @@ IceTransport::isInitiator() const
 {
     if (isInitialized())
         return pj_ice_strans_get_role(icest_.get()) == PJ_ICE_SESS_ROLE_CONTROLLING;
-    return initiator_session_;
+    return initiatorSession_;
 }
 
 bool
@@ -441,50 +436,52 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
 bool
 IceTransport::stop()
 {
-    if (not isInitialized()) {
-        RING_ERR("Session not created yet");
-        return false;
+    if (isStarted()) {
+        auto status = pj_ice_strans_stop_ice(icest_.get());
+        if (status != PJ_SUCCESS) {
+            RING_ERR("ICE stop failed: %s", sip_utils::sip_strerror(status).c_str());
+            return false;
+        }
     }
-
-    auto status = pj_ice_strans_stop_ice(icest_.get());
-    if (status != PJ_SUCCESS) {
-        RING_ERR("ICE start failed: %s", sip_utils::sip_strerror(status).c_str());
-        return false;
-    }
-
     return true;
 }
 
 bool
-IceTransport::isInitialized() const
+IceTransport::_isInitialized() const
 {
-    if (auto icest = icest_.get())
-        return pj_ice_strans_has_sess(icest);
+    if (auto icest = icest_.get()) {
+        auto state = pj_ice_strans_get_state(icest);
+        return state >= PJ_ICE_STRANS_STATE_SESS_READY and state != PJ_ICE_STRANS_STATE_FAILED;
+    }
     return false;
 }
 
 bool
-IceTransport::isStarted() const
+IceTransport::_isStarted() const
 {
-    return pj_ice_strans_sess_is_running(icest_.get());
+    if (auto icest = icest_.get()) {
+        auto state = pj_ice_strans_get_state(icest);
+        return state >= PJ_ICE_STRANS_STATE_NEGO and state != PJ_ICE_STRANS_STATE_FAILED;
+    }
+    return false;
 }
 
 bool
-IceTransport::isCompleted() const
+IceTransport::_isRunning() const
 {
-    return pj_ice_strans_sess_is_complete(icest_.get());
+    if (auto icest = icest_.get()) {
+        auto state = pj_ice_strans_get_state(icest);
+        return state >= PJ_ICE_STRANS_STATE_RUNNING and state != PJ_ICE_STRANS_STATE_FAILED;
+    }
+    return false;
 }
 
 bool
-IceTransport::isRunning() const
+IceTransport::_isFailed() const
 {
-    return isInitialized() and pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_RUNNING;
-}
-
-bool
-IceTransport::isFailed() const
-{
-    return isInitialized() and pj_ice_strans_get_state(icest_.get()) == PJ_ICE_STRANS_STATE_FAILED;
+    if (auto icest = icest_.get())
+        return pj_ice_strans_get_state(icest) == PJ_ICE_STRANS_STATE_FAILED;
+    return false;
 }
 
 IpAddr
@@ -560,6 +557,9 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
 bool
 IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 {
+    if (not isInitialized())
+        return false;
+
     // Register only if no NAT traversal methods exists
     if (upnp_ or config_.stun.port > 0 or config_.turn.port > 0)
         return false;
@@ -663,17 +663,19 @@ IceTransport::selectUPnPIceCandidates()
 std::vector<uint8_t>
 IceTransport::getLocalAttributesAndCandidates() const
 {
+    if (not isInitialized())
+        return {};
+
     std::stringstream ss;
     ss << local_ufrag_ << NEW_LINE;
     ss << local_pwd_ << NEW_LINE;
-    for  (unsigned i=0; i<component_count_; i++) {
+    for (unsigned i=0; i<component_count_; i++) {
         const auto& candidates = getLocalCandidates(i);
         for (const auto& c : candidates)
             ss << c << NEW_LINE;
     }
     auto str(ss.str());
-    std::vector<uint8_t> ret(str.begin(), str.end());
-    return ret;
+    return std::vector<uint8_t>(str.begin(), str.end());
 }
 
 void
@@ -786,11 +788,6 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
-    if (not isInitialized()) {
-        RING_ERR("ICE: not initialized transport");
-        return -1;
-    }
-
     register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
@@ -828,12 +825,11 @@ IceTransport::waitForInitialization(unsigned timeout)
 {
     std::unique_lock<std::mutex> lk(iceMutex_);
     if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
-                         [this]{ return iceTransportInitDone_; })) {
+                         [this]{ return _isInitialized() or _isFailed(); })) {
         RING_WARN("waitForInitialization: timeout");
         return -1;
     }
-    RING_DBG("waitForInitialization: %u", iceTransportInitDone_);
-    return iceTransportInitDone_;
+    return not _isFailed();
 }
 
 int
@@ -841,12 +837,11 @@ IceTransport::waitForNegotiation(unsigned timeout)
 {
     std::unique_lock<std::mutex> lk(iceMutex_);
     if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
-                         [this]{ return iceTransportNegoDone_; })) {
+                         [this]{ return _isRunning() or _isFailed(); })) {
         RING_WARN("waitForIceNegotiation: timeout");
         return -1;
     }
-    RING_DBG("waitForNegotiation: %u", iceTransportNegoDone_);
-    return iceTransportNegoDone_;
+    return not _isFailed();
 }
 
 ssize_t
@@ -895,8 +890,7 @@ IceTransportFactory::createTransport(const char* name, int component_count,
                                      const IceTransportOptions& options)
 {
     try {
-        return std::make_shared<IceTransport>(name, component_count, master,
-                                              options);
+        return std::make_shared<IceTransport>(name, component_count, master, options);
     } catch(const std::exception& e) {
         RING_ERR("%s",e.what());
         return nullptr;
