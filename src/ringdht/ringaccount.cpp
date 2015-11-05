@@ -60,12 +60,14 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <utility>
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cctype>
 #include <cstdarg>
+#include <fstream>
 
 namespace ring {
 
@@ -900,11 +902,187 @@ RingAccount::doRegister_()
                 return true;
             }
         );
-    }
-    catch (const std::exception& e) {
+
+        // Listen to data channel
+        dht_.listen<dht::IceCandidates>(
+            inboxKey,
+            [shared] (dht::IceCandidates&& msg) {
+                runOnMainThread([shared, msg]() mutable {
+                        shared->incomingDataChannel(std::move(msg));
+                    });
+                return true;
+            });
+    } catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
+}
+
+bool
+RingAccount::hasDataConnection(const std::string& peer_id)
+{
+    return dataConnectionMap_.find(peer_id) != dataConnectionMap_.cend();
+}
+
+std::shared_ptr<IceTransport>
+RingAccount::getDataConnection(const std::string& peer_id)
+{
+    auto iter = dataConnectionMap_.find(peer_id);
+    if (iter != dataConnectionMap_.cend())
+        return iter->second;
+    return {};
+}
+
+void
+RingAccount::addDataConnection(const std::string& peer_id, std::shared_ptr<IceTransport> ice)
+{
+    dataConnectionMap_.emplace(peer_id, ice);
+}
+
+void
+RingAccount::removeDataConnection(const std::string& peer_id)
+{
+    dataConnectionMap_.erase(peer_id);
+}
+
+void
+RingAccount::onDataIceInitComplete(const std::string& peer_id, IceTransport& ice,
+                                   dht::IceCandidates&& remote_ice)
+{
+    if (not ice.isInitialized()) {
+        RING_ERR("[Peer:%s] data ICE transport init failed (ice@%p)", peer_id.c_str(), &ice);
+        emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(getAccountID(), peer_id, "SYS_FAILURE");
+        removeDataConnection(peer_id);
+        return;
+    }
+
+    // Send our ICE info to peer through DHT
+    const dht::Value::Id msg_id = udist(rand_);
+    const dht::Value::Id value_id = udist(rand_);
+    const auto destination = dht::InfoHash(peer_id);
+    const auto key = dht::InfoHash::get("inbox:" + peer_id);
+    dht::Value value { dht::IceCandidates(msg_id, ice.getLocalAttributesAndCandidates()) };
+    value.id = value_id;
+
+    auto this_account = std::static_pointer_cast<RingAccount>(shared_from_this());
+    RING_DBG("[Peer:%s] sending data ICE descriptor (ice@%p)", peer_id.c_str(), &ice);
+    dht_.putEncrypted(
+        key, destination,
+        std::move(value),
+        [this_account, key, value_id, peer_id](bool done) { // ok=true on complete
+            if (!done) {
+                RING_ERR("[Peer:%s] can't put data ICE descriptor on DHT", peer_id.c_str());
+                emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(this_account->getAccountID(), peer_id, "SYS_FAILURE");
+                this_account->removeDataConnection(peer_id);
+            } else
+                RING_DBG("[Peer:%s] data ICE descriptor sent", peer_id.c_str());
+
+            // stop put
+            this_account->dht_.cancelPut(key, value_id);
+        });
+
+    emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(getAccountID(), peer_id, "CONNECTING");
+
+    // Start negotiation if existing remote info
+    if (remote_ice.ice_data.size() > 0)
+        ice.start(remote_ice.ice_data);
+}
+
+void
+RingAccount::onDataIceNegoComplete(const std::string& peer_id, IceTransport& ice)
+{
+    if (ice.isFailed()) {
+        RING_DBG("[Peer:%s] data ICE transport ready (ice@%p)", peer_id.c_str(), &ice);
+        emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(getAccountID(), peer_id, "CONNECTED");
+    } else {
+        RING_ERR("[Peer:%s] data ICE transport negotiation failed (ice@%p)", peer_id.c_str(), &ice);
+        emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(getAccountID(), peer_id, "NO_CONNECTION");
+        removeDataConnection(peer_id);
+    }
+}
+
+/**
+ * throw:
+ *  std::invalid_argument: if uri is not a recognisable RingID
+ */
+
+std::string
+RingAccount::sendDataConnection(const std::string& peer_id, bool initiator,
+                                dht::IceCandidates&& remote_ice)
+{
+    if (hasDataConnection(peer_id))
+        return peer_id;
+
+    auto this_account = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto ice_opts = getIceOptions();
+
+    ice_opts.onInitDone = [this_account, peer_id, remote_ice](IceTransport& ice, bool /*done*/) mutable {
+        this_account->onDataIceInitComplete(peer_id, ice, std::move(remote_ice));
+    };
+
+    ice_opts.onNegoDone = [this_account, peer_id](IceTransport& ice, bool /*done*/) {
+        this_account->onDataIceNegoComplete(peer_id, ice);
+    };
+
+    if (auto ice = createIceTransport(("data:" + dht_.getId().toString()).c_str(), 1, initiator,
+                                      ice_opts)) {
+        addDataConnection(peer_id, ice);
+        return peer_id;
+    }
+
+    RING_ERR("[Peer:%s] data ICE transport creation failed", peer_id.c_str());
+    return {};
+}
+
+void
+RingAccount::incomingDataChannel(dht::IceCandidates&& msg)
+{
+    const auto peer_id = msg.from.toString();
+    const std::vector<uint8_t>& ice_data = msg.ice_data;
+    RING_DBG("[Peer:%s] incoming data ICE descriptors:\n%s", peer_id.c_str(),
+             std::string(std::begin(ice_data), std::end(ice_data)).c_str());
+
+    // Request answer?
+    if (auto ice = getDataConnection(peer_id)) {
+        // ignore msg replay
+        if (ice->isStarted())
+            return;
+
+        // Start ICE negotiation
+        if (!ice->start(ice_data)) {
+            // we let the peer responsible to timeout, just cancel on our side
+            emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(getAccountID(), peer_id, "SYS_FAILURE");
+            removeDataConnection(peer_id);
+        } // else continue on CONNECTING state
+
+    } else { // new request
+        sendDataConnection(peer_id, false, std::move(msg));
+    }
+}
+
+std::string
+RingAccount::sendFile(const std::string& peer_uri, const std::string& filename)
+{
+    // check filename existance first
+    std::ifstream fstream {filename, std::ios::in | std::ios::binary};
+    if (not fstream.good()) {
+        RING_ERR("Cannot open file '%s'", filename.c_str());
+        return {};
+    }
+
+    const auto peer_id = parseRingUri(peer_uri);
+    if (sendDataConnection(peer_id, true).empty())
+        return {};
+
+    // the transfer will start when data connection is negotiated
+    return addFileStreamToTransfer(peer_id, std::move(fstream));
+}
+
+std::string
+RingAccount::addFileStreamToTransfer(const std::string& peer_id, std::ifstream&& fstream)
+{
+    RING_DBG("[Peer:%s] file streaming attached (fstream@%p)", peer_id.c_str(), &fstream);
+    return {};
 }
 
 void
