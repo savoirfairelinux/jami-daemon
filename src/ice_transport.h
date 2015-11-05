@@ -112,14 +112,41 @@ class IceTransport {
          */
         bool stop();
 
-        bool isInitialized() const;
+        /**
+         * Returns true if ICE transport has been initialized
+         * [mutex protected]
+         */
+        bool isInitialized() const {
+            std::lock_guard<std::mutex> lk(iceMutex_);
+            return _isInitialized();
+        }
 
-        bool isStarted() const;
+        /**
+         * Returns true if ICE negotiation has been started
+         * [mutex protected]
+         */
+        bool isStarted() const {
+            std::lock_guard<std::mutex> lk(iceMutex_);
+            return _isStarted();
+        }
 
-        bool isCompleted() const;
+        /**
+         * Returns true if ICE negotiation has completed with success
+         * [mutex protected]
+         */
+        bool isRunning() const {
+            std::lock_guard<std::mutex> lk(iceMutex_);
+            return _isRunning();
+        }
 
-        bool isRunning() const;
-        bool isFailed() const;
+        /**
+         * Returns true if ICE transport is in failure state
+         * [mutex protected]
+         */
+        bool isFailed() const {
+            std::lock_guard<std::mutex> lk(iceMutex_);
+            return _isFailed();
+        }
 
         IpAddr getLocalAddress(unsigned comp_id) const;
 
@@ -203,11 +230,15 @@ class IceTransport {
 
         void getDefaultCanditates();
 
+        /* Not-mutex protected version of public versions */
+        bool _isInitialized() const;
+        bool _isStarted() const;
+        bool _isRunning() const;
+        bool _isFailed() const;
+
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         IceTransportCompleteCb on_initdone_cb_;
         IceTransportCompleteCb on_negodone_cb_;
-        bool iceTransportInitDone_ {false};
-        bool iceTransportNegoDone_ {false};
         std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
         unsigned component_count_;
         pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
@@ -231,7 +262,7 @@ class IceTransport {
         };
         std::vector<ComponentIO> compIO_;
 
-        bool initiator_session_ {true};
+        std::atomic_bool initiatorSession_ {true};
 
         /**
          * Returns the IP of each candidate for a given component in the ICE session
