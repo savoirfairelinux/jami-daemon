@@ -17,9 +17,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-
-#ifndef __MEDIA_DECODER_H__
-#define __MEDIA_DECODER_H__
+#pragma once
 
 #include "config.h"
 
@@ -79,7 +77,7 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(VideoFrame&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
@@ -125,5 +123,3 @@ class MediaDecoder {
 };
 
 } // namespace ring
-
-#endif // __MEDIA_DECODER_H__
