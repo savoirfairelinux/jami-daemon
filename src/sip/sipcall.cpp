@@ -770,7 +770,7 @@ SIPCall::startIce()
 {
     if (not iceTransport_)
         return false;
-    if (iceTransport_->isStarted() || iceTransport_->isCompleted()) {
+    if (iceTransport_->isStarted()) {
         RING_DBG("[call:%s] ICE already started", getCallId().c_str());
         return true;
     }
