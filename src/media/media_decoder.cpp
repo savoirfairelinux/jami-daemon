@@ -280,10 +280,11 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(VideoFrame& result)
 {
-    AVPacket *inpacket = video_packet.get();
-    int ret = av_read_frame(inputCtx_, inpacket);
+    AVPacket inpacket;
+    av_init_packet(&inpacket);
+    int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -296,13 +297,18 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
     }
 
     // is this a packet from the video stream?
-    if (inpacket->stream_index != streamIndex_)
+    if (inpacket.stream_index != streamIndex_) {
+        av_packet_unref(&inpacket);
         return Status::Success;
+    }
 
     auto frame = result.pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
-                                    &frameFinished, inpacket);
+                                    &frameFinished, &inpacket);
+
+    av_packet_unref(&inpacket);
+
     if (len <= 0)
         return Status::DecodeError;
 
@@ -333,10 +339,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     const auto frame = decodedFrame.pointer();
 
     AVPacket inpacket;
-    memset(&inpacket, 0, sizeof(inpacket));
     av_init_packet(&inpacket);
-    inpacket.data = NULL;
-    inpacket.size = 0;
 
    int ret = av_read_frame(inputCtx_, &inpacket);
     if (ret == AVERROR(EAGAIN)) {
@@ -351,12 +354,16 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     // is this a packet from the audio stream?
-    if (inpacket.stream_index != streamIndex_)
+    if (inpacket.stream_index != streamIndex_) {
+        av_packet_unref(&inpacket);
         return Status::Success;
+    }
 
     int frameFinished = 0;
     int len = avcodec_decode_audio4(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
+    av_packet_unref(&inpacket);
+
     if (len <= 0) {
         return Status::DecodeError;
     }
@@ -385,14 +392,14 @@ MediaDecoder::Status
 MediaDecoder::flush(VideoFrame& result)
 {
     AVPacket inpacket;
-    memset(&inpacket, 0, sizeof(inpacket));
     av_init_packet(&inpacket);
-    inpacket.data = NULL;
-    inpacket.size = 0;
 
     int frameFinished = 0;
     auto len = avcodec_decode_video2(decoderCtx_, result.pointer(),
                                     &frameFinished, &inpacket);
+
+    av_packet_unref(&inpacket);
+
     if (len <= 0)
         return Status::DecodeError;
 
