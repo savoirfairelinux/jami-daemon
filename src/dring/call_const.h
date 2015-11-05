@@ -51,6 +51,7 @@ constexpr static char ACCOUNTID                [] = "ACCOUNTID"           ;
 constexpr static char PEER_HOLDING             [] = "PEER_HOLDING"        ;
 constexpr static char AUDIO_MUTED              [] = "AUDIO_MUTED"         ;
 constexpr static char VIDEO_MUTED              [] = "VIDEO_MUTED"         ;
+constexpr static char VIDEO_SOURCE             [] = "VIDEO_SOURCE"        ;
 
 }
 
