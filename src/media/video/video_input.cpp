@@ -108,8 +108,7 @@ bool VideoInput::captureFrame()
     if (not decoder_)
         return false;
 
-    VideoPacket pkt;
-    const auto ret = decoder_->decode(getNewFrame(), pkt);
+    const auto ret = decoder_->decode(getNewFrame());
 
     switch (ret) {
         case MediaDecoder::Status::ReadError:

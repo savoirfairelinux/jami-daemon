@@ -40,8 +40,10 @@ using std::string;
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
-    startTime_(AV_NOPTS_VALUE)
+    startTime_(AV_NOPTS_VALUE),
+    mediaPacket((AVPacket*)av_mallocz(sizeof(AVPacket)))
 {
+    av_init_packet(mediaPacket.get());
 }
 
 MediaDecoder::~MediaDecoder()
@@ -280,10 +282,9 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(VideoFrame& result)
 {
-    AVPacket *inpacket = video_packet.get();
-    int ret = av_read_frame(inputCtx_, inpacket);
+    int ret = av_read_frame(inputCtx_, mediaPacket.get());
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -296,13 +297,15 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
     }
 
     // is this a packet from the video stream?
-    if (inpacket->stream_index != streamIndex_)
+    if (mediaPacket.get()->stream_index != streamIndex_)
         return Status::Success;
 
     auto frame = result.pointer();
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
-                                    &frameFinished, inpacket);
+                                    &frameFinished, mediaPacket.get());
+
+    av_packet_unref(mediaPacket.get());
     if (len <= 0)
         return Status::DecodeError;
 
@@ -332,13 +335,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 {
     const auto frame = decodedFrame.pointer();
 
-    AVPacket inpacket;
-    memset(&inpacket, 0, sizeof(inpacket));
-    av_init_packet(&inpacket);
-    inpacket.data = NULL;
-    inpacket.size = 0;
-
-   int ret = av_read_frame(inputCtx_, &inpacket);
+   int ret = av_read_frame(inputCtx_, mediaPacket.get());
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -351,12 +348,13 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     // is this a packet from the audio stream?
-    if (inpacket.stream_index != streamIndex_)
+    if (mediaPacket.get()->stream_index != streamIndex_)
         return Status::Success;
 
     int frameFinished = 0;
     int len = avcodec_decode_audio4(decoderCtx_, frame,
-                                    &frameFinished, &inpacket);
+                                    &frameFinished, mediaPacket.get());
+    av_packet_unref(mediaPacket.get());
     if (len <= 0) {
         return Status::DecodeError;
     }
@@ -384,15 +382,13 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 MediaDecoder::Status
 MediaDecoder::flush(VideoFrame& result)
 {
-    AVPacket inpacket;
-    memset(&inpacket, 0, sizeof(inpacket));
-    av_init_packet(&inpacket);
-    inpacket.data = NULL;
-    inpacket.size = 0;
 
     int frameFinished = 0;
     auto len = avcodec_decode_video2(decoderCtx_, result.pointer(),
-                                    &frameFinished, &inpacket);
+                                    &frameFinished, mediaPacket.get());
+
+    av_packet_unref(mediaPacket.get());
+
     if (len <= 0)
         return Status::DecodeError;
 

@@ -29,15 +29,6 @@
 
 namespace ring { namespace video {
 
-/*=== VideoPacket  ===========================================================*/
-
-VideoPacket::VideoPacket() : packet_(static_cast<AVPacket *>(av_mallocz(sizeof(AVPacket))))
-{
-    av_init_packet(packet_);
-}
-
-VideoPacket::~VideoPacket() { av_free_packet(packet_); av_free(packet_); }
-
 /*=== VideoGenerator =========================================================*/
 
 VideoFrame&
