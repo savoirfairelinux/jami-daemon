@@ -42,6 +42,13 @@ MediaFrame::reset() noexcept
     av_frame_unref(frame_.get());
 }
 
+MediaPacket::MediaPacket() : packet_(static_cast<AVPacket *>(av_mallocz(sizeof(AVPacket))))
+{
+    av_init_packet(packet_);
+}
+
+MediaPacket::~MediaPacket() { av_free_packet(packet_); av_free(packet_); }
+
 #ifdef RING_VIDEO
 
 void

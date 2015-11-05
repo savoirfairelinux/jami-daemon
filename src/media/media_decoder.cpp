@@ -280,7 +280,7 @@ int MediaDecoder::setupFromVideoData()
 }
 
 MediaDecoder::Status
-MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
+MediaDecoder::decode(VideoFrame& result, MediaPacket& video_packet)
 {
     AVPacket *inpacket = video_packet.get();
     int ret = av_read_frame(inputCtx_, inpacket);
@@ -328,17 +328,17 @@ MediaDecoder::decode(VideoFrame& result, video::VideoPacket& video_packet)
 #endif // RING_VIDEO
 
 MediaDecoder::Status
-MediaDecoder::decode(const AudioFrame& decodedFrame)
+MediaDecoder::decode(const AudioFrame& decodedFrame, MediaPacket& mediaPacket)
 {
     const auto frame = decodedFrame.pointer();
 
-    AVPacket inpacket;
-    memset(&inpacket, 0, sizeof(inpacket));
-    av_init_packet(&inpacket);
-    inpacket.data = NULL;
-    inpacket.size = 0;
+    AVPacket *inpacket = mediaPacket.get();
+    memset(inpacket, 0, sizeof(*inpacket));
+    av_init_packet(inpacket);
+    inpacket->data = NULL;
+    inpacket->size = 0;
 
-   int ret = av_read_frame(inputCtx_, &inpacket);
+   int ret = av_read_frame(inputCtx_, inpacket);
     if (ret == AVERROR(EAGAIN)) {
         return Status::Success;
     } else if (ret == AVERROR_EOF) {
@@ -351,12 +351,12 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     // is this a packet from the audio stream?
-    if (inpacket.stream_index != streamIndex_)
+    if (inpacket->stream_index != streamIndex_)
         return Status::Success;
 
     int frameFinished = 0;
     int len = avcodec_decode_audio4(decoderCtx_, frame,
-                                    &frameFinished, &inpacket);
+                                    &frameFinished, inpacket);
     if (len <= 0) {
         return Status::DecodeError;
     }

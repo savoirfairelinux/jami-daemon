@@ -108,7 +108,7 @@ bool VideoInput::captureFrame()
     if (not decoder_)
         return false;
 
-    VideoPacket pkt;
+    MediaPacket pkt;
     const auto ret = decoder_->decode(getNewFrame(), pkt);
 
     switch (ret) {

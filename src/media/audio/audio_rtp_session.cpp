@@ -275,8 +275,9 @@ AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     AudioFrame decodedFrame;
+    MediaPacket pkt;
 
-    switch (audioDecoder_->decode(decodedFrame)) {
+    switch (audioDecoder_->decode(decodedFrame, pkt)) {
 
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,

@@ -19,6 +19,7 @@
  */
 
 #pragma once
+#include "noncopyable.h"
 
 #include "config.h"
 
@@ -88,6 +89,17 @@ class VideoFrame: public MediaFrame {
     private:
         bool allocated_ {false};
         void setGeometry(int format, int width, int height) noexcept;
+};
+
+class MediaPacket {
+    public:
+        MediaPacket();
+        ~MediaPacket();
+        AVPacket* get() { return packet_; };
+
+    private:
+        NON_COPYABLE(MediaPacket);
+        AVPacket *packet_;
 };
 
 // Some helpers

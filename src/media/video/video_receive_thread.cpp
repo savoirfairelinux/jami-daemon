@@ -155,7 +155,7 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 
 bool VideoReceiveThread::decodeFrame()
 {
-    VideoPacket pkt;
+    MediaPacket pkt;
     const auto ret = videoDecoder_->decode(getNewFrame(), pkt);
 
     switch (ret) {

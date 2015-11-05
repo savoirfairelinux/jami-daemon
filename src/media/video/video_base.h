@@ -121,19 +121,6 @@ public:
 struct VideoFrameActiveWriter: Observable<std::shared_ptr<VideoFrame>> {};
 struct VideoFramePassiveReader: Observer<std::shared_ptr<VideoFrame>> {};
 
-/*=== VideoPacket  ===========================================================*/
-
-class VideoPacket {
-    public:
-        VideoPacket();
-        ~VideoPacket();
-        AVPacket* get() { return packet_; };
-
-    private:
-        NON_COPYABLE(VideoPacket);
-        AVPacket *packet_;
-};
-
 /*=== VideoGenerator =========================================================*/
 
 class VideoGenerator : public VideoFrameActiveWriter

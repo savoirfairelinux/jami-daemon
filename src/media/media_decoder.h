@@ -29,6 +29,7 @@
 #endif // RING_VIDEO
 
 #include "audio/audiobuffer.h"
+#include "media_buffer.h"
 
 #include "rational.h"
 #include "noncopyable.h"
@@ -79,12 +80,12 @@ class MediaDecoder {
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();
-        Status decode(VideoFrame&, video::VideoPacket&);
+        Status decode(VideoFrame&, MediaPacket&);
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
         int setupFromAudioData(const AudioFormat format);
-        Status decode(const AudioFrame&);
+        Status decode(const AudioFrame&, MediaPacket&);
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
         int getWidth() const;
