@@ -265,20 +265,6 @@ Call::toggleRecording()
     return startRecording;
 }
 
-std::string Call::getTypeStr() const
-{
-    switch (type_) {
-        case CallType::INCOMING:
-            return "incoming";
-        case CallType::OUTGOING:
-            return "outgoing";
-        case CallType::MISSED:
-            return "missed";
-        default:
-            return "";
-    }
-}
-
 std::map<std::string, std::string>
 Call::getDetails() const
 {
