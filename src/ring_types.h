@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,7 +31,7 @@ namespace ring {
 
 typedef int16_t AudioSample;
 
-static constexpr size_t SIZEBUF = 32000; /** About 1s of buffering at 48kHz */
+static constexpr size_t SIZEBUF = 3000; /** About 62.5ms of buffering at 48kHz */
 
 /**
  * This meta-function is used to enable a template overload
