@@ -35,6 +35,13 @@
 
 namespace ring { namespace video {
 
+class OSXVideoSize {
+    public:
+        OSXVideoSize(const unsigned width, const unsigned height);
+        unsigned width;
+        unsigned height;
+};
+
 class VideoDeviceImpl {
     public:
         /**
@@ -57,28 +64,57 @@ class VideoDeviceImpl {
         DeviceParams getDeviceParams() const;
 
     private:
+        const OSXVideoSize& extractSize(const std::string &name) const;
+
         AVCaptureDevice* avDevice_;
+        std::vector<OSXVideoSize> available_sizes_;
+        OSXVideoSize current_size_;
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
     : device(uniqueID)
+    , current_size_(-1, -1)
     , avDevice_([AVCaptureDevice deviceWithUniqueID:
         [NSString stringWithCString:uniqueID.c_str() encoding:[NSString defaultCStringEncoding]]])
 {
     name = [[avDevice_ localizedName] UTF8String];
+
+    for (AVCaptureDeviceFormat* format in avDevice_.formats) {
+        std::stringstream ss;
+        auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
+        OSXVideoSize size(dimensions.width, dimensions.height);
+        available_sizes_.push_back(size);
+    }
     // Set default settings
     applySettings(VideoSettings());
 }
 
+OSXVideoSize::OSXVideoSize(const unsigned width, const unsigned height) :
+    width(width), height(height) {}
+
 void
 VideoDeviceImpl::applySettings(VideoSettings settings)
 {
-//TODO: not supported for now on OSX
-// Set preferences or fallback to defaults.
-//    channel_ = getChannel(settings["channel"]);
-//    size_ = channel_.getSize(settings["size"]);
+//TODO: add framerate
 //    rate_ = size_.getRate(settings["rate"]);
+    current_size_ = extractSize(settings.video_size);
 }
+
+const OSXVideoSize&
+VideoDeviceImpl::extractSize(const std::string &name) const
+{
+    for (const auto &item : available_sizes_) {
+        std::stringstream ss;
+        ss << item.width << "x" << item.height;
+        if (ss.str() == name)
+            return item;
+    }
+
+    // fallback to last size
+    assert(not available_sizes_.empty());
+    return available_sizes_.back();
+}
+
 
 DeviceParams
 VideoDeviceImpl::getDeviceParams() const
@@ -86,13 +122,11 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
     params.input = "[" + device + "]";
     params.format = "avfoundation";
-// No channel support for now
-//    params.channel = channel_.idx;
+
+    params.width = current_size_.width;
+    params.height = current_size_.height;
+
     auto format = [avDevice_ activeFormat];
-    CMVideoDimensions dimensions =
-                CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-    params.width = dimensions.width;
-    params.height = dimensions.height;
     auto frameRate = (AVFrameRateRange*)
                     [format.videoSupportedFrameRateRanges objectAtIndex:0];
     params.framerate = frameRate.maxFrameRate;
@@ -159,12 +193,12 @@ VideoDeviceImpl::getSizeList(const std::string& channel) const
 {
     std::vector<std::string> v;
 
-    for (AVCaptureDeviceFormat* format in avDevice_.formats) {
-      std::stringstream ss;
-      auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-        ss << dimensions.width << "x" << dimensions.height;
+    for (const auto &item : available_sizes_) {
+        std::stringstream ss;
+        ss << item.width << "x" << item.height;
         v.push_back(ss.str());
     }
+
     return v;
 }
 

@@ -1,5 +1,5 @@
 #Libav 11-1 (git version packaged for ubuntu  14.10)
-LIBAV_HASH := f851477889ae48e2f17073cf7486e1d5561b7ae4
+LIBAV_HASH := 2ec112f71cd03ccab1b6f9a00d29199a57bcc7a5
 LIBAV_GITURL := git://git.libav.org/libav.git
 
 ifndef HAVE_WIN32
@@ -182,9 +182,6 @@ libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 	(cd $@-$(LIBAV_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 	$(APPLY) $(SRC)/libav/osx.patch
-	$(APPLY) $(SRC)/libav/0001-rtpdec-add-a-trace-when-jitter-buffer-is-full.patch
-	$(APPLY) $(SRC)/libav/0002-rtpdec-inform-jitter-buffer-size.patch
-	$(APPLY) $(SRC)/libav/0003-rtsp-warning-when-max_delay-reached.patch
 	$(MOVE)
 
 .libav: libav
