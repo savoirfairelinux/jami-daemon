@@ -3,6 +3,8 @@ From: Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
 Date: Mon, 9 Jun 2014 14:20:55 -0400
 Subject: [PATCH 1/1] ssl_sock: add gnutls backend
 
+Copyright (c) 2014-2015 Savoir-faire Linux Inc.
+
 This backend is mutually exclusive with the OpenSSL one, but completely
 compatible, and conformant to the PJSIP API. Also avoids any license issues
 when linking statically.
@@ -17,19 +19,8 @@ Philippe Proulx <philippe.proulx@savoirfairelinux.com> and
 Adrien Béraud <adrien.beraud@savoirfairelinux.com>
 on behalf of Savoir-faire Linux.
 ---
- {a => b}/aconfigure                           |  194 +-
- {a => b}/aconfigure.ac                        |  109 +-
- {a => b}/pjlib/build/Makefile                 |    2 +-
- {a => b}/pjlib/include/pj/compat/os_auto.h.in |    3 +
- {a => b}/pjlib/include/pj/config.h            |    4 +-
- {a => b}/pjlib/include/pj/ssl_sock.h          |    5 +
- {a => b}/pjlib/src/pj/ssl_sock_common.c       |    5 +
- /dev/null => b/pjlib/src/pj/ssl_sock_gtls.c   | 2867 +++++++++++++++++++++++++
- {a => b}/pjlib/src/pj/ssl_sock_ossl.c         |    6 +-
- 9 files changed, 3124 insertions(+), 71 deletions(-)
-
 diff --git a/aconfigure b/aconfigure
-index 084ab0a..d4f4639 100755
+index 83fc5d7..8654c54 100755
 --- a/aconfigure
 +++ b/aconfigure
 @@ -637,6 +637,8 @@ ac_no_opencore_amrnb
@@ -109,20 +100,19 @@ index 084ab0a..d4f4639 100755
 +done
 +  done
 +IFS=$as_save_IFS
- 
++
 +fi
 +fi
 +PKG_CONFIG=$ac_cv_prog_PKG_CONFIG
 +if test -n "$PKG_CONFIG"; then
 +  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
 +$as_echo "$PKG_CONFIG" >&6; }
- else
++else
 +  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 +$as_echo "no" >&6; }
 +fi
-+
  
--		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for OpenSSL installations.." >&5
++
 +  test -n "$PKG_CONFIG" && break
 +done
 +test -n "$PKG_CONFIG" || PKG_CONFIG="none"
@@ -147,12 +137,13 @@ index 084ab0a..d4f4639 100755
 +$as_echo_n "checking for gnutls_certificate_set_x509_system_trust in -lgnutls... " >&6; }
 +if ${ac_cv_lib_gnutls_gnutls_certificate_set_x509_system_trust+:} false; then :
 +  $as_echo_n "(cached) " >&6
-+else
+ else
 +  ac_check_lib_save_LIBS=$LIBS
 +LIBS="-lgnutls  $LIBS"
 +cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 +/* end confdefs.h.  */
-+
+ 
+-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for OpenSSL installations.." >&5
 +/* Override any GCC internal prototype to avoid an error.
 +   Use char because int might match the return type of a GCC
 +   builtin and then its argument prototype would still apply.  */
@@ -228,7 +219,7 @@ index 084ab0a..d4f4639 100755
  if ${ac_cv_lib_crypto_ERR_load_BIO_strings+:} false; then :
    $as_echo_n "(cached) " >&6
 @@ -7710,7 +7839,7 @@ if test "x$ac_cv_lib_crypto_ERR_load_BIO_strings" = xyes; then :
-   libcrypto_present=1 && LIBS="-lcrypto -ldl -lz $LIBS"
+   libcrypto_present=1 && LIBS="-lcrypto $LIBS"
  fi
  
 -		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSL_library_init in -lssl" >&5
@@ -236,7 +227,7 @@ index 084ab0a..d4f4639 100755
  $as_echo_n "checking for SSL_library_init in -lssl... " >&6; }
  if ${ac_cv_lib_ssl_SSL_library_init+:} false; then :
    $as_echo_n "(cached) " >&6
-@@ -7750,14 +7879,16 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
+@@ -7750,22 +7879,23 @@ if test "x$ac_cv_lib_ssl_SSL_library_init" = xyes; then :
    libssl_present=1 && LIBS="-lssl $LIBS"
  fi
  
@@ -251,29 +242,13 @@ index 084ab0a..d4f4639 100755
 +            # PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK
 +            #AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
 +            $as_echo "#define PJ_HAS_SSL_SOCK 1" >>confdefs.h
-+
-+            $as_echo "#define PJ_HAS_TLS_SOCK 0" >>confdefs.h
  
--			{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSLv2_method in -lssl" >&5
-+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for SSLv2_method in -lssl" >&5
- $as_echo_n "checking for SSLv2_method in -lssl... " >&6; }
- if ${ac_cv_lib_ssl_SSLv2_method+:} false; then :
-   $as_echo_n "(cached) " >&6
-@@ -7797,18 +7928,17 @@ if test "x$ac_cv_lib_ssl_SSLv2_method" = xyes; then :
-   libssl_no_ssl2=1
- fi
- 
--			if test "x$libssl_no_ssl2" != "x1"; then
--				CFLAGS="$CFLAGS -DOPENSSL_NO_SSL2=1"
--			fi
 -		else
 -			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ** OpenSSL libraries not found, disabling SSL support **" >&5
 -$as_echo "** OpenSSL libraries not found, disabling SSL support **" >&6; }
 -		fi
--
-+            if test "x$libssl_no_ssl2" != "x1"; then
-+                    CFLAGS="$CFLAGS -DOPENSSL_NO_SSL2=1"
-+            fi
++            $as_echo "#define PJ_HAS_TLS_SOCK 0" >>confdefs.h
+ 
 +        else
 +            { $as_echo "$as_me:${as_lineno-$LINENO}: result: ** No OpenSSL libraries found, disabling SSL support **" >&5
 +$as_echo "** No OpenSSL libraries found, disabling SSL support **" >&6; }
@@ -287,10 +262,10 @@ index 084ab0a..d4f4639 100755
  if test "${with_opencore_amrnb+set}" = set; then :
    withval=$with_opencore_amrnb; as_fn_error $? "This option is obsolete and replaced by --with-opencore-amr=DIR" "$LINENO" 5
 diff --git a/aconfigure.ac b/aconfigure.ac
-index 67cf24f..c6cbf82 100644
+index 179dfac..588ef7b 100644
 --- a/aconfigure.ac
 +++ b/aconfigure.ac
-@@ -1512,42 +1512,81 @@ fi
+@@ -1512,38 +1512,77 @@ fi
  
  dnl # Include SSL support
  AC_SUBST(ac_no_ssl)
@@ -323,17 +298,13 @@ index 67cf24f..c6cbf82 100644
 -		AC_SUBST(libssl_present)
 -		AC_SUBST(libcrypto_present)
 -		AC_CHECK_HEADER(openssl/ssl.h,[openssl_h_present=1])
--		AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="-lcrypto -ldl -lz $LIBS"],,-ldl -lz)
+-		AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="-lcrypto $LIBS"])
 -		AC_CHECK_LIB(ssl,SSL_library_init,[libssl_present=1 && LIBS="-lssl $LIBS"])
 -		if test "x$openssl_h_present" = "x1" -a "x$libssl_present" = "x1" -a "x$libcrypto_present" = "x1"; then
 -	        	AC_MSG_RESULT([OpenSSL library found, SSL support enabled])
 -			# PJSIP_HAS_TLS_TRANSPORT setting follows PJ_HAS_SSL_SOCK
 -			#AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
 -			AC_DEFINE(PJ_HAS_SSL_SOCK, 1)
--			AC_CHECK_LIB(ssl,SSLv2_method,[libssl_no_ssl2=1])
--			if test "x$libssl_no_ssl2" != "x1"; then
--				CFLAGS="$CFLAGS -DOPENSSL_NO_SSL2=1"
--			fi
 -		else
 -			AC_MSG_RESULT([** OpenSSL libraries not found, disabling SSL support **])
 -		fi
@@ -387,7 +358,7 @@ index 67cf24f..c6cbf82 100644
 +        AC_SUBST(libssl_present)
 +        AC_SUBST(libcrypto_present)
 +        AC_CHECK_HEADER(openssl/ssl.h, [openssl_h_present=1])
-+        AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="-lcrypto -ldl -lz $LIBS"],,-ldl -lz)
++        AC_CHECK_LIB(crypto,ERR_load_BIO_strings,[libcrypto_present=1 && LIBS="-lcrypto $LIBS"])
 +        AC_CHECK_LIB(ssl,SSL_library_init,[libssl_present=1 && LIBS="-lssl $LIBS"])
 +        if test "x$openssl_h_present" = "x1" -a "x$libssl_present" = "x1" -a "x$libcrypto_present" = "x1"; then
 +            AC_MSG_RESULT([OpenSSL library found, SSL support enabled])
@@ -395,10 +366,6 @@ index 67cf24f..c6cbf82 100644
 +            #AC_DEFINE(PJSIP_HAS_TLS_TRANSPORT, 1)
 +            AC_DEFINE(PJ_HAS_SSL_SOCK, 1)
 +            AC_DEFINE(PJ_HAS_TLS_SOCK, 0)
-+            AC_CHECK_LIB(ssl,SSLv2_method,[libssl_no_ssl2=1])
-+            if test "x$libssl_no_ssl2" != "x1"; then
-+                    CFLAGS="$CFLAGS -DOPENSSL_NO_SSL2=1"
-+            fi
 +        else
 +            AC_MSG_RESULT([** No OpenSSL libraries found, disabling SSL support **])
 +        fi
@@ -435,10 +402,10 @@ index 18df2bf..9295740 100644
  
  #endif	/* __PJ_COMPAT_OS_AUTO_H__ */
 diff --git a/pjlib/include/pj/config.h b/pjlib/include/pj/config.h
-index 08116cd..6d042fd 100644
+index 1f4408e..f1c5cec 100644
 --- a/pjlib/include/pj/config.h
 +++ b/pjlib/include/pj/config.h
-@@ -854,13 +854,15 @@
+@@ -855,13 +855,15 @@
  
  /**
   * Enable secure socket. For most platforms, this is implemented using
@@ -456,7 +423,7 @@ index 08116cd..6d042fd 100644
  
  
 diff --git a/pjlib/include/pj/ssl_sock.h b/pjlib/include/pj/ssl_sock.h
-index 161bcf3..0b8d1fc 100644
+index 1682bda..749b49f 100644
 --- a/pjlib/include/pj/ssl_sock.h
 +++ b/pjlib/include/pj/ssl_sock.h
 @@ -181,6 +181,11 @@ typedef struct pj_ssl_cert_info {
@@ -488,9 +455,9 @@ index 913efee..ac7f683 100644
  #if !defined(PJ_SYMBIAN) || PJ_SYMBIAN==0
      param->read_buffer_size = 1500;
  #endif
-diff --git b/pjlib/src/pj/ssl_sock_gtls.c b/pjlib/src/pj/ssl_sock_gtls.c
+diff --git a/pjlib/src/pj/ssl_sock_gtls.c b/pjlib/src/pj/ssl_sock_gtls.c
 new file mode 100644
-index 0000000..5a383d7
+index 0000000..6864740
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
 @@ -0,0 +1,2869 @@
@@ -3364,10 +3331,10 @@ index 0000000..5a383d7
 +
 +#endif /* PJ_HAS_SSL_SOCK */
 diff --git a/pjlib/src/pj/ssl_sock_ossl.c b/pjlib/src/pj/ssl_sock_ossl.c
-index 513d754..d1db3f0 100644
+index 40a5a1e..9237898 100644
 --- a/pjlib/src/pj/ssl_sock_ossl.c
 +++ b/pjlib/src/pj/ssl_sock_ossl.c
-@@ -31,8 +31,10 @@
+@@ -32,8 +32,10 @@
  #include <pj/timer.h>
  
  
