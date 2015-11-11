@@ -70,8 +70,13 @@ int MediaDecoder::openInput(const DeviceParams& params)
         ss << params.width << "x" << params.height;
         av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
     }
+#ifndef HAVE_WIN32
+    // on windows, framerate setting can lead to a failure while opening device
+    // despite investigations, we didn't found a proper solution
+    // we let dshow choose the framerate, which is the highest according to our experimentations
     if (params.framerate)
         av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
+#endif
     if (params.channel)
         av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
