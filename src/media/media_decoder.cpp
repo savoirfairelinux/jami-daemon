@@ -18,6 +18,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_decoder.h"
 #include "media_device.h"
@@ -70,8 +74,10 @@ int MediaDecoder::openInput(const DeviceParams& params)
         ss << params.width << "x" << params.height;
         av_dict_set(&options_, "video_size", ss.str().c_str(), 0);
     }
+#ifndef HAVE_WIN32
     if (params.framerate)
         av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
+#endif
     if (params.channel)
         av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
