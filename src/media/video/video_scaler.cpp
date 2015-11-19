@@ -119,7 +119,7 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
     const auto out_desc = av_pix_fmt_desc_get((AVPixelFormat)output_frame->format);
     memset(tmp_data_, 0, sizeof(tmp_data_));
     for (int i = 0; i < 4 && output_frame->linesize[i]; i++) {
-        unsigned x_shift=xoff, y_shift=yoff;
+        signed x_shift=xoff, y_shift=yoff;
         if (i == 1 || i == 2) {
             x_shift = -((-x_shift) >> out_desc->log2_chroma_w);
             y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
