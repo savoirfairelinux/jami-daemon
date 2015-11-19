@@ -1311,7 +1311,12 @@ std::string SIPAccount::getLoginName()
 #else
     TCHAR username[UNLEN + 1];
     DWORD size = UNLEN + 1;
-    return  GetUserName((TCHAR*)username, &size) ? std::string((char*)username) : "";
+    std::string uname;
+    if (GetUserName((TCHAR*)username, &size)) {
+        std::wstring wStr = username;
+        uname = std::string(wStr.begin(), wStr.end());
+    }
+    return uname;
 #endif
 }
 
