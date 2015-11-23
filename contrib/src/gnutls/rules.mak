@@ -46,8 +46,13 @@ GNUTLS_CONF := \
 	--disable-openssl-compatibility \
 	--disable-guile \
 	--disable-nls \
+	--disable-dtls-srtp-support \
 	--without-libintl-prefix \
 	$(HOSTCONF)
+
+ifdef HAVE_ANDROID
+	GNUTLS_CONF += --disable-hardware-acceleration
+endif
 
 DEPS_gnutls = nettle $(DEPS_nettle) iconv $(DEPS_iconv)
 
