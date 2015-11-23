@@ -1,6 +1,6 @@
 # Perl Compatible Regular Expression
 
-PCRE_VERSION := 8.36
+PCRE_VERSION := 8.37
 PCRE_URL := ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$(PCRE_VERSION).tar.bz2
 
 PKGS += pcre
