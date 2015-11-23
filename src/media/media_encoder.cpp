@@ -201,10 +201,6 @@ MediaEncoder::openOutput(const char *filename,
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
         encoderCtx_->bit_rate = encoderCtx_->rc_max_rate =  maxBitrate;
         encoderCtx_->rc_buffer_size = maxBitrate;
-        // on libav there are video artifcats if multithreading is enabled
-        // see https://bugzilla.libav.org/show_bug.cgi?id=912
-        // TODO: this is a workaround !
-        encoderCtx_->thread_count = 1;
         RING_DBG("Using Max bitrate %d", maxBitrate);
     }
 
