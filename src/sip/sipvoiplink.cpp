@@ -85,6 +85,7 @@ static void sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_
 static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
+static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
 
@@ -439,8 +440,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // Close call at application level
-        if (auto oldCallid = static_cast<SIPCall*>(replaced_inv->mod_data[mod_ua_.id]))
-            oldCallid->hangup(PJSIP_SC_OK);
+        if (auto replacedCall = getCallFromInvite(replaced_inv))
+            replacedCall->hangup(PJSIP_SC_OK);
     }
 
 
