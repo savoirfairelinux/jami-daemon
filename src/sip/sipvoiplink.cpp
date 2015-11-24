@@ -399,52 +399,35 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // Check if call has been transfered
     pjsip_tx_data *tdata = 0;
 
-    // If Replace header present
-    if (replaced_dlg) {
-        // Always answer the new INVITE with 200 if the replaced call is in early or confirmed state.
-        if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_OK, NULL, NULL, &response) == PJ_SUCCESS) {
-            if (pjsip_inv_send_msg(call->inv.get(), response) != PJ_SUCCESS)
-                call->inv.reset(); // FIXME: not sure if we need to continue
-        }
-
-        // Get the INVITE session associated with the replaced dialog.
-        pjsip_inv_session *replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
-
-        // Disconnect the "replaced" INVITE session.
-        if (pjsip_inv_end_session(replaced_inv, PJSIP_SC_GONE, NULL, &tdata) == PJ_SUCCESS && tdata) {
-            pjsip_inv_send_msg(replaced_inv, tdata);
-        }
-    } else { // Proceed with normal call flow
-        if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not create answer TRYING");
-            return PJ_FALSE;
-        }
-
-        if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not send msg TRYING");
-            return PJ_FALSE;
-        }
-
-        call->setState(Call::ConnectionState::TRYING);
-
-        if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not create answer RINGING");
-            return PJ_FALSE;
-        }
-
-        // contactStr must stay in scope as long as tdata
-        const pj_str_t contactStr(account->getContactHeader(transport->get()));
-        sip_utils::addContactHeader(&contactStr, tdata);
-
-        if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
-            RING_ERR("Could not send msg RINGING");
-            return PJ_FALSE;
-        }
-
-        call->setState(Call::ConnectionState::RINGING);
-
-        Manager::instance().incomingCall(*call, account_id);
+    if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        RING_ERR("Could not create answer TRYING");
+        return PJ_FALSE;
     }
+
+    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+        RING_ERR("Could not send msg TRYING");
+        return PJ_FALSE;
+    }
+
+    call->setState(Call::ConnectionState::TRYING);
+
+    if (pjsip_inv_answer(call->inv.get(), PJSIP_SC_RINGING, NULL, NULL, &tdata) != PJ_SUCCESS) {
+        RING_ERR("Could not create answer RINGING");
+        return PJ_FALSE;
+    }
+
+    // contactStr must stay in scope as long as tdata
+    const pj_str_t contactStr(account->getContactHeader(transport->get()));
+    sip_utils::addContactHeader(&contactStr, tdata);
+
+    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+        RING_ERR("Could not send msg RINGING");
+        return PJ_FALSE;
+    }
+
+    call->setState(Call::ConnectionState::RINGING);
+
+    Manager::instance().incomingCall(*call, account_id);
 
     return PJ_FALSE;
 }
