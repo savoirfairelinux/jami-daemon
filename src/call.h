@@ -125,6 +125,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         void setPeerNumber(const std::string& number) {
             peerNumber_ = number;
+            if (peerDisplayName_.empty())
+                setPeerDisplayName("TOTOTITITATA");
         }
 
         /**
