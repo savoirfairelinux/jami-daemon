@@ -33,6 +33,7 @@
 #include "audio/recordable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "sip/sip_utils.h"
 
 #include <mutex>
 #include <map>
@@ -125,6 +126,13 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         void setPeerNumber(const std::string& number) {
             peerNumber_ = number;
+            if (peerDisplayName_.empty()) {
+                // remove <sip:> from uri
+                auto peerDisplayName = peerNumber_;
+                sip_utils::stripSipUriPrefix(peerDisplayName);
+                // remove everything after ?
+                setPeerDisplayName(peerDisplayName.substr(0,peerDisplayName.find("?")));
+            }
         }
 
         /**

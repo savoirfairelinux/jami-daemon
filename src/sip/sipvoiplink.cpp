@@ -328,7 +328,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setState(Call::ConnectionState::PROGRESSING);
     call->setPeerNumber(peerNumber);
-    call->setPeerDisplayName(peerDisplayName);
+    if (not peerDisplayName.empty())
+        call->setPeerDisplayName(peerDisplayName);
+
     call->initRecFilename(peerNumber);
     call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
