@@ -214,7 +214,10 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 
     call->setIPToIP(isIP2IP());
     call->setSecure(isTlsEnabled());
+
+    toUri.substr(0,toUri.find("?"));
     call->setPeerNumber(toUri);
+
     call->initRecFilename(to);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
