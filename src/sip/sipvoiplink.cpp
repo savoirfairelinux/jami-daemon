@@ -168,6 +168,7 @@ try_respond_stateless(pjsip_endpoint *endpt, pjsip_rx_data *rdata, int st_code,
 static pj_bool_t
 transaction_request_cb(pjsip_rx_data *rdata)
 {
+    RING_ERR("###################### > transaction_request_cb");
     if (!rdata or !rdata->msg_info.msg) {
         RING_ERR("rx_data is NULL");
         return PJ_FALSE;
@@ -431,6 +432,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     Manager::instance().incomingCall(*call, account_id);
 
     if (replaced_dlg) {
+        RING_ERR("################## replaced_dlg");
         // Get the INVITE session associated with the replaced dialog.
         auto replaced_inv = pjsip_dlg_get_inv_session(replaced_dlg);
 
@@ -440,11 +442,16 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
 
         // Close call at application level
-        if (auto replacedCall = getCallFromInvite(replaced_inv))
+        if (auto replacedCall = getCallFromInvite(replaced_inv)){
+            RING_ERR("################## will hangup");
             replacedCall->hangup(PJSIP_SC_OK);
+        }else{
+            RING_ERR("################## will NOT hangup");
+        }
     }
 
 
+    RING_ERR("###################### < transaction_request_cb");
     return PJ_FALSE;
 }
 
@@ -1039,9 +1046,12 @@ static bool
 transferCall(SIPCall& call, const std::string& refer_to)
 {
     const auto& callId = call.getCallId();
-    RING_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to.c_str());
+    //URI header must be removed
+    auto refer_to_withoutHeader = refer_to;
+    sip_utils::removeHeaderFromUri(refer_to_withoutHeader);
+    RING_WARN("[call:%s] Trying to transfer to %s", callId.c_str(), refer_to_withoutHeader.c_str());
     try {
-        Manager::instance().newOutgoingCall(refer_to, call.getAccountId());
+        Manager::instance().newOutgoingCall(refer_to_withoutHeader, call.getAccountId());
         Manager::instance().hangupCall(callId);
     } catch (const std::exception& e) {
         RING_ERR("[call:%s] SIP transfer failed: %s", callId.c_str(), e.what());

@@ -543,9 +543,14 @@ SIPCall::transfer(const std::string& to)
     stopRecording();
 
     std::string toUri;
+
     pj_str_t dst = { 0, 0 };
 
     toUri = account.getToUri(to);
+
+    //URI header must be removed
+    sip_utils::removeHeaderFromUri(toUri);
+
     pj_cstr(&dst, toUri.c_str());
     RING_DBG("[call:%s] Transferring to %.*s", getCallId().c_str(), (int)dst.slen, dst.ptr);
 
