@@ -442,6 +442,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
         // Close call at application level
         if (auto replacedCall = getCallFromInvite(replaced_inv))
             replacedCall->hangup(PJSIP_SC_OK);
+
+        peerNumber.substr(0,peerNumber.find("?"));
+        call->setPeerNumber(peerNumber);
     }
 
 
