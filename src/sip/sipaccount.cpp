@@ -214,6 +214,10 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 
     call->setIPToIP(isIP2IP());
     call->setSecure(isTlsEnabled());
+
+    //URI header must be removed
+    sip_utils::removeHeaderFromUri(toUri);
+
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 

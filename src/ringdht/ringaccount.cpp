@@ -271,7 +271,10 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
               to_id.c_str(), target.toString(true).c_str());
     call->initIceTransport(true);
     call->setIPToIP(true);
-    call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
+    auto toUri = getToUri(to_id+"@"+target.toString(true));
+    //URI header must be removed
+    sip_utils::removeHeaderFromUri(toUri);
+    call->setPeerNumber(toUri);
     call->initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
