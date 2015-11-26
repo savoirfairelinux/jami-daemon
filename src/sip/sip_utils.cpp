@@ -179,6 +179,20 @@ sip_strerror(pj_status_t code)
     return std::string{err_msg};
 }
 
+void
+removeHeaderFromUri(std::string& uri)
+{
+    auto headerBeginPos = uri.find("?");
+    if (headerBeginPos != std::string::npos)
+    {
+        auto headerEndPos = uri.find(">");
+        if (headerEndPos != std::string::npos)
+            uri.erase(headerBeginPos, headerEndPos - headerBeginPos);
+        else
+            uri.erase(headerBeginPos, uri.length());
+    }
+}
+
 PJDialogLock::PJDialogLock(pjsip_dialog* dialog)
     : dialog_(dialog)
 {
