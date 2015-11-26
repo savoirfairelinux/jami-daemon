@@ -70,6 +70,7 @@ std::string parseDisplayName(const pjsip_contact_hdr* header);
 std::string getHostFromUri(const std::string& sipUri);
 
 void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
+void removeHeaderFromUri(std::string& uri);
 
 std::string sip_strerror(pj_status_t code);
 

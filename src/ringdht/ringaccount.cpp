@@ -174,7 +174,9 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    const std::string toUri = parseRingUri(toUrl);
+    std::string toUri = parseRingUri(toUrl);
+    //URI header must be removed
+    sip_utils::removeHeaderFromUri(toUri);
     RING_DBG("Calling DHT peer %s", toUri.c_str());
 
     auto& manager = Manager::instance();
@@ -182,6 +184,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                                                                   Call::CallType::OUTGOING);
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
+    call->setPeerNumber(toUri);
 
     // Create an ICE transport for SIP channel
     auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
@@ -271,7 +274,10 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
               to_id.c_str(), target.toString(true).c_str());
     call->initIceTransport(true);
     call->setIPToIP(true);
-    call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
+    auto toUri = getToUri(to_id+"@"+target.toString(true));
+    //URI header must be removed
+    sip_utils::removeHeaderFromUri(toUri);
+    call->setPeerNumber(toUri);
     call->initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
