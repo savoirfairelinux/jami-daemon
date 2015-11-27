@@ -84,7 +84,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * \note modify validStateTransition/getStateStr if this enum changes
          */
         enum class CallState : unsigned {
-            INACTIVE, ACTIVE, HOLD, BUSY, MERROR, COUNT__
+            INACTIVE, ACTIVE, HOLD, BUSY, MERROR, OVER, COUNT__
         };
 
         virtual ~Call();
