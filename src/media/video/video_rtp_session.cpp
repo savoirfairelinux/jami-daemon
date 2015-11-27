@@ -372,12 +372,18 @@ VideoRtpSession::adaptQualityAndBitrate()
         videoBitrateInfo_.cptBitrateChecking++;
 
         // packetLostRate is not already available. Do nothing
-        if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
+	packetLostRate = checkPeerPacketLoss();
+        if (packetLostRate == NO_PACKET_LOSS_CALCULATED) {
             // we force iterative bitrate adaptation
             videoBitrateInfo_.cptBitrateChecking = 0;
+	    cptNoPacketLossCalculated++;
+	} else {
+	    cptNoPacketLossCalculated = 0;
+	}
 
         // too much packet lost : decrease quality and bitrate
-        } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
+        if ((packetLostRate >= videoBitrateInfo_.packetLostThreshold)
+	   && (cptNoPacketLossCalculated == 0 )) {
 
             // calculate new quality by dichotomie
             videoBitrateInfo_.videoQualityCurrent = getLowerQuality();
@@ -406,7 +412,8 @@ VideoRtpSession::adaptQualityAndBitrate()
 
 
         // no packet lost: increase quality and bitrate
-        } else if (videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) {
+        } else if ((videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) 
+		|| (cptNoPacketLossCalculated >= MAX_NO_PACKET_LOSS_CALCULATED)) {
 
             // calculate new quality by dichotomie
             videoBitrateInfo_.videoQualityCurrent =

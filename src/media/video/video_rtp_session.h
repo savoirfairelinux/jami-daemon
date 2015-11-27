@@ -121,6 +121,8 @@ private:
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     //packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
+    //if we can not calculate packet loss because no RTCP, force to increase bitrate
+    static constexpr unsigned MAX_NO_PACKET_LOSS_CALCULATED {3};
 
     InterruptedThreadLoop rtcpCheckerThread_;
     bool setupRtcpChecker();
