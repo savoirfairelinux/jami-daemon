@@ -56,8 +56,10 @@ Call::~Call()
 void
 Call::removeCall()
 {
+    auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
     iceTransport_.reset();
+    setState(CallState::OVER);
 }
 
 const std::string&
@@ -86,6 +88,11 @@ Call::validStateTransition(CallState newState)
     // Notice to developper:
     // - list only permitted transition (return true)
     // - let non permitted ones as default case (return false)
+
+    // always permited
+    if (newState == CallState::OVER)
+        return true;
+
     switch (callState_) {
         case CallState::INACTIVE:
             switch (newState) {
@@ -218,6 +225,9 @@ Call::getStateStr() const
                 default:
                     return StateEvent::INACTIVE;
             }
+
+        case CallState::OVER:
+            return StateEvent::OVER;
 
         case CallState::MERROR:
         default:
