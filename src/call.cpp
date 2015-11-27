@@ -56,8 +56,10 @@ Call::~Call()
 void
 Call::removeCall()
 {
+    auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
     iceTransport_.reset();
+    emitSignal<DRing::CallSignal::StateChange>(id_, DRing::Call::StateEvent::REMOVED, 0);
 }
 
 const std::string&
