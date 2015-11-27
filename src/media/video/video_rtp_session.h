@@ -117,9 +117,10 @@ private:
     static constexpr unsigned MAX_SIZE_HISTO_QUALITY_ {30};
     static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
 
-    //5 tries in a row
+    // 5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
-    //packet loss threshold
+    bool hasReachMaxQuality_ {false};
+    // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 
     InterruptedThreadLoop rtcpCheckerThread_;
