@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Eloi Bail <Eloi.Bail@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -514,8 +515,8 @@ VideoRtpSession::setupRtcpChecker()
 void
 VideoRtpSession::processRtcpChecker()
 {
+    auto rtcpPacket = socketPair_.getQueueRtcpHeader.pop();
     adaptQualityAndBitrate();
-    rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
 }
 
 void

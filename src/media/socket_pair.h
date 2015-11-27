@@ -50,6 +50,7 @@ namespace ring {
 
 class IceSocket;
 class SRTPProtoContext;
+class BlockingQueue;
 
 typedef struct {
 #ifdef WORDS_BIGENDIAN
@@ -106,6 +107,7 @@ class SocketPair {
 
         void stopSendOp(bool state = true);
         std::vector<rtcpRRHeader> getRtcpInfo();
+	BlockingQueue& getQueueRtcpHeader() { return queueRtcpHeader_;}
 
     private:
         NON_COPYABLE(SocketPair);
@@ -138,6 +140,7 @@ class SocketPair {
         std::unique_ptr<SRTPProtoContext> srtpContext_;
 
         std::list<rtcpRRHeader> listRtcpHeader_;
+        BlockingQueue<rtcpRRHeader> queueRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
         static constexpr unsigned MAX_LIST_SIZE {20};
 };

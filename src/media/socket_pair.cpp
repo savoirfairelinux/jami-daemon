@@ -244,6 +244,7 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     if(header->pt != 201) //201 = RR PT
         return;
 
+#if 0
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
     if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
@@ -252,6 +253,8 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpHeader_.push_back(*header);
+#endif
+    queueRtcpHeader_.push(*header);
 }
 
 std::vector<rtcpRRHeader>
