@@ -361,6 +361,7 @@ VideoRtpSession::adaptQualityAndBitrate()
 
     if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
         needToCheckQuality = true;
+	hasReachMaxQuality_ = false;
         lastLongRTCPCheck_ = std::chrono::system_clock::now();
         // we force iterative bitrate adaptation
         videoBitrateInfo_.cptBitrateChecking = 0;
@@ -401,12 +402,14 @@ VideoRtpSession::adaptQualityAndBitrate()
             if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
                     (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
                 ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
+                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back())))) {
                 mediaRestartNeeded = true;
+		hasReachMaxQuality_ = true;
+	     }
 
 
         // no packet lost: increase quality and bitrate
-        } else if (videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) {
+        } else if ((videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) && ( not hasReachMaxQuality_)) {
 
             // calculate new quality by dichotomie
             videoBitrateInfo_.videoQualityCurrent =
