@@ -92,9 +92,9 @@ DBusConfigurationManager::registerAllAccounts(void)
 }
 
 void
-DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& messages)
 {
-    DRing::sendAccountTextMessage(accountID, to, message);
+    DRing::sendAccountTextMessage(accountID, to, messages);
 }
 
 auto

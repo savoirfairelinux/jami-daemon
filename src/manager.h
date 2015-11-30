@@ -412,7 +412,8 @@ class Manager {
          */
         void sendRegister(const std::string& accountId, bool enable);
 
-        void sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
+        void sendTextMessage(const std::string& accountID, const std::string& to,
+                             const std::map<std::string, std::string>& messages);
 
         /**
          * Get account list

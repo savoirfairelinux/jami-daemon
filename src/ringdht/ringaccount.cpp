@@ -1317,13 +1317,26 @@ RingAccount::connectivityChanged()
 }
 
 void
-RingAccount::sendTextMessage(const std::string& to, const std::string& message)
+RingAccount::sendTextMessage(const std::string& to,
+                             const std::map<std::string, std::string>& messages)
 {
+    if (to.empty() or messages.empty())
+        return;
+
     const std::string& toUri = parseRingUri(to);
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
-                      dht::InfoHash(toUri),
-                      dht::ImMessage(udist(rand_), std::string(message), now));
+
+    // Single-part message
+    if (messages.size() == 1) {
+        dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
+                          dht::InfoHash(toUri),
+                          dht::ImMessage(udist(rand_), std::string(messages.begin()->second), now));
+        return;
+    }
+
+    // Multi-part message
+    // TODO: not supported yet
+    RING_ERR("Multi-part im is not supported yet by RingAccount");
 }
 
 } // namespace ring
