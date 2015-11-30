@@ -33,6 +33,7 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
+#include "intrin.h" // UNUSED
 
 #include <functional>
 #include <string>
@@ -147,7 +148,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         /**
          * If supported, send a text message from this account.
          */
-        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */) {};
+        virtual void sendTextMessage(const std::string& to UNUSED,
+                                     const std::map<std::string, std::string>& messages UNUSED) {};
 
         std::vector<std::shared_ptr<Call>> getCalls();
 

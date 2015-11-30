@@ -60,6 +60,8 @@
 #include "ip_utils.h"
 #include "string_utils.h"
 
+#include "im/instant_messaging.h"
+
 #include <unistd.h>
 
 #include <algorithm>
@@ -2073,6 +2075,7 @@ void SIPAccount::updateDialogViaSentBy(pjsip_dialog *dlg)
         pjsip_dlg_set_via_sent_by(dlg, &via_addr_, via_tp_);
 }
 
+#if 0
 /**
  * Create Accept header for MESSAGE.
  */
@@ -2088,11 +2091,13 @@ static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
 
     return accept;
 }
+#endif
 
 void
-SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
+SIPAccount::sendTextMessage(const std::string& to,
+                            const std::map<std::string, std::string>& messages)
 {
-    if (to.empty() or msg.empty())
+    if (to.empty() or messages.empty())
         return;
 
     std::string toUri;
@@ -2102,7 +2107,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
     else
         toUri = getToUri(to);
 
-    const pjsip_method msg_method = { PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE") };
+    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
     pj_str_t pjFrom = pj_str((char*) from.c_str());
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
@@ -2110,7 +2115,8 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
     /* Create request. */
     pjsip_tx_data *tdata;
     pj_status_t status = pjsip_endpt_create_request(link_->getEndpoint(), &msg_method,
-                                        &pjTo, &pjFrom, &pjTo, NULL, NULL, -1, NULL, &tdata);
+                                                    &pjTo, &pjFrom, &pjTo, nullptr, nullptr, -1,
+                                                    nullptr, &tdata);
     if (status != PJ_SUCCESS) {
         RING_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
         return;
@@ -2119,21 +2125,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::string& msg)
     const pjsip_tpselector tp_sel = getTransportSelector();
     pjsip_tx_data_set_transport(tdata, &tp_sel);
 
-    /* Add accept header. */
-    pjsip_msg_add_hdr( tdata->msg, (pjsip_hdr*)im_create_accept(tdata->pool));
-
-    /* Set default media type if none is specified */
-    static const constexpr pj_str_t type = CONST_PJ_STR("text");
-    static const constexpr pj_str_t subtype = CONST_PJ_STR("plain");
-
-    pj_str_t message = pj_str((char*) msg.c_str());
-
-    tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &subtype, &message);
-    if (tdata->msg->body == NULL) {
-        RING_ERR("Unable to create msg body");
-        pjsip_tx_data_dec_ref(tdata);
-        return;
-    }
+    InstantMessaging::fillPJSIPMessageBody(*tdata, messages);
 
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, nullptr, nullptr);
     if (status != PJ_SUCCESS) {
