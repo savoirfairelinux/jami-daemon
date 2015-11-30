@@ -372,6 +372,8 @@ VideoRtpSession::adaptQualityAndBitrate()
         lastLongRTCPCheck_ = std::chrono::system_clock::now();
         // we force iterative bitrate adaptation
         videoBitrateInfo_.cptBitrateChecking = 0;
+        // we increase period
+        RTCP_LONG_CHECKING_INTERVAL = RTCP_LONG_CHECKING_INTERVAL * 1.5;
     }
 
 
