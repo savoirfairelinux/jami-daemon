@@ -49,7 +49,7 @@ void setAccountEnabled(const std::string& accountID, bool enable);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
-void sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
+void sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& messages);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
