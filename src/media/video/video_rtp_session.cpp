@@ -442,13 +442,14 @@ VideoRtpSession::adaptQualityAndBitrate()
                     (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
                 mediaRestartNeeded = true;
 
-            if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
-                lastLongRTCPCheck_ = std::chrono::system_clock::now();
 
         } else {
             // nothing we reach maximal tries
         }
     }
+
+    if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
+        lastLongRTCPCheck_ = std::chrono::system_clock::now();
 
     if (mediaRestartNeeded) {
         storeVideoBitrateInfo();
