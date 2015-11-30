@@ -446,7 +446,7 @@
             </tp:docstring>
             <arg type="s" name="callID" direction="in"/>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
-            <arg type="a{ss}" name="message" direction="in"/>
+            <arg type="a{ss}" name="payloads" direction="in"/>
             <arg type="b" name="isMixed" direction="in"/>
         </method>
 

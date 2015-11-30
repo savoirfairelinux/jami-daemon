@@ -336,10 +336,11 @@ SIPAccountBase::getIceOptions() const noexcept
 }
 
 void
-SIPAccountBase::onTextMessage(const std::string& from, const std::string& msg)
+SIPAccountBase::onTextMessage(const std::string& from,
+                              const std::map<std::string, std::string>& payloads)
 {
-    RING_WARN("Text message received ! %s -> %s",  from.c_str(), msg.c_str());
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, msg);
+    RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
 }
 
 void

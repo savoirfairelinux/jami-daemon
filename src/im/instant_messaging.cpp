@@ -30,6 +30,8 @@
 
 namespace ring {
 
+using sip_utils::CONST_PJ_STR;
+
 /**
  * the pair<string, string> we receive is expected to be in the format <mime type, payload>
  * the mime type is in the format "type/subtype"
@@ -116,6 +118,42 @@ createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& pa
 }
 
 void
+InstantMessaging::fillPJSIPMessageBody(pjsip_tx_data& tdata,
+                                       const std::map<std::string, std::string>& payloads)
+{
+    // multi-part body?
+    if (payloads.size() == 1) {
+        createMessageBody(tdata.pool, *payloads.begin(), &tdata.msg->body);
+        return;
+    }
+
+    /* if ctype is not specified "multipart/mixed" will be used
+     * if the boundary is not specified, a random one will be generateAudioPort
+     * FIXME: generate boundary and check that none of the message parts contain it before
+     *        calling this function; however the probability of this happenings if quite low as
+     *        the randomly generated string is fairly long
+     */
+    tdata.msg->body = pjsip_multipart_create(tdata.pool, nullptr, nullptr);
+
+    for (const auto& pair: payloads) {
+        auto part = pjsip_multipart_create_part(tdata.pool);
+        if (not part) {
+            RING_ERR("pjsip_multipart_create_part failed: not enough memory");
+            throw InstantMessageException("Internal SIP error");
+        }
+
+        createMessageBody(tdata.pool, pair, &part->body);
+
+        auto status = pjsip_multipart_add_part(tdata.pool, tdata.msg->body, part);
+        if (status != PJ_SUCCESS) {
+            RING_ERR("pjsip_multipart_add_part failed: %s",
+                     sip_utils::sip_strerror(status).c_str());
+            throw InstantMessageException("Internal SIP error");
+        }
+    }
+}
+
+void
 InstantMessaging::sendSipMessage(pjsip_inv_session* session,
                                  const std::map<std::string, std::string>& payloads)
 {
@@ -124,7 +162,7 @@ InstantMessaging::sendSipMessage(pjsip_inv_session* session,
         return;
     }
 
-    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, {const_cast<char*>("MESSAGE"), 7}};
+    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
 
     {
         auto dialog = session->dlg;
@@ -138,36 +176,7 @@ InstantMessaging::sendSipMessage(pjsip_inv_session* session,
             throw InstantMessageException("Internal SIP error");
         }
 
-        // multi-part body?
-        if (payloads.size() > 1) {
-            /* if ctype is not specified "multipart/mixed" will be used
-             * if the boundary is not specified, a random one will be generateAudioPort
-             * FIXME: generate boundary and check that none of the message parts contain it before
-             *        calling this function; however the probability of this happenings if quite low as
-             *        the randomly generated string is fairly long
-             */
-            tdata->msg->body = pjsip_multipart_create(tdata->pool, nullptr, nullptr);
-
-            for (const auto& pair: payloads) {
-                auto part = pjsip_multipart_create_part(tdata->pool);
-                if (not part) {
-                    RING_ERR("pjsip_multipart_create_part failed: %s",
-                              sip_utils::sip_strerror(status).c_str());
-                    throw InstantMessageException("Internal SIP error");
-                }
-
-                createMessageBody(tdata->pool, pair, &part->body);
-
-                status = pjsip_multipart_add_part(tdata->pool, tdata->msg->body, part);
-                if (status != PJ_SUCCESS) {
-                    RING_ERR("pjsip_multipart_add_part failed: %s",
-                             sip_utils::sip_strerror(status).c_str());
-                    throw InstantMessageException("Internal SIP error");
-                }
-            }
-        } else {
-            createMessageBody(tdata->pool, *payloads.begin(), &tdata->msg->body);
-        }
+        fillPJSIPMessageBody(*tdata, payloads);
 
         status = pjsip_dlg_send_request(dialog, tdata, -1, nullptr);
         if (status != PJ_SUCCESS) {
