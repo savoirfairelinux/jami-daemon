@@ -49,7 +49,7 @@ void setAccountEnabled(const std::string& accountID, bool enable);
 std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
-void sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
+void sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& messages);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -179,7 +179,7 @@ struct ConfigurationSignal {
         };
         struct IncomingAccountMessage {
                 constexpr static const char* name = "IncomingAccountMessage";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::string& /*message*/);
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*messages*/);
         };
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";

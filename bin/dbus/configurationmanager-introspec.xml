@@ -254,12 +254,10 @@
        </method>
 
       <method name="sendTextMessage" tp:name-for-bindings="sendTextMessage">
-          <arg type="s" name="accountID" direction="in">
-          </arg>
-          <arg type="s" name="to" direction="in">
-          </arg>
-          <arg type="s" name="message" direction="in">
-          </arg>
+          <arg type="s" name="accountID" direction="in"/>
+          <arg type="s" name="to" direction="in"/>
+          <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+          <arg type="a{ss}" name="messages" direction="in"/>
        </method>
 
        <signal name="incomingAccountMessage" tp:name-for-bindings="incomingAccountMessage">
@@ -267,12 +265,10 @@
            <tp:docstring>
                Notify clients that a new text message has been received at the account level.
            </tp:docstring>
-           <arg type="s" name="accountID">
-           </arg>
-           <arg type="s" name="from">
-           </arg>
-           <arg type="s" name="message">
-           </arg>
+           <arg type="s" name="accountID"/>
+           <arg type="s" name="from"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+          <arg type="a{ss}" name="messages" direction="in"/>
        </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">

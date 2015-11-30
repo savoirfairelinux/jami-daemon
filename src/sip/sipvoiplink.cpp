@@ -237,12 +237,13 @@ transaction_request_cb(pjsip_rx_data *rdata)
                     Manager::instance().startVoiceMessageNotification(account_id, voicemail);
             }
         } else if (request.find("MESSAGE") != std::string::npos) {
-            if (body) {
-                pjsip_endpt_respond( endpt_, NULL, rdata, PJSIP_SC_OK, NULL, NULL, NULL, NULL);
-                std::string text {(char*)body->data, (char*)body->data+body->len};
-                account->onTextMessage(peerNumber, text);
-                return PJ_FALSE;
-            }
+            // Reply 200 immediatly (RFC 3428, ch. 7)
+            pjsip_endpt_respond(endpt_, nullptr, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr, nullptr);
+            // Process message content in case of multi-part body
+            auto messages = InstantMessaging::parseSipMessage(rdata->msg_info.msg);
+            if (messages.size() > 0)
+                account->onTextMessage(peerNumber, messages);
+            return PJ_FALSE;
         }
 
         try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
