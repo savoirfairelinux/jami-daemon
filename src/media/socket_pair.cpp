@@ -265,6 +265,14 @@ SocketPair::getRtcpInfo()
 }
 
 void
+SocketPair::flushRTCPQueue()
+{
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+    listRtcpHeader_.clear();
+}
+
+
+void
 SocketPair::createSRTP(const char* out_suite, const char* out_key,
                        const char* in_suite, const char* in_key)
 {

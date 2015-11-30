@@ -40,6 +40,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     : muxContext_(socketPair.createIOContext())
     , videoEncoder_(new MediaEncoder)
 {
+    socketPair.flushRTCPQueue();
     videoEncoder_->setDeviceOptions(dev);
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
     videoEncoder_->openOutput(dest.c_str(), args);
