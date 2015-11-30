@@ -257,7 +257,7 @@ class RingAccount : public SIPAccountBase {
         bool discardTrustRequest(const std::string& from);
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
-        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */) override;
+        virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& messages) override;
 
         void connectivityChanged();
 

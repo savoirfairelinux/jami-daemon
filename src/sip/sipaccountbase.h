@@ -233,7 +233,7 @@ public:
 
     const IceTransportOptions getIceOptions() const noexcept override;
 
-    void onTextMessage(const std::string& from, const std::string& msg);
+    void onTextMessage(const std::string& from, const std::map<std::string, std::string>& msg);
 
 protected:
     virtual void serialize(YAML::Emitter &out) override;
