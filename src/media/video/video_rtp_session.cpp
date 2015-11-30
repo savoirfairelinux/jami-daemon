@@ -190,10 +190,18 @@ void VideoRtpSession::stop()
     if (socketPair_)
         socketPair_->interrupt();
 
+    // reset default video quality if exist
+    if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+        videoBitrateInfo_.videoQualityCurrent = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
+
+    videoBitrateInfo_.videoBitrateCurrent = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
+    storeVideoBitrateInfo();
+
     receiveThread_.reset();
     sender_.reset();
     socketPair_.reset();
     videoLocal_.reset();
+
 }
 
 void VideoRtpSession::forceKeyFrame()

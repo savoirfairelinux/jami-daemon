@@ -31,8 +31,6 @@ namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
 
-constexpr static auto DEFAULT_VIDEO_BITRATE = 250; // in Kbits/second
-
 SystemCodecContainer::SystemCodecContainer()
 {
     initCodecConfig();
@@ -51,6 +49,7 @@ SystemCodecContainer::initCodecConfig()
     auto maxH264 = SystemCodecInfo::DEFAULT_H264_MAX_QUALITY;
     auto minVP8 = SystemCodecInfo::DEFAULT_VP8_MIN_QUALITY;
     auto maxVP8 = SystemCodecInfo::DEFAULT_VP8_MAX_QUALITY;
+    auto defaultBitrate = SystemCodecInfo::DEFAULT_VIDEO_BITRATE;
 #endif
     availableCodecList_ = {
 #ifdef RING_VIDEO
@@ -58,26 +57,26 @@ SystemCodecContainer::initCodecConfig()
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H264,
                                                "H264", "libx264",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE,
+                                               defaultBitrate,
                                                minH264,
                                                maxH264),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE,
+                                               defaultBitrate,
                                                minVP8,
                                                maxVP8),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               defaultBitrate),
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_H263,
                                                "H263-1998", "h263",
                                                CODEC_ENCODER_DECODER,
-                                               DEFAULT_VIDEO_BITRATE),
+                                               defaultBitrate),
 #endif
         /* Define supported audio codec*/
 
