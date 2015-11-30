@@ -894,8 +894,9 @@ RingAccount::doRegister_()
                     return true;
 
                 auto from = v.from.toString();
-                auto msg = v.msg;
-                RING_DBG("Text message received from DHT ! %s -> %s",  from.c_str(), msg.c_str());
+                std::map<std::string, std::string> msg = {{"text/plain", v.msg}};
+                RING_DBG("Text message received from DHT from %s, %zu part(s)",
+                         from.c_str(), msg.size());
                 emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(this_.getAccountID(), from, msg);
                 return true;
             }
@@ -1317,13 +1318,26 @@ RingAccount::connectivityChanged()
 }
 
 void
-RingAccount::sendTextMessage(const std::string& to, const std::string& message)
+RingAccount::sendTextMessage(const std::string& to,
+                             const std::map<std::string, std::string>& payloads)
 {
-    const std::string& toUri = parseRingUri(to);
+    if (to.empty() or payloads.empty())
+        return;
+
+    const auto& toUri = parseRingUri(to);
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
-                      dht::InfoHash(toUri),
-                      dht::ImMessage(udist(rand_), std::string(message), now));
+
+    // Single-part message
+    if (payloads.size() == 1) {
+        dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
+                          dht::InfoHash(toUri),
+                          dht::ImMessage(udist(rand_), std::string(payloads.begin()->second), now));
+        return;
+    }
+
+    // Multi-part message
+    // TODO: not supported yet
+    RING_ERR("Multi-part im is not supported yet by RingAccount");
 }
 
 } // namespace ring

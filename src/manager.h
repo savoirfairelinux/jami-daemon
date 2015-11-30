@@ -407,12 +407,13 @@ class Manager {
          * ConfigurationManager - Send registration request
          * @param accountId The account to register/unregister
          * @param enable The flag for the type of registration
-         *		 false for unregistration request
-         *		 true for registration request
+         *   false for unregistration request
+         *   true for registration request
          */
         void sendRegister(const std::string& accountId, bool enable);
 
-        void sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message);
+        void sendTextMessage(const std::string& accountID, const std::string& to,
+                             const std::map<std::string, std::string>& payloads);
 
         /**
          * Get account list

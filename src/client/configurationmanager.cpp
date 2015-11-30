@@ -287,9 +287,9 @@ registerAllAccounts()
 }
 
 void
-sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads)
 {
-    ring::Manager::instance().sendTextMessage(accountID, to, message);
+    ring::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
 
 /* contact requests */

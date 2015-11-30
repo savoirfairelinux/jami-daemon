@@ -2701,12 +2701,13 @@ Manager::sendRegister(const std::string& accountID, bool enable)
 }
 
 void
-Manager::sendTextMessage(const std::string& accountID, const std::string& to, const std::string& message)
+Manager::sendTextMessage(const std::string& accountID, const std::string& to,
+                         const std::map<std::string, std::string>& payloads)
 {
     const auto acc = getAccount(accountID);
     if (!acc)
         return;
-    acc->sendTextMessage(to, message);
+    acc->sendTextMessage(to, payloads);
 }
 
 void

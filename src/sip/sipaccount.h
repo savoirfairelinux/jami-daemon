@@ -497,7 +497,8 @@ class SIPAccount : public SIPAccountBase {
 
         void onRegister(pjsip_regc_cbparam *param);
 
-        virtual void sendTextMessage(const std::string& /* to */, const std::string& /* message */) override;
+        virtual void sendTextMessage(const std::string& to,
+                                     const std::map<std::string, std::string>& payloads) override;
 
     private:
         void doRegister1_();
