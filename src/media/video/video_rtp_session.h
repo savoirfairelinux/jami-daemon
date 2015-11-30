@@ -105,7 +105,7 @@ private:
     // interval in seconds between RTCP checkings
     const unsigned RTCP_CHECKING_INTERVAL {4};
     // long interval in seconds between RTCP checkings
-    const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
+    unsigned RTCP_LONG_CHECKING_INTERVAL {30};
     // no packet loss can be calculated as no data in input
     static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
     // bitrate and quality info struct
