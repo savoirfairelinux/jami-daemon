@@ -106,6 +106,7 @@ class SocketPair {
 
         void stopSendOp(bool state = true);
         std::vector<rtcpRRHeader> getRtcpInfo();
+        void flushRTCPQueue();
 
     private:
         NON_COPYABLE(SocketPair);
