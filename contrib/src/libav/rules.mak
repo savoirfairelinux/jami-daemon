@@ -187,6 +187,7 @@ libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 	$(APPLY) $(SRC)/libav/0002-rtpdec-inform-jitter-buffer-size.patch
 	$(APPLY) $(SRC)/libav/0003-rtsp-warning-when-max_delay-reached.patch
 	$(APPLY) $(SRC)/libav/0004-mpegvideo_enc-enable-rtp_mode-when-multiple-slices-a.patch
+	$(APPLY) $(SRC)/libav/0005-rtpdec-flush-stats-when-new-SSRC.patch
 	$(MOVE)
 
 .libav: libav
