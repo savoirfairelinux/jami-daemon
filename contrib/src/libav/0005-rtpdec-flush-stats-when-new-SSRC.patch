@@ -1,0 +1,28 @@
+From 41fff64042b340487e226fd4a810cd5cb22ec4fc Mon Sep 17 00:00:00 2001
+From: Eloi BAIL <eloi.bail@savoirfairelinux.com>
+Date: Tue, 1 Dec 2015 11:56:08 -0500
+Subject: [PATCH] rtpdec: flush stats when new SSRC
+
+to be test
+---
+ libavformat/rtpdec.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/libavformat/rtpdec.c b/libavformat/rtpdec.c
+index 823e03c..e89d3da 100644
+--- a/libavformat/rtpdec.c
++++ b/libavformat/rtpdec.c
+@@ -607,6 +607,11 @@ static int rtp_parse_packet_internal(RTPDemuxContext *s, AVPacket *pkt,
+     timestamp = AV_RB32(buf + 4);
+     ssrc      = AV_RB32(buf + 8);
+     /* store the ssrc in the RTPDemuxContext */
++    if (ssrc != s->ssrc) {
++        av_log(st ? st->codec : NULL, AV_LOG_WARNING,
++               "change in ssrc - flushing stats");
++        rtp_init_statistics(&s->statistics, s->seq);
++    }
+     s->ssrc = ssrc;
+
+     /* NOTE: we can handle only one payload type */
+--
+2.1.4
