@@ -34,6 +34,17 @@
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
+        "fedora_23": [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
+        ],
         "debian_8": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
@@ -129,6 +140,7 @@
         "fedora_21" : ["yum upgrade -y"],
         "fedora_21_i386" : ["yum upgrade -y"],
         "fedora_22": ["yum upgrade -y"],
+        "fedora_23": ["dnf upgrade -y"],
         "debian_8": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
@@ -145,6 +157,7 @@
         "fedora_21" : "",
         "fedora_21_i386" : "",
         "fedora_22": "",
+        "fedora_23": "",
         "debian_8": "",
         "debian_8_i386": "",
         "debian_9": "",
@@ -164,6 +177,7 @@
         "fedora_21" : "@midnight",
         "fedora_21_i386" : "@midnight",
         "fedora_22": "@midnight",
+        "fedora_23": "@midnight",
         "debian_8": "@midnight",
         "debian_8_i386": "@midnight",
         "debian_9": "@midnight",
