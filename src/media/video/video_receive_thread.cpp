@@ -45,7 +45,10 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
+    /* ebail: keyframe requests can lead to timeout if they are not answered.
+     * we decided so to disable them for the moment
     , requestKeyFrameCallback_(0)
+    */
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
             std::bind(&VideoReceiveThread::cleanup, this))
