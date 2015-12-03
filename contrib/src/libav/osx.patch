@@ -1,3 +1,17 @@
+From f447ae45d8ca82fbf79b4f773c41e30cab730f13 Mon Sep 17 00:00:00 2001
+From: Luca Barbato <lu_zero@gentoo.org>
+Date: Mon, 23 Nov 2015 17:08:49 -0500
+Subject: [PATCH 1/2] configure: ObjC support
+
+Assume that the default C compiler and the default ObjC compiler match
+(default for OSX).
+
+Signed-off-by: Luca Barbato <lu_zero@gentoo.org>
+---
+ Makefile  |  7 +++++++
+ configure | 63 ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++-
+ 2 files changed, 69 insertions(+), 1 deletion(-)
+
 diff --git a/Makefile b/Makefile
 index cc016b3..183617e 100644
 --- a/Makefile
@@ -38,10 +52,10 @@ index cc016b3..183617e 100644
     $(COMPILE_HOSTC)
 
 diff --git a/configure b/configure
-index 13245f7..a293cc0 100755
+index c073f30..6f9f1f3 100755
 --- a/configure
 +++ b/configure
-@@ -238,6 +238,7 @@ Toolchain options:
+@@ -231,6 +231,7 @@ Toolchain options:
    --ar=AR                  use archive tool AR [$ar_default]
    --as=AS                  use assembler AS [$as_default]
    --cc=CC                  use C compiler CC [$cc_default]
@@ -49,7 +63,7 @@ index 13245f7..a293cc0 100755
    --dep-cc=DEPCC           use dependency generator DEPCC [$cc_default]
    --ld=LD                  use linker LD
    --pkg-config=PKGCONFIG   use pkg-config tool PKGCONFIG [$pkg_config_default]
-@@ -250,6 +251,7 @@ Toolchain options:
+@@ -243,6 +244,7 @@ Toolchain options:
    --host-libs=HLIBS        use libs HLIBS when linking for host
    --host-os=OS             compiler host OS [$target_os]
    --extra-cflags=ECFLAGS   add ECFLAGS to CFLAGS [$CFLAGS]
@@ -57,7 +71,7 @@ index 13245f7..a293cc0 100755
    --extra-ldflags=ELDFLAGS add ELDFLAGS to LDFLAGS [$LDFLAGS]
    --extra-ldexeflags=ELDFLAGS add ELDFLAGS to LDEXEFLAGS [$LDEXEFLAGS]
    --extra-libs=ELIBS       add ELIBS [$ELIBS]
-@@ -683,6 +685,10 @@ add_asflags(){
+@@ -676,6 +678,10 @@ add_asflags(){
      append ASFLAGS $($asflags_filter "$@")
  }
 
@@ -68,7 +82,7 @@ index 13245f7..a293cc0 100755
  add_ldflags(){
      append LDFLAGS $($ldflags_filter "$@")
  }
-@@ -737,6 +743,13 @@ check_cc(){
+@@ -730,6 +736,13 @@ check_cc(){
      check_cmd $cc $CPPFLAGS $CFLAGS "$@" $CC_C $(cc_o $TMPO) $TMPC
  }
 
@@ -82,7 +96,7 @@ index 13245f7..a293cc0 100755
  check_cpp(){
      log check_cpp "$@"
      cat > $TMPC
-@@ -835,6 +848,19 @@ check_cflags(){
+@@ -828,6 +841,19 @@ check_cflags(){
      test_cflags "$@" && add_cflags "$@"
  }
 
@@ -102,16 +116,7 @@ index 13245f7..a293cc0 100755
  test_ldflags(){
      log test_ldflags "$@"
      check_ld "$@" <<EOF
-@@ -1377,6 +1403,8 @@ HAVE_LIST_PUB="
- "
-
- HEADERS_LIST="
-+    AVFoundation_AVFoundation_h
-+    CoreVideo_CoreVideo_h
-     alsa_asoundlib_h
-     altivec_h
-     arpa_inet_h
-@@ -1640,6 +1668,7 @@ CMDLINE_SET="
+@@ -1616,6 +1642,7 @@ CMDLINE_SET="
      as
      build_suffix
      cc
@@ -119,24 +124,15 @@ index 13245f7..a293cc0 100755
      cpu
      cross_prefix
      dep_cc
-@@ -1949,7 +1978,7 @@ zmbv_encoder_deps="zlib"
- dxva2_deps="dxva2api_h"
- vaapi_deps="va_va_h"
- vda_deps="VideoDecodeAcceleration_VDADecoder_h pthreads"
--vda_extralibs="-framework CoreFoundation -framework VideoDecodeAcceleration -framework QuartzCore"
-+vda_extralibs="-framework CoreFoundation -framework CoreMedia -framework CoreVideo -framework VideoDecodeAcceleration -framework QuartzCore"
- vdpau_deps="vdpau_vdpau_h vdpau_vdpau_x11_h"
+@@ -1646,6 +1673,7 @@ CMDLINE_SET="
 
- h263_vaapi_hwaccel_deps="vaapi"
-@@ -2109,6 +2138,7 @@ xwma_demuxer_select="riffdec"
- # indevs / outdevs
- alsa_indev_deps="alsa_asoundlib_h snd_pcm_htimestamp"
- alsa_outdev_deps="alsa_asoundlib_h"
-+avfoundation_indev_deps="AVFoundation_AVFoundation_h CoreVideo_CoreVideo_h"
- bktr_indev_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
- dv1394_indev_deps="dv1394"
- dv1394_indev_select="dv_demuxer"
-@@ -2285,6 +2315,9 @@ AS_O='-o $@'
+ CMDLINE_APPEND="
+     extra_cflags
++    extra_objcflags
+     host_cppflags
+ "
+
+@@ -2246,6 +2274,9 @@ AS_O='-o $@'
  CC_C='-c'
  CC_E='-E -o $@'
  CC_O='-o $@'
@@ -146,15 +142,31 @@ index 13245f7..a293cc0 100755
  LD_O='-o $@'
  LD_LIB='-l%'
  LD_PATH='-L'
-@@ -2580,6 +2613,7 @@ esac
+@@ -2547,6 +2578,23 @@ case "$toolchain" in
+     ;;
+ esac
 
- ar_default="${cross_prefix}${ar_default}"
- cc_default="${cross_prefix}${cc_default}"
++test -n "$cross_prefix" && enable cross_compile
++
++if enabled cross_compile; then
++    test -n "$arch" && test -n "$target_os" ||
++        die "Must specify target arch and OS when cross-compiling"
++fi
++
++ar_default="${cross_prefix}${ar_default}"
++cc_default="${cross_prefix}${cc_default}"
 +occ_default="${cross_prefix}${occ_default}"
- nm_default="${cross_prefix}${nm_default}"
- pkg_config_default="${cross_prefix}${pkg_config_default}"
- ranlib="${cross_prefix}${ranlib}"
-@@ -3032,16 +3066,22 @@ test -n "$cc_type" && enable $cc_type ||
++nm_default="${cross_prefix}${nm_default}"
++pkg_config_default="${cross_prefix}${pkg_config_default}"
++ranlib="${cross_prefix}${ranlib}"
++strip="${cross_prefix}${strip}"
++
++sysinclude_default="${sysroot}/usr/include"
++
+ set_default arch cc pkg_config sysinclude target_exec target_os
+ enabled cross_compile || host_cc_default=$cc
+ set_default host_cc
+@@ -2991,16 +3039,22 @@ test -n "$cc_type" && enable $cc_type ||
      warn "Unknown C compiler $cc, unable to select optimal CFLAGS"
 
  : ${as_default:=$cc}
@@ -178,31 +190,25 @@ index 13245f7..a293cc0 100755
  probe_cc ld "$ld"
  ldflags_filter=$_flags_filter
  add_ldflags $_flags $_ldflags
-@@ -4268,6 +4308,15 @@ check_header linux/fb.h
- check_header linux/videodev2.h
- check_struct linux/videodev2.h "struct v4l2_frmivalenum" discrete
+@@ -3036,6 +3090,7 @@ else
+ fi
 
-+check_header AVFoundation/AVFoundation.h &&
-+    check_objcflags -fobjc-arc &&
-+    add_extralibs -framework Foundation -framework AVFoundation || \
-+    disable AVFoundation_AVFoundation_h
-+
-+check_header CoreVideo/CoreVideo.h &&
-+    check_objcflags -fobjc-arc &&
-+    add_extralibs -framework CoreVideo ||
-+
- check_header sys/videoio.h
+ add_cflags $extra_cflags
++add_objcflags $extra_objcflags
+ add_asflags $extra_cflags
 
- check_func_headers "windows.h vfw.h" capCreateCaptureWindow "$vfwcap_indev_extralibs"
-@@ -4689,6 +4738,7 @@ ARCH=$arch
+ if test -n "$sysroot"; then
+@@ -4609,7 +4664,9 @@ CC_IDENT=$cc_ident
+ ARCH=$arch
  INTRINSICS=$intrinsics
  CC=$cc
++OBJCC=$cc
  AS=$as
 +OBJCC=$objcc
  LD=$ld
  DEPCC=$dep_cc
  DEPCCFLAGS=$DEPCCFLAGS \$(CPPFLAGS)
-@@ -4704,9 +4754,13 @@ STRIP=$strip
+@@ -4625,9 +4682,13 @@ STRIP=$strip
  LN_S=$ln_s
  CPPFLAGS=$CPPFLAGS
  CFLAGS=$CFLAGS
@@ -216,20 +222,73 @@ index 13245f7..a293cc0 100755
  CC_C=$CC_C
  CC_E=$CC_E
  CC_O=$CC_O
+--
+2.6.2
+
+
+From ef27d661dd6ff6d2456bce36f28693ee40c3f2e5 Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
+Date: Mon, 23 Nov 2015 17:08:50 -0500
+Subject: [PATCH 2/2] avfoundation: Simple capture
+
+Originally based on the capture written by
+Thilo Borgmann <thilo.borgmann@mail.de>.
+
+Signed-off-by: Luca Barbato <lu_zero@gentoo.org>
+---
+ configure                      |   7 +
+ libavdevice/Makefile           |   1 +
+ libavdevice/alldevices.c       |   1 +
+ libavdevice/avfoundation_dec.m | 686 +++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 695 insertions(+)
+ create mode 100644 libavdevice/avfoundation_dec.m
+
+diff --git a/configure b/configure
+index 6f9f1f3..708a51f 100755
+--- a/configure
++++ b/configure
+@@ -1389,6 +1389,7 @@ HAVE_LIST_PUB="
+ "
+
+ HEADERS_LIST="
++    AVFoundation_AVFoundation_h
+     alsa_asoundlib_h
+     altivec_h
+     arpa_inet_h
+@@ -2100,6 +2101,7 @@ xwma_demuxer_select="riffdec"
+ # indevs / outdevs
+ alsa_indev_deps="alsa_asoundlib_h snd_pcm_htimestamp"
+ alsa_outdev_deps="alsa_asoundlib_h"
++avfoundation_indev_deps="AVFoundation_AVFoundation_h"
+ bktr_indev_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
+ dv1394_indev_deps="dv1394"
+ dv1394_indev_select="dv_demuxer"
+@@ -4267,6 +4269,11 @@ check_header linux/fb.h
+ check_header linux/videodev2.h
+ check_struct linux/videodev2.h "struct v4l2_frmivalenum" discrete
+
++check_header AVFoundation/AVFoundation.h &&
++    check_objcflags -fobjc-arc &&
++    add_extralibs -framework Foundation -framework AVFoundation -framework CoreMedia || \
++    disable AVFoundation_AVFoundation_h
++
+ check_header sys/videoio.h
+
+ check_func_headers "windows.h vfw.h" capCreateCaptureWindow "$vfwcap_indev_extralibs"
 diff --git a/libavdevice/Makefile b/libavdevice/Makefile
-index 2a21832..682a39a 100644
+index 25e126c..2b6800f 100644
 --- a/libavdevice/Makefile
 +++ b/libavdevice/Makefile
 @@ -11,6 +11,7 @@ OBJS-$(CONFIG_ALSA_INDEV)                += alsa-audio-common.o \
                                              alsa-audio-dec.o
  OBJS-$(CONFIG_ALSA_OUTDEV)               += alsa-audio-common.o \
                                              alsa-audio-enc.o
-+OBJS-$(CONFIG_AVFOUNDATION_INDEV)	 += avfoundation_dec.o
++OBJS-$(CONFIG_AVFOUNDATION_INDEV)        += avfoundation_dec.o
  OBJS-$(CONFIG_BKTR_INDEV)                += bktr.o
  OBJS-$(CONFIG_DV1394_INDEV)              += dv1394.o
  OBJS-$(CONFIG_FBDEV_INDEV)               += fbdev.o
 diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
-index 5dbe277..8439b5b 100644
+index 155f7a8..b739449 100644
 --- a/libavdevice/alldevices.c
 +++ b/libavdevice/alldevices.c
 @@ -48,6 +48,7 @@ void avdevice_register_all(void)
@@ -242,10 +301,10 @@ index 5dbe277..8439b5b 100644
      REGISTER_INDEV   (FBDEV,            fbdev);
 diff --git a/libavdevice/avfoundation_dec.m b/libavdevice/avfoundation_dec.m
 new file mode 100644
-index 0000000..6b60782
+index 0000000..f01484c
 --- /dev/null
 +++ b/libavdevice/avfoundation_dec.m
-@@ -0,0 +1,517 @@
+@@ -0,0 +1,686 @@
 +/*
 + * AVFoundation input device
 + * Copyright (c) 2015 Luca Barbato
@@ -272,87 +331,111 @@ index 0000000..6b60782
 +#include <pthread.h>
 +
 +#include "libavformat/avformat.h"
-+#include "libavutil/log.h"
-+#include "libavutil/opt.h"
-+#include "libavutil/pixdesc.h"
 +#include "libavformat/internal.h"
-+#include "libavutil/time.h"
++
++#include "libavutil/log.h"
 +#include "libavutil/mathematics.h"
++#include "libavutil/opt.h"
++#include "libavutil/parseutils.h"
++#include "libavutil/pixdesc.h"
++#include "libavutil/time.h"
 +
 +#include "avdevice.h"
 +
-+struct AVFPixelFormatSpec {
-+    enum AVPixelFormat ff_id;
-+    OSType avf_id;
++struct AVPixelFormatMap {
++    enum AVPixelFormat pix_fmt;
++    OSType core_video_fmt;
 +};
 +
-+static const struct AVFPixelFormatSpec avf_pixel_formats[] = {
-+    { AV_PIX_FMT_MONOBLACK,    kCVPixelFormatType_1Monochrome },
-+    { AV_PIX_FMT_RGB555BE,     kCVPixelFormatType_16BE555 },
-+    { AV_PIX_FMT_RGB555LE,     kCVPixelFormatType_16LE555 },
-+    { AV_PIX_FMT_RGB565BE,     kCVPixelFormatType_16BE565 },
-+    { AV_PIX_FMT_RGB565LE,     kCVPixelFormatType_16LE565 },
-+    { AV_PIX_FMT_RGB24,        kCVPixelFormatType_24RGB },
-+    { AV_PIX_FMT_BGR24,        kCVPixelFormatType_24BGR },
-+    { AV_PIX_FMT_ARGB,         kCVPixelFormatType_32ARGB },
-+    { AV_PIX_FMT_BGRA,         kCVPixelFormatType_32BGRA },
-+    { AV_PIX_FMT_ABGR,         kCVPixelFormatType_32ABGR },
-+    { AV_PIX_FMT_RGBA,         kCVPixelFormatType_32RGBA },
-+    { AV_PIX_FMT_BGR48BE,      kCVPixelFormatType_48RGB },
-+    { AV_PIX_FMT_UYVY422,      kCVPixelFormatType_422YpCbCr8 },
-+    { AV_PIX_FMT_YUVA444P,     kCVPixelFormatType_4444YpCbCrA8R },
-+    { AV_PIX_FMT_YUVA444P16LE, kCVPixelFormatType_4444AYpCbCr16 },
-+    { AV_PIX_FMT_YUV444P,      kCVPixelFormatType_444YpCbCr8 },
-+    { AV_PIX_FMT_YUV422P16,    kCVPixelFormatType_422YpCbCr16 },
-+    { AV_PIX_FMT_YUV422P10,    kCVPixelFormatType_422YpCbCr10 },
-+    { AV_PIX_FMT_YUV444P10,    kCVPixelFormatType_444YpCbCr10 },
-+    { AV_PIX_FMT_YUV420P,      kCVPixelFormatType_420YpCbCr8Planar },
++static const struct AVPixelFormatMap pixel_format_map[] = {
++    { AV_PIX_FMT_ABGR,         kCVPixelFormatType_32ABGR                       },
++    { AV_PIX_FMT_ARGB,         kCVPixelFormatType_32ARGB                       },
++    { AV_PIX_FMT_BGR24,        kCVPixelFormatType_24BGR                        },
++    { AV_PIX_FMT_BGR48BE,      kCVPixelFormatType_48RGB                        },
++    { AV_PIX_FMT_BGRA,         kCVPixelFormatType_32BGRA                       },
++    { AV_PIX_FMT_MONOBLACK,    kCVPixelFormatType_1Monochrome                  },
 +    { AV_PIX_FMT_NV12,         kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange },
-+    { AV_PIX_FMT_YUYV422,      kCVPixelFormatType_422YpCbCr8_yuvs },
++    { AV_PIX_FMT_RGB24,        kCVPixelFormatType_24RGB                        },
++    { AV_PIX_FMT_RGB555BE,     kCVPixelFormatType_16BE555                      },
++    { AV_PIX_FMT_RGB555LE,     kCVPixelFormatType_16LE555                      },
++    { AV_PIX_FMT_RGB565BE,     kCVPixelFormatType_16BE565                      },
++    { AV_PIX_FMT_RGB565LE,     kCVPixelFormatType_16LE565                      },
++    { AV_PIX_FMT_RGBA,         kCVPixelFormatType_32RGBA                       },
++    { AV_PIX_FMT_UYVY422,      kCVPixelFormatType_422YpCbCr8                   },
++    { AV_PIX_FMT_YUV420P,      kCVPixelFormatType_420YpCbCr8Planar             },
++    { AV_PIX_FMT_YUV422P10,    kCVPixelFormatType_422YpCbCr10                  },
++    { AV_PIX_FMT_YUV422P16,    kCVPixelFormatType_422YpCbCr16                  },
++    { AV_PIX_FMT_YUV444P,      kCVPixelFormatType_444YpCbCr8                   },
++    { AV_PIX_FMT_YUV444P10,    kCVPixelFormatType_444YpCbCr10                  },
++    { AV_PIX_FMT_YUVA444P,     kCVPixelFormatType_4444YpCbCrA8R                },
++    { AV_PIX_FMT_YUVA444P16LE, kCVPixelFormatType_4444AYpCbCr16                },
++    { AV_PIX_FMT_YUYV422,      kCVPixelFormatType_422YpCbCr8_yuvs              },
 +#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
-+    { AV_PIX_FMT_GRAY8,        kCVPixelFormatType_OneComponent8 },
++    { AV_PIX_FMT_GRAY8,        kCVPixelFormatType_OneComponent8                },
 +#endif
-+    { AV_PIX_FMT_NONE, 0 }
++    { AV_PIX_FMT_NONE,                                                       0 }
 +};
++
++static enum AVPixelFormat core_video_to_pix_fmt(OSType core_video_fmt)
++{
++    int i;
++    for (i = 0; pixel_format_map[i].pix_fmt != AV_PIX_FMT_NONE; i++)
++        if (core_video_fmt == pixel_format_map[i].core_video_fmt)
++            return pixel_format_map[i].pix_fmt;
++    return AV_PIX_FMT_NONE;
++}
++
++static OSType pix_fmt_to_core_video(enum AVPixelFormat pix_fmt)
++{
++    int i;
++    for (i = 0; pixel_format_map[i].pix_fmt != AV_PIX_FMT_NONE; i++)
++        if (pix_fmt == pixel_format_map[i].pix_fmt)
++            return pixel_format_map[i].core_video_fmt;
++    return 0;
++}
 +
 +typedef struct AVFoundationCaptureContext {
-+    AVClass         *class;
-+    int             list_devices;
-+    CFTypeRef       session;        /** AVCaptureSession*/
-+    char*           video_size;     /**< String describing video size,
-+                                        set by a private option. */
-+    enum AVPixelFormat pixel_format;   /**< Set by a private option. */
-+    int             list_format;    /**< Set by a private option. */
-+    char*           framerate;      /**< Set by a private option. */
++    AVClass *class;
++    /* AVOptions */
++    int list_devices;
++    int list_formats;
++    char *pixel_format;
++    char *video_size;   /* String describing video size */
++    char *framerate;    /* String describing the framerate */
 +
-+    int             video_stream_index;
++    int video_stream_index;
++    int width, height;
++    AVRational internal_framerate;
 +
-+    int64_t         first_pts;
-+    int             frames_captured;
-+    int             audio_frames_captured;
++    int64_t first_pts;
++    int frames_captured;
 +    pthread_mutex_t frame_lock;
-+    pthread_cond_t  frame_wait_cond;
++    pthread_cond_t frame_wait_cond;
 +
-+    CFTypeRef           avf_delegate;   /** AVFFrameReceiver */
-+    CFTypeRef           video_output;   /** AVCaptureVideoDataOutput */
-+    CVImageBufferRef    current_frame;  /** CVImageBufferRef */
-+
++    /* ARC-compatible pointers to ObjC objects */
++    CFTypeRef session;                  /* AVCaptureSession */
++    CFTypeRef video_output;
++    CFTypeRef video_delegate;
++    CVImageBufferRef current_frame;
 +} AVFoundationCaptureContext;
 +
 +#define AUDIO_DEVICES 1
 +#define VIDEO_DEVICES 2
-+#define ALL_DEVICES   AUDIO_DEVICES|VIDEO_DEVICES
++#define ALL_DEVICES   AUDIO_DEVICES | VIDEO_DEVICES
 +
 +#define OFFSET(x) offsetof(AVFoundationCaptureContext, x)
 +#define DEC AV_OPT_FLAG_DECODING_PARAM
 +static const AVOption options[] = {
-+    { "list_devices", "List available devices and exit", OFFSET(list_devices),  AV_OPT_TYPE_INT,    {.i64 = 0 },             0, INT_MAX, DEC, "list_devices" },
-+    { "all",          "Show all the supported devices",  OFFSET(list_devices),  AV_OPT_TYPE_CONST,  {.i64 = ALL_DEVICES },   0, INT_MAX, DEC, "list_devices" },
-+    { "audio",        "Show only the audio devices",     OFFSET(list_devices),  AV_OPT_TYPE_CONST,  {.i64 = AUDIO_DEVICES }, 0, INT_MAX, DEC, "list_devices" },
-+    { "video",        "Show only the video devices",     OFFSET(list_devices),  AV_OPT_TYPE_CONST,  {.i64 = VIDEO_DEVICES }, 0, INT_MAX, DEC, "list_devices" },
++    { "list_devices", "List available devices and exit",                           OFFSET(list_devices), AV_OPT_TYPE_INT,    { .i64 =             0 }, 0, INT_MAX, DEC, "list_devices" },
++    { "all",          "Show all the supported devices",                            OFFSET(list_devices), AV_OPT_TYPE_CONST,  { .i64 = ALL_DEVICES   }, 0, INT_MAX, DEC, "list_devices" },
++    { "audio",        "Show only the audio devices",                               OFFSET(list_devices), AV_OPT_TYPE_CONST,  { .i64 = AUDIO_DEVICES }, 0, INT_MAX, DEC, "list_devices" },
++    { "video",        "Show only the video devices",                               OFFSET(list_devices), AV_OPT_TYPE_CONST,  { .i64 = VIDEO_DEVICES }, 0, INT_MAX, DEC, "list_devices" },
++    { "list_formats", "List available formats and exit",                           OFFSET(list_formats), AV_OPT_TYPE_INT,    { .i64 =             0 }, 0, INT_MAX, DEC, "list_formats" },
++    { "pixel_format", "Preferred pixel format",                                    OFFSET(pixel_format), AV_OPT_TYPE_STRING, { .str = NULL          }, 0,       0, DEC },
++    { "video_size",   "A string describing frame size, such as 640x480 or hd720.", OFFSET(video_size),   AV_OPT_TYPE_STRING, { .str = NULL          }, 0,       0, DEC },
++    { "framerate",    "A string representing desired framerate",                   OFFSET(framerate),    AV_OPT_TYPE_STRING, { .str = NULL          }, 0,       0, DEC },
 +    { NULL },
 +};
-+
 +
 +static void list_capture_devices_by_type(AVFormatContext *s, NSString *type)
 +{
@@ -360,14 +443,13 @@ index 0000000..6b60782
 +
 +    av_log(s, AV_LOG_INFO, "Type: %s\n", [type UTF8String]);
 +    for (AVCaptureDevice *device in devices) {
-+
 +        av_log(s, AV_LOG_INFO, "uniqueID: %s\nname: %s\nformat:\n",
 +               [[device uniqueID] UTF8String],
 +               [[device localizedName] UTF8String]);
 +
 +        for (AVCaptureDeviceFormat *format in device.formats)
 +            av_log(s, AV_LOG_INFO, "\t%s\n",
-+                   [[NSString stringWithFormat:@"%@", format] UTF8String]);
++                   [[NSString stringWithFormat: @ "%@", format] UTF8String]);
 +    }
 +}
 +
@@ -384,34 +466,49 @@ index 0000000..6b60782
 +    return AVERROR_EXIT;
 +}
 +
-+static void lock_frames(AVFoundationCaptureContext* ctx)
++static int list_formats(AVFormatContext *s)
++{
++    av_log(s, AV_LOG_VERBOSE, "Supported pixel formats (first is more efficient):\n");
++    AVCaptureVideoDataOutput *out = [[AVCaptureVideoDataOutput alloc] init];
++
++    for (NSNumber *cv_pixel_format in[out availableVideoCVPixelFormatTypes]) {
++        OSType cv_fmt              = [cv_pixel_format intValue];
++        enum AVPixelFormat pix_fmt = core_video_to_pix_fmt(cv_fmt);
++        if (pix_fmt != AV_PIX_FMT_NONE) {
++            av_log(s, AV_LOG_VERBOSE, "  %s: %d\n",
++                   av_get_pix_fmt_name(pix_fmt),
++                   cv_fmt);
++        }
++    }
++    return AVERROR_EXIT;
++}
++
++static void lock_frames(AVFoundationCaptureContext *ctx)
 +{
 +    pthread_mutex_lock(&ctx->frame_lock);
 +}
 +
-+static void unlock_frames(AVFoundationCaptureContext* ctx)
++static void unlock_frames(AVFoundationCaptureContext *ctx)
 +{
 +    pthread_mutex_unlock(&ctx->frame_lock);
 +}
 +
-+/** FrameReceiver class - delegate for AVCaptureSession
-+ */
-+@interface AVFFrameReceiver : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
++@interface VideoCapture : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
 +{
-+    AVFoundationCaptureContext* _context;
++    AVFoundationCaptureContext *_context;
 +}
 +
-+- (id)initWithContext:(AVFoundationCaptureContext*)context;
++- (id)initWithContext:(AVFoundationCaptureContext *)context;
 +
-+- (void)  captureOutput:(AVCaptureOutput *)captureOutput
-+  didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
-+         fromConnection:(AVCaptureConnection *)connection;
++- (void)captureOutput:(AVCaptureOutput *)captureOutput
++    didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
++    fromConnection:(AVCaptureConnection *)connection;
 +
 +@end
 +
-+@implementation AVFFrameReceiver
++@implementation VideoCapture
 +
-+- (id)initWithContext:(AVFoundationCaptureContext*)context
++- (id)initWithContext:(AVFoundationCaptureContext *)context
 +{
 +    if (self = [super init]) {
 +        _context = context;
@@ -419,17 +516,24 @@ index 0000000..6b60782
 +    return self;
 +}
 +
-+- (void)  captureOutput:(AVCaptureOutput *)captureOutput
-+  didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
-+         fromConnection:(AVCaptureConnection *)connection
++- (void)captureOutput:(AVCaptureOutput *)captureOutput
++    didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
++    fromConnection:(AVCaptureConnection *)connection
 +{
++    CVImageBufferRef buf;
 +    lock_frames(_context);
 +
 +    if (_context->current_frame != nil) {
 +        CFRelease(_context->current_frame);
 +    }
 +
-+    _context->current_frame = CFRetain(CMSampleBufferGetImageBuffer(videoFrame));
++    buf = CMSampleBufferGetImageBuffer(videoFrame);
++    if (!buf)
++        return;
++
++    CFRetain(buf);
++
++    _context->current_frame = buf;
 +
 +    pthread_cond_signal(&_context->frame_wait_cond);
 +
@@ -440,129 +544,208 @@ index 0000000..6b60782
 +
 +@end
 +
-+NSString *pat = @"\\[[^\\].]*\\]";
++/**
++ * Configure the video device.
++ */
++static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_device)
++{
++    AVFoundationCaptureContext *ctx        = s->priv_data;
++    AVCaptureDeviceFormat *selected_format = nil;
++    AVFrameRateRange *selected_range       = nil;
++    double framerate                       = av_q2d(ctx->internal_framerate);
++    double epsilon                         = 0.00000001;
++
++    for (AVCaptureDeviceFormat *format in[video_device formats]) {
++        CMFormatDescriptionRef formatDescription;
++        CMVideoDimensions dimensions;
++
++        formatDescription = (CMFormatDescriptionRef)format.formatDescription;
++        dimensions        = CMVideoFormatDescriptionGetDimensions(formatDescription);
++
++        if ((ctx->width == 0 && ctx->height == 0) ||
++            (dimensions.width == ctx->width && dimensions.height == ctx->height)) {
++            av_log(s, AV_LOG_VERBOSE, "Trying video size %dx%d\n",
++                   dimensions.width, dimensions.height);
++            ctx->width      = dimensions.width;
++            ctx->height     = dimensions.height;
++            selected_format = format;
++            if (framerate) {
++                av_log(s, AV_LOG_VERBOSE, "Checking support for framerate %f\n",
++                       framerate);
++                for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges)
++                    if (range.minFrameRate <= (framerate + epsilon) &&
++                        range.maxFrameRate >= (framerate - epsilon)) {
++                        selected_range = range;
++                        break;
++                    }
++            } else {
++                selected_range = format.videoSupportedFrameRateRanges[0];
++                framerate      = selected_range.maxFrameRate;
++                break;
++            }
++
++            if (selected_format && selected_range)
++                break;
++        }
++    }
++
++    if (!selected_format) {
++        av_log(s, AV_LOG_ERROR, "Selected video size (%dx%d) is not supported by the device\n",
++               ctx->width, ctx->height);
++        return false;
++    } else {
++        av_log(s, AV_LOG_VERBOSE, "Setting video size to %dx%d\n",
++               ctx->width, ctx->height);
++    }
++
++    if (framerate && !selected_range) {
++        av_log(s, AV_LOG_ERROR, "Selected framerate (%f) is not supported by the device\n",
++               framerate);
++        return false;
++    } else {
++        av_log(s, AV_LOG_VERBOSE, "Setting framerate to %f\n",
++               framerate);
++    }
++
++    if ([video_device lockForConfiguration : NULL] == YES) {
++        [video_device setActiveFormat : selected_format];
++        [video_device setActiveVideoMinFrameDuration : CMTimeMake(1, framerate)];
++        [video_device setActiveVideoMaxFrameDuration : CMTimeMake(1, framerate)];
++    } else {
++        av_log(s, AV_LOG_ERROR, "Could not lock device for configuration\n");
++        return false;
++    }
++    return true;
++}
++
++static void print_supported_formats(AVFormatContext *s, AVCaptureDevice *device)
++{
++    av_log(s, AV_LOG_WARNING, "Supported modes:\n");
++    for (AVCaptureDeviceFormat *format in[device formats]) {
++        CMFormatDescriptionRef formatDescription;
++        CMVideoDimensions dimensions;
++
++        formatDescription = (CMFormatDescriptionRef)format.formatDescription;
++        dimensions        = CMVideoFormatDescriptionGetDimensions(formatDescription);
++
++        for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges)
++            av_log(s, AV_LOG_WARNING, "  %dx%d@[%f %f]fps\n",
++                   dimensions.width, dimensions.height,
++                   range.minFrameRate, range.maxFrameRate);
++    }
++}
 +
 +static int setup_stream(AVFormatContext *s, AVCaptureDevice *device)
 +{
-+    NSLog(@"setting up stream for device %@ ID\n", [device uniqueID]);
-+
 +    AVFoundationCaptureContext *ctx = s->priv_data;
-+    NSError *__autoreleasing error = nil;
++    NSError *__autoreleasing error  = nil;
 +    AVCaptureDeviceInput *input;
-+    AVCaptureSession *session = (__bridge AVCaptureSession*)ctx->session;
-+    input = [AVCaptureDeviceInput deviceInputWithDevice:device
-+                                                  error:&error];
++    AVCaptureSession *session = (__bridge AVCaptureSession *)ctx->session;
++
++    av_log(s, AV_LOG_VERBOSE, "Setting up stream for device %s\n", [[device uniqueID] UTF8String]);
++
++    if (!configure_video_device(s, device)) {
++        av_log(s, AV_LOG_ERROR, "device configuration failed\n");
++        print_supported_formats(s, device);
++        return AVERROR(EINVAL);
++    }
++
 +    // add the input devices
++    input = [AVCaptureDeviceInput deviceInputWithDevice:device
++             error:&error];
 +    if (!input) {
 +        av_log(s, AV_LOG_ERROR, "%s\n",
 +               [[error localizedDescription] UTF8String]);
 +        return AVERROR_UNKNOWN;
 +    }
 +
-+    if ([session canAddInput:input]) {
-+        [session addInput:input];
++    if ([session canAddInput : input]) {
++        [session addInput : input];
 +    } else {
-+        av_log(s, AV_LOG_ERROR, "can't add video input to capture session\n");
-+        return -1;
++        av_log(s, AV_LOG_ERROR, "Cannot add video input to capture session\n");
++        return AVERROR(EINVAL);
 +    }
 +
 +    // add the output devices
-+    if ([device hasMediaType:AVMediaTypeVideo]) {
-+
-+        AVCaptureVideoDataOutput* out = [[AVCaptureVideoDataOutput alloc] init];
++    if ([device hasMediaType : AVMediaTypeVideo]) {
++        AVCaptureVideoDataOutput *out = [[AVCaptureVideoDataOutput alloc] init];
++        NSNumber *core_video_fmt      = nil;
 +        if (!out) {
 +            av_log(s, AV_LOG_ERROR, "Failed to init AV video output\n");
-+            return -1;
++            return AVERROR(EINVAL);
 +        }
 +
-+        [out setAlwaysDiscardsLateVideoFrames:YES];
++        [out setAlwaysDiscardsLateVideoFrames : YES];
 +
++        if (ctx->pixel_format) {
++            // Try to use specified pixel format
++            core_video_fmt = [NSNumber numberWithInt:pix_fmt_to_core_video(av_get_pix_fmt(ctx->pixel_format))];
++            if ([[out availableVideoCVPixelFormatTypes] indexOfObject : core_video_fmt] != NSNotFound) {
++                av_log(s, AV_LOG_VERBOSE, "Pixel format %s supported!\n", ctx->pixel_format);
++            } else {
++                core_video_fmt = nil;
++            }
++        }
 +
-+        // select pixel format
-+        struct AVFPixelFormatSpec pxl_fmt_spec;
-+        pxl_fmt_spec.ff_id = AV_PIX_FMT_NONE;
-+
-+        av_log(s, AV_LOG_ERROR, "Supported pixel formats:\n");
-+        for (NSNumber *pxl_fmt in [out availableVideoCVPixelFormatTypes]) {
-+            struct AVFPixelFormatSpec pxl_fmt_dummy;
-+            pxl_fmt_dummy.ff_id = AV_PIX_FMT_NONE;
-+            for (int i = 0; avf_pixel_formats[i].ff_id != AV_PIX_FMT_NONE; i++) {
-+                if ([pxl_fmt intValue] == avf_pixel_formats[i].avf_id) {
-+                    pxl_fmt_dummy = avf_pixel_formats[i];
++        if (!ctx->pixel_format || !core_video_fmt) {
++            av_log(s, AV_LOG_VERBOSE, "Pixel format not supported or not provided, overriding...\n");
++            for (NSNumber *cv_pixel_format in[out availableVideoCVPixelFormatTypes]) {
++                OSType cv_fmt              = [cv_pixel_format intValue];
++                enum AVPixelFormat pix_fmt = core_video_to_pix_fmt(cv_fmt);
++                // Use the first one in the list, it will be the most effective
++                if (pix_fmt != AV_PIX_FMT_NONE) {
++                    core_video_fmt    = cv_pixel_format;
++                    ctx->pixel_format = av_strdup(av_get_pix_fmt_name(pix_fmt));
 +                    break;
 +                }
 +            }
-+
-+            if (pxl_fmt_dummy.ff_id != AV_PIX_FMT_NONE) {
-+                av_log(s, AV_LOG_ERROR, "  %s: %d \n", av_get_pix_fmt_name(pxl_fmt_dummy.ff_id),
-+                                                    pxl_fmt_dummy.avf_id);
-+
-+                // select first supported pixel format instead of user selected (or default) pixel format
-+                if (pxl_fmt_spec.ff_id == AV_PIX_FMT_NONE) {
-+                    pxl_fmt_spec = pxl_fmt_dummy;
-+                }
-+            }
 +        }
 +
-+        // fail if there is no appropriate pixel format or print a warning about overriding the pixel format
-+        if (pxl_fmt_spec.ff_id == AV_PIX_FMT_NONE) {
-+            return 1;
++        // fail if there is no appropriate pixel format
++        if (!core_video_fmt) {
++            return AVERROR(EINVAL);
 +        } else {
-+            av_log(s, AV_LOG_WARNING, "Overriding selected pixel format to use %s instead.\n",
-+                   av_get_pix_fmt_name(pxl_fmt_spec.ff_id));
++            av_log(s, AV_LOG_VERBOSE, "Using %s.\n",
++                   ctx->pixel_format);
 +        }
-+        ctx->pixel_format          = pxl_fmt_spec.ff_id;
-+        NSNumber     *pixel_format = [NSNumber numberWithUnsignedInt:pxl_fmt_spec.avf_id];
-+        NSDictionary *capture_dict = [NSDictionary dictionaryWithObject:pixel_format
-+                                                   forKey:(id)kCVPixelBufferPixelFormatTypeKey];
-+        [out setVideoSettings:capture_dict];
 +
-+        AVFFrameReceiver* delegate = [[AVFFrameReceiver alloc] initWithContext:ctx];
++        NSDictionary *capture_dict = [NSDictionary dictionaryWithObject:core_video_fmt
++                                      forKey:(const NSString *)kCVPixelBufferPixelFormatTypeKey];
++        [out setVideoSettings : capture_dict];
++
++        VideoCapture *delegate = [[VideoCapture alloc] initWithContext:ctx];
 +
 +        dispatch_queue_t queue = dispatch_queue_create("avf_queue", NULL);
-+        [out setSampleBufferDelegate:delegate queue:queue];
++        [out setSampleBufferDelegate : delegate queue : queue];
 +
-+        ctx->avf_delegate = (__bridge_retained CFTypeRef) delegate;
-+
-+        if ([session canAddOutput:out]) {
-+            [session addOutput:out];
-+            ctx->video_output = (__bridge_retained CFTypeRef) out;
++        if ([session canAddOutput : out]) {
++            [session addOutput : out];
++            ctx->video_output   = (__bridge_retained CFTypeRef)out;
++            ctx->video_delegate = (__bridge_retained CFTypeRef)delegate;
 +        } else {
 +            av_log(s, AV_LOG_ERROR, "can't add video output to capture session\n");
-+            return -1;
++            return AVERROR(EINVAL);
 +        }
-+        NSLog(@"%@", device);
 +    }
 +
-+/**    if ([device hasMediaType:AVMediaTypeAudio]) {
-+        AVCaptureAudioDataOutput *out =
-+            [[AVCaptureAudioDataOutput alloc] init];
-+
-+        out.audioSettings = nil;
-+        [session addOutput:out];
-+
-+        NSLog(@"%@ %@", device, out.audioSettings);
-+    }
-+*/
 +    return 0;
 +}
 +
 +static int get_video_config(AVFormatContext *s)
 +{
-+    AVFoundationCaptureContext *ctx = (AVFoundationCaptureContext*)s->priv_data;
++    AVFoundationCaptureContext *ctx = (AVFoundationCaptureContext *)s->priv_data;
 +    CVImageBufferRef image_buffer;
 +    CGSize image_buffer_size;
-+    AVStream* stream = avformat_new_stream(s, NULL);
++    AVStream *stream = avformat_new_stream(s, NULL);
 +
 +    if (!stream) {
 +        av_log(s, AV_LOG_ERROR, "Failed to create AVStream\n");
-+        return -1;
++        return AVERROR(EINVAL);
 +    }
 +
 +    // Take stream info from the first frame.
-+    while (ctx->frames_captured < 1) {
++    while (ctx->frames_captured < 1)
 +        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, YES);
-+    }
 +
 +    lock_frames(ctx);
 +
@@ -570,15 +753,14 @@ index 0000000..6b60782
 +
 +    avpriv_set_pts_info(stream, 64, 1, 1000000);
 +
-+    image_buffer = ctx->current_frame;
++    image_buffer      = ctx->current_frame;
 +    image_buffer_size = CVImageBufferGetEncodedSize(image_buffer);
 +
-+    av_log(s, AV_LOG_ERROR, "Update stream info...\n");
 +    stream->codec->codec_id   = AV_CODEC_ID_RAWVIDEO;
 +    stream->codec->codec_type = AVMEDIA_TYPE_VIDEO;
 +    stream->codec->width      = (int)image_buffer_size.width;
 +    stream->codec->height     = (int)image_buffer_size.height;
-+    stream->codec->pix_fmt    = ctx->pixel_format;
++    stream->codec->pix_fmt    = av_get_pix_fmt(ctx->pixel_format);
 +
 +    CFRelease(ctx->current_frame);
 +    ctx->current_frame = nil;
@@ -588,11 +770,9 @@ index 0000000..6b60782
 +    return 0;
 +}
 +
-+static void destroy_context(AVFoundationCaptureContext* ctx)
++static void destroy_context(AVFoundationCaptureContext *ctx)
 +{
-+    NSLog(@"Destroying context");
-+
-+    AVCaptureSession *session = (__bridge AVCaptureSession*)ctx->session;
++    AVCaptureSession *session = (__bridge AVCaptureSession *)ctx->session;
 +    [session stopRunning];
 +
 +    ctx->session = NULL;
@@ -610,78 +790,98 @@ index 0000000..6b60782
 +    AVCaptureDevice *device;
 +    for (NSString *type in @[AVMediaTypeVideo]) {
 +        device = [AVCaptureDevice defaultDeviceWithMediaType:type];
-+        if (device)
++        if (device) {
++            av_log(s, AV_LOG_VERBOSE, "Using default device %s\n",
++                   [[device uniqueID] UTF8String]);
 +            return setup_stream(s, device);
++        }
++    }
++    return AVERROR(EINVAL);
++}
++
++/**
++ * Try to open device given in filename
++ * Two supported formats: "device_unique_id" or "[device_unique_id]"
++ */
++static AVCaptureDevice *create_device(AVFormatContext *s)
++{
++    NSString *filename;
++    NSError *__autoreleasing error = nil;
++    NSRegularExpression *exp;
++    NSArray *matches;
++    AVCaptureDevice *device;
++
++    filename = [NSString stringWithFormat:@ "%s", s->filename];
++
++    if ((device = [AVCaptureDevice deviceWithUniqueID:filename])) {
++        av_log(s, AV_LOG_VERBOSE, "Device with name %s found\n", [filename UTF8String]);
++        return device;
 +    }
 +
-+    return -1;
++    // Remove '[]' from the device name
++    NSString *pat = @"(?<=\\[).*?(?=\\])";
++    exp = [NSRegularExpression regularExpressionWithPattern:pat
++           options:0
++           error:&error];
++    if (!exp) {
++        av_log(s, AV_LOG_ERROR, "%s\n",
++               [[error localizedDescription] UTF8String]);
++        return NULL;
++    }
++
++    matches = [exp matchesInString:filename options:0
++               range:NSMakeRange(0, [filename length])];
++
++    if (matches.count > 0) {
++        for (NSTextCheckingResult *match in matches) {
++            NSRange range      = [match rangeAtIndex:0];
++            NSString *uniqueID = [filename substringWithRange:NSMakeRange(range.location, range.length)];
++            av_log(s, AV_LOG_VERBOSE, "opening device with ID: %s\n", [uniqueID UTF8String]);
++            if (!(device = [AVCaptureDevice deviceWithUniqueID:uniqueID])) {
++                av_log(s, AV_LOG_ERROR, "Device with name %s not found", [filename UTF8String]);
++                return NULL;
++            }
++            return device;
++        }
++    }
++    return NULL;
 +}
 +
 +static int setup_streams(AVFormatContext *s)
 +{
-+    NSLog(@"setting streams");
 +    AVFoundationCaptureContext *ctx = s->priv_data;
 +    int ret;
-+    NSError *__autoreleasing error = nil;
-+    NSArray *matches;
-+    NSString *filename;
 +    AVCaptureDevice *device;
-+    NSRegularExpression *exp;
 +
 +    pthread_mutex_init(&ctx->frame_lock, NULL);
 +    pthread_cond_init(&ctx->frame_wait_cond, NULL);
 +
 +    ctx->session = (__bridge_retained CFTypeRef)[[AVCaptureSession alloc] init];
 +
-+    if (s->filename[0] != '[') {
++    if (!strncmp(s->filename, "default", 7)) {
 +        ret = setup_default_stream(s);
 +    } else {
-+        exp = [NSRegularExpression regularExpressionWithPattern:pat
-+                                                        options:0
-+                                                          error:&error];
-+        if (!exp) {
-+            av_log(s, AV_LOG_ERROR, "%s\n",
-+                   [[error localizedDescription] UTF8String]);
-+            return AVERROR(ENOMEM);
-+        }
-+
-+        filename = [NSString stringWithFormat:@"%s", s->filename];
-+        av_log(s, AV_LOG_INFO, "device name: %s\n",[filename UTF8String]);
-+
-+        matches = [exp matchesInString:filename options:0
-+                                 range:NSMakeRange(0, [filename length])];
-+
-+        if (matches.count > 0) {
-+            for (NSTextCheckingResult *match in matches) {
-+                NSRange range = [match rangeAtIndex:0];
-+                NSString *uniqueID = [filename substringWithRange:NSMakeRange(range.location + 1, range.length-2)];
-+                av_log(s, AV_LOG_INFO, "opening device with ID: %s\n",[uniqueID UTF8String]);
-+                if (!(device = [AVCaptureDevice deviceWithUniqueID:uniqueID])) {
-+                    // report error
-+                    av_log(s, AV_LOG_ERROR, "Device with name %s not found",[filename UTF8String]);
-+                    return AVERROR(EINVAL);
-+                }
-+                ret = setup_stream(s, device);
-+                if (ret < 0) {
-+                    // avfoundation_close
-+                    return ret;
-+                }
-+            }
++        device = create_device(s);
++        if (device) {
++            ret = setup_stream(s, device);
 +        } else {
-+            av_log(s, AV_LOG_ERROR, "No matches for %s",[filename UTF8String]);
++            av_log(s, AV_LOG_ERROR, "No matches for %s\n", s->filename);
 +            ret = setup_default_stream(s);
 +        }
 +    }
 +
 +    if (ret < 0) {
-+        av_log(s, AV_LOG_ERROR, "No device could be added");
++        av_log(s, AV_LOG_ERROR, "No device could be added\n");
 +        return ret;
 +    }
 +
-+    av_log(s, AV_LOG_INFO, "Starting session!\n");
-+    [(__bridge AVCaptureSession*)ctx->session startRunning];
++    av_log(s, AV_LOG_VERBOSE, "Starting session!\n");
++    [(__bridge AVCaptureSession *)ctx->session startRunning];
 +
-+    av_log(s, AV_LOG_INFO, "Checking video config\n");
++    // Session is started, unlock device
++    [device unlockForConfiguration];
++
++    av_log(s, AV_LOG_VERBOSE, "Checking video config\n");
 +    if (get_video_config(s)) {
 +        destroy_context(ctx);
 +        return AVERROR(EIO);
@@ -690,20 +890,48 @@ index 0000000..6b60782
 +    return 0;
 +}
 +
-+
 +static int avfoundation_read_header(AVFormatContext *s)
 +{
 +    AVFoundationCaptureContext *ctx = s->priv_data;
 +    ctx->first_pts = av_gettime();
++
++    AVRational framerate_q = { 0, 1 };
++    ctx->internal_framerate = framerate_q;
++
 +    if (ctx->list_devices)
 +        return avfoundation_list_capture_devices(s);
++    if (ctx->list_formats) {
++        return list_formats(s);
++    }
++
++    if (ctx->pixel_format) {
++        if (av_get_pix_fmt(ctx->pixel_format) == AV_PIX_FMT_NONE) {
++            av_log(s, AV_LOG_ERROR, "No such input format: %s.\n",
++                   ctx->pixel_format);
++            return AVERROR(EINVAL);
++        }
++    }
++
++    if (ctx->video_size &&
++        (av_parse_video_size(&ctx->width, &ctx->height, ctx->video_size)) < 0) {
++        av_log(s, AV_LOG_ERROR, "Could not parse video size '%s'.\n",
++               ctx->video_size);
++        return AVERROR(EINVAL);
++    }
++
++    if (ctx->framerate &&
++        (av_parse_video_rate(&ctx->internal_framerate, ctx->framerate)) < 0) {
++        av_log(s, AV_LOG_ERROR, "Could not parse framerate '%s'.\n",
++               ctx->framerate);
++        return AVERROR(EINVAL);
++    }
 +
 +    return setup_streams(s);
 +}
 +
 +static int avfoundation_read_packet(AVFormatContext *s, AVPacket *pkt)
 +{
-+    AVFoundationCaptureContext* ctx = (AVFoundationCaptureContext*)s->priv_data;
++    AVFoundationCaptureContext *ctx = (AVFoundationCaptureContext *)s->priv_data;
 +
 +    do {
 +        lock_frames(ctx);
@@ -715,13 +943,13 @@ index 0000000..6b60782
 +
 +            pkt->pts = pkt->dts = av_rescale_q(av_gettime() - ctx->first_pts,
 +                                               AV_TIME_BASE_Q,
-+                                               (AVRational){1, 1000000});
-+            pkt->stream_index  = ctx->video_stream_index;
-+            pkt->flags        |= AV_PKT_FLAG_KEY;
++                                               (AVRational) {1, 1000000 });
++            pkt->stream_index = ctx->video_stream_index;
++            pkt->flags       |= AV_PKT_FLAG_KEY;
 +
 +            CVPixelBufferLockBaseAddress(ctx->current_frame, 0);
 +
-+            void* data = CVPixelBufferGetBaseAddress(ctx->current_frame);
++            void *data = CVPixelBufferGetBaseAddress(ctx->current_frame);
 +            memcpy(pkt->data, data, pkt->size);
 +
 +            CVPixelBufferUnlockBaseAddress(ctx->current_frame, 0);
@@ -740,7 +968,7 @@ index 0000000..6b60782
 +
 +static int avfoundation_read_close(AVFormatContext *s)
 +{
-+    NSLog(@"Closing session...");
++    av_log(s, AV_LOG_VERBOSE, "Closing session...\n");
 +    AVFoundationCaptureContext *ctx = s->priv_data;
 +    destroy_context(ctx);
 +    return 0;
@@ -763,3 +991,5 @@ index 0000000..6b60782
 +    .flags          = AVFMT_NOFILE,
 +    .priv_class     = &avfoundation_class,
 +};
+--
+2.6.2
