@@ -191,6 +191,7 @@ struct AccountVideoCodecInfo : AccountCodecInfo
     unsigned frameRate;
     unsigned profileId;
     std::string parameters;
+    bool isAutoBitrateEnabled{true};
 };
 bool operator== (SystemCodecInfo codec1, SystemCodecInfo codec2);
 

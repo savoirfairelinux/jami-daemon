@@ -202,7 +202,8 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::QUALITY, to_string(quality)},
         {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, to_string(systemCodecInfo.maxQuality)},
         {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, to_string(systemCodecInfo.minQuality)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)}
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)},
+        {DRing::Account::ConfProperties::CodecInfo::AUTO_BITRATE_ENABLED, bool_to_str(isAutoBitrateEnabled)}
         };
 }
 
