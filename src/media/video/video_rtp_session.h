@@ -48,9 +48,22 @@ struct VideoBitrateInfo {
     unsigned videoQualityCurrent;
     unsigned videoQualityMin;
     unsigned videoQualityMax;
-    unsigned cptBitrateChecking;
-    unsigned maxBitrateChecking;
     float packetLostThreshold;
+};
+
+enum QualityState : unsigned {
+    QUALITY_UNTESTED = 0,
+    QUALITY_KO = 1,
+    QUALITY_OK = 2
+};
+
+struct QualityInfo {
+    unsigned val;
+    QualityState state = QUALITY_UNTESTED;
+    unsigned statTotal = 0;
+    unsigned statFailure = 0;
+    unsigned statSuccess = 0;
+    QualityInfo(unsigned val, QualityState state, unsigned statT, unsigned statF, unsigned statS) : val(val), state(state), statTotal(statT), statFailure(statF), statSuccess(statS) {}
 };
 
 class VideoRtpSession : public RtpSession {
@@ -95,39 +108,46 @@ private:
     uint16_t initSeqVal_ = 0;
 
     float checkPeerPacketLoss();
-    unsigned getLowerQuality();
-    unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
     void getVideoBitrateInfo();
 
 
     // interval in seconds between RTCP checkings
-    const unsigned RTCP_CHECKING_INTERVAL {4};
+    const unsigned RTCP_CHECKING_INTERVAL {2};
     // long interval in seconds between RTCP checkings
     const unsigned RTCP_LONG_CHECKING_INTERVAL {30};
     // no packet loss can be calculated as no data in input
     static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
     // bitrate and quality info struct
-    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
-    // previous quality and bitrate used if quality or bitrate need to be decreased
-    std::list<unsigned> histoQuality_ {};
-    std::list<unsigned> histoBitrate_ {};
-    // max size of quality and bitrate historic
-    static constexpr unsigned MAX_SIZE_HISTO_QUALITY_ {30};
-    static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
+    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0,0,0,PACKET_LOSS_THRESHOLD};
 
-    //5 tries in a row
-    static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     //packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
+    static constexpr float PACKET_LOSS_LOW {5.0};
+    static constexpr float PACKET_LOSS_MEDIUM {15.0};
+    static constexpr float PACKET_LOSS_HIGH {25.0};
 
     InterruptedThreadLoop rtcpCheckerThread_;
     bool setupRtcpChecker();
     void processRtcpChecker();
     void cleanupRtcpChecker();
-};
 
+    void initBitrateAndQualityTable();
+    void resetBitrateAndQualityStats();
+    bool increaseQuality();
+    bool decreaseQuality(float packetLoss);
+    bool increaseBitrate();
+    bool decreaseBitrate(float packetLoss);
+    void dumpStat();
+    void updateQualityTable();
+    void updateBitrateTable();
+
+    std::vector<QualityInfo> tableQuality_ {};
+    unsigned indexQuality_;
+    std::vector<QualityInfo> tableBitrate_ {};
+    unsigned indexBitrate_;
+};
 }} // namespace ring::video
 
 #endif // __VIDEO_RTP_SESSION_H__
