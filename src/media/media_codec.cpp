@@ -23,6 +23,7 @@
 #include "account_const.h"
 
 #include "string_utils.h"
+#include "logger.h"
 
 #include <string>
 #include <sstream>
@@ -202,7 +203,8 @@ AccountVideoCodecInfo::getCodecSpecifications()
         {DRing::Account::ConfProperties::CodecInfo::QUALITY, to_string(quality)},
         {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, to_string(systemCodecInfo.maxQuality)},
         {DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY, to_string(systemCodecInfo.minQuality)},
-        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)}
+        {DRing::Account::ConfProperties::CodecInfo::FRAME_RATE, to_string(frameRate)},
+        {DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED, bool_to_str(isAutoQualityEnabled)}
         };
 }
 
@@ -220,6 +222,10 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
     if (it != details.end())
         quality = ring::stoi(it->second);
+
+    it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
+    if (it != details.end())
+        isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
 }
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()
