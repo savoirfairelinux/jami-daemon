@@ -104,7 +104,9 @@ void VideoRtpSession::startSender()
             RING_ERR("%s", e.what());
             send_.enabled = false;
         }
-        if (not rtcpCheckerThread_.isRunning())
+        auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
+        auto isAutoBitrateEnabledStr = codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_BITRATE_ENABLED];
+        if ((not rtcpCheckerThread_.isRunning()) && (isAutoBitrateEnabledStr.compare(TRUE_STR) == 0))
             rtcpCheckerThread_.start();
     }
 }

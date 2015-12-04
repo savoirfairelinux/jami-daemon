@@ -227,6 +227,7 @@ constexpr static const char QUALITY            [] = "CodecInfo.quality";
 constexpr static const char MIN_QUALITY        [] = "CodecInfo.min_quality";
 constexpr static const char MAX_QUALITY        [] = "CodecInfo.max_quality";
 constexpr static const char CHANNEL_NUMBER     [] = "CodecInfo.channelNumber";
+constexpr static const char AUTO_BITRATE_ENABLED [] = "CodecInfo.autoBitrateEnabled";
 
 } //namespace DRing::Account::ConfProperties::CodecInfo
 
