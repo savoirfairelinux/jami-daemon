@@ -60,7 +60,8 @@ VideoRtpSession::VideoRtpSession(const string &callID,
 VideoRtpSession::~VideoRtpSession()
 { stop(); }
 
-void VideoRtpSession::startSender()
+void
+VideoRtpSession::startSender()
 {
     if (send_.enabled and not send_.holding) {
         if (sender_) {
@@ -122,7 +123,8 @@ VideoRtpSession::restartSender()
     setupVideoPipeline();
 }
 
-void VideoRtpSession::startReceiver()
+void
+VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
@@ -140,7 +142,8 @@ void VideoRtpSession::startReceiver()
         receiveThread_.reset();
     }
 }
-void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
+void
+VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
                             std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
@@ -173,7 +176,8 @@ void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
     setupVideoPipeline();
 }
 
-void VideoRtpSession::stop()
+void
+VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     rtcpCheckerThread_.join();
@@ -196,7 +200,8 @@ void VideoRtpSession::stop()
     videoLocal_.reset();
 }
 
-void VideoRtpSession::forceKeyFrame()
+void
+VideoRtpSession::forceKeyFrame()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     if (sender_)
@@ -256,7 +261,8 @@ VideoRtpSession::enterConference(Conference* conference)
     }
 }
 
-void VideoRtpSession::exitConference()
+void
+VideoRtpSession::exitConference()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
 
@@ -290,7 +296,6 @@ VideoRtpSession::useCodec(const ring::AccountVideoCodecInfo* codec) const
     return sender_->useCodec(codec);
 }
 
-
 float
 VideoRtpSession::checkPeerPacketLoss()
 {
@@ -310,132 +315,268 @@ VideoRtpSession::checkPeerPacketLoss()
         return NO_PACKET_LOSS_CALCULATED;
 }
 
-unsigned
-VideoRtpSession::getLowerQuality()
-{
-    // if lower quality was stored we return it
-    unsigned quality = videoBitrateInfo_.videoQualityCurrent;
-    while ( not histoQuality_.empty()) {
-        quality = histoQuality_.back();
-        histoQuality_.pop_back();
-        if (quality > videoBitrateInfo_.videoQualityCurrent)
-            return quality;
+bool
+VideoRtpSession::increaseBitrate() {
+    unsigned jump = 0;
+    auto bitrateChanged = false;
+
+    tableBitrate_[indexBitrate_].statSuccess++;
+
+    //already reach highest bitrate
+    if (indexBitrate_ == tableBitrate_.size() - 1)
+        return bitrateChanged;
+
+    auto distToMax = tableBitrate_.size() - 1 - indexBitrate_;
+
+    if (distToMax <= (tableBitrate_.size() * 1/3))
+        jump = std::min(indexBitrate_ + 1, (unsigned) (tableBitrate_.size() - 1));
+    else if (distToMax <= (tableBitrate_.size() * 2/3))
+        jump = std::min(indexBitrate_ + 2, (unsigned) (tableBitrate_.size() - 1));
+    else
+        jump = std::min(indexBitrate_ + 3, (unsigned) (tableBitrate_.size() - 1));
+
+    while (indexBitrate_ < jump) {
+        if (tableBitrate_[indexBitrate_].state == QUALITY_KO)
+            break;
+
+        tableBitrate_[indexBitrate_].state = QUALITY_OK;
+        tableBitrate_[indexBitrate_].statTotal++;
+        tableBitrate_[indexBitrate_].statSuccess++;
+        indexBitrate_++;
+        videoBitrateInfo_.videoBitrateCurrent = tableBitrate_[indexBitrate_].val;
+        bitrateChanged = true;
     }
 
-    // if no appropriate quality found, calculate it with dichotomie
-    quality = (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMin) / 2;
-    return quality;
+    return bitrateChanged;
 }
 
-unsigned
-VideoRtpSession::getLowerBitrate()
-{
-    // if a lower bitrate was stored we return it
-    unsigned bitrate = videoBitrateInfo_.videoBitrateCurrent;
-    while ( not histoBitrate_.empty()) {
-        bitrate = histoBitrate_.back();
-        histoBitrate_.pop_back();
-        if (bitrate < videoBitrateInfo_.videoBitrateCurrent)
-            return bitrate;
+bool
+VideoRtpSession::decreaseBitrate(float packetLoss) {
+    unsigned step = 0;
+
+    tableBitrate_[indexBitrate_].statFailure++;
+
+    //already reach lowest bitrate
+    if (indexBitrate_ == 0)
+        return false;
+
+    if (packetLoss <= PACKET_LOSS_LOW)
+        step = 1 ;
+    else if (packetLoss <= PACKET_LOSS_MEDIUM)
+        step = 2;
+    else if (packetLoss <= PACKET_LOSS_HIGH)
+        step = 3;
+    else
+        step = 4;
+
+    unsigned jump = std::max((signed)(indexBitrate_ - step), (signed) 0);
+
+    while ( indexBitrate_ > jump) {
+        tableBitrate_[indexBitrate_].state = QUALITY_KO;
+        tableBitrate_[indexBitrate_].statTotal++;
+        tableBitrate_[indexBitrate_].statFailure++;
+        indexBitrate_--;
+        videoBitrateInfo_.videoBitrateCurrent = tableBitrate_[indexBitrate_].val;
+    }
+    return true;
+}
+
+bool
+VideoRtpSession::increaseQuality() {
+    unsigned jump = 0;
+    auto qualityChanged = false;
+
+    tableQuality_[indexQuality_].statSuccess++;
+
+    //already reach highest quality
+    if (indexQuality_ == tableQuality_.size() - 1)
+        return qualityChanged;
+
+    auto distToMax = tableQuality_.size() - 1 - indexQuality_;
+
+    if (distToMax <= (tableQuality_.size() * 1/3))
+        jump = std::min(indexQuality_ + 1, (unsigned) (tableQuality_.size() - 1));
+    else if (distToMax <= (tableQuality_.size() * 2/3))
+        jump = std::min(indexQuality_ + 2, (unsigned) (tableQuality_.size() - 1));
+    else
+        jump = std::min(indexQuality_ + 3, (unsigned) (tableQuality_.size() - 1));
+
+    while (indexQuality_ < jump) {
+        if (tableQuality_[indexQuality_].state == QUALITY_KO)
+            break;
+
+        tableQuality_[indexQuality_].state = QUALITY_OK;
+        tableQuality_[indexQuality_].statTotal++;
+        tableQuality_[indexQuality_].statSuccess++;
+        indexQuality_++;
+        videoBitrateInfo_.videoQualityCurrent = tableQuality_[indexQuality_].val;
+        qualityChanged = true;
     }
 
-    // if no appropriate bitrate found, calculate it with dichotomie
-    bitrate = (videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMin) / 2;
-    return bitrate;
+    return qualityChanged;
+}
+
+bool
+VideoRtpSession::decreaseQuality(float packetLoss) {
+    unsigned step = 0;
+
+    tableQuality_[indexQuality_].statFailure++;
+
+    //already reach lowest quality
+    if (indexQuality_ == 0)
+        return false;
+
+    if (packetLoss <= PACKET_LOSS_LOW)
+        step = 1 ;
+    else if (packetLoss <= PACKET_LOSS_MEDIUM)
+        step = 2;
+    else if (packetLoss <= PACKET_LOSS_HIGH)
+        step = 3;
+    else
+        step = 4;
+
+    unsigned jump = std::max((signed)(indexQuality_ - step), (signed) 0);
+
+    while ( indexQuality_ > jump) {
+        tableQuality_[indexQuality_].state = QUALITY_KO;
+        tableQuality_[indexQuality_].statTotal++;
+        tableQuality_[indexQuality_].statFailure++;
+        indexQuality_--;
+        videoBitrateInfo_.videoQualityCurrent = tableQuality_[indexQuality_].val;
+    }
+    return true;
+}
+
+void
+VideoRtpSession::updateQualityTable() {
+    //dumpStat();
+    for (auto& qualityIt : tableQuality_) {
+        if (qualityIt.state == QUALITY_KO) {
+            //we consider that less than 2 failures are ok
+            if (qualityIt.statFailure <= 2) {
+                qualityIt.state = QUALITY_OK;
+                RING_WARN("-> quality %u can be used (less than 2 failures) ",
+                        qualityIt.val);
+            } else if (( qualityIt.statTotal / qualityIt.statFailure) >= 3) {
+                RING_WARN("-> quality %u can be used (ratio ok) ", qualityIt.val);
+                qualityIt.state = QUALITY_OK;
+            }
+
+        }
+    }
+}
+
+void
+VideoRtpSession::updateBitrateTable() {
+    for (auto& bitrateIt : tableBitrate_) {
+        if (bitrateIt.state == QUALITY_KO) {
+            //we consider that less than 2 failures are ok
+            if (bitrateIt.statFailure <= 2) {
+                bitrateIt.state = QUALITY_OK;
+                RING_WARN("-> bitrate %u can be used (less than 2 failures) ",
+                        bitrateIt.val);
+            } else if (( bitrateIt.statTotal / bitrateIt.statFailure) >= 3) {
+                RING_WARN("-> bitrate %u can be used (ratio ok) ", bitrateIt.val);
+                bitrateIt.state = QUALITY_OK;
+            }
+        }
+    }
+}
+
+void
+VideoRtpSession::initBitrateAndQualityTable() {
+    if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) {
+        // create table of quality with a step of 1
+        for (unsigned q = videoBitrateInfo_.videoQualityMin; q >= videoBitrateInfo_.videoQualityMax ; q--) {
+            QualityInfo info = {q, QUALITY_UNTESTED, 0, 0, 0};
+            tableQuality_.push_back(info);
+        }
+    }
+
+    // create table of bitrate with a step of 50
+    for (unsigned b = videoBitrateInfo_.videoBitrateMin; b <= videoBitrateInfo_.videoBitrateMax ; b+=50) {
+        QualityInfo info = {b, QUALITY_UNTESTED, 0, 0, 0};
+        tableBitrate_.push_back(info);
+    }
+}
+
+void
+VideoRtpSession::resetBitrateAndQualityStats() {
+    for (auto& itQ : tableQuality_)
+        itQ.statFailure = itQ.statSuccess = itQ.statTotal = 0;
+
+    for (auto& itB : tableBitrate_)
+        itB.statFailure = itB.statSuccess = itB.statTotal = 0;
+}
+
+void
+VideoRtpSession::dumpStat() {
+    for (const auto& qualityIt : tableQuality_) {
+        RING_ERR("quality: %u; state %u; statTotal %u; statSuccess %u; statFailure %u",
+                qualityIt.val,
+                qualityIt.state,
+                qualityIt.statTotal,
+                qualityIt.statSuccess,
+                qualityIt.statFailure);
+    }
+
+    for (const auto& bitrateIt : tableBitrate_) {
+        RING_ERR("bitrate: %u; state %u; statTotal %u; statSuccess %u; statFailure %u",
+                bitrateIt.val,
+                bitrateIt.state,
+                bitrateIt.statTotal,
+                bitrateIt.statSuccess,
+                bitrateIt.statFailure);
+    }
 }
 
 void
 VideoRtpSession::adaptQualityAndBitrate()
 {
-    bool needToCheckQuality = false;
     bool mediaRestartNeeded = false;
     float packetLostRate = 0.0;
 
     auto rtcpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTCPCheck_);
     auto rtcpLongCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastLongRTCPCheck_);
 
-    if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
-        needToCheckQuality = true;
-        lastRTCPCheck_ = std::chrono::system_clock::now();
-    }
 
     if (rtcpLongCheckTimer.count() >= RTCP_LONG_CHECKING_INTERVAL) {
-        needToCheckQuality = true;
         lastLongRTCPCheck_ = std::chrono::system_clock::now();
-        // we force iterative bitrate adaptation
-        videoBitrateInfo_.cptBitrateChecking = 0;
+        updateBitrateTable();
+        updateQualityTable();
+        return;
     }
 
 
-    if (needToCheckQuality) {
+    if (rtcpCheckTimer.count() >= RTCP_CHECKING_INTERVAL) {
+        lastRTCPCheck_ = std::chrono::system_clock::now();
 
-        videoBitrateInfo_.cptBitrateChecking++;
+        if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+            tableQuality_[indexQuality_].statTotal++;
 
-        // packetLostRate is not already available. Do nothing
+        tableBitrate_[indexBitrate_].statTotal++;
+
+        //packetLostRate is not already available. Do nothing
         if ((packetLostRate = checkPeerPacketLoss()) == NO_PACKET_LOSS_CALCULATED) {
-            // we force iterative bitrate adaptation
-            videoBitrateInfo_.cptBitrateChecking = 0;
+            if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+                tableQuality_[indexQuality_].statSuccess++;
 
-        // too much packet lost : decrease quality and bitrate
+            tableBitrate_[indexBitrate_].statSuccess++;
+
+        //too much packet lost : decrease quality and bitrate
         } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
 
-            // calculate new quality by dichotomie
-            videoBitrateInfo_.videoQualityCurrent = getLowerQuality();
+            //decrease quality and bitrate. Quality has the priority
+            mediaRestartNeeded = decreaseBitrate(packetLostRate);
+            if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+                mediaRestartNeeded = decreaseQuality(packetLostRate);
 
-            // calculate new bitrate by dichotomie
-            videoBitrateInfo_.videoBitrateCurrent =  getLowerBitrate();
-
-            // boundaries low
-            if (videoBitrateInfo_.videoQualityCurrent > videoBitrateInfo_.videoQualityMin)
-                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMin;
-
-            if (videoBitrateInfo_.videoBitrateCurrent < videoBitrateInfo_.videoBitrateMin)
-                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMin;
-
-
-            // we force iterative bitrate and quality adaptation
-            videoBitrateInfo_.cptBitrateChecking = 0;
-
-            // asynchronous A/V media restart
-            // we give priority to quality
-            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
-                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
-                mediaRestartNeeded = true;
-
-
-        // no packet lost: increase quality and bitrate
-        } else if (videoBitrateInfo_.cptBitrateChecking <= videoBitrateInfo_.maxBitrateChecking) {
-
-            // calculate new quality by dichotomie
-            videoBitrateInfo_.videoQualityCurrent =
-                (videoBitrateInfo_.videoQualityCurrent + videoBitrateInfo_.videoQualityMax) / 2;
-
-            // calculate new bitrate by dichotomie
-            videoBitrateInfo_.videoBitrateCurrent =
-                ( videoBitrateInfo_.videoBitrateCurrent + videoBitrateInfo_.videoBitrateMax) / 2;
-
-            // boundaries high
-            if (videoBitrateInfo_.videoQualityCurrent < videoBitrateInfo_.videoQualityMax)
-                videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMax;
-
-            if (videoBitrateInfo_.videoBitrateCurrent > videoBitrateInfo_.videoBitrateMax)
-                videoBitrateInfo_.videoBitrateCurrent = videoBitrateInfo_.videoBitrateMax;
-
-            // asynchronous A/V media restart
-            // we give priority to quality
-            if (((videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoQualityCurrent !=  (histoQuality_.empty() ? 0 : histoQuality_.back()))) ||
-                ((videoBitrateInfo_.videoQualityCurrent == SystemCodecInfo::DEFAULT_NO_QUALITY) &&
-                    (videoBitrateInfo_.videoBitrateCurrent !=  (histoBitrate_.empty() ? 0 : histoBitrate_.back()))))
-                mediaRestartNeeded = true;
-
-            if (videoBitrateInfo_.cptBitrateChecking == videoBitrateInfo_.maxBitrateChecking)
-                lastLongRTCPCheck_ = std::chrono::system_clock::now();
-
+        //no packet lost: increase quality and bitrate
         } else {
-            // nothing we reach maximal tries
+            //increase quality and bitrate. Quality has the priority
+            mediaRestartNeeded = increaseBitrate();
+            if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+                mediaRestartNeeded = increaseQuality();
         }
     }
 
@@ -443,9 +584,7 @@ VideoRtpSession::adaptQualityAndBitrate()
         storeVideoBitrateInfo();
         const auto& cid = callID_;
 
-        RING_WARN("[%u/%u] packetLostRate=%f -> change quality to %d bitrate to %d",
-                videoBitrateInfo_.cptBitrateChecking,
-                videoBitrateInfo_.maxBitrateChecking,
+        RING_WARN("packetLostRate=%f : quality->%d | bitrate->%d",
                 packetLostRate,
                 videoBitrateInfo_.videoQualityCurrent,
                 videoBitrateInfo_.videoBitrateCurrent);
@@ -456,6 +595,7 @@ VideoRtpSession::adaptQualityAndBitrate()
             });
     }
 }
+
 void
 VideoRtpSession::getVideoBitrateInfo() {
     auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
@@ -467,12 +607,10 @@ VideoRtpSession::getVideoBitrateInfo() {
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::QUALITY])),
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MIN_QUALITY])),
             (unsigned)(ring::stoi(codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY])),
-            videoBitrateInfo_.cptBitrateChecking,
-            videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
         };
     } else {
-        videoBitrateInfo_ = {0,0,0,0,0,0,0,0,0};
+        videoBitrateInfo_ = {0,0,0,0,0,0,0};
     }
 }
 
@@ -490,21 +628,26 @@ VideoRtpSession::storeVideoBitrateInfo() {
             {DRing::Account::ConfProperties::CodecInfo::MAX_QUALITY, ring::to_string(videoBitrateInfo_.videoQualityMax)}
         });
 
-        if (histoQuality_.size() > MAX_SIZE_HISTO_QUALITY_)
-            histoQuality_.pop_front();
-
-        if (histoBitrate_.size() > MAX_SIZE_HISTO_BITRATE_)
-            histoBitrate_.pop_front();
-
-        histoQuality_.push_back(videoBitrateInfo_.videoQualityCurrent);
-        histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
-
     }
 }
+
 bool
 VideoRtpSession::setupRtcpChecker()
 {
     getVideoBitrateInfo();
+    if (tableQuality_.empty())
+        initBitrateAndQualityTable();
+    else
+        resetBitrateAndQualityStats();
+
+    // we move to the midle of the vector
+    indexQuality_ = tableQuality_.size() / 2;
+    indexBitrate_ = tableBitrate_.size() / 2;
+
+    if (videoBitrateInfo_.videoQualityCurrent != SystemCodecInfo::DEFAULT_NO_QUALITY)
+        videoBitrateInfo_.videoQualityCurrent = tableQuality_[indexQuality_].val;
+
+    videoBitrateInfo_.videoBitrateCurrent = tableBitrate_[indexBitrate_].val;
     return true;
 }
 
