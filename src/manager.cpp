@@ -2799,4 +2799,13 @@ Manager::getSinkClient(const std::string& id)
 }
 #endif // RING_VIDEO
 
+std::string
+Manager::sendFile(const std::string& accountId, const std::string& peerUri,
+                  const std::string& filename)
+{
+    if (auto acc = getAccount(accountId))
+        return acc->sendFile(peerUri, filename);
+    return {};
+}
+
 } // namespace ring
