@@ -34,6 +34,7 @@
 #include "logger.h"
 
 #include <memory>
+#include <thread>
 
 namespace ring {
 
@@ -50,13 +51,15 @@ struct PaDeviceInfos {
         std::string description;
         pa_sample_spec sample_spec;
         pa_channel_map channel_map;
+        uint32_t monitor_of {PA_INVALID_INDEX};
 
         PaDeviceInfos(const pa_source_info& source) :
             index(source.index),
             name(source.name),
             description(source.description),
             sample_spec(source.sample_spec),
-            channel_map(source.channel_map) {}
+            channel_map(source.channel_map),
+            monitor_of(source.monitor_of_sink) {}
 
         PaDeviceInfos(const pa_sink_info& source) :
             index(source.index),
@@ -135,6 +138,8 @@ class PulseLayer : public AudioLayer {
         static void context_changed_callback(pa_context* c,
                                              pa_subscription_event_type_t t,
                                              uint32_t idx , void* userdata);
+        void contextChanged(pa_context*, pa_subscription_event_type_t, uint32_t idx);
+
         static void source_input_info_callback(pa_context *c,
                                                const pa_source_info *i,
                                                int eol, void *userdata);
@@ -150,6 +155,10 @@ class PulseLayer : public AudioLayer {
         virtual int getIndexCapture() const;
         virtual int getIndexPlayback() const;
         virtual int getIndexRingtone() const;
+
+        std::string getPreferredPlaybackDevice() const;
+        std::string getPreferredRingtoneDevice() const;
+        std::string getPreferredCaptureDevice() const;
 
         NON_COPYABLE(PulseLayer);
 
@@ -219,6 +228,7 @@ class PulseLayer : public AudioLayer {
         bool gettingServerInfo_ {false};
         std::mutex readyMtx_ {};
         std::condition_variable readyCv_ {};
+        std::thread streamStarter_ {};
 
         AudioPreference &preference_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
