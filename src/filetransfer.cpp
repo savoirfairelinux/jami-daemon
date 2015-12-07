@@ -1,0 +1,51 @@
+/*
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+// Std
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <stdexcept>
+
+// Project
+#include "filetransfer.h"
+
+namespace ring {
+
+FileTransfer::FileTransfer(const std::string& filename)
+    : filename_ (filename)
+    , handle_(fopen(filename.c_str(), "rb"))
+{
+    if (not handle_)
+        throw std::runtime_error(std::strerror(errno));
+}
+
+FileTransfer::~FileTransfer()
+{
+    fclose(reinterpret_cast<std::FILE*>(handle_));
+}
+
+std::size_t
+FileTransfer::read(void* buffer UNUSED, std::size_t size UNUSED)
+{
+    return 0;
+}
+
+} // namespace ring
