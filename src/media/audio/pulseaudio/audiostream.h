@@ -81,6 +81,10 @@ class AudioStream {
             return AudioFormat(s->rate, s->channels);
         }
 
+        inline std::string getDeviceName() const {
+            return pa_stream_get_device_name(audiostream_);
+        }
+
         bool isReady();
 
     private:
