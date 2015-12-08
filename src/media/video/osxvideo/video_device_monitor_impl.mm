@@ -98,15 +98,17 @@ void VideoDeviceMonitorImpl::start()
                                     object:nil
                                     queue:[NSOperationQueue mainQueue]
                                     usingBlock:^(NSNotification *note) {
-                                      AVCaptureDevice* dev = (AVCaptureDevice*)note.object;
-                                      monitor_->addDevice([[dev uniqueID] UTF8String]);
+                                        auto dev = (AVCaptureDevice*)note.object;
+                                        if([dev hasMediaType:AVMediaTypeVideo])
+                                            monitor_->addDevice([[dev uniqueID] UTF8String]);
                                     }];
     id deviceWasDisconnectedObserver = [notificationCenter addObserverForName:AVCaptureDeviceWasDisconnectedNotification
                                         object:nil
                                         queue:[NSOperationQueue mainQueue]
                                         usingBlock:^(NSNotification *note) {
-                                          AVCaptureDevice* dev = (AVCaptureDevice*)note.object;
-                                          monitor_->removeDevice([[dev uniqueID] UTF8String]);
+                                            auto dev = (AVCaptureDevice*)note.object;
+                                            if([dev hasMediaType:AVMediaTypeVideo])
+                                                monitor_->removeDevice([[dev uniqueID] UTF8String]);
                                         }];
     observers = [[NSArray alloc] initWithObjects:deviceWasConnectedObserver, deviceWasDisconnectedObserver, nil];
 }
