@@ -26,6 +26,7 @@
 #endif
 
 #include "media_io_handle.h"
+#include "threadloop.h"
 
 #ifndef _WIN32
 #include <sys/socket.h>
@@ -44,6 +45,7 @@ using socklen_t = int;
 #include <list>
 #include <vector>
 #include <condition_variable>
+#include <bitset>
 
 
 namespace ring {
@@ -70,6 +72,68 @@ typedef struct {
     uint32_t last_seq;  /*last sequence number */
     uint32_t jitter;    /*jitter */
 } rtcpRRHeader;
+
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2; /* protocol version */
+    uint32_t p:1;       /* padding flag */
+    uint32_t reserved:5;/* field reserved*/
+
+#else
+    uint32_t reserved:5;/* field reserved*/
+    uint32_t p:1;       /* padding flag */
+    uint32_t version:2; /* protocol version */
+#endif
+    uint32_t pt:8;      /* payload type */
+    uint32_t len:16;    /* length of RTCP packet */
+    uint32_t ssrc;      /* synchronization source identifier of packet send */
+} rtcpXRHeader;
+
+typedef struct {
+    uint32_t bt:8;      /* block type = 1 in our case */
+#ifdef WORDS_BIGENDIAN
+    uint32_t reserved:4; /* reserved */
+    uint32_t thinning:4; /* thinning ? */
+
+#else
+    uint32_t thinning:4; /* thinning ? */
+    uint32_t reserved:4; /* reserved */
+#endif
+    uint32_t len:16;    /* block length */
+    uint32_t ssrc;      /* synchronization source identifier of packet send */
+    uint32_t beginSeq:16;/* The first sequence number that this block reports on */
+    uint32_t endSeq:16;  /* The last sequence number that this block reports on */
+} rtcpXRBlockHeader;
+
+typedef std::vector<std::bitset<16>> rtcpXRBlockContent;
+
+typedef struct {
+    rtcpXRHeader xrHeader;
+    rtcpXRBlockHeader blkHeader;
+    rtcpXRBlockContent blkContent;
+} rtcpXRPacket;
+
+typedef struct {
+#ifdef WORDS_BIGENDIAN
+    uint32_t version:2;   /* protocol version */
+    uint32_t p:1;           /* padding flag */
+    uint32_t x:1;           /* header extension flag */
+    uint32_t cc:4;          /* CSRC count */
+    uint32_t m:1;           /* marker bit */
+    uint32_t pt:7;          /* payload type */
+#else
+    uint32_t cc:4;          /* CSRC count */
+    uint32_t x:1;           /* header extension flag */
+    uint32_t p:1;           /* padding flag */
+    uint32_t version:2;         /* protocol version */
+    uint32_t pt:7;          /* payload type */
+    uint32_t m:1;           /* marker bit */
+#endif
+    uint32_t seq:16;        /* sequence number */
+    uint32_t ts;                /* timestamp */
+    uint32_t ssrc;              /* synchronization source */
+    uint32_t csrc[1];           /* optional CSRC list */
+} rtpHeader;
 
 class SocketPair {
     public:
@@ -140,6 +204,25 @@ class SocketPair {
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
         static constexpr unsigned MAX_LIST_SIZE {20};
+
+        rtcpXRPacket rtcpXRPacket_;
+
+        void checkRTPPacket(rtpHeader* header);
+        void dumpRTPStats();
+        void addSeqToBlkContent(bool isLost);
+        static constexpr unsigned XR_BLOCK_CONTENT_MAX {14};
+        uint16_t lastSeq_ = 0;
+        unsigned packetDropped_ = 0;
+        unsigned packetReceived_ = 0;
+        unsigned packetDuplicated_ = 0;
+        std::bitset<16> blkContent_ = std::bitset<16>{}.set(0);
+        unsigned blkContentIndex_ = 0;
+        bool newRtpSession_ = true;
+        std::vector<uint16_t> missingCseq_;
+        std::mutex rtpCheckingMutex_;
+        std::chrono::time_point<std::chrono::system_clock>  lastRTPCheck_;
+        static constexpr unsigned RTP_STAT_INTERVAL {4};
+        static constexpr bool PACKET_LOST = true;
 };
 
 
