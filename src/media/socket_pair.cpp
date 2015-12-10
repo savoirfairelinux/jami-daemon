@@ -30,6 +30,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <bitset>
 
 extern "C" {
 #include "srtp.h"
@@ -196,6 +197,9 @@ SocketPair::SocketPair(const char *uri, int localPort)
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , rtcpXRthread_(std::bind(&SocketPair::setupXRReports, this),
+            std::bind(&SocketPair::processXRReports, this),
+            std::bind(&SocketPair::cleanupXRReports, this))
 {
     openSockets(uri, localPort);
 }
@@ -209,6 +213,9 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
     , listRtcpHeader_()
+    , rtcpXRthread_(std::bind(&SocketPair::setupXRReports, this),
+            std::bind(&SocketPair::processXRReports, this),
+            std::bind(&SocketPair::cleanupXRReports, this))
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -226,12 +233,126 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
 
     rtp_sock_->setOnRecv(queueRtpPacket);
     rtcp_sock_->setOnRecv(queueRtcpPacket);
+    if (not rtcpXRthread_.isRunning())
+        rtcpXRthread_.start();
 }
 
 SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+}
+
+bool
+SocketPair::setupXRReports()
+{
+    rtcpXRPacket_.xrHeader.version = 2;
+    rtcpXRPacket_.xrHeader.pt = 207;
+    return true;
+}
+
+void
+SocketPair::processXRReports()
+{
+    rtcpXRthread_.wait_for(std::chrono::seconds(4));
+    generateXRPackets();
+}
+void
+SocketPair::cleanupXRReports()
+{}
+
+void
+SocketPair::generateXRPackets()
+{
+    uint16_t currentSeq = 0;
+    uint32_t ssrc = 0;
+    auto blkContent = std::bitset<16>{}.set();
+    uint16_t maskBlkContent = 0;
+
+    unsigned blkContentIndex = 0;
+    std::vector<unsigned> missingCseq;
+
+    /* SEE https://tools.ietf.org/html/rfc3611
+     * chapter 2, 3, 4
+     *
+     * */
+
+    for (unsigned nbPacket = 0; nbPacket < listRtpHeader_.size(); nbPacket++) {
+        ssrc = ntohl(listRtpHeader_[nbPacket].ssrc);
+        currentSeq =  ntohs(listRtpHeader_[nbPacket].seq);
+
+        if (nbPacket == 0) { //first Packet : fill header
+            rtcpXRPacket_.xrHeader.ssrc = rtcpXRPacket_.blkHeader.ssrc = ssrc + 1;
+            rtcpXRPacket_.blkHeader.beginSeq = lastSeq_ = currentSeq;
+            //first packet is never lost
+            blkContent.set(XR_BLOCK_CONTENT_MAX - blkContentIndex, 1);
+        } else {
+            auto diff = currentSeq - lastSeq_;
+            if (diff == 1) {
+                //no packet loss -> 1
+                blkContent.set(XR_BLOCK_CONTENT_MAX - blkContentIndex, 1);
+            } else {
+                blkContent.set(XR_BLOCK_CONTENT_MAX - blkContentIndex, 0);
+                packetDropped_++;
+                //find if packets arrived lately
+                auto it = find (missingCseq.begin(), missingCseq.end(), currentSeq);
+                if (it != missingCseq.end()){
+                    RING_ERR("seq %u finally arrived !", currentSeq);
+                    missingCseq.erase(it);
+                } else {
+                    //if not add it to list
+                    auto i = 1;
+                    while ( i < diff ) {
+                        missingCseq.push_back(lastSeq_+i);
+                        i++;
+                    }
+                }
+            }
+
+            if ((nbPacket % XR_BLOCK_CONTENT_MAX) == 0) {
+                //rtcpXRPacket_.blkContent.push_back(blkContent.to_ulong());
+                rtcpXRPacket_.blkContent.push_back(blkContent);
+                blkContentIndex = 0;
+            } else {
+                blkContentIndex++;
+            }
+        }
+
+            //update lenghts
+
+#if 0
+        if (rtcpXRPacket_.xrHeader.ssrc != ssrc + 1)
+            RING_ERR("Change in SSRC !!! for currentSeq %u : %u vs %u",
+                    currentSeq, rtcpXRPacket_.xrHeader.ssrc, ssrc);
+#endif
+
+        lastSeq_ = currentSeq;
+    }
+    rtcpXRPacket_.blkHeader.endSeq = lastSeq_;
+
+    RING_ERR("---------------------------------------");
+    RING_ERR("-->SEQ %u to %u",
+        rtcpXRPacket_.blkHeader.beginSeq, rtcpXRPacket_.blkHeader.endSeq);
+    RING_ERR("-->DROP=%u/%u",
+            packetDropped_,
+            rtcpXRPacket_.blkHeader.endSeq - rtcpXRPacket_.blkHeader.beginSeq);
+
+    if ( not missingCseq.empty()) {
+        RING_ERR("-> Missing cseq (for sure)");
+        for (const auto& itCseq : missingCseq)
+            RING_ERR("%u",itCseq);
+    }
+
+    if (packetDropped_ != 0) {
+        RING_ERR("-> Detail");
+        for (const auto& itPacket :rtcpXRPacket_.blkContent)
+            RING_ERR("%s", itPacket.to_string().c_str());
+    }
+    RING_ERR("---------------------------------------");
+
+    rtcpXRPacket_.blkContent.clear();
+    listRtpHeader_.clear();
+    packetDropped_ = 0;
 }
 
 void
@@ -278,6 +399,7 @@ SocketPair::interrupt()
     if (rtp_sock_) rtp_sock_->setOnRecv(nullptr);
     if (rtcp_sock_) rtcp_sock_->setOnRecv(nullptr);
     cv_.notify_all();
+    rtcpXRthread_.join();
 }
 
 void
@@ -449,6 +571,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // No RTCP... try RTP
     if (!len and (datatype & static_cast<int>(DataType::RTP))) {
         len = readRtpData(buf, buf_size);
+        auto header = reinterpret_cast<rtpHeader*>(buf);
+        listRtpHeader_.push_back(*header);
         fromRTCP = false;
     }
 
@@ -461,7 +585,6 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (err < 0)
             RING_WARN("decrypt error %d", err);
     }
-
     return len;
 }
 
@@ -500,10 +623,16 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         return buf_size;
 
     // IceSocket
+#if 1
     if (isRTCP)
         return rtcp_sock_->send(buf, buf_size);
     else
         return rtp_sock_->send(buf, buf_size);
+#else
+    // we will generate and send our rtcp XR packet by our self
+    if (not isRTCP)
+        return rtp_sock_->send(buf, buf_size);
+#endif
 }
 
 int
