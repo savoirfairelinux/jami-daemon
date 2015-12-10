@@ -149,6 +149,64 @@ exportable_callback(std::function<typename Ts::cb_type>&& func) {
                           (std::forward<std::function<typename Ts::cb_type>>(func)));
 }
 
+/* Data connector: an efficient and warranted IO connection to a peer */
+struct DataConnector {
+    enum ConnectionType {
+        STREAM, //
+        DGRAM, //
+    };
+    enum class IOType {FUNCTIONAL, VECTORIAL}; // let user choose io method (see io union member)
+    enum class EventType {
+        NOTCONNECTED,
+        CONNECTED,
+        ACCEPTED,                       // peer has accepted the connection, transfer is going to start
+        REFUSED,                        // peer has refused the connection, the connector is removed after the event processing
+        TIMEOUT,                        // peer doesn't reply to any communication after this delay
+        ENDOFSTREAM,                    // the peer has closed the connection
+        CLOSED,                         // user has closed the connection
+        IOVEC_INTR,                     // called when an IOVector is processed and intr is true.
+    };
+
+    using SimpleFuncType = void();
+    using ToggleFuncType = bool();
+    using EventFuncType = void(const DataConnector* dc, EventType event, void* context) const;
+    using IOFuncType = int(const DataConnector* dc, const uint8_t* buffer, unsigned lenght);
+    using IOVector = struct {
+        size_t lenght;
+        size_t used;
+        uint8_t* data;
+        bool intr;                      // IOVEC_INTR event is trigged if true
+    };
+
+    // Connection API
+    void* userData;                     // free space for user, this is not touch by the library
+    SimpleFuncType stopConnection;      // user call this function when he wants to stop definively the connection
+    ToggleFuncType toggleTransferFlow;  // user can call this function to toggle communication flow, thead-safe
+    ConnectionType cnxType;             // see ConnectionType enumeration
+    EventFuncType sendEvent;            // called when event trigged. Note: the data processing is stop until this function returns
+    //unsigned timeout; // delay in millisecond before sending TIMEOUT event
+
+    // IO API
+    union {
+        struct {
+            IOFuncType readCallback;    // called when readBuffer has data to be read by user, nullptr if no read operation
+            uint8_t* readBuffer;        // user provided buffer given to readCallback, nullptr if not used
+            size_t readBufferLenght;    // size in bytes of readBuffer, 0 if not used
+
+            IOFuncType writeCallback;   // called when user can send data, nullptr if no write operation
+            uint8_t* writeBuffer;       // user provided buffer given to writeCallback, nullptr if not used
+            size_t writeBufferLenght;   // size in bytes of readBuffer, 0 if not used
+        } functional;
+
+        struct {
+            size_t readCount;           // number of readVectors entries, 0 if no read operation
+            IOVector* readVectors;      // Rx scatter/gather list, nullptr if no read operation
+            size_t writeCount;          // number of writeVectors entries, 0 if no write operation
+            IOVector* writeVectors;     // Tx scatter/gather list, nullptr if no write operation
+        } vectorial;
+    } io;
+};
+
 } // namespace DRing
 
 #endif /* DRING_H */

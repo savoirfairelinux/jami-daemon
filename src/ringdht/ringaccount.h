@@ -30,6 +30,8 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "filetransfer.h"
+#include "ice_socket.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -261,6 +263,8 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged();
 
+        std::string sendFile(const std::string& peer_uri, const std::string& filename) override;
+
     private:
 
         void doRegister_();
@@ -407,6 +411,25 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(Args... args);
+
+        /**
+         * Data connection, file transfer
+         */
+
+        void onDataIceInitComplete(const std::string& peer_id, IceTransport& ice,
+                                   dht::IceCandidates&& remote_ice, bool initiator);
+        void onDataIceNegoComplete(const std::string& peer_id, IceTransport& ice);
+        std::string sendDataConnection(const std::string& peer_id, bool initiator,
+                                       dht::IceCandidates&& remote_ice={});
+        std::shared_ptr<IceTransport> getDataConnection(const std::string& peer_id);
+        bool hasDataConnection(const std::string& peer_id);
+        void registerDataConnection(const std::string& peer_id, std::shared_ptr<IceTransport> ice);
+        void removeDataConnection(const std::string& peer_id);
+        void onIncomingDataChannel(dht::IceCandidates&& msg);
+
+        std::map<std::string, std::shared_ptr<IceTransport>> dataConnectionMap_;
+        std::list<std::shared_ptr<IceTransport>> zombieDataConnectionList_;
+        FileServer<IceSocket> fileServer_;
 };
 
 } // namespace ring

@@ -61,7 +61,7 @@ struct IceTransportOptions {
     std::string turnServerRealm {};     //!< non-empty for long-term credential
 };
 
-class IceTransport {
+class IceTransport : public std::enable_shared_from_this<IceTransport> {
     public:
         using Attribute = struct {
                 std::string ufrag;
@@ -179,9 +179,9 @@ class IceTransport {
 
         void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
-        ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+        ssize_t recv(int comp_id, uint8_t* buf, size_t len);
 
-        ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+        ssize_t send(int comp_id, const uint8_t* buf, size_t len);
 
         ssize_t getNextPacketSize(int comp_id);
 
@@ -192,6 +192,8 @@ class IceTransport {
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
         unsigned getComponentCount() const {return component_count_;}
+
+        std::shared_ptr<IceTransport> getSharedPtr() { return shared_from_this(); }
 
     private:
         static constexpr int MAX_CANDIDATES {32};
