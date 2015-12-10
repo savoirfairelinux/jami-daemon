@@ -30,6 +30,7 @@
 #include <string>
 #include <algorithm>
 #include <iterator>
+#include <bitset>
 
 extern "C" {
 #include "srtp.h"
@@ -196,6 +197,7 @@ SocketPair::SocketPair(const char *uri, int localPort)
     , rtpDestAddrLen_()
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
+    , lastRTPCheck_(std::chrono::system_clock::now())
 {
     openSockets(uri, localPort);
 }
@@ -209,6 +211,7 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     , rtcpDestAddr_()
     , rtcpDestAddrLen_()
     , listRtcpHeader_()
+    , lastRTPCheck_(std::chrono::system_clock::now())
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -232,6 +235,119 @@ SocketPair::~SocketPair()
 {
     interrupt();
     closeSockets();
+}
+
+void
+SocketPair::addSeqToBlkContent(bool isLost)
+{
+    blkContent_.set(XR_BLOCK_CONTENT_MAX - blkContentIndex_, (isLost ? 0 : 1));
+    blkContentIndex_++;
+    if (blkContentIndex_ > XR_BLOCK_CONTENT_MAX) {
+        //rtcpXRPacket_.blkContent.push_back(blkContent.to_ulong());
+        rtcpXRPacket_.blkContent.push_back(blkContent_);
+        blkContentIndex_ = 0;
+        blkContent_.reset();
+    }
+    if (isLost) {
+        packetDropped_++;
+    } else {
+        packetReceived_++;
+    }
+}
+
+void
+SocketPair::checkRTPPacket(rtpHeader* header)
+{
+    std::lock_guard<std::mutex> l(rtpCheckingMutex_);
+    auto ssrc = ntohl(header->ssrc);
+    auto currentSeq = ntohs(header->seq);
+
+    if (ssrc + 1 != rtcpXRPacket_.xrHeader.ssrc) {
+        RING_ERR("new SSRC");
+        dumpRTPStats();
+    }
+
+    if (newRtpSession_) { //first Packet : fill header
+        rtcpXRPacket_.xrHeader.ssrc = ssrc + 1;
+        rtcpXRPacket_.blkHeader.beginSeq = lastSeq_ = currentSeq;
+        //first packet is never lost
+        addSeqToBlkContent(not PACKET_LOST);
+        newRtpSession_ = false;
+        packetReceived_++;
+    } else {
+        auto diff = currentSeq - lastSeq_;
+        if (diff == 0) {
+            packetDuplicated_++;
+        } else if (diff == 1) {
+            //no packet loss -> 1
+            addSeqToBlkContent(not PACKET_LOST);
+        } else {
+            //find if packets arrived lately
+            auto it = find (missingCseq_.begin(), missingCseq_.end(), currentSeq);
+            if (it != missingCseq_.end()) {
+                RING_ERR("seq %u finally arrived !", currentSeq);
+                missingCseq_.erase(it);
+                packetDropped_--;
+            } else {
+                //if not add it to list
+                auto i = 1;
+                while ( i < diff) {
+                    missingCseq_.push_back(lastSeq_+i);
+                    addSeqToBlkContent(PACKET_LOST);
+                    i++;
+                }
+            }
+            // add the packet received
+            addSeqToBlkContent(not PACKET_LOST);
+        }
+    }
+
+    lastSeq_ = currentSeq;
+
+    auto rtpCheckTimer = std::chrono::duration_cast<std::chrono::seconds> (std::chrono::system_clock::now() - lastRTPCheck_);
+    if (rtpCheckTimer.count() >= RTP_STAT_INTERVAL) {
+        dumpRTPStats();
+        lastRTPCheck_ = std::chrono::system_clock::now();
+    }
+
+}
+
+void
+SocketPair::dumpRTPStats()
+{
+    rtcpXRPacket_.blkHeader.endSeq = lastSeq_;
+
+    RING_ERR("---------------------------------------");
+    RING_ERR("-->SEQ %u to %u",
+        rtcpXRPacket_.blkHeader.beginSeq, rtcpXRPacket_.blkHeader.endSeq);
+    RING_ERR("-->DROP=%u/%u",
+            packetDropped_,
+            rtcpXRPacket_.blkHeader.endSeq - rtcpXRPacket_.blkHeader.beginSeq + 2);
+    RING_ERR("-->RECEIVED=%u",
+            packetReceived_);
+    RING_ERR("-->DUPLICATED=%u",
+            packetDuplicated_);
+
+    if ( not missingCseq_.empty()) {
+        RING_ERR("-> Missing cseq (for sure)");
+        for (const auto& itCseq : missingCseq_)
+            RING_ERR("%u",itCseq);
+    }
+
+    if (packetDropped_ != 0) {
+        RING_ERR("-> Detail");
+        for (const auto& itPacket :rtcpXRPacket_.blkContent)
+            RING_ERR("%s", itPacket.to_string().c_str());
+        RING_ERR("%s", blkContent_.to_string().c_str());
+    }
+    RING_ERR("---------------------------------------");
+
+    rtcpXRPacket_.blkContent.clear();
+    missingCseq_.clear();
+    packetDropped_ = 0;
+    packetReceived_ = 0;
+    packetDuplicated_ = 0;
+    newRtpSession_ = true;
 }
 
 void
@@ -449,6 +565,8 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
     // No RTCP... try RTP
     if (!len and (datatype & static_cast<int>(DataType::RTP))) {
         len = readRtpData(buf, buf_size);
+        auto header = reinterpret_cast<rtpHeader*>(buf);
+        checkRTPPacket(header);
         fromRTCP = false;
     }
 
@@ -461,7 +579,6 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
         if (err < 0)
             RING_WARN("decrypt error %d", err);
     }
-
     return len;
 }
 
@@ -500,10 +617,16 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         return buf_size;
 
     // IceSocket
+#if 1
     if (isRTCP)
         return rtcp_sock_->send(buf, buf_size);
     else
         return rtp_sock_->send(buf, buf_size);
+#else
+    // we will generate and send our rtcp XR packet by our self
+    if (not isRTCP)
+        return rtp_sock_->send(buf, buf_size);
+#endif
 }
 
 int
