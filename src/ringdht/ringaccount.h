@@ -300,12 +300,15 @@ class RingAccount : public SIPAccountBase {
 
         struct PendingCall {
             std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice;
+            std::shared_ptr<IceTransport> ice_sp;
             std::weak_ptr<SIPCall> call;
             std::future<size_t> listen_key;
             dht::InfoHash call_key;
             dht::InfoHash from;
         };
+
+        void handlePendingCallList();
+        bool handlePendingCall(PendingCall& pc, bool incoming);
 
         /**
          * DHT calls waiting for ICE negotiation

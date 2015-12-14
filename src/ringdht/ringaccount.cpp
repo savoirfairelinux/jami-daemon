@@ -76,7 +76,8 @@ using sip_utils::CONST_PJ_STR;
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {10};
-static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
+static constexpr auto ICE_NEGOTIATION_TIMEOUT {std::chrono::seconds(60)};
+static constexpr auto TLS_TIMEOUT {std::chrono::seconds(30)};
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
 
@@ -501,7 +502,8 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
         fileutils::saveFile(path + ".crt", id.second->getPacked(), 0600);
 }
 
-void RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
+void
+RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
     if (hostname_.empty())
@@ -517,7 +519,8 @@ void RingAccount::setAccountDetails(const std::map<std::string, std::string> &de
     checkIdentityPath();
 }
 
-std::map<std::string, std::string> RingAccount::getAccountDetails() const
+std::map<std::string, std::string>
+RingAccount::getAccountDetails() const
 {
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
@@ -555,100 +558,149 @@ RingAccount::getVolatileAccountDetails() const
 void
 RingAccount::handleEvents()
 {
+    // Process DHT events
     dht_.loop();
 
-    std::lock_guard<std::mutex> lock(callsMutex_);
-    auto now = std::chrono::steady_clock::now();
-    auto c = pendingCalls_.begin();
-    while (c != pendingCalls_.end()) {
-        auto call = c->call.lock();
-        if (not call) {
-            RING_DBG("Removing deleted call from pending calls");
-            if (c->call_key != dht::InfoHash())
-                dht_.cancelListen(c->call_key, c->listen_key.get());
-            c = pendingCalls_.erase(c);
-            continue;
-        }
-        auto ice = c->ice.get();
-        if (ice->isRunning()) {
-            auto id = loadIdentity();
-            auto remote_h = c->from;
-            tls::TlsParams tlsParams {
-                .ca_list = "",
-                .id = id,
-                .dh_params = dhParams_,
-                .timeout = std::chrono::seconds(30),
-                .cert_check = [remote_h](unsigned status,
-                                         const gnutls_datum_t* cert_list,
-                                         unsigned cert_num) -> pj_status_t {
-                    if (status & GNUTLS_CERT_EXPIRED ||
-                        status & GNUTLS_CERT_NOT_ACTIVATED) {
-                        RING_ERR("Expired certificate for %s", remote_h.toString().c_str());
-                        return PJ_SSL_CERT_EVALIDITY_PERIOD;
-                    } else if (status & GNUTLS_CERT_INSECURE_ALGORITHM) {
-                        RING_ERR("Untrusted certificate for %s", remote_h.toString().c_str());
-                        return PJ_SSL_CERT_EUNTRUSTED;
-                    }
+    // Call msg in "callto:"
+    handlePendingCallList();
+}
 
-                    if (cert_num == 0) {
-                        RING_ERR("Unknown TLS certificate error for %s",
-                                  remote_h.toString().c_str());
-                        return PJ_SSL_CERT_EUNKNOWN;
-                    }
+void
+RingAccount::handlePendingCallList()
+{
+    // Process pending call into a local list to not block threads depending on this list,
+    // as incoming call handlers. As example, current implementation of this processing depends on
+    // a future.get(), a blocking method.
 
-                    try {
-                        std::vector<uint8_t> crt_blob(cert_list[0].data,
-                                                      cert_list[0].data + cert_list[0].size);
-                        dht::crypto::Certificate crt(crt_blob);
-                        const auto tls_id = crt.getId();
-                        if (crt.getUID() != tls_id.toString()) {
-                            RING_ERR("Certificate UID must be the public key ID");
-                            return PJ_SSL_CERT_EUNTRUSTED;
-                        }
+    decltype(pendingCalls_) pending_calls;
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pending_calls = std::move(pendingCalls_);
+        pendingCalls_.clear();
+    }
 
-                        if (tls_id != remote_h) {
-                            RING_ERR("Certificate public key (ID %s) doesn't match expectation (%s)",
-                                      tls_id.toString().c_str(), remote_h.toString().c_str());
-                            return PJ_SSL_CERT_EUNTRUSTED;
-                        }
-                    } catch (const std::exception& e) {
-                        RING_ERR("TLS certificate exception for %s: %s",
-                                 remote_h.toString().c_str(), e.what());
-                        return PJ_SSL_CERT_EUNKNOWN;
-                    }
-                    RING_DBG("Certificate verified for %s", remote_h.toString().c_str());
-                    return PJ_SUCCESS;
-                }
-            };
-            auto tr = link_->sipTransportBroker->getTlsIceTransport(c->ice, ICE_COMP_SIP_TRANSPORT, tlsParams);
-            call->setTransport(tr);
-            call->setState(Call::ConnectionState::PROGRESSING);
-            if (c->call_key == dht::InfoHash()) {
-                RING_DBG("[call:%s] ICE succeeded : moving incoming call to pending sip call",
-                         call->getCallId().c_str());
-                auto in = c;
-                ++c;
-                pendingSipCalls_.splice(pendingSipCalls_.begin(), pendingCalls_, in, c);
-            } else {
-                RING_DBG("[call:%s] ICE succeeded : removing pending outgoing call",
-                         call->getCallId().c_str());
-                createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
-                dht_.cancelListen(c->call_key, c->listen_key.get());
-                c = pendingCalls_.erase(c);
-            }
-        } else if (ice->isFailed() || now - c->start > std::chrono::seconds(ICE_NEGOTIATION_TIMEOUT)) {
-            RING_WARN("[call:%s] ICE timeout : removing pending call (%ld)",
-                      call->getCallId().c_str(), call.use_count());
-            if (c->call_key != dht::InfoHash())
-                dht_.cancelListen(c->call_key, c->listen_key.get());
-            call->onFailure();
-            c = pendingCalls_.erase(c);
+    static const dht::InfoHash invalid_hash; // Invariant
+
+    auto pc_iter = std::begin(pending_calls);
+    while (pc_iter != std::end(pending_calls)) {
+        bool incoming = pc_iter->call_key == invalid_hash; // do it now, handlePendingCall may invalidate pc data
+
+        if (handlePendingCall(*pc_iter, incoming)) {
+            // Cancel pending listen (outgoing call)
+            if (not incoming)
+                dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.get());
+            pc_iter = pending_calls.erase(pc_iter);
         } else
-            ++c;
+            ++pc_iter;
+    }
+
+    // Re-integrate non-handled and valid pending calls
+    {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pendingCalls_.splice(std::end(pendingCalls_), pending_calls);
     }
 }
 
-bool RingAccount::mapPortUPnP()
+pj_status_t
+check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t* cert_list,
+                       unsigned cert_num)
+{
+    if (cert_num == 0) {
+        RING_ERR("[peer:%s] No certificate", from.toString().c_str());
+        return PJ_SSL_CERT_EUNKNOWN;
+    }
+
+    if (status & GNUTLS_CERT_EXPIRED or status & GNUTLS_CERT_NOT_ACTIVATED) {
+        RING_ERR("[peer:%s] Expired certificate", from.toString().c_str());
+        return PJ_SSL_CERT_EVALIDITY_PERIOD;
+    }
+
+    if (status & GNUTLS_CERT_INSECURE_ALGORITHM) {
+        RING_ERR("[peer:%s] Untrusted certificate", from.toString().c_str());
+        return PJ_SSL_CERT_EUNTRUSTED;
+    }
+
+    std::vector<uint8_t> crt_blob(cert_list[0].data, cert_list[0].data + cert_list[0].size);
+    dht::crypto::Certificate crt(crt_blob);
+
+    const auto tls_id = crt.getId();
+    if (crt.getUID() != tls_id.toString()) {
+        RING_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
+        return PJ_SSL_CERT_EUNTRUSTED;
+    }
+
+    if (tls_id != from) {
+        RING_ERR("[peer:%s] Certificate public key ID doesn't match (%s)",
+                 from.toString().c_str(), tls_id.toString().c_str());
+        return PJ_SSL_CERT_EUNTRUSTED;
+    }
+
+    RING_DBG("[peer:%s] Certificate verified", from.toString().c_str());
+    return PJ_SUCCESS;
+}
+
+bool
+RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
+{
+    auto call = pc.call.lock();
+    if (not call)
+        return true;
+
+    auto ice = pc.ice_sp.get();
+    if (not ice or ice->isFailed()) {
+        RING_ERR("[call:%s] Null or failed ICE transport", call->getCallId().c_str());
+        call->onFailure();
+        return true;
+    }
+
+    // Return to pending list if not negotiated yet and not in timeout
+    if (not ice->isRunning()) {
+        if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
+            RING_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
+            call->onFailure();
+            return true;
+        }
+        return false;
+    }
+
+    // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
+    auto remote_h = pc.from;
+    tls::TlsParams tlsParams {
+        .ca_list = "",
+        .id = loadIdentity(),
+        .dh_params = dhParams_,
+        .timeout = TLS_TIMEOUT,
+        .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
+                                 unsigned cert_num) -> pj_status_t {
+            try {
+                return check_peer_certificate(remote_h, status, cert_list, cert_num);
+            } catch (const std::exception& e) {
+                RING_ERR("[peer:%s] TLS certificate check exception: %s",
+                         remote_h.toString().c_str(), e.what());
+                return PJ_SSL_CERT_EUNKNOWN;
+            }
+        }
+    };
+    auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
+                                                            tlsParams);
+    call->setTransport(tr);
+
+    // Notify of fully available connection between peers
+    RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
+    call->setState(Call::ConnectionState::PROGRESSING);
+
+    // Incoming call?
+    if (incoming) {
+        std::lock_guard<std::mutex> lock(callsMutex_);
+        pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
+    } else
+        createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+
+    return true;
+}
+
+bool
+RingAccount::mapPortUPnP()
 {
     // return true if not using UPnP
     bool added = true;
@@ -679,7 +731,8 @@ bool RingAccount::mapPortUPnP()
     return added;
 }
 
-void RingAccount::doRegister()
+void
+RingAccount::doRegister()
 {
     if (not isUsable()) {
         RING_WARN("Account must be enabled and active to register, ignoring");
@@ -942,11 +995,19 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
     call->initRecFilename(from);
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall{std::chrono::steady_clock::now(), ice, weak_call, {}, {}, msg.from});
+        pendingCalls_.emplace_back(PendingCall {
+            .start = std::chrono::steady_clock::now(),
+            .ice_sp = ice,
+            .call = weak_call,
+            .listen_key = {},
+            .call_key = {},
+            .from = msg.from
+        });
     }
 }
 
-void RingAccount::doUnregister(std::function<void(bool)> released_cb)
+void
+RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
@@ -1074,7 +1135,8 @@ RingAccount::saveTreatedMessages() const
     saveIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages", treatedMessages_);
 }
 
-void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
+void
+RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
 {
     if (nodes.empty())
         return;
@@ -1091,7 +1153,8 @@ void RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) cons
     }
 }
 
-void RingAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
+void
+RingAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
 {
     fileutils::check_dir(dataPath_.c_str());
     for (const auto& v : values) {
@@ -1193,7 +1256,8 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
     }
 }
 
-std::string RingAccount::getFromUri() const
+std::string
+RingAccount::getFromUri() const
 {
     const std::string uri = "<sip:" + dht_.getId().toString() + "@ring.dht>";
     if (not displayName_.empty())
@@ -1201,7 +1265,8 @@ std::string RingAccount::getFromUri() const
     return uri;
 }
 
-std::string RingAccount::getToUri(const std::string& to) const
+std::string
+RingAccount::getToUri(const std::string& to) const
 {
     return "<sips:" + to + ";transport=tls>";
 }
