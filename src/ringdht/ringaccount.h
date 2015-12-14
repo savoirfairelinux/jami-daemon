@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef RINGACCOUNT_H
-#define RINGACCOUNT_H
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -43,8 +42,8 @@
 #include <future>
 
 /**
- * @file sipaccount.h
- * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
+ * @file ringaccount.h
+ * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
  */
 
 namespace YAML {
@@ -69,9 +68,9 @@ class IceTransport;
 
 class RingAccount : public SIPAccountBase {
     public:
-        constexpr static const char * const ACCOUNT_TYPE = "RING";
+        constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
-        constexpr static const char * const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
+        constexpr static const char* const DHT_DEFAULT_BOOTSTRAP = "bootstrap.ring.cx";
         constexpr static const char* const DHT_TYPE_NS = "cx.ring";
 
         /* constexpr */ static const std::pair<uint16_t, uint16_t> DHT_PORT_RANGE;
@@ -184,11 +183,6 @@ class RingAccount : public SIPAccountBase {
         MatchRank matches(const std::string &username, const std::string &hostname) const;
 
         /**
-         * Presence management
-         */
-        //SIPPresence * getPresence() const;
-
-        /**
          * Activate the module.
          * @param function Publish or subscribe to enable
          * @param enable Flag
@@ -262,14 +256,12 @@ class RingAccount : public SIPAccountBase {
         void connectivityChanged();
 
     private:
+        NON_COPYABLE(RingAccount);
 
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
-        //const dht::ValueType ICE_ANNOUCEMENT_TYPE = {10, "ICE descriptors", std::chrono::minutes(3)};
-
-        NON_COPYABLE(RingAccount);
 
         void handleEvents();
 
@@ -300,12 +292,15 @@ class RingAccount : public SIPAccountBase {
 
         struct PendingCall {
             std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice;
+            std::shared_ptr<IceTransport> ice_sp;
             std::weak_ptr<SIPCall> call;
             std::future<size_t> listen_key;
             dht::InfoHash call_key;
             dht::InfoHash from;
         };
+
+        void handlePendingCallList();
+        bool handlePendingCall(PendingCall& pc, bool incoming);
 
         /**
          * DHT calls waiting for ICE negotiation
@@ -403,12 +398,10 @@ class RingAccount : public SIPAccountBase {
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};
-        pjsip_transport *via_tp_ {nullptr};
+        pjsip_transport* via_tp_ {nullptr};
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(Args... args);
 };
 
 } // namespace ring
-
-#endif
