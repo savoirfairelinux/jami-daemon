@@ -785,8 +785,10 @@ SIPCall::startIce()
 bool
 SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
 {
+#ifdef RING_VIDEO
     if (videortp_.isSending())
         return videortp_.useCodec(codec);
+#endif
     return false;
 }
 
@@ -1010,8 +1012,11 @@ SIPCall::getDetails() const
                     peerHolding_ ? TRUE_STR : FALSE_STR);
 
     auto& acc = getSIPAccount();
+
+#ifdef RING_VIDEO
     // If Video is not enabled return an empty string
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
+#endif
 
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
