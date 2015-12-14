@@ -43,8 +43,8 @@
 #include <future>
 
 /**
- * @file sipaccount.h
- * @brief A SIP Account specify SIP specific functions and object = SIPCall/SIPVoIPLink)
+ * @file ringaccount.h
+ * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
  */
 
 namespace YAML {
@@ -300,12 +300,15 @@ class RingAccount : public SIPAccountBase {
 
         struct PendingCall {
             std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice;
+            std::shared_ptr<IceTransport> ice_sp;
             std::weak_ptr<SIPCall> call;
             std::future<size_t> listen_key;
             dht::InfoHash call_key;
             dht::InfoHash from;
         };
+
+        void handlePendingCallList();
+        bool handlePendingCall(PendingCall& pc, bool incoming);
 
         /**
          * DHT calls waiting for ICE negotiation
