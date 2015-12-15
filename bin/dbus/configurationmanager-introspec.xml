@@ -885,6 +885,27 @@
            </arg>
        </method>
 
+       <method name="sendFile" tp:name-for-bindings="sendFile">
+           <tp:added version="2.3.0"/>
+           <arg type="s" name="accountId" direction="in">
+               <tp:docstring>
+                   An account ID.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="peerUri" direction="in">
+               <tp:docstring>
+                   Destination URI.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="filename" direction="in">
+               <tp:docstring>
+                   Fully qualified pathname on file to send
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="result" direction="out">
+           </arg>
+       </method>
+
        <signal name="certificateStateChanged" tp:name-for-bindings="certificateStateChanged">
            <tp:added version="2.2.0"/>
            <tp:docstring>
