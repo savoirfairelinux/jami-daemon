@@ -51,6 +51,10 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
+namespace DRing {
+class DataConnector;
+}
+
 namespace ring {
 
 namespace Conf {
@@ -757,6 +761,12 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        /**
+         * Send a file to a peer using given account
+         * @return a transfer id
+         */
+        std::string sendFile(const std::string& accountId, const std::string& peerUri,
+                             const std::string& filename);
 
     private:
         void removeAccounts();
@@ -921,8 +931,7 @@ class Manager {
 
         /**
          * Call periodically to poll for VoIP events */
-        void
-        pollEvents();
+        void pollEvents();
 
         /**
          * Create a new outgoing call
