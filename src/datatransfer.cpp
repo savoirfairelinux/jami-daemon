@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -17,35 +17,26 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef ICE_SOCKET_H
-#define ICE_SOCKET_H
 
-#include <memory>
-#include <functional>
+// Std
+#include <sstream>
+
+// Project
+#include "datatransfer.h"
 
 namespace ring {
 
-class IceTransport;
-using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
-
-class IceSocket
+static DataTransfer::Id
+generateId()
 {
-    private:
-        std::shared_ptr<IceTransport> ice_transport_ {};
-        int compId_ = -1;
+    static unsigned long long count = 0;
+    std::ostringstream s;
+    s << ++count; // simple but enough
+    return s.str();
+}
 
-    public:
-        IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
-            : ice_transport_(iceTransport), compId_(compId) {}
+DataTransfer::DataTransfer()
+    : id_ (generateId())
+{}
 
-        void close();
-        ssize_t recv(uint8_t* buf, size_t len);
-        ssize_t send(const uint8_t* buf, size_t len);
-        ssize_t getNextPacketSize() const;
-        ssize_t waitForData(unsigned int timeout);
-        void setOnRecv(IceRecvCb cb);
-};
-
-};
-
-#endif /* ICE_SOCKET_H */
+} // namespace ring

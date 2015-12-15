@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2015 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -17,35 +17,35 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef ICE_SOCKET_H
-#define ICE_SOCKET_H
 
-#include <memory>
-#include <functional>
+#pragma once
+
+// Std
+#include <string>
+
+// Project
+#include "noncopyable.h"
 
 namespace ring {
 
-class IceTransport;
-using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
-
-class IceSocket
+class DataTransfer
 {
-    private:
-        std::shared_ptr<IceTransport> ice_transport_ {};
-        int compId_ = -1;
+public:
+    using Id = std::string;
 
-    public:
-        IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
-            : ice_transport_(iceTransport), compId_(compId) {}
+    DataTransfer();
+    virtual ~DataTransfer() = default;
 
-        void close();
-        ssize_t recv(uint8_t* buf, size_t len);
-        ssize_t send(const uint8_t* buf, size_t len);
-        ssize_t getNextPacketSize() const;
-        ssize_t waitForData(unsigned int timeout);
-        void setOnRecv(IceRecvCb cb);
+    Id getId() const noexcept {
+        return id_;
+    }
+
+    virtual std::size_t read(void* buffer, std::size_t size) = 0;
+    virtual std::size_t write(void* buffer, std::size_t size) = 0;
+
+private:
+    NON_COPYABLE(DataTransfer);
+    const Id id_;
 };
 
-};
-
-#endif /* ICE_SOCKET_H */
+} // namespace ring
