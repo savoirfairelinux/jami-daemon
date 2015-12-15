@@ -92,6 +92,7 @@ AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
@@ -99,7 +100,7 @@ AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
                     [Define if you have CoreAudio])
 
 dnl Android is linux, but a bit different
-AS_IF([test "$SYS" = linux],[
+AS_IF([HAVE_LINUX],[
     AC_MSG_CHECKING([for an Android system])
     AC_PREPROC_IFELSE([AC_LANG_PROGRAM(
         [[#ifndef __ANDROID__
@@ -113,7 +114,6 @@ AS_IF([test "$SYS" = linux],[
       AC_MSG_RESULT([no])
     ])
 ])
-AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl override platform specific check for dependent libraries
 dnl otherwise libtool linking of shared libraries will
@@ -217,7 +217,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   CFLAGS="${CFLAGS} -I${CONTRIB_DIR}/include"
   CXXFLAGS="${CXXFLAGS} -I${CONTRIB_DIR}/include"
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
-  AS_IF([test "${SYS}" = "mingw32"],[
+  AS_IF([HAVE_WIN32],[
         PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
         AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
         export PKG_CONFIG_PATH_CUSTOM
@@ -225,7 +225,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
   LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
 
-  AS_IF([test "${SYS}" = "darwin"], [
+  AS_IF([HAVE_DARWIN], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
     export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"
   ])
@@ -248,7 +248,7 @@ PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject file
 
 PKG_CHECK_MODULES([YAMLCPP], [yaml-cpp >= 0.5.1],, AC_MSG_ERROR([yaml-cpp not found]))
 
-if test "${HAVE_ANDROID}" = "1"; then
+if HAVE_ANDROID; then
     dnl Check for OpenSL
     AC_ARG_WITH([opensl],
                 AS_HELP_STRING([--without-opensl],
@@ -264,7 +264,7 @@ if test "${HAVE_ANDROID}" = "1"; then
 fi
 AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
 
-if test "${SYS}" != "mingw32"; then
+if HAVE_LINUX; then
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
@@ -280,7 +280,7 @@ fi
 AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 
-if test "${SYS}" != "mingw32"; then
+if HAVE_LINUX; then
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
 AC_ARG_WITH([pulse],
@@ -310,7 +310,7 @@ AS_IF([test "x$have_jack" = "xyes"],,
 ])
 
 dnl check for libportaudio
-AS_IF([test "${SYS}" = "mingw32"],[
+AS_IF([HAVE_WIN32],[
 AC_ARG_WITH([portaudio], [AS_HELP_STRING([--without-portaudio],
             [disable support for portaudio])], [], [with_portaudio=yes])
 
