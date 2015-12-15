@@ -123,6 +123,13 @@ libring_la_SOURCES = \
 		ice_transport.h \
 		plugin_manager.cpp \
 		plugin_loader_dl.cpp \
+		udt.cpp \
+		datatransfer.cpp \
+		filetransfer.cpp \
+		filetransfer.h \
+		datamanager.h \
+		datatransfer.h \
+		udt.h \
 		ring_plugin.h \
 		plugin_loader.h \
 		plugin_manager.h \

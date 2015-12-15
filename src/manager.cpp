@@ -1393,7 +1393,8 @@ Manager::addTask(const std::function<bool()>&& task)
 }
 
 // Must be invoked periodically by a timer from the main event loop
-void Manager::pollEvents()
+void
+Manager::pollEvents()
 {
     //-- Handlers
     {
@@ -1427,12 +1428,12 @@ void Manager::pollEvents()
 
             auto next = std::next(iter);
             bool result;
-            try {
+            //try {
                 result = (*iter)();
-            } catch (const std::exception& e) {
-                RING_ERR("MainLoop exception (task): %s", e.what());
-                result = false;
-            }
+                //} catch (const std::exception& e) {
+                //RING_ERR("MainLoop exception (task): %s", e.what());
+                //result = false;
+                //}
             if (not result)
                 tmpList.erase(iter);
             iter = next;
@@ -2830,5 +2831,14 @@ Manager::getSinkClient(const std::string& id)
     return nullptr;
 }
 #endif // RING_VIDEO
+
+std::string
+Manager::sendFile(const std::string& accountId, const std::string& peerUri,
+                  const std::string& filename)
+{
+    if (auto acc = getAccount(accountId))
+        return acc->sendFile(peerUri, filename);
+    return {};
+}
 
 } // namespace ring
