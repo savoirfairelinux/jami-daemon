@@ -30,6 +30,8 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "filetransfer.h"
+#include "ice_socket.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -41,6 +43,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <deque>
 
 /**
  * @file sipaccount.h
@@ -54,6 +57,48 @@ class Emitter;
 
 namespace ring {
 
+struct IceDataCandidates : public dht::EncryptedValue<IceDataCandidates>
+{
+    IceDataCandidates() = default;
+    IceDataCandidates(dht::Value::Id msg_id, Blob ice) : id(msg_id), ice_data(ice) {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::seconds>(now);
+    }
+
+    static constexpr const dht::ValueType& TYPE = dht::IceCandidates::TYPE;
+    virtual const dht::ValueType& getType() const override {
+        return dht::IceCandidates::TYPE;
+    }
+    static dht::Value::Filter getFilter() {
+        return dht::EncryptedValue<IceDataCandidates>::getFilter();
+    }
+
+    template <typename Packer>
+    void msgpack_pack(Packer& pk) const
+    {
+        pk.pack_array(3);
+        pk.pack(id);
+
+        pk.pack_array(ice_data.size());
+        for (uint8_t b : ice_data)
+            pk.pack(b);
+        pk.pack(static_cast<uint64_t>(timestamp.count()));
+    }
+
+    void msgpack_unpack(::msgpack::object o)
+    {
+        if (o.type != ::msgpack::type::ARRAY) throw ::msgpack::type_error();
+        if (o.via.array.size < 2) throw ::msgpack::type_error();
+        id = o.via.array.ptr[0].as<dht::Value::Id>();
+        ice_data = dht::unpackBlob(o.via.array.ptr[1]);
+        timestamp = std::chrono::seconds(o.via.array.ptr[2].as<uint64_t>());
+    }
+
+    dht::Value::Id id;
+    Blob ice_data;
+    std::chrono::seconds timestamp;
+};
+
 namespace Conf {
 const char *const DHT_PORT_KEY = "dhtPort";
 const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
@@ -66,6 +111,7 @@ const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
 }
 
 class IceTransport;
+class IceTransaction;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -261,6 +307,10 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged();
 
+        std::string sendFile(const std::string& peer_uri, const std::string& filename) override;
+
+        void cancelDataTransaction(const std::string& peer_id);
+
     private:
 
         void doRegister_();
@@ -410,6 +460,28 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(Args... args);
+
+        /**
+         * Data connection, file transfer
+         */
+
+        void onIncomingIceDataMsg(IceDataCandidates&& msg);
+        void onDataTransactionReply(const IceDataCandidates& msg);
+
+        bool hasRunningDataConnection(const std::string& peer_id);
+        std::chrono::seconds hasPendingDataConnection(const std::string& peer_id);
+
+        void onDataIceInitSuccess(const std::string& peer_id);
+        void onDataIceNegoSuccess(const std::string& peer_id);
+
+        bool newDataTransaction(const std::string& peer_id, bool is_initiator,
+                                IceDataCandidates&& remote_ice={});
+
+        std::mutex dataMutex_;
+        std::map<std::string, std::unique_ptr<IceTransaction>> pendingDataTransactionMap_; // mix local/remote transactions
+        std::map<std::string, std::unique_ptr<IceTransaction>> dataConnectionMap_; // established data connection to given peer
+
+        FileServer<IceSocket> fileServer_;
 };
 
 } // namespace ring
