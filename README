@@ -106,7 +106,7 @@ make -j
 # Then the daemon
 cd ../../
 ./autogen.sh
-./configure --without-alsa --without-pulse --without-dbus --prefix=<install_path>
+./configure  --without-dbus --prefix=<install_path>
 make
 
 If you want to link against libringclient and native client easiest way is to
