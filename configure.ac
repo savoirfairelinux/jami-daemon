@@ -92,6 +92,7 @@ AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
@@ -113,7 +114,6 @@ AS_IF([test "$SYS" = linux],[
       AC_MSG_RESULT([no])
     ])
 ])
-AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl override platform specific check for dependent libraries
 dnl otherwise libtool linking of shared libraries will
@@ -264,7 +264,7 @@ if test "${HAVE_ANDROID}" = "1"; then
 fi
 AM_CONDITIONAL([BUILD_OPENSL], test "x$have_opensl" = "xyes")
 
-if test "${SYS}" != "mingw32"; then
+if test "${SYS}" = "linux"; then
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
@@ -280,7 +280,7 @@ fi
 AM_CONDITIONAL(BUILD_ALSA, test "x$with_alsa" = "xyes")
 
 
-if test "${SYS}" != "mingw32"; then
+if test "${SYS}" = "linux"; then
 dnl Check for pulseaudio development package - name: libpulse-dev
 LIBPULSE_MIN_VERSION=0.9.15
 AC_ARG_WITH([pulse],
