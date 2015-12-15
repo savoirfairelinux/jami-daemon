@@ -515,3 +515,9 @@ DBusConfigurationManager::getVolume(const std::string& device) -> decltype(DRing
 {
     return DRing::getVolume(device);
 }
+
+auto
+DBusConfigurationManager::sendFile(const std::string& accountID, const std::string& peerUri, const std::string& filename) -> decltype(DRing::sendFile(accountID, peerUri, filename))
+{
+    return DRing::sendFile(accountID, peerUri, filename);
+}

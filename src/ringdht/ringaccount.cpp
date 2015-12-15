@@ -60,12 +60,14 @@
 
 #include <yaml-cpp/yaml.h>
 
+#include <utility>
 #include <algorithm>
 #include <array>
 #include <memory>
 #include <sstream>
 #include <cctype>
 #include <cstdarg>
+#include <fstream>
 
 namespace ring {
 
@@ -76,6 +78,9 @@ static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {5};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT {std::chrono::seconds(60)};
 static constexpr auto TLS_TIMEOUT {std::chrono::seconds(30)};
+
+// Limit number of ICE data msg request/msg that waiting for handling
+static constexpr int PENDING_DATA_MSG_LENGHT {15};
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
 
@@ -798,6 +803,8 @@ RingAccount::doRegister_()
 
         dht_.run((in_port_t)dhtPortUsed_, identity, false);
 
+        RING_DBG("[DHT:%s] NodeID: %s", getAccountID().c_str(), dht_.getId().toString().c_str());
+
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             auto& store = tls::CertificateStore::instance();
             auto cert = store.getCertificate(pk_id.toString());
@@ -851,7 +858,8 @@ RingAccount::doRegister_()
         // Listen for incoming calls
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         callKey_ = dht::InfoHash::get("callto:"+dht_.getId().toString());
-        RING_DBG("Listening on callto:%s : %s", dht_.getId().toString().c_str(), callKey_.toString().c_str());
+        RING_DBG("[DHT:%s] callto key: %s", getAccountID().c_str(), callKey_.toString().c_str());
+
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
@@ -906,6 +914,8 @@ RingAccount::doRegister_()
         );
 
         auto inboxKey = dht::InfoHash::get("inbox:"+dht_.getId().toString());
+        RING_DBG("[DHT:%s] inbox key: %s", getAccountID().c_str(), inboxKey.toString().c_str());
+
         dht_.listen<dht::TrustRequest>(
             inboxKey,
             [shared](dht::TrustRequest&& v) {
@@ -954,11 +964,295 @@ RingAccount::doRegister_()
                 return true;
             }
         );
-    }
-    catch (const std::exception& e) {
+
+        // Listen to data channel
+        dht_.listen<dht::IceCandidates>(
+            inboxKey,
+            [shared] (dht::IceCandidates&& msg) {
+                shared->onIncomingIceDataMsg(std::move(msg));
+                return true;
+            });
+    } catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
+}
+
+struct IceTransaction {
+    IceTransaction(const std::string& pid, dht::Value::Id tid, dht::IceCandidates&& remote_cands)
+        : peer_id(pid), id(tid), remote_candidates(remote_cands) {}
+    const std::string peer_id;
+    const dht::Value::Id id;
+    dht::IceCandidates remote_candidates;
+    std::shared_ptr<IceTransport> transport;
+};
+
+// Helper template to send DataConnectionStatus signal to client
+template<typename... Args>
+inline void
+emitDataCnxStatus(Args... args)
+{
+    emitSignal<DRing::ConfigurationSignal::DataConnectionStatus>(args...);
+}
+
+void
+RingAccount::onIncomingIceDataMsg(dht::IceCandidates&& msg)
+{
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    auto peer_id = msg.from.toString();
+    const bool is_request = msg.id & 1 == 0;
+
+    // TODO: check certificate for white/black listing
+
+    if (is_request) {
+        // drop request/reply if established data connection exists
+        if (hasRunningDataConnection(peer_id)) {
+            RING_WARN("[dht:%s] drop data request/reply: connection existing", getAccountID().c_str());
+            return;
+        }
+
+        // To not overload OS network stack with many sockets opened by pjnath ICE negotiation,
+        // we delay requests if another one is in negotiation (whatever be the peer).
+        // This protect against DDOS attack.
+        if (pendingDataTransactionMap_.empty()) {
+            RING_DBG("[dht:%s] rx data request/0x%lx from %s", getAccountID().c_str(), msg.id,
+                     peer_id.c_str());
+            newDataTransaction(peer_id, false, std::move(msg));
+
+        } else if (pendingDataRequests_.size() < PENDING_DATA_MSG_LENGHT) {
+            pendingDataRequests_.emplace_back(std::move(msg));
+            RING_DBG("[dht:%s] delaying data request/0x%lx", getAccountID().c_str(), msg.id);
+
+        } else
+            RING_WARN("[dht:%s] droped request/0x%lx: pending data queue full (DDOS?)",
+                      getAccountID().c_str(), msg.id);
+    } else {
+        onDataTransactionReply(msg);
+    }
+}
+
+void
+RingAccount::onDataTransactionReply(const dht::IceCandidates& msg)
+{
+    const auto peer_id = msg.from.toString();
+
+    auto item = pendingDataTransactionMap_.find(peer_id);
+    if (item == pendingDataTransactionMap_.cend())
+        return;
+
+    // Drop replies not related to the pending request
+    auto trx = *item->second;
+    if (trx.id != msg.id)
+        return;
+
+    RING_DBG("[DHT:%s] rx data reply/0x%lx by %s:\n%s", getAccountID().c_str(), msg.id,
+             peer_id.c_str(), std::string(std::begin(msg.ice_data),
+                                          std::end(msg.ice_data)).c_str());
+
+    if (not trx.transport->start(msg.ice_data)) {
+        // we let the peer responsible to timeout, just cancel on our side
+        cancelPendingTransaction(peer_id);
+    } // else continue on CONNECTING state
+}
+
+void
+RingAccount::cancelPendingTransaction(const std::string& peer_id)
+{
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    emitDataCnxStatus(getAccountID(), peer_id, "SYS_FAILURE");
+    runOnMainThread([acc, peer_id]{
+            {
+                std::lock_guard<std::mutex> lock(acc->dataMutex_);
+                acc->pendingDataTransactionMap_.erase(peer_id);
+            }
+            acc->processNextDataRequest();
+        });
+}
+
+bool
+RingAccount::processNextDataRequest()
+{
+    dht::IceCandidates msg;
+
+    // Try to make new transaction and send reply.
+    // In case of failure try the next request.
+    do {
+        {
+            std::lock_guard<std::mutex> lock(dataMutex_);
+            if (pendingDataRequests_.empty() or not pendingDataTransactionMap_.empty())
+                return false;
+            msg = std::move(pendingDataRequests_.front());
+            pendingDataRequests_.pop_front();
+        }
+    } while (!newDataTransaction(msg.from.toString(), false, std::move(msg)));
+
+    return true;
+}
+
+void
+RingAccount::onDataIceInitComplete(const std::string& peer_id)
+{
+    std::lock_guard<std::mutex> lock(dataMutex_);
+    auto item = pendingDataTransactionMap_.find(peer_id);
+    if (item == pendingDataTransactionMap_.cend())
+        return;
+    auto& trx = *item->second;
+    auto& ice = *trx.transport;
+
+    if (ice.isFailed()) {
+        RING_ERR("[dht:%s] data transport init failed (ice@%p)", getAccountID().c_str(), &ice);
+        cancelPendingTransaction(peer_id);
+        return;
+    }
+
+    // Send our ICE info to peer through DHT at its inbox key
+    const auto destination = dht::InfoHash(peer_id);
+    const auto key = dht::InfoHash::get("inbox:" + peer_id);
+    const auto candidates = ice.getLocalAttributesAndCandidates();
+    dht::Value value {dht::IceCandidates(trx.id, candidates)};
+    const auto value_id = value.id;
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    const auto id = trx.id;
+
+    RING_DBG("[dht:%s] Tx ICE data/0x%lx at %s (key:%s)", getAccountID().c_str(), id,
+             destination.toString().c_str(), key.toString().c_str());
+
+    dht_.putEncrypted(
+        key, destination, std::move(value),
+        // on done callback
+        [acc, peer_id, key, value_id, id](bool done) {
+            if (!done) {
+                RING_ERR("[dht:%s] put failed for ICE data/0x%lx", acc->getAccountID().c_str(), id);
+                acc->cancelPendingTransaction(peer_id);
+            }
+            acc->dht_.cancelPut(key, value_id);
+        });
+
+    // We can now wait for a remote ICE data or try to start ICE negotiation.
+    // In both cases we are trying to solve the global connecting state.
+    emitDataCnxStatus(getAccountID(), peer_id, "CONNECTING");
+
+    // Start negotiation if we're slave
+    if (trx.id & 1)
+        ice.start(trx.remote_candidates.ice_data);
+}
+
+void
+RingAccount::onDataIceNegoComplete(IceTransport& ice, const std::string& peer_id)
+{
+    if (!ice.isRunning()) {
+        RING_ERR("[dht:%s] data negotiation failed (ice@%p)", getAccountID().c_str(), &ice);
+        emitDataCnxStatus(getAccountID(), peer_id, "CONNECTION_FAILURE");
+        return;
+    }
+
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        auto item = pendingDataTransactionMap_.find(peer_id);
+        if (item == pendingDataTransactionMap_.cend())
+            return;
+        dataConnectionMap_.emplace(peer_id, std::move(item->second));
+        pendingDataTransactionMap_.erase(peer_id);
+    }
+
+    // Move pending transaction to running transaction list
+    RING_DBG("[dht:%s] data connection success with %s", getAccountID().c_str(), peer_id.c_str());
+    emitDataCnxStatus(getAccountID(), peer_id, "CONNECTED");
+
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    runOnMainThread([acc, peer_id]{ acc->processNextDataRequest(); });
+
+    // TODO: run a file server on this connection
+}
+
+bool
+RingAccount::hasRunningDataConnection(const std::string& peer_id)
+{
+    return dataConnectionMap_.find(peer_id) != dataConnectionMap_.cend();
+}
+
+bool
+RingAccount::hasPendingDataConnection(const std::string& peer_id)
+{
+    return pendingDataTransactionMap_.find(peer_id) != pendingDataTransactionMap_.cend();
+}
+
+bool
+RingAccount::newDataTransaction(const std::string& peer_id, bool is_initiator,
+                                dht::IceCandidates&& remote_ice)
+{
+    dht::Value::Id id;
+
+    if (is_initiator) {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        if (hasRunningDataConnection(peer_id) or hasPendingDataConnection(peer_id)) {
+            RING_DBG("[dht:%s] connection existing with %s, no new request", getAccountID().c_str(),
+                     peer_id.c_str());
+            return true; // connection existing
+        }
+        id = udist(rand_) << 1; // request: random id with LSB at 0
+    } else {
+        id = remote_ice.id | 1; // reply: LSB = 1
+    }
+
+    IceTransaction* trx;
+    {
+        std::lock_guard<std::mutex> lock(dataMutex_);
+        auto trx_ptr = std::unique_ptr<IceTransaction>(
+            new IceTransaction {peer_id, id, std::move(remote_ice)});
+        trx = trx_ptr.get();
+        pendingDataTransactionMap_.emplace(peer_id, std::move(trx_ptr));
+        RING_DBG("[dht:%s] data transaction created for peer %s", getAccountID().c_str(), peer_id.c_str());
+    }
+
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto ice_opts = getIceOptions();
+
+    // lambda running in ICE thread
+    ice_opts.onInitDone = [acc, peer_id](IceTransport&, bool done) mutable {
+        if (done)
+            runOnMainThread([acc, peer_id]{
+                    acc->onDataIceInitComplete(peer_id);
+                });
+        else
+            acc->cancelPendingTransaction(peer_id);
+    };
+
+    // lambda running in ICE thread
+    ice_opts.onNegoDone = [acc, peer_id](IceTransport& ice, bool done) {
+        acc->onDataIceNegoComplete(ice, peer_id);
+        if (!done)
+            acc->cancelPendingTransaction(peer_id);
+    };
+
+    if (auto ice = createIceTransport(("data:" + peer_id).c_str(), 1, is_initiator, ice_opts)) {
+        trx->transport = ice;
+        return true;
+    }
+
+    return false;
+}
+
+std::string
+RingAccount::sendFile(const std::string& peer_uri, const std::string& filename)
+{
+    // check filename existance first
+    std::ifstream fstream {filename, std::ios::in | std::ios::binary};
+    if (not fstream.good()) {
+        RING_ERR("[DHT:%s] Cannot open file '%s'", getAccountID().c_str(), filename.c_str());
+        return {};
+    }
+
+    /**
+     * throw:
+     *  std::invalid_argument: if uri is not a recognisable RingID
+     */
+    const auto peer_id = parseRingUri(peer_uri);
+    if (not newDataTransaction(peer_id, true))
+        return {};
+
+    // the transfer will start when data connection will be negotiated
+    return fileServer_.newFileTransfer(peer_id, std::move(fstream));
 }
 
 void

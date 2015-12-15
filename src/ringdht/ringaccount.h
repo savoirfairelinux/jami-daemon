@@ -30,6 +30,8 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "filetransfer.h"
+#include "ice_socket.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -41,6 +43,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <deque>
 
 /**
  * @file sipaccount.h
@@ -66,6 +69,7 @@ const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
 }
 
 class IceTransport;
+class IceTransaction;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -261,6 +265,8 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged();
 
+        std::string sendFile(const std::string& peer_uri, const std::string& filename) override;
+
     private:
 
         void doRegister_();
@@ -410,6 +416,31 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(Args... args);
+
+        /**
+         * Data connection, file transfer
+         */
+
+        void onIncomingIceDataMsg(dht::IceCandidates&& msg);
+        bool processNextDataRequest();
+        void onDataTransactionReply(const dht::IceCandidates& msg);
+
+        bool hasRunningDataConnection(const std::string& peer_id);
+        bool hasPendingDataConnection(const std::string& peer_id);
+
+        void onDataIceInitComplete(const std::string& peer_id);
+        void onDataIceNegoComplete(IceTransport& ice, const std::string& peer_id);
+
+        bool newDataTransaction(const std::string& peer_id, bool is_initiator,
+                                dht::IceCandidates&& remote_ice={});
+        void cancelPendingTransaction(const std::string& peer_id);
+
+        std::mutex dataMutex_;
+        std::list<dht::IceCandidates> pendingDataRequests_;
+        std::map<std::string, std::unique_ptr<IceTransaction>> pendingDataTransactionMap_; // mix local/remote transactions
+        std::map<std::string, std::unique_ptr<IceTransaction>> dataConnectionMap_; // established data connection to given peer
+
+        FileServer<IceSocket> fileServer_;
 };
 
 } // namespace ring
