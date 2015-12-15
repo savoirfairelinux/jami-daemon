@@ -806,4 +806,10 @@ setCredentials(const std::string& accountID,
     }
 }
 
+std::string
+sendFile(const std::string& accountID, const std::string& peerUri, const std::string& filename)
+{
+    return ring::Manager::instance().sendFile(accountID, peerUri, filename);
+}
+
 } // namespace DRing

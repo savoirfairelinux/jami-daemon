@@ -158,6 +158,9 @@ struct AudioSignal {
         };
 };
 
+/* File transfer */
+std::string sendFile(const std::string& accountID, const std::string& peerUri, const std::string& filename);
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -213,6 +216,10 @@ struct ConfigurationSignal {
         struct MediaParametersChanged {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
+        };
+        struct DataConnectionStatus {
+                constexpr static const char* name = "DataConnectionStatus";
+                using cb_type = void(const std::string& /*accountId*/, const std::string& /*id*/, const std::string& /*status*/);
         };
 #ifdef __ANDROID__
         /**
