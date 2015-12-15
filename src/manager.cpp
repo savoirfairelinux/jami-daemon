@@ -1407,7 +1407,11 @@ void Manager::pollEvents()
             // Think twice before modify this code.
 
             nextEventHandler_ = std::next(iter);
-            iter->second();
+            try {
+                iter->second();
+            } catch (const std::exception& e) {
+                RING_ERR("MainLoop exception (handler): %s", e.what());
+            }
             iter = nextEventHandler_;
         }
     }
@@ -1422,7 +1426,14 @@ void Manager::pollEvents()
                 return;
 
             auto next = std::next(iter);
-            if (not (*iter)())
+            bool result;
+            try {
+                result = (*iter)();
+            } catch (const std::exception& e) {
+                RING_ERR("MainLoop exception (task): %s", e.what());
+                result = false;
+            }
+            if (not result)
                 tmpList.erase(iter);
             iter = next;
         }
