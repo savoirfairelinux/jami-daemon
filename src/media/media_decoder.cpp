@@ -86,6 +86,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
     av_dict_set(&options_, "reorder_queue_size",ring::to_string(jitterBufferMaxSize_).c_str(), 0);
     av_dict_set(&options_, "max_delay",ring::to_string(jitterBufferMaxDelay_).c_str(), 0);
 
+    if(!params.pixel_format.empty()){
+        av_dict_set(&options_, "pixel_format",params.pixel_format.c_str(), 0);
+    }
     RING_DBG("Trying to open device %s with format %s", params.input.c_str(),
                                                         params.format.c_str());
     int ret = avformat_open_input(
