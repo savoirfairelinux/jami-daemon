@@ -37,6 +37,7 @@ struct DeviceParams {
     std::string format {};
     unsigned width {}, height {};
     rational<double> framerate {};
+    std::string pixel_format {};
     unsigned channel {}; // Channel number
     std::string loop {};
     std::string sdp_flags {};

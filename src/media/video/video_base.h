@@ -156,7 +156,7 @@ struct VideoSettings
     std::string name {};
     std::string video_size {};
     std::string channel {};
-    unsigned framerate {};
+    std::string framerate {};
 };
 
 }} // namespace ring::video
