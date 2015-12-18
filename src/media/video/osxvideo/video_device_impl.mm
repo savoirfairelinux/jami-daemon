@@ -53,9 +53,14 @@ class VideoDeviceImpl {
         std::string name;
 
         std::vector<std::string> getChannelList() const;
+        std::vector<std::pair<unsigned, unsigned>> getSizeList(const std::string& channel) const;
+        std::vector<std::pair<unsigned, unsigned>> getSizeList() const;
+        std::vector<rational<double>> getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const;
+
+        /*std::vector<std::string> getChannelList() const;
         std::vector<std::string> getSizeList(const std::string& channel) const;
         std::vector<std::string> getSizeList() const;
-        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;
+        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;*/
         float getRate(unsigned rate) const;
 
         VideoSettings getSettings() const;
@@ -152,31 +157,6 @@ VideoDeviceImpl::getSettings() const
     return settings;
 }
 
-VideoDevice::VideoDevice(const std::string& path) :
-    deviceImpl_(new VideoDeviceImpl(path))
-{
-    node_ = path;
-    name = deviceImpl_->name;
-}
-
-DeviceParams
-VideoDevice::getDeviceParams() const
-{
-    return deviceImpl_->getDeviceParams();
-}
-
-void
-VideoDevice::applySettings(VideoSettings settings)
-{
-    deviceImpl_->applySettings(settings);
-}
-
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
-}
-
 std::vector<std::string>
 VideoDeviceImpl::getSizeList() const
 {
@@ -211,21 +191,35 @@ VideoDeviceImpl::getSizeList(const std::string& channel) const
     return v;
 }
 
-std::vector<std::string> VideoDeviceImpl::getChannelList() const
+std::vector<std::string>
+VideoDeviceImpl::getChannelList() const
 {
     return {"default"};
 }
 
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
+VideoDevice::VideoDevice(const std::string& path) :
+    deviceImpl_(new VideoDeviceImpl(path))
 {
-    DRing::VideoCapabilities cap;
+    node_ = path;
+    name = deviceImpl_->name;
+}
 
-    for (const auto& chan : deviceImpl_->getChannelList())
-        for (const auto& size : deviceImpl_->getSizeList(chan))
-            cap[chan][size] = deviceImpl_->getRateList(chan, size);
+DeviceParams
+VideoDevice::getDeviceParams() const
+{
+    return deviceImpl_->getDeviceParams();
+}
 
-    return cap;
+void
+VideoDevice::applySettings(VideoSettings settings)
+{
+    deviceImpl_->applySettings(settings);
+}
+
+VideoSettings
+VideoDevice::getSettings() const
+{
+    return deviceImpl_->getSettings();
 }
 
 VideoDevice::~VideoDevice()

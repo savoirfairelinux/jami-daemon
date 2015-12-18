@@ -90,8 +90,11 @@ int MediaDecoder::openInput(const DeviceParams& params)
     av_dict_set(&options_, "reorder_queue_size",ring::to_string(jitterBufferMaxSize_).c_str(), 0);
     av_dict_set(&options_, "max_delay",ring::to_string(jitterBufferMaxDelay_).c_str(), 0);
 
-    RING_DBG("Trying to open device %s with format %s", params.input.c_str(),
-                                                        params.format.c_str());
+    if(!params.pixel_format.empty()){
+        av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
+    }
+    RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
+                                                        params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -130,7 +133,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
         avcodec_close(decoderCtx_);
 
     // Increase analyze time to solve synchronization issues between callers.
-    static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
+    static const unsigned MAX_ANALYZE_DURATION = 0; // time in seconds
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
