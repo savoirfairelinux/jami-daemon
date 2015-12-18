@@ -78,8 +78,13 @@ extractString(const std::map<std::string, std::string>& settings, const std::str
 static unsigned
 extractInt(const std::map<std::string, std::string>& settings, const std::string& key) {
     auto i = settings.find(key);
-    if (i != settings.cend())
-        return ring::stoi(i->second);
+    if (i != settings.cend()) {
+        try {
+            return ring::stoi(i->second);
+        } catch(const std::exception& e) {
+            RING_ERR("Can't parse int: %s", i->second.c_str());
+        }
+    }
     return 0;
 }
 
@@ -88,7 +93,7 @@ VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
     name = extractString(settings, "name");
     channel = extractString(settings, "channel");
     video_size = extractString(settings, "size");
-    framerate = extractInt(settings, "rate");
+    framerate = extractString(settings, "rate");
 }
 
 std::map<std::string, std::string>
@@ -98,7 +103,7 @@ VideoSettings::to_map() const
         {"name", name},
         {"size", video_size},
         {"channel", channel},
-        {"rate", ring::to_string(framerate)}
+        {"rate", framerate}
     };
 }
 
@@ -112,7 +117,7 @@ convert<ring::video::VideoSettings>::encode(const ring::video::VideoSettings& rh
     node["name"] = rhs.name;
     node["video_size"] = rhs.video_size;
     node["channel"] = rhs.channel;
-    node["framerate"] = ring::to_string(rhs.framerate);
+    node["framerate"] = rhs.framerate;
     return node;
 }
 
@@ -125,7 +130,7 @@ convert<ring::video::VideoSettings>::decode(const Node& node, ring::video::Video
     rhs.name = node["name"].as<std::string>();
     rhs.video_size = node["video_size"].as<std::string>();
     rhs.channel = node["channel"].as<std::string>();
-    rhs.framerate = node["framerate"].as<unsigned>();
+    rhs.framerate = node["framerate"].as<std::string>();
     return true;
 }
 
