@@ -80,32 +80,43 @@ void AudioBuffer::setChannelNum(unsigned n, bool mix /* = false */)
 
     n = std::max(1U, n);
 
-    if (!mix or c == 0) {
-        if (n < c)
-            samples_.resize(n);
-        else
-            samples_.resize(n, std::vector<AudioSample>(frames(), 0));
-        return;
+    if (mix and c != 0)  {
+        // 2+ch->1ch
+        if (n == 1) {
+            auto& chan1 = samples_[0];
+            auto& chan2 = samples_[1];
+            for (unsigned i = 0, f = frames(); i < f; i++)
+                chan1[i] = chan1[i] / 2 + chan2[i] / 2;
+            if (c > 2) {
+                // center (3.0+)/ subwoofer (2.1)
+                const auto& chan3 = samples_[2];
+                for (unsigned i = 0, f = frames(); i < f; i++)
+                    chan1[i] += chan3[i];
+            }
+            if (c > 3) {
+                // subwoofer (3.1+)
+                const auto& chan4 = samples_[3];
+                for (unsigned i = 0, f = frames(); i < f; i++)
+                    chan1[i] += chan4[i];
+            }
+
+            samples_.resize(1);
+            return;
+        }
+
+        // 1ch->Nch
+        if (c == 1) {
+            samples_.resize(n, samples_[0]);
+            return;
+        }
+
+        // Unsupported channel mixing Cch -> Nch
     }
 
-    // 2ch->1ch
-    if (n == 1) {
-        std::vector<AudioSample>& chan1 = samples_[0];
-        std::vector<AudioSample>& chan2 = samples_[1];
-        for (unsigned i = 0, f = frames(); i < f; i++)
-            chan1[i] = chan1[i] / 2 + chan2[i] / 2;
-        samples_.resize(1);
-        return;
-    }
-
-    // 1ch->Nch
-    if (c == 1) {
-        samples_.resize(n, samples_[0]);
-        return;
-    }
-
-    RING_WARN("Unsupported channel mixing: %dch->%dch", c, n);
-    samples_.resize(n, samples_[0]);
+    if (n < c)
+        samples_.resize(n);
+    else
+        samples_.resize(n, std::vector<AudioSample>(frames(), 0));
 }
 
 void AudioBuffer::setFormat(AudioFormat format)
