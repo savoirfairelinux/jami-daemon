@@ -33,10 +33,13 @@ namespace ring {
  * to open a LibAV device/stream
  */
 struct DeviceParams {
+    std::string name {};
     std::string input {}; // Device path (e.g. /dev/video0)
     std::string format {};
     unsigned width {}, height {};
     rational<double> framerate {};
+    std::string pixel_format {};
+    std::string channel_name {};
     unsigned channel {}; // Channel number
     std::string loop {};
     std::string sdp_flags {};
