@@ -40,6 +40,7 @@ struct DeviceParams {
     unsigned channel {}; // Channel number
     std::string loop {};
     std::string sdp_flags {};
+    std::string pixel_format {};
 };
 
 }
