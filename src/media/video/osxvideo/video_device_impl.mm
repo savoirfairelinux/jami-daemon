@@ -35,14 +35,8 @@
 
 namespace ring { namespace video {
 
-class OSXVideoSize {
-    public:
-        OSXVideoSize(const unsigned width, const unsigned height);
-        unsigned width;
-        unsigned height;
-};
-
 class VideoDeviceImpl {
+    using VideoSize = std::pair<unsigned, unsigned>;
     public:
         /**
          * @throw std::runtime_error
@@ -53,22 +47,19 @@ class VideoDeviceImpl {
         std::string name;
 
         std::vector<std::string> getChannelList() const;
-        std::vector<std::string> getSizeList(const std::string& channel) const;
-        std::vector<std::string> getSizeList() const;
-        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;
-        float getRate(unsigned rate) const;
-
-        VideoSettings getSettings() const;
-        void applySettings(VideoSettings settings);
+        std::vector<VideoSize> getSizeList(const std::string& channel) const;
+        std::vector<VideoSize> getSizeList() const;
+        std::vector<rational<double>> getRateList(const std::string& channel, VideoSize size) const;
 
         DeviceParams getDeviceParams() const;
+        void setDeviceParams(const DeviceParams&);
 
     private:
-        const OSXVideoSize extractSize(const std::string &name) const;
+        const VideoSize extractSize(VideoSize) const;
 
         AVCaptureDevice* avDevice_;
-        std::vector<OSXVideoSize> available_sizes_;
-        OSXVideoSize current_size_;
+        std::vector<VideoSize> available_sizes_;
+        VideoSize current_size_;
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
@@ -92,21 +83,11 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
 OSXVideoSize::OSXVideoSize(const unsigned width, const unsigned height) :
     width(width), height(height) {}
 
-void
-VideoDeviceImpl::applySettings(VideoSettings settings)
-{
-//TODO: add framerate
-//    rate_ = size_.getRate(settings["rate"]);
-    current_size_ = extractSize(settings.video_size);
-}
-
-const OSXVideoSize
-VideoDeviceImpl::extractSize(const std::string &name) const
+VideoSize
+VideoDeviceImpl::extractSize(VideoSize size) const
 {
     for (const auto item : available_sizes_) {
-        std::stringstream ss;
-        ss << item.width << "x" << item.height;
-        if (ss.str() == name)
+        if (item.width == size.first && item.height == size.second)
             return item;
     }
 
@@ -114,14 +95,14 @@ VideoDeviceImpl::extractSize(const std::string &name) const
     if (!available_sizes_.empty()) {
         return available_sizes_.back();
     }
-    return OSXVideoSize(-1, -1);
+    return VideoSize(0, 0);
 }
-
 
 DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
+    params.name = [[avDevice_ localizedName] UTF8String];
     params.input = "[" + device + "]";
     params.format = "avfoundation";
 
@@ -135,49 +116,15 @@ VideoDeviceImpl::getDeviceParams() const
     return params;
 }
 
-VideoSettings
-VideoDeviceImpl::getSettings() const
-{
-    VideoSettings settings;
-
-    settings.name = [[avDevice_ localizedName] UTF8String];
-
-    auto format = [avDevice_ activeFormat];
-    auto frameRate = (AVFrameRateRange*)
-                    [format.videoSupportedFrameRateRanges objectAtIndex:0];
-    settings.framerate = frameRate.maxFrameRate;
-    settings.video_size = std::to_string(current_size_.width) +
-        "x" + std::to_string(current_size_.height);
-
-    return settings;
-}
-
-VideoDevice::VideoDevice(const std::string& path) :
-    deviceImpl_(new VideoDeviceImpl(path))
-{
-    node_ = path;
-    name = deviceImpl_->name;
-}
-
-DeviceParams
-VideoDevice::getDeviceParams() const
-{
-    return deviceImpl_->getDeviceParams();
-}
-
 void
-VideoDevice::applySettings(VideoSettings settings)
+VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
-    deviceImpl_->applySettings(settings);
+//TODO: add framerate
+//    rate_ = size_.getRate(settings["rate"]);
+    current_size_ = extractSize(params.video_size);
 }
 
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
-}
-
-std::vector<std::string>
+std::vector<std::pair<unsigned, unsigned>>
 VideoDeviceImpl::getSizeList() const
 {
     return getSizeList("default");
@@ -197,35 +144,59 @@ VideoDeviceImpl::getRateList(const std::string& channel, const std::string& size
     return v;
 }
 
-std::vector<std::string>
+std::vector<std::pair<unsigned, unsigned>>
 VideoDeviceImpl::getSizeList(const std::string& channel) const
 {
-    std::vector<std::string> v;
+    std::vector<std::pair<unsigned, unsigned>> v;
 
     for (const auto &item : available_sizes_) {
-        std::stringstream ss;
-        ss << item.width << "x" << item.height;
-        v.push_back(ss.str());
+        v.emplace_back(item.width, item.height);
     }
 
     return v;
 }
 
-std::vector<std::string> VideoDeviceImpl::getChannelList() const
+std::vector<std::string>
+VideoDeviceImpl::getChannelList() const
 {
     return {"default"};
 }
 
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
+VideoDevice::VideoDevice(const std::string& path) :
+    deviceImpl_(new VideoDeviceImpl(path))
 {
-    DRing::VideoCapabilities cap;
+    node_ = path;
+    name = deviceImpl_->name;
+}
 
-    for (const auto& chan : deviceImpl_->getChannelList())
-        for (const auto& size : deviceImpl_->getSizeList(chan))
-            cap[chan][size] = deviceImpl_->getRateList(chan, size);
+DeviceParams
+VideoDevice::getDeviceParams() const
+{
+    return deviceImpl_->getDeviceParams();
+}
 
-    return cap;
+void
+VideoDevice::setDeviceParams(const DeviceParams& params)
+{
+    return deviceImpl_->setDeviceParams(params);
+}
+
+std::vector<std::string>
+VideoDevice::getChannelList() const
+{
+    return deviceImpl_->getChannelList();
+}
+
+std::vector<std::pair<unsigned, unsigned>>
+VideoDevice::getSizeList(const std::string& channel) const
+{
+    return deviceImpl_->getSizeList(channel);
+}
+
+std::vector<rational<double>>
+VideoDevice::getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const
+{
+    return deviceImpl_->getRateList(channel, size);
 }
 
 VideoDevice::~VideoDevice()

@@ -40,6 +40,8 @@ bool_to_str(bool b) noexcept
     return b ? TRUE_STR : FALSE_STR;
 }
 
+std::string to_string(double value);
+
 #ifdef __ANDROID__
 
 // Rationale:
