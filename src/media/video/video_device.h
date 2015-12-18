@@ -28,7 +28,10 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include "videomanager_interface.h"
+#include "string_utils.h"
+#include "logger.h" // for _debug
 
 namespace ring { namespace video {
 
@@ -63,12 +66,67 @@ public:
      *                 '800x448': ['15'],
      *                 '960x540': ['10']}}
      */
-    DRing::VideoCapabilities getCapabilities() const;
+    DRing::VideoCapabilities getCapabilities() const{
+        DRing::VideoCapabilities cap;
+
+        for (const auto& chan : getChannelList())
+            for (const auto& size : getSizeList(chan)) {
+                std::stringstream sz;
+                sz << size.first << "x" << size.second;
+                auto rates = getRateList(chan, size);
+                std::vector<std::string> rates_str {rates.size()};
+                std::transform(rates.begin(), rates.end(), rates_str.begin(), [](rational<double> r) { return ring::to_string(r.real()); });
+                cap[chan][sz.str()] = rates_str;
+            }
+
+        return cap;
+    }
+
+    VideoSettings getDefaultSettings() const {
+        VideoSettings settings = getSettings();
+        settings.channel = getChannelList().front();
+
+        std::pair<unsigned, unsigned> max_size {0, 0};
+        rational<double> max_size_rate {0};
+
+        auto sizes = getSizeList(settings.channel);
+        for (auto& s : sizes) {
+            if (s.second > 720)
+                continue;
+            auto rates = getRateList(settings.channel, s);
+            if (rates.empty())
+                continue;
+            auto max_rate = *std::max_element(rates.begin(), rates.end());
+            if (max_rate < 10)
+                continue;
+            if (s.second > max_size.second || (s.second == max_size.second && s.first > max_size.first)) {
+                max_size = s;
+                max_size_rate = max_rate;
+            }
+        }
+        if (max_size.second > 0) {
+            std::stringstream video_size;
+            video_size << max_size.first << "x" << max_size.second;
+            settings.video_size = video_size.str();
+            settings.framerate = ring::to_string(max_size_rate.real());
+            RING_WARN("Selecting default: %s, %s FPS", settings.video_size.c_str(), settings.framerate.c_str());
+        }
+
+        return settings;
+    }
 
     /*
      * Get the settings for the device.
      */
-    VideoSettings getSettings() const;
+    VideoSettings getSettings() const {
+        DeviceParams params = getDeviceParams();
+        VideoSettings settings;
+        settings.name = params.name;
+        settings.channel = params.channel_name;
+        settings.video_size = sizeToString(params.width, params.height);
+        settings.framerate = ring::to_string(params.framerate.real());
+        return settings;
+    }
 
     /*
      * Setup the device with the preferences listed in the "settings" map.
@@ -77,7 +135,16 @@ public:
      * If a key is missing, a valid default value is choosen. Thus, calling
      * this function with an empty map will reset the device to default.
      */
-    void applySettings(VideoSettings settings);
+    void applySettings(VideoSettings settings) {
+        DeviceParams params {};
+        params.name = settings.name;
+        params.channel_name = settings.channel;
+        auto size = sizeFromString(settings.channel, settings.video_size);
+        params.width = size.first;
+        params.height = size.second;
+        params.framerate = rateFromString(settings.channel, size, settings.framerate);
+        setDeviceParams(params);
+    }
 
     /**
      * Returns the parameters needed for actual use of the device
@@ -85,6 +152,48 @@ public:
     DeviceParams getDeviceParams() const;
 
 private:
+
+    std::vector<std::string> getChannelList() const;
+    std::vector<std::pair<unsigned, unsigned>> getSizeList(const std::string& channel) const;
+    std::vector<rational<double>> getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const;
+
+    std::pair<unsigned, unsigned> sizeFromString(const std::string& channel, const std::string& size) const
+    {
+        auto size_list = getSizeList(channel);
+        for (const auto& s : size_list) {
+            if (sizeToString(s.first, s.second) == size)
+                return s;
+        }
+        return {0, 0};
+    }
+
+    std::string sizeToString(unsigned w, unsigned h) const {
+        std::stringstream video_size;
+        video_size << w << "x" << h;
+        return video_size.str();
+    }
+
+    rational<double> rateFromString(const std::string& channel, std::pair<unsigned, unsigned> size, const std::string& rate) const
+    {
+        rational<double> closest {0};
+        try {
+            double rate_val = rate.empty() ? 0 : std::stod(rate);
+            double closest_dist  = std::numeric_limits<double>::max();
+            auto rate_list = getRateList(channel, size);
+            for (const auto& r : rate_list) {
+                double dist = r.real() - rate_val;
+                if (dist < closest_dist) {
+                    closest = r;
+                    closest_dist = dist;
+                }
+            }
+        } catch (const std::exception& e) {
+            //DHT_WARN("Can't read framerate \"%s\"", rate.c_str());
+        }
+        return closest;
+    }
+
+    void setDeviceParams(const DeviceParams&);
 
     /*
      * The device node, e.g. "/dev/video0".

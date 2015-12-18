@@ -48,24 +48,22 @@ class VideoDeviceImpl {
         unsigned int id;
 
         std::vector<std::string> getChannelList() const;
-        std::vector<std::string> getSizeList(const std::string& channel) const;
-        std::vector<std::string> getSizeList() const;
-        std::vector<std::string> getRateList(const std::string& channel,
-            const std::string& size) const;
-        float getRate(unsigned rate) const;
-
-        VideoSettings getSettings() const;
-        void applySettings(VideoSettings settings);
+        std::vector<std::pair<unsigned, unsigned>> getSizeList(const std::string& channel) const;
+        std::vector<std::pair<unsigned, unsigned>> getSizeList() const;
+        std::vector<rational<double>> getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const;
 
         DeviceParams getDeviceParams() const;
+        void setDeviceParams(const DeviceParams&);
 
     private:
         std::unique_ptr<CaptureGraphInterfaces> cInterface;
 
         void setup();
-        std::vector<std::string> sizeList_;
-        std::map<std::string, std::vector<std::string> > rateList_;
-        std::map<std::string, AM_MEDIA_TYPE*> capMap_;
+        std::vector<std::pair<unsigned, unsigned>> sizeList_;
+        std::map<std::pair<unsigned, unsigned>, std::vector<rational<double>> > rateList_;
+        std::map<std::pair<unsigned, unsigned>, AM_MEDIA_TYPE*> capMap_;
+
+        //AM_MEDIA_TYPE* findCap(const std::string& size);
         void fail(const std::string& error);
 };
 
@@ -74,8 +72,6 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& id)
     , cInterface(new CaptureGraphInterfaces())
 {
     setup();
-
-    applySettings(VideoSettings());
 }
 
 void
@@ -207,13 +203,9 @@ VideoDeviceImpl::setup()
                 cInterface->streamConf_->GetStreamCaps(i, &pmt, (BYTE*)&pSCC);
                 if (pmt->formattype == FORMAT_VideoInfo) {
                     auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
-                    sizeList_.push_back(
-                        std::to_string(videoInfo->bmiHeader.biWidth) + "x" +
-                        std::to_string(videoInfo->bmiHeader.biHeight));
-                    rateList_[sizeList_.back()].push_back(
-                        std::to_string(1e7 / pSCC.MinFrameInterval));
-                    rateList_[sizeList_.back()].push_back(
-                        std::to_string(1e7 / pSCC.MaxFrameInterval));
+                    sizeList_.emplace_back(videoInfo->bmiHeader.biWidth, videoInfo->bmiHeader.biHeight);
+                    rateList_[sizeList_.back()].emplace_back(1e7, pSCC.MinFrameInterval);
+                    rateList_[sizeList_.back()].emplace_back(1e7, pSCC.MaxFrameInterval);
                     capMap_[sizeList_.back()] = pmt;
                 }
             }
@@ -229,25 +221,12 @@ VideoDeviceImpl::fail(const std::string& error)
     throw std::runtime_error(error);
 }
 
-void
-VideoDeviceImpl::applySettings(VideoSettings settings)
-{
-    if (!settings.video_size.empty()) {
-        auto pmt = capMap_[settings.video_size];
-        if (pmt != nullptr) {
-            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = settings.framerate;
-            if (FAILED(cInterface->streamConf_->SetFormat(capMap_[settings.video_size]))) {
-                RING_ERR("Could not set settings.");
-            }
-        }
-    }
-}
-
 DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
 
+    params.name = name;
     params.input = device;
     params.format = "dshow";
 
@@ -258,30 +237,50 @@ VideoDeviceImpl::getDeviceParams() const
             auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
             params.width = videoInfo->bmiHeader.biWidth;
             params.height = videoInfo->bmiHeader.biHeight;
-            params.framerate = 1e7 /  videoInfo->AvgTimePerFrame;
+            params.framerate = {1e7,  videoInfo->AvgTimePerFrame};
         }
     }
     return params;
 }
 
-VideoSettings
-VideoDeviceImpl::getSettings() const
+void
+VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
-    VideoSettings settings;
-
-    settings.name = name;
-
-    AM_MEDIA_TYPE *pmt;
-    HRESULT hr = cInterface->streamConf_->GetFormat(&pmt);
-    if (SUCCEEDED(hr)) {
-        if (pmt->formattype == FORMAT_VideoInfo) {
-            auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
-            settings.video_size = std::to_string(videoInfo->bmiHeader.biWidth) +
-                "x" + std::to_string(videoInfo->bmiHeader.biHeight);
-            settings.framerate = 1e7 / videoInfo->AvgTimePerFrame;
+    if (params.width and params.height) {
+        auto pmt = capMap_.at(std::make_pair(params.width, params.height));
+        if (pmt != nullptr) {
+            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = (rational<double>(1e7) / params.framerate).real();
+            if (FAILED(cInterface->streamConf_->SetFormat(pmt))) {
+                RING_ERR("Could not set settings.");
+            }
         }
     }
-    return settings;
+}
+
+std::vector<std::pair<unsigned, unsigned>>
+VideoDeviceImpl::getSizeList() const
+{
+    return sizeList_;
+}
+
+std::vector<rational<double>>
+VideoDeviceImpl::getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const
+{
+    (void) channel;
+    return rateList_.at(size);
+}
+
+std::vector<std::pair<unsigned, unsigned>>
+VideoDeviceImpl::getSizeList(const std::string& channel) const
+{
+    (void) channel;
+    return sizeList_;
+}
+
+std::vector<std::string>
+VideoDeviceImpl::getChannelList() const
+{
+    return {"default"};
 }
 
 VideoDevice::VideoDevice(const std::string& path)
@@ -298,55 +297,27 @@ VideoDevice::getDeviceParams() const
 }
 
 void
-VideoDevice::applySettings(VideoSettings settings)
+VideoDevice::setDeviceParams(const DeviceParams& params)
 {
-    deviceImpl_->applySettings(settings);
-}
-
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
+    return deviceImpl_->setDeviceParams(params);
 }
 
 std::vector<std::string>
-VideoDeviceImpl::getSizeList() const
+VideoDevice::getChannelList() const
 {
-    return sizeList_;
+    return deviceImpl_->getChannelList();
 }
 
-std::vector<std::string>
-VideoDeviceImpl::getRateList(const std::string& channel,
-    const std::string& size) const
+std::vector<std::pair<unsigned, unsigned>>
+VideoDevice::getSizeList(const std::string& channel) const
 {
-    (void) channel;
-    return rateList_.at(size);
+    return deviceImpl_->getSizeList(channel);
 }
 
-std::vector<std::string>
-VideoDeviceImpl::getSizeList(const std::string& channel) const
+std::vector<rational<double>>
+VideoDevice::getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const
 {
-    (void) channel;
-    return sizeList_;
-}
-
-std::vector<std::string>
-VideoDeviceImpl::getChannelList() const
-{
-    return {"default"};
-}
-
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
-{
-    DRing::VideoCapabilities cap;
-
-    for (const auto& chan : deviceImpl_->getChannelList()) {
-        for (const auto& size : deviceImpl_->getSizeList(chan)) {
-            cap[chan][size] = deviceImpl_->getRateList(chan, size);
-        }
-    }
-    return cap;
+    return deviceImpl_->getRateList(channel, size);
 }
 
 VideoDevice::~VideoDevice()
