@@ -91,7 +91,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
 
     std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl (pa_proplist_new(), pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_MEDIA_ROLE, "phone");
-    pa_proplist_sets(pl.get(), PA_PROP_FILTER_WANT, "echo-cancel");
+    //pa_proplist_sets(pl.get(), PA_PROP_FILTER_WANT, "echo-cancel");
 
     context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME, pl.get());
     if (!context_) {
@@ -335,7 +335,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create playback stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
-        playback_.reset(new AudioStream(c, mainloop_, "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos));
+        playback_.reset(new AudioStream(c, mainloop_, "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->writeToSpeaker();
         }, this);
@@ -343,7 +343,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create capture stream
     if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
-        record_.reset(new AudioStream(c, mainloop_, "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos));
+        record_.reset(new AudioStream(c, mainloop_, "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_read_callback(record_->stream() , [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->readFromMic();
         }, this);
@@ -351,7 +351,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create ringtone stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice())) {
-        ringtone_.reset(new AudioStream(c, mainloop_, "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos));
+        ringtone_.reset(new AudioStream(c, mainloop_, "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos, false));
         pa_stream_set_write_callback(ringtone_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
         }, this);
