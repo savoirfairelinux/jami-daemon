@@ -49,7 +49,7 @@ class AudioStream {
          * @param audio sampling rate
          * @param pointer to pa_source_info or pa_sink_info (depending on type).
          */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*);
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*, bool ec);
 
         ~AudioStream();
 
