@@ -433,21 +433,37 @@ SocketPair::dumpRTPStats()
 void
 SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
 {
+    // rtcpRRHeader are smaller than XR
     if (len < sizeof(rtcpRRHeader))
-        return;
-
-    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-    if(header->pt != 201) //201 = RR PT
         return;
 
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
-    if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
-        RING_WARN("Need to drop RTCP packets");
-        listRtcpHeader_.pop_front();
-    }
+    // try first RTCP XR (pt == 207)
+    auto packet = reinterpret_cast<rtcpXRPacket*>(buf);
+    if (packet->xrHeader.pt == 207) {
+        RING_ERR("------------------------------");
+        RING_ERR("RECEIVE PACKET XR");
+        std::bitset<8> contentBitset;
+        for (const auto& itPacket :packet->blkContent) {
+            contentBitset = std::bitset<8>(itPacket);
+            RING_ERR("%s", contentBitset.to_string().c_str());
+        }
+        RING_ERR("------------------------------");
 
-    listRtcpHeader_.push_back(*header);
+    } else {
+        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        if(header->pt != 201) //201 = RR PT
+            return;
+
+
+        if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
+            RING_WARN("Need to drop RTCP packets");
+            listRtcpHeader_.pop_front();
+        }
+
+        listRtcpHeader_.push_back(*header);
+    }
 }
 
 std::vector<rtcpRRHeader>
