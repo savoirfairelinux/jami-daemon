@@ -418,6 +418,7 @@ SocketPair::dumpRTPStats()
             RING_ERR("%u",itCseq);
     }
 
+#if 0
     //if (packetDropped_ != 0) {
         RING_ERR("-> Detail");
         std::bitset<8> contentBitset;
@@ -426,21 +427,20 @@ SocketPair::dumpRTPStats()
             RING_ERR("%s", contentBitset.to_string().c_str());
         }
     //}
+#endif
     RING_ERR("---------------------------------------");
 }
 #endif
 
 void
-SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
+SocketPair::saveRtcpRRPacket(uint8_t* buf, size_t len)
 {
     if (len < sizeof(rtcpRRHeader))
         return;
 
-    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
-    if(header->pt != 201) //201 = RR PT
-        return;
-
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+
+    auto header = reinterpret_cast<rtcpRRHeader*>(buf);
 
     if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
         RING_WARN("Need to drop RTCP packets");
@@ -448,6 +448,84 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     }
 
     listRtcpHeader_.push_back(*header);
+}
+
+void
+SocketPair::saveRtcpXRPacket(uint8_t* buf, size_t len)
+{
+    rtcpXRPacket xrPacket;
+    uint8_t* ptrBuf = buf;
+    auto dataContentLen = len - sizeof(rtcpXRBlockHeader) -  sizeof(rtcpXRHeader);
+    std::bitset<8> contentBitset;
+    bool isMsb = true;
+    unsigned indexBitset;
+    uint16_t currentSeq, lastSeq;
+    std::vector<uint16_t> seqLost;
+
+    if (len < (sizeof(rtcpXRHeader) + sizeof(rtcpXRBlockHeader)))
+        return;
+
+    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+
+    memcpy(&xrPacket.xrHeader, ptrBuf, sizeof(rtcpXRHeader));
+    ptrBuf+= sizeof(rtcpXRHeader);
+    memcpy(&xrPacket.blkHeader, ptrBuf, sizeof(rtcpXRBlockHeader));
+    ptrBuf+= sizeof(rtcpXRBlockHeader);
+
+    //TODO better way ?
+    //memcpy(xrPacket.blkContent.data(), ptrBuf, (len - sizeof(rtcpXRHeader) - sizeof(rtcpXRBlockHeader)));
+    //std::copy_n(ptrBuf, dataContentLen, xrPacket.blkContent.begin());
+    if (dataContentLen > 0) {
+        unsigned i = 0;
+        while(i < dataContentLen) {
+            xrPacket.blkContent.push_back(*ptrBuf);
+            ptrBuf++;
+            i++;
+        }
+    }
+
+    currentSeq = ntohs(xrPacket.blkHeader.beginSeq);
+    lastSeq = ntohs(xrPacket.blkHeader.endSeq);
+
+
+    RING_ERR("------------------------------");
+    RING_ERR("FROM %u to %u", currentSeq, lastSeq);
+
+    for (const auto& itPacket :xrPacket.blkContent) {
+        contentBitset = std::bitset<8>(itPacket);
+        if (isMsb)
+            indexBitset = 6;
+        else
+            indexBitset = 7;
+
+        //first bit (=1) must be ignored
+        int i = indexBitset;
+        while ((currentSeq <= lastSeq) && (i >= 0)) {
+            if (not contentBitset[i])
+                seqLost.push_back(currentSeq);
+            currentSeq++;
+            i--;
+        }
+
+        isMsb = not isMsb;
+    }
+    RING_ERR("---- MISS SEQ----");
+    for (auto const& itSeqLost : seqLost)
+        RING_ERR("%d",itSeqLost);
+    RING_ERR("------------------------------");
+}
+
+void
+SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
+{
+    if ( len < 2)
+        return;
+
+    auto payloadType = buf[1];
+    if (payloadType == 207)
+        saveRtcpXRPacket(buf, len);
+    else if (payloadType == 201)
+        saveRtcpRRPacket(buf, len);
 }
 
 std::vector<rtcpRRHeader>

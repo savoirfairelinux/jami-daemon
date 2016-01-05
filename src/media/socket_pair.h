@@ -183,6 +183,8 @@ class SocketPair {
         int readRtcpData(void* buf, int buf_size);
         int writeData(uint8_t* buf, int buf_size);
         void saveRtcpPacket(uint8_t* buf, size_t len);
+        void saveRtcpRRPacket(uint8_t* buf, size_t len);
+        void saveRtcpXRPacket(uint8_t* buf, size_t len);
 
         std::mutex dataBuffMutex_;
         std::condition_variable cv_;
