@@ -73,7 +73,7 @@ using sip_utils::CONST_PJ_STR;
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
-static constexpr int ICE_INIT_TIMEOUT {5};
+static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr int ICE_NEGOTIATION_TIMEOUT {60};
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
