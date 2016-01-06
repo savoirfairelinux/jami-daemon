@@ -163,16 +163,29 @@ void
 AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
-    if (it != details.end())
-        bitrate = ring::stoi(it->second);
-
+    if (it != details.end()) {
+        try {
+            bitrate = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
     it = details.find(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE);
-    if (it != details.end())
-        audioformat.sample_rate = ring::stoi(it->second);
-
+    if (it != details.end()) {
+        try {
+            audioformat.sample_rate = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
     it = details.find(DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER);
-    if (it != details.end())
-        audioformat.nb_channels = ring::stoi(it->second);
+    if (it != details.end()) {
+        try {
+            audioformat.nb_channels = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
 }
 
 bool
@@ -212,16 +225,29 @@ void
 AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
-    if (it != details.end())
-        bitrate = ring::stoi(it->second);
-
+    if (it != details.end()) {
+        try {
+            bitrate = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
     it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
-    if (it != details.end())
-        frameRate = ring::stoi(it->second);
-
+    if (it != details.end()) {
+        try {
+            frameRate = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
     it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
-    if (it != details.end())
-        quality = ring::stoi(it->second);
+    if (it != details.end()) {
+        try {
+            quality = ring::stoi(it->second);
+        } catch (std::exception &e) {
+            RING_ERR("exception converting string to integer: %s", e.what());
+        }
+    }
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
