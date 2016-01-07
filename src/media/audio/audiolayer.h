@@ -219,6 +219,7 @@ class AudioLayer {
          */
         void hardwareInputFormatAvailable(AudioFormat capture);
 
+        void devicesChanged();
 
         const AudioBuffer& getToPlay(AudioFormat format, size_t writableSamples);
 
@@ -255,7 +256,7 @@ class AudioLayer {
         /**
          * Whether or not the audio layer stream is started
          */
-        Status status_ {Status::Idle};
+        std::atomic<Status> status_ {Status::Idle};
         mutable std::condition_variable startedCv_;
 
         /**

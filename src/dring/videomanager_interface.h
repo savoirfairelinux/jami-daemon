@@ -75,6 +75,13 @@ void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 #endif
 
+struct AudioSignal {
+        struct DeviceEvent {
+                constexpr static const char* name = "DeviceEvent";
+                using cb_type = void(void);
+        };
+};
+
 // Video signal type definitions
 struct VideoSignal {
         struct DeviceEvent {
