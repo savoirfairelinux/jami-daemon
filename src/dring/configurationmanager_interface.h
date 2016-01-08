@@ -149,6 +149,13 @@ bool discardTrustRequest(const std::string& accountId, const std::string& from);
 
 void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
 
+struct AudioSignal {
+        struct DeviceEvent {
+                constexpr static const char* name = "DeviceEvent";
+                using cb_type = void(void);
+        };
+};
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {

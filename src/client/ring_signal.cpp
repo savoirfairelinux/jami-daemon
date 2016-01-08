@@ -79,6 +79,9 @@ getSignalHandlers()
         exported_callback<DRing::PresenceSignal::NewBuddyNotification>(),
         exported_callback<DRing::PresenceSignal::SubscriptionStateChanged>(),
 
+        /* Audio */
+        exported_callback<DRing::AudioSignal::DeviceEvent>(),
+
 #ifdef RING_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),

@@ -48,8 +48,9 @@ class AudioStream {
          * @param types
          * @param audio sampling rate
          * @param pointer to pa_source_info or pa_sink_info (depending on type).
+         * @param true if echo cancelling should be used with this stream
          */
-        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*);
+        AudioStream(pa_context *, pa_threaded_mainloop *, const char *, int, unsigned, const PaDeviceInfos*, bool);
 
         ~AudioStream();
 
@@ -79,6 +80,10 @@ class AudioStream {
         inline AudioFormat format() const {
             auto s = sampleSpec();
             return AudioFormat(s->rate, s->channels);
+        }
+
+        inline std::string getDeviceName() const {
+            return pa_stream_get_device_name(audiostream_);
         }
 
         bool isReady();

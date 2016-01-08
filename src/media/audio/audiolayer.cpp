@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "client/ring_signal.h"
 
 #include <ctime>
 
@@ -60,6 +61,12 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
     inputResampler_->setFormat(capture);
+}
+
+void AudioLayer::devicesChanged()
+{
+    RING_WARN("emitSignal<DRing::AudioSignal::DeviceEvent>()");
+    emitSignal<DRing::AudioSignal::DeviceEvent>();
 }
 
 void AudioLayer::flushMain()

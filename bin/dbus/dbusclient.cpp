@@ -127,6 +127,7 @@ DBusClient::initLibrary(int flags)
     using DRing::CallSignal;
     using DRing::ConfigurationSignal;
     using DRing::PresenceSignal;
+    using DRing::AudioSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
@@ -193,6 +194,10 @@ DBusClient::initLibrary(int flags)
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
     };
 
+    const std::map<std::string, SharedCallback> audioEvHandlers = {
+        exportable_callback<AudioSignal::DeviceEvent>(bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
+    };
+
 #ifdef RING_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
@@ -208,6 +213,7 @@ DBusClient::initLibrary(int flags)
     registerCallHandlers(callEvHandlers);
     registerConfHandlers(configEvHandlers);
     registerPresHandlers(presEvHandlers);
+    registerPresHandlers(audioEvHandlers);
 #ifdef RING_VIDEO
     registerVideoHandlers(videoEvHandlers);
 #endif
