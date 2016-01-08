@@ -458,6 +458,10 @@
            </arg>
        </method>
 
+        <signal name="audioDeviceEvent" tp:name-for-bindings="audioDeviceEvent">
+           <tp:docstring>Signal triggered by changes in the detected audio devices, e.g. a headset being unplugged.</tp:docstring>
+        </signal>
+
        <method name="getAudioOutputDeviceList" tp:name-for-bindings="getAudioOutputDeviceList">
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
            <arg type="as" name="list" direction="out">
