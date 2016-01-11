@@ -151,7 +151,7 @@ void sendTrustRequest(const std::string& accountId, const std::string& to, const
 
 struct AudioSignal {
         struct DeviceEvent {
-                constexpr static const char* name = "DeviceEvent";
+                constexpr static const char* name = "audioDeviceEvent";
                 using cb_type = void(void);
         };
 };
