@@ -798,6 +798,8 @@ class Manager {
          */
         void playATone(Tone::TONEID toneId);
 
+        int getCurrentDeviceIndex(DeviceType type);
+
         /** Current Call ID */
         std::string currentCall_;
 

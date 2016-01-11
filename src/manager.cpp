@@ -1948,6 +1948,23 @@ Manager::setAudioPlugin(const std::string& audioPlugin)
         RING_ERR("No audio layer created, possibly built without audio support");
 }
 
+int
+Manager::getCurrentDeviceIndex(DeviceType type)
+{
+    if (not audiodriver_)
+        return -1;
+    switch (type) {
+        case DeviceType::PLAYBACK:
+            return audiodriver_->getIndexPlayback();
+        case DeviceType::RINGTONE:
+            return audiodriver_->getIndexRingtone();
+        case DeviceType::CAPTURE:
+            return audiodriver_->getIndexCapture();
+        default:
+            return -1;
+    }
+}
+
 /**
  * Set audio output device
  */
@@ -1959,6 +1976,10 @@ Manager::setAudioDevice(int index, DeviceType type)
     if (not audiodriver_) {
         RING_ERR("Audio driver not initialized");
         return ;
+    }
+    if (getCurrentDeviceIndex(type) == index) {
+        RING_WARN("Audio device already selected ; doing nothing.");
+        return;
     }
 
     const bool wasStarted = audiodriver_->isStarted();
