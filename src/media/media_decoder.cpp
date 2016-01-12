@@ -421,11 +421,11 @@ int MediaDecoder::getWidth() const
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
-rational<unsigned>
+rational<double>
 MediaDecoder::getFps() const
 {
-    return {(unsigned)avStream_->avg_frame_rate.num,
-            (unsigned)avStream_->avg_frame_rate.den};
+    return {(double)avStream_->avg_frame_rate.num,
+            (double)avStream_->avg_frame_rate.den};
 }
 
 rational<unsigned>
