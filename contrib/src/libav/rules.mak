@@ -183,7 +183,8 @@ libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 	(cd $@-$(LIBAV_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/libav/osx.patch
+	$(APPLY) $(SRC)/libav/0005-avfoundation-simple-capture.patch
+	$(APPLY) $(SRC)/libav/0006-avfoundation-fix-framerate-selection.patch
 endif
 	$(APPLY) $(SRC)/libav/0001-rtpdec-add-a-trace-when-jitter-buffer-is-full.patch
 	$(APPLY) $(SRC)/libav/0002-rtpdec-inform-jitter-buffer-size.patch

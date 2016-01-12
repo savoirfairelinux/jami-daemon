@@ -1,0 +1,55 @@
+From fe6d5ed5a707830774465607527011996201e92d Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
+Date: Tue, 12 Jan 2016 14:17:19 -0500
+Subject: [PATCH] avfoundation: fix framerate selection
+
+framerate ranges can sometimes include only one value:
+[30.0000,30.0000]
+[15.5000,15.5000]
+...
+Adding an epsilon prevent correct framerate selection
+---
+ libavdevice/avfoundation_dec.m | 16 +++++++++++++---
+ 1 file changed, 13 insertions(+), 3 deletions(-)
+
+diff --git a/libavdevice/avfoundation_dec.m b/libavdevice/avfoundation_dec.m
+index f01484c..f233622 100644
+--- a/libavdevice/avfoundation_dec.m
++++ b/libavdevice/avfoundation_dec.m
+@@ -265,12 +265,13 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+             if (framerate) {
+                 av_log(s, AV_LOG_VERBOSE, "Checking support for framerate %f\n",
+                        framerate);
+-                for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges)
++                for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges) {
+                     if (range.minFrameRate <= (framerate + epsilon) &&
+                         range.maxFrameRate >= (framerate - epsilon)) {
+                         selected_range = range;
+                         break;
+                     }
++                }
+             } else {
+                 selected_range = format.videoSupportedFrameRateRanges[0];
+                 framerate      = selected_range.maxFrameRate;
+@@ -302,8 +303,17 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+
+     if ([video_device lockForConfiguration : NULL] == YES) {
+         [video_device setActiveFormat : selected_format];
+-        [video_device setActiveVideoMinFrameDuration : CMTimeMake(1, framerate)];
+-        [video_device setActiveVideoMaxFrameDuration : CMTimeMake(1, framerate)];
++        if (selected_range.minFrameRate == selected_range.maxFrameRate) {
++            //CMTimeMake(int64_t value, int32_t timescale) does not allow to use a Float64 as a timescale
++            //Some camera have extremely precise rate values and rounding them does not work
++            // if a range support only one value, use this value instead of the passed framerate
++            //(which may have been round up and will cause failure)
++            [video_device setActiveVideoMinFrameDuration : selected_range.minFrameDuration];
++            [video_device setActiveVideoMaxFrameDuration : selected_range.maxFrameDuration];
++        } else {
++            [video_device setActiveVideoMinFrameDuration : CMTimeMake(1, framerate)];
++            [video_device setActiveVideoMaxFrameDuration : CMTimeMake(1, framerate)];
++        }
+     } else {
+         av_log(s, AV_LOG_ERROR, "Could not lock device for configuration\n");
+         return false;
+--
+2.6.2
