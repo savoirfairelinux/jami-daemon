@@ -303,10 +303,8 @@ RingBuffer::discard(size_t toDiscard)
 
     for (auto & r : readoffsets_) {
         size_t dst = (r.second + buffer_size - endPos_) % buffer_size;
-        if (dst < toDiscard) {
-            RING_DBG("%s : discarding: %zu frames", r.first.c_str(), toDiscard - dst);
+        if (dst < toDiscard)
             r.second = (r.second + toDiscard - dst) % buffer_size;
-        }
     }
     return toDiscard;
 }

@@ -62,10 +62,8 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     bool is_keyframe = forceKeyFrame_ > 0 \
         or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
-    if (is_keyframe) {
-        RING_DBG("keyframe requested");
+    if (is_keyframe)
         --forceKeyFrame_;
-    }
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
@@ -81,6 +79,7 @@ VideoSender::update(Observable<std::shared_ptr<VideoFrame> >* /*obs*/,
 void
 VideoSender::forceKeyFrame()
 {
+    RING_DBG("keyframe requested");
     ++forceKeyFrame_;
 }
 
