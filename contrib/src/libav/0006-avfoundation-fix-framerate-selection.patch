@@ -1,0 +1,71 @@
+From a160903e6482884267f326ada811ae21df2696de Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
+Date: Tue, 12 Jan 2016 14:17:19 -0500
+Subject: [PATCH] avfoundation: fix framerate selection
+
+framerate ranges can sometimes include only one value:
+[30.0000,30.0000]
+[15.5000,15.5000]
+...
+Adding an epsilon prevent correct framerate selection
+---
+ libavdevice/avfoundation_dec.m | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
+
+diff --git a/libavdevice/avfoundation_dec.m b/libavdevice/avfoundation_dec.m
+index f01484c..f579ced 100644
+--- a/libavdevice/avfoundation_dec.m
++++ b/libavdevice/avfoundation_dec.m
+@@ -246,7 +246,6 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+     AVCaptureDeviceFormat *selected_format = nil;
+     AVFrameRateRange *selected_range       = nil;
+     double framerate                       = av_q2d(ctx->internal_framerate);
+-    double epsilon                         = 0.00000001;
+
+     for (AVCaptureDeviceFormat *format in[video_device formats]) {
+         CMFormatDescriptionRef formatDescription;
+@@ -254,6 +253,7 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+
+         formatDescription = (CMFormatDescriptionRef)format.formatDescription;
+         dimensions        = CMVideoFormatDescriptionGetDimensions(formatDescription);
++        double epsilon = 0.00000001;
+
+         if ((ctx->width == 0 && ctx->height == 0) ||
+             (dimensions.width == ctx->width && dimensions.height == ctx->height)) {
+@@ -265,12 +265,13 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+             if (framerate) {
+                 av_log(s, AV_LOG_VERBOSE, "Checking support for framerate %f\n",
+                        framerate);
+-                for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges)
++                for (AVFrameRateRange *range in format.videoSupportedFrameRateRanges) {
+                     if (range.minFrameRate <= (framerate + epsilon) &&
+                         range.maxFrameRate >= (framerate - epsilon)) {
+                         selected_range = range;
+                         break;
+                     }
++                }
+             } else {
+                 selected_range = format.videoSupportedFrameRateRanges[0];
+                 framerate      = selected_range.maxFrameRate;
+@@ -302,8 +303,17 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+
+     if ([video_device lockForConfiguration : NULL] == YES) {
+         [video_device setActiveFormat : selected_format];
+-        [video_device setActiveVideoMinFrameDuration : CMTimeMake(1, framerate)];
+-        [video_device setActiveVideoMaxFrameDuration : CMTimeMake(1, framerate)];
++        if (selected_range.minFrameRate == selected_range.maxFrameRate) {
++            //CMTimeMake(int64_t value, int32_t timescale) does not allow to use a Float64 as a timescale
++            //Some camera have extremely precise rate values and rounding them does not work
++            // if a range support only one value, use this value instead of the passed framerate
++            //(which may have been round up and will cause failure)
++            [video_device setActiveVideoMinFrameDuration : selected_range.minFrameDuration];
++            [video_device setActiveVideoMaxFrameDuration : selected_range.maxFrameDuration];
++        } else {
++            [video_device setActiveVideoMinFrameDuration : CMTimeMake(1, framerate)];
++            [video_device setActiveVideoMaxFrameDuration : CMTimeMake(1, framerate)];
++        }
+     } else {
+         av_log(s, AV_LOG_ERROR, "Could not lock device for configuration\n");
+         return false;
+--
+2.6.2
