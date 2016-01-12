@@ -308,13 +308,14 @@ VideoRtpSession::useCodec(const ring::AccountVideoCodecInfo* codec) const
 float
 VideoRtpSession::checkPeerPacketLoss()
 {
-    auto rtcpInfoVect = socketPair_->getRtcpInfo();
+#if 0
+    auto rtcpReports = socketPair_->getRtcpReports();
     unsigned totalLost = 0;
     unsigned fract = 0;
-    auto vectSize = rtcpInfoVect.size();
+    auto vectSize = rtcpReports.size();
 
-    for (const auto& it : rtcpInfoVect) {
-        fract = (ntohl(it.fraction_lost) & 0xff000000)  >> 24;
+    for (const auto& it : rtcpReports) {
+        fract = ((it.fraction_lost) & 0xff000000)  >> 24;
         totalLost += fract;
     }
 
@@ -322,6 +323,8 @@ VideoRtpSession::checkPeerPacketLoss()
         return (float)( 100 * totalLost) / (256.0 * vectSize);
     else
         return NO_PACKET_LOSS_CALCULATED;
+#endif
+    return NO_PACKET_LOSS_CALCULATED;
 }
 
 unsigned
