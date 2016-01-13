@@ -32,7 +32,6 @@
 #include "logger.h"
 #include "manager.h"
 
-#include <regex>
 #include <algorithm> // for std::find
 #include <stdexcept>
 
@@ -40,12 +39,25 @@
 #include <cstdlib>
 #include <fstream>
 
+// Std-C++11 regex feature implemented only since GCC 4.9
+// Using pcre library as replacement
+//#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ < 9
+#define USE_PCRE_REGEX
+#include <pcre.h>
+//#else
+//#include <regex>
+//#endif
+
 // uncomment to log pulseaudio sink and sources
 //#define PA_LOG_SINK_SOURCES
 
 namespace ring {
 
-static const std::regex PA_EC_SUFIX {".echo-cancel(\\..+)?$"};
+#ifdef USE_PCRE_REGEX
+static constexpr const char* PA_EC_SUFFIX {"/.echo-cancel(\\..+)?$/g"};
+#else
+static const std::regex PA_EC_SUFFIX {".echo-cancel(\\..+)?$"};
+#endif
 
 PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
 {
@@ -293,7 +305,7 @@ bool endsWith(const std::string& str, const std::string& ending)
 const PaDeviceInfos* findBest(const std::vector<PaDeviceInfos>& list) {
     if (list.empty()) return nullptr;
     /*for (const auto& info : list)
-        if (info.monitor_of == PA_INVALID_INDEX && not endsWith(info.name, PA_EC_SUFIX))
+        if (info.monitor_of == PA_INVALID_INDEX && not endsWith(info.name, PA_EC_SUFFIX))
             return &info;*/
     for (const auto& info : list)
         if (info.monitor_of == PA_INVALID_INDEX)
@@ -524,9 +536,31 @@ void PulseLayer::ringtoneToSpeaker()
 
 
 std::string stripEchoSufix(std::string deviceName) {
-    return std::regex_replace(deviceName, PA_EC_SUFIX, "");
-    /*return endsWith(deviceName, PA_EC_SUFIX)
-          ? deviceName.substr(0, deviceName.size() - PA_EC_SUFIX.size())
+#ifdef USE_PCRE_REGEX
+    const char *error;
+    const static int resSize = 3;
+    int erroffset, resPos[resSize] = {0};
+    pcre* re = pcre_compile(PA_EC_SUFFIX, 0, &error, &erroffset, NULL);
+    if (re == NULL) {
+        RING_ERR("PCRE compilation failed at offset %d: %s\n", erroffset, error);
+        return deviceName;
+    }
+    int rc = pcre_exec(re, NULL, deviceName.c_str(), deviceName.size(), 0, 0, resPos, resSize);
+    if (rc > 0) {
+        int start = resPos[0];
+        int length = resPos[1];
+        deviceName.replace(start, length, "");
+        RING_ERR("%s", deviceName.c_str());
+    } else {
+        RING_ERR("NO RESULT %s", deviceName.c_str());
+    }
+    pcre_free(re);
+    return deviceName;
+#else
+    return std::regex_replace(deviceName, PA_EC_SUFFIX, "");
+#endif
+    /*return endsWith(deviceName, PA_EC_SUFFIX)
+          ? deviceName.substr(0, deviceName.size() - PA_EC_SUFFIX.size())
           : deviceName;*/
 }
 
@@ -539,14 +573,12 @@ PulseLayer::context_changed_callback(pa_context* c,
 }
 
 void
-PulseLayer::contextChanged(pa_context* c, pa_subscription_event_type_t type,
-                                     uint32_t idx UNUSED)
+PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t type,
+                           uint32_t idx UNUSED)
 {
     bool reset = false;
 
     switch (type & PA_SUBSCRIPTION_EVENT_FACILITY_MASK) {
-            pa_operation *op;
-
         case PA_SUBSCRIPTION_EVENT_SINK:
             switch (type & PA_SUBSCRIPTION_EVENT_TYPE_MASK) {
                 case PA_SUBSCRIPTION_EVENT_NEW:
