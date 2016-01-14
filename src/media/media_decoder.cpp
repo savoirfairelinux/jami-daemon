@@ -433,11 +433,33 @@ int MediaDecoder::getWidth() const
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
+// Borrowed from ffmpeg av_guess_frame_rate() in libavformat/utils.c
+// Adapted to be compatible with libav project.
+static AVRational
+guess_frame_rate(const AVFormatContext* format, const AVStream* st)
+{
+    AVRational fr {};
+    AVRational codec_fr = st->codec->framerate;
+    AVRational avg_fr = st->avg_frame_rate;
+
+    if (avg_fr.num > 0 && avg_fr.den > 0 && av_q2d(avg_fr) < 70)
+        fr = avg_fr;
+
+    if (st->codec->ticks_per_frame > 1) {
+        if (codec_fr.num > 0 && codec_fr.den > 0 &&
+            ((fr.num == 0 || av_q2d(codec_fr) < av_q2d(fr)*0.7) &&
+             fabs(1.0 - av_q2d(av_div_q(avg_fr, fr))) > 0.1))
+            fr = codec_fr;
+    }
+
+    return fr;
+}
+
 rational<double>
 MediaDecoder::getFps() const
 {
-    return {(double)avStream_->avg_frame_rate.num,
-            (double)avStream_->avg_frame_rate.den};
+    auto fr = guess_frame_rate(inputCtx_, avStream_);
+    return {(double)fr.num, (double)fr.den};
 }
 
 rational<unsigned>
