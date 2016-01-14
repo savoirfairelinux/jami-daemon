@@ -169,8 +169,9 @@ VideoInput::createDecoder()
     decOpts_.height = decoder->getHeight();
     decOpts_.framerate = decoder->getFps();
 
-    RING_DBG("created decoder with video params : size=%dX%d, fps=%lf",
-             decOpts_.width, decOpts_.height, decOpts_.framerate.real());
+    RING_DBG("created decoder with video params : size=%dX%d, fps=%g (%g/%g)",
+             decOpts_.width, decOpts_.height, decOpts_.framerate.real(),
+             decOpts_.framerate.numerator(), decOpts_.framerate.denominator());
 
     decoder_ = std::move(decoder);
     foundDecOpts(decOpts_);
