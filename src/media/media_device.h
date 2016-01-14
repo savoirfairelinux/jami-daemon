@@ -36,7 +36,7 @@ struct DeviceParams {
     std::string input {}; // Device path (e.g. /dev/video0)
     std::string format {};
     unsigned width {}, height {};
-    rational<double> framerate {};
+    rational<int> framerate {};
     unsigned channel {}; // Channel number
     std::string loop {};
     std::string sdp_flags {};
