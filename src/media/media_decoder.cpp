@@ -424,8 +424,8 @@ int MediaDecoder::getHeight() const
 rational<double>
 MediaDecoder::getFps() const
 {
-    return {(double)avStream_->avg_frame_rate.num,
-            (double)avStream_->avg_frame_rate.den};
+    auto fr = av_guess_frame_rate(inputCtx_, avStream_, nullptr);
+    return {(double)fr.num, (double)fr.den};
 }
 
 rational<unsigned>
