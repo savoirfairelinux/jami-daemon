@@ -407,6 +407,9 @@ AudioPreference::createAudioLayer()
     return nullptr;
 #endif
 #endif // __ANDROID__
+
+    RING_WARN("No audio layer provided");
+    return nullptr;
 }
 
 void AudioPreference::serialize(YAML::Emitter &out)
