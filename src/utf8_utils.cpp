@@ -305,12 +305,12 @@ utf8_make_valid(const std::string & name)
 std::string
 utf8_from_utf16(std::string input)
 {
-    using utf_8_to_16 = std::codecvt_utf8_utf16<char16_t>;
-    auto& f = std::use_facet<utf_8_to_16>(std::locale("en_US.UTF8"));
+    auto& f = std::use_facet<std::codecvt<char16_t, char, std::mbstate_t>>(std::locale());
 
-    std::wstring_convert<utf_8_to_16, char16_t> utf16conv;
+    std::wstring_convert<std::codecvt_utf8_utf16<char16_t>, char16_t> utf16conv;
     std::u16string utf16 = utf16conv.from_bytes(input.c_str());
     std::mbstate_t mb = std::mbstate_t();
+
 
     std::string result8 = std::string(utf16.size() * f.max_length(), '\0');
     const char16_t* from_next;
