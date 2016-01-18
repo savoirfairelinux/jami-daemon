@@ -4,6 +4,7 @@
  *  Copyright (C) 2014-2015 Savoir-faire Linux Inc.
  *
  *  Author: Pascal Potvin <pascal.potvin@extenway.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -24,6 +25,10 @@
 #include <cstring>
 #include <cassert>
 #include "utf8_utils.h"
+
+#include <locale>
+#include <string>
+#include <codecvt>
 
 /*
  * The LIKELY and UNLIKELY macros let the programmer give hints to
@@ -295,6 +300,28 @@ utf8_make_valid(const std::string & name)
     delete[] str;
 
     return answer;
+}
+
+std::string
+utf8_from_utf16(std::string input)
+{
+    using utf_8_to_16 = std::codecvt_utf8_utf16<char16_t>;
+    auto& f = std::use_facet<utf_8_to_16>(std::locale("en_US.UTF8"));
+
+    std::wstring_convert<utf_8_to_16, char16_t> utf16conv;
+    std::u16string utf16 = utf16conv.from_bytes(input.c_str());
+    std::mbstate_t mb = std::mbstate_t();
+
+    std::string result8 = std::string(utf16.size() * f.max_length(), '\0');
+    const char16_t* from_next;
+    char* to_next;
+
+    // error checking skipped
+    f.out(mb, &utf16[0], &utf16[utf16.size()], from_next,
+          &result8[0], &result8[result8.size()], to_next);
+    result8.resize(to_next - &result8[0]);
+
+    return result8;
 }
 
 } // namespace ring

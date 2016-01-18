@@ -4,6 +4,7 @@
  *  Copyright (C) 2014-2015 Savoir-faire Linux Inc.
  *
  *  Author: Pascal Potvin <pascal.potvin@extenway.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -41,8 +42,7 @@ namespace ring {
  * Returns: true if the text was valid UTF-8
  */
 
-bool
-utf8_validate(const std::string & str);
+bool utf8_validate(const std::string & str);
 
 /**
  * utf8_make_valid:
@@ -54,8 +54,17 @@ utf8_validate(const std::string & str);
  *
  * Returns: a valid utf8 string.
  */
-std::string
-utf8_make_valid(const std::string & name);
+std::string utf8_make_valid(const std::string & name);
+
+/**
+ * utf8_from_utf16:
+ * @input: string encoded in UTF-16
+ *
+ * Transforms a byte string encoded in UTF-16 into UTF-8 byte string
+ *
+ * Returns: a valid UTF-8 string.
+ */
+std::string utf8_from_utf16(std::string input);
 
 } // namespace ring
 
