@@ -309,9 +309,9 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 
 void
 SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                   std::shared_ptr<VideoFrame>& frame_p)
+                   std::shared_ptr<VideoFrame> frame_p)
 {
-    auto f = frame_p; // keep a local reference during rendering
+    auto& f = *frame_p;
 
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
@@ -325,13 +325,14 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 #endif
 
 #if HAVE_SHM
-    shm_->renderFrame(*f.get());
+    shm_->renderFrame(f);
 #endif
 
     if (target_.pull) {
         VideoFrame dst;
-        const int width = f->width();
-        const int height = f->height();
+        VideoScaler scaler;
+        const int width = f.width();
+        const int height = f.height();
 #ifndef __APPLE__
         const int format = VIDEO_PIXFMT_BGRA;
 #else
@@ -345,7 +346,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
                 buffer_ptr->width = width;
                 buffer_ptr->height = height;
                 dst.setFromMemory(buffer_ptr->ptr, format, width, height);
-                scaler_->scale(*f, dst);
+                scaler_->scale(f, dst);
                 target_.push(std::move(buffer_ptr));
             }
         }

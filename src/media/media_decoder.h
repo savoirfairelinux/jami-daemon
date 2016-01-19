@@ -44,12 +44,6 @@ class AVCodec;
 
 namespace ring {
 
-#ifdef RING_VIDEO
-namespace video {
-class VideoPacket;
-} // namespace ring::video
-#endif // RING_VIDEO
-
 class AudioFrame;
 class AudioFormat;
 class RingBuffer;
