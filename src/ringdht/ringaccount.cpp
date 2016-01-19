@@ -44,6 +44,7 @@
 #include "account_schema.h"
 #include "logger.h"
 #include "manager.h"
+#include "utf8_utils.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -66,6 +67,7 @@
 #include <sstream>
 #include <cctype>
 #include <cstdarg>
+#include <string>
 
 namespace ring {
 
@@ -894,10 +896,9 @@ RingAccount::doRegister_()
                     return true;
 
                 auto from = v.from.toString();
-                std::map<std::string, std::string> msg = {{"text/plain", v.msg}};
-                RING_DBG("Text message received from DHT from %s, %zu part(s)",
-                         from.c_str(), msg.size());
-                emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(this_.getAccountID(), from, msg);
+                std::map<std::string, std::string> payloads = {{"text/plain",
+                                                                utf8_make_valid(v.msg)}};
+                shared->onTextMessage(from, payloads);
                 return true;
             }
         );
