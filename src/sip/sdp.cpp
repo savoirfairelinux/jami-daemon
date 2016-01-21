@@ -685,15 +685,22 @@ std::vector<std::string>
 Sdp::getIceCandidates(unsigned media_index) const
 {
     auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
+    auto localSession = activeLocalSession_ ? activeLocalSession_ : localSession_;
     if (not session) {
         RING_ERR("getIceCandidates failed: no remote session");
         return {};
     }
-    if (media_index >= session->media_count) {
+    if (media_index >= session->media_count || media_index >= localSession->media_count) {
         RING_ERR("getIceCandidates failed: cannot access media#%u (may be deactivated)", media_index);
         return {};
     }
     auto media = session->media[media_index];
+    auto localMedia = localSession->media[media_index];
+    if (media->desc.port == 0 || localMedia->desc.port == 0) {
+        RING_ERR("getIceCandidates failed: media#%u is disabled", media_index);
+        return {};
+    }
+
     std::vector<std::string> candidates;
 
     for (unsigned i=0; i < media->attr_count; i++) {
