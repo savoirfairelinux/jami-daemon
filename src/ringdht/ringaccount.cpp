@@ -1209,13 +1209,14 @@ std::string RingAccount::getToUri(const std::string& to) const
 pj_str_t
 RingAccount::getContactHeader(pjsip_transport* t)
 {
+    auto ringid = dht_.getId().toString();
     if (!t) {
         RING_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s%s<sips:%s@ring.dht>",
                                          displayName_.c_str(),
                                          (displayName_.empty() ? "" : " "),
-                                         username_.c_str());
+                                         ringid.c_str());
         return contact_;
     }
 
@@ -1226,8 +1227,8 @@ RingAccount::getContactHeader(pjsip_transport* t)
                                      "%s%s<sips:%s%s%s;transport=tls>",
                                      displayName_.c_str(),
                                      (displayName_.empty() ? "" : " "),
-                                     username_.c_str(),
-                                     (username_.empty() ? "" : "@"),
+                                     ringid.c_str(),
+                                     (ringid.empty() ? "" : "@"),
                                      address.toString(true).c_str());
     return contact_;
 }
