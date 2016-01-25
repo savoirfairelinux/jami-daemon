@@ -217,7 +217,7 @@ ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
 download = curl -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
-	wget --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
+	wget --no-check-certificate --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
 	touch $@.tmp && \
 	mv $@.tmp $@
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
