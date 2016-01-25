@@ -29,6 +29,7 @@
 #pragma GCC diagnostic pop
 
 #include "manager.h"
+#include "media_const.h"
 #include "client/videomanager.h"
 #include "client/ring_signal.h"
 #include "config/yamlparser.h"
@@ -101,7 +102,8 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
     const auto it = findDeviceByName(defaultDevice_);
     if(it == std::end(devices_))
         return {};
-    return "camera://" + it->getSettings().name;
+    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+    return DRing::Media::VideoProtocolPrefix::CAMERA + sep + it->getSettings().name;
 }
 
 void
