@@ -21,6 +21,7 @@
 #include <unistd.h> // for sleep
 #include "test_video_input.h"
 #include "video_input.h"
+#include "media_const.h"
 #include <map>
 #include <string>
 
@@ -28,7 +29,8 @@ namespace ring { namespace video { namespace test {
 
 void VideoInputTest::testInput()
 {
-    std::string resource = "display://" + std::string(getenv("DISPLAY") ? : ":0.0");
+    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
+    std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep + std::string(getenv("DISPLAY") ? : ":0.0");
     VideoInput video;
     video.switchInput(resource);
     usleep(10000);

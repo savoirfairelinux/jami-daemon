@@ -24,6 +24,16 @@ namespace DRing {
 
 namespace Media {
 
+// Supported MRL schemes
+namespace VideoProtocolPrefix {
+
+constexpr static const char* NONE       = "";
+constexpr static const char* DISPLAY    = "display";
+constexpr static const char* FILE       = "file";
+constexpr static const char* CAMERA     = "camera";
+constexpr static const char* SEPARATOR  = "://";
+}
+
 namespace Details {
 
 constexpr static char MEDIA_TYPE_AUDIO[] = "MEDIA_TYPE_AUDIO";

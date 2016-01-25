@@ -26,6 +26,7 @@
 #include "video_input.h"
 
 #include "media_decoder.h"
+#include "media_const.h"
 #include "manager.h"
 #include "client/videomanager.h"
 #include "sinkclient.h"
@@ -310,7 +311,7 @@ VideoInput::switchInput(const std::string& resource)
     }
 
     // Supported MRL schemes
-    static const std::string sep = "://";
+    static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
 
     const auto pos = resource.find(sep);
     if (pos == std::string::npos)
@@ -324,17 +325,17 @@ VideoInput::switchInput(const std::string& resource)
 
     bool valid = false;
 
-    if (prefix == "camera") {
+    if (prefix == DRing::Media::VideoProtocolPrefix::CAMERA) {
         /* Video4Linux2 */
         valid = initCamera(suffix);
-    } else if (prefix == "display") {
+    } else if (prefix == DRing::Media::VideoProtocolPrefix::DISPLAY) {
         /* X11 display name */
 #ifndef _WIN32
         valid = initX11(suffix);
 #else
         valid = initGdiGrab(suffix);
 #endif
-    } else if (prefix == "file") {
+    } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
         valid = initFile(suffix);
     }
