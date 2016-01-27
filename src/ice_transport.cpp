@@ -170,18 +170,21 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     TRY( pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap) );
     TRY( pj_ioqueue_create(pool_.get(), IOQUEUE_MAX_HANDLES, &config_.stun_cfg.ioqueue) );
 
+    pj_ice_strans* icest = nullptr;
+    pj_status_t status = pj_ice_strans_create(name, &config_, component_count,
+                                              this, &icecb, &icest);
+
+    if (status != PJ_SUCCESS || icest == nullptr) {
+        throw std::runtime_error("pj_ice_strans_create() failed");
+    }
+
+    // Must be created after any potential failure
     thread_ = std::thread([this]{
             register_thread();
             while (not threadTerminateFlags_) {
                 handleEvents(500); // limit polling to 500ms
             }
         });
-
-    pj_ice_strans* icest = nullptr;
-    pj_status_t status = pj_ice_strans_create(name, &config_, component_count,
-                                              this, &icecb, &icest);
-    if (status != PJ_SUCCESS || icest == nullptr)
-        throw std::runtime_error("pj_ice_strans_create() failed");
 }
 
 IceTransport::~IceTransport()
