@@ -179,25 +179,11 @@ SipTransport::removeStateListener(uintptr_t lid)
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool) :
 cp_(cp), pool_(pool), endpt_(endpt)
-{
-/*#if HAVE_DHT
-    pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
-                                  pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
-                                  &ice_pj_transport_type_);
-#endif*/
-    RING_DBG("SipTransportBroker@%p", this);
-}
+{}
 
 SipTransportBroker::~SipTransportBroker()
 {
-    RING_DBG("~SipTransportBroker@%p", this);
-
     shutdown();
-
-    udpTransports_.clear();
-    transports_.clear();
-
-    RING_DBG("destroying SipTransportBroker@%p", this);
 }
 
 void
@@ -281,12 +267,12 @@ SipTransportBroker::addTransport(pjsip_transport* t)
 void
 SipTransportBroker::shutdown()
 {
-    std::unique_lock<std::mutex> lock(transportMapMutex_);
-    for (auto& t : transports_) {
-        if (auto transport = t.second.lock()) {
-            pjsip_transport_shutdown(transport->get());
-        }
-    }
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    RING_DBG("shutdown transports (%zu ICE, %zu UDP)", transports_.size(), udpTransports_.size());
+    for (auto& item: transports_)
+        pjsip_transport_shutdown(item.first);
+    transports_.clear();
+    udpTransports_.clear();
 }
 
 std::shared_ptr<SipTransport>
