@@ -183,7 +183,7 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 }
 
 void
-SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+SIPCall::setTransport(std::shared_ptr<SipTransport> t)
 {
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     if (transport_)
@@ -195,18 +195,15 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 
         // listen for transport destruction
         transport_->addStateListener(list_id,
-            [wthis_, t, list_id] (pjsip_transport_state state,
-                                  const pjsip_transport_state_info*)
-            {
+            [wthis_, list_id] (pjsip_transport_state state, const pjsip_transport_state_info*) {
                 if (auto this_ = wthis_.lock()) {
                     // end the call if the SIP transport is shut down
-                    if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
+                    if (not SipTransport::isAlive(this_->transport_, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         RING_WARN("[call:%s] Ending call because underlying SIP transport was closed",
                                   this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
                     }
-                } else // should not happen
-                    t->removeStateListener(list_id);
+                }
             });
     }
 }
