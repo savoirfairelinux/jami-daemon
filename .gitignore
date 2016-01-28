@@ -94,3 +94,5 @@ configure
 bin/dbus/*.adaptor.h
 bin/dbus/cx.ring.Ring.service
 bin/dring
+doltcompile
+doltlibtool
