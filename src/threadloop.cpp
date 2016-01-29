@@ -117,7 +117,11 @@ void ThreadLoop::exit()
 bool
 ThreadLoop::isRunning() const noexcept
 {
+#ifdef _WIN32
+    return state_ == RUNNING;
+#else
     return thread_.joinable() and state_ == RUNNING;
+#endif
 }
 
 bool
