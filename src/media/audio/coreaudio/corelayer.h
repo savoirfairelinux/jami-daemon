@@ -86,8 +86,10 @@ class CoreLayer : public AudioLayer {
             return indexRing_;
         }
 
-        void initAudioLayerPlayback();
-        void initAudioLayerCapture();
+        /**
+         * Configure the AudioUnit
+         */
+        void initAudioLayerIO();
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -164,8 +166,8 @@ class CoreLayer : public AudioLayer {
         std::vector<AudioSample> playbackIBuff_;
         std::vector<AudioSample> captureIBuff_;
 
-        AudioUnit outputUnit_;
-        AudioUnit inputUnit_;
+        AudioUnit ioUnit_;
+
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
