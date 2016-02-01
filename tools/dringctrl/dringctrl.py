@@ -40,6 +40,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--gaa', help='Get all accounts (of optionaly given type)',
                         nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
+    parser.add_argument('--newaccount', help='Create new account', action='store_true')
+    parser.add_argument('--accountype', help='Set account type', action='store_true', default='RING')
+    parser.add_argument('--accountalias', help='Set account name')
+
     parser.add_argument('--gara', help='Get all registered accounts', action='store_true')
     parser.add_argument('--gaea', help='Get all enabled accounts', action='store_true')
     parser.add_argument('--gaad', help='Get all account details', action='store_true')
@@ -119,6 +123,11 @@ if __name__ == "__main__":
     if args.gaad:
         for account in ctrl.getAllAccounts():
             printAccountDetails(account)
+
+    if args.newaccount:
+        details = {'Account.alias' : args.accountalias,
+                   'Account.type' : args.accountype}
+        ctrl.addAccount(details)
 
     if args.gacd:
         for codecId in ctrl.getActiveCodecs(args.gacd):
