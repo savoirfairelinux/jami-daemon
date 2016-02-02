@@ -40,6 +40,8 @@ struct DeviceParams {
     unsigned channel {}; // Channel number
     std::string loop {};
     std::string sdp_flags {};
+    unsigned offset_x {};
+    unsigned offset_y {};
 };
 
 }

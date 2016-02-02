@@ -77,6 +77,10 @@ int MediaDecoder::openInput(const DeviceParams& params)
     if (params.framerate)
         av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
 #endif
+    if (params.offset_x || params.offset_y) {
+        av_dict_set(&options_, "offset_x", ring::to_string(params.offset_x).c_str(), 0);
+        av_dict_set(&options_, "offset_y", ring::to_string(params.offset_y).c_str(), 0);
+    }
     if (params.channel)
         av_dict_set(&options_, "channel", ring::to_string(params.channel).c_str(), 0);
     av_dict_set(&options_, "loop", params.loop.c_str(), 0);
