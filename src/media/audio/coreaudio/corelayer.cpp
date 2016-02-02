@@ -285,80 +285,18 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    // Checks for resampling
-    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
+    auto& ringBuff = getToRing(audioFormat_, inNumberFrames);
+    auto& playBuff = getToPlay(audioFormat_, inNumberFrames);
 
-    unsigned urgentFramesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+    auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
 
-    if (urgentFramesToGet > 0) {
-        RING_WARN("Getting urgent frames.");
-        size_t totSample = std::min(inNumberFrames, urgentFramesToGet);
-
-        playbackBuff_.setFormat(audioFormat_);
-        playbackBuff_.resize(totSample);
-        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
-
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
+    if (toPlay.frames() == 0) {
         for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i); // Write
-
-        Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
+            memset((Float32*)ioData->mBuffers[i].mData, 0, ioData->mBuffers[i].mDataByteSize);
     }
-
-    unsigned normalFramesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
-
-    if (normalFramesToGet > 0) {
-
-        double resampleFactor = 1.0;
-        unsigned readableSamples = inNumberFrames;
-
-        if (resample) {
-            resampleFactor = static_cast<double>(audioFormat_.sample_rate) / mainBufferAudioFormat.sample_rate;
-            readableSamples = std::ceil(inNumberFrames / resampleFactor);
-        }
-        readableSamples = std::min(readableSamples, normalFramesToGet);
-        size_t nResampled = (double) readableSamples * resampleFactor;
-
-        playbackBuff_.setFormat(mainBufferAudioFormat);
-        playbackBuff_.resize(readableSamples);
-        Manager::instance().getRingBufferPool().getData(
-                playbackBuff_, RingBufferPool::DEFAULT_ID);
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-
-        if (resample) {
-            AudioBuffer resampledOutput(readableSamples, audioFormat_);
-            resampler_->resample(playbackBuff_, resampledOutput);
-
-            for (int i = 0; i < audioFormat_.nb_channels; ++i)
-                resampledOutput.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
-
-        } else {
-            for (int i = 0; i < audioFormat_.nb_channels; ++i)
-                playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
-        }
-    }
-
-    if (normalFramesToGet <= 0) {
-        AudioLoop* tone = Manager::instance().getTelephoneTone();
-        AudioLoop* file_tone = Manager::instance().getTelephoneFile();
-
-        playbackBuff_.setFormat(audioFormat_);
-        playbackBuff_.resize(inNumberFrames);
-
-        if (tone) {
-            tone->getNext(playbackBuff_, playbackGain_);
-        }
-        else if (file_tone) {
-            file_tone->getNext(playbackBuff_, playbackGain_);
-        }
-        else {
-            playbackBuff_.reset();
-        }
-        for (int i = 0; i < audioFormat_.nb_channels; ++i) {
-            playbackBuff_.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
-        }
+    else {
+        for (int i = 0; i < audioFormat_.nb_channels; ++i)
+            toPlay.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
     }
 }
 
