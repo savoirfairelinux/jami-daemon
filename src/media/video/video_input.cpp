@@ -238,6 +238,7 @@ VideoInput::initGdiGrab(std::string params)
     decOpts_.input = "desktop";
     decOpts_.framerate = 30;
 
+    RING_ERR("Params %s", params.c_str());
     if (space != std::string::npos) {
         std::istringstream iss(params.substr(space + 1));
         char sep;
@@ -245,6 +246,13 @@ VideoInput::initGdiGrab(std::string params)
         iss >> w >> sep >> h;
         decOpts_.width = round2pow(w, 3);
         decOpts_.height = round2pow(h, 3);
+
+        size_t plus = params.find('+');
+        std::istringstream dss(params.substr(plus + 1, space - plus));
+        RING_ERR("Params %s", params.substr(3, space).c_str());
+        dss >> decOpts_.offset_x >> sep >> decOpts_.offset_y;
+        RING_ERR("Offset %d %d", decOpts_.offset_x , decOpts_.offset_y);
+        sleep(10);
     } else {
         decOpts_.width = default_grab_width;
         decOpts_.height = default_grab_height;
