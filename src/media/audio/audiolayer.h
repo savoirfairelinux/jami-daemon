@@ -155,6 +155,13 @@ class AudioLayer {
             isPlaybackMuted_ = muted;
         }
 
+        bool isRingtoneMuted() const {
+            return isRingtoneMuted_;
+        }
+        void muteRingtone(bool muted) {
+            isRingtoneMuted_ = muted;
+        }
+
         /**
          * Set capture stream gain (microphone)
          * Range should be [-1.0, 1.0]
@@ -234,6 +241,11 @@ class AudioLayer {
          * True if playback is not to be used
          */
         bool isPlaybackMuted_;
+
+        /**
+         * True if ringtone should be muted
+         */
+        bool isRingtoneMuted_ {false};
 
         /**
          * Gain applied to mic signal

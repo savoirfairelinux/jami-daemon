@@ -273,6 +273,18 @@ DBusConfigurationManager::mutePlayback(const bool& mute)
 }
 
 auto
+DBusConfigurationManager::isRingtoneMuted() -> decltype(DRing::isRingtoneMuted())
+{
+    return DRing::isRingtoneMuted();
+}
+
+void
+DBusConfigurationManager::muteRingtone(const bool& mute)
+{
+    DRing::muteRingtone(mute);
+}
+
+auto
 DBusConfigurationManager::getAudioManager() -> decltype(DRing::getAudioManager())
 {
     return DRing::getAudioManager();

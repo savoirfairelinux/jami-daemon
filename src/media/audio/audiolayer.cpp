@@ -130,7 +130,7 @@ const AudioBuffer& AudioLayer::getToRing(AudioFormat format, size_t writableSamp
 
         ringtoneBuffer_.setFormat(fileformat);
         ringtoneBuffer_.resize(readableSamples);
-        fileToPlay->getNext(ringtoneBuffer_, 1.0);
+        fileToPlay->getNext(ringtoneBuffer_, isRingtoneMuted_ ? 0. : 1.);
         ringtoneBuffer_.setChannelNum(format.nb_channels, true);
         AudioBuffer* out;
         if (resample) {
