@@ -72,15 +72,20 @@ AudioRecorder::AudioRecorder(ring::AudioFormat sampleFormat, SLEngineItf slEngin
 
     // create audio recorder
     // (requires the RECORD_AUDIO permission)
-    const SLInterfaceID id[1] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE};
+    const SLInterfaceID ids[2] = {SL_IID_ANDROIDSIMPLEBUFFERQUEUE, SL_IID_ANDROIDCONFIGURATION};
     const SLboolean req[1] = {SL_BOOLEAN_TRUE};
     SLresult result;
     result = (*slEngine)->CreateAudioRecorder(slEngine,
                                               &recObjectItf_,
                                               &audioSrc,
                                               &audioSnk,
-                                              1, id, req);
+                                              sizeof(ids)/sizeof(ids[0]), ids, req);
     SLASSERT(result);
+
+    SLAndroidConfigurationItf recordConfig;
+    SLint32 streamType = SL_ANDROID_RECORDING_PRESET_VOICE_COMMUNICATION;
+    result = (*recObjectItf_)->GetInterface(recObjectItf_, SL_IID_ANDROIDCONFIGURATION, &recordConfig);
+    result = (*recordConfig)->SetConfiguration(recordConfig, SL_ANDROID_KEY_RECORDING_PRESET, &streamType, sizeof(SLint32));
 
     result = (*recObjectItf_)->Realize(recObjectItf_, SL_BOOLEAN_FALSE);
     SLASSERT(result);
