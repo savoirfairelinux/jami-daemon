@@ -716,6 +716,26 @@ mutePlayback(bool mute)
     return;
 }
 
+bool
+isRingtoneMuted()
+{
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->isRingtoneMuted();
+
+    RING_ERR("Audio layer not valid");
+    return false;
+}
+
+void
+muteRingtone(bool mute)
+{
+    if (auto audiolayer = ring::Manager::instance().getAudioDriver())
+        return audiolayer->muteRingtone(mute);
+
+    RING_ERR("Audio layer not valid");
+    return;
+}
+
 std::map<std::string, std::string>
 getHookSettings()
 {

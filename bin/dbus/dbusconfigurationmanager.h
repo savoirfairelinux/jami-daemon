@@ -96,6 +96,8 @@ class DBusConfigurationManager :
         void muteCapture(const bool& mute);
         bool isPlaybackMuted();
         void mutePlayback(const bool& mute);
+        bool isRingtoneMuted();
+        void muteRingtone(const bool& mute);
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
         std::vector<std::string> getSupportedAudioManagers();
