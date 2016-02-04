@@ -113,9 +113,9 @@ Account::Account(const std::string &accountID)
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
     #ifdef __ANDROID__
-        ringtonePath_ = "/data/data/cx.ring/files/ringtones/konga.ul";
+        ringtonePath_ = "/data/data/cx.ring/files/ringtones/default.wav";
     #else
-        ringtonePath_ = "/usr/share/ring/ringtones/konga.ul";
+        ringtonePath_ = "/usr/share/ring/ringtones/default.wav";
     #endif
 }
 

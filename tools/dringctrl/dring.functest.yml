@@ -18,7 +18,7 @@ accounts:
   publishPort: 5060
   registrationexpire: 600
   ringtoneEnabled: true
-  ringtonePath: /home/alexandresavard/Development/sflphone/gnome
+  ringtonePath: /usr/share/ring/ringtones/default.wav
   sameasLocal: true
   serviceRoute:
   srtp:
@@ -67,7 +67,7 @@ accounts:
   publishPort: 5060
   registrationexpire: 600
   ringtoneEnabled: true
-  ringtonePath: /home/alexandresavard/Development/sflphone/gnome
+  ringtonePath: /usr/share/ring/ringtones/default.wav
   sameasLocal: true
   serviceRoute:
   srtp:
@@ -116,7 +116,7 @@ accounts:
   publishPort: 5060
   registrationexpire: 600
   ringtoneEnabled: true
-  ringtonePath: /usr/share/sflphone/ringtones/konga.ul
+  ringtonePath: /usr/share/ring/ringtones/default.wav
   sameasLocal: true
   serviceRoute:
   srtp:
