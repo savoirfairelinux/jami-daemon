@@ -129,6 +129,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 
 SIPCall::~SIPCall()
 {
+    RING_WARN("bye SIPCall, transport_ = %p", transport_.get());
     setTransport({});
     inv.reset(); // prevents callback usage
 }
@@ -183,7 +184,7 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 }
 
 void
-SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+SIPCall::setTransport(std::shared_ptr<SipTransport> t)
 {
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     if (transport_)
@@ -203,8 +204,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                                   this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
                     }
-                } else // should not happen
-                    this_->transport_->removeStateListener(list_id);
+                }
             });
     }
 }

@@ -66,6 +66,7 @@ void
 SipTransport::deleteTransport(pjsip_transport* t)
 {
     pjsip_transport_shutdown(t);
+    RING_DBG("decref pjsip_transport@%p {rc=%ld}",t, pj_atomic_get(t->ref_cnt));
     pjsip_transport_dec_ref(t);
 }
 
@@ -281,12 +282,10 @@ SipTransportBroker::addTransport(pjsip_transport* t)
 void
 SipTransportBroker::shutdown()
 {
-    std::unique_lock<std::mutex> lock(transportMapMutex_);
-    for (auto& t : transports_) {
-        if (auto transport = t.second.lock()) {
-            pjsip_transport_shutdown(transport->get());
-        }
-    }
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    RING_WARN("shutdown %u ICE transports", transports_.size());
+    for (auto& item : transports_)
+        pjsip_transport_shutdown(item.first);
 }
 
 std::shared_ptr<SipTransport>
