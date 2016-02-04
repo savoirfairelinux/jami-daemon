@@ -174,19 +174,19 @@
         "git pull"
     ],
     "AutoDeploySchedule": {
-        "fedora_21" : "@midnight",
-        "fedora_21_i386" : "@midnight",
-        "fedora_22": "@midnight",
-        "fedora_23": "@midnight",
-        "debian_8": "@midnight",
-        "debian_8_i386": "@midnight",
-        "debian_9": "@midnight",
-        "ubuntu_14.04": "@midnight",
-        "ubuntu_15.04": "@midnight",
-        "ubuntu_15.10": "@midnight",
-        "ubuntu_14.04_i386": "@midnight",
-        "ubuntu_15.04_i386": "@midnight",
-        "ubuntu_15.10_i386": "@midnight"
+        "fedora_21" : "0 0 * * 5",
+        "fedora_21_i386" : "0 0 * * 5",
+        "fedora_22": "0 0 * * 5",
+        "fedora_23": "0 0 * * 5",
+        "debian_8": "0 0 * * 5",
+        "debian_8_i386": "0 0 * * 5",
+        "debian_9": "0 0 * * 5",
+        "ubuntu_14.04": "0 0 * * 5",
+        "ubuntu_15.04": "0 0 * * 5",
+        "ubuntu_15.10": "0 0 * * 5",
+        "ubuntu_14.04_i386": "0 0 * * 5",
+        "ubuntu_15.04_i386": "0 0 * * 5",
+        "ubuntu_15.10_i386": "0 0 * * 5"
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
