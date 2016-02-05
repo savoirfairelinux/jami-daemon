@@ -21,6 +21,10 @@
 
 #pragma once
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "audio/audiobuffer.h"
 
 #include <string>
@@ -30,6 +34,12 @@
 namespace ring {
 
 class AudioRecord;
+
+#ifdef RING_VIDEO
+namespace video {
+class VideoRecorder;
+}
+#endif // RING_VIDEO
 
 class Recordable {
 public:
@@ -75,6 +85,7 @@ protected:
     mutable std::mutex apiMutex_;
     bool recording_ {false};
     std::unique_ptr<AudioRecord> recAudio_;
+    std::unique_ptr<video::VideoRecorder> videoRecorder_;
 };
 
 } // namespace ring
