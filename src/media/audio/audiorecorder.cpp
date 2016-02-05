@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -20,6 +20,7 @@
  */
 
 #include "audiorecorder.h"
+
 #include "audiorecord.h"
 #include "ringbufferpool.h"
 #include "audiobuffer.h"
@@ -32,11 +33,11 @@
 namespace ring {
 
 static constexpr std::size_t BUFFER_LENGTH {10000};
-static constexpr std::chrono::milliseconds SLEEP_TIME {20};
+static constexpr auto SLEEP_TIME = std::chrono::milliseconds(20);
 
 AudioRecorder::AudioRecorder(AudioRecord* arec, RingBufferPool& rbp)
     : ringBufferPool_(rbp)
-    , buffer_(new AudioBuffer(BUFFER_LENGTH, ringBufferPool_.getInternalAudioFormat()))
+    , buffer_(new AudioBuffer(BUFFER_LENGTH, AudioFormat::NONE()))
     , arecord_(arec)
     , thread_(
         [this] { return true; },
@@ -54,6 +55,11 @@ AudioRecorder::AudioRecorder(AudioRecord* arec, RingBufferPool& rbp)
     recorderId_ = id.append(s);
 }
 
+AudioRecorder::~AudioRecorder()
+{
+    thread_.join();
+}
+
 unsigned
 AudioRecorder::nextProcessID() noexcept
 {
@@ -62,9 +68,9 @@ AudioRecorder::nextProcessID() noexcept
 }
 
 void
-AudioRecorder::init() {
-    if (!arecord_->isRecording())
-        arecord_->setSndFormat(ringBufferPool_.getInternalAudioFormat());
+AudioRecorder::init()
+{
+    buffer_->setFormat(ringBufferPool_.getInternalAudioFormat());
 }
 
 void

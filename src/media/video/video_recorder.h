@@ -1,7 +1,6 @@
 /*
- *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2016 Savoir-faire Linux Inc.
  *
- *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -21,48 +20,27 @@
 
 #pragma once
 
-#include "threadloop.h"
 #include "noncopyable.h"
 
 #include <string>
 #include <memory>
 
 namespace ring {
+class MediaEncoder;
+}
 
-class RingBufferPool;
-class AudioRecord;
-class AudioBuffer;
+namespace ring { namespace video {
 
-class AudioRecorder {
+class VideoRecorder
+{
 public:
-    AudioRecorder(AudioRecord* arec, RingBufferPool& rbp);
-    ~AudioRecorder();
-
-    std::string getRecorderID() const {
-        return recorderId_;
-    }
-
-    /**
-     * Set the record to the current audio format.
-     * Should be called before start() at least once.
-     */
-    void init();
-
-    /**
-     * Call to start recording.
-     */
-    void start();
+    VideoRecorder(const std::string& filename);
+    ~VideoRecorder();
 
 private:
-    NON_COPYABLE(AudioRecorder);
-    static unsigned nextProcessID() noexcept;
-    void process();
+    NON_COPYABLE(VideoRecorder);
 
-    std::string recorderId_;
-    RingBufferPool& ringBufferPool_;
-    std::unique_ptr<AudioBuffer> buffer_;
-    AudioRecord* arecord_;
-    ThreadLoop thread_;
+    std::unique_ptr<MediaEncoder> encoder_;
 };
 
-} // namespace ring
+}} // namespace ring::video
