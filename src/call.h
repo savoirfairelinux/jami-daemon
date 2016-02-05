@@ -30,7 +30,7 @@
 
 #include "logger.h"
 
-#include "audio/recordable.h"
+#include "recordable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
 

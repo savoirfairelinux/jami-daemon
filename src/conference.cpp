@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
+#include "audio/audiorecorder.h"
 
 #ifdef RING_VIDEO
 #include "sip/sipcall.h"
@@ -149,7 +150,7 @@ bool Conference::toggleRecording()
     const bool startRecording = Recordable::toggleRecording();
     auto& rbPool = Manager::instance().getRingBufferPool();
 
-    std::string process_id(Recordable::recorder_.getRecorderID());
+    std::string process_id(Recordable::recorder_->getRecorderID());
 
     // start recording
     if (startRecording) {
@@ -158,7 +159,7 @@ bool Conference::toggleRecording()
 
         rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
 
-        Recordable::recorder_.start();
+        Recordable::recorder_->start();
     } else {
         for (const auto &item : participants_)
             rbPool.unBindHalfDuplexOut(process_id, item);
