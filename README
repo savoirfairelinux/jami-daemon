@@ -37,9 +37,8 @@ More information is available on the project homepage:
   http://www.ring.cx/
 
 This source tree contains the daemon application only, DRing, that handles
-the business logic of Ring. UI are located in differents repositories.
-Check our client subprojects here:
-https://projects.savoirfairelinux.com/projects/ring
+the business logic of Ring. UIs are located in differents repositories. See
+the Contributing section for more information.
 
 
 Short description of content of source tree
@@ -148,16 +147,18 @@ Contributing to Ring
 
 Of course we love patches. And contributions. And spring rolls.
 
-Development website: http://projects.savoirfairelinux.com/projects/ring/wiki
+Development website / Bug Tracker:
+ - https://tuleap.ring.cx/projects/ring/
+
+Repositories are hosted on Gerrit, which we use for code review. It also
+contains the client subprojects:
+ - https://gerrit-ring.savoirfairelinux.com/#/admin/projects/
 
 Do not hesitate to join us and post comments, suggestions, questions
 and general feedback on the Ring mailing-list:
 http://lists.savoirfairelinux.net/mailman/listinfo/ring
 
-Bug reports:
-http://projects.savoirfairelinux.com/projects/ring/wiki/BugReports
-
 IRC (on #freenode):
-#sflphone
+ - #ring
 
   -- The Ring Team
