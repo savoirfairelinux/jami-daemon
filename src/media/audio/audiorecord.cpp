@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,6 +26,7 @@
 #include "audiorecord.h"
 #include "logger.h"
 #include "fileutils.h"
+#include "manager.h"
 
 #include <sndfile.hh>
 
@@ -80,8 +82,14 @@ AudioRecord::AudioRecord()
     : sndFormat_(AudioFormat::MONO())
     , filename_(createFilename())
     , savePath_()
+    , recorder_(this, Manager::instance().getRingBufferPool())
 {
     RING_DBG("Generate filename for this call %s ", filename_.c_str());
+}
+
+AudioRecord::~AudioRecord()
+{
+    closeFile();
 }
 
 void AudioRecord::setSndFormat(AudioFormat format)
@@ -141,7 +149,6 @@ AudioRecord::openFile()
 {
     fileHandle_.reset(); // do it before calling fileExists()
 
-    bool result = false;
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
@@ -162,7 +169,7 @@ AudioRecord::openFile()
     if (doAppend and fileHandle_->seek(0, SEEK_END) < 0)
         RING_WARN("Couldn't seek to the end of the file ");
 
-    return result;
+    return true;
 }
 
 void
@@ -193,8 +200,10 @@ AudioRecord::toggleRecording()
 {
     if (isOpenFile())
         recordingEnabled_ = !recordingEnabled_;
-    else if (openFile())
+    else if (openFile()) {
         recordingEnabled_ = true;
+        recorder_.start();
+    }
 
     return recordingEnabled_;
 }
@@ -202,7 +211,7 @@ AudioRecord::toggleRecording()
 void
 AudioRecord::stopRecording() const noexcept
 {
-    RING_DBG("Stop recording");
+    RING_DBG("Stop recording %s", savePath_.c_str());
     recordingEnabled_ = false;
 }
 

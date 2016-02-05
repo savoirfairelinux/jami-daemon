@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -36,16 +36,11 @@ class AudioBuffer;
 class AudioRecorder {
 public:
     AudioRecorder(AudioRecord* arec, RingBufferPool& rbp);
+    ~AudioRecorder();
 
-    std::string getRecorderID() const noexcept {
+    std::string getRecorderID() const {
         return recorderId_;
     }
-
-    /**
-     * Set the record to the current audio format.
-     * Should be called before start() at least once.
-     */
-    void init();
 
     /**
      * Call to start recording.
