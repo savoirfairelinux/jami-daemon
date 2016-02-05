@@ -1125,7 +1125,7 @@ Manager::joinParticipant(const std::string& callId1,
     conf->setState(Conference::ACTIVE_ATTACHED);
 
     // set recording sampling rate
-    conf->setRecordingFormat(ringbufferpool_->getInternalAudioFormat());
+    conf->setRecordingAudioFormat(ringbufferpool_->getInternalAudioFormat());
 
     return true;
 }
@@ -1166,7 +1166,7 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
     if (successCounter >= 2) {
         conferenceMap_[conf->getConfID()] = conf;
         emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
-        conf->setRecordingFormat(ringbufferpool_->getInternalAudioFormat());
+        conf->setRecordingAudioFormat(ringbufferpool_->getInternalAudioFormat());
     }
 }
 
@@ -2110,7 +2110,7 @@ Manager::toggleRecordingCall(const std::string& id)
     }
 
     const bool result = rec->toggleRecording();
-    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getFilename());
+    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getAudioFilename());
     emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
     return result;
 }

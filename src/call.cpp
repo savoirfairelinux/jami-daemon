@@ -20,13 +20,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "call.h"
 #include "account.h"
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
 #include "client/ring_signal.h"
-#include "audio/audiorecorder.h"
+#include "audio/audiorecord.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
@@ -35,7 +39,11 @@
 #include "string_utils.h"
 #include "enumclass_utils.h"
 
-#include "errno.h"
+#ifdef RING_VIDEO
+#include "video/video_recorder.h"
+#endif // RING_VIDEO
+
+#include <errno.h>
 
 namespace ring {
 
@@ -260,14 +268,12 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
+    std::string process_id = Recordable::recAudio_->getRecorderID();
     RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
-    std::string process_id = Recordable::recorder_->getRecorderID();
 
     if (startRecording) {
         rbPool.bindHalfDuplexOut(process_id, id_);
         rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
-
-        Recordable::recorder_->start();
     } else {
         rbPool.unBindHalfDuplexOut(process_id, id_);
         rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
