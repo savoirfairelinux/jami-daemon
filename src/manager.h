@@ -65,6 +65,7 @@ class SinkClient;
 class PluginManager;
 class AudioFile;
 class DTMF;
+class RingBufferPool;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
