@@ -40,7 +40,6 @@ libaudio_la_SOURCES = \
 		ringbufferpool.cpp \
 		audiorecord.cpp \
 		audiorecorder.cpp \
-		recordable.cpp \
 		audiolayer.cpp \
 		resampler.cpp \
 		$(RING_SPEEXDSP_SRC) \
@@ -64,7 +63,6 @@ noinst_HEADERS = \
 		audiorecord.h \
 		audiorecorder.h \
 		audiolayer.h \
-		recordable.h \
 		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
 		resampler.h \

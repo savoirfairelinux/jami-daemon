@@ -28,7 +28,7 @@
 #include <string>
 #include <memory>
 
-#include "audio/recordable.h"
+#include "recordable.h"
 
 namespace ring {
 
