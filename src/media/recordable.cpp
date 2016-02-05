@@ -24,10 +24,17 @@
 #include "manager.h"
 #include "logger.h"
 
+#ifdef RING_VIDEO
+#include "video/video_recorder.h"
+#endif // RING_VIDEO
+
 namespace ring {
 
 Recordable::Recordable()
     : recAudio_(new AudioRecord)
+#ifdef RING_VIDEO
+    , videoRecorder_()
+#endif // RING_VIDEO
 {
     auto record_path = Manager::instance().audioPreference.getRecordPath();
     RING_DBG("Set recording options: %s", record_path.c_str());
@@ -62,6 +69,9 @@ Recordable::toggleRecording()
     if (not recording_) {
         recAudio_->setSndFormat(Manager::instance().getRingBufferPool().getInternalAudioFormat());
         recAudio_->toggleRecording();
+#ifdef RING_VIDEO
+        videoRecorder_.reset(new video::VideoRecorder {"foobar.avi"});
+#endif // RING_VIDEO
     } else {
         recAudio_->stopRecording();
     }
@@ -76,6 +86,9 @@ Recordable::stopRecording()
     if (not recording_)
         return;
     recAudio_->stopRecording();
+#ifdef RING_VIDEO
+    videoRecorder_.reset();
+#endif // RING_VIDEO
 }
 
 } // namespace ring

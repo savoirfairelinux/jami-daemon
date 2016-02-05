@@ -20,6 +20,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
+
 #include "call.h"
 #include "account.h"
 #include "manager.h"
@@ -35,7 +39,11 @@
 #include "string_utils.h"
 #include "enumclass_utils.h"
 
-#include "errno.h"
+#ifdef RING_VIDEO
+#include "video/video_recorder.h"
+#endif // RING_VIDEO
+
+#include <errno.h>
 
 namespace ring {
 

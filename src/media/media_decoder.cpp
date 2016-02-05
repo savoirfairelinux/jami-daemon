@@ -38,14 +38,16 @@ namespace ring {
 
 using std::string;
 
-MediaDecoder::MediaDecoder() :
-    inputCtx_(avformat_alloc_context()),
-    startTime_(AV_NOPTS_VALUE)
+MediaDecoder::MediaDecoder()
+    : inputCtx_(avformat_alloc_context())
+    , startTime_(AV_NOPTS_VALUE)
 {
 }
 
 MediaDecoder::~MediaDecoder()
 {
+    termRecording();
+
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
 
@@ -288,6 +290,17 @@ int MediaDecoder::setupFromVideoData()
     return 0;
 }
 
+static void
+log_packet(const AVFormatContext* fmt_ctx, const AVPacket* pkt)
+{
+    AVRational& time_base = fmt_ctx->streams[pkt->stream_index]->time_base;
+    RING_WARN("pts:%llu pts_time:%.6g dts:%llu dts_time:%.6g duration:%llu duration_time:%.6g stream_index:%d tb:%u/%u",
+              pkt->pts, av_q2d(time_base) * pkt->pts,
+              pkt->dts, av_q2d(time_base) * pkt->dts,
+              pkt->duration, av_q2d(time_base) * pkt->duration,
+              pkt->stream_index, time_base.num, time_base.den);
+}
+
 MediaDecoder::Status
 MediaDecoder::decode(VideoFrame& result)
 {
@@ -309,6 +322,35 @@ MediaDecoder::decode(VideoFrame& result)
     if (inpacket.stream_index != streamIndex_) {
         av_packet_unref(&inpacket);
         return Status::Success;
+    }
+
+    // Recording?
+    if (recCtx_ and inpacket.pts >= 0 and inpacket.dts >= 0) {
+        AVPacket pkt_file;
+        av_init_packet(&pkt_file);
+        if (av_packet_ref(&pkt_file, &inpacket) < 0)
+            RING_ERR("can't copy frame");
+
+        pkt_file.stream_index = recStream_->index;
+
+        if (firstPTS_ == -1)
+            firstPTS_ = inpacket.pts;
+
+        av_packet_rescale_ts(&pkt_file,
+                             recCtx_->streams[recStream_->index]->codec->time_base,
+                             recCtx_->streams[recStream_->index]->time_base);
+
+        pkt_file.dts = pkt_file.pts = cptFrame_ * incTs_;
+        cptFrame_++;
+
+        //log_packet(inputCtx_, &inpacket);
+        //log_packet(recCtx_, &pkt_file);
+
+        auto ret = av_interleaved_write_frame(recCtx_, &pkt_file);
+        if (ret < 0)
+            RING_ERR("av_interleaved_write_frame failed with return %d", ret);
+
+        av_packet_unref(&pkt_file);
     }
 
     auto frame = result.pointer();
@@ -497,6 +539,64 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
         break;
     }
     return pix_fmt;
+}
+
+void
+MediaDecoder::initRecording()
+{
+    static const char* const filename = "/tmp/test.mkv";
+    termRecording();
+    recCtx_ = avformat_alloc_context();
+
+    recCtx_->oformat = av_guess_format(nullptr, filename, nullptr);
+    strncpy(recCtx_->filename, filename, sizeof(recCtx_->filename));
+
+    recStream_ = avformat_new_stream(recCtx_, nullptr);
+
+    auto ret = avcodec_copy_context(recCtx_->streams[0]->codec, inputCtx_->streams[0]->codec);
+    if (ret < 0) {
+        RING_WARN("Copying stream context failed");
+        termRecording();
+        return;
+    }
+
+    if (recCtx_->oformat->flags & AVFMT_GLOBALHEADER)
+        recStream_->codec->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
+
+    av_dump_format(recCtx_, 0, filename, 1);
+
+    if ((recCtx_->oformat->flags & AVFMT_NOFILE) == 0) {
+        if (avio_open(&recCtx_->pb, filename, AVIO_FLAG_WRITE) < 0) {
+            RING_ERR("Could not open '%s'\n", filename);
+            termRecording();
+            return;
+        }
+    }
+
+    if (avformat_write_header(recCtx_, nullptr)) {
+        RING_ERR("Could not write header for output file... check codec parameters");
+        termRecording();
+        return;
+    }
+
+    auto& tb = recStream_->codec->time_base;
+    //tb = inputCtx_->streams[0]->time_base;
+    RING_WARN("src fps = %u/%u", tb.num, tb.den);
+
+    incTs_ = ((float)tb.num / tb.den) * 1000;
+    cptFrame_ = 0;
+}
+
+void
+MediaDecoder::termRecording()
+{
+    if (recCtx_) {
+        av_write_trailer(recCtx_);
+        avformat_close_input(&recCtx_);
+    }
+
+    recCtx_ = nullptr;
+    recStream_ = nullptr;
 }
 
 } // namespace ring

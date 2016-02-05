@@ -86,6 +86,9 @@ class MediaDecoder {
 
         void setOptions(const std::map<std::string, std::string>& options);
 
+        void initRecording();
+        void termRecording();
+
     private:
         NON_COPYABLE(MediaDecoder);
 
@@ -111,6 +114,13 @@ class MediaDecoder {
         const unsigned jitterBufferMaxSize_ {500};
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
+
+        // Video Recording members
+        AVFormatContext* recCtx_ = nullptr;
+        AVStream* recStream_ = nullptr;
+        float incTs_ = 0;
+        unsigned cptFrame_ = 0;
+        int64_t firstPTS_ = -1;
 
     protected:
         AVDictionary *options_ = nullptr;

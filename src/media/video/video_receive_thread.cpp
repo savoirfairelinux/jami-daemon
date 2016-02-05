@@ -116,8 +116,10 @@ bool VideoReceiveThread::setup()
     EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
 
     auto conf = Manager::instance().getConferenceFromCallID(id_);
-    if (!conf)
+    if (!conf) {
         exitConference();
+        videoDecoder_->initRecording();
+    }
 
     return true;
 }

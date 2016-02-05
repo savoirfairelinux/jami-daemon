@@ -61,6 +61,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
+#include <libavutil/timestamp.h>
 }
 
 #include "libav_utils.h"
