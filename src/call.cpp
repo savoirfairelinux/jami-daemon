@@ -26,7 +26,7 @@
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
 #include "client/ring_signal.h"
-
+#include "audio/audiorecorder.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
@@ -261,13 +261,13 @@ Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
     RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
-    std::string process_id = Recordable::recorder_.getRecorderID();
+    std::string process_id = Recordable::recorder_->getRecorderID();
 
     if (startRecording) {
         rbPool.bindHalfDuplexOut(process_id, id_);
         rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
 
-        Recordable::recorder_.start();
+        Recordable::recorder_->start();
     } else {
         rbPool.unBindHalfDuplexOut(process_id, id_);
         rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
