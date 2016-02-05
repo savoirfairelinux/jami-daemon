@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,10 +19,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _AUDIO_RECORD_H
-#define _AUDIO_RECORD_H
+#pragma once
 
 #include "audiobuffer.h"
+#include "audiorecorder.h"
 #include "noncopyable.h"
 
 #include <atomic>
@@ -36,6 +37,7 @@ namespace ring {
 class AudioRecord {
     public:
         AudioRecord();
+        ~AudioRecord();
 
         void setSndFormat(AudioFormat format);
         void setRecordingOptions(AudioFormat format, const std::string &path);
@@ -96,6 +98,10 @@ class AudioRecord {
          */
         void recData(AudioBuffer& buffer);
 
+        std::string getRecorderID() const {
+            return recorder_.getRecorderID();
+        }
+
     private:
         NON_COPYABLE(AudioRecord);
 
@@ -138,8 +144,11 @@ class AudioRecord {
          * Path for this recording
          */
         std::string savePath_;
+
+        /**
+         * Audio recording thread
+         */
+        AudioRecorder recorder_;
 };
 
 } // namespace ring
-
-#endif // _AUDIO_RECORD_H
