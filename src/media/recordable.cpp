@@ -20,7 +20,7 @@
 
 #include "recordable.h"
 #include "audio/audiorecord.h"
-#include "audio/audiorecorder.h"
+#include "audio/ringbufferpool.h"
 #include "manager.h"
 #include "logger.h"
 
@@ -28,7 +28,6 @@ namespace ring {
 
 Recordable::Recordable()
     : recAudio_(new AudioRecord)
-    , recorder_(new AudioRecorder {recAudio_.get(), Manager::instance().getRingBufferPool()})
 {
     auto record_path = Manager::instance().audioPreference.getRecordPath();
     RING_DBG("Set recording options: %s", record_path.c_str());
@@ -36,46 +35,46 @@ Recordable::Recordable()
 }
 
 Recordable::~Recordable()
-{
-    if (recAudio_->isOpenFile())
-        recAudio_->closeFile();
-}
+{}
 
 void
-Recordable::initRecFilename(const std::string &filename)
+Recordable::initRecFilename(const std::string& filename)
 {
     recAudio_->initFilename(filename);
 }
 
 std::string
-Recordable::getFilename() const
+Recordable::getAudioFilename() const
 {
     return recAudio_->getFilename();
 }
 
 void
-Recordable::setRecordingFormat(AudioFormat format)
+Recordable::setRecordingAudioFormat(AudioFormat format)
 {
     recAudio_->setSndFormat(format);
 }
 
 bool
-Recordable::isRecording() const
-{
-    return recAudio_->isRecording();
-}
-
-bool
 Recordable::toggleRecording()
 {
-    if (not isRecording())
-        recorder_->init();
-    return recAudio_->toggleRecording();
+    std::lock_guard<std::mutex> lk {apiMutex_};
+    if (not recording_) {
+        recAudio_->setSndFormat(Manager::instance().getRingBufferPool().getInternalAudioFormat());
+        recAudio_->toggleRecording();
+    } else {
+        recAudio_->stopRecording();
+    }
+    recording_ = not recording_;
+    return recording_;
 }
 
 void
 Recordable::stopRecording()
 {
+    std::lock_guard<std::mutex> lk {apiMutex_};
+    if (not recording_)
+        return;
     recAudio_->stopRecording();
 }
 
