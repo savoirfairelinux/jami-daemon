@@ -38,6 +38,8 @@ def printAccountDetails(account):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+    parser.add_argument('--adra', help='Add new Ring (DHT) account', metavar='<account>',
+                        type=str)
     parser.add_argument('--gaa', help='Get all accounts (of optionaly given type)',
                         nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
     parser.add_argument('--gara', help='Get all registered accounts', action='store_true')
@@ -100,6 +102,10 @@ if __name__ == "__main__":
     if len(sys.argv) == 1:
         ctrl.run()
         sys.exit(0)
+
+    if args.adra:
+        accDetails = {'Account.type':'RING', 'Account.alias':args.adra if args.adra!='' else 'RingAccount', 'username':'dummy'}
+        accountID = ctrl.addAccount(accDetails)
 
     if args.gac:
         print(ctrl.getAllCodecs())
