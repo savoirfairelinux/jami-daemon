@@ -189,7 +189,9 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
     } while (err == -EBUSY and ++tries <= MAX_RETRIES);
 
     if (err < 0) {
-        RING_ERR("Alsa: couldn't open device %s : %s",  dev.c_str(),
+        RING_ERR("Alsa: couldn't open %s device %s : %s",
+              (stream == SND_PCM_STREAM_CAPTURE)? "capture" : (stream == SND_PCM_STREAM_PLAYBACK)? "playback" : "ringtone",
+              dev.c_str(),
               snd_strerror(err));
         return false;
     }
@@ -781,34 +783,34 @@ void AlsaLayer::playback(int maxFrames)
 
 void AlsaLayer::audioCallback()
 {
-    if (!playbackHandle_ or !captureHandle_)
-        return;
+    if (playbackHandle_)
+    {
+        notifyIncomingCall();
 
-    notifyIncomingCall();
+        snd_pcm_wait(playbackHandle_, 20);
 
-    snd_pcm_wait(playbackHandle_, 20);
+        int playbackAvailFrames = 0;
 
-    int playbackAvailFrames = 0;
+        if (not safeUpdate(playbackHandle_, playbackAvailFrames))
+            return;
 
-    if (not safeUpdate(playbackHandle_, playbackAvailFrames))
-        return;
+        unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
 
-    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
-    if (framesToGet > 0) {
-        // Urgent data (dtmf, incoming call signal) come first.
-        framesToGet = std::min(framesToGet, (unsigned)playbackAvailFrames);
-        playbackBuff_.setFormat(audioFormat_);
-        playbackBuff_.resize(framesToGet);
-        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        playbackBuff_.interleave(playbackIBuff_);
-        write(playbackIBuff_.data(), framesToGet, playbackHandle_);
-        // Consume the regular one as well (same amount of frames)
-        Manager::instance().getRingBufferPool().discard(framesToGet, RingBufferPool::DEFAULT_ID);
-    } else {
-        // regular audio data
-        playback(playbackAvailFrames);
+        if (framesToGet > 0) {
+            // Urgent data (dtmf, incoming call signal) come first.
+            framesToGet = std::min(framesToGet, (unsigned)playbackAvailFrames);
+            playbackBuff_.setFormat(audioFormat_);
+            playbackBuff_.resize(framesToGet);
+            urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+            playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+            playbackBuff_.interleave(playbackIBuff_);
+            write(playbackIBuff_.data(), framesToGet, playbackHandle_);
+            // Consume the regular one as well (same amount of frames)
+            Manager::instance().getRingBufferPool().discard(framesToGet, RingBufferPool::DEFAULT_ID);
+        } else {
+            // regular audio data
+            playback(playbackAvailFrames);
+        }
     }
 
     if (ringtoneHandle_) {
@@ -831,7 +833,7 @@ void AlsaLayer::audioCallback()
     }
 
     // Additionally handle the mic's audio stream
-    if (is_capture_running_)
+    if (!playbackHandle_ and is_capture_running_)
         capture();
 }
 
