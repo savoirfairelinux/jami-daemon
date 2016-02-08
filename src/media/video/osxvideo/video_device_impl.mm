@@ -142,6 +142,13 @@ VideoDeviceImpl::getSettings() const
 
     settings.name = [[avDevice_ localizedName] UTF8String];
 
+    auto format = [avDevice_ activeFormat];
+    auto frameRate = (AVFrameRateRange*)
+                    [format.videoSupportedFrameRateRanges objectAtIndex:0];
+    settings.framerate = frameRate.maxFrameRate;
+    settings.video_size = std::to_string(current_size_.width) +
+        "x" + std::to_string(current_size_.height);
+
     return settings;
 }
 
