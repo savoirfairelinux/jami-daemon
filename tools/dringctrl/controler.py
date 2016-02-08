@@ -117,13 +117,14 @@ class DRingCtrl(Thread):
             self.instance.Register(os.getpid(), self.name)
             self.registered = True
 
-        except:
+        except dbus.DBusException as e:
             raise DRingCtrlDeamonError("Client registration failed")
 
         try:
             proxy_callmgr.connect_to_signal('incomingCall', self.onIncomingCall)
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
             proxy_callmgr.connect_to_signal('conferenceCreated', self.onConferenceCreated)
+            proxy_confmgr.connect_to_signal('accountsChanged', self.onAccountsChanged)
 
         except dbus.DBusException as e:
             raise DRingCtrlDBusError("Unable to connect to dring DBus signals")
@@ -226,7 +227,6 @@ class DRingCtrl(Thread):
         """ On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
         """
-
         print(("On call state changed " + callid + " " + state))
 
         if callid not in self.activeCalls:
@@ -235,7 +235,6 @@ class DRingCtrl(Thread):
             self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
                                              'To': callDetails['PEER_NUMBER'],
                                           'State': state }
-
 
         self.currentCallId = callid
 
@@ -252,7 +251,7 @@ class DRingCtrl(Thread):
         elif state == "FAILURE":
             self.onCallFailure(callid, state)
         else:
-            print("unknown state")
+            print("unknown state:" + str(state))
 
     def onConferenceCreated_cb(self):
         pass
@@ -336,7 +335,7 @@ class DRingCtrl(Thread):
     def addAccount(self, details=None):
         """Add a new account account
 
-        Add a new account to the SFLphone-daemon. Default parameters are \
+        Add a new account to the Ring-daemon. Default parameters are \
         used for missing account configuration field.
 
         Required parameters are type, alias, hostname, username and password
@@ -349,7 +348,7 @@ class DRingCtrl(Thread):
                                   username and password in \
                                   order to create a new account")
 
-        return self.configurationmanager.addAccount(details)
+        return str(self.configurationmanager.addAccount(details))
 
     def removeAccount(self, accountID=None):
         """Remove an account from internal list"""
@@ -431,6 +430,9 @@ class DRingCtrl(Thread):
 
         account = self._valid_account(account)
         self.configurationmanager.sendRegister(account, register)
+
+    def onAccountsChanged(self):
+        print "Accounts changed"
 
     #
     # Codec manager
