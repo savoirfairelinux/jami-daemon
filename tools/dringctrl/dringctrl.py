@@ -38,43 +38,44 @@ def printAccountDetails(account):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--gaa', help='Get all accounts (of optionaly given type)',
+
+    parser.add_argument('--get-all-accounts', help='Get all accounts (of optionaly given type)',
                         nargs='?', metavar='<type>', type=str, default=argparse.SUPPRESS)
-    parser.add_argument('--gara', help='Get all registered accounts', action='store_true')
-    parser.add_argument('--gaea', help='Get all enabled accounts', action='store_true')
-    parser.add_argument('--gaad', help='Get all account details', action='store_true')
+    parser.add_argument('--get-registered-accounts', help='Get all registered accounts',
+                        action='store_true')
+    parser.add_argument('--get-enabled-accounts', help='Get all enabled accounts',
+                        action='store_true')
+    parser.add_argument('--get-all-accounts-details', help='Get all accounts details',
+                        action='store_true')
 
-    parser.add_argument('--gac', help='Get all codecs', action='store_true')
-
-    parser.add_argument('--gad', help='Get account details',
+    parser.add_argument('--add-ring-account', help='Add new Ring account',
                         metavar='<account>', type=str)
-
+    parser.add_argument('--remove-ring-account', help='Remove Ring account',
+                        metavar='<account>', type=str)
+    parser.add_argument('--get-account-details', help='Get account details',
+                        metavar='<account>', type=str)
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--enable', help='Enable the account',
                        metavar='<account>', type=str)
     group.add_argument('--disable', help='Disable the account',
                        metavar='<account>', type=str)
-
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--register', help='Register the account',
                        metavar='<account>', type=str)
     group.add_argument('--unregister', help='Unregister the account',
                        metavar='<account>', type=str)
-
-    parser.add_argument('--sac', help='Set active account',
+    parser.add_argument('--set-active-account', help='Set active account',
                         metavar='<account>', type=str)
 
-    parser.add_argument('--gacl', help='Get active codecs for the account',
+    parser.add_argument('--get-all-codecs', help='Get all codecs', action='store_true')
+    parser.add_argument('--get-active-codecs', help='Get active codecs for the account',
                         nargs='?', metavar='<account>', type=str, default=argparse.SUPPRESS)
-    parser.add_argument('--sacl', help='Set active codecs for active account',
+    parser.add_argument('--get-active-codecs-details', help='Get active codecs details for the account',
+                        metavar='<account>',type=str)
+    parser.add_argument('--set-active-codecs', help='Set active codecs for active account',
                         metavar='<codec list>', type=str)
 
-    parser.add_argument('--gacd', help='Get active codecs details for the account',
-                        metavar='<account>',type=str)
-
-    #parser.add_argument('--gcc', help='Get current callid', action='store_true')
-    parser.add_argument('--gcl', help='Get call list', action='store_true')
-
+    parser.add_argument('--get-call-list', help='Get call list', action='store_true')
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--call', help='Call to number', metavar='<destination>')
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
@@ -101,42 +102,49 @@ if __name__ == "__main__":
         ctrl.run()
         sys.exit(0)
 
-    if args.gac:
+    if args.add-ring-account:
+        accDetails = {'Account.type':'RING', 'Account.alias':args.add-ring-account if args.add-ring-account!='' else 'RingAccount'}
+        accountID = ctrl.addAccount(accDetails)
+
+    if args.remove-ring-account and args.remove-ring-account != '':
+        ctrl.removeAccount(args.remove-ring-account)
+
+    if args.get-all-codecs:
         print(ctrl.getAllCodecs())
 
-    if hasattr(args, 'gaa'):
-        for account in ctrl.getAllAccounts(args.gaa):
+    if hasattr(args, 'get-all-accounts'):
+        for account in ctrl.getAllAccounts(args.get-all-accounts):
             print(account)
 
-    if args.gara:
+    if args.get-registered-accounts:
         for account in ctrl.getAllRegisteredAccounts():
             print(account)
 
-    if args.gaea:
+    if args.get-enabled-accounts:
         for account in ctrl.getAllEnabledAccounts():
             print(account)
 
-    if args.gaad:
+    if args.get-all-accounts-details:
         for account in ctrl.getAllAccounts():
             printAccountDetails(account)
 
-    if args.gacd:
-        for codecId in ctrl.getActiveCodecs(args.gacd):
+    if args.get-active-codecs-details:
+        for codecId in ctrl.getActiveCodecs(args.get-active-codecs-details):
             print("# codec",codecId,"-------------")
-            print(ctrl.getCodecDetails(args.gacd, codecId))
+            print(ctrl.getCodecDetails(args.get-active-codecs-details, codecId))
             print("#-- ")
 
-    if args.sac:
-        ctrl.setAccount(args.sac)
+    if args.set-active-account:
+        ctrl.setAccount(args.set-active-account)
 
-    if args.gad:
-        printAccountDetails(args.gad)
+    if args.get-account-details:
+        printAccountDetails(args.get-account-details)
 
-    if hasattr(args, 'gacl'):
-        print(ctrl.getActiveCodecs(args.gacl))
+    if hasattr(args, 'get-active-codecs'):
+        print(ctrl.getActiveCodecs(args.get-active-codec))
 
-    if args.sacl:
-        ctrl.setActiveCodecList(codec_list=args.sacl)
+    if args.set-active-codecs:
+        ctrl.setActiveCodecList(codec_list=args.set-active-codecs)
 
     if args.enable:
         ctrl.setAccountEnable(args.enable, True)
@@ -150,7 +158,7 @@ if __name__ == "__main__":
     if args.unregister:
         ctrl.setAccountRegistered(args.unregister, False)
 
-    if args.gcl:
+    if args.get-call-list:
         for call in ctrl.getAllCalls():
             print(call)
 
@@ -188,49 +196,3 @@ if __name__ == "__main__":
             ctrl.videomanager.startCamera()
             time.sleep(2)
             ctrl.videomanager.stopCamera()
-
-"""
-
-		# Get call details
-		elif opt == "--gcd":
-			if arg == "current": arg = sflphone.getCurrentCallID()
-
-			details = sflphone.getCallDetails(arg)
-			if details:
-				print "Call: " + arg
-				print "Account: " + details['ACCOUNTID']
-				print "Peer: " + details['PEER_NAME'] + "<" + details['PEER_NUMBER'] + ">"
-
-		# Transfer the current call
-		elif opt == "--transfer":
-			call = sflphone.callmanager.getCurrentCallID()
-			sflphone.Transfert(call, arg)
-
-		#
-		# account options
-		#
-
-		# Register an account
-		elif opt == "--register":
-			if not sflphone.checkAccountExists(arg):
-				print "Account " + arg + ": no such account."
-
-			elif arg  in sflphone.getAllRegisteredAccounts():
-				print "Account " + arg + ": already registered."
-
-			else:
-				sflphone.setAccountRegistered(arg, True)
-				print arg + ": Sent register request."
-
-		# Unregister an account
-		elif opt == "--unregister":
-			if not sflphone.checkAccountExists(arg):
-				print "Account " + arg + ": no such account."
-
-			elif arg not in sflphone.getAllRegisteredAccounts():
-				print "Account " + arg + ": is not registered."
-
-			else:
-				sflphone.setAccountRegistered(arg, False)
-				print arg + ": Sent unregister request."
-"""
