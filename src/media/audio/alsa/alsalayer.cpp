@@ -133,7 +133,9 @@ void AlsaThread::run()
     alsa_->startedCv_.notify_all();
 
     while (alsa_->status_ == AudioLayer::Status::Started and running_) {
-        alsa_->audioCallback();
+        alsa_->playback();
+        alsa_->ringtone();
+        alsa_->capture();
     }
 }
 
@@ -189,7 +191,10 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
     } while (err == -EBUSY and ++tries <= MAX_RETRIES);
 
     if (err < 0) {
-        RING_ERR("Alsa: couldn't open device %s : %s",  dev.c_str(),
+        RING_ERR("Alsa: couldn't open %s device %s : %s",
+              (stream == SND_PCM_STREAM_CAPTURE)? "capture" :
+              (stream == SND_PCM_STREAM_PLAYBACK)? "playback" : "ringtone",
+              dev.c_str(),
               snd_strerror(err));
         return false;
     }
@@ -682,6 +687,9 @@ AlsaLayer::getAudioDeviceName(int index, DeviceType type) const
 
 void AlsaLayer::capture()
 {
+    if (!captureHandle_ or !is_capture_running_)
+        return;
+
     AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
 
     int toGetFrames = snd_pcm_avail_update(captureHandle_);
@@ -719,9 +727,38 @@ void AlsaLayer::capture()
     }
 }
 
-void AlsaLayer::playback(int maxFrames)
+void AlsaLayer::playback()
 {
-    unsigned framesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
+
+    if (!playbackHandle_)
+        return;
+
+    notifyIncomingCall();
+
+    snd_pcm_wait(playbackHandle_, 20);
+
+    int maxFrames = 0;
+
+    if (not safeUpdate(playbackHandle_, maxFrames))
+        return;
+
+    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+
+    if (framesToGet > 0) {
+        // Urgent data (dtmf, incoming call signal) come first.
+        framesToGet = std::min(framesToGet, (unsigned)maxFrames);
+        playbackBuff_.setFormat(audioFormat_);
+        playbackBuff_.resize(framesToGet);
+        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        playbackBuff_.interleave(playbackIBuff_);
+        write(playbackIBuff_.data(), framesToGet, playbackHandle_);
+        // Consume the regular one as well (same amount of frames)
+        Manager::instance().getRingBufferPool().discard(framesToGet, RingBufferPool::DEFAULT_ID);
+        return;
+    }
+
+    framesToGet = Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
 
     // no audio available, play tone or silence
     if (framesToGet <= 0) {
@@ -779,60 +816,27 @@ void AlsaLayer::playback(int maxFrames)
     }
 }
 
-void AlsaLayer::audioCallback()
+void AlsaLayer::ringtone()
 {
-    if (!playbackHandle_ or !captureHandle_)
+    if (!ringtoneHandle_)
         return;
 
-    notifyIncomingCall();
+    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
+    int ringtoneAvailFrames = 0;
 
-    snd_pcm_wait(playbackHandle_, 20);
-
-    int playbackAvailFrames = 0;
-
-    if (not safeUpdate(playbackHandle_, playbackAvailFrames))
+    if (not safeUpdate(ringtoneHandle_, ringtoneAvailFrames))
         return;
 
-    unsigned framesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+    playbackBuff_.setFormat(audioFormat_);
+    playbackBuff_.resize(ringtoneAvailFrames);
 
-    if (framesToGet > 0) {
-        // Urgent data (dtmf, incoming call signal) come first.
-        framesToGet = std::min(framesToGet, (unsigned)playbackAvailFrames);
-        playbackBuff_.setFormat(audioFormat_);
-        playbackBuff_.resize(framesToGet);
-        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
-        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
-        playbackBuff_.interleave(playbackIBuff_);
-        write(playbackIBuff_.data(), framesToGet, playbackHandle_);
-        // Consume the regular one as well (same amount of frames)
-        Manager::instance().getRingBufferPool().discard(framesToGet, RingBufferPool::DEFAULT_ID);
-    } else {
-        // regular audio data
-        playback(playbackAvailFrames);
+    if (file_tone) {
+        RING_DBG("playback gain %.3f", playbackGain_);
+        file_tone->getNext(playbackBuff_, playbackGain_);
     }
 
-    if (ringtoneHandle_) {
-        AudioLoop *file_tone = Manager::instance().getTelephoneFile();
-        int ringtoneAvailFrames = 0;
-
-        if (not safeUpdate(ringtoneHandle_, ringtoneAvailFrames))
-            return;
-
-        playbackBuff_.setFormat(audioFormat_);
-        playbackBuff_.resize(ringtoneAvailFrames);
-
-        if (file_tone) {
-            RING_DBG("playback gain %.3f", playbackGain_);
-            file_tone->getNext(playbackBuff_, playbackGain_);
-        }
-
-        playbackBuff_.interleave(playbackIBuff_);
-        write(playbackIBuff_.data(), ringtoneAvailFrames, ringtoneHandle_);
-    }
-
-    // Additionally handle the mic's audio stream
-    if (is_capture_running_)
-        capture();
+    playbackBuff_.interleave(playbackIBuff_);
+    write(playbackIBuff_.data(), ringtoneAvailFrames, ringtoneHandle_);
 }
 
 void AlsaLayer::updatePreference(AudioPreference &preference, int index, DeviceType type)
