@@ -45,6 +45,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 
 namespace ring {
 class IpAddr;
@@ -92,12 +93,14 @@ public:
      * tries to remove the given mapping
      */
     void removeMapping(const Mapping& mapping);
+    
+    /* register our client as a UPnP service */
+    void registerRD(std::string hash);
 
     /**
      * tries to get the external ip of the router
      */
     IpAddr getExternalIP() const;
-
 
     /**
      * get our local ip
@@ -167,6 +170,17 @@ private:
     std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
     mutable std::mutex validIGDMutex_;
     std::condition_variable validIGDCondVar_;
+    
+    /**
+     * map of valid RingDevices
+     *
+     * the UDN string is used to uniquely identify the RingDevice - same as user hash
+     *
+     * the mutex is used to access these lists and RingDevices in a thread-safe manner
+     */
+    std::map<std::string, std::unique_ptr<RD>> validRDs_;
+    mutable std::mutex validRDMutex_;
+    std::condition_variable validRDCondVar_;
 
     /**
      * Map of valid IGD listeners.
@@ -187,13 +201,18 @@ private:
 
     /* sends out async search for IGD */
     void searchForIGD();
+    
+    /* sends out async search for RDs */
+    void searchForRD();
 
     /**
      * Parses the device description and adds desired devices to
      * relevant lists
      */
     void parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event);
-
+    
+    void parseRD(IXML_Document* doc, const Upnp_Discovery* d_event);
+    
     void parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event);
 
     /* tries to add mapping, assumes you alreayd have lock on igd_mutex_ */

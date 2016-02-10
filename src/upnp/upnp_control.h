@@ -98,6 +98,9 @@ public:
      * tries to get the local ip of the IGD (router)
      */
     IpAddr getLocalIP() const;
+    
+    /* tries to register a Ring Device for auto discovery */
+    void regRD(std::string hash) const;
 
 private:
 
