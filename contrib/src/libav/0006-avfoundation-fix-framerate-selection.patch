@@ -1,4 +1,4 @@
-From fe6d5ed5a707830774465607527011996201e92d Mon Sep 17 00:00:00 2001
+From 95c829d3cba16e8c7e29ddb530ea9350dfbf4447 Mon Sep 17 00:00:00 2001
 From: Alexandre Lision <alexandre.lision@savoirfairelinux.com>
 Date: Tue, 12 Jan 2016 14:17:19 -0500
 Subject: [PATCH] avfoundation: fix framerate selection
@@ -9,13 +9,22 @@ framerate ranges can sometimes include only one value:
 ...
 Adding an epsilon prevent correct framerate selection
 ---
- libavdevice/avfoundation_dec.m | 16 +++++++++++++---
- 1 file changed, 13 insertions(+), 3 deletions(-)
+ libavdevice/avfoundation_dec.m | 18 ++++++++++++++----
+ 1 file changed, 14 insertions(+), 4 deletions(-)
 
 diff --git a/libavdevice/avfoundation_dec.m b/libavdevice/avfoundation_dec.m
-index f01484c..f233622 100644
+index f01484c..a9f6c80 100644
 --- a/libavdevice/avfoundation_dec.m
 +++ b/libavdevice/avfoundation_dec.m
+@@ -246,7 +246,7 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
+     AVCaptureDeviceFormat *selected_format = nil;
+     AVFrameRateRange *selected_range       = nil;
+     double framerate                       = av_q2d(ctx->internal_framerate);
+-    double epsilon                         = 0.00000001;
++    double epsilon                         = 0.0001;
+
+     for (AVCaptureDeviceFormat *format in[video_device formats]) {
+         CMFormatDescriptionRef formatDescription;
 @@ -265,12 +265,13 @@ static bool configure_video_device(AVFormatContext *s, AVCaptureDevice *video_de
              if (framerate) {
                  av_log(s, AV_LOG_VERBOSE, "Checking support for framerate %f\n",
