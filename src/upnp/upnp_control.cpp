@@ -150,4 +150,13 @@ Controller::getExternalIP() const
     return {}; //  empty address
 }
 
+void
+Controller::registerRingDevice(std::string hash) const
+{
+#if HAVE_LIBUPNP
+     if (upnpContext_)
+         upnpContext_->registerRingDevice(hash);
+#endif
+}
+
 }} // namespace ring::upnp
