@@ -99,6 +99,9 @@ public:
      */
     IpAddr getLocalIP() const;
 
+    /* tries to register a Ring Device for auto discovery */
+    void registerRingDevice(std::string hash) const;
+
 private:
 
     /**
