@@ -23,8 +23,19 @@
 #include <sstream>
 #include <cctype>
 #include <algorithm>
+#include <ostream>
 
 namespace ring {
+
+std::string
+to_string(double value)
+{
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf), "%-.*G", 16, value);
+    if (len <= 0)
+        throw std::invalid_argument{"can't parse double"};
+    return {buf, (size_t)len};
+}
 
 std::string
 trim(const std::string &s)

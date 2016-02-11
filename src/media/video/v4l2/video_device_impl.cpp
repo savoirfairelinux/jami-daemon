@@ -42,6 +42,7 @@ extern "C" {
 
 #include "logger.h"
 #include "../video_device.h"
+#include "string_utils.h"
 
 #define ZEROVAR(x) memset(&(x), 0, sizeof(x))
 
@@ -55,14 +56,14 @@ class VideoV4l2Size {
          * @throw std::runtime_error
          */
         void getFrameRates(int fd, unsigned int pixel_format);
-        std::vector<std::string> getRateList() const;
-        float getRate(unsigned rate) const;
+        std::vector<rational<double>> getRateList() const;
+        rational<double> getRate(double rate) const;
 
         unsigned width;
         unsigned height;
 
     private:
-        std::vector<float> rates_;
+        std::vector<rational<double>> rates_;
 };
 
 class VideoV4l2Channel {
@@ -81,8 +82,9 @@ class VideoV4l2Channel {
         void setFourcc(unsigned code);
         const char * getFourcc() const;
 
-        std::vector<std::string> getSizeList() const;
+        std::vector<std::pair<unsigned, unsigned>> getSizeList() const;
         const VideoV4l2Size& getSize(const std::string &name) const;
+        const VideoV4l2Size& getSize(std::pair<unsigned, unsigned> name) const;
 
         unsigned idx;
         std::string name;
@@ -104,8 +106,9 @@ class VideoDeviceImpl {
         std::string name;
 
         std::vector<std::string> getChannelList() const;
-        std::vector<std::string> getSizeList(const std::string& channel) const;
-        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;
+        std::vector<std::pair<unsigned, unsigned>> getSizeList(const std::string& channel) const;
+        std::vector<rational<double>> getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const;
+        std::vector<rational<double>> getRateList(const std::string& channel, const std::string& size) const;
 
         VideoSettings getSettings() const;
         void applySettings(VideoSettings settings);
@@ -119,7 +122,7 @@ class VideoDeviceImpl {
         /* Preferences */
         VideoV4l2Channel channel_;
         VideoV4l2Size size_;
-        float rate_;
+        rational<double> rate_;
 };
 
 static const unsigned pixelformats_supported[] = {
@@ -207,17 +210,9 @@ using std::stringstream;
 VideoV4l2Size::VideoV4l2Size(const unsigned width, const unsigned height) :
     width(width), height(height), rates_() {}
 
-vector<string> VideoV4l2Size::getRateList() const
+vector<rational<double>> VideoV4l2Size::getRateList() const
 {
-    vector<string> v;
-
-    for (const auto &item : rates_) {
-        stringstream ss;
-        ss << item;
-        v.push_back(ss.str());
-    }
-
-    return v;
+    return rates_;
 }
 
 void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
@@ -229,7 +224,7 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
     frmival.height = height;
 
     if (ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival)) {
-        rates_.push_back(25);
+        rates_.emplace_back(25);
         RING_ERR("could not query frame interval for size");
         return;
     }
@@ -237,36 +232,31 @@ void VideoV4l2Size::getFrameRates(int fd, unsigned int pixel_format)
     switch(frmival.type) {
         case V4L2_FRMIVAL_TYPE_DISCRETE:
             do {
-                const float rate = static_cast<float>(frmival.discrete.denominator)
-                    / frmival.discrete.numerator;
-                rates_.push_back(rate);
+                rates_.emplace_back(frmival.discrete.denominator, frmival.discrete.numerator);
                 ++frmival.index;
             } while (!ioctl(fd, VIDIOC_ENUM_FRAMEINTERVALS, &frmival));
             break;
         case V4L2_FRMIVAL_TYPE_CONTINUOUS:
-            rates_.push_back(25);
+            rates_.emplace_back(25);
             // TODO
             RING_ERR("Continuous Frame Intervals not supported");
             break;
         case V4L2_FRMIVAL_TYPE_STEPWISE:
-            rates_.push_back(25);
+            rates_.emplace_back(25);
             // TODO
             RING_ERR("Stepwise Frame Intervals not supported");
             break;
     }
 }
 
-float
-VideoV4l2Size::getRate(unsigned rate) const
+rational<double>
+VideoV4l2Size::getRate(double rate) const
 {
     for (const auto& item : rates_) {
-        if (item == rate)
+        if (std::fabs(item.real() - rate) < 0.0001d)
             return item;
     }
-
-    // fallback to last size
-    assert(not rates_.empty());
-    return rates_.back();
+    return 0;
 }
 
 VideoV4l2Channel::VideoV4l2Channel(unsigned idx, const char *s) :
@@ -287,15 +277,12 @@ VideoV4l2Channel::getFourcc() const
     return fourcc_;
 }
 
-vector<string> VideoV4l2Channel::getSizeList() const
+std::vector<std::pair<unsigned, unsigned>> VideoV4l2Channel::getSizeList() const
 {
-    vector<string> v;
+    vector<std::pair<unsigned, unsigned>> v;
 
-    for (const auto &item : sizes_) {
-        stringstream ss;
-        ss << item.width << "x" << item.height;
-        v.push_back(ss.str());
-    }
+    for (const auto &item : sizes_)
+        v.emplace_back(item.width, item.height);
 
     return v;
 }
@@ -406,9 +393,20 @@ VideoV4l2Channel::getSize(const string &name) const
             return item;
     }
 
-    // fallback to last size
     assert(not sizes_.empty());
-    return sizes_.back();
+    return sizes_.front();
+}
+
+const VideoV4l2Size&
+VideoV4l2Channel::getSize(std::pair<unsigned, unsigned> s) const
+{
+    for (const auto &item : sizes_) {
+        if (item.width == s.first && item.height == s.second)
+            return item;
+    }
+
+    assert(not sizes_.empty());
+    return sizes_.front();
 }
 
 VideoDeviceImpl::VideoDeviceImpl(const string& path) :
@@ -448,7 +446,7 @@ VideoDeviceImpl::VideoDeviceImpl(const string& path) :
     ::close(fd);
 
     // Set default settings
-    applySettings(VideoSettings());
+    //applySettings(VideoSettings());
 }
 
 vector<string> VideoDeviceImpl::getChannelList() const
@@ -461,14 +459,20 @@ vector<string> VideoDeviceImpl::getChannelList() const
     return v;
 }
 
-vector<string>
+vector<std::pair<unsigned, unsigned>>
 VideoDeviceImpl::getSizeList(const string& channel) const
 {
     return getChannel(channel).getSizeList();
 }
 
-vector<string>
+vector<rational<double>>
 VideoDeviceImpl::getRateList(const string& channel, const string& size) const
+{
+    return getChannel(channel).getSize(size).getRateList();
+}
+
+vector<rational<double>>
+VideoDeviceImpl::getRateList(const string& channel, std::pair<unsigned, unsigned> size) const
 {
     return getChannel(channel).getSize(size).getRateList();
 }
@@ -481,7 +485,7 @@ VideoDeviceImpl::getChannel(const string &name) const
             return item;
 
     assert(not channels_.empty());
-    return channels_.back();
+    return channels_.front();
 }
 
 void
@@ -490,7 +494,11 @@ VideoDeviceImpl::applySettings(VideoSettings settings)
     // Set preferences or fallback to defaults.
     channel_ = getChannel(settings.channel);
     size_ = channel_.getSize(settings.video_size);
-    rate_ = size_.getRate(settings.framerate);
+    try {
+        rate_ = size_.getRate(settings.framerate.empty() ? 0 : std::stod(settings.framerate));
+    } catch (const std::exception& e) {
+        rate_ = 0;
+    }
 }
 
 VideoSettings
@@ -499,10 +507,14 @@ VideoDeviceImpl::getSettings() const
     VideoSettings settings;
     settings.name = name;
     settings.channel = channel_.name;
-    stringstream video_size;
-    video_size << size_.width << "x" << size_.height;
-    settings.video_size = video_size.str();
-    settings.framerate = rate_;
+    if (size_.width > 0 && size_.height > 0) {
+        stringstream video_size;
+        video_size << size_.width << "x" << size_.height;
+        settings.video_size = video_size.str();
+    } else {
+        settings.video_size = "";
+    }
+    settings.framerate = ring::to_string(rate_.real());
     return settings;
 }
 
@@ -550,10 +562,34 @@ VideoDevice::getCapabilities() const
     DRing::VideoCapabilities cap;
 
     for (const auto& chan : deviceImpl_->getChannelList())
-        for (const auto& size : deviceImpl_->getSizeList(chan))
-            cap[chan][size] = deviceImpl_->getRateList(chan, size);
+        for (const auto& size : deviceImpl_->getSizeList(chan)) {
+            stringstream sz;
+            sz << size.first << "x" << size.second;
+            auto rates = deviceImpl_->getRateList(chan, size);
+            std::vector<std::string> rates_str {rates.size()};
+            std::transform(rates.begin(), rates.end(), rates_str.begin(), [](rational<double> r) { return ring::to_string(r.real()); });
+            cap[chan][sz.str()] = rates_str;
+        }
 
     return cap;
+}
+
+std::vector<std::string>
+VideoDevice::getChannelList() const
+{
+    return deviceImpl_->getChannelList();
+}
+
+std::vector<std::pair<unsigned, unsigned>>
+VideoDevice::getSizeList(const std::string& channel) const
+{
+    return deviceImpl_->getSizeList(channel);
+}
+
+std::vector<rational<double>>
+VideoDevice::getRateList(const std::string& channel, std::pair<unsigned, unsigned> size) const
+{
+    return deviceImpl_->getRateList(channel, size);
 }
 
 VideoDevice::~VideoDevice()
