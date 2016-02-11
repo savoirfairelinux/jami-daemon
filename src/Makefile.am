@@ -73,6 +73,7 @@ libring_la_LDFLAGS = \
 		@SAMPLERATE_LIBS@ \
 		@SNDFILE_LIBS@ \
 		@YAMLCPP_LIBS@ \
+		@JSONCPP_LIBS@ \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
 		@PORTAUDIO_LIBS@ \
@@ -115,6 +116,7 @@ libring_la_SOURCES = \
 		account.cpp \
 		logger.cpp \
 		fileutils.cpp \
+		archiver.cpp \
 		threadloop.cpp \
 		ip_utils.h \
 		ip_utils.cpp \
@@ -136,6 +138,7 @@ libring_la_SOURCES = \
 		call.h \
 		logger.h \
 		fileutils.h \
+		archiver.h \
 		noncopyable.h \
 		utf8_utils.h \
 		ring_types.h \
