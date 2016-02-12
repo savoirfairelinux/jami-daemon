@@ -149,6 +149,12 @@ bool discardTrustRequest(const std::string& accountId, const std::string& from);
 
 void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
 
+/*
+ * Import/Export accounts
+ */
+int exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password);
+int importAccounts(std::string archivePath, std::string password);
+
 struct AudioSignal {
         struct DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
