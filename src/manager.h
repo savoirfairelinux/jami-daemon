@@ -500,11 +500,17 @@ class Manager {
         void setAccountActive(const std::string& accountID, bool active);
 
         /**
+         * Return a new random accountid that is not present in the list
+         * @return std::string A brand new accountid
+         */
+        std::string getNewAccountId();
+
+        /**
          * Add a new account, and give it a new account ID automatically
          * @param details The new account parameters
          * @return The account Id given to the new account
          */
-        std::string addAccount(const std::map<std::string, std::string> &details);
+        std::string addAccount(const std::map<std::string, std::string> &details, const std::string& accountId = {});
 
         /**
          * Delete an existing account, unregister VoIPLink associated, and
