@@ -425,7 +425,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     using yaml_utils::parseValue;
 
     SIPAccountBase::unserialize(node);
-    parseValue(node, Conf::DHT_PORT_KEY, dhtPort_);
+
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
@@ -1251,6 +1251,9 @@ RingAccount::loadDhParams(const std::string path)
 void
 RingAccount::generateDhParams()
 {
+    //make sure cachePath_ is writable
+    fileutils::check_dir(cachePath_.c_str(), 0700);
+
     std::packaged_task<decltype(loadDhParams)> task(loadDhParams);
     dhParams_ = task.get_future();
     std::thread task_td(std::move(task), cachePath_ + DIR_SEPARATOR_STR "dhParams");
