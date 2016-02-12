@@ -34,6 +34,7 @@
 #endif
 #include "logger.h"
 #include "fileutils.h"
+#include "archiver.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "ringdht/ringaccount.h"
@@ -312,6 +313,21 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         acc->sendTrustRequest(to, payload);
+}
+
+/*
+ * Import/Export accounts
+ */
+int
+exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password)
+{
+    return ring::Archiver::instance().exportAccounts(accountIDs, filepath, password);
+}
+
+int
+importAccounts(std::string archivePath, std::string password)
+{
+    return ring::Archiver::instance().importAccounts(archivePath, password);
 }
 
 ///This function is used as a base for new accounts for clients that support it
