@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,9 +20,12 @@
  */
 
 #include "sips_transport_ice.h"
+
 #include "ice_transport.h"
 #include "manager.h"
+#include "sip/sip_utils.h"
 #include "logger.h"
+#include "intrin.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
@@ -39,7 +43,6 @@ namespace ring { namespace tls {
 static constexpr int POOL_TP_INIT {512};
 static constexpr int POOL_TP_INC {512};
 static constexpr int TRANSPORT_INFO_LENGTH {64};
-static constexpr int DTLS_MTU {6400};
 
 static void
 sockaddr_to_host_port(pj_pool_t* pool,
@@ -52,74 +55,145 @@ sockaddr_to_host_port(pj_pool_t* pool,
     host_port->port = pj_sockaddr_get_port(addr);
 }
 
+static pj_status_t
+tls_status_from_err(int err)
+{
+    pj_status_t status;
+
+    switch (err) {
+        case GNUTLS_E_SUCCESS:
+            status = PJ_SUCCESS;
+            break;
+        case GNUTLS_E_MEMORY_ERROR:
+            status = PJ_ENOMEM;
+            break;
+        case GNUTLS_E_LARGE_PACKET:
+            status = PJ_ETOOBIG;
+            break;
+        case GNUTLS_E_NO_CERTIFICATE_FOUND:
+            status = PJ_ENOTFOUND;
+            break;
+        case GNUTLS_E_SESSION_EOF:
+            status = PJ_EEOF;
+            break;
+        case GNUTLS_E_HANDSHAKE_TOO_LARGE:
+            status = PJ_ETOOBIG;
+            break;
+        case GNUTLS_E_EXPIRED:
+            status = PJ_EGONE;
+            break;
+        case GNUTLS_E_TIMEDOUT:
+            status = PJ_ETIMEDOUT;
+            break;
+        case GNUTLS_E_PREMATURE_TERMINATION:
+            status = PJ_ECANCELLED;
+            break;
+        case GNUTLS_E_INTERNAL_ERROR:
+        case GNUTLS_E_UNIMPLEMENTED_FEATURE:
+            status = PJ_EBUG;
+            break;
+        case GNUTLS_E_AGAIN:
+        case GNUTLS_E_INTERRUPTED:
+        case GNUTLS_E_REHANDSHAKE:
+            status = PJ_EPENDING;
+            break;
+        case GNUTLS_E_TOO_MANY_EMPTY_PACKETS:
+        case GNUTLS_E_TOO_MANY_HANDSHAKE_PACKETS:
+        case GNUTLS_E_RECORD_LIMIT_REACHED:
+            status = PJ_ETOOMANY;
+            break;
+        case GNUTLS_E_UNSUPPORTED_VERSION_PACKET:
+        case GNUTLS_E_UNSUPPORTED_SIGNATURE_ALGORITHM:
+        case GNUTLS_E_UNSUPPORTED_CERTIFICATE_TYPE:
+        case GNUTLS_E_X509_UNSUPPORTED_ATTRIBUTE:
+        case GNUTLS_E_X509_UNSUPPORTED_EXTENSION:
+        case GNUTLS_E_X509_UNSUPPORTED_CRITICAL_EXTENSION:
+            status = PJ_ENOTSUP;
+            break;
+        case GNUTLS_E_INVALID_SESSION:
+        case GNUTLS_E_INVALID_REQUEST:
+        case GNUTLS_E_INVALID_PASSWORD:
+        case GNUTLS_E_ILLEGAL_PARAMETER:
+        case GNUTLS_E_RECEIVED_ILLEGAL_EXTENSION:
+        case GNUTLS_E_UNEXPECTED_PACKET:
+        case GNUTLS_E_UNEXPECTED_PACKET_LENGTH:
+        case GNUTLS_E_UNEXPECTED_HANDSHAKE_PACKET:
+        case GNUTLS_E_UNWANTED_ALGORITHM:
+        case GNUTLS_E_USER_ERROR:
+            status = PJ_EINVAL;
+            break;
+        default:
+            status = PJ_EUNKNOWN;
+            break;
+    }
+
+    return status;
+}
+
+//==================================================================================================
+//==================================================================================================
+//==================================================================================================
+//==================================================================================================
+//==================================================================================================
+//==================================================================================================
+
 SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    const TlsParams& param,
                                    const std::shared_ptr<ring::IceTransport>& ice,
                                    int comp_id)
-    : pool_  {nullptr, pj_pool_release}
-    , rxPool_ (nullptr, pj_pool_release)
-    , trData_ ()
-    , ice_ (ice)
+    : ice_ (ice)
     , comp_id_ (comp_id)
-    , param_ (param)
-    , tlsThread_(
-        std::bind(&SipsIceTransport::setup, this),
-        std::bind(&SipsIceTransport::loop, this),
-        std::bind(&SipsIceTransport::clean, this))
-    , xcred_ {nullptr, gnutls_certificate_free_credentials}
+    , certCheck_(param.cert_check)
+    , trData_ ()
+    , pool_  {nullptr, pj_pool_release}
+    , rxPool_ (nullptr, pj_pool_release)
 {
     RING_DBG("SipIceTransport@%p {tr=%p}", this, &trData_.base);
-
-    trData_.self = this;
 
     if (not ice or not ice->isRunning())
         throw std::logic_error("ICE transport must exist and negotiation completed");
 
-    pool_.reset(pjsip_endpt_create_pool(endpt, "SipsIceTransport.pool",
-                                        POOL_TP_INIT, POOL_TP_INC));
-    if (not pool_) {
-        RING_ERR("Can't create PJSIP pool");
-        throw std::bad_alloc();
-    }
-    auto pool = pool_.get();
+    trData_.self = this; // up-link for PJSIP callbacks
+
+    pool_ = std::move(sip_utils::smart_alloc_pool(endpt, "SipsIceTransport.pool",
+                                                  POOL_TP_INIT, POOL_TP_INC));
 
     auto& base = trData_.base;
+    std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
+
     pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "SipsIceTransport");
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
-    base.pool = pool;
+    base.pool = pool_.get();
 
-    if (pj_atomic_create(pool, 0, &base.ref_cnt) != PJ_SUCCESS)
+    if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP atomic.");
 
-    if (pj_lock_create_recursive_mutex(pool, "SipsIceTransport.mutex",
+    if (pj_lock_create_recursive_mutex(pool_.get(), "SipsIceTransport.mutex",
                                        &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
-    is_server_ = not ice->isInitiator();
     local_ = ice->getLocalAddress(comp_id);
     remote_ = ice->getRemoteAddress(comp_id);
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
     base.key.type = PJSIP_TRANSPORT_TLS;
     base.type_name = (char*)pjsip_transport_get_type_name((pjsip_transport_type_e)base.key.type);
     base.flag = pjsip_transport_get_flag_from_type((pjsip_transport_type_e)base.key.type);
-    base.info = (char*) pj_pool_alloc(pool, TRANSPORT_INFO_LENGTH);
+    base.info = (char*) pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH);
 
     char print_addr[PJ_INET6_ADDRSTRLEN+10];
-    pj_ansi_snprintf(base.info, TRANSPORT_INFO_LENGTH, "%s to %s",
-                     base.type_name,
-                     pj_sockaddr_print(remote_.pjPtr(), print_addr,
-                                       sizeof(print_addr), 3));
+    pj_ansi_snprintf(base.info, TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name,
+                     pj_sockaddr_print(remote_.pjPtr(), print_addr, sizeof(print_addr), 3));
     base.addr_len = remote_.getLength();
-    base.dir = PJSIP_TP_DIR_NONE; ///is_server? PJSIP_TP_DIR_INCOMING : PJSIP_TP_DIR_OUTGOING;
+    base.dir = PJSIP_TP_DIR_NONE;
     base.data = nullptr;
 
     /* Set initial local address */
     auto local = ice->getDefaultLocalAddress();
     pj_sockaddr_cp(&base.local_addr, local.pjPtr());
 
-    sockaddr_to_host_port(pool, &base.local_name, &base.local_addr);
-    sockaddr_to_host_port(pool, &base.remote_name, remote_.pjPtr());
+    sockaddr_to_host_port(pool_.get(), &base.local_name, &base.local_addr);
+    sockaddr_to_host_port(pool_.get(), &base.remote_name, remote_.pjPtr());
 
     base.send_msg = [](pjsip_transport *transport,
                        pjsip_tx_data *tdata,
@@ -131,7 +205,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
         RING_DBG("SipsIceTransport@%p: shutdown", this_);
-        this_->shutdown();
+        this_->tls_->shutdown();
         return PJ_SUCCESS;
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
@@ -143,14 +217,8 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     /* Init rdata_ */
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_.reset(pjsip_endpt_create_pool(base.endpt,
-                                          "SipsIceTransport.rxPool",
-                                          PJSIP_POOL_RDATA_LEN,
-                                          PJSIP_POOL_RDATA_LEN));
-    if (not rxPool_) {
-        RING_ERR("Can't create PJSIP rx pool");
-        throw std::bad_alloc();
-    }
+    rxPool_ = std::move(sip_utils::smart_alloc_pool(endpt, "SipsIceTransport.rxPool",
+                                                    PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN));
     rdata_.tp_info.pool = rxPool_.get();
     rdata_.tp_info.transport = &base;
     rdata_.tp_info.tp_data = this;
@@ -167,210 +235,293 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
     std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
-    /* Register error subsystem */
-    /*pj_status_t status = pj_register_strerror(PJ_ERRNO_START_USER +
-                                              PJ_ERRNO_SPACE_SIZE * 6,
-                                              PJ_ERRNO_SPACE_SIZE,
-                                              &tls_strerror);
-    pj_assert(status == PJ_SUCCESS);*/
+    TlsSession::TlsSessionCallbacks cbs = {
+        .onStateChange = [this](TlsSessionState state){ onTlsStateChange(state); },
+        .onRxData = [this](TlsSession::Blob&& buf){ onRxData(std::move(buf)); },
+        .onCertificatesUpdate = [this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                       unsigned int n){ onCertificatesUpdate(l, r, n); },
+        .verifyCertificate = [this](gnutls_session_t session){ return verifyCertificate(session); }
+    };
+    tls_.reset(new TlsSession(ice, comp_id, param, cbs));
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
 
-    gnutls_priority_init(&priority_cache_,
-                         "SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE",
-                         nullptr);
-
-    tlsThread_.start();
     Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
 }
 
 SipsIceTransport::~SipsIceTransport()
 {
-    RING_DBG("~SipsIceTransport");
-    auto event = state_ == TlsConnectionState::ESTABLISHED;
-    shutdown();
-    tlsThread_.join();
+    auto base = getTransportBase();
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    handleEvents(); // process latest incoming packets
 
-    pjsip_transport_add_ref(getTransportBase());
-    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
-    if (state_cb && event) {
-        pjsip_transport_state_info state_info;
-        pjsip_tls_state_info tls_info;
+    // Stop low-level transport first
+    tls_.reset();
 
-        /* Init transport state info */
-        std::memset(&state_info, 0, sizeof(state_info));
-        std::memset(&tls_info, 0, sizeof(tls_info));
+    // Flush PJSIP/TLS events
+    handleEvents();
+
+    pjsip_transport_add_ref(base);
+
+    // Force DISCONNECTED state
+    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
         pj_ssl_sock_info ssl_info;
-        getInfo(&ssl_info);
+        std::memset(&ssl_info, 0, sizeof(ssl_info));
+
+        pjsip_tls_state_info tls_info;
+        std::memset(&tls_info, 0, sizeof(tls_info));
         tls_info.ssl_sock_info = &ssl_info;
+
+        pjsip_transport_state_info state_info;
+        std::memset(&state_info, 0, sizeof(state_info));
         state_info.ext_info = &tls_info;
         state_info.status = PJ_SUCCESS;
 
-        (*state_cb)(getTransportBase(), PJSIP_TP_STATE_DISCONNECTED, &state_info);
+        try {
+            (*state_cb)(base, PJSIP_TP_STATE_DISCONNECTED, &state_info);
+        } catch (...) {
+            // silent
+        }
     }
 
     if (not trData_.base.is_shutdown and not trData_.base.is_destroying)
-        pjsip_transport_shutdown(getTransportBase());
+        pjsip_transport_shutdown(base);
 
-    pjsip_transport_dec_ref(getTransportBase());
-
+    pjsip_transport_dec_ref(base);
     pj_lock_destroy(trData_.base.lock);
     pj_atomic_destroy(trData_.base.ref_cnt);
-
-    gnutls_priority_deinit(priority_cache_);
 }
 
-pj_status_t
-SipsIceTransport::startTlsSession()
+void
+SipsIceTransport::handleEvents()
 {
-    RING_DBG("SipsIceTransport::startTlsSession as %s",
-             (is_server_ ? "server" : "client"));
-    int ret;
-
-    ret = gnutls_init(&session_, (is_server_ ? GNUTLS_SERVER : GNUTLS_CLIENT) | GNUTLS_DATAGRAM);
-    if (ret != GNUTLS_E_SUCCESS) {
-        shutdown();
-        return tls_status_from_err(ret);
+    // Notify transport manager about state changes first
+    decltype(stateChangeEvents_) eventDataQueue;
+    {
+        std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
+        eventDataQueue = std::move(stateChangeEvents_);
+        stateChangeEvents_.clear();
     }
 
-    gnutls_session_set_ptr(session_, this);
-    gnutls_transport_set_ptr(session_, this);
+    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
+        for (auto& evdata : eventDataQueue) {
+            evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
+            evdata.state_info.ext_info = &evdata.tls_info;
 
-    gnutls_priority_set(session_, priority_cache_);
-
-    /* Allocate credentials for handshaking and transmission */
-    gnutls_certificate_credentials_t certCred;
-    ret = gnutls_certificate_allocate_credentials(&certCred);
-    if (ret < 0 or not certCred) {
-        RING_ERR("Can't allocate credentials");
-        shutdown();
-        return PJ_ENOMEM;
-    }
-
-    xcred_.reset(certCred);
-
-    if (is_server_) {
-        auto& dh_params = param_.dh_params.get();
-        if (dh_params)
-            gnutls_certificate_set_dh_params(certCred, dh_params.get());
-        else
-            RING_ERR("DH params unavaliable");
-    }
-
-    gnutls_certificate_set_verify_function(certCred, [](gnutls_session_t session) {
-        auto this_ = reinterpret_cast<SipsIceTransport*>(gnutls_session_get_ptr(session));
-        return this_->verifyCertificate();
-    });
-
-    if (not param_.ca_list.empty()) {
-        /* Load CA if one is specified. */
-        ret = gnutls_certificate_set_x509_trust_file(certCred,
-                                                     param_.ca_list.c_str(),
-                                                     GNUTLS_X509_FMT_PEM);
-        if (ret < 0)
-            ret = gnutls_certificate_set_x509_trust_file(certCred,
-                                                         param_.ca_list.c_str(),
-                                                         GNUTLS_X509_FMT_DER);
-        if (ret < 0)
-            throw std::runtime_error("Can't load CA.");
-        RING_DBG("Loaded %s", param_.ca_list.c_str());
-    }
-    if (param_.id.first) {
-        /* Load certificate, key and pass */
-        ret = gnutls_certificate_set_x509_key(certCred,
-                                              &param_.id.second->cert, 1,
-                                              param_.id.first->x509_key);
-        if (ret < 0)
-            throw std::runtime_error("Can't load certificate : "
-                                     + std::string(gnutls_strerror(ret)));
-    }
-
-    /* Finally set credentials for this session */
-    ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, certCred);
-    if (ret != GNUTLS_E_SUCCESS) {
-        shutdown();
-        return tls_status_from_err(ret);
-    }
-
-    if (is_server_) {
-        /* Require client certificate and valid cookie */
-        gnutls_certificate_server_set_request(session_, GNUTLS_CERT_REQUIRE);
-        gnutls_dtls_prestate_set(session_, &prestate_);
-    }
-
-    gnutls_dtls_set_mtu(session_, DTLS_MTU);
-
-    gnutls_transport_set_vec_push_function(session_, [](gnutls_transport_ptr_t t,
-                                                    const giovec_t* iov,
-                                                    int iovcnt) -> ssize_t {
-        auto this_ = reinterpret_cast<SipsIceTransport*>(t);
-        ssize_t sent = 0;
-        for (int i=0; i<iovcnt; i++) {
-            const giovec_t& dat = *(iov+i);
-            auto ret = this_->tlsSend(dat.iov_base, dat.iov_len);
-            if (ret < 0)
-                return ret;
-            sent += ret;
+            (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
         }
-        return sent;
-    });
-    gnutls_transport_set_pull_function(session_, [](gnutls_transport_ptr_t t,
-                                                    void* d,
-                                                    size_t s) -> ssize_t {
-        auto this_ = reinterpret_cast<SipsIceTransport*>(t);
-        return this_->tlsRecv(d, s);
-    });
-    gnutls_transport_set_pull_timeout_function(session_, [](gnutls_transport_ptr_t t,
-                                                            unsigned ms) -> int {
-        auto this_ = reinterpret_cast<SipsIceTransport*>(t);
-        return this_->waitForTlsData(ms);
-    });
-
-    // start handshake
-    handshakeStart_ = clock::now();
-    state_ = TlsConnectionState::HANDSHAKING;
-
-    return PJ_SUCCESS;
-}
-
-void
-SipsIceTransport::closeTlsSession()
-{
-    state_ = TlsConnectionState::DISCONNECTED;
-    if (session_) {
-        gnutls_bye(session_, GNUTLS_SHUT_RDWR);
-        gnutls_deinit(session_);
-        session_ = nullptr;
     }
 
-    xcred_.reset();
+    // Handle TLS -> SIP transport
+    decltype(rxPending_) rx;
+    {
+        std::lock_guard<std::mutex> l(rxMtx_);
+        rx = std::move(rxPending_);
+        rxPending_.clear();
+    }
+
+    for (auto it = rx.begin(); it != rx.end(); ++it) {
+        auto& pck = *it;
+        pj_pool_reset(rdata_.tp_info.pool);
+        pj_gettimeofday(&rdata_.pkt_info.timestamp);
+        rdata_.pkt_info.len = pck.size();
+        std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
+        auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
+
+        // Uncomplet parsing? (may be a partial sip packet received)
+        if (eaten != rdata_.pkt_info.len) {
+            auto npck_it = std::next(it);
+            if (npck_it != rx.end()) {
+                // drop current packet, merge reminder with next one
+                auto& npck = *npck_it;
+                npck.insert(npck.begin(), pck.begin()+eaten, pck.end());
+            } else {
+                // erase eaten part, keep reminder
+                pck.erase(pck.begin(), pck.begin()+eaten);
+                {
+                    std::lock_guard<std::mutex> l(rxMtx_);
+                    rxPending_.splice(rxPending_.begin(), rx, it);
+                }
+                break;
+            }
+        }
+    }
+
+    // Acknowledged SIP -> TLS packet
+    decltype(txAckQueue_) ack_queue;
+    {
+        std::lock_guard<std::mutex> l(txAckQueueMutex_);
+        ack_queue = std::move(txAckQueue_);
+        txAckQueue_.clear();
+    }
+    auto base = getTransportBase();
+    for (const auto& pair: ack_queue) {
+        auto tdata = pair.first;
+        tdata->op_key.tdata = nullptr;
+        if (tdata->op_key.callback) {
+            tdata->op_key.callback(base, tdata->op_key.token, pair.second);
+            tdata->op_key.callback = nullptr;
+        }
+    }
 }
 
 void
-SipsIceTransport::certGetCn(const pj_str_t* gen_name, pj_str_t* cn)
+SipsIceTransport::pushChangeStateEvent(ChangeStateEventData&& ev)
 {
-    pj_str_t CN_sign = {(char*)"CN=", 3};
-    char *p, *q;
+    std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
+    stateChangeEvents_.emplace_back(std::move(ev));
+}
 
-    std::memset(cn, 0, sizeof(*cn));
+// - DO NOT BLOCK - (Called in TlsSession thread)
+void
+SipsIceTransport::onTlsStateChange(UNUSED TlsSessionState state)
+{
+    if (state == TlsSessionState::ESTABLISHED)
+        updateTransportState(PJSIP_TP_STATE_CONNECTED);
+    else if (state == TlsSessionState::SHUTDOWN)
+        updateTransportState(PJSIP_TP_STATE_DISCONNECTED);
+}
 
-    p = pj_strstr(gen_name, &CN_sign);
-    if (!p)
-        return;
+// - DO NOT BLOCK - (Called in TlsSession thread)
+void
+SipsIceTransport::onRxData(std::vector<uint8_t>&& buf)
+{
+    std::lock_guard<std::mutex> l(rxMtx_);
+    if (rxPending_.empty())
+        rxPending_.emplace_back(std::move(buf));
+    else {
+        auto& last = rxPending_.back();
+        last.insert(std::end(last), std::begin(buf), std::end(buf));
+    }
+}
 
-    p += 3; /* shift pointer to value part */
-    pj_strset(cn, p, gen_name->slen - (p - gen_name->ptr));
-    q = pj_strchr(cn, ',');
-    if (q)
-        cn->slen = q - p;
+/* Update local & remote certificates info. This function should be
+ * called after handshake or re-negotiation successfully completed.
+ *
+ * - DO NOT BLOCK - (Called in TlsSession thread)
+ */
+void
+SipsIceTransport::onCertificatesUpdate(const gnutls_datum_t* local_raw,
+                                       const gnutls_datum_t* remote_raw,
+                                       unsigned int remote_count)
+{
+    // local certificate
+    if (local_raw)
+        certGetInfo(pool_.get(), &localCertInfo_, local_raw, 1);
+    else
+        std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
+
+    // Remote certificates
+    if (remote_raw)
+        certGetInfo(pool_.get(), &remoteCertInfo_, remote_raw, remote_count);
+    else
+        std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
+}
+
+int
+SipsIceTransport::verifyCertificate(gnutls_session_t session)
+{
+    // Support only x509 format
+    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
+        verifyStatus_ = PJ_SSL_CERT_EINVALID_FORMAT;
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // Store verification status
+    unsigned int status = 0;
+    auto ret = gnutls_certificate_verify_peers2(session, &status);
+    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
+        verifyStatus_ = PJ_SSL_CERT_EUNTRUSTED;
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    unsigned int cert_list_size = 0;
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
+    if (cert_list == nullptr) {
+        verifyStatus_ = PJ_SSL_CERT_EISSUER_NOT_FOUND;
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    if (certCheck_) {
+        verifyStatus_ = certCheck_(status, cert_list, cert_list_size);
+        if (verifyStatus_ != PJ_SUCCESS)
+            return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // notify GnuTLS to continue handshake normally
+    return GNUTLS_E_SUCCESS;
+}
+
+void
+SipsIceTransport::updateTransportState(pjsip_transport_state state)
+{
+    ChangeStateEventData ev;
+
+    std::memset(&ev.state_info, 0, sizeof(ev.state_info));
+    std::memset(&ev.tls_info, 0, sizeof(ev.tls_info));
+
+    ev.state = state;
+    tlsConnected_ = state == PJSIP_TP_STATE_CONNECTED;
+    getInfo(&ev.ssl_info, tlsConnected_);
+    if (tlsConnected_)
+        ev.state_info.status = ev.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
+    else
+        ev.state_info.status = PJ_SUCCESS; // TODO: use last gnu error
+
+    pushChangeStateEvent(std::move(ev));
+}
+
+void
+SipsIceTransport::getInfo(pj_ssl_sock_info* info, bool established)
+{
+    std::memset(info, 0, sizeof(*info));
+
+    // Established flag
+    info->established = established;
+
+    // Protocol
+    info->proto = PJ_SSL_SOCK_PROTO_DTLS1;
+
+    // Local address
+    pj_sockaddr_cp(&info->local_addr, local_.pjPtr());
+
+    if (established) {
+        const auto cipher = gnutls_cipher_get(tls_->getGnuTlsSession()); // Current cipher
+        gnutls_cipher_algorithm_t lookup;
+        unsigned char id[2];
+
+        for (size_t i=0; ; ++i) {
+            const auto suite = gnutls_cipher_suite_info(i, id, nullptr, &lookup, nullptr, nullptr);
+            if (not suite) {
+                RING_ERR("Can't find info for cipher %s (%d)", gnutls_cipher_get_name(cipher), cipher);
+                break;
+            }
+
+            if (lookup == cipher) {
+                info->cipher = (pj_ssl_cipher) ((id[0] << 8) | id[1]);
+                break;
+            }
+        }
+
+        // Remote address
+        pj_sockaddr_cp(&info->remote_addr, remote_.pjPtr());
+
+        // Certificates info
+        info->local_cert_info = &localCertInfo_;
+        info->remote_cert_info = &remoteCertInfo_;
+
+        // Verification status
+        info->verify_status = verifyStatus_;
+    }
+
+    // Last known GnuTLS error code
+    info->last_native_err = GNUTLS_E_SUCCESS;
 }
 
 /* Get certificate info; in case the certificate info is already populated,
  * this function will check if the contents need updating by inspecting the
- * issuer and the serial number. */
+ * issuer and the serial number.
+ */
 void
 SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
                               const gnutls_datum_t* crt_raw, size_t crt_raw_num)
@@ -441,7 +592,7 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
         ci->subj_alt_name.entry = \
             (decltype(ci->subj_alt_name.entry))pj_pool_calloc(pool, seq, sizeof(*ci->subj_alt_name.entry));
         if (!ci->subj_alt_name.entry) {
-            last_err_ = GNUTLS_E_MEMORY_ERROR;
+            //last_err_ = GNUTLS_E_MEMORY_ERROR;
             return;
         }
 
@@ -482,471 +633,23 @@ SipsIceTransport::certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci,
     }
 }
 
-
-/* Update local & remote certificates info. This function should be
- * called after handshake or renegotiation successfully completed. */
 void
-SipsIceTransport::certUpdate()
+SipsIceTransport::certGetCn(const pj_str_t* gen_name, pj_str_t* cn)
 {
-    /* Get active local certificate */
-    if(const auto local_raw = gnutls_certificate_get_ours(session_))
-        certGetInfo(pool_.get(), &localCertInfo_, local_raw, 1);
-    else
-        std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
+    pj_str_t CN_sign = {(char*)"CN=", 3};
+    char *p, *q;
 
-    unsigned int certslen = 0;
-    if (const auto remote_raw = gnutls_certificate_get_peers(session_, &certslen))
-        certGetInfo(pool_.get(), &remoteCertInfo_, remote_raw, certslen);
-    else
-        std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
-}
+    std::memset(cn, 0, sizeof(*cn));
 
-void
-SipsIceTransport::getInfo(pj_ssl_sock_info* info)
-{
-    std::memset(info, 0, sizeof(*info));
-
-    /* Established flag */
-    info->established = (state_ == TlsConnectionState::ESTABLISHED);
-
-    /* Protocol */
-    info->proto = PJ_SSL_SOCK_PROTO_DTLS1;
-
-    /* Local address */
-    pj_sockaddr_cp(&info->local_addr, local_.pjPtr());
-
-    if (info->established) {
-        unsigned char id[2];
-        gnutls_cipher_algorithm_t cipher;
-        gnutls_cipher_algorithm_t lookup;
-
-        /* Current cipher */
-        cipher = gnutls_cipher_get(session_);
-        for (size_t i=0; ; ++i) {
-            const auto suite = gnutls_cipher_suite_info(i, id, nullptr, &lookup,
-                                                        nullptr, nullptr);
-            if (not suite) {
-                RING_ERR("Can't find info for cipher %s (%d)", gnutls_cipher_get_name(cipher), cipher);
-                break;
-            }
-
-            if (lookup == cipher) {
-                info->cipher = (pj_ssl_cipher) ((id[0] << 8) | id[1]);
-                break;
-            }
-        }
-
-        /* Remote address */
-        pj_sockaddr_cp(&info->remote_addr, remote_.pjPtr());
-
-        /* Certificates info */
-        info->local_cert_info = &localCertInfo_;
-        info->remote_cert_info = &remoteCertInfo_;
-
-        /* Verification status */
-        info->verify_status = verifyStatus_;
-    }
-
-    /* Last known GnuTLS error code */
-    info->last_native_err = last_err_;
-}
-
-pj_status_t
-SipsIceTransport::tryHandshake()
-{
-    RING_DBG("SipsIceTransport::tryHandshake as %s",
-             (is_server_ ? "server" : "client"));
-    pj_status_t status;
-    int ret = gnutls_handshake(session_);
-    if (ret == GNUTLS_E_SUCCESS) {
-        /* System are GO */
-        RING_DBG("SipsIceTransport::tryHandshake : ESTABLISHED");
-        state_ = TlsConnectionState::ESTABLISHED;
-        status = PJ_SUCCESS;
-    } else if (!gnutls_error_is_fatal(ret)) {
-        /* Non fatal error, retry later (busy or again) */
-        status = PJ_EPENDING;
-    } else {
-        /* Fatal error invalidates session, no fallback */
-        RING_ERR("TLS fatal error : %s", gnutls_strerror(ret));
-        status = PJ_EINVAL;
-    }
-    last_err_ = ret;
-    return status;
-}
-
-/* When handshake completed:
- * - notify application
- * - if handshake failed, reset SSL state
- * - return false when SSL socket instance is destroyed by application. */
-bool
-SipsIceTransport::onHandshakeComplete(pj_status_t status)
-{
-    /* Update certificates info on successful handshake */
-    if (status == PJ_SUCCESS) {
-        RING_DBG("Handshake success on remote %s",
-                   remote_.toString(true).c_str());
-        certUpdate();
-    } else {
-        /* Handshake failed destroy ourself silently. */
-        char errmsg[PJ_ERR_MSG_SIZE];
-        RING_ERR("Handshake failed on remote %s: %s",
-                 remote_.toString(true).c_str(),
-                 pj_strerror(status, errmsg, sizeof(errmsg)).ptr);
-    }
-
-    ChangeStateEventData eventData;
-    getInfo(&eventData.ssl_info);
-
-    if (status != PJ_SUCCESS)
-        shutdown(); // to be done after getInfo() call
-
-    // push event to handleEvents()
-    eventData.state_info.status = eventData.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
-    eventData.state = (status != PJ_SUCCESS) ? PJSIP_TP_STATE_DISCONNECTED : PJSIP_TP_STATE_CONNECTED;
-
-    {
-        std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
-        stateChangeEvents_.emplace(std::move(eventData));
-    }
-
-    return status == PJ_SUCCESS;
-}
-
-int
-SipsIceTransport::verifyCertificate()
-{
-    /* Support only x509 format */
-    if (gnutls_certificate_type_get(session_) != GNUTLS_CRT_X509) {
-        verifyStatus_ = PJ_SSL_CERT_EINVALID_FORMAT;
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    /* Store verification status */
-    unsigned int status = 0;
-    auto ret = gnutls_certificate_verify_peers2(session_, &status);
-    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
-        verifyStatus_ = PJ_SSL_CERT_EUNTRUSTED;
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    unsigned int cert_list_size = 0;
-    auto cert_list = gnutls_certificate_get_peers(session_, &cert_list_size);
-    if (cert_list == nullptr) {
-        verifyStatus_ = PJ_SSL_CERT_EISSUER_NOT_FOUND;
-        return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    if (param_.cert_check) {
-        verifyStatus_ = param_.cert_check(status, cert_list, cert_list_size);
-        if (verifyStatus_ != PJ_SUCCESS)
-            return GNUTLS_E_CERTIFICATE_ERROR;
-    }
-
-    /* notify GnuTLS to continue handshake normally */
-    return GNUTLS_E_SUCCESS;
-}
-
-void
-SipsIceTransport::handleEvents()
-{
-    // Process state changes first
-    decltype(stateChangeEvents_) eventDataQueue = stateChangeEvents_;
-    {
-        std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
-        eventDataQueue = std::move(stateChangeEvents_);
-    }
-    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
-        // application notification
-        while (not eventDataQueue.empty()) {
-            auto& evdata = eventDataQueue.front();
-            evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
-            evdata.state_info.ext_info = &evdata.tls_info;
-            (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
-            eventDataQueue.pop();
-        }
-    }
-
-    // Handle stream GnuTLS -> SIP transport
-    decltype(rxPending_) rx;
-    {
-        std::lock_guard<std::mutex> l(rxMtx_);
-        rx = std::move(rxPending_);
-    }
-
-    for (auto it = rx.begin(); it != rx.end(); ++it) {
-        auto& pck = *it;
-        pj_pool_reset(rdata_.tp_info.pool);
-        pj_gettimeofday(&rdata_.pkt_info.timestamp);
-        rdata_.pkt_info.len = pck.size();
-        std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
-        auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
-        if (eaten != rdata_.pkt_info.len) {
-            // partial sip packet received
-            auto npck_it = std::next(it);
-            if (npck_it != rx.end()) {
-                // drop current packet, merge reminder with next one
-                auto& npck = *npck_it;
-                npck.insert(npck.begin(), pck.begin()+eaten, pck.end());
-            } else {
-                // erase eaten part, keep reminder
-                pck.erase(pck.begin(), pck.begin()+eaten);
-                {
-                    std::lock_guard<std::mutex> l(rxMtx_);
-                    rxPending_.splice(rxPending_.begin(), rx, it);
-                }
-                break;
-            }
-        }
-    }
-    putBuff(std::move(rx));
-    rxCv_.notify_all();
-
-    // Report status GnuTLS -> SIP transport
-    decltype(outputAckBuff_) ackBuf;
-    {
-        std::lock_guard<std::mutex> l(outputBuffMtx_);
-        ackBuf = std::move(outputAckBuff_);
-    }
-    for (const auto& pair: ackBuf) {
-        const auto& f = pair.first;
-        f.tdata_op_key->tdata = nullptr;
-        RING_DBG("status: %ld", pair.second);
-        if (f.tdata_op_key->callback)
-            f.tdata_op_key->callback(getTransportBase(), f.tdata_op_key->token,
-                                     pair.second);
-    }
-    cv_.notify_all();
-}
-
-bool
-SipsIceTransport::setup()
-{
-    RING_DBG("Starting GnuTLS thread");
-
-    // permit incoming packets
-    ice_->setOnRecv(comp_id_, [this](uint8_t* buf, size_t len) {
-            {
-                std::lock_guard<std::mutex> l(inputBuffMtx_);
-                tlsInputBuff_.emplace_back(buf, buf+len);
-                canRead_ = true;
-                RING_DBG("TLS(ice): rx %zuB", len);
-            }
-            cv_.notify_all();
-            return len;
-        });
-
-    if (is_server_) {
-        gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
-        state_ = TlsConnectionState::COOKIE;
-        return true;
-    }
-
-    return startTlsSession() == PJ_SUCCESS;
-}
-
-void
-SipsIceTransport::loop()
-{
-    if (not ice_->isRunning()) {
-        shutdown();
+    p = pj_strstr(gen_name, &CN_sign);
+    if (!p)
         return;
-    }
 
-    if (state_ == TlsConnectionState::COOKIE) {
-        {
-            std::unique_lock<std::mutex> l(inputBuffMtx_);
-            if (tlsInputBuff_.empty()) {
-                cv_.wait(l, [&](){
-                    return state_ != TlsConnectionState::COOKIE or not tlsInputBuff_.empty();
-                });
-            }
-            if (state_ != TlsConnectionState::COOKIE)
-                return;
-            const auto& pck = tlsInputBuff_.front();
-            std::memset(&prestate_, 0, sizeof(prestate_));
-            int ret = gnutls_dtls_cookie_verify(&cookie_key_,
-                                                &trData_.base.key.rem_addr,
-                                                trData_.base.addr_len,
-                                                (char*)pck.data(), pck.size(),
-                                                &prestate_);
-            if (ret < 0) {
-                gnutls_dtls_cookie_send(&cookie_key_,
-                                        &trData_.base.key.rem_addr,
-                                        trData_.base.addr_len, &prestate_, this,
-                                        [](gnutls_transport_ptr_t t,
-                                           const void* d, size_t s) -> ssize_t {
-                    auto this_ = reinterpret_cast<SipsIceTransport*>(t);
-                    return this_->tlsSend(d, s);
-                });
-                tlsInputBuff_.pop_front();
-                if (tlsInputBuff_.empty())
-                    canRead_ = false;
-                return;
-            }
-        }
-        startTlsSession();
-    }
-
-    if (state_ == TlsConnectionState::HANDSHAKING) {
-        if (clock::now() - handshakeStart_ > param_.timeout) {
-            onHandshakeComplete(PJ_ETIMEDOUT);
-            return;
-        }
-        auto status = tryHandshake();
-        if (status != PJ_EPENDING)
-            onHandshakeComplete(status);
-    }
-
-    if (state_ == TlsConnectionState::ESTABLISHED) {
-        {
-            std::mutex flagsMtx_ {};
-            std::unique_lock<std::mutex> l(flagsMtx_);
-            cv_.wait(l, [&](){
-                return state_ != TlsConnectionState::ESTABLISHED or canRead_ or canWrite_;
-            });
-        }
-
-        if (state_ != TlsConnectionState::ESTABLISHED and not getTransportBase()->is_shutdown)
-            return;
-
-        decltype(rxPending_) rx;
-        while (canRead_ or gnutls_record_check_pending(session_)) {
-            if (rx.empty())
-                getBuff(rx, PJSIP_MAX_PKT_LEN);
-            auto& buf = rx.front();
-            const auto decrypted_size = gnutls_record_recv(session_, buf.data(), buf.size());
-
-            if (decrypted_size > 0/* || transport error */) {
-                buf.resize(decrypted_size);
-                {
-                    std::lock_guard<std::mutex> l(rxMtx_);
-                    rxPending_.splice(rxPending_.end(), rx, rx.begin());
-                }
-            } else if (decrypted_size == 0) {
-                /* EOF */
-                tlsThread_.stop();
-                break;
-            } else if (decrypted_size == GNUTLS_E_AGAIN or
-                       decrypted_size == GNUTLS_E_INTERRUPTED) {
-                break;
-            } else if (decrypted_size == GNUTLS_E_REHANDSHAKE) {
-                /* Seems like we are renegotiating */
-
-                RING_DBG("rehandshake");
-                auto try_handshake_status = tryHandshake();
-
-                /* Not pending is either success or failed */
-                if (try_handshake_status != PJ_EPENDING) {
-                    if (!onHandshakeComplete(try_handshake_status)) {
-                        break;
-                    }
-                }
-
-                if (try_handshake_status != PJ_SUCCESS and
-                    try_handshake_status != PJ_EPENDING) {
-                    break;
-                }
-            } else if (!gnutls_error_is_fatal(decrypted_size)) {
-                /* non-fatal error, let's just continue */
-            } else {
-                shutdown();
-                break;
-            }
-        }
-        putBuff(std::move(rx));
-        flushOutputBuff();
-    }
-}
-
-void
-SipsIceTransport::clean()
-{
-    RING_DBG("Ending GnuTLS thread");
-
-    // Forbid GnuTLS <-> ICE IOs
-    ice_->setOnRecv(comp_id_, nullptr);
-    tlsInputBuff_.clear();
-    canRead_ = false;
-    canWrite_ = false;
-
-    {
-        // Reply all SIP transport send requests with ENOTCONN status error
-        std::unique_lock<std::mutex> l(outputBuffMtx_);
-
-        for (const auto& f : outputBuff_) {
-            f.tdata_op_key->tdata = nullptr;
-            if (f.tdata_op_key->callback)
-                outputAckBuff_.emplace_back(std::move(f), -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN)); // see handleEvents()
-        }
-        outputBuff_.clear();
-
-        // make sure that all callbacks are called before closing
-        cv_.wait(l, [&](){
-                return outputAckBuff_.empty();
-            });
-    }
-
-    // note: incoming packets (rxPending_) will be processed in destructor
-
-    if (cookie_key_.data) {
-        gnutls_free(cookie_key_.data);
-        cookie_key_.data = nullptr;
-        cookie_key_.size = 0;
-    }
-
-    closeTlsSession();
-}
-
-IpAddr
-SipsIceTransport::getLocalAddress() const
-{
-    return ice_->getLocalAddress(comp_id_);
-}
-
-IpAddr
-SipsIceTransport::getRemoteAddress() const
-{
-    return ice_->getRemoteAddress(comp_id_);
-}
-
-ssize_t
-SipsIceTransport::tlsSend(const void* d, size_t s)
-{
-    return ice_->send(comp_id_, (const uint8_t*)d, s);
-}
-
-ssize_t
-SipsIceTransport::tlsRecv(void* d , size_t s)
-{
-    std::lock_guard<std::mutex> l(inputBuffMtx_);
-    if (tlsInputBuff_.empty()) {
-        gnutls_transport_set_errno(session_, EAGAIN);
-        return -1;
-    }
-    const auto& front = tlsInputBuff_.front();
-    const auto n = std::min(front.size(), s);
-    std::copy_n(front.begin(), n, (uint8_t*)d);
-    tlsInputBuff_.pop_front();
-    if (tlsInputBuff_.empty())
-        canRead_ = false;
-    return n;
-}
-
-int
-SipsIceTransport::waitForTlsData(unsigned ms)
-{
-    std::unique_lock<std::mutex> l(inputBuffMtx_);
-    if (tlsInputBuff_.empty()) {
-        cv_.wait_for(l, std::chrono::milliseconds(ms), [&]() {
-            return state_ == TlsConnectionState::DISCONNECTED or not tlsInputBuff_.empty();
-        });
-    }
-    if (state_ == TlsConnectionState::DISCONNECTED) {
-        gnutls_transport_set_errno(session_, EINTR);
-        return -1;
-    }
-    return tlsInputBuff_.empty() ? 0 : tlsInputBuff_.front().size();
+    p += 3; /* shift pointer to value part */
+    pj_strset(cn, p, gen_name->slen - (p - gen_name->ptr));
+    q = pj_strchr(cn, ',');
+    if (q)
+        cn->slen = q - p;
 }
 
 pj_status_t
@@ -966,251 +669,27 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                       addr_len==sizeof(pj_sockaddr_in6)),
                      PJ_EINVAL);
 
+    tdata->op_key.tdata = tdata;
     tdata->op_key.token = token;
     tdata->op_key.callback = callback;
-    if (state_ == TlsConnectionState::ESTABLISHED) {
-        decltype(txBuff_) tx;
-        size_t size = tdata->buf.cur - tdata->buf.start;
-        getBuff(tx, (uint8_t*)tdata->buf.start, (uint8_t*)tdata->buf.cur);
-        {
-            std::lock_guard<std::mutex> l(outputBuffMtx_);
-            txBuff_.splice(txBuff_.end(), std::move(tx));
-        }
-        tdata->op_key.tdata = nullptr;
-        if (tdata->op_key.callback)
-            tdata->op_key.callback(getTransportBase(), token, size);
-    } else {
-        std::lock_guard<std::mutex> l(outputBuffMtx_);
-        tdata->op_key.tdata = tdata;
-        outputBuff_.emplace_back(DelayedTxData{&tdata->op_key, {}});
-        if (tdata->msg && tdata->msg->type == PJSIP_REQUEST_MSG) {
-            auto& dtd = outputBuff_.back();
-            dtd.timeout = clock::now();
-            dtd.timeout += std::chrono::milliseconds(pjsip_cfg()->tsx.td);
-        }
+
+    // Asynchronous send
+    const std::size_t size = tdata->buf.cur - tdata->buf.start;
+    auto ret = tls_->async_send(tdata->buf.start, size, [=](std::size_t bytes_sent){
+            if (bytes_sent == 0)
+                bytes_sent = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
+            std::lock_guard<std::mutex> l(txAckQueueMutex_);
+            txAckQueue_.emplace_back(std::make_pair(tdata, bytes_sent));
+        });
+
+    // Shutdown on fatal errors
+    if (gnutls_error_is_fatal(ret)) {
+        RING_ERR("[TLS] send failed: %s", gnutls_strerror(ret));
+        tls_->shutdown();
+        return tls_status_from_err(ret);
     }
-    canWrite_ = true;
-    cv_.notify_all();
+
     return PJ_EPENDING;
-}
-
-pj_status_t
-SipsIceTransport::flushOutputBuff()
-{
-    ssize_t status = PJ_SUCCESS;
-
-    // send delayed data first
-    for (;;) {
-        bool fatal = true;
-        DelayedTxData f;
-
-        {
-            std::lock_guard<std::mutex> l(outputBuffMtx_);
-            if (outputBuff_.empty())
-                break;
-            f = std::move(outputBuff_.front());
-            outputBuff_.pop_front();
-        }
-
-        // Too late?
-        if (f.timeout != clock::time_point() && f.timeout < clock::now()) {
-            status = GNUTLS_E_TIMEDOUT;
-            fatal = false;
-        } else {
-            status = trySend(f.tdata_op_key);
-            fatal = status < 0;
-            if (fatal) {
-                if (gnutls_error_is_fatal(status))
-                    tlsThread_.stop();
-                else {
-                    // Failed but non-fatal. Retry later.
-                    std::lock_guard<std::mutex> l(outputBuffMtx_);
-                    outputBuff_.emplace_front(std::move(f));
-                }
-            }
-        }
-
-        f.tdata_op_key->tdata = nullptr;
-
-        if (f.tdata_op_key->callback) {
-            std::lock_guard<std::mutex> l(outputBuffMtx_);
-            outputAckBuff_.emplace_back(std::move(f), status > 0 ? status : -tls_status_from_err(status)); // see handleEvents()
-        }
-
-        if (fatal)
-            return -tls_status_from_err(status);
-    }
-
-    decltype(txBuff_) tx;
-    {
-        std::lock_guard<std::mutex> l(outputBuffMtx_);
-        tx = std::move(txBuff_);
-        canWrite_ = false;
-    }
-    for (auto it = tx.begin(); it != tx.end(); ++it) {
-        const auto& msg = *it;
-        const auto nwritten = gnutls_record_send(session_, msg.data(), msg.size());
-        if (nwritten <= 0) {
-            status = nwritten;
-            if (gnutls_error_is_fatal(status))
-                tlsThread_.stop();
-            {
-                std::lock_guard<std::mutex> l(outputBuffMtx_);
-                txBuff_.splice(txBuff_.begin(), tx, it, tx.end());
-                canWrite_ = true;
-            }
-            break;
-        }
-    }
-    putBuff(std::move(tx));
-    return status > 0 ? PJ_SUCCESS : -tls_status_from_err(status);
-}
-
-ssize_t
-SipsIceTransport::trySend(pjsip_tx_data_op_key *pck)
-{
-    const auto tdata = pck->tdata;
-    const size_t size = tdata->buf.cur - tdata->buf.start;
-    const size_t max_tx_sz = gnutls_dtls_get_data_mtu(session_);
-
-    size_t total_written = 0;
-    while (total_written < size) {
-        /* Ask GnuTLS to encrypt our plaintext now. GnuTLS will use the push
-         * callback to actually send the encrypted bytes. */
-        const auto tx_size = std::min(max_tx_sz, size - total_written);
-        const auto nwritten = gnutls_record_send(session_,
-                                                 tdata->buf.start + total_written,
-                                                 tx_size);
-        if (nwritten <= 0) {
-            /* Normally we would have to retry record_send but our internal
-             * state has not changed, so we have to ask for more data first.
-             * We will just try again later, although this should never happen.
-             */
-            return nwritten;
-        }
-
-        /* Good, some data was encrypted and written */
-        total_written += nwritten;
-    }
-    return total_written;
-}
-
-void
-SipsIceTransport::shutdown()
-{
-    RING_DBG("%s", __PRETTY_FUNCTION__);
-    state_ = TlsConnectionState::DISCONNECTED;
-    tlsThread_.stop();
-    cv_.notify_all();
-}
-
-void
-SipsIceTransport::getBuff(decltype(buffPool_)& l, const uint8_t* b, const uint8_t* e)
-{
-    std::lock_guard<std::mutex> lk(buffPoolMtx_);
-    if (buffPool_.empty())
-        l.emplace_back(b, e);
-    else {
-        l.splice(l.end(), buffPool_, buffPool_.begin());
-        auto& buf = l.back();
-        buf.resize(std::distance(b, e));
-        std::copy(b, e, buf.begin());
-    }
-}
-
-void
-SipsIceTransport::getBuff(decltype(buffPool_)& l, const size_t s)
-{
-    std::lock_guard<std::mutex> lk(buffPoolMtx_);
-    if (buffPool_.empty())
-        l.emplace_back(s);
-    else {
-        l.splice(l.end(), buffPool_, buffPool_.begin());
-        auto& buf = l.back();
-        buf.resize(s);
-    }
-}
-
-void
-SipsIceTransport::putBuff(decltype(buffPool_)&& l)
-{
-    std::lock_guard<std::mutex> lk(buffPoolMtx_);
-    buffPool_.splice(buffPool_.end(), l);
-}
-
-pj_status_t
-SipsIceTransport::tls_status_from_err(int err)
-{
-    pj_status_t status;
-
-    switch (err) {
-    case GNUTLS_E_SUCCESS:
-        status = PJ_SUCCESS;
-        break;
-    case GNUTLS_E_MEMORY_ERROR:
-        status = PJ_ENOMEM;
-        break;
-    case GNUTLS_E_LARGE_PACKET:
-        status = PJ_ETOOBIG;
-        break;
-    case GNUTLS_E_NO_CERTIFICATE_FOUND:
-        status = PJ_ENOTFOUND;
-        break;
-    case GNUTLS_E_SESSION_EOF:
-        status = PJ_EEOF;
-        break;
-    case GNUTLS_E_HANDSHAKE_TOO_LARGE:
-        status = PJ_ETOOBIG;
-        break;
-    case GNUTLS_E_EXPIRED:
-        status = PJ_EGONE;
-        break;
-    case GNUTLS_E_TIMEDOUT:
-        status = PJ_ETIMEDOUT;
-        break;
-    case GNUTLS_E_PREMATURE_TERMINATION:
-        status = PJ_ECANCELLED;
-        break;
-    case GNUTLS_E_INTERNAL_ERROR:
-    case GNUTLS_E_UNIMPLEMENTED_FEATURE:
-        status = PJ_EBUG;
-        break;
-    case GNUTLS_E_AGAIN:
-    case GNUTLS_E_INTERRUPTED:
-    case GNUTLS_E_REHANDSHAKE:
-        status = PJ_EPENDING;
-        break;
-    case GNUTLS_E_TOO_MANY_EMPTY_PACKETS:
-    case GNUTLS_E_TOO_MANY_HANDSHAKE_PACKETS:
-    case GNUTLS_E_RECORD_LIMIT_REACHED:
-        status = PJ_ETOOMANY;
-        break;
-    case GNUTLS_E_UNSUPPORTED_VERSION_PACKET:
-    case GNUTLS_E_UNSUPPORTED_SIGNATURE_ALGORITHM:
-    case GNUTLS_E_UNSUPPORTED_CERTIFICATE_TYPE:
-    case GNUTLS_E_X509_UNSUPPORTED_ATTRIBUTE:
-    case GNUTLS_E_X509_UNSUPPORTED_EXTENSION:
-    case GNUTLS_E_X509_UNSUPPORTED_CRITICAL_EXTENSION:
-        status = PJ_ENOTSUP;
-        break;
-    case GNUTLS_E_INVALID_SESSION:
-    case GNUTLS_E_INVALID_REQUEST:
-    case GNUTLS_E_INVALID_PASSWORD:
-    case GNUTLS_E_ILLEGAL_PARAMETER:
-    case GNUTLS_E_RECEIVED_ILLEGAL_EXTENSION:
-    case GNUTLS_E_UNEXPECTED_PACKET:
-    case GNUTLS_E_UNEXPECTED_PACKET_LENGTH:
-    case GNUTLS_E_UNEXPECTED_HANDSHAKE_PACKET:
-    case GNUTLS_E_UNWANTED_ALGORITHM:
-    case GNUTLS_E_USER_ERROR:
-        status = PJ_EINVAL;
-        break;
-    default:
-        status = PJ_EUNKNOWN;
-        break;
-    }
-
-    return status;
 }
 
 }} // namespace ring::tls
