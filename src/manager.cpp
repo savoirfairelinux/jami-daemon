@@ -2399,9 +2399,8 @@ Manager::setAccountDetails(const std::string& accountID,
 }
 
 std::string
-Manager::addAccount(const std::map<std::string, std::string>& details)
+Manager::getNewAccountId()
 {
-    /** @todo Deal with both the accountMap_ and the Configuration */
     std::string newAccountID;
     static std::uniform_int_distribution<uint64_t> rand_acc_id;
 
@@ -2414,8 +2413,16 @@ Manager::addAccount(const std::map<std::string, std::string>& details)
     } while (std::find(accountList.begin(), accountList.end(), newAccountID)
              != accountList.end());
 
-    // Get the type
+    return newAccountID;
+}
 
+std::string
+Manager::addAccount(const std::map<std::string, std::string>& details, const std::string& accountId)
+{
+    /** @todo Deal with both the accountMap_ and the Configuration */
+    auto newAccountID = accountId.empty() ? getNewAccountId() : accountId;
+
+    // Get the type
     const char* accountType;
     if (details.find(Conf::CONFIG_ACCOUNT_TYPE) != details.end())
         accountType = (*details.find(Conf::CONFIG_ACCOUNT_TYPE)).second.c_str();
