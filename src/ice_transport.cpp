@@ -853,9 +853,11 @@ IceTransport::waitForData(int comp_id, unsigned int timeout)
     auto& io = compIO_[comp_id];
     std::unique_lock<std::mutex> lk(io.mutex);
     if (!io.cv.wait_for(lk, std::chrono::milliseconds(timeout),
-                        [&io]{ return !io.queue.empty(); })) {
+                        [this, &io]{ return !io.queue.empty() or !isRunning(); })) {
         return 0;
     }
+    if (!isRunning())
+        return -1; // acknowledged as an error
     return io.queue.front().datalen;
 }
 
