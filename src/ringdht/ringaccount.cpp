@@ -665,9 +665,12 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_h = pc.from;
+    auto id(loadIdentity());
+
     tls::TlsParams tlsParams {
         .ca_list = "",
-        .id = loadIdentity(),
+        .cert = id.second,
+        .cert_key = id.first,
         .dh_params = dhParams_,
         .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
         .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,

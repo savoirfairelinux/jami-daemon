@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,10 +21,9 @@
 
 #pragma once
 
+#include "security/tls_session.h"
 #include "ip_utils.h"
-#include "threadloop.h"
-
-#include <opendht/crypto.h>
+#include "noncopyable.h"
 
 #include <pjsip.h>
 #include <pj/pool.h>
@@ -36,11 +36,10 @@
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <condition_variable>
 #include <chrono>
-#include <future>
 #include <queue>
 #include <utility>
+#include <vector>
 
 namespace ring {
 class IceTransport;
@@ -48,23 +47,11 @@ class IceTransport;
 
 namespace ring { namespace tls {
 
-enum class TlsConnectionState {
-    DISCONNECTED,
-    COOKIE,
-    HANDSHAKING,
-    ESTABLISHED
-};
-
-struct TlsParams {
-    std::string ca_list;
-    dht::crypto::Identity id;
-    std::shared_future<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>> dh_params;
-    std::chrono::steady_clock::duration timeout;
-    std::function<pj_status_t(unsigned status,
-                              const gnutls_datum_t* cert_list,
-                              unsigned cert_list_size)> cert_check;
-};
-
+/**
+ * SipsIceTransport
+ *
+ * Implements TLS transport as an pjsip_transport
+ */
 struct SipsIceTransport
 {
     using clock = std::chrono::steady_clock;
@@ -81,57 +68,36 @@ struct SipsIceTransport
 
     void shutdown();
 
-    IpAddr getLocalAddress() const;
-    IpAddr getRemoteAddress() const;
+    std::shared_ptr<IceTransport> getIceTransport() const { return ice_; }
+    pjsip_transport* getTransportBase() { return &trData_.base; }
 
-    std::shared_ptr<IceTransport> getIceTransport() const {
-        return ice_;
-    }
-
-    pjsip_transport* getTransportBase() {
-        return &trData_.base;
-    }
+    IpAddr getLocalAddress() const { return local_; }
+    IpAddr getRemoteAddress() const { return remote_; }
 
 private:
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> rxPool_;
+    NON_COPYABLE(SipsIceTransport);
 
-    using DelayedTxData = struct {
-        pjsip_tx_data_op_key *tdata_op_key;
-        clock::time_point timeout;
-    };
-
-    TransportData trData_; // uplink to this (used in C callbacks)
     const std::shared_ptr<IceTransport> ice_;
     const int comp_id_;
-
-    TlsParams param_;
-
-    bool is_server_ {false};
-    //bool has_pending_connect_ {false};
+    const std::function<int(unsigned, const gnutls_datum_t*, unsigned)> certCheck_;
     IpAddr local_ {};
     IpAddr remote_ {};
 
-    ThreadLoop tlsThread_;
-    std::condition_variable_any cv_;
-    std::atomic<bool> canRead_ {false};
-    std::atomic<bool> canWrite_ {false};
+    // PJSIP transport backend
 
-    // TODO
-    pj_status_t verifyStatus_ {};
-    int last_err_;
+    TransportData trData_; // uplink to "this" (used by PJSIP called C-callbacks)
+
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> pool_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)*> rxPool_;
+
+    pjsip_rx_data rdata_;
 
     pj_ssl_cert_info localCertInfo_;
     pj_ssl_cert_info remoteCertInfo_;
 
-    std::atomic<TlsConnectionState> state_ {TlsConnectionState::DISCONNECTED};
-    clock::time_point handshakeStart_;
+    pj_status_t verifyStatus_ {PJ_EUNKNOWN};
 
-    gnutls_session_t session_ {nullptr};
-    std::unique_ptr<gnutls_certificate_credentials_st, decltype(gnutls_certificate_free_credentials)&> xcred_;
-    gnutls_priority_t priority_cache_ {nullptr};
-    gnutls_datum_t cookie_key_ {nullptr, 0};
-    gnutls_dtls_prestate_st prestate_;
+    // TlsSession backend
 
     struct ChangeStateEventData {
         pj_ssl_sock_info ssl_info;
@@ -140,60 +106,29 @@ private:
         decltype(PJSIP_TP_STATE_DISCONNECTED) state;
     };
 
-    std::mutex stateChangeEventsMutex_;
-    std::queue<ChangeStateEventData> stateChangeEvents_;
+    std::unique_ptr<TlsSession> tls_;
+    std::atomic_bool tlsConnected_ {false}; // set by updateTransportState
 
-    /**
-     * To be called on a regular basis to receive packets
-     */
-    void handleEvents();
-
-    // ThreadLoop
-    bool setup();
-    void loop();
-    void clean();
-
-    // SIP transport <-> GnuTLS
-    pj_status_t send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
-                     int addr_len, void* token,
-                     pjsip_transport_callback callback);
-    ssize_t trySend(pjsip_tx_data_op_key* tdata);
-    pj_status_t flushOutputBuff();
-    std::list<DelayedTxData> outputBuff_;
-    std::list<std::pair<DelayedTxData, ssize_t>> outputAckBuff_; // acknowledged outputBuff_
-    std::list<std::vector<uint8_t>> txBuff_;
-    std::mutex outputBuffMtx_;
+    std::mutex stateChangeEventsMutex_ {};
+    std::list<ChangeStateEventData> stateChangeEvents_ {};
 
     std::mutex rxMtx_;
-    std::condition_variable_any rxCv_;
     std::list<std::vector<uint8_t>> rxPending_;
-    pjsip_rx_data rdata_;
 
-    // data buffer pool
-    std::list<std::vector<uint8_t>> buffPool_;
-    std::mutex buffPoolMtx_;
-    void getBuff(decltype(buffPool_)& l, const uint8_t* b, const uint8_t* e);
-    void getBuff(decltype(buffPool_)& l, const size_t s);
-    void putBuff(decltype(buffPool_)&& l);
+    std::mutex txAckQueueMutex_;
+    std::list<std::pair<pjsip_tx_data*, ssize_t>> txAckQueue_;
 
-    // GnuTLS <-> ICE
-    ssize_t tlsSend(const void*, size_t);
-    ssize_t tlsRecv(void* d , size_t s);
-    int waitForTlsData(unsigned ms);
-    std::mutex inputBuffMtx_;
-    std::list<std::vector<uint8_t>> tlsInputBuff_;
-
-    pj_status_t startTlsSession();
-    void closeTlsSession();
-
-    pj_status_t tryHandshake();
-    void certGetCn(const pj_str_t* gen_name, pj_str_t* cn);
-    void certGetInfo(pj_pool_t* pool, pj_ssl_cert_info* ci, const gnutls_datum_t* cert, size_t crt_raw_num);
-    void certUpdate();
-    bool onHandshakeComplete(pj_status_t status);
-    int verifyCertificate();
-    void getInfo(pj_ssl_sock_info* info);
-    static pj_status_t tls_status_from_err(int err);
+    pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
+    void handleEvents();
+    void pushChangeStateEvent(ChangeStateEventData&&);
+    void updateTransportState(pjsip_transport_state);
+    void certGetInfo(pj_pool_t*, pj_ssl_cert_info*, const gnutls_datum_t*, size_t);
+    void certGetCn(const pj_str_t*, pj_str_t*);
+    void getInfo(pj_ssl_sock_info*, bool);
+    void onTlsStateChange(TlsSessionState);
+    void onRxData(TlsSession::Blob&&);
+    void onCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
+    int verifyCertificate(gnutls_session_t);
 };
 
 }} // namespace ring::tls
