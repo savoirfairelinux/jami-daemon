@@ -146,6 +146,8 @@ void
 IncomingCall(const std::string& accountId,
     const std::string& callId, const std::string& message)
 {
+    (void) accountId;
+    (void) message;
     if (not isActive) {
         DRing::accept(callId);
         isActive = true;
@@ -175,6 +177,8 @@ run()
     }
 
     DRing::fini();
+
+    return 0;
 }
 
 static void
