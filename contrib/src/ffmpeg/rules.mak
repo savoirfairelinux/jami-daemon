@@ -1,4 +1,4 @@
-FFMPEG_HASH := f90c9bbbca32620a9cb78898a2b1b7d2cce9ad0f
+FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
 FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
 
 ifdef HAVE_WIN32
@@ -123,9 +123,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-	$(APPLY) $(SRC)/ffmpeg/0001-rtpdec-add-a-trace-when-jitter-buffer-is-full.patch
-	$(APPLY) $(SRC)/ffmpeg/0002-rtpdec-inform-jitter-buffer-size.patch
-	$(APPLY) $(SRC)/ffmpeg/0003-rtsp-warning-when-max_delay-reached.patch
 	$(MOVE)
 
 .ffmpeg: ffmpeg
