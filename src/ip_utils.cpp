@@ -128,10 +128,11 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
-    const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
     IpAddr addr = {};
 
 #ifndef _WIN32
+    const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
+
     int fd = socket(unix_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         RING_ERR("Could not open socket: %m");
@@ -171,7 +172,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
 
     DWORD dwRetval = getaddrinfo(interface.c_str(), "0", &hints, &result);
     if (dwRetval != 0) {
-        RING_ERR("getaddrinfo failed with error: %d", dwRetval);
+        RING_ERR("getaddrinfo failed with error: %lu", dwRetval);
         return addr;
     }
 
