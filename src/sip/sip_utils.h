@@ -27,6 +27,8 @@
 
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
+#include <pj/pool.h>
+#include <pjsip/sip_endpoint.h>
 
 #include <utility>
 #include <string>
@@ -94,6 +96,16 @@ public:
 private:
     pjsip_dialog* dialog_;
 };
+
+// Helper on PJSIP memory pool allocation from endpoint
+// This encapsulate the allocated memory pool inside a unique_ptr
+static inline std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>
+smart_alloc_pool(pjsip_endpoint* endpt, const char* const name, pj_size_t initial, pj_size_t inc) {
+    auto pool = pjsip_endpt_create_pool(endpt, name, initial, inc);
+    if (not pool)
+        throw std::bad_alloc();
+    return std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&>(pool, pj_pool_release);
+}
 
 }} // namespace ring::sip_utils
 

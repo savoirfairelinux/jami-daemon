@@ -24,6 +24,7 @@
 #include "config.h"
 #endif
 
+#include "security/tls_session.h"
 #include "sip/sipaccountbase.h"
 
 #include "noncopyable.h"
@@ -374,7 +375,7 @@ class RingAccount : public SIPAccountBase {
          */
         void generateDhParams();
 
-        std::shared_future<std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>> dhParams_;
+        std::shared_future<tls::TlsParams::DhParams> dhParams_;
         std::mutex dhParamsMtx_;
         std::condition_variable dhParamsCv_;
         bool allowPeersFromHistory_;

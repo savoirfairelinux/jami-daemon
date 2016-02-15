@@ -665,9 +665,12 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_h = pc.from;
+    auto id(loadIdentity());
+
     tls::TlsParams tlsParams {
         .ca_list = "",
-        .id = loadIdentity(),
+        .cert = id.second,
+        .cert_key = id.first,
         .dh_params = dhParams_,
         .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
         .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
@@ -1209,36 +1212,10 @@ RingAccount::loadValues() const
     return values;
 }
 
-static std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>
-getNewDhParams()
-{
-    using namespace std::chrono;
-    auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_NORMAL);
-    RING_DBG("Generating DH params with %u bits", bits);
-    auto t1 = high_resolution_clock::now();
-
-    gnutls_dh_params_t new_params_;
-    int ret = gnutls_dh_params_init(&new_params_);
-    if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("Error initializing DH params: %s", gnutls_strerror(ret));
-        return {nullptr, gnutls_dh_params_deinit};
-    }
-
-    ret = gnutls_dh_params_generate2(new_params_, bits);
-    if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("Error generating DH params: %s", gnutls_strerror(ret));
-        return {nullptr, gnutls_dh_params_deinit};
-    }
-
-    auto time_span = duration_cast<duration<double>>(high_resolution_clock::now() - t1);
-    RING_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
-    return {new_params_, gnutls_dh_params_deinit};
-}
-
 void
 RingAccount::generateDhParams()
 {
-    std::packaged_task<decltype(getNewDhParams())()> task(&getNewDhParams);
+    std::packaged_task<decltype(tls::newDhParams)> task(tls::newDhParams);
     dhParams_ = task.get_future();
     std::thread task_td(std::move(task));
     task_td.detach();
