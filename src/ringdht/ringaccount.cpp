@@ -1208,7 +1208,7 @@ RingAccount::loadValues() const
         }
         remove(file.c_str());
     }
-    RING_DBG("Loaded %lu values", values.size());
+    RING_DBG("Loaded %zu values", values.size());
     return values;
 }
 
