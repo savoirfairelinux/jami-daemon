@@ -1,6 +1,6 @@
 # YAML
-YAML_CPP_VERSION := 0.5.1
-YAML_CPP_URL := http://yaml-cpp.googlecode.com/files/yaml-cpp-$(YAML_CPP_VERSION).tar.gz
+YAML_CPP_VERSION := 24fa1b33805c9a91df0f32c46c28e314dd7ad96f
+YAML_CPP_URL := https://github.com/jbeder/yaml-cpp/archive/$(YAML_CPP_VERSION).tar.gz
 
 PKGS += yaml-cpp
 
@@ -8,12 +8,9 @@ ifeq ($(call need_pkg,'yaml-cpp'),)
 PKGS_FOUND += yaml-cpp
 endif
 
-DEPS_yaml-cpp = boost-headers $(DEPS_boost-headers)
-
 YAML_CPP_CMAKECONF := -DBUILD_STATIC:BOOL=ON \
                       -DBUILD_SHARED:BOOL=OFF \
                       -DYAML_CPP_BUILD_TOOLS:BOOL=OFF \
-                      -DBoost_INCLUDE_DIR=../../$(HOST)/include \
                       -DBUILD_SHARED_LIBS:BOOL=OFF
 
 $(TARBALLS)/yaml-cpp-$(YAML_CPP_VERSION).tar.gz:
