@@ -711,7 +711,7 @@ SipsIceTransport::handleEvents()
     for (const auto& pair: ackBuf) {
         const auto& f = pair.first;
         f.tdata_op_key->tdata = nullptr;
-        RING_DBG("status: %ld", pair.second);
+        RING_DBG("status: %d", pair.second);
         if (f.tdata_op_key->callback)
             f.tdata_op_key->callback(getTransportBase(), f.tdata_op_key->token,
                                      pair.second);

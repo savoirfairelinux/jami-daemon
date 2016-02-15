@@ -196,7 +196,7 @@ CertificateStore::pinCertificatePath(const std::string& path, std::function<void
             }
             paths_.emplace(path, std::move(scerts));
         }
-        RING_DBG("CertificateStore: loaded %lu certificates from %s.",
+        RING_DBG("CertificateStore: loaded %u certificates from %s.",
                  certs.size(), path.c_str());
         if (cb)
             cb(ids);
