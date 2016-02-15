@@ -1,4 +1,4 @@
-FFMPEG_HASH := f90c9bbbca32620a9cb78898a2b1b7d2cce9ad0f
+FFMPEG_HASH := af21d609a0ddeeddad4fdefecb19fd4e13744f80
 FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
 
 ifdef HAVE_WIN32
