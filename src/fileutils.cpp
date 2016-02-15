@@ -64,7 +64,9 @@
 namespace ring { namespace fileutils {
 
 // returns true if directory exists
-bool check_dir(const char *path, mode_t dirmode, mode_t parentmode)
+bool check_dir(const char *path,
+            mode_t UNUSED dirmode,
+            mode_t parentmode)
 {
     DIR *dir = opendir(path);
 
@@ -211,7 +213,7 @@ loadFile(const std::string& path)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
     std::streamsize size = file.tellg();
-    if (size > std::numeric_limits<unsigned>::max())
+    if ((unsigned)size > std::numeric_limits<unsigned>::max())
         throw std::runtime_error("File is too big: "+path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
@@ -221,7 +223,9 @@ loadFile(const std::string& path)
 }
 
 void
-saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode)
+saveFile(const std::string& path,
+        const std::vector<uint8_t>& data,
+        mode_t UNUSED mode)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
