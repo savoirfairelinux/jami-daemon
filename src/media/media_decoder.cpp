@@ -132,8 +132,11 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     // Increase analyze time to solve synchronization issues between callers.
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(55, 43, 100)
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
-
+#else
+    inputCtx_->max_analyze_duration2 = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+#endif
     RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
@@ -217,7 +220,11 @@ int MediaDecoder::setupFromVideoData()
     // Increase analyze time to solve synchronization issues between callers.
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(55, 43, 100)
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+#else
+    inputCtx_->max_analyze_duration2 = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+#endif
 
     RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)

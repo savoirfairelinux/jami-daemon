@@ -121,7 +121,7 @@ udp_resolve_host(const char* node, int service)
     struct addrinfo* res = nullptr;
     if (auto error = getaddrinfo(node, sport, &hints, &res)) {
         res = nullptr;
-        RING_ERR("getaddrinfo failed: %s\n", gai_strerror(error));
+        RING_ERR("getaddrinfo failed: %S\n", gai_strerror(error));
     }
 
     return res;
