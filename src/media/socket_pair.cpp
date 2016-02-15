@@ -98,7 +98,7 @@ private:
 };
 
 static int
-ff_network_wait_fd(int fd)
+ff_network_wait_fd(unsigned int fd)
 {
     struct pollfd p = { fd, POLLOUT, 0 };
     auto ret = poll(&p, 1, NET_POLL_TIMEOUT);
@@ -121,7 +121,7 @@ udp_resolve_host(const char* node, int service)
     struct addrinfo* res = nullptr;
     if (auto error = getaddrinfo(node, sport, &hints, &res)) {
         res = nullptr;
-        RING_ERR("getaddrinfo failed: %s\n", gai_strerror(error));
+        RING_ERR("getaddrinfo failed: %S\n", gai_strerror(error));
     }
 
     return res;
@@ -347,8 +347,8 @@ SocketPair::waitForData()
             }
 
             // work with system socket
-            struct pollfd p[2] = { {rtpHandle_, POLLIN, 0},
-                                   {rtcpHandle_, POLLIN, 0} };
+            struct pollfd p[2] = { {(unsigned int)rtpHandle_, POLLIN, 0},
+                                   {(unsigned int)rtcpHandle_, POLLIN, 0} };
             ret = poll(p, 2, NET_POLL_TIMEOUT);
             if (ret > 0) {
                 ret = 0;
