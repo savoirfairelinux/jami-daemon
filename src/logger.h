@@ -33,7 +33,9 @@ extern "C" {
  * Print something, coloring it depending on the level
  */
 void logger(const int level, const char* format, ...)
-#ifdef __GNUC__
+#ifdef _WIN32
+    __attribute__((format(gnu_printf, 2, 3)))
+#elif defined(__GNUC__)
     __attribute__((format(printf, 2, 3)))
 #endif
     ;
