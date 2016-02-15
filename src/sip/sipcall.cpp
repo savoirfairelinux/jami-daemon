@@ -183,7 +183,7 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 }
 
 void
-SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
+SIPCall::setTransport(std::shared_ptr<SipTransport> t)
 {
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     if (transport_)
@@ -203,8 +203,7 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                                   this_->getCallId().c_str());
                         this_->onFailure(ECONNRESET);
                     }
-                } else // should not happen
-                    this_->transport_->removeStateListener(list_id);
+                }
             });
     }
 }
