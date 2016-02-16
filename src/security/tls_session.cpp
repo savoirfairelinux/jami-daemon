@@ -256,16 +256,26 @@ TlsSession::shutdown()
 const char*
 TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 {
-    auto cipher = gnutls_cipher_get(session_);
-    gnutls_cipher_algorithm_t lookup;
+    gnutls_cipher_algorithm_t cipher, s_cipher = gnutls_cipher_get(session_);
+    gnutls_kx_algorithm_t kx, s_kx = gnutls_kx_get(session_);
+    gnutls_mac_algorithm_t mac, s_mac = gnutls_mac_get(session_);
 
-    // Loop on ciphers suite until our cipher is found
+    // Loop on ciphers suite, filter-in by the priority string, until our cipher is found
     for (std::size_t i=0; ; ++i) {
-        const char* const suite = gnutls_cipher_suite_info(i, cs_id.data(), nullptr, &lookup, nullptr, nullptr);
-        if (lookup == cipher)
+        unsigned int idx;
+        auto ret = gnutls_priority_get_cipher_suite_index(priority_cache_, i, &idx);
+        if (ret == GNUTLS_E_REQUESTED_DATA_NOT_AVAILABLE)
+            break;
+        if (ret == GNUTLS_E_UNKNOWN_CIPHER_SUITE)
+            continue;
+        const char* const suite = gnutls_cipher_suite_info(idx, cs_id.data(), &kx, &cipher, &mac,
+                                                           nullptr);
+        if (cipher == s_cipher && kx == s_kx && mac == s_mac)
             return suite;
     }
 
+    auto name = gnutls_cipher_get_name(s_cipher);
+    RING_WARN("[TLS] No Cipher Suite Id found for cipher %s", name ? name : "<null>");
     return {};
 }
 
