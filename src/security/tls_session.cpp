@@ -256,16 +256,23 @@ TlsSession::shutdown()
 const char*
 TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 {
-    auto cipher = gnutls_cipher_get(session_);
-    gnutls_cipher_algorithm_t lookup;
+    // get current session cipher suite info
+    gnutls_cipher_algorithm_t cipher, s_cipher = gnutls_cipher_get(session_);
+    gnutls_kx_algorithm_t kx, s_kx = gnutls_kx_get(session_);
+    gnutls_mac_algorithm_t mac, s_mac = gnutls_mac_get(session_);
 
-    // Loop on ciphers suite until our cipher is found
+    // Loop on all known cipher suites until matching with session data, extract it's cs_id
     for (std::size_t i=0; ; ++i) {
-        const char* const suite = gnutls_cipher_suite_info(i, cs_id.data(), nullptr, &lookup, nullptr, nullptr);
-        if (lookup == cipher)
+        const char* const suite = gnutls_cipher_suite_info(i, cs_id.data(), &kx, &cipher, &mac,
+                                                           nullptr);
+        if (!suite)
+          break;
+        if (cipher == s_cipher && kx == s_kx && mac == s_mac)
             return suite;
     }
 
+    auto name = gnutls_cipher_get_name(s_cipher);
+    RING_WARN("[TLS] No Cipher Suite Id found for cipher %s", name ? name : "<null>");
     return {};
 }
 
