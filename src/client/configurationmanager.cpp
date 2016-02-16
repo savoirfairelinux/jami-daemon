@@ -406,30 +406,35 @@ setCodecDetails(const std::string& accountID,
         return false;
 
     }
-    if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO) {
-        if (auto foundCodec = std::static_pointer_cast<ring::AccountAudioCodecInfo>(codec)) {
-            foundCodec->setCodecSpecifications(details);
-            ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
-            return true;
+    try {
+        if (codec->systemCodecInfo.mediaType & ring::MEDIA_AUDIO) {
+            if (auto foundCodec = std::static_pointer_cast<ring::AccountAudioCodecInfo>(codec)) {
+                foundCodec->setCodecSpecifications(details);
+                ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
+                return true;
+            }
         }
+
+        if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO) {
+            if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec)) {
+                foundCodec->setCodecSpecifications(details);
+                RING_WARN("parameters for %s changed ",
+                          foundCodec->systemCodecInfo.name.c_str());
+                if (auto call = ring::Manager::instance().getCurrentCall()) {
+                    if (call->useVideoCodec(foundCodec.get())) {
+                        RING_WARN("%s running. Need to restart encoding",
+                                  foundCodec->systemCodecInfo.name.c_str());
+                        call->restartMediaSender();
+                    }
+                }
+                ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
+                return true;
+            }
+        }
+    } catch (const std::exception& e) {
+        RING_ERR("Cannot set codec specifications: %s", e.what());
     }
 
-    if (codec->systemCodecInfo.mediaType & ring::MEDIA_VIDEO) {
-        if (auto foundCodec = std::static_pointer_cast<ring::AccountVideoCodecInfo>(codec)) {
-            foundCodec->setCodecSpecifications(details);
-            RING_WARN("parameters for %s changed ",
-                      foundCodec->systemCodecInfo.name.c_str());
-            if (auto call = ring::Manager::instance().getCurrentCall()) {
-                if (call->useVideoCodec(foundCodec.get())) {
-                    RING_WARN("%s running. Need to restart encoding",
-                              foundCodec->systemCodecInfo.name.c_str());
-                    call->restartMediaSender();
-                }
-            }
-            ring::emitSignal<ConfigurationSignal::MediaParametersChanged>(accountID);
-            return true;
-        }
-    }
     return false;
 }
 
