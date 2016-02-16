@@ -29,6 +29,10 @@ endif
 
 PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CAND=32 -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2
 
+ifdef HAVE_WIN64
+PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
+endif
+
 PKGS += pjproject
 # FIXME: nominally 2.2.0 is enough, but it has to be patched for gnutls
 ifeq ($(call need_pkg,'libpjproject'),)
