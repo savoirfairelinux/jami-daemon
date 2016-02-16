@@ -312,7 +312,8 @@ UNPACK = $(RM) -R $@ \
 	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xvzf $(f)) \
 	$(foreach f,$(filter %.tar.bz2,$^), && tar xvjf $(f)) \
 	$(foreach f,$(filter %.tar.xz,$^), && tar xvJf $(f)) \
-	$(foreach f,$(filter %.zip,$^), && unzip $(f))
+	$(foreach f,$(filter %.zip,$^), && unzip $(f)) \
+	$(foreach f,$(filter %.7z,$^), && 7z x $(f) -o*)
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -fp1) <
 pkg_static = (cd $(UNPACK_DIR) && ../../../contrib/src/pkg-static.sh $(1))

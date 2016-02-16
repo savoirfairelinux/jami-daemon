@@ -1,5 +1,6 @@
 *.tar.*
 *.zip
 *.h
+*.7z
 *.tgz
 *-git/
