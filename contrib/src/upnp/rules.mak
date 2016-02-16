@@ -18,6 +18,7 @@ ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/upnp/libupnp-win32.patch
 	$(APPLY) $(SRC)/upnp/libupnp-win64.patch
 	$(APPLY) $(SRC)/upnp/threadpool.patch
+	$(APPLY) $(SRC)/upnp/win_inet_pton.patch
 endif
 	$(APPLY) $(SRC)/upnp/libupnp-ipv6.patch
 	$(APPLY) $(SRC)/upnp/miniserver.patch
