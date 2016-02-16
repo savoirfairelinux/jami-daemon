@@ -70,12 +70,12 @@ VideoDeviceMonitor::getCapabilities(const string& name) const
 VideoSettings
 VideoDeviceMonitor::getSettings(const string& name)
 {
-    const auto itd = findDeviceByName(name);
+    const auto itd = findPreferencesByName(name);
 
-    if (itd == devices_.end())
+    if (itd == preferences_.end())
         return VideoSettings();
 
-    return itd->getSettings();
+    return *itd;
 }
 
 void
@@ -189,14 +189,16 @@ VideoDeviceMonitor::addDevice(const string& node)
         auto it = findPreferencesByName(dev.name);
         if (it != preferences_.end())
             dev.applySettings(*it);
-        else
+        else {
+            dev.applySettings(dev.getDefaultSettings());
             preferences_.push_back(dev.getSettings());
+        }
 
         // in case there is no default device on a fresh run
         if (defaultDevice_.empty())
             defaultDevice_ = dev.name;
 
-        devices_.push_back(dev);
+        devices_.emplace_back(std::move(dev));
         notify();
     } catch (const std::runtime_error& e) {
         RING_ERR("%s", e.what());
