@@ -142,6 +142,18 @@ AccountCodecInfo::AccountCodecInfo(const SystemCodecInfo& sysCodecInfo)
 AccountCodecInfo::~AccountCodecInfo()
 {}
 
+AccountCodecInfo&
+AccountCodecInfo::operator=(const AccountCodecInfo& o)
+{
+    if (&systemCodecInfo != &o.systemCodecInfo)
+        throw std::runtime_error("cannot assign codec info object pointing to another codec.");
+    order = o.order;
+    isActive = o.isActive;
+    payloadType = o.payloadType;
+    bitrate = o.bitrate;
+    quality = o.quality;
+}
+
 AccountAudioCodecInfo::AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo)
     : AccountCodecInfo(sysCodecInfo)
     , audioformat{sysCodecInfo.audioformat}
@@ -162,17 +174,13 @@ AccountAudioCodecInfo::getCodecSpecifications()
 void
 AccountAudioCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
-    auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
-    if (it != details.end())
-        bitrate = ring::stoi(it->second);
+    decltype(bitrate) tmp_bitrate = ring::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::BITRATE));
+    decltype(audioformat) tmp_audioformat = audioformat;
+    tmp_audioformat.sample_rate = ring::stoi(details.at(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE));
 
-    it = details.find(DRing::Account::ConfProperties::CodecInfo::SAMPLE_RATE);
-    if (it != details.end())
-        audioformat.sample_rate = ring::stoi(it->second);
-
-    it = details.find(DRing::Account::ConfProperties::CodecInfo::CHANNEL_NUMBER);
-    if (it != details.end())
-        audioformat.nb_channels = ring::stoi(it->second);
+    // copy back if no exception was raised
+    bitrate = tmp_bitrate;
+    audioformat = tmp_audioformat;
 }
 
 bool
@@ -211,21 +219,26 @@ AccountVideoCodecInfo::getCodecSpecifications()
 void
 AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::string>& details)
 {
+    auto copy = *this;
+
     auto it = details.find(DRing::Account::ConfProperties::CodecInfo::BITRATE);
     if (it != details.end())
-        bitrate = ring::stoi(it->second);
+        copy.bitrate = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::FRAME_RATE);
     if (it != details.end())
-        frameRate = ring::stoi(it->second);
+        copy.frameRate = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::QUALITY);
     if (it != details.end())
-        quality = ring::stoi(it->second);
+        copy.quality = ring::stoi(it->second);
 
     it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
-        isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
+        copy.isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
+
+    // copy back if no exception was raised
+    *this = copy;
 }
 
 AccountVideoCodecInfo::~AccountVideoCodecInfo()

@@ -154,6 +154,8 @@ struct AccountCodecInfo
 {
     AccountCodecInfo(const SystemCodecInfo& sysCodecInfo);
     ~AccountCodecInfo();
+    AccountCodecInfo(const AccountCodecInfo&) = default;
+    AccountCodecInfo& operator=(const AccountCodecInfo&);
 
     const SystemCodecInfo& systemCodecInfo;
     unsigned order; /*used to define prefered codec list order in UI*/
@@ -170,6 +172,8 @@ struct AccountAudioCodecInfo : AccountCodecInfo
 {
     AccountAudioCodecInfo(const SystemAudioCodecInfo& sysCodecInfo);
     ~AccountAudioCodecInfo();
+    AccountAudioCodecInfo(const AccountAudioCodecInfo&) = default;
+    AccountAudioCodecInfo& operator=(const AccountAudioCodecInfo&) = default;
 
     std::map<std::string, std::string>  getCodecSpecifications();
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
@@ -183,6 +187,8 @@ struct AccountVideoCodecInfo : AccountCodecInfo
 {
     AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCodecInfo);
     ~AccountVideoCodecInfo();
+    AccountVideoCodecInfo(const AccountVideoCodecInfo&) = default;
+    AccountVideoCodecInfo& operator=(const AccountVideoCodecInfo&) = default;
 
     void setCodecSpecifications(const std::map<std::string, std::string>& details);
     std::map<std::string, std::string>  getCodecSpecifications();
