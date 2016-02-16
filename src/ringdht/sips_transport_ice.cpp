@@ -647,8 +647,6 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
     // Shutdown on fatal errors
     if (gnutls_error_is_fatal(ret)) {
         tdata->op_key.tdata = nullptr;
-        if (callback)
-            callback(&trData_.base, token, -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN));
         RING_ERR("[TLS] send failed: %s", gnutls_strerror(ret));
         tls_->shutdown();
         return tls_status_from_err(ret);
