@@ -584,8 +584,16 @@ RingAccount::handlePendingCallList()
     auto pc_iter = std::begin(pending_calls);
     while (pc_iter != std::end(pending_calls)) {
         bool incoming = pc_iter->call_key == invalid_hash; // do it now, handlePendingCall may invalidate pc data
+        bool handled;
 
-        if (handlePendingCall(*pc_iter, incoming)) {
+        try {
+            handled = handlePendingCall(*pc_iter, incoming);
+        } catch (const std::exception& e) {
+            RING_ERR("[DHT] exception during pending call handling: %s", e.what());
+            handled = true; // drop from pending list
+        }
+
+        if (handled) {
             // Cancel pending listen (outgoing call)
             if (not incoming)
                 dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.get());
