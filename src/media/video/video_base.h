@@ -154,9 +154,9 @@ struct VideoSettings
     std::map<std::string, std::string> to_map() const;
 
     std::string name {};
-    std::string video_size {};
     std::string channel {};
-    unsigned framerate {};
+    std::string video_size {};
+    std::string framerate {};
 };
 
 }} // namespace ring::video

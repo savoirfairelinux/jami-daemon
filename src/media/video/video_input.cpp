@@ -113,8 +113,11 @@ bool VideoInput::captureFrame()
 
     switch (ret) {
         case MediaDecoder::Status::ReadError:
-        case MediaDecoder::Status::DecodeError:
             return false;
+
+        // try to keep decoding
+        case MediaDecoder::Status::DecodeError:
+            return true;
 
         // End of streamed file
         case MediaDecoder::Status::EOFError:
