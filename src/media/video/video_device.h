@@ -25,6 +25,7 @@
 #include "video_base.h"
 #include "rational.h"
 
+#include <cmath>
 #include <map>
 #include <memory>
 #include <string>
