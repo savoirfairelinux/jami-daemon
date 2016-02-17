@@ -217,7 +217,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          /* Accessor to data structures
          * @return The list that reflects the user's choice
          */
-        std::vector<unsigned> getActiveCodecs() const;
+        std::vector<unsigned> getActiveCodecs(MediaType mediaType = MEDIA_ALL) const;
+        bool isActiveCodec(MediaType mediaType) const;
 
         /**
          * Update both the codec order structure and the codec string used for
@@ -225,7 +226,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         void setActiveCodecs(const std::vector<unsigned>& list);
         std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
-        std::vector<unsigned> getActiveAccountCodecInfoIdList(MediaType mediaType) const;
         std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
         std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
 
@@ -453,8 +453,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
         std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
-        void desactivateAllMedia(MediaType mediaType);
-
+        void setAllCodecsActive(MediaType mediaType, bool active);
 };
 
 } // namespace ring
