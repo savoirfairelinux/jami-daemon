@@ -24,10 +24,14 @@
 #include "media_buffer.h"
 #include "string_utils.h"
 #include "logger.h"
+#include "intrin.h"
 
 #include <cassert>
 
 namespace ring { namespace video {
+
+static unsigned extractInt(const std::map<std::string, std::string>& settings,
+                           const std::string& key) UNUSED;
 
 /*=== VideoGenerator =========================================================*/
 
@@ -81,7 +85,7 @@ extractInt(const std::map<std::string, std::string>& settings, const std::string
     if (i != settings.cend()) {
         try {
             return ring::stoi(i->second);
-        } catch(...) {
+        } catch (...) {
             RING_ERR("Can't parse int: %s", i->second.c_str());
         }
     }
