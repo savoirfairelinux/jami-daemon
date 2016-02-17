@@ -75,19 +75,6 @@ extractString(const std::map<std::string, std::string>& settings, const std::str
     return {};
 }
 
-static unsigned
-extractInt(const std::map<std::string, std::string>& settings, const std::string& key) {
-    auto i = settings.find(key);
-    if (i != settings.cend()) {
-        try {
-            return ring::stoi(i->second);
-        } catch(...) {
-            RING_ERR("Can't parse int: %s", i->second.c_str());
-        }
-    }
-    return 0;
-}
-
 VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
 {
     name = extractString(settings, "name");
