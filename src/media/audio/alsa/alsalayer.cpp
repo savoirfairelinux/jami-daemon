@@ -36,20 +36,19 @@
 namespace ring {
 
 class AlsaThread {
-    public:
-        AlsaThread(AlsaLayer *alsa);
-        ~AlsaThread();
-        void initAudioLayer();
-        void start();
-        bool isRunning() const;
+public:
+    AlsaThread(AlsaLayer *alsa);
+    ~AlsaThread();
+    void initAudioLayer();
+    void start();
+    bool isRunning() const;
 
-    private:
-        void run();
-
-        NON_COPYABLE(AlsaThread);
-        std::thread thread_;
-        AlsaLayer* alsa_;
-        std::atomic<bool> running_;
+private:
+    NON_COPYABLE(AlsaThread);
+    void run();
+    AlsaLayer* alsa_;
+    std::atomic<bool> running_;
+    std::thread thread_;
 };
 
 AlsaThread::AlsaThread(AlsaLayer *alsa)
