@@ -35,13 +35,6 @@
 
 namespace ring { namespace video {
 
-class OSXVideoSize {
-    public:
-        OSXVideoSize(const unsigned width, const unsigned height);
-        unsigned width;
-        unsigned height;
-};
-
 class VideoDeviceImpl {
     public:
         /**
@@ -53,22 +46,19 @@ class VideoDeviceImpl {
         std::string name;
 
         std::vector<std::string> getChannelList() const;
-        std::vector<std::string> getSizeList(const std::string& channel) const;
-        std::vector<std::string> getSizeList() const;
-        std::vector<std::string> getRateList(const std::string& channel, const std::string& size) const;
-        float getRate(unsigned rate) const;
-
-        VideoSettings getSettings() const;
-        void applySettings(VideoSettings settings);
+        std::vector<VideoSize> getSizeList(const std::string& channel) const;
+        std::vector<VideoSize> getSizeList() const;
+        std::vector<FrameRate> getRateList(const std::string& channel, VideoSize size) const;
 
         DeviceParams getDeviceParams() const;
+        void setDeviceParams(const DeviceParams&);
 
     private:
-        const OSXVideoSize extractSize(const std::string &name) const;
+        VideoSize extractSize(VideoSize) const;
 
         AVCaptureDevice* avDevice_;
-        std::vector<OSXVideoSize> available_sizes_;
-        OSXVideoSize current_size_;
+        std::vector<VideoSize> available_sizes_;
+        VideoSize current_size_;
 };
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
@@ -79,34 +69,18 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
 {
     name = [[avDevice_ localizedName] UTF8String];
 
+    available_sizes_.reserve(avDevice_.formats.count);
     for (AVCaptureDeviceFormat* format in avDevice_.formats) {
-        std::stringstream ss;
         auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
-        OSXVideoSize size(dimensions.width, dimensions.height);
-        available_sizes_.push_back(size);
+        available_sizes_.emplace_back(dimensions.width, dimensions.height);
     }
-    // Set default settings
-    applySettings(VideoSettings());
 }
 
-OSXVideoSize::OSXVideoSize(const unsigned width, const unsigned height) :
-    width(width), height(height) {}
-
-void
-VideoDeviceImpl::applySettings(VideoSettings settings)
-{
-//TODO: add framerate
-//    rate_ = size_.getRate(settings["rate"]);
-    current_size_ = extractSize(settings.video_size);
-}
-
-const OSXVideoSize
-VideoDeviceImpl::extractSize(const std::string &name) const
+VideoSize
+VideoDeviceImpl::extractSize(VideoSize size) const
 {
     for (const auto item : available_sizes_) {
-        std::stringstream ss;
-        ss << item.width << "x" << item.height;
-        if (ss.str() == name)
+        if (item.first == size.first && item.second == size.second)
             return item;
     }
 
@@ -114,19 +88,19 @@ VideoDeviceImpl::extractSize(const std::string &name) const
     if (!available_sizes_.empty()) {
         return available_sizes_.back();
     }
-    return OSXVideoSize(-1, -1);
+    return VideoSize(0, 0);
 }
-
 
 DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
+    params.name = [[avDevice_ localizedName] UTF8String];
     params.input = "[" + device + "]";
     params.format = "avfoundation";
 
-    params.width = current_size_.width;
-    params.height = current_size_.height;
+    params.width = current_size_.first;
+    params.height = current_size_.second;
 
     auto format = [avDevice_ activeFormat];
     auto frameRate = (AVFrameRateRange*)
@@ -135,21 +109,41 @@ VideoDeviceImpl::getDeviceParams() const
     return params;
 }
 
-VideoSettings
-VideoDeviceImpl::getSettings() const
+void
+VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
-    VideoSettings settings;
+//TODO: add framerate
+//    rate_ = size_.getRate(settings["rate"]);
+    current_size_ = extractSize({params.width, params.height});
+}
 
-    settings.name = [[avDevice_ localizedName] UTF8String];
+std::vector<VideoSize>
+VideoDeviceImpl::getSizeList() const
+{
+    return getSizeList("default");
+}
 
+std::vector<FrameRate>
+VideoDeviceImpl::getRateList(const std::string& channel, VideoSize size) const
+{
     auto format = [avDevice_ activeFormat];
-    auto frameRate = (AVFrameRateRange*)
-                    [format.videoSupportedFrameRateRanges objectAtIndex:0];
-    settings.framerate = frameRate.maxFrameRate;
-    settings.video_size = std::to_string(current_size_.width) +
-        "x" + std::to_string(current_size_.height);
+    std::vector<FrameRate> v;
+    v.reserve(format.videoSupportedFrameRateRanges.count);
+    for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges)
+        v.emplace_back(frameRateRange.maxFrameRate);
+    return v;
+}
 
-    return settings;
+std::vector<VideoSize>
+VideoDeviceImpl::getSizeList(const std::string& channel) const
+{
+    return available_sizes_;
+}
+
+std::vector<std::string>
+VideoDeviceImpl::getChannelList() const
+{
+    return {"default"};
 }
 
 VideoDevice::VideoDevice(const std::string& path) :
@@ -166,66 +160,27 @@ VideoDevice::getDeviceParams() const
 }
 
 void
-VideoDevice::applySettings(VideoSettings settings)
+VideoDevice::setDeviceParams(const DeviceParams& params)
 {
-    deviceImpl_->applySettings(settings);
-}
-
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
+    return deviceImpl_->setDeviceParams(params);
 }
 
 std::vector<std::string>
-VideoDeviceImpl::getSizeList() const
+VideoDevice::getChannelList() const
 {
-    return getSizeList("default");
+    return deviceImpl_->getChannelList();
 }
 
-std::vector<std::string>
-VideoDeviceImpl::getRateList(const std::string& channel, const std::string& size) const
+std::vector<VideoSize>
+VideoDevice::getSizeList(const std::string& channel) const
 {
-    auto format = [avDevice_ activeFormat];
-    std::vector<std::string> v;
-
-    for (AVFrameRateRange* frameRateRange in format.videoSupportedFrameRateRanges) {
-      std::stringstream ss;
-        ss << frameRateRange.maxFrameRate;
-        v.push_back(ss.str());
-    }
-    return v;
+    return deviceImpl_->getSizeList(channel);
 }
 
-std::vector<std::string>
-VideoDeviceImpl::getSizeList(const std::string& channel) const
+std::vector<FrameRate>
+VideoDevice::getRateList(const std::string& channel, VideoSize size) const
 {
-    std::vector<std::string> v;
-
-    for (const auto &item : available_sizes_) {
-        std::stringstream ss;
-        ss << item.width << "x" << item.height;
-        v.push_back(ss.str());
-    }
-
-    return v;
-}
-
-std::vector<std::string> VideoDeviceImpl::getChannelList() const
-{
-    return {"default"};
-}
-
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
-{
-    DRing::VideoCapabilities cap;
-
-    for (const auto& chan : deviceImpl_->getChannelList())
-        for (const auto& size : deviceImpl_->getSizeList(chan))
-            cap[chan][size] = deviceImpl_->getRateList(chan, size);
-
-    return cap;
+    return deviceImpl_->getRateList(channel, size);
 }
 
 VideoDevice::~VideoDevice()
