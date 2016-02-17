@@ -203,7 +203,7 @@ join_string(const std::vector<unsigned> &v)
 void
 Account::serialize(YAML::Emitter& out)
 {
-    const auto& activeCodecs = join_string(getActiveAccountCodecInfoIdList(MEDIA_ALL));
+    const auto& activeCodecs = join_string(getActiveCodecs(MEDIA_ALL));
 
     out << YAML::Key << ID_KEY << YAML::Value << accountID_;
     out << YAML::Key << ALIAS_KEY << YAML::Value << alias_;
@@ -309,10 +309,13 @@ Account::getVolatileAccountDetails() const
     };
 }
 
-std::vector<unsigned>
-Account::getActiveCodecs() const
+bool
+Account::hasActiveCodec(MediaType mediaType) const
 {
-    return getActiveAccountCodecInfoIdList(MEDIA_ALL);
+    for (auto& codecIt: accountCodecInfoList_)
+        if ((codecIt->systemCodecInfo.mediaType & mediaType) && codecIt->isActive)
+            return true;
+    return false;
 }
 
 void
@@ -320,7 +323,7 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
     // TODO: mutex to protect isActive
-    desactivateAllMedia(MEDIA_ALL);
+    setAllCodecsActive(MEDIA_ALL, false);
 
     // list contains the ordered payload of active codecs picked by the user for this account
     // we used the codec vector to save the order.
@@ -339,6 +342,15 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
                  std::shared_ptr<AccountCodecInfo> b) {
                   return a->order < b->order;
               });
+
+    if (!hasActiveCodec(MEDIA_AUDIO)) {
+        RING_WARN("All audio codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_AUDIO, true);
+    }
+    if (!hasActiveCodec(MEDIA_VIDEO)) {
+        RING_WARN("All video codecs disabled, enabling all");
+        setAllCodecsActive(MEDIA_VIDEO, true);
+    }
 }
 
 std::string
@@ -483,7 +495,7 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 }
 
 std::vector<unsigned>
-Account::getActiveAccountCodecInfoIdList(MediaType mediaType) const
+Account::getActiveCodecs(MediaType mediaType) const
 {
     if (mediaType == MEDIA_NONE)
         return {};
@@ -513,14 +525,13 @@ Account::getAccountCodecInfoIdList(MediaType mediaType) const
 }
 
 void
-Account::desactivateAllMedia(MediaType mediaType)
+Account::setAllCodecsActive(MediaType mediaType, bool active)
 {
     if (mediaType == MEDIA_NONE)
         return;
-
     for (auto& codecIt: accountCodecInfoList_) {
         if (codecIt->systemCodecInfo.mediaType & mediaType)
-            codecIt->isActive = false;
+            codecIt->isActive = active;
     }
 }
 

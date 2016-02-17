@@ -262,7 +262,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     if (!body || pjmedia_sdp_parse(rdata->tp_info.pool, (char*) body->data, body->len, &r_sdp) != PJ_SUCCESS)
         r_sdp = NULL;
 
-    if (account->getActiveAccountCodecInfoIdList(MEDIA_AUDIO).empty()) {
+    if (not account->hasActiveCodec(MEDIA_AUDIO)) {
         try_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE, NULL, NULL, NULL);
 
         return PJ_FALSE;
