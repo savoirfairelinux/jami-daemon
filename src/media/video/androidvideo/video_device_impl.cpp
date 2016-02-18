@@ -57,24 +57,23 @@ class VideoDeviceImpl {
 
         std::string name;
 
-        VideoSettings getSettings() const;
-        void applySettings(VideoSettings settings);
-
         DeviceParams getDeviceParams() const;
-        std::vector<std::string> getSizeList() const;
-        std::vector<unsigned> getRateList() const;
+        void setDeviceParams(const DeviceParams&);
+
+        std::vector<VideoSize> getSizeList() const;
+        std::vector<FrameRate> getRateList() const;
     private:
         void selectFormat();
-        std::string getSize(const std::string size) const;
-        unsigned getRate(const unsigned rate) const;
+        VideoSize getSize(VideoSize size) const;
+        FrameRate getRate(FrameRate rate) const;
 
-        std::vector<int> formats_;
-        std::vector<std::string> sizes_;
-        std::vector<unsigned> rates_;
+        std::vector<int> formats_ {};
+        std::vector<VideoSize> sizes_ {};
+        std::vector<FrameRate> rates_ {};
 
-        const struct android_fmt *fmt_;
-        std::string size_;
-        unsigned rate_;
+        const struct android_fmt *fmt_ {nullptr};
+        VideoSize size_ {};
+        FrameRate rate_ {};
 };
 
 void
@@ -116,77 +115,51 @@ VideoDeviceImpl::selectFormat()
     }
 }
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path) :
-    name(path), formats_(), sizes_(), rates_(), fmt_(nullptr), rate_()
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
 {
-    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes_, &rates_);
+    std::vector<unsigned> sizes;
+    std::vector<unsigned> rates;
+    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
+    for (size_t i=0, n=sizes.size(); i<n; i+=2)
+        sizes_.emplace_back(sizes[i], sizes[i+1]);
+    for (const auto& r : rates)
+        rates_.emplace_back(r, 1000);
 
     selectFormat();
-    applySettings(VideoSettings());
 }
 
-std::string
-VideoDeviceImpl::getSize(const std::string size) const
+VideoSize
+VideoDeviceImpl::getSize(VideoSize size) const
 {
     for (const auto &iter : sizes_) {
         if (iter == size)
             return iter;
     }
 
-    assert(not sizes_.empty());
-    return sizes_.back();
+    return sizes_.empty() ? VideoSize{0, 0} : sizes_.back();
 }
 
-unsigned
-VideoDeviceImpl::getRate(const unsigned rate) const
+FrameRate
+VideoDeviceImpl::getRate(FrameRate rate) const
 {
     for (const auto &iter : rates_) {
         if (iter == rate)
             return iter;
     }
 
-    assert(not rates_.empty());
-    return rates_.back();
+    return rates_.empty() ? FrameRate{0, 0} : rates_.back();
 }
 
-std::vector<std::string>
+std::vector<VideoSize>
 VideoDeviceImpl::getSizeList() const
 {
     return sizes_;
 }
 
-std::vector<unsigned>
+std::vector<FrameRate>
 VideoDeviceImpl::getRateList() const
 {
     return rates_;
-}
-
-void
-VideoDeviceImpl::applySettings(VideoSettings settings)
-{
-    std::stringstream ss;
-    int width, height;
-    char sep;
-
-    size_ = getSize(settings.video_size);
-    rate_ = getRate(settings.framerate);
-
-    ss << size_;
-    ss >> width >> sep >> height;
-
-    /* VideoManager will cache these parameters and set them only when device is open */
-    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->code, width, height, rate_);
-}
-
-VideoSettings
-VideoDeviceImpl::getSettings() const
-{
-    VideoSettings settings;
-    settings.name = name;
-    settings.channel = "default";
-    settings.video_size = size_;
-    settings.framerate = rate_;
-    return settings;
 }
 
 DeviceParams
@@ -199,13 +172,22 @@ VideoDeviceImpl::getDeviceParams() const
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
 
-    ss2 << size_;
-    ss2 >> params.width >> sep >> params.height;
-
+    params.name = name;
     params.input = name;
     params.channel =  0;
+    params.width = size_.first;
+    params.height = size_.second;
     params.framerate = rate_;
+
     return params;
+}
+
+void
+VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
+{
+    size_ = getSize({params.width, params.height});
+    rate_ = getRate(params.framerate);
+    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->code, size_.first, size_.second, rate_.real());
 }
 
 VideoDevice::VideoDevice(const std::string& path) :
@@ -214,41 +196,34 @@ VideoDevice::VideoDevice(const std::string& path) :
     name = deviceImpl_->name;
 }
 
-void
-VideoDevice::applySettings(VideoSettings settings)
-{
-    deviceImpl_->applySettings(settings);
-}
-
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
-}
-
 DeviceParams
 VideoDevice::getDeviceParams() const
 {
     return deviceImpl_->getDeviceParams();
 }
 
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
+void
+VideoDevice::setDeviceParams(const DeviceParams& params)
 {
-    DRing::VideoCapabilities cap;
+    return deviceImpl_->setDeviceParams(params);
+}
 
-    for (const auto &iter : deviceImpl_->getSizeList()) {
-        std::vector<std::string> rates;
+std::vector<std::string>
+VideoDevice::getChannelList() const
+{
+    return {"default"};
+}
 
-        for(const auto &iter : deviceImpl_->getRateList()) {
-            std::stringstream ss;
-            ss << iter;
-            rates.push_back(ss.str());
-        }
-        cap["default"][iter] = rates;
-    }
+std::vector<VideoSize>
+VideoDevice::getSizeList(const std::string& channel) const
+{
+    return deviceImpl_->getSizeList();
+}
 
-    return cap;
+std::vector<FrameRate>
+VideoDevice::getRateList(const std::string& channel, VideoSize size) const
+{
+    return deviceImpl_->getRateList();
 }
 
 VideoDevice::~VideoDevice()
