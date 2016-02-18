@@ -1982,6 +1982,10 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
             RING_ERR("%s", e.what());
         }
 
+        // sendUnregister may failed and cause regc_ to be reset to nullptr
+        // in this case re-registration has been scheduled, so just leave
+        if (!regc_)
+            return true;
         pjsip_regc_update_contact(regc_, 1, &contact_);
 
         /*  Perform new registration */
