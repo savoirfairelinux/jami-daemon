@@ -94,7 +94,7 @@ struct VideoSignal {
 #ifdef __ANDROID__
         struct GetCameraInfo {
             constexpr static const char* name = "GetCameraInfo";
-            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<std::string> *sizes, std::vector<unsigned> *rates);
+            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
         };
         struct SetParameters {
             constexpr static const char* name = "SetParameters";

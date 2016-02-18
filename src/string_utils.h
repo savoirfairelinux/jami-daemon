@@ -67,6 +67,15 @@ stoi(const std::string& str)
     return v;
 }
 
+static inline double
+stod(const std::string& str)
+{
+    double v;
+    std::istringstream os(str);
+    os >> v;
+    return v;
+}
+
 #else
 
 template <typename T>
@@ -80,6 +89,12 @@ static inline int
 stoi(const std::string& str)
 {
     return std::stoi(str);
+}
+
+static inline double
+stod(const std::string& str)
+{
+    return std::stod(str);
 }
 
 #endif
