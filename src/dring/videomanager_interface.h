@@ -73,6 +73,8 @@ void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 #ifdef __ANDROID__
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
+void* obtainFrame(int length);
+void releaseFrame(void* frame);
 #endif
 
 // Video signal type definitions
@@ -90,25 +92,21 @@ struct VideoSignal {
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
 #ifdef __ANDROID__
-        struct AcquireCamera {
-            constexpr static const char* name = "AcquireCamera";
+        struct GetCameraInfo {
+            constexpr static const char* name = "GetCameraInfo";
+            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
+        };
+        struct SetParameters {
+            constexpr static const char* name = "SetParameters";
+            using cb_type = void(const std::string& device, const int format, const int width, const int height, const int rate);
+        };
+        struct StartCapture {
+            constexpr static const char* name = "StartCapture";
             using cb_type = void(const std::string& device);
         };
-        struct ReleaseCamera {
-            constexpr static const char* name = "ReleaseCamera";
-            using cb_type = void(const std::string& device);
-        };
-        struct GetCameraFormats {
-            constexpr static const char* name = "GetCameraFormats";
-            using cb_type = void(const std::string& device, std::vector<int> *formats_);
-        };
-        struct GetCameraSizes {
-            constexpr static const char* name = "GetCameraSizes";
-            using cb_type = void(const std::string& device, int format, std::vector<std::string> *sizes);
-        };
-        struct GetCameraRates{
-            constexpr static const char* name = "GetCameraRates";
-            using cb_type = void(const std::string& device, const int format, const std::string& size, std::vector<float> *rates_);
+        struct StopCapture {
+            constexpr static const char* name = "StopCapture";
+            using cb_type = void(void);
         };
 #endif
 };
