@@ -30,6 +30,11 @@
 #include "string_utils.h"
 #include "logger.h"
 
+//HWACCEL
+#ifdef _WIN32
+#include "dxva2.h"
+#endif
+
 #include <iostream>
 #include <unistd.h>
 #include <thread> // hardware_concurrency
@@ -131,7 +136,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     // Increase analyze time to solve synchronization issues between callers.
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
-    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+    inputCtx_->max_analyze_duration2 = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
     RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
@@ -216,7 +221,7 @@ int MediaDecoder::setupFromVideoData()
     // Increase analyze time to solve synchronization issues between callers.
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
-    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
+    inputCtx_->max_analyze_duration2 = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
     RING_DBG("Finding stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
@@ -257,7 +262,26 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
-    decoderCtx_->thread_count = std::thread::hardware_concurrency();
+    AVHWAccel* hwaccel = nullptr;
+    AVHWAccel* h264_dxva2_hwaccel = nullptr;
+    while((hwaccel = av_hwaccel_next(hwaccel)))
+    {
+        if((hwaccel->pix_fmt == AV_PIX_FMT_DXVA2_VLD) && (hwaccel->id == CODEC_ID_H264))
+        {
+            h264_dxva2_hwaccel = hwaccel;
+            av_register_hwaccel(h264_dxva2_hwaccel);
+            printf("dxva2_hwaccel = %s\r\n",h264_dxva2_hwaccel->name);
+        }
+        break;
+    }
+    if (h264_dxva2_hwaccel) {
+        decoderCtx_->hwaccel = h264_dxva2_hwaccel;
+        dxva2_init(decoderCtx_);
+    }
+
+
+
+    decoderCtx_->thread_count = 1; //std::thread::hardware_concurrency();
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -439,7 +463,9 @@ MediaDecoder::getTimeBase() const
 }
 
 int MediaDecoder::getPixelFormat() const
-{ return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt); }
+{ //return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt);
+    return AV_PIX_FMT_DXVA2_VLD;
+}
 
 void
 MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
