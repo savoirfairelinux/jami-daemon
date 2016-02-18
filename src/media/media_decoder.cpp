@@ -30,6 +30,11 @@
 #include "string_utils.h"
 #include "logger.h"
 
+//HWACCEL
+#ifdef _WIN32
+#include "dxva2.h"
+#endif
+
 #include <iostream>
 #include <unistd.h>
 #include <thread> // hardware_concurrency
@@ -257,7 +262,26 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
-    decoderCtx_->thread_count = std::thread::hardware_concurrency();
+    RING_WARN("TRY TO FIND HW ACCEL \n");
+    AVHWAccel* hwaccel = nullptr;
+    AVHWAccel* h264_dxva2_hwaccel = nullptr;
+    while((hwaccel = av_hwaccel_next(hwaccel)))
+    {
+        RING_WARN("HW ACCEL : %s\n", hwaccel->name);
+        if((hwaccel->pix_fmt == AV_PIX_FMT_DXVA2_VLD) && (hwaccel->id == AV_CODEC_ID_H264))
+        {
+            h264_dxva2_hwaccel = hwaccel;
+            av_register_hwaccel(h264_dxva2_hwaccel);
+            RING_WARN("USING HW_ACCEL = %s\n",h264_dxva2_hwaccel->name);
+        }
+        break;
+    }
+    if (h264_dxva2_hwaccel) {
+        decoderCtx_->hwaccel = h264_dxva2_hwaccel;
+        dxva2_init(decoderCtx_);
+    }
+
+    decoderCtx_->thread_count = 1; //std::thread::hardware_concurrency();
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -439,7 +463,9 @@ MediaDecoder::getTimeBase() const
 }
 
 int MediaDecoder::getPixelFormat() const
-{ return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt); }
+{ //return libav_utils::ring_pixel_format(decoderCtx_->pix_fmt);
+    return AV_PIX_FMT_DXVA2_VLD;
+}
 
 void
 MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
