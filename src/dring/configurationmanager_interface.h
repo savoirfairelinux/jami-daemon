@@ -158,6 +158,60 @@ struct AudioSignal {
         };
 };
 
+/* File transfer */
+using DataConnectionId = std::string;
+using DataTransferId = std::string;
+using DataTransferSize = std::size_t;
+
+
+enum class DataConnectionStatus {
+    DISCONNECTED, // No connection available (reason provided)
+    CONNECTING, // trying to find peer and create a secure connection
+    IDLE, // no pending transfer
+    TRANSFERING, // one or more transfer are pending
+};
+
+enum class DataConnectionError : int {
+    NONE=0,
+    CLOSED,
+    REFUSED, // peer not found or refused the connection
+    IO, // underlaying transport io error
+
+    // more later...
+};
+
+struct DataConnectionInfo {
+    DataConnectionStatus status; // connection status
+    std::string peer; // remote identification
+    std::string account; // account used for transfer
+};
+
+enum class FileTransferStatus {
+    REQUESTED,
+    PROGRESSING,
+    FINISHED,
+    CANCELLED, // could be set in case of cancelFileTransfer() or disconnection by error
+    REFUSED, // refused or cancelled by peer
+
+   // more later...
+};
+
+struct FileTransferInfo {
+    std::string connection; // used connection id
+    std::string filename;
+    std::size_t size;
+    FileTransferStatus status;
+};
+
+std::string connectToPeer(const std::string& accountId, const std::string& peerUri);
+bool dataConnectionInfo(const std::string& id, const DataConnectionInfo& info);
+bool closeDataConnection(const std::string& id);
+
+std::string sendFile(const std::string& accountId, const std::string& peerUri, const std::string& filename);
+bool fileTransferInfo(const std::string& id, FileTransferInfo& info);
+std::size_t fileTransferProgress(const std::string& id);
+bool cancelFileTransfer(const std::string& id); // could be used by local or remote (refuse or stop)
+
 // Configuration signal type definitions
 struct ConfigurationSignal {
         struct VolumeChanged {
@@ -213,6 +267,14 @@ struct ConfigurationSignal {
         struct MediaParametersChanged {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
+        };
+        struct DataConnectionStatus {
+                constexpr static const char* name = "DataConnectionStatus";
+                using cb_type = void(const std::string& /*accountId*/, const std::string& /*id*/, DataConnectionStatus /*status*/);
+        };
+        struct FileTransferStatus {
+                constexpr static const char* name = "FileTransferStatus";
+                using cb_type = void(const std::string& /*accountId*/, const std::string& /*id*/, FileTransferStatus /*status*/);
         };
 #ifdef __ANDROID__
         /**

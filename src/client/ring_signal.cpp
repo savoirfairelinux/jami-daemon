@@ -68,6 +68,8 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
+        exported_callback<DRing::ConfigurationSignal::DataConnectionStatus>(),
+        exported_callback<DRing::ConfigurationSignal::FileTransferStatus>(),
 #ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
