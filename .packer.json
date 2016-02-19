@@ -1,28 +1,6 @@
 {
     "BuildType" : "Docker",
     "BuildInstructions" : {
-        "fedora_21" : [
-            "mkdir -p /sources",
-            "cd /ring-daemon",
-            "cp ring-daemon.spec ..",
-            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
-            "cd ..",
-            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
-            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
-            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
-            "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
-        ],
-        "fedora_21_i386" : [
-            "mkdir -p /sources",
-            "cd /ring-daemon",
-            "cp ring-daemon.spec ..",
-            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
-            "cd ..",
-            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
-            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
-            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
-            "cp -R /root/rpmbuild/RPMS/i686/* /output"
-        ],
         "fedora_22": [
             "mkdir -p /sources",
             "cd /ring-daemon",
@@ -95,26 +73,6 @@
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
-        "ubuntu_15.04": [
-            "mkdir -p /sources/ring-daemon",
-            "cd /sources/ring-daemon",
-            "/ring-daemon/debian/rules get-orig-source",
-            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
-            "dch --release --distribution \"unstable\" debian/changelog",
-            "dpkg-buildpackage -uc -us",
-            "cd .. ",
-            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ],
-        "ubuntu_15.04_i386": [
-            "mkdir -p /sources/ring-daemon",
-            "cd /sources/ring-daemon",
-            "/ring-daemon/debian/rules get-orig-source",
-            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
-            "dch --release --distribution \"unstable\" debian/changelog",
-            "dpkg-buildpackage -uc -us",
-            "cd .. ",
-            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-        ],
         "ubuntu_15.10": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
@@ -137,35 +95,27 @@
         ]
     },
     "UpdateInstructions" : {
-        "fedora_21" : ["yum upgrade -y"],
-        "fedora_21_i386" : ["yum upgrade -y"],
         "fedora_22": ["yum upgrade -y"],
         "fedora_23": ["dnf upgrade -y"],
         "debian_8": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_15.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_15.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
     },
     "ReviewType": "",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
-        "fedora_21" : "",
-        "fedora_21_i386" : "",
         "fedora_22": "",
         "fedora_23": "",
         "debian_8": "",
         "debian_8_i386": "",
         "debian_9": "",
         "ubuntu_14.04": "",
-        "ubuntu_15.04": "",
-        "ubuntu_15.10": "",
         "ubuntu_14.04_i386": "",
-        "ubuntu_15.04_i386": "",
+        "ubuntu_15.10": "",
         "ubuntu_15.10_i386": ""
     },
     "ReloadProjectCmd" : [
@@ -174,18 +124,14 @@
         "git pull"
     ],
     "AutoDeploySchedule": {
-        "fedora_21" : "0 0 0 * * THU",
-        "fedora_21_i386" : "0 0 0 * * THU",
         "fedora_22": "0 0 0 * * THU",
         "fedora_23": "0 0 0 * * THU",
         "debian_8": "0 0 0 * * THU",
         "debian_8_i386": "0 0 0 * * THU",
         "debian_9": "0 0 0 * * THU",
         "ubuntu_14.04": "0 0 0 * * THU",
-        "ubuntu_15.04": "0 0 0 * * THU",
-        "ubuntu_15.10": "0 0 0 * * THU",
         "ubuntu_14.04_i386": "0 0 0 * * THU",
-        "ubuntu_15.04_i386": "0 0 0 * * THU",
+        "ubuntu_15.10": "0 0 0 * * THU",
         "ubuntu_15.10_i386": "0 0 0 * * THU"
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
