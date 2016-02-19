@@ -12,6 +12,17 @@
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
+        "fedora_22_i386" : [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/i686/* /output"
+        ],
         "fedora_23": [
             "mkdir -p /sources",
             "cd /ring-daemon",
@@ -22,6 +33,17 @@
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
+        ],
+        "fedora_23_i386" : [
+            "mkdir -p /sources",
+            "cd /ring-daemon",
+            "cp ring-daemon.spec ..",
+            "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
+            "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
+            "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/i686/* /output"
         ],
         "debian_8": [
             "mkdir -p /sources/ring-daemon",
@@ -44,6 +66,16 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "debian_9": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "debian_9_i386": [
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
@@ -96,10 +128,13 @@
     },
     "UpdateInstructions" : {
         "fedora_22": ["yum upgrade -y"],
+        "fedora_22_i386": ["yum upgrade -y"],
         "fedora_23": ["dnf upgrade -y"],
+        "fedora_23_i386": ["dnf upgrade -y"],
         "debian_8": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_8_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "debian_9": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "debian_9_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
@@ -109,10 +144,13 @@
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
         "fedora_22": "",
+        "fedora_22_i386": "",
         "fedora_23": "",
+        "fedora_23_i386": "",
         "debian_8": "",
         "debian_8_i386": "",
         "debian_9": "",
+        "debian_9_i386": "",
         "ubuntu_14.04": "",
         "ubuntu_14.04_i386": "",
         "ubuntu_15.10": "",
@@ -125,10 +163,13 @@
     ],
     "AutoDeploySchedule": {
         "fedora_22": "0 0 0 * * THU",
+        "fedora_22_i386": "0 0 0 * * THU",
         "fedora_23": "0 0 0 * * THU",
+        "fedora_23_i386": "0 0 0 * * THU",
         "debian_8": "0 0 0 * * THU",
         "debian_8_i386": "0 0 0 * * THU",
         "debian_9": "0 0 0 * * THU",
+        "debian_9_i386": "0 0 0 * * THU",
         "ubuntu_14.04": "0 0 0 * * THU",
         "ubuntu_14.04_i386": "0 0 0 * * THU",
         "ubuntu_15.10": "0 0 0 * * THU",
