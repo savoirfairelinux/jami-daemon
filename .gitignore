@@ -77,6 +77,7 @@ ID
 
 # IDE stuffs
 nbproject
+*.kdev*
 
 # JNI generated files
 *_wrap.cpp
@@ -97,3 +98,4 @@ bin/dring
 bin/ringcli
 doltcompile
 doltlibtool
+__pycache__
