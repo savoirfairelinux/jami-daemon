@@ -35,6 +35,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <vector>
 
 class AVCodecContext;
 class AVStream;
@@ -105,11 +106,11 @@ private:
     VideoFrame scaledFrame_;
 #endif // RING_VIDEO
 
-    uint8_t *scaledFrameBuffer_ = nullptr;
+    std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
     int streamIndex_ = -1;
 #if defined(LIBAVCODEC_VERSION_MAJOR) && (LIBAVCODEC_VERSION_MAJOR < 54)
-    uint8_t *encoderBuffer_ = nullptr;
+    std::vector<uint8_t> encoderBuffer_;
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
