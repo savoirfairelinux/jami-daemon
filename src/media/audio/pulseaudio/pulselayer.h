@@ -95,13 +95,11 @@ struct PaDeviceInfos {
 class PulseMainLoopLock {
     public:
         explicit PulseMainLoopLock(pa_threaded_mainloop *loop);
-        void destroyLoop();
         ~PulseMainLoopLock();
 
     private:
         NON_COPYABLE(PulseMainLoopLock);
         pa_threaded_mainloop *loop_;
-        bool destroyLoop_;
 };
 
 class PulseLayer : public AudioLayer {
@@ -225,7 +223,7 @@ class PulseLayer : public AudioLayer {
 
         /** PulseAudio context and asynchronous loop */
         pa_context* context_ {nullptr};
-        pa_threaded_mainloop* mainloop_ {nullptr};
+        std::unique_ptr<pa_threaded_mainloop, decltype(pa_threaded_mainloop_free)&> mainloop_;
         bool enumeratingSinks_ {false};
         bool enumeratingSources_ {false};
         bool gettingServerInfo_ {false};
@@ -237,6 +235,7 @@ class PulseLayer : public AudioLayer {
         AudioPreference &preference_;
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
+        pa_operation* subscribeOp_ {nullptr};
         friend class AudioLayerTest;
 };
 
