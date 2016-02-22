@@ -39,8 +39,6 @@
 
 namespace DRing {
 
-using ring::videoManager;
-
 void
 registerVideoHandlers(const std::map<std::string,
                       std::shared_ptr<CallbackWrapperBase>>& handlers)
@@ -61,65 +59,65 @@ registerVideoHandlers(const std::map<std::string,
 std::vector<std::string>
 getDeviceList()
 {
-    return videoManager.videoDeviceMonitor.getDeviceList();
+    return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceList();
 }
 
 VideoCapabilities
 getCapabilities(const std::string& name)
 {
-    return videoManager.videoDeviceMonitor.getCapabilities(name);
+    return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getCapabilities(name);
 }
 
 std::string
 getDefaultDevice()
 {
-    return videoManager.videoDeviceMonitor.getDefaultDevice();
+    return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDefaultDevice();
 }
 
 void
 setDefaultDevice(const std::string& name)
 {
     RING_DBG("Setting default device to %s", name.c_str());
-    videoManager.videoDeviceMonitor.setDefaultDevice(name);
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(name);
 }
 
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
-    return videoManager.videoDeviceMonitor.getSettings(name).to_map();
+    return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(name).to_map();
 }
 
 void
 applySettings(const std::string& name,
               const std::map<std::string, std::string>& settings)
 {
-    videoManager.videoDeviceMonitor.applySettings(name, settings);
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(name, settings);
 }
 
 void
 startCamera()
 {
-    videoManager.videoPreview = ring::getVideoCamera();
-    videoManager.started = switchToCamera();
+    ring::Manager::instance().getVideoManager().videoPreview = ring::getVideoCamera();
+    ring::Manager::instance().getVideoManager().started = switchToCamera();
 }
 
 void
 stopCamera()
 {
     if (switchInput(""))
-        videoManager.started = false;
-    videoManager.videoPreview.reset();
+        ring::Manager::instance().getVideoManager().started = false;
+    ring::Manager::instance().getVideoManager().videoPreview.reset();
 }
 
 bool
 switchInput(const std::string& resource)
 {
     if (auto call = ring::Manager::instance().getCurrentCall()) {
-        // TODO remove this part when clients are updated to use CallManager::switchInput
+        // TODO remove this part when clients are updated to use Callring::Manager::switchInput
         call->switchInput(resource);
         return true;
     } else {
-        if (auto input = videoManager.videoInput.lock())
+        if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
             return input->switchInput(resource).valid();
         RING_WARN("Video input not initialized");
     }
@@ -129,13 +127,13 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
-    return switchInput(videoManager.videoDeviceMonitor.getMRLForDefaultDevice());
+    return switchInput(ring::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
 hasCameraStarted()
 {
-    return videoManager.started;
+    return ring::Manager::instance().getVideoManager().started;
 }
 
 void
@@ -151,13 +149,13 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 void
 addVideoDevice(const std::string &node)
 {
-    videoManager.videoDeviceMonitor.addDevice(node);
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node);
 }
 
 void
 removeVideoDevice(const std::string &node)
 {
-    videoManager.videoDeviceMonitor.removeDevice(node);
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.removeDevice(node);
 }
 
 void*
@@ -181,24 +179,23 @@ releaseFrame(void* frame)
 
 namespace ring {
 
-VideoManager videoManager;
-
 std::shared_ptr<video::VideoFrameActiveWriter>
 getVideoCamera()
 {
-    if (auto input = videoManager.videoInput.lock())
+    auto& vmgr = Manager::instance().getVideoManager();
+    if (auto input = vmgr.videoInput.lock())
         return input;
 
-    videoManager.started = false;
+    vmgr.started = false;
     auto input = std::make_shared<video::VideoInput>();
-    videoManager.videoInput = input;
+    vmgr.videoInput = input;
     return input;
 }
 
 video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
-    return videoManager.videoDeviceMonitor;
+    return Manager::instance().getVideoManager().videoDeviceMonitor;
 }
 
 } // namespace ring
