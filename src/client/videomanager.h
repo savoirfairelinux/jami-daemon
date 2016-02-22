@@ -51,8 +51,6 @@ struct VideoManager
         std::atomic_bool started;
 };
 
-extern VideoManager videoManager;
-
 std::shared_ptr<video::VideoFrameActiveWriter> getVideoCamera();
 video::VideoDeviceMonitor& getVideoDeviceMonitor();
 

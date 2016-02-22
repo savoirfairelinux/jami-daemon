@@ -213,6 +213,9 @@ Manager::Manager() :
     , ringbufferpool_(new RingBufferPool)
     , callFactory(), conferenceMap_()
     , accountFactory_(), ice_tf_()
+#ifdef RING_VIDEO
+    , videoManager_(new VideoManager)
+#endif
 {
     // initialize random generator
     // mt19937_64 should be seeded with 2 x 32 bits
