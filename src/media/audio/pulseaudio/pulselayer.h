@@ -5,7 +5,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Андрей Лухнов <aol.nnov@gmail.com>
- *  Author: Adrien Beraud <adrien.beraud@gmail.com>
+ *  Author: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -46,12 +46,14 @@ class RingBuffer;
  * Convenience structure to hold PulseAudio device propreties such as supported channel number etc.
  */
 struct PaDeviceInfos {
-        uint32_t index;
-        std::string name;
-        std::string description;
-        pa_sample_spec sample_spec;
-        pa_channel_map channel_map;
+        uint32_t index {0};
+        std::string name {};
+        std::string description {"default"};
+        pa_sample_spec sample_spec {};
+        pa_channel_map channel_map {};
         uint32_t monitor_of {PA_INVALID_INDEX};
+
+        PaDeviceInfos() {};
 
         PaDeviceInfos(const pa_source_info& source) :
             index(source.index),
