@@ -184,8 +184,10 @@ void PulseLayer::updateSinkList()
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSinks_) {
         RING_DBG("Updating PulseAudio sink list");
-        sinkList_.clear();
         enumeratingSinks_ = true;
+        sinkList_.clear();
+        sinkList_.emplace_back();
+        sinkList_.front().channel_map.channels = std::min(defaultAudioFormat_.nb_channels, 2u);
         if (auto op = pa_context_get_sink_info_list(context_, sink_input_info_callback, this))
             pa_operation_unref(op);
         else
@@ -198,8 +200,10 @@ void PulseLayer::updateSourceList()
     std::unique_lock<std::mutex> lk(readyMtx_);
     if (not enumeratingSources_) {
         RING_DBG("Updating PulseAudio source list");
-        sourceList_.clear();
         enumeratingSources_ = true;
+        sourceList_.clear();
+        sourceList_.emplace_back();
+        sourceList_.front().channel_map.channels = std::min(defaultAudioFormat_.nb_channels, 2u);
         if (auto op = pa_context_get_source_info_list(context_, source_input_info_callback, this))
             pa_operation_unref(op);
         else
@@ -234,9 +238,8 @@ std::vector<std::string> PulseLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> names;
     names.reserve(sourceList_.size() + 1);
-    names.push_back("default");
     for (const auto& s : sourceList_)
-        names.push_back(s.description);
+        names.emplace_back(s.description);
     return names;
 }
 
@@ -244,22 +247,19 @@ std::vector<std::string> PulseLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> names;
     names.reserve(sinkList_.size() + 1);
-    names.push_back("default");
     for (const auto& s : sinkList_)
-        names.push_back(s.description);
+        names.emplace_back(s.description);
     return names;
 }
 
 int PulseLayer::getAudioDeviceIndex(const std::string& descr, DeviceType type) const
 {
-    if (descr == "default")
-        return 0;
     switch (type) {
     case DeviceType::PLAYBACK:
     case DeviceType::RINGTONE:
-        return 1 + std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
+        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     case DeviceType::CAPTURE:
-        return 1 + std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
+        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::DescriptionComparator(descr)));
     default:
         RING_ERR("Unexpected device type");
         return 0;
@@ -273,9 +273,9 @@ int PulseLayer::getAudioDeviceIndexByName(const std::string& name, DeviceType ty
     switch (type) {
     case DeviceType::PLAYBACK:
     case DeviceType::RINGTONE:
-        return 1 + std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(name)));
+        return std::distance(sinkList_.begin(), std::find_if(sinkList_.begin(), sinkList_.end(), PaDeviceInfos::NameComparator(name)));
     case DeviceType::CAPTURE:
-        return 1 + std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
+        return std::distance(sourceList_.begin(), std::find_if(sourceList_.begin(), sourceList_.end(), PaDeviceInfos::NameComparator(name)));
     default:
         RING_ERR("Unexpected device type");
         return 0;
@@ -294,28 +294,19 @@ bool endsWith(const std::string& str, const std::string& ending)
  */
 const PaDeviceInfos* findBest(const std::vector<PaDeviceInfos>& list) {
     if (list.empty()) return nullptr;
-    /*for (const auto& info : list)
-        if (info.monitor_of == PA_INVALID_INDEX && not endsWith(info.name, PA_EC_SUFFIX))
-            return &info;*/
     for (const auto& info : list)
         if (info.monitor_of == PA_INVALID_INDEX)
             return &info;
     return &list[0];
 }
 
-const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name, const std::string& defaultName) const
+const PaDeviceInfos* PulseLayer::getDeviceInfos(const std::vector<PaDeviceInfos>& list, const std::string& name) const
 {
     auto dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(name));
     if (dev_info == list.end()) {
-        dev_info = std::find_if(list.begin(), list.end(), PaDeviceInfos::NameComparator(defaultName));
-        if (dev_info == list.end()) {
-            auto best = findBest(list);
-            RING_WARN("Preferred device %s not found in device list, selecting %s instead.",
-                        name.c_str(), best->name.c_str());
-            return best;
-        }
         RING_WARN("Preferred device %s not found in device list, selecting default %s instead.",
-                        name.c_str(), dev_info->name.c_str());
+                        name.c_str(), list.front().name.c_str());
+        return &list.front();
     }
     return &(*dev_info);
 }
@@ -353,7 +344,7 @@ void PulseLayer::createStreams(pa_context* c)
     hardwareFormatAvailable(defaultAudioFormat_);
 
     // Create playback stream
-    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice(), defaultSink_)) {
+    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice())) {
         playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->writeToSpeaker();
@@ -362,7 +353,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create ringtone stream
     // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source with an input source
-    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice(), defaultSink_)) {
+    if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice())) {
         ringtone_.reset(new AudioStream(c, mainloop_.get(), "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos, false));
         pa_stream_set_write_callback(ringtone_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
@@ -370,7 +361,7 @@ void PulseLayer::createStreams(pa_context* c)
     }
 
     // Create capture stream
-    if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice(), defaultSource_)) {
+    if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice())) {
         record_.reset(new AudioStream(c, mainloop_.get(), "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_read_callback(record_->stream() , [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->readFromMic();
@@ -615,8 +606,8 @@ void PulseLayer::waitForDeviceList()
             return;
 
         // If a current device changed, restart streams
-        if (!playback_ || stripEchoSufix(playback_->getDeviceName()) != getDeviceInfos(sinkList_, getPreferredPlaybackDevice(), defaultSink_)->name
-         || !record_   || stripEchoSufix(record_->getDeviceName())   != getDeviceInfos(sourceList_, getPreferredCaptureDevice(), defaultSource_)->name) {
+        if (!playback_ || stripEchoSufix(playback_->getDeviceName()) != getDeviceInfos(sinkList_, getPreferredPlaybackDevice())->name
+         || !record_   || stripEchoSufix(record_->getDeviceName())   != getDeviceInfos(sourceList_, getPreferredCaptureDevice())->name) {
             RING_WARN("Audio devices changed, restarting streams.");
             stopStream();
             startStream();
@@ -647,9 +638,14 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
           pa_channel_map_snprint(cm, sizeof(cm), &i->channel_map));
 
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
-    context->defaultSink_ = i->default_sink_name;
-    context->defaultSource_ = i->default_source_name;
+    context->defaultSink_ = {};
+    context->defaultSource_ = {};
     context->defaultAudioFormat_ = {i->sample_spec.rate, i->sample_spec.channels};
+    if (not context->sinkList_.empty())
+        context->sinkList_.front().channel_map.channels = std::min(i->sample_spec.channels, (uint8_t)2);
+    if (not context->sourceList_.empty())
+        context->sourceList_.front().channel_map.channels = std::min(i->sample_spec.channels, (uint8_t)2);
+    //list.front().channel_map.channels = std::max(defaultAudioFormat_.nb_channels, 2u);
     {
         std::lock_guard<std::mutex> lk(context->readyMtx_);
         context->gettingServerInfo_ = false;
