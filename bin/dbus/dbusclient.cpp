@@ -42,6 +42,9 @@
 #include "dbuspresencemanager.h"
 #include "presencemanager_interface.h"
 
+#include "dbusdatatransfer.h"
+#include "datatransfer_interface.h"
+
 #ifdef RING_VIDEO
 #include "dbusvideomanager.h"
 #include "videomanager_interface.h"
@@ -128,12 +131,14 @@ DBusClient::initLibrary(int flags)
     using DRing::ConfigurationSignal;
     using DRing::PresenceSignal;
     using DRing::AudioSignal;
+    using DRing::DataTransferSignal;
 
     using SharedCallback = std::shared_ptr<DRing::CallbackWrapperBase>;
 
     auto callM = callManager_.get();
     auto confM = configurationManager_.get();
     auto presM = presenceManager_.get();
+    auto dxferM = dataXfer_.get();
 
 #ifdef RING_VIDEO
     using DRing::VideoSignal;
@@ -198,6 +203,12 @@ DBusClient::initLibrary(int flags)
         exportable_callback<AudioSignal::DeviceEvent>(bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
     };
 
+    // Data transfer handlers
+    const std::map<std::string, SharedCallback> dataXferEvHandlers = {
+        exportable_callback<DataTransferSignal::DataConnectionStatus>(bind(&DBusDataTransfer::dataConnectionStatus, dxferM, _1, _2, reinterpret_cast<const int&>(_3), reinterpret_cast<const int&>(_4))),
+        exportable_callback<DataTransferSignal::FileTransferStatus>(bind(&DBusDataTransfer::fileTransferStatus, dxferM, _1, _2, reinterpret_cast<const int&>(_3), reinterpret_cast<const int&>(_4))),
+    };
+
 #ifdef RING_VIDEO
     // Video event handlers
     const std::map<std::string, SharedCallback> videoEvHandlers = {
@@ -214,6 +225,7 @@ DBusClient::initLibrary(int flags)
     registerConfHandlers(configEvHandlers);
     registerPresHandlers(presEvHandlers);
     registerPresHandlers(audioEvHandlers);
+    registerDataXferHandlers(dataXferEvHandlers);
 #ifdef RING_VIDEO
     registerVideoHandlers(videoEvHandlers);
 #endif
