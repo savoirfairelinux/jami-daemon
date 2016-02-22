@@ -66,6 +66,7 @@ class PluginManager;
 class AudioFile;
 class DTMF;
 class RingBufferPool;
+class VideoManager;
 
 /** To send multiple string */
 typedef std::list<std::string> TokenList;
@@ -758,7 +759,6 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
-
     private:
         void removeAccounts();
 
@@ -961,8 +961,8 @@ class Manager {
 
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
-
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
+        VideoManager& getVideoManager() const { return *videoManager_; }
 #endif // RING_VIDEO
 
     private:
@@ -1011,6 +1011,10 @@ class Manager {
         void sendTextMessageToConference(const Conference& conf,
                                          const std::map<std::string, std::string>& messages,
                                          const std::string& from) const noexcept;
+#endif
+
+#ifdef RING_VIDEO
+    std::unique_ptr<VideoManager> videoManager_;
 #endif
 };
 
