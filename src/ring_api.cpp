@@ -33,6 +33,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
+#include "client/ring_signal.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -45,6 +46,11 @@ init(enum InitFlag flags) noexcept
 {
     ::setDebugMode(flags & DRING_FLAG_DEBUG);
     ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
+
+    // Following function create a local static variable inside
+    // This var must have the same live as Manager.
+    // So we call it now to create this var.
+    ring::getSignalHandlers();
 
     try {
         // current implementation use static variable

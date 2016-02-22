@@ -119,7 +119,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
     , videortp_(id, getVideoSettings())
-    , videoInput_(videoManager.videoDeviceMonitor.getMRLForDefaultDevice())
+    , videoInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
     , sdp_(new Sdp(id))
 {
@@ -907,7 +907,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         if (mute == isVideoMuted_) return;
         RING_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
-        videoInput_ = isVideoMuted_ ? "" : videoManager.videoDeviceMonitor.getMRLForDefaultDevice();
+        videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
         emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
