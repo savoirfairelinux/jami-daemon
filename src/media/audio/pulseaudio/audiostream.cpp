@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -71,13 +72,13 @@ AudioStream::AudioStream(pa_context *c,
 
         if (type == PLAYBACK_STREAM || type == RINGTONE_STREAM) {
             pa_stream_connect_playback(audiostream_,
-                    infos->name.empty() ? NULL : infos->name.c_str(),
+                    infos->name.empty() ? nullptr : infos->name.c_str(),
                     &attributes,
                     flags,
-                    NULL, NULL);
+                    nullptr, nullptr);
         } else if (type == CAPTURE_STREAM) {
             pa_stream_connect_record(audiostream_,
-                    infos->name.empty() ? NULL : infos->name.c_str(),
+                    infos->name.empty() ? nullptr : infos->name.c_str(),
                     &attributes,
                     flags);
         }
