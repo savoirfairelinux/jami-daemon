@@ -61,24 +61,14 @@ static const std::unique_ptr<pcre, decltype(pcre_free)> PA_EC_SUFFIX {pcre_compi
 static const std::regex PA_EC_SUFFIX {"\\.echo-cancel(?:\\..+)?$"};
 #endif
 
-PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop), destroyLoop_(false)
+PulseMainLoopLock::PulseMainLoopLock(pa_threaded_mainloop *loop) : loop_(loop)
 {
     pa_threaded_mainloop_lock(loop_);
-}
-
-// set this flag if we want the loop to be destroyed once it's unlocked
-void PulseMainLoopLock::destroyLoop()
-{
-    destroyLoop_ = true;
 }
 
 PulseMainLoopLock::~PulseMainLoopLock()
 {
     pa_threaded_mainloop_unlock(loop_);
-    if (destroyLoop_) {
-        pa_threaded_mainloop_stop(loop_);
-        pa_threaded_mainloop_free(loop_);
-    }
 }
 
 PulseLayer::PulseLayer(AudioPreference &pref)
@@ -86,7 +76,7 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     , playback_()
     , record_()
     , ringtone_()
-    , mainloop_(pa_threaded_mainloop_new())
+    , mainloop_(pa_threaded_mainloop_new(), pa_threaded_mainloop_free)
     , preference_(pref)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {
@@ -97,39 +87,31 @@ PulseLayer::PulseLayer(AudioPreference &pref)
     if (!mainloop_)
         throw std::runtime_error("Couldn't create pulseaudio mainloop");
 
-    if (pa_threaded_mainloop_start(mainloop_) < 0) {
-        pa_threaded_mainloop_free(mainloop_);
+    if (pa_threaded_mainloop_start(mainloop_.get()) < 0)
         throw std::runtime_error("Failed to start pulseaudio mainloop");
-    }
 
-    PulseMainLoopLock lock(mainloop_);
+    PulseMainLoopLock lock(mainloop_.get());
 
     std::unique_ptr<pa_proplist, decltype(pa_proplist_free)&> pl (pa_proplist_new(), pa_proplist_free);
     pa_proplist_sets(pl.get(), PA_PROP_MEDIA_ROLE, "phone");
 
-    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_), PACKAGE_NAME, pl.get());
-    if (!context_) {
-        lock.destroyLoop();
+    context_ = pa_context_new_with_proplist(pa_threaded_mainloop_get_api(mainloop_.get()), PACKAGE_NAME, pl.get());
+    if (!context_)
         throw std::runtime_error("Couldn't create pulseaudio context");
-    }
 
     pa_context_set_state_callback(context_, context_state_callback, this);
 
-    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0) {
-        lock.destroyLoop();
+    if (pa_context_connect(context_, nullptr , PA_CONTEXT_NOAUTOSPAWN , nullptr) < 0)
         throw std::runtime_error("Could not connect pulseaudio context to the server");
-    }
 
     // wait until context is ready
     for (;;) {
         pa_context_state_t context_state = pa_context_get_state(context_);
-        if (not PA_CONTEXT_IS_GOOD(context_state)) {
-            lock.destroyLoop();
+        if (not PA_CONTEXT_IS_GOOD(context_state))
             throw std::runtime_error("Pulse audio context is bad");
-        }
         if (context_state == PA_CONTEXT_READY)
             break;
-        pa_threaded_mainloop_wait(mainloop_);
+        pa_threaded_mainloop_wait(mainloop_.get());
     }
 }
 
@@ -141,13 +123,15 @@ PulseLayer::~PulseLayer()
     disconnectAudioStream();
 
     {
-        PulseMainLoopLock lock(mainloop_);
+        PulseMainLoopLock lock(mainloop_.get());
         pa_context_set_state_callback(context_, NULL, NULL);
         pa_context_set_subscribe_callback(context_, NULL, NULL);
         pa_context_disconnect(context_);
         pa_context_unref(context_);
-        lock.destroyLoop();
     }
+
+    if (subscribeOp_)
+        pa_operation_unref(subscribeOp_);
 }
 
 void PulseLayer::context_state_callback(pa_context* c, void *user_data)
@@ -171,8 +155,8 @@ void PulseLayer::contextStateChanged(pa_context* c)
 
         case PA_CONTEXT_READY:
             RING_DBG("Connection to PulseAudio server established");
-            pa_threaded_mainloop_signal(mainloop_, 0);
-            pa_context_subscribe(c, mask, nullptr, this);
+            pa_threaded_mainloop_signal(mainloop_.get(), 0);
+            subscribeOp_ = pa_context_subscribe(c, mask, nullptr, this);
             pa_context_set_subscribe_callback(c, context_changed_callback, this);
             updateSinkList();
             updateSourceList();
@@ -181,12 +165,16 @@ void PulseLayer::contextStateChanged(pa_context* c)
             break;
 
         case PA_CONTEXT_TERMINATED:
+            if (subscribeOp_) {
+                pa_operation_unref(subscribeOp_);
+                subscribeOp_ = nullptr;
+            }
             break;
 
         case PA_CONTEXT_FAILED:
         default:
             RING_ERR("%s" , pa_strerror(pa_context_errno(c)));
-            pa_threaded_mainloop_signal(mainloop_, 0);
+            pa_threaded_mainloop_signal(mainloop_.get(), 0);
             break;
     }
 }
@@ -366,7 +354,7 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create playback stream
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredPlaybackDevice(), defaultSink_)) {
-        playback_.reset(new AudioStream(c, mainloop_, "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos, true));
+        playback_.reset(new AudioStream(c, mainloop_.get(), "Playback", PLAYBACK_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_write_callback(playback_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->writeToSpeaker();
         }, this);
@@ -375,7 +363,7 @@ void PulseLayer::createStreams(pa_context* c)
     // Create ringtone stream
     // Echo canceling is not enabled for ringtone, because PA can only cancel a single output source with an input source
     if (auto dev_infos = getDeviceInfos(sinkList_, getPreferredRingtoneDevice(), defaultSink_)) {
-        ringtone_.reset(new AudioStream(c, mainloop_, "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos, false));
+        ringtone_.reset(new AudioStream(c, mainloop_.get(), "Ringtone", RINGTONE_STREAM, audioFormat_.sample_rate, dev_infos, false));
         pa_stream_set_write_callback(ringtone_->stream(), [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->ringtoneToSpeaker();
         }, this);
@@ -383,13 +371,13 @@ void PulseLayer::createStreams(pa_context* c)
 
     // Create capture stream
     if (auto dev_infos = getDeviceInfos(sourceList_, getPreferredCaptureDevice(), defaultSource_)) {
-        record_.reset(new AudioStream(c, mainloop_, "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos, true));
+        record_.reset(new AudioStream(c, mainloop_.get(), "Capture", CAPTURE_STREAM, audioFormat_.sample_rate, dev_infos, true));
         pa_stream_set_read_callback(record_->stream() , [](pa_stream * /*s*/, size_t /*bytes*/, void* userdata) {
             static_cast<PulseLayer*>(userdata)->readFromMic();
         }, this);
     }
 
-    pa_threaded_mainloop_signal(mainloop_, 0);
+    pa_threaded_mainloop_signal(mainloop_.get(), 0);
 
     flushMain();
     flushUrgent();
@@ -434,7 +422,7 @@ PulseLayer::stopStream()
     });
 
     {
-        PulseMainLoopLock lock(mainloop_);
+        PulseMainLoopLock lock(mainloop_.get());
 
         if (playback_)
             pa_stream_flush(playback_->stream(), nullptr, nullptr);
