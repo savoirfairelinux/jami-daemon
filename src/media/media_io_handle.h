@@ -25,6 +25,7 @@
 
 #include <cstdlib>
 #include <cstdint>
+#include <vector>
 
 #ifndef AVFORMAT_AVIO_H
 class AVIOContext;
@@ -51,7 +52,7 @@ public:
 private:
     NON_COPYABLE(MediaIOHandle);
     AVIOContext *ctx_;
-    unsigned char *buf_;
+    std::vector<uint8_t> buf_ {};
 };
 
 } // namespace ring

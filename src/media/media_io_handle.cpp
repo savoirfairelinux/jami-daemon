@@ -21,6 +21,8 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_io_handle.h"
 
+#include "logger.h"
+
 namespace ring {
 
 MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
@@ -28,15 +30,15 @@ MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
                              io_readcallback read_cb,
                              io_writecallback write_cb,
                              io_seekcallback seek_cb,
-                             void *opaque) : ctx_(0), buf_(0)
+                             void *opaque) : ctx_(0)
 
 {
-    buf_ = static_cast<unsigned char *>(av_malloc(buffer_size));
-    ctx_ = avio_alloc_context(buf_, buffer_size, writeable, opaque, read_cb,
+    buf_.reserve(buffer_size);
+    ctx_ = avio_alloc_context(buf_.data(), buffer_size, writeable, opaque, read_cb,
                               write_cb, seek_cb);
     ctx_->max_packet_size = buffer_size;
 }
 
-MediaIOHandle::~MediaIOHandle() { av_free(ctx_); av_free(buf_); }
+MediaIOHandle::~MediaIOHandle() { av_free(ctx_); }
 
 } // namespace ring

@@ -45,17 +45,17 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
-    if (outputCtx_ and outputCtx_->priv_data)
-        av_write_trailer(outputCtx_);
+    if (outputCtx_) {
+        if (outputCtx_->priv_data)
+            av_write_trailer(outputCtx_);
 
-    if (encoderCtx_)
-        avcodec_close(encoderCtx_);
+        if (encoderCtx_)
+            avcodec_close(encoderCtx_);
 
-    av_free(scaledFrameBuffer_);
+        avformat_free_context(outputCtx_);
+    }
 
-#if (LIBAVCODEC_VERSION_MAJOR < 54)
-    av_free(encoderBuffer_);
-#endif
+    av_dict_free(&options_);
 }
 
 void MediaEncoder::setDeviceOptions(const DeviceParams& args)
@@ -235,16 +235,11 @@ MediaEncoder::openOutput(const char *filename,
 
 #if (LIBAVCODEC_VERSION_MAJOR < 54)
         encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
-        encoderBuffer_ = (uint8_t*) av_malloc(encoderBufferSize_);
-        if (!encoderBuffer_)
-            throw MediaEncoderException("Could not allocate encoder buffer");
+        encoderBuffer_.reserve(encoderBufferSize_);
 #endif
 
-        scaledFrameBuffer_ = (uint8_t*) av_malloc(scaledFrameBufferSize_);
-        if (!scaledFrameBuffer_)
-            throw MediaEncoderException("Could not allocate scaled frame buffer");
-
-        scaledFrame_.setFromMemory(scaledFrameBuffer_, format, width, height);
+        scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
+        scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
     }
 #endif // RING_VIDEO
 }
@@ -342,7 +337,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
 #else
 
-    int ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+    int ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
                                    encoderBufferSize_, frame);
     if (ret < 0) {
         print_averror("avcodec_encode_video", ret);
@@ -350,7 +345,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         return ret;
     }
 
-    pkt.data = encoderBuffer_;
+    pkt.data = encoderBuffer_.data();
     pkt.size = ret;
 
     // rescale pts from encoded video framerate to rtp clock rate
@@ -389,9 +384,8 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         return -1;
     }
 
-    AudioSample *sample_data = reinterpret_cast<AudioSample*>(av_malloc(needed_bytes));
-    if (!sample_data)
-        return -1;
+    std::vector<AudioSample> samples (needed_bytes / sizeof(AudioSample));
+    AudioSample* sample_data = samples.data();
 
     AudioSample *offset_ptr = sample_data;
     int nb_frames = buffer.frames();
@@ -408,10 +402,8 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 
     while (nb_frames > 0) {
         AVFrame *frame = av_frame_alloc();
-        if (!frame) {
-            av_freep(&sample_data);
+        if (!frame)
             return -1;
-        }
 
         if (encoderCtx_->frame_size)
             frame->nb_samples = std::min<int>(nb_frames,
@@ -439,7 +431,6 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             av_strerror(err, errbuf, sizeof(errbuf));
             RING_ERR("Couldn't fill audio frame: %s: %d %d", errbuf,
                      frame->nb_samples, buffer_size);
-            av_freep(&sample_data);
             av_frame_free(&frame);
             return -1;
         }
@@ -457,7 +448,6 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         if (ret < 0) {
             print_averror("avcodec_encode_audio2", ret);
             av_free_packet(&pkt);
-            av_freep(&sample_data);
             av_frame_free(&frame);
             return ret;
         }
@@ -481,8 +471,6 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         av_free_packet(&pkt);
         av_frame_free(&frame);
     }
-
-    av_freep(&sample_data);
 
     return 0;
 }
@@ -512,7 +500,7 @@ int MediaEncoder::flush()
             RING_ERR("write_frame failed");
     }
 #else
-    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_,
+    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
                                encoderBufferSize_, NULL);
     if (ret < 0) {
         RING_ERR("avcodec_encode_video failed");
@@ -520,7 +508,7 @@ int MediaEncoder::flush()
         return ret;
     }
 
-    pkt.data = encoderBuffer_;
+    pkt.data = encoderBuffer_.data();
     pkt.size = ret;
 
     // write the compressed frame
