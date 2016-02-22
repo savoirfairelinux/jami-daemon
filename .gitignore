@@ -90,6 +90,12 @@ nbproject
 # Mac
 .DS_Store
 
+# Android
+/build-android-arm-linux-androideabi/
+/contrib/arm-linux-androideabi/
+/extras/tools/check_sed
+/extras/tools/libtool-*.tar.xz
+
 build-aux/
 configure
 bin/dbus/*.adaptor.h
