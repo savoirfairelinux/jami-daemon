@@ -88,11 +88,10 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
 #ifdef __ANDROID__
-        exported_callback<DRing::VideoSignal::AcquireCamera>(),
-        exported_callback<DRing::VideoSignal::ReleaseCamera>(),
-        exported_callback<DRing::VideoSignal::GetCameraFormats>(),
-        exported_callback<DRing::VideoSignal::GetCameraSizes>(),
-        exported_callback<DRing::VideoSignal::GetCameraRates>(),
+        exported_callback<DRing::VideoSignal::GetCameraInfo>(),
+        exported_callback<DRing::VideoSignal::SetParameters>(),
+        exported_callback<DRing::VideoSignal::StartCapture>(),
+        exported_callback<DRing::VideoSignal::StopCapture>(),
 #endif
 #endif
     };
