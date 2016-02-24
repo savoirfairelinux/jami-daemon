@@ -190,7 +190,7 @@ private:
         FrameRate closest {0};
         double rate_val = 0;
         try {
-            rate_val = rate.empty() ? 0 : std::stod(rate);
+            rate_val = rate.empty() ? 0 : ring::stod(rate);
         } catch (...) {
             RING_WARN("Can't read framerate \"%s\"", rate.c_str());
         }

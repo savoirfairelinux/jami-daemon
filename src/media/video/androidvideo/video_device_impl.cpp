@@ -33,19 +33,19 @@
 
 namespace ring { namespace video {
 
-class VideoAndroidSize {
-    public:
-        VideoAndroidSize(std::string size, std::string camera_id, int format);
+/*
+ * Array to match Android formats. List formats in ascending
+ * preferrence: the format with the lower index will be picked.
+ */
+struct android_fmt {
+    int             code;
+    std::string     name;
+    enum VideoPixelFormat ring_format;
+};
 
-        std::string str() const;
-        float getRate(std::string) const;
-        float getRate(unsigned) const;
-        std::vector<std::string> getRateList() const;
-
-        unsigned width;
-        unsigned height;
-    private:
-        std::vector<float> rates_;
+static const struct android_fmt and_formats[] {
+    { 17,           "NV21",     VIDEO_PIXFMT_NV21 },
+    { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
 };
 
 class VideoDeviceImpl {
@@ -55,156 +55,139 @@ class VideoDeviceImpl {
          */
         VideoDeviceImpl(const std::string& path);
 
-        std::string camera_id;
         std::string name;
 
-        const VideoAndroidSize& getSize(const std::string size) const;
-
-        VideoSettings getSettings() const;
-        void applySettings(VideoSettings settings);
-
         DeviceParams getDeviceParams() const;
-        std::vector<std::string> getSizeList() const;
+        void setDeviceParams(const DeviceParams&);
+
+        std::vector<VideoSize> getSizeList() const;
+        std::vector<FrameRate> getRateList() const;
     private:
-        int format_;
-        std::string size_;
-        unsigned rate_;
-        std::vector<VideoAndroidSize> sizes_;
+        void selectFormat();
+        VideoSize getSize(VideoSize size) const;
+        FrameRate getRate(FrameRate rate) const;
+
+        std::vector<int> formats_ {};
+        std::vector<VideoSize> sizes_ {};
+        std::vector<FrameRate> rates_ {};
+
+        const struct android_fmt *fmt_ {nullptr};
+        VideoSize size_ {};
+        FrameRate rate_ {};
 };
 
-/* VideoAndroidSize */
-VideoAndroidSize::VideoAndroidSize(std::string size, std::string camera_id, int format)
+void
+VideoDeviceImpl::selectFormat()
 {
-    sscanf(size.c_str(), "%ux%u", &width, &height);
+    /*
+     * formats_ contains camera parameters as returned by the GetCameraInfo
+     * signal, find the matching V4L2 formats
+     */
+    unsigned int current, best = UINT_MAX;
+    for(const auto &fmt : formats_) {
+        const struct android_fmt *and_fmt;
+        for(and_fmt = std::begin(and_formats);
+            and_formats < std::end(and_formats);
+            and_fmt++) {
+            if (fmt == and_fmt->code) {
+                current = and_fmt - std::begin(and_formats);
+                break;
+            }
+        }
 
-    emitSignal<DRing::VideoSignal::GetCameraRates>(camera_id, format, size, &rates_);
-}
+        /* No match found, we should add it */
+        if (and_fmt == std::end(and_formats)) {
+            RING_WARN("AndroidVideo: No format matching %d", fmt);
+            continue;
+        }
 
-std::string
-VideoAndroidSize::str() const
-{
-    std::stringstream ss;
-    ss << width << "x" << height;
-    return ss.str();
-}
-
-float
-VideoAndroidSize::getRate(unsigned rate) const
-{
-    for(const auto &r : rates_) {
-        if (r == rate)
-            return r;
+        if (current < best)
+            best = current;
     }
 
-    assert(not rates_.empty());
-    return rates_.back();
-}
-
-float
-VideoAndroidSize::getRate(std::string rate) const
-{
-    unsigned r;
-    std::stringstream ss;
-    ss << rate;
-    ss >> r;
-
-    return getRate(r);
-}
-
-std::vector<std::string>
-VideoAndroidSize::getRateList() const
-{
-    std::vector<std::string> v;
-
-    for(const auto &rate : rates_) {
-        std::stringstream ss;
-        ss << rate;
-        v.push_back(ss.str());
+    if (best != UINT_MAX) {
+        fmt_ = &and_formats[best];
+        RING_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
     }
-
-    return v;
-}
-
-/* VideoDeviceImpl */
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path) :
-    camera_id(path), name(path), format_(), rate_()
-{
-    emitSignal<DRing::VideoSignal::AcquireCamera>(camera_id);
-    RING_DBG("### Acquired Camera %s", camera_id.c_str());
-
-    std::vector<int> formats;
-    emitSignal<DRing::VideoSignal::GetCameraFormats>(camera_id, &formats);
-
-    assert(not formats.empty());
-    format_ = formats[0]; /* FIXME: select a real value */
-
-    std::vector<std::string> sizes;
-    emitSignal<DRing::VideoSignal::GetCameraSizes>(camera_id, format_, &sizes);
-    for(const auto &iter : sizes) {
-        sizes_.push_back(VideoAndroidSize(iter, camera_id, format_));
+    else {
+        fmt_ = &and_formats[0];
+        RING_ERR("AndroidVideo: Could not find a known format to use");
     }
-
-    emitSignal<DRing::VideoSignal::ReleaseCamera>(camera_id);
-
-    // Set default settings
-    applySettings(VideoSettings());
 }
 
-const VideoAndroidSize&
-VideoDeviceImpl::getSize(const std::string size) const
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
+{
+    std::vector<unsigned> sizes;
+    std::vector<unsigned> rates;
+    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
+    for (size_t i=0, n=sizes.size(); i<n; i+=2)
+        sizes_.emplace_back(sizes[i], sizes[i+1]);
+    for (const auto& r : rates)
+        rates_.emplace_back(r, 1000);
+
+    selectFormat();
+}
+
+VideoSize
+VideoDeviceImpl::getSize(VideoSize size) const
 {
     for (const auto &iter : sizes_) {
-        if (iter.str() == size)
+        if (iter == size)
             return iter;
     }
 
-    assert(not sizes_.empty());
-    return sizes_.back();
+    return sizes_.empty() ? VideoSize{0, 0} : sizes_.back();
 }
 
-std::vector<std::string>
+FrameRate
+VideoDeviceImpl::getRate(FrameRate rate) const
+{
+    for (const auto &iter : rates_) {
+        if (iter == rate)
+            return iter;
+    }
+
+    return rates_.empty() ? FrameRate{0, 0} : rates_.back();
+}
+
+std::vector<VideoSize>
 VideoDeviceImpl::getSizeList() const
 {
-    std::vector<std::string> v;
-
-    for(const auto &iter : sizes_)
-        v.push_back(iter.str());
-
-    return v;
+    return sizes_;
 }
 
-void
-VideoDeviceImpl::applySettings(VideoSettings settings)
+std::vector<FrameRate>
+VideoDeviceImpl::getRateList() const
 {
-    const VideoAndroidSize &s = getSize(settings.video_size);
-    size_ = s.str();
-    rate_ = s.getRate(settings.framerate);
-}
-
-VideoSettings
-VideoDeviceImpl::getSettings() const
-{
-    VideoSettings settings;
-    settings.name = name;
-    settings.channel = "default";
-    settings.video_size = size_;
-    settings.framerate = rate_;
-    return settings;
+    return rates_;
 }
 
 DeviceParams
 VideoDeviceImpl::getDeviceParams() const
 {
-    const VideoAndroidSize &s = getSize(size_);
-
     DeviceParams params;
-    params.input = camera_id;
-    params.format = "android";
+    std::stringstream ss1, ss2;
+    char sep;
+
+    ss1 << fmt_->ring_format;
+    ss1 >> params.format;
+
+    params.name = name;
+    params.input = name;
     params.channel =  0;
-    params.width = s.width;
-    params.height = s.height;
+    params.width = size_.first;
+    params.height = size_.second;
     params.framerate = rate_;
+
     return params;
+}
+
+void
+VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
+{
+    size_ = getSize({params.width, params.height});
+    rate_ = getRate(params.framerate);
+    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->code, size_.first, size_.second, rate_.real());
 }
 
 VideoDevice::VideoDevice(const std::string& path) :
@@ -213,35 +196,34 @@ VideoDevice::VideoDevice(const std::string& path) :
     name = deviceImpl_->name;
 }
 
-void
-VideoDevice::applySettings(VideoSettings settings)
-{
-    deviceImpl_->applySettings(settings);
-}
-
-VideoSettings
-VideoDevice::getSettings() const
-{
-    return deviceImpl_->getSettings();
-}
-
 DeviceParams
 VideoDevice::getDeviceParams() const
 {
     return deviceImpl_->getDeviceParams();
 }
 
-DRing::VideoCapabilities
-VideoDevice::getCapabilities() const
+void
+VideoDevice::setDeviceParams(const DeviceParams& params)
 {
-    DRing::VideoCapabilities cap;
+    return deviceImpl_->setDeviceParams(params);
+}
 
-    for (const auto &iter : deviceImpl_->getSizeList()) {
-        const auto &s = deviceImpl_->getSize(iter);
-        cap["default"][s.str()] = s.getRateList();
-    }
+std::vector<std::string>
+VideoDevice::getChannelList() const
+{
+    return {"default"};
+}
 
-    return cap;
+std::vector<VideoSize>
+VideoDevice::getSizeList(const std::string& channel) const
+{
+    return deviceImpl_->getSizeList();
+}
+
+std::vector<FrameRate>
+VideoDevice::getRateList(const std::string& channel, VideoSize size) const
+{
+    return deviceImpl_->getRateList();
 }
 
 VideoDevice::~VideoDevice()
