@@ -56,8 +56,8 @@ MediaDecoder::~MediaDecoder()
 #else
             av_close_input_file(inputCtx_);
 #endif
-        }
-        avformat_free_context(inputCtx_);
+        } else
+            avformat_free_context(inputCtx_);
     }
 
     av_dict_free(&options_);
