@@ -48,17 +48,8 @@ MediaDecoder::~MediaDecoder()
 {
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
-
-    if (inputCtx_) {
-        if (inputCtx_->nb_streams > 0) {
-#if LIBAVFORMAT_VERSION_CHECK(53, 17, 0, 25, 0)
-            avformat_close_input(&inputCtx_);
-#else
-            av_close_input_file(inputCtx_);
-#endif
-        }
-        avformat_free_context(inputCtx_);
-    }
+    if (inputCtx_)
+        avformat_close_input(&inputCtx_);
 
     av_dict_free(&options_);
 }
