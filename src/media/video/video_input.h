@@ -133,7 +133,7 @@ private:
     int publish_index_ = 0;
 
     /* Get notified when libav is done with this buffer */
-    static void releaseBufferCb(void *opaque, void *ptr);
+    void releaseBufferCb(uint8_t* ptr);
     std::vector<struct VideoFrameBuffer> buffers_;
 #endif
 };

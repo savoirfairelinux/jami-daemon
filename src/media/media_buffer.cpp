@@ -130,7 +130,7 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
 
 void
 VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height,
-                          std::function<void(void*)> cb) noexcept
+                          std::function<void(uint8_t*)> cb) noexcept
 {
     setFromMemory(ptr, format, width, height);
     if (cb) {

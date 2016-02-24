@@ -80,7 +80,7 @@ class VideoFrame: public MediaFrame {
         // Set internal pixel buffers on given memory buffer
         // This buffer must follow given specifications.
         void setFromMemory(uint8_t* data, int format, int width, int height) noexcept;
-        void setFromMemory(uint8_t* data, int format, int width, int height, std::function<void(void*)> cb) noexcept;
+        void setFromMemory(uint8_t* data, int format, int width, int height, std::function<void(uint8_t*)> cb) noexcept;
 
         void noise();
 
@@ -88,8 +88,8 @@ class VideoFrame: public MediaFrame {
         VideoFrame& operator =(const VideoFrame& src);
 
     private:
-        std::function<void(void*)> releaseBufferCb_ {};
-        void *ptr_ {nullptr};
+        std::function<void(uint8_t*)> releaseBufferCb_ {};
+        uint8_t* ptr_ {nullptr};
         bool allocated_ {false};
         void setGeometry(int format, int width, int height) noexcept;
 };

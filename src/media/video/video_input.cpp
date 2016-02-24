@@ -109,7 +109,7 @@ void VideoInput::processAndroid()
 
             buffer.status = BUFFER_PUBLISHED;
             frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
-                                std::bind(&VideoInput::releaseBufferCb, this));
+                                std::bind(&VideoInput::releaseBufferCb, this, std::placeholders::_1));
             publish_index_++;
             lck.unlock();
             publishFrame();
@@ -240,7 +240,7 @@ void VideoInput::freeOneBuffer(struct VideoFrameBuffer& b)
     b.status = BUFFER_NOT_ALLOCATED;
 }
 
-void VideoInput::releaseBufferCb(void *ptr)
+void VideoInput::releaseBufferCb(uint8_t* ptr)
 {
     std::lock_guard<std::mutex> lck(mutex_);
 
