@@ -78,11 +78,12 @@ private:
 
 class InterruptedThreadLoop : public ThreadLoop {
 public:
-
     InterruptedThreadLoop(const std::function<bool()>& setup,
                           const std::function<void()>& process,
                           const std::function<void()>& cleanup)
         : ThreadLoop::ThreadLoop(setup, process, cleanup) {}
+
+    InterruptedThreadLoop(InterruptedThreadLoop&& o) noexcept : ThreadLoop(std::move(o)) {};
 
     void stop() override;
 
@@ -96,6 +97,19 @@ public:
         std::unique_lock<std::mutex> lk(mutex_);
         cv_.wait_for(lk, rel_time, [this](){return isStopping();});
     }
+
+    template <typename Predicate>
+    void
+    wait(Predicate pred)
+    {
+        if (std::this_thread::get_id() != get_id())
+            throw std::runtime_error("can not call wait_for outside thread context");
+
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait(lk, [this, pred](){ return isStopping() or pred(); });
+    }
+
+    void interrupt() { cv_.notify_one(); }
 
 private:
     std::mutex mutex_;
