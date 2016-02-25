@@ -196,6 +196,12 @@ Manager::instance()
 }
 
 void
+Manager::setAutoAnswer(bool enable)
+{
+    autoAnswer_ = enable;
+}
+
+void
 Manager::loadDefaultAccountMap()
 {
     accountFactory_.initIP2IPAccount();
@@ -1603,6 +1609,9 @@ Manager::incomingCall(Call &call, const std::string& accountId)
     std::string from("<" + number + ">");
 
     emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
+
+    if (autoAnswer_)
+        runOnMainThread([this, callID]{ answerCall(callID); });
 }
 
 //THREAD=VoIP

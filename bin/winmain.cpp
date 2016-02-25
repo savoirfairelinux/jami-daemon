@@ -62,6 +62,7 @@ print_usage()
     "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
     "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
     "-p, --persistent \t- Stay alive after client quits" << std::endl <<
+    "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
     "-h, --help \t- Print help" << std::endl;
 }
 
@@ -71,20 +72,22 @@ print_usage()
 static bool
 parse_args(int argc, char *argv[], bool& persistent)
 {
-    static const struct option long_options[] = {
+    int consoleFlag = false;
+    int debugFlag = false;
+    int helpFlag = false;
+    int versionFlag = false;
+    int autoAnswer = false;
+
+    const struct option long_options[] = {
         /* These options set a flag. */
         {"debug", no_argument, NULL, 'd'},
         {"console", no_argument, NULL, 'c'},
         {"persistent", no_argument, NULL, 'p'},
         {"help", no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 'v'},
+        {"auto-answer", no_argument, &autoAnswer, true},
         {0, 0, 0, 0} /* Sentinel */
     };
-
-    int consoleFlag = false;
-    int debugFlag = false;
-    int helpFlag = false;
-    int versionFlag = false;
 
     while (true) {
         /* getopt_long stores the option index here. */
@@ -138,6 +141,9 @@ parse_args(int argc, char *argv[], bool& persistent)
 
     if (debugFlag)
         ringFlags |= DRing::DRING_FLAG_DEBUG;
+
+    if (autoAnswer)
+        ringFlags |= DRing::DRING_FLAG_AUTOANSWER;
 
     return false;
 }
