@@ -5,7 +5,8 @@ noinst_LTLIBRARIES = libclient_dbus.la
 BUILT_SOURCES=                      \
     dbuscallmanager.adaptor.h       \
     dbusconfigurationmanager.adaptor.h \
-    dbusinstance.adaptor.h
+    dbusinstance.adaptor.h \
+	dbusdatatransfer.adaptor.h
 
 BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: presencemanager-introspec.xml Makefile.am
@@ -29,6 +30,10 @@ dbusconfigurationmanager.adaptor.h: configurationmanager-introspec.xml Makefile.
 dbusinstance.adaptor.h: instance-introspec.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
+# Rule to generate the binding headers
+dbusdatatransfer.adaptor.h: datatransfer-introspec.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
 libclient_dbus_la_SOURCES = \
     dbuscallmanager.cpp \
     dbuscallmanager.h \
@@ -41,6 +46,8 @@ libclient_dbus_la_SOURCES = \
     dbus_cpp.h \
     dbuspresencemanager.cpp \
     dbuspresencemanager.h \
+	dbusdatatransfer.cpp \
+    dbusdatatransfer.h \
     $(BUILT_SOURCES)
 
 if RING_VIDEO
@@ -59,9 +66,10 @@ servicedir = $(datadir)/dbus-1/services
 service_DATA = cx.ring.Ring.service
 
 EXTRA_DIST = callmanager-introspec.xml \
-			 configurationmanager-introspec.xml \
-			 instance-introspec.xml \
-			 presencemanager-introspec.xml
+		configurationmanager-introspec.xml \
+		instance-introspec.xml \
+		presencemanager-introspec.xml \
+		datatransfer-introspec.xml
 
 if RING_VIDEO
 EXTRA_DIST += videomanager-introspec.xml
