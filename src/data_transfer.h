@@ -1,0 +1,167 @@
+/*
+ *  Copyright (C) 2016 Savoir-faire Linux Inc.
+ *
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#pragma once
+
+#include "datatransfer_interface.h"
+#include "threadloop.h"
+#include "noncopyable.h"
+
+#include <string>
+#include <fstream>
+#include <mutex>
+#include <memory>
+#include <ios>
+#include <vector>
+#include <condition_variable>
+
+namespace ring {
+
+class IceTransaction;
+class FileSender;
+class FileReceiver;
+
+class DataXfertEndPoint
+{
+public:
+    DataXfertEndPoint(IceTransaction& transport)
+        : transport_(transport) {};
+
+    void connected();
+    void disconnected();
+    bool send(const std::vector<uint8_t>& payload);
+    bool send(const void* payload, std::size_t size);
+    void txPktAck(uint32_t seq);
+    void onRxData(const std::vector<uint8_t>& buf);
+    void rxPktData(const uint8_t* buf, std::size_t size);
+    void rxPktAck(const uint8_t* buf, std::size_t size);
+
+private:
+    IceTransaction& transport_;
+    std::shared_ptr<FileSender> sender_ {};
+    std::shared_ptr<FileReceiver> receiver_ {};
+
+    uint32_t lastRxSeq_ {0};
+
+    struct DataPacketHeader {
+        uint8_t version {0};
+        uint32_t seq {0};
+    };
+
+    struct AckPacketHeader {
+        uint8_t version {0};
+        uint32_t seq {0};
+    };
+
+    struct DataPacket : std::vector<uint8_t> {
+        void reset(const void* payload, std::size_t size);
+        uint32_t seq {0};
+    };
+
+    std::mutex txMutex_ {};
+    std::condition_variable txCv_ {};
+    bool txAck_ {};
+    DataPacket txPkt_;
+};
+
+class DataTransfer
+{
+public:
+    DataTransfer(const DRing::DataConnectionId& connectionId, const std::string& name);
+    virtual ~DataTransfer();
+
+    DataTransfer(DataTransfer&& o)
+        : id_(std::move(o.id_))
+        , info_(std::move(o.info_)) {}
+
+    DRing::DataTransferId getId() const noexcept { return id_; }
+
+    void setStatus(DRing::DataTransferCode code);
+
+    virtual void onConnected(DataXfertEndPoint* transport) { transport_ = transport; };
+    virtual void onDisconnected() {};
+    virtual void onRxData(const void*, std::size_t) {};
+
+protected:
+    DRing::DataTransferId id_ {}; // unique (in the process scope) data transfer identifier
+    std::mutex infoMutex_ {};
+    DRing::DataTransferInfo info_ {};
+    DataXfertEndPoint* transport_ {nullptr};
+
+private:
+    NON_COPYABLE(DataTransfer);
+};
+
+class FileSender : public DataTransfer
+{
+public:
+    FileSender(FileSender&& o)
+        : DataTransfer(std::move(o))
+        , stream_(std::move(o.stream_))
+        , thread_(std::move(o.thread_)) {}
+
+    ~FileSender();
+
+    void onConnected(DataXfertEndPoint* transport) override;
+    void onDisconnected() override;
+
+    static std::shared_ptr<FileSender> newFileSender(const DRing::DataConnectionId& connectionId,
+                                                     const std::string& name,
+                                                     std::ifstream&& stream);
+
+private:
+    NON_COPYABLE(FileSender);
+    std::ifstream stream_ {};
+    ThreadLoop thread_;
+    std::streamoff bytes_sent_ {0};
+
+    // No public ctors, use newFileSender()
+    FileSender(const DRing::DataConnectionId& connectionId, const std::string& name,
+               std::ifstream&& stream);
+
+    void process();
+    bool sendHello();
+    bool sendEof();
+    bool sendData(const uint8_t* buf, std::size_t size);
+};
+
+class FileReceiver : public DataTransfer
+{
+public:
+    FileReceiver(FileReceiver&& o)
+        : DataTransfer(std::move(o))
+        , stream_(std::move(o.stream_)) {}
+
+    void accept(const std::string& pathname);
+
+    static std::shared_ptr<FileReceiver> newFileReceiver(const DRing::DataConnectionId& connectionId,
+                                                         const std::string& name);
+
+private:
+    NON_COPYABLE(FileReceiver);
+    std::ofstream stream_ {};
+
+    // no public ctor, use newFileReceiver()
+    FileReceiver(const DRing::DataConnectionId& connectionId, const std::string& name);
+};
+
+extern void acceptFileTransfer(const DRing::DataTransferId& tid, const std::string& pathname);
+
+} // namespace ring
