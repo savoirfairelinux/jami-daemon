@@ -27,6 +27,7 @@
 #include "callmanager_interface.h"
 #include "configurationmanager_interface.h"
 #include "presencemanager_interface.h"
+#include "datatransfer_interface.h"
 
 #ifdef RING_VIDEO
 #include "videomanager_interface.h"
