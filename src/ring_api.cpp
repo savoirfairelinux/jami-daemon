@@ -54,7 +54,9 @@ init(enum InitFlag flags) noexcept
 
     try {
         // current implementation use static variable
-        return &ring::Manager::instance() != nullptr;
+        auto& manager = ring::Manager::instance();
+        manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
+        return true;
     } catch (...) {
         return false;
     }

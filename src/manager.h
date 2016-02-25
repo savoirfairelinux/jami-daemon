@@ -91,6 +91,8 @@ class Manager {
 
         static Manager& instance();
 
+        void setAutoAnswer(bool enable);
+
         /**
          * General preferences configuration
          */
@@ -760,6 +762,8 @@ class Manager {
         std::vector<std::string> loadAccountOrder() const;
 
     private:
+        std::atomic_bool autoAnswer_ {false};
+
         void removeAccounts();
 
         bool parseConfiguration();
