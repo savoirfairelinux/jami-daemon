@@ -122,7 +122,9 @@ TlsSession::typeName() const
 void
 TlsSession::dump_io_stats() const
 {
-    RING_WARN("[TLS] RxRawPckt=%zu (%zu bytes)", stRxRawPacketCnt_, stRxRawBytesCnt_);
+    RING_DBG("[TLS] RxRawPkt=%zu (%zu bytes) - TxRawPkt=%zu (%zu bytes)",
+             stRxRawPacketCnt_, stRxRawBytesCnt_,
+             stTxRawPacketCnt_, stTxRawBytesCnt_);
 }
 
 TlsSessionState
@@ -278,7 +280,7 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 
 // Called by application to send data to encrypt.
 ssize_t
-TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
+TlsSession::async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
 {
     if (state_ == TlsSessionState::SHUTDOWN)
         return GNUTLS_E_INVALID_SESSION;
@@ -293,7 +295,7 @@ TlsSession::send(const TxData& tx_data)
 {
     std::size_t max_tx_sz = gnutls_dtls_get_data_mtu(session_);
     std::size_t tx_size = tx_data.size;
-    auto ptr = static_cast<uint8_t*>(tx_data.ptr);
+    const auto ptr = static_cast<const uint8_t*>(tx_data.ptr);
 
     // Split user data into MTU-suitable chunck
     size_t total_written = 0;
@@ -325,6 +327,7 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        dump_io_stats();
     }
     return ret;
 }
@@ -362,6 +365,7 @@ TlsSession::recvRaw(void* buf, size_t size)
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
     rxQueue_.pop_front();
+    dump_io_stats();
     return count;
 }
 
