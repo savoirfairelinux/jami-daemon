@@ -138,8 +138,14 @@ public:
     // Returns the TLS session type ('server' or 'client')
     const char* typeName() const;
 
+    bool isServer() const { return isServer_; }
+
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
+
+    // Return maximum application payload size in bytes
+    // Returned value must be checked and considered valid only if not 0 (session is initialized)
+    unsigned int getMaxPayload() const { return maxPayload_; }
 
     // Can be called by onStateChange callback when state == ESTABLISHED
     // to obtain the used cypher suite id.
@@ -148,7 +154,13 @@ public:
 
     // Asynchronous sending operation. on_send_complete will be called with a positive number
     // for number of bytes sent, or negative for errors, or 0 in case of shutdown (end of session).
-    ssize_t async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    int async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    int async_send(std::vector<uint8_t>&& data, TxDataCompleteFunc on_send_complete);
+
+    // Synchronous sending operation. Return negative number (gnutls error) or a positive number
+    // for bytes sent.
+    ssize_t send(const void* data, std::size_t size);
+    ssize_t send(const std::vector<uint8_t>& data);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -168,10 +180,18 @@ private:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
+    std::atomic<unsigned int> maxPayload_ {0};
 
     // IO GnuTLS <-> ICE
     struct TxData {
-        void* const ptr;
+        TxData(const void* ptr, std::size_t size, TxDataCompleteFunc on_send_complete)
+        : data(), ptr(ptr), size(size), onComplete(on_send_complete) {}
+
+        TxData(std::vector<uint8_t>&& buf, TxDataCompleteFunc on_send_complete)
+        : data(std::move(buf)), ptr(data.data()), size(data.size()), onComplete(on_send_complete) {}
+
+        std::vector<uint8_t> data;
+        const void* ptr;
         std::size_t size;
         TxDataCompleteFunc onComplete;
     };
@@ -181,7 +201,7 @@ private:
     std::list<TxData> txQueue_ {};
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
-    ssize_t send(const TxData&);
+    ssize_t send_(const uint8_t* tx_data, std::size_t tx_size);
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
     ssize_t recvRaw(void*, size_t);

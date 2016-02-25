@@ -195,7 +195,9 @@ TlsSession::typeName() const
 void
 TlsSession::dump_io_stats() const
 {
-    RING_WARN("[TLS] RxRawPckt=%zu (%zu bytes)", stRxRawPacketCnt_, stRxRawBytesCnt_);
+    RING_DBG("[TLS] RxRawPkt=%zu (%zu bytes) - TxRawPkt=%zu (%zu bytes)",
+             stRxRawPacketCnt_, stRxRawBytesCnt_,
+             stTxRawPacketCnt_, stTxRawBytesCnt_);
 }
 
 TlsSessionState
@@ -383,8 +385,8 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 }
 
 // Called by application to send data to encrypt.
-ssize_t
-TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
+int
+TlsSession::async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
 {
     std::lock_guard<std::mutex> lk {ioMutex_};
     txQueue_.emplace_back(TxData {data, size, on_send_complete});
@@ -392,18 +394,42 @@ TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_
     return GNUTLS_E_SUCCESS;
 }
 
+int
+TlsSession::async_send(std::vector<uint8_t>&& data, TxDataCompleteFunc on_send_complete)
+{
+    std::lock_guard<std::mutex> lk {ioMutex_};
+    txQueue_.emplace_back(TxData {std::move(data), on_send_complete});
+    ioCv_.notify_one();
+    return GNUTLS_E_SUCCESS;
+}
+
 ssize_t
-TlsSession::send(const TxData& tx_data)
+TlsSession::send(const void* data, std::size_t size)
+{
+    std::lock_guard<std::mutex> lk {ioMutex_};
+    if (state_ != TlsSessionState::ESTABLISHED)
+        return GNUTLS_E_INVALID_SESSION;
+    if (!txQueue_.empty())
+        return GNUTLS_E_AGAIN;
+    return send_(static_cast<const uint8_t*>(data), size);
+}
+
+ssize_t
+TlsSession::send(const std::vector<uint8_t>& vec)
+{
+    return send(vec.data(), vec.size());
+}
+
+ssize_t
+TlsSession::send_(const uint8_t* tx_data, std::size_t tx_size)
 {
     std::size_t max_tx_sz = gnutls_dtls_get_data_mtu(session_);
-    std::size_t tx_size = tx_data.size;
-    auto ptr = static_cast<uint8_t*>(tx_data.ptr);
 
     // Split user data into MTU-suitable chunck
     size_t total_written = 0;
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
-        auto nwritten = gnutls_record_send(session_, ptr + total_written, chunck_sz);
+        auto nwritten = gnutls_record_send(session_, tx_data + total_written, chunck_sz);
         if (nwritten <= 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
@@ -429,6 +455,7 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        //dump_io_stats();
     }
     return ret;
 }
@@ -466,6 +493,7 @@ TlsSession::recvRaw(void* buf, size_t size)
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
     rxQueue_.pop_front();
+    //dump_io_stats();
     return count;
 }
 
@@ -689,6 +717,7 @@ TlsSession::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
+    maxPayload_ = gnutls_dtls_get_data_mtu(session_);
     return TlsSessionState::ESTABLISHED;
 }
 
@@ -709,7 +738,7 @@ TlsSession::handleStateEstablished(TlsSessionState state)
         lk.unlock();
         for (const auto& txdata : tx_queue) {
             while (state_ == TlsSessionState::ESTABLISHED) {
-                auto bytes_sent = send(txdata);
+                auto bytes_sent = send_(static_cast<const uint8_t*>(txdata.ptr), txdata.size);
                 auto fatal = gnutls_error_is_fatal(bytes_sent);
                 if (bytes_sent < 0 and !fatal)
                     continue;
