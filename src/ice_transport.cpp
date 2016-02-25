@@ -756,7 +756,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 }
 
 ssize_t
-IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
+IceTransport::recv(int comp_id, uint8_t* buf, size_t len)
 {
     register_thread();
     auto& io = compIO_[comp_id];
@@ -789,7 +789,7 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 }
 
 ssize_t
-IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
+IceTransport::send(int comp_id, const uint8_t* buf, size_t len)
 {
     register_thread();
     auto remote = getRemoteAddress(comp_id);
@@ -881,6 +881,7 @@ IceTransportFactory::IceTransportFactory()
     ice_cfg_.turn.cfg.max_pkt_size = 8192;
     //ice_cfg_.stun.max_host_cands = icedemo.opt.max_host;
     ice_cfg_.opt.aggressive = PJ_FALSE;
+    ice_cfg_.opt.controlled_agent_want_nom_timeout = 60000; // disabled nomination timeout, we use total negotiation timeout
 }
 
 IceTransportFactory::~IceTransportFactory()
@@ -909,7 +910,7 @@ IceSocket::close()
 }
 
 ssize_t
-IceSocket::recv(unsigned char* buf, size_t len)
+IceSocket::recv(uint8_t* buf, size_t len)
 {
     if (!ice_transport_.get())
         return -1;
@@ -917,7 +918,7 @@ IceSocket::recv(unsigned char* buf, size_t len)
 }
 
 ssize_t
-IceSocket::send(const unsigned char* buf, size_t len)
+IceSocket::send(const uint8_t* buf, size_t len)
 {
     if (!ice_transport_.get())
         return -1;
