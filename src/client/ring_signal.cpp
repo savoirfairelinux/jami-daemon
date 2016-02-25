@@ -79,6 +79,10 @@ getSignalHandlers()
         exported_callback<DRing::PresenceSignal::NewBuddyNotification>(),
         exported_callback<DRing::PresenceSignal::SubscriptionStateChanged>(),
 
+        /* Data transfer */
+        exported_callback<DRing::DataTransferSignal::DataConnectionStatus>(),
+        exported_callback<DRing::DataTransferSignal::DataTransferStatus>(),
+
         /* Audio */
         exported_callback<DRing::AudioSignal::DeviceEvent>(),
 
