@@ -139,6 +139,7 @@ class DBusConfigurationManager :
         void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload);
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
         int importAccounts(const std::string& archivePath, const std::string& password);
+        std::string sendFile(const std::string& accountID, const std::string& peerUri, const std::string& filename);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

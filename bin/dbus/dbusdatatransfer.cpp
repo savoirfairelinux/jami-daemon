@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2016 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
@@ -17,35 +17,23 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef ICE_SOCKET_H
-#define ICE_SOCKET_H
 
-#include <memory>
-#include <functional>
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
-namespace ring {
+#include "dbusdatatransfer.h"
+#include "datatransfer_interface.h"
 
-class IceTransport;
-using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
+DBusDataTransfer::DBusDataTransfer(DBus::Connection& connection)
+    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/DataTransfer")
+{}
 
-class IceSocket
+auto
+DBusDataTransfer::sendFile(const std::string& accountID,
+                           const std::string& peerUri,
+                           const std::string& pathname,
+                           const std::string& name) -> decltype(DRing::sendFile(accountID, peerUri, pathname, name))
 {
-    private:
-        std::shared_ptr<IceTransport> ice_transport_ {};
-        int compId_ = -1;
-
-    public:
-        IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
-            : ice_transport_(iceTransport), compId_(compId) {}
-
-        void close();
-        ssize_t recv(uint8_t* buf, size_t len);
-        ssize_t send(const uint8_t* buf, size_t len);
-        ssize_t getNextPacketSize() const;
-        ssize_t waitForData(unsigned int timeout);
-        void setOnRecv(IceRecvCb cb);
-};
-
-};
-
-#endif /* ICE_SOCKET_H */
+    return DRing::sendFile(accountID, peerUri, pathname, name);
+}
