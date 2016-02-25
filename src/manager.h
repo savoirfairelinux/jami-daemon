@@ -48,6 +48,8 @@
 #include "audio/audiolayer.h"
 #include "audio/tonecontrol.h"
 
+#include "datatransfer_interface.h"
+
 #include "preferences.h"
 #include "noncopyable.h"
 
@@ -761,6 +763,15 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        /**
+         * Send a file to a peer using given account
+         * @return a transfer id
+         */
+         DRing::DataTransferId sendFile(const std::string& accountId,
+                                        const std::string& peerUri,
+                                        const std::string& pathname,
+                                        const std::string& name);
+
     private:
         std::atomic_bool autoAnswer_ {false};
 
@@ -928,8 +939,7 @@ class Manager {
 
         /**
          * Call periodically to poll for VoIP events */
-        void
-        pollEvents();
+        void pollEvents();
 
         /**
          * Create a new outgoing call
@@ -962,6 +972,8 @@ class Manager {
         IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
 
         void addTask(const std::function<bool()>&& task);
+
+        std::mt19937_64& getRandomEngine() noexcept { return rand_; }
 
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
