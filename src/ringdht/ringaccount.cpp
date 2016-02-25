@@ -25,6 +25,14 @@
 #include "config.h"
 #endif
 
+#ifdef _WIN32
+    #include <ws2tcpip.h>
+#else
+    #include <arpa/inet.h>
+#endif
+
+#include <intrin.h>
+
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
@@ -37,6 +45,7 @@
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
 #include "dring/account_const.h"
+#include "dring/datatransfer_interface.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -45,6 +54,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "utf8_utils.h"
+#include "noncopyable.h"
 
 #ifdef RING_VIDEO
 #include "libav_utils.h"
@@ -56,11 +66,17 @@
 #include "config/yamlparser.h"
 
 #include "security/certstore.h"
+#include "security/tls_session.h"
+
+#include "threadloop.h"
+#include "data_transfer.h"
 
 #include <opendht/securedht.h>
 
 #include <yaml-cpp/yaml.h>
 
+// libstdc(++)
+#include <utility>
 #include <algorithm>
 #include <array>
 #include <memory>
@@ -68,6 +84,9 @@
 #include <cctype>
 #include <cstdarg>
 #include <string>
+#include <fstream>
+#include <future>
+
 
 namespace ring {
 
@@ -80,12 +99,17 @@ static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 
+// Limit number of ICE data msg request/msg that waiting for handling
+static constexpr int PENDING_DATA_MSG_LENGHT {15};
+
 static constexpr const char * const RING_URI_PREFIX = "ring:";
 
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
 static std::uniform_int_distribution<dht::Value::Id> udist;
+
+dht::ValueType IceDataCandidates::TYPE;
 
 static const std::string
 parseRingUri(const std::string& toUrl)
@@ -141,6 +165,7 @@ RingAccount::createIceTransport(Args... args)
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
 {
+    IceDataCandidates::TYPE = dht::IceCandidates::TYPE; // Prevent gvar init order fiasco
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -148,8 +173,10 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 
 RingAccount::~RingAccount()
 {
+    RING_DBG("delete ring account %s", getAccountID().c_str());
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     dht_.join();
+    RING_DBG("bye ring account %s", getAccountID().c_str());
 }
 
 std::shared_ptr<SIPCall>
@@ -455,14 +482,14 @@ RingAccount::checkIdentityPath()
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
-    dht::crypto::Certificate dht_cert;
-    dht::crypto::PrivateKey dht_key;
+    if (dht_id_.second)
+        return dht_id_;
 
     try {
-        dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
-    }
-    catch (const std::exception& e) {
+        dht_id_.second = std::make_shared<dht::crypto::Certificate>(fileutils::loadFile(tlsCertificateFile_));
+        dht_id_.first = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
+
+    } catch (const std::exception& e) {
         RING_ERR("Error loading identity: %s", e.what());
         auto ca = dht::crypto::generateIdentity("Ring CA");
         if (!ca.first || !ca.second) {
@@ -484,14 +511,13 @@ RingAccount::loadIdentity()
         tlsPassword_ = {};
 
         username_ = RING_URI_PREFIX+id.second->getId().toString();
+
+        dht_id_= std::move(id);
         return id;
     }
 
-    username_ = RING_URI_PREFIX+dht_cert.getId().toString();
-    return {
-        std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
-        std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
-    };
+    username_ = RING_URI_PREFIX + dht_id_.second->getId().toString();
+    return dht_id_;
 }
 
 void
@@ -810,6 +836,8 @@ RingAccount::doRegister_()
 
         dht_.run((in_port_t)dhtPortUsed_, identity, false);
 
+        RING_DBG("[DHT:%s] RingID: %s", getAccountID().c_str(), dht_.getId().toString().c_str());
+
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             auto& store = tls::CertificateStore::instance();
             auto cert = store.getCertificate(pk_id.toString());
@@ -863,7 +891,8 @@ RingAccount::doRegister_()
         // Listen for incoming calls
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         callKey_ = dht::InfoHash::get("callto:"+dht_.getId().toString());
-        RING_DBG("Listening on callto:%s : %s", dht_.getId().toString().c_str(), callKey_.toString().c_str());
+        RING_DBG("[DHT:%s] callto key: %s", getAccountID().c_str(), callKey_.toString().c_str());
+
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
@@ -918,6 +947,8 @@ RingAccount::doRegister_()
         );
 
         auto inboxKey = dht::InfoHash::get("inbox:"+dht_.getId().toString());
+        RING_DBG("[DHT:%s] inbox key: %s", getAccountID().c_str(), inboxKey.toString().c_str());
+
         dht_.listen<dht::TrustRequest>(
             inboxKey,
             [shared](dht::TrustRequest&& v) {
@@ -970,8 +1001,18 @@ RingAccount::doRegister_()
                 return true;
             }
         );
-    }
-    catch (const std::exception& e) {
+
+        // Listen to data channel
+        dht_.listen<IceDataCandidates>(
+            inboxKey,
+            [shared] (IceDataCandidates&& msg) {
+                if (msg.id & 1)
+                    shared->onDataTransactionReply(msg);
+                else
+                    shared->onDataTransactionRequest(std::move(msg));
+                return true;
+            });
+    } catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
@@ -1319,8 +1360,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
  */
 void
 RingAccount::enablePresence(const bool& /* enabled */)
-{
-}
+{}
 
 /**
  *  Set the presence (PUBLISH/SUBSCRIBE) support flags
@@ -1328,8 +1368,7 @@ RingAccount::enablePresence(const bool& /* enabled */)
  */
 void
 RingAccount::supportPresence(int /* function */, bool /* enabled*/)
-{
-}
+{}
 
 /* trust requests */
 std::map<std::string, std::string>
@@ -1460,6 +1499,580 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     // TODO: not supported yet
     RING_ERR("Multi-part im is not supported yet by RingAccount");
     messageEngine_.onMessageSent(token, false);
+}
+
+//==================================================================================================
+//==================================================================================================
+
+namespace SeqNum
+{
+
+using seqnum_t = int32_t;
+static constexpr seqnum_t THRESHOLD {0x3FFFFFFF}; // threshold for comparing seq. no.
+static constexpr seqnum_t MAX {0x7FFFFFFF}; // maximum sequence number
+static constexpr seqnum_t INVALID {-1}; // invalid sequence number
+
+inline static int cmp(seqnum_t seq1, seqnum_t seq2) {
+    return (std::abs(seq1 - seq2) < THRESHOLD) ? (seq1 - seq2) : (seq2 - seq1);
+}
+
+inline static int lenght(seqnum_t seq1, seqnum_t seq2) {
+    return (seq1 <= seq2) ? (seq2 - seq1 + 1) : (seq2 - seq1 + MAX + 2);
+}
+
+inline static int offset(seqnum_t seq1, seqnum_t seq2) {
+    if (std::abs(seq1 - seq2) < THRESHOLD)
+        return seq2 - seq1;
+
+    if (seq1 < seq2)
+        return seq2 - seq1 - MAX - 1;
+
+    return seq2 - seq1 + MAX + 1;
+}
+
+inline static seqnum_t increase(seqnum_t seq, seqnum_t inc) {
+    return (MAX - seq >= inc) ? seq + inc : seq - MAX + inc - 1;
+}
+
+inline static seqnum_t increase(seqnum_t seq) {
+    return (seq == MAX) ? 0 : seq + 1;
+}
+
+inline static seqnum_t decrease(seqnum_t seq) {
+    return (seq == 0) ? MAX : seq - 1;
+}
+
+} // namespace SeqNum
+
+class SecureIceTransport
+{
+public:
+    using clock = std::chrono::steady_clock;
+
+    SecureIceTransport(RingAccount& account, const std::string& pid, dht::Value::Id tid,
+                       IceDataCandidates&& remote_cands);
+    ~SecureIceTransport();
+
+    operator bool() const {
+        return peer_id.empty();
+    }
+
+    void createTlsSession(dht::crypto::Identity& id,
+                          std::shared_future<tls::DhParams> dh_params);
+
+    const DRing::DataConnectionId cid;
+    const RingAccount& account;
+    const std::string peer_id; // DHT peer id
+    const dht::Value::Id tid; // DHT transaction id
+    IceDataCandidates remote_candidates;
+    std::shared_ptr<IceTransport> transport {};
+    std::chrono::seconds creationTimepoint;
+
+private:
+    NON_COPYABLE(SecureIceTransport);
+
+    std::shared_ptr<DataConnection> dataConnection_ {};
+
+    // DTLS session
+    std::unique_ptr<tls::TlsSession> tls_;
+    void onTlsStateChange(tls::TlsSessionState);
+    void onCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
+    int onVerifyCertificate(gnutls_session_t);
+    void onRxData(std::vector<uint8_t>&&);
+
+    // Reliable stream members
+    SeqNum::seqnum_t initialSeq_;
+    SeqNum::seqnum_t txSeq_;
+    SeqNum::seqnum_t lastRxSeqNum_;
+    SeqNum::seqnum_t lastRxAck_;
+    ssize_t lastTxResult_ {GNUTLS_E_SUCCESS};
+    std::mutex txMutex_ {};
+    std::condition_variable txCv_ {};
+
+    void idleTask(void);
+    ssize_t sendPacket(DataConnection::Packet&);
+};
+
+std::unique_ptr<SecureIceTransport>
+RingAccount::newSecureIceTransport(const std::string& peer_id, bool is_initiator,
+                                   IceDataCandidates&& remote_ice)
+{
+    dht::Value::Id tid;
+
+    if (is_initiator)
+        tid = udist(rand_) << 1; // request: random id with LSB at 0
+    else
+        tid = remote_ice.id | 1; // reply: LSB = 1
+
+    auto trx = std::unique_ptr<SecureIceTransport>(new SecureIceTransport {*this, peer_id, tid,
+                std::move(remote_ice)});
+    return std::move(trx);
+}
+
+DRing::DataTransferId
+RingAccount::sendFile(const std::string& peer_uri, const std::string& pathname,
+                      UNUSED const std::string& name)
+{
+    // check filename existance first
+    std::ifstream stream {pathname, std::ios::in | std::ios::binary};
+    if (not stream.good()) {
+        RING_ERR("[DHT:%s] Cannot open file '%s'", getAccountID().c_str(), pathname.c_str());
+        return {};
+    }
+
+    /**
+     * throw:
+     *  std::invalid_argument: if uri is not a recognisable RingID
+     */
+    const auto peer_id = parseRingUri(peer_uri);
+
+    // Find/create peer_id related SecureIceTransport
+    bool do_init = false;
+    DRing::DataConnectionId cid {0};
+    {
+        std::lock_guard<std::mutex> lock(sitMutex_);
+        auto item = establishedSITMap_.find(peer_id);
+        if (item == establishedSITMap_.cend()) {
+            item = pendingSITMap_.find(peer_id);
+            if (item == pendingSITMap_.cend()) {
+                if (auto sit = newSecureIceTransport(peer_id, true)) {
+                    cid = pendingSITMap_.emplace(peer_id, std::move(sit)).first->second->cid;
+                    do_init = true;
+                } else {
+                    return {};
+                }
+            } else {
+                cid = item->second->cid;
+            }
+        } else {
+            cid = item->second->cid;
+        }
+    }
+
+    if (do_init) {
+        auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+        runOnMainThread([acc, peer_id]{ acc->initSecureIceTransport(peer_id); });
+    }
+
+    //auto ftx = FileTransfer::newFileTransfer(cid, name, std::move(stream));
+    return 0;
+}
+
+void
+RingAccount::onDataTransactionRequest(IceDataCandidates&& msg)
+{
+    /** Request handling algorithm:
+     *
+     * A data transaction as to be unique between 2 peers, but each one
+     * can send a request in same time and even be received in same time.
+     * Two ICE transports on same peer-pair will be negotiated in this context.
+     * It's a waste of ressources but hard to solve as breaking the symmetrie is
+     * not easy: on which element both side can decide with transport has to be abandoned?
+     *
+     * In case of existing transaction (in progress or established), the newer wins.
+     */
+    std::lock_guard<std::mutex> lock(sitMutex_);
+    const auto& peer_id = msg.from.toString();
+
+    // Check pending list first
+    auto item = pendingSITMap_.find(peer_id);
+    if (item != pendingSITMap_.cend()) {
+        if (item->second->creationTimepoint > msg.timestamp)
+            return;
+        else if (msg.timestamp == item->second->creationTimepoint) {
+            // Symmetric Requests! Biggest NodeID wins.
+            if (msg.from < dht_.getId())
+                return;
+        }
+        item->second = newSecureIceTransport(peer_id, false, std::move(msg));
+        return;
+    } else {
+        auto item = establishedSITMap_.find(peer_id);
+        if (item != establishedSITMap_.cend()) {
+            if (item->second->creationTimepoint > msg.timestamp)
+                return;
+        }
+    }
+
+    auto result = pendingSITMap_.emplace(peer_id, newSecureIceTransport(peer_id, false, std::move(msg)));
+    if (not result.second)
+        return;
+
+    // Deport to main thread ICE transport initialization as we may lock dht (we're in dhtrunner
+    // thread, already locked). This prevent mutex deadlock.
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+    runOnMainThread([acc, peer_id] { acc->initSecureIceTransport(peer_id); });
+}
+
+void
+RingAccount::onDataTransactionReply(const IceDataCandidates& msg)
+{
+    std::lock_guard<std::mutex> lock(sitMutex_);
+    const auto peer_id = msg.from.toString();
+
+    auto item = pendingSITMap_.find(peer_id);
+    if (item == pendingSITMap_.cend())
+        return;
+
+    // Drop replies not related to the pending request
+    auto& trx = *item->second;
+    if ((trx.tid | 1) != msg.id)
+        return;
+
+    RING_DBG("[DHT:%s] rx data reply/0x%lx by %s:\n%s", getAccountID().c_str(), msg.id,
+             peer_id.c_str(), std::string(std::begin(msg.ice_data),
+                                          std::end(msg.ice_data)).c_str());
+
+    if (not trx.transport->start(msg.ice_data))
+        pendingSITMap_.erase(item);
+}
+
+bool
+RingAccount::initSecureIceTransport(const std::string& peer_id)
+{
+    std::lock_guard<std::mutex> lock(sitMutex_);
+    auto item = pendingSITMap_.find(peer_id);
+    if (item == pendingSITMap_.cend())
+        return false;
+
+    auto& trx = *item->second;
+
+    try {
+        auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+        auto ice_opts = getIceOptions();
+
+        // this lambda may run in ICE thread or in the current thread
+        ice_opts.onInitDone = [acc, peer_id](IceTransport&, bool done) mutable {
+            if (done)
+                runOnMainThread([acc, peer_id]() { acc->onDataIceInitSuccess(peer_id); });
+            else {
+                acc->cancelSecureIceTransport(peer_id);
+                RING_ERR("ice init failed");
+            }
+        };
+
+        // same remark as onInitDone
+        ice_opts.onNegoDone = [acc, peer_id](IceTransport&, bool done) {
+            if (done)
+                runOnMainThread([acc, peer_id] { acc->onDataIceNegoSuccess(peer_id); });
+            else {
+                acc->cancelSecureIceTransport(peer_id);
+                RING_ERR("ice nego failed");
+            }
+        };
+
+        if (auto ice = createIceTransport("data", 1, (trx.tid & 1) == 0, ice_opts))
+            trx.transport = std::move(ice);
+        else
+            throw std::runtime_error("ICE transport creation failed");
+    } catch (const std::exception& e) {
+        RING_ERR("[DHT:%s] exception in data transaction 0x%lx creation: %s",
+                 getAccountID().c_str(), trx.tid, e.what());
+        cancelSecureIceTransport(peer_id);
+        return false;
+    }
+
+    return true;
+}
+
+void
+RingAccount::cancelSecureIceTransport(const std::string& peer_id)
+{
+    std::lock_guard<std::mutex> lock(sitMutex_);
+    pendingSITMap_.erase(peer_id);
+}
+
+void
+RingAccount::onDataIceInitSuccess(const std::string& peer_id)
+{
+    dht::Value::Id tid;
+    std::vector<uint8_t> candidates;
+
+    {
+        std::lock_guard<std::mutex> lock(sitMutex_);
+        auto item = pendingSITMap_.find(peer_id);
+        if (item == pendingSITMap_.cend()) {
+            RING_WARN("no pending data transaction with peer %s", peer_id.c_str());
+            return;
+        }
+        auto& trx = *item->second;
+        if (not trx.transport) {
+            RING_ERR("data transaction without transport!");
+            return;
+        }
+        auto& ice = *trx.transport;
+
+        tid = trx.tid;
+        candidates = ice.getLocalAttributesAndCandidates();
+
+        // We can now wait for a remote ICE data or try to start ICE negotiation.
+        // In both cases we are trying to solve the global connecting state.
+        //emitDataCnxStatus(getAccountID(), trx.peer_id, DRing::DataTransferCode::CODE_TRYING);
+
+        // Start negotiation if we're slave
+        if (tid & 1)
+            ice.start(trx.remote_candidates.ice_data);
+    }
+
+    // Send our ICE info to peer through DHT at its inbox key
+    const auto destination = dht::InfoHash(peer_id);
+    const auto key = dht::InfoHash::get("inbox:" + peer_id);
+    dht::Value value {IceDataCandidates(tid, candidates)};
+    const auto value_id = value.id;
+    auto acc = std::static_pointer_cast<RingAccount>(shared_from_this());
+
+    RING_DBG("[DHT:%s] Tx ICE data/0x%lx at %s (key:%s)", getAccountID().c_str(), tid,
+             destination.toString().c_str(), key.toString().c_str());
+
+    dht_.putEncrypted(
+        key, destination, std::move(value),
+        // on done callback
+        [acc, key, value_id, tid, peer_id](bool done) {
+            if (!done) {
+                RING_ERR("[DHT:%s] put failed for ICE data/0x%lx",
+                         acc->getAccountID().c_str(), tid);
+                acc->cancelSecureIceTransport(peer_id);
+            }
+            acc->dht_.cancelPut(key, value_id);
+        });
+}
+
+void
+RingAccount::onDataIceNegoSuccess(const std::string& peer_id)
+{
+    // Move pending transaction to running transaction list
+    {
+        std::lock_guard<std::mutex> lock(sitMutex_);
+
+        auto new_item = pendingSITMap_.find(peer_id);
+        if (new_item == pendingSITMap_.cend())
+            return;
+
+        RING_DBG("[data:%s] ICE connected to %s", getAccountID().c_str(), peer_id.c_str());
+
+        try {
+            // Time to negotiate a TLS session
+            new_item->second->createTlsSession(dht_id_, dhParams_);
+        } catch (...) {
+            RING_ERR("[data:%s] TLS session failed on peer %s", getAccountID().c_str(),
+                     peer_id.c_str());
+            cancelSecureIceTransport(peer_id);
+            return;
+        }
+
+        // Replace existing transaction by this newest
+        auto old_item = establishedSITMap_.find(peer_id);
+        if (old_item != establishedSITMap_.cend())
+            old_item->second = std::move(new_item->second);
+        else
+            establishedSITMap_.emplace(std::move(*new_item));
+        pendingSITMap_.erase(new_item);
+    }
+}
+
+//==================================================================================================
+//==================================================================================================
+
+static DRing::DataConnectionId
+get_unique_connection_id()
+{
+    static std::atomic<DRing::DataConnectionId> uid {0};
+    uid += 1;
+    return uid;
+}
+
+SecureIceTransport::SecureIceTransport(RingAccount& account, const std::string& pid,
+                                       dht::Value::Id tid, IceDataCandidates&& remote_cands)
+    : cid(get_unique_connection_id())
+    , account(account)
+    , peer_id(pid)
+    , tid(tid)
+    , remote_candidates(remote_cands)
+    , tls_()
+{
+    std::uniform_int_distribution<int32_t> dist(0, SeqNum::MAX);
+    initialSeq_ = dist(Manager::instance().getRandomEngine());
+    txSeq_ = initialSeq_;
+    lastRxSeqNum_ = SeqNum::decrease(initialSeq_);
+    lastRxAck_ = initialSeq_;
+
+    RING_DBG("[SIT:%lx] created (tid=%lx, iseq=%08x) for peer %s", cid, tid, initialSeq_,
+             peer_id.c_str());
+}
+
+SecureIceTransport::~SecureIceTransport()
+{
+    RING_DBG("delete data transaction with peer %s", peer_id.c_str());
+
+    Manager::instance().unregisterEventHandler(reinterpret_cast<uintptr_t>(this));
+
+    // TODO: gently stop data transfers
+    auto ice = std::move(transport);
+    runOnMainThread([ice]() mutable { ice.reset(); });
+}
+
+void
+SecureIceTransport::idleTask(void)
+{
+    DataConnection::Packet ping;
+    sendPacket(ping);
+}
+
+ssize_t
+SecureIceTransport::sendPacket(DataConnection::Packet& pkt)
+{
+    auto& h = pkt.getHeader();
+    h.seq = txSeq_;
+    txSeq_ = SeqNum::increase(txSeq_);
+
+    tls_->async_send(pkt.data(), pkt.size(), [this](std::size_t res) {
+            std::lock_guard<std::mutex> lk(txMutex_);
+            lastTxResult_ = res;
+            txCv_.notify_one();
+        });
+
+    std::unique_lock<std::mutex> lk {txMutex_};
+    if (txCv_.wait_for(lk, std::chrono::milliseconds(500)) == std::cv_status::timeout) {
+        RING_ERR("[SIT:%lx] send timeout (overloaded ICE thread?)", cid);
+        throw std::runtime_error("ftp send timeout");
+    }
+
+    if (gnutls_error_is_fatal(lastTxResult_)) {
+        RING_ERR("[SIT:%lx] send failed (fatal TLS error)", cid);
+        return -1;
+    }
+
+    return lastTxResult_;
+}
+
+void
+SecureIceTransport::createTlsSession(dht::crypto::Identity& id,
+                                     std::shared_future<tls::DhParams> dh_params)
+{
+    // Try to establish a TLS session over the ICE transport
+
+    dht::InfoHash remote_h {peer_id};
+    tls::TlsParams tls_params {
+        .ca_list = "", // TODO
+        .cert = id.second,
+        .cert_key = id.first,
+        .dh_params = dh_params,
+        .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
+        .cert_check = {}
+    };
+    tls::TlsSession::TlsSessionCallbacks tls_cbs = {
+        .onStateChange = [this](tls::TlsSessionState state){ onTlsStateChange(state); },
+        .onRxData = [this](std::vector<uint8_t>&& buf){ onRxData(std::move(buf)); },
+        .onCertificatesUpdate = [this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+                                       unsigned int n){ onCertificatesUpdate(l, r, n); },
+        .verifyCertificate = [this](gnutls_session_t session){ return onVerifyCertificate(session); }
+    };
+    tls_.reset(new tls::TlsSession(transport, 0, tls_params, tls_cbs));
+}
+
+// - DO NOT BLOCK - (Called in TlsSession thread)
+void
+SecureIceTransport::onTlsStateChange(tls::TlsSessionState state)
+{
+    if (state == tls::TlsSessionState::ESTABLISHED)
+        Manager::instance().registerEventHandler(reinterpret_cast<uintptr_t>(this),
+                                                 [this]{ idleTask(); });
+    else if (state == tls::TlsSessionState::SHUTDOWN)
+        Manager::instance().unregisterEventHandler(reinterpret_cast<uintptr_t>(this));
+}
+
+// - DO NOT BLOCK - (Called in TlsSession thread)
+void
+SecureIceTransport::onRxData(std::vector<uint8_t>&& buf)
+{
+    uint8_t* data = buf.data() + sizeof(DataConnection::PacketHeader);
+    std::size_t data_len = buf.size() - sizeof(DataConnection::PacketHeader);
+
+    RING_ERR("rx: %zu", buf.size());
+    if (buf.size() < sizeof(DataConnection::PacketHeader)) {
+        RING_ERR("too short");
+        return;
+    }
+
+    auto pkt = reinterpret_cast<DataConnection::PacketHeader*>(buf.data());
+    if (pkt->version > 0) {
+        RING_WARN("bad version");
+        // TODO: statistics
+        return;
+    }
+
+    // handle ACK info
+    // TODO
+    //if (pkt->ack)
+    //    updateAckInfo(ntohl(pkt->ack));
+
+    // check sequence number validity
+    auto offset = SeqNum::offset(lastRxAck_, pkt->seq);
+    RING_WARN("seq#: %08x", offset);
+    //if ((offset < 0) || (offset >= m_pRcvBuffer->getAvailBufSize()))
+    //  return -1;
+
+    // record
+    // TODO
+
+    // loss detection
+    auto loss_cnt = SeqNum::cmp(pkt->seq, SeqNum::increase(lastRxSeqNum_));
+    if (loss_cnt > 0) {
+        RING_WARN("loss: %d", loss_cnt);
+        // Insert to loss list and report to peer
+    }
+
+    // update largest rx sequence number or remove retransmitted packet from loss list
+    if (SeqNum::cmp(pkt->seq, lastRxSeqNum_) > 0)
+        lastRxSeqNum_ = pkt->seq;
+    else
+        ; // TODO: remove from loss list
+}
+
+/* Update local & remote certificates info. This function should be
+ * called after handshake or re-negotiation successfully completed.
+ *
+ * - DO NOT BLOCK - (Called in TlsSession thread)
+ */
+void
+SecureIceTransport::onCertificatesUpdate(UNUSED const gnutls_datum_t* local_raw,
+                                     UNUSED const gnutls_datum_t* remote_raw,
+                                     UNUSED unsigned int remote_count)
+{
+    // TODO
+}
+
+int
+SecureIceTransport::onVerifyCertificate(gnutls_session_t session)
+{
+    // Support only x509 format
+    if (gnutls_certificate_type_get(session) != GNUTLS_CRT_X509) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // Store verification status
+    unsigned int status = 0;
+    auto ret = gnutls_certificate_verify_peers2(session, &status);
+    if (ret < 0 or (status & GNUTLS_CERT_SIGNATURE_FAILURE) != 0) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    unsigned int cert_list_size = 0;
+    auto cert_list = gnutls_certificate_get_peers(session, &cert_list_size);
+    if (cert_list == nullptr) {
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    dht::InfoHash remote_h {peer_id};
+    try {
+        check_peer_certificate(remote_h, status, cert_list, cert_list_size);
+    } catch (const std::exception& e) {
+        RING_ERR("[data:%s] TLS certificate check exception: %s", peer_id.c_str(), e.what());
+        return GNUTLS_E_CERTIFICATE_ERROR;
+    }
+
+    // notify GnuTLS to continue handshake normally
+    return GNUTLS_E_SUCCESS;
 }
 
 } // namespace ring
