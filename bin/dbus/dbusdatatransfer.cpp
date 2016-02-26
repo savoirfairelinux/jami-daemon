@@ -24,10 +24,68 @@
 
 #include "dbusdatatransfer.h"
 #include "datatransfer_interface.h"
+#include "string_utils.h"
 
 DBusDataTransfer::DBusDataTransfer(DBus::Connection& connection)
     : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/DataTransfer")
 {}
+
+auto
+DBusDataTransfer::connectToPeer(const std::string& accountId, const std::string& peerUri) -> decltype(DRing::connectToPeer(accountId, peerUri))
+{
+    return DRing::connectToPeer(accountId, peerUri);
+}
+
+std::map<std::string, std::string>
+DBusDataTransfer::getDataConnectionInfo(const std::string& dataConnectionId)
+{
+    DRing::DataConnectionInfo info;
+    if (DRing::dataConnectionInfo(dataConnectionId, info)) {
+        // serialize the struct
+        return {
+            {DRing::DataTransfer::ACCOUNT, info.account},
+            {DRing::DataTransfer::PEER,    info.peer},
+            {DRing::DataTransfer::CODE,    ring::to_string(info.code)},
+        };
+    } else {
+        return {};
+    }
+}
+
+auto
+DBusDataTransfer::closeDataConnection(const std::string& dataConnectionId) -> decltype(DRing::closeDataConnection(dataConnectionId))
+{
+    return DRing::closeDataConnection(dataConnectionId);
+}
+
+auto
+DBusDataTransfer::cancelDataTransfer(const std::string& dataTransferId) -> decltype(DRing::cancelDataTransfer(dataTransferId))
+{
+    return DRing::cancelDataTransfer(dataTransferId);
+}
+
+int64_t
+DBusDataTransfer::getDataTransferSentBytes(const std::string& dataTransferId)
+{
+    return DRing::dataTransferSentBytes(dataTransferId);
+}
+
+std::map<std::string, std::string>
+DBusDataTransfer::getDataTransferInfo(const std::string& dataTransferId)
+{
+    DRing::DataTransferInfo info;
+    if (DRing::dataTransferInfo(dataTransferId, info)) {
+        // serialize the struct
+        return {
+            {DRing::DataTransfer::CONNECTION_ID, info.connectionId},
+            {DRing::DataTransfer::NAME,          info.name},
+            {DRing::DataTransfer::SIZE,          ring::to_string(info.size)},
+            {DRing::DataTransfer::CODE,          ring::to_string(info.code)},
+        };
+    } else {
+        return {};
+    }
+}
 
 auto
 DBusDataTransfer::sendFile(const std::string& accountID,
@@ -36,4 +94,10 @@ DBusDataTransfer::sendFile(const std::string& accountID,
                            const std::string& name) -> decltype(DRing::sendFile(accountID, peerUri, pathname, name))
 {
     return DRing::sendFile(accountID, peerUri, pathname, name);
+}
+
+void
+DBusDataTransfer::acceptFileTransfer(const std::string& dataTransferId, const std::string& pathname)
+{
+    DRing::acceptFileTransfer(dataTransferId, pathname);
 }
