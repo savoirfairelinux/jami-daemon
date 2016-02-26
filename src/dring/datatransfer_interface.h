@@ -76,6 +76,16 @@ struct DataTransferInfo {
     int code; // latest status code (set by DataTransferStatus signal change)
 };
 
+// strings used to serialize structs
+namespace DataTransfer {
+    constexpr static const char ACCOUNT       [] = "Account";
+    constexpr static const char PEER          [] = "Peer";
+    constexpr static const char CODE          [] = "Code";
+    constexpr static const char CONNECTION_ID [] = "ConnectionID";
+    constexpr static const char NAME          [] = "Name";
+    constexpr static const char SIZE          [] = "Size";
+} //namespace DRing::DataTransfer
+
 // Signal handlers registration
 void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
