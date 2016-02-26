@@ -28,7 +28,7 @@
                    A name given to the peer.
                </tp:docstring>
            </arg>
-           <arg type="s" name="result" direction="out">
+           <arg type="s" name="dataTransferId" direction="out">
 			   <tp:docstring>
                    Returns a DataTransferId.
                </tp:docstring>
@@ -68,5 +68,109 @@
                </tp:docstring>
            </arg>
 		</signal>
+
+    <method name="connectToPeer" tp:name-for-bindings="connectToPeer">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="accountId" direction="in">
+             <tp:docstring>
+                 An account ID.
+             </tp:docstring>
+         </arg>
+         <arg type="s" name="peerUri" direction="in">
+             <tp:docstring>
+                 Destination URI.
+             </tp:docstring>
+         </arg>
+         <arg type="s" name="dataConnectionId" direction="out">
+           <tp:docstring>
+                 Returns a DataConnectionId.
+           </tp:docstring>
+         </arg>
+    </method>
+
+    <method name="getDataConnectionInfo" tp:name-for-bindings="getDataConnectionInfo">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataConnectionId" direction="in">
+             <tp:docstring>
+                 A DataConnectionId.
+             </tp:docstring>
+         </arg>
+         <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+         <arg type="a{ss}" name="dataConnectionInfo" direction="out" tp:type="String_String_Map">
+             <tp:docstring>
+                 The available keys / parameters are:
+                 <ul>
+                     <li>Account: account used for transfer</li>
+                     <li>Peer: remote identification</li>
+                     <li>Code: latest status code (set by DataConnectionStatus signal change)</li>
+                 </ul>
+             </tp:docstring>
+         </arg>
+    </method>
+
+    <method name="closeDataConnection" tp:name-for-bindings="closeDataConnection">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataConnectionId" direction="in">
+             <tp:docstring>
+                 A DataConnectionId.
+             </tp:docstring>
+         </arg>
+         <arg type="b" name="result" direction="out"/>
+    </method>
+
+    <method name="cancelDataTransfer" tp:name-for-bindings="cancelDataTransfer">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataTransferId" direction="in">
+             <tp:docstring>
+                 A DataTransferId.
+             </tp:docstring>
+         </arg>
+         <arg type="b" name="result" direction="out"/>
+    </method>
+
+    <method name="getDataTransferSentBytes" tp:name-for-bindings="getDataTransferSentBytes">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataTransferId" direction="in">
+             <tp:docstring>
+                 A DataTransferId.
+             </tp:docstring>
+         </arg>
+         <arg type="x" name="size" direction="out"/>
+    </method>
+
+    <method name="getDataTransferInfo" tp:name-for-bindings="getDataTransferInfo">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataTransferId" direction="in">
+             <tp:docstring>
+                 A DataTransferId.
+             </tp:docstring>
+         </arg>
+         <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+         <arg type="a{ss}" name="dataTransferInfo" direction="out" tp:type="String_String_Map">
+             <tp:docstring>
+                 The available keys / parameters are:
+                 <ul>
+                     <li>ConnectionID: used connection id</li>
+                     <li>PNameeer: public name sent to peer, (e.g.: a filename for file transfer)</li>
+                     <li>Size: total size to transfer, -1 if unknown</li>
+                     <li>Code: latest status code (set by DataTransferStatus signal change)</li>
+                 </ul>
+             </tp:docstring>
+         </arg>
+    </method>
+
+    <method name="acceptFileTransfer" tp:name-for-bindings="acceptFileTransfer">
+         <tp:added version="2.3.0"/>
+         <arg type="s" name="dataTransferId" direction="in">
+             <tp:docstring>
+                 A DataTransferId.
+             </tp:docstring>
+         </arg>
+         <arg type="s" name="pathname" direction="in">
+             <tp:docstring>
+                 File pathname (where to save the file).
+             </tp:docstring>
+         </arg>
+    </method>
 	</interface>
 </node>
