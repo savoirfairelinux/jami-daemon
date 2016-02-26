@@ -137,7 +137,6 @@ class DBusConfigurationManager :
         bool acceptTrustRequest(const std::string& accountId, const std::string& from);
         bool discardTrustRequest(const std::string& accountId, const std::string& from);
         void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload);
-        std::string sendFile(const std::string& accountID, const std::string& peerUri, const std::string& filename);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

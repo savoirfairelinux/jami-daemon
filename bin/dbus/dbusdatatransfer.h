@@ -22,6 +22,7 @@
 #define __RING_DBUSDATATRANSFER_H__
 
 #include <string>
+#include <map>
 
 #include "dbus_cpp.h"
 
@@ -50,8 +51,19 @@ public:
     DBusDataTransfer(DBus::Connection& connection);
 
     // Methods
+    // These wrap the datatransfer_interface.h API in order to (de)serialize the data structures
+    std::string connectToPeer(const std::string& accountId, const std::string& peerUri);
+    std::map<std::string, std::string> getDataConnectionInfo(const std::string& dataConnectionId);
+    bool closeDataConnection(const std::string& dataConnectionId);
+
+    bool cancelDataTransfer(const std::string& dataTransferId);
+    int64_t getDataTransferSentBytes(const std::string& dataTransferId);
+    std::map<std::string, std::string> getDataTransferInfo(const std::string& dataTransferId);
+
     std::string sendFile(const std::string& accountID, const std::string& peerUri,
                          const std::string& pathname, const std::string& name);
+    void acceptFileTransfer(const std::string& dataTransferId, const std::string& pathname);
+
 };
 
 #endif // __RING_DBUSDATATRANSFER_H__
