@@ -95,6 +95,9 @@ public:
      */
     VideoSettings getDefaultSettings() const {
         auto settings = getSettings();
+        auto channels = getChannelList();
+        if (channels.empty())
+            return {};
         settings.channel = getChannelList().front();
 
         VideoSize max_size {0, 0};
@@ -102,7 +105,7 @@ public:
 
         auto sizes = getSizeList(settings.channel);
         for (auto& s : sizes) {
-            if (s.second > 720)
+            if (s.second > 640)
                 continue;
             auto rates = getRateList(settings.channel, s);
             if (rates.empty())
