@@ -93,6 +93,7 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::SetParameters>(),
         exported_callback<DRing::VideoSignal::StartCapture>(),
         exported_callback<DRing::VideoSignal::StopCapture>(),
+        exported_callback<DRing::VideoSignal::FrameAvailable>(),
 #endif
 #endif
     };

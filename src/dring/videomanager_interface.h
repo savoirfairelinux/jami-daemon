@@ -30,6 +30,9 @@
 #include <cstdlib>
 
 #include "dring.h"
+#include "media/media_buffer.h"
+
+#include <libavcodec/avcodec.h>
 
 namespace DRing {
 
@@ -104,6 +107,10 @@ struct VideoSignal {
         struct StopCapture {
             constexpr static const char* name = "StopCapture";
             using cb_type = void(void);
+        };
+        struct FrameAvailable {
+            constexpr static const char* name = "FrameAvailable";
+            using cb_type = void(AVPacket *packet, int& len, int& frameFinished);
         };
 #endif
 };

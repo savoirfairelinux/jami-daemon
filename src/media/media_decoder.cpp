@@ -26,6 +26,7 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+#include "client/ring_signal.h"
 
 #include "string_utils.h"
 #include "logger.h"
@@ -312,8 +313,19 @@ MediaDecoder::decode(VideoFrame& result)
 
     auto frame = result.pointer();
     int frameFinished = 0;
-    int len = avcodec_decode_video2(decoderCtx_, frame,
+    int len = 0;
+
+#ifdef __ANDROID__
+#include <android/log.h>
+#define TAG "videomanager.i"
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, TAG, __VA_ARGS__)
+    LOGV("decode");
+    // TODO: we also need to get the decoded frame back here, e.g. for video conferencing.
+    emitSignal<DRing::VideoSignal::FrameAvailable>(&inpacket, len, frameFinished);
+#else
+    len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
+#endif
 
     av_packet_unref(&inpacket);
 
