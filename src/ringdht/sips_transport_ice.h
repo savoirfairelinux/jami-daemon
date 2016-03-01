@@ -115,9 +115,6 @@ private:
     std::mutex rxMtx_;
     std::list<std::vector<uint8_t>> rxPending_;
 
-    std::mutex txAckQueueMutex_;
-    std::list<std::pair<pjsip_tx_data*, ssize_t>> txAckQueue_;
-
     pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
     void handleEvents();
     void pushChangeStateEvent(ChangeStateEventData&&);

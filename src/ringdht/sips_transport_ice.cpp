@@ -328,20 +328,6 @@ SipsIceTransport::handleEvents()
             }
         }
     }
-
-    // Acknowledged SIP -> TLS packet
-    decltype(txAckQueue_) ack_queue;
-    {
-        std::lock_guard<std::mutex> l(txAckQueueMutex_);
-        ack_queue = std::move(txAckQueue_);
-        txAckQueue_.clear();
-    }
-    for (const auto& pair: ack_queue) {
-        auto tdata = pair.first;
-        tdata->op_key.tdata = nullptr;
-        if (tdata->op_key.callback)
-            tdata->op_key.callback(&trData_.base, tdata->op_key.token, pair.second);
-    }
 }
 
 void
@@ -637,11 +623,13 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
 
     // Asynchronous send
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
-    auto ret = tls_->async_send(tdata->buf.start, size, [=](std::size_t bytes_sent){
+    auto ret = tls_->async_send(tdata->buf.start, size, [=](std::size_t bytes_sent) {
+            // WARN: This code is called in the context of the TlsSession thread
             if (bytes_sent == 0)
                 bytes_sent = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
-            std::lock_guard<std::mutex> l(txAckQueueMutex_);
-            txAckQueue_.emplace_back(std::make_pair(tdata, bytes_sent));
+            tdata->op_key.tdata = nullptr;
+            if (tdata->op_key.callback)
+                tdata->op_key.callback(&trData_.base, tdata->op_key.token, bytes_sent);
         });
 
     // Shutdown on fatal errors
