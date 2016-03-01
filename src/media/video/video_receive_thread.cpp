@@ -24,6 +24,7 @@
 #include "media/media_decoder.h"
 #include "socket_pair.h"
 #include "manager.h"
+#include "client/ring_signal.h"
 #include "client/videomanager.h"
 #include "sinkclient.h"
 #include "logger.h"
@@ -155,7 +156,12 @@ void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 
 bool VideoReceiveThread::decodeFrame()
 {
-    const auto ret = videoDecoder_->decode(getNewFrame());
+    VideoFrame& frame = getNewFrame();
+// TODO get android feedback if that is possible.
+#ifdef __ANDROID__
+    emitSignal<DRing::VideoSignal::FrameAvailable>(&frame);
+#else
+    const auto ret = videoDecoder_->decode(frame);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -176,7 +182,7 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::EOFError:
             break;
     }
-
+#endif
     return false;
 }
 

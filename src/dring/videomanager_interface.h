@@ -30,6 +30,7 @@
 #include <cstdlib>
 
 #include "dring.h"
+#include "media/media_buffer.h"
 
 namespace DRing {
 
@@ -107,6 +108,10 @@ struct VideoSignal {
         struct StopCapture {
             constexpr static const char* name = "StopCapture";
             using cb_type = void(void);
+        };
+        struct FrameAvailable {
+            constexpr static const char* name = "FrameAvailable";
+            using cb_type = void(ring::VideoFrame *frame);
         };
 #endif
 };
