@@ -38,11 +38,21 @@
 
 namespace ring { namespace tls {
 
-static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
 static constexpr const char* TLS_PRIORITY_STRING {"SECURE192:-RSA:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE"};
+static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
+static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
-static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
+static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(250); // Delay between two handshake request on DTLS
+static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
+
+// Helper to cast any duration into an integer number of milliseconds
+template <class Rep, class Period>
+static std::chrono::milliseconds::rep
+duration2ms(std::chrono::duration<Rep, Period> d)
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(d).count();
+}
 
 class TlsSession::TlsCertificateCredendials
 {
@@ -216,15 +226,17 @@ TlsSession::commonSessionInit()
         return false;
     }
 
+    // DTLS hanshake timeouts
+    auto re_tx_timeout = duration2ms(DTLS_RETRANSMIT_TIMEOUT);
+    gnutls_dtls_set_timeouts(session_, re_tx_timeout,
+                             std::max(duration2ms(params_.timeout), re_tx_timeout));
+
+    // DTLS maximum payload size (raw packet relative)
+    gnutls_dtls_set_mtu(session_, DTLS_MTU);
+
     // Stuff for transport callbacks
     gnutls_session_set_ptr(session_, this);
     gnutls_transport_set_ptr(session_, this);
-    gnutls_dtls_set_mtu(session_, DTLS_MTU);
-
-    // TODO: minimize user timeout
-    auto timeout = std::chrono::duration_cast<std::chrono::milliseconds>(params_.timeout).count();
-    gnutls_dtls_set_timeouts(session_, 1000, timeout);
-
     gnutls_transport_set_vec_push_function(session_,
                                            [](gnutls_transport_ptr_t t, const giovec_t* iov,
                                               int iovcnt) -> ssize_t {
@@ -449,7 +461,13 @@ TlsSession::handleStateCookie(TlsSessionState state)
     {
         // block until rx packet or shutdown
         std::unique_lock<std::mutex> lk {ioMutex_};
-        ioCv_.wait(lk, [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
+        if (!ioCv_.wait_for(lk, COOKIE_TIMEOUT,
+                            [this]{ return !rxQueue_.empty()
+                                    or state_ == TlsSessionState::SHUTDOWN; })) {
+            RING_ERR("[TLS] SYN cookie failed: timeout");
+            return TlsSessionState::SHUTDOWN;
+        }
+        // Shutdown state?
         if (rxQueue_.empty())
             return TlsSessionState::SHUTDOWN;
         count = rxQueue_.front().size();
@@ -637,7 +655,6 @@ TlsSession::process()
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
 }
-
 
 TlsParams::DhParams
 newDhParams()
