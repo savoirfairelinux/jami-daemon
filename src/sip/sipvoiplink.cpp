@@ -449,22 +449,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     return PJ_FALSE;
 }
 
-static void
-tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
-                  const pjsip_transport_state_info* info)
-{
-    // There is no way (at writing) to link a user data to a PJSIP transport.
-    // So we obtain it from the global SIPVoIPLink instance that owns it.
-    // Be sure the broker's owner is not deleted during proccess
-    if (auto sipLink = getSIPVoIPLink()) {
-        if (auto& broker = sipLink->sipTransportBroker)
-            broker->transportStateChanged(tp, state, info);
-        else
-            RING_ERR("SIPVoIPLink with invalid SipTransportBroker");
-    } else
-        RING_ERR("no more VoIP link");
-}
-
 /*************************************************************************************************/
 
 pjsip_endpoint * SIPVoIPLink::getEndpoint()
@@ -519,11 +503,6 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     }
 
     sipTransportBroker.reset(new SipTransportBroker(endpt_, cp_, *pool_));
-
-    auto status = pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_),
-                                           tp_state_callback);
-    if (status != PJ_SUCCESS)
-        RING_ERR("Can't set transport callback: %s", sip_utils::sip_strerror(status).c_str());
 
     if (!ip_utils::getLocalAddr())
         throw VoipLinkException("UserAgent: Unable to determine network capabilities");
@@ -612,7 +591,6 @@ SIPVoIPLink::~SIPVoIPLink()
          timeout++)
         sleep(1);
 
-    pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     handleEvents();
 
