@@ -148,6 +148,8 @@ class SipTransport
         std::map<uintptr_t, SipTransportStateCallback> stateListeners_;
         std::mutex stateListenersMutex_;
 
+        pjsip_tp_state_listener_key* stateListenerKey_ {nullptr};
+
         bool connected_ {false};
         TlsInfos tlsInfos_;
 };
@@ -192,8 +194,6 @@ public:
      * Start gracefull shutdown procedure for all transports
      */
     void shutdown();
-
-    void transportStateChanged(pjsip_transport*, pjsip_transport_state, const pjsip_transport_state_info*);
 
 private:
     NON_COPYABLE(SipTransportBroker);
