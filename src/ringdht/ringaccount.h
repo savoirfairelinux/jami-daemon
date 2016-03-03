@@ -346,6 +346,8 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
+        static tls::DhParams loadDhParams(const std::string path);
+
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),
          * and certPath_ a valid certificate file, load and returns them.
@@ -375,7 +377,7 @@ class RingAccount : public SIPAccountBase {
          */
         void generateDhParams();
 
-        std::shared_future<tls::TlsParams::DhParams> dhParams_;
+        std::shared_future<tls::DhParams> dhParams_;
         std::mutex dhParamsMtx_;
         std::condition_variable dhParamsCv_;
         bool allowPeersFromHistory_;
