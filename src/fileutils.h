@@ -23,6 +23,7 @@
 
 #include <string>
 #include <vector>
+#include <chrono>
 
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
@@ -65,6 +66,8 @@ namespace ring { namespace fileutils {
     bool recursive_mkdir(const std::string& path, mode_t mode=0755);
 
     bool isDirectory(const std::string& path);
+
+    std::chrono::system_clock::time_point writeTime(const std::string& path);
 
     /**
      * Read content of the directory.

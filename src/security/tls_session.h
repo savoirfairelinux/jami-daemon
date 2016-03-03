@@ -59,9 +59,34 @@ enum class TlsSessionState {
     SHUTDOWN
 };
 
-struct TlsParams {
-    using DhParams = std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>;
+class DhParams {
+public:
+    DhParams() = default;
+    DhParams(DhParams&&) = default;
 
+    /** Take ownership of gnutls_dh_params */
+    explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
+
+    /** Deserialize DER or PEM encoded DH-params */
+    DhParams(const std::vector<uint8_t>& data);
+
+    gnutls_dh_params_t get() {
+        return params_.get();
+    }
+    const gnutls_dh_params_t get() const {
+        return params_.get();
+    }
+
+    /** Serialize data in PEM format */
+    std::vector<uint8_t> serialize() const;
+
+    static DhParams generate();
+
+private:
+    std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&> params_ {nullptr, gnutls_dh_params_deinit};
+};
+
+struct TlsParams {
     // User CA list for session credentials
     std::string ca_list;
 
@@ -80,10 +105,6 @@ struct TlsParams {
                       const gnutls_datum_t* cert_list,
                       unsigned cert_list_size)> cert_check;
 };
-
-// Compute Diffie-Hellman parameters suitable for TlsParams::dh_params.
-// Synchonous call: turn it asynchronous with std::async(std::launch::async, newDhParams)
-TlsParams::DhParams newDhParams();
 
 /**
  * TlsSession
