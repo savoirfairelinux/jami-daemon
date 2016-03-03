@@ -28,6 +28,9 @@
 #ifdef __ANDROID__
 #include <sstream>
 #endif
+#ifdef WIN32
+#include <windows.h>
+#endif
 
 namespace ring {
 
@@ -41,6 +44,22 @@ bool_to_str(bool b) noexcept
 }
 
 std::string to_string(double value);
+
+#ifdef WIN32
+
+std::wstring to_wstring(const std::string& s)
+{
+    int slength = (int)s.length() + 1;
+    int len = MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, nullptr, 0);
+    if (not len)
+        throw std::runtime_error("Can't convert string to wchar");
+    std::wstring r((size_t)len, 0);
+    if (!MultiByteToWideChar(CP_ACP, 0, s.c_str(), slength, &(*r.begin()), len))
+        throw std::runtime_error("Can't convert string to wchar");
+    return r;
+}
+
+#endif
 
 #ifdef __ANDROID__
 
