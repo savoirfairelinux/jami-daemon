@@ -82,8 +82,10 @@ using yaml_utils::parseValue;
 using yaml_utils::parseVectorMap;
 using sip_utils::CONST_PJ_STR;
 
-static const int MIN_REGISTRATION_TIME = 60;
-static const int DEFAULT_REGISTRATION_TIME = 3600;
+static constexpr int MIN_REGISTRATION_TIME = 60;  // seconds
+static constexpr unsigned DEFAULT_REGISTRATION_TIME = 3600;  // seconds
+static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
+static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300; // seconds
 static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1", "SSLv3"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
@@ -1110,13 +1112,13 @@ SIPAccount::onRegister(pjsip_regc_cbparam *param)
         case PJSIP_SC_BAD_GATEWAY:
         case PJSIP_SC_SERVICE_UNAVAILABLE:
         case PJSIP_SC_SERVER_TIMEOUT:
-            scheduleReregistration(link_->getEndpoint());
+            scheduleReregistration();
             break;
 
         default:
             /* Global failure */
             if (PJSIP_IS_STATUS_IN_CLASS(param->code, 600))
-                scheduleReregistration(link_->getEndpoint());
+                scheduleReregistration();
     }
     setRegistrationExpire(param->expiration);
 }
@@ -2001,30 +2003,23 @@ SIPAccount::checkNATAddress(pjsip_regc_cbparam *param, pj_pool_t *pool)
 
 /* Auto re-registration timeout callback */
 void
-SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
+SIPAccount::autoReregTimerCb()
 {
-    auto context = static_cast<std::pair<SIPAccount *, pjsip_endpoint *> *>(te->user_data);
-    SIPAccount *acc = context->first;
-    pjsip_endpoint *endpt = context->second;
-
-    /* Check if the reregistration timer is still valid, e.g: while waiting
+    /* Check if the re-registration timer is still valid, e.g: while waiting
      * timeout timer application might have deleted the account or disabled
      * the auto-reregistration.
      */
-    if (not acc->auto_rereg_.active) {
-        delete context;
+    if (not auto_rereg_.active)
         return;
-    }
 
     /* Start re-registration */
-    acc->auto_rereg_.attempt_cnt++;
+    ++auto_rereg_.attempt_cnt;
     try {
-        acc->sendRegister();
-    } catch (const VoipLinkException &e) {
-        RING_ERR("%s", e.what());
-        acc->scheduleReregistration(endpt);
+        sendRegister();
+    } catch (const VoipLinkException& e) {
+        RING_ERR("Exception during SIP registration: %s", e.what());
+        scheduleReregistration();
     }
-    delete context;
 }
 
 /* Schedule reregistration for specified account. Note that the first
@@ -2032,7 +2027,7 @@ SIPAccount::autoReregTimerCb(pj_timer_heap_t * /*th*/, pj_timer_entry *te)
  * Also note that this function should be called within PJSUA mutex.
  */
 void
-SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
+SIPAccount::scheduleReregistration()
 {
     if (!isUsable())
         return;
@@ -2040,21 +2035,21 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
     /* Cancel any re-registration timer */
     if (auto_rereg_.timer.id) {
         auto_rereg_.timer.id = PJ_FALSE;
-        pjsip_endpt_cancel_timer(endpt, &auto_rereg_.timer);
+        pjsip_endpt_cancel_timer(link_->getEndpoint(), &auto_rereg_.timer);
     }
 
     /* Update re-registration flag */
     auto_rereg_.active = PJ_TRUE;
 
     /* Set up timer for reregistration */
-    auto_rereg_.timer.cb = &SIPAccount::autoReregTimerCb;
-    auto_rereg_.timer.user_data = new std::pair<SIPAccount *, pjsip_endpoint *>(this, endpt);
+    auto_rereg_.timer.cb = [](pj_timer_heap_t* /*th*/, pj_timer_entry* te) {
+        static_cast<SIPAccount*>(te->user_data)->autoReregTimerCb();
+    };
+    auto_rereg_.timer.user_data = this;
 
-    /* Reregistration attempt. The first attempt will be done immediately. */
+    /* Reregistration attempt. The first attempt will be done sooner */
     pj_time_val delay;
-    const int FIRST_RETRY_INTERVAL = 60;
-    const int RETRY_INTERVAL = 300;
-    delay.sec = auto_rereg_.attempt_cnt ? RETRY_INTERVAL : FIRST_RETRY_INTERVAL;
+    delay.sec = auto_rereg_.attempt_cnt ? REGISTRATION_RETRY_INTERVAL : REGISTRATION_FIRST_RETRY_INTERVAL;
     delay.msec = 0;
 
     /* Randomize interval by +/- 10 secs */
@@ -2069,7 +2064,7 @@ SIPAccount::scheduleReregistration(pjsip_endpoint *endpt)
 
     RING_WARN("Scheduling re-registration retry in %ld seconds..", delay.sec);
     auto_rereg_.timer.id = PJ_TRUE;
-    if (pjsip_endpt_schedule_timer(endpt, &auto_rereg_.timer, &delay) != PJ_SUCCESS)
+    if (pjsip_endpt_schedule_timer(link_->getEndpoint(), &auto_rereg_.timer, &delay) != PJ_SUCCESS)
         auto_rereg_.timer.id = PJ_FALSE;
 }
 

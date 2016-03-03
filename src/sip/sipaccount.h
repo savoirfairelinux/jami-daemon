@@ -466,8 +466,6 @@ class SIPAccount : public SIPAccountBase {
          */
         void supportPresence(int function, bool enable);
 
-        void scheduleReregistration(pjsip_endpoint *endpt);
-
         /**
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
@@ -546,10 +544,11 @@ class SIPAccount : public SIPAccountBase {
             unsigned     attempt_cnt; /**< Attempt counter.     */
         } auto_rereg_;           /**< Reregister/reconnect data. */
 
-        std::uniform_int_distribution<decltype(pj_time_val::msec)> delay10ZeroDist_ {-10000, 10000};
-        std::uniform_int_distribution<decltype(pj_time_val::msec)> delay10PosDist_ {0, 10000};
+        std::uniform_int_distribution<int> delay10ZeroDist_ {-10000, 10000};
+        std::uniform_int_distribution<unsigned int> delay10PosDist_ {0, 10000};
 
-        static void autoReregTimerCb(pj_timer_heap_t *th, pj_timer_entry *te);
+        void scheduleReregistration();
+        void autoReregTimerCb();
 
         /**
          * Map of credential for this account
