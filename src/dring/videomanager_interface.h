@@ -32,6 +32,8 @@
 #include "dring.h"
 #include "media/media_buffer.h"
 
+#include <libavcodec/avcodec.h>
+
 namespace DRing {
 
 /* FrameBuffer is a generic video frame container */
@@ -111,7 +113,7 @@ struct VideoSignal {
         };
         struct FrameAvailable {
             constexpr static const char* name = "FrameAvailable";
-            using cb_type = void(ring::VideoFrame *frame);
+            using cb_type = void(AVPacket *packet, int& len, int& frameFinished);
         };
 #endif
 };
