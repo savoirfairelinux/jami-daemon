@@ -59,8 +59,51 @@ enum class TlsSessionState {
     SHUTDOWN
 };
 
+class DhParams {
+public:
+    DhParams() = default;
+    DhParams(DhParams&&) = default;
+    DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
+    DhParams(const std::vector<uint8_t>& data) {
+        gnutls_dh_params_t new_params_;
+        int ret = gnutls_dh_params_init(&new_params_);
+        if (ret)
+            throw std::runtime_error(std::string("Error initializing DH params: ") + gnutls_strerror(ret));
+        params_.reset(new_params_);
+        const gnutls_datum_t dat {(uint8_t*)data.data(), (unsigned)data.size()};
+        int ret_pem = gnutls_dh_params_import_pkcs3(params_.get(), &dat, GNUTLS_X509_FMT_PEM);
+        if (ret_pem) {
+            int ret_der = gnutls_dh_params_import_pkcs3(params_.get(), &dat, GNUTLS_X509_FMT_DER);
+            if (ret_der) {
+                throw std::runtime_error(std::string("Error importing DH params: ") + gnutls_strerror(ret_pem) + " " + gnutls_strerror(ret_der));
+            }
+        }
+    }
+
+    gnutls_dh_params_t get() {
+        return params_.get();
+    }
+    const gnutls_dh_params_t get() const {
+        return params_.get();
+    }
+
+    std::vector<uint8_t> serialize() const {
+        gnutls_datum_t out;
+        if (gnutls_dh_params_export2_pkcs3(params_.get(), GNUTLS_X509_FMT_PEM, &out))
+            return {};
+        std::vector<uint8_t> ret {out.data, out.data+out.size};
+        gnutls_free(out.data);
+        return ret;
+    }
+
+    static DhParams generate();
+
+private:
+    std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&> params_ {nullptr, gnutls_dh_params_deinit};
+};
+
 struct TlsParams {
-    using DhParams = std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>;
+    //using DhParams = std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&>;
 
     // User CA list for session credentials
     std::string ca_list;
@@ -83,7 +126,7 @@ struct TlsParams {
 
 // Compute Diffie-Hellman parameters suitable for TlsParams::dh_params.
 // Synchonous call: turn it asynchronous with std::async(std::launch::async, newDhParams)
-TlsParams::DhParams newDhParams();
+//TlsParams::DhParams newDhParams();
 
 /**
  * TlsSession
