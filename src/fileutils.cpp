@@ -204,6 +204,38 @@ bool isDirectoryWritable(const std::string &directory)
     return access(directory.c_str(), W_OK) == 0;
 }
 
+std::chrono::system_clock::time_point
+writeTime(const std::string& path)
+{
+#ifndef WIN32
+    struct stat s;
+    auto ret = stat(path.c_str(), &s);
+    if (ret)
+        throw std::runtime_error("Can't check write time for: " + path);
+    return std::chrono::system_clock::from_time_t(s.st_mtime);
+#else
+    HANDLE h = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (h == INVALID_HANDLE_VALUE)
+        throw std::runtime_error("Can't open: " + path);
+    FILETIME lastWriteTime;
+    if (!GetFileTime(h, nullptr, nullptr, &lastWriteTime))
+        throw std::runtime_error("Can't check write time for: " + path);
+    CloseHandle(h);
+    SYSTEMTIME sTime;
+    if (!FileTimeToSystemTime(&lastWriteTime, &sTime))
+        throw std::runtime_error("Can't check write time for: " + path);
+    struct tm tm {};
+    tm.tm_year = sTime.wYear - 1900;
+    tm.tm_mon = sTime.wMonth - 1;
+    tm.tm_mday = sTime.wDay;
+    tm.tm_hour = sTime.wHour;
+    tm.tm_min = sTime.wMinute;
+    tm.tm_sec = sTime.wSecond;
+    tm.tm_isdst = -1;
+    return std::chrono::system_clock::from_time_t(_mkgmtime(&tm));
+#endif
+}
+
 std::vector<uint8_t>
 loadFile(const std::string& path)
 {
