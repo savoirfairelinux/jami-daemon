@@ -1220,12 +1220,35 @@ RingAccount::loadValues() const
     return values;
 }
 
+tls::DhParams
+RingAccount::loadDhParams(const std::string path)
+{
+    try {
+        auto modified = fileutils::writeTime(path);
+        RING_WARN("modification date: %ld", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - modified).count());
+        if (modified > std::chrono::system_clock::now() - std::chrono::hours(24 * 3))
+            return {fileutils::loadFile(path)};
+        else {
+            RING_WARN("file is too old");
+            throw std::runtime_error("file is too old");
+        }
+    } catch (...) {
+        auto params = tls::DhParams::generate();
+        try {
+            fileutils::saveFile(path, params.serialize(), 0600);
+        } catch (...) {
+            RING_WARN("error saving dh params");
+        }
+        return params;
+    }
+}
+
 void
 RingAccount::generateDhParams()
 {
-    std::packaged_task<decltype(tls::newDhParams)> task(tls::newDhParams);
+    std::packaged_task<decltype(loadDhParams)> task(loadDhParams);
     dhParams_ = task.get_future();
-    std::thread task_td(std::move(task));
+    std::thread task_td(std::move(task), cachePath_ + DIR_SEPARATOR_STR "dhParams");
     task_td.detach();
 }
 
