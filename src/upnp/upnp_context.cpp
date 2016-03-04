@@ -120,14 +120,16 @@ UPnPContext::UPnPContext()
      *       by selecting the IP
      */
 
-#ifdef UPNP_ENABLE_IPV6
-    /* TODO: test if ipv6 support works properly, eg: what if router doesn't support ipv6? */
-    RING_DBG("UPnP: using IPv6");
-    upnp_err = UpnpInit2(0, 0);
-#else
+ #ifdef UPNP_ENABLE_IPV6
+     RING_DBG("UPnP: IPv6 support enabled, but we will use IPv4");
+     /* IPv6 version seems to fail on some systems with:
+      * UPNP_E_SOCKET_BIND: An error occurred binding a socket. */
+     /* TODO: figure out why ipv6 version doesn't work  */
+     // upnp_err = UpnpInit2(0, 0);
+ #endif
     RING_DBG("UPnP: using IPv4");
     upnp_err = UpnpInit(0, 0);
-#endif
+
     if ( upnp_err != UPNP_E_SUCCESS ) {
         UpnpFinish();
         throw std::runtime_error(UpnpGetErrorMessage(upnp_err));
