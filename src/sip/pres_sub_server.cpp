@@ -29,6 +29,7 @@
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
 #include "sip_utils.h"
+#include "intrin.h"
 
 namespace ring {
 
@@ -36,8 +37,12 @@ using sip_utils::CONST_PJ_STR;
 
 /* Callback called when *server* subscription state has changed. */
 void
-PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
+PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_event *event)
 {
+    RING_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    return;
+
+#if 0 // DISABLED: removed IP2IP support, tuleap: #448
     pjsip_rx_data *rdata = event->body.rx_msg.rdata;
 
     if (!rdata) {
@@ -47,7 +52,6 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
 
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
-
     if (!sipaccount) {
         RING_ERR("Could not find account IP2IP");
         return;
@@ -79,6 +83,7 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
     }
 
     pres->unlock();
+#endif
 }
 
 pj_bool_t
@@ -89,6 +94,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     pj_str_t *str = &method->name;
     std::string request(str->ptr, str->slen);
 //    pj_str_t contact;
+#if 0 // DISABLED: removed IP2IP support, tuleap: #448
     pj_status_t status;
     pjsip_dialog *dlg;
     pjsip_evsub *sub;
@@ -98,13 +104,17 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
     pj_str_t reason;
     pres_msg_data msg_data;
     pjsip_evsub_state ev_state;
-
+#endif
 
     /* Only hande incoming subscribe messages should be processed here.
      * Otherwise we return FALSE to let other modules handle it */
     if (pjsip_method_cmp(&rdata->msg_info.msg->line.req.method, pjsip_get_subscribe_method()) != 0)
         return PJ_FALSE;
 
+    RING_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
+    return PJ_FALSE;
+
+#if 0 // DISABLED: removed IP2IP support, tuleap: #448
     /* debug msg */
     std::string name(rdata->msg_info.to->name.ptr, rdata->msg_info.to->name.slen);
     std::string server(rdata->msg_info.from->name.ptr, rdata->msg_info.from->name.slen);
@@ -255,6 +265,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
 
     pres->unlock();
     return PJ_TRUE;
+#endif
 }
 
 pjsip_module PresSubServer::mod_presence_server = {

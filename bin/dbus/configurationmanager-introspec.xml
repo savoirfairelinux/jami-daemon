@@ -131,42 +131,6 @@
             </arg>
         </method>
 
-        <method name="getIp2IpDetails" tp:name-for-bindings="getIp2IpDetails">
-            <tp:docstring>
-            Get configuration settings of the IP2IP_PROFILE. They are sligthly different from account settings since no VoIP accounts are involved.
-            </tp:docstring>
-            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
-            <tp:docstring>
-            Available parameters are:
-            <ul>
-            <li>ACCOUNT_ID</li>
-            <li>SRTP_KEY_EXCHANGE</li>
-            <li>SRTP_ENABLE</li>
-            <li>SRTP_RTP_FALLBACK</li>
-            <li>ZRTP_DISPLAY_SAS</li>
-            <li>ZRTP_HELLO_HASH</li>
-            <li>ZRTP_NOT_SUPP_WARNING</li>
-            <li>ZRTP_DISPLAY_SAS_ONCE</li>
-            <li>LOCAL_INTERFACE</li>
-            <li>LOCAL_PORT</li>
-            <li>TLS_LISTENER_PORT</li>
-            <li>TLS_CA_LIST_FILE</li>
-            <li>TLS_CERTIFICATE_FILE</li>
-            <li>TLS_PRIVATE_KEY_FILE</li>
-            <li>TLS_PASSWORD</li>
-            <li>TLS_METHOD</li>
-            <li>TLS_CIPHERS</li>
-            <li>TLS_SERVER_NAME</li>
-            <li>TLS_VERIFY_SERVER</li>
-            <li>TLS_VERIFY_CLIENT</li>
-            <li>TLS_REQUIRE_CLIENT_CERTIFICATE</li>
-            <li>TLS_NEGOTIATION_TIMEOUT_SEC</li>
-            </ul>
-            </tp:docstring>
-            </arg>
-        </method>
-
        <method name="getCredentials" tp:name-for-bindings="getCredentials">
            <arg type="s" name="accountID" direction="in">
            </arg>

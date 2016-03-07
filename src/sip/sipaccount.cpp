@@ -148,9 +148,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     via_addr_.host.ptr = 0;
     via_addr_.host.slen = 0;
     via_addr_.port = 0;
-
-    if (isIP2IP())
-        alias_ = IP2IP_PROFILE;
 }
 
 SIPAccount::~SIPAccount()
@@ -757,7 +754,7 @@ void SIPAccount::doRegister()
 
 void SIPAccount::doRegister1_()
 {
-    if (hostname_.empty() || isIP2IP()) {
+    if (isIP2IP()) {
         doRegister2_();
         return;
     }
@@ -1671,26 +1668,6 @@ std::string SIPAccount::getUserAgentName() const
     return userAgent_;
 }
 
-std::map<std::string, std::string> SIPAccount::getIp2IpDetails() const
-{
-    assert(isIP2IP());
-    std::map<std::string, std::string> ip2ipAccountDetails;
-    ip2ipAccountDetails[Conf::CONFIG_SRTP_KEY_EXCHANGE] = sip_utils::getKeyExchangeName(srtpKeyExchange_);
-    ip2ipAccountDetails[Conf::CONFIG_SRTP_ENABLE] = isSrtpEnabled() ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_SRTP_RTP_FALLBACK] = srtpFallback_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS] = zrtpDisplaySas_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_ZRTP_HELLO_HASH] = zrtpHelloHash_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_ZRTP_NOT_SUPP_WARNING] = zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE] = zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR;
-    ip2ipAccountDetails[Conf::CONFIG_LOCAL_PORT] = ring::to_string(localPort_);
-
-    auto tlsSettings(getTlsSettings());
-    std::copy(tlsSettings.begin(), tlsSettings.end(),
-              std::inserter(ip2ipAccountDetails, ip2ipAccountDetails.end()));
-
-    return ip2ipAccountDetails;
-}
-
 std::map<std::string, std::string>
 SIPAccount::getTlsSettings() const
 {
@@ -1713,7 +1690,7 @@ SIPAccount::getTlsSettings() const
 
 bool SIPAccount::isIP2IP() const
 {
-    return accountID_ == IP2IP_PROFILE;
+    return hostname_.empty();
 }
 
 SIPPresence * SIPAccount::getPresence() const

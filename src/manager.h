@@ -904,10 +904,6 @@ class Manager {
             return accountFactory_.accountCount<T>();
         }
 
-        std::shared_ptr<Account> getIP2IPAccount() const {
-            return accountFactory_.getIP2IPAccount();
-        }
-
         // only used by test framework
         bool hasAccount(const std::string& accountID) {
             return accountFactory_.hasAccount(accountID);
@@ -999,8 +995,6 @@ class Manager {
         AccountFactory accountFactory_;
 
         std::mt19937_64 rand_;
-
-        void loadDefaultAccountMap();
 
         void loadAccount(const YAML::Node &item, int &errorCount,
                          const std::string &accountOrder);
