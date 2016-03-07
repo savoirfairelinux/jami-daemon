@@ -116,15 +116,10 @@ class AccountFactory {
             return v;
         }
 
-        std::shared_ptr<Account> getIP2IPAccount() const;
-
-        void initIP2IPAccount();
-
     private:
         mutable std::recursive_mutex mutex_ = {};
         std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)> > generators_ = {};
         std::map<std::string, AccountMap<Account> > accountMaps_ = {};
-        std::weak_ptr<Account> ip2ip_account_ = {}; //! cached pointer on IP2IP account
 
         template <class T>
         const AccountMap<Account>* getMap_() const {
