@@ -1,6 +1,6 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.4.6
+GNUTLS_VERSION := 3.4.10
 GNUTLS_URL := ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
@@ -28,7 +28,6 @@ endif
 #endif
 	$(APPLY) $(SRC)/gnutls/gnutls-no-egd.patch
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
-	$(APPLY) $(SRC)/gnutls/downgrade-automake-requirement.patch
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 	$(APPLY) $(SRC)/gnutls/format-security.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
