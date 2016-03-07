@@ -633,7 +633,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     RING_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
 
-    auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
+    std::shared_ptr<SIPAccountBase> result {};
     MatchRank best = MatchRank::NONE;
 
 #if HAVE_DHT
