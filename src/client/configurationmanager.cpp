@@ -78,16 +78,6 @@ registerConfHandlers(const std::map<std::string,
 }
 
 std::map<std::string, std::string>
-getIp2IpDetails()
-{
-    auto account = ring::Manager::instance().getIP2IPAccount();
-    if (auto sipaccount = static_cast<SIPAccount*>(account.get()))
-        return sipaccount->getIp2IpDetails();
-    RING_ERR("Could not find IP2IP account");
-    return std::map<std::string, std::string>();
-}
-
-std::map<std::string, std::string>
 getAccountDetails(const std::string& accountID)
 {
     return ring::Manager::instance().getAccountDetails(accountID);

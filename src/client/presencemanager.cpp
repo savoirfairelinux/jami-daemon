@@ -102,7 +102,7 @@ publish(const std::string& accountID, bool status, const std::string& note)
 void
 answerServerRequest(const std::string& uri, bool flag)
 {
-    auto account = ring::Manager::instance().getIP2IPAccount();
+    /*auto account = ring::Manager::instance().getIP2IPAccount();
     if (auto sipaccount = static_cast<SIPAccount *>(account.get())) {
         RING_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
                  flag ? "true" : "false");
@@ -112,7 +112,7 @@ answerServerRequest(const std::string& uri, bool flag)
         else
             RING_ERR("Presence not initialized");
     } else
-        RING_ERR("Could not find account IP2IP");
+        RING_ERR("Could not find account IP2IP");*/
 }
 
 /**
