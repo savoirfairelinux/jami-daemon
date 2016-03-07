@@ -75,7 +75,6 @@ class SIPCall;
  */
 class SIPAccount : public SIPAccountBase {
     public:
-        constexpr static const char * const IP2IP_PROFILE = "IP2IP";
         constexpr static const char * const ACCOUNT_TYPE = "SIP";
 
         /**
@@ -131,11 +130,6 @@ class SIPAccount : public SIPAccountBase {
          * @return std::map< std::string, std::string > The account volatile details
          */
         virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
-
-        /**
-         * Return the information for the default IP to IP account
-         */
-        std::map<std::string, std::string> getIp2IpDetails() const;
 
         /**
          * Return the TLS settings, mainly used to return security information to
