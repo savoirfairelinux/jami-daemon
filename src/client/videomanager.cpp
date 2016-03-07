@@ -161,7 +161,7 @@ removeVideoDevice(const std::string &node)
 void*
 obtainFrame(int length)
 {
-    if (auto input = videoManager.videoInput.lock())
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
         return (*input).obtainFrame(length);
 
     return nullptr;
@@ -170,7 +170,7 @@ obtainFrame(int length)
 void
 releaseFrame(void* frame)
 {
-    if (auto input = videoManager.videoInput.lock())
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
         (*input).releaseFrame(frame);
 }
 #endif
