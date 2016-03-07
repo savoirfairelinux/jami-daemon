@@ -469,12 +469,6 @@ DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const s
 }
 
 auto
-DBusConfigurationManager::getIp2IpDetails() -> decltype(DRing::getIp2IpDetails())
-{
-    return DRing::getIp2IpDetails();
-}
-
-auto
 DBusConfigurationManager::getCredentials(const std::string& accountID) -> decltype(DRing::getCredentials(accountID))
 {
     return DRing::getCredentials(accountID);

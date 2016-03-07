@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
@@ -9,6 +9,7 @@
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -85,8 +86,6 @@ using random_device = std::random_device;
 #include <iostream>
 #include <fstream>
 #include <sstream>
-#include <sys/types.h> // mkdir(2)
-#include <sys/stat.h>  // mkdir(2)
 #include <memory>
 #include <mutex>
 
@@ -201,12 +200,6 @@ Manager::setAutoAnswer(bool enable)
     autoAnswer_ = enable;
 }
 
-void
-Manager::loadDefaultAccountMap()
-{
-    accountFactory_.initIP2IPAccount();
-}
-
 Manager::Manager() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
@@ -250,8 +243,7 @@ Manager::parseConfiguration()
             result = false;
         }
     } catch (const YAML::BadFile &e) {
-        RING_WARN("Could not open config file: creating default account map");
-        loadDefaultAccountMap();
+        RING_WARN("Could not open configuration file");
     }
 
     return result;
@@ -319,8 +311,7 @@ Manager::init(const std::string &config_file)
             parseConfiguration();
         } catch (const YAML::Exception &e) {
             RING_ERR("%s", e.what());
-            RING_WARN("Restoring backup failed, creating default account map");
-            loadDefaultAccountMap();
+            RING_WARN("Restoring backup failed");
         }
     }
 
@@ -2329,43 +2320,23 @@ Manager::setAccountsOrder(const std::string& order)
 std::vector<std::string>
 Manager::getAccountList() const
 {
-    // TODO: this code looks weird. need further investigation!
-
-    using std::vector;
-    using std::string;
-    const vector<string> account_order(loadAccountOrder());
-
-    // The IP2IP profile should always be available, and first in the list;
-    // however, it is possible that it was deleted by removeAccounts()
-
-    vector<string> v;
+    auto account_order = loadAccountOrder();
 
     // Concatenate all account pointers in a single map
     const auto& allAccounts = accountFactory_.getAllAccounts();
+    std::vector<std::string> v;
+    v.reserve(allAccounts.size());
 
     // If no order has been set, load the default one ie according to the creation date.
     if (account_order.empty()) {
-        for (const auto &account : allAccounts) {
-            if (account->isIP2IP())
-                continue;
-            v.push_back(account->getAccountID());
-        }
+        for (const auto &account : allAccounts)
+            v.emplace_back(account->getAccountID());
     } else {
-        const auto& ip2ipAccountID = getIP2IPAccount() ?
-            getIP2IPAccount()->getAccountID() : std::string();
         for (const auto& id : account_order) {
-            if (id.empty() or id == ip2ipAccountID)
-                continue;
-
             if (accountFactory_.hasAccount(id))
                 v.push_back(id);
         }
     }
-
-    if (const auto& account = getIP2IPAccount())
-        v.push_back(account->getAccountID());
-    else
-        RING_ERR("could not find IP2IP profile in getAccount list");
 
     return v;
 }
@@ -2550,18 +2521,10 @@ Manager::loadAccount(const YAML::Node &node, int &errorCount,
     };
 
     if (!accountid.empty() and !accountAlias.empty()) {
-        const auto& ip2ipAccountID = getIP2IPAccount() ?
-            getIP2IPAccount()->getAccountID() : std::string();
-
-        if (not inAccountOrder(accountid) and accountid != ip2ipAccountID) {
+        if (not inAccountOrder(accountid)) {
             RING_WARN("Dropping account %s, which is not in account order", accountid.c_str());
         } else if (accountFactory_.isSupportedType(accountType.c_str())) {
-            std::shared_ptr<Account> a;
-            if (accountid != ip2ipAccountID)
-                a = accountFactory_.createAccount(accountType.c_str(), accountid);
-            else
-                a = accountFactory_.getIP2IPAccount();
-            if (a) {
+            if (auto a = accountFactory_.createAccount(accountType.c_str(), accountid)) {
                 a->unserialize(node);
             } else {
                 RING_ERR("Failed to create account type \"%s\"", accountType.c_str());
@@ -2576,8 +2539,6 @@ Manager::loadAccount(const YAML::Node &node, int &errorCount,
 int
 Manager::loadAccountMap(const YAML::Node &node)
 {
-    accountFactory_.initIP2IPAccount();
-
     // build preferences
     preferences.unserialize(node);
     voipPreferences.unserialize(node);
@@ -2779,7 +2740,7 @@ std::shared_ptr<Call>
 Manager::newOutgoingCall(const std::string& toUrl,
                              const std::string& preferredAccountId)
 {
-    auto account = Manager::instance().getIP2IPAccount();
+    std::shared_ptr<Account> account {};
     auto preferred = getAccount(preferredAccountId);
     std::string finalToUrl = toUrl;
 
