@@ -52,7 +52,7 @@ private:
 };
 
 AlsaThread::AlsaThread(AlsaLayer *alsa)
-    : thread_(), alsa_(alsa), running_(false)
+    : alsa_(alsa), running_(false), thread_()
 {}
 
 bool AlsaThread::isRunning() const
