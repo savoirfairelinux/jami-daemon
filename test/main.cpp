@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *
@@ -52,7 +52,7 @@ void cleanup()
 int main(int argc, char* argv[])
 {
     atexit(cleanup);
-    printf("\nRing Daemon Test Suite, by Savoir-faire Linux 2004-2015\n\n");
+    printf("\nRing Daemon Test Suite, by Savoir-faire Linux 2004-2016\n\n");
     setConsoleLog(true);
     setDebugMode(true);
     ring::fileutils::FileHandle f(ring::fileutils::create_pidfile());

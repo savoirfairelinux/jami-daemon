@@ -3,7 +3,7 @@ From: Vittorio Giovara <vittorio.giovara@savoirfairelinux.com>
 Date: Mon, 9 Jun 2014 14:20:55 -0400
 Subject: [PATCH 1/1] ssl_sock: add gnutls backend
 
-Copyright (c) 2014-2015 Savoir-faire Linux Inc.
+Copyright (c) 2014-2016 Savoir-faire Linux Inc.
 
 This backend is mutually exclusive with the OpenSSL one, but completely
 compatible, and conformant to the PJSIP API. Also avoids any license issues
