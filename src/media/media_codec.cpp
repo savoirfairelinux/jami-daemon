@@ -30,7 +30,7 @@
 
 namespace ring {
 
-static unsigned&
+static unsigned
 generateId()
 {
     static unsigned id = 0;
