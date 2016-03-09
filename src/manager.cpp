@@ -2751,7 +2751,11 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
     const auto acc = getAccount(accountID);
     if (!acc)
         return;
-    acc->sendTextMessage(to, payloads);
+    try {
+        acc->sendTextMessage(to, payloads);
+    } catch (const std::exception &e) {
+        RING_ERR("Error sending text message: %s", e.what());
+    }
 }
 
 void
