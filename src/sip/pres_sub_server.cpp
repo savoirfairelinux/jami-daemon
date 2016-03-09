@@ -45,7 +45,7 @@ PresSubServer::pres_evsub_on_srv_state(pjsip_evsub *sub, pjsip_event *event)
         return;
     }
 
-    auto account = Manager::instance().getIP2IPAccount();
+    anuriestauto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
 
     if (!sipaccount) {
