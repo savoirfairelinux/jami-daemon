@@ -21,7 +21,7 @@
 import sys
 import os
 import time
-import configparser
+import ConfigParser as configparser
 
 from threading import Thread
 from random import shuffle

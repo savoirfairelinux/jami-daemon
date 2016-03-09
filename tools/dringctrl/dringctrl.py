@@ -23,7 +23,7 @@ import random
 import time
 import argparse
 
-from gi.repository import GObject
+import gobject as GObject
 
 from errors import *
 from controler import DRingCtrl
@@ -81,16 +81,16 @@ if __name__ == "__main__":
     #group.add_argument('--transfer', help='Transfer active call', metavar='<destination>')
 
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('--accept', help='Accept the call', metavar='<account>')
-    group.add_argument('--hangup', help='Hangup the call', metavar='<account>')
-    group.add_argument('--refuse', help='Refuse the call', metavar='<account>')
+    group.add_argument('--accept', help='Accept the call', metavar='<call>')
+    group.add_argument('--hangup', help='Hangup the call', metavar='<call>')
+    group.add_argument('--refuse', help='Refuse the call', metavar='<call>')
 
     group = parser.add_mutually_exclusive_group()
     group.add_argument('--hold', help='Hold the call', metavar='<call>')
     group.add_argument('--unhold', help='Unhold the call', metavar='<call>')
 
     parser.add_argument('--dtmf', help='Send DTMF', metavar='<key>')
-    parser.add_argument('--toggleVideo', help='Launch toggle video  tests', action='store_true')
+    parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
 
     parser.add_argument('--test', help=' '.join(str(test) for test in DRingTester().getTestName() ), metavar='<testName>')
 
@@ -102,49 +102,49 @@ if __name__ == "__main__":
         ctrl.run()
         sys.exit(0)
 
-    if args.add-ring-account:
-        accDetails = {'Account.type':'RING', 'Account.alias':args.add-ring-account if args.add-ring-account!='' else 'RingAccount'}
+    if args.add_ring_account:
+        accDetails = {'Account.type':'RING', 'Account.alias':args.add_ring_account if args.add_ring_account!='' else 'RingAccount'}
         accountID = ctrl.addAccount(accDetails)
 
-    if args.remove-ring-account and args.remove-ring-account != '':
-        ctrl.removeAccount(args.remove-ring-account)
+    if args.remove_ring_account and args.remove_ring_account != '':
+        ctrl.removeAccount(args.remove_ring_account)
 
-    if args.get-all-codecs:
+    if args.get_all_codecs:
         print(ctrl.getAllCodecs())
 
-    if hasattr(args, 'get-all-accounts'):
-        for account in ctrl.getAllAccounts(args.get-all-accounts):
+    if hasattr(args, 'get_all_accounts'):
+        for account in ctrl.getAllAccounts(args.get_all_accounts):
             print(account)
 
-    if args.get-registered-accounts:
+    if args.get_registered_accounts:
         for account in ctrl.getAllRegisteredAccounts():
             print(account)
 
-    if args.get-enabled-accounts:
+    if args.get_enabled_accounts:
         for account in ctrl.getAllEnabledAccounts():
             print(account)
 
-    if args.get-all-accounts-details:
+    if args.get_all_accounts_details:
         for account in ctrl.getAllAccounts():
             printAccountDetails(account)
 
-    if args.get-active-codecs-details:
-        for codecId in ctrl.getActiveCodecs(args.get-active-codecs-details):
+    if args.get_active_codecs_details:
+        for codecId in ctrl.getActiveCodecs(args.getactivecodecsdetails):
             print("# codec",codecId,"-------------")
-            print(ctrl.getCodecDetails(args.get-active-codecs-details, codecId))
+            print(ctrl.getCodecDetails(args.getactivecodecsdetails, codecId))
             print("#-- ")
 
-    if args.set-active-account:
-        ctrl.setAccount(args.set-active-account)
+    if args.set_active_account:
+        ctrl.setAccount(args.setactiveaccount)
 
-    if args.get-account-details:
-        printAccountDetails(args.get-account-details)
+    if args.get_account_details:
+        printAccountDetails(args.getaccountdetails)
 
-    if hasattr(args, 'get-active-codecs'):
-        print(ctrl.getActiveCodecs(args.get-active-codec))
+    if hasattr(args, 'get_active_codecs'):
+        print(ctrl.getActiveCodecs(args.get_active_codec))
 
-    if args.set-active-codecs:
-        ctrl.setActiveCodecList(codec_list=args.set-active-codecs)
+    if args.set_active_codecs:
+        ctrl.setActiveCodecList(codec_list=args.set_active_codecs)
 
     if args.enable:
         ctrl.setAccountEnable(args.enable, True)
@@ -158,7 +158,7 @@ if __name__ == "__main__":
     if args.unregister:
         ctrl.setAccountRegistered(args.unregister, False)
 
-    if args.get-call-list:
+    if args.get_call_list:
         for call in ctrl.getAllCalls():
             print(call)
 
@@ -186,7 +186,7 @@ if __name__ == "__main__":
     if args.test:
         DRingTester().start(ctrl, args.test)
 
-    if args.toggleVideo:
+    if args.toggle_video:
         if not ctrl.videomanager:
             print("Error: daemon without video support")
             sys.exit(1)
