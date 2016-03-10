@@ -23,7 +23,7 @@ import random
 import time
 import argparse
 
-from gi.repository import GObject
+import gobject as GObject
 
 from errors import *
 from controler import DRingCtrl

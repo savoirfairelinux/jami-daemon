@@ -28,7 +28,7 @@ import hashlib
 from threading import Thread
 from functools import partial
 
-from gi.repository import GObject
+import gobject as GObject
 
 from errors import *
 
@@ -36,7 +36,7 @@ try:
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
 except ImportError as e:
-    raise DRingCtrlError("No python3-dbus module found")
+    raise DRingCtrlError("No python-dbus module found")
 
 
 DBUS_DEAMON_OBJECT = 'cx.ring.Ring'
@@ -45,7 +45,7 @@ DBUS_DEAMON_PATH = '/cx/ring/Ring'
 
 class DRingCtrl(Thread):
     def __init__(self, name):
-        super().__init__()
+        super(DRingCtrl, self).__init__()
 
         self.activeCalls = {}  # list of active calls (known by the client)
         self.activeConferences = {}  # list of active conferences
@@ -177,7 +177,7 @@ class DRingCtrl(Thread):
                                          'To': to,
                                       'State': ''}
         self.currentCallId = callid
-        self.onIncomingCall_cb()
+        self.onIncomingCall_cb(callid)
 
 
     def onCallHangUp(self, callid):
@@ -192,7 +192,7 @@ class DRingCtrl(Thread):
         """ Update state for this call to Ringing """
 
         self.activeCalls[callid]['State'] = state
-        self.onCallRinging_cb()
+        self.onCallRinging_cb(callid)
 
 
     def onCallHold(self, callid, state):
