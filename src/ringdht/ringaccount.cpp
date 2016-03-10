@@ -596,7 +596,7 @@ RingAccount::handlePendingCallList()
         if (handled) {
             // Cancel pending listen (outgoing call)
             if (not incoming)
-                dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.get());
+                dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.share());
             pc_iter = pending_calls.erase(pc_iter);
         } else
             ++pc_iter;
