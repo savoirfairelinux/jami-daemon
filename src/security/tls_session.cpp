@@ -292,8 +292,6 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 ssize_t
 TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
 {
-    if (state_ == TlsSessionState::SHUTDOWN)
-        return GNUTLS_E_INVALID_SESSION;
     std::lock_guard<std::mutex> lk {ioMutex_};
     txQueue_.emplace_back(TxData {data, size, on_send_complete});
     ioCv_.notify_one();
