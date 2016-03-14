@@ -839,6 +839,7 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                 case PJSIP_SC_DECLINE:
                 case PJSIP_SC_BUSY_EVERYWHERE:
                 case PJSIP_SC_BUSY_HERE:
+                case PJSIP_SC_GONE: // SIPCall::peerHungup()
                     if (inv->role != PJSIP_ROLE_UAC)
                         break;
                     // close call

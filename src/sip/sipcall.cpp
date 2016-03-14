@@ -199,11 +199,11 @@ SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
                                   const pjsip_transport_state_info*)
             {
                 if (auto this_ = wthis_.lock()) {
-                    // end the call if the SIP transport is shut down
+                    // end the call if the SIP transport is shutdown
                     if (not SipTransport::isAlive(t, state) and this_->getConnectionState() != ConnectionState::DISCONNECTED) {
                         RING_WARN("[call:%s] Ending call because underlying SIP transport was closed",
                                   this_->getCallId().c_str());
-                        this_->onFailure(ECONNRESET);
+                        this_->onClosed();
                     }
                 } else // should not happen
                     t->removeStateListener(list_id);
@@ -659,7 +659,7 @@ SIPCall::peerHungup()
     if (not inv)
         throw VoipLinkException("No invite session for this call");
 
-    terminateSipSession(PJSIP_SC_NOT_FOUND);
+    terminateSipSession(PJSIP_SC_GONE);
     Call::peerHungup();
 }
 
@@ -696,9 +696,9 @@ SIPCall::onFailure(signed cause)
 void
 SIPCall::onClosed()
 {
+    peerHungup();
     Manager::instance().peerHungupCall(*this);
     removeCall();
-    Manager::instance().checkAudio();
 }
 
 void

@@ -1745,14 +1745,13 @@ Manager::peerHungupCall(Call& call)
         unsetCurrentCall();
     }
 
-    call.peerHungup();
-
     checkAudio();
     removeWaitingCall(call_id);
     if (not incomingCallsWaiting())
         stopTone();
 
     removeAudio(call);
+    checkAudio();
 }
 
 //THREAD=VoIP
