@@ -150,11 +150,23 @@ PortAudioLayer::updatePreference(AudioPreference &preference,
 {
     switch (type) {
         case DeviceType::PLAYBACK:
-        preference.setAlsaCardout(index);
+        {
+            auto playbackList = getDeviceByType(true);
+            if (playbackList.size() > (size_t) index) {
+                auto realIdx = getAudioDeviceIndex(playbackList.at(index), type);
+                preference.setAlsaCardout(realIdx);
+            }
+        }
         break;
 
         case DeviceType::CAPTURE:
-        preference.setAlsaCardin(index);
+        {
+            auto captureList = getDeviceByType(false);
+            if (captureList.size() > (size_t) index) {
+                auto realIdx = getAudioDeviceIndex(captureList.at(index), type);
+                preference.setAlsaCardin(realIdx);
+            }
+        }
         break;
 
         case DeviceType::RINGTONE:
@@ -343,8 +355,8 @@ PortAudioLayer::init()
         this->terminate();
     }
 
-    indexOut_ = indexRing_ = Pa_GetDefaultOutputDevice();
-    indexIn_ = Pa_GetDefaultInputDevice();
+    indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
+    indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
 
     if (indexOut_ != paNoDevice) {
         const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
