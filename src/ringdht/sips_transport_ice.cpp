@@ -279,6 +279,10 @@ void
 SipsIceTransport::handleEvents()
 {
     // Notify transport manager about state changes first
+    // Note: stop when disconnected event is encountered
+    // and differ its notification AFTER pending rx msg to let
+    // them a chance to be delivered to application before closing
+    // the transport.
     decltype(stateChangeEvents_) eventDataQueue;
     {
         std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
@@ -286,11 +290,19 @@ SipsIceTransport::handleEvents()
         stateChangeEvents_.clear();
     }
 
-    if (auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr)) {
+    ChangeStateEventData disconnectedEvent;
+    bool disconnected = false;
+    auto state_cb = pjsip_tpmgr_get_state_cb(trData_.base.tpmgr);
+    if (state_cb) {
         for (auto& evdata : eventDataQueue) {
             evdata.tls_info.ssl_sock_info = &evdata.ssl_info;
             evdata.state_info.ext_info = &evdata.tls_info;
-            (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
+            if (evdata.state != PJSIP_TP_STATE_DISCONNECTED) {
+                (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
+            } else {
+                disconnectedEvent = std::move(evdata);
+                disconnected = true;
+            }
         }
     }
 
@@ -328,6 +340,10 @@ SipsIceTransport::handleEvents()
             }
         }
     }
+
+    // Time to deliver disconnected event if exists
+    if (disconnected and state_cb)
+        (*state_cb)(&trData_.base, disconnectedEvent.state, &disconnectedEvent.state_info);
 }
 
 void
