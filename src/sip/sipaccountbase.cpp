@@ -39,13 +39,14 @@
 
 #include "client/ring_signal.h"
 #include "string_utils.h"
+#include "fileutils.h"
 
 #include <type_traits>
 
 namespace ring {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID), link_(getSIPVoIPLink())
+    : Account(accountID), link_(getSIPVoIPLink()), messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
 {}
 
 SIPAccountBase::~SIPAccountBase() {}

@@ -2092,12 +2092,15 @@ static pjsip_accept_hdr* im_create_accept(pj_pool_t *pool)
 }
 #endif
 
-void
+uint64_t
 SIPAccount::sendTextMessage(const std::string& to,
-                            const std::map<std::string, std::string>& payloads)
+                            const std::map<std::string, std::string>& payloads, std::function<void(bool)> cb)
 {
-    if (to.empty() or payloads.empty())
-        return;
+    if (to.empty() or payloads.empty()) {
+        RING_WARN("No sender or payload");
+        cb(false);
+        return 0;
+    }
 
     std::string toUri;
     if (to.find("sip:") != std::string::npos or
@@ -2118,7 +2121,8 @@ SIPAccount::sendTextMessage(const std::string& to,
                                                     nullptr, &tdata);
     if (status != PJ_SUCCESS) {
         RING_ERR("Unable to create request: %s", sip_utils::sip_strerror(status).c_str());
-        return;
+        cb(false);
+        return 0;
     }
 
     const pjsip_tpselector tp_sel = getTransportSelector();
@@ -2126,10 +2130,31 @@ SIPAccount::sendTextMessage(const std::string& to,
 
     InstantMessaging::fillPJSIPMessageBody(*tdata, payloads);
 
-    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, nullptr, nullptr);
+    struct ctx {
+        std::weak_ptr<SIPAccount> acc;
+        std::function<void(bool)> cb;
+    };
+    ctx* t = new ctx;
+    t->acc = std::static_pointer_cast<SIPAccount>(shared_from_this());
+    t->cb = cb;
+
+    status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, t, [](void *token, pjsip_event *e) {
+        auto c = (ctx*) token;
+        try {
+            if (auto acc = c->acc.lock()) {
+                c->cb(e && e->body.tsx_state.tsx
+                        && e->body.tsx_state.tsx->status_code == PJSIP_SC_OK);
+            }
+        } catch (const std::exception& e) {
+            RING_ERR("Error calling message callback: %s", e.what());
+        }
+        delete c;
+    });
+
     if (status != PJ_SUCCESS) {
         RING_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-        return;
+        delete t;
+        return 0;
     }
 }
 

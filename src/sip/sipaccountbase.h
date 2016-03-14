@@ -31,6 +31,7 @@
 #include "ip_utils.h"
 #include "noncopyable.h"
 #include "security/certstore.h"
+#include "im/message_engine.h"
 
 #include <pjsip/sip_types.h>
 #include <opendht/value.h>
@@ -233,6 +234,14 @@ public:
 
     const IceTransportOptions getIceOptions() const noexcept override;
 
+    virtual uint64_t sendTextMessage(const std::string& to,
+                                     const std::map<std::string, std::string>& payloads, std::function<void(bool)> cb) = 0;
+
+    virtual uint64_t sendTextMessage(const std::string& to,
+                                     const std::map<std::string, std::string>& payloads) override {
+        return messageEngine_.sendMessage(to, payloads);
+    }
+
     void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
 
 protected:
@@ -249,6 +258,8 @@ protected:
      * @return std::map< std::string, std::string > The account volatile details
      */
     virtual std::map<std::string, std::string> getVolatileAccountDetails() const override;
+
+    InstantMessaging::MessageEngine messageEngine_;
 
     /**
      * Voice over IP Link contains a listener thread and calls

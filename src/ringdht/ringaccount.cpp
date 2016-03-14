@@ -1394,12 +1394,12 @@ RingAccount::connectivityChanged()
         dht_.connectivityChanged();
 }
 
-void
+uint64_t
 RingAccount::sendTextMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads)
+                             const std::map<std::string, std::string>& payloads, std::function<void(bool)> cb)
 {
     if (to.empty() or payloads.empty())
-        return;
+        return 0;
 
     const auto& toUri = parseRingUri(to);
     auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
@@ -1409,7 +1409,7 @@ RingAccount::sendTextMessage(const std::string& to,
         dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
                           dht::InfoHash(toUri),
                           dht::ImMessage(udist(rand_), std::string(payloads.begin()->second), now));
-        return;
+        return 0;
     }
 
     // Multi-part message
