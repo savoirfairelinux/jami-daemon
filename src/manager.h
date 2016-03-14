@@ -416,7 +416,7 @@ class Manager {
          */
         void sendRegister(const std::string& accountId, bool enable);
 
-        void sendTextMessage(const std::string& accountID, const std::string& to,
+        uint64_t sendTextMessage(const std::string& accountID, const std::string& to,
                              const std::map<std::string, std::string>& payloads);
 
         /**
@@ -962,6 +962,7 @@ class Manager {
         IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
 
         void addTask(const std::function<bool()>&& task);
+        void scheduleTask(const std::function<bool()>&& task);
 
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
@@ -976,6 +977,11 @@ class Manager {
         decltype(eventHandlerMap_)::iterator nextEventHandler_;
 
         std::list<std::function<bool()>> pendingTaskList_;
+        struct Job {
+            std::function<void()> cb;
+            void cancel() { cb = {}; }
+        };
+        std::multimap<std::chrono::steady_clock::time_point, std::shared_ptr<Job>> scheduledTasks_;
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
