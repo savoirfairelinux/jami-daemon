@@ -150,11 +150,23 @@ PortAudioLayer::updatePreference(AudioPreference &preference,
 {
     switch (type) {
         case DeviceType::PLAYBACK:
-        preference.setAlsaCardout(index);
+        {
+            auto playbackList = getDeviceByType(true);
+            if (playbackList.size() > (size_t) index) {
+                auto realIdx = getAudioDeviceIndex(playbackList.at(index), type);
+                preference.setAlsaCardout(realIdx);
+            }
+        }
         break;
 
         case DeviceType::CAPTURE:
-        preference.setAlsaCardin(index);
+        {
+            auto captureList = getDeviceByType(false);
+            if (captureList.size() > (size_t) index) {
+                auto realIdx = getAudioDeviceIndex(captureList.at(index), type);
+                preference.setAlsaCardin(realIdx);
+            }
+        }
         break;
 
         case DeviceType::RINGTONE:
@@ -343,22 +355,31 @@ PortAudioLayer::init()
         this->terminate();
     }
 
-    indexOut_ = indexRing_ = Pa_GetDefaultOutputDevice();
-    indexIn_ = Pa_GetDefaultInputDevice();
+    indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
+    indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
 
     if (indexOut_ != paNoDevice) {
-        const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_);
-        audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-        audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
-        hardwareFormatAvailable(audioFormat_);
+        if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
+            audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
+            audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
+            hardwareFormatAvailable(audioFormat_);
+        } else {
+            indexOut_ = paNoDevice;
+        }
     }
 
     if (indexIn_ != paNoDevice) {
-        const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_);
-        audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-        audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
-        hardwareInputFormatAvailable(audioInputFormat_);
+        if (const auto inputDeviceInfo = Pa_GetDeviceInfo(indexIn_)) {
+            audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
+            audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
+            hardwareInputFormatAvailable(audioInputFormat_);
+        } else {
+            indexIn_ = paNoDevice;
+        }
     }
+
+    for (int i = 0; i < Direction::End; i++)
+        streams[i] = nullptr;
 }
 
 void
@@ -432,9 +453,11 @@ PortAudioLayer::initStream()
 
     RING_DBG("Start PortAudio Streams");
     for (int i = 0; i < Direction::End; i++) {
-        auto err = Pa_StartStream(streams[i]);
-        if (err != paNoError)
-            this->handleError(err);
+        if (streams[i]) {
+            auto err = Pa_StartStream(streams[i]);
+            if (err != paNoError)
+                this->handleError(err);
+        }
     }
 
     flushUrgent();
