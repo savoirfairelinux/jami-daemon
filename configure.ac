@@ -215,8 +215,8 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
-  CFLAGS="${CFLAGS} -I${CONTRIB_DIR}/include"
-  CXXFLAGS="${CXXFLAGS} -I${CONTRIB_DIR}/include"
+  CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 -I${CONTRIB_DIR}/include"
+  CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 -I${CONTRIB_DIR}/include"
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
   AS_IF([test "${SYS}" = "mingw32"],[
         PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
