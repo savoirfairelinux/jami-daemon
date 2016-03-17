@@ -72,6 +72,7 @@
 namespace ring {
 
 using sip_utils::CONST_PJ_STR;
+using std::chrono::system_clock;
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
@@ -1224,20 +1225,21 @@ tls::DhParams
 RingAccount::loadDhParams(const std::string path)
 {
     try {
-        auto modified = fileutils::writeTime(path);
-        RING_WARN("modification date: %ld", std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now() - modified).count());
-        if (modified > std::chrono::system_clock::now() - std::chrono::hours(24 * 3))
-            return {fileutils::loadFile(path)};
-        else {
-            RING_WARN("file is too old");
-            throw std::runtime_error("file is too old");
-        }
-    } catch (...) {
+        // writeTime throw exception if file doesn't exist
+        auto duration = system_clock::now() - fileutils::writeTime(path);
+        if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
+            throw std::runtime_error("too old file");
+
+        RING_DBG("Loading DhParams from file '%s'", path.c_str());
+        return {fileutils::loadFile(path)};
+    } catch (const std::exception& e) {
+        RING_WARN("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
         auto params = tls::DhParams::generate();
         try {
             fileutils::saveFile(path, params.serialize(), 0600);
-        } catch (...) {
-            RING_WARN("error saving dh params");
+            RING_DBG("Saved DhParams to file '%s'", path.c_str());
+        } catch (const std::exception& ex) {
+            RING_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
         }
         return params;
     }
