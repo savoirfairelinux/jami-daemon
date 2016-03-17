@@ -166,10 +166,10 @@ public:
      * Returns the parameters needed for actual use of the device
      */
     DeviceParams getDeviceParams() const;
+    std::vector<std::string> getChannelList() const;
 
 private:
 
-    std::vector<std::string> getChannelList() const;
     std::vector<VideoSize> getSizeList(const std::string& channel) const;
     std::vector<FrameRate> getRateList(const std::string& channel, VideoSize size) const;
 
