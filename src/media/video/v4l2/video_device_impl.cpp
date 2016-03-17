@@ -463,7 +463,8 @@ VideoDeviceImpl::VideoDeviceImpl(const string& path)
         if (input.type & V4L2_INPUT_TYPE_CAMERA) {
             VideoV4l2Channel channel(idx, (const char*) input.name);
             channel.readFormats(fd);
-            channels_.push_back(channel);
+            if (not channel.getSizeList().empty())
+                channels_.push_back(channel);
         }
 
         input.index = ++idx;

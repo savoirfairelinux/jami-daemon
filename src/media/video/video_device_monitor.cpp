@@ -183,6 +183,9 @@ VideoDeviceMonitor::addDevice(const string& node)
     // instantiate a new unique device
     try {
         VideoDevice dev {node};
+        if (dev.getChannelList().empty())
+            return;
+
         giveUniqueName(dev, devices_);
 
         // restore its preferences if any, or store the defaults
