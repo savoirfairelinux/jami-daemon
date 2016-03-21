@@ -74,7 +74,7 @@ case "${host_os}" in
     AC_DEFINE([_BSD_SOURCE], [1], [ISO C, POSIX, and 4.3BSD things.])
     AC_DEFINE([_SVID_SOURCE], [1], [ISO C, POSIX, and SVID things.])
 
-    AC_DEFINE([WIN32_LEAN_AND_MEAN],, [Define to limit the scope of <windows.h>.])
+    AC_DEFINE([WIN32_LEAN_AND_MEAN],[1], [Define to limit the scope of <windows.h>.])
 
     CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
     LDFLAGS+="-no-undefined -avoid-version -Wl,--nxcompat -Wl,--dynamicbase"
