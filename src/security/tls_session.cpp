@@ -38,7 +38,7 @@
 
 namespace ring { namespace tls {
 
-static constexpr const char* TLS_PRIORITY_STRING {"SECURE192:-RSA:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE"};
+static constexpr const char* TLS_PRIORITY_STRING {"SECURE192:-RSA:-VERS-TLS-ALL:+VERS-DTLS-ALL:+ANON-ECDH:+ANON-DH:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
@@ -101,12 +101,60 @@ private:
     T creds_;
 };
 
+class TlsSession::TlsAnonymousClientCredendials
+{
+    using T = gnutls_anon_client_credentials_t;
+public:
+    TlsAnonymousClientCredendials() {
+        int ret = gnutls_anon_allocate_client_credentials(&creds_);
+        if (ret < 0) {
+            RING_ERR("gnutls_anon_allocate_client_credentials() failed with ret=%d", ret);
+            throw std::bad_alloc();
+        }
+    }
+
+    ~TlsAnonymousClientCredendials() {
+        gnutls_anon_free_client_credentials(creds_);
+    }
+
+    operator T() { return creds_; }
+
+private:
+    NON_COPYABLE(TlsAnonymousClientCredendials);
+    T creds_;
+};
+
+class TlsSession::TlsAnonymousServerCredendials
+{
+    using T = gnutls_anon_server_credentials_t;
+public:
+    TlsAnonymousServerCredendials() {
+        int ret = gnutls_anon_allocate_server_credentials(&creds_);
+        if (ret < 0) {
+            RING_ERR("gnutls_anon_allocate_server_credentials() failed with ret=%d", ret);
+            throw std::bad_alloc();
+        }
+    }
+
+    ~TlsAnonymousServerCredendials() {
+        gnutls_anon_free_server_credentials(creds_);
+    }
+
+    operator T() { return creds_; }
+
+private:
+    NON_COPYABLE(TlsAnonymousServerCredendials);
+    T creds_;
+};
+
 TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
                        const TlsParams& params, const TlsSessionCallbacks& cbs)
     : socket_(new IceSocket(ice, ice_comp_id))
     , isServer_(not ice->isInitiator())
     , params_(params)
     , callbacks_(cbs)
+    , cacred_(nullptr)
+    , sacred_(nullptr)
     , xcred_(nullptr)
     , thread_([this] { return setup(); },
               [this] { process(); },
@@ -183,6 +231,24 @@ TlsSession::setupServer()
 }
 
 void
+TlsSession::initAnonymous()
+{
+    // credentials for handshaking and transmission
+    if (isServer_)
+        sacred_.reset(new TlsAnonymousServerCredendials());
+    else
+        cacred_.reset(new TlsAnonymousClientCredendials());
+
+    // Setup DH-params for anonymous authentification
+    if (isServer_) {
+        if (const auto& dh_params = params_.dh_params.get().get())
+            gnutls_anon_set_server_dh_params(*sacred_, dh_params);
+        else
+            RING_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
+    }
+}
+
+void
 TlsSession::initCredentials()
 {
     int ret;
@@ -244,7 +310,11 @@ TlsSession::commonSessionInit()
         return false;
     }
 
-    ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
+    if (isServer_)
+        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *sacred_);
+    else
+        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *cacred_);
+
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
         return false;
@@ -462,7 +532,7 @@ TlsSession::handleStateSetup(UNUSED TlsSessionState state)
     RING_DBG("[TLS] Start %s DTLS session", typeName());
 
     try {
-        initCredentials();
+        initAnonymous();
     } catch (const std::exception& e) {
         RING_ERR("[TLS] credential init failed: %s", e.what());
         return TlsSessionState::SHUTDOWN;
