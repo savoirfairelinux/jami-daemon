@@ -38,7 +38,8 @@
 
 namespace ring { namespace tls {
 
-static constexpr const char* TLS_PRIORITY_STRING {"SECURE192:-RSA:-VERS-TLS-ALL:+VERS-DTLS-ALL:%SERVER_PRECEDENCE"};
+static constexpr const char* TLS_ANON_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* TLS_PRIORITY_STRING {"SECURE192:-RSA:-VERS-TLS-ALL:+VERS-DTLS-ALL:+ANON-ECDH:+ANON-DH:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
@@ -101,19 +102,67 @@ private:
     T creds_;
 };
 
+class TlsSession::TlsAnonymousClientCredendials
+{
+    using T = gnutls_anon_client_credentials_t;
+public:
+    TlsAnonymousClientCredendials() {
+        int ret = gnutls_anon_allocate_client_credentials(&creds_);
+        if (ret < 0) {
+            RING_ERR("gnutls_anon_allocate_client_credentials() failed with ret=%d", ret);
+            throw std::bad_alloc();
+        }
+    }
+
+    ~TlsAnonymousClientCredendials() {
+        gnutls_anon_free_client_credentials(creds_);
+    }
+
+    operator T() { return creds_; }
+
+private:
+    NON_COPYABLE(TlsAnonymousClientCredendials);
+    T creds_;
+};
+
+class TlsSession::TlsAnonymousServerCredendials
+{
+    using T = gnutls_anon_server_credentials_t;
+public:
+    TlsAnonymousServerCredendials() {
+        int ret = gnutls_anon_allocate_server_credentials(&creds_);
+        if (ret < 0) {
+            RING_ERR("gnutls_anon_allocate_server_credentials() failed with ret=%d", ret);
+            throw std::bad_alloc();
+        }
+    }
+
+    ~TlsAnonymousServerCredendials() {
+        gnutls_anon_free_server_credentials(creds_);
+    }
+
+    operator T() { return creds_; }
+
+private:
+    NON_COPYABLE(TlsAnonymousServerCredendials);
+    T creds_;
+};
+
 TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
                        const TlsParams& params, const TlsSessionCallbacks& cbs)
     : socket_(new IceSocket(ice, ice_comp_id))
     , isServer_(not ice->isInitiator())
     , params_(params)
     , callbacks_(cbs)
+    , cacred_(nullptr)
+    , sacred_(nullptr)
     , xcred_(nullptr)
     , thread_([this] { return setup(); },
               [this] { process(); },
               [this] { cleanup(); })
 {
     // Setup TLS algorithms priority list
-    auto ret = gnutls_priority_init(&priority_cache_, TLS_PRIORITY_STRING, nullptr);
+    auto ret = gnutls_priority_init(&priority_cache_, TLS_ANON_PRIORITY_STRING, nullptr);
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] priority setup failed: %s", gnutls_strerror(ret));
         throw std::runtime_error("TlsSession");
@@ -183,6 +232,24 @@ TlsSession::setupServer()
 }
 
 void
+TlsSession::initAnonymous()
+{
+    // credentials for handshaking and transmission
+    if (isServer_)
+        sacred_.reset(new TlsAnonymousServerCredendials());
+    else
+        cacred_.reset(new TlsAnonymousClientCredendials());
+
+    // Setup DH-params for anonymous authentification
+    if (isServer_) {
+        if (const auto& dh_params = params_.dh_params.get().get())
+            gnutls_anon_set_server_dh_params(*sacred_, dh_params);
+        else
+            RING_WARN("[TLS] DH params unavailable"); // YOMGUI: need to stop?
+    }
+}
+
+void
 TlsSession::initCredentials()
 {
     int ret;
@@ -238,13 +305,17 @@ TlsSession::commonSessionInit()
 {
     int ret;
 
-    ret = gnutls_priority_set(session_, priority_cache_);
+    ret = gnutls_priority_set_direct(session_, TLS_PRIORITY_STRING, nullptr);
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session TLS priority set failed: %s", gnutls_strerror(ret));
         return false;
     }
 
-    ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
+    if (isServer_)
+        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *sacred_);
+    else
+        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *cacred_);
+
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
         return false;
@@ -462,9 +533,9 @@ TlsSession::handleStateSetup(UNUSED TlsSessionState state)
     RING_DBG("[TLS] Start %s DTLS session", typeName());
 
     try {
-        initCredentials();
+        initAnonymous();
     } catch (const std::exception& e) {
-        RING_ERR("[TLS] credential init failed: %s", e.what());
+        RING_ERR("[TLS] anonymous init failed: %s", e.what());
         return TlsSessionState::SHUTDOWN;
     }
 
@@ -560,10 +631,39 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 
     auto ret = gnutls_handshake(session_);
 
+    RING_WARN("safe status = %u", gnutls_safe_renegotiation_status(session_));
+
     if (ret == GNUTLS_E_SUCCESS) {
         auto desc = gnutls_session_get_desc(session_);
         RING_WARN("[TLS] Session established: %s", desc);
         gnutls_free(desc);
+
+        // If anonymous connection setup, rehandshake immediatly with certificate authentification
+        if (not xcred_) {
+            // Re-setup TLS algorithms priority list
+            ret = gnutls_priority_set_direct(session_, TLS_PRIORITY_STRING, nullptr);
+            if (ret != GNUTLS_E_SUCCESS) {
+                RING_ERR("[TLS] session TLS priority set failed: %s", gnutls_strerror(ret));
+                return TlsSessionState::SHUTDOWN;
+            }
+
+            try {
+                initCredentials();
+            } catch (const std::exception& e) {
+                RING_ERR("[TLS] credential init failed: %s", e.what());
+                return TlsSessionState::SHUTDOWN;
+            }
+
+            gnutls_credentials_clear(session_);
+            ret = gnutls_credentials_set(session_, GNUTLS_CRD_CERTIFICATE, *xcred_);
+            if (ret != GNUTLS_E_SUCCESS) {
+                RING_ERR("[TLS] session credential set failed: %s", gnutls_strerror(ret));
+                return TlsSessionState::SHUTDOWN;
+            }
+
+            RING_DBG("[TLS] force re-handshake using certificate authentification");
+            return state;
+        }
 
         // Aware about certificates updates
         if (callbacks_.onCertificatesUpdate) {
@@ -677,7 +777,6 @@ TlsSession::process()
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
 }
-
 
 DhParams
 DhParams::generate()
