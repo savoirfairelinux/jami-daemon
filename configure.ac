@@ -82,6 +82,12 @@ case "${host_os}" in
     DESTDIR="`pwd`/_win32/"
     AC_SUBST(WINDOWS_ARCH)
     AC_SUBST(PROGRAMFILES)
+
+    case "${host}" in
+            amd64*|x86_64*)
+                HAVE_WIN64="1"
+            ;;
+    esac
     ;;
   *)
     SYS="${host_os}"
@@ -215,8 +221,14 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
-  CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 -I${CONTRIB_DIR}/include"
-  CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 -I${CONTRIB_DIR}/include"
+  CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
+  CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
+  AS_IF([test "${HAVE_WIN64}" = "1"],[
+      CFLAGS+=" -DPJ_WIN64=1"
+      CXXFLAGS+=" -DPJ_WIN64=1"
+  ])
+  CFLAGS+=" -I${CONTRIB_DIR}/include"
+  CXXFLAGS+=" -I${CONTRIB_DIR}/include"
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
   AS_IF([test "${SYS}" = "mingw32"],[
         PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
