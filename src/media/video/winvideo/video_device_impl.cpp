@@ -249,9 +249,9 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
     if (params.width and params.height) {
         auto pmt = capMap_.at(std::make_pair(params.width, params.height));
         if (pmt != nullptr) {
-            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = (FrameRate(1e7) / params.framerate).real();
+            ((VIDEOINFOHEADER*) pmt->pbFormat)->AvgTimePerFrame = (REFERENCE_TIME)(FrameRate(1e7) / params.framerate).real();
             if (FAILED(cInterface->streamConf_->SetFormat(pmt))) {
-                RING_ERR("Could not set settings.");
+                RING_ERR("Could not set settings.\n");
             }
         }
     }
