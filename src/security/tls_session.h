@@ -73,7 +73,7 @@ public:
     gnutls_dh_params_t get() {
         return params_.get();
     }
-    const gnutls_dh_params_t get() const {
+    gnutls_dh_params_t get() const {
         return params_.get();
     }
 
@@ -197,15 +197,21 @@ private:
 
     // GnuTLS backend and connection state
     class TlsCertificateCredendials;
+    class TlsAnonymousClientCredendials;
+    class TlsAnonymousServerCredendials;
+    std::unique_ptr<TlsAnonymousClientCredendials> cacred_; // ctor init.
+    std::unique_ptr<TlsAnonymousServerCredendials> sacred_; // ctor init.
     std::unique_ptr<TlsCertificateCredendials> xcred_; // ctor init.
     gnutls_session_t session_ {nullptr};
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_priority_t priority_cache_ {nullptr};
     gnutls_dtls_prestate_st prestate_ {};
     ssize_t cookie_count_ {0};
+    bool rehandshake_ {false};
 
     TlsSessionState setupClient();
     TlsSessionState setupServer();
+    void initAnonymous();
     void initCredentials();
     bool commonSessionInit();
 
