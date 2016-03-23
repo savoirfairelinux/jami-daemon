@@ -73,7 +73,7 @@ public:
     gnutls_dh_params_t get() {
         return params_.get();
     }
-    const gnutls_dh_params_t get() const {
+    gnutls_dh_params_t get() const {
         return params_.get();
     }
 
