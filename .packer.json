@@ -134,7 +134,17 @@
            "dpkg-buildpackage -uc -us",
            "cd .. ",
            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-       ]
+       ],
+         "ubuntu_16.04_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ]
     },
     "UpdateInstructions" : {
         "fedora_22": ["yum upgrade -y"],
@@ -149,7 +159,8 @@
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
+        "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+	"ubuntu_16.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
     },
     "ReviewType": "",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
@@ -166,7 +177,8 @@
         "ubuntu_14.04_i386": "",
         "ubuntu_15.10": "",
         "ubuntu_15.10_i386": "",
-        "ubuntu_16.04": ""
+        "ubuntu_16.04": "",
+	"ubuntu_16.04_i386": ""
     },
     "ReloadProjectCmd" : [
         "git checkout packaging",
@@ -186,7 +198,8 @@
         "ubuntu_14.04_i386": "0 0 0 * * THU",
         "ubuntu_15.10": "0 0 0 * * THU",
         "ubuntu_15.10_i386": "0 0 0 * * THU",
-        "ubuntu_16.04": "0 0 0 * * THU"
+        "ubuntu_16.04": "0 0 0 * * THU",
+	"ubuntu_16.04_i386": "0 0 0 * * THU"
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
