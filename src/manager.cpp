@@ -74,6 +74,7 @@ using random_device = std::random_device;
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
+#include "dring/account_const.h"
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
@@ -2744,18 +2745,45 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         acc->doUnregister();
 }
 
-void
+uint64_t
 Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
     const auto acc = getAccount(accountID);
     if (!acc)
-        return;
+        return 0;
     try {
-        acc->sendTextMessage(to, payloads);
+        return acc->sendTextMessage(to, payloads);
     } catch (const std::exception& e) {
         RING_ERR("Exception during text message sending: %s", e.what());
     }
+}
+
+std::string
+Manager::getMessageStatus(uint64_t id)
+{
+    const auto& allAccounts = accountFactory_.getAllAccounts();
+    for (auto acc : allAccounts) {
+        if (auto sacc = std::dynamic_pointer_cast<SIPAccountBase>(acc)) {
+            auto status = sacc->getMessageStatus(id);
+            if (status != im::MessageStatus::UNKNOWN) {
+                switch (status) {
+                case im::MessageStatus::IDLE:
+                case im::MessageStatus::SENDING:
+                    return DRing::Account::MessageStates::SENDING;
+                case im::MessageStatus::SENT:
+                    return DRing::Account::MessageStates::SENT;
+                case im::MessageStatus::READ:
+                    return DRing::Account::MessageStates::READ;
+                case im::MessageStatus::FAILURE:
+                    return DRing::Account::MessageStates::FAILURE;
+                default:
+                    return DRing::Account::MessageStates::UNKNOWN;
+                }
+            }
+        }
+    }
+    return DRing::Account::MessageStates::UNKNOWN;
 }
 
 void
