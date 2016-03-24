@@ -3,6 +3,7 @@
     "BuildInstructions" : {
         "fedora_22": [
             "mkdir -p /sources",
+<<<<<<< HEAD
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
             "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
@@ -10,10 +11,20 @@
             "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+=======
+            "cd /ring-client-gnome",
+            "cp ring-gnome.spec ..",
+            "git archive --format=tar --prefix=ring-client-gnome/ -o /sources/ring-gnome origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-gnome.spec",
+            "sed -i 's/%setup -q/%setup -n ring-client-gnome/' ring-gnome.spec",
+            "rpmbuild -ba ring-gnome.spec --define \"_sourcedir /sources\"",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
         "fedora_22_i386" : [
             "mkdir -p /sources",
+<<<<<<< HEAD
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
             "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
@@ -21,10 +32,20 @@
             "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+=======
+            "cd /ring-client-gnome",
+            "cp ring-gnome.spec ..",
+            "git archive --format=tar --prefix=ring-client-gnome/ -o /sources/ring-gnome origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-gnome.spec",
+            "sed -i 's/%setup -q/%setup -n ring-client-gnome/' ring-gnome.spec",
+            "rpmbuild -ba ring-gnome.spec --define \"_sourcedir /sources\"",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "cp -R /root/rpmbuild/RPMS/i686/* /output"
         ],
         "fedora_23": [
             "mkdir -p /sources",
+<<<<<<< HEAD
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
             "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
@@ -32,10 +53,20 @@
             "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-daemon.spec",
             "sed -i 's/%setup -q/%setup -n ring-daemon/' ring-daemon.spec",
             "rpmbuild -ba ring-daemon.spec --define \"_sourcedir /sources\"",
+=======
+            "cd /ring-client-gnome",
+            "cp ring-gnome.spec ..",
+            "git archive --format=tar --prefix=ring-client-gnome/ -o /sources/ring-gnome origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-gnome.spec",
+            "sed -i 's/%setup -q/%setup -n ring-client-gnome/' ring-gnome.spec",
+            "rpmbuild -ba ring-gnome.spec --define \"_sourcedir /sources\"",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "cp -R /root/rpmbuild/RPMS/x86_64/* /output"
         ],
         "fedora_23_i386" : [
             "mkdir -p /sources",
+<<<<<<< HEAD
             "cd /ring-daemon",
             "cp ring-daemon.spec ..",
             "git archive --format=tar --prefix=ring-daemon/ -o /sources/daemon origin/master",
@@ -49,6 +80,21 @@
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "cd /ring-client-gnome",
+            "cp ring-gnome.spec ..",
+            "git archive --format=tar --prefix=ring-client-gnome/ -o /sources/ring-gnome origin/master",
+            "cd ..",
+            "sed -i 's/define release .*/define release {{RELEASE_NUMBER}}/g' ring-gnome.spec",
+            "sed -i 's/%setup -q/%setup -n ring-client-gnome/' ring-gnome.spec",
+            "rpmbuild -ba ring-gnome.spec --define \"_sourcedir /sources\"",
+            "cp -R /root/rpmbuild/RPMS/i686/* /output"
+        ],
+        "debian_8": [
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -56,9 +102,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "debian_8_i386": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -66,9 +118,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "debian_9": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -76,9 +134,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "debian_9_i386": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -86,9 +150,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "ubuntu_14.04": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -96,9 +166,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "ubuntu_14.04_i386": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -106,9 +182,15 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "ubuntu_15.10": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
             "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
             "dch --release --distribution \"unstable\" debian/changelog",
             "dpkg-buildpackage -uc -us",
@@ -116,6 +198,23 @@
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
         "ubuntu_15.10_i386": [
+<<<<<<< HEAD
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
+            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ],
+        "ubuntu_16.04": [
+<<<<<<< HEAD
             "mkdir -p /sources/ring-daemon",
             "cd /sources/ring-daemon",
             "/ring-daemon/debian/rules get-orig-source",
@@ -125,16 +224,21 @@
             "cd .. ",
             "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
         ],
-        "ubuntu_16.04": [
-           "mkdir -p /sources/ring-daemon",
-           "cd /sources/ring-daemon",
-           "/ring-daemon/debian/rules get-orig-source",
-           "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
-           "dch --release --distribution \"unstable\" debian/changelog",
-           "dpkg-buildpackage -uc -us",
-           "cd .. ",
-           "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
-       ]
+        "ubuntu_16.04_i386": [
+            "mkdir -p /sources/ring-daemon",
+            "cd /sources/ring-daemon",
+            "/ring-daemon/debian/rules get-orig-source",
+=======
+            "mkdir -p /sources/ring-gnome",
+            "cd /sources/ring-gnome",
+            "/ring-client-gnome/debian/rules get-orig-source",
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
+            "dch --newversion $(dpkg-parsechangelog | perl -ne 'print $1 if m{^Version:\\s+([\\d\\.]+)};')-{{RELEASE_NUMBER}} \"Automatic nightly release\"",
+            "dch --release --distribution \"unstable\" debian/changelog",
+            "dpkg-buildpackage -uc -us",
+            "cd .. ",
+            "mv *.orig.tar* *.debian.tar* *deb *changes *dsc /output"
+        ]
     },
     "UpdateInstructions" : {
         "fedora_22": ["yum upgrade -y"],
@@ -149,8 +253,14 @@
         "ubuntu_14.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_15.10_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
-        "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
+<<<<<<< HEAD
+        "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
+        "ubuntu_16.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
     },
+=======
+        "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
+},
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
     "ReviewType": "",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
@@ -166,7 +276,12 @@
         "ubuntu_14.04_i386": "",
         "ubuntu_15.10": "",
         "ubuntu_15.10_i386": "",
+<<<<<<< HEAD
+        "ubuntu_16.04": "",
+        "ubuntu_16.04_i386": ""
+=======
         "ubuntu_16.04": ""
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
     },
     "ReloadProjectCmd" : [
         "git checkout packaging",
@@ -186,7 +301,12 @@
         "ubuntu_14.04_i386": "0 0 0 * * THU",
         "ubuntu_15.10": "0 0 0 * * THU",
         "ubuntu_15.10_i386": "0 0 0 * * THU",
+<<<<<<< HEAD
+        "ubuntu_16.04": "0 0 0 * * THU",
+	"ubuntu_16.04_i386": "0 0 0 * * THU"
+=======
         "ubuntu_16.04": "0 0 0 * * THU"
+>>>>>>> e52cb444bffd42a1894f9577c73815e3b0bda148
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
