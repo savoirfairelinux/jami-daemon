@@ -2744,18 +2744,31 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         acc->doUnregister();
 }
 
-void
+uint64_t
 Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
     const auto acc = getAccount(accountID);
     if (!acc)
-        return;
+        return 0;
     try {
-        acc->sendTextMessage(to, payloads);
+        return acc->sendTextMessage(to, payloads);
     } catch (const std::exception& e) {
         RING_ERR("Exception during text message sending: %s", e.what());
     }
+}
+
+std::string
+Manager::getMessageStatus(uint64_t id)
+{
+    const auto& allAccounts = accountFactory_.getAllAccounts();
+    for (auto acc : allAccounts) {
+        if (auto sacc = std::dynamic_pointer_cast<SIPAccountBase>(acc)) {
+            //if (sacc->getMessageStatus(id))
+            //
+        }
+    }
+    return
 }
 
 void
