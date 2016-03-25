@@ -681,7 +681,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
 
-    InstantMessaging::sendSipMessage(inv.get(), messages);
+    im::sendSipMessage(inv.get(), messages);
 }
 #endif // HAVE_INSTANT_MESSAGING
 
