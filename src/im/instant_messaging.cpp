@@ -68,7 +68,7 @@ createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& pa
     sep = mimeType.find('/');
     if (std::string::npos == sep) {
         RING_DBG("bad mime type: '%.30s'", mimeType.c_str());
-        throw InstantMessaging::InstantMessageException("invalid mime type");
+        throw im::InstantMessageException("invalid mime type");
     }
 
     const auto& type = mimeType.substr(0, sep);
@@ -94,7 +94,7 @@ createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& pa
         auto paramSplit = paramPair.find('=');
         if (std::string::npos == paramSplit) {
             RING_DBG("bad parameter: '%.30s'", paramPair.c_str());
-            throw InstantMessaging::InstantMessageException("invalid parameter");
+            throw im::InstantMessageException("invalid parameter");
         }
 
         const auto& arg = paramPair.substr(0, paramSplit);
@@ -118,7 +118,7 @@ createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& pa
 }
 
 void
-InstantMessaging::fillPJSIPMessageBody(pjsip_tx_data& tdata,
+im::fillPJSIPMessageBody(pjsip_tx_data& tdata,
                                        const std::map<std::string, std::string>& payloads)
 {
     // multi-part body?
@@ -154,7 +154,7 @@ InstantMessaging::fillPJSIPMessageBody(pjsip_tx_data& tdata,
 }
 
 void
-InstantMessaging::sendSipMessage(pjsip_inv_session* session,
+im::sendSipMessage(pjsip_inv_session* session,
                                  const std::map<std::string, std::string>& payloads)
 {
     if (payloads.empty()) {
@@ -228,7 +228,7 @@ parseMessageBody(const pjsip_msg_body* body)
  * @return map of content types and message payloads
  */
 std::map<std::string, std::string>
-InstantMessaging::parseSipMessage(const pjsip_msg* msg)
+im::parseSipMessage(const pjsip_msg* msg)
 {
     std::map<std::string, std::string> ret;
 
@@ -259,7 +259,7 @@ InstantMessaging::parseSipMessage(const pjsip_msg* msg)
 
 #if HAVE_IAX
 void
-InstantMessaging::sendIaxMessage(iax_session* session, const std::string& /* id */,
+im::sendIaxMessage(iax_session* session, const std::string& /* id */,
                                  const std::vector<std::string>& chunks)
 {
     //TODO: implement multipart message creation for IAX via the pjsip api and then convert

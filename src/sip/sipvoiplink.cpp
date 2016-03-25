@@ -240,7 +240,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             // Reply 200 immediatly (RFC 3428, ch. 7)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
-            auto payloads = InstantMessaging::parseSipMessage(rdata->msg_info.msg);
+            auto payloads = im::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0)
                 account->onTextMessage(peerNumber, payloads);
             return PJ_FALSE;
@@ -1117,7 +1117,7 @@ onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg
     //      case of conferences; a content type containing this info will be added to the messages
     //      in the future
     Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        InstantMessaging::parseSipMessage(msg));
+                                        im::parseSipMessage(msg));
 
 #endif // HAVE_INSTANT_MESSAGING
 }
