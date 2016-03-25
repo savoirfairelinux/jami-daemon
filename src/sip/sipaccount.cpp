@@ -2124,7 +2124,7 @@ SIPAccount::sendTextMessage(const std::string& to,
     const pjsip_tpselector tp_sel = getTransportSelector();
     pjsip_tx_data_set_transport(tdata, &tp_sel);
 
-    InstantMessaging::fillPJSIPMessageBody(*tdata, payloads);
+    im::fillPJSIPMessageBody(*tdata, payloads);
 
     status = pjsip_endpt_send_request(link_->getEndpoint(), tdata, -1, nullptr, nullptr);
     if (status != PJ_SUCCESS) {

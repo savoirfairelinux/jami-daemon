@@ -1691,7 +1691,7 @@ Manager::sendCallTextMessage(const std::string& callID,
 
         try {
             call->sendTextMessage(messages, from);
-        } catch (const InstantMessaging::InstantMessageException& e) {
+        } catch (const im::InstantMessageException& e) {
             RING_ERR("Failed to send message to call %s: %s", call->getCallId().c_str(), e.what());
         }
     }
