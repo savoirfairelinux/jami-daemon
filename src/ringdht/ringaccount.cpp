@@ -953,17 +953,22 @@ RingAccount::doRegister_()
 
         dht_.listen<dht::ImMessage>(
             inboxKey,
-            [shared](dht::ImMessage&& v) {
+            [shared, inboxKey](dht::ImMessage&& v) {
                 auto& this_ = *shared.get();
                 auto res = this_.treatedMessages_.insert(v.id);
-                this_.saveTreatedMessages();
                 if (!res.second)
                     return true;
+                this_.saveTreatedMessages();
 
                 auto from = v.from.toString();
+                auto now = system_clock::to_time_t(system_clock::now());
                 std::map<std::string, std::string> payloads = {{"text/plain",
                                                                 utf8_make_valid(v.msg)}};
                 shared->onTextMessage(from, payloads);
+                RING_WARN("Sending message confirmation %lu", v.id);
+                this_.dht_.putEncrypted(inboxKey,
+                          v.from,
+                          dht::ImMessage(v.id, std::string(), now));
                 return true;
             }
         );
@@ -1395,26 +1400,65 @@ RingAccount::connectivityChanged()
 }
 
 void
-RingAccount::sendTextMessage(const std::string& to,
-                             const std::map<std::string, std::string>& payloads)
+RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
 {
-    if (to.empty() or payloads.empty())
+    if (to.empty() or payloads.empty()) {
+        messageEngine_.onMessageSent(token, false);
         return;
+    }
 
-    const auto& toUri = parseRingUri(to);
-    auto now = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    auto toUri = parseRingUri(to);
+    auto toH = dht::InfoHash(toUri);
+    auto now = system_clock::to_time_t(system_clock::now());
 
     // Single-part message
     if (payloads.size() == 1) {
-        dht_.putEncrypted(dht::InfoHash::get("inbox:"+toUri),
-                          dht::InfoHash(toUri),
-                          dht::ImMessage(udist(rand_), std::string(payloads.begin()->second), now));
+        auto e = sentMessages_.emplace(token, PendingMessage {});
+        e.first->second.to = toH;
+
+        auto h = dht::InfoHash::get("inbox:"+toUri);
+        std::weak_ptr<RingAccount> wshared = std::static_pointer_cast<RingAccount>(shared_from_this());
+
+        dht_.listen<dht::ImMessage>(h, [wshared,token](dht::ImMessage&& msg) {
+            if (auto this_ = wshared.lock()) {
+                // check expected message confirmation
+                auto e = this_->sentMessages_.find(msg.id);
+                if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
+                    RING_WARN("Unrelated text message reply");
+                    return true;
+                }
+                this_->sentMessages_.erase(e);
+                RING_WARN("Relevent text message reply for %lu", token);
+
+                // add treated message
+                auto res = this_->treatedMessages_.insert(msg.id);
+                if (!res.second)
+                    return true;
+
+                this_->saveTreatedMessages();
+
+                // report message as confirmed received
+                this_->messageEngine_.onMessageSent(token, true);
+            }
+            return false;
+        });
+
+        dht_.putEncrypted(h,
+                          toH,
+                          dht::ImMessage(token, std::string(payloads.begin()->second), now),
+                          [wshared,token](bool ok) {
+                            if (auto this_ = wshared.lock()) {
+                                if (not ok)
+                                    this_->messageEngine_.onMessageSent(token, false);
+                            }
+                        });
         return;
     }
 
     // Multi-part message
     // TODO: not supported yet
     RING_ERR("Multi-part im is not supported yet by RingAccount");
+    messageEngine_.onMessageSent(token, false);
 }
 
 } // namespace ring
