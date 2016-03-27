@@ -39,13 +39,14 @@
 
 #include "client/ring_signal.h"
 #include "string_utils.h"
+#include "fileutils.h"
 
 #include <type_traits>
 
 namespace ring {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID), link_(getSIPVoIPLink())
+    : Account(accountID), link_(getSIPVoIPLink()), messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages")
 {}
 
 SIPAccountBase::~SIPAccountBase() {}
@@ -258,6 +259,17 @@ SIPAccountBase::getVolatileAccountDetails() const
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_CODE,    ring::to_string(transportStatus_));
     a.emplace(Conf::CONFIG_TRANSPORT_STATE_DESC,    transportError_);
     return a;
+}
+
+
+void
+SIPAccountBase::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
+{
+    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
+        messageEngine_.load();
+    else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
+        messageEngine_.save();
+    Account::setRegistrationState(state, details_code, details_str);
 }
 
 auto

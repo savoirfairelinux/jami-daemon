@@ -252,7 +252,7 @@ class RingAccount : public SIPAccountBase {
         bool discardTrustRequest(const std::string& from);
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
-        virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads) override;
+        virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
         void connectivityChanged();
 
@@ -313,8 +313,15 @@ class RingAccount : public SIPAccountBase {
          */
         std::list<PendingCall> pendingSipCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
-        std::set<dht::Value::Id> treatedMessages_ {};
         mutable std::mutex callsMutex_ {};
+
+        struct PendingMessage {
+            dht::InfoHash to;
+            std::chrono::steady_clock::time_point received;
+        };
+
+        std::map<dht::Value::Id, PendingMessage> sentMessages_ {};
+        std::set<dht::Value::Id> treatedMessages_ {};
 
         std::string idPath_ {};
         std::string cachePath_ {};
