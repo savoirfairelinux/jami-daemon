@@ -75,6 +75,7 @@ using random_device = std::random_device;
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
+#include "dring/account_const.h"
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
@@ -1389,7 +1390,24 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
 void
 Manager::addTask(const std::function<bool()>&& task)
 {
-    pendingTaskList_.emplace_back(task);
+    pendingTaskList_.emplace_back(std::move(task));
+}
+
+std::shared_ptr<Manager::Runnable>
+Manager::scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when)
+{
+    auto runnable = std::make_shared<Runnable>(std::move(task));
+    scheduleTask(runnable, when);
+    return runnable;
+}
+
+
+void
+Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when)
+{
+    std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
+    scheduledTasks_.emplace(when, task);
+    RING_DBG("Task scheduled. Next in %ds", std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
 }
 
 // Must be invoked periodically by a timer from the main event loop
@@ -1413,6 +1431,22 @@ void Manager::pollEvents()
                 RING_ERR("MainLoop exception (handler): %s", e.what());
             }
             iter = nextEventHandler_;
+        }
+    }
+
+    //-- Scheduled tasks
+    {
+        auto now = std::chrono::steady_clock::now();
+        std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
+        while (not scheduledTasks_.empty() && scheduledTasks_.begin()->first <= now) {
+            auto f = scheduledTasks_.begin();
+            auto task = std::move(f->second->cb);
+            if (task)
+                pendingTaskList_.emplace_back([task](){
+                    task();
+                    return false;
+                });
+            scheduledTasks_.erase(f);
         }
     }
 
@@ -2705,18 +2739,43 @@ Manager::sendRegister(const std::string& accountID, bool enable)
         acc->doUnregister();
 }
 
-void
+uint64_t
 Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
     const auto acc = getAccount(accountID);
     if (!acc)
-        return;
+        return 0;
     try {
-        acc->sendTextMessage(to, payloads);
+        return acc->sendTextMessage(to, payloads);
     } catch (const std::exception& e) {
         RING_ERR("Exception during text message sending: %s", e.what());
     }
+}
+
+std::string
+Manager::getMessageStatus(uint64_t id)
+{
+    const auto& allAccounts = accountFactory_.getAllAccounts();
+    for (auto acc : allAccounts) {
+        auto status = acc->getMessageStatus(id);
+        if (status != im::MessageStatus::UNKNOWN) {
+            switch (status) {
+            case im::MessageStatus::IDLE:
+            case im::MessageStatus::SENDING:
+                return DRing::Account::MessageStates::SENDING;
+            case im::MessageStatus::SENT:
+                return DRing::Account::MessageStates::SENT;
+            case im::MessageStatus::READ:
+                return DRing::Account::MessageStates::READ;
+            case im::MessageStatus::FAILURE:
+                return DRing::Account::MessageStates::FAILURE;
+            default:
+                return DRing::Account::MessageStates::UNKNOWN;
+            }
+        }
+    }
+    return DRing::Account::MessageStates::UNKNOWN;
 }
 
 void
