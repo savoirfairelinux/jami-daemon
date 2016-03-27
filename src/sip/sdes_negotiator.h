@@ -32,7 +32,7 @@ namespace ring {
 
 /**
  * General exception object that is thrown when
- * an error occured with a regular expression
+ * an error occurred with a regular expression
  * operation.
  */
 class ParseError : public std::invalid_argument {

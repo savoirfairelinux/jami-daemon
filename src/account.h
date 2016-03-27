@@ -66,7 +66,7 @@ class VoipLinkException : public std::runtime_error
 {
     public:
         VoipLinkException(const std::string &str = "") :
-            std::runtime_error("VoipLinkException occured: " + str) {}
+            std::runtime_error("VoipLinkException occurred: " + str) {}
 };
 
 /**

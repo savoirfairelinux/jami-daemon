@@ -62,7 +62,7 @@ class SdpSessionException : public std::exception {
         virtual ~SdpSessionException() throw() {}
 
         virtual const char *what() const throw() {
-            std::string expt("SdpSession: SdpSessionException occured: ");
+            std::string expt("SdpSession: SdpSessionException occurred: ");
             expt.append(errstr);
             return expt.c_str();
         }
