@@ -30,6 +30,7 @@
 #include "noncopyable.h"
 #include "config/serializable.h"
 #include "registration_states.h"
+#include "im/message_engine.h"
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
@@ -147,9 +148,17 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /**
          * If supported, send a text message from this account.
+         * @return a token to query the message status
          */
-        virtual void sendTextMessage(const std::string& to UNUSED,
-                                     const std::map<std::string, std::string>& payloads UNUSED) {};
+        virtual uint64_t sendTextMessage(const std::string& to UNUSED,
+                                     const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
+
+        /**
+         * Return the status corresponding to the token.
+         */
+        virtual im::MessageStatus getMessageStatus(uint64_t id) const {
+            return im::MessageStatus::UNKNOWN;
+        }
 
         std::vector<std::shared_ptr<Call>> getCalls();
 
@@ -280,6 +289,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         IpAddr getUPnPIpAddress() const;
 
         virtual const IceTransportOptions getIceOptions() const noexcept;
+
+        /**
+         * Random generator engine
+         * Logical account state shall never rely on the state of the random generator.
+         */
+        mutable std::mt19937_64 rand_;
 
     private:
         NON_COPYABLE(Account);
@@ -430,12 +445,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Account mail box
          */
         std::string mailBox_;
-
-        /**
-         * Random generator engine
-         * Logical account state shall never rely on the state of the random generator.
-         */
-        mutable std::mt19937_64 rand_;
 
         /**
          * UPnP IGD controller and the mutex to access it

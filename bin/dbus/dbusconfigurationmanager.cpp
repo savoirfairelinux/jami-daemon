@@ -91,10 +91,16 @@ DBusConfigurationManager::registerAllAccounts(void)
     DRing::registerAllAccounts();
 }
 
-void
-DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads)
+auto
+DBusConfigurationManager::sendTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads) -> decltype(DRing::sendAccountTextMessage(accountID, to, payloads))
 {
-    DRing::sendAccountTextMessage(accountID, to, payloads);
+    return DRing::sendAccountTextMessage(accountID, to, payloads);
+}
+
+auto
+DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing::getMessageStatus(id))
+{
+    return DRing::getMessageStatus(id);
 }
 
 auto
