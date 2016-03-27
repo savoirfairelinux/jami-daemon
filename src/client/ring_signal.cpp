@@ -66,6 +66,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::CertificateExpired>(),
         exported_callback<DRing::ConfigurationSignal::CertificateStateChanged>(),
         exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
+        exported_callback<DRing::ConfigurationSignal::AccountMessageStatus>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
