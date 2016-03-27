@@ -236,7 +236,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                     if (auto call = weak_call.lock())
                         call->onFailure();
                 } else
-                    RING_DBG("Succesfully put ICE descriptor on DHT");
+                    RING_DBG("Successfully put ICE descriptor on DHT");
                 shared_this->dht_.cancelPut(callkey, vid);
             }
         );
