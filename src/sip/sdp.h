@@ -56,7 +56,7 @@ class AudioCodec;
 class SdpException : public std::runtime_error {
     public:
         SdpException(const std::string& str="") :
-            std::runtime_error("SDP: SdpException occured: " + str) {}
+            std::runtime_error("SDP: SdpException occurred: " + str) {}
 };
 
 class Sdp {

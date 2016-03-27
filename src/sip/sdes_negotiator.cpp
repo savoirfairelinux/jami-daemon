@@ -69,7 +69,7 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
             "(?P<mkiLength>[0-9]{1,3})\\;?)?", true));
 
     } catch (const CompileError& exception) {
-        throw ParseError("A compile exception occured on a pattern.");
+        throw ParseError("A compile exception occurred on a pattern.");
     }
 
     // Take each line from the vector

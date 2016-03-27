@@ -44,7 +44,7 @@ namespace ring { namespace InstantMessaging {
 struct InstantMessageException : std::runtime_error
 {
     InstantMessageException(const std::string& str="") :
-        std::runtime_error("InstantMessageException occured: " + str) {}
+        std::runtime_error("InstantMessageException occurred: " + str) {}
 };
 
 /**

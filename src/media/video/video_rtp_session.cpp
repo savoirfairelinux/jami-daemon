@@ -82,7 +82,7 @@ void VideoRtpSession::startSender()
                     else
                         RING_ERR("No valid new video parameters.");
                 } catch (const std::exception& e) {
-                    RING_ERR("Exception during retriving video parameters: %s",
+                    RING_ERR("Exception during retrieving video parameters: %s",
                              e.what());
                 }
             } else {
