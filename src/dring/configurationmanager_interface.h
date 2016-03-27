@@ -160,6 +160,10 @@ struct AudioSignal {
 
 // Configuration signal type definitions
 struct ConfigurationSignal {
+        struct Pool {
+                constexpr static const char* name = "Pool";
+                using cb_type = void(void);
+        };
         struct VolumeChanged {
                 constexpr static const char* name = "VolumeChanged";
                 using cb_type = void(const std::string& /*device*/, double /*value*/);

@@ -55,6 +55,7 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::AudioMuted>(),
 
         /* Configuration */
+        exported_callback<DRing::ConfigurationSignal::Pool>(),
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
         exported_callback<DRing::ConfigurationSignal::AccountsChanged>(),
         exported_callback<DRing::ConfigurationSignal::StunStatusFailed>(),

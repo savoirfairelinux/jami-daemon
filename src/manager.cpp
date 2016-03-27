@@ -1399,6 +1399,7 @@ void
 Manager::addTask(const std::function<bool()>&& task)
 {
     pendingTaskList_.emplace_back(task);
+    emitSignal<DRing::ConfigurationSignal::Pool>();
 }
 
 // Must be invoked periodically by a timer from the main event loop
@@ -1427,26 +1428,29 @@ void Manager::pollEvents()
 
     //-- Tasks
     {
-        auto tmpList = std::move(pendingTaskList_);
-        pendingTaskList_.clear();
-        auto iter = std::begin(tmpList);
-        while (iter != tmpList.cend()) {
-            if (finished_)
-                return;
+        decltype(pendingTaskList_) remList;
+        do {
+            auto tmpList = std::move(pendingTaskList_);
+            auto iter = std::begin(tmpList);
+            while (iter != tmpList.cend()) {
+                if (finished_)
+                    return;
 
-            auto next = std::next(iter);
-            bool result;
-            try {
-                result = (*iter)();
-            } catch (const std::exception& e) {
-                RING_ERR("MainLoop exception (task): %s", e.what());
-                result = false;
+                auto next = std::next(iter);
+                bool result;
+                try {
+                    result = (*iter)();
+                } catch (const std::exception& e) {
+                    RING_ERR("MainLoop exception (task): %s", e.what());
+                    result = false;
+                }
+                if (not result)
+                    tmpList.erase(iter);
+                iter = next;
             }
-            if (not result)
-                tmpList.erase(iter);
-            iter = next;
-        }
-        pendingTaskList_.splice(std::end(pendingTaskList_), tmpList);
+            remList.splice(std::end(remList), tmpList);
+        } while (not pendingTaskList_.empty());
+        pendingTaskList_.splice(std::end(pendingTaskList_), remList);
     }
 }
 
