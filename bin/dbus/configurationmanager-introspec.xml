@@ -258,6 +258,20 @@
           <arg type="s" name="to" direction="in"/>
           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
           <arg type="a{ss}" name="payloads" direction="in"/>
+          <arg type="t" name="id" direction="out">
+             <tp:docstring>
+               The message ID.
+             </tp:docstring>
+          </arg>
+       </method>
+
+      <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
+          <arg type="t" name="id" direction="in"/>
+          <arg type="s" name="status" direction="out">
+             <tp:docstring>
+               The message status.
+             </tp:docstring>
+          </arg>
        </method>
 
        <signal name="incomingAccountMessage" tp:name-for-bindings="incomingAccountMessage">
@@ -269,6 +283,15 @@
            <arg type="s" name="from"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
           <arg type="a{ss}" name="payloads"/>
+       </signal>
+
+       <signal name="accountMessageStatus" tp:name-for-bindings="accountMessageStatus">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients that a sent text message status have changed.
+           </tp:docstring>
+           <arg type="t" name="id"/>
+           <arg type="s" name="status"/>
        </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">
