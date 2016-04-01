@@ -4,7 +4,7 @@ GNUTLS_VERSION := 3.4.10
 GNUTLS_URL := ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
-ifeq ($(call need_pkg,"gnutls >= 3.3.0"),)
+ifeq ($(call need_pkg,"gnutls >= 3.3.19"),)
 PKGS_FOUND += gnutls
 endif
 
