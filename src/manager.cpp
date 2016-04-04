@@ -51,6 +51,7 @@ using random_device = std::random_device;
 
 #include "sip/sip_utils.h"
 #include "sip/sipvoiplink.h"
+#include "sip/sipaccount.h"
 
 #include "im/instant_messaging.h"
 
@@ -2742,42 +2743,43 @@ Manager::getAudioDriver()
 
 std::shared_ptr<Call>
 Manager::newOutgoingCall(const std::string& toUrl,
-                             const std::string& preferredAccountId)
+                         const std::string& preferredAccountId)
 {
-    std::shared_ptr<Account> account {};
     auto preferred = getAccount(preferredAccountId);
-    std::string finalToUrl = toUrl;
 
 #if HAVE_DHT
     if (toUrl.find("ring:") != std::string::npos) {
         if (preferred && preferred->getAccountType() == RingAccount::ACCOUNT_TYPE)
-            return preferred->newOutgoingCall(finalToUrl);
+            return preferred->newOutgoingCall(toUrl);
         auto dhtAcc = getAllAccounts<RingAccount>();
         for (const auto& acc : dhtAcc)
             if (acc->isEnabled())
-                return acc->newOutgoingCall(finalToUrl);
+                return acc->newOutgoingCall(toUrl);
     }
 #endif
+    // If peer url is an IP, and the preferred account is not an "IP2IP like",
+    // we try to find a suitable one in all SIPAccount's.
+    auto strippedToUrl = toUrl;
+    sip_utils::stripSipUriPrefix(strippedToUrl); // FIXME: have a generic version to remove sip dependency
+    if (IpAddr::isValid(strippedToUrl) and !preferred->isIP2IP()) {
+        std::shared_ptr<Account> ip2ip_acc;
+        for (const auto& acc : getAllAccounts<SIPAccount>())
+            if (acc->isEnabled() and acc->isIP2IP())
+                ip2ip_acc = acc;
+        if (!ip2ip_acc) {
+            RING_ERR("No suitable IP2IP account found to call '%s'", toUrl.c_str());
+            return nullptr;
+        }
+        preferred = ip2ip_acc;
+    }
 
-    // FIXME: have a generic version to remove sip dependency
-    sip_utils::stripSipUriPrefix(finalToUrl);
-
-    if (!IpAddr::isValid(finalToUrl)) {
-        account = preferred;
-        if (account)
-            finalToUrl = toUrl;
-        else
-            RING_WARN("Preferred account %s doesn't exist, using IP2IP account",
-                 preferredAccountId.c_str());
-    } else
-        RING_WARN("IP Url detected, using IP2IP account");
-
-    if (!account or !account->isUsable()) {
+    // Sanity checks
+    if (!preferred or !preferred->isUsable()) {
         RING_ERR("No suitable account found to create outgoing call");
         return nullptr;
     }
 
-    return account->newOutgoingCall(finalToUrl);
+    return preferred->newOutgoingCall(toUrl);
 }
 
 #ifdef RING_VIDEO
