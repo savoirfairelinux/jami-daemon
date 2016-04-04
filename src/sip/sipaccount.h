@@ -522,6 +522,8 @@ class SIPAccount : public SIPAccountBase {
         bool hostnameMatch(const std::string &hostname) const;
         bool proxyMatch(const std::string &hostname) const;
 
+        void refreshCredentialsInfos();
+
         bool isSrtpEnabled() const {
             return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE;
         }
