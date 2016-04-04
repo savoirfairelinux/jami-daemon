@@ -553,6 +553,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
+    auto old_username = username_;
     SIPAccountBase::setAccountDetails(details);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
@@ -602,7 +603,8 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     if (iter != details.end())
         srtpKeyExchange_ = sip_utils::getKeyExchangeProtocol(iter->second.c_str());
 
-    if (credentials_.empty()) { // credentials not set, construct 1 entry
+    if (credentials_.empty()) {
+        // credentials not set, construct 1 entry
         RING_WARN("No credentials set, inferring them...");
         std::vector<std::map<std::string, std::string> > v;
         std::map<std::string, std::string> map;
@@ -611,6 +613,12 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
         map[Conf::CONFIG_ACCOUNT_REALM] = "*";
         v.push_back(map);
         setCredentials(v);
+    } else if (old_username != username_) {
+        // update credentials username if changed
+        for (auto& c : credentials_)
+            if (c.username == old_username)
+                c.username = username_;
+        refreshCredentialsInfos();
     }
 }
 
@@ -1605,12 +1613,7 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
         return;
     }
     credentials_.clear();
-    cred_.clear();
-
-    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
-
     credentials_.reserve(creds.size());
-    cred_.reserve(creds.size());
     for (const auto& cred : creds) {
         auto realm = cred.find(Conf::CONFIG_ACCOUNT_REALM);
         auto user = cred.find(Conf::CONFIG_ACCOUNT_USERNAME);
@@ -1618,7 +1621,18 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
         credentials_.emplace_back(realm != cred.end() ? realm->second : "",
                                   user  != cred.end() ? user->second  : "",
                                   passw != cred.end() ? passw->second : "");
-        auto& c = credentials_.back();
+    }
+    refreshCredentialsInfos();
+}
+
+void
+SIPAccount::refreshCredentialsInfos()
+{
+    bool md5HashingEnabled = Manager::instance().preferences.getMd5Hash();
+
+    cred_.clear();
+    cred_.reserve(credentials_.size());
+    for (auto& c : credentials_) {
         if (md5HashingEnabled)
             c.computePasswordHash();
 

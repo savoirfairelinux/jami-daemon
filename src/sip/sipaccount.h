@@ -527,6 +527,8 @@ class SIPAccount : public SIPAccountBase {
         bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
         bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
 
+        void refreshCredentialsInfos();
+
         bool isSrtpEnabled() const {
             return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE;
         }
