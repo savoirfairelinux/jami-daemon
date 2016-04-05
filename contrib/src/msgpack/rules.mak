@@ -8,7 +8,6 @@ PKGS_FOUND += msgpack
 endif
 
 MSGPACK_CMAKECONF := -DMSGPACK_CXX11=ON \
-		-DMSGPACK_BUILD_EXAMPLES=OFF \
 		-DCMAKE_INSTALL_LIBDIR=lib
 
 $(TARBALLS)/msgpack-c-$(MSGPACK_VERSION).tar.gz:
@@ -23,6 +22,8 @@ msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz .sum-msgpack
 	$(MOVE)
 
 .msgpack: msgpack toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) . $(MSGPACK_CMAKECONF)
+	cd $< && ./bootstrap
+	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(MAKE)
 	cd $< && $(MAKE) install
 	touch $@
