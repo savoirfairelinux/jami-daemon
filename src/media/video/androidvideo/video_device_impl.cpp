@@ -30,6 +30,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <array>
 
 namespace ring { namespace video {
 
@@ -43,9 +44,9 @@ struct android_fmt {
     enum VideoPixelFormat ring_format;
 };
 
-static const struct android_fmt and_formats[] {
-    { 17,           "NV21",     VIDEO_PIXFMT_NV21 },
-    { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
+static const std::array<android_fmt, 2> and_formats {
+    android_fmt { 17,           "NV21",     VIDEO_PIXFMT_NV21    },
+    android_fmt { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
 };
 
 class VideoDeviceImpl {
@@ -71,7 +72,7 @@ class VideoDeviceImpl {
         std::vector<VideoSize> sizes_ {};
         std::vector<FrameRate> rates_ {};
 
-        const struct android_fmt *fmt_ {nullptr};
+        const android_fmt* fmt_ {nullptr};
         VideoSize size_ {};
         FrameRate rate_ {};
 };
@@ -83,26 +84,19 @@ VideoDeviceImpl::selectFormat()
      * formats_ contains camera parameters as returned by the GetCameraInfo
      * signal, find the matching V4L2 formats
      */
-    unsigned int current, best = UINT_MAX;
-    for(const auto &fmt : formats_) {
-        const struct android_fmt *and_fmt;
-        for(and_fmt = std::begin(and_formats);
-            and_formats < std::end(and_formats);
-            and_fmt++) {
-            if (fmt == and_fmt->code) {
-                current = and_fmt - std::begin(and_formats);
+    unsigned best = UINT_MAX;
+    for(auto fmt : formats_) {
+        auto f = and_formats.begin();
+        for (; f != and_formats.end(); ++f) {
+            if (f->code == fmt) {
+                auto pos = std::distance(and_formats.begin(), f);
+                if (pos < best)
+                    best = pos;
                 break;
             }
         }
-
-        /* No match found, we should add it */
-        if (and_fmt == std::end(and_formats)) {
+        if (f == and_formats.end())
             RING_WARN("AndroidVideo: No format matching %d", fmt);
-            continue;
-        }
-
-        if (current < best)
-            best = current;
     }
 
     if (best != UINT_MAX) {
@@ -119,6 +113,9 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
 {
     std::vector<unsigned> sizes;
     std::vector<unsigned> rates;
+    formats_.reserve(16);
+    sizes.reserve(16);
+    rates.reserve(16);
     emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
     for (size_t i=0, n=sizes.size(); i<n; i+=2)
         sizes_.emplace_back(sizes[i], sizes[i+1]);
