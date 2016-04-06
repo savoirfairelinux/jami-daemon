@@ -20,6 +20,7 @@
 
 """DRing controling class through DBUS"""
 
+import sys
 import os
 import random
 import time
@@ -28,7 +29,13 @@ import hashlib
 from threading import Thread
 from functools import partial
 
-from gi.repository import GObject
+try:
+    from gi.repository import GObject
+except ImportError as e:
+    import gobject as GObject
+except Exception as e:
+    print(str(e))
+    exit(1)
 
 from errors import *
 
@@ -36,7 +43,7 @@ try:
     import dbus
     from dbus.mainloop.glib import DBusGMainLoop
 except ImportError as e:
-    raise DRingCtrlError("No python3-dbus module found")
+    raise DRingCtrlError("No python-dbus module found")
 
 
 DBUS_DEAMON_OBJECT = 'cx.ring.Ring'
@@ -44,13 +51,17 @@ DBUS_DEAMON_PATH = '/cx/ring/Ring'
 
 
 class DRingCtrl(Thread):
-    def __init__(self, name):
-        super().__init__()
+    def __init__(self, name, autoAnswer):
+        if sys.version_info[0] < 3:
+            super(DRingCtrl, self).__init__()
+        else:
+            super().__init__()
 
         self.activeCalls = {}  # list of active calls (known by the client)
         self.activeConferences = {}  # list of active conferences
         self.account = None  # current active account
         self.name = name # client name
+        self.autoAnswer = autoAnswer
 
         self.currentCallId = ""
         self.currentConfId = ""
@@ -141,7 +152,6 @@ class DRingCtrl(Thread):
         except:
             raise DRingCtrlDeamonError("Client unregistration failed")
 
-
     def isRegistered(self):
         return self.registered
 
@@ -149,7 +159,9 @@ class DRingCtrl(Thread):
     # Signal handling
     #
 
-    def onIncomingCall_cb(self):
+    def onIncomingCall_cb(self, callId):
+        if self.autoAnswer:
+            self.Accept(callId)
         pass
 
     def onCallHangup_cb(self, callId):
@@ -177,7 +189,7 @@ class DRingCtrl(Thread):
                                          'To': to,
                                       'State': ''}
         self.currentCallId = callid
-        self.onIncomingCall_cb()
+        self.onIncomingCall_cb(callid)
 
 
     def onCallHangUp(self, callid):
@@ -192,7 +204,7 @@ class DRingCtrl(Thread):
         """ Update state for this call to Ringing """
 
         self.activeCalls[callid]['State'] = state
-        self.onCallRinging_cb()
+        self.onCallRinging_cb(callid)
 
 
     def onCallHold(self, callid, state):
@@ -223,7 +235,7 @@ class DRingCtrl(Thread):
         del self.activeCalls[callid]
 
 
-    def onCallStateChanged(self, callid, state):
+    def onCallStateChanged(self, callid, state, code):
         """ On call state changed event, set the values for new calls,
         or delete the call from the list of active calls
         """
@@ -234,7 +246,8 @@ class DRingCtrl(Thread):
             callDetails = self.getCallDetails(callid)
             self.activeCalls[callid] = {'Account': callDetails['ACCOUNTID'],
                                              'To': callDetails['PEER_NUMBER'],
-                                          'State': state }
+                                          'State': state,
+                                          'Code': code }
 
         self.currentCallId = callid
 
@@ -609,6 +622,16 @@ class DRingCtrl(Thread):
 
         return self.callmanager.switchInput(callid, inputName)
 
+    def interruptHandler(self, signum, frame):
+        print('Signal handler called with signal ' + str(signum))
+        self.stopThread()
+
+    def printAccountDetails(self, account):
+        details = self.getAccountDetails(account)
+        print(account)
+        for k in sorted(details.keys()):
+            print("  %s: %s" % (k, details[k]))
+        print()
 
     def run(self):
         """Processing method for this thread"""
@@ -619,8 +642,5 @@ class DRingCtrl(Thread):
             context.iteration(True)
 
             if self.isStop:
-                print("++++++++++++++++++++++++++++++++++++++++")
-                print("++++++++++++++++++++++++++++++++++++++++")
-                print("++++++++++++++++++++++++++++++++++++++++")
-                print("++++++++++++++++++++++++++++++++++++++++")
+                print("++++++++++++++++++ EXIT ++++++++++++++++++++++")
                 return
