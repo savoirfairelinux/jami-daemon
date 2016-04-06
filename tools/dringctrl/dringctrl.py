@@ -23,7 +23,13 @@ import random
 import time
 import argparse
 
-from gi.repository import GObject
+try:
+    from gi.repository import GObject
+except ImportError as e:
+    import gobject as GObject
+except Exception as e:
+    print(str(e))
+    exit(1)
 
 from errors import *
 from controler import DRingCtrl
@@ -93,14 +99,11 @@ if __name__ == "__main__":
     parser.add_argument('--toggle-video', help='Launch toggle video  tests', action='store_true')
 
     parser.add_argument('--test', help=' '.join(str(test) for test in DRingTester().getTestName() ), metavar='<testName>')
+    parser.add_argument('--auto-answer', help='Keep running and auto-answer the calls', action='store_true')
 
     args = parser.parse_args()
 
-    ctrl = DRingCtrl(sys.argv[0])
-
-    if len(sys.argv) == 1:
-        ctrl.run()
-        sys.exit(0)
+    ctrl = DRingCtrl(sys.argv[0], args.auto_answer)
 
     if args.add_ring_account:
         accDetails = {'Account.type':'RING', 'Account.alias':args.add_ring_account if args.add_ring_account!='' else 'RingAccount'}
@@ -196,3 +199,8 @@ if __name__ == "__main__":
             ctrl.videomanager.startCamera()
             time.sleep(2)
             ctrl.videomanager.stopCamera()
+
+    if len(sys.argv) == 1 or ctrl.autoAnswer:
+        ctrl.run()
+        sys.exit(0)
+

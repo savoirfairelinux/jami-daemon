@@ -21,7 +21,14 @@
 import sys
 import os
 import time
-import configparser
+
+try:
+    import configparser
+except ImportError as e:
+    import ConfigParser as configparser
+except Exception as e:
+    print(str(e))
+    exit(1)
 
 from threading import Thread
 from random import shuffle
