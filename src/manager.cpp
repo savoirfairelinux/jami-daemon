@@ -157,7 +157,7 @@ static constexpr int RING_TLS_LOGLEVEL = 0;
 static void
 tls_print_logs(int level, const char* msg)
 {
-    RING_DBG("GnuTLS [%d]: %s", level, msg);
+    RING_XDBG("[%d]GnuTLS: %s", level, msg);
 }
 
 static void
