@@ -64,6 +64,9 @@ void strErr();
 #define STR(EXP) #EXP
 #define XSTR(X) STR(X)
 
+// Line return char in a string
+#define ENDL "\n"
+
 // Do not remove the "| " in following without modifying vlogger() code
 #define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
 
@@ -112,10 +115,15 @@ void strErr();
 
 #endif /* __ANDROID__ _WIN32 */
 
-#define RING_ERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define RING_WARN(M, ...)  LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define RING_INFO(M, ...)  LOGGER(M, LOG_INFO, ##__VA_ARGS__)
-#define RING_DBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
+#define RING_ERR(M, ...)   LOGGER(M ENDL, LOG_ERR, ##__VA_ARGS__)
+#define RING_WARN(M, ...)  LOGGER(M ENDL, LOG_WARNING, ##__VA_ARGS__)
+#define RING_INFO(M, ...)  LOGGER(M ENDL, LOG_INFO, ##__VA_ARGS__)
+#define RING_DBG(M, ...)   LOGGER(M ENDL, LOG_DEBUG, ##__VA_ARGS__)
+
+#define RING_XERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
+#define RING_XWARN(M, ...)  LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
+#define RING_XINFO(M, ...)  LOGGER(M, LOG_INFO, ##__VA_ARGS__)
+#define RING_XDBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
 
 #ifdef __cplusplus
 }

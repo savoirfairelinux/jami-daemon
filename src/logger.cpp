@@ -177,9 +177,8 @@ vlogger(const int level, const char *format, va_list ap)
         vfprintf(stderr, format, ap);
 
 #ifndef _WIN32
-        fputs(END_COLOR"\n", stderr);
+        fputs(END_COLOR, stderr);
 #else
-        fputs("\n", stderr);
         SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
 
