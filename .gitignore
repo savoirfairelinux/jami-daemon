@@ -35,7 +35,6 @@ libtool
 # The test binary
 *Tester
 *orig
-*.1
 *-glue.h
 
 # Ignore rendered docs
