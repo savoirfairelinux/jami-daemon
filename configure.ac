@@ -637,7 +637,6 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/test/Makefile \
                  src/security/Makefile \
                  src/upnp/Makefile \
-                 test/Makefile \
                  ringtones/Makefile \
                  man/Makefile \
                  doc/Makefile \
