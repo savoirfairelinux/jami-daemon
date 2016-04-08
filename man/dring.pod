@@ -24,6 +24,14 @@ Output the log to the console instead of syslog.
 
 Debug mode (more verbose output).
 
+=item B<-a, --auto-answer>
+
+Force automatic answer to incoming calls.
+
+=item B<-p, --persistent>
+
+Stay alive after client quits.
+
 =item B<-h, --help>
 
 Print short list of command-line options.
@@ -32,17 +40,17 @@ Print short list of command-line options.
 
 =head1 BUGS
 
-Please report bugs at https://projects.savoirfairelinux.com/projects/ring/issues/new.
+Please report bugs at https://tuleap.ring.cx/projects/ring.
 
 =head1 AUTHORS
 
-B<dring> is developed in Montreal by Savoir-faire Linux Inc. The active developers are Tristan Matthews <tristan.matthews@savoirfairelinux.com> and Alexandre Savard <alexandre.savard@savoirfairelinux.com>.
+B<dring> is developed in Montreal by Savoir-faire Linux Inc.
 
 This manual page was written by Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>.
 
 =head1 SEE ALSO
 
-B<ring>(1), B<ring-client-gnome>(1)
+B<gnome-ring>(1)
 
 =head1 COPYRIGHT
 
