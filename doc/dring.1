@@ -1,0 +1,27 @@
+.\" Manpage for gnome-ring.
+.TH man 8 "08 April 2016" "1.0" "dring man page"
+.SH NAME
+dring \- Ring.cx daemon
+.SH SYNOPSIS
+dring [options]
+.SH DESCRIPTION
+dring is the daemon for Ring.cx
+.SH OPTIONS
+.B \-c, \-\-console
+Log in console instead of syslog.
+.TP
+.B \-d, \-\-debug
+Debug mode (more verbose).
+.TP
+.B \-p, \-\-persistent
+Stay alive after client quits.
+.TP
+.B \-\-auto-answer
+Force automatic answer to incoming calls.
+.TP
+.B \-h, \-\-help
+Display help text and exit.
+.SH SEE ALSO
+gnome-ring(1)
+.SH AUTHOR
+Alexandre Viau (alexandre.viau@savoirfairelinux.net)
