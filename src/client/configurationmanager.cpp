@@ -89,6 +89,18 @@ getVolatileAccountDetails(const std::string& accountID)
     return ring::Manager::instance().getVolatileAccountDetails(accountID);
 }
 
+bool
+registerRingDevice(const std::string& accountID, const std::string& accountUsername)
+{
+    return ring::Manager::instance().registerRingDevice(accountID, accountUsername);
+}
+
+std::map<std::string, std::string>
+getAutodiscoveryList()
+{
+     return ring::Manager::instance().getAutodiscoveryList();
+}
+
 std::map<std::string, std::string>
 getTlsDefaultSettings()
 {

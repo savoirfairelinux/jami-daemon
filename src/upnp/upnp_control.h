@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *
@@ -30,6 +30,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 
 namespace ring {
 class IpAddr;
@@ -98,6 +99,12 @@ public:
      * tries to get the local ip of the IGD (router)
      */
     IpAddr getLocalIP() const;
+
+    /* tries to register a Ring Device for auto discovery */
+    void registerRingDevice(std::string hash) const;
+
+    /* returns a list of discovered Ring Devices */
+    std::map<std::string, std::string> getValidRingDevices() const;
 
 private:
 

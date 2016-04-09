@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *
@@ -46,10 +46,8 @@ Controller::~Controller()
 {
     /* remove all mappings */
     removeMappings();
-#if HAVE_LIBUPNP
     if (listToken_ and upnpContext_)
         upnpContext_->removeIGDListener(listToken_);
-#endif
 }
 
 bool
@@ -66,11 +64,9 @@ Controller::setIGDListener(IGDFoundCallback&& cb)
 {
     if (not upnpContext_)
         return;
-#if HAVE_LIBUPNP
     if (listToken_)
         upnpContext_->removeIGDListener(listToken_);
     listToken_ = cb ? upnpContext_->addIGDListener(std::move(cb)) : 0;
-#endif
 }
 
 bool
@@ -152,6 +148,34 @@ Controller::getExternalIP() const
         return upnpContext_->getExternalIP();
 #endif
     return {}; //  empty address
+}
+
+void
+Controller::registerRingDevice(std::string hash) const
+{
+#if HAVE_LIBUPNP
+     if (upnpContext_)
+         upnpContext_->registerRingDevice(hash);
+#endif
+}
+
+std::map<std::string, std::string>
+Controller::getValidRingDevices() const
+{
+#if HAVE_LIBUPNP
+     if (upnpContext_){
+         std::map<std::string, std::shared_ptr<RingDevice>> list(upnpContext_->validRDs_);
+         std::map<std::string, std::string> ret;
+         for(auto item : list){
+            ret.insert(std::pair<std::string,std::string>(item.first+".UDN",item.second->getUDN()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".DeviceType",item.second->getDeviceType()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".FriendlyName",item.second->getFriendlyName()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".BaseURL",item.second->getBaseURL()+"description.xml"));
+            ret.insert(std::pair<std::string,std::string>(item.first+".relURL",item.second->getrelURL()));
+         }
+         return ret;
+    }
+#endif
 }
 
 }} // namespace ring::upnp

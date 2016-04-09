@@ -10,5 +10,7 @@ libupnpcontrol_la_SOURCES = \
         upnp_control.h \
         upnp_context.cpp \
         upnp_context.h \
+        upnp_rd.cpp \
+        upnp_rd.h \
         upnp_igd.cpp \
         upnp_igd.h

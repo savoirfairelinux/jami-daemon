@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2015 Savoir-faire Linux Inc.
  *
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
  *
@@ -45,6 +45,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 
 namespace ring {
 class IpAddr;
@@ -59,6 +60,17 @@ public:
 #if HAVE_LIBUPNP
     UPnPContext();
     ~UPnPContext();
+
+    /**
+     * map of valid RingDevices
+     *
+     * the UDN string is used to uniquely identify the RingDevice - same as user hash
+     *
+     * the mutex is used to access these lists and RingDevices in a thread-safe manner
+     */
+    std::map<std::string, std::shared_ptr<RingDevice>> validRDs_;
+    mutable std::mutex validRDMutex_;
+    std::condition_variable validRDCondVar_;
 
     /**
      * Returns 'true' if there is at least one valid (connected) IGD.
@@ -93,11 +105,13 @@ public:
      */
     void removeMapping(const Mapping& mapping);
 
+    /* register our client as a UPnP service */
+    void registerRingDevice(std::string hash);
+
     /**
      * tries to get the external ip of the router
      */
     IpAddr getExternalIP() const;
-
 
     /**
      * get our local ip
@@ -188,11 +202,16 @@ private:
     /* sends out async search for IGD */
     void searchForIGD();
 
+    /* sends out async search for RDs */
+    void searchForRD();
+
     /**
      * Parses the device description and adds desired devices to
      * relevant lists
      */
     void parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event);
+
+    void parseRD(IXML_Document* doc, const Upnp_Discovery* d_event);
 
     void parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event);
 
