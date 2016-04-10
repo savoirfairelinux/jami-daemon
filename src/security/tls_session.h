@@ -138,6 +138,8 @@ public:
     // Returns the TLS session type ('server' or 'client')
     const char* typeName() const;
 
+    bool isServer() const { return isServer_; }
+
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
 
@@ -148,7 +150,7 @@ public:
 
     // Asynchronous sending operation. on_send_complete will be called with a positive number
     // for number of bytes sent, or negative for errors, or 0 in case of shutdown (end of session).
-    ssize_t async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    ssize_t async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -171,7 +173,7 @@ private:
 
     // IO GnuTLS <-> ICE
     struct TxData {
-        void* const ptr;
+        const void* ptr;
         std::size_t size;
         TxDataCompleteFunc onComplete;
     };
