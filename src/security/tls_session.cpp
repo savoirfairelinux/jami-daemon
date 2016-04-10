@@ -39,8 +39,9 @@
 namespace ring { namespace tls {
 
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+//static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
+static constexpr int DTLS_MTU {1460}; // limit for networks like ADSL
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
@@ -157,33 +158,29 @@ TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
     , cacred_(nullptr)
     , sacred_(nullptr)
     , xcred_(nullptr)
-    , thread_([this] { return setup(); },
-              [this] { process(); },
-              [this] { cleanup(); })
 {
+    setup();
+    process(); // SETUP
+    if (not isServer_)
+        process(); // start HANDSHAKE (client)
+
     socket_->setOnRecv([this](uint8_t* buf, size_t len) {
-            std::lock_guard<std::mutex> lk {ioMutex_};
-            if (rxQueue_.size() == INPUT_MAX_SIZE) {
-                rxQueue_.pop_front(); // drop oldest packet if input buffer is full
-                ++stRxRawPacketDropCnt_;
-            }
             rxQueue_.emplace_back(buf, buf+len);
-            ++stRxRawPacketCnt_;
-            stRxRawBytesCnt_ += len;
-            ioCv_.notify_one();
+            {
+                std::lock_guard<std::mutex> lk {ioMutex_};
+                ++stRxRawPacketCnt_;
+                stRxRawBytesCnt_ += len;
+            }
+            RING_ERR("rx raw %zu", len);
+            process();
             return len;
         });
-
-    // Run FSM into dedicated thread
-    thread_.start();
 }
 
 TlsSession::~TlsSession()
 {
-    shutdown();
-    thread_.join();
-
     socket_->setOnRecv(nullptr);
+    cleanup();
 }
 
 const char*
@@ -195,13 +192,14 @@ TlsSession::typeName() const
 void
 TlsSession::dump_io_stats() const
 {
+    std::lock_guard<std::mutex> lk {ioMutex_};
     RING_WARN("[TLS] RxRawPckt=%zu (%zu bytes)", stRxRawPacketCnt_, stRxRawBytesCnt_);
 }
 
 TlsSessionState
 TlsSession::setupClient()
 {
-    auto ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
+    auto ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM | GNUTLS_NONBLOCK);
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
@@ -342,12 +340,12 @@ TlsSession::commonSessionInit()
                                            auto this_ = reinterpret_cast<TlsSession*>(t);
                                            return this_->recvRaw(d, s);
                                        });
+    // Seem to be mendatory, even in non-blocking (got errors without, gnutls 3.4.10)
     gnutls_transport_set_pull_timeout_function(session_,
                                                [](gnutls_transport_ptr_t t, unsigned ms) -> int {
                                                    auto this_ = reinterpret_cast<TlsSession*>(t);
                                                    return this_->waitForRawData(ms);
                                                });
-
     return true;
 }
 
@@ -356,7 +354,6 @@ void
 TlsSession::shutdown()
 {
     state_ = TlsSessionState::SHUTDOWN;
-    ioCv_.notify_one(); // unblock waiting FSM
 }
 
 const char*
@@ -383,13 +380,26 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 }
 
 // Called by application to send data to encrypt.
-ssize_t
+void
 TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
 {
     std::lock_guard<std::mutex> lk {ioMutex_};
     txQueue_.emplace_back(TxData {data, size, on_send_complete});
-    ioCv_.notify_one();
-    return GNUTLS_E_SUCCESS;
+}
+
+ssize_t
+TlsSession::send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
+{
+    if (size == 0)
+        return GNUTLS_E_SUCCESS;
+    auto st = state_.load();
+    if (st == TlsSessionState::SHUTDOWN)
+        return GNUTLS_E_INVALID_SESSION;
+    if (st != TlsSessionState::ESTABLISHED) {
+        async_send(data, size, on_send_complete);
+        return GNUTLS_E_SUCCESS;
+    }
+    return send({data, size, {}});
 }
 
 ssize_t
@@ -404,7 +414,7 @@ TlsSession::send(const TxData& tx_data)
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
         auto nwritten = gnutls_record_send(session_, ptr + total_written, chunck_sz);
-        if (nwritten <= 0) {
+        if (nwritten < 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.
@@ -429,6 +439,7 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        RING_ERR("tx raw %zu", size);
     }
     return ret;
 }
@@ -456,7 +467,6 @@ TlsSession::sendRawVec(const giovec_t* iov, int iovcnt)
 ssize_t
 TlsSession::recvRaw(void* buf, size_t size)
 {
-    std::lock_guard<std::mutex> lk {ioMutex_};
     if (rxQueue_.empty()) {
         gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
@@ -466,6 +476,7 @@ TlsSession::recvRaw(void* buf, size_t size)
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
     rxQueue_.pop_front();
+    RING_ERR("read raw %zu (bs = %zu)", count, size);
     return count;
 }
 
@@ -475,20 +486,9 @@ TlsSession::recvRaw(void* buf, size_t size)
 // a positive number indicating the number of bytes received,
 // and -1 on error.
 int
-TlsSession::waitForRawData(unsigned timeout)
+TlsSession::waitForRawData(UNUSED unsigned timeout)
 {
-    std::unique_lock<std::mutex> lk {ioMutex_};
-    if (not ioCv_.wait_for(lk, std::chrono::milliseconds(timeout),
-                           [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; }))
-        return 0;
-
-    // shutdown?
-    if (state_ == TlsSessionState::SHUTDOWN) {
-        gnutls_transport_set_errno(session_, EINTR);
-        return -1;
-    }
-
-    return rxQueue_.front().size();
+    return rxQueue_.empty() ? 0 : 1;
 }
 
 bool
@@ -507,7 +507,7 @@ TlsSession::setup()
 void
 TlsSession::cleanup()
 {
-    state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
+    shutdown(); // be sure to block any user operations
 
     // Flush pending application send requests with a 0 bytes-sent result
     for (auto& txdata : txQueue_) {
@@ -550,35 +550,13 @@ TlsSession::handleStateCookie(TlsSessionState state)
 {
     RING_DBG("[TLS] SYN cookie");
 
-    std::size_t count;
-    {
-        // block until rx packet or shutdown
-        std::unique_lock<std::mutex> lk {ioMutex_};
-        if (!ioCv_.wait_for(lk, COOKIE_TIMEOUT,
-                            [this]{ return !rxQueue_.empty()
-                                    or state_ == TlsSessionState::SHUTDOWN; })) {
-            RING_ERR("[TLS] SYN cookie failed: timeout");
-            return TlsSessionState::SHUTDOWN;
-        }
-        // Shutdown state?
-        if (rxQueue_.empty())
-            return TlsSessionState::SHUTDOWN;
-        count = rxQueue_.front().size();
-    }
-
     // Total bytes rx during cookie checking (see flood protection below)
-    cookie_count_ += count;
+    auto& pkt = rxQueue_.front();
+    cookie_count_ += pkt.size();
 
     int ret;
-
-    // Peek and verify front packet
-    {
-        std::lock_guard<std::mutex> lk {ioMutex_};
-        auto& pkt = rxQueue_.front();
-        std::memset(&prestate_, 0, sizeof(prestate_));
-        ret = gnutls_dtls_cookie_verify(&cookie_key_, nullptr, 0,
-                                        pkt.data(), pkt.size(), &prestate_);
-    }
+    std::memset(&prestate_, 0, sizeof(prestate_));
+    ret = gnutls_dtls_cookie_verify(&cookie_key_, nullptr, 0, pkt.data(), pkt.size(), &prestate_);
 
     if (ret < 0) {
         gnutls_dtls_cookie_send(&cookie_key_, nullptr, 0, &prestate_,
@@ -588,12 +566,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
                                     auto this_ = reinterpret_cast<TlsSession*>(t);
                                     return this_->sendRaw(d, s);
                                 });
-
-        // Drop front packet
-        {
-            std::lock_guard<std::mutex> lk {ioMutex_};
-            rxQueue_.pop_front();
-        }
+        rxQueue_.pop_front(); // consume packet
 
         // Cookie may be sent on multiple network packets
         // So we retry until we get a valid cookie.
@@ -609,7 +582,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
 
     RING_DBG("[TLS] cookie ok");
 
-    ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
+    ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM | GNUTLS_NONBLOCK);
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
@@ -621,7 +594,8 @@ TlsSession::handleStateCookie(TlsSessionState state)
     if (not commonSessionInit())
         return TlsSessionState::SHUTDOWN;
 
-    return TlsSessionState::HANDSHAKE;
+    // Process handshake on current rx packet
+    return handleStateHandshake(TlsSessionState::HANDSHAKE);
 }
 
 TlsSessionState
@@ -629,7 +603,12 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 {
     RING_DBG("[TLS] handshake");
 
-    auto ret = gnutls_handshake(session_);
+    int ret;
+
+    // Loop on handshake until break on read-op or not EAGAIN nor EINTR on write-op
+    if (nextSleep_)
+        std::this_thread::sleep_until(nextTime_);
+    ret = gnutls_handshake(session_);
 
     // Stop on fatal error
     if (gnutls_error_is_fatal(ret)) {
@@ -639,10 +618,17 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 
     // Continue handshaking on non-fatal error
     if (ret != GNUTLS_E_SUCCESS) {
+        auto milli = gnutls_dtls_get_timeout(session_);
+        RING_WARN("sleep: %u", milli);
+        nextTime_ = clock::now() + std::chrono::milliseconds(milli);
+        nextSleep_ = true;
         // TODO: handle GNUTLS_E_LARGE_PACKET (MTU must be lowered)
-        RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+        if (ret != GNUTLS_E_AGAIN and ret != GNUTLS_E_INTERRUPTED)
+            RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
         return state;
     }
+
+    nextSleep_ = false;
 
     // Safe-Renegotiation status shall always be true to prevent MiM attack
     if (!gnutls_safe_renegotiation_status(session_)) {
@@ -657,7 +643,7 @@ TlsSession::handleStateHandshake(TlsSessionState state)
     // Anonymous connection? rehandshake immediatly with certificate authentification forced
     auto cred = gnutls_auth_get_type(session_);
     if (cred == GNUTLS_CRD_ANON) {
-        RING_DBG("[TLS] renogotiate with certificate authentification");
+        RING_WARN("[TLS] renegotiate with certificate authentification");
 
         // Re-setup TLS algorithms priority list with only certificate based cipher suites
         ret = gnutls_priority_set_direct(session_, TLS_CERT_PRIORITY_STRING, nullptr);
@@ -674,7 +660,10 @@ TlsSession::handleStateHandshake(TlsSessionState state)
             return TlsSessionState::SHUTDOWN;
         }
 
-        return state; // handshake
+        // re-handshake
+        if (isServer_)
+            return state;
+        return handleStateHandshake(state);
 
     } else if (cred != GNUTLS_CRD_CERTIFICATE) {
         RING_ERR("[TLS] spurious session credential (%u)", cred);
@@ -695,68 +684,60 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 TlsSessionState
 TlsSession::handleStateEstablished(TlsSessionState state)
 {
-    // block until rx/tx packet or state change
-    std::unique_lock<std::mutex> lk {ioMutex_};
-    ioCv_.wait(lk, [this]{ return !txQueue_.empty() or !rxQueue_.empty() or state_ != TlsSessionState::ESTABLISHED; });
-    state = state_.load();
-    if (state != TlsSessionState::ESTABLISHED)
-        return state;
-
-    // Handle TX data from application
-    if (not txQueue_.empty()) {
-        decltype(txQueue_) tx_queue = std::move(txQueue_);
-        txQueue_.clear();
-        lk.unlock();
-        for (const auto& txdata : tx_queue) {
-            while (state_ == TlsSessionState::ESTABLISHED) {
-                auto bytes_sent = send(txdata);
-                auto fatal = gnutls_error_is_fatal(bytes_sent);
-                if (bytes_sent < 0 and !fatal)
-                    continue;
-                if (txdata.onComplete)
-                    txdata.onComplete(bytes_sent);
-                if (fatal)
-                    return TlsSessionState::SHUTDOWN;
-                break;
-            }
+    // Handle pending tx packets from application
+    // As state is established, async_send is never called.
+    // So locking mutex is not needed.
+    for (const auto& txdata : txQueue_) {
+        while (state_ == TlsSessionState::ESTABLISHED) {
+            auto bytes_sent = send(txdata);
+            auto fatal = gnutls_error_is_fatal(bytes_sent);
+            if (bytes_sent < 0 and !fatal)
+                continue;
+            if (txdata.onComplete)
+                txdata.onComplete(bytes_sent);
+            if (fatal)
+                return TlsSessionState::SHUTDOWN;
+            break;
         }
-        lk.lock();
     }
+    txQueue_.clear();
 
     // Handle RX data from network
-    if (!rxQueue_.empty()) {
-        std::vector<uint8_t> buf(8*1024);
-        unsigned char sequence[8];
 
-        lk.unlock();
-        auto ret = gnutls_record_recv_seq(session_, buf.data(), buf.size(), sequence);
-        if (ret > 0) {
-            buf.resize(ret);
-            // TODO: handle sequence re-order
-            if (callbacks_.onRxData)
-                callbacks_.onRxData(std::move(buf));
-            return state;
-        }
+    if (rxQueue_.empty())
+        return state;
 
-        if (ret == 0) {
-            RING_DBG("[TLS] eof");
-            return TlsSessionState::SHUTDOWN;
-        }
+    std::vector<uint8_t> buf(8*1024);
+    unsigned char sequence[8];
 
-        if (ret == GNUTLS_E_REHANDSHAKE) {
-            RING_DBG("[TLS] re-handshake");
-            return TlsSessionState::HANDSHAKE;
-        }
-
-        if (gnutls_error_is_fatal(ret)) {
-            RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
-            return TlsSessionState::SHUTDOWN;
-        }
-
-        // non-fatal error... let's continue
-        lk.lock();
+    auto ret = gnutls_record_recv_seq(session_, buf.data(), buf.size(), sequence);
+    if (ret > 0) {
+        buf.resize(ret);
+        // TODO: handle sequence re-order
+        if (callbacks_.onRxData)
+            callbacks_.onRxData(std::move(buf));
+        return state;
     }
 
+    if (ret == 0) {
+        RING_DBG("[TLS] eof");
+        return TlsSessionState::SHUTDOWN;
+    }
+
+    if (ret == GNUTLS_E_REHANDSHAKE) {
+        RING_DBG("[TLS] re-handshake");
+        if (isServer_)
+            return TlsSessionState::HANDSHAKE;
+        else
+            return handleStateHandshake(TlsSessionState::HANDSHAKE);
+    }
+
+    if (gnutls_error_is_fatal(ret)) {
+        RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+        return TlsSessionState::SHUTDOWN;
+    }
+
+    // non-fatal error... let's continue
     return state;
 }
 
@@ -764,9 +745,6 @@ TlsSessionState
 TlsSession::handleStateShutdown(TlsSessionState state)
 {
     RING_DBG("[TLS] shutdown");
-
-    // Stop ourself
-    thread_.stop();
     return state;
 }
 
@@ -782,6 +760,9 @@ TlsSession::process()
 
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
+
+    if (new_state == TlsSessionState::HANDSHAKE)
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
 }
 
 DhParams

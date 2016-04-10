@@ -146,9 +146,13 @@ public:
     // Return the name of current cipher.
     const char* getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const;
 
-    // Asynchronous sending operation. on_send_complete will be called with a positive number
-    // for number of bytes sent, or negative for errors, or 0 in case of shutdown (end of session).
-    ssize_t async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    // Sending operation: could be synchronous or asynchronous.
+    // Asynchronous, if session is not established yet. In this case 0 is returned and
+    // the given callback will be used to return the result of send operation when
+    // the session will be established, or any possible errors.
+    // Synchronous when the session is established. The callback is never used,
+    // and the number of bytes sent is returned, or a negative number for errors.
+    ssize_t send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -176,11 +180,11 @@ private:
         TxDataCompleteFunc onComplete;
     };
 
-    std::mutex ioMutex_ {};
-    std::condition_variable ioCv_ {};
+    mutable std::mutex ioMutex_ {};
     std::list<TxData> txQueue_ {};
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
+    void async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
     ssize_t send(const TxData&);
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
@@ -206,6 +210,8 @@ private:
     gnutls_datum_t cookie_key_ {nullptr, 0};
     gnutls_dtls_prestate_st prestate_ {};
     ssize_t cookie_count_ {0};
+    bool nextSleep_ {false};
+    clock::time_point nextTime_ {};
 
     TlsSessionState setupClient();
     TlsSessionState setupServer();
@@ -214,7 +220,6 @@ private:
     bool commonSessionInit();
 
     // FSM thread (TLS states)
-    ThreadLoop thread_; // ctor init.
     bool setup();
     void process();
     void cleanup();

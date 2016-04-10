@@ -638,9 +638,9 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
     tdata->op_key.token = token;
     tdata->op_key.callback = callback;
 
-    // Asynchronous send
+    // TLS send (could be asynch or synch)
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
-    auto ret = tls_->async_send(tdata->buf.start, size, [=](std::size_t bytes_sent) {
+    auto ret = tls_->send(tdata->buf.start, size, [=](std::size_t bytes_sent) {
             // WARN: This code is called in the context of the TlsSession thread
             if (bytes_sent == 0)
                 bytes_sent = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
@@ -649,15 +649,20 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
                 tdata->op_key.callback(&trData_.base, tdata->op_key.token, bytes_sent);
         });
 
-    // Shutdown on fatal errors
-    if (gnutls_error_is_fatal(ret)) {
+    // Shutdown on any errors
+    if (ret < 0) {
         tdata->op_key.tdata = nullptr;
         RING_ERR("[TLS] send failed: %s", gnutls_strerror(ret));
         tls_->shutdown();
         return tls_status_from_err(ret);
     }
 
-    return PJ_EPENDING;
+    // Asynch?
+    if (ret == 0)
+        return PJ_EPENDING;
+
+    tdata->op_key.tdata = nullptr;
+    return PJ_SUCCESS;
 }
 
 }} // namespace ring::tls
