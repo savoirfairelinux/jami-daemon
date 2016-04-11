@@ -2320,22 +2320,12 @@ Manager::setAccountsOrder(const std::string& order)
 std::vector<std::string>
 Manager::getAccountList() const
 {
-    auto account_order = loadAccountOrder();
-
     // Concatenate all account pointers in a single map
-    const auto& allAccounts = accountFactory_.getAllAccounts();
+    const auto& allAccounts = getAllAccounts();
     std::vector<std::string> v;
-    v.reserve(allAccounts.size());
 
-    // If no order has been set, load the default one ie according to the creation date.
-    if (account_order.empty()) {
-        for (const auto &account : allAccounts)
-            v.emplace_back(account->getAccountID());
-    } else {
-        for (const auto& id : account_order) {
-            if (accountFactory_.hasAccount(id))
-                v.push_back(id);
-        }
+    for (const auto &account : allAccounts) {
+        v.emplace_back(account->getAccountID());
     }
 
     return v;
