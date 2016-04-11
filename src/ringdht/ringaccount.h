@@ -181,7 +181,7 @@ class RingAccount : public SIPAccountBase {
         }
 
         /* Returns true if the username and/or hostname match this account */
-        MatchRank matches(const std::string &username, const std::string &hostname) const;
+        MatchRank matches(const std::string &username, const std::string &hostname) const override;
 
         /**
          * Activate the module.
