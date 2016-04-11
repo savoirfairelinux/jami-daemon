@@ -443,7 +443,7 @@ class SIPAccount : public SIPAccountBase {
         pjsip_tpselector getTransportSelector();
 
         /* Returns true if the username and/or hostname match this account */
-        MatchRank matches(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        MatchRank matches(const std::string &username, const std::string &hostname) const override;
 
         /**
          * Presence management
@@ -521,10 +521,10 @@ class SIPAccount : public SIPAccountBase {
 
         void usePublishedAddressPortInVIA();
         void useUPnPAddressPortInVIA();
-        bool fullMatch(const std::string &username, const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        bool fullMatch(const std::string &username, const std::string &hostname) const;
         bool userMatch(const std::string &username) const;
-        bool hostnameMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
-        bool proxyMatch(const std::string &hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const;
+        bool hostnameMatch(const std::string &hostname) const;
+        bool proxyMatch(const std::string &hostname) const;
 
         bool isSrtpEnabled() const {
             return srtpKeyExchange_ != sip_utils::KeyExchangeProtocol::NONE;
