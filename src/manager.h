@@ -885,7 +885,7 @@ class Manager {
         bool hasCurrentCall() const;
 
         /**
-         * Get an account pointer, looks for both SIP and IAX
+         * Get an account pointer, looks for account of type T
          * @param accountID account ID to get
          * @return std::shared_ptr<Account> Shared pointer on an Account instance or nullptr if not found
          */
@@ -894,9 +894,26 @@ class Manager {
             return accountFactory_.getAccount<T>(accountID);
         }
 
+        /**
+         * Get a list of account pointers of type T (baseclass Account)
+         * @return a sorted vector of all accounts of type T
+         */
         template <class T=Account>
-        std::vector<std::shared_ptr<T> > getAllAccounts() const {
-            return accountFactory_.getAllAccounts<T>();
+        std::vector<std::shared_ptr<T>> getAllAccounts() const {
+            auto account_order = loadAccountOrder();
+            std::vector<std::shared_ptr<T>> accountList;
+
+            // If no order has been set, load the default one ie according to the creation date.
+            if (account_order.empty()) {
+                for (const auto &account : accountFactory_.getAllAccounts<T>())
+                    accountList.emplace_back(account);
+            } else {
+                for (const auto& id : account_order) {
+                    if (auto acc = accountFactory_.getAccount<T>(id))
+                        accountList.push_back(acc);
+                }
+            }
+            return accountList;
         }
 
         template <class T=Account>

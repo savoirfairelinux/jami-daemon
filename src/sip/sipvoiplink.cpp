@@ -633,7 +633,8 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     RING_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
 
-    std::shared_ptr<SIPAccountBase> result {};
+    std::shared_ptr<SIPAccountBase> result;
+    std::shared_ptr<SIPAccountBase> IP2IPAccount;
     MatchRank best = MatchRank::NONE;
 
 #if HAVE_DHT
@@ -665,10 +666,13 @@ SIPVoIPLink::guessAccount(const std::string& userName,
         } else if (match > best) {
             best = match;
             result = account;
+        } else if (!IP2IPAccount && account->isIP2IP()) {
+            // Allow IP2IP calls if an account exists for this type of calls
+            IP2IPAccount = account;
         }
     }
 
-    return result;
+    return result ? result : IP2IPAccount;
 }
 
 // Called from EventThread::run (not main thread)
