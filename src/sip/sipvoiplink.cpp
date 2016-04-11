@@ -651,7 +651,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {
         if (!account)
             continue;
-        const MatchRank match(account->matches(userName, server, endpt_, pool_.get()));
+        const MatchRank match(account->matches(userName, server));
 
         // return right away if this is a full match
         if (match == MatchRank::FULL) {
