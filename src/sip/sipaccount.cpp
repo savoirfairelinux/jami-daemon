@@ -1276,9 +1276,9 @@ void SIPAccount::loadConfig()
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
-bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname, pjsip_endpoint *endpt, pj_pool_t *pool) const
+bool SIPAccount::fullMatch(const std::string& username, const std::string& hostname) const
 {
-    return userMatch(username) and hostnameMatch(hostname, endpt, pool);
+    return userMatch(username) and hostnameMatch(hostname);
 }
 
 bool SIPAccount::userMatch(const std::string& username) const
@@ -1286,7 +1286,7 @@ bool SIPAccount::userMatch(const std::string& username) const
     return !username.empty() and username == username_;
 }
 
-bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
+bool SIPAccount::hostnameMatch(const std::string& hostname) const
 {
     if (hostname == hostname_)
         return true;
@@ -1295,7 +1295,7 @@ bool SIPAccount::hostnameMatch(const std::string& hostname, pjsip_endpoint * /*e
     return ip_utils::haveCommonAddr(a, b);
 }
 
-bool SIPAccount::proxyMatch(const std::string& hostname, pjsip_endpoint * /*endpt*/, pj_pool_t * /*pool*/) const
+bool SIPAccount::proxyMatch(const std::string& hostname) const
 {
     if (hostname == serviceRoute_)
         return true;
@@ -1747,19 +1747,18 @@ SIPAccount::supportPresence(int function, bool enabled)
 }
 
 MatchRank
-SIPAccount::matches(const std::string &userName, const std::string &server,
-                    pjsip_endpoint *endpt, pj_pool_t *pool) const
+SIPAccount::matches(const std::string &userName, const std::string &server) const
 {
-    if (fullMatch(userName, server, endpt, pool)) {
+    if (fullMatch(userName, server)) {
         RING_DBG("Matching account id in request is a fullmatch %s@%s", userName.c_str(), server.c_str());
         return MatchRank::FULL;
-    } else if (hostnameMatch(server, endpt, pool)) {
+    } else if (hostnameMatch(server)) {
         RING_DBG("Matching account id in request with hostname %s", server.c_str());
         return MatchRank::PARTIAL;
     } else if (userMatch(userName)) {
         RING_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::PARTIAL;
-    } else if (proxyMatch(server, endpt, pool)) {
+    } else if (proxyMatch(server)) {
         RING_DBG("Matching account id in request with proxy %s", server.c_str());
         return MatchRank::PARTIAL;
     } else {
