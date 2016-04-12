@@ -97,16 +97,20 @@ endif
 ifdef HAVE_IOS
 VPX_CONF += --sdk-path=$(SDKROOT)
 endif
+LOCAL_HOSTVARS=""
 ifdef HAVE_ANDROID
 # vpx configure.sh overrides our sysroot and it looks for it itself, and
 # uses that path to look for the compiler (which we already know)
 VPX_CONF += --sdk-path=$(shell dirname $(shell which $(CROSS_COMPILE)gcc))
 # needed for cpu-features.h
 VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
+# set an explicit alternative libc since the sysroot override can make it blank
+VPX_CONF += --libc=$(SYSROOT)
+LOCAL_HOSTVARS=$(HOSTVARS)
 endif
 
 .vpx: libvpx
-	cd $< && CROSS=$(VPX_CROSS) ./configure --target=$(VPX_TARGET) \
+	cd $< && CROSS=$(VPX_CROSS) $(LOCAL_HOSTVARS) ./configure --target=$(VPX_TARGET) \
 		$(VPX_CONF) --prefix=$(PREFIX)
 	cd $< && $(MAKE)
 	cd $< && ../../../contrib/src/pkg-static.sh vpx.pc
