@@ -319,12 +319,12 @@ SipsIceTransport::handleEvents()
         auto& pck = *it;
         pj_pool_reset(rdata_.tp_info.pool);
         pj_gettimeofday(&rdata_.pkt_info.timestamp);
-        rdata_.pkt_info.len = pck.size();
-        std::copy_n(pck.data(), pck.size(), rdata_.pkt_info.packet);
+        rdata_.pkt_info.len = (pck.size() <= PJSIP_MAX_PKT_LEN ? pck.size() : PJSIP_MAX_PKT_LEN);
+        std::copy_n(pck.data(), rdata_.pkt_info.len, rdata_.pkt_info.packet);
         auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
 
         // Uncomplet parsing? (may be a partial sip packet received)
-        if (eaten != rdata_.pkt_info.len) {
+        if (eaten != pck.size()) {
             auto npck_it = std::next(it);
             if (npck_it != rx.end()) {
                 // drop current packet, merge reminder with next one
@@ -369,12 +369,7 @@ void
 SipsIceTransport::onRxData(std::vector<uint8_t>&& buf)
 {
     std::lock_guard<std::mutex> l(rxMtx_);
-    if (rxPending_.empty())
-        rxPending_.emplace_back(std::move(buf));
-    else {
-        auto& last = rxPending_.back();
-        last.insert(std::end(last), std::begin(buf), std::end(buf));
-    }
+    rxPending_.emplace_back(std::move(buf));
 }
 
 /* Update local & remote certificates info. This function should be
