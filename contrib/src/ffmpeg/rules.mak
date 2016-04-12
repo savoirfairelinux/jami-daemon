@@ -33,9 +33,11 @@ FFMPEGCONF += \
 		--enable-parser=vp8
 
 #librairies
+ifndef HAVE_ANDROID
 FFMPEGCONF += \
 		--enable-libx264 \
 		--enable-libvpx
+endif
 
 #encoders/decoders
 FFMPEGCONF += \
@@ -88,6 +90,18 @@ FFMPEGCONF += \
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
+# Linux
+ifdef HAVE_LINUX
+FFMPEGCONF += --target-os=linux --enable-pic
+ifndef HAVE_ANDROID
+FFMPEGCONF += --enable-indev=v4l2 --enable-indev=x11grab --enable-x11grab
+else
+# used to avoid Text Relocations
+FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
+FFMPEGCONF += --disable-asm
+endif
+endif
+
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
 endif
@@ -99,6 +113,25 @@ endif
 
 ifeq ($(ARCH),x86_64)
 FFMPEGCONF += --arch=x86_64
+endif
+
+# ARM stuff
+ifeq ($(ARCH),arm)
+FFMPEGCONF += --arch=arm
+ifdef HAVE_NEON
+FFMPEGCONF += --enable-neon
+endif
+ifdef HAVE_ARMV7A
+FFMPEGCONF += --cpu=cortex-a8
+endif
+ifdef HAVE_ARMV6
+FFMPEGCONF += --cpu=armv6 --disable-neon
+endif
+endif
+
+# ARM64 stuff
+ifeq ($(ARCH),aarch64)
+FFMPEGCONF += --arch=aarch64
 endif
 
 # Windows
@@ -128,6 +161,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 .ffmpeg: ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
-		--prefix="$(PREFIX)" --enable-static --disable-shared
+                --prefix="$(PREFIX)" --enable-static --disable-shared
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@
