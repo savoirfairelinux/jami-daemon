@@ -106,7 +106,7 @@ VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
 endif
 
 .vpx: libvpx
-	cd $< && CROSS=$(VPX_CROSS) ./configure --target=$(VPX_TARGET) \
+	cd $< && CROSS=$(VPX_CROSS) $(HOSTVARS) ./configure --target=$(VPX_TARGET) \
 		$(VPX_CONF) --prefix=$(PREFIX)
 	cd $< && $(MAKE)
 	cd $< && ../../../contrib/src/pkg-static.sh vpx.pc

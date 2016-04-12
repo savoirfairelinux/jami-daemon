@@ -33,9 +33,9 @@ FFMPEGCONF += \
 		--enable-parser=vp8
 
 #librairies
-FFMPEGCONF += \
-		--enable-libx264 \
-		--enable-libvpx
+#FFMPEGCONF += \
+#		--enable-libx264 \
+#		--enable-libvpx
 
 #encoders/decoders
 FFMPEGCONF += \
@@ -88,6 +88,14 @@ FFMPEGCONF += \
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
+# Linux
+ifdef HAVE_LINUX
+FFMPEGCONF += --target-os=linux --enable-pic
+ifndef HAVE_ANDROID
+FFMPEGCONF += --enable-indev=v4l2 --enable-indev=x11grab --enable-x11grab
+endif
+endif
+
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
 endif
@@ -127,7 +135,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 
 .ffmpeg: ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
-		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
-		--prefix="$(PREFIX)" --enable-static --disable-shared
+		--extra-ldflags="$(LDFLAGS)" --extra-cxxflags=-fPIC --extra-cflags=-fPIC $(FFMPEGCONF) \
+                --prefix="$(PREFIX)" --enable-static --disable-shared --disable-asm
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@
