@@ -276,10 +276,16 @@ registerAllAccounts()
     ring::Manager::instance().registerAccounts();
 }
 
-void
+uint64_t
 sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads)
 {
-    ring::Manager::instance().sendTextMessage(accountID, to, payloads);
+    return ring::Manager::instance().sendTextMessage(accountID, to, payloads);
+}
+
+std::string
+getMessageStatus(uint64_t id)
+{
+    return ring::Manager::instance().getMessageStatus(id);
 }
 
 /* contact requests */

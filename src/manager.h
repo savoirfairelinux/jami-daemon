@@ -416,8 +416,10 @@ class Manager {
          */
         void sendRegister(const std::string& accountId, bool enable);
 
-        void sendTextMessage(const std::string& accountID, const std::string& to,
+        uint64_t sendTextMessage(const std::string& accountID, const std::string& to,
                              const std::map<std::string, std::string>& payloads);
+
+        std::string getMessageStatus(uint64_t id);
 
         /**
          * Get account list
@@ -976,6 +978,13 @@ class Manager {
 
         void addTask(const std::function<bool()>&& task);
 
+        struct Runnable {
+            std::function<void()> cb;
+            Runnable(const std::function<void()>&& t) : cb(std::move(t)) {}
+        };
+        std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
+        void scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when);
+
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
@@ -989,6 +998,8 @@ class Manager {
         decltype(eventHandlerMap_)::iterator nextEventHandler_;
 
         std::list<std::function<bool()>> pendingTaskList_;
+        std::multimap<std::chrono::steady_clock::time_point, std::shared_ptr<Runnable>> scheduledTasks_;
+        std::mutex scheduledTasksMutex_;
 
         /**
          * Test if call is a valid call, i.e. have been created and stored in
