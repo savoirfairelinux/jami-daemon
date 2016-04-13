@@ -260,7 +260,7 @@ AudioReceiveThread::setup()
     audioDecoder_->setIOContext(sdpContext_.get());
     EXIT_IF_FAIL(not audioDecoder_->openInput(args_),
         "Could not open input \"%s\"", SDP_FILENAME);
-    // Now replace our custom AVIOContext with one that will read packets
+	// Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
 
     EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(format_),
@@ -275,8 +275,8 @@ AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     AudioFrame decodedFrame;
-
-    switch (audioDecoder_->decode(decodedFrame)) {
+	
+	switch (audioDecoder_->decode(decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,

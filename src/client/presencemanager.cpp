@@ -35,7 +35,6 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
-#include "intrin.h"
 
 namespace DRing {
 
@@ -101,9 +100,8 @@ publish(const std::string& accountID, bool status, const std::string& note)
  * Accept or not a PresSubServer request for IP2IP account
  */
 void
-answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
+answerServerRequest(const std::string& uri, bool flag)
 {
-#if 0 // DISABLED: removed IP2IP support, tuleap: #448
     auto account = ring::Manager::instance().getIP2IPAccount();
     if (auto sipaccount = static_cast<SIPAccount *>(account.get())) {
         RING_DBG("Approve presence (acc:IP2IP, serv:%s, flag:%s)", uri.c_str(),
@@ -115,9 +113,6 @@ answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
             RING_ERR("Presence not initialized");
     } else
         RING_ERR("Could not find account IP2IP");
-#else
-    RING_ERR("answerServerRequest() is deprecated and does nothing");
-#endif
 }
 
 /**

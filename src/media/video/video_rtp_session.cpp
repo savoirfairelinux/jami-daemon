@@ -24,8 +24,9 @@
 #include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
-#include "ice_socket.h"
-#include "socket_pair.h"
+//#include "ice_socket.h"
+#include "ice_transport.h"
+
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"
 #include "logger.h"
@@ -82,7 +83,7 @@ void VideoRtpSession::startSender()
                     else
                         RING_ERR("No valid new video parameters.");
                 } catch (const std::exception& e) {
-                    RING_ERR("Exception during retrieving video parameters: %s",
+                    RING_ERR("Exception during retriving video parameters: %s",
                              e.what());
                 }
             } else {

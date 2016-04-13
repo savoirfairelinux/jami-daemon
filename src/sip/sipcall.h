@@ -128,10 +128,10 @@ class SIPCall : public Call
 
         void setContactHeader(pj_str_t *contact);
 
-        void setTransport(std::shared_ptr<SipTransport> t);
+        void setTransport(const std::shared_ptr<SipTransport>& t);
 
-        inline SipTransport* getTransport() {
-            return transport_.get();
+        inline const std::shared_ptr<SipTransport>& getTransport() {
+            return transport_;
         }
 
         void sendSIPInfo(const char *const body, const char *const subtype);

@@ -32,7 +32,7 @@ namespace ring {
 class AudioFileException : public std::runtime_error {
     public:
         AudioFileException(const std::string &str) :
-            std::runtime_error("AudioFile: AudioFileException occurred: " + str) {}
+            std::runtime_error("AudioFile: AudioFileException occured: " + str) {}
 };
 
 /**

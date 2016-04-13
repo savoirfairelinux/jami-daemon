@@ -19,7 +19,6 @@
  */
 
 #include "ice_transport.h"
-#include "ice_socket.h"
 #include "logger.h"
 #include "sip/sip_utils.h"
 #include "manager.h"
@@ -45,23 +44,6 @@ namespace ring {
 template< class T >
 static constexpr const T& min( const T& a, const T& b ) {
     return (b < a) ? b : a;
-}
-
-static void
-register_thread()
-{
-    // We have to register the external thread so it could access the pjsip frameworks
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
-#endif
-        pj_thread_register(NULL, desc, &this_thread);
-        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
-    }
 }
 
 IceTransport::Packet::Packet(void *pkt, pj_size_t size)
@@ -773,45 +755,6 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
     return count;
 }
 
-void
-IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
-{
-    auto& io = compIO_[comp_id];
-    std::lock_guard<std::mutex> lk(io.mutex);
-    io.cb = cb;
-
-    if (cb) {
-        // Flush existing queue using the callback
-        for (const auto& packet : io.queue)
-            io.cb((uint8_t*)packet.data.get(), packet.datalen);
-        io.queue.clear();
-    }
-}
-
-ssize_t
-IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
-{
-    register_thread();
-    auto remote = getRemoteAddress(comp_id);
-    if (!remote) {
-        RING_ERR("Can't find remote address for component %d", comp_id);
-        errno = EINVAL;
-        return -1;
-    }
-    auto status = pj_ice_strans_sendto(icest_.get(), comp_id+1, buf, len, remote.pjPtr(), remote.getLength());
-    if (status != PJ_SUCCESS) {
-        if (status == PJ_EBUSY) {
-            errno = EAGAIN;
-        } else {
-            RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
-            errno = EIO;
-        }
-        return -1;
-    }
-
-    return len;
-}
-
 ssize_t
 IceTransport::getNextPacketSize(int comp_id)
 {
@@ -917,14 +860,6 @@ IceSocket::recv(unsigned char* buf, size_t len)
 }
 
 ssize_t
-IceSocket::send(const unsigned char* buf, size_t len)
-{
-    if (!ice_transport_.get())
-        return -1;
-    return ice_transport_->send(compId_, buf, len);
-}
-
-ssize_t
 IceSocket::getNextPacketSize() const
 {
     if (!ice_transport_.get())
@@ -939,14 +874,6 @@ IceSocket::waitForData(unsigned int timeout)
         return -1;
 
     return ice_transport_->waitForData(compId_, timeout);
-}
-
-void
-IceSocket::setOnRecv(IceRecvCb cb)
-{
-    if (!ice_transport_.get())
-        return;
-    return ice_transport_->setOnRecv(compId_, cb);
 }
 
 } // namespace ring

@@ -55,6 +55,7 @@
 #endif
 #include <unistd.h>
 #include <fcntl.h>
+#include <dirent.h>
 
 namespace ring { namespace tls {
 

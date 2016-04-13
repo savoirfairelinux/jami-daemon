@@ -23,9 +23,13 @@
 #include "video_base.h"
 #include "media_buffer.h"
 #include "string_utils.h"
-#include "logger.h"
+#include "logger.h" 
 
 #include <cassert>
+
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
 
 namespace ring { namespace video {
 

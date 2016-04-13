@@ -35,6 +35,10 @@
 
 #include <dshow.h>
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace ring { namespace video {
 
 class VideoDeviceImpl {
@@ -237,7 +241,7 @@ VideoDeviceImpl::getDeviceParams() const
             auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
             params.width = videoInfo->bmiHeader.biWidth;
             params.height = videoInfo->bmiHeader.biHeight;
-            params.framerate = {1e7,  videoInfo->AvgTimePerFrame};
+            params.framerate = {1e7,  static_cast<double>(videoInfo->AvgTimePerFrame)};
         }
     }
     return params;

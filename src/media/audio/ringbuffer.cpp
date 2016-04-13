@@ -31,6 +31,10 @@
 #include <cstdlib>
 #include <cstring>
 
+#ifdef WIN32_NATIVE
+# include <algorithm>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 // corresponds to 160 ms (about 5 rtp packets)

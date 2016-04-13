@@ -26,7 +26,11 @@
 #include "config.h"
 #endif
 
+#ifdef WIN32_NATIVE
+#include "u_intrin.h"
+#elif
 #include "intrin.h"
+#endif
 
 #include "sdp.h"
 #include "sipvoiplink.h"
@@ -166,9 +170,8 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED)
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::INCOMING);
 }
 
-template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingSIPCall(const std::string& toUrl)
 {
     std::string to;
     std::string toUri;
@@ -312,7 +315,7 @@ SIPAccount::getTransportSelector() {
 std::shared_ptr<Call>
 SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+	return newOutgoingSIPCall(toUrl);
 }
 
 bool

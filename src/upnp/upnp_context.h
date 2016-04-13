@@ -39,8 +39,8 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
-#include <upnp/upnp.h>
-#include <upnp/upnptools.h>
+#include <upnp.h>
+#include <upnptools.h>
 #endif
 
 #include "noncopyable.h"

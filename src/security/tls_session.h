@@ -45,8 +45,8 @@ class IceSocket;
 } // namespace ring
 
 namespace dht { namespace crypto {
-class Certificate;
-class PrivateKey;
+struct Certificate;
+struct PrivateKey;
 }} // namespace dht::crypto
 
 namespace ring { namespace tls {
@@ -63,6 +63,10 @@ class DhParams {
 public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
+	
+	DhParams& operator =(const DhParams&){
+		return *this;
+	}
 
     /** Take ownership of gnutls_dh_params */
     explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
@@ -73,7 +77,7 @@ public:
     gnutls_dh_params_t get() {
         return params_.get();
     }
-    gnutls_dh_params_t get() const {
+    const gnutls_dh_params_t get() const {
         return params_.get();
     }
 
@@ -82,7 +86,7 @@ public:
 
     static DhParams generate();
 
-private:
+private:	
     std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&> params_ {nullptr, gnutls_dh_params_deinit};
 };
 
@@ -95,7 +99,8 @@ struct TlsParams {
     std::shared_ptr<dht::crypto::PrivateKey> cert_key;
 
     // Diffie-Hellman computed by gnutls_dh_params_init/gnutls_dh_params_generateX
-    std::shared_future<DhParams> dh_params;
+    //std::shared_future<DhParams> dh_params;
+	std::shared_future<DhParams> dh_params;
 
     // DTLS timeout
     std::chrono::steady_clock::duration timeout;
@@ -197,19 +202,15 @@ private:
 
     // GnuTLS backend and connection state
     class TlsCertificateCredendials;
-    class TlsAnonymousClientCredendials;
-    class TlsAnonymousServerCredendials;
-    std::unique_ptr<TlsAnonymousClientCredendials> cacred_; // ctor init.
-    std::unique_ptr<TlsAnonymousServerCredendials> sacred_; // ctor init.
     std::unique_ptr<TlsCertificateCredendials> xcred_; // ctor init.
     gnutls_session_t session_ {nullptr};
     gnutls_datum_t cookie_key_ {nullptr, 0};
+    gnutls_priority_t priority_cache_ {nullptr};
     gnutls_dtls_prestate_st prestate_ {};
     ssize_t cookie_count_ {0};
 
     TlsSessionState setupClient();
     TlsSessionState setupServer();
-    void initAnonymous();
     void initCredentials();
     bool commonSessionInit();
 

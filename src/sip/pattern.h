@@ -30,7 +30,7 @@ namespace ring {
 
 /**
  * Exception object that is thrown when
- * an error occurred while compiling the
+ * an error occured while compiling the
  * regular expression.
  */
 class CompileError : public std::invalid_argument {
@@ -41,7 +41,7 @@ class CompileError : public std::invalid_argument {
 
 /**
  * Exception object that is thrown when
- * an error occurred while mathing a
+ * an error occured while mathing a
  * pattern to an expression.
  */
 class MatchError : public std::invalid_argument {

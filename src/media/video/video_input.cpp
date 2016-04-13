@@ -39,7 +39,12 @@
 #include <string>
 #include <sstream>
 #include <cassert>
-#include <unistd.h>
+
+#ifdef WIN32_NATIVE
+# include <io.h>
+#else
+# include <unistd.h>
+#endif /* WIN32_NATIVE */
 
 namespace ring { namespace video {
 

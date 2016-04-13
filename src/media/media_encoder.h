@@ -37,6 +37,10 @@
 #include <string>
 #include <vector>
 
+#include "media_codec.h"
+#include "media_buffer.h"
+#include "media_io_handle.h"
+
 class AVCodecContext;
 class AVStream;
 class AVFormatContext;
@@ -45,10 +49,10 @@ class AVCodec;
 
 namespace ring {
 
-class AudioBuffer;
-class MediaIOHandle;
-class MediaDescription;
-class AccountCodecInfo;
+//class AudioBuffer;
+//class MediaIOHandle;
+//class MediaDescription;
+//class AccountCodecInfo;
 
 class MediaEncoderException : public std::runtime_error {
     public:

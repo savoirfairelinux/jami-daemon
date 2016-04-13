@@ -26,7 +26,7 @@
 #include <cstring>
 #include <vector>
 #include <climits>
-#include <sndfile.hh>
+#include <sndfile.h>
 
 #include "audiofile.h"
 #include "audio/resampler.h"
@@ -34,6 +34,8 @@
 #include "client/ring_signal.h"
 
 #include "logger.h"
+
+#include <sndfile.hh>
 
 namespace ring {
 

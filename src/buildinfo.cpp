@@ -25,14 +25,19 @@
 #include "dring.h"
 #include <string>
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace DRing {
 
 const char*
 version() noexcept
 {
-    return RING_REVISION[0] and RING_DIRTY_REPO[0] ?
+    /*return RING_REVISION[0] and RING_DIRTY_REPO[0] ?
         PACKAGE_VERSION "-" RING_REVISION "-" RING_DIRTY_REPO :
-        (RING_REVISION[0] ? PACKAGE_VERSION "-" RING_REVISION : PACKAGE_VERSION);
+        (RING_REVISION[0] ? PACKAGE_VERSION "-" RING_REVISION : PACKAGE_VERSION);*/
+	return " ";
 }
 
 } // namespace DRing

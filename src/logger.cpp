@@ -24,7 +24,12 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/time.h>
+
+#ifdef WIN32_NATIVE
+# include <sys_time.h>
+#else
+# include <sys/time.h>
+#endif
 
 #include <string>
 #include <sstream>
@@ -41,7 +46,7 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef WIN32
+#ifdef WIN32_NATIVE
 #include "winsyslog.h"
 #endif
 
@@ -65,9 +70,13 @@
 #define YELLOW "\033[01;33m"
 #define CYAN "\033[22;36m"
 #else
-#define RED FOREGROUND_RED
-#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN
-#define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN
+#define LIGHTER 1
+#define ADJUSTMENT (LIGHTER * 0x0008)
+#define FOREGROUND_WHITE 0x0007
+#define RED FOREGROUND_RED + ADJUSTMENT
+#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN + ADJUSTMENT
+#define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN + ADJUSTMENT
+#define FOREGROUND_NORMAL FOREGROUND_GREEN + ADJUSTMENT
 #endif
 
 static int consoleLog;
@@ -138,7 +147,7 @@ vlogger(const int level, const char *format, va_list ap)
         const char* color_prefix = "";
 #else
         WORD color_header = CYAN;
-        WORD color_prefix = FOREGROUND_GREEN;
+		WORD color_prefix = FOREGROUND_NORMAL;
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
         WORD saved_attributes;
@@ -177,8 +186,9 @@ vlogger(const int level, const char *format, va_list ap)
         vfprintf(stderr, format, ap);
 
 #ifndef _WIN32
-        fputs(END_COLOR, stderr);
+        fputs(END_COLOR"\n", stderr);
 #else
+        fputs("\n", stderr);
         SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
 

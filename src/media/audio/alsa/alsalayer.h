@@ -111,9 +111,10 @@ class AlsaLayer : public AudioLayer {
         int getAudioDeviceIndex(const std::string &description, DeviceType type) const;
         std::string getAudioDeviceName(int index, DeviceType type) const;
 
-        void playback();
-        void ringtone();
+        void playback(int maxSamples);
         void capture();
+
+        void audioCallback();
 
         /**
          * Get the index of the audio card for capture

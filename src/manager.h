@@ -1,3 +1,4 @@
+<<<<<<< e10a8eed6419901b6adec5001d993aa9994fbf83
 /*
  *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *

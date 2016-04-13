@@ -240,7 +240,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
             // Reply 200 immediatly (RFC 3428, ch. 7)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
-            auto payloads = im::parseSipMessage(rdata->msg_info.msg);
+            auto payloads = InstantMessaging::parseSipMessage(rdata->msg_info.msg);
             if (payloads.size() > 0)
                 account->onTextMessage(peerNumber, payloads);
             return PJ_FALSE;
@@ -610,7 +610,11 @@ SIPVoIPLink::~SIPVoIPLink()
     for (int timeout = 0;
          pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
          timeout++)
-        sleep(1);
+#ifdef WIN32_NATIVE
+		Sleep(1);
+#else 
+		sleep(1);
+#endif /* WIN32_NATIVE */
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
@@ -633,8 +637,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     RING_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
 
-    std::shared_ptr<SIPAccountBase> result;
-    std::shared_ptr<SIPAccountBase> IP2IPAccount;
+    auto result = std::static_pointer_cast<SIPAccountBase>(Manager::instance().getIP2IPAccount()); // default result
     MatchRank best = MatchRank::NONE;
 
 #if HAVE_DHT
@@ -666,13 +669,10 @@ SIPVoIPLink::guessAccount(const std::string& userName,
         } else if (match > best) {
             best = match;
             result = account;
-        } else if (!IP2IPAccount && account->isIP2IP()) {
-            // Allow IP2IP calls if an account exists for this type of calls
-            IP2IPAccount = account;
         }
     }
 
-    return result ? result : IP2IPAccount;
+    return result;
 }
 
 // Called from EventThread::run (not main thread)
@@ -681,12 +681,12 @@ SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined(WIN32_NATIVE)
         static thread_local pj_thread_desc desc;
         static thread_local pj_thread_t *this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
+#elif
+		static __thread pj_thread_desc desc;
+		static __thread pj_thread_t *this_thread;
 #endif
         RING_DBG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
@@ -1121,7 +1121,7 @@ onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg
     //      case of conferences; a content type containing this info will be added to the messages
     //      in the future
     Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        im::parseSipMessage(msg));
+                                        InstantMessaging::parseSipMessage(msg));
 
 #endif // HAVE_INSTANT_MESSAGING
 }
@@ -1245,9 +1245,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
     RING_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
 
     pjsip_host_info host_info {
-        .flag = 0,
-        .type = type,
-        .addr = {{(char*)name.c_str(), name_size}, port},
+        /*.flag = */0,
+        /*.type = */type,
+        /*.addr = */{{(char*)name.c_str(), name_size}, port},
     };
 
     const auto token = std::hash<std::string>()(name + to_string(type));

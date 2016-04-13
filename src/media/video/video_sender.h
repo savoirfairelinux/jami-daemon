@@ -26,6 +26,10 @@
 #include "media_encoder.h"
 #include "media_io_handle.h"
 
+#include "socket_pair.h"
+#include "media_device.h"
+#include "media_codec.h"
+
 #include <map>
 #include <string>
 #include <memory>
@@ -33,7 +37,7 @@
 
 // Forward declarations
 namespace ring {
-class SocketPair;
+//class SocketPair;
 class AccountVideoCodecInfo;
 }
 

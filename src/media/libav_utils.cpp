@@ -34,6 +34,10 @@
 #include <mutex>
 #include <exception>
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace ring { namespace libav_utils {
 
 // protect libav/ffmpeg access

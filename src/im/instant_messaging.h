@@ -39,12 +39,12 @@ struct pjsip_rx_data;
 struct pjsip_msg;
 struct pjsip_tx_data;
 
-namespace ring { namespace im {
+namespace ring { namespace InstantMessaging {
 
 struct InstantMessageException : std::runtime_error
 {
     InstantMessageException(const std::string& str="") :
-        std::runtime_error("InstantMessageException occurred: " + str) {}
+        std::runtime_error("InstantMessageException occured: " + str) {}
 };
 
 /**
@@ -84,4 +84,4 @@ void sendIaxMessage(iax_session* session, const std::string& id,
 
 void fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::string>& payloads);
 
-}} // namespace ring::im
+}} // namespace ring::InstantMessaging

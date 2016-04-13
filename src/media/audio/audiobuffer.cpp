@@ -23,6 +23,10 @@
 #include <string.h>
 #include <cstring> // memset
 
+#ifdef WIN32_NATIVE
+# include <algorithm>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 std::ostream& operator <<(std::ostream& stream, const AudioFormat& f) {

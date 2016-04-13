@@ -20,10 +20,8 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "media_codec.h"
+
 #include "media_encoder.h"
-#include "media_buffer.h"
-#include "media_io_handle.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -117,8 +115,7 @@ MediaEncoder::getLastSeqValue()
 }
 
 void
-MediaEncoder::openOutput(const char *filename,
-                         const ring::MediaDescription& args)
+MediaEncoder::openOutput(const char *filename, const MediaDescription& args)
 {
     setOptions(args);
     AVOutputFormat *oformat = av_guess_format("rtp", filename, nullptr);
@@ -588,7 +585,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         auto v = av_dict_get(options_, "sample_rate", NULL, 0);
         if (v) {
             encoderCtx_->sample_rate = atoi(v->value);
-            encoderCtx_->time_base = (AVRational) {1, encoderCtx_->sample_rate};
+            encoderCtx_->time_base = AVRational {1, encoderCtx_->sample_rate};
         } else {
             RING_WARN("[%s] No sample rate set", encoderName);
             encoderCtx_->sample_rate = 8000;

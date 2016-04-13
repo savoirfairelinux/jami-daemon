@@ -32,6 +32,8 @@
 #include "ringdht/ringaccount.h"
 #endif
 
+#include "sip/sipvoiplink.h" // for SIPVoIPLink::loadIP2IPSettings
+
 #include <stdexcept>
 
 namespace ring {
@@ -189,6 +191,19 @@ AccountFactory::accountCount() const
         count += it.second.size();
 
     return count;
+}
+
+std::shared_ptr<Account>
+AccountFactory::getIP2IPAccount() const
+{
+    return ip2ip_account_.lock();
+}
+
+void AccountFactory::initIP2IPAccount()
+{
+    // cache this often used account using a weak_ptr
+    ip2ip_account_ = createAccount(SIPAccount::ACCOUNT_TYPE,
+                                   SIPAccount::IP2IP_PROFILE);
 }
 
 } // namespace ring

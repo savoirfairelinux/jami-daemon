@@ -1,13 +1,6 @@
 /*
  * This header borrowed from Cygnus GNUwin32 project
  *
- * Cygwin is free software.  Red Hat, Inc. licenses Cygwin to you under the
- * terms of the GNU General Public License as published by the Free Software
- * Foundation; you can redistribute it and/or modify it under the terms of
- * the GNU General Public License either version 3 of the license, or (at your
- * option) any later version (GPLv3+), along with the additional permissions
- * given below.
- *
  * Modified for use with functions to map syslog
  * calls to EventLog calls on the windows platform
  *
@@ -20,9 +13,7 @@
 
 #ifndef WINSYSLOG_H
 #define WINSYSLOG_H
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN 1
-#endif
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #define WINLOG_PRIMASK  0x07

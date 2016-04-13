@@ -22,7 +22,8 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "socket_pair.h"
-#include "ice_socket.h"
+//#include "ice_socket.h"
+#include "ice_transport.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -39,6 +40,10 @@ extern "C" {
 #include <stdexcept>
 #include <unistd.h>
 #include <sys/types.h>
+
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
 
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO

@@ -247,7 +247,9 @@ ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
 #if defined __ANDROID__ || defined _WIN32
-#warning "Not implemented"
+#ifndef WIN32_NATIVE
+# warning "Not implemented"
+#endif
 #else
     if (not (_res.options & RES_INIT))
         res_init();
@@ -281,8 +283,8 @@ IpAddr::isUnspecified() const
     switch (addr.addr.sa_family) {
     case AF_INET:
         return IN_IS_ADDR_UNSPECIFIED(&addr.ipv4.sin_addr);
-    case AF_INET6:
-        return IN6_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
+    /*case AF_INET6:
+        return IN6_IS_ADDR_UNSPECIFIED(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));*/
     default:
         return true;
     }
@@ -296,8 +298,8 @@ IpAddr::isLoopback() const
         uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
         return b1 == 127;
     }
-    case AF_INET6:
-        return IN6_IS_ADDR_LOOPBACK(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
+    /*case AF_INET6:
+        return IN6_IS_ADDR_LOOPBACK(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));*/
     default:
         return false;
     }

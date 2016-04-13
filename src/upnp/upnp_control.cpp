@@ -46,10 +46,8 @@ Controller::~Controller()
 {
     /* remove all mappings */
     removeMappings();
-#if HAVE_LIBUPNP
     if (listToken_ and upnpContext_)
         upnpContext_->removeIGDListener(listToken_);
-#endif
 }
 
 bool
@@ -66,11 +64,9 @@ Controller::setIGDListener(IGDFoundCallback&& cb)
 {
     if (not upnpContext_)
         return;
-#if HAVE_LIBUPNP
     if (listToken_)
         upnpContext_->removeIGDListener(listToken_);
     listToken_ = cb ? upnpContext_->addIGDListener(std::move(cb)) : 0;
-#endif
 }
 
 bool

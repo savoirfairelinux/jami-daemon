@@ -23,6 +23,8 @@
 #include <memory>
 #include <functional>
 
+#include <utf8_utils.h>
+
 namespace ring {
 
 class IceTransport;

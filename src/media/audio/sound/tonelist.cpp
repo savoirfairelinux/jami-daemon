@@ -22,6 +22,10 @@
  */
 #include "tonelist.h"
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {

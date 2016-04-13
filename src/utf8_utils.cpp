@@ -38,7 +38,6 @@
 #define UNLIKELY(expr) (expr)
 #endif
 
-
 /*
  * Check whether a Unicode (5.2) char is in a valid range.
  *
@@ -255,7 +254,7 @@ utf8_make_valid(const std::string & name)
     const char *remainder = name.c_str();
     const char *invalid;
     char *str = NULL;
-    char *pos;
+    char *pos = NULL;
 
     while (remaining_bytes != 0) {
         if (utf8_validate_c_str(remainder, remaining_bytes, &invalid))

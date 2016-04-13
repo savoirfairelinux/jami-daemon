@@ -34,7 +34,11 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
-#include "intrin.h" // UNUSED
+#ifdef WIN32_NATIVE
+#include "u_intrin.h"
+#elif
+#include "intrin.h"
+#endif
 
 #include <functional>
 #include <string>

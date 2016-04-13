@@ -36,6 +36,13 @@
 #include <memory>
 #include <chrono>
 
+#include "media_device.h"
+#include "media_buffer.h"
+#include "media_io_handle.h"
+#include "audio/audiobuffer.h"
+#include "audio/ringbuffer.h"
+#include "audio/resampler.h"
+
 class AVCodecContext;
 class AVStream;
 class AVDictionary;
@@ -43,13 +50,6 @@ class AVFormatContext;
 class AVCodec;
 
 namespace ring {
-
-class AudioFrame;
-class AudioFormat;
-class RingBuffer;
-class Resampler;
-class MediaIOHandle;
-class DeviceParams;
 
 class MediaDecoder {
     public:
@@ -66,8 +66,8 @@ class MediaDecoder {
 
         void emulateRate() { emulateRate_ = true; }
         void setInterruptCallback(int (*cb)(void*), void *opaque);
-        int openInput(const DeviceParams&);
-
+		int openInput(const DeviceParams&);
+		
         void setIOContext(MediaIOHandle *ioctx);
 #ifdef RING_VIDEO
         int setupFromVideoData();

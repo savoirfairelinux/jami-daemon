@@ -28,8 +28,10 @@
 #endif
 
 #ifdef _WIN32
-    #include <ws2tcpip.h>
-
+# define WINVER 0x0A00
+# define _WIN32_WINNT 0x0A00
+# include <ws2tcpip.h>
+# include <iso646.h>
     //define in mingw
     #ifdef interface
     #undef interface
