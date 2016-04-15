@@ -113,9 +113,9 @@ class OpenSLLayer : public AudioLayer {
             return "";
         }
 
-        bool engineServicePlay(bool waiting);
-        bool engineServiceRing(bool waiting);
-        bool engineServiceRec(bool waiting);
+        void engineServicePlay(bool waiting);
+        void engineServiceRing(bool waiting);
+        void engineServiceRec(bool waiting);
 
     private:
         void audioCaptureFillBuffer(AudioBuffer &buffer);
