@@ -121,7 +121,7 @@ MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
         RING_WARN("Can't send message in status %d", (int)m->second.status);
         return;
     }
-    RING_DBG("Retrying to send message %lu", m->first);
+    RING_DBG("Retrying to send message %llu", m->first);
     m->second.status = MessageStatus::SENDING;
     m->second.retried++;
     m->second.last_op = clock::now();
@@ -132,7 +132,7 @@ MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
 void
 MessageEngine::onMessageSent(MessageToken token, bool ok)
 {
-    RING_WARN("Message %lu: %s", token, ok ? "success" : "failure");
+    RING_WARN("Message %llu: %s", token, ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto f = messages_.find(token);
     if (f != messages_.end()) {
