@@ -870,7 +870,7 @@ SIPCall::startAllMedia()
         }
     }
 
-    if (peerHolding_ != peer_holding) {
+    if (not quiet and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
@@ -906,14 +906,16 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
-        emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
+        if (not quiet)
+            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (mute == isAudioMuted_) return;
         RING_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
-        emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+        if (not quiet)
+            emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
     }
 }
 

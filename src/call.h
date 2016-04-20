@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __CALL_H__
-#define __CALL_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,6 +39,7 @@
 #include <memory>
 #include <vector>
 #include <condition_variable>
+#include <set>
 
 namespace ring {
 
@@ -333,6 +333,16 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaSender() = 0;
 
+        using StateListener = std::function<void(CallState, int)>;
+
+        template<class T>
+        void addStateListener(T&& list) {
+            stateChangedListeners_.emplace_back(std::forward<T>(list));
+        }
+
+        bool quiet {false};
+        std::set<std::shared_ptr<Call>> subcalls {};
+
     protected:
         /**
          * Constructor of a call
@@ -351,6 +361,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         /** Protect every attribute that can be changed by two threads */
         mutable std::recursive_mutex callMutex_ {};
+
+        std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
         // Informations about call socket / audio
 
@@ -393,6 +405,11 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         time_t timestamp_start_ {0};
 };
 
-} // namespace ring
+/*
+class CallGroup {
+    std::string id;
+    std::set<std::shared_ptr<Call>> calls;
+};*/
 
-#endif // __CALL_H__
+
+} // namespace ring
