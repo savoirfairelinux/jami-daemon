@@ -29,7 +29,12 @@
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
 #include "sip_utils.h"
-#include "intrin.h"
+
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
 
 namespace ring {
 
@@ -52,6 +57,7 @@ PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_eve
 
     auto account = Manager::instance().getIP2IPAccount();
     auto sipaccount = static_cast<SIPAccount *>(account.get());
+
     if (!sipaccount) {
         RING_ERR("Could not find account IP2IP");
         return;

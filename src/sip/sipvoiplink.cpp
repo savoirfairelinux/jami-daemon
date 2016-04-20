@@ -610,7 +610,11 @@ SIPVoIPLink::~SIPVoIPLink()
     for (int timeout = 0;
          pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
          timeout++)
+#ifdef WIN32_NATIVE
+        Sleep(1);
+#else 
         sleep(1);
+#endif /* WIN32_NATIVE */
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
@@ -681,7 +685,7 @@ SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined WIN32_NATIVE
         static thread_local pj_thread_desc desc;
         static thread_local pj_thread_t *this_thread;
 #else
@@ -1245,9 +1249,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
     RING_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
 
     pjsip_host_info host_info {
-        .flag = 0,
-        .type = type,
-        .addr = {{(char*)name.c_str(), name_size}, port},
+        /*.flag = */0,
+        /*.type = */type,
+        /*.addr = */{{(char*)name.c_str(), name_size}, port},
     };
 
     const auto token = std::hash<std::string>()(name + to_string(type));

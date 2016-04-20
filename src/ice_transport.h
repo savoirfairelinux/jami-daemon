@@ -21,8 +21,16 @@
 #ifndef ICE_TRANSPORT_H
 #define ICE_TRANSPORT_H
 
-#include "ice_socket.h"
+#ifndef WIN32_NATIVE
+# include "ice_socket.h"
+#endif
+
 #include "ip_utils.h"
+
+#ifdef WIN32_NATIVE
+# include "logger.h"
+# include "sip/sip_utils.h"
+#endif
 
 #include <pjnath.h>
 #include <pjlib.h>
@@ -38,7 +46,30 @@
 #include <condition_variable>
 #include <thread>
 
+#ifdef WIN32_NATIVE
+# include <utf8_utils.h>
+#endif
+
 namespace ring {
+
+#ifdef WIN32_NATIVE
+static void
+register_thread()
+{
+	// We have to register the external thread so it could access the pjsip frameworks
+	if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined(WIN32_NATIVE)
+		static thread_local pj_thread_desc desc;
+		static thread_local pj_thread_t *this_thread;
+#else
+		static __thread pj_thread_desc desc;
+		static __thread pj_thread_t *this_thread;
+#endif
+		pj_thread_register(NULL, desc, &this_thread);
+		RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+	}
+}
+#endif
 
 namespace upnp {
 class Controller;
@@ -176,12 +207,51 @@ class IceTransport {
         bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
 
         // I/O methods
-
+#ifndef WIN32_NATIVE
         void setOnRecv(unsigned comp_id, IceRecvCb cb);
+#else
+		void setOnRecv(unsigned comp_id, IceRecvCb cb) {
+			auto& io = compIO_[comp_id];
+			std::lock_guard<std::mutex> lk(io.mutex);
+			io.cb = cb;
+
+			if (cb) {
+				// Flush existing queue using the callback
+				for (const auto& packet : io.queue)
+					io.cb((uint8_t*)packet.data.get(), packet.datalen);
+				io.queue.clear();
+			}
+		};
+#endif
 
         ssize_t recv(int comp_id, unsigned char* buf, size_t len);
 
+#ifndef WIN32_NATIVE
         ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+#else
+        ssize_t send(int comp_id, const unsigned char* buf, size_t len) {
+			register_thread();
+			auto remote = getRemoteAddress(comp_id);
+			if (!remote) {
+				RING_ERR("Can't find remote address for component %d", comp_id);
+				errno = EINVAL;
+				return -1;
+			}
+			auto status = pj_ice_strans_sendto(icest_.get(), comp_id + 1, buf, len, remote.pjPtr(), remote.getLength());
+			if (status != PJ_SUCCESS) {
+				if (status == PJ_EBUSY) {
+					errno = EAGAIN;
+				}
+				else {
+					RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
+					errno = EIO;
+				}
+				return -1;
+			}
+
+			return len;
+		};
+#endif
 
         ssize_t getNextPacketSize(int comp_id);
 
@@ -236,8 +306,13 @@ class IceTransport {
         bool _isRunning() const;
         bool _isFailed() const;
 
+#ifndef WIN32_NATIVE
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        IceTransportCompleteCb on_initdone_cb_;
+#else
+		std::unique_ptr<pj_pool_t, void (__cdecl &)(pj_pool_t *)> pool_;
+#endif     
+   
+		IceTransportCompleteCb on_initdone_cb_;
         IceTransportCompleteCb on_negodone_cb_;
         std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
         unsigned component_count_;
@@ -309,6 +384,34 @@ class IceTransportFactory {
         std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
         pj_ice_strans_cfg ice_cfg_;
 };
+
+#ifdef WIN32_NATIVE
+class IceSocket
+{
+private:
+	std::shared_ptr<IceTransport> ice_transport_{};
+	int compId_ = -1;
+
+public:
+	IceSocket(std::shared_ptr<IceTransport> iceTransport, int compId)
+		: ice_transport_(iceTransport), compId_(compId) {}
+
+	void close();
+	ssize_t recv(unsigned char* buf, size_t len);
+	ssize_t send(const unsigned char* buf, size_t len) {
+		if (!ice_transport_.get())
+			return -1;
+		ice_transport_->send(compId_, buf, len);
+	};
+	ssize_t getNextPacketSize() const;
+	ssize_t waitForData(unsigned int timeout);
+	void setOnRecv(IceRecvCb cb) {
+		if (!ice_transport_.get())
+			return;
+		return ice_transport_->setOnRecv(0,0);// compId_, cb);
+	};
+};
+#endif
 
 };
 

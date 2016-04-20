@@ -20,12 +20,15 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_decoder.h"
-#include "media_device.h"
-#include "media_buffer.h"
-#include "media_io_handle.h"
-#include "audio/audiobuffer.h"
-#include "audio/ringbuffer.h"
-#include "audio/resampler.h"
+
+#ifndef WIN32_NATIVE
+# include "media_device.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+# include "audio/audiobuffer.h"
+# include "audio/ringbuffer.h"
+# include "audio/resampler.h"
+#endif
 
 #include "string_utils.h"
 #include "logger.h"
