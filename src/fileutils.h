@@ -65,6 +65,7 @@ namespace ring { namespace fileutils {
 
     bool recursive_mkdir(const std::string& path, mode_t mode=0755);
 
+    bool isFile(const std::string& path);
     bool isDirectory(const std::string& path);
 
     std::chrono::system_clock::time_point writeTime(const std::string& path);
