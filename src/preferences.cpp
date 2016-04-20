@@ -245,7 +245,11 @@ HookPreference::HookPreference() :
     , numberAddPrefix_("")
     , numberEnabled_(false)
     , sipEnabled_(false)
+#ifndef WIN32_NATIVE
     , urlCommand_("x-www-browser")
+#else
+    , urlCommand_("@START")
+#endif /*!WIN32_NATIVE*/
     , urlSipField_("X-ring-url")
 {}
 

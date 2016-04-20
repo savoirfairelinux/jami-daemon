@@ -25,6 +25,11 @@
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 
+static std::random_device rd;
+static std::mt19937 mt(rd());
+static std::uniform_real_distribution<> dist(-1, 1);
+static float patdata;
+
 namespace ring {
 
 PortAudioLayer::PortAudioLayer(const AudioPreference &pref)
@@ -65,7 +70,7 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name,
 
     numDevices = Pa_GetDeviceCount();
     if (numDevices < 0)
-        this->handleError(numDevices);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     else {
         const PaDeviceInfo *deviceInfo;
         for (int i = 0; i < numDevices; i++) {
@@ -127,11 +132,15 @@ PortAudioLayer::stopStream()
     for (int i = 0; i < Direction::End; i++) {
         auto err = Pa_StopStream(streams[i]);
         if(err != paNoError)
-            this->handleError(err);
+            RING_ERR("Pa_StopStream error : %s %s",
+                (i == Direction::Input ? "Input" : "Output"),
+                Pa_GetErrorText(err));
 
         err = Pa_CloseStream(streams[i]);
         if (err != paNoError)
-            this->handleError(err);
+            RING_ERR("Pa_CloseStream error : %s %s",
+                (i == Direction::Input ? "Input" : "Output"),
+                Pa_GetErrorText(err));
     }
 
     {
@@ -186,7 +195,7 @@ PortAudioLayer::getDeviceByType(const bool& playback) const
 
     numDevices = Pa_GetDeviceCount();
     if (numDevices < 0)
-        this->handleError(numDevices);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     else {
         for (int i = 0; i < numDevices; i++) {
             const auto deviceInfo = Pa_GetDeviceInfo(i);
@@ -221,9 +230,9 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
         Manager::instance().getRingBufferPool().getInternalAudioFormat();
     bool resample =
         ref->audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
+
     auto urgentFramesToGet =
         ref->urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
     if (urgentFramesToGet > 0) {
         RING_WARN("Getting urgent frames.");
         size_t totSample = std::min(framesPerBuffer,
@@ -271,6 +280,7 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
             ref->playbackBuff_.interleave(out);
         }
     }
+
     if (normalFramesToGet <= 0) {
         auto tone = Manager::instance().getTelephoneTone();
         auto file_tone = Manager::instance().getTelephoneFile();
@@ -286,9 +296,20 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
             //RING_WARN("No tone or file_tone!");
             ref->playbackBuff_.reset();
         }
-        ref->playbackBuff_.interleave(out);
+        ref->playbackBuff_.interleave(out); //actual write buffer data ???????
     }
     return paContinue;
+
+    //TEST OUTPUT W/NOISE
+    //float *fout = (float*)outputBuffer;
+    //unsigned int i;
+    //(void)inputBuffer; /* Prevent unused variable warning. */
+
+    //for (i = 0; i<framesPerBuffer; i++)
+    //{
+    //    *fout++ = (float) dist(mt);
+    //}
+    //return paContinue;
 }
 
 int
@@ -333,7 +354,9 @@ PortAudioLayer::paInputCallback(const void *inputBuffer, void *outputBuffer,
         ref->mainRingBuffer_->put(out);
     } else {
         ref->dcblocker_.process(inBuff);
-        ref->mainRingBuffer_->put(inBuff);
+        ref->mainRingBuffer_->put(inBuff); //actual write buffer data
+        std::vector<ring::AudioSample> samples = inBuff.interleave();
+        //RING_WARN("in:%d",samples[0]);
     }
     return paContinue;
 }
@@ -351,15 +374,27 @@ PortAudioLayer::init()
     RING_DBG("Init PortAudioLayer");
     const auto err = Pa_Initialize();
     if (err != paNoError) {
-        this->handleError(err);
+        RING_ERR("PortAudioLayer error : %s",  Pa_GetErrorText(err));
         this->terminate();
     }
 
+#ifdef WIN32_NATIVE
+    indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
+    indexIn_ = indexIn_ == Pa_GetDefaultInputDevice();
+#else
     indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
     indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
+#endif
 
     if (indexOut_ != paNoDevice) {
         if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
+            const PaHostApiInfo* hostApiInfo = Pa_GetHostApiInfo(outputDeviceInfo->hostApi);
+            RING_DBG("Ouput hostAPI name: %s", hostApiInfo->name);
+            RING_DBG("Ouput hostAPI deviceCount: %d", hostApiInfo->deviceCount);
+            RING_DBG("current device index: %d", indexOut_);
+            RING_DBG("Ouput Device name: %s", outputDeviceInfo->name);
+            RING_DBG("maxOutputChannels: %d", outputDeviceInfo->maxOutputChannels);
+            RING_DBG("defaultSampleRate: %0.0f", outputDeviceInfo->defaultSampleRate);
             audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
             audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
             hardwareFormatAvailable(audioFormat_);
@@ -388,7 +423,7 @@ PortAudioLayer::terminate() const
     RING_DBG("PortAudioLayer terminate.");
     const auto err = Pa_Terminate();
     if (err != paNoError)
-        this->handleError(err);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
 }
 
 void
@@ -421,7 +456,7 @@ PortAudioLayer::initStream()
             &PortAudioLayer::paOutputCallback,
             this);
         if(err != paNoError)
-            this->handleError(err);
+            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
     }
 
     RING_DBG("Open PortAudio Input Stream");
@@ -448,7 +483,7 @@ PortAudioLayer::initStream()
             &PortAudioLayer::paInputCallback,
             this);
         if(err != paNoError)
-            this->handleError(err);
+            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
     }
 
     RING_DBG("Start PortAudio Streams");
@@ -456,7 +491,7 @@ PortAudioLayer::initStream()
         if (streams[i]) {
             auto err = Pa_StartStream(streams[i]);
             if (err != paNoError)
-                this->handleError(err);
+                RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
         }
     }
 

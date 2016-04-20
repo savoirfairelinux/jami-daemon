@@ -39,8 +39,13 @@
 #include <windows.h>
 #include <wincrypt.h>
 #endif
+#ifdef WIN32_NATIVE
+#include <upnp.h>
+#include <upnptools.h>
+#else
 #include <upnp/upnp.h>
 #include <upnp/upnptools.h>
+#endif
 #endif
 
 #include "noncopyable.h"

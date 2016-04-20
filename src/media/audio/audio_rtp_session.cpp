@@ -239,7 +239,8 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
             std::bind(&AudioReceiveThread::cleanup, this))
-{}
+{
+}
 
 AudioReceiveThread::~AudioReceiveThread()
 {
@@ -262,10 +263,8 @@ AudioReceiveThread::setup()
         "Could not open input \"%s\"", SDP_FILENAME);
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
-
     EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(format_),
                  "decoder IO startup failed");
-
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
     return true;
 }
@@ -275,7 +274,6 @@ AudioReceiveThread::process()
 {
     AudioFormat mainBuffFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
     AudioFrame decodedFrame;
-
     switch (audioDecoder_->decode(decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:

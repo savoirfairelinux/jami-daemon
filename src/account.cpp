@@ -57,7 +57,13 @@ using random_device = std::random_device;
 
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
-#include "intrin.h"
+
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
+
 #include "dring/account_const.h"
 
 namespace ring {

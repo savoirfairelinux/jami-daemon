@@ -20,12 +20,15 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_decoder.h"
-#include "media_device.h"
-#include "media_buffer.h"
-#include "media_io_handle.h"
-#include "audio/audiobuffer.h"
-#include "audio/ringbuffer.h"
-#include "audio/resampler.h"
+
+#ifndef WIN32_NATIVE
+# include "media_device.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+# include "audio/audiobuffer.h"
+# include "audio/ringbuffer.h"
+# include "audio/resampler.h"
+#endif
 
 #include "string_utils.h"
 #include "logger.h"
@@ -42,6 +45,7 @@ MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
     startTime_(AV_NOPTS_VALUE)
 {
+    av_log_set_level(AV_LOG_QUIET);
 }
 
 MediaDecoder::~MediaDecoder()
@@ -70,6 +74,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
     // on windows, framerate setting can lead to a failure while opening device
     // despite investigations, we didn't found a proper solution
     // we let dshow choose the framerate, which is the highest according to our experimentations
+    if (params.framerate)
+        av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
+#elif WIN32_NATIVE
     if (params.framerate)
         av_dict_set(&options_, "framerate", ring::to_string(params.framerate.real()).c_str(), 0);
 #endif
@@ -123,7 +130,7 @@ void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 
 int MediaDecoder::setupFromAudioData(const AudioFormat format)
 {
-    int ret;
+    int ret = 0;
 
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
@@ -133,14 +140,16 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    RING_DBG("Finding stream info");
+    RING_DBG("Finding audio stream info");
+    av_log_set_level(AV_LOG_WARNING);
+
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
-    ret = avformat_find_stream_info(inputCtx_, NULL);
+    ret = avformat_find_stream_info(inputCtx_, nullptr);
 #endif
-    RING_DBG("Finding stream info DONE");
-
+    RING_DBG("Finding audio stream info DONE");
+    av_log_set_level(AV_LOG_QUIET);
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/
@@ -152,13 +161,13 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
             errBuf[0] = '\0';
 
         // always fail here
-        RING_ERR("Could not find stream info: %s", errBuf);
+        RING_ERR("Could not find audio stream info: %s", errBuf);
         return -1;
     }
 
     // find the first audio stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
+        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
@@ -218,12 +227,14 @@ int MediaDecoder::setupFromVideoData()
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    RING_DBG("Finding stream info");
+    RING_DBG("Finding video stream info");
 #if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
     ret = av_find_stream_info(inputCtx_);
 #else
     ret = avformat_find_stream_info(inputCtx_, NULL);
 #endif
+    RING_DBG("Finding video stream info DONE");
+
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/
@@ -241,7 +252,7 @@ int MediaDecoder::setupFromVideoData()
 
     // find the first video stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {

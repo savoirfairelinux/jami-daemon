@@ -27,6 +27,10 @@
 #include <cstdlib>
 #include <cstring> // std::memset
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 MediaFrame::MediaFrame()

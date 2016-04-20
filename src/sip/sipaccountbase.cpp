@@ -354,7 +354,9 @@ SIPAccountBase::onTextMessage(const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
     RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+	for (auto i : payloads)
+		RING_DBG("%s: %s", from.c_str(), i.second.c_str());
+	emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
 }
 
 void

@@ -24,11 +24,19 @@
 
 #include "tls_session.h"
 
-#include "ice_socket.h"
+#ifndef WIN32_NATIVE
+# include "ice_socket.h"
+#endif
+
 #include "ice_transport.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "intrin.h"
+
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
