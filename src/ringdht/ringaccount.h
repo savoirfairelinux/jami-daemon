@@ -64,16 +64,19 @@ namespace dev
 namespace ring {
 
 namespace Conf {
-const char *const DHT_PORT_KEY = "dhtPort";
-const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
-const char *const DHT_CONTACTS = "dhtContacts";
-const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
-const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
-const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
-const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
-const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
-const char *const ETH_PATH = "ethPath";
-const char *const ETH_ACCOUNT = "ethAccount";
+constexpr const char* const DHT_PORT_KEY = "dhtPort";
+constexpr const char* const DHT_VALUES_PATH_KEY = "dhtValuesPath";
+constexpr const char* const DHT_CONTACTS = "dhtContacts";
+constexpr const char* const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
+constexpr const char* const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
+constexpr const char* const ETH_KEY = "ethKey";
+constexpr const char* const ETH_PATH = "ethPath";
+constexpr const char* const ETH_ACCOUNT = "ethAccount";
+constexpr const char* const RING_CA_KEY = "ringCaKey";
+constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
 }
 
 class IceTransport;
@@ -137,7 +140,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Disconnect from the DHT.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
+        void doUnregister(std::function<void(bool)> cb = {}) override;
 
         /**
          * @return pj_str_t "From" uri based on account information.
@@ -298,7 +301,17 @@ class RingAccount : public SIPAccountBase {
          */
         bool mapPortUPnP();
 
+        /*struct Receipt {
+            dht::InfoHash id;
+            dht::InfoHash dev_id;
+            dev::Address eth;
+            std::string serialize() const;
+            std::pair<std::string, std::vector<uint8_t>> sign();
+        }*/
+
         dht::DhtRunner dht_ {};
+        dht::crypto::Identity identity_ {};
+        //dht::crypto::
 
         dht::InfoHash callKey_;
 
@@ -340,6 +353,11 @@ class RingAccount : public SIPAccountBase {
         std::string ethPath_ {};
         std::string ethAccount_ {};
 
+        std::string archivePath_ {};
+
+        std::string receipt_ {};
+        std::vector<uint8_t> receiptSignature_ {};
+
         struct TrustRequest {
             dht::InfoHash from;
             std::chrono::system_clock::time_point received;
@@ -349,6 +367,34 @@ class RingAccount : public SIPAccountBase {
         std::vector<TrustRequest> trustRequests_;
 
         tls::TrustStore trust_;
+
+        /**
+         * Crypto material contained in the archive,
+         * not persisted in the account configuration
+         */
+        ArchiveContent {
+            dht::crypto::Identity id;
+            dht::crypto::PrivateKey key;
+            dht::crypto::PrivateKey ca_key;
+            std::vector<uint8_t> eth_key;
+        };
+
+        //bool checkIdentity()
+
+        bool hasCertificate() const;
+        bool hasPrivateKey() const;
+        bool hasSignedReceipt() const;
+
+        bool hasIdentity() const {
+            return hasSignedReceipt() and hasCertificate() and hasPrivateKey();
+        }
+
+        std::string makeReceipt(const dht::crypto::Identity& id);
+        void createRingDevice(const dht::crypto::Identity& id);
+        void createRingDevice(const std::vector<uint8_t>& archive_dat, const std::string& pwd);
+        //void createIdentity(const std::string& pwd);
+        void saveArchive(const ArchiveContent& content, const std::string& pwd) const;
+        ArchiveContent loadArchive(dht::crypto::Identity& id, const std::string& pwd);
 
         /**
          * Validate the values for privkeyPath_ and certPath_.

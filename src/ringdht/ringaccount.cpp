@@ -52,12 +52,15 @@
 #include "fileutils.h"
 #include "string_utils.h"
 #include "array_size.h"
+#include "archiver.h"
 
 #include "config/yamlparser.h"
 #include "security/certstore.h"
 #include "libdevcrypto/SecretStore.h"
+#include "base64.h"
 
 #include <yaml-cpp/yaml.h>
+#include <json/json.h>
 
 #include <unistd.h>
 
@@ -442,17 +445,81 @@ void RingAccount::unserialize(const YAML::Node &node)
 }
 
 void
+RingAccount::createRingDevice(const dht::crypto::Identity& id)
+{
+    auto dev_id = dht::crypto::generateIdentity("Ring device", id);
+    if (!dev_id.first || !dev_id.second) {
+        throw VoipLinkException("Can't generate identity for this account.");
+    }
+    idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
+    fileutils::check_dir(idPath_.c_str(), 0700);
+
+    // save the chain including CA
+    saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
+    tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
+    tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+    tlsPassword_ = {};
+
+    receipt_ = makeReceipt(id);
+    receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
+
+    identity_ = dev_id;
+}
+
+std::string
+RingAccount::makeReceipt(const dht::crypto::Identity& id)
+{
+    std::ostringstream is;
+    is << "{\"id\":\"" << id.second->getId()
+       << "\",\"dev\":\"" << identity_.second->getId()
+       << "\",\"eth\":\"" << ethAccount_ << "\"}";
+    return is.str();
+}
+
+bool
+RingAccount::hasSignedReceipt() const
+{
+    if (receipt_.empty() or receiptSignature_.empty())
+        return false;
+
+    if (!identity_.second)
+        return false;
+
+    auto cert = identity_.second->issuer;
+
+    if (!cert->getPublicKey().checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_))
+        return false;
+
+    Json::Value root;
+    Json::Reader reader;
+    if (!reader.parse(receipt_, root))
+        return false;
+
+    auto id = root["id"];
+    auto dev_id = root["dev"];
+    auto eth_addr = root["eth"];
+    if (dev_id != identity_.second->getId().toString())
+        return false;
+    if (id != cert->getId().toString())
+        return false;
+    if (eth_addr != ethAccount_)
+        return false;
+    return true;
+}
+
+void
 RingAccount::checkIdentityPath()
 {
-    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
+
+    /*if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
         loadIdentity();
         return;
-    }
+    }*/
 
-    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+    /*const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
-    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
-    loadIdentity();
+    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";*/
+    identity_ = loadIdentity();
 }
 
 dev::Address
@@ -480,21 +547,50 @@ RingAccount::loadEthAccount()
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
-    loadEthAccount();
+    /*if (receipt_.empty() or receiptSignature_.empty())
+        return false;*/
+
+    //loadEthAccount();
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
     try {
+        /*Json::Value root;
+        Json::Reader reader;
+        if (!reader.parse(receipt_, root))
+            return false;
+
+        auto id = dht::InfoHash(root["id"]);
+        auto dev_id = dht::InfoHash(root["dev"]);
+        auto eth_addr = root["eth"];*/
+
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
+        auto crt_id = dht_cert.getId();
+        if (/*crt_id != dev_id or  */crt_id != dht_key.getPublicKey().getId())
+            return {};
+
+        /*if (!dht_cert.second->ca->checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_))
+            return {};*/
+
+        username_ = RING_URI_PREFIX + crt_id.toString();
+        //ethAccount_ = eth_addr;
+        identity_ = {
+            std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
+            std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
+        };
     }
     catch (const std::exception& e) {
-        RING_ERR("Error loading identity: %s", e.what());
+        /*RING_ERR("Error loading identity: %s", e.what());
         auto ca = dht::crypto::generateIdentity("Ring CA");
         if (!ca.first || !ca.second) {
             throw VoipLinkException("Can't generate CA for this account.");
         }
-        auto id = dht::crypto::generateIdentity("Ring", ca);
+        auto id = dht::crypto::generateIdentity("Ring", ca, 4096, true);
         if (!id.first || !id.second) {
+            throw VoipLinkException("Can't generate identity for this account.");
+        }
+        auto dev_id = dht::crypto::generateIdentity("Ring device", id);
+        if (!dev_id.first || !dev_id.second) {
             throw VoipLinkException("Can't generate identity for this account.");
         }
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
@@ -508,14 +604,134 @@ RingAccount::loadIdentity()
         tlsPassword_ = {};
 
         username_ = RING_URI_PREFIX+id.second->getId().toString();
-        return id;
+        return id;*/
     }
 
-    username_ = RING_URI_PREFIX+dht_cert.getId().toString();
+    return identity_;
+
+    /*username_ = RING_URI_PREFIX+dht_cert.getId().toString();
     return {
         std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
         std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
-    };
+    };*/
+}
+
+void
+RingAccount::loadArchive(dht::crypto::Identity& id, const std::string& pwd)
+{
+    // Read file
+    std::vector<uint8_t> file;
+    try {
+        file = fileutils::loadFile(archivePath_);
+    } catch (const std::exception& ex) {
+        RING_ERR("Read failed: %s", ex.what());
+        return;
+    }
+
+    // Decrypt
+    try {
+        file = dht::crypto::aesDecrypt(file, pwd);
+    } catch (const std::exception& ex) {
+        RING_ERR("Decryption failed: %s", ex.what());
+        return;
+    }
+
+    // Decompress
+    try {
+        file = archiver::decompress(file);
+    } catch (const std::exception& ex) {
+        RING_ERR("Decompression failed: %s", ex.what());
+        return;
+    }
+
+    try {
+        // Decode string
+        std::string decoded {file.begin(), file.end()};
+
+        // Add
+        Json::Value value;
+        Json::Reader reader;
+        if (!reader.parse(decoded.c_str(),value)) {
+            RING_ERR("Failed to parse %s", reader.getFormattedErrorMessages().c_str());
+            return;
+        }
+
+        fileutils::check_dir(idPath_.c_str(), 0700);
+        auto details = DRing::getAccountTemplate(ACCOUNT_TYPE);
+
+        for (Json::ValueIterator itr = value.begin() ; itr != value.end() ; itr++) {
+            if (itr->asString().empty())
+                continue;
+            if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
+                std::string fileContent(itr->asString());
+                fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", {fileContent.begin(), fileContent.end()}, 0600);
+
+            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+                std::string fileContent(itr->asString());
+                fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.key", {fileContent.begin(), fileContent.end()}, 0600);
+
+            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+                std::string fileContent(itr->asString());
+                fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "dht.crt", {fileContent.begin(), fileContent.end()}, 0600);
+            } else
+                details[itr.key().asString()] = itr->asString();
+        }
+
+        SIPAccountBase::setAccountDetails(details);
+        parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
+        parseBool(details, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+        parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
+        parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
+        parseBool(details, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
+    } catch (const std::exception& ex) {
+        RING_ERR("Can't parse JSON: %s", ex.what());
+    }
+}
+
+void
+RingAccount::saveArchive(const ArchiveContent& archive,
+                           const std::string& pwd) const {
+    Json::Value root;
+
+    auto details = getAccountDetails();
+    for (auto it : details) {
+        if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0) {
+            // Ringtone path is not exportable
+        } else if (it.first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
+                it.first.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0 ||
+                it.first.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+            // replace paths by the files content
+            root[it.first] = base64::encode(fileutils::loadFile(it.second));
+        } else
+            root[it.first] = it.second;
+    }
+
+    root[RING_CA_KEY] = archive.ca_key.serialize();
+
+    Json::FastWriter fastWriter;
+    std::string output = fastWriter.write(root);
+
+    // Compress
+    std::vector<uint8_t> compressed;
+    try {
+        compressed = archiver::compress(output);
+    } catch (const std::runtime_error& ex) {
+        RING_ERR("Export failed: %s", ex.what());
+        return;
+    }
+
+    // Encrypt using provided password
+    auto encrypted = dht::crypto::aesEncrypt(compressed, pwd);
+
+    // Write
+    try {
+        if (archivePath_.empty())
+            archivePath_ = idPath_ + DIR_SEPARATOR_STR "export.gz"
+        fileutils::saveFile(archivePath_, encrypted);
+    } catch (const std::runtime_error& ex) {
+        RING_ERR("Export failed: %s", ex.what());
+        return;
+    }
 }
 
 void
@@ -541,7 +757,45 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
-    checkIdentityPath();
+
+    std::string archive_password;
+    parseString(DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
+    parseString(DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
+
+    loadIdentity();
+
+    // have archive
+    if (archivePath_.empty() or not fileutils::isFile(archivePath_)) {
+        // have identity
+        if (hasSignedReceipt()) {
+            /// good
+        } else {
+            if (archive_password.empty()) {
+                RING_WARN("Password needed to create archive");
+                // need password
+                //emitSignal<>();
+            } else {
+                // port from old ringaccount
+                if (identity_.first and identity_.second) {
+                    auto id = identity_;
+                    createRingDevice(id);
+                    createArchive(id, archive_password);
+                }
+            }
+        }
+    } else {
+        if (hasSignedReceipt()) {
+            // good
+        } else {
+            if (archive_password.empty()) {
+                RING_WARN("Password needed to read archive");
+            } else {
+                dht::crypto::Identity id;
+                loadArchive(id, archive_password);
+                createRingDevice(id);
+            }
+        }
+    }
 }
 
 std::map<std::string, std::string>
@@ -700,12 +954,13 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_h = pc.from;
-    auto id(loadIdentity());
+    if (not identity_.first or not identity_.second)
+        identity_ = loadIdentity();
 
     tls::TlsParams tlsParams {
         .ca_list = "",
-        .cert = id.second,
-        .cert_key = id.first,
+        .cert = identity_.second,
+        .cert_key = identity_.first,
         .dh_params = dhParams_,
         .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
         .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
@@ -719,9 +974,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             }
         }
     };
-    auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
-                                                            tlsParams);
-    call->setTransport(tr);
+    call->setTransport(link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
+                                                            tlsParams));
 
     // Notify of fully available connection between peers
     RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
@@ -814,7 +1068,7 @@ RingAccount::doRegister_()
             RING_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
-        auto identity = loadIdentity();
+        identity_ = loadIdentity();
 
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
@@ -836,7 +1090,7 @@ RingAccount::doRegister_()
                 setRegistrationState(state);
             });
 
-        dht_.run((in_port_t)dhtPortUsed_, identity, false);
+        dht_.run((in_port_t)dhtPortUsed_, identity_, false);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             auto& store = tls::CertificateStore::instance();
