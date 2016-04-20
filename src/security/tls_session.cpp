@@ -44,7 +44,7 @@ static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
-static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(250); // Delay between two handshake request on DTLS
+static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(2500); // Delay between two handshake request on DTLS
 static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
 
 // Helper to cast any duration into an integer number of milliseconds
