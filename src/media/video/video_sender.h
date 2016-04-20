@@ -26,6 +26,12 @@
 #include "media_encoder.h"
 #include "media_io_handle.h"
 
+#ifdef WIN32_NATIVE
+# include "socket_pair.h"
+# include "media_device.h"
+# include "media_codec.h"
+#endif
+
 #include <map>
 #include <string>
 #include <memory>
@@ -33,7 +39,9 @@
 
 // Forward declarations
 namespace ring {
+#ifndef WIN32_NATIVE
 class SocketPair;
+#endif
 class AccountVideoCodecInfo;
 }
 
