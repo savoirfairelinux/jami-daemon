@@ -137,7 +137,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Disconnect from the DHT.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
+        void doUnregister(std::function<void(bool)> cb = {}) override;
 
         /**
          * @return pj_str_t "From" uri based on account information.
@@ -299,6 +299,7 @@ class RingAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         dht::DhtRunner dht_ {};
+        dht::crypto::Identity identity_ {};
 
         dht::InfoHash callKey_;
 
@@ -340,6 +341,11 @@ class RingAccount : public SIPAccountBase {
         std::string ethPath_ {};
         std::string ethAccount_ {};
 
+        std::string archivePath_ {};
+
+        std::string receipt_ {};
+        std::vector<uint8_t> receiptSignature_ {};
+
         struct TrustRequest {
             dht::InfoHash from;
             std::chrono::system_clock::time_point received;
@@ -349,6 +355,23 @@ class RingAccount : public SIPAccountBase {
         std::vector<TrustRequest> trustRequests_;
 
         tls::TrustStore trust_;
+
+        //bool checkIdentity()
+
+        bool hasCertificate() const;
+        bool hasPrivateKey() const;
+        bool hasSignedReceipt() const;
+
+        bool hasIdentity() const {
+            return hasSignedReceipt() and hasCertificate() and hasPrivateKey();
+        }
+
+        std::string makeReceipt(const dht::crypto::Identity& id);
+        void createRingDevice(const dht::crypto::Identity& id);
+        void createRingDevice(const std::vector<uint8_t>& archive_dat, const std::string& pwd);
+        //void createIdentity(const std::string& pwd);
+        void createArchive(const std::string& pwd);
+
 
         /**
          * Validate the values for privkeyPath_ and certPath_.
