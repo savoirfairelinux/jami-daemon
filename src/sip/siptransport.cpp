@@ -27,7 +27,13 @@
 #include "ringdht/sips_transport_ice.h"
 
 #include "array_size.h"
-#include "intrin.h"
+
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
+
 #include "sipvoiplink.h"
 
 #include <pjsip.h>
@@ -394,9 +400,9 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
         remoteAddr.setPort(pjsip_transport_get_default_port_for_type(l->get()->type));
 
     RING_DBG("Get new TLS transport to %s", remoteAddr.toString(true).c_str());
-    pjsip_tpselector sel {PJSIP_TPSELECTOR_LISTENER, {
-        .listener = l->get()
-    }};
+	pjsip_tpselector sel;
+	sel.type = PJSIP_TPSELECTOR_LISTENER;
+	sel.u.listener = l->get();
 
     pjsip_tx_data tx_data;
     tx_data.dest_info.name = pj_str_t{(char*)remote_name.data(), (pj_ssize_t)remote_name.size()};

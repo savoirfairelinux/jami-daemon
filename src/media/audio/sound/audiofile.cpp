@@ -26,7 +26,12 @@
 #include <cstring>
 #include <vector>
 #include <climits>
+
+#ifdef WIN32_NATIVE
+#include <sndfile.h>
+#else
 #include <sndfile.hh>
+#endif
 
 #include "audiofile.h"
 #include "audio/resampler.h"
@@ -34,6 +39,10 @@
 #include "client/ring_signal.h"
 
 #include "logger.h"
+
+#ifdef WIN32_NATIVE
+#include <sndfile.hh>
+#endif
 
 namespace ring {
 

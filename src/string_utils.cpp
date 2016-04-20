@@ -29,6 +29,10 @@
 #include <windows.h>
 #endif
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 #ifdef _WIN32

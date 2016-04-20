@@ -23,6 +23,10 @@
 #include <memory>
 #include <functional>
 
+#ifdef WIN32_NATIVE
+# include <utf8_utils.h>
+#endif
+
 namespace ring {
 
 class IceTransport;

@@ -26,7 +26,11 @@
 #include "config.h"
 #endif
 
-#include "intrin.h"
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
 
 #include "sdp.h"
 #include "sipvoiplink.h"
@@ -166,9 +170,8 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED)
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::INCOMING);
 }
 
-template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingSIPCall(const std::string& toUrl)
 {
     std::string to;
     std::string toUri;
@@ -312,7 +315,7 @@ SIPAccount::getTransportSelector() {
 std::shared_ptr<Call>
 SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+	return newOutgoingSIPCall(toUrl);
 }
 
 bool
@@ -732,7 +735,7 @@ void SIPAccount::doRegister()
         std::thread{ [shared] {
             /* We have to register the external thread so it could access the pjsip frameworks */
             if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined WIN32_NATIVE
                     static thread_local pj_thread_desc desc;
                     static thread_local pj_thread_t *this_thread;
 #else
@@ -1309,6 +1312,14 @@ std::string SIPAccount::getLoginName()
 #ifndef _WIN32
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
+#elif defined (WIN32_NATIVE)
+	TCHAR username[UNLEN + 1];
+	DWORD size = UNLEN + 1;
+	std::string uname;
+	if (GetUserName((TCHAR*)username, &size)) {
+		uname = username;
+	}
+	return uname;
 #else
     TCHAR username[UNLEN + 1];
     DWORD size = UNLEN + 1;
@@ -1620,16 +1631,16 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
             c.computePasswordHash();
 
         cred_.emplace_back(pjsip_cred_info {
-            .realm     = pj_str((char*) c.realm.c_str()),
-            .scheme    = pj_str((char*) "digest"),
-            .username  = pj_str((char*) c.username.c_str()),
-            .data_type = (c.password_h.empty()
+            /*.realm     = */pj_str((char*) c.realm.c_str()),
+            /*.scheme    = */pj_str((char*) "digest"),
+            /*.username  = */pj_str((char*) c.username.c_str()),
+            /*.data_type = */(c.password_h.empty()
                            ? PJSIP_CRED_DATA_PLAIN_PASSWD
                            : PJSIP_CRED_DATA_DIGEST),
-            .data      = pj_str((char*) (c.password_h.empty()
+            /*.data      = */pj_str((char*) (c.password_h.empty()
                            ? c.password.c_str()
                            : c.password_h.c_str())),
-            .ext       = {}
+            /*.ext       = */{}
         });
     }
 }

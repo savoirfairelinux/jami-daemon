@@ -88,6 +88,12 @@ using random_device = std::random_device;
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#ifdef WIN32_NATIVE
+#include <sys/types.h>
+#include <sys/stat.h> 
+#endif
+
 #include <memory>
 #include <mutex>
 
@@ -1920,8 +1926,13 @@ Manager::playRingtone(const std::string& accountID)
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
+#ifndef WIN32_NATIVE
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#else
+		ringchoice = std::string(""/*PROGSHAREDIR*/) + DIR_SEPARATOR_STR
+                     + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#endif
     }
 
     {

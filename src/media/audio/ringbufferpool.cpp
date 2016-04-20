@@ -28,6 +28,10 @@
 #include <utility> // for std::pair
 #include <cstring>
 
+#ifdef WIN32_NATIVE
+# include <algorithm>
+#endif /* WIN32_NATIVE */
+
 namespace ring {
 
 const char * const RingBufferPool::DEFAULT_ID = "audiolayer_id";

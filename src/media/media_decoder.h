@@ -36,6 +36,15 @@
 #include <memory>
 #include <chrono>
 
+#ifdef WIN32_NATIVE
+# include "media_device.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+# include "audio/audiobuffer.h"
+# include "audio/ringbuffer.h"
+# include "audio/resampler.h"
+#endif
+
 class AVCodecContext;
 class AVStream;
 class AVDictionary;
@@ -44,12 +53,14 @@ class AVCodec;
 
 namespace ring {
 
+#ifndef WIN32_NATIVE
 class AudioFrame;
 class AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;
 class DeviceParams;
+#endif
 
 class MediaDecoder {
     public:

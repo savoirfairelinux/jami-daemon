@@ -34,7 +34,9 @@ extern "C" {
  */
 void logger(const int level, const char* format, ...)
 #ifdef _WIN32
+#ifndef WIN32_NATIVE
     __attribute__((format(gnu_printf, 2, 3)))
+#endif
 #elif defined(__GNUC__)
     __attribute__((format(printf, 2, 3)))
 #endif

@@ -19,7 +19,9 @@
  */
 
 #include "ice_transport.h"
-#include "ice_socket.h"
+#ifndef WIN32_NATIVE
+# include "ice_socket.h"
+#endif
 #include "logger.h"
 #include "sip/sip_utils.h"
 #include "manager.h"
@@ -47,6 +49,7 @@ static constexpr const T& min( const T& a, const T& b ) {
     return (b < a) ? b : a;
 }
 
+#ifndef WIN32_NATIVE
 static void
 register_thread()
 {
@@ -63,6 +66,7 @@ register_thread()
         RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
     }
 }
+#endif
 
 IceTransport::Packet::Packet(void *pkt, pj_size_t size)
     : data(new char[size]), datalen(size)
@@ -773,6 +777,7 @@ IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
     return count;
 }
 
+#ifndef WIN32_NATIVE
 void
 IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 {
@@ -811,6 +816,7 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 
     return len;
 }
+#endif
 
 ssize_t
 IceTransport::getNextPacketSize(int comp_id)
@@ -916,6 +922,7 @@ IceSocket::recv(unsigned char* buf, size_t len)
     return ice_transport_->recv(compId_, buf, len);
 }
 
+#ifndef WIN32_NATIVE
 ssize_t
 IceSocket::send(const unsigned char* buf, size_t len)
 {
@@ -923,6 +930,7 @@ IceSocket::send(const unsigned char* buf, size_t len)
         return -1;
     return ice_transport_->send(compId_, buf, len);
 }
+#endif
 
 ssize_t
 IceSocket::getNextPacketSize() const
@@ -941,6 +949,7 @@ IceSocket::waitForData(unsigned int timeout)
     return ice_transport_->waitForData(compId_, timeout);
 }
 
+#ifndef WIN32_NATIVE
 void
 IceSocket::setOnRecv(IceRecvCb cb)
 {
@@ -948,5 +957,6 @@ IceSocket::setOnRecv(IceRecvCb cb)
         return;
     return ice_transport_->setOnRecv(compId_, cb);
 }
+#endif
 
 } // namespace ring

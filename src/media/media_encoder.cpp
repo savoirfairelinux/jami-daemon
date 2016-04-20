@@ -20,10 +20,14 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "media_codec.h"
+
 #include "media_encoder.h"
-#include "media_buffer.h"
-#include "media_io_handle.h"
+
+#ifndef WIN32_NATIVE
+# include "media_codec.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+#endif
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -588,7 +592,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         auto v = av_dict_get(options_, "sample_rate", NULL, 0);
         if (v) {
             encoderCtx_->sample_rate = atoi(v->value);
-            encoderCtx_->time_base = (AVRational) {1, encoderCtx_->sample_rate};
+            encoderCtx_->time_base = AVRational {1, encoderCtx_->sample_rate};
         } else {
             RING_WARN("[%s] No sample rate set", encoderName);
             encoderCtx_->sample_rate = 8000;

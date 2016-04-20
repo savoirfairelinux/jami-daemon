@@ -34,14 +34,24 @@
 #include <cstdlib> // for std::free
 
 #if HAVE_LIBUPNP
-#include <upnp/upnp.h>
-#include <upnp/upnptools.h>
-#endif
+# ifdef WIN32_NATIVE
+#  include <upnp.h>
+#  include <upnptools.h>
+# else
+#  include <upnp/upnp.h>
+#  include <upnp/upnptools.h>
+# endif /* WIN32_NATIVE */
+#endif /* HAVE_LIBUPNP */
 
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
-#include "intrin.h"
+
+#ifdef WIN32_NATIVE
+# include "p_intrin.h"
+#else
+# include "intrin.h"
+#endif
 
 #if HAVE_DHT
 #include <opendht/rng.h>

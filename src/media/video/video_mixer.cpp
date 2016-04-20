@@ -125,7 +125,11 @@ VideoMixer::process()
     const std::chrono::duration<double> diff = now - lastProcess_;
     const double delay = FRAME_DURATION - diff.count();
     if (delay > 0)
-        usleep(delay * 1e6);
+#ifdef WIN32_NATIVE
+	Sleep(delay * 1e6);
+#else
+    usleep(delay * 1e6);
+#endif
     lastProcess_ = now;
 
     VideoFrame& output = getNewFrame();
