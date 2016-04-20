@@ -333,13 +333,13 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
 int
 exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password)
 {
-    return ring::Archiver::instance().exportAccounts(accountIDs, filepath, password);
+    return ring::archiver::exportAccounts(accountIDs, filepath, password);
 }
 
 int
 importAccounts(std::string archivePath, std::string password)
 {
-    return ring::Archiver::instance().importAccounts(archivePath, password);
+    return ring::archiver::importAccounts(archivePath, password);
 }
 
 ///This function is used as a base for new accounts for clients that support it
