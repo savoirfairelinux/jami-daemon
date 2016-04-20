@@ -16,14 +16,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef H_BASE64
-#define H_BASE64
+#pragma once
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-#include "stdint.h"
+#include <stdint.h>
+#include <stddef.h>
 
 /**
  * Encode a buffer in base64.
@@ -51,46 +47,14 @@ char *ring_base64_encode(const uint8_t *input, size_t input_length,
 uint8_t *ring_base64_decode(const char *input, size_t input_length,
                             uint8_t *output, size_t *output_length);
 
-#ifdef __cplusplus
-}
-#endif
-
 #include <string>
 #include <vector>
 
 namespace ring {
 namespace base64 {
 
-std::string
-encode(const std::vector<uint8_t>::const_iterator begin,
-       const std::vector<uint8_t>::const_iterator end)
-{
-    size_t output_length = 4 * ((std::distance(begin, end) + 2) / 3);
-    std::string out;
-    out.resize(output_length);
-    ring_base64_encode(&(*begin), std::distance(begin, end),
-                       &(*out.begin()), &output_length);
-    out.resize(output_length);
-    return out;
-}
-
-std::string
-encode(const std::vector<uint8_t>& dat)
-{
-    return encode(dat.cbegin(), dat.cend());
-}
-
-std::vector<uint8_t>
-decode(const std::string& str)
-{
-    size_t output_length = str.length() / 4 * 3 + 2;
-    std::vector<uint8_t> output;
-    output.resize(output_length);
-    ring_base64_decode(str.data(), str.size(), output.data(), &output_length);
-    output.resize(output_length);
-    return output;
-}
+std::string encode(const std::vector<uint8_t>::const_iterator begin, const std::vector<uint8_t>::const_iterator end);
+std::string encode(const std::vector<uint8_t>& dat);
+std::vector<uint8_t> decode(const std::string& str);
 
 }} // namespace ring::base64
-
-#endif // H_BASE64

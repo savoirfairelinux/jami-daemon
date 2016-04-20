@@ -158,7 +158,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
-    if (old_client_state != new_client_state) {
+    if (not quiet and old_client_state != new_client_state) {
         RING_DBG("[call:%s] emit client call state change %s, code %d",
                  id_.c_str(), new_client_state.c_str(), code);
         emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
