@@ -441,15 +441,15 @@ void RingAccount::unserialize(const YAML::Node &node)
 void
 RingAccount::checkIdentityPath()
 {
-    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
+    /*if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
         loadIdentity();
         return;
-    }
+    }*/
 
-    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+    /*const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
-    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
-    loadIdentity();
+    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";*/
+    identity_ = loadIdentity();
 }
 
 dht::crypto::Identity
@@ -468,8 +468,12 @@ RingAccount::loadIdentity()
         if (!ca.first || !ca.second) {
             throw VoipLinkException("Can't generate CA for this account.");
         }
-        auto id = dht::crypto::generateIdentity("Ring", ca);
+        auto id = dht::crypto::generateIdentity("Ring", ca, 4096, true);
         if (!id.first || !id.second) {
+            throw VoipLinkException("Can't generate identity for this account.");
+        }
+        auto dev_id = dht::crypto::generateIdentity("Ring device", id);
+        if (!dev_id.first || !dev_id.second) {
             throw VoipLinkException("Can't generate identity for this account.");
         }
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
@@ -672,12 +676,13 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_h = pc.from;
-    auto id(loadIdentity());
+    if (not identity_.first or not identity_.second)
+        identity_ = loadIdentity();
 
     tls::TlsParams tlsParams {
         .ca_list = "",
-        .cert = id.second,
-        .cert_key = id.first,
+        .cert = identity_.second,
+        .cert_key = identity_.first,
         .dh_params = dhParams_,
         .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
         .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
@@ -691,9 +696,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             }
         }
     };
-    auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
-                                                            tlsParams);
-    call->setTransport(tr);
+    call->setTransport(link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
+                                                            tlsParams));
 
     // Notify of fully available connection between peers
     RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
@@ -786,7 +790,7 @@ RingAccount::doRegister_()
             RING_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
-        auto identity = loadIdentity();
+        identity_ = loadIdentity();
 
         dht_.setOnStatusChanged([this](dht::Dht::Status s4, dht::Dht::Status s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
@@ -808,7 +812,7 @@ RingAccount::doRegister_()
                 setRegistrationState(state);
             });
 
-        dht_.run((in_port_t)dhtPortUsed_, identity, false);
+        dht_.run((in_port_t)dhtPortUsed_, identity_, false);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             auto& store = tls::CertificateStore::instance();

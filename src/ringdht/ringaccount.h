@@ -126,7 +126,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Disconnect from the DHT.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
+        void doUnregister(std::function<void(bool)> cb = {}) override;
 
         /**
          * @return pj_str_t "From" uri based on account information.
@@ -288,6 +288,7 @@ class RingAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         dht::DhtRunner dht_ {};
+        dht::crypto::Identity identity_ {};
 
         dht::InfoHash callKey_;
 
