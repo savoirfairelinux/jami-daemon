@@ -56,6 +56,10 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#ifdef WIN32_NATIVE
+# include <dirent.h>
+#endif
+
 namespace ring { namespace tls {
 
 //Map the internal ring Enum class of the exported names

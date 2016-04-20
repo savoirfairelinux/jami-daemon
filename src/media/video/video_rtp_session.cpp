@@ -24,7 +24,13 @@
 #include "video_sender.h"
 #include "video_receive_thread.h"
 #include "video_mixer.h"
-#include "ice_socket.h"
+
+#ifdef WIN32_NATIVE
+# include "ice_transport.h"
+#else
+# include "ice_socket.h"
+#endif
+
 #include "socket_pair.h"
 #include "sip/sipvoiplink.h" // for enqueueKeyframeRequest
 #include "manager.h"

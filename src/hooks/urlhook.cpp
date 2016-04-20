@@ -26,8 +26,12 @@ namespace ring {
 int UrlHook::runAction(const std::string &command, const std::string &args)
 {
     //FIXME : use fork and execve, so no need to escape shell arguments
+#ifdef WIN32_NATIVE
+    const std::string cmd = args.empty() ? " " : (command + " " + args);
+#else
     const std::string cmd = command + (args.empty() ? "" : " ") +
-                            "\"" + args + "\" &";
+        "\"" + args + "\" &";
+#endif
     return system(cmd.c_str());
 }
 

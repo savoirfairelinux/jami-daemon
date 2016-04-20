@@ -20,10 +20,14 @@
  */
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
-#include "media_codec.h"
+
 #include "media_encoder.h"
-#include "media_buffer.h"
-#include "media_io_handle.h"
+
+#ifndef WIN32_NATIVE
+# include "media_codec.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+#endif
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -332,7 +336,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         // write the compressed frame
         ret = av_write_frame(outputCtx_, &pkt);
         if (ret < 0)
-            print_averror("av_write_frame", ret);
+            print_averror("encode_video - av_write_frame", ret);
     }
 
 #else
@@ -465,7 +469,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0)
-                print_averror("av_write_frame", ret);
+                print_averror("encode_audio - av_write_frame", ret);
         }
 
         av_free_packet(&pkt);
@@ -525,7 +529,7 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
-    const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
+    const auto sdp_size = outputCtx_->streams[0]->codecpar->extradata_size + 2048;
     std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
@@ -588,7 +592,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         auto v = av_dict_get(options_, "sample_rate", NULL, 0);
         if (v) {
             encoderCtx_->sample_rate = atoi(v->value);
-            encoderCtx_->time_base = (AVRational) {1, encoderCtx_->sample_rate};
+            encoderCtx_->time_base = AVRational {1, encoderCtx_->sample_rate};
         } else {
             RING_WARN("[%s] No sample rate set", encoderName);
             encoderCtx_->sample_rate = 8000;

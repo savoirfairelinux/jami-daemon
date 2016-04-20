@@ -37,6 +37,12 @@
 #include <string>
 #include <vector>
 
+#ifdef WIN32_NATIVE
+# include "media_codec.h"
+# include "media_buffer.h"
+# include "media_io_handle.h"
+#endif
+
 class AVCodecContext;
 class AVStream;
 class AVFormatContext;
@@ -45,10 +51,12 @@ class AVCodec;
 
 namespace ring {
 
+#ifndef WIN32_NATIVE
 class AudioBuffer;
 class MediaIOHandle;
 class MediaDescription;
 class AccountCodecInfo;
+#endif
 
 class MediaEncoderException : public std::runtime_error {
     public:

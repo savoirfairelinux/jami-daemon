@@ -34,11 +34,14 @@ extern "C" {
  */
 void logger(const int level, const char* format, ...)
 #ifdef _WIN32
+#ifndef WIN32_NATIVE
     __attribute__((format(gnu_printf, 2, 3)))
+#endif
 #elif defined(__GNUC__)
     __attribute__((format(printf, 2, 3)))
 #endif
     ;
+void wlogger(const int level, const char* file, const char* format, ...);
 void vlogger(const int level, const char* format, va_list);
 
 /**
@@ -64,11 +67,17 @@ void strErr();
 #define STR(EXP) #EXP
 #define XSTR(X) STR(X)
 
+#define FILE_NAME_ONLY(X) (strrchr(X, '\\') ? strrchr(X, '\\') + 1 : X)
+
 // Line return char in a string
 #define ENDL "\n"
 
 // Do not remove the "| " in following without modifying vlogger() code
+#ifndef WIN32_NATIVE 
 #define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
+#else
+#define LOG_FORMAT(M, ...) ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
+#endif
 
 #ifdef __ANDROID__
 
@@ -101,9 +110,13 @@ void strErr();
 #define LOG_INFO    EVENTLOG_INFORMATION_TYPE
 #define LOG_DEBUG   EVENTLOG_SUCCESS
 
+#ifndef WIN32_NATIVE
 #define FILE_NAME __FILE__
-
 #define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
+#else
+#define FILE_NAME __FILE__
+#define LOGGER(M, LEVEL, ...) wlogger(LEVEL, FILE_NAME,LOG_FORMAT(M, ##__VA_ARGS__))
+#endif
 
 #else
 
