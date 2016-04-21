@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <queue>
 
 namespace ring {
 class IceTransport;
@@ -179,7 +180,27 @@ private:
     std::mutex ioMutex_ {};
     std::condition_variable ioCv_ {};
     std::list<TxData> txQueue_ {};
-    std::list<std::vector<uint8_t>> rxQueue_ {};
+
+    struct cmp {
+        bool operator()(const std::vector<uint8_t>& v1, const std::vector<uint8_t>& v2) const;
+    };
+    struct ReorderQueue {
+        using Blob = std::vector<uint8_t>;
+
+        std::size_t size() const;
+        bool empty() const;
+
+        Blob& top();
+        void pop();
+
+        void emplace(uint8_t*, uint8_t*);
+
+        std::queue<Blob> ready {};
+        std::priority_queue<Blob, std::vector<Blob>, cmp> q {};
+        uint16_t epoch {0};
+        uint64_t seq {0};
+    };
+    ReorderQueue rxQueue_ {};
 
     ssize_t send(const TxData&);
     ssize_t sendRaw(const void*, size_t);

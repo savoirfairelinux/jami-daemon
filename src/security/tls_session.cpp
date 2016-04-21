@@ -36,6 +36,8 @@
 #include <algorithm>
 #include <cstring> // std::memset
 
+#include <linux/swab.h>
+
 namespace ring { namespace tls {
 
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
@@ -44,7 +46,7 @@ static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
-static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(250); // Delay between two handshake request on DTLS
+static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(2500); // Delay between two handshake request on DTLS
 static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
 
 // Helper to cast any duration into an integer number of milliseconds
@@ -148,6 +150,105 @@ private:
     T creds_;
 };
 
+#pragma pack(1)
+struct DtlsPacket {
+    uint8_t content_type;
+    uint16_t version;
+    uint16_t epoch;
+    uint64_t seq;
+};
+#pragma pack(0)
+
+bool
+TlsSession::cmp::operator()(const std::vector<uint8_t>& v1,
+                            const std::vector<uint8_t>& v2) const
+{
+    const auto p1 = reinterpret_cast<const DtlsPacket*>(v1.data());
+    const auto p2 = reinterpret_cast<const DtlsPacket*>(v2.data());
+
+    uint64_t e1 = __swab16(p1->epoch);
+    uint64_t e2 = __swab16(p2->epoch);
+    uint64_t s1 = __swab64(p1->seq) >> 16;
+    uint64_t s2 = __swab64(p2->seq) >> 16;
+
+    return ((e1 << 48) + s1) > ((e2 << 48) + s2);
+}
+
+std::size_t
+TlsSession::ReorderQueue::size() const
+{
+    return ready.size();
+}
+
+bool
+TlsSession::ReorderQueue::empty() const
+{
+    return ready.empty();
+}
+
+TlsSession::ReorderQueue::Blob&
+TlsSession::ReorderQueue::top()
+{
+    return ready.front();
+}
+
+void
+TlsSession::ReorderQueue::pop()
+{
+    auto p = reinterpret_cast<DtlsPacket*>(ready.front().data());
+    epoch = __swab16(p->epoch);
+    seq = (__swab64(p->seq) >> 16) + 1;
+    RING_ERR("-: (%x, %016lx)", epoch, seq - 1);
+    ready.pop();
+}
+
+void
+TlsSession::ReorderQueue::emplace(uint8_t* start, uint8_t* end)
+{
+    auto p = reinterpret_cast<DtlsPacket*>(start);
+    uint16_t pkt_epoch = __swab16(p->epoch);
+    uint64_t pkt_seq = __swab64(p->seq) >> 16;
+    if (pkt_epoch != epoch) {
+        // epoch change: queue this packet for later, wait next packet in case of reordering
+        q.emplace(start, end);
+        RING_ERR("e: (%x, %016lx)", pkt_epoch, pkt_seq);
+    } else if (pkt_seq != seq) {
+        // sequence broken: queue this packet for later, wait next packet in case of reordering
+        q.emplace(start, end);
+        RING_ERR("s: (%x, %016lx)", pkt_epoch, pkt_seq);
+    } else {
+        // waited packed: queue as ready
+        epoch = pkt_epoch;
+        seq = pkt_seq + 1;
+        ready.emplace(start, end);
+        RING_ERR("+: (%x, %016lx)", pkt_epoch, pkt_seq);
+
+        // check for sequence continuity in pending queue
+        while (!q.empty()) {
+            auto& v = q.top();
+            auto p = reinterpret_cast<const DtlsPacket*>(v.data());
+            pkt_epoch = __swab16(p->epoch);
+            pkt_seq = __swab64(p->seq) >> 16;
+            RING_ERR("q?: (%x, %016lx)", pkt_epoch, pkt_seq);
+            if (pkt_epoch != epoch) {
+                //epoch = pkt_epoch;
+                //seq = pkt_seq + 1;
+                //ready.emplace(std::move(v));
+                //RING_ERR("+q: (%x, %016lx)", pkt_epoch, pkt_seq);
+                //q.pop();
+                break;
+            } else if (pkt_seq == seq) {
+                seq = pkt_seq + 1;
+                ready.emplace(std::move(v));
+                RING_ERR("+: (%x, %016lx)", pkt_epoch, pkt_seq);
+                q.pop();
+            } else {
+                break;
+            }
+        }
+    }
+}
+
 TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
                        const TlsParams& params, const TlsSessionCallbacks& cbs)
     : socket_(new IceSocket(ice, ice_comp_id))
@@ -164,10 +265,10 @@ TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
     socket_->setOnRecv([this](uint8_t* buf, size_t len) {
             std::lock_guard<std::mutex> lk {ioMutex_};
             if (rxQueue_.size() == INPUT_MAX_SIZE) {
-                rxQueue_.pop_front(); // drop oldest packet if input buffer is full
+                rxQueue_.pop(); // drop oldest packet if input buffer is full
                 ++stRxRawPacketDropCnt_;
             }
-            rxQueue_.emplace_back(buf, buf+len);
+            rxQueue_.emplace(buf, buf+len);
             ++stRxRawPacketCnt_;
             stRxRawBytesCnt_ += len;
             ioCv_.notify_one();
@@ -462,10 +563,10 @@ TlsSession::recvRaw(void* buf, size_t size)
         return -1;
     }
 
-    const auto& pkt = rxQueue_.front();
+    const auto& pkt = rxQueue_.top();
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
-    rxQueue_.pop_front();
+    rxQueue_.pop();
     return count;
 }
 
@@ -488,7 +589,7 @@ TlsSession::waitForRawData(unsigned timeout)
         return -1;
     }
 
-    return rxQueue_.front().size();
+    return rxQueue_.top().size();
 }
 
 bool
@@ -563,7 +664,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
         // Shutdown state?
         if (rxQueue_.empty())
             return TlsSessionState::SHUTDOWN;
-        count = rxQueue_.front().size();
+        count = rxQueue_.top().size();
     }
 
     // Total bytes rx during cookie checking (see flood protection below)
@@ -574,10 +675,10 @@ TlsSession::handleStateCookie(TlsSessionState state)
     // Peek and verify front packet
     {
         std::lock_guard<std::mutex> lk {ioMutex_};
-        auto& pkt = rxQueue_.front();
+        auto& pkt = rxQueue_.top();
         std::memset(&prestate_, 0, sizeof(prestate_));
         ret = gnutls_dtls_cookie_verify(&cookie_key_, nullptr, 0,
-                                        pkt.data(), pkt.size(), &prestate_);
+                                        (void*)(pkt.data()), pkt.size(), &prestate_);
     }
 
     if (ret < 0) {
@@ -592,7 +693,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
         // Drop front packet
         {
             std::lock_guard<std::mutex> lk {ioMutex_};
-            rxQueue_.pop_front();
+            rxQueue_.pop();
         }
 
         // Cookie may be sent on multiple network packets
