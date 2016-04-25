@@ -101,6 +101,8 @@ libring_la_CFLAGS = \
 		@PORTAUDIO_CFLAGS@ \
 		$(TLS_CFLAGS)
 
+libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
+
 if USE_DHT
 libring_la_CFLAGS += $(OPENDHT_CFLAGS)
 endif
