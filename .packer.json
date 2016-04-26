@@ -162,7 +162,7 @@
         "ubuntu_16.04": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"],
         "ubuntu_16.04_i386": ["apt-get update", "( apt-get upgrade -y || apt-get upgrade -y || apt-get upgrade -y )"]
 },
-    "ReviewType": "Gerrit",
+    "ReviewType": "",
     "ReviewAddress": "https://gerrit-ring.savoirfairelinux.com",
     "Package" : {
         "fedora_22": "",
