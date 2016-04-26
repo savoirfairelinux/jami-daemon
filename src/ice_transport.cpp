@@ -875,6 +875,12 @@ IceTransportFactory::IceTransportFactory()
     pj_ice_strans_cfg_default(&ice_cfg_);
     ice_cfg_.stun_cfg.pf = &cp_.factory;
 
+    // v2.4.5 of PJNATH has a default of 100ms but RFC 5389 since version 14 requires
+    // a minimum of 500ms on fixed-line links. Our usual case is wireless links.
+    // This solves too long ICE exchange by DHT.
+    // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 31s before timeout.
+    ice_cfg_.stun_cfg.rto_msec = 500;
+
     ice_cfg_.af = pj_AF_INET();
 
     ice_cfg_.stun.cfg.max_pkt_size = 8192;
