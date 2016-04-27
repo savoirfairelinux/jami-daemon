@@ -4,7 +4,7 @@ JSONCPP_URL := https://github.com/open-source-parsers/jsoncpp/archive/$(JSONCPP_
 
 PKGS += jsoncpp
 
-ifeq ($(call need_pkg,'jsoncpp'),)
+ifeq ($(call need_pkg,"jsoncpp >= 3.3.19"),)
 PKGS_FOUND += jsoncpp
 endif
 
