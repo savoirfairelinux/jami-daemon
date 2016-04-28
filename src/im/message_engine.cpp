@@ -125,7 +125,10 @@ MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
     m->second.status = MessageStatus::SENDING;
     m->second.retried++;
     m->second.last_op = clock::now();
-    emitSignal<DRing::ConfigurationSignal::AccountMessageStatus>(m->first, DRing::Account::MessageStates::SENDING);
+    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                 m->first,
+                                                                 m->second.to,
+                                                                 static_cast<int>(DRing::Account::MessageStates::SENDING));
     account_.sendTextMessage(m->second.to, m->second.payloads, m->first);
 }
 
@@ -139,10 +142,16 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatus>(token, DRing::Account::MessageStates::SENT);
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                             token,
+                                                                             f->second.to,
+                                                                             static_cast<int>(DRing::Account::MessageStates::SENT));
             } else if (f->second.retried == MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatus>(token, DRing::Account::MessageStates::FAILURE);
+                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
+                                                                             token,
+                                                                             f->second.to,
+                                                                             static_cast<int>(DRing::Account::MessageStates::FAILURE));
             } else {
                 f->second.status = MessageStatus::IDLE;
                 // TODO: reschedule sending

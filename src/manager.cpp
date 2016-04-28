@@ -1408,7 +1408,7 @@ Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock:
 {
     std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     scheduledTasks_.emplace(when, task);
-    RING_DBG("Task scheduled. Next in %lds", std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
+    RING_DBG("Task scheduled. Next in %llds", std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
 }
 
 // Must be invoked periodically by a timer from the main event loop
@@ -2740,17 +2740,17 @@ uint64_t
 Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
-    const auto acc = getAccount(accountID);
-    if (!acc)
-        return 0;
-    try {
-        return acc->sendTextMessage(to, payloads);
-    } catch (const std::exception& e) {
-        RING_ERR("Exception during text message sending: %s", e.what());
+    if (const auto acc = getAccount(accountID)) {
+        try {
+            return acc->sendTextMessage(to, payloads);
+        } catch (const std::exception& e) {
+            RING_ERR("Exception during text message sending: %s", e.what());
+        }
     }
+    return 0;
 }
 
-std::string
+int
 Manager::getMessageStatus(uint64_t id)
 {
     const auto& allAccounts = accountFactory_.getAllAccounts();
@@ -2760,19 +2760,19 @@ Manager::getMessageStatus(uint64_t id)
             switch (status) {
             case im::MessageStatus::IDLE:
             case im::MessageStatus::SENDING:
-                return DRing::Account::MessageStates::SENDING;
+                return static_cast<int>(DRing::Account::MessageStates::SENDING);
             case im::MessageStatus::SENT:
-                return DRing::Account::MessageStates::SENT;
+                return static_cast<int>(DRing::Account::MessageStates::SENT);
             case im::MessageStatus::READ:
-                return DRing::Account::MessageStates::READ;
+                return static_cast<int>(DRing::Account::MessageStates::READ);
             case im::MessageStatus::FAILURE:
-                return DRing::Account::MessageStates::FAILURE;
+                return static_cast<int>(DRing::Account::MessageStates::FAILURE);
             default:
-                return DRing::Account::MessageStates::UNKNOWN;
+                return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
             }
         }
     }
-    return DRing::Account::MessageStates::UNKNOWN;
+    return static_cast<int>(DRing::Account::MessageStates::UNKNOWN);
 }
 
 void
