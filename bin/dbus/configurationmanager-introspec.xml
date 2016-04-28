@@ -277,17 +277,17 @@
           </arg>
        </method>
 
-      <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
+       <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
           <arg type="t" name="id" direction="in"/>
-          <arg type="s" name="status" direction="out">
+          <arg type="i" name="status" direction="out">
              <tp:docstring>
                The message status.
                 <ul>
-                    <li>UNKNOWN:    unknown message or message status</li>
-                    <li>SENDING:    message is being sent or waiting for peer confirmation.</li>
-                    <li>SENT:       message have been received from the other end.</li>
-                    <li>READ:       message have been read by the peer.</li>
-                    <li>FAILURE:    the message coudn't be delivered.</li>
+                    <li>UNKNOWN = 0    unknown message or message status</li>
+                    <li>SENDING = 1    message is being sent or waiting for peer confirmation.</li>
+                    <li>SENT = 2      message have been received from the other end.</li>
+                    <li>READ = 3       message have been read by the peer.</li>
+                    <li>FAILURE = 4    the message coudn't be delivered.</li>
                 </ul>
              </tp:docstring>
           </arg>
@@ -309,12 +309,12 @@
            <tp:docstring>
                Notify clients that a sent text message status have changed
            </tp:docstring>
+           <arg type="s" name="accountID"/>
            <arg type="t" name="id"/>
-           <arg type="s" name="status">
+           <arg type="s" name="to"/>
+           <arg type="i" name="status">
               <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
-          <arg type="a{ss}" name="payloads"/>
        </signal>
 
        <method name="setVolume" tp:name-for-bindings="setVolume">

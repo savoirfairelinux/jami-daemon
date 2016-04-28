@@ -963,7 +963,7 @@ RingAccount::doRegister_()
                 std::map<std::string, std::string> payloads = {{"text/plain",
                                                                 utf8_make_valid(v.msg)}};
                 shared->onTextMessage(from, payloads);
-                RING_WARN("Sending message confirmation %lu", v.id);
+                RING_WARN("Sending message confirmation %llu", v.id);
                 this_.dht_.putEncrypted(inboxKey,
                           v.from,
                           dht::ImMessage(v.id, std::string(), now));
@@ -1429,7 +1429,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     return true;
                 }
                 this_->sentMessages_.erase(e);
-                RING_WARN("Relevent text message reply for %lu", token);
+                RING_WARN("Relevent text message reply for %llu", token);
 
                 // add treated message
                 auto res = this_->treatedMessages_.insert(msg.id);
