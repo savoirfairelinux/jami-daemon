@@ -279,7 +279,7 @@
 
       <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
           <arg type="t" name="id" direction="in"/>
-          <arg type="s" name="status" direction="out">
+          <arg type="i" name="status" direction="out">
              <tp:docstring>
                The message status.
                 <ul>
@@ -310,7 +310,8 @@
                Notify clients that a sent text message status have changed
            </tp:docstring>
            <arg type="t" name="id"/>
-           <arg type="s" name="status">
+           <arg type="s" name="to"/>
+           <arg type="i" name="status">
               <tp:docstring>The new status of the message, see getMessageStatus for possible values.</tp:docstring>
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>

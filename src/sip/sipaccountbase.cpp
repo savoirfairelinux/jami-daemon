@@ -46,7 +46,9 @@
 namespace ring {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID), link_(getSIPVoIPLink()), messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages")
+    : Account(accountID),
+    messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
+    link_(getSIPVoIPLink())
 {}
 
 SIPAccountBase::~SIPAccountBase() {}

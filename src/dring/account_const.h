@@ -58,15 +58,13 @@ constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
 
 } //namespace DRing::Account
 
-namespace MessageStates {
-
-constexpr static const char UNKNOWN                   [] = "UNKNOWN";
-constexpr static const char SENDING                   [] = "SENDING";
-constexpr static const char SENT                      [] = "SENT";
-constexpr static const char READ                      [] = "READ";
-constexpr static const char FAILURE                   [] = "FAILURE";
-
-} //namespace DRing::MessageStates
+enum MessageStates {
+    UNKNOWN,
+    SENDING,
+    SENT,
+    READ,
+    FAILURE
+}; //DRing::Account::MessageStates
 
 namespace VolatileProperties {
 
