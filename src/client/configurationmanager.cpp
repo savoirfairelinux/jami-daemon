@@ -283,7 +283,7 @@ sendAccountTextMessage(const std::string& accountID, const std::string& to, cons
     return ring::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
 
-std::string
+int
 getMessageStatus(uint64_t id)
 {
     return ring::Manager::instance().getMessageStatus(id);
