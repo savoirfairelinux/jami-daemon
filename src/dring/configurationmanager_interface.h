@@ -197,7 +197,7 @@ struct ConfigurationSignal {
         };
         struct AccountMessageStatus {
                 constexpr static const char* name = "AccountMessageStatus";
-                using cb_type = void(uint64_t /*message_id*/, const std::string& /*state*/);
+                using cb_type = void(uint64_t /*message_id*/, const std::string& /*to*/, const std::string& /*state*/);
         };
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
