@@ -419,7 +419,7 @@ class Manager {
         uint64_t sendTextMessage(const std::string& accountID, const std::string& to,
                              const std::map<std::string, std::string>& payloads);
 
-        std::string getMessageStatus(uint64_t id);
+        int getMessageStatus(uint64_t id);
 
         /**
          * Get account list

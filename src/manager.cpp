@@ -1408,7 +1408,7 @@ Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock:
 {
     std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     scheduledTasks_.emplace(when, task);
-    RING_DBG("Task scheduled. Next in %lds", std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
+    RING_DBG("Task scheduled. Next in %llds", std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
 }
 
 // Must be invoked periodically by a timer from the main event loop
@@ -2741,16 +2741,17 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
                          const std::map<std::string, std::string>& payloads)
 {
     const auto acc = getAccount(accountID);
-    if (!acc)
-        return 0;
-    try {
-        return acc->sendTextMessage(to, payloads);
-    } catch (const std::exception& e) {
-        RING_ERR("Exception during text message sending: %s", e.what());
+    if (acc) {
+        try {
+            return acc->sendTextMessage(to, payloads);
+        } catch (const std::exception& e) {
+            RING_ERR("Exception during text message sending: %s", e.what());
+        }
     }
+    return 0;
 }
 
-std::string
+int
 Manager::getMessageStatus(uint64_t id)
 {
     const auto& allAccounts = accountFactory_.getAllAccounts();

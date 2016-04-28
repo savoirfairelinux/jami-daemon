@@ -50,7 +50,7 @@ std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
 uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads);
-std::string getMessageStatus(uint64_t id);
+int getMessageStatus(uint64_t id);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -197,7 +197,7 @@ struct ConfigurationSignal {
         };
         struct AccountMessageStatus {
                 constexpr static const char* name = "AccountMessageStatus";
-                using cb_type = void(uint64_t /*message_id*/, const std::string& /*state*/);
+                using cb_type = void(uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/);
         };
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
