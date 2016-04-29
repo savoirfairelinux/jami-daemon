@@ -339,7 +339,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getSDP().receiveOffer(r_sdp,
         account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account->getActiveAccountCodecInfoList(MEDIA_VIDEO),
+        account->getActiveAccountCodecInfoList(account->isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
         account->getSrtpKeyExchange()
     );
     auto ice_attrs = Sdp::getIceAttributes(r_sdp);
