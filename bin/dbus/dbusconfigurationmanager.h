@@ -56,6 +56,9 @@ class DBusConfigurationManager :
         DBusConfigurationManager(DBus::Connection& connection);
 
         // Methods
+        bool registerRingDevice(const std::string& accountID, const std::string& accountUsername);
+        std::map<std::string, std::string> getAutodiscoveryList();
+        std::vector<std::string> queryRingAccountsFromAutodiscovery(const std::string& accountUsername);
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
         std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
         void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);

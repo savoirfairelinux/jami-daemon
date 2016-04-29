@@ -55,6 +55,7 @@ using random_device = std::random_device;
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
+#include "upnp/upnp_context.h"
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
 #include "intrin.h"
@@ -277,6 +278,32 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
     upnpEnabled_.store(enabled);
+}
+
+bool
+Account::registerRingDevice(const std::string& accountUsername) const
+{
+    std::shared_ptr<upnp::UPnPContext> upnpContext_ = upnp::getUPnPContext();
+    upnpContext_->registerRingDevice(accountUsername);
+    return true;
+}
+
+std::vector<std::shared_ptr<upnp::RingDevice>>
+Account::getAutodiscoveryList()
+{
+    std::shared_ptr<upnp::UPnPContext> upnpContext_ = upnp::getUPnPContext();
+    if (upnpContext_){
+         return upnpContext_->validRDs_;
+    }
+}
+
+std::vector<std::string>
+Account::queryRingAccountsFromAutodiscovery(const std::string& accountUsername)
+{
+    std::shared_ptr<upnp::UPnPContext> upnpContext_ = upnp::getUPnPContext();
+    if (upnpContext_){
+         return upnpContext_->queryRingAccountsFromAutodiscovery(accountUsername);
+    }
 }
 
 std::map<std::string, std::string>

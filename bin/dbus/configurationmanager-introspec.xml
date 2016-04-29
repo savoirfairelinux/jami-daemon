@@ -15,6 +15,60 @@
             </arg>
         </method>
 
+        <method name="registerRingDevice" tp:name-for-bindings="registerRingDevice">
+            <tp:docstring>
+                Register this Ring instance on the LAN via UPnP.
+            </tp:docstring>
+            <arg type="s" name="accountID" direction="in">
+               <tp:docstring>
+                   The account account ID.
+               </tp:docstring>
+            </arg>
+            <arg type="s" name="accountUsername" direction="in">
+               <tp:docstring>
+                   The account username hash.
+               </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out">
+            </arg>
+        </method>
+
+        <method name="getAutodiscoveryList" tp:name-for-bindings="getAutodiscoveryList">
+            <tp:docstring>
+                Get a list of upnp autodiscovered accounts.
+            </tp:docstring>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+            <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+                <tp:docstring>
+                    The available keys / parameters are:
+                    <ul>
+                        <li>UDN: The Unique Device Name of the autodiscovered Ring Device</li>
+                        <li>DEVICETYPE: The type of the autodiscovered Ring Device</li>
+                        <li>FRIENDLYNAME: The friendly name of the autodiscovered Ring Device</li>
+                        <li>BASEURL: The full URL to the autodiscovered Ring Device's description.xml page</li>
+                        <li>RELURL: Potentially used for IP address without description.xml or otherwise</li>
+                    </ul>
+                </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="queryRingAccountsFromAutodiscovery">
+            <tp:docstring>
+                Get a list of ring accounts associated with each upnp autodiscovered account.
+            </tp:docstring>
+            <arg type="s" name="accountUsername" direction="in">
+                <tp:docstring>
+                    The account username hash.
+                </tp:docstring>
+            </arg>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+            <arg type="as" name="list" direction="out">
+               <tp:docstring>
+                   A list of account IDs
+               </tp:docstring>
+            </arg>
+        </method>
+
         <method name="getAccountDetails" tp:name-for-bindings="getAccountDetails">
             <tp:docstring>
                 Get all parameters of the specified account.

@@ -41,6 +41,7 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 #include "intrin.h"
 
 #if HAVE_DHT
@@ -75,6 +76,11 @@ constexpr static const char * UPNP_WANCON_DEVICE = "urn:schemas-upnp-org:device:
 constexpr static const char * UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
 constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:service:WANPPPConnection:1";
 
+/* UPnP Ring definition */
+constexpr static const char * UPNP_RING_DEVICE = "urn:schemas-upnp-org:device:ringdevice:1";
+constexpr static const char * UPNP_RING_SERVICE_DEVID = "urn:schemas-upnp-org:service:getAccounts:1";
+constexpr static const char * UPNP_RING_SERVICE_ID = "urn:upnp-org:serviceId:getAccounts:1";
+
 /* UPnP error codes */
 constexpr static int          INVALID_ARGS = 402;
 constexpr static const char * INVALID_ARGS_STR = "402";
@@ -95,6 +101,8 @@ constexpr static unsigned MAX_RETRIES = 20;
 /*
  * Local prototypes
  */
+static IXML_Element* ixml_create_element_with_value(IXML_Document* doc, const char* element_name, const char* value);
+static char* create_desc_doc(const std::string& hash);
 static std::string get_element_text(IXML_Node*);
 static std::string get_first_doc_item(IXML_Document*, const char*);
 static std::string get_first_element_item(IXML_Element*, const char*);
@@ -102,6 +110,16 @@ static void checkResponseError(IXML_Document*);
 
 static int
 cp_callback(Upnp_EventType event_type, void* event, void* user_data)
+{
+    if (auto upnpContext = static_cast<UPnPContext*>(user_data))
+        return upnpContext->handleUPnPEvents(event_type, event);
+
+    RING_WARN("UPnP callback without UPnPContext");
+    return 0;
+}
+
+static int
+device_callback(Upnp_EventType event_type, void *event, void *user_data)
 {
     if (auto upnpContext = static_cast<UPnPContext*>(user_data))
         return upnpContext->handleUPnPEvents(event_type, event);
@@ -159,6 +177,7 @@ UPnPContext::UPnPContext()
      * we will probably receive their advertisements either way
      */
     searchForIGD();
+    searchForRD();
 }
 
 UPnPContext::~UPnPContext()
@@ -183,6 +202,214 @@ UPnPContext::~UPnPContext()
 #endif
 }
 
+static IXML_Element*
+ixml_create_element_with_value(IXML_Document* doc, const char* element_name, const char* value)
+{
+    int error;
+    IXML_Element* element = nullptr;
+    IXML_Node* node_value = nullptr;
+    error = ixmlDocument_createElementEx(doc, element_name, &element);
+    if (error != IXML_SUCCESS) {
+        RING_DBG("Error creating Ring Device XML element: %s", element_name);
+        return nullptr;
+    }
+    error = ixmlDocument_createTextNodeEx(doc, value, &node_value);
+    if (error != IXML_SUCCESS) {
+        RING_DBG("Error creating Ring Device XML node with value: %s", value);
+        ixmlElement_free(element);
+        return nullptr;
+    }
+    error = ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(element), reinterpret_cast<IXML_Node*>(node_value));
+    if (error != IXML_SUCCESS) {
+        RING_DBG("Error creating Ring Device XML node with value: %s to elemet: %s", value, element_name);
+        ixmlElement_free(element); /* this should free the node as well */
+        return nullptr;
+    }
+    return element;
+}
+
+static char*
+create_desc_doc(const std::string& hash)
+{
+    char* ring_doc_str = nullptr;
+    int upnp_err;
+
+    // create description doc
+    IXML_Document* ring_desc_doc = nullptr;
+    upnp_err = ixmlDocument_createDocumentEx(&ring_desc_doc);
+    if (upnp_err != IXML_SUCCESS) {
+        RING_DBG("error initializing XML doc");
+        return ring_doc_str;
+    }
+
+    // <root xmlns="urn:schemas-upnp-org:device-1-0"></root>
+    IXML_Element* ring_root_element = nullptr;
+    ixmlDocument_createElementEx(ring_desc_doc, "root", &ring_root_element);
+    ixmlElement_setAttribute(ring_root_element, "xmlns", "urn:schemas-upnp-org:device-1-0");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_desc_doc), reinterpret_cast<IXML_Node*>(ring_root_element));
+
+    // <specVersion></specVersion>
+    IXML_Element* parent = ixmlDocument_createElement(ring_desc_doc, "specVersion");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_root_element), reinterpret_cast<IXML_Node*>(parent));
+
+    // <major>1</major>
+    IXML_Element* child = ixml_create_element_with_value(ring_desc_doc, "major", "1");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(parent), reinterpret_cast<IXML_Node*>(child));
+
+    // <minor>0</minor>
+    child = ixml_create_element_with_value(ring_desc_doc, "minor", "0");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(parent), reinterpret_cast<IXML_Node*>(child));
+
+    // <device></device>
+    IXML_Element* device_element = ixmlDocument_createElement(ring_desc_doc, "device");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_root_element), reinterpret_cast<IXML_Node*>(device_element));
+
+    // <deviceType>urn:schemas-upnp-org:device:ringdevice:1</deviceType>
+    child = ixml_create_element_with_value(ring_desc_doc, "deviceType", UPNP_RING_DEVICE);
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <friendlyName>RING VoIP client</friendlyName>
+    child = ixml_create_element_with_value(ring_desc_doc, "friendlyName", "RING VoIP client");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <manufacturer>Savoir-faire Linux</manufacturer>
+    child = ixml_create_element_with_value(ring_desc_doc, "manufacturer", "Savoir-faire Linux");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <manufacturerURL>https://www.savoirfairelinux.com</manufacturerURL>
+    child = ixml_create_element_with_value(ring_desc_doc, "manufacturerURL", "https://www.savoirfairelinux.com");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <modelDescription>RING VoIP client 2.0</modelDescription>
+    child = ixml_create_element_with_value(ring_desc_doc, "modelDescription", "RING VoIP client 2.0");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <modelName>RING</modelName>
+    child = ixml_create_element_with_value(ring_desc_doc, "modelName", "RING");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <modelNumber>2.0</modelNumber>
+    child = ixml_create_element_with_value(ring_desc_doc, "modelNumber", "2.0");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <modelURL>http://ring.cx</modelURL>
+    child = ixml_create_element_with_value(ring_desc_doc, "modelURL", "http://ring.cx");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <serialNumber>db05dbd0643143b035727c5b4c58d3c71f98d369</serialNumber>
+    child = ixml_create_element_with_value(ring_desc_doc, "serialNumber", hash.c_str());
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <UDN>RING hash:db05dbd0643143b035727c5b4c58d3c71f98d369</UDN>
+    child = ixml_create_element_with_value(ring_desc_doc, "UDN", (hash).c_str());
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+    // <UPC>db05dbd0643143b035727c5b4c58d3c71f98d369</UPC>
+    child = ixml_create_element_with_value(ring_desc_doc, "UPC", ("RING hash:" + hash).c_str());
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(device_element), reinterpret_cast<IXML_Node*>(child));
+
+    ring_doc_str = ixmlPrintDocument(ring_desc_doc);
+    RING_DBG("created XML document: %s",ring_doc_str);
+
+    ixmlDocument_free(ring_desc_doc);
+
+    return ring_doc_str;
+}
+
+void
+UPnPContext::registerRingDevice(std::string hash)
+{
+    int upnp_err;
+    char* ip_address = nullptr;
+    unsigned short port = 0;
+
+    ip_address = UpnpGetServerIpAddress(); // do not free
+    port = UpnpGetServerPort();
+
+    // relax the parser to allow malformed text
+    ixmlRelaxParser( 1 );
+
+    upnp_err = UpnpEnableWebserver(true);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        RING_DBG("error enabling web server: %s", UpnpGetErrorMessage(upnp_err));
+        return;
+    }
+
+    // register device from generated XML
+    // Use below for testing purposes.
+    // char* ring_doc_str = create_desc_doc( "db05dbd0643143b035727c5b4c58d3c71f98d369" );
+    char* ring_doc_str = create_desc_doc( hash );
+
+    // According to http://manual.freeshell.org/libupnp-1.6.18/html/upnp/UpnpRegisterRootDevice2.html
+    // UpnpRegisterRootDevice2 returns UPNP_E_INVALID_DESC if the description document is not a valid device description
+    // Hence this is handled below by the if statement.
+    upnp_err = UpnpRegisterRootDevice2(UPNPREG_BUF_DESC, ring_doc_str, strlen(ring_doc_str), 1, device_callback, &deviceHandle_, &deviceHandle_);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        RING_DBG("error registering the rootdevice: %s", UpnpGetErrorMessage(upnp_err));
+        return;
+    }
+    ixmlFreeDOMString(ring_doc_str);
+
+    RING_DBG("RING device registered");
+
+    // start sending device advertisements every 2 minutes
+    upnp_err = UpnpSendAdvertisement(deviceHandle_, 120);
+    if (upnp_err != UPNP_E_SUCCESS) {
+        RING_DBG("error sending device advertisement: %s", UpnpGetErrorMessage(upnp_err));
+        UpnpUnRegisterRootDevice(deviceHandle_);
+        return;
+    }
+    RING_DBG("RING device advertisement sent");
+
+}
+
+int
+UPnPContext::updateAccountList()
+{
+    RING_DBG("Notifying subscriptions of a change in variables. If any.");
+
+    std::string pipedBuilder = validRDs_[0]->getUDN();
+
+    for(unsigned int i = 1; i < validRDs_.size(); i++)
+    {
+        pipedBuilder += ("|" + validRDs_[i]->getUDN());
+    }
+
+    //char* ring_doc_str = nullptr;
+    int upnp_err;
+
+    // create description doc
+    IXML_Document* ring_desc_doc = nullptr;
+    upnp_err = ixmlDocument_createDocumentEx(&ring_desc_doc);
+    if (upnp_err != IXML_SUCCESS) {
+        RING_DBG("error initializing XML doc");
+        return upnp_err; //ring_doc_str;
+    }
+
+    // <e:propertyset xmlns="urn:schemas-upnp-org:event-1-0"></root>
+    IXML_Element* ring_root_element = nullptr;
+    ixmlDocument_createElementEx(ring_desc_doc, "e:propertyset", &ring_root_element);
+    ixmlElement_setAttribute(ring_root_element, "xmlns:e", "urn:schemas-upnp-org:event-1-0");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_desc_doc), reinterpret_cast<IXML_Node*>(ring_root_element));
+
+    // <e:property></e:property>
+    IXML_Element* parent = ixmlDocument_createElement(ring_desc_doc, "e:property");
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_root_element), reinterpret_cast<IXML_Node*>(parent));
+
+    // <accounts>ring:123|ring:321</accounts>
+    IXML_Element* child = ixml_create_element_with_value(ring_desc_doc, "accounts", pipedBuilder.c_str());
+    ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(parent), reinterpret_cast<IXML_Node*>(child));
+
+    return UpnpNotifyExt(deviceHandle_, UPNP_RING_SERVICE_DEVID, UPNP_RING_SERVICE_ID, ring_desc_doc);
+}
+
+std::vector<std::string>
+UPnPContext::queryRingAccountsFromAutodiscovery(const std::string& accountUsername)
+{
+    int index = 0;
+    for(unsigned int i = 0; i < validRDs_.size(); i++){
+        if(validRDs_[i]->getUDN() == accountUsername){
+            index = i;
+            break;
+        }
+    }
+    DOMString* oa;
+    std::string acc = "accounts";
+    UpnpGetServiceVarStatus(ctrlptHandle_, validRDs_[index]->getBaseURL().c_str(), acc.c_str(), oa);
+    std::string conv (oa[0]);
+    return {conv};
+}
+
 void
 UPnPContext::searchForIGD()
 {
@@ -196,6 +423,18 @@ UPnPContext::searchForIGD()
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_IGD_DEVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
+}
+
+void
+UPnPContext::searchForRD()
+{
+    if(not clientRegistered_) {
+        RING_WARN("UPnP: Control Point not registered");
+        return;
+    }
+
+    /* send out search for Ring devices */
+    UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_RING_DEVICE, this);
 }
 
 bool
@@ -501,9 +740,84 @@ UPnPContext::parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event)
 
     if (deviceType.compare(UPNP_IGD_DEVICE) == 0) {
         parseIGD(doc, d_event);
+    } else if (deviceType.compare(UPNP_RING_DEVICE) == 0) {
+        parseRD(doc, d_event);
+    }
+}
+
+void
+UPnPContext::parseRD(IXML_Document* doc, const Upnp_Discovery* d_event)
+{
+    if (not doc or not d_event)
+        return;
+
+    /* check the UDN to see if its already in our device list(s)
+     * if it is, then update the device advertisement timeout (expiration)
+     */
+    std::string UDN = get_first_doc_item(doc, "UDN");
+    if (UDN.empty()) {
+        RING_ERR("UPnP: could not find UDN in description document of device");
+        return;
     }
 
-    /* TODO: check if its a ring device */
+    {
+        std::lock_guard<std::mutex> lock(validRDMutex_);
+
+        for(unsigned int i = 0; i < validRDs_.size(); i++){
+            if(validRDs_[i]->getUDN() == UDN){
+                /* we already have this device in our list */
+                /* TODO: update expiration */
+                return;
+            }
+        }
+    }
+
+    std::string deviceType = get_first_doc_item(doc, "deviceType");
+    if (not deviceType.empty() ){
+        if (deviceType == "urn:schemas-upnp-org:device:ringdevice:1"){
+            RING_DBG("UPnP: checking new ring device type: %s", deviceType.c_str());
+        } else {
+            RING_DBG("UPnP: checking new unknown device type: %s", deviceType.c_str());
+        }
+    }
+
+    std::string friendlyName = get_first_doc_item(doc, "friendlyName");
+    if (not friendlyName.empty() ){
+        RING_DBG("UPnP: checking new device of type RD with friendlyName: %s", friendlyName.c_str());
+    }
+
+    // determine baseURL
+    std::string baseURL = get_first_doc_item(doc, "URLBase");
+    if (baseURL.empty()) {
+        // get it from the discovery event location
+        baseURL = std::string(d_event->Location);
+    }
+
+    std::string relURL = get_first_doc_item(doc, "presentationURL");
+    if (not relURL.empty() ){
+        RING_DBG("UPnP: checking new device of type RD with presentationURL: %s", relURL.c_str());
+    }
+
+    RING_DBG("============================================\n New Ring Device with UDN: %s found.\n "
+             "It also has the following parameters:\ndeviceType: %s \nfriendlyName: %s \nURLBase: "
+             "%s \nrelURL: %s \n============================================", UDN.c_str(),
+             deviceType.c_str(), friendlyName.c_str(), baseURL.c_str(), relURL.c_str());
+
+    std::unique_ptr<RingDevice> new_rd(new RingDevice(UDN, deviceType, friendlyName, baseURL, relURL));
+    new_rd->localIp = ip_utils::getLocalAddr(pj_AF_INET());
+
+    RING_DBG("UPnP: found a valid RD: %s", new_rd->getBaseURL().c_str());
+
+    {
+        std::lock_guard<std::mutex> lock(validRDMutex_);
+        validRDs_.push_back(std::move(new_rd));
+        validRDCondVar_.notify_all();
+        for (const auto& l : igdListeners_)
+            l.second();
+    }
+
+    UpnpSubscribeAsync(ctrlptHandle_, new_rd->getBaseURL().c_str(), SUBSCRIBE_TIMEOUT, cp_callback, this);
+
 }
 
 void
@@ -582,7 +896,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
                     /* get the rest of the service definitions */
 
                     /* serviceId */
-                    IXML_Element* service_element = (IXML_Element*)service_node;
+                    IXML_Element* service_element = reinterpret_cast<IXML_Element*>(service_node);
                     std::string serviceId = get_first_element_item(service_element, "serviceId");
 
                     /* get the relative controlURL and turn it into absolute address using the URLBase */
@@ -701,6 +1015,7 @@ get_first_element_item(IXML_Element* element, const char* item)
     }
     return ret;
 }
+
 int
 UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 {
@@ -729,6 +1044,8 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
                 RING_WARN("UPnP: Error in discovery event received by the CP: %s",
                           UpnpGetErrorMessage(d_event->ErrCode));
 
+            //RING_DBG("Trying to download device description from: " + (d_event->Location));
+
             /* RING_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
                      d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, d_event->Location, d_event->Os);
             */
@@ -748,6 +1065,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
                  * RING_WARN("UPnP: Error downloading device description: %s",
                  *         UpnpGetErrorMessage(upnp_err));
                  */
+                 RING_DBG("UPnP: Error downloading device description: %s", UpnpGetErrorMessage(upnp_err));
             } else {
                 parseDevice(desc_doc.get(), d_event);
             }
@@ -768,7 +1086,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
     {
-        struct Upnp_Discovery *d_event = (struct Upnp_Discovery *)event;
+        struct Upnp_Discovery *d_event = static_cast<struct Upnp_Discovery *>(event);
 
         RING_DBG("UPnP: Control Point received ByeBye for device: %s", d_event->DeviceId);
 
@@ -788,6 +1106,63 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
         /* TODO: handle event by updating any changed state variables */
 
+    }
+    break;
+
+    case UPNP_EVENT_SUBSCRIPTION_REQUEST:
+    {
+        struct Upnp_Subscription_Request *s_event = static_cast<struct Upnp_Subscription_Request *>(event);
+        RING_DBG("A subscription request has been received. Handling it now.");
+
+        std::string pipedBuilder = validRDs_[0]->getUDN();
+
+        for(unsigned int i = 1; i < validRDs_.size(); i++)
+        {
+            pipedBuilder += ("|" + validRDs_[i]->getUDN());
+        }
+
+        //char* ring_doc_str = nullptr;
+        int upnp_err;
+
+        // create description doc
+        IXML_Document* ring_desc_doc = nullptr;
+        upnp_err = ixmlDocument_createDocumentEx(&ring_desc_doc);
+        if (upnp_err != IXML_SUCCESS) {
+            RING_DBG("error initializing XML doc");
+            return upnp_err; //ring_doc_str;
+        }
+
+        // <e:propertyset xmlns="urn:schemas-upnp-org:event-1-0"></root>
+        IXML_Element* ring_root_element = nullptr;
+        ixmlDocument_createElementEx(ring_desc_doc, "e:propertyset", &ring_root_element);
+        ixmlElement_setAttribute(ring_root_element, "xmlns:e", "urn:schemas-upnp-org:event-1-0");
+        ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_desc_doc), reinterpret_cast<IXML_Node*>(ring_root_element));
+
+        // <e:property></e:property>
+        IXML_Element* parent = ixmlDocument_createElement(ring_desc_doc, "e:property");
+        ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(ring_root_element), reinterpret_cast<IXML_Node*>(parent));
+
+        // <accounts>ring:123|ring:321</accounts>
+        IXML_Element* child = ixml_create_element_with_value(ring_desc_doc, "accounts", pipedBuilder.c_str());
+        ixmlNode_appendChild(reinterpret_cast<IXML_Node*>(parent), reinterpret_cast<IXML_Node*>(child));
+
+        //ring_doc_str = ixmlPrintDocument(ring_desc_doc);
+        //RING_DBG("created XML document: %s",ring_doc_str);
+
+        // Getting the const char** values for the UpnpAcceptSubscription method is quite torturous...
+        /*std::string pipedBuilder = validRDs_[0]->getUDN();
+
+        for(unsigned int i = 1; i < validRDs_.size(); i++)
+        {
+            pipedBuilder += ("|" + validRDs_[i]->getUDN());
+        }
+
+        const char * upnpVariables[] = {"Accounts"};
+        const char * upnpVarValues[] = {pipedBuilder.c_str()};*/
+
+        // We could replace this with UpnpAcceptSubscriptionExt to use an IXML document instead of these char** values...
+        return UpnpAcceptSubscriptionExt(deviceHandle_, UPNP_RING_SERVICE_DEVID, s_event->ServiceId, ring_desc_doc, s_event->Sid);
+        //return UpnpAcceptSubscription(deviceHandle_,UPNP_RING_SERVICE_DEVID,s_event->ServiceId,upnpVariables,upnpVarValues,sizeof(upnpVariables)/sizeof(upnpVariables[0]),s_event->Sid);
     }
     break;
 
@@ -820,7 +1195,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_CONTROL_ACTION_COMPLETE:
     {
-        struct Upnp_Action_Complete *a_event = (struct Upnp_Action_Complete *)event;
+        struct Upnp_Action_Complete *a_event = static_cast<struct Upnp_Action_Complete *>(event);
 
         /* RING_DBG("UPnP: Control Point async action complete"); */
 
@@ -835,7 +1210,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_CONTROL_GET_VAR_COMPLETE:
     {
-        struct Upnp_State_Var_Complete *sv_event = (struct Upnp_State_Var_Complete *)event;
+        struct Upnp_State_Var_Complete *sv_event = static_cast<struct Upnp_State_Var_Complete *>(event);
 
         /* RING_DBG("UPnP: Control Point async get variable complete"); */
 
