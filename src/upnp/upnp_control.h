@@ -30,6 +30,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 
 namespace ring {
 class IpAddr;

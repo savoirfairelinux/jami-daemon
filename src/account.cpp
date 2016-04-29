@@ -55,6 +55,7 @@ using random_device = std::random_device;
 #include <yaml-cpp/yaml.h>
 #pragma GCC diagnostic pop
 
+#include "upnp/upnp_context.h"
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
 #include "intrin.h"
@@ -277,6 +278,32 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
     upnpEnabled_.store(enabled);
+}
+
+bool
+Account::registerRingDevice(const std::string& accountUsername) const
+{
+    std::shared_ptr<upnp::UPnPContext> upnpContext_ = upnp::getUPnPContext();
+    upnpContext_->registerRingDevice(accountUsername);
+    return true;
+}
+
+std::map<std::string, std::string>
+Account::getAutodiscoveryList()
+{
+    std::shared_ptr<upnp::UPnPContext> upnpContext_ = upnp::getUPnPContext();
+    if (upnpContext_){
+         std::map<std::string, std::shared_ptr<upnp::RingDevice>> list(upnpContext_->validRDs_);
+         std::map<std::string, std::string> ret;
+         for(auto item : list){
+            ret.insert(std::pair<std::string,std::string>(item.first+".UDN",item.second->getUDN()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".DeviceType",item.second->getDeviceType()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".FriendlyName",item.second->getFriendlyName()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".BaseURL",item.second->getBaseURL()+"description.xml"));
+            ret.insert(std::pair<std::string,std::string>(item.first+".relURL",item.second->getrelURL()));
+         }
+         return ret;
+    }
 }
 
 std::map<std::string, std::string>

@@ -95,6 +95,9 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         virtual void setAccountDetails(const std::map<std::string, std::string> &details);
 
+        virtual bool registerRingDevice(const std::string& accountUsername) const;
+        static std::map<std::string, std::string> getAutodiscoveryList();
+
         virtual std::map<std::string, std::string> getAccountDetails() const;
 
         virtual std::map<std::string, std::string> getVolatileAccountDetails() const;

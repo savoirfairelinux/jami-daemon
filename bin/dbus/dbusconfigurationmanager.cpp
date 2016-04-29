@@ -32,6 +32,18 @@ DBusConfigurationManager::DBusConfigurationManager(DBus::Connection& connection)
 {}
 
 auto
+DBusConfigurationManager::registerRingDevice(const std::string& accountID, const std::string& accountUsername) -> decltype(DRing::registerRingDevice(accountID, accountUsername))
+{
+    return DRing::registerRingDevice(accountID,accountUsername);
+}
+
+auto
+DBusConfigurationManager::getAutodiscoveryList() -> decltype(DRing::getAutodiscoveryList())
+{
+    return DRing::getAutodiscoveryList();
+}
+
+auto
 DBusConfigurationManager::getAccountDetails(const std::string& accountID) -> decltype(DRing::getAccountDetails(accountID))
 {
     return DRing::getAccountDetails(accountID);
