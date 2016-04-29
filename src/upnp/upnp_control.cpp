@@ -154,4 +154,32 @@ Controller::getExternalIP() const
     return {}; //  empty address
 }
 
+void
+Controller::registerRingDevice(std::string hash) const
+{
+#if HAVE_LIBUPNP
+     if (upnpContext_)
+         upnpContext_->registerRingDevice(hash);
+#endif
+}
+
+std::map<std::string, std::string>
+Controller::getValidRingDevices() const
+{
+#if HAVE_LIBUPNP
+     if (upnpContext_){
+         std::map<std::string, std::shared_ptr<RingDevice>> list(upnpContext_->validRDs_);
+         std::map<std::string, std::string> ret;
+         for(auto item : list){
+            ret.insert(std::pair<std::string,std::string>(item.first+".UDN",item.second->getUDN()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".DeviceType",item.second->getDeviceType()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".FriendlyName",item.second->getFriendlyName()));
+            ret.insert(std::pair<std::string,std::string>(item.first+".BaseURL",item.second->getBaseURL()+"description.xml"));
+            ret.insert(std::pair<std::string,std::string>(item.first+".relURL",item.second->getrelURL()));
+         }
+         return ret;
+    }
+#endif
+}
+
 }} // namespace ring::upnp

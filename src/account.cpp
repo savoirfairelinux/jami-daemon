@@ -279,6 +279,20 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     upnpEnabled_.store(enabled);
 }
 
+bool
+Account::registerRingDevice(const std::string& accountUsername) const
+{
+    upnp_->registerRingDevice(accountUsername);
+    return true;
+}
+
+std::map<std::string, std::string>
+Account::getAutodiscoveryList()
+{
+    std::unique_ptr<ring::upnp::Controller> upnp (new upnp::Controller());
+    return upnp->getValidRingDevices();
+}
+
 std::map<std::string, std::string>
 Account::getAccountDetails() const
 {

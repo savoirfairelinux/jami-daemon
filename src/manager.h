@@ -433,6 +433,18 @@ class Manager {
         void setAccountsOrder(const std::string& order);
 
         /**
+         * Register a Ring Device for LAN UPnP
+         * @return bool sucess of registration.
+         */
+        bool registerRingDevice(const std::string& accountID, const std::string& accountUsername) const;
+
+        /**
+         * Retrieve the list of autodiscovered accounts
+         * @return std::map< std::string, std::string > The list of accounts and details
+         */
+        std::map<std::string, std::string> getAutodiscoveryList() const;
+
+        /**
          * Retrieve details about a given account
          * @param accountID	  The account identifier
          * @return std::map< std::string, std::string > The account details
