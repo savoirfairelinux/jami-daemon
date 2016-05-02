@@ -171,7 +171,6 @@ std::shared_ptr<SIPCall>
 SIPAccount::newOutgoingCall(const std::string& toUrl)
 {
     std::string to;
-    std::string toUri;
     int family;
 
     auto& manager = Manager::instance();
@@ -205,12 +204,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
         RING_DBG("UserAgent: New registered account call to %s", toUrl.c_str());
     }
 
-    // If toUrl is not a well formatted sip URI, use account information to process it
-    if (toUrl.find("sip:") != std::string::npos or
-        toUrl.find("sips:") != std::string::npos)
-        toUri = toUrl;
-    else
-        toUri = getToUri(to);
+    auto toUri = getToUri(to);
     call->initIceTransport(true);
 
     call->setIPToIP(isIP2IP());
@@ -2078,12 +2072,7 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
         return;
     }
 
-    std::string toUri;
-    if (to.find("sip:") != std::string::npos or
-        to.find("sips:") != std::string::npos)
-        toUri = to;
-    else
-        toUri = getToUri(to);
+    auto toUri = getToUri(to);
 
     const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     std::string from(getFromUri());
