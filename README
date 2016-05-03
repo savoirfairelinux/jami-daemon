@@ -62,7 +62,7 @@ How to compile on Linux
 
 1) Compile the dependencies first
 
-cd ../contrib/
+cd contrib
 mkdir native
 cd native
 ../bootstrap
