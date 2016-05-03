@@ -353,7 +353,7 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
-        static tls::DhParams loadDhParams(const std::string path);
+        static tls::DhParams loadDhParams(const std::string& path);
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),
