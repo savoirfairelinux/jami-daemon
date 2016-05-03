@@ -2742,6 +2742,25 @@ Manager::sendTextMessage(const std::string& accountID, const std::string& to,
 {
     if (const auto acc = getAccount(accountID)) {
         try {
+            for(std::map<std::string, std::string>::const_iterator it = payloads.begin(); it != payloads.end(); ++it) {
+                //TODO Should be something like acc->msgSize
+                RING_WARN("key: %s size: %llu", it->first.c_str(), it->second.size());
+              if (it->second.size() > 5600) {
+                  RING_WARN("WE NEED TO CHOP CHOP");
+                  size_t idx = 0;
+                  const size_t maxSize = 5600;
+                  while (idx < it->second.size()) {
+                      auto max = std::min(maxSize, it->second.size() - idx);
+                      std::map<std::string, std::string> shrinkedPayload;
+                      shrinkedPayload[it->first] = it->second.substr(idx, max);
+                      idx += max;
+                      RING_WARN("MAX : %llu, IDX: %llu ", max, idx);
+                      //FIXME: We loose id with that (maybe return a list)
+                      acc->sendTextMessage(to, shrinkedPayload);
+                  }
+                  return 0;
+              }
+            }
             return acc->sendTextMessage(to, payloads);
         } catch (const std::exception& e) {
             RING_ERR("Exception during text message sending: %s", e.what());

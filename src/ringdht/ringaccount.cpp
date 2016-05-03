@@ -1225,7 +1225,7 @@ RingAccount::loadValues() const
 }
 
 tls::DhParams
-RingAccount::loadDhParams(const std::string path)
+RingAccount::loadDhParams(const std::string& path)
 {
     try {
         // writeTime throw exception if file doesn't exist
