@@ -1423,6 +1423,8 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         dht_.listen<dht::ImMessage>(h, [wshared,token](dht::ImMessage&& msg) {
             if (auto this_ = wshared.lock()) {
                 // check expected message confirmation
+                if (msg.id != token)
+                    return true;
                 auto e = this_->sentMessages_.find(msg.id);
                 if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
                     RING_WARN("Unrelated text message reply");
