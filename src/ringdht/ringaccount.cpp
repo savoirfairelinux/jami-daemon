@@ -1424,8 +1424,14 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             if (auto this_ = wshared.lock()) {
                 // check expected message confirmation
                 auto e = this_->sentMessages_.find(msg.id);
+                if (e == this_->sentMessages_.end()) {
+                        RING_DBG("Message not found for %llu", token);
+                }
+                if (e->second.to != msg.from) {
+                        RING_DBG("Unrelated text message : from %s != second %s", msg.from.toString().c_str(), e->second.to.toString().c_str());
+                }
                 if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
-                    RING_WARN("Unrelated text message reply");
+                    RING_DBG("Unrelated text message reply for %llu", token);
                     return true;
                 }
                 this_->sentMessages_.erase(e);
