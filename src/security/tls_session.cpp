@@ -162,7 +162,7 @@ TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
               [this] { cleanup(); })
 {
     socket_->setOnRecv([this](uint8_t* buf, size_t len) {
-            std::lock_guard<std::mutex> lk {ioMutex_};
+            std::lock_guard<std::mutex> lk {rxMutex_};
             if (rxQueue_.size() == INPUT_MAX_SIZE) {
                 rxQueue_.pop_front(); // drop oldest packet if input buffer is full
                 ++stRxRawPacketDropCnt_;
@@ -170,7 +170,7 @@ TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
             rxQueue_.emplace_back(buf, buf+len);
             ++stRxRawPacketCnt_;
             stRxRawBytesCnt_ += len;
-            ioCv_.notify_one();
+            rxCv_.notify_one();
             return len;
         });
 
@@ -195,7 +195,9 @@ TlsSession::typeName() const
 void
 TlsSession::dump_io_stats() const
 {
-    RING_WARN("[TLS] RxRawPckt=%zu (%zu bytes)", stRxRawPacketCnt_, stRxRawBytesCnt_);
+    RING_DBG("[TLS] RxRawPkt=%zu (%zu bytes) - TxRawPkt=%zu (%zu bytes)",
+             stRxRawPacketCnt_.load(), stRxRawBytesCnt_.load(),
+             stTxRawPacketCnt_.load(), stTxRawBytesCnt_.load());
 }
 
 TlsSessionState
@@ -356,7 +358,7 @@ void
 TlsSession::shutdown()
 {
     state_ = TlsSessionState::SHUTDOWN;
-    ioCv_.notify_one(); // unblock waiting FSM
+    rxCv_.notify_one(); // unblock waiting FSM
 }
 
 const char*
@@ -382,28 +384,31 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
     return {};
 }
 
-// Called by application to send data to encrypt.
 ssize_t
-TlsSession::async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete)
+TlsSession::send(const void* data, std::size_t size)
 {
-    std::lock_guard<std::mutex> lk {ioMutex_};
-    txQueue_.emplace_back(TxData {data, size, on_send_complete});
-    ioCv_.notify_one();
-    return GNUTLS_E_SUCCESS;
+    std::lock_guard<std::mutex> lk {txMutex_};
+    if (state_ != TlsSessionState::ESTABLISHED)
+        return GNUTLS_E_INVALID_SESSION;
+    return send_(static_cast<const uint8_t*>(data), size);
 }
 
 ssize_t
-TlsSession::send(const TxData& tx_data)
+TlsSession::send(const std::vector<uint8_t>& vec)
+{
+    return send(vec.data(), vec.size());
+}
+
+ssize_t
+TlsSession::send_(const uint8_t* tx_data, std::size_t tx_size)
 {
     std::size_t max_tx_sz = gnutls_dtls_get_data_mtu(session_);
-    std::size_t tx_size = tx_data.size;
-    auto ptr = static_cast<uint8_t*>(tx_data.ptr);
 
     // Split user data into MTU-suitable chunck
     size_t total_written = 0;
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
-        auto nwritten = gnutls_record_send(session_, ptr + total_written, chunck_sz);
+        auto nwritten = gnutls_record_send(session_, tx_data + total_written, chunck_sz);
         if (nwritten <= 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
@@ -456,7 +461,7 @@ TlsSession::sendRawVec(const giovec_t* iov, int iovcnt)
 ssize_t
 TlsSession::recvRaw(void* buf, size_t size)
 {
-    std::lock_guard<std::mutex> lk {ioMutex_};
+    std::lock_guard<std::mutex> lk {rxMutex_};
     if (rxQueue_.empty()) {
         gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
@@ -477,8 +482,8 @@ TlsSession::recvRaw(void* buf, size_t size)
 int
 TlsSession::waitForRawData(unsigned timeout)
 {
-    std::unique_lock<std::mutex> lk {ioMutex_};
-    if (not ioCv_.wait_for(lk, std::chrono::milliseconds(timeout),
+    std::unique_lock<std::mutex> lk {rxMutex_};
+    if (not rxCv_.wait_for(lk, std::chrono::milliseconds(timeout),
                            [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; }))
         return 0;
 
@@ -508,12 +513,6 @@ void
 TlsSession::cleanup()
 {
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
-
-    // Flush pending application send requests with a 0 bytes-sent result
-    for (auto& txdata : txQueue_) {
-        if (txdata.onComplete)
-            txdata.onComplete(0);
-    }
 
     if (session_) {
         // DTLS: not use GNUTLS_SHUT_RDWR to not wait for a peer answer
@@ -553,8 +552,8 @@ TlsSession::handleStateCookie(TlsSessionState state)
     std::size_t count;
     {
         // block until rx packet or shutdown
-        std::unique_lock<std::mutex> lk {ioMutex_};
-        if (!ioCv_.wait_for(lk, COOKIE_TIMEOUT,
+        std::unique_lock<std::mutex> lk {rxMutex_};
+        if (!rxCv_.wait_for(lk, COOKIE_TIMEOUT,
                             [this]{ return !rxQueue_.empty()
                                     or state_ == TlsSessionState::SHUTDOWN; })) {
             RING_ERR("[TLS] SYN cookie failed: timeout");
@@ -573,7 +572,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
 
     // Peek and verify front packet
     {
-        std::lock_guard<std::mutex> lk {ioMutex_};
+        std::lock_guard<std::mutex> lk {rxMutex_};
         auto& pkt = rxQueue_.front();
         std::memset(&prestate_, 0, sizeof(prestate_));
         ret = gnutls_dtls_cookie_verify(&cookie_key_, nullptr, 0,
@@ -591,7 +590,7 @@ TlsSession::handleStateCookie(TlsSessionState state)
 
         // Drop front packet
         {
-            std::lock_guard<std::mutex> lk {ioMutex_};
+            std::lock_guard<std::mutex> lk {rxMutex_};
             rxQueue_.pop_front();
         }
 
@@ -696,32 +695,11 @@ TlsSessionState
 TlsSession::handleStateEstablished(TlsSessionState state)
 {
     // block until rx/tx packet or state change
-    std::unique_lock<std::mutex> lk {ioMutex_};
-    ioCv_.wait(lk, [this]{ return !txQueue_.empty() or !rxQueue_.empty() or state_ != TlsSessionState::ESTABLISHED; });
+    std::unique_lock<std::mutex> lk {rxMutex_};
+    rxCv_.wait(lk, [this]{ return !rxQueue_.empty() or state_ != TlsSessionState::ESTABLISHED; });
     state = state_.load();
     if (state != TlsSessionState::ESTABLISHED)
         return state;
-
-    // Handle TX data from application
-    if (not txQueue_.empty()) {
-        decltype(txQueue_) tx_queue = std::move(txQueue_);
-        txQueue_.clear();
-        lk.unlock();
-        for (const auto& txdata : tx_queue) {
-            while (state_ == TlsSessionState::ESTABLISHED) {
-                auto bytes_sent = send(txdata);
-                auto fatal = gnutls_error_is_fatal(bytes_sent);
-                if (bytes_sent < 0 and !fatal)
-                    continue;
-                if (txdata.onComplete)
-                    txdata.onComplete(bytes_sent);
-                if (fatal)
-                    return TlsSessionState::SHUTDOWN;
-                break;
-            }
-        }
-        lk.lock();
-    }
 
     // Handle RX data from network
     if (!rxQueue_.empty()) {
