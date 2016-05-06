@@ -81,6 +81,8 @@ using random_device = std::random_device;
 #include "libav_utils.h"
 #include "video/sinkclient.h"
 
+#include "data_transfer.h"
+
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -1412,7 +1414,8 @@ Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock:
 }
 
 // Must be invoked periodically by a timer from the main event loop
-void Manager::pollEvents()
+void
+Manager::pollEvents()
 {
     //-- Handlers
     {
@@ -2864,5 +2867,16 @@ Manager::getSinkClient(const std::string& id)
     return nullptr;
 }
 #endif // RING_VIDEO
+
+DRing::DataTransferId
+Manager::sendFile(const std::string& accountId,
+                  const std::string& peerUri,
+                  const std::string& pathname,
+                  const std::string& name)
+{
+    if (auto acc = getAccount(accountId))
+        return acc->sendFile(peerUri, pathname, name);
+    return {};
+}
 
 } // namespace ring

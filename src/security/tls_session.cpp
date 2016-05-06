@@ -434,6 +434,7 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        //dump_io_stats();
     }
     return ret;
 }
@@ -471,6 +472,7 @@ TlsSession::recvRaw(void* buf, size_t size)
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
     rxQueue_.pop_front();
+    //dump_io_stats();
     return count;
 }
 
