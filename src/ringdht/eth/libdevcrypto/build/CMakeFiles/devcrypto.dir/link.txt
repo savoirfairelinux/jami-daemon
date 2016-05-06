@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdevcrypto.a  CMakeFiles/devcrypto.dir/AES.o CMakeFiles/devcrypto.dir/ECDHE.o CMakeFiles/devcrypto.dir/Common.o CMakeFiles/devcrypto.dir/WordList.o CMakeFiles/devcrypto.dir/CryptoPP.o CMakeFiles/devcrypto.dir/SecretStore.o
+/usr/bin/ranlib libdevcrypto.a
