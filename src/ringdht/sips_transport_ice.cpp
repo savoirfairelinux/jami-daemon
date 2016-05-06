@@ -260,6 +260,14 @@ SipsIceTransport::~SipsIceTransport()
 {
     RING_DBG("~SipIceTransport@%p {tr=%p}", this, &trData_.base);
 
+    // Flush send queue with ENOTCONN error
+    for (auto tdata : txQueue_) {
+        tdata->op_key.tdata = nullptr;
+        if (tdata->op_key.callback)
+            tdata->op_key.callback(&trData_.base, tdata->op_key.token,
+                                   -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN));
+    }
+
     auto base = getTransportBase();
     Manager::instance().unregisterEventHandler((uintptr_t)this);
 
@@ -305,6 +313,39 @@ SipsIceTransport::handleEvents()
                 break;
             }
         }
+    }
+
+    // Handle SIP transport -> TLS
+    decltype(txQueue_) tx_queue;
+    {
+        std::lock_guard<std::mutex> l(txMutex_);
+        if (syncTx_) {
+            tx_queue = std::move(txQueue_);
+            txQueue_.clear();
+        }
+    }
+
+    bool fatal = false;
+    for (auto tdata : tx_queue) {
+        pj_status_t status;
+        if (!fatal) {
+            const std::size_t size = tdata->buf.cur - tdata->buf.start;
+            auto ret = tls_->send(tdata->buf.start, size);
+            if (gnutls_error_is_fatal(ret)) {
+                RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ret));
+                tls_->shutdown();
+                fatal = true;
+            }
+            if (ret < 0)
+                status = tls_status_from_err(ret);
+            else
+                status = ret;
+        } else
+            status = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
+
+        tdata->op_key.tdata = nullptr;
+        if (tdata->op_key.callback)
+            tdata->op_key.callback(&trData_.base, tdata->op_key.token, status);
     }
 
     // Handle TLS -> SIP transport
@@ -438,9 +479,13 @@ SipsIceTransport::updateTransportState(pjsip_transport_state state)
     std::memset(&ev.tls_info, 0, sizeof(ev.tls_info));
 
     ev.state = state;
-    tlsConnected_ = state == PJSIP_TP_STATE_CONNECTED;
-    getInfo(&ev.ssl_info, tlsConnected_);
-    if (tlsConnected_)
+    bool connected = state == PJSIP_TP_STATE_CONNECTED;
+    {
+        std::lock_guard<std::mutex> lk {txMutex_};
+        syncTx_ = true;
+    }
+    getInfo(&ev.ssl_info, connected);
+    if (connected)
         ev.state_info.status = ev.ssl_info.verify_status ? PJSIP_TLS_ECERTVERIF : PJ_SUCCESS;
     else
         ev.state_info.status = PJ_SUCCESS; // TODO: use last gnu error
@@ -613,8 +658,8 @@ SipsIceTransport::certGetCn(const pj_str_t* gen_name, pj_str_t* cn)
 }
 
 pj_status_t
-SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
-                       int addr_len, void *token,
+SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
+                       int addr_len, void* token,
                        pjsip_transport_callback callback)
 {
     // Sanity check
@@ -633,25 +678,26 @@ SipsIceTransport::send(pjsip_tx_data *tdata, const pj_sockaddr_t *rem_addr,
     tdata->op_key.token = token;
     tdata->op_key.callback = callback;
 
-    // Asynchronous send
+    // Check in we are able to send it in synchronous way first
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
-    auto ret = tls_->async_send(tdata->buf.start, size, [=](std::size_t bytes_sent) {
-            // WARN: This code is called in the context of the TlsSession thread
-            if (bytes_sent == 0)
-                bytes_sent = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
-            tdata->op_key.tdata = nullptr;
-            if (tdata->op_key.callback)
-                tdata->op_key.callback(&trData_.base, tdata->op_key.token, bytes_sent);
-        });
+    std::unique_lock<std::mutex> lk {txMutex_};
+    if (syncTx_ and txQueue_.empty()) {
+        auto ret = tls_->send(tdata->buf.start, size);
+        lk.unlock();
 
-    // Shutdown on fatal errors
-    if (gnutls_error_is_fatal(ret)) {
-        tdata->op_key.tdata = nullptr;
-        RING_ERR("[TLS] send failed: %s", gnutls_strerror(ret));
-        tls_->shutdown();
-        return tls_status_from_err(ret);
+        // Shutdown on fatal error, else ignore it
+        if (gnutls_error_is_fatal(ret)) {
+            tdata->op_key.tdata = nullptr;
+            RING_ERR("1[TLS] fatal error during sending: %s", gnutls_strerror(ret));
+            tls_->shutdown();
+            return tls_status_from_err(ret);
+        }
+
+        return PJ_SUCCESS;
     }
 
+    // Asynchronous sending
+    txQueue_.push_back(tdata);
     return PJ_EPENDING;
 }
 

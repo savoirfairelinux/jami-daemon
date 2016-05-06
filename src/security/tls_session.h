@@ -38,6 +38,7 @@
 #include <utility>
 #include <vector>
 #include <map>
+#include <atomic>
 
 namespace ring {
 class IceTransport;
@@ -148,7 +149,13 @@ public:
 
     // Asynchronous sending operation. on_send_complete will be called with a positive number
     // for number of bytes sent, or negative for errors, or 0 in case of shutdown (end of session).
-    ssize_t async_send(void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    int async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
+    int async_send(std::vector<uint8_t>&& data, TxDataCompleteFunc on_send_complete);
+
+    // Synchronous sending operation. Return negative number (gnutls error) or a positive number
+    // for bytes sent.
+    ssize_t send(const void* data, std::size_t size);
+    ssize_t send(const std::vector<uint8_t>& data);
 
 private:
     using clock = std::chrono::steady_clock;
@@ -170,29 +177,23 @@ private:
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
 
     // IO GnuTLS <-> ICE
-    struct TxData {
-        void* const ptr;
-        std::size_t size;
-        TxDataCompleteFunc onComplete;
-    };
-
-    std::mutex ioMutex_ {};
-    std::condition_variable ioCv_ {};
-    std::list<TxData> txQueue_ {};
+    std::mutex txMutex_ {};
+    std::mutex rxMutex_ {};
+    std::condition_variable rxCv_ {};
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
-    ssize_t send(const TxData&);
+    ssize_t send_(const uint8_t* tx_data, std::size_t tx_size);
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
 
-    // Statistics (also protected by mutex ioMutex_)
-    std::size_t stRxRawPacketCnt_ {0};
-    std::size_t stRxRawBytesCnt_ {0};
-    std::size_t stRxRawPacketDropCnt_ {0};
-    std::size_t stTxRawPacketCnt_ {0};
-    std::size_t stTxRawBytesCnt_ {0};
+    // Statistics
+    std::atomic<std::size_t> stRxRawPacketCnt_ {0};
+    std::atomic<std::size_t> stRxRawBytesCnt_ {0};
+    std::atomic<std::size_t> stRxRawPacketDropCnt_ {0};
+    std::atomic<std::size_t> stTxRawPacketCnt_ {0};
+    std::atomic<std::size_t> stTxRawBytesCnt_ {0};
     void dump_io_stats() const;
 
     // GnuTLS backend and connection state
