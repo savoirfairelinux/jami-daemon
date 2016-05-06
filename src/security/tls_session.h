@@ -138,6 +138,8 @@ public:
     // Returns the TLS session type ('server' or 'client')
     const char* typeName() const;
 
+    bool isServer() const { return isServer_; }
+
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
 
