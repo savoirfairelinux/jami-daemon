@@ -640,7 +640,8 @@ TlsSession::handleStateHandshake(TlsSessionState state)
     // Continue handshaking on non-fatal error
     if (ret != GNUTLS_E_SUCCESS) {
         // TODO: handle GNUTLS_E_LARGE_PACKET (MTU must be lowered)
-        RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+        if (ret != GNUTLS_E_AGAIN)
+            RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
         return state;
     }
 
