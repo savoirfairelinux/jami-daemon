@@ -141,6 +141,10 @@ public:
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
 
+    // Return maximum application payload size in bytes
+    // Returned value must be checked and considered valid only if not 0 (session is initialized)
+    unsigned int getMaxPayload() const { return maxPayload_; }
+
     // Can be called by onStateChange callback when state == ESTABLISHED
     // to obtain the used cypher suite id.
     // Return the name of current cipher.
@@ -168,6 +172,7 @@ private:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
+    std::atomic<unsigned int> maxPayload_ {0};
 
     // IO GnuTLS <-> ICE
     struct TxData {
