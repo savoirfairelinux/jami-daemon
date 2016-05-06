@@ -77,6 +77,7 @@ libring_la_LDFLAGS = \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
 		@PORTAUDIO_LIBS@ \
+		@CRYPTOPP_LIBS@ \
 		$(TLS_LIB) \
 		$(IAX_LIB) \
 		$(IM_LIB) \
@@ -99,6 +100,7 @@ libring_la_CFLAGS = \
 		@LIBUPNP_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		@PORTAUDIO_CFLAGS@ \
+		@CRYPTOPP_CFLAGS@ \
 		$(TLS_CFLAGS)
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
