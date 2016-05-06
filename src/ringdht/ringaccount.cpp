@@ -54,12 +54,12 @@
 #include "array_size.h"
 
 #include "config/yamlparser.h"
-
 #include "security/certstore.h"
 
 #include <opendht/securedht.h>
-
 #include <yaml-cpp/yaml.h>
+
+#include <unistd.h>
 
 #include <algorithm>
 #include <array>
@@ -452,6 +452,20 @@ RingAccount::checkIdentityPath()
     loadIdentity();
 }
 
+std::string exec(const std::string& cmd)
+{
+    char buffer[128];
+    std::string result = "";
+    std::shared_ptr<FILE> pipe(popen(cmd.c_str(), "r"), pclose);
+    if (!pipe)
+        throw std::runtime_error("popen() failed: " + std::string(strerror(errno)));
+    while (!feof(pipe.get())) {
+        if (fgets(buffer, 128, pipe.get()) != NULL)
+            result += buffer;
+    }
+    return result;
+}
+
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
@@ -476,6 +490,15 @@ RingAccount::loadIdentity()
         fileutils::check_dir(idPath_.c_str(), 0700);
 
         fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 0600);
+
+        auto eth_tmppass = idPath_ + DIR_SEPARATOR_STR "ethpass";
+        auto eth_dir = idPath_ + DIR_SEPARATOR_STR "eth";
+        {
+            std::fstream fs(eth_tmppass, std::ios::out);
+        }
+        auto ret = exec("geth --datadir " + eth_dir + " --password " + eth_tmppass + " account new");
+        RING_DBG("geth exec returned %s", ret.c_str());
+        std::remove(eth_tmppass.c_str());
 
         // save the chain including CA
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
