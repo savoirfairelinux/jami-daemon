@@ -107,7 +107,11 @@ private:
     };
 
     std::unique_ptr<TlsSession> tls_;
-    std::atomic_bool tlsConnected_ {false}; // set by updateTransportState
+
+    std::mutex txMutex_ {};
+    std::condition_variable txCv_ {};
+    std::list<pjsip_tx_data*> txQueue_ {};
+    bool syncTx_ {false}; // true if we can send data synchronously (cnx established)
 
     std::mutex stateChangeEventsMutex_ {};
     std::list<ChangeStateEventData> stateChangeEvents_ {};
