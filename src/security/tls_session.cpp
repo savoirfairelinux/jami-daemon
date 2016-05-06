@@ -690,6 +690,7 @@ TlsSession::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
+    maxPayload_ = gnutls_dtls_get_data_mtu(session_);
     return TlsSessionState::ESTABLISHED;
 }
 
