@@ -63,6 +63,8 @@ const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
 const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
 const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
+const char *const ETH_PATH = "ethPath";
+const char *const ETH_ACCOUNT = "ethAccount";
 }
 
 class IceTransport;
