@@ -1,6 +1,6 @@
 # libvpx
 
-VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
+VPX_HASH := cbecf57f3e0d85a7b7f97f3ab7c507f6fe640a93
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
 
