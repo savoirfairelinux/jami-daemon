@@ -963,7 +963,7 @@ RingAccount::doRegister_()
                 std::map<std::string, std::string> payloads = {{"text/plain",
                                                                 utf8_make_valid(v.msg)}};
                 shared->onTextMessage(from, payloads);
-                RING_DBG("Sending message confirmation %llu", v.id);
+                RING_DBG("Sending message confirmation %" PRIu64, v.id);
                 this_.dht_.putEncrypted(inboxKey,
                           v.from,
                           dht::ImMessage(v.id, std::string(), now));
@@ -1427,18 +1427,18 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     return true;
                 auto e = this_->sentMessages_.find(msg.id);
                 if (e == this_->sentMessages_.end()) {
-                        RING_DBG("Message not found for %llu", token);
+                        RING_DBG("Message not found for %" PRIu64, token);
                 }
                 if (e->second.to != msg.from) {
                         RING_DBG("Unrelated text message : from %s != second %s",
                                  msg.from.toString().c_str(), e->second.to.toString().c_str());
                 }
                 if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
-                    RING_DBG("Unrelated text message reply for %llu", token);
+                    RING_DBG("Unrelated text message reply for %" PRIu64, token);
                     return true;
                 }
                 this_->sentMessages_.erase(e);
-                RING_DBG("Relevant text message reply for %llu", token);
+                RING_DBG("Relevant text message reply for %" PRIu64, token);
 
                 // add treated message
                 auto res = this_->treatedMessages_.insert(msg.id);
