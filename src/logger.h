@@ -26,6 +26,8 @@ extern "C" {
 #endif
 
 #include <stdarg.h>
+#define __STDC_FORMAT_MACROS 1
+#include <inttypes.h>
 
 #define LOGFILE "dring"
 
