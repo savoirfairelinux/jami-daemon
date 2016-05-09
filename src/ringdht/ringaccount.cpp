@@ -250,7 +250,10 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                           std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
                 if (auto call = weak_call.lock())
                     call->setState(Call::ConnectionState::PROGRESSING);
-                ice->start(msg.ice_data);
+                if (!ice->start(msg.ice_data)) {
+                    call->onFailure();
+                    return true;
+                }
                 return false;
             }
         );
@@ -1005,7 +1008,10 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
             shared_this->dht_.cancelPut(shared_this->callKey_, vid);
         }
     );
-    ice->start(msg.ice_data);
+    if (!ice->start(msg.ice_data)) {
+        call->onFailure();
+        return;
+    }
     call->setPeerNumber(from);
     call->initRecFilename(from);
     {
