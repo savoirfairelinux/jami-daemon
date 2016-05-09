@@ -121,7 +121,7 @@ MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
         RING_WARN("Can't send message in status %d", (int)m->second.status);
         return;
     }
-    RING_DBG("Retrying to send message %llu", m->first);
+    RING_DBG("Retrying to send message %" PRIu64, m->first);
     m->second.status = MessageStatus::SENDING;
     m->second.retried++;
     m->second.last_op = clock::now();
@@ -135,37 +135,37 @@ MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
 void
 MessageEngine::onMessageSent(MessageToken token, bool ok)
 {
-    RING_DBG("Message %llu: %s", token, ok ? "success" : "failure");
+    RING_DBG("Message %" PRIu64 ": %s", token, ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto f = messages_.find(token);
     if (f != messages_.end()) {
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
-                RING_DBG("Status SENT for message %llu", token);
+                RING_DBG("Status SENT for message %" PRIu64, token);
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
             } else if (f->second.retried == MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
-                RING_DBG("Status FAILURE for message %llu", token);
+                RING_DBG("Status FAILURE for message %" PRIu64, token);
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
             } else {
                 f->second.status = MessageStatus::IDLE;
-                RING_DBG("Status IDLE for message %llu", token);
+                RING_DBG("Status IDLE for message %" PRIu64, token);
                 // TODO: reschedule sending
             }
         }
         else {
-           RING_DBG("Message %llu not SENDING", token);
+           RING_DBG("Message %" PRIu64 " not SENDING", token);
         }
     }
     else {
-        RING_DBG("Can't find message %llu", token);
+        RING_DBG("Can't find message %" PRIu64, token);
     }
 }
 
