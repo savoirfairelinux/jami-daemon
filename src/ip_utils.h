@@ -104,12 +104,8 @@ public:
             addr.addr.sa_family = AF_UNSPEC;
     }
 
-    inline bool operator==(const IpAddr& other) const {
-        return pj_sockaddr_cmp(&addr, &other.addr) == 0;
-    }
-
     // Is defined
-    inline operator bool() const {
+    inline explicit operator bool() const {
         return isIpv4() or isIpv6();
     }
 
@@ -225,6 +221,10 @@ public:
 private:
     pj_sockaddr addr;
 };
+
+// IpAddr helpers
+inline bool operator==(const IpAddr& lhs, const IpAddr& rhs) { return !pj_sockaddr_cmp(&lhs, &rhs); }
+inline bool operator!=(const IpAddr& lhs, const IpAddr& rhs) { return !(lhs == rhs); }
 
 namespace ip_utils {
 
