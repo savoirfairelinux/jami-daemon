@@ -13,7 +13,7 @@ $(TARBALLS)/iax-git.tar.gz:
 
 iax: iax-git.tar.gz .sum-iax
 	$(UNPACK)
-	mv libiax2.git $@
+	mv libiax* $@
 	touch $@
 
 
