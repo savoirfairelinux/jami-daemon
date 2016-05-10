@@ -2119,7 +2119,6 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
 
     if (status != PJ_SUCCESS) {
         RING_ERR("Unable to send request: %s", sip_utils::sip_strerror(status).c_str());
-        delete t;
         return;
     }
 }
