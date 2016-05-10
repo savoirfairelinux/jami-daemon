@@ -577,7 +577,7 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
     auto pubIP = publicIP;
     for (const auto& addr : getLocalCandidatesAddr(compId)) {
         auto port = addr.getPort();
-        localIP.setPort(port);
+        localIP.setPort(port); // mandatory, as addr compare method compares also ports
         if (addr != localIP)
             continue;
         pubIP.setPort(port);
@@ -645,10 +645,10 @@ IceTransport::selectUPnPIceCandidates()
                 auto candidates = getLocalCandidatesAddr(comp_id);
                 for (IpAddr addr : candidates) {
                     auto localIP = upnp_->getLocalIP();
-                    localIP.setPort(addr.getPort());
+                    auto port = addr.getPort();
+                    localIP.setPort(port); // mandatory, as addr compare method compares also ports
                     if (addr != localIP)
                         continue;
-                    uint16_t port = addr.getPort();
                     uint16_t port_used;
                     if (upnp_->addAnyMapping(port, upnp::PortType::UDP, true, &port_used)) {
                         publicIP.setPort(port_used);
