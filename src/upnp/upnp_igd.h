@@ -60,8 +60,8 @@ public:
 
     ~Mapping() = default;
 
-    friend bool operator== (Mapping &cRedir1, Mapping &cRedir2);
-    friend bool operator!= (Mapping &cRedir1, Mapping &cRedir2);
+    friend bool operator== (const Mapping& cRedir1, const Mapping& cRedir2);
+    friend bool operator!= (const Mapping& cRedir1, const Mapping& cRedir2);
 
     uint16_t      getPortExternal()    const { return port_external_; };
     std::string   getPortExternalStr() const { return ring::to_string(port_external_); };
@@ -79,7 +79,7 @@ public:
         return port_external_ == 0 or port_internal_ == 0 ? false : true;
     };
 
-    inline operator bool() const {
+    inline explicit operator bool() const {
         return isValid();
     }
 

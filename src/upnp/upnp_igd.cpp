@@ -46,7 +46,7 @@ Mapping& Mapping::operator=(Mapping&& other)
     return *this;
 }
 
-bool operator== (Mapping &cMap1, Mapping &cMap2)
+bool operator== (const Mapping& cMap1, const Mapping& cMap2)
 {
     /* we don't compare the description because it doesn't change the function of the
      * mapping; we don't compare the IGD because for now we assume that we always
@@ -57,7 +57,7 @@ bool operator== (Mapping &cMap1, Mapping &cMap2)
             cMap1.type_ == cMap2.type_);
 }
 
-bool operator!= (Mapping &cMap1, Mapping &cMap2)
+bool operator!= (const Mapping& cMap1, const Mapping& cMap2)
 {
     return !(cMap1 == cMap2);
 }

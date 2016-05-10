@@ -104,7 +104,7 @@ class SdesNegotiator {
         ring::CryptoAttribute
         negotiate(const std::vector<std::string>& attributes) const;
 
-        operator bool() const {
+        inline explicit operator bool() const {
             return not localCapabilities_.empty();
         }
 
