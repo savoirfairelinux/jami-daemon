@@ -54,10 +54,7 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
     }
     save();
     runOnMainThread([this,token]() {
-        std::lock_guard<std::mutex> lock(messagesMutex_);
-        auto m = messages_.find(token);
-        if (m != messages_.end())
-            trySend(m);
+        retrySend();
     });
     return token;
 }
@@ -94,14 +91,35 @@ MessageEngine::nextEvent() const
 void
 MessageEngine::retrySend()
 {
-    auto now = clock::now();
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    for (auto m = messages_.begin(); m != messages_.end(); ++m) {
-        if (m->second.status == MessageStatus::UNKNOWN || m->second.status == MessageStatus::IDLE) {
-            auto next_op = m->second.last_op + RETRY_PERIOD;
-            if (next_op <= now)
-                trySend(m);
+    struct PendingMsg {
+        MessageToken token;
+        std::string to;
+        std::map<std::string, std::string> payloads;
+    };
+    std::vector<PendingMsg> pending {};
+    {
+        std::lock_guard<std::mutex> lock(messagesMutex_);
+        auto now = clock::now();
+        for (auto m = messages_.begin(); m != messages_.end(); ++m) {
+            if (m->second.status == MessageStatus::UNKNOWN || m->second.status == MessageStatus::IDLE) {
+                auto next_op = m->second.last_op + RETRY_PERIOD;
+                if (next_op <= now) {
+                    m->second.status = MessageStatus::SENDING;
+                    m->second.retried++;
+                    m->second.last_op = clock::now();
+                    pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
+                }
+            }
         }
+    }
+    // avoid locking while calling callback
+    for (auto& p : pending) {
+        emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+            account_.getAccountID(),
+            p.token,
+            p.to,
+            (int)DRing::Account::MessageStates::SENDING);
+        account_.sendTextMessage(p.to, p.payloads, p.token);
     }
 }
 
@@ -111,25 +129,6 @@ MessageEngine::getStatus(MessageToken t) const
     std::lock_guard<std::mutex> lock(messagesMutex_);
     const auto m = messages_.find(t);
     return (m == messages_.end()) ? MessageStatus::UNKNOWN : m->second.status;
-}
-
-void
-MessageEngine::trySend(decltype(MessageEngine::messages_)::iterator m)
-{
-    if (m->second.status != MessageStatus::IDLE &&
-        m->second.status != MessageStatus::UNKNOWN) {
-        RING_WARN("Can't send message in status %d", (int)m->second.status);
-        return;
-    }
-    RING_DBG("Retrying to send message %" PRIu64, m->first);
-    m->second.status = MessageStatus::SENDING;
-    m->second.retried++;
-    m->second.last_op = clock::now();
-    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                 m->first,
-                                                                 m->second.to,
-                                                                 static_cast<int>(DRing::Account::MessageStates::SENDING));
-    account_.sendTextMessage(m->second.to, m->second.payloads, m->first);
 }
 
 void
