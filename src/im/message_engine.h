@@ -91,8 +91,6 @@ private:
 
     std::map<MessageToken, Message> messages_;
     mutable std::mutex messagesMutex_ {};
-
-    void trySend(decltype(messages_)::iterator);
 };
 
 }} // namespace ring::im
