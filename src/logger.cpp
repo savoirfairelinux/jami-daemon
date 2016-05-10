@@ -141,7 +141,8 @@ vlogger(const int level, const char *format, va_list ap)
         WORD color_prefix = FOREGROUND_GREEN;
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-        WORD saved_attributes;
+        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+        WORD saved_attributes = consoleInfo.wAttributes;
 #endif
 
         switch (level) {
@@ -153,28 +154,34 @@ vlogger(const int level, const char *format, va_list ap)
                 break;
         }
 
+        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
+        if (sep) {
 #ifndef _WIN32
-        fputs(color_header, stderr);
+            fputs(color_header, stderr);
 #else
-        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-        saved_attributes = consoleInfo.wAttributes;
-        SetConsoleTextAttribute(hConsole, color_header);
+            SetConsoleTextAttribute(hConsole, color_header);
 #endif
 
-        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
-        std::string ctx(format, sep - format);
-        format = sep + 2;
-        fputs(getHeader(ctx.c_str()).c_str(), stderr);
+            std::string ctx(format, sep - format);
+            format = sep + 2;
+            fputs(getHeader(ctx.c_str()).c_str(), stderr);
 
 #ifndef _WIN32
-        fputs(END_COLOR, stderr);
+            fputs(END_COLOR, stderr);
+#else
+            SetConsoleTextAttribute(hConsole, saved_attributes);
+#endif
+        }
+
+#ifndef _WIN32
         fputs(color_prefix, stderr);
 #else
-        SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
 
         vfprintf(stderr, format, ap);
+        if (!sep)
+            fprintf(stderr, ENDL);
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
