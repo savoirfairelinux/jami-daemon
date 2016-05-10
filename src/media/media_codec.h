@@ -237,7 +237,7 @@ public:
         return mkiLength_;
     }
 
-    operator bool() const {
+    inline explicit operator bool() const {
         return not tag_.empty();
     }
 
