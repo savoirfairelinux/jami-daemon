@@ -91,6 +91,12 @@ getVolatileAccountDetails(const std::string& accountID)
 }
 
 std::map<std::string, std::string>
+testAccountICEInitialization(const std::string& accountID)
+{
+    return ring::Manager::instance().testAccountICEInitialization(accountID);
+}
+
+std::map<std::string, std::string>
 getTlsDefaultSettings()
 {
     std::stringstream portstr;
