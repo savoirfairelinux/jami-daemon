@@ -66,6 +66,11 @@ enum class MessageStates : int {
     FAILURE
 }; //DRing::Account::MessageStates
 
+enum class testAccountICEInitializationStatus : int {
+    SUCCESS = 0,
+    FAILURE = 1
+}; //DRING:Account::testAccountICEInitializationResults
+
 namespace VolatileProperties {
 
 constexpr static const char ACTIVE                    [] = "Account.active";

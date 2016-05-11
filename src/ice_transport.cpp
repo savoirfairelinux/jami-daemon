@@ -236,7 +236,8 @@ IceTransport::handleEvents(unsigned max_msec)
         if (n_events < 0) {
             const auto err = pj_get_os_error();
             // Kept as debug as some errors are "normal" in regular context
-            RING_DBG("IceIOQueue: error %d - %s", err, sip_utils::sip_strerror(err).c_str());
+            last_errmsg_ = sip_utils::sip_strerror(err);
+            RING_DBG("IceIOQueue: error %d - %s", err, last_errmsg_.c_str());
             std::this_thread::sleep_for(std::chrono::milliseconds(PJ_TIME_VAL_MSEC(timeout)));
             return;
         }
@@ -255,10 +256,13 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
         op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
-    if (done)
+    if (done) {
         RING_DBG("ICE %s success", opname);
-    else
-        RING_ERR("ICE %s failed: %s", opname, sip_utils::sip_strerror(status).c_str());
+    }
+    else {
+        last_errmsg_ = sip_utils::sip_strerror(status);
+        RING_ERR("ICE %s failed: %s", opname, last_errmsg_.c_str());
+    }
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
@@ -292,6 +296,12 @@ IceTransport::getUFragPwd()
     local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
 }
 
+std::string
+IceTransport::getLastErrMsg() const
+{
+    return last_errmsg_;
+}
+
 void
 IceTransport::getDefaultCanditates()
 {
@@ -322,7 +332,8 @@ IceTransport::setInitiatorSession()
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLING);
         if (status != PJ_SUCCESS) {
-            RING_ERR("ICE role change failed: %s", sip_utils::sip_strerror(status).c_str());
+            last_errmsg_ = sip_utils::sip_strerror(status);
+            RING_ERR("ICE role change failed: %s", last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -338,7 +349,8 @@ IceTransport::setSlaveSession()
     if (isInitialized()) {
         auto status = pj_ice_strans_change_role(icest_.get(), PJ_ICE_SESS_ROLE_CONTROLLED);
         if (status != PJ_SUCCESS) {
-            RING_ERR("ICE role change failed: %s", sip_utils::sip_strerror(status).c_str());
+            last_errmsg_ = sip_utils::sip_strerror(status);
+            RING_ERR("ICE role change failed: %s", last_errmsg_.c_str());
             return false;
         }
         return true;
@@ -377,7 +389,8 @@ IceTransport::start(const Attribute& rem_attrs,
                                           rem_candidates.size(),
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
-        RING_ERR("ICE start failed: %s", sip_utils::sip_strerror(status).c_str());
+        last_errmsg_ = sip_utils::sip_strerror(status);
+        RING_ERR("ICE start failed: %s", last_errmsg_.c_str());
         return false;
     }
     return true;
@@ -442,7 +455,8 @@ IceTransport::stop()
     if (isStarted()) {
         auto status = pj_ice_strans_stop_ice(icest_.get());
         if (status != PJ_SUCCESS) {
-            RING_ERR("ICE stop failed: %s", sip_utils::sip_strerror(status).c_str());
+            last_errmsg_ = sip_utils::sip_strerror(status);
+            RING_ERR("ICE stop failed: %s", last_errmsg_.c_str());
             return false;
         }
     }
@@ -618,8 +632,9 @@ IceTransport::addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAd
         NULL);
 
     if (ret != PJ_SUCCESS) {
+        last_errmsg_ = sip_utils::sip_strerror(ret);
         RING_ERR("pj_ice_sess_add_cand failed with error %d: %s", ret,
-                 sip_utils::sip_strerror(ret).c_str());
+                 last_errmsg_.c_str());
         RING_ERR("failed to add candidate for comp_id=%d : %s : %s", comp_id,
                  base.toString().c_str(), addr.toString().c_str());
     } else {
@@ -803,7 +818,8 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
         if (status == PJ_EBUSY) {
             errno = EAGAIN;
         } else {
-            RING_ERR("ice send failed: %s", sip_utils::sip_strerror(status).c_str());
+            last_errmsg_ = sip_utils::sip_strerror(status);
+            RING_ERR("ice send failed: %s", last_errmsg_.c_str());
             errno = EIO;
         }
         return -1;
