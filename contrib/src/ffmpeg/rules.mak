@@ -82,6 +82,8 @@ FFMPEGCONF += \
 		--enable-encoder=tiff \
 		--enable-decoder=tiff
 
+DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+
 ifdef HAVE_WIN32
 FFMPEGCONF += \
 	--enable-indev=dshow \
@@ -89,7 +91,11 @@ FFMPEGCONF += \
 	--enable-dxva2
 endif
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+ifdef HAVE_MACOSX
+FFMPEGCONF += \
+	--enable-indev=avfcapture \
+	--enable-indev=avfgrab
+endif
 
 ifdef HAVE_IOS
 FFMPEGCONF += \
@@ -153,7 +159,7 @@ FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
 ifeq ($(call need_pkg,"ffmpeg >= 2.6.1"),)
-PKGS_FOUND += ffmepg
+PKGS_FOUND += ffmpeg
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
@@ -168,6 +174,10 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
+	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
+endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg
