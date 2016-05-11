@@ -2432,6 +2432,36 @@ Manager::setAccountDetails(const std::string& accountID,
     });
 }
 
+std::map <std::string, std::string>
+Manager::testAccountTurnCredentials(const std::string& accountID)
+{
+    RING_DBG("testAccountTurnCredentials CALLED");
+
+    const auto account = getAccount(accountID);
+    const auto transportOptions = account->getIceOptions();
+
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+
+    auto ice = iceTransportFactory.createTransport(
+        accountID.c_str(), 4, true, account->getIceOptions()
+    );
+
+    std::map<std::string, std::string> result;
+
+    if (ice->waitForInitialization(10) <= 0)
+    {
+        result["status"] = "1";
+        result["message"] = ice->getLastErrMsg();
+    }
+    else
+    {
+        result["status"] = "0";
+        result["mesage"] = "";
+    }
+
+    return result;
+}
+
 std::string
 Manager::getNewAccountId()
 {
