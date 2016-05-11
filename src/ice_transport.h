@@ -152,6 +152,8 @@ class IceTransport {
 
         IpAddr getRemoteAddress(unsigned comp_id) const;
 
+        std::string getLastErrMsg() const;
+
         IpAddr getDefaultLocalAddress() const {
             return getLocalAddress(0);
         }
@@ -248,6 +250,7 @@ class IceTransport {
         std::condition_variable iceCV_ {};
         mutable std::mutex iceMutex_ {};
         pj_ice_strans_cfg config_;
+        std::string last_errmsg;
 
         struct Packet {
                 Packet(void *pkt, pj_size_t size);
