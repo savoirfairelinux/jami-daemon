@@ -2433,6 +2433,17 @@ Manager::setAccountDetails(const std::string& accountID,
 }
 
 std::string
+Manager::testAccountTurnCredentials(const std::string& accountID)
+{
+    RING_DBG("testAccountTurnCredentials CALLED");
+
+    const auto account = getAccount(accountID);
+    const auto transportOptions = account->getIceOptions();
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    return "POTATO";
+}
+
+std::string
 Manager::getNewAccountId()
 {
     std::string newAccountID;
