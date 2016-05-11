@@ -90,6 +90,12 @@ getVolatileAccountDetails(const std::string& accountID)
     return ring::Manager::instance().getVolatileAccountDetails(accountID);
 }
 
+std::string
+testAccountTurnCredentials(const std::string& accountID)
+{
+    return ring::Manager::instance().testAccountTurnCredentials(accountID);
+}
+
 std::map<std::string, std::string>
 getTlsDefaultSettings()
 {

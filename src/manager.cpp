@@ -2433,6 +2433,33 @@ Manager::setAccountDetails(const std::string& accountID,
 }
 
 std::string
+Manager::testAccountTurnCredentials(const std::string& accountID)
+{
+    RING_DBG("testAccountTurnCredentials CALLED");
+
+    const auto account = getAccount(accountID);
+    const auto transportOptions = account->getIceOptions();
+
+    //auto ice = account->createIceTransport(
+    //    accoundID.c_str(), 4, true, account->getIceOptions()
+    //);
+    //return "Ice initialization SUCCESS";
+
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+
+    auto ice = iceTransportFactory.createTransport(
+        accountID.c_str(), 4, true, account->getIceOptions()
+    );
+
+    if (ice->waitForInitialization(10) <= 0)
+    {
+        return "Ice initialization failed";
+    }
+
+    return "";
+}
+
+std::string
 Manager::getNewAccountId()
 {
     std::string newAccountID;
