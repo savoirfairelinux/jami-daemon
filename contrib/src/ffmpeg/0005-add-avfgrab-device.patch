@@ -1,0 +1,901 @@
+From 5328b6ebf67dabd8257f96cd579ef703c2b3b49b Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@gmail.com>
+Date: Tue, 22 Dec 2015 16:39:31 -0500
+Subject: [PATCH 2/2] add avfgrab indev
+
+- list_displays
+- list_windows
+- grad screen by its displayid
+---
+ configure                |   5 +
+ libavdevice/Makefile     |   1 +
+ libavdevice/alldevices.c |   1 +
+ libavdevice/avfgrab.m    | 829 +++++++++++++++++++++++++++++++++++++++++++++++
+ 4 files changed, 836 insertions(+)
+ create mode 100644 libavdevice/avfgrab.m
+
+diff --git a/configure b/configure
+index 48c7049..d1ae770 100755
+--- a/configure
++++ b/configure
+@@ -2970,6 +2970,8 @@ avfoundation_indev_extralibs="-framework CoreVideo -framework Foundation -framew
+ avfoundation_indev_select="avfoundation"
+ avfcapture_indev_extralibs="-fobjc-arc -framework Foundation -framework AVFoundation -framework CoreVideo -framework CoreMedia"
+ avfcapture_indev_select="avfcapture"
++avfgrab_indev_extralibs="-fobjc-arc -framework Foundation -framework AVFoundation -framework CoreVideo  -framework AppKit -framework CoreMedia -framework IOKit"
++avfgrab_indev_select="avfgrab"
+ bktr_indev_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
+ caca_outdev_deps="libcaca"
+ decklink_indev_deps="decklink pthreads"
+@@ -5724,6 +5726,9 @@ enabled avfoundation_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActi
+ enabled avfcapture_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfcapture_indev; }
+ enabled avfcapture_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
+                                 check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
++enabled avfgrab_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfgrab_indev; }
++enabled avfgrab_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
++                            check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
+ enabled cuda              && check_header cuda.h # this is not a dependency
+ enabled cuvid             && { enabled cuda ||
+                                die "ERROR: CUVID requires CUDA"; }
+diff --git a/libavdevice/Makefile b/libavdevice/Makefile
+index a8f3069..6ec57ea 100644
+--- a/libavdevice/Makefile
++++ b/libavdevice/Makefile
+@@ -16,6 +16,7 @@ OBJS-$(CONFIG_ALSA_INDEV)                += alsa_dec.o alsa.o timefilter.o
+ OBJS-$(CONFIG_ALSA_OUTDEV)               += alsa_enc.o alsa.o
+ OBJS-$(CONFIG_AVFOUNDATION_INDEV)        += avfoundation.o
+ OBJS-$(CONFIG_AVFCAPTURE_INDEV)          += avfcapture.o
++OBJS-$(CONFIG_AVFGRAB_INDEV)             += avfgrab.o
+ OBJS-$(CONFIG_BKTR_INDEV)                += bktr.o
+ OBJS-$(CONFIG_CACA_OUTDEV)               += caca.o
+ OBJS-$(CONFIG_DECKLINK_OUTDEV)           += decklink_enc.o decklink_enc_c.o decklink_common.o
+diff --git a/libavdevice/alldevices.c b/libavdevice/alldevices.c
+index 6c97978..aabf5d7 100644
+--- a/libavdevice/alldevices.c
++++ b/libavdevice/alldevices.c
+@@ -49,6 +49,7 @@ void avdevice_register_all(void)
+     REGISTER_INOUTDEV(ALSA,             alsa);
+     REGISTER_INDEV   (AVFOUNDATION,     avfoundation);
+     REGISTER_INDEV   (AVFCAPTURE,       avfcapture);
++    REGISTER_INDEV   (AVFGRAB,          avfgrab);
+     REGISTER_INDEV   (BKTR,             bktr);
+     REGISTER_OUTDEV  (CACA,             caca);
+     REGISTER_INOUTDEV(DECKLINK,         decklink);
+diff --git a/libavdevice/avfgrab.m b/libavdevice/avfgrab.m
+new file mode 100644
+index 0000000..a434c61
+--- /dev/null
++++ b/libavdevice/avfgrab.m
+@@ -0,0 +1,829 @@
++/*
++ * AVFgrab input device
++ * Copyright (c) 2015 Thilo Borgmann <thilo.borgmann@mail.de>
++ *                    Alexandre Lision <alexandre.lision@savoirfairelinux.com>
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++/**
++ * @file
++ * AVFgrab input device
++ * @author Alexandre Lision <alexandre.lision@savoirfairelinux.com>
++ */
++
++#include <AVFoundation/AVFoundation.h>
++#include <Cocoa/Cocoa.h>
++#include <ObjC/runtime.h>
++#include <pthread.h>
++#include <IOKit/graphics/IOGraphicsLib.h>
++
++#include "libavutil/pixdesc.h"
++#include "libavutil/opt.h"
++#include "libavutil/avstring.h"
++#include "libavformat/internal.h"
++#include "libavutil/internal.h"
++#include "libavutil/parseutils.h"
++#include "libavutil/time.h"
++#include "avdevice.h"
++
++static const int avf_time_base = 1000000;
++
++static const AVRational avf_time_base_q = {
++    .num = 1,
++    .den = avf_time_base
++};
++
++struct AVPixelFormatMap {
++    enum AVPixelFormat pix_fmt;
++    OSType core_video_fmt;
++};
++
++static const struct AVPixelFormatMap pixel_format_map[] = {
++    { AV_PIX_FMT_MONOBLACK,    kCVPixelFormatType_1Monochrome },
++    { AV_PIX_FMT_RGB555BE,     kCVPixelFormatType_16BE555 },
++    { AV_PIX_FMT_RGB555LE,     kCVPixelFormatType_16LE555 },
++    { AV_PIX_FMT_RGB565BE,     kCVPixelFormatType_16BE565 },
++    { AV_PIX_FMT_RGB565LE,     kCVPixelFormatType_16LE565 },
++    { AV_PIX_FMT_RGB24,        kCVPixelFormatType_24RGB },
++    { AV_PIX_FMT_BGR24,        kCVPixelFormatType_24BGR },
++    { AV_PIX_FMT_ARGB,         kCVPixelFormatType_32ARGB },
++    { AV_PIX_FMT_BGRA,         kCVPixelFormatType_32BGRA },
++    { AV_PIX_FMT_ABGR,         kCVPixelFormatType_32ABGR },
++    { AV_PIX_FMT_RGBA,         kCVPixelFormatType_32RGBA },
++    { AV_PIX_FMT_BGR48BE,      kCVPixelFormatType_48RGB },
++    { AV_PIX_FMT_UYVY422,      kCVPixelFormatType_422YpCbCr8 },
++    { AV_PIX_FMT_YUVA444P,     kCVPixelFormatType_4444YpCbCrA8R },
++    { AV_PIX_FMT_YUVA444P16LE, kCVPixelFormatType_4444AYpCbCr16 },
++    { AV_PIX_FMT_YUV444P,      kCVPixelFormatType_444YpCbCr8 },
++    { AV_PIX_FMT_YUV422P16,    kCVPixelFormatType_422YpCbCr16 },
++    { AV_PIX_FMT_YUV422P10,    kCVPixelFormatType_422YpCbCr10 },
++    { AV_PIX_FMT_YUV444P10,    kCVPixelFormatType_444YpCbCr10 },
++    { AV_PIX_FMT_YUV420P,      kCVPixelFormatType_420YpCbCr8Planar },
++    { AV_PIX_FMT_NV12,         kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange },
++    { AV_PIX_FMT_YUYV422,      kCVPixelFormatType_422YpCbCr8_yuvs },
++#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
++    { AV_PIX_FMT_GRAY8,        kCVPixelFormatType_OneComponent8 },
++#endif
++    { AV_PIX_FMT_NONE, 0 }
++};
++
++typedef struct
++{
++    AVClass*           class;
++
++    int                frames_captured;
++    int64_t            first_pts;
++    pthread_mutex_t    frame_lock;
++    pthread_cond_t     frame_wait_cond;
++    CFTypeRef          video_delegate;
++
++    char*              pixel_format;
++    char*              framerate;
++    AVRational         internal_framerate;
++
++    int                capture_cursor;
++    int                capture_mouse_clicks;
++
++    char* video_size;   /* String describing video size */
++    int width, height;
++
++    int                list_displays;
++    int                list_windows;
++    int                list_formats;
++
++    int                video_stream_index;
++
++    CFTypeRef          capture_session;   // AVCaptureSession*
++    CFTypeRef          video_output;      // AVCaptureVideoDataOutput*
++    CMSampleBufferRef  current_frame;
++} AVFContext;
++
++static void lock_frames(AVFContext* ctx)
++{
++    pthread_mutex_lock(&ctx->frame_lock);
++}
++
++static void unlock_frames(AVFContext* ctx)
++{
++    pthread_mutex_unlock(&ctx->frame_lock);
++}
++
++/** FrameReciever class - delegate for AVCaptureSession
++ */
++@interface AVFgrabFrameReceiver : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate>
++{
++    AVFContext* _context;
++}
++
++- (id)initWithContext:(AVFContext*)context;
++
++- (void)  captureOutput:(AVCaptureOutput *)captureOutput
++  didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
++         fromConnection:(AVCaptureConnection *)connection;
++
++@end
++
++@implementation AVFgrabFrameReceiver
++
++- (id)initWithContext:(AVFContext*)context
++{
++    if (self = [super init]) {
++        _context = context;
++    }
++    return self;
++}
++
++- (void)  captureOutput:(AVCaptureOutput *)captureOutput
++  didOutputSampleBuffer:(CMSampleBufferRef)videoFrame
++         fromConnection:(AVCaptureConnection *)connection
++{
++    lock_frames(_context);
++
++    if (_context->current_frame != NULL) {
++        CFRelease(_context->current_frame);
++    }
++
++    _context->current_frame = (CMSampleBufferRef)CFRetain(videoFrame);
++
++    pthread_cond_signal(&_context->frame_wait_cond);
++
++    unlock_frames(_context);
++
++    ++_context->frames_captured;
++}
++
++@end
++
++// https://github.com/mpflanzer/glfw/commit/e0a6772e5e4c672179fc69a90bcda3369792ed1f
++// Returns the io_service_t corresponding to a CG display ID, or 0 on failure.
++// The io_service_t should be released with IOObjectRelease when not needed.
++//
++static io_service_t IOServicePortFromCGDisplayID(CGDirectDisplayID displayID)
++{
++     io_iterator_t iter;
++     io_service_t serv, servicePort = 0;
++
++     CFMutableDictionaryRef matching = IOServiceMatching("IODisplayConnect");
++
++     // releases matching for us
++     kern_return_t err = IOServiceGetMatchingServices(kIOMasterPortDefault,
++                                                      matching,
++                                                      &iter);
++     if (err)
++         return 0;
++
++     while((serv = IOIteratorNext(iter)) != 0)
++     {
++         CFDictionaryRef displayInfo;
++
++         CFNumberRef vendorIDRef;
++         CFNumberRef productIDRef;
++
++         NSNumber *vendorID;
++         NSNumber *productID;
++         NSNumber *serialNumber;
++
++         Boolean success;
++
++         displayInfo = IODisplayCreateInfoDictionary(serv, kIODisplayOnlyPreferredName);
++
++         success = CFDictionaryGetValueIfPresent(displayInfo, CFSTR(kDisplayVendorID), (const void**)&vendorIDRef);
++         success &= CFDictionaryGetValueIfPresent(displayInfo, CFSTR(kDisplayProductID), (const void**)&productIDRef);
++
++         if(!success)
++         {
++             CFRelease(displayInfo);
++             continue;
++         }
++
++         vendorID = (__bridge NSNumber*)vendorIDRef;
++         productID = (__bridge NSNumber*)productIDRef;
++
++         // If the vendor and product id along with the serial don't match
++         // then we are not looking at the correct monitor.
++         // NOTE: The serial number is important in cases where two monitors
++         //       are the exact same.
++         if(CGDisplayVendorNumber(displayID) != vendorID.unsignedIntValue ||
++            CGDisplayModelNumber(displayID) != productID.unsignedIntValue)
++         {
++             CFRelease(displayInfo);
++             continue;
++         }
++
++         servicePort = serv;
++         CFRelease(displayInfo);
++         break;
++     }
++
++     IOObjectRelease(iter);
++     return servicePort;
++}
++
++static io_service_t get_io_service(CGDirectDisplayID displayID)
++{
++    io_iterator_t iter;
++    io_service_t serv, servicePort = 0;
++
++    CFMutableDictionaryRef matching = IOServiceMatching("IODisplayConnect");
++
++    // releases matching for us
++    kern_return_t err = IOServiceGetMatchingServices(kIOMasterPortDefault,
++                                                     matching,
++                                                     &iter);
++    if (err)
++        return 0;
++
++    while ((serv = IOIteratorNext(iter)) != 0)
++    {
++        CFDictionaryRef info;
++        CFIndex vendorID, productID, serialNumber;
++        CFNumberRef vendorIDRef, productIDRef, serialNumberRef;
++        Boolean success;
++
++        info = IODisplayCreateInfoDictionary(serv,
++                                             kIODisplayOnlyPreferredName);
++
++        vendorIDRef = CFDictionaryGetValue(info,
++                                           CFSTR(kDisplayVendorID));
++        productIDRef = CFDictionaryGetValue(info,
++                                            CFSTR(kDisplayProductID));
++        serialNumberRef = CFDictionaryGetValue(info,
++                                               CFSTR(kDisplaySerialNumber));
++
++        success = CFNumberGetValue(vendorIDRef, kCFNumberCFIndexType,
++                                   &vendorID);
++        success &= CFNumberGetValue(productIDRef, kCFNumberCFIndexType,
++                                    &productID);
++        success &= CFNumberGetValue(serialNumberRef, kCFNumberCFIndexType,
++                                    &serialNumber);
++
++        if (!success)
++        {
++            CFRelease(info);
++            continue;
++        }
++
++        // If the vendor and product id along with the serial don't match
++        // then we are not looking at the correct monitor.
++        // NOTE: The serial number is important in cases where two monitors
++        //       are the exact same.
++        if (CGDisplayVendorNumber(displayID) != vendorID  ||
++            CGDisplayModelNumber(displayID) != productID  ||
++            CGDisplaySerialNumber(displayID) != serialNumber)
++        {
++            CFRelease(info);
++            continue;
++        }
++
++        // The VendorID, Product ID, and the Serial Number all Match Up!
++        // Therefore we have found the appropriate display io_service
++        servicePort = serv;
++        CFRelease(info);
++        break;
++    }
++
++    IOObjectRelease(iter);
++    return servicePort;
++}
++
++// https://github.com/mpflanzer/glfw/commit/e0a6772e5e4c672179fc69a90bcda3369792ed1f
++// Get the name of the specified display
++//
++static char* get_display_name(AVFormatContext *s, CGDirectDisplayID displayID)
++{
++    char* name;
++    CFDictionaryRef info, names;
++    CFStringRef value;
++    CFIndex size;
++
++    // Supports OS X 10.4 Tiger and Newer
++    io_service_t serv = IOServicePortFromCGDisplayID(displayID);
++
++    if (serv == 0)
++    {
++        av_log(s, AV_LOG_INFO, "Cocoa: IOServicePortFromCGDisplayID Returned an Invalid Port. (Port: 0)\n");
++        return strdup("Unknown");
++    }
++
++
++
++    info = IODisplayCreateInfoDictionary(serv, kIODisplayOnlyPreferredName);
++    IOObjectRelease(serv);
++
++    names = CFDictionaryGetValue(info, CFSTR(kDisplayProductName));
++
++    if (!names || !CFDictionaryGetValueIfPresent(names, CFSTR("en_US"),
++                                                 (const void**) &value))
++    {
++        // This may happen if a desktop Mac is running headless
++        av_log(s, AV_LOG_INFO, "Failed to retrieve display name\n");
++        CFRelease(info);
++        return strdup("Unknown");
++    }
++
++    size = CFStringGetMaximumSizeForEncoding(CFStringGetLength(value),
++                                             kCFStringEncodingUTF8);
++    name = calloc(size + 1, sizeof(char));
++
++    CFStringGetCString(value, name, size, kCFStringEncodingUTF8);
++
++    CFRelease(info);
++
++    if (CGDisplayIsBuiltin(displayID))
++        strcat(name," (Built-in display)");
++
++    return name;
++}
++
++static void list_displays(AVFormatContext *s)
++{
++    uint32_t num_screens    = 0;
++    CGGetActiveDisplayList(0, NULL, &num_screens);
++
++    if (num_screens > 0) {
++        av_log(s, AV_LOG_INFO, "Listing displays (first is primary):\n");
++        for (NSScreen* screen in [NSScreen screens]) {
++            NSDictionary* screenDescription = [screen deviceDescription];
++            CGDirectDisplayID displayID = [[screenDescription objectForKey:@"NSScreenNumber"] unsignedIntValue];
++            char* name = get_display_name(s, displayID);
++            av_log(s, AV_LOG_INFO, "%u: %s\n", displayID, name);
++        }
++    } else {
++        av_log(s, AV_LOG_INFO, "No screen available.\n");
++    }
++}
++
++static void list_windows(AVFormatContext *s)
++{
++    CGWindowListOption listOptions = kCGWindowListOptionAll | kCGWindowListExcludeDesktopElements;
++    CFArrayRef windowList = CGWindowListCopyWindowInfo(listOptions, kCGNullWindowID);
++    // Copy the returned list, further pruned, to another list. This also adds some bookkeeping
++	// information to the list as well as
++    for (NSDictionary* entry in (__bridge NSArray*)windowList) {
++        if ([entry[(id)kCGWindowSharingState] intValue] == kCGWindowSharingNone)
++            return;
++
++        // Grab the application name, but since it's optional we need to check before we can use it.
++		NSString* applicationName = entry[(id)kCGWindowOwnerName];
++        NSString* nameAndPID = nil;
++		if (applicationName != NULL) {
++			// PID is required so we assume it's present.
++			nameAndPID = [NSString stringWithFormat:@"%@ (%@)", applicationName, entry[(id)kCGWindowOwnerPID]];
++		}
++		else {
++			// The application name was not provided, so we use a fake application name to designate this.
++			// PID is required so we assume it's present.
++			nameAndPID = [NSString stringWithFormat:@"((unknown)) (%@)", entry[(id)kCGWindowOwnerPID]];
++		}
++
++        CFNumberRef windowIDRef = (__bridge CFNumberRef)entry[(id)kCGWindowNumber];
++        CFNumberRef windowLevelRef = (__bridge CFNumberRef)entry[(id)kCGWindowLayer];
++
++        int windowID = 0;
++        int windowLevel = 0;
++
++        CFNumberGetValue(windowIDRef, kCFNumberIntType, &windowID);
++        CFNumberGetValue(windowLevelRef, kCGWindowIDCFNumberType, &windowLevel);
++
++        av_log(s, AV_LOG_INFO, "Window: %s, PID %d, Level %d\n",
++            [nameAndPID UTF8String], windowID, windowLevel);
++
++    }
++
++    CFRelease(windowList);
++}
++
++static enum AVPixelFormat core_video_to_pix_fmt(OSType core_video_fmt)
++{
++    int i;
++    for (i = 0; pixel_format_map[i].pix_fmt != AV_PIX_FMT_NONE; i++) {
++         if (core_video_fmt == pixel_format_map[i].core_video_fmt)
++             return pixel_format_map[i].pix_fmt;
++    }
++    return AV_PIX_FMT_NONE;
++}
++
++static OSType pix_fmt_to_core_video(enum AVPixelFormat pix_fmt)
++{
++    int i;
++    for (i = 0; pixel_format_map[i].pix_fmt != AV_PIX_FMT_NONE; i++) {
++         if (pix_fmt == pixel_format_map[i].pix_fmt)
++             return pixel_format_map[i].core_video_fmt;
++    }
++    return 0;
++}
++
++static void list_formats(AVFormatContext *s)
++{
++    av_log(s, AV_LOG_INFO, "Supported pixel formats (first is more efficient):\n");
++    AVCaptureVideoDataOutput* out = [[AVCaptureVideoDataOutput alloc] init];
++
++    for (NSNumber* cv_pixel_format in [out availableVideoCVPixelFormatTypes]) {
++        OSType cv_fmt = [cv_pixel_format intValue];
++        enum AVPixelFormat pix_fmt = core_video_to_pix_fmt(cv_fmt);
++        if (pix_fmt != AV_PIX_FMT_NONE) {
++            av_log(s, AV_LOG_INFO, "%s\n",
++                   av_get_pix_fmt_name(pix_fmt));
++        }
++    }
++}
++
++static void destroy_context(AVFContext* ctx)
++{
++#define SaveCFRelease(ptr) { \
++    if (ptr) {               \
++        CFRelease(ptr);      \
++        ptr = NULL;          \
++    }                        \
++}
++    [(__bridge AVCaptureSession*)ctx->capture_session stopRunning];
++
++    SaveCFRelease(ctx->capture_session);
++    SaveCFRelease(ctx->video_output);
++    SaveCFRelease(ctx->video_delegate);
++    SaveCFRelease(ctx->current_frame);
++
++    pthread_mutex_destroy(&ctx->frame_lock);
++    pthread_cond_destroy(&ctx->frame_wait_cond);
++#undef SaveRelease
++}
++
++/**
++ * Configure the video device.
++ *
++ * Configure the video device using a run-time approach to access properties
++ * since formats, activeFormat are available since  iOS >= 7.0 or OSX >= 10.7
++ * and activeVideoMaxFrameDuration is available since i0S >= 7.0 and OSX >= 10.9.
++ *
++ * The NSUndefinedKeyException must be handled by the caller of this function.
++ *
++ */
++static int configure_display(AVFormatContext *s, AVCaptureScreenInput *screen_input)
++{
++    AVFContext *ctx = (AVFContext*)s->priv_data;
++    double framerate = av_q2d(ctx->internal_framerate);
++
++    av_log(s, AV_LOG_INFO, "Setting framerate to %f\n", framerate);
++    [screen_input setMinFrameDuration:CMTimeMake(1, framerate)];
++
++#if !TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1080
++    if (ctx->capture_cursor) {
++        screen_input.capturesCursor = YES;
++    } else {
++        screen_input.capturesCursor = NO;
++    }
++#endif
++#if !TARGET_OS_IPHONE && __MAC_OS_X_VERSION_MIN_REQUIRED >= 1070
++
++    if (ctx->capture_mouse_clicks) {
++        screen_input.capturesMouseClicks = YES;
++    } else {
++        screen_input.capturesMouseClicks = NO;
++    }
++
++#endif
++    return 0;
++}
++
++static int add_display_input(AVFormatContext *s)
++{
++    AVFContext *ctx                   = (AVFContext*)s->priv_data;
++    AVCaptureSession *capture_session = (__bridge AVCaptureSession*)ctx->capture_session;
++    int ret;
++
++    AVCaptureScreenInput* screenInput;
++
++    char* captureID = av_strdup(s->filename);
++    CGDirectDisplayID display = 0;
++
++    if ([NSScreen screens].count == 0) {
++        av_log(s, AV_LOG_ERROR, "No display available\n");
++        return 1;
++    } else if (strlen(captureID) == 0) {
++        av_log(s, AV_LOG_ERROR, "No display id provided\n");
++        return 1;
++    } else if (!strcmp(captureID, "default")) {
++        NSScreen* primary = [NSScreen screens][0];
++        NSDictionary* screenDescription = [primary deviceDescription];
++        display = [[screenDescription objectForKey:@"NSScreenNumber"] unsignedIntValue];
++        av_log(s, AV_LOG_INFO, "Using primary display\n");
++    } else {
++        display = atoi(captureID);
++    }
++
++    // Create input
++    if ((screenInput = [[AVCaptureScreenInput alloc] initWithDisplayID:display])) {
++        av_log(s, AV_LOG_INFO, "Display with ID %s found\n",captureID);
++    } else {
++        av_log(s, AV_LOG_ERROR, "Display not found\n");
++        return 1;
++    }
++
++    // Configure device framerate and video size
++    @try {
++        if ((ret = configure_display(s, screenInput)) < 0) {
++            return ret;
++        }
++    } @catch (NSException *exception) {
++        if (![[exception name] isEqualToString:NSUndefinedKeyException]) {
++          av_log (s, AV_LOG_ERROR, "An error occurred: %s", [exception.reason UTF8String]);
++          return AVERROR_EXTERNAL;
++        }
++    }
++
++
++    // Attach input to capture session
++    if ([capture_session canAddInput:screenInput]) {
++        [capture_session addInput:screenInput];
++    } else {
++        av_log(s, AV_LOG_ERROR, "can't add video input to capture session\n");
++        return 1;
++    }
++
++    return 0;
++}
++
++static int add_video_output(AVFormatContext *s)
++{
++    AVFContext* ctx = (AVFContext*)s->priv_data;
++    AVCaptureSession* capture_session  = (__bridge AVCaptureSession*)ctx->capture_session;
++    AVCaptureVideoDataOutput* out = [[AVCaptureVideoDataOutput alloc] init];
++    NSNumber *core_video_fmt = nil;
++
++    if (!out) {
++        av_log(s, AV_LOG_ERROR, "Failed to init AV video output\n");
++        return AVERROR(EINVAL);
++    }
++
++    [out setAlwaysDiscardsLateVideoFrames:YES];
++
++    if (ctx->pixel_format) {
++        // Try to use specified pixel format
++        core_video_fmt = [NSNumber numberWithInt:pix_fmt_to_core_video(av_get_pix_fmt(ctx->pixel_format))];
++        if ([[out availableVideoCVPixelFormatTypes] indexOfObject:core_video_fmt] != NSNotFound) {
++            av_log(s, AV_LOG_VERBOSE, "Pixel format %s supported!\n", ctx->pixel_format);
++        } else {
++            core_video_fmt = nil;
++        }
++    }
++
++    if (!ctx->pixel_format || !core_video_fmt) {
++        av_log(s, AV_LOG_INFO, "Pixel format not supported or not provided, overriding...\n");
++        for (NSNumber *cv_pixel_format in [out availableVideoCVPixelFormatTypes]) {
++            OSType cv_fmt = [cv_pixel_format intValue];
++            enum AVPixelFormat pix_fmt = core_video_to_pix_fmt(cv_fmt);
++            // Use the first one in the list, it will be the most effective
++            if (pix_fmt != AV_PIX_FMT_NONE) {
++                core_video_fmt = cv_pixel_format;
++                ctx->pixel_format = av_strdup(av_get_pix_fmt_name(pix_fmt));;
++                break;
++            }
++        }
++    }
++
++    // fail if there is no appropriate pixel format
++    if (!core_video_fmt) {
++        return AVERROR(EINVAL);
++    } else {
++        av_log(s, AV_LOG_INFO, "Using %s.\n",
++                ctx->pixel_format);
++    }
++
++    NSDictionary *capture_dict = [NSDictionary dictionaryWithObject:core_video_fmt
++                                                             forKey:(id)kCVPixelBufferPixelFormatTypeKey];
++    [out setVideoSettings:capture_dict];
++
++    AVFgrabFrameReceiver* delegate = [[AVFgrabFrameReceiver alloc] initWithContext:ctx];
++
++    dispatch_queue_t queue = dispatch_queue_create("avfgrab_queue", NULL);
++    [out setSampleBufferDelegate:delegate queue:queue];
++
++    if ([capture_session canAddOutput:out]) {
++        [capture_session addOutput:out];
++        ctx->video_output   = (__bridge_retained CFTypeRef) out;
++        ctx->video_delegate = (__bridge_retained CFTypeRef) delegate;
++    } else {
++        av_log(s, AV_LOG_ERROR, "can't add video output to capture session\n");
++        return AVERROR(EINVAL);
++    }
++
++    return 0;
++}
++
++static int get_video_config(AVFormatContext *s)
++{
++    AVFContext *ctx = (AVFContext*)s->priv_data;
++
++    AVStream* stream = avformat_new_stream(s, NULL);
++
++    CVImageBufferRef image_buffer;
++    CGSize image_buffer_size;
++
++    if (!stream) {
++        return 1;
++    }
++
++    // Take stream info from the first frame.
++    while (ctx->frames_captured < 1) {
++        CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.1, YES);
++    }
++
++    lock_frames(ctx);
++
++    ctx->video_stream_index = stream->index;
++
++    avpriv_set_pts_info(stream, 64, 1, avf_time_base);
++
++    image_buffer      = CMSampleBufferGetImageBuffer(ctx->current_frame);
++    image_buffer_size = CVImageBufferGetEncodedSize(image_buffer);
++
++    stream->codecpar->codec_id   = AV_CODEC_ID_RAWVIDEO;
++    stream->codecpar->codec_type = AVMEDIA_TYPE_VIDEO;
++    stream->codecpar->width      = (int)image_buffer_size.width;
++    stream->codecpar->height     = (int)image_buffer_size.height;
++    stream->codecpar->format     = av_get_pix_fmt(ctx->pixel_format);
++
++    CFRelease(ctx->current_frame);
++    ctx->current_frame = NULL;
++
++    unlock_frames(ctx);
++    return 0;
++}
++
++static int avf_read_header(AVFormatContext *s)
++{
++#define FAIL {            \
++    destroy_context(ctx); \
++    return AVERROR(EIO);  \
++}
++    AVFContext *ctx = (AVFContext*)s->priv_data;
++
++    ctx->first_pts          = av_gettime();
++    pthread_mutex_init(&ctx->frame_lock, NULL);
++    pthread_cond_init(&ctx->frame_wait_cond, NULL);
++
++    // List displays if requested
++    if (ctx->list_displays) {
++        list_displays(s);
++        FAIL;
++    }
++
++    if (ctx->list_windows) {
++        list_windows(s);
++        FAIL;
++    }
++
++    if (ctx->list_formats) {
++        list_formats(s);
++        FAIL;
++    }
++
++    if (ctx->pixel_format) {
++        if (av_get_pix_fmt(ctx->pixel_format) == AV_PIX_FMT_NONE) {
++            av_log(s, AV_LOG_ERROR, "No such input format: %s.\n", ctx->pixel_format);
++            return AVERROR(EINVAL);
++        }
++    }
++
++    if (ctx->video_size &&
++        (av_parse_video_size(&ctx->width, &ctx->height, ctx->video_size)) < 0) {
++        av_log(s, AV_LOG_ERROR, "Could not parse video size '%s'.\n", ctx->video_size);
++       return AVERROR(EINVAL);
++    }
++
++    if (ctx->framerate &&
++        (av_parse_video_rate(&ctx->internal_framerate, ctx->framerate)) < 0) {
++        av_log(s, AV_LOG_ERROR, "Could not parse framerate '%s'.\n", ctx->framerate);
++       return AVERROR(EINVAL);
++    }
++
++    // Initialize capture session
++    ctx->capture_session = CFBridgingRetain([[AVCaptureSession alloc] init]);
++
++    [(__bridge AVCaptureSession*)ctx->capture_session beginConfiguration];
++    // Adding video input to capture session
++    if (add_display_input(s)) {
++        [(__bridge AVCaptureSession*)ctx->capture_session commitConfiguration];
++        FAIL;
++    }
++
++
++    // Adding video output to capture session
++    if (add_video_output(s)) {
++        [(__bridge AVCaptureSession*)ctx->capture_session commitConfiguration];
++        FAIL;
++    }
++
++    [(__bridge AVCaptureSession*)ctx->capture_session commitConfiguration];
++
++    av_log(s, AV_LOG_INFO, "Starting session...\n");
++
++    // Start the capture session
++    [(__bridge AVCaptureSession*)ctx->capture_session startRunning];
++
++    // Get the final video device configuration by run-time approach
++    if (get_video_config(s)) {
++        FAIL;
++    }
++
++#undef FAIL
++
++    return 0;
++}
++
++static int avf_read_packet(AVFormatContext *s, AVPacket *pkt)
++{
++    AVFContext* ctx = (AVFContext*)s->priv_data;
++
++    do {
++        CVImageBufferRef image_buffer;
++        lock_frames(ctx);
++
++        image_buffer = CMSampleBufferGetImageBuffer(ctx->current_frame);
++
++        if (ctx->current_frame != NULL) {
++            void *data;
++            if (av_new_packet(pkt, (int)CVPixelBufferGetDataSize(image_buffer)) < 0) {
++                return AVERROR(EIO);
++            }
++
++            CMItemCount count;
++            CMSampleTimingInfo timing_info;
++
++            if (CMSampleBufferGetOutputSampleTimingInfoArray(ctx->current_frame, 1, &timing_info, &count) == noErr) {
++                AVRational timebase_q = av_make_q(1, timing_info.presentationTimeStamp.timescale);
++                pkt->pts = pkt->dts = av_rescale_q(timing_info.presentationTimeStamp.value, timebase_q, avf_time_base_q);
++            }
++
++            pkt->flags        |= AV_PKT_FLAG_KEY;
++
++            CVPixelBufferLockBaseAddress(image_buffer, 0);
++
++            data = CVPixelBufferGetBaseAddress(image_buffer);
++            memcpy(pkt->data, data, pkt->size);
++
++            CVPixelBufferUnlockBaseAddress(image_buffer, 0);
++            CFRelease(ctx->current_frame);
++            ctx->current_frame = NULL;
++        } else {
++            pkt->data = NULL;
++            pthread_cond_wait(&ctx->frame_wait_cond, &ctx->frame_lock);
++        }
++
++        unlock_frames(ctx);
++    } while (!pkt->data);
++
++    return 0;
++}
++
++static int avf_close(AVFormatContext *s)
++{
++    AVFContext* ctx = (AVFContext*)s->priv_data;
++    destroy_context(ctx);
++    return 0;
++}
++
++static const AVOption options[] = {
++    { "list_displays", "List available displays", offsetof(AVFContext, list_displays), AV_OPT_TYPE_INT, {.i64=0}, 0, 1, AV_OPT_FLAG_DECODING_PARAM, "list_displays" },
++    { "list_windows", "List available windows", offsetof(AVFContext, list_windows), AV_OPT_TYPE_INT, {.i64=0}, 0, 1, AV_OPT_FLAG_DECODING_PARAM, "list_windows" },
++    { "list_formats", "List available formats and exit", offsetof(AVFContext, list_formats),  AV_OPT_TYPE_INT, {.i64 = 0 }, 0, 1, AV_OPT_FLAG_DECODING_PARAM, "list_formats" },
++    { "framerate", "Set frame rate", offsetof(AVFContext, framerate), AV_OPT_TYPE_STRING, {.str = "ntsc"}, 0, 0, AV_OPT_FLAG_DECODING_PARAM },
++    { "video_size",   "A string describing frame size", offsetof(AVFContext, video_size), AV_OPT_TYPE_STRING, {.str = NULL},  0, 0, AV_OPT_FLAG_DECODING_PARAM },
++    { "capture_cursor", "capture the screen cursor", offsetof(AVFContext, capture_cursor), AV_OPT_TYPE_INT, {.i64=0}, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
++    { "capture_mouse_clicks", "capture the screen mouse clicks", offsetof(AVFContext, capture_mouse_clicks), AV_OPT_TYPE_INT, {.i64=0}, 0, 1, AV_OPT_FLAG_DECODING_PARAM },
++    { NULL },
++};
++
++static const AVClass avf_class = {
++    .class_name = "AVFgrab input device",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++    .category   = AV_CLASS_CATEGORY_DEVICE_VIDEO_INPUT,
++};
++
++AVInputFormat ff_avfgrab_demuxer = {
++    .name           = "avfgrab",
++    .long_name      = NULL_IF_CONFIG_SMALL("AVFgrab input device"),
++    .priv_data_size = sizeof(AVFContext),
++    .read_header    = avf_read_header,
++    .read_packet    = avf_read_packet,
++    .read_close     = avf_close,
++    .flags          = AVFMT_NOFILE,
++    .priv_class     = &avf_class,
++};
+-- 
+2.9.3
+
