@@ -255,10 +255,13 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
         op == PJ_ICE_STRANS_OP_NEGOTIATION ? "negotiation" : "unknown_op";
 
     const bool done = status == PJ_SUCCESS;
-    if (done)
+    if (done) {
         RING_DBG("ICE %s success", opname);
-    else
-        RING_ERR("ICE %s failed: %s", opname, sip_utils::sip_strerror(status).c_str());
+    }
+    else {
+        last_errmsg = sip_utils::sip_strerror(status);
+        RING_ERR("ICE %s failed: %s", opname, last_errmsg.c_str());
+    }
 
     {
         std::lock_guard<std::mutex> lk(iceMutex_);
@@ -290,6 +293,12 @@ IceTransport::getUFragPwd()
     pj_ice_strans_get_ufrag_pwd(icest_.get(), &local_ufrag, &local_pwd, NULL, NULL);
     local_ufrag_.assign(local_ufrag.ptr, local_ufrag.slen);
     local_pwd_.assign(local_pwd.ptr, local_pwd.slen);
+}
+
+std::string
+IceTransport::getLastErrMsg() const
+{
+    return last_errmsg;
 }
 
 void
