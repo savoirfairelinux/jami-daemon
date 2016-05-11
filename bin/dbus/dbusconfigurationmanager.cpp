@@ -49,6 +49,13 @@ DBusConfigurationManager::setAccountDetails(const std::string& accountID, const 
     DRing::setAccountDetails(accountID, details);
 }
 
+auto
+DBusConfigurationManager::testAccountTurnCredentials(const std::string& accountID) -> decltype(DRing::testAccountTurnCredentials(accountID))
+{
+    return DRing::testAccountTurnCredentials(accountID);
+}
+
+
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
 {

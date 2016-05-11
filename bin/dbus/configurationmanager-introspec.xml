@@ -158,6 +158,13 @@
            </arg>
        </method>
 
+       <method name="testAccountTurnCredentials" tp:name-for-bindings="testAccountTurnCredentials">
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="message" direction="out">
+           </arg>
+       </method>
+
        <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
            <tp:docstring>
                 Update the accounts order.
