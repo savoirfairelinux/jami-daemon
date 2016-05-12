@@ -53,8 +53,6 @@ using VideoCapabilities = std::map<std::string, std::map<std::string, std::vecto
 
 void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
-std::vector<unsigned> getVideoCodecList(const std::string& accountID);
-std::vector<std::string> getVideoCodecDetails(unsigned codecId);
 void setVideoCodecList(const std::string& accountID, const std::vector<unsigned>& list);
 std::vector<std::string> getDeviceList();
 VideoCapabilities getCapabilities(const std::string& name);
