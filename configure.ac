@@ -1,4 +1,4 @@
-dnl Ring - configure.ac for automake 1.9 and autoconf 2.59
+LOLdnl Ring - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
