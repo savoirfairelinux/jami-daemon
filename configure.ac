@@ -450,6 +450,9 @@ AC_ARG_WITH([sdes],
 AS_IF([test "x$with_sdes" = "xyes"], [
       PKG_CHECK_MODULES(PCRE, [libpcre],,AC_MSG_ERROR([libpcre not found]))]);
 
+
+PKG_CHECK_MODULES(CRYPTOPP, [libcrypto++],,AC_MSG_ERROR([libcrypto++ not found]))
+
 AC_DEFINE_UNQUOTED([HAVE_SDES], `if test "x$with_sdes" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have sdes support])
 AM_CONDITIONAL(BUILD_SDES, test "x$with_sdes" = "xyes" )
 
@@ -560,6 +563,12 @@ AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
 
+AX_BOOST_BASE([1.48],,[AC_MSG_ERROR([Ring needs Boost but it was not found in your system])])
+AX_BOOST_FILESYSTEM
+AX_BOOST_SYSTEM
+AX_BOOST_RANDOM
+AX_BOOST_THREAD
+
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 
@@ -618,6 +627,10 @@ AC_CONFIG_FILES([Makefile \
                  src/im/Makefile \
                  src/iax/Makefile \
                  src/ringdht/Makefile \
+                 src/ringdht/eth/libscrypt/Makefile \
+                 src/ringdht/eth/json_spirit/Makefile \
+                 src/ringdht/eth/libdevcore/Makefile \
+                 src/ringdht/eth/libdevcrypto/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
                  src/media/audio/pulseaudio/Makefile \
