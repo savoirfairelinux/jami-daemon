@@ -94,7 +94,6 @@ IceTransport::cb_on_ice_complete(pj_ice_strans* ice_st,
         RING_WARN("null IceTransport");
 }
 
-
 IceTransport::IceTransport(const char* name, int component_count, bool master,
                            const IceTransportOptions& options)
     : pool_(nullptr, pj_pool_release)
@@ -105,6 +104,9 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     , initiatorSession_(master)
     , thread_()
 {
+    RING_DBG("[ICE:%p] new ('%s', %d component(s), %s)", this, name, component_count,
+             master?"master":"slave");
+
     if (options.upnpEnable)
         upnp_.reset(new upnp::Controller());
 
@@ -132,7 +134,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
             pj_cstr(&config_.stun.server, options.stunServer.c_str());
             config_.stun.port = PJ_STUN_PORT;
         }
-        RING_WARN("ICE: STUN='%s', PORT=%d", options.stunServer.c_str(),
+        RING_WARN("[ICE:%p] STUN='%s', PORT=%d", this, options.stunServer.c_str(),
                  config_.stun.port);
     } else
         config_.stun.port = 0;
@@ -161,7 +163,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
         // Only UDP yet
         config_.turn.conn_type = PJ_TURN_TP_UDP;
 
-        RING_WARN("ICE: TURN='%s', PORT=%d", options.turnServer.c_str(),
+        RING_WARN("[ICE:%p] TURN='%s', PORT=%d", this, options.turnServer.c_str(),
                  config_.turn.port);
     } else
         config_.turn.port = 0;
@@ -189,6 +191,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
 
 IceTransport::~IceTransport()
 {
+    RING_DBG("[ICE:%p] destruction", this);
     register_thread();
 
     threadTerminateFlags_ = true;
@@ -378,6 +381,7 @@ IceTransport::start(const Attribute& rem_attrs,
                                           rem_candidates.data());
     if (status != PJ_SUCCESS) {
         RING_ERR("ICE start failed: %s", sip_utils::sip_strerror(status).c_str());
+        //pj_ice_strans_stop_ice(); // forced to prevent PJNATH issues
         return false;
     }
     return true;
@@ -756,7 +760,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 }
 
 ssize_t
-IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
+IceTransport::recv(int comp_id, uint8_t* buf, size_t len)
 {
     register_thread();
     auto& io = compIO_[comp_id];
@@ -789,7 +793,7 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 }
 
 ssize_t
-IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
+IceTransport::send(int comp_id, const uint8_t* buf, size_t len)
 {
     register_thread();
     auto remote = getRemoteAddress(comp_id);
@@ -874,6 +878,7 @@ IceTransportFactory::IceTransportFactory()
 
     pj_ice_strans_cfg_default(&ice_cfg_);
     ice_cfg_.stun_cfg.pf = &cp_.factory;
+    ice_cfg_.stun_cfg.rto_msec = 500; // as recommended by RFC 3489-bis (not 100ms as PJSIP says)
 
     // v2.4.5 of PJNATH has a default of 100ms but RFC 5389 since version 14 requires
     // a minimum of 500ms on fixed-line links. Our usual case is wireless links.
@@ -915,7 +920,7 @@ IceSocket::close()
 }
 
 ssize_t
-IceSocket::recv(unsigned char* buf, size_t len)
+IceSocket::recv(uint8_t* buf, size_t len)
 {
     if (!ice_transport_.get())
         return -1;
@@ -923,7 +928,7 @@ IceSocket::recv(unsigned char* buf, size_t len)
 }
 
 ssize_t
-IceSocket::send(const unsigned char* buf, size_t len)
+IceSocket::send(const uint8_t* buf, size_t len)
 {
     if (!ice_transport_.get())
         return -1;
