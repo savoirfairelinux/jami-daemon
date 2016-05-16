@@ -73,7 +73,7 @@ void pollEvents() noexcept;
  *
  * The library provides to users a way to be acknowledged
  * when daemon's objects have a state change.
- * The user is aware of this changement wen the deamon calls
+ * The user is aware of this changement when the deamon calls
  * a user-given callback.
  * Daemon handles many of these callbacks, one per event type.
  * The user registers his callbacks using registerXXXXHandlers() functions.
