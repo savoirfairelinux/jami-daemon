@@ -34,6 +34,7 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
+#include "datatransfer_interface.h"
 #include "intrin.h" // UNUSED
 
 #include <functional>
@@ -295,6 +296,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Logical account state shall never rely on the state of the random generator.
          */
         mutable std::mt19937_64 rand_;
+
+        virtual DRing::DataTransferId sendFile(UNUSED const std::string& peer_uri,
+                                               UNUSED const std::string& pathname,
+                                               UNUSED const std::string& name) {
+            return {}; // not supported by default
+        }
 
     private:
         NON_COPYABLE(Account);
