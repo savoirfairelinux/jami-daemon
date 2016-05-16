@@ -424,8 +424,9 @@ TlsSession::send_(const uint8_t* tx_data, std::size_t tx_size)
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.
              */
-            RING_WARN("[TLS] send failed (only %zu bytes sent): %s", total_written,
-                      gnutls_strerror(nwritten));
+            if (nwritten != GNUTLS_E_AGAIN)
+                RING_WARN("[TLS] send failed (only %zu bytes sent): %s", total_written,
+                          gnutls_strerror(nwritten));
             return nwritten;
         }
 
@@ -444,6 +445,7 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        //dump_io_stats();
     }
     return ret;
 }
@@ -481,6 +483,7 @@ TlsSession::recvRaw(void* buf, size_t size)
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
     rxQueue_.pop_front();
+    //dump_io_stats();
     return count;
 }
 
