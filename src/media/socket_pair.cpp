@@ -189,8 +189,8 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
     return udp_fd;
 }
 
-// Maximal size allowed for a RTP packet, this value of 1460 bytes is PPoE safe.
-static const size_t RTP_BUFFER_SIZE = 1460;
+// Maximal size allowed for a RTP packet, this value of 1452 bytes is PPoE+STUN safe.
+static const size_t RTP_BUFFER_SIZE = 1400;
 static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
