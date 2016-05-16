@@ -18,7 +18,8 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#pragma once
+#ifndef UPNP_CONTEXT_H_
+#define UPNP_CONTEXT_H_
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -31,17 +32,8 @@
 #include <condition_variable>
 #include <chrono>
 #include <atomic>
-#include <thread>
 
-#if HAVE_LIBUPNP
-#ifdef _WIN32
-#define UPNP_STATIC_LIB
-#include <windows.h>
-#include <wincrypt.h>
-#endif
-#include <upnp/upnp.h>
-#include <upnp/upnptools.h>
-#endif
+#include <natpmp.h>
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
@@ -52,12 +44,13 @@ class IpAddr;
 
 namespace ring { namespace upnp {
 
-class UPnPContext {
+class NATPMPContext {
 public:
     constexpr static unsigned SEARCH_TIMEOUT {30};
 
-    UPnPContext();
-    ~UPnPContext();
+#if HAVE_LIBUPNP
+    NATPMPContext();
+    ~NATPMPContext();
 
     /**
      * Returns 'true' if there is at least one valid (connected) IGD.
@@ -103,54 +96,33 @@ public:
      */
     IpAddr getLocalIP() const;
 
-#if HAVE_LIBUPNP
-
     /**
      * callback function for the UPnP client (control point)
      * all UPnP events received by the client are processed here
      */
     int handleUPnPEvents(Upnp_EventType event_type, void* event);
 
+#else
+    /* use default constructor and destructor */
+    NATPMPContext() = default;
+    ~NATPMPContext() = default;
 #endif
 
 private:
-    NON_COPYABLE(UPnPContext);
-
-    enum { Sinit=0, Ssendpub, Srecvpub, Ssendmap, Srecvmap, Sdone, Sidle, Serror=1000 } natpmpstate = Ssendpub;
-    std::thread pmpthread_;
-
-    /**
-     * map of valid IGDs - IGDs which have the correct services and are connected
-     * to some external network (have an external IP)
-     *
-     * the UDN string is used to uniquely identify the IGD
-     *
-     * the mutex is used to access these lists and IGDs in a thread-safe manner
-     */
-    std::map<std::string, std::unique_ptr<IGD>> validIGDs_;
-    mutable std::mutex validIGDMutex_;
-    std::condition_variable validIGDCondVar_;
-
-    /**
-     * Map of valid IGD listeners.
-     */
-    std::map<size_t, IGDFoundCallback> igdListeners_;
-
-    /**
-     * Last provided token for valid IGD listeners.
-     * 0 is the invalid token.
-     */
-    size_t listenerToken_ {0};
-
-    /**
-     * chooses the IGD to use (currently selects the first one in the map)
-     * assumes you already have a lock on igd_mutex_
-     */
-    IGD* chooseIGD_unlocked() const;
-
-    std::atomic_bool clientRegistered_ {false};
+    NON_COPYABLE(NATPMPContext);
 
 #if HAVE_LIBUPNP
+
+    natpmp_t natpmp;
+    //struct in_addr public_addr;
+    IpAddr public_addr;
+    natpmpresp_t response;
+
+    enum { Sinit=0, Ssendpub, Srecvpub, Sidle, Ssendmap, Srecvmap, Sdone, Sstop, Serror=1000 } natpmpstate = Sinit;
+
+    std::thread t_;
+    std::condition_variable stateCV_;
+    mutable std::mutex stateMutex_;
 
     /**
      * UPnP devices typically send out several discovery
@@ -170,61 +142,57 @@ private:
      * The mutex is to access the set in a thread safe manner
      */
 
-    std::set<std::string> cpDevices_;
+    //std::set<std::string> cpDevices_;
     std::mutex cpDeviceMutex_;
 
     /**
      * control and device handles;
      * set by the SDK once each is registered
      */
-    UpnpClient_Handle ctrlptHandle_ {-1};
-    UpnpDevice_Handle deviceHandle_ {-1};
+    //UpnpClient_Handle ctrlptHandle_ {-1};
+    //UpnpDevice_Handle deviceHandle_ {-1};
 
     /**
-     * keep track if we've successfully registered a  device
+     * keep track if we've successfully registered
+     * a client and/ore device
      */
-    bool deviceRegistered_ {false};
+    std::atomic_bool clientRegistered_ {false};
+    //bool deviceRegistered_ {false};
+
+    /**
+     * map of valid IGDs - IGDs which have the correct services and are connected
+     * to some external network (have an external IP)
+     *
+     * the UDN string is used to uniquely identify the IGD
+     *
+     * the mutex is used to access these lists and IGDs in a thread-safe manner
+     */
+    /*std::map<std::string, std::unique_ptr<IGD>> validIGDs_;*/
+    mutable std::mutex validIGDMutex_;
+    std::condition_variable validIGDCondVar_;
+
+    /**
+     * Map of valid IGD listeners.
+     */
+    std::map<size_t, IGDFoundCallback> igdListeners_;
+
+    /**
+     * Last provided token for valid IGD listeners.
+     * 0 is the invalid token.
+     */
+    size_t listenerToken_ {0};
 
     /* sends out async search for IGD */
     void searchForIGD();
 
-    /**
-     * Parses the device description and adds desired devices to
-     * relevant lists
-     */
-    void parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event);
-
-    void parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event);
-
-
-    /* these functions directly create UPnP actions
-     * and make synchronous UPnP control point calls
-     * they assume you have a lock on the igd_mutex_ */
-    bool isIGDConnected(const IGD& igd);
-
-    IpAddr getExternalIP(const IGD& igd);
-
-    void removeMappingsByLocalIPAndDescription(const IGD& igd,
-                                               const std::string& description);
-#endif /* HAVE_LIBUPNP */
-
     /* tries to add mapping, assumes you alreayd have lock on igd_mutex_ */
-    Mapping addMapping(IGD& igd,
+    Mapping addMapping(IGD* igd,
                        uint16_t port_external,
                        uint16_t port_internal,
                        PortType type,
                        int *upnp_error);
 
-    uint16_t chooseRandomPort(const IGD& igd, PortType type);
-
-    bool deletePortMapping(const IGD& igd,
-                           const std::string& port_external,
-                           const std::string& protocol);
-
-    bool addPortMapping(const IGD& igd,
-                        const Mapping& mapping,
-                        int* error_code);
-
+#endif /* HAVE_LIBUPNP */
 
 };
 
@@ -234,6 +202,8 @@ private:
  * contexts for multiple internet interfaces, which is not currently
  * supported.
  */
-std::shared_ptr<UPnPContext> getUPnPContext();
+std::shared_ptr<NATPMPContext> getNATPMPContext();
 
 }} // namespace ring::upnp
+
+#endif /* UPNP_CONTEXT_H_ */

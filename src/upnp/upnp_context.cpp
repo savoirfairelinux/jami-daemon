@@ -38,6 +38,8 @@
 #include <upnp/upnptools.h>
 #endif
 
+#include <natpmp.h>
+
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
@@ -65,6 +67,20 @@ getUPnPContext()
     return context;
 }
 
+/* UPnP error codes */
+constexpr static int INVALID_ARGS = 402;
+constexpr static int ARRAY_IDX_INVALID = 713;
+constexpr static int CONFLICT_IN_MAPPING = 718;
+
+/* max number of times to retry mapping if it fails due to conflict;
+ * there isn't much logic in picking this number... ideally not many ports should
+ * be mapped in a system, so a few number of random port retries should work;
+ * a high number of retries would indicate there might be some kind of bug or else
+ * incompatibility with the router; we use it to prevent an infinite loop of
+ * retrying to map the entry
+ */
+constexpr static unsigned MAX_RETRIES = 20;
+
 #if HAVE_LIBUPNP
 
 /* UPnP IGD definitions */
@@ -75,22 +91,9 @@ constexpr static const char * UPNP_WANCON_DEVICE = "urn:schemas-upnp-org:device:
 constexpr static const char * UPNP_WANIP_SERVICE = "urn:schemas-upnp-org:service:WANIPConnection:1";
 constexpr static const char * UPNP_WANPPP_SERVICE = "urn:schemas-upnp-org:service:WANPPPConnection:1";
 
-/* UPnP error codes */
-constexpr static int          INVALID_ARGS = 402;
 constexpr static const char * INVALID_ARGS_STR = "402";
-constexpr static int          ARRAY_IDX_INVALID = 713;
 constexpr static const char * ARRAY_IDX_INVALID_STR = "713";
-constexpr static int          CONFLICT_IN_MAPPING = 718;
 constexpr static const char * CONFLICT_IN_MAPPING_STR = "718";
-
-/* max number of times to retry mapping if it fails due to conflict;
- * there isn't much logic in picking this number... ideally not many ports should
- * be mapped in a system, so a few number of random port retries should work;
- * a high number of retries would indicate there might be some kind of bug or else
- * incompatibility with the router; we use it to prevent an infinite loop of
- * retrying to map the entry
- */
-constexpr static unsigned MAX_RETRIES = 20;
 
 /*
  * Local prototypes
@@ -110,8 +113,95 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
     return 0;
 }
 
+#else
+
+constexpr static int UPNP_E_SUCCESS = 0;
+
+#endif // HAVE_LIBUPNP
+
 UPnPContext::UPnPContext()
 {
+    pmpthread_ = std::thread([this]() {
+        RING_WARN("pmpthread_");
+        natpmp_t natpmp;
+        struct in_addr public_addr;
+        natpmpresp_t response;
+        int r;
+
+        if (initnatpmp(&natpmp, 0, 0) < 0)  {
+            RING_ERR("can't initialize natpmp");
+            throw std::runtime_error("can't initialize natpmp");
+        }
+
+        while (natpmpstate != Sdone) {
+            switch(natpmpstate) {
+            case Ssendpub:
+                if (sendpublicaddressrequest(&natpmp) < 0)
+                    natpmpstate = Serror;
+                else {
+                    RING_WARN("Srecvpub\n");
+                    natpmpstate = Srecvpub;
+                }
+                break;
+            case Srecvpub:
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                r = readnatpmpresponseorretry(&natpmp, &response);
+                if(r<0 && r!=NATPMP_TRYAGAIN)
+                    natpmpstate = Serror;
+                else if(r!=NATPMP_TRYAGAIN) {
+                    //t3 = high_resolution_clock::now();
+                    memcpy(&public_addr, &response.pnu.publicaddress.addr, sizeof(public_addr));
+                    //inet_ntop(AF_INET, &public_addr, addr_str, INET_ADDRSTRLEN);
+
+                    std::unique_ptr<IGD> new_igd {new IGD(ip_utils::getLocalAddr(AF_INET), IpAddr(response.pnu.publicaddress.addr))};
+                    {
+                        std::lock_guard<std::mutex> lock(validIGDMutex_);
+                        /* delete all RING mappings first */
+                        //removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
+                        validIGDs_.emplace("NATPMP", std::move(new_igd));
+                        validIGDCondVar_.notify_all();
+                        for (const auto& l : igdListeners_)
+                            l.second();
+                    }
+
+                    RING_WARN("Ssendmap, got public address %s", IpAddr(public_addr).toString().c_str());
+                    natpmpstate = Sidle;
+                }
+                break;
+            case Ssendmap:
+                if (sendnewportmappingrequest(&natpmp, NATPMP_PROTOCOL_UDP, 5632, 2145, 3600) < 0)
+                  natpmpstate = Serror;
+                else {
+                  RING_WARN("Srecvmap");
+                  natpmpstate = Srecvmap;
+                }
+                break;
+            case Srecvmap:
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                r = readnatpmpresponseorretry(&natpmp, &response);
+                if(r<0 && r!=NATPMP_TRYAGAIN)
+                  natpmpstate = Serror;
+                else if(r != NATPMP_TRYAGAIN) {
+                  //t4 = high_resolution_clock::now();
+                  //pub_port = response.pnu.newportmapping.mappedpublicport;
+                  //priv_port = response.pnu.newportmapping.privateport;
+                  /*copy(publicport, response.newportmapping.mappedpublicport);
+                  copy(privateport, response.newportmapping.privateport);
+                  copy(mappinglifetime, response.newportmapping.lifetime);*/
+                  closenatpmp(&natpmp);
+                  natpmpstate = Sdone;
+                }
+                break;
+            case Sidle:
+                std::this_thread::sleep_for(std::chrono::milliseconds(5));
+                break;
+            }
+        }
+    });
+    clientRegistered_ = true;
+
+#if HAVE_LIBUPNP
+
     int upnp_err;
     char* ip_address = nullptr;
     unsigned short port = 0;
@@ -159,16 +249,17 @@ UPnPContext::UPnPContext()
      * we will probably receive their advertisements either way
      */
     searchForIGD();
+#endif
 }
 
 UPnPContext::~UPnPContext()
 {
+#if HAVE_LIBUPNP
     /* make sure everything is unregistered, freed, and UpnpFinish() is called */
-
     {
         std::lock_guard<std::mutex> lock(validIGDMutex_);
         for( auto const &it : validIGDs_) {
-            removeMappingsByLocalIPAndDescription(it.second.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
+            removeMappingsByLocalIPAndDescription(*it.second, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
         }
     }
 
@@ -181,8 +272,10 @@ UPnPContext::~UPnPContext()
 #ifndef _WIN32
     UpnpFinish();
 #endif
+#endif
 }
 
+#if HAVE_LIBUPNP
 void
 UPnPContext::searchForIGD()
 {
@@ -197,6 +290,7 @@ UPnPContext::searchForIGD()
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANIP_SERVICE, this);
     UpnpSearchAsync(ctrlptHandle_, SEARCH_TIMEOUT, UPNP_WANPPP_SERVICE, this);
 }
+#endif
 
 bool
 UPnPContext::hasValidIGD(std::chrono::seconds timeout)
@@ -243,19 +337,25 @@ UPnPContext::chooseIGD_unlocked() const
 {
     if (validIGDs_.empty())
         return nullptr;
-    return validIGDs_.begin()->second.get();
+    auto natpmp = validIGDs_.find("NATPMP");
+    if (natpmp == validIGDs_.end())
+        return validIGDs_.begin()->second.get();
+    else
+        return natpmp->second.get();
 }
 
 /**
  * tries to add mapping
  */
 Mapping
-UPnPContext::addMapping(IGD* igd,
+UPnPContext::addMapping(IGD& igd,
                         uint16_t port_external,
                         uint16_t port_internal,
                         PortType type,
                         int *upnp_error)
 {
+    RING_WARN("UPnPContext::addMapping");
+
     *upnp_error = -1;
 
     Mapping mapping{port_external, port_internal};
@@ -266,7 +366,7 @@ UPnPContext::addMapping(IGD* igd,
      * for something else
      * if the mapping doesn't exist, then try to add it
      */
-    auto globalMappings = type == PortType::UDP ? &igd->udpMappings : &igd->tcpMappings;
+    auto globalMappings = type == PortType::UDP ? &igd.udpMappings : &igd.tcpMappings;
     auto iter = globalMappings->find(port_external);
     if (iter != globalMappings->end()) {
         /* mapping exists with same external port */
@@ -308,17 +408,17 @@ generateRandomPort()
     /* define the range */
     static std::uniform_int_distribution<uint16_t> dist(Mapping::UPNP_PORT_MIN, Mapping::UPNP_PORT_MAX);
 
-    return dist(gen);;
+    return dist(gen);
 }
 
 /**
  * chooses a random port that is not yet used by the daemon for UPnP
  */
 uint16_t
-UPnPContext::chooseRandomPort(const IGD* igd, PortType type)
+UPnPContext::chooseRandomPort(const IGD& igd, PortType type)
 {
     auto globalMappings = type == PortType::UDP ?
-                          &igd->udpMappings : &igd->tcpMappings;
+                          &igd.udpMappings : &igd.tcpMappings;
 
     uint16_t port = generateRandomPort();
 
@@ -367,7 +467,7 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
         auto iter = globalMappings->find(port_desired);
         if (iter != globalMappings->end()) {
             /* port already used, we need a unique port */
-            port_desired = chooseRandomPort(igd, type);
+            port_desired = chooseRandomPort(*igd, type);
         }
     }
 
@@ -375,7 +475,7 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
         port_local = port_desired;
 
     int upnp_error;
-    Mapping mapping = addMapping(igd, port_desired, port_local, type, &upnp_error);
+    Mapping mapping = addMapping(*igd, port_desired, port_local, type, &upnp_error);
     /* keep trying to add the mapping as long as the upnp error is 718 == conflicting mapping
      * if adding the mapping fails for any other reason, give up
      * don't try more than MAX_RETRIES to prevent infinite loops
@@ -392,10 +492,10 @@ UPnPContext::addAnyMapping(uint16_t port_desired,
         RING_DBG("UPnP: mapping failed (conflicting entry? err = %d), trying with a different port.",
                  upnp_error);
         /* TODO: make sure we don't try sellecting the same random port twice if it fails ? */
-        port_desired = chooseRandomPort(igd, type);
+        port_desired = chooseRandomPort(*igd, type);
         if (use_same_port)
             port_local = port_desired;
-        mapping = addMapping(igd, port_desired, port_local, type, &upnp_error);
+        mapping = addMapping(*igd, port_desired, port_local, type, &upnp_error);
         ++numberRetries;
     }
 
@@ -439,7 +539,7 @@ UPnPContext::removeMapping(const Mapping& mapping)
                 /* no other users, can delete */
                 RING_DBG("UPnP: removing port mapping : %s",
                          mapping.toString().c_str());
-                deletePortMapping(igd,
+                deletePortMapping(*igd,
                                   mapping.getPortExternalStr(),
                                   mapping.getTypeStr());
                 globalMappings->erase(iter);
@@ -481,6 +581,8 @@ UPnPContext::getExternalIP() const
     RING_WARN("UPnP: no valid IGD available");
     return {};
 }
+
+#if HAVE_LIBUPNP
 
 /**
  * Parses the device description and adds desired devices to
@@ -621,8 +723,8 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
                         /* RING_DBG("UPnP: got service info from device:\n\tserviceType: %s\n\tserviceID: %s\n\tcontrolURL: %s\n\teventSubURL: %s",
                                  serviceType.c_str(), serviceId.c_str(), controlURL.c_str(), eventSubURL.c_str()); */
                         new_igd.reset(new IGD(UDN, baseURL, friendlyName, serviceType, serviceId, controlURL, eventSubURL));
-                        if (isIGDConnected(new_igd.get())) {
-                            new_igd->publicIp = getExternalIP(new_igd.get());
+                        if (isIGDConnected(*new_igd)) {
+                            new_igd->publicIp = getExternalIP(*new_igd);
                             if (new_igd->publicIp) {
                                 RING_DBG("UPnP: got external IP: %s", new_igd->publicIp.toString().c_str());
                                 new_igd->localIp = ip_utils::getLocalAddr(pj_AF_INET());
@@ -650,7 +752,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
         {
             std::lock_guard<std::mutex> lock(validIGDMutex_);
             /* delete all RING mappings first */
-            removeMappingsByLocalIPAndDescription(new_igd.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
+            removeMappingsByLocalIPAndDescription(*new_igd, Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
             validIGDs_.emplace(UDN, std::move(new_igd));
             validIGDCondVar_.notify_all();
             for (const auto& l : igdListeners_)
@@ -870,22 +972,22 @@ checkResponseError(IXML_Document* doc)
 }
 
 bool
-UPnPContext::isIGDConnected(const IGD* igd)
+UPnPContext::isIGDConnected(const IGD& igd)
 {
     bool connected = false;
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
-    action.reset(UpnpMakeAction("GetStatusInfo", igd->getServiceType().c_str(), 0, nullptr));
+    action.reset(UpnpMakeAction("GetStatusInfo", igd.getServiceType().c_str(), 0, nullptr));
 
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
     IXML_Document* response_ptr = nullptr;
-    int upnp_err = UpnpSendAction(ctrlptHandle_, igd->getControlURL().c_str(),
-                                  igd->getServiceType().c_str(), nullptr, action.get(), &response_ptr);
+    int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(),
+                                  igd.getServiceType().c_str(), nullptr, action.get(), &response_ptr);
     response.reset(response_ptr);
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
         RING_WARN("UPnP: Failed to get GetStatusInfo from: %s, %d: %s",
-                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+                  igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
 
         return false;
     }
@@ -903,21 +1005,21 @@ UPnPContext::isIGDConnected(const IGD* igd)
 }
 
 IpAddr
-UPnPContext::getExternalIP(const IGD* igd)
+UPnPContext::getExternalIP(const IGD& igd)
 {
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
-    action.reset(UpnpMakeAction("GetExternalIPAddress", igd->getServiceType().c_str(), 0, nullptr));
+    action.reset(UpnpMakeAction("GetExternalIPAddress", igd.getServiceType().c_str(), 0, nullptr));
 
     std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
     IXML_Document* response_ptr = nullptr;
-    int upnp_err = UpnpSendAction(ctrlptHandle_, igd->getControlURL().c_str(),
-                                  igd->getServiceType().c_str(), nullptr, action.get(), &response_ptr);
+    int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(),
+                                  igd.getServiceType().c_str(), nullptr, action.get(), &response_ptr);
     response.reset(response_ptr);
     checkResponseError(response.get());
     if( upnp_err != UPNP_E_SUCCESS) {
         /* TODO: if failed, should we chck if the igd is disconnected? */
         RING_WARN("UPnP: Failed to get GetExternalIPAddress from: %s, %d: %s",
-                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+                  igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
         return {};
     }
 
@@ -926,15 +1028,15 @@ UPnPContext::getExternalIP(const IGD* igd)
 }
 
 void
-UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::string& description)
+UPnPContext::removeMappingsByLocalIPAndDescription(const IGD& igd, const std::string& description)
 {
-    if (!igd->localIp) {
+    if (!igd.localIp) {
         RING_DBG("UPnP: cannot determine local IP in function removeMappingsByLocalIPAndDescription()");
         return;
     }
 
     RING_DBG("UPnP: removing all port mappings with description: \"%s\" and local ip: %s",
-             description.c_str(), igd->localIp.toString().c_str());
+             description.c_str(), igd.localIp.toString().c_str());
 
     int entry_idx = 0;
     bool done = false;
@@ -942,19 +1044,19 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
     do {
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
         IXML_Document* action_ptr = nullptr;
-        UpnpAddToAction(&action_ptr, "GetGenericPortMappingEntry", igd->getServiceType().c_str(),
+        UpnpAddToAction(&action_ptr, "GetGenericPortMappingEntry", igd.getServiceType().c_str(),
                         "NewPortMappingIndex", ring::to_string(entry_idx).c_str());
         action.reset(action_ptr);
 
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
         IXML_Document* response_ptr = nullptr;
-        int upnp_err = UpnpSendAction(ctrlptHandle_, igd->getControlURL().c_str(),
-                                      igd->getServiceType().c_str(), nullptr, action.get(), &response_ptr);
+        int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(),
+                                      igd.getServiceType().c_str(), nullptr, action.get(), &response_ptr);
         response.reset(response_ptr);
         if( not response and upnp_err != UPNP_E_SUCCESS) {
             /* TODO: if failed, should we chck if the igd is disconnected? */
             RING_WARN("UPnP: Failed to get GetGenericPortMappingEntry from: %s, %d: %s",
-                      igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+                      igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
             return;
         }
 
@@ -967,7 +1069,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
             std::string client_ip = get_first_doc_item(response.get(), "NewInternalClient");
 
             /* check if same IP and description */
-            if (IpAddr(client_ip) == igd->localIp and desc_actual.compare(description) == 0) {
+            if (IpAddr(client_ip) == igd.localIp and desc_actual.compare(description) == 0) {
                 /* get the rest of the needed parameters */
                 std::string port_internal = get_first_doc_item(response.get(), "NewInternalPort");
                 std::string port_external = get_first_doc_item(response.get(), "NewExternalPort");
@@ -999,94 +1101,107 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const IGD* igd, const std::st
     } while(not done);
 }
 
-bool
-UPnPContext::deletePortMapping(const IGD* igd, const std::string& port_external, const std::string& protocol)
-{
-    std::string action_name{"DeletePortMapping"};
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
-    IXML_Document* action_ptr = nullptr;
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewRemoteHost", "");
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewExternalPort", port_external.c_str());
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewProtocol", protocol.c_str());
-    action.reset(action_ptr);
+#endif
 
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
-    IXML_Document* response_ptr = nullptr;
-    int upnp_err = UpnpSendAction(ctrlptHandle_, igd->getControlURL().c_str(),
-                                  igd->getServiceType().c_str(), nullptr, action.get(), &response_ptr);
-    response.reset(response_ptr);
-    if( upnp_err != UPNP_E_SUCCESS) {
-        /* TODO: if failed, should we check if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to get %s from: %s, %d: %s", action_name.c_str(),
-                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
-        return false;
+bool
+UPnPContext::deletePortMapping(const IGD& igd, const std::string& port_external, const std::string& protocol)
+{
+    if (igd.isUPnP()) {
+#if HAVE_LIBUPNP
+        std::string action_name{"DeletePortMapping"};
+        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
+        IXML_Document* action_ptr = nullptr;
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewRemoteHost", "");
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewExternalPort", port_external.c_str());
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewProtocol", protocol.c_str());
+        action.reset(action_ptr);
+
+        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
+        IXML_Document* response_ptr = nullptr;
+        int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(),
+                                      igd.getServiceType().c_str(), nullptr, action.get(), &response_ptr);
+        response.reset(response_ptr);
+        if( upnp_err != UPNP_E_SUCCESS) {
+            /* TODO: if failed, should we check if the igd is disconnected? */
+            RING_WARN("UPnP: Failed to get %s from: %s, %d: %s", action_name.c_str(),
+                      igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+            return false;
+        }
+        /* check if there is an error code */
+        std::string errorCode = get_first_doc_item(response.get(), "errorCode");
+        if (not errorCode.empty()) {
+            std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
+            RING_WARN("UPnP: %s returned with error: %s: %s",
+                      action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
+            return false;
+        }
+#endif
+    } else {
+        natpmpstate = Ssendmap;
     }
-    /* check if there is an error code */
-    std::string errorCode = get_first_doc_item(response.get(), "errorCode");
-    if (not errorCode.empty()) {
-        std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
-        RING_WARN("UPnP: %s returned with error: %s: %s",
-                  action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
-        return false;
-    }
+
     return true;
 }
 
 bool
-UPnPContext::addPortMapping(const IGD* igd, const Mapping& mapping, int* error_code)
+UPnPContext::addPortMapping(const IGD& igd, const Mapping& mapping, int* error_code)
 {
-    *error_code = UPNP_E_SUCCESS;
+    if (igd.isUPnP()) {
+#if HAVE_LIBUPNP
+        *error_code = UPNP_E_SUCCESS;
 
-    std::string action_name{"AddPortMapping"};
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
-    IXML_Document* action_ptr = nullptr;
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewRemoteHost", "");
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewExternalPort", mapping.getPortExternalStr().c_str());
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewProtocol", mapping.getTypeStr().c_str());
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewInternalPort", mapping.getPortInternalStr().c_str());
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewInternalClient", igd->localIp.toString().c_str());
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewEnabled", "1");
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewPortMappingDescription", mapping.getDescription().c_str());
-    /* for now assume lease duration is always infinite */
-    UpnpAddToAction(&action_ptr, action_name.c_str(), igd->getServiceType().c_str(),
-                    "NewLeaseDuration", "0");
-    action.reset(action_ptr);
+        std::string action_name{"AddPortMapping"};
+        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> action(nullptr, ixmlDocument_free);
+        IXML_Document* action_ptr = nullptr;
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewRemoteHost", "");
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewExternalPort", mapping.getPortExternalStr().c_str());
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewProtocol", mapping.getTypeStr().c_str());
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewInternalPort", mapping.getPortInternalStr().c_str());
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewInternalClient", igd.localIp.toString().c_str());
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewEnabled", "1");
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewPortMappingDescription", mapping.getDescription().c_str());
+        /* for now assume lease duration is always infinite */
+        UpnpAddToAction(&action_ptr, action_name.c_str(), igd.getServiceType().c_str(),
+                        "NewLeaseDuration", "0");
+        action.reset(action_ptr);
 
-    std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
-    IXML_Document* response_ptr = nullptr;
-    int upnp_err = UpnpSendAction(ctrlptHandle_, igd->getControlURL().c_str(),
-                                  igd->getServiceType().c_str(), nullptr, action.get(), &response_ptr);
-    response.reset(response_ptr);
-    if( not response and upnp_err != UPNP_E_SUCCESS) {
-        /* TODO: if failed, should we chck if the igd is disconnected? */
-        RING_WARN("UPnP: Failed to %s from: %s, %d: %s", action_name.c_str(),
-                  igd->getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
-        *error_code = -1; /* make sure to -1 since we didn't get a response */
-        return false;
-    }
+        std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> response(nullptr, ixmlDocument_free);
+        IXML_Document* response_ptr = nullptr;
+        int upnp_err = UpnpSendAction(ctrlptHandle_, igd.getControlURL().c_str(),
+                                      igd.getServiceType().c_str(), nullptr, action.get(), &response_ptr);
+        response.reset(response_ptr);
+        if( not response and upnp_err != UPNP_E_SUCCESS) {
+            /* TODO: if failed, should we chck if the igd is disconnected? */
+            RING_WARN("UPnP: Failed to %s from: %s, %d: %s", action_name.c_str(),
+                      igd.getServiceType().c_str(), upnp_err, UpnpGetErrorMessage(upnp_err));
+            *error_code = -1; /* make sure to -1 since we didn't get a response */
+            return false;
+        }
 
-    /* check if there is an error code */
-    std::string errorCode = get_first_doc_item(response.get(), "errorCode");
-    if (not errorCode.empty()) {
-        std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
-        RING_WARN("UPnP: %s returned with error: %s: %s",
-                  action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
-        *error_code = ring::stoi(errorCode);
-        return false;
+        /* check if there is an error code */
+        std::string errorCode = get_first_doc_item(response.get(), "errorCode");
+        if (not errorCode.empty()) {
+            std::string errorDescription = get_first_doc_item(response.get(), "errorDescription");
+            RING_WARN("UPnP: %s returned with error: %s: %s",
+                      action_name.c_str(), errorCode.c_str(), errorDescription.c_str());
+            *error_code = ring::stoi(errorCode);
+            return false;
+        }
+#endif
+    } else {
+        natpmpstate = Ssendmap;
     }
     return true;
 }
-
-#endif /* HAVE_LIBUPNP */
 
 }} // namespace ring::upnp

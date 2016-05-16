@@ -18,12 +18,12 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef UPNP_IGD_H_
-#define UPNP_IGD_H_
+#pragma once
 
 #include <string>
 #include <map>
 #include <functional>
+#include <chrono>
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -54,6 +54,17 @@ public:
     , description_(description)
     {};
 
+    Mapping(
+        uint16_t port_external,
+        uint16_t port_internal,
+        PortType type,
+        std::chrono::system_clock::time_point expiration)
+    : port_external_(port_external)
+    , port_internal_(port_internal)
+    , type_(type)
+    , expiration_(expiration)
+    {};
+
     /* move constructor and operator */
     Mapping(Mapping&&);
     Mapping& operator=(Mapping&&);
@@ -63,13 +74,14 @@ public:
     friend bool operator== (const Mapping& cRedir1, const Mapping& cRedir2);
     friend bool operator!= (const Mapping& cRedir1, const Mapping& cRedir2);
 
-    uint16_t      getPortExternal()    const { return port_external_; };
-    std::string   getPortExternalStr() const { return ring::to_string(port_external_); };
-    uint16_t      getPortInternal()    const { return port_internal_; };
-    std::string   getPortInternalStr() const { return ring::to_string(port_internal_); };
-    PortType      getType()            const { return type_; };
+    uint16_t      getPortExternal()    const { return port_external_; }
+    std::string   getPortExternalStr() const { return ring::to_string(port_external_); }
+    uint16_t      getPortInternal()    const { return port_internal_; }
+    std::string   getPortInternalStr() const { return ring::to_string(port_internal_); }
+    PortType      getType()            const { return type_; }
     std::string   getTypeStr()         const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
-    std::string   getDescription()     const { return description_; };
+    std::string   getDescription()     const { return description_; }
+    std::chrono::system_clock::time_point getExpiration() const { return expiration_; }
 
     std::string toString() const {
         return getPortExternalStr() + ":" + getPortInternalStr() + ", " + getTypeStr();
@@ -90,7 +102,10 @@ protected:
     uint16_t port_external_;
     uint16_t port_internal_;
     PortType type_; /* UPD or TCP */
-    std::string description_;
+    std::string description_ {};
+
+    /** For NATPMP only */
+    std::chrono::system_clock::time_point expiration_ {};
 };
 
 /**
@@ -123,6 +138,7 @@ using IGDFoundCallback = std::function<void()>;
 /* defines a UPnP capable Internet Gateway Device (a router) */
 class IGD {
 public:
+    enum class Type { UPnP, NATPMP };
 
     /* device address seen by IGD */
     IpAddr localIp;
@@ -136,6 +152,8 @@ public:
 
     /* constructors */
     IGD() {}
+
+#if HAVE_LIBUPNP
     IGD(std::string UDN,
         std::string baseURL,
         std::string friendlyName,
@@ -143,13 +161,21 @@ public:
         std::string serviceId,
         std::string controlURL,
         std::string eventSubURL)
-        : UDN_(UDN)
+        : type_(Type::UPnP)
+        , UDN_(UDN)
         , baseURL_(baseURL)
         , friendlyName_(friendlyName)
         , serviceType_(serviceType)
         , serviceId_(serviceId)
         , controlURL_(controlURL)
         , eventSubURL_(eventSubURL)
+        {}
+#endif
+
+    IGD(IpAddr loc, IpAddr pub)
+        : type_(Type::NATPMP)
+        , localIp(loc)
+        , publicIp(pub)
         {}
 
     /* move constructor and operator */
@@ -158,6 +184,10 @@ public:
 
     ~IGD() = default;
 
+    Type getType() const { return type_; }
+    bool isUPnP() const { return type_ == Type::UPnP; }
+
+#if HAVE_LIBUPNP
     const std::string& getUDN() const { return UDN_; };
     const std::string& getBaseURL() const { return baseURL_; };
     const std::string& getFriendlyName() const { return friendlyName_; };
@@ -165,10 +195,14 @@ public:
     const std::string& getServiceId() const { return serviceId_; };
     const std::string& getControlURL() const { return controlURL_; };
     const std::string& getEventSubURL() const { return eventSubURL_; };
+#endif
 
 private:
     NON_COPYABLE(IGD);
 
+    Type type_;
+
+#if HAVE_LIBUPNP
     /* root device info */
     std::string UDN_ {}; /* used to uniquely identify this UPnP device */
     std::string baseURL_ {};
@@ -179,9 +213,8 @@ private:
     std::string serviceId_ {};
     std::string controlURL_ {};
     std::string eventSubURL_ {};
+#endif
 
 };
 
 }} // namespace ring::upnp
-
-#endif /* UPNP_IGD_H_ */
