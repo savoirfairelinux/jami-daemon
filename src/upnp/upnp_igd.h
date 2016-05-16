@@ -18,12 +18,16 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef UPNP_IGD_H_
-#define UPNP_IGD_H_
+#pragma once
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include <string>
 #include <map>
 #include <functional>
+#include <chrono>
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -63,13 +67,13 @@ public:
     friend bool operator== (const Mapping& cRedir1, const Mapping& cRedir2);
     friend bool operator!= (const Mapping& cRedir1, const Mapping& cRedir2);
 
-    uint16_t      getPortExternal()    const { return port_external_; };
-    std::string   getPortExternalStr() const { return ring::to_string(port_external_); };
-    uint16_t      getPortInternal()    const { return port_internal_; };
-    std::string   getPortInternalStr() const { return ring::to_string(port_internal_); };
-    PortType      getType()            const { return type_; };
+    uint16_t      getPortExternal()    const { return port_external_; }
+    std::string   getPortExternalStr() const { return ring::to_string(port_external_); }
+    uint16_t      getPortInternal()    const { return port_internal_; }
+    std::string   getPortInternalStr() const { return ring::to_string(port_internal_); }
+    PortType      getType()            const { return type_; }
     std::string   getTypeStr()         const { return type_ == PortType::UDP ? "UDP" : "TCP"; }
-    std::string   getDescription()     const { return description_; };
+    std::string   getDescription()     const { return description_; }
 
     std::string toString() const {
         return getPortExternalStr() + ":" + getPortInternalStr() + ", " + getTypeStr();
@@ -82,6 +86,10 @@ public:
     inline explicit operator bool() const {
         return isValid();
     }
+
+#if HAVE_LIBNATPMP
+    std::chrono::system_clock::time_point renewal_ {std::chrono::system_clock::time_point::min()};
+#endif
 
 private:
     NON_COPYABLE(Mapping);
@@ -123,7 +131,6 @@ using IGDFoundCallback = std::function<void()>;
 /* defines a UPnP capable Internet Gateway Device (a router) */
 class IGD {
 public:
-
     /* device address seen by IGD */
     IpAddr localIp;
 
@@ -136,7 +143,24 @@ public:
 
     /* constructors */
     IGD() {}
-    IGD(std::string UDN,
+    IGD(IpAddr loc, IpAddr pub)
+        : localIp(loc)
+        , publicIp(pub) {}
+
+    /* move constructor and operator */
+    IGD(IGD&&) = default;
+    IGD& operator=(IGD&&) = default;
+
+    virtual ~IGD() = default;
+
+private:
+    NON_COPYABLE(IGD);
+};
+
+#if HAVE_LIBUPNP
+class UPnPIGD : public IGD {
+public:
+    UPnPIGD(std::string UDN,
         std::string baseURL,
         std::string friendlyName,
         std::string serviceType,
@@ -152,12 +176,6 @@ public:
         , eventSubURL_(eventSubURL)
         {}
 
-    /* move constructor and operator */
-    IGD(IGD&&) = default;
-    IGD& operator=(IGD&&) = default;
-
-    ~IGD() = default;
-
     const std::string& getUDN() const { return UDN_; };
     const std::string& getBaseURL() const { return baseURL_; };
     const std::string& getFriendlyName() const { return friendlyName_; };
@@ -167,8 +185,6 @@ public:
     const std::string& getEventSubURL() const { return eventSubURL_; };
 
 private:
-    NON_COPYABLE(IGD);
-
     /* root device info */
     std::string UDN_ {}; /* used to uniquely identify this UPnP device */
     std::string baseURL_ {};
@@ -179,9 +195,31 @@ private:
     std::string serviceId_ {};
     std::string controlURL_ {};
     std::string eventSubURL_ {};
-
 };
+#endif
+
+#if HAVE_LIBNATPMP
+class PMPIGD : public IGD {
+public:
+    PMPIGD(IpAddr loc, IpAddr pub)
+        : IGD(loc, pub) {}
+
+    GlobalMapping* getNextMappingToRenew() const {
+        const GlobalMapping* mapping {nullptr};
+        for (const auto& m : udpMappings)
+            if (!mapping or m.second.renewal_ < mapping->renewal_)
+                mapping = &m.second;
+        for (const auto& m : tcpMappings)
+            if (!mapping or m.second.renewal_ < mapping->renewal_)
+                mapping = &m.second;
+        return (GlobalMapping*)mapping;
+    }
+
+    std::chrono::system_clock::time_point getRenewalTime() const {
+        const auto next = getNextMappingToRenew();
+        return next ? next->renewal_ : std::chrono::system_clock::time_point::max();
+    }
+};
+#endif
 
 }} // namespace ring::upnp
-
-#endif /* UPNP_IGD_H_ */
