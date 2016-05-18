@@ -153,28 +153,37 @@ vlogger(const int level, const char *format, va_list ap)
                 break;
         }
 
-#ifndef _WIN32
-        fputs(color_header, stderr);
-#else
+#ifdef _WIN32
         GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
         saved_attributes = consoleInfo.wAttributes;
-        SetConsoleTextAttribute(hConsole, color_header);
 #endif
 
-        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
-        std::string ctx(format, sep - format);
-        format = sep + 2;
-        fputs(getHeader(ctx.c_str()).c_str(), stderr);
-
+        // must exist, check LOG_FORMAT
+        auto sep = strchr(format, '|');
+        if (sep) {
 #ifndef _WIN32
-        fputs(END_COLOR, stderr);
+            fputs(color_header, stderr);
+#else
+            SetConsoleTextAttribute(hConsole, color_header);
+#endif
+            std::string ctx(format, sep - format);
+            format = sep + 2;
+            fputs(getHeader(ctx.c_str()).c_str(), stderr);
+#ifndef _WIN32
+            fputs(END_COLOR, stderr);
+#else
+            SetConsoleTextAttribute(hConsole, saved_attributes);
+#endif
+        }
+#ifndef _WIN32
         fputs(color_prefix, stderr);
 #else
-        SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
 
         vfprintf(stderr, format, ap);
+        if (not sep)
+            fputs(ENDL, stderr);
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
