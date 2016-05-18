@@ -57,8 +57,6 @@
 
 #include "security/certstore.h"
 
-#include <opendht/securedht.h>
-
 #include <yaml-cpp/yaml.h>
 
 #include <algorithm>
@@ -772,9 +770,9 @@ RingAccount::doRegister()
 }
 
 static constexpr const char*
-dhtStatusStr(dht::Dht::Status status) {
-    return status == dht::Dht::Status::Connected  ? "connected"  : (
-           status == dht::Dht::Status::Connecting ? "connecting" :
+dhtStatusStr(dht::NodeStatus status) {
+    return status == dht::NodeStatus::Connected  ? "connected"  : (
+           status == dht::NodeStatus::Connecting ? "connecting" :
                                                     "disconnected");
 }
 
@@ -790,17 +788,17 @@ RingAccount::doRegister_()
         }
         auto identity = loadIdentity();
 
-        dht_.setOnStatusChanged([this](dht::Dht::Status s4, dht::Dht::Status s6) {
+        dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
                 RegistrationState state;
                 switch (std::max(s4, s6)) {
-                    case dht::Dht::Status::Connecting:
+                    case dht::NodeStatus::Connecting:
                         state = RegistrationState::TRYING;
                         break;
-                    case dht::Dht::Status::Connected:
+                    case dht::NodeStatus::Connected:
                         state = RegistrationState::REGISTERED;
                         break;
-                    case dht::Dht::Status::Disconnected:
+                    case dht::NodeStatus::Disconnected:
                         state = RegistrationState::UNREGISTERED;
                         break;
                     default:
@@ -1155,7 +1153,7 @@ RingAccount::saveTreatedMessages() const
 }
 
 void
-RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
+RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
 {
     if (nodes.empty())
         return;
@@ -1173,7 +1171,7 @@ RingAccount::saveNodes(const std::vector<dht::Dht::NodeExport>& nodes) const
 }
 
 void
-RingAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
+RingAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
 {
     fileutils::check_dir(dataPath_.c_str());
     for (const auto& v : values) {
@@ -1183,10 +1181,10 @@ RingAccount::saveValues(const std::vector<dht::Dht::ValuesExport>& values) const
     }
 }
 
-std::vector<dht::Dht::NodeExport>
+std::vector<dht::NodeExport>
 RingAccount::loadNodes() const
 {
-    std::vector<dht::Dht::NodeExport> nodes;
+    std::vector<dht::NodeExport> nodes;
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
     {
         std::ifstream file(nodesPath);
@@ -1201,24 +1199,24 @@ RingAccount::loadNodes() const
             std::string id, ipstr;
             if (!(iss >> id >> ipstr)) { break; }
             IpAddr ip {ipstr};
-            dht::Dht::NodeExport e {dht::InfoHash(id), ip, ip.getLength()};
+            dht::NodeExport e {dht::InfoHash(id), ip, ip.getLength()};
             nodes.push_back(e);
         }
     }
     return nodes;
 }
 
-std::vector<dht::Dht::ValuesExport>
+std::vector<dht::ValuesExport>
 RingAccount::loadValues() const
 {
-    std::vector<dht::Dht::ValuesExport> values;
+    std::vector<dht::ValuesExport> values;
     const auto dircontent(fileutils::readDirectory(dataPath_));
     for (const auto& fname : dircontent) {
         const auto file = dataPath_+DIR_SEPARATOR_STR+fname;
         try {
             std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
             std::istreambuf_iterator<char> begin(ifs), end;
-            values.emplace_back(dht::Dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
+            values.emplace_back(dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
             RING_ERR("Error reading value: %s", e.what());
         }
