@@ -1,5 +1,5 @@
 # MSGPACK
-MSGPACK_VERSION := cpp-1.2.0
+MSGPACK_VERSION := cpp-1.4.1
 MSGPACK_URL := https://github.com/msgpack/msgpack-c/archive/$(MSGPACK_VERSION).tar.gz
 
 PKGS += msgpack
