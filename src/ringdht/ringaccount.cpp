@@ -235,7 +235,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                         call->onFailure();
                 } else
                     RING_DBG("Successfully put ICE descriptor on DHT");
-                shared_this->dht_.cancelPut(callkey, vid);
             }
         );
 
@@ -1003,7 +1002,6 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
                     call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
-            shared_this->dht_.cancelPut(shared_this->callKey_, vid);
         }
     );
     if (!ice->start(msg.ice_data)) {
