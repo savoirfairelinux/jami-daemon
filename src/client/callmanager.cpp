@@ -33,7 +33,11 @@
 #include "logger.h"
 #include "manager.h"
 
+#include "src/smartools.h"
+
 namespace DRing {
+
+ring::Smartools *tools;
 
 void
 registerCallHandlers(const std::map<std::string,
@@ -140,6 +144,20 @@ void
 removeConference(const std::string& conference_id)
 {
    ring::Manager::instance().removeConference(conference_id);
+}
+
+void
+launchSmartInfo(int refreshTimeMs)
+{
+  if(refreshTimeMs)
+  {
+    tools = new ring::Smartools(refreshTimeMs);
+    tools->start();
+  }
+  else
+  {
+    tools->stop();
+  }
 }
 
 bool
