@@ -33,6 +33,8 @@
 #include "logger.h"
 #include "manager.h"
 
+#include "smartools.h"
+
 namespace DRing {
 
 void
@@ -140,6 +142,20 @@ void
 removeConference(const std::string& conference_id)
 {
    ring::Manager::instance().removeConference(conference_id);
+}
+
+void
+startSmartInfo(uint32_t refreshTimeMs)
+{
+    RING_DBG("launch SmartInfo tool");
+    ring::Smartools::getInstance().start(std::chrono::milliseconds(refreshTimeMs));
+}
+
+void
+stopSmartInfo()
+{
+    RING_DBG("Stop SmartInfo tool");
+    ring::Smartools::getInstance().stop();
 }
 
 bool

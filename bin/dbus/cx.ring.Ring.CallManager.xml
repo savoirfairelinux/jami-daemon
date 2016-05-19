@@ -35,8 +35,15 @@
               </tp:docstring>
             </arg>
             <arg type="b" name="refuseSucceeded" direction="out"/>
-
         </method>
+
+        <signal name="SmartInfo" tp:name-for-bindings="SmartInfo">
+            <tp:docstring>
+              Once enabled using the startSmartInfo method, this signal is emitted every refreshTimeMS
+            </tp:docstring>
+             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+             <arg type="a{ss}" name="info" direction="out" />
+       </signal>
 
         <method name="accept" tp:name-for-bindings="accept">
             <tp:docstring>
@@ -342,6 +349,23 @@
                 The ID of the call to record.
               </tp:docstring>
             </arg>
+        </method>
+
+        <method name="startSmartInfo" tp:name-for-bindings="startSmartInfo">
+            <tp:docstring>
+              Start sending the signal smartInfo
+            </tp:docstring>
+            <arg type="u" name="refreshTimeMs" direction="in">
+              <tp:docstring>
+                Set the sending time (in milliseconds) of the signal.
+              </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="stopSmartInfo" tp:name-for-bindings="stopSmartInfo">
+            <tp:docstring>
+              Stop sending the signal smartInfo
+            </tp:docstring>
         </method>
 
         <method name="getIsRecording" tp:name-for-bindings="getIsRecording">
