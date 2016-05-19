@@ -105,6 +105,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
         RING_DBG("Using format %s", params.format.c_str());
     }
 
+
     return ret;
 }
 
@@ -423,6 +424,9 @@ int MediaDecoder::getWidth() const
 
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
+
+std::string MediaDecoder::getDecoderName() const
+{ return decoderCtx_->codec->name; }
 
 rational<double>
 MediaDecoder::getFps() const
