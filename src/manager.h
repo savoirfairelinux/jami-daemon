@@ -51,6 +51,8 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
+#include "smartools.h"
+
 namespace ring {
 
 namespace Conf {
@@ -218,6 +220,11 @@ class Manager {
          * Notify the client the transfer is successful
          */
         void transferSucceeded();
+
+        /**
+         *push a lot of informations to the client
+         */
+        void smartInfo(const std::map< std::string, std::map< std::string, std::string > >& info);
 
         /**
          * Notify the client that the transfer failed
