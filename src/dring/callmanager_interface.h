@@ -33,6 +33,9 @@
 
 namespace DRing {
 
+void launchSmartInfo(int refreshTimeMs);
+void callSmartInfo();
+
 void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */
@@ -96,6 +99,11 @@ void sendTextMessage(const std::string& callID, const std::map<std::string, std:
 
 // Call signal type definitions
 struct CallSignal {
+
+        struct SmartInfo {
+                constexpr static const char* name = "SmartInfo";
+                using cb_type = void(const std::map<std::string, std::string>&);
+        };
         struct StateChange {
                 constexpr static const char* name = "StateChange";
                 using cb_type = void(const std::string&, const std::string&, int);
@@ -202,6 +210,6 @@ struct CallSignal {
         };
 };
 
-} // namespace DRing
+}; // namespace DRing
 
 #endif // DRING_CALLMANAGERI_H

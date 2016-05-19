@@ -459,6 +459,7 @@ VideoInput::initFile(std::string path)
 std::shared_future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
+  std::cout<<decOpts_.framerate<< std::endl;
     if (resource == currentResource_)
         return futureDecOpts_;
 
@@ -535,6 +536,9 @@ int VideoInput::getWidth() const
 int VideoInput::getHeight() const
 { return decOpts_.height; }
 
+const ring::rational<double> VideoInput::getFramerate() const
+{ return decOpts_.framerate; }
+
 int VideoInput::getPixelFormat() const
 {
     int format;
@@ -545,6 +549,12 @@ int VideoInput::getPixelFormat() const
     return format;
 }
 #else
+const ring::rational<double> VideoInput::getFramerate() const
+{
+  if (decoder_)
+  return decoder_->getFps();
+}
+
 int VideoInput::getWidth() const
 { return decoder_->getWidth(); }
 
