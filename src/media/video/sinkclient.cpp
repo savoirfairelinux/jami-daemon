@@ -37,6 +37,7 @@
 #include "dring/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"
+#include "../../smartools.h"
 
 #ifndef _WIN32
 #include <sys/mman.h>
@@ -48,6 +49,8 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+
+
 
 namespace ring { namespace video {
 
@@ -318,13 +321,17 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
-        RING_DBG("%s: FPS %f", id_.c_str(), frameCount_ / seconds.count());
+        std::ostringstream fps;
+        fps << frameCount_ / seconds.count();
+        //send the framerate for display it in the smartInfo window
+        Smartools::getInstance().setFrameRate(id_.c_str(), fps.str());
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }
 #endif
 
 #if HAVE_SHM
+    Smartools::getInstance().setResolution(id_.c_str(), std::to_string(f.width()), std::to_string(f.height()));
     shm_->renderFrame(f);
 #endif
 
@@ -356,6 +363,10 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 void
 SinkClient::setFrameSize(int width, int height)
 {
+    //send the resolution for display it in the smartInfo window
+    RING_DBG("remote resolution");
+    //Smartools::getInstance().setRemoteResolution(std::to_string(width), std::to_string(height));
+
     if (width > 0 and height > 0) {
         RING_WARN("Start sink <%s / %s>, size=%dx%d, mixer=%u",
                  getId().c_str(), openedName().c_str(), width, height, mixer_);
