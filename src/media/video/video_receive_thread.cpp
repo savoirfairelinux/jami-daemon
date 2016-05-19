@@ -27,6 +27,7 @@
 #include "client/videomanager.h"
 #include "sinkclient.h"
 #include "logger.h"
+#include "../../smartools.h"
 
 #include <unistd.h>
 #include <map>
@@ -118,6 +119,9 @@ bool VideoReceiveThread::setup()
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)
         exitConference();
+
+    //std::cout<<videoDecoder_->getDecoderName()<<VideoReceiveThread::id_<<std::endl;
+    Smartools::setRemoteCodec(videoDecoder_->getDecoderName());
 
     return true;
 }
