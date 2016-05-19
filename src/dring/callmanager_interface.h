@@ -67,6 +67,9 @@ std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+/* Statistic related methods */
+void launchSmartInfo(uint32_t refreshTimeMs);
+
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
 void stopRecordedFilePlayback(const std::string& filepath);
@@ -200,8 +203,12 @@ struct CallSignal {
                 constexpr static const char* name = "AudioMuted";
                 using cb_type = void(const std::string&, bool);
         };
+        struct SmartInfo {
+                constexpr static const char* name = "SmartInfo";
+                using cb_type = void(const std::map<std::string, std::string>&);
+        };
 };
 
-} // namespace DRing
+}; // namespace DRing
 
 #endif // DRING_CALLMANAGERI_H

@@ -53,6 +53,7 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::PeerHold>(),
         exported_callback<DRing::CallSignal::VideoMuted>(),
         exported_callback<DRing::CallSignal::AudioMuted>(),
+        exported_callback<DRing::CallSignal::SmartInfo>(),
 
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
