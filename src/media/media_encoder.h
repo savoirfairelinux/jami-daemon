@@ -84,6 +84,7 @@ public:
     void setMuted(bool isMuted);
     void setInitSeqVal(uint16_t seqVal);
     uint16_t getLastSeqValue();
+    std::string getEncoderName() const;
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
