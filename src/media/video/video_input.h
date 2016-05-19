@@ -71,6 +71,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    const rational<double> getFramerate() const;
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
