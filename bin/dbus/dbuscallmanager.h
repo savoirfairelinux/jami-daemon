@@ -54,6 +54,7 @@ class DBusCallManager :
         DBusCallManager(DBus::Connection& connection);
 
         // Methods
+        void launchSmartInfo(const int32_t& refreshTimeMs);
         std::string placeCall(const std::string& accountID, const std::string& to);
         bool refuse(const std::string& callID);
         bool accept(const std::string& callID);

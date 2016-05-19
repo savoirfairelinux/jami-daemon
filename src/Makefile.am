@@ -75,6 +75,8 @@ libring_la_CFLAGS = \
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 
 libring_la_SOURCES = \
+    smartools.cpp\
+    smartools.h\
 		buildinfo.cpp \
 		conference.cpp \
 		account_factory.cpp \
