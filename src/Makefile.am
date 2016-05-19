@@ -108,6 +108,8 @@ libring_la_CFLAGS += $(OPENDHT_CFLAGS)
 endif
 
 libring_la_SOURCES = \
+    smartools.cpp\
+    smartools.h\
 		buildinfo.cpp \
 		conference.cpp \
 		account_factory.cpp \

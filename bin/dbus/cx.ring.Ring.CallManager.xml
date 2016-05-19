@@ -35,9 +35,12 @@
               </tp:docstring>
             </arg>
             <arg type="b" name="refuseSucceeded" direction="out"/>
-
         </method>
 
+        <signal name="SmartInfo" tp:name-for-bindings="SmartInfo">
+ +            <tp:docstring/>
+ +            <arg type="a{ss}" name="info" direction="out" />
+ +        </signal>
         <method name="accept" tp:name-for-bindings="accept">
             <tp:docstring>
               Answer an incoming call. Automatically puts the current call on HOLD.
@@ -340,6 +343,17 @@
             <arg type="s" name="callID" direction="in">
               <tp:docstring>
                 The ID of the call to record.
+              </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="launchSmartInfo" tp:name-for-bindings="launchSmartInfo">
+            <tp:docstring>
+              Launch the SmartInfo tool.
+            </tp:docstring>
+            <arg type="i" name="refreshTimeMs" direction="in">
+              <tp:docstring>
+                Active the tool
               </tp:docstring>
             </arg>
         </method>
