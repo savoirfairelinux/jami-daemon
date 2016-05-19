@@ -39,6 +39,8 @@
 #include "manager.h"
 #include <sstream>
 
+#include "../../smartools.h"
+
 namespace ring {
 
 class AudioSender {
@@ -281,6 +283,8 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
+            //std::cout<<"Receive: "<<audioDecoder_->getDecoderName()<<std::endl;
+            Smartools::setRemoteAudioCodec(audioDecoder_->getDecoderName());
             return;
 
         case MediaDecoder::Status::DecodeError:
