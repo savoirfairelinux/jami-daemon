@@ -26,6 +26,7 @@
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
+#include "smartools.h"
 
 #include <map>
 #include <unistd.h>
@@ -67,6 +68,9 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
+
+    // Send local video codec in SmartInfo
+    Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
 }
 
 void

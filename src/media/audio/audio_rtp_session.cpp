@@ -37,6 +37,7 @@
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "manager.h"
+#include "smartools.h"
 #include <sstream>
 
 namespace ring {
@@ -166,6 +167,7 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
+        Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
         if (audioEncoder_->encode_audio(resampledData_) < 0)
             RING_ERR("encoding failed");
     } else {
@@ -281,6 +283,8 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
+            // Refresh the remote audio codec in the callback SmartInfo
+            Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
             return;
 
         case MediaDecoder::Status::DecodeError:

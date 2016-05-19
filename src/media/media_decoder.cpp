@@ -416,6 +416,9 @@ int MediaDecoder::getWidth() const
 int MediaDecoder::getHeight() const
 { return decoderCtx_->height; }
 
+std::string MediaDecoder::getDecoderName() const
+{ return decoderCtx_->codec->name; }
+
 rational<double>
 MediaDecoder::getFps() const
 {

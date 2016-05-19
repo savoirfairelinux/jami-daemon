@@ -283,3 +283,15 @@ DBusCallManager::sendTextMessage(const std::string& callID, const std::map<std::
 {
     DRing::sendTextMessage(callID, messages, "Me", isMixed);
 }
+
+void
+DBusCallManager::startSmartInfo(const uint32_t& refreshTimeMs)
+{
+    DRing::startSmartInfo(refreshTimeMs);
+}
+
+void
+DBusCallManager::stopSmartInfo()
+{
+    DRing::stopSmartInfo();
+}
