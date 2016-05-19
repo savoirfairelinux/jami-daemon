@@ -166,7 +166,8 @@ DBusClient::initLibrary(int flags)
         exportable_callback<CallSignal::RtcpReportReceived>(bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
         exportable_callback<CallSignal::PeerHold>(bind(&DBusCallManager::peerHold, callM, _1, _2)),
         exportable_callback<CallSignal::AudioMuted>(bind(&DBusCallManager::audioMuted, callM, _1, _2)),
-        exportable_callback<CallSignal::VideoMuted>(bind(&DBusCallManager::videoMuted, callM, _1, _2))
+        exportable_callback<CallSignal::VideoMuted>(bind(&DBusCallManager::videoMuted, callM, _1, _2)),
+        exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1))
     };
 
     // Configuration event handlers

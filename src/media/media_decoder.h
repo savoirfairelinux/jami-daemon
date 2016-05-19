@@ -81,6 +81,8 @@ class MediaDecoder {
 
         int getWidth() const;
         int getHeight() const;
+        std::string getDecoderName() const;
+
         rational<double> getFps() const;
         int getPixelFormat() const;
 

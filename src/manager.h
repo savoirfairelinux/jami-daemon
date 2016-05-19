@@ -51,6 +51,8 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
+#include "smartools.h"
+
 namespace ring {
 
 namespace Conf {
@@ -218,6 +220,11 @@ class Manager {
          * Notify the client the transfer is successful
          */
         void transferSucceeded();
+
+        /**
+         * Push given calls related informations to the client
+         */
+        void smartInfo(const std::map<std::string, std::string>& info);
 
         /**
          * Notify the client that the transfer failed
@@ -769,6 +776,12 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        /**
+         * Get the Call referred by callID. If the Call does not exist, return
+         * empty std::shared_ptr<Call> instance
+         */
+        std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
+
     private:
         std::atomic_bool autoAnswer_ {false};
 
@@ -779,10 +792,6 @@ class Manager {
         // Set the ringtone or recorded call to be played
         void updateAudioFile(const std::string &file, int sampleRate);
 
-        /**
-         * Get the Call referred to by callID. If the Call does not exist, return NULL
-         */
-        std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
 
         /**
          * Process remaining participant given a conference and the current call id.
