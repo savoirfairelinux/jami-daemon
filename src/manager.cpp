@@ -726,6 +726,13 @@ Manager::transferSucceeded()
     transferSucceeded();
 }
 
+void
+Manager::smartInfo()
+{
+  emitSignal<DRing::CallSignal::SmartInfo>(42);
+}
+
+
 bool
 Manager::attendedTransfer(const std::string& transferID,
                               const std::string& targetID)
