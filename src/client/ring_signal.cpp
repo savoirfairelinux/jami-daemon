@@ -27,6 +27,7 @@ getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
         /* Call */
+        exported_callback<DRing::CallSignal::SmartInfo>(),
         exported_callback<DRing::CallSignal::StateChange>(),
         exported_callback<DRing::CallSignal::TransferFailed>(),
         exported_callback<DRing::CallSignal::TransferSucceeded>(),
