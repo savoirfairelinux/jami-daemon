@@ -142,6 +142,8 @@ DBusClient::initLibrary(int flags)
 
     // Call event handlers
     const std::map<std::string, SharedCallback> callEvHandlers = {
+
+        exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1)),
         exportable_callback<CallSignal::StateChange>(bind(&DBusCallManager::callStateChanged, callM, _1, _2, _3)),
         exportable_callback<CallSignal::TransferFailed>(bind(&DBusCallManager::transferFailed, callM)),
         exportable_callback<CallSignal::TransferSucceeded>(bind(&DBusCallManager::transferSucceeded, callM)),
