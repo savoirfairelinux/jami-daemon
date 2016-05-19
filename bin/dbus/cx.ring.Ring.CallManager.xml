@@ -35,8 +35,16 @@
               </tp:docstring>
             </arg>
             <arg type="b" name="refuseSucceeded" direction="out"/>
-
         </method>
+
+        <signal name="SmartInfo" tp:name-for-bindings="SmartInfo">
+            <tp:docstring>
+              Once after starting by using launchSmartInfo method, the signal is
+              emit every refreshTimeMs.
+            </tp:docstring>
+             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+             <arg type="a{ss}" name="info" direction="out" />
+       </signal>
 
         <method name="accept" tp:name-for-bindings="accept">
             <tp:docstring>
@@ -340,6 +348,18 @@
             <arg type="s" name="callID" direction="in">
               <tp:docstring>
                 The ID of the call to record.
+              </tp:docstring>
+            </arg>
+        </method>
+
+        <method name="launchSmartInfo" tp:name-for-bindings="launchSmartInfo">
+            <tp:docstring>
+              Start sending the signal smartInfo
+            </tp:docstring>
+            <arg type="i" name="refreshTimeMs" direction="in">
+              <tp:docstring>
+                Set the sending time of the signal.
+                If refreshTimeMs =0, the daemon stop sending the signal
               </tp:docstring>
             </arg>
         </method>
