@@ -90,6 +90,7 @@ using random_device = std::random_device;
 #include <sstream>
 #include <memory>
 #include <mutex>
+#include <map>
 
 namespace ring {
 
@@ -721,6 +722,17 @@ Manager::transferSucceeded()
 {
     transferSucceeded();
 }
+
+void
+Manager::smartInfo()
+{
+  static int val = 0;
+  val++;
+  std::map<std::string,std::string> info;
+  info["counter"]= std::to_string(val);
+  emitSignal<DRing::CallSignal::SmartInfo>(info);
+}
+
 
 bool
 Manager::attendedTransfer(const std::string& transferID,
