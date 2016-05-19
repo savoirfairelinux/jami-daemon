@@ -116,6 +116,10 @@ MediaEncoder::getLastSeqValue()
         return 0;
 }
 
+std::string
+MediaEncoder::getEncoderName() const
+{ return encoderCtx_->codec->name; }
+
 void
 MediaEncoder::openOutput(const char *filename,
                          const ring::MediaDescription& args)
