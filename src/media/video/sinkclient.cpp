@@ -37,6 +37,7 @@
 #include "dring/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"
+#include "../../smartools.h"
 
 #ifndef _WIN32
 #include <sys/mman.h>
@@ -48,6 +49,8 @@
 #include <cerrno>
 #include <cstring>
 #include <stdexcept>
+
+
 
 namespace ring { namespace video {
 
@@ -312,13 +315,16 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
                    std::shared_ptr<VideoFrame> frame_p)
 {
     auto& f = *frame_p;
-
 #ifdef DEBUG_FPS
     auto currentTime = std::chrono::system_clock::now();
     const std::chrono::duration<double> seconds = currentTime - lastFrameDebug_;
     ++frameCount_;
     if (seconds.count() > 1) {
         RING_DBG("%s: FPS %f", id_.c_str(), frameCount_ / seconds.count());
+
+        std::ostringstream toString;
+        toString << frameCount_ / seconds.count();
+        Smartools::setFramerate(toString.str());
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }
