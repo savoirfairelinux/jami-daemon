@@ -67,6 +67,9 @@ std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+/* Statistic related methods */
+void launchSmartInfo(int refreshTimeMs);
+
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
 void stopRecordedFilePlayback(const std::string& filepath);
@@ -96,6 +99,11 @@ void sendTextMessage(const std::string& callID, const std::map<std::string, std:
 
 // Call signal type definitions
 struct CallSignal {
+
+        struct SmartInfo {
+                constexpr static const char* name = "SmartInfo";
+                using cb_type = void(const std::map<std::string, std::string>&);
+        };
         struct StateChange {
                 constexpr static const char* name = "StateChange";
                 using cb_type = void(const std::string&, const std::string&, int);
@@ -202,6 +210,6 @@ struct CallSignal {
         };
 };
 
-} // namespace DRing
+}; // namespace DRing
 
 #endif // DRING_CALLMANAGERI_H

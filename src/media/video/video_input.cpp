@@ -459,6 +459,7 @@ VideoInput::initFile(std::string path)
 std::shared_future<DeviceParams>
 VideoInput::switchInput(const std::string& resource)
 {
+  std::cout<<decOpts_.framerate<< std::endl;
     if (resource == currentResource_)
         return futureDecOpts_;
 
