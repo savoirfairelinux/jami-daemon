@@ -97,6 +97,8 @@ class DBusCallManager :
         void requestGoClear(const std::string& callID);
         void acceptEnrollment(const std::string& callID, const bool& accepted);
         void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const bool& isMixed);
+        void startSmartInfo(const uint32_t& refreshTimeMs);
+        void stopSmartInfo();
 };
 
 #endif // __RING_CALLMANAGER_H__
