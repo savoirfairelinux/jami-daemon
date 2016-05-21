@@ -431,6 +431,24 @@ class Manager {
         void setAccountsOrder(const std::string& order);
 
         /**
+         * Register a Ring Device for LAN UPnP
+         * @return bool sucess of registration.
+         */
+        bool registerRingDevice(const std::string& accountID, const std::string& accountUsername) const;
+
+        /**
+         * Retrieve the list of autodiscovered accounts
+         * @return std::map< std::string, std::string > The list of accounts and details
+         */
+        std::vector<std::shared_ptr<ring::upnp::RingDevice>> getAutodiscoveryList() const;
+
+        /**
+         * Retrieve the accounts located under an autodiscovered location
+         * @return std::vector<std::string> The list of accounts
+         */
+        std::vector<std::string> queryRingAccountsFromAutodiscovery(const std::string& accountUsername) const;
+
+        /**
          * Retrieve details about a given account
          * @param accountID	  The account identifier
          * @return std::map< std::string, std::string > The account details

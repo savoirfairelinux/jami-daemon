@@ -2388,10 +2388,34 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     }
 }
 
+bool
+Manager::registerRingDevice(const std::string& accountID, const std::string& accountUsername) const
+{
+    const auto account = getAccount(accountID);
+
+    if(account) {
+        account->registerRingDevice(accountUsername);
+        return true;
+    } else {
+        RING_ERR("Could not get account with accountID %s", accountID.c_str());
+        return false;
+    }
+}
+
+std::vector<std::shared_ptr<ring::upnp::RingDevice>>
+Manager::getAutodiscoveryList() const
+{
+    return Account::getAutodiscoveryList();
+}
+
+std::vector<std::string>
+Manager::queryRingAccountsFromAutodiscovery(const std::string& accountUsername) const
+{
+	return Account::queryRingAccountsFromAutodiscovery(accountUsername);
+}
 
 // method to reduce the if/else mess.
 // Even better, switch to XML !
-
 void
 Manager::setAccountDetails(const std::string& accountID,
                                const std::map<std::string, std::string>& details)
