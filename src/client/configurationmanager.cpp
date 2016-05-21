@@ -28,33 +28,30 @@
 #include "configurationmanager_interface.h"
 #include "account_schema.h"
 #include "manager.h"
+#if HAVE_TLS && HAVE_DHT
 #include "security/tlsvalidator.h"
 #include "security/certstore.h"
+#endif
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "ringdht/ringaccount.h"
+#if HAVE_IAX
+#include "iax/iaxaccount.h"
+#endif
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
 #include "client/ring_signal.h"
-#include "upnp/upnp_context.h"
+#include "upnp/upnp_rd.h"
 
-#ifdef WIN32_NATIVE
-#include "windirent.h"
-#else
 #include <dirent.h>
-#endif
 
 #include <cerrno>
 #include <cstring>
 #include <sstream>
-
-#ifdef _WIN32
-#undef interface
-#endif
 
 namespace DRing {
 
@@ -126,12 +123,17 @@ std::map<std::string, std::string>
 validateCertificate(const std::string&,
                     const std::string& certificate)
 {
+#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
+#else
+    RING_WARN("TLS not supported");
+    return {};
+#endif
 }
 
 std::map<std::string, std::string>
@@ -141,28 +143,38 @@ validateCertificatePath(const std::string&,
                     const std::string& privateKeyPass,
                     const std::string& caList)
 {
+#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
+#else
+    RING_WARN("TLS not supported");
+    return {};
+#endif
 }
 
 std::map<std::string, std::string>
 getCertificateDetails(const std::string& certificate)
 {
+#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
     }
+#else
+    RING_WARN("TLS not supported");
+#endif
     return {};
 }
 
 std::map<std::string, std::string>
 getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
 {
+#if HAVE_TLS && HAVE_DHT
     try {
         auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
         TlsValidator validator {certificate, privateKey, privateKeyPassword};
@@ -171,13 +183,20 @@ getCertificateDetailsPath(const std::string& certificate, const std::string& pri
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
     }
+#else
+    RING_WARN("TLS not supported");
+#endif
     return {};
 }
 
 std::vector<std::string>
 getPinnedCertificates()
 {
+#if HAVE_TLS && HAVE_DHT
     return ring::tls::CertificateStore::instance().getPinnedCertificates();
+#else
+    RING_WARN("TLS not supported");
+#endif
     return {};
 }
 
@@ -332,6 +351,10 @@ getAccountTemplate(const std::string& accountType)
         return ring::RingAccount("dummy", false).getAccountDetails();
     else if (accountType == Account::ProtocolNames::SIP)
         return ring::SIPAccount("dummy", false).getAccountDetails();
+#if HAVE_IAX
+    else if (accountType == Account::ProtocolNames::IAX)
+        return ring::IAXAccount("dummy").getAccountDetails();
+#endif
     return {};
 }
 
@@ -375,9 +398,11 @@ getSupportedTlsMethod()
 std::vector<std::string>
 getSupportedCiphers(const std::string& accountID)
 {
+#if HAVE_TLS
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return SIPAccount::getSupportedTlsCiphers();
     RING_ERR("SIP account %s doesn't exist", accountID.c_str());
+#endif
     return {};
 }
 
@@ -574,6 +599,12 @@ void
 setAgcState(bool enabled)
 {
     ring::Manager::instance().setAGCState(enabled);
+}
+
+int32_t
+isIax2Enabled()
+{
+    return HAVE_IAX;
 }
 
 std::string
@@ -796,26 +827,6 @@ setCredentials(const std::string& accountID,
             if (sipaccount->isEnabled())
                 sipaccount->doRegister();
         });
-    }
-}
-
-void
-connectivityChanged()
-{
-    RING_WARN("received connectivity changed - trying to re-connect enabled accounts");
-
-    // reset the UPnP context
-    try {
-        ring::upnp::getUPnPContext()->connectivityChanged();
-    } catch (std::runtime_error& e) {
-        RING_ERR("UPnP context error: %s", e.what());
-    }
-
-    auto account_list = ring::Manager::instance().getAccountList();
-    for (auto account_id : account_list) {
-        if (auto account = ring::Manager::instance().getAccount(account_id)) {
-            account->connectivityChanged();
-        }
     }
 }
 

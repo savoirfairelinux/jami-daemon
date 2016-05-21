@@ -49,6 +49,7 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+#include "upnp_rd.h"
 
 namespace ring {
 class IpAddr;
@@ -59,9 +60,25 @@ namespace ring { namespace upnp {
 class UPnPContext {
 public:
     constexpr static unsigned SEARCH_TIMEOUT {30};
+    constexpr static unsigned SUBSCRIBE_TIMEOUT {120};
+
+    /* Holds the hash of the current ring account in use. */
+    static std::string currentRingHash;
 
     UPnPContext();
     ~UPnPContext();
+
+    /**
+     * map of valid RingDevices
+     *
+     * the UDN string is used to uniquely identify the RingDevice - same as user hash
+     *
+     * the mutex is used to access these lists and RingDevices in a thread-safe manner
+     */
+    std::vector<std::shared_ptr<RingDevice>> validRDs_;
+    //std::map<std::string, std::shared_ptr<RingDevice>> validRDs_;
+    mutable std::mutex validRDMutex_;
+    std::condition_variable validRDCondVar_;
 
     /**
      * Returns 'true' if there is at least one valid (connected) IGD.
@@ -95,6 +112,15 @@ public:
      * tries to remove the given mapping
      */
     void removeMapping(const Mapping& mapping);
+
+    /* register our client as a UPnP service */
+    void registerRingDevice(const std::string& hash, const bool& visibleOverUpnp);
+
+    /* update the account list to be broadcast over UPnP */
+    int updateAccountList();
+
+    /* Obtain a list of accounts from the autodiscovered accounts */
+    std::vector<std::string> queryRingAccountsFromAutodiscovery(const std::string& accountUsername);
 
     /**
      * tries to get the external ip of the router
@@ -218,11 +244,16 @@ private:
     /* sends out async search for IGD */
     void searchForIGD();
 
+    /* sends out async search for RDs */
+    void searchForRD();
+
     /**
      * Parses the device description and adds desired devices to
      * relevant lists
      */
     void parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event);
+
+    void parseRD(IXML_Document* doc, const Upnp_Discovery* d_event);
 
     void parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event);
 

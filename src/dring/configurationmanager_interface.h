@@ -38,6 +38,9 @@ namespace DRing {
 
 void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
+bool registerRingDevice(const std::string& accountID, const bool& visibleOverUpnp);
+std::map<std::string, std::string> getAutodiscoveryList();
+std::vector<std::string> queryRingAccountsFromAutodiscovery(const std::string& accountUsername);
 std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
 void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
