@@ -50,6 +50,7 @@
 
 namespace ring { namespace upnp {
 class Controller;
+class RingDevice;
 }} // namespace ring::upnp
 
 namespace YAML {
@@ -94,6 +95,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         void freeAccount();
 
         virtual void setAccountDetails(const std::map<std::string, std::string> &details);
+
+        virtual bool registerRingDevice(const std::string& accountUsername) const;
+
+        static std::vector<std::shared_ptr<ring::upnp::RingDevice>> getAutodiscoveryList();
 
         virtual std::map<std::string, std::string> getAccountDetails() const;
 

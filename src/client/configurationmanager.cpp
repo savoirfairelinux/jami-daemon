@@ -45,6 +45,7 @@
 #include "system_codec_container.h"
 #include "account_const.h"
 #include "client/ring_signal.h"
+#include "upnp/upnp_rd.h"
 
 #include <dirent.h>
 
@@ -61,6 +62,7 @@ using ring::tls::TlsValidator;
 using ring::tls::CertificateStore;
 using ring::DeviceType;
 using ring::HookPreference;
+using ring::upnp::RingDevice;
 
 void
 registerConfHandlers(const std::map<std::string,
@@ -88,6 +90,33 @@ std::map<std::string, std::string>
 getVolatileAccountDetails(const std::string& accountID)
 {
     return ring::Manager::instance().getVolatileAccountDetails(accountID);
+}
+
+bool
+registerRingDevice(const std::string& accountID, const std::string& accountUsername)
+{
+    return ring::Manager::instance().registerRingDevice(accountID, accountUsername);
+}
+
+std::map<std::string, std::string>
+getAutodiscoveryList()
+{
+	 std::vector<std::shared_ptr<RingDevice>> list(ring::Manager::instance().getAutodiscoveryList());
+	 std::map<std::string, std::string> ret;
+	 for(unsigned int i = 0; i < list.size(); i++){
+		ret.insert(std::pair<std::string,std::string>(i+".UDN",list[i]->getUDN()));
+		std::vector<std::string> extra = list[i]->getRingAccounts();
+		for(unsigned int j = 0; j < extra.size(); j++){
+			ret.insert(std::pair<std::string,std::string>(j+".UDN",extra[i]));
+		}
+		// Extra debug items.
+		/*ret.insert(std::pair<std::string,std::string>(i+".DeviceType",item.second->getDeviceType()));
+		ret.insert(std::pair<std::string,std::string>(i+".FriendlyName",item.second->getFriendlyName()));
+		ret.insert(std::pair<std::string,std::string>(i+".BaseURL",item.second->getBaseURL()+"description.xml"));
+		ret.insert(std::pair<std::string,std::string>(i+".relURL",item.second->getrelURL()));*/
+	 }
+	 return ret;
+     //return ring::Manager::instance().getAutodiscoveryList();
 }
 
 std::map<std::string, std::string>
