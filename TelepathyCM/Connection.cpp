@@ -26,8 +26,8 @@
 #include <QNetworkReply>
 #include <QCryptographicHash>
 
-#include "connection.h"
-#include "protocol.h"
+#include "Connection.h"
+#include "ProtocolSession.h"
 
 RingConnection::RingConnection      (const QDBusConnection &dbusConnection, const QString &cmName,
                                      const QString &protocolName,

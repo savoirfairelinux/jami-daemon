@@ -18,8 +18,8 @@
  */
 
 
-#include "protocol.h"
-#include "connection.h"
+#include "ProtocolSession.h"
+#include "Connection.h"
 
 #include <TelepathyQt/RequestableChannelClassSpec>
 #include <TelepathyQt/RequestableChannelClassSpecList>

@@ -1,0 +1,8 @@
+[ConnectionManager]
+Name = hanging
+BusName = org.freedesktop.Telepathy.ConnectionManager.ring
+ObjectPath = /org/freedesktop/Telepathy/ConnectionManager/Ring
+
+[Protocol hangouts]
+param-account=s required
+param-password=s required
