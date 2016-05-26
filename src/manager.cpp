@@ -332,12 +332,6 @@ Manager::init(const std::string &config_file)
 }
 
 void
-Manager::setPath(const std::string&)
-{
-    // FIME: needed?
-}
-
-void
 Manager::finish() noexcept
 {
     bool expected = false;
