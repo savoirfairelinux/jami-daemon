@@ -128,8 +128,6 @@ class Manager {
          */
         void init(const std::string &config_file);
 
-        void setPath(const std::string &path);
-
         /*
          * Terminate all threads and exit DBus loop
          */
