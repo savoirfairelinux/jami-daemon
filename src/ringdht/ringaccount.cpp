@@ -669,7 +669,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             call->onFailure();
             return true;
         }
-        return false;
+        // Cleanup pending call if call is over (cancelled by user or any other reason)
+        return call->getState() == Call::CallState::OVER;
     }
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
