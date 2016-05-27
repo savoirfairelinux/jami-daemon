@@ -669,6 +669,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             call->onFailure();
             return true;
         }
+        if (call->getState() == Call::CallState::OVER)
+            return true;
         return false;
     }
 
