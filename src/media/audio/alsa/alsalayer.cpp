@@ -183,7 +183,7 @@ bool AlsaLayer::openDevice(snd_pcm_t **pcm, const std::string &dev, snd_pcm_stre
         if (err == -EBUSY) {
             // We're called in audioThread_ context, so if exit is requested
             // force return now
-            if (not audioThread_->isRunning())
+            if ((not audioThread_) or (not audioThread_->isRunning()))
                 return false;
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
