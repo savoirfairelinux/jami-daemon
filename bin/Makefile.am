@@ -28,4 +28,19 @@ dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
+
+else
+SUBDIRS=restcpp
+
+sbin_PROGRAMS = dring
+
+dring_SOURCES = main.cpp
+
+dring_CXXFLAGS= -g \
+				-I$(top_srcdir)/src \
+                -I$(top_srcdir)/src/dring \
+				-DREST_API \
+                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+
+dring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
 endif
