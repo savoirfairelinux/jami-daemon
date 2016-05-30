@@ -25,12 +25,27 @@
 #include <cstring>
 #include <signal.h>
 #include <getopt.h>
+#include <cstdlib>
 
+#include "dring.h"
+
+#include "logger.h"
+
+#if REST_API
+#include "rest/restclient.h"
+#else
 #include "dbus/dbusclient.h"
+#endif
+
 #include "fileutils.h"
 
 static int ringFlags = 0;
-static std::unique_ptr<DBusClient> dbusClient;
+static int port = 8080;
+#if REST_API
+	static std::unique_ptr<RestClient> restClient;
+#else
+	static std::unique_ptr<DBusClient> dbusClient;
+#endif
 
 static void
 print_title()
@@ -52,6 +67,7 @@ print_usage()
     "-c, --console \t- Log in console (instead of syslog)" << std::endl <<
     "-d, --debug \t- Debug mode (more verbose)" << std::endl <<
     "-p, --persistent \t- Stay alive after client quits" << std::endl <<
+    "--port \t- Port to use for the rest API. Default is 8080" << std::endl <<
     "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
     "-h, --help \t- Print help" << std::endl;
 }
@@ -76,6 +92,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         {"help", no_argument, NULL, 'h'},
         {"version", no_argument, NULL, 'v'},
         {"auto-answer", no_argument, &autoAnswer, true},
+        {"port", optional_argument, NULL, 'x'},
         {0, 0, 0, 0} /* Sentinel */
     };
 
@@ -83,7 +100,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        auto c = getopt_long(argc, argv, "dcphv", long_options, &option_index);
+        auto c = getopt_long(argc, argv, "dcphvx:", long_options, &option_index);
 
         // end of the options
         if (c == -1)
@@ -110,6 +127,10 @@ parse_args(int argc, char *argv[], bool& persistent)
             case 'v':
                 versionFlag = true;
                 break;
+
+			case 'x':
+				port = std::atoi(optarg);
+				break;
 
             default:
                 break;
@@ -138,21 +159,6 @@ parse_args(int argc, char *argv[], bool& persistent)
     return false;
 }
 
-static int
-run()
-{
-    if (dbusClient)
-        return dbusClient->event_loop();
-    return 1;
-}
-
-static void
-interrupt()
-{
-    if (dbusClient)
-        dbusClient->exit();
-}
-
 static void
 signal_handler(int code)
 {
@@ -164,7 +170,14 @@ signal_handler(int code)
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
 
-    interrupt();
+	// Interrupt the process
+#if REST_API
+	if (restClient)
+		restClient->exit();
+#else
+	if (dbusClient)
+		dbusClient->exit();
+#endif
 }
 
 int
@@ -189,7 +202,26 @@ main(int argc, char *argv [])
     if (parse_args(argc, argv, persistent))
         return 0;
 
-    // initialize client/library
+    // TODO: Block signals for all threads but the main thread, decide how/if we should
+    // handle other signals
+    signal(SIGINT, signal_handler);
+    signal(SIGHUP, signal_handler);
+    signal(SIGTERM, signal_handler);
+
+#if REST_API
+	try {
+		restClient.reset(new RestClient {(unsigned short)port, ringFlags, persistent});
+    } catch (const std::exception& ex) {
+        std::cerr << "One does not simply initialize the rest client: " << ex.what() << std::endl;
+        return 1;
+    }
+
+	if (restClient)
+		return restClient->event_loop();
+	else
+		return 1;
+#else
+	// initialize client/library
     try {
         dbusClient.reset(new DBusClient {ringFlags, persistent});
     } catch (const std::exception& ex) {
@@ -197,11 +229,10 @@ main(int argc, char *argv [])
         return 1;
     }
 
-    // TODO: Block signals for all threads but the main thread, decide how/if we should
-    // handle other signals
-    signal(SIGINT, signal_handler);
-    signal(SIGHUP, signal_handler);
-    signal(SIGTERM, signal_handler);
+	if (dbusClient)
+        return dbusClient->event_loop();
+	else
+		return 1;
+#endif
 
-    return run();
 }

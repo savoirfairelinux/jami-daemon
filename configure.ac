@@ -613,6 +613,7 @@ dnl What Makefiles to generate
 #TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
+				 bin/rest/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
