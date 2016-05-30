@@ -47,7 +47,7 @@ Short description of content of source tree
 - src/ is the core of DRing.
 - bin/ contains applications main code.
 - bin/dbus, the D-Bus xml interfaces, and c++ bindings
-
+- bin/restcpp, the C++ REST API implemented with Restbed
 
 About Savoir-faire Linux
 ------------------------
@@ -133,6 +133,27 @@ interaction between daemon and client will not work; for each platform where
 dbus is not available the client should implement all the methods in the
 *_stub.cpp files.
 
+How to compile with the REST API
+--------------------------------
+
+Ring offers two REST API. One written in C++, and the other written in Cython.
+Up to this date, only the C++ API is available. The Cython API will soon follow.
+
+To compile Ring-daemon with the C++ REST API, follow these two steps :
+
+1) Compile the dependencies
+cd contrib
+mkdir native
+cd native
+../bootstrap
+make
+make .restbed
+
+2) Then compile the daemon
+cd ../../
+./autogen.sh
+./configure --without-dbus --with-restcpp
+make
 
 SIP accounts
 ---------------------
