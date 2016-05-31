@@ -54,10 +54,12 @@
 #include "array_size.h"
 
 #include "config/yamlparser.h"
-
 #include "security/certstore.h"
+#include "libdevcrypto/SecretStore.h"
 
 #include <yaml-cpp/yaml.h>
+
+#include <unistd.h>
 
 #include <algorithm>
 #include <array>
@@ -137,12 +139,12 @@ RingAccount::createIceTransport(Args... args)
 }
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID), via_addr_()
-{
-    cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
-    dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
-    idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-}
+    : SIPAccountBase(accountID), via_addr_(),
+    cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
+    dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
+    idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID()),
+    store_(new dev::SecretStore(idPath_ + DIR_SEPARATOR_STR "eth"))
+{}
 
 RingAccount::~RingAccount()
 {
@@ -452,12 +454,31 @@ RingAccount::checkIdentityPath()
     loadIdentity();
 }
 
+dev::Address
+RingAccount::loadEthAccount()
+{
+    auto keys = store_->keys();
+    RING_WARN("Ethereum: %lu keys in wallet", keys.size());
+    if (keys.empty()) {
+            dev::KeyPair keypair {dev::Secret::random()};
+            auto uid = store_->importSecret(keypair.secret().ref(), "");
+            RING_WARN("Created key: %s", dht::InfoHash(keypair.address().asArray()).toString().c_str());
+            return keypair.address();
+    } else {
+        for (const auto& k : keys) {
+            dht::InfoHash h {store_->getAddress(k).asArray()};
+            //auto a = store_->getAddress(k);
+            RING_WARN("Key: %s", h.toString().c_str());
+        }
+    }
+}
+
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
+    loadEthAccount();
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
-
     try {
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
@@ -474,7 +495,6 @@ RingAccount::loadIdentity()
         }
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
         fileutils::check_dir(idPath_.c_str(), 0700);
-
         fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 0600);
 
         // save the chain including CA
@@ -821,11 +841,11 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#if 0 // enable if dht_ logging is needed
+#if 1 // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+            [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
         );
 #endif
 
