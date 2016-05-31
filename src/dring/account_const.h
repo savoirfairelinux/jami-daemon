@@ -227,6 +227,13 @@ constexpr static const char ALLOW_FROM_TRUSTED [] = "DHT.AllowFromTrusted";
 
 } //namespace DRing::Account::DHT
 
+namespace ETH {
+
+constexpr static const char KEY_FILE   		   [] = "ETH.keyFile";
+constexpr static const char ACCOUNT    		   [] = "ETH.account";
+
+} //namespace DRing::Account::ETH
+
 namespace CodecInfo {
 
 constexpr static const char NAME               [] = "CodecInfo.name";
