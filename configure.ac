@@ -50,14 +50,14 @@ case "${host_os}" in
     ;;
   darwin*)
     SYS=darwin
-
-    AC_EGREP_CPP(yes,
-            [#import <TargetConditionals.h>
-             #if TARGET_OS_IPHONE
-             yes
-             #endif],
-             [HAVE_IOS="1"],
-             [HAVE_OSX="1"])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+        [[#import <TargetConditionals.h>
+          #if TARGET_OS_IPHONE
+          yes
+          #endif
+        ]])],
+        [HAVE_IOS="1"],
+        [HAVE_OSX="1"])
     ;;
   mingw32*)
     SYS=mingw32
