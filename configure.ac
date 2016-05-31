@@ -29,6 +29,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_LANG(C++)
 
 dnl
 dnl  Check the operating system
@@ -544,6 +545,20 @@ AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
                          AC_MSG_WARN([Missing OpenDHT]))],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
+
+AC_CHECK_HEADER([cryptopp/cryptlib.h], , AC_MSG_FAILURE([Unable to find the cryptopp headers (you may need to install the dev package).]))
+AS_IF([test "${SYS}" = "mingw32"],[
+    LDFLAGS += " -lcryptopp -lboost_filesystem -lboost_system -lboost_random -lboost_thread"
+], [
+  AC_CHECK_LIB([cryptopp], [main], [], [
+      AC_MSG_FAILURE([cryptopp link test failed.])
+  ])
+  AX_BOOST_BASE([1.48],,[AC_MSG_ERROR([Ring needs Boost but it was not found in your system])])
+  AC_CHECK_LIB([boost_filesystem], exit, , [AC_MSG_FAILURE(['Can't find boost filesystem'])])
+  AC_CHECK_LIB([boost_system], exit, , [AC_MSG_FAILURE(['Can't find boost system'])])
+  AC_CHECK_LIB([boost_random], exit, , [AC_MSG_FAILURE(['Can't find boost random'])])
+  AC_CHECK_LIB([boost_thread], exit, , [AC_MSG_FAILURE(['Can't find boost thread'])])
+])
 
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
