@@ -54,10 +54,12 @@
 #include "array_size.h"
 
 #include "config/yamlparser.h"
-
 #include "security/certstore.h"
+#include "libdevcrypto/SecretStore.h"
 
 #include <yaml-cpp/yaml.h>
+
+#include <unistd.h>
 
 #include <algorithm>
 #include <array>
@@ -137,12 +139,13 @@ RingAccount::createIceTransport(const Args&... args)
 }
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID), via_addr_()
-{
-    cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
-    dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
-    idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-}
+    : SIPAccountBase(accountID), via_addr_(),
+    cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
+    dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
+    idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID()),
+    ethPath_(idPath_ + DIR_SEPARATOR_STR "eth"),
+    store_(new dev::SecretStore(ethPath_))
+{}
 
 RingAccount::~RingAccount()
 {
@@ -459,12 +462,34 @@ RingAccount::checkIdentityPath()
     loadIdentity();
 }
 
+dev::Address
+RingAccount::loadEthAccount()
+{
+    auto keys = store_->keys();
+    RING_WARN("Ethereum: %lu keys in wallet", keys.size());
+    if (keys.empty()) {
+        dev::KeyPair keypair {dev::Secret::random()};
+        store_->importSecret(keypair.secret().ref(), "");
+        ethAccount_ = dht::InfoHash(keypair.address().asArray()).toString();
+        RING_WARN("Created key: %s", ethAccount_.c_str());
+        return keypair.address();
+    } else {
+        for (const auto& k : keys) {
+            dht::InfoHash h {store_->getAddress(k).asArray()};
+            ethAccount_ = h.toString();
+            //auto a = store_->getAddress(k);
+            RING_WARN("Ethereum account: %s", ethAccount_.c_str());
+            break;
+        }
+    }
+}
+
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
+    loadEthAccount();
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
-
     try {
 #if TARGET_OS_IPHONE
         const auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR;
@@ -487,7 +512,6 @@ RingAccount::loadIdentity()
         }
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
         fileutils::check_dir(idPath_.c_str(), 0700);
-
         fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 0600);
 
         // save the chain including CA
@@ -562,6 +586,9 @@ RingAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_?TRUE_STR:FALSE_STR);
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
+
+    a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
+    a.emplace(DRing::Account::ConfProperties::ETH::ACCOUNT,                ethAccount_);
 
     return a;
 }
@@ -839,11 +866,11 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#if 0 // enable if dht_ logging is needed
+#if 1 // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_DEBUG, m, args); }
+            [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
         );
 #endif
 
