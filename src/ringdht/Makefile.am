@@ -6,9 +6,20 @@ SUBDIRS = eth/libscrypt eth/json_spirit eth/libdevcore eth/libdevcrypto
 
 AM_CPPFLAGS += -Ieth $(BOOST_CPPFLAGS)
 noinst_LTLIBRARIES = libringacc.la
+
+AM_LDFLAGS = $(BOOST_LDFLAGS)
+
 libringacc_la_CXXFLAGS = @CXXFLAGS@
 
-libringacc_la_LIBADD = $(DHT_LIBS)
+libringacc_la_LIBADD = $(DHT_LIBS) \
+    $(BOOST_SYSTEM_LIB) \
+    $(BOOST_FILESYSTEM_LIB) \
+    $(BOOST_RANDOM_LIB) \
+    $(BOOST_THREAD_LIB) \
+    ./eth/json_spirit/libjsonspirit.la \
+    ./eth/libscrypt/libscrypt.la \
+    ./eth/libdevcore/libdevcore.la \
+    ./eth/libdevcrypto/libdevcrypto.la
 
 libringacc_la_SOURCES = \
         ringaccount.cpp \
