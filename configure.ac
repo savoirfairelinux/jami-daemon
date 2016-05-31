@@ -600,6 +600,8 @@ AC_CONFIG_FILES([Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
                  src/ringdht/Makefile \
+                 src/ringdht/eth/libdevcore/Makefile \
+                 src/ringdht/eth/libdevcrypto/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
                  src/media/audio/pulseaudio/Makefile \
