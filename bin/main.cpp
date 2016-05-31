@@ -27,7 +27,7 @@
 #include <getopt.h>
 #include <cstdlib>
 
-#include "dring.h"
+#include "dring/dring.h"
 
 #include "logger.h"
 

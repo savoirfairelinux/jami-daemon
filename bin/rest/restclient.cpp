@@ -1,51 +1,39 @@
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif // HAVE_CONFIG_H
-
 #include "restclient.h"
 
-#include <chrono>
-
-#include "logger.h"
-
-RestClient::RestClient(unsigned short port, int flags, bool persistent)
+RestClient::RestClient(unsigned short port, int flags, bool persistent) :
+	service_()
 {
-	if(initLibrary(flags) < 0)
-		throw std::runtime_error {"cannot initialize libring"};
+	configurationManager_.reset(new RestConfigurationManager());
 
-	std::thread pollEvents_([this](){
-		while(!pollNoMore_)
-		{
-			DRing::pollEvents();
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-		}
-	});
+	if (initLib(flags) < 0)
+        throw std::runtime_error {"cannot initialize libring"};
 
-#if HTTPS
-	server_.reset(new Server<HTTPS> {port});
-#else
-	server_.reset(new Server<HTTP> {port});
-#endif
+	initResources();
 
-
-	RING_INFO("HTTP server running on port %d", port);
-
-	server_->addRoute("/", [](){
-			return "Hi, this is the defaut route from the Muffin HTTP server example";
-	});
+	settings_ = std::make_shared<restbed::Settings>();
+    settings_->set_port(port);
+    //settings_->set_worker_limit( 4 );
+	settings_->set_default_header( "Connection", "close" );
 }
 
 RestClient::~RestClient()
 {
-	pollNoMore_ = true;
-	pollEvents_.join();
-
+	RING_INFO("destroying RestClient");
 	exit();
 }
 
 int
 RestClient::event_loop() noexcept
 {
+	RING_INFO("Rest client starting web service");
+	service_.start(settings_);
+
+	RING_INFO("Rest client starting to poll events");
+	while(!pollNoMore_)
+	{
+		DRing::pollEvents();
+		std::this_thread::sleep_for(std::chrono::milliseconds(10));
+	}
 	return 0;
 }
 
@@ -53,7 +41,8 @@ int
 RestClient::exit() noexcept
 {
     try {
-        finiLibrary();
+		pollNoMore_ = true;
+		endLib();
     } catch (const std::exception& err) {
         std::cerr << "quitting: " << err.what() << std::endl;
         return 1;
@@ -63,7 +52,7 @@ RestClient::exit() noexcept
 }
 
 int
-RestClient::initLibrary(int flags)
+RestClient::initLib(int flags)
 {
 	if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
@@ -81,7 +70,41 @@ RestClient::initLibrary(int flags)
 }
 
 void
-RestClient::finiLibrary() noexcept
+RestClient::endLib() noexcept
 {
 	DRing::fini();
+}
+
+void
+RestClient::initResources()
+{
+	// Init the routes
+
+	accountList_ = std::make_shared<restbed::Resource>();
+    accountList_->set_path("/accountList");
+    accountList_->set_method_handler("GET", std::bind(&RestClient::get_accountList, this, std::placeholders::_1));
+
+	// Add the routes to the service
+	service_.publish(accountList_);
+
+}
+
+// Restbed resources
+void
+RestClient::get_accountList(const std::shared_ptr<restbed::Session> session)
+{
+	RING_INFO("[%s] requesting accountList", session->get_origin().c_str());
+
+	std::vector<std::string> accountList = configurationManager_->getAccountList();
+
+	std::string body = "";
+
+	for(auto& it : accountList)
+	{
+		body += "ringID : ";
+		body += it;
+		body += '\n';
+	}
+
+    session->close(restbed::OK, body, {{"Content-Length",std::to_string(body.length())}});
 }
