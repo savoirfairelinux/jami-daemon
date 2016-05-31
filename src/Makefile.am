@@ -74,6 +74,11 @@ libring_la_CFLAGS = \
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 
+if HAVE_LINUX
+#needed to compile the .so
+libring_la_CXXFLAGS += -fPIC
+endif
+
 libring_la_SOURCES = \
 		buildinfo.cpp \
 		conference.cpp \
