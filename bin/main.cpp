@@ -27,12 +27,12 @@
 #include <getopt.h>
 #include <cstdlib>
 
-#include "dring.h"
+#include "dring/dring.h"
 
 #include "logger.h"
 
 #if REST_API
-#include "rest/restclient.h"
+#include "restcpp/restclient.h"
 #else
 #include "dbus/dbusclient.h"
 #endif
@@ -41,6 +41,7 @@
 
 static int ringFlags = 0;
 static int port = 8080;
+
 #if REST_API
 	static std::unique_ptr<RestClient> restClient;
 #else
@@ -210,7 +211,7 @@ main(int argc, char *argv [])
 
 #if REST_API
 	try {
-		restClient.reset(new RestClient {(unsigned short)port, ringFlags, persistent});
+		restClient.reset(new RestClient {port, ringFlags, persistent});
     } catch (const std::exception& ex) {
         std::cerr << "One does not simply initialize the rest client: " << ex.what() << std::endl;
         return 1;

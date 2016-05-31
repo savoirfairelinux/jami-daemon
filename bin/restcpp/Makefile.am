@@ -3,19 +3,12 @@ include $(top_srcdir)/globals.mak
 noinst_LTLIBRARIES = libclient_rest.la
 
 libclient_rest_la_SOURCES = \
-	connection.h \
-	http_status.h \
-	json.h \
-	manager.h \
-	parserHTTP.cpp \
-	parserHTTP.h \
-	response.cpp \
-	response.h \
-	router.cpp \
-	router.h \
-	server.h \
 	restclient.cpp \
-	restclient.h
+	restclient.h \
+	restconfigurationmanager.cpp \
+	restconfigurationmanager.h \
+	restvideomanager.cpp \
+	restvideomanager.h
 
 libclient_rest_la_CXXFLAGS = \
 	-std=c++14 \
@@ -23,13 +16,11 @@ libclient_rest_la_CXXFLAGS = \
 	-Wall \
 	-Wextra \
 	-Wno-reorder \
+	-Wno-unused-variable \
+	-Wno-unused-parameter \
 	-pedantic \
-	-I../ \
-	-I$(top_srcdir)/src \
-	-I$(top_srcdir)/src/dring
+	-I$(top_srcdir)/src
 
 libclient_rest_la_LDFLAGS = \
 	-lpthread \
-	-lboost_system \
-	-lcrypto \
-	-lssl
+	-lrestbed
