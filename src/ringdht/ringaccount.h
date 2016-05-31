@@ -52,6 +52,15 @@ class Node;
 class Emitter;
 }
 
+
+namespace dev
+{
+    class SecretStore;
+    template <unsigned N> class FixedHash;
+    using h160 = FixedHash<20>;
+    using Address = h160;
+}
+
 namespace ring {
 
 namespace Conf {
@@ -63,6 +72,8 @@ const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
 const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
 const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
 const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
+const char *const ETH_PATH = "ethPath";
+const char *const ETH_ACCOUNT = "ethAccount";
 }
 
 class IceTransport;
@@ -326,6 +337,8 @@ class RingAccount : public SIPAccountBase {
         std::string idPath_ {};
         std::string cachePath_ {};
         std::string dataPath_ {};
+        std::string ethPath_ {};
+        std::string ethAccount_ {};
 
         struct TrustRequest {
             dht::InfoHash from;
@@ -354,6 +367,9 @@ class RingAccount : public SIPAccountBase {
         void saveTreatedMessages() const;
 
         static tls::DhParams loadDhParams(const std::string path);
+
+        std::unique_ptr<dev::SecretStore> store_;
+        dev::Address loadEthAccount();
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),
