@@ -19,6 +19,7 @@ sndfile: libsndfile-$(SNDFILE_VERSION).tar.gz .sum-sndfile
 	$(APPLY) $(SRC)/sndfile/soundcard.patch
 	$(APPLY) $(SRC)/sndfile/carbon.patch
 	$(APPLY) $(SRC)/sndfile/autotools.patch
+	$(APPLY) $(SRC)/sndfile/disable_programs.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub Cfg && autoreconf -fi
 	$(MOVE)
 
