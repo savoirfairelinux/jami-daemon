@@ -96,6 +96,12 @@ nbproject
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
 
+#iOS
+/contrib/native*
+/contrib/aarch64-apple-darwin/
+/contrib/armv7-apple-darwin/
+/build-ios*
+
 build-aux/
 configure
 bin/dbus/*.adaptor.h
