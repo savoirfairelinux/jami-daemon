@@ -19,6 +19,14 @@ case "$HOST" in
 	powerpc64-*|ppc64-*)
 		ARCH="ppc64"
 		;;
+	aarch64-*)
+	if $HAVE_IOS
+	then
+		ARCH="arm64"
+	else
+		ARCH="aarch64"
+	fi
+		;;
 	*-*)
 		ARCH="${HOST%%-*}"
 		;;

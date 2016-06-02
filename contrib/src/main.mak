@@ -151,20 +151,23 @@ endif
 CCAS=$(CC) -c
 
 ifdef HAVE_IOS
+MIN_IOS_VERSION=8.0
 CC=xcrun clang
 CXX=xcrun clang++
-ifdef HAVE_NEON
-AS=perl $(abspath ../../extras/tools/build/bin/gas-preprocessor.pl) $(CC)
-CCAS=gas-preprocessor.pl $(CC) -c
-else
+# Not sure if still needed (maybe ffmpeg need that)æ
+#ifdef HAVE_NEON
+#AS=perl $(abspath ../../extras/tools/gas-preprocessor.pl) $(CC)
+#CCAS=gas-preprocessor.pl $(CC) -c
+#else
 CCAS=$(CC) -c
-endif
+#endif
 AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_CFLAGS += $(CFLAGS)
-EXTRA_LDFLAGS += $(LDFLAGS)
+EXTRA_CFLAGS += $(CFLAGS) -arch $(ARCH) -isysroot $(IOS_SDK) -miphoneos-version-min=$(MIN_IOS_VERSION)
+EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc++ -arch $(ARCH) -isysroot $(IOS_SDK) -miphoneos-version-min=$(MIN_IOS_VERSION)
+EXTRA_LDFLAGS += $(LDFLAGS) -arch $(ARCH) -isysroot $(IOS_SDK)
 endif
 
 ifdef HAVE_WIN32
