@@ -151,20 +151,26 @@ endif
 CCAS=$(CC) -c
 
 ifdef HAVE_IOS
+MIN_IOS_VERSION=8.0
+
 CC=xcrun clang
 CXX=xcrun clang++
-ifdef HAVE_NEON
-AS=perl $(abspath ../../extras/tools/build/bin/gas-preprocessor.pl) $(CC)
-CCAS=gas-preprocessor.pl $(CC) -c
-else
 CCAS=$(CC) -c
-endif
 AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_CFLAGS += $(CFLAGS)
-EXTRA_LDFLAGS += $(LDFLAGS)
+
+EXTRA_CFLAGS=-arch $(ARCH) -isysroot $(IOS_SDK)
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
+EXTRA_CFLAGS += -miphoneos-version-min=$(MIN_IOS_VERSION) -fembed-bitcode
+else
+EXTRA_CFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
+endif
+
+EXTRA_CXXFLAGS=$(EXTRA_CFLAGS) -std=c++11 -stdlib=libc++
+EXTRA_LDFLAGS=$(EXTRA_CFLAGS)
+
 endif
 
 ifdef HAVE_WIN32

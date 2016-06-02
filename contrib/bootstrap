@@ -132,11 +132,11 @@ check_ios_sdk()
 {
    if test -z "$SDKROOT"
    then
-      SDKROOT=`xcode-select -print-path`/Platforms/iPhone${PLATFORM}.platform/Developer/SDKs/iPhone${PLATFORM}${SDK_VERSION}.sdk
+      SDKROOT=`xcode-select -print-path`/Platforms/${IOS_TARGET_PLATFORM}.platform/Developer/SDKs/${IOS_TARGET_PLATFORM}${SDK_VERSION}.sdk
       echo "SDKROOT not specified, assuming $SDKROOT"
    else
       SDKROOT="$SDKROOT"
-      fi
+   fi
 
    if [ ! -d "${SDKROOT}" ]
    then
@@ -144,6 +144,7 @@ check_ios_sdk()
       exit 1
    fi
    add_make "IOS_SDK=${SDKROOT}"
+   add_make "IOS_TARGET_PLATFORM=${IOS_TARGET_PLATFORM}"
 }
 
 check_macosx_sdk()
