@@ -20,6 +20,10 @@ nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
 DEPS_nettle = gmp $(DEPS_gmp)
 
 .nettle: nettle
+ifdef HAVE_IOS
+	cd $< && $(HOSTVARS) ./configure --disable-assembler $(HOSTCONF)
+else
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+endif
 	cd $< && $(MAKE) install
 	touch $@
