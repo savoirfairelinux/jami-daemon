@@ -27,6 +27,10 @@ ifeq ($(ARCH),aarch64)
 # old neon, not compatible with aarch64
 SPEEXDSP_CONF += --disable-neon
 endif
+ifeq ($(ARCH),arm64)
+# old neon, not compatible with arm64(==aarch64)
+SPEEXDSP_CONF += --disable-neon
+endif
 ifndef HAVE_NEON
 SPEEXDSP_CONF += --disable-neon
 endif
