@@ -16,6 +16,12 @@ samplerate: libsamplerate-$(SAMPLERATE_VERSION).tar.gz .sum-samplerate
 	$(UNPACK)
 	$(APPLY) $(SRC)/samplerate/soundcard.patch
 	$(APPLY) $(SRC)/samplerate/carbon.patch
+ifdef HAVE_IOS
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+#warning assembler double / int conversion disabled
+	$(APPLY) $(SRC)/samplerate/disable_assembler.patch
+endif
+endif
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub Cfg
 	$(MOVE)
 
