@@ -68,6 +68,10 @@ endif
 	$(MOVE)
 
 .pjproject: pjproject
-	cd $< && $(HOSTVARS) ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
+ifdef HAVE_IOS
+	cd $< && ARCH="-arch $(ARCH)" IPHONESDK=$(IOS_SDK) $(HOSTVARS) ./configure-iphone $(HOSTCONF) $(PJPROJECT_OPTIONS)
+else
+  cd $< && $(HOSTVARS) ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
+endif
 	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" $(MAKE) && $(MAKE) install
 	touch $@
