@@ -92,9 +92,11 @@ nbproject
 
 # Android
 /build-android-arm-linux-androideabi/
-/contrib/arm-linux-androideabi/
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
+
+#iOS
+/build-ios*
 
 build-aux/
 configure
