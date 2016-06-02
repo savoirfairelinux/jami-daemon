@@ -685,8 +685,9 @@ SIPVoIPLink::handleEvents()
         static thread_local pj_thread_desc desc;
         static thread_local pj_thread_t *this_thread;
 #else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
+#warning THREAD LOCAL STORAGE UNSUPPORTED --- NEED TO BE FIXED
+        static pj_thread_desc desc;
+        static pj_thread_t *this_thread;
 #endif
         RING_DBG("Registering thread");
         pj_thread_register(NULL, desc, &this_thread);
