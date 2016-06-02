@@ -1,0 +1,12 @@
+--- a/Makefile.am	2016-05-30 11:59:21.000000000 -0400
++++ b/Makefile.am	2016-05-30 11:59:28.000000000 -0400
+@@ -6,8 +6,8 @@
+ octave_dir = Octave
+ endif
+
+-SUBDIRS = M4 man doc Win32 src $(octave_dir) examples regtest tests programs
+-DIST_SUBDIRS = M4 man doc Win32 src Octave examples regtest tests programs
++SUBDIRS = M4 man doc Win32 src $(octave_dir)
++DIST_SUBDIRS = M4 man doc Win32 src Octave
+
+ EXTRA_DIST = libsndfile.spec.in sndfile.pc.in
