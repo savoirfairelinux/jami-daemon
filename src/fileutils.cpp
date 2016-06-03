@@ -28,6 +28,8 @@
 #include "logger.h"
 #include "intrin.h"
 
+#include <TargetConditionals.h>
+
 #ifdef __ANDROID__
 #include "client/ring_signal.h"
 #endif
@@ -154,7 +156,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined WIN32
+#if defined __ANDROID__ || defined WIN32 || TARGET_OS_IPHONE
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
