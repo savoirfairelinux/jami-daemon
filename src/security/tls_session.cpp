@@ -149,11 +149,12 @@ private:
 };
 
 TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
-                       const TlsParams& params, const TlsSessionCallbacks& cbs)
+                       const TlsParams& params, const TlsSessionCallbacks& cbs, bool anonymous)
     : socket_(new IceSocket(ice, ice_comp_id))
     , isServer_(not ice->isInitiator())
     , params_(params)
     , callbacks_(cbs)
+    , anonymous_(anonymous)
     , cacred_(nullptr)
     , sacred_(nullptr)
     , xcred_(nullptr)
@@ -295,22 +296,31 @@ TlsSession::commonSessionInit()
 {
     int ret;
 
-    // Force anonymous connection, see handleStateHandshake how we handle failures
-    ret = gnutls_priority_set_direct(session_, TLS_FULL_PRIORITY_STRING, nullptr);
-    if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
-        return false;
-    }
+    if (anonymous_) {
+        // Force anonymous connection, see handleStateHandshake how we handle failures
+        ret = gnutls_priority_set_direct(session_, TLS_FULL_PRIORITY_STRING, nullptr);
+        if (ret != GNUTLS_E_SUCCESS) {
+            RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
+            return false;
+        }
 
-    // Add anonymous credentials
-    if (isServer_)
-        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *sacred_);
-    else
-        ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *cacred_);
+        // Add anonymous credentials
+        if (isServer_)
+            ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *sacred_);
+        else
+            ret = gnutls_credentials_set(session_, GNUTLS_CRD_ANON, *cacred_);
 
-    if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] anonymous credential set failed: %s", gnutls_strerror(ret));
-        return false;
+        if (ret != GNUTLS_E_SUCCESS) {
+            RING_ERR("[TLS] anonymous credential set failed: %s", gnutls_strerror(ret));
+            return false;
+        }
+    } else {
+        // Use a classic non-encrypted CERTIFICATE exchange method (less anonymous)
+        ret = gnutls_priority_set_direct(session_, TLS_CERT_PRIORITY_STRING, nullptr);
+        if (ret != GNUTLS_E_SUCCESS) {
+            RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
+            return false;
+        }
     }
 
     // Add certificate credentials
@@ -532,7 +542,8 @@ TlsSession::handleStateSetup(UNUSED TlsSessionState state)
     RING_DBG("[TLS] Start %s DTLS session", typeName());
 
     try {
-        initAnonymous();
+        if (anonymous_)
+            initAnonymous();
         initCredentials();
     } catch (const std::exception& e) {
         RING_ERR("[TLS] authentifications init failed: %s", e.what());
