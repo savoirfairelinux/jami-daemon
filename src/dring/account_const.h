@@ -69,7 +69,7 @@ enum class MessageStates : int {
 enum class testAccountICEInitializationStatus : int {
     SUCCESS = 0,
     FAILURE = 1
-}; //DRING:Account::testAccountICEInitializationResults
+}; //DRING:Account::testAccountICEInitializationStatus
 
 namespace VolatileProperties {
 
