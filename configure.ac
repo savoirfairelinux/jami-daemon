@@ -98,6 +98,7 @@ AM_CONDITIONAL(HAVE_LINUX,   test "${SYS}" = "linux")
 AM_CONDITIONAL(HAVE_WIN32,   test "${SYS}" = "mingw32")
 AM_CONDITIONAL(HAVE_WIN64,   test "${HAVE_WIN64}" = "1")
 AM_CONDITIONAL(HAVE_OSX,   test "${HAVE_OSX}" = "1")
+AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],

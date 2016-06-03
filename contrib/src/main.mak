@@ -170,9 +170,19 @@ AR=xcrun ar
 LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
-EXTRA_CFLAGS += $(CFLAGS) -arch $(ARCH) -isysroot $(IOS_SDK) -miphoneos-version-min=$(MIN_IOS_VERSION)
-EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc++ -arch $(ARCH) -isysroot $(IOS_SDK) -miphoneos-version-min=$(MIN_IOS_VERSION)
+EXTRA_CFLAGS += $(CFLAGS) -arch $(ARCH) -isysroot $(IOS_SDK)
+EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc++ -arch $(ARCH) -isysroot $(IOS_SDK)
 EXTRA_LDFLAGS += $(LDFLAGS) -arch $(ARCH) -isysroot $(IOS_SDK)
+
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
+EXTRA_CFLAGS += -miphoneos-version-min=$(MIN_IOS_VERSION)
+EXTRA_CXXFLAGS += -miphoneos-version-min=$(MIN_IOS_VERSION)
+EXTRA_LDFLAGS +=-miphoneos-version-min=$(MIN_IOS_VERSION)
+else
+EXTRA_CFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
+EXTRA_CXXFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
+EXTRA_LDFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
+endif
 endif
 
 ifdef HAVE_WIN32
