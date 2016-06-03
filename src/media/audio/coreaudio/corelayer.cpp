@@ -57,8 +57,10 @@ std::vector<std::string> CoreLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> ret;
 
+#if !TARGET_OS_IPHONE
     for (auto x : getDeviceList(true))
         ret.push_back(x.name_);
+#endif
 
     return ret;
 }
@@ -67,10 +69,10 @@ std::vector<std::string> CoreLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> ret;
 
+#if !TARGET_OS_IPHONE
     for (auto x : getDeviceList(false))
-    {
         ret.push_back(x.name_);
-    }
+#endif
 
     return ret;
 }
@@ -175,6 +177,7 @@ void CoreLayer::initAudioLayerIO()
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
+#if !TARGET_OS_IPHONE
     UInt32 bufferSizeFrames = 0;
     size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
@@ -183,6 +186,14 @@ void CoreLayer::initAudioLayerIO()
                 outputBus,
                 &bufferSizeFrames,
                 &size));
+#else
+    Float32 bufferDuration;
+    UInt32 propSize = sizeof(Float32);
+    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareIOBufferDuration,
+                            &propSize,
+                            &bufferDuration);
+    UInt32 bufferSizeFrames = audioInputFormat_.sample_rate * bufferDuration;
+#endif
 
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers[0]) +
@@ -392,6 +403,7 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
 std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
 {
     std::vector<AudioDevice> ret;
+#if !TARGET_OS_IPHONE
     UInt32 propsize;
 
     AudioObjectPropertyAddress theAddress = {
@@ -422,7 +434,7 @@ std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
         }
     }
     delete[] devids;
-
+#endif
     return ret;
 }
 
