@@ -22,7 +22,7 @@
 #include "dring/callmanager_interface.h"
 
 DBusCallManager::DBusCallManager(DBus::Connection& connection)
-    : DBus::ObjectAdaptor(connection, "/cx/ring/Ring/CallManager")
+    : DBus::ObjectAdaptor(connection, "/cx.ring.Ring.CallManager")
 {}
 
 auto
