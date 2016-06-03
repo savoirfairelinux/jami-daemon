@@ -24,6 +24,10 @@ if HAVE_OSX
 SUBDIRS += coreaudio
 endif
 
+if HAVE_IOS
+SUBDIRS += coreaudio
+endif
+
 if HAVE_PORTAUDIO
 SUBDIRS += portaudio
 endif
