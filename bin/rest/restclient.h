@@ -8,6 +8,7 @@
 #include <iostream>
 #include <thread>
 #include <functional>
+#include <iterator>
 #include <restbed>
 
 #include "dring/dring.h"
@@ -22,7 +23,7 @@
 
 class RestClient {
 	public:
-		RestClient(unsigned short port, int flags, bool persistent);
+		RestClient(int port, int flags, bool persistent);
 		~RestClient();
 
 		int event_loop() noexcept;
@@ -37,11 +38,6 @@ class RestClient {
 
 		std::unique_ptr<RestConfigurationManager> configurationManager_;
 
-		// Restbed
 		restbed::Service service_;
 		std::shared_ptr<restbed::Settings> settings_;
-
-		// Restbed ressources
-		std::shared_ptr<restbed::Resource> accountList_;
-		void get_accountList(const std::shared_ptr<restbed::Session> session);
 };

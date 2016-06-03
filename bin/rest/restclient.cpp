@@ -1,7 +1,7 @@
 #include "restclient.h"
 
-RestClient::RestClient(unsigned short port, int flags, bool persistent) :
-	service_()
+RestClient::RestClient(int port, int flags, bool persistent) :
+    service_()
 {
 	configurationManager_.reset(new RestConfigurationManager());
 
@@ -14,6 +14,7 @@ RestClient::RestClient(unsigned short port, int flags, bool persistent) :
     settings_->set_port(port);
     //settings_->set_worker_limit( 4 );
 	settings_->set_default_header( "Connection", "close" );
+	RING_INFO("RestClient running on port [%d]", port);
 }
 
 RestClient::~RestClient()
@@ -66,6 +67,7 @@ RestClient::initLib(int flags)
 
     if (!DRing::start())
         return -1;
+
     return 0;
 }
 
@@ -78,33 +80,10 @@ RestClient::endLib() noexcept
 void
 RestClient::initResources()
 {
-	// Init the routes
+    // Get the resources from the configuration manager
+	std::vector<std::shared_ptr<restbed::Resource>> configManagerResources = configurationManager_->getResources();
 
-	accountList_ = std::make_shared<restbed::Resource>();
-    accountList_->set_path("/accountList");
-    accountList_->set_method_handler("GET", std::bind(&RestClient::get_accountList, this, std::placeholders::_1));
-
-	// Add the routes to the service
-	service_.publish(accountList_);
-
-}
-
-// Restbed resources
-void
-RestClient::get_accountList(const std::shared_ptr<restbed::Session> session)
-{
-	RING_INFO("[%s] requesting accountList", session->get_origin().c_str());
-
-	std::vector<std::string> accountList = configurationManager_->getAccountList();
-
-	std::string body = "";
-
-	for(auto& it : accountList)
-	{
-		body += "ringID : ";
-		body += it;
-		body += '\n';
-	}
-
-    session->close(restbed::OK, body, {{"Content-Length",std::to_string(body.length())}});
+    // Add them the the service
+	for(auto& it : configManagerResources)
+		service_.publish(it);
 }

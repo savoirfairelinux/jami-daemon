@@ -210,7 +210,7 @@ main(int argc, char *argv [])
 
 #if REST_API
 	try {
-		restClient.reset(new RestClient {(unsigned short)port, ringFlags, persistent});
+		restClient.reset(new RestClient {port, ringFlags, persistent});
     } catch (const std::exception& ex) {
         std::cerr << "One does not simply initialize the rest client: " << ex.what() << std::endl;
         return 1;

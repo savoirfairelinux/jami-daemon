@@ -14,6 +14,7 @@ libclient_rest_la_CXXFLAGS = \
 	-Wall \
 	-Wextra \
 	-Wno-reorder \
+	-Wno-unused-variable \
 	-pedantic \
 	-I$(top_srcdir)/src
 
