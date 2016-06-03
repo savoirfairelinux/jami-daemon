@@ -24,6 +24,10 @@ if HAVE_OSX
 SUBDIRS += coreaudio
 endif
 
+if HAVE_IOS
+SUBDIRS += coreaudio
+endif
+
 if HAVE_PORTAUDIO
 SUBDIRS += portaudio
 endif
@@ -86,6 +90,10 @@ libaudio_la_LIBADD += ./alsa/libalsalayer.la
 endif
 
 if HAVE_OSX
+libaudio_la_LIBADD += ./coreaudio/libcoreaudiolayer.la
+endif
+
+if HAVE_IOS
 libaudio_la_LIBADD += ./coreaudio/libcoreaudiolayer.la
 endif
 
