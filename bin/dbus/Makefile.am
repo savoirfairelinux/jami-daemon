@@ -8,25 +8,25 @@ BUILT_SOURCES=                      \
     dbusinstance.adaptor.h
 
 BUILT_SOURCES+=dbuspresencemanager.adaptor.h
-dbuspresencemanager.adaptor.h: presencemanager-introspec.xml Makefile.am
+dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 if RING_VIDEO
 BUILT_SOURCES+=dbusvideomanager.adaptor.h
-dbusvideomanager.adaptor.h: videomanager-introspec.xml Makefile.am
+dbusvideomanager.adaptor.h: cx.ring.Ring.VideoManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 endif
 
 # Rule to generate the binding headers
-dbuscallmanager.adaptor.h: callmanager-introspec.xml Makefile.am
+dbuscallmanager.adaptor.h: cx.ring.Ring.CallManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-dbusconfigurationmanager.adaptor.h: configurationmanager-introspec.xml Makefile.am
+dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 # Rule to generate the binding headers
-dbusinstance.adaptor.h: instance-introspec.xml Makefile.am
+dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
 libclient_dbus_la_SOURCES = \
@@ -58,13 +58,22 @@ libclient_dbus_la_CXXFLAGS = -I../ \
 servicedir = $(datadir)/dbus-1/services
 service_DATA = cx.ring.Ring.service
 
-EXTRA_DIST = callmanager-introspec.xml \
-			 configurationmanager-introspec.xml \
-			 instance-introspec.xml \
-			 presencemanager-introspec.xml
+# Dbus interface files
+# https://dbus.freedesktop.org/doc/dbus-api-design.html#interface-files
+interfacedir = $(datadir)/dbus-1/interfaces
+interface_DATA = cx.ring.Ring.CallManager.xml \
+                 cx.ring.Ring.ConfigurationManager.xml \
+                 cx.ring.Ring.Instance.xml \
+                 cx.ring.Ring.PresenceManager.xml
+
+EXTRA_DIST = cx.ring.Ring.CallManager.xml \
+             cx.ring.Ring.ConfigurationManager.xml \
+             cx.ring.Ring.Instance.xml \
+             cx.ring.Ring.PresenceManager.xml
 
 if RING_VIDEO
-EXTRA_DIST += videomanager-introspec.xml
+EXTRA_DIST += cx.ring.Ring.VideoManager.xml
+interface_DATA += cx.ring.Ring.VideoManager.xml
 endif
 
 CLEANFILES= \
