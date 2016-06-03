@@ -1,5 +1,5 @@
 <?xml version="1.0" ?>
-<node name="/videomanager-introspec" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
+<node name="/cx.ring.Ring.VideoManager" xmlns:tp="http://telepathy.freedesktop.org/wiki/DbusSpec#extensions-v0">
     <interface name="cx.ring.Ring.VideoManager">
         <!-- Video device methods -->
 
