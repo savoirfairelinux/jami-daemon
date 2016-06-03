@@ -33,6 +33,7 @@
 #include "sipcall.h"
 #include "sip_utils.h"
 #include "array_size.h"
+#include "thread_local.h"
 
 #include "call_factory.h"
 
@@ -726,15 +727,14 @@ void SIPAccount::doRegister()
         std::thread{ [shared] {
             /* We have to register the external thread so it could access the pjsip frameworks */
             if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
-                    static thread_local pj_thread_desc desc;
-                    static thread_local pj_thread_t *this_thread;
-#else
-                    static __thread pj_thread_desc desc;
-                    static __thread pj_thread_t *this_thread;
-#endif
-                    RING_DBG("Registering thread with pjlib");
-                    pj_thread_register(NULL, desc, &this_thread);
+				static RING_THREADLOCAL(pj_thread_desc, desc);
+				pj_thread_desc desc_val;
+				desc = &desc_val;
+				static RING_THREADLOCAL(pj_thread_t*, this_thread);
+				pj_thread_t* this_thread_val;
+				this_thread = &this_thread_val;
+                RING_DBG("Registering thread with pjlib");
+                pj_thread_register(NULL, *(*desc), *this_thread);
             }
 
             auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
