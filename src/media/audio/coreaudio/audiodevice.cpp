@@ -20,6 +20,8 @@
 
 #include "audiodevice.h"
 
+#if !TARGET_OS_IPHONE
+
 namespace ring {
 
 AudioDevice::AudioDevice(AudioDeviceID devid, bool isInput)
@@ -168,3 +170,5 @@ std::string AudioDevice::getName() const
 }
 
 } // namespace ring
+
+#endif // TARGET_OS_IPHONE
