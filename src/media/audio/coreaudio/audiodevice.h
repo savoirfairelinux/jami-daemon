@@ -21,14 +21,19 @@
 #ifndef AUDIO_DEVICE_H
 #define AUDIO_DEVICE_H
 
+#import <TargetConditionals.h>
+
+#if !TARGET_OS_IPHONE
 #include <CoreServices/CoreServices.h>
 #include <CoreAudio/CoreAudio.h>
+#endif
 
 #include <string>
 
 namespace ring {
 
 class AudioDevice {
+#if !TARGET_OS_IPHONE
 public:
     AudioDevice() : id_(kAudioDeviceUnknown) { }
     AudioDevice(AudioDeviceID devid, bool isInput);
@@ -48,6 +53,7 @@ public:
 private:
     int     countChannels() const;
     std::string  getName() const;
+#endif
 };
 
 }

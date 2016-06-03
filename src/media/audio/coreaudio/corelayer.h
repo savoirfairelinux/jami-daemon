@@ -25,7 +25,9 @@
 #include "noncopyable.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <AudioToolbox/AudioToolbox.h>
+#ifndef TARGET_OS_IPHONE
 #include <CoreAudio/AudioHardware.h>
+#endif
 
 #define checkErr( err) \
     if(err) {\
