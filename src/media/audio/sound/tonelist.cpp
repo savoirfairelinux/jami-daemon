@@ -22,6 +22,8 @@
  */
 #include "tonelist.h"
 
+#include <ciso646>
+
 namespace ring {
 
 static const char *toneZone[TelephoneTone::ZID_COUNTRIES][Tone::TONE_NULL] = {
