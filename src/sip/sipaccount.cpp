@@ -26,7 +26,11 @@
 #include "config.h"
 #endif
 
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 #include "sdp.h"
 #include "sipvoiplink.h"

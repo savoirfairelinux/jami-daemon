@@ -25,7 +25,12 @@
 #include "manager.h"
 #include "sip/sip_utils.h"
 #include "logger.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 #include <opendht/crypto.h>
 
