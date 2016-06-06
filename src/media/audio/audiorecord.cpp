@@ -33,7 +33,12 @@
 #include <algorithm>
 #include <sstream> // for stringstream
 #include <cstdio>
-#include <unistd.h>
+
+#ifdef WIN32_NATIVE
+# include <io.h>
+#else
+# include <unistd.h>
+#endif
 
 namespace ring {
 

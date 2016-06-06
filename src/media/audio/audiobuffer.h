@@ -32,6 +32,10 @@
 
 #include "ring_types.h"
 
+#ifdef WIN32_NATIVE
+# include <iso646.h>
+#endif
+
 namespace ring {
 
 /**
@@ -340,12 +344,14 @@ class AudioBuffer {
          * Buffer sample number is increased if required to hold the new requested samples.
          */
         size_t copy(AudioSample* in, size_t sample_num, size_t pos_out = 0);
-
     private:
         int sampleRate_;
-
+#ifdef WIN32_NATIVE
+    public:
+#endif
         // buffers holding data for each channels
         std::vector<std::vector<AudioSample> > samples_;
+
 };
 
 } // namespace ring

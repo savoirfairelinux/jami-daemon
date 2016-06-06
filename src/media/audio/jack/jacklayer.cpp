@@ -251,7 +251,11 @@ JackLayer::ringbuffer_worker()
             return;
 
         // FIXME this is all kinds of evil
+#ifdef WIN32_NATIVE
+        Sleep(20000);
+#else
         usleep(20000);
+#endif
 
         capture();
         playback();
