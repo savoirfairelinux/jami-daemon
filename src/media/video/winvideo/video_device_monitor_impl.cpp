@@ -26,7 +26,13 @@
 #include <stdexcept> // for std::runtime_error
 #include <string>
 #include <thread>
+
+#ifdef WIN32_NATIVE
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
+
 #include <vector>
 
 #include "../video_device_monitor.h"

@@ -41,6 +41,11 @@
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
+
+#ifdef WIN32_NATIVE
+#include <iso646.h>
+#endif
+
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>

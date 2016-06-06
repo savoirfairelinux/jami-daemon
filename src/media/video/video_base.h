@@ -35,6 +35,10 @@
 #include <set>
 #include <mutex>
 
+#ifdef WIN32_NATIVE
+#include <iso646.h>
+#endif
+
 class AVPacket;
 class AVDictionary;
 
