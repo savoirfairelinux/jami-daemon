@@ -32,8 +32,13 @@
 
 #include <algorithm>
 #include <sstream> // for stringstream
-#include <cstdio>
+#include <cstdio>  // fix windows compiler bug
+
+#ifdef WIN32_NATIVE
+#include <io.h>
+#else
 #include <unistd.h>
+#endif
 
 namespace ring {
 
