@@ -40,6 +40,10 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 
+#ifdef WIN32_NATIVE
+#include <iso646.h>
+#endif /* WIN32_NATIVE */
+
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
 #define poll WSAPoll
