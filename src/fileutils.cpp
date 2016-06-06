@@ -26,7 +26,12 @@
 
 #include "fileutils.h"
 #include "logger.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 #ifdef __ANDROID__
 #include "client/ring_signal.h"

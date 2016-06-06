@@ -28,7 +28,12 @@
 #include "ice_transport.h"
 #include "logger.h"
 #include "noncopyable.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>

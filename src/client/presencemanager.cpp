@@ -35,7 +35,12 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 namespace DRing {
 
