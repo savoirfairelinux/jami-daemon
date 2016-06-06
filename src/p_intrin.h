@@ -23,7 +23,7 @@
 #ifndef INTRIN_H_
 #define INTRIN_H_
 
-# define __attribute__(A)
+#define __attribute__(A)
 #define UNUSED __attribute__((__unused__))
 
 #endif // INTRIN_H_
