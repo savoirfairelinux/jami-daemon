@@ -41,7 +41,12 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 #if HAVE_DHT
 #include <opendht/rng.h>

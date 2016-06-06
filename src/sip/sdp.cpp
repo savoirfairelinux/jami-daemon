@@ -39,7 +39,12 @@
 
 #include "media_codec.h"
 #include "system_codec_container.h"
-#include "intrin.h" // for UNUSED
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
+#include "intrin.h"
+#endif
 
 #if HAVE_DHT
 #include <opendht/rng.h>

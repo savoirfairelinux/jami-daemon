@@ -29,7 +29,12 @@
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
 #include "sip_utils.h"
+
+#ifdef WIN32_NATIVE
+#include "p_intrin.h"
+#else
 #include "intrin.h"
+#endif
 
 namespace ring {
 
