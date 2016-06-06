@@ -202,15 +202,12 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) override;
 
         /**
-         * Create outgoing SIPCall.
-         * @param[in] toUrl The address to call
-         * @return std::shared_ptr<T> A shared pointer on the created call.
-         *      The type of this instance is given in template argument.
-         *      This type can be any base class of SIPCall class (included).
-         */
-        template <class T=SIPCall>
-        std::shared_ptr<enable_if_base_of<T, SIPCall> >
-        newOutgoingCall(const std::string& toUrl);
+        * Create outgoing SIPCall.
+        * @param[in] toUrl The address to call
+        * @return std::shared_ptr<SIPCall> A shared pointer to the created call.
+        */
+        std::shared_ptr<SIPCall>
+        newOutgoingSIPCall(const std::string& toUrl);
 
         /**
          * Create incoming SIPCall.
@@ -280,7 +277,6 @@ class RingAccount : public SIPAccountBase {
          * @return true if all is correct
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
-
 
         /**
          * Maps require port via UPnP
