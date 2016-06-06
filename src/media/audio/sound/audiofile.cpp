@@ -40,7 +40,7 @@ namespace ring {
 void
 AudioFile::onBufferFinish()
 {
-    // We want to send values in milisecond
+    // We want to send values in millisecond
     const int divisor = buffer_->getSampleRate() / 1000;
 
     if (divisor == 0) {
