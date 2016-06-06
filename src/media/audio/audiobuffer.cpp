@@ -22,6 +22,7 @@
 #include "logger.h"
 #include <string.h>
 #include <cstring> // memset
+#include <algorithm>
 
 namespace ring {
 

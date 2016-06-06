@@ -23,6 +23,7 @@
 
 #include <cmath>
 #include <cassert>
+#include <ciso646> // fix windows compiler bug
 
 #include "dtmfgenerator.h"
 
