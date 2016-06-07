@@ -246,7 +246,7 @@ std::vector<IpAddr>
 ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
-#if defined __ANDROID__ || defined _WIN32
+#if defined __ANDROID__ || defined _WIN32 || TARGET_OS_IPHONE
 #warning "Not implemented"
 #else
     if (not (_res.options & RES_INIT))
