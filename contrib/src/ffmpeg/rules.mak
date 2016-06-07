@@ -53,8 +53,6 @@ FFMPEGCONF += \
 		--enable-decoder=pcm_mulaw \
 		--enable-encoder=mpeg4 \
 		--enable-decoder=mpeg4 \
-		--enable-encoder=libvpx_vp8 \
-		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
 		--enable-encoder=h263p \
 		--enable-decoder=h263 \
@@ -67,6 +65,11 @@ FFMPEGCONF += \
 		--enable-decoder=libspeex \
 		--enable-encoder=libopus \
 		--enable-decoder=libopus
+		ifndef HAVE_IOS
+		FFMPEGCONF += \
+				--enable-encoder=libvpx_vp8 \
+				--enable-decoder=vp8
+		endif
 
 #encoders/decoders for images
 FFMPEGCONF += \
@@ -98,6 +101,11 @@ FFMPEGCONF += \
 	--enable-indev=avfgrab
 endif
 
+ifdef HAVE_IOS
+FFMPEGCONF += \
+	--target-os=darwin
+endif
+
 # Linux
 ifdef HAVE_LINUX
 FFMPEGCONF += --target-os=linux --enable-pic
@@ -110,8 +118,10 @@ FFMPEGCONF += --disable-asm
 endif
 endif
 
+ifndef HAVE_IOS
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
+endif
 endif
 
 # x86 stuff
