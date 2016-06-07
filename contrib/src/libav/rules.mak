@@ -1,5 +1,5 @@
-#Libav 11-1 (git version packaged for ubuntu  14.10)
-LIBAV_HASH := f851477889ae48e2f17073cf7486e1d5561b7ae4
+#Libav 11-7 (git version packaged for ubuntu  14.10)
+LIBAV_HASH := 0fc667e89b7261499067aef0a81dd0d4a0f980e3
 LIBAV_GITURL := git://git.libav.org/libav.git
 
 ifndef HAVE_WIN32
