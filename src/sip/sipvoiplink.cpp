@@ -70,6 +70,8 @@
 #include <istream>
 #include <algorithm>
 
+#include "thread_local.h"
+
 namespace ring {
 
 using sip_utils::CONST_PJ_STR;
@@ -681,16 +683,14 @@ SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
-#else
-#warning THREAD LOCAL STORAGE UNSUPPORTED --- NEED TO BE FIXED
-        static pj_thread_desc desc;
-        static pj_thread_t *this_thread;
-#endif
+		static RING_THREADLOCAL(pj_thread_desc, desc);
+		pj_thread_desc desc_val;
+		desc = &desc_val;
+		static RING_THREADLOCAL(pj_thread_t*, this_thread);
+		pj_thread_t* this_thread_val;
+		this_thread = &this_thread_val;
         RING_DBG("Registering thread");
-        pj_thread_register(NULL, desc, &this_thread);
+        pj_thread_register(NULL, *(*desc), this_thread);
     }
 
     static const pj_time_val timeout = {0, 0}; // polling
