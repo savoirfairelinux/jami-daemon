@@ -132,7 +132,11 @@ Sdp::findCodecByPayload(const unsigned payloadType)
 static void
 randomFill(std::vector<uint8_t>& dest)
 {
+#ifdef WIN32_NATIVE
+    std::uniform_int_distribution<int> rand_byte{ 0, std::numeric_limits<uint8_t>::max() };
+#else
     std::uniform_int_distribution<uint8_t> rand_byte(0, 255);
+#endif /* WIN32_NATIVE */
     random_device rdev;
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }

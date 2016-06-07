@@ -473,9 +473,8 @@ class SIPAccount : public SIPAccountBase {
          *      The type of this instance is given in template argument.
          *      This type can be any base class of SIPCall class (included).
          */
-        template <class T=SIPCall>
-        std::shared_ptr<enable_if_base_of<T, SIPCall> >
-        newOutgoingCall(const std::string& toUrl);
+        std::shared_ptr<SIPCall>
+        newOutgoingSIPCall(const std::string& toUrl);
 
         /**
          * Create incoming SIPCall.
