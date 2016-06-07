@@ -529,7 +529,7 @@ std::string stripEchoSufix(std::string deviceName) {
 #ifdef USE_PCRE_REGEX
     if (PA_EC_SUFFIX) {
         static const constexpr int resSize = 3;
-        int resPos[resSize] = {};
+        int resPos[resSize] {};
         int rc = pcre_exec(PA_EC_SUFFIX.get(), nullptr, deviceName.c_str(), deviceName.size(), 0, 0, resPos, resSize);
         if (rc > 0) {
             int start = resPos[0];

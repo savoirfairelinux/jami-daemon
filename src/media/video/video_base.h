@@ -145,7 +145,7 @@ protected:
 private:
     std::shared_ptr<VideoFrame> writableFrame_ = nullptr;
     std::shared_ptr<VideoFrame> lastFrame_ = nullptr;
-    std::mutex mutex_ = {}; // lock writableFrame_/lastFrame_ access
+    std::mutex mutex_ {}; // lock writableFrame_/lastFrame_ access
 };
 
 struct VideoSettings

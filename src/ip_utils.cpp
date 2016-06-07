@@ -107,7 +107,7 @@ ip_utils::getLocalAddr(pj_uint16_t family)
         family = pj_AF_INET();
 #endif
     }
-    IpAddr ip_addr = {};
+    IpAddr ip_addr {};
     pj_status_t status = pj_gethostip(family, ip_addr.pjPtr());
     if (status == PJ_SUCCESS) {
         return ip_addr;
@@ -128,7 +128,7 @@ ip_utils::getInterfaceAddr(const std::string &interface, pj_uint16_t family)
     if (interface == DEFAULT_INTERFACE)
         return getLocalAddr(family);
 
-    IpAddr addr = {};
+    IpAddr addr {};
 
 #ifndef _WIN32
     const auto unix_family = family == pj_AF_INET() ? AF_INET : AF_INET6;
