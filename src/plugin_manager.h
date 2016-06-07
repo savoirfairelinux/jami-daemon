@@ -131,21 +131,21 @@ class PluginManager
 
         int32_t invokeService(const std::string& name, void* data);
 
-        std::mutex          mutex_ = {};
+        std::mutex          mutex_ {};
         RING_PluginAPI      pluginApi_ = {
             { RING_PLUGIN_ABI_VERSION, RING_PLUGIN_API_VERSION },
             nullptr, // set by PluginManager constructor
             registerObjectFactory_, invokeService_,
         };
-        PluginMap           dynPluginMap_ = {}; // Only dynamic loaded plugins
-        ExitFuncVec         exitFuncVec_ = {};
-        ObjectFactoryMap    exactMatchMap_ = {};
-        ObjectFactoryVec    wildCardVec_ = {};
+        PluginMap           dynPluginMap_ {}; // Only dynamic loaded plugins
+        ExitFuncVec         exitFuncVec_ {};
+        ObjectFactoryMap    exactMatchMap_ {};
+        ObjectFactoryVec    wildCardVec_ {};
 
         // Storage used during plugin initialisation.
         // Will be copied into previous ones only if the initialisation success.
-        ObjectFactoryMap    tempExactMatchMap_ = {};
-        ObjectFactoryVec    tempWildCardVec_ = {};
+        ObjectFactoryMap    tempExactMatchMap_ {};
+        ObjectFactoryVec    tempWildCardVec_ {};
 
         // registered services
         std::map<std::string, ServiceFunction> services_ {};

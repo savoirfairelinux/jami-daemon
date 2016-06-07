@@ -117,9 +117,9 @@ class AccountFactory {
         }
 
     private:
-        mutable std::recursive_mutex mutex_ = {};
-        std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)> > generators_ = {};
-        std::map<std::string, AccountMap<Account> > accountMaps_ = {};
+        mutable std::recursive_mutex mutex_ {};
+        std::map<std::string, std::function<std::shared_ptr<Account>(const std::string&)> > generators_ {};
+        std::map<std::string, AccountMap<Account> > accountMaps_ {};
 
         template <class T>
         const AccountMap<Account>* getMap_() const {

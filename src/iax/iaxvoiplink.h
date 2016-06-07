@@ -147,7 +147,7 @@ class IAXVoIPLink {
         /** encoder/decoder/resampler buffers */
         AudioBuffer rawBuffer_{RAW_BUFFER_SIZE, AudioFormat::MONO()};
         AudioBuffer resampledData_{RAW_BUFFER_SIZE * 4, AudioFormat::MONO()};
-        unsigned char encodedData_[RAW_BUFFER_SIZE] = {};
+        unsigned char encodedData_[RAW_BUFFER_SIZE] {};
 
         std::unique_ptr<Resampler> resampler_;
 

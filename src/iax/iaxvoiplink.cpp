@@ -42,7 +42,7 @@
 
 namespace ring {
 
-std::mutex IAXVoIPLink::mutexIAX = {};
+std::mutex IAXVoIPLink::mutexIAX {};
 
 IAXVoIPLink::IAXVoIPLink(IAXAccount& account) : account_(account), resampler_(new Resampler{44100})
 {}
