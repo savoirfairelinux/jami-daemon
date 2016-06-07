@@ -19,7 +19,6 @@ FFMPEGCONF += \
 		--disable-programs \
 		--disable-sdl
 
-
 #enable muxers/demuxers
 FFMPEGCONF += \
 		--enable-demuxers \
@@ -53,8 +52,6 @@ FFMPEGCONF += \
 		--enable-decoder=pcm_mulaw \
 		--enable-encoder=mpeg4 \
 		--enable-decoder=mpeg4 \
-		--enable-encoder=libvpx_vp8 \
-		--enable-decoder=vp8 \
 		--enable-encoder=h263 \
 		--enable-encoder=h263p \
 		--enable-decoder=h263 \
@@ -66,7 +63,9 @@ FFMPEGCONF += \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex \
 		--enable-encoder=libopus \
-		--enable-decoder=libopus
+		--enable-decoder=libopus \
+		--enable-encoder=libvpx_vp8 \
+		--enable-decoder=vp8
 
 #encoders/decoders for images
 FFMPEGCONF += \
@@ -90,6 +89,14 @@ FFMPEGCONF += \
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
+ifdef HAVE_IOS
+FFMPEGCONF += \
+	--target-os=darwin \
+	--enable-cross-compile \
+	--arch=$(ARCH) \
+	--enable-pic
+endif
+
 # Linux
 ifdef HAVE_LINUX
 FFMPEGCONF += --target-os=linux --enable-pic
@@ -102,8 +109,10 @@ FFMPEGCONF += --disable-asm
 endif
 endif
 
+ifndef HAVE_IOS
 ifdef HAVE_CROSS_COMPILE
 FFMPEGCONF += --cross-prefix=$(HOST)-
+endif
 endif
 
 # x86 stuff
@@ -160,6 +169,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 
 .ffmpeg: ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
+		--extra-cflags="$(CFLAGS)" \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
                 --prefix="$(PREFIX)" --enable-static --disable-shared
 	cd $< && $(MAKE) install-libs install-headers
