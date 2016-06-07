@@ -1,7 +1,7 @@
 # speex
 
 SPEEX_VERSION := git
-SPEEX_HASH := HEAD
+SPEEX_HASH := 9172c7ef85fbf058027528d48ededbc7ca847908
 SPEEX_GITURL := http://git.xiph.org/?p=speex.git;a=snapshot;h=$(SPEEX_HASH);sf=tgz
 
 PKGS += speex
