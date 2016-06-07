@@ -1,6 +1,6 @@
 # libvpx
 
-VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
+VPX_HASH := cbecf57f3e0d85a7b7f97f3ab7c507f6fe640a93
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
 
@@ -20,13 +20,20 @@ libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
 DEPS_vpx =
 
 ifdef HAVE_CROSS_COMPILE
+ifndef HAVE_IOS
 VPX_CROSS := $(CROSS_COMPILE)
+endif
 else
 VPX_CROSS :=
 endif
 
+
 ifeq ($(ARCH),arm)
 VPX_ARCH := armv7
+else ifeq ($(ARCH),armv7)
+VPX_ARCH := armv7
+else ifeq ($(ARCH),arm64)
+VPX_ARCH := arm64
 else ifeq ($(ARCH),i386)
 VPX_ARCH := x86
 else ifeq ($(ARCH),mips)
@@ -46,7 +53,11 @@ VPX_OS := android
 else ifdef HAVE_LINUX
 VPX_OS := linux
 else ifdef HAVE_DARWIN_OS
-ifeq ($(ARCH),arm)
+ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
+VPX_OS := iphonesimulator
+else ifeq ($(ARCH),armv7)
+VPX_OS := darwin
+else ifeq ($(ARCH),arm64)
 VPX_OS := darwin
 else
 ifeq ($(OSX_VERSION),10.5)
@@ -95,7 +106,7 @@ ifdef HAVE_MACOSX
 VPX_CONF += --sdk-path=$(MACOSX_SDK)
 endif
 ifdef HAVE_IOS
-VPX_CONF += --sdk-path=$(SDKROOT)
+VPX_CONF += --sdk-path=$(IOS_SDK)
 endif
 LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
