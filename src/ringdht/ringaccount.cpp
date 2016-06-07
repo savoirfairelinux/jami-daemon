@@ -459,8 +459,14 @@ RingAccount::loadIdentity()
     dht::crypto::PrivateKey dht_key;
 
     try {
+#if TARGET_OS_IPHONE
+        const auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR;
+        dht_cert = dht::crypto::Certificate(fileutils::loadFile(path + tlsCertificateFile_));
+        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(path + tlsPrivateKeyFile_), tlsPassword_);
+#else
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
+#endif
     }
     catch (const std::exception& e) {
         RING_ERR("Error loading identity: %s", e.what());
@@ -479,8 +485,13 @@ RingAccount::loadIdentity()
 
         // save the chain including CA
         saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
+#if TARGET_OS_IPHONE
+        tlsCertificateFile_ = "dht.crt";
+        tlsPrivateKeyFile_ =  "dht.key";
+#else
         tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
         tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+#endif
         tlsPassword_ = {};
 
         username_ = RING_URI_PREFIX+id.second->getId().toString();
