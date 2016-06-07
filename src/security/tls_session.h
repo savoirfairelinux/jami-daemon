@@ -45,8 +45,8 @@ class IceSocket;
 } // namespace ring
 
 namespace dht { namespace crypto {
-class Certificate;
-class PrivateKey;
+struct Certificate;
+struct PrivateKey;
 }} // namespace dht::crypto
 
 namespace ring { namespace tls {
@@ -63,6 +63,10 @@ class DhParams {
 public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
+    
+    DhParams& operator =(const DhParams&){
+        return *this;
+    }
 
     /** Take ownership of gnutls_dh_params */
     explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
@@ -178,15 +182,9 @@ private:
     std::atomic<unsigned int> maxPayload_ {0};
 
     // IO GnuTLS <-> ICE
-    struct TxData {
-        void* const ptr;
-        std::size_t size;
-        TxDataCompleteFunc onComplete;
-    };
-
-    std::mutex ioMutex_ {};
-    std::condition_variable ioCv_ {};
-    std::list<TxData> txQueue_ {};
+    std::mutex txMutex_{};
+    std::mutex rxMutex_{};
+    std::condition_variable rxCv_{};
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
     ssize_t send(const TxData&);
