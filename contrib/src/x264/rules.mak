@@ -22,8 +22,10 @@ X264CONF += --enable-pic
 else
 X264CONF += --enable-win32thread
 endif
+ifndef HAVE_IOS
 ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(CROSS_COMPILE)"
+endif
 endif
 
 $(TARBALLS)/x264-$(X264_HASH).tar.xz:
