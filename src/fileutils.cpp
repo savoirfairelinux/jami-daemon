@@ -27,8 +27,10 @@
 #include "fileutils.h"
 #include "logger.h"
 
+#include <ciso646> // fix windows compiler bug
 #ifdef WIN32_NATIVE
-#include "p_intrin.h"
+#include "compiler_intrinsics.h"
+#include <io.h>
 #else
 #include "intrin.h"
 #endif
@@ -36,6 +38,7 @@
 #ifdef __ANDROID__
 #include "client/ring_signal.h"
 #endif
+
 #ifdef _WIN32
 #include "string_utils.h"
 #endif
@@ -56,6 +59,10 @@
 #endif
 #if !defined __ANDROID__ && !defined _WIN32
 #   include <wordexp.h>
+#endif
+
+#if defined _MSC_VER
+#include <direct.h>
 #endif
 
 #include <sstream>
@@ -159,7 +166,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined WIN32
+#if defined __ANDROID__ || defined WIN32_NATIVE || defined WIN32
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -222,7 +229,7 @@ writeTime(const std::string& path)
         throw std::runtime_error("Can't check write time for: " + path);
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
-    HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h = CreateFileW(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
     FILETIME lastWriteTime;
@@ -359,8 +366,11 @@ void set_program_dir(char *program_path)
 std::string
 get_cache_dir()
 {
+#ifdef WIN32_NATIVE
+    const std::string cache_home(".cache");
+#else
     const std::string cache_home(XDG_CACHE_HOME);
-
+#endif
     if (not cache_home.empty()) {
         return cache_home;
     } else {
@@ -433,7 +443,11 @@ get_data_dir()
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
             + DIR_SEPARATOR_STR + PACKAGE;
 #else
+#ifdef WIN32_NATIVE
+    const std::string data_home(".data");
+#else
     const std::string data_home(XDG_DATA_HOME);
+#endif
     if (not data_home.empty())
         return data_home + DIR_SEPARATOR_STR + PACKAGE;
     // "If $XDG_DATA_HOME is either not set or empty, a default equal to
@@ -462,7 +476,12 @@ get_config_dir()
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
 #endif
 
+#ifdef WIN32_NATIVE
+    const std::string xdg_env(".config");
+#else
     const std::string xdg_env(XDG_CONFIG_HOME);
+#endif
+
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 

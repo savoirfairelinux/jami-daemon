@@ -247,7 +247,9 @@ ip_utils::getLocalNameservers()
 {
     std::vector<IpAddr> res;
 #if defined __ANDROID__ || defined _WIN32
+#ifndef WIN32_NATIVE
 #warning "Not implemented"
+#endif
 #else
     if (not (_res.options & RES_INIT))
         res_init();
