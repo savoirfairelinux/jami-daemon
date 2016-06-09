@@ -6,7 +6,9 @@ libclient_rest_la_SOURCES = \
 	restclient.cpp \
 	restclient.h \
 	restconfigurationmanager.cpp \
-	restconfigurationmanager.h
+	restconfigurationmanager.h \
+	restvideomanager.cpp \
+	restvideomanager.h
 
 libclient_rest_la_CXXFLAGS = \
 	-std=c++14 \
@@ -15,6 +17,7 @@ libclient_rest_la_CXXFLAGS = \
 	-Wextra \
 	-Wno-reorder \
 	-Wno-unused-variable \
+	-Wno-unused-parameter \
 	-pedantic \
 	-I$(top_srcdir)/src
 

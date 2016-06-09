@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <thread>
+
 #include <functional>
 #include <iterator>
 #include <restbed>
@@ -20,6 +21,7 @@
 #endif
 #include "logger.h"
 #include "restconfigurationmanager.h"
+#include "restvideomanager.h"
 
 class RestClient {
 	public:
@@ -37,7 +39,10 @@ class RestClient {
 		bool pollNoMore_ = false;
 
 		std::unique_ptr<RestConfigurationManager> configurationManager_;
+		std::unique_ptr<RestVideoManager> videoManager_;
 
+		// Restbed attributes
 		restbed::Service service_;
 		std::shared_ptr<restbed::Settings> settings_;
+		std::thread restbed;
 };
