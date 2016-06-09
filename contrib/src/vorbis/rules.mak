@@ -25,7 +25,11 @@ $(TARBALLS)/libvorbis-$(VORBIS_VERSION).tar.xz:
 
 vorbis: libvorbis-$(VORBIS_VERSION).tar.xz .sum-vorbis
 	$(UNPACK)
+ifndef HAVE_IOS
 	$(APPLY) $(SRC)/vorbis/osx.patch
+else
+	$(APPLY) $(SRC)/vorbis/ios.patch
+endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
