@@ -560,6 +560,13 @@ AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
       [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
        AM_CONDITIONAL(USE_DHT, false)])
 
+# Need to had --enable-dht-log flags for debug message on the dht
+AC_ARG_ENABLE([dht-log],
+  AS_HELP_STRING([--enable-dht-log], [disable support for dht]))
+
+AS_IF([test "x$enable_dht_log" = "xyes"],
+      AC_DEFINE([DHT_LOG], 1, [Define to enable OpenDHT logs]))
+
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 
