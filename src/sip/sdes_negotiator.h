@@ -27,6 +27,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <map>
 
 namespace ring {
 
@@ -56,7 +57,7 @@ enum KeyMethod {
 };
 
 struct CryptoSuiteDefinition {
-    const char *name;
+    const char* name;
     int masterKeyLength;
     int masterSaltLength;
     int srtpLifetime;
@@ -75,15 +76,21 @@ struct CryptoSuiteDefinition {
 * as defined in RFC4568 (6.2)
 */
 
-static std::vector<CryptoSuiteDefinition> CryptoSuites = {
+static std::map<std::string, CryptoSuiteDefinition> CryptoSuites = {
+    { "AES_CM_256_HMAC_SHA1_80",
+      {"AES_CM_256_HMAC_SHA1_80", 256, 112, 31, 31, AESCounterMode, 256, HMACSHA1, 80, 80, 160, 160 }},
+
+    { "AES_CM_192_HMAC_SHA1_80",
+      {"AES_CM_192_HMAC_SHA1_80", 192, 112, 31, 31, AESCounterMode, 192, HMACSHA1, 80, 80, 160, 160 }},
+
     { "AES_CM_128_HMAC_SHA1_80",
-      128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160 },
+      {"AES_CM_128_HMAC_SHA1_80", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 80, 80, 160, 160 }},
 
     { "AES_CM_128_HMAC_SHA1_32",
-      128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160 },
+      {"AES_CM_128_HMAC_SHA1_32", 128, 112, 48, 31, AESCounterMode, 128, HMACSHA1, 32, 80, 160, 160 }},
 
     { "F8_128_HMAC_SHA1_80",
-      128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160 }
+      {"F8_128_HMAC_SHA1_80", 128, 112, 48, 31, AESF8Mode, 128, HMACSHA1, 80, 80, 160, 160 }},
 };
 
 class SdesNegotiator {
@@ -99,10 +106,10 @@ class SdesNegotiator {
          */
     public:
         SdesNegotiator() {}
-        SdesNegotiator(const std::vector<CryptoSuiteDefinition>& capabilites);
+        SdesNegotiator(const std::vector<std::string>& capabilites);
 
         ring::CryptoAttribute
-        negotiate(const std::vector<std::string>& attributes) const;
+        find(const std::vector<std::string>& attributes) const;
 
         inline explicit operator bool() const {
             return not localCapabilities_.empty();
@@ -118,6 +125,8 @@ class SdesNegotiator {
          * preferred method is then chosen from that list.
          */
         std::vector<CryptoSuiteDefinition> localCapabilities_;
+
+        friend class Sdp;
 };
 
 } // namespace ring

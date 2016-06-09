@@ -61,11 +61,18 @@ using std::stringstream;
 static constexpr int POOL_INITIAL_SIZE = 16384;
 static constexpr int POOL_INCREMENT_SIZE = POOL_INITIAL_SIZE;
 
+// Prefered crypto-suite (in order)
+static const std::vector<std::string> preferedCryptoSuites = {
+    "AES_CM_256_HMAC_SHA1_80",
+    "AES_CM_192_HMAC_SHA1_80",
+    "AES_CM_128_HMAC_SHA1_80",
+};
+
 Sdp::Sdp(const std::string& id)
     : memPool_(nullptr, pj_pool_release)
     , publishedIpAddr_()
     , publishedIpAddrType_()
-    , sdesNego_ {CryptoSuites}
+    , sdesNego_(preferedCryptoSuites)
     , zrtpHelloHash_()
     , telephoneEventPayload_(101) // same as asterisk
 {
@@ -132,7 +139,6 @@ randomFill(std::vector<uint8_t>& dest)
     std::generate(dest.begin(), dest.end(), std::bind(rand_byte, std::ref(rdev)));
 }
 
-
 void
 Sdp::setActiveLocalSdpSession(const pjmedia_sdp_session* sdp)
 {
@@ -150,25 +156,23 @@ Sdp::setActiveRemoteSdpSession(const pjmedia_sdp_session *sdp)
     activeRemoteSession_ = sdp;
 }
 
-pjmedia_sdp_attr *
-Sdp::generateSdesAttribute()
+void
+Sdp::generateSdesAttributes(pjmedia_sdp_media* med)
 {
-    static constexpr const unsigned cryptoSuite = 0;
-    std::vector<uint8_t> keyAndSalt;
-    keyAndSalt.resize(ring::CryptoSuites[cryptoSuite].masterKeyLength / 8
-                    + ring::CryptoSuites[cryptoSuite].masterSaltLength/ 8);
-    // generate keys
-    randomFill(keyAndSalt);
+    int tag = 0;
+    for (const auto& suite : sdesNego_.localCapabilities_) {
+        std::vector<uint8_t> keyAndSalt;
+        keyAndSalt.resize(suite.masterKeyLength / 8 + suite.masterSaltLength/ 8);
+        randomFill(keyAndSalt);
 
-    std::string tag = "1";
-    std::string crypto_attr = tag + " "
-                            + ring::CryptoSuites[cryptoSuite].name
-                            + " inline:" + base64::encode(keyAndSalt);
-    RING_DBG("%s", crypto_attr.c_str());
-
-    pj_str_t val { (char*) crypto_attr.c_str(),
-                    static_cast<pj_ssize_t>(crypto_attr.size()) };
-    return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
+        std::string attr = ring::to_string(tag) + " " + suite.name
+            + " inline:" + base64::encode(keyAndSalt);
+        auto val = sip_utils::CONST_PJ_STR(attr);
+        if (pjmedia_sdp_media_add_attr(med, pjmedia_sdp_attr_create(memPool_.get(), "crypto",
+                                                                    &val)) != PJ_SUCCESS)
+            SdpException("Could not add sdes attributes to media");
+        ++tag;
+    }
 }
 
 pjmedia_sdp_media *
@@ -257,8 +261,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "sendonly" : "inactive") : "sendrecv", NULL);
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
-        if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
-            SdpException("Could not add sdes attribute to media");
+        generateSdesAttributes(med);
     } /* else if (kx == sip_utils::KeyExchangeProtocol::ZRTP) {
         if (!zrtpHelloHash_.empty())
             addZrtpAttribute(med, zrtpHelloHash_);
@@ -266,7 +269,6 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
 
     return med;
 }
-
 
 void Sdp::addRTCPAttribute(pjmedia_sdp_media *med)
 {
@@ -440,7 +442,8 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
         RING_ERR("Failed to initialize negotiator");
 }
 
-void Sdp::startNegotiation()
+void
+Sdp::startNegotiation()
 {
     if (negotiator_ == NULL) {
         RING_ERR("Can't start negotiation with invalid negotiator");
@@ -455,20 +458,57 @@ void Sdp::startNegotiation()
         return;
     }
 
+    // Media format negotiation
     if (pjmedia_sdp_neg_negotiate(memPool_.get(), negotiator_, 0) != PJ_SUCCESS)
         return;
 
-    if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS)
+    if (pjmedia_sdp_neg_get_active_local(negotiator_, &active_local) != PJ_SUCCESS) {
         RING_ERR("Could not retrieve local active session");
-    else
-        setActiveLocalSdpSession(active_local);
+        return;
+    }
 
-    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS)
+    if (pjmedia_sdp_neg_get_active_remote(negotiator_, &active_remote) != PJ_SUCCESS) {
         RING_ERR("Could not retrieve remote active session");
-    else
-        setActiveRemoteSdpSession(active_remote);
-}
+        return;
+    }
 
+    // Crypto negotation
+    // For each media slot, get the most prefered crypto-suite available on
+    // both side. If nothing found, refuse the media slot
+
+    std::vector<std::reference_wrapper<CryptoAttribute>> local_crypto;
+    for (unsigned i = 0; i < active_local->media_count; ++i) {
+        auto media = active_local->media[i];
+        for (unsigned j = 0; j < media->attr_count; ++j) {
+            const auto attribute = media->attr[j];
+            if (pj_stricmp2(&attribute->name, "crypto") == 0) {
+                RING_ERR("attr: %s", attribute->value.ptr);
+                //if (auto crypto_attr = sdesNego_.find(&attribute->value))
+                //    local_crypto_suites.emplace_back(crypto_attr);
+            }
+        }
+    }
+
+    #if 0
+    std::vector<CryptoAttribute> active_crypto_;
+    for (unsigned i = 0; i < remote_local->media_count; ++i) {
+        auto media = remote_local->media[i];
+        for (unsigned j = 0; j < media->attr_count; ++j) {
+            const auto attribute = media->attr[j];
+            if (pj_stricmp2(&attribute->name, "crypto") == 0) {
+                for (auto str : local_crypto_suites) {
+                    if (!pj_strcmp(str, attribute->value.ptr)) {
+                        sdesNego_.negotiate(std::string(suite));
+                        break;
+                    }
+                }
+            }
+        }
+    #endif
+
+    setActiveLocalSdpSession(active_local);
+    setActiveRemoteSdpSession(active_remote);
+}
 
 std::string
 Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, unsigned pt_keep)
@@ -634,7 +674,7 @@ Sdp::getMediaSlots(const pjmedia_sdp_session* session, bool remote) const
             if (pj_stricmp2(&attribute->name, "crypto") == 0)
                 crypto.emplace_back(attribute->value.ptr, attribute->value.slen);
         }
-        descr.crypto = sdesNego_.negotiate(crypto);
+        //descr.crypto = sdesNego_.negotiate(crypto);
     }
     return ret;
 }

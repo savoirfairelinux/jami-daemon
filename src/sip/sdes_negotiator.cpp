@@ -22,6 +22,7 @@
 
 #include "sdes_negotiator.h"
 #include "pattern.h"
+#include "logger.h"
 
 #include <memory>
 #include <iostream>
@@ -33,9 +34,14 @@
 
 namespace ring {
 
-SdesNegotiator::SdesNegotiator(const std::vector<CryptoSuiteDefinition>& localCapabilites) :
-    localCapabilities_(localCapabilites)
-{}
+SdesNegotiator::SdesNegotiator(const std::vector<std::string>& capabilites)
+{
+    for (auto& name : capabilites) {
+        try {
+            localCapabilities_.push_back(CryptoSuites[name]);
+        } catch (...) {}
+    }
+}
 
 std::vector<CryptoAttribute>
 SdesNegotiator::parse(const std::vector<std::string>& attributes)
@@ -56,10 +62,12 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
         tagPattern.reset(new Pattern("^(?P<tag>[0-9]{1,9})", false));
 
         cryptoSuitePattern.reset(new Pattern(
-            "(?P<cryptoSuite>AES_CM_128_HMAC_SHA1_80|" \
-            "AES_CM_128_HMAC_SHA1_32|" \
-            "F8_128_HMAC_SHA1_80|" \
-            "[A-Za-z0-9_]+)", false)); // srtp-crypto-suite-ext
+                                     "(?P<cryptoSuite>AES_CM_256_HMAC_SHA1_80|" \
+                                     "AES_CM_192_HMAC_SHA1_80|"         \
+                                     "AES_CM_128_HMAC_SHA1_80|"         \
+                                     "AES_CM_128_HMAC_SHA1_32|"         \
+                                     "F8_128_HMAC_SHA1_80|"             \
+                                     "[A-Za-z0-9_]+)", false)); // srtp-crypto-suite-ext
 
         keyParamsPattern.reset(new Pattern(
             "(?P<srtpKeyMethod>inline|[A-Za-z0-9_]+)\\:" \
@@ -160,13 +168,13 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
 }
 
 CryptoAttribute
-SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
+SdesNegotiator::find(const std::vector<std::string>& attributes) const
 {
     try {
         auto cryptoAttributeVector(parse(attributes));
         for (const auto& iter_offer : cryptoAttributeVector) {
             for (const auto& iter_local : localCapabilities_) {
-                if (iter_offer.getCryptoSuite().compare(iter_local.name))
+                if (!iter_offer.getCryptoSuite().compare(iter_local.name))
                     return iter_offer;
             }
         }

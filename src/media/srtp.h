@@ -30,10 +30,10 @@ struct AVHMAC;
 struct SRTPContext {
     struct AVAES *aes;
     struct AVHMAC *hmac;
-    int rtp_hmac_size, rtcp_hmac_size;
-    uint8_t master_key[16];
+    int key_size, rtp_hmac_size, rtcp_hmac_size;
+    uint8_t master_key[32];
     uint8_t master_salt[14];
-    uint8_t rtp_key[16],  rtcp_key[16];
+    uint8_t rtp_key[32],  rtcp_key[32];
     uint8_t rtp_salt[14], rtcp_salt[14];
     uint8_t rtp_auth[20], rtcp_auth[20];
     int seq_largest, seq_initialized;

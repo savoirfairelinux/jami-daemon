@@ -1,0 +1,20 @@
+TRACEPOINT_EVENT_CLASS(
+	ring,
+	this_class,
+	TP_ARGS(int, instance),
+	TP_FIELDS(ctf_integer(int, instance, instance))
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+	ring,
+	this_class,
+	enter,
+	TP_ARGS(int, instance)
+)
+
+TRACEPOINT_EVENT_INSTANCE(
+	ring,
+	this_class,
+	leave,
+	TP_ARGS(int, instance)
+)

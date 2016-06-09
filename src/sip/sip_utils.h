@@ -83,6 +83,10 @@ constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept {
     return {const_cast<char*>(a), N-1};
 }
 
+static inline const pj_str_t CONST_PJ_STR(const std::string& s) noexcept {
+    return {const_cast<char*>(s.c_str()), static_cast<pj_ssize_t>(s.size())};
+}
+
 // PJSIP dialog locking in RAII way
 // Usage: declare local variable like this: sip_utils::PJDialogLock lock {dialog};
 // The lock is kept until the local variable is deleted

@@ -299,7 +299,7 @@ class Sdp {
          * Add rtpmap field if necessary
          */
         pjmedia_sdp_media *setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangeProtocol);
-        pjmedia_sdp_attr *generateSdesAttribute();
+        void generateSdesAttributes(pjmedia_sdp_media* med);
 
         void setTelephoneEventRtpmap(pjmedia_sdp_media *med);
 

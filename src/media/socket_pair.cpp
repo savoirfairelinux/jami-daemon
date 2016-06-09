@@ -40,6 +40,8 @@ extern "C" {
 #include <unistd.h>
 #include <sys/types.h>
 
+#include "traces.h"
+
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
 #define poll WSAPoll
@@ -518,9 +520,11 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
 
     // Encrypt?
     if (not isRTCP and srtpContext_ and srtpContext_->srtp_out.aes) {
+        tracepoint(ring, enter, reinterpret_cast<std::uintptr_t>(this));
         buf_size = ff_srtp_encrypt(&srtpContext_->srtp_out, buf,
                                    buf_size, srtpContext_->encryptbuf,
                                    sizeof(srtpContext_->encryptbuf));
+        tracepoint(ring, leave, reinterpret_cast<std::uintptr_t>(this));
         if (buf_size < 0) {
             RING_WARN("encrypt error %d", buf_size);
             return buf_size;
