@@ -26,6 +26,9 @@ ifndef HAVE_IOS
 ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(CROSS_COMPILE)"
 endif
+else
+#FOR NOW THIS WILL DO
+X264CONF += --disable-asm
 endif
 
 $(TARBALLS)/x264-$(X264_HASH).tar.xz:
