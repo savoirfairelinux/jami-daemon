@@ -28,8 +28,9 @@ dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
+endif
 
-else
+if RING_RESTCPP
 SUBDIRS=restcpp
 
 sbin_PROGRAMS = dring
