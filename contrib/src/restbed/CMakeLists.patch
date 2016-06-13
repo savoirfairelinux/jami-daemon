@@ -1,0 +1,10 @@
+--- CMakeLists.txt	2016-06-13 12:01:30.415787179 -0400
++++ CMakeLists.txt	2016-06-13 12:01:33.329120391 -0400
+@@ -71,5 +71,5 @@
+ install( FILES "${INCLUDE_DIR}/${PROJECT_NAME}" DESTINATION "include" )
+ install( FILES ${BUILD_ARTIFACTS} DESTINATION "include/corvusoft/${PROJECT_NAME}" )
+ install( TARGETS ${PROJECT_NAME}
+-         LIBRARY DESTINATION "library"
+-         ARCHIVE DESTINATION "library" COMPONENT library )
++         LIBRARY DESTINATION "lib"
++         ARCHIVE DESTINATION "lib" COMPONENT library )
