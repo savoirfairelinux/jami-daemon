@@ -821,7 +821,7 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#ifdef DEBUG_DHT // enable if dht_ logging is needed
+#ifdef LOG_DHT // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
