@@ -383,6 +383,21 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
+# Rest C++ with restbed
+AC_ARG_WITH([restcpp],
+	[AS_HELP_STRING([--with-restcpp], [enable rest support with C++])],
+	[with_restcpp=yes],
+	[with_restcpp=no])
+AS_IF([test "x$with_restcpp" = xyes], [
+	PKG_CHECK_MODULES(RESTBED, librestbed,, AC_MSG_WARN([Missing restbed files]))
+
+	AS_AC_EXPAND(SBINDIR, $sbindir)
+	AC_SUBST(SBINDIR)
+
+	AC_CONFIG_FILES([bin/restcpp/Makefile])
+
+	AM_CONDITIONAL(RING_RESTCPP, true)],
+	AM_CONDITIONAL(RING_RESTCPP, false));
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
@@ -613,7 +628,6 @@ dnl What Makefiles to generate
 #TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
-				 bin/restcpp/Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
