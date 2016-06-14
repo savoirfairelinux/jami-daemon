@@ -288,6 +288,10 @@ ifdef HAVE_LINUX
 HOSTCONF += --enable-static --disable-shared
 endif
 
+ifdef HAVE_IOS
+HOSTCONF += --enable-static --disable-shared
+endif
+
 ifdef HAVE_WIN32
 HOSTCONF += --enable-static --disable-shared --without-pic
 PIC :=
