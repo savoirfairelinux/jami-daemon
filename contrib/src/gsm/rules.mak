@@ -12,6 +12,7 @@ $(TARBALLS)/libgsm_$(GSM_VERSION).tar.gz:
 gsm: libgsm_$(GSM_VERSION).tar.gz .sum-gsm
 	$(UNPACK)
 	mv gsm-1.0-* libgsm_$(GSM_VERSION)
+	$(APPLY) $(SRC)/gsm/include_ios.patch
 	$(APPLY) $(SRC)/gsm/gsm-cross.patch
 	sed -e 's/^CFLAGS.*=/CFLAGS+=/' -i.orig libgsm_$(GSM_VERSION)/Makefile
 	$(MOVE)
