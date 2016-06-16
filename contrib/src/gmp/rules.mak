@@ -14,7 +14,7 @@ gmp: gmp-$(GMP_VERSION).tar.bz2 .sum-gmp
 
 .gmp: gmp
 ifdef HAVE_IOS
-	cd $< && $(HOSTVARS) ./configure --disable-assembly $(HOSTCONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure --disable-assembly $(HOSTCONF)
 else
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
 endif
