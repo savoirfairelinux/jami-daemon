@@ -22,6 +22,12 @@ nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
 DEPS_nettle = gmp $(DEPS_gmp)
 
 .nettle: nettle
+ifdef HAVE_IOS
+	cd $< && sed -i.orig s/-ggdb3//g configure.ac
+	cd $< && autoreconf
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure $(HOSTCONF)
+else
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+endif
 	cd $< && $(MAKE) install
 	touch $@
