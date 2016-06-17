@@ -25,7 +25,8 @@ dring_SOURCES = main.cpp
 
 dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
                 -I$(top_srcdir)/src/dring \
-                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
+                -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\" \
+                -lva -lva-drm -lva-x11
 
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
 endif
