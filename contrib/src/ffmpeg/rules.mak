@@ -1,4 +1,5 @@
-FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
+#FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
+FFMPEG_HASH := 0ea58059d635484957b332fe9432351381fae6cd
 FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
 
 ifdef HAVE_WIN32
@@ -86,7 +87,13 @@ FFMPEGCONF += \
 FFMPEGCONF += \
 	--enable-indev=dshow \
 	--enable-indev=gdigrab \
-	--enable-dxva2
+	--enable-dxva2 \
+	--enable-vaapi
+
+# vaapi
+FFMPEGCONF += \
+	--enable-hwaccel=h264_vaapi \
+	--enable-hwaccel=mpeg4_vaapi
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
