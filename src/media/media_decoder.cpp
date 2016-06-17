@@ -27,6 +27,11 @@
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
 
+#define USE_HWACCEL // debugging purposes
+#ifdef USE_HWACCEL
+#include "hwaccel.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -266,6 +271,46 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
+#ifdef USE_HWACCEL
+    // TODO wrap in if statement: user setting
+    RingHWContext *rhw = static_cast<RingHWContext*>(av_mallocz(sizeof(*rhw)));
+    if (!rhw) {
+        RING_ERR("Hardware acceleration context is NULL");
+        return -1;
+    }
+
+    // get hwaccel name (or maybe id?) from user settings
+    // hwaccel names: see hwaccels array in hwaccel.h
+    char *hwaccel_name = NULL;
+    hwaccel_name = "vaapi"; // TODO option me!
+    if (!hwaccel_name || !strcmp(hwaccel_name, "none"))
+        rhw->hwaccel_id = HWACCEL_NONE;
+    else if (!strcmp(hwaccel_name, "auto"))
+        rhw->hwaccel_id = HWACCEL_AUTO;
+    else {
+        int i;
+        for (i = 0; hwaccels[i].name; i++) {
+            if (!strcmp(hwaccels[i].name, hwaccel_name)) {
+                RING_DBG("Found match for hwaccel: %s", hwaccel_name);
+                rhw->hwaccel_id = hwaccels[i].id;
+                break;
+            }
+        }
+
+        if (!rhw->hwaccel_id) {
+            RING_ERR("Unrecognized hardware acceleration: %s", hwaccel_name);
+            return -1;
+        }
+    }
+    rhw->hwaccel_pix_fmt = AV_PIX_FMT_NONE;
+
+    decoderCtx_->opaque = rhw; // store for later
+    decoderCtx_->get_format = get_format;
+    decoderCtx_->get_buffer2 = get_buffer;
+    decoderCtx_->thread_safe_callbacks = 1;
+    rhw->dec_ctx = decoderCtx_;
+#endif // USE_HWACCEL
+
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
@@ -314,13 +359,22 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-
     av_packet_unref(&inpacket);
 
     if (len <= 0)
         return Status::DecodeError;
 
     if (frameFinished) {
+#ifdef USE_HWACCEL
+        RingHWContext *rhw = static_cast<RingHWContext*>(decoderCtx_->opaque);
+        bool should_retrieve = (frame->format == rhw->hwaccel_pix_fmt);
+        if (rhw->hwaccel_retrieve_data && should_retrieve) {
+            if (rhw->hwaccel_retrieve_data(decoderCtx_, frame) < 0)
+                return Status::DecodeError;
+        }
+        rhw->hwaccel_retrieved_pix_fmt = static_cast<AVPixelFormat>(frame->format);
+#endif // USE_HWACCEL
+
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
