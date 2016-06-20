@@ -10,4 +10,5 @@ if RING_ACCEL
 libosxvideo_la_SOURCES += videotoolbox.h videotoolbox.mm
 endif
 
-AM_OBJCXXFLAGS = -std=c++11
+AM_LIBTOOLFLAGS = --tag=CXX
+AM_OBJCXXFLAGS = -std=c++11 $(CXXFLAGS)

@@ -13,6 +13,10 @@ RING_VIDEO_LIBS+= \
                 ./media/video/v4l2/libv4l2.la
 endif
 endif
+if HAVE_IOS
+RING_VIDEO_LIBS+= \
+                ./media/video/osxvideo/libosxvideo.la
+endif
 if HAVE_OSX
 RING_VIDEO_LIBS+= \
                 ./media/video/osxvideo/libosxvideo.la
