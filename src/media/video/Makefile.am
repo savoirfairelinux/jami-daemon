@@ -17,6 +17,11 @@ SUBDIRS+= \
     osxvideo
 endif
 
+if HAVE_IOS
+SUBDIRS+= \
+    osxvideo
+endif
+
 if HAVE_WIN32
 SUBDIRS+= \
 	winvideo
