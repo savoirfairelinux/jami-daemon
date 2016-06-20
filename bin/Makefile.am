@@ -29,3 +29,7 @@ dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
 
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
 endif
+
+if RING_RESTCYTHON
+SUBDIRS=restcython
+endif
