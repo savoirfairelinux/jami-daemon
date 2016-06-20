@@ -3,7 +3,11 @@
 UUID_VERSION := 1.0.2
 UUID_URL := $(SF)/libuuid/libuuid-$(UUID_VERSION).tar.gz
 
+ifndef HAVE_IOS
 ifeq ($(call need_pkg,"uuid >= 2.0.0"),)
+PKGS_FOUND += uuid
+endif
+else
 PKGS_FOUND += uuid
 endif
 
