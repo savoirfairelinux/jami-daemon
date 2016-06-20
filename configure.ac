@@ -401,6 +401,19 @@ AS_IF([test "x$with_restcpp" = "xyes"], [
     AM_CONDITIONAL(RING_RESTCPP, true)],
     AM_CONDITIONAL(RING_RESTCPP, false));
 
+# Rest python with Cython
+AC_ARG_WITH([restcython],
+    AS_HELP_STRING([--with-restcython], [enable rest support with Cython]))
+
+AS_IF([test "x$with_restcython" = xyes], [
+    AS_AC_EXPAND(SBINDIR, $sbindir)
+    AC_SUBST(LIBDIR)
+
+    AC_CONFIG_FILES([bin/restcython/Makefile])
+
+    AM_CONDITIONAL(RING_RESTCYTHON, true)],
+    AM_CONDITIONAL(RING_RESTCYTHON, false));
+
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"

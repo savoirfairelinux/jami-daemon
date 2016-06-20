@@ -47,3 +47,21 @@ dring_CXXFLAGS= -g \
 
 dring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
 endif
+
+if RING_RESTCYTHON
+SUBDIRS=restcython
+
+all:
+	cp restcython/dring .
+	chmod +x dring
+
+install:
+	mkdir -p /opt/dring_cython/
+	./restcython/install.sh restcython /opt/dring_cython/
+	sudo cp /opt/dring_cython/restcython/dring /opt/dring_cython/dring
+	chmod +x /opt/dring_cython/dring
+	ln -s /opt/dring_cython/dring /usr/bin/dring
+
+clean:
+	rm -f dring
+endif
