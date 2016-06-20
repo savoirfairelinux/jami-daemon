@@ -32,6 +32,7 @@ ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
 	$(APPLY) $(SRC)/gnutls/format-security.patch
+	$(APPLY) $(SRC)/gnutls/dtls-packet-reordering.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)

@@ -133,7 +133,7 @@ public:
     };
 
     TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id, const TlsParams& params,
-               const TlsSessionCallbacks& cbs, bool anonymous=false);
+               const TlsSessionCallbacks& cbs, bool anonymous=true);
     ~TlsSession();
 
     // Returns the TLS session type ('server' or 'client')

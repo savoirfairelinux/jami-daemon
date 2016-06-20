@@ -1,0 +1,5 @@
+--- a/lib/gnutls_buffers.c
++++ b/lib/gnutls_buffers.c
+@@ -1033 +1033 @@
+-		    && hsk->end_offset >=
++		    && hsk->end_offset + 1 >=
