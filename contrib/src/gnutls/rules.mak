@@ -30,6 +30,7 @@ endif
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 	$(APPLY) $(SRC)/gnutls/format-security.patch
+	$(APPLY) $(SRC)/gnutls/dtls-packet-reordering.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
