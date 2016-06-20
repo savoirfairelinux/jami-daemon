@@ -71,8 +71,10 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& uniqueID)
 
     available_sizes_.reserve(avDevice_.formats.count);
     for (AVCaptureDeviceFormat* format in avDevice_.formats) {
+#if !TARGET_OS_IPHONE
         auto dimensions = CMVideoFormatDescriptionGetDimensions(format.formatDescription);
         available_sizes_.emplace_back(dimensions.width, dimensions.height);
+#endif
     }
 }
 
