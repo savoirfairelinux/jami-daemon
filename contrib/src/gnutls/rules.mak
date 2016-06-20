@@ -4,7 +4,9 @@ GNUTLS_VERSION := 3.4.10
 GNUTLS_URL := ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
-ifeq ($(call need_pkg,"gnutls >= 3.3.19"),)
+# We need at least the 3.4.10, but DTLS handshake re-ordered packet fix is only available since 3.4.14
+# So we patch the 3.4.10 until official release of 3.4.14
+ifeq ($(call need_pkg,"gnutls >= 3.4.14"),)
 PKGS_FOUND += gnutls
 endif
 
@@ -32,6 +34,7 @@ ifndef HAVE_IOS
 	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
 endif
 	$(APPLY) $(SRC)/gnutls/format-security.patch
+	$(APPLY) $(SRC)/gnutls/dtls-packet-reordering.patch
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
