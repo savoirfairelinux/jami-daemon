@@ -1,0 +1,186 @@
+{
+    "api": {
+        "version": "0.1",
+        "description": "Ring API - REST documentation",
+        "license": "GPLv3",
+        "url": "https://github.com/sevaivanov/ring-api/",
+        "authors": {
+            "Seva Ivanov": "seva.ivanov@savoirfairelinux.com",
+            "Simon Zeni": "simon.zeni@savoirfairelinux.com"
+        },
+        "syntax": {
+            "types": {
+                "GET": "Get",
+                "POST": "Create",
+                "PUT": "Update",
+                "DELETE": "Delete"
+            },
+            "template": {
+                "/resource/": {
+                    "type1": "Function name of libring <interface.h>",
+                    "type2": {
+                        "argument": {
+                            "value1": "Function name of libring <interface.h>",
+                            "value2": "Function name of libring <interface.h>"
+                        }
+                    }
+                }
+            },
+            "comments": "Not allowed in JSON, use spaces instead",
+            "empty_lines": {
+                1: "Under same resource but more than 2 of same subresource",
+                2: "Different root resources"
+            },
+            "TODO": "Unfinished tasks"
+        }
+    },
+
+    "/account/": {
+       "GET": {
+            "type": {
+                "SIP": "getAccountTemplate",
+                "IAX": "getAccountTemplate",
+                "IP2IP": "getAccountTemplate",
+                "RING": "getAccountTemplate"
+            }
+        },
+        "POST": "addAccount"
+    },
+
+    "/accounts/": {
+        "GET": "getAccountList"
+    },
+
+    "/accounts/<account_id>/": {
+        "DELETE": "removeAccount"
+    },
+
+    "/accounts/<account_id>/details/": {
+        "GET": {
+            "type": {
+                "default": "getAccountDetails",
+                "volatile": "getVolatileAccountDetails"
+            }
+        },
+        "PUT": "setAccountDetails"
+    },
+
+    "/accounts/<account_id>/ciphers/": {
+        "GET": "getSupportedCiphers"
+    },
+
+    "/accounts/<account_id>/codecs/": {
+        "GET": {
+            "type": {
+                "active": "getActiveCodecList",
+                "details": "getCodecDetails"
+            }
+        },
+        "PUT": {
+            "type": {
+                "active": "setActiveCodecList",
+                "details": "setCodecDetails"
+            }
+        }
+    },
+
+    "/accounts/<account_id>/call/": {
+        "POST": {
+            "ring_id": "placeCall"
+        }
+    },
+
+    "/accounts/<account_id>/certificates/<cert_id>/": {
+        "GET": {
+            "action": {
+                "validate": "validateCertificate"
+            }
+        },
+        "PUT": {
+            "status": {
+                "UNDEFINED": "setCertificateStatus",
+                "ALLOWED": "setCertificateStatus",
+                "BANNED": "setCertificateStatus"
+            }
+        }
+    },
+
+    "/calls/<call_id>/": {
+        "PUT": {
+            "action": [
+                "accept",
+                "refuse",
+                "hangup",
+                "hold",
+                "unhold"
+            ]
+        }
+    },
+
+    "/accounts/<account_id>/message/": {
+        "GET": "getMessageStatus",
+        "POST": "sendAccountTextMessage"
+    },
+
+    "/codecs/": {
+        "GET": "getCodecList"
+    },
+
+    "/crypto/tls/": {
+        "GET": {
+            "type": {
+                "settings": "getTlsDefaultSettings",
+                "method": "getSupportedTlsMethod"
+            }
+        }
+    },
+
+
+    "/certificates/": {
+        "GET": "getPinnedCertificates"
+    },
+
+    "/certificate/<cert_id>/": {
+        "GET": "getCertificateDetails",
+        "POST": {
+            "action": {
+                "pin": "pinCertificate",
+                "pin_remote": "pinRemoteCertificate",
+                "unpin": "unpinCertificate"
+            }
+        }
+    },
+
+    "/audio/plugins/": {
+        "GET": "getAudioPluginList"
+    },
+
+    "/video/devices/": {
+        "GET": {
+            "type": {
+                "all": "getDeviceList",
+                "default": "getDefaultDevice"
+            }
+        },
+        "PUT": {
+            "type": {
+                "default": "setDefaultDevice"
+            }
+        }
+    },
+
+    "/video/<device_name>/settings/": {
+        "GET": "getSettings",
+        "PUT": "applySettings"
+    },
+
+    "/video/camera/": {
+        "GET": "hasCameraStarted",
+        "PUT": {
+            "action": {
+                "start": "startCamera",
+                "stop": "stopCamera"
+            }
+        }
+    }
+}

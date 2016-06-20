@@ -1,0 +1,39 @@
+#!/bin/sh
+
+SCRIPT=$(readlink -f $0)
+DIR=`dirname $SCRIPT`
+path=""
+
+echo "Searching for libring.so.0 path"
+
+if [ -f /usr/lib/libring.so.0 ]; then
+    path="/usr/lib/"
+
+elif [ -f /usr/local/lib/libring.so.0 ]; then
+    path="/usr/local/lib"
+
+elif [ -f "$DIR"/../src/.libs/libring.so.0 ]; then
+    path="$DIR/../src/.libs"
+
+else
+    echo "Launching a find command in home, this may take a while "
+    path="$(find /home -name libring.so.0 -printf '%h\n')"
+
+    if [ "$path" == "" ]; then
+        echo "find in /home failed"
+        echo "Launching a find command in /, this may take a while"
+        path="$(find / -name libring.so.0 -printf '%h\n' 2>/dev/null)"
+    fi
+
+    if [ "$path" == "" ]; then
+        echo "Can't find libring.so on your computer"
+        echo "Are you sure you have the ring-daemon somewhere on your computer?"
+        echo "Go see https://tuleap.ring.cx for more informations"
+        exit
+
+    fi
+fi
+
+echo "libring.so path : $path "
+
+LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$path "$DIR"/restcython/client.py $@

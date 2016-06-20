@@ -283,12 +283,12 @@ if test "${SYS}" = "linux"; then
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
-	[AS_HELP_STRING([--without-alsa], [disable support for alsa])],
-	[],
-	[with_alsa=yes])
+    [AS_HELP_STRING([--without-alsa], [disable support for alsa])],
+    [],
+    [with_alsa=yes])
 AS_IF([test "x$with_alsa" = "xyes"], [
        PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development files]))
-	]);
+    ]);
 
 AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
 fi
@@ -383,6 +383,19 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
+# Rest python with Cython
+AC_ARG_WITH([restcython],
+    [AS_HELP_STRING([--with-restcython], [enable rest support with Cython])],
+    [with_restcython=yes],
+    [with_restcython=no])
+AS_IF([test "x$with_restcython" = xyes], [
+    AS_AC_EXPAND(SBINDIR, $sbindir)
+    AC_SUBST(SBINDIR)
+
+    AC_CONFIG_FILES([bin/restcython/Makefile])
+
+    AM_CONDITIONAL(RING_RESTCYTHON, true)],
+    AM_CONDITIONAL(RING_RESTCYTHON, false));
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
@@ -579,7 +592,7 @@ AS_IF([test "x$with_upnp" = "xyes"],
       ])
 
 AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
-	[Define if you have shared memory support])
+    [Define if you have shared memory support])
 
 # DOXYGEN
 # required dependency(ies): doxygen
