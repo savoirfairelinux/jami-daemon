@@ -930,6 +930,7 @@ RingAccount::doRegister_()
                 for (;req != this_.trustRequests_.end(); ++req)
                     if (req->from == v.from) {
                         req->received = std::chrono::system_clock::now();
+                        req->payload = v.payload;
                         break;
                     }
                 if (req == this_.trustRequests_.end()) {
