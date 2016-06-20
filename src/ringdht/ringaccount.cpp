@@ -930,6 +930,7 @@ RingAccount::doRegister_()
                 for (;req != this_.trustRequests_.end(); ++req)
                     if (req->from == v.from) {
                         req->received = std::chrono::system_clock::now();
+                        req->payload = v.payload;
                         break;
                     }
                 if (req == this_.trustRequests_.end()) {
@@ -1374,6 +1375,9 @@ RingAccount::discardTrustRequest(const std::string& from)
 void
 RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
+    RING_DBG("sending payload: %ld", payload.size());
+    for (auto i = payload.begin(); i != payload.end(); ++i)
+        RING_DBG("value: %04X", *i);
     setCertificateStatus(to, tls::TrustStore::PermissionStatus::ALLOWED);
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
