@@ -6,4 +6,5 @@ libosxvideo_la_SOURCES = \
 	video_device_impl.mm \
 	video_device_monitor_impl.mm
 
-AM_OBJCXXFLAGS = -std=c++11
+AM_LIBTOOLFLAGS = --tag=CXX
+AM_OBJCXXFLAGS = -std=c++11 $(CXXFLAGS)
