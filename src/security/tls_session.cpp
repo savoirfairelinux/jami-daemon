@@ -28,7 +28,6 @@
 #include "ice_transport.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "intrin.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
@@ -536,7 +535,7 @@ TlsSession::cleanup()
 }
 
 TlsSessionState
-TlsSession::handleStateSetup(UNUSED TlsSessionState state)
+TlsSession::handleStateSetup(TlsSessionState /*state*/)
 {
     RING_DBG("[TLS] Start %s DTLS session", typeName());
 
