@@ -25,7 +25,6 @@
 #include <iax/iax-client.h>
 #include <iax/frame.h>
 
-#include "intrin.h"
 #include "iaxcall.h"
 #include "logger.h"
 #include "manager.h"
@@ -146,7 +145,7 @@ IAXCall::answer()
 }
 
 void
-IAXCall::hangup(int reason UNUSED)
+IAXCall::hangup(int /*reason*/)
 {
     Manager::instance().getRingBufferPool().unBindAll(getCallId());
 

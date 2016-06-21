@@ -34,7 +34,6 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
-#include "intrin.h" // UNUSED
 
 #include <functional>
 #include <string>
@@ -150,13 +149,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * If supported, send a text message from this account.
          * @return a token to query the message status
          */
-        virtual uint64_t sendTextMessage(const std::string& to UNUSED,
-                                     const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
+        virtual uint64_t sendTextMessage(const std::string& to,
+                                     const std::map<std::string, std::string>& payloads) { return 0; }
 
         /**
          * Return the status corresponding to the token.
          */
-        virtual im::MessageStatus getMessageStatus(uint64_t id UNUSED) const {
+        virtual im::MessageStatus getMessageStatus(uint64_t id) const {
             return im::MessageStatus::UNKNOWN;
         }
 

@@ -41,7 +41,6 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
-#include "intrin.h"
 
 #if HAVE_DHT
 #include <opendht/rng.h>

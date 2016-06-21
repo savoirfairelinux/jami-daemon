@@ -57,7 +57,6 @@ using random_device = std::random_device;
 
 #include "upnp/upnp_control.h"
 #include "ip_utils.h"
-#include "intrin.h"
 #include "dring/account_const.h"
 
 namespace ring {

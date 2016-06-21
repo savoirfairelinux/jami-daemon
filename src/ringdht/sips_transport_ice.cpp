@@ -25,7 +25,6 @@
 #include "manager.h"
 #include "sip/sip_utils.h"
 #include "logger.h"
-#include "intrin.h"
 
 #include <opendht/crypto.h>
 
@@ -397,7 +396,7 @@ SipsIceTransport::pushChangeStateEvent(ChangeStateEventData&& ev)
 
 // - DO NOT BLOCK - (Called in TlsSession thread)
 void
-SipsIceTransport::onTlsStateChange(UNUSED TlsSessionState state)
+SipsIceTransport::onTlsStateChange(TlsSessionState state)
 {
     if (state == TlsSessionState::ESTABLISHED)
         updateTransportState(PJSIP_TP_STATE_CONNECTED);
