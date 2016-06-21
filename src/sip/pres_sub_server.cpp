@@ -29,7 +29,6 @@
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
 #include "sip_utils.h"
-#include "intrin.h"
 
 namespace ring {
 
@@ -37,7 +36,7 @@ using sip_utils::CONST_PJ_STR;
 
 /* Callback called when *server* subscription state has changed. */
 void
-PresSubServer::pres_evsub_on_srv_state(UNUSED pjsip_evsub *sub, UNUSED pjsip_event *event)
+PresSubServer::pres_evsub_on_srv_state(pjsip_evsub* /*sub*/, pjsip_event* /*event*/)
 {
     RING_ERR("PresSubServer::pres_evsub_on_srv_state() is deprecated and does nothing");
     return;

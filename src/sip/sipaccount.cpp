@@ -26,8 +26,6 @@
 #include "config.h"
 #endif
 
-#include "intrin.h"
-
 #include "sdp.h"
 #include "sipvoiplink.h"
 #include "sipcall.h"
@@ -160,7 +158,7 @@ SIPAccount::~SIPAccount()
 }
 
 std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string& from UNUSED)
+SIPAccount::newIncomingCall(const std::string& /*from*/)
 {
     auto& manager = Manager::instance();
     return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::INCOMING);
@@ -1537,7 +1535,7 @@ SIPAccount::getSupportedTlsProtocols()
     return availProtos;
 }
 
-void SIPAccount::keepAliveRegistrationCb(UNUSED pj_timer_heap_t *th, pj_timer_entry *te)
+void SIPAccount::keepAliveRegistrationCb(pj_timer_heap_t* /*th*/, pj_timer_entry* te)
 {
     SIPAccount *sipAccount = static_cast<SIPAccount *>(te->user_data);
 

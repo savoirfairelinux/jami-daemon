@@ -28,15 +28,15 @@ DBusInstance::DBusInstance(DBus::Connection& connection,
 {}
 
 void
-DBusInstance::Register(const int32_t& pid UNUSED,
-                       const std::string& name UNUSED)
+DBusInstance::Register(const int32_t& /*pid*/,
+                       const std::string& /*name*/)
 {
     ++count_;
 }
 
 
 void
-DBusInstance::Unregister(const int32_t& pid UNUSED)
+DBusInstance::Unregister(const int32_t& /*pid*/)
 {
     --count_;
 
