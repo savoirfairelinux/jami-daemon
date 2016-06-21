@@ -38,7 +38,6 @@
 #include "call_factory.h"
 #include "ring_types.h"
 #include "system_codec_container.h"
-#include "intrin.h" // for UNUSED
 
 namespace ring {
 
@@ -170,17 +169,14 @@ IAXVoIPLink::sendAudioFromMic()
         int compSize = 0;
         unsigned int audioRate = accountAudioCodec->audioformat.sample_rate;
         int outSamples;
-        UNUSED AudioBuffer *in;
 
         if (audioRate != mainBufferSampleRate) {
             rawBuffer_.setSampleRate(audioRate);
             resampledData_.setSampleRate(mainBufferSampleRate);
             resampler_->resample(rawBuffer_, resampledData_);
-            in = &resampledData_;
             outSamples = 0;
         } else {
             outSamples = samples;
-            in = &rawBuffer_;
         }
 
     /*

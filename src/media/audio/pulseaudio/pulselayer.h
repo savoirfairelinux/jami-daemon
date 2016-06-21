@@ -142,7 +142,7 @@ class PulseLayer : public AudioLayer {
         static void source_input_info_callback(pa_context *c,
                                                const pa_source_info *i,
                                                int eol, void *userdata);
-        static void sink_input_info_callback(pa_context *c,
+        static void sink_input_info_callback(pa_context* /*c*/,
                                              const pa_sink_info *i,
                                              int eol, void *userdata);
         static void server_info_callback(pa_context*,

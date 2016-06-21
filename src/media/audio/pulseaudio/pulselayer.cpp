@@ -21,7 +21,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "intrin.h"
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/resampler.h"
@@ -553,8 +552,8 @@ PulseLayer::context_changed_callback(pa_context* c,
 }
 
 void
-PulseLayer::contextChanged(pa_context* c UNUSED, pa_subscription_event_type_t type,
-                           uint32_t idx UNUSED)
+PulseLayer::contextChanged(pa_context* /*c*/, pa_subscription_event_type_t type,
+                           uint32_t /*idx*/)
 {
     bool reset = false;
 
@@ -657,7 +656,7 @@ void PulseLayer::server_info_callback(pa_context*, const pa_server_info *i, void
     context->readyCv_.notify_all();
 }
 
-void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_source_info *i, int eol, void *userdata)
+void PulseLayer::source_input_info_callback(pa_context* /*c*/, const pa_source_info *i, int eol, void *userdata)
 {
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
 
@@ -701,7 +700,7 @@ void PulseLayer::source_input_info_callback(pa_context *c UNUSED, const pa_sourc
     }
 }
 
-void PulseLayer::sink_input_info_callback(pa_context *c UNUSED, const pa_sink_info *i, int eol, void *userdata)
+void PulseLayer::sink_input_info_callback(pa_context* /*c*/, const pa_sink_info *i, int eol, void *userdata)
 {
     PulseLayer *context = static_cast<PulseLayer*>(userdata);
 

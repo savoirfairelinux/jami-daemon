@@ -26,7 +26,6 @@
 
 #include "fileutils.h"
 #include "logger.h"
-#include "intrin.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -72,7 +71,7 @@ namespace ring { namespace fileutils {
 
 // returns true if directory exists
 bool check_dir(const char *path,
-            mode_t UNUSED dirmode,
+            mode_t dirmode,
             mode_t parentmode)
 {
     DIR *dir = opendir(path);
@@ -264,7 +263,7 @@ loadFile(const std::string& path)
 void
 saveFile(const std::string& path,
         const std::vector<uint8_t>& data,
-        mode_t UNUSED mode)
+        mode_t mode)
 {
     std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
@@ -278,7 +277,7 @@ saveFile(const std::string& path,
 }
 
 static size_t
-dirent_buf_size(UNUSED DIR* dirp)
+dirent_buf_size(DIR* dirp)
 {
     long name_max;
 #if defined(HAVE_FPATHCONF) && defined(HAVE_DIRFD) && defined(_PC_NAME_MAX)
