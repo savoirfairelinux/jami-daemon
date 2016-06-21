@@ -32,7 +32,6 @@
 #include "logger.h"
 #include "manager.h"
 #include "call_factory.h"
-#include "intrin.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>
@@ -114,7 +113,7 @@ IAXAccount::loadConfig()
 
 template <>
 std::shared_ptr<IAXCall>
-IAXAccount::newIncomingCall(const std::string& from UNUSED)
+IAXAccount::newIncomingCall(const std::string& from)
 {
     auto& manager = Manager::instance();
     return manager.callFactory.newCall<IAXCall, IAXAccount>(*this, manager.getNewCallID(),
