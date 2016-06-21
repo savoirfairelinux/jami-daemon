@@ -21,7 +21,6 @@
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "logger.h"
-#include "intrin.h"
 
 #include <stdexcept>
 
@@ -117,7 +116,7 @@ void AudioStream::moved(pa_stream* s)
 void
 AudioStream::stateChanged(pa_stream* s)
 {
-    UNUSED char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
+    char str[PA_SAMPLE_SPEC_SNPRINT_MAX];
 
     switch (pa_stream_get_state(s)) {
         case PA_STREAM_CREATING:
