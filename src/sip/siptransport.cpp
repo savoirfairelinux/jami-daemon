@@ -27,7 +27,6 @@
 #include "ringdht/sips_transport_ice.h"
 
 #include "array_size.h"
-#include "intrin.h"
 #include "sipvoiplink.h"
 
 #include <pjsip.h>
@@ -96,7 +95,7 @@ SipTransport::~SipTransport()
 }
 
 bool
-SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t,
+SipTransport::isAlive(const std::shared_ptr<SipTransport>& t,
                       pjsip_transport_state state)
 {
     return state != PJSIP_TP_STATE_DISCONNECTED
