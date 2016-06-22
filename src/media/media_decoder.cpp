@@ -46,6 +46,10 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
+#if defined(RING_VIDEO) && defined(RING_ACCEL)
+    delete accel_;
+    decoderCtx_->opaque = nullptr;
+#endif
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
     if (inputCtx_)
@@ -91,6 +95,9 @@ int MediaDecoder::openInput(const DeviceParams& params)
     }
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
+
+    enableAccel_ = (params.enable_accel == "1");
+
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -259,6 +266,10 @@ int MediaDecoder::setupFromVideoData()
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
+#ifdef RING_ACCEL
+    video::HardwareAccel::setupAccel(decoderCtx_);
+#endif // RING_ACCEL
+
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
     if (!inputDecoder_) {
@@ -314,7 +325,6 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-
     av_packet_unref(&inpacket);
 
     if (len <= 0)
@@ -322,6 +332,11 @@ MediaDecoder::decode(VideoFrame& result)
 
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
+#if defined(RING_VIDEO) && defined(RING_ACCEL)
+        if (auto accel = static_cast<video::HardwareAccel*>(decoderCtx_->opaque))
+            if (!accel->extractData(decoderCtx_, result))
+                return Status::DecodeError;
+#endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
