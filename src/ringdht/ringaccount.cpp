@@ -1241,14 +1241,16 @@ RingAccount::loadDhParams(const std::string path)
         return {fileutils::loadFile(path)};
     } catch (const std::exception& e) {
         RING_WARN("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
-        auto params = tls::DhParams::generate();
-        try {
-            fileutils::saveFile(path, params.serialize(), 0600);
-            RING_DBG("Saved DhParams to file '%s'", path.c_str());
-        } catch (const std::exception& ex) {
-            RING_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
+        if (auto params = tls::DhParams::generate()) {
+            try {
+                fileutils::saveFile(path, params.serialize(), 0600);
+                RING_DBG("Saved DhParams to file '%s'", path.c_str());
+            } catch (const std::exception& ex) {
+                RING_WARN("Failed to save DhParams in file '%s': %s", path.c_str(), ex.what());
+            }
+            return params;
         }
-        return params;
+        return {};
     }
 }
 
