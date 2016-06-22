@@ -27,6 +27,10 @@
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
 
+#if USE_HWACCEL
+#include "video/hwaccel.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -91,6 +95,12 @@ int MediaDecoder::openInput(const DeviceParams& params)
     }
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
+
+#if USE_HWACCEL
+    if (!params.hwaccel.empty())
+        hwaccel = params.hwaccel;
+#endif
+
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -257,7 +267,15 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
+#if USE_HWACCEL
+    // hwaccel frame decoding is unstable, and may cost performance
+    // http://forum.doom9.org/showthread.php?p=1684864#post1684864
+    if (!hwaccel.empty() && hwaccel != "none")
+        decoderCtx_->thread_count = 1;
+#else
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
+#endif
+
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -265,6 +283,26 @@ int MediaDecoder::setupFromVideoData()
         RING_ERR("Unsupported codec");
         return -1;
     }
+
+#if USE_HWACCEL
+    // hwaccel info is stored in decoderCtx_->opaque
+    if (find_hwaccel(decoderCtx_, hwaccel.c_str()) < 0) {
+        RING_ERR("Falling back to software decoding");
+        decoderCtx_->get_buffer2 = avcodec_default_get_buffer2;
+        decoderCtx_->get_format = avcodec_default_get_format;
+        // find_decoder is called again because it inits the threads
+        // avoid reinit if there can only be a single thread
+        int thread_count = std::thread::hardware_concurrency();
+        if (thread_count != 1) {
+            decoderCtx_->thread_count = thread_count;
+            inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+            if (!inputDecoder_) {
+                RING_ERR("Unsupported codec");
+                return -1;
+            }
+        }
+    }
+#endif // USE_HWACCEL
 
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
@@ -314,13 +352,23 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-
     av_packet_unref(&inpacket);
 
     if (len <= 0)
         return Status::DecodeError;
 
     if (frameFinished) {
+#if USE_HWACCEL
+        RingHWContext *rhw = static_cast<RingHWContext*>(decoderCtx_->opaque);
+        if (rhw) {
+            if (rhw->hwaccel_retrieve_data && frame->format == rhw->hwaccel_pix_fmt) {
+                if (rhw->hwaccel_retrieve_data(decoderCtx_, frame) < 0)
+                    return Status::DecodeError;
+            }
+            rhw->hwaccel_retrieved_pix_fmt = static_cast<AVPixelFormat>(frame->format);
+        }
+#endif // USE_HWACCEL
+
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
