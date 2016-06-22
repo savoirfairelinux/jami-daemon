@@ -324,14 +324,10 @@ MediaDecoder::decode(VideoFrame& result)
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
-            auto target = startTime_ + frame_time.real() * 1000000;
+            auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
-#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-                av_usleep(target - now);
-#else
-                usleep(target - now);
-#endif
+                std::this_thread::sleep_for(std::chrono::milliseconds(target - now));
             }
         }
         return Status::FrameFinished;
@@ -382,11 +378,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
             auto target = startTime_ + frame_time.real() * 1000000;
             auto now = av_gettime();
             if (target > now) {
-#if LIBAVUTIL_VERSION_CHECK(51, 34, 0, 61, 100)
-                av_usleep(target - now);
-#else
-                usleep(target - now);
-#endif
+                std::this_thread::sleep_for(std::chrono::microseconds(static_cast<std::uint32_t>(target - now)));
             }
         }
         return Status::FrameFinished;
