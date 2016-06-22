@@ -1,7 +1,11 @@
-FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
+FFMPEG_HASH := 55816c926955799de1ebb7e0a03a0ebb5ea95bcc
 FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
 
 ifdef HAVE_WIN32
+PKGS += ffmpeg
+endif
+
+ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
@@ -17,7 +21,8 @@ FFMPEGCONF += \
 		--enable-swscale \
 		--enable-protocols \
 		--disable-programs \
-		--disable-sdl
+		--disable-sdl \
+		--enable-debug --disable-optimizations --disable-stripping
 
 #enable muxers/demuxers
 FFMPEGCONF += \
@@ -91,6 +96,14 @@ FFMPEGCONF += \
 	--enable-dxva2
 endif
 
+ifdef HAVE_LINUX
+FFMPEGCONF += \
+		--enable-vaapi \
+		--enable-hwaccel=h264_vaapi \
+		--enable-hwaccel=mpeg4_vaapi \
+		--enable-hwaccel=h263_vaapi
+endif
+
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
 	--enable-indev=avfcapture \
@@ -158,12 +171,12 @@ FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
-ifeq ($(call need_pkg,"ffmpeg >= 2.6.1"),)
-PKGS_FOUND += ffmpeg
-endif
+#ifeq ($(call need_pkg,"ffmpeg >= 3.0.1"),)
+#PKGS_FOUND += ffmpeg
+#endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
-	$(call download_git,$(FFMPEG_GITURL),release/2.6, $(FFMPEG_HASH))
+	$(call download_git,$(FFMPEG_GITURL),release/3.0, $(FFMPEG_HASH))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	$(warning Not implemented.)

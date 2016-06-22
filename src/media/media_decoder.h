@@ -28,6 +28,10 @@
 
 #include "audio/audiobuffer.h"
 
+#if defined(RING_VIDEO) && defined(USE_HWACCEL)
+#include "video/hwaccel.h"
+#endif
+
 #include "rational.h"
 #include "noncopyable.h"
 
@@ -111,6 +115,11 @@ class MediaDecoder {
         const unsigned jitterBufferMaxSize_ {500};
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
+
+#if USE_HWACCEL
+        std::string hwaccel_;
+        std::unique_ptr<video::HardwareAccelProxy> proxy_;
+#endif
 
     protected:
         AVDictionary *options_ = nullptr;

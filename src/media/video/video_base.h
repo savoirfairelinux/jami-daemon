@@ -159,6 +159,7 @@ struct VideoSettings
     std::string channel {};
     std::string video_size {};
     std::string framerate {};
+    std::string hwaccel {};
 };
 
 }} // namespace ring::video
