@@ -81,6 +81,7 @@ VideoSettings::VideoSettings(const std::map<std::string, std::string>& settings)
     channel = extractString(settings, "channel");
     video_size = extractString(settings, "size");
     framerate = extractString(settings, "rate");
+    hwaccel = extractString(settings, "hwaccel");
 }
 
 std::map<std::string, std::string>
@@ -90,7 +91,8 @@ VideoSettings::to_map() const
         {"name", name},
         {"size", video_size},
         {"channel", channel},
-        {"rate", framerate}
+        {"rate", framerate},
+        {"hwaccel", hwaccel}
     };
 }
 
@@ -105,6 +107,7 @@ convert<ring::video::VideoSettings>::encode(const ring::video::VideoSettings& rh
     node["video_size"] = rhs.video_size;
     node["channel"] = rhs.channel;
     node["framerate"] = rhs.framerate;
+    node["hwaccel"] = rhs.hwaccel;
     return node;
 }
 
@@ -118,6 +121,7 @@ convert<ring::video::VideoSettings>::decode(const Node& node, ring::video::Video
     rhs.video_size = node["video_size"].as<std::string>();
     rhs.channel = node["channel"].as<std::string>();
     rhs.framerate = node["framerate"].as<std::string>();
+    rhs.hwaccel = node["hwaccel"].as<std::string>();
     return true;
 }
 
