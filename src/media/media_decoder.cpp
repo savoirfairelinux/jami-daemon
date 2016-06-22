@@ -27,6 +27,10 @@
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
 
+#if RING_VIDEO && USE_HWACCEL
+#include "video/hwaccel.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -91,6 +95,12 @@ int MediaDecoder::openInput(const DeviceParams& params)
     }
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
+
+#if RING_VIDEO && USE_HWACCEL
+    if (!params.hwaccel.empty())
+        hwaccel_ = params.hwaccel;
+#endif
+
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -257,7 +267,19 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 
+#if USE_HWACCEL
+    // hwaccel info is stored in decoderCtx_->opaque
+    if (find_hwaccel(decoderCtx_, hwaccel_.c_str()) < 0)
+        RING_ERR("Falling back to software decoding");
+    // hwaccel frame decoding is unstable, and may cost performance
+    // http://forum.doom9.org/showthread.php?p=1684864#post1684864
+    if (!decoderCtx_->rhw && decoderCtx_->rhw->hwaccel_id != HWACCEL_NONE)
+        decoderCtx_->thread_count = 1;
+    else
+        decoderCtx_->thread_count = std::thread::hardware_concurrency();
+#else
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
+#endif // USE_HWACCEL
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -314,13 +336,23 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-
     av_packet_unref(&inpacket);
 
     if (len <= 0)
         return Status::DecodeError;
 
     if (frameFinished) {
+#if USE_HWACCEL
+        RingHWContext *rhw = static_cast<RingHWContext*>(decoderCtx_->opaque);
+        if (rhw) {
+            if (rhw->hwaccel_retrieve_data && frame->format == rhw->hwaccel_pix_fmt) {
+                if (rhw->hwaccel_retrieve_data(decoderCtx_, frame) < 0)
+                    return Status::DecodeError;
+            }
+            rhw->hwaccel_retrieved_pix_fmt = static_cast<AVPixelFormat>(frame->format);
+        }
+#endif // USE_HWACCEL
+
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
