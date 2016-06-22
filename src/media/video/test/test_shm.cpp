@@ -49,7 +49,7 @@ sink_thread()
 
     while (!done) {
         sink.render(test_vec);
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     sink.stop();
     std::cerr << std::endl;
@@ -77,7 +77,7 @@ run_client()
     assert(dest.size() == test_data_str.size());
     while (not done and dest != test_data_str) {
         src.render(dest.data(), dest.size());
-        usleep(1000);
+        std::this_thread::sleep_for(std::chrono::microseconds(1000));
     }
     src.stop();
     std::cerr << "Got characters, exitting client process" << std::endl;
