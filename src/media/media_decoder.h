@@ -112,6 +112,10 @@ class MediaDecoder {
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
 
+#if defined(RING_VIDEO) && defined(USE_HWACCEL)
+        std::string hardwareAccelName_;
+#endif
+
     protected:
         AVDictionary *options_ = nullptr;
 };
