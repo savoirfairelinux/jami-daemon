@@ -1,4 +1,4 @@
-FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
+FFMPEG_HASH := 55816c926955799de1ebb7e0a03a0ebb5ea95bcc
 FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
 
 ifdef HAVE_WIN32
@@ -84,9 +84,21 @@ FFMPEGCONF += \
 		--enable-decoder=tiff
 
 FFMPEGCONF += \
-	--enable-indev=dshow \
-	--enable-indev=gdigrab \
-	--enable-dxva2
+		--enable-indev=dshow \
+		--enable-indev=gdigrab
+
+ifdef HAVE_WIN32
+FFMPEGCONF += \
+    --enable-dxva2
+endif
+
+ifdef HAVE_LINUX
+FFMPEGCONF += \
+		--enable-vaapi \
+		--enable-hwaccel=h264_vaapi \
+		--enable-hwaccel=mpeg4_vaapi \
+		--enable-hwaccel=h263_vaapi
+endif
 
 DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
@@ -145,7 +157,7 @@ PKGS_FOUND += ffmepg
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
-	$(call download_git,$(FFMPEG_GITURL),release/2.6, $(FFMPEG_HASH))
+	$(call download_git,$(FFMPEG_GITURL),release/3.0, $(FFMPEG_HASH))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
 	$(warning Not implemented.)
