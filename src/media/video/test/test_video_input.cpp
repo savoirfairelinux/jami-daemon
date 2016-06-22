@@ -18,7 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <unistd.h> // for sleep
+#include <thread>
 #include "test_video_input.h"
 #include "video_input.h"
 #include "media_const.h"
@@ -33,7 +33,7 @@ void VideoInputTest::testInput()
     std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep + std::string(getenv("DISPLAY") ? : ":0.0");
     VideoInput video;
     video.switchInput(resource);
-    usleep(10000);
+    std::this_thread::sleep_for(std::chrono::milliseconds(10000));
 }
 
 }}} // namespace ring::video::test
