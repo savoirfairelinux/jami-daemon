@@ -33,7 +33,8 @@ libvideo_la_SOURCES = \
 	video_receive_thread.cpp video_receive_thread.h \
 	video_sender.cpp video_sender.h \
 	video_rtp_session.cpp video_rtp_session.h \
-	sinkclient.cpp sinkclient.h
+	sinkclient.cpp sinkclient.h \
+	hwaccel.cpp hwaccel.h
 
 libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 
