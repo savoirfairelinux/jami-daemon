@@ -1,7 +1,11 @@
-FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
+FFMPEG_HASH := 60873bf992eab1d3bad8dd0fd11336363d44854d
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 ifdef HAVE_WIN32
+PKGS += ffmpeg
+endif
+
+ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
@@ -89,7 +93,19 @@ FFMPEGCONF += \
 	--enable-dxva2
 endif
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+ifdef HAVE_LINUX
+FFMPEGCONF += \
+	--enable-vaapi \
+	--enable-hwaccel=h264_vaapi \
+	--enable-hwaccel=mpeg4_vaapi \
+	--enable-hwaccel=h263_vaapi
+endif
+
+ifdef HAVE_MACOSX
+FFMPEGCONF += \
+	--enable-indev=avfcapture \
+	--enable-indev=avfgrab
+endif
 
 ifdef HAVE_IOS
 FFMPEGCONF += \
@@ -99,6 +115,8 @@ FFMPEGCONF += \
 	--enable-pic \
         --enable-indev=avfoundation
 endif
+
+DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 
 # Linux
 ifdef HAVE_LINUX
@@ -152,7 +170,7 @@ FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
-ifeq ($(call need_pkg,"ffmpeg >= 2.6.1"),)
+ifeq ($(call need_pkg,"ffmpeg >= 3.1.3"),)
 PKGS_FOUND += ffmpeg
 endif
 
