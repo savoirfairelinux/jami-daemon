@@ -125,7 +125,7 @@ VideoMixer::process()
     const std::chrono::duration<double> diff = now - lastProcess_;
     const double delay = FRAME_DURATION - diff.count();
     if (delay > 0)
-        usleep(delay * 1e6);
+        std::this_thread::sleep_for(std::chrono::microseconds(static_cast<std::uint32_t>(delay * 1e6)));
     lastProcess_ = now;
 
     VideoFrame& output = getNewFrame();
