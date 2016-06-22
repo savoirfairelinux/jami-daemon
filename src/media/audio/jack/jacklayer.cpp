@@ -251,7 +251,7 @@ JackLayer::ringbuffer_worker()
             return;
 
         // FIXME this is all kinds of evil
-        usleep(20000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20000));
 
         capture();
         playback();
