@@ -35,6 +35,10 @@ libvideo_la_SOURCES = \
 	video_rtp_session.cpp video_rtp_session.h \
 	sinkclient.cpp sinkclient.h
 
+if RING_ACCEL
+libvideo_la_SOURCES += accel.cpp accel.h
+endif
+
 libvideo_la_LIBADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 
 AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@
