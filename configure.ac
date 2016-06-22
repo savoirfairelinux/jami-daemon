@@ -120,7 +120,6 @@ AS_IF([test "$SYS" = linux],[
       AC_MSG_RESULT([no])
     ])
 ])
-
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl override platform specific check for dependent libraries
@@ -432,6 +431,27 @@ AS_IF([test "x$enable_video" != "xno"],
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
+dnl hardware acceleration is enabled by default
+AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable hardware acceleration]))
+AS_IF([test "x$enable_accel" != "xno"], [
+  AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
+  AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
+    PKG_CHECK_MODULES(LIBVA, [libva], ,
+      [AC_MSG_WARN([Missing libva package])])
+    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+      AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Have vaapi drm])
+      ], [AC_MSG_WARN([Could not find libva-drm])
+    ])
+    AC_CHECK_HEADER([X11/Xlib.h], [
+      AC_CHECK_LIB(X11, XOpenDisplay, [], [AC_MSG_WARN([Could not find X11])])
+      AC_DEFINE([HAVE_X11], [1], [Have x11])
+      PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
+        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Have vaapi x11])
+        ], [AC_MSG_WARN([Could not find libva-x11])
+      ])
+    ])
+  ])
+])
 
 # PTHREAD
 # required dependency(ies): libxpat

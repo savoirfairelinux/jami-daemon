@@ -2,8 +2,10 @@
 LIBAV_HASH := f851477889ae48e2f17073cf7486e1d5561b7ae4
 LIBAV_GITURL := git://git.libav.org/libav.git
 
+ifndef HAVE_LINUX
 ifndef HAVE_WIN32
 PKGS += libav
+endif
 endif
 
 #disable everything
