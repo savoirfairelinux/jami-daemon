@@ -78,6 +78,10 @@ public:
         return params_.get();
     }
 
+    explicit inline operator bool() const {
+        return bool(params_);
+    }
+
     /** Serialize data in PEM format */
     std::vector<uint8_t> serialize() const;
 

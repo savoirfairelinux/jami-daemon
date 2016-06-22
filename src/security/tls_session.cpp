@@ -71,6 +71,10 @@ DhParams::DhParams(const std::vector<uint8_t>& data)
 std::vector<uint8_t>
 DhParams::serialize() const
 {
+    if (!params_) {
+        RING_WARN("serialize() called on an empty DhParams");
+        return {};
+    }
     gnutls_datum_t out;
     if (gnutls_dh_params_export2_pkcs3(params_.get(), GNUTLS_X509_FMT_PEM, &out))
         return {};
@@ -779,6 +783,7 @@ DhParams
 DhParams::generate()
 {
     using clock = std::chrono::high_resolution_clock;
+    return {};
 
     auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_HIGH);
     RING_DBG("Generating DH params with %u bits", bits);
