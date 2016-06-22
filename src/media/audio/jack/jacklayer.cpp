@@ -250,8 +250,7 @@ JackLayer::ringbuffer_worker()
         if (status_ != Status::Started)
             return;
 
-        // FIXME this is all kinds of evil
-        usleep(20000);
+        std::this_thread::sleep_for(std::chrono::milliseconds(20));
 
         capture();
         playback();

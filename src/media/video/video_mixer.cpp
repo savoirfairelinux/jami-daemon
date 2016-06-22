@@ -44,7 +44,7 @@ private:
     std::mutex mutex_;
 };
 
-static constexpr const double FRAME_DURATION = 1/30.;
+static constexpr const auto FRAME_DURATION = std::chrono::duration<double>(1/30.);
 
 VideoMixer::VideoMixer(const std::string& id)
     : VideoGenerator::VideoGenerator()
@@ -122,10 +122,10 @@ void
 VideoMixer::process()
 {
     const auto now = std::chrono::system_clock::now();
-    const std::chrono::duration<double> diff = now - lastProcess_;
-    const double delay = FRAME_DURATION - diff.count();
-    if (delay > 0)
-        usleep(delay * 1e6);
+    const auto diff = now - lastProcess_;
+    const auto delay = FRAME_DURATION - diff;
+    if (delay.count() > 0)
+        std::this_thread::sleep_for(delay);
     lastProcess_ = now;
 
     VideoFrame& output = getNewFrame();
