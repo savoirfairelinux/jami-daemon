@@ -128,6 +128,8 @@ public:
                       settings.framerate.c_str());
         }
 
+        settings.enable_accel = "1";
+
         return settings;
     }
 
@@ -141,6 +143,7 @@ public:
         settings.channel = params.channel_name;
         settings.video_size = sizeToString(params.width, params.height);
         settings.framerate = ring::to_string(params.framerate.real());
+        settings.enable_accel = params.enable_accel;
         return settings;
     }
 
@@ -159,6 +162,7 @@ public:
         params.width = size.first;
         params.height = size.second;
         params.framerate = rateFromString(settings.channel, size, settings.framerate);
+        params.enable_accel = settings.enable_accel;
         setDeviceParams(params);
     }
 
