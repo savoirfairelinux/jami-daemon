@@ -120,7 +120,6 @@ AS_IF([test "$SYS" = linux],[
       AC_MSG_RESULT([no])
     ])
 ])
-
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl override platform specific check for dependent libraries
@@ -416,6 +415,22 @@ AS_IF([test "x$enable_video" != "xno"],
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
+dnl hwaccel is enabled by default
+AC_ARG_ENABLE([hwaccel], AS_HELP_STRING([--disable-hwaccel], [Disable hardware acceleration]))
+AS_IF([test "x$enable_hwaccel" != "xno"], [
+  AC_DEFINE([USE_HWACCEL], [1], [Allows use of hardware acceleration])
+  AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
+    PKG_CHECK_MODULES(LIBVA, [libva], , [AC_MSG_WARN([Missing libva package])])
+    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+      AC_DEFINE([HAVE_VAAPI_DRM], [1], [Have vaapi drm])
+      ], [AC_MSG_WARN([Could not find libva-drm])
+    ])
+    PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
+      AC_DEFINE([HAVE_VAAPI_X11], [1], [Have vaapi x11])
+      ], [AC_MSG_WARN([Could not find libva-x11])
+    ])
+  ])
+])
 
 # PTHREAD
 # required dependency(ies): libxpat
