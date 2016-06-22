@@ -44,6 +44,12 @@ class AVCodec;
 
 namespace ring {
 
+#if defined(RING_VIDEO) && defined(RING_ACCEL)
+namespace video {
+class HardwareAccel;
+}
+#endif
+
 class AudioFrame;
 class AudioFormat;
 class RingBuffer;
@@ -113,6 +119,11 @@ class MediaDecoder {
         const unsigned jitterBufferMaxSize_ {500};
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
+
+        bool enableAccel_ = true;
+#if defined(RING_VIDEO) && defined(RING_ACCEL)
+        std::shared_ptr<video::HardwareAccel> accel_;
+#endif
 
     protected:
         AVDictionary *options_ = nullptr;
