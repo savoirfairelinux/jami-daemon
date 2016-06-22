@@ -27,6 +27,10 @@
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
 
+#if defined(RING_VIDEO) && defined(USE_HWACCEL)
+#include "video/hwaccel.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -91,6 +95,12 @@ int MediaDecoder::openInput(const DeviceParams& params)
     }
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
+
+#if defined(RING_VIDEO) && defined(USE_HWACCEL)
+    if (!params.hwaccel.empty())
+        hwaccel_ = params.hwaccel;
+#endif
+
     int ret = avformat_open_input(
         &inputCtx_,
         params.input.c_str(),
@@ -214,7 +224,7 @@ int MediaDecoder::setupFromVideoData()
         avcodec_close(decoderCtx_);
 
     // Increase analyze time to solve synchronization issues between callers.
-    static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
+    static const unsigned MAX_ANALYZE_DURATION = 1; // time in seconds
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
@@ -258,6 +268,11 @@ int MediaDecoder::setupFromVideoData()
     }
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
+
+#ifdef USE_HWACCEL
+    auto proxy = new video::HardwareAccelProxy();
+    proxy->findHardwareAccel(decoderCtx_, hwaccel_);
+#endif
 
     // find the decoder for the video stream
     inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
@@ -314,13 +329,18 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-
     av_packet_unref(&inpacket);
 
     if (len <= 0)
         return Status::DecodeError;
 
     if (frameFinished) {
+#ifdef USE_HWACCEL
+        if (auto proxy = static_cast<video::HardwareAccelProxy*>(decoderCtx_->opaque))
+            if (proxy->retrieveData(decoderCtx_, frame) < 0)
+                return Status::DecodeError;
+#endif // USE_HWACCEL
+
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
