@@ -418,7 +418,11 @@ TlsSession::send_(const uint8_t* tx_data, std::size_t tx_size)
     size_t total_written = 0;
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
-        auto nwritten = gnutls_record_send(session_, tx_data + total_written, chunck_sz);
+        ssize_t nwritten;
+        auto data_seq = tx_data + total_written;
+        do {
+            nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
+        } while (nwritten == GNUTLS_E_INTERRUPTED or nwritten == GNUTLS_E_AGAIN);
         if (nwritten <= 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
@@ -444,8 +448,9 @@ TlsSession::sendRaw(const void* buf, size_t size)
         // log only on success
         ++stTxRawPacketCnt_;
         stTxRawBytesCnt_ += size;
+        return ret;
     }
-    return ret;
+    return -1;
 }
 
 // Called by GNUTLS to send encrypted packet to low-level transport.
@@ -458,7 +463,7 @@ TlsSession::sendRawVec(const giovec_t* iov, int iovcnt)
         const giovec_t& dat = iov[i];
         ssize_t ret = sendRaw(dat.iov_base, dat.iov_len);
         if (ret < 0)
-            return ret;
+            return -1;
         sent += ret;
     }
     return sent;
