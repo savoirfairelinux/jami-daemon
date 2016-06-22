@@ -120,7 +120,6 @@ AS_IF([test "$SYS" = linux],[
       AC_MSG_RESULT([no])
     ])
 ])
-
 AM_CONDITIONAL(HAVE_ANDROID, test "${HAVE_ANDROID}" = "1")
 
 dnl override platform specific check for dependent libraries
@@ -412,6 +411,20 @@ AS_IF([test "x$enable_video" != "xno"],
     [
      AM_CONDITIONAL(RING_VIDEO, false)
      ]);
+
+AS_IF([test "x$enable_hwaccel" != "xno"], [
+  AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
+    PKG_CHECK_MODULES(LIBVA, [libva], , [AC_MSG_WARN([Missing libva package])])
+    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+      AC_DEFINE([HAVE_VAAPI_DRM], [1], [Have vaapi drm])
+      AM_CONDITIONAL([HAVE_VAAPI_DRM], [true])
+      ], [AC_MSG_WARN([Could not find libva-drm])])
+    PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
+      AC_DEFINE([HAVE_VAAPI_X11], [1], [Have vaapi x11])
+      AM_CONDITIONAL([HAVE_VAAPI_X11], [true])
+      ], [AC_MSG_WARN([Could not find libva-x11])])
+  ])
+])
 
 dnl TLS support is enabled if it's installed and up to date
 AC_ARG_WITH([tls],
