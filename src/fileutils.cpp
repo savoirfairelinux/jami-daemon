@@ -42,7 +42,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifndef WIN32_NATIVE
 #include <libgen.h>
+#endif
+
 #include <dirent.h>
 #include <signal.h>
 #include <unistd.h>
@@ -349,10 +352,12 @@ static std::string cache_path;
 static std::string config_path;
 #else
 static char *program_dir = NULL;
+#ifndef WIN32_NATIVE
 void set_program_dir(char *program_path)
 {
     program_dir = dirname(program_path);
 }
+#endif
 #endif
 
 std::string

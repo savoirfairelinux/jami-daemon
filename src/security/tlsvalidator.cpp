@@ -44,7 +44,11 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifndef WIN32_NATIVE
 #include <libgen.h>
+#endif
+
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <netinet/tcp.h>
@@ -843,7 +847,12 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
     char* dup = strdup(privateKeyPath_.c_str());
+#ifndef WIN32_NATIVE
     const char* dir = dirname(dup);
+#else
+    char* dir;
+    _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
+#endif
 
     struct stat statbuf;
     int err = stat(dir, &statbuf);
@@ -861,7 +870,12 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
 TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
 {
     char* dup = strdup(certificatePath_.c_str());
+#ifndef WIN32_NATIVE
     const char* dir = dirname(dup);
+#else
+    char* dir;
+    _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
+#endif
 
     struct stat statbuf;
     int err = stat(dir, &statbuf);
