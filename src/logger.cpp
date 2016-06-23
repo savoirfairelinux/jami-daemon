@@ -24,7 +24,13 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
+
+#ifdef WIN32_NATIVE
+#include <sys_time.h>
+#include <ciso646>
+#else
 #include <sys/time.h>
+#endif
 
 #include <string>
 #include <sstream>
@@ -41,7 +47,7 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef WIN32
+#if defined _WIN32 || defined WIN32_NATIVE
 #include "winsyslog.h"
 #endif
 
@@ -65,9 +71,17 @@
 #define YELLOW "\033[01;33m"
 #define CYAN "\033[22;36m"
 #else
+#ifdef WIN32_NATIVE
+#define FOREGROUND_WHITE 0x000f
+#define RED FOREGROUND_RED + 0x0008
+#define YELLOW FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
+#define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN + 0x0008
+#define LIGHT_GREEN FOREGROUND_GREEN + 0x0008
+#else
 #define RED FOREGROUND_RED
 #define YELLOW FOREGROUND_RED + FOREGROUND_GREEN
 #define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN
+#endif
 #endif
 
 static int consoleLog;
@@ -123,6 +137,22 @@ logger(const int level, const char* format, ...)
 }
 
 void
+wlogger(const int level, const char* file, const char* format, ...)
+{
+    if (!debugMode && level == LOG_DEBUG)
+        return;
+
+    const char* file_name_only = FILE_NAME_ONLY(file);
+    std::string buffer(file_name_only);
+    buffer.append(format);
+
+    va_list ap;
+    va_start(ap, format);
+    vlogger(level, buffer.c_str(), ap);
+    va_end(ap);
+}
+
+void
 vlogger(const int level, const char *format, va_list ap)
 {
     if (!debugMode && level == LOG_DEBUG)
@@ -137,8 +167,12 @@ vlogger(const int level, const char *format, va_list ap)
         const char* color_header = CYAN;
         const char* color_prefix = "";
 #else
-        WORD color_header = CYAN;
+#ifdef WIN32_NATIVE
+        WORD color_prefix = LIGHT_GREEN;
+#else
         WORD color_prefix = FOREGROUND_GREEN;
+#endif
+        WORD color_header = CYAN;
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
         WORD saved_attributes;
