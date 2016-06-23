@@ -21,7 +21,7 @@
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "logger.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include <stdexcept>
 

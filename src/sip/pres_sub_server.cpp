@@ -29,7 +29,7 @@
 #include "pres_sub_server.h"
 #include "client/ring_signal.h"
 #include "sip_utils.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 namespace ring {
 
