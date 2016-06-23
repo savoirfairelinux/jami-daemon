@@ -46,7 +46,11 @@
 #include "account_const.h"
 #include "client/ring_signal.h"
 
+#ifdef WIN32_NATIVE
+#include "windirent.h"
+#else
 #include <dirent.h>
+#endif
 
 #include <cerrno>
 #include <cstring>
