@@ -32,7 +32,7 @@
 #include "logger.h"
 #include "manager.h"
 #include "call_factory.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include "config/yamlparser.h"
 #include <yaml-cpp/yaml.h>

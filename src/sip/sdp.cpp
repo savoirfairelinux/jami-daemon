@@ -39,7 +39,7 @@
 
 #include "media_codec.h"
 #include "system_codec_container.h"
-#include "intrin.h" // for UNUSED
+#include "compiler_intrinsics.h" // for UNUSED
 
 #if HAVE_DHT
 #include <opendht/rng.h>
