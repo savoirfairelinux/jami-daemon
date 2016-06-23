@@ -34,7 +34,7 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
-#include "intrin.h" // UNUSED
+#include "compiler_intrinsics.h" // UNUSED
 
 #include <functional>
 #include <string>

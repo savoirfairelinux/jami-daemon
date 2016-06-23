@@ -26,7 +26,7 @@
 #include "config.h"
 #endif
 
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include "sdp.h"
 #include "sipvoiplink.h"

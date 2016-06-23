@@ -45,7 +45,7 @@
 #include "logger.h"
 #include "ip_utils.h"
 #include "upnp_igd.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;

@@ -35,7 +35,7 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 namespace DRing {
 

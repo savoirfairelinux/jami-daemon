@@ -111,7 +111,7 @@ libring_la_SOURCES = \
 		noncopyable.h \
 		utf8_utils.h \
 		ring_types.h \
-		intrin.h \
+		compiler_intrinsics.h \
 		array_size.h \
 		account_schema.h \
 		registration_states.h \
