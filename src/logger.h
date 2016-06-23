@@ -34,8 +34,13 @@ extern "C" {
 /**
  * Print something, coloring it depending on the level
  */
-void logger(const int level, const char* format, ...)
-#ifdef _WIN32
+
+#ifdef WIN32_NATIVE
+  void wlogger(const int level, const char* file, const char* format, ...);
+#else
+  void logger(const int level, const char* format, ...)
+#endif
+#if defined(_WIN32) && !defined(WIN32_NATIVE)
     __attribute__((format(gnu_printf, 2, 3)))
 #elif defined(__GNUC__)
     __attribute__((format(printf, 2, 3)))
@@ -70,7 +75,12 @@ void strErr();
 #define ENDL "\n"
 
 // Do not remove the "| " in following without modifying vlogger() code
+#ifndef WIN32_NATIVE
+#define FILE_NAME_ONLY(X) (strrchr(X, '\\') ? strrchr(X, '\\') + 1 : X)
 #define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
+#else
+#define LOG_FORMAT(M, ...) ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
+#endif
 
 #ifdef __ANDROID__
 
@@ -105,7 +115,11 @@ void strErr();
 
 #define FILE_NAME __FILE__
 
+#ifndef WIN32_NATIVE
 #define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
+#else
+#define LOGGER(M, LEVEL, ...) wlogger(LEVEL, FILE_NAME,LOG_FORMAT(M, ##__VA_ARGS__))
+#endif
 
 #else
 
