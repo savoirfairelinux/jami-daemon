@@ -44,7 +44,13 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#ifdef WIN32_NATIVE
+#include "winlibgen.h"
+#else
 #include <libgen.h>
+#endif
+
 #ifndef _WIN32
 #include <sys/socket.h>
 #include <netinet/tcp.h>

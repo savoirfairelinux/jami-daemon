@@ -42,7 +42,12 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef WIN32_NATIVE
+#include "winlibgen.h"
+#else
 #include <libgen.h>
+#endif
+
 #include <dirent.h>
 #include <signal.h>
 #include <unistd.h>
