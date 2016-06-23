@@ -42,7 +42,11 @@
 #include "client/ring_signal.h"
 #include "upnp/upnp_context.h"
 
+#ifdef WIN32_NATIVE
+#include "windirent.h"
+#else
 #include <dirent.h>
+#endif
 
 #include <cerrno>
 #include <cstring>
