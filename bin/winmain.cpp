@@ -22,7 +22,13 @@
 #include <thread>
 #include <cstring>
 #include <signal.h>
+
+#ifdef WIN32_NATIVE
+#include "wingetopt.h"
+#else
 #include <getopt.h>
+#endif
+
 #include <string>
 
 #include "dring.h"
