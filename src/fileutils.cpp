@@ -26,7 +26,7 @@
 
 #include "fileutils.h"
 #include "logger.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>

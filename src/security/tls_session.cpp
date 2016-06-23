@@ -28,7 +28,7 @@
 #include "ice_transport.h"
 #include "logger.h"
 #include "noncopyable.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
