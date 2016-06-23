@@ -25,7 +25,7 @@
 #include "manager.h"
 #include "sip/sip_utils.h"
 #include "logger.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #include <opendht/crypto.h>
 

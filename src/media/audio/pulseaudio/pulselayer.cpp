@@ -21,7 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 #include "audiostream.h"
 #include "pulselayer.h"
 #include "audio/resampler.h"
