@@ -38,7 +38,7 @@
 #include "call_factory.h"
 #include "ring_types.h"
 #include "system_codec_container.h"
-#include "intrin.h" // for UNUSED
+#include "compiler_intrinsics.h" // for UNUSED
 
 namespace ring {
 

@@ -23,6 +23,10 @@
 #ifndef INTRIN_H_
 #define INTRIN_H_
 
+#ifdef WIN32_NATIVE
+#define UNUSED
+#else
 #define UNUSED __attribute__((__unused__))
+#endif
 
 #endif // INTRIN_H_

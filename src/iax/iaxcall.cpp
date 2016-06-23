@@ -25,7 +25,7 @@
 #include <iax/iax-client.h>
 #include <iax/frame.h>
 
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 #include "iaxcall.h"
 #include "logger.h"
 #include "manager.h"

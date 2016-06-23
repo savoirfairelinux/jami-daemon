@@ -27,7 +27,7 @@
 #include "ringdht/sips_transport_ice.h"
 
 #include "array_size.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 #include "sipvoiplink.h"
 
 #include <pjsip.h>
