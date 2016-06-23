@@ -26,7 +26,7 @@
 
 #include "fileutils.h"
 #include "logger.h"
-#include "intrin.h"
+#include "compiler_intrinsics.h"
 
 #ifdef __APPLE__
 #include <TargetConditionals.h>
@@ -43,7 +43,13 @@
 #include <sys/stat.h>
 
 #include <libgen.h>
+
+#ifdef WIN32_NATIVE
+#include "windirent.h"
+#else
 #include <dirent.h>
+#endif
+
 #include <signal.h>
 #include <unistd.h>
 #include <fcntl.h>
