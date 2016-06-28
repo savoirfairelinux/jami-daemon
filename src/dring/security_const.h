@@ -28,12 +28,12 @@ namespace Status {
 constexpr static char UNDEFINED [] = "UNDEFINED";
 constexpr static char ALLOWED   [] = "ALLOWED";
 constexpr static char BANNED    [] = "BANNED";
-} //namespace Dring::Certificate::Status
+} //namespace DRing::Certificate::Status
 
 namespace TrustStatus {
 constexpr static char UNTRUSTED [] = "UNTRUSTED";
 constexpr static char TRUSTED   [] = "TRUSTED";
-} //namespace Dring::Certificate::TrustStatus
+} //namespace DRing::Certificate::TrustStatus
 
 /**
 * Those constantes are used by the ConfigurationManager.validateCertificate method
