@@ -4,6 +4,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Alexandre Bourget <alexandre.bourget@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,6 +28,7 @@
 #include "client/ring_signal.h"
 
 #include "sip/sipcall.h"
+#include "sip/sip_utils.h"
 #include "sip/sipvoiplink.h"
 #include "audio/audiolayer.h"
 
@@ -54,6 +56,7 @@ registerCallHandlers(const std::map<std::string,
 std::string
 placeCall(const std::string& accountID, const std::string& to)
 {
+    ring::sip_utils::register_thread();
     // Check if a destination number is available
     if (to.empty()) {
         RING_DBG("No number entered - Call stopped");
@@ -66,54 +69,63 @@ placeCall(const std::string& accountID, const std::string& to)
 bool
 refuse(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().refuseCall(callID);
 }
 
 bool
 accept(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().answerCall(callID);
 }
 
 bool
 hangUp(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().hangupCall(callID);
 }
 
 bool
 hangUpConference(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().hangupConference(confID);
 }
 
 bool
 hold(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().onHoldCall(callID);
 }
 
 bool
 unhold(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().offHoldCall(callID);
 }
 
 bool
 muteLocalMedia(const std::string& callid, const std::string& mediaType, bool mute)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().muteMediaCall(callid, mediaType, mute);
 }
 
 bool
 transfer(const std::string& callID, const std::string& to)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().transferCall(callID, to);
 }
 
 bool
 attendedTransfer(const std::string& transferID, const std::string& targetID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().attendedTransfer(transferID, targetID);
 }
 
@@ -121,126 +133,147 @@ bool
 joinParticipant(const std::string& sel_callID,
                              const std::string& drag_callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().joinParticipant(sel_callID, drag_callID);
 }
 
 void
 createConfFromParticipantList(const std::vector<std::string>& participants)
 {
-   ring::Manager::instance().createConfFromParticipantList(participants);
+    ring::sip_utils::register_thread();
+    ring::Manager::instance().createConfFromParticipantList(participants);
 }
 
 bool
 isConferenceParticipant(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().isConferenceParticipant(callID);
 }
 
 void
 removeConference(const std::string& conference_id)
 {
-   ring::Manager::instance().removeConference(conference_id);
+    ring::sip_utils::register_thread();
+    ring::Manager::instance().removeConference(conference_id);
 }
 
 bool
 addParticipant(const std::string& callID, const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().addParticipant(callID, confID);
 }
 
 bool
 addMainParticipant(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().addMainParticipant(confID);
 }
 
 bool
 detachParticipant(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().detachParticipant(callID);
 }
 
 bool
 joinConference(const std::string& sel_confID, const std::string& drag_confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().joinConference(sel_confID, drag_confID);
 }
 
 bool
 holdConference(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().holdConference(confID);
 }
 
 bool
 unholdConference(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().unHoldConference(confID);
 }
 
 std::map<std::string, std::string>
 getConferenceDetails(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getConferenceDetails(callID);
 }
 
 std::vector<std::string>
 getConferenceList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getConferenceList();
 }
 
 std::vector<std::string>
 getParticipantList(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getParticipantList(confID);
 }
 
 std::vector<std::string>
 getDisplayNames(const std::string& confID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getDisplayNames(confID);
 }
 
 std::string
 getConferenceId(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getConferenceId(callID);
 }
 
 bool
 startRecordedFilePlayback(const std::string& filepath)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().startRecordedFilePlayback(filepath);
 }
 
 void
 stopRecordedFilePlayback(const std::string& filepath)
 {
+    ring::sip_utils::register_thread();
    ring::Manager::instance().stopRecordedFilePlayback(filepath);
 }
 
 bool
 toggleRecording(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().toggleRecordingCall(callID);
 }
 
 void
 setRecording(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     toggleRecording(callID);
 }
 
 void
 recordPlaybackSeek(double value)
 {
-   ring::Manager::instance().recordingPlaybackSeek(value);
+    ring::sip_utils::register_thread();
+    ring::Manager::instance().recordingPlaybackSeek(value);
 }
 
 bool
 getIsRecording(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().isRecording(callID);
 }
 
@@ -254,18 +287,21 @@ getCurrentAudioCodecName(const std::string&)
 std::map<std::string, std::string>
 getCallDetails(const std::string& callID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getCallDetails(callID);
 }
 
 std::vector<std::string>
 getCallList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getCallList();
 }
 
 void
 playDTMF(const std::string& key)
 {
+    ring::sip_utils::register_thread();
     auto code = key.data()[0];
     ring::Manager::instance().playDtmf(code);
 
@@ -276,6 +312,7 @@ playDTMF(const std::string& key)
 void
 startTone(int32_t start, int32_t type)
 {
+    ring::sip_utils::register_thread();
     if (start) {
         if (type == 0)
            ring::Manager::instance().playTone();
@@ -288,6 +325,7 @@ startTone(int32_t start, int32_t type)
 bool
 switchInput(const std::string& callID, const std::string& resource)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().switchInput(callID, resource);
 }
 
@@ -325,7 +363,8 @@ void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
 #if HAVE_INSTANT_MESSAGING
-   ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
+    ring::sip_utils::register_thread();
+    ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
 #endif
 }
 
