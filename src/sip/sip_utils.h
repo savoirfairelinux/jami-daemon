@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,6 +22,7 @@
 #ifndef SIP_UTILS_H_
 #define SIP_UTILS_H_
 
+#include "logger.h"
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "media/audio/audiobuffer.h"
@@ -54,11 +56,28 @@ static inline KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {
     return !std::strcmp("sdes", name) ? KeyExchangeProtocol::SDES : KeyExchangeProtocol::NONE;
 }
 
+static inline void register_thread()
+{
+    // We have to register the external thread so it could access the pjsip frameworks
+    if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+        static thread_local pj_thread_desc desc;
+        static thread_local pj_thread_t *this_thread;
+#else
+        static __thread pj_thread_desc desc;
+        static __thread pj_thread_t *this_thread;
+#endif
+        pj_thread_register(NULL, desc, &this_thread);
+        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+    }
+}
+
 /**
  * Helper function to parser header from incoming sip messages
  * @return Header from SIP message
  */
 std::string fetchHeaderValue(pjsip_msg *msg, const std::string &field);
+
 
 pjsip_route_hdr *
 createRouteSet(const std::string &route, pj_pool_t *hdr_pool);
