@@ -41,6 +41,7 @@
 #include "account_const.h"
 #include "client/ring_signal.h"
 #include "upnp/upnp_context.h"
+#include "sip/sip_utils.h"
 
 #ifdef WIN32_NATIVE
 #include "windirent.h"
@@ -85,24 +86,28 @@ registerConfHandlers(const std::map<std::string,
 std::map<std::string, std::string>
 getAccountDetails(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAccountDetails(accountID);
 }
 
 std::map<std::string, std::string>
 getVolatileAccountDetails(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVolatileAccountDetails(accountID);
 }
 
 std::map<std::string, std::string>
 testAccountICEInitialization(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().testAccountICEInitialization(accountID);
 }
 
 std::map<std::string, std::string>
 getTlsDefaultSettings()
 {
+    ring::sip_utils::register_thread();
     std::stringstream portstr;
     portstr << ring::sip_utils::DEFAULT_SIP_TLS_PORT;
 
@@ -126,6 +131,7 @@ std::map<std::string, std::string>
 validateCertificate(const std::string&,
                     const std::string& certificate)
 {
+    ring::sip_utils::register_thread();
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
@@ -141,6 +147,7 @@ validateCertificatePath(const std::string&,
                     const std::string& privateKeyPass,
                     const std::string& caList)
 {
+    ring::sip_utils::register_thread();
     try {
         return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
@@ -152,6 +159,7 @@ validateCertificatePath(const std::string&,
 std::map<std::string, std::string>
 getCertificateDetails(const std::string& certificate)
 {
+    ring::sip_utils::register_thread();
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
@@ -163,6 +171,7 @@ getCertificateDetails(const std::string& certificate)
 std::map<std::string, std::string>
 getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
 {
+    ring::sip_utils::register_thread();
     try {
         auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
         TlsValidator validator {certificate, privateKey, privateKeyPassword};
@@ -177,6 +186,7 @@ getCertificateDetailsPath(const std::string& certificate, const std::string& pri
 std::vector<std::string>
 getPinnedCertificates()
 {
+    ring::sip_utils::register_thread();
     return ring::tls::CertificateStore::instance().getPinnedCertificates();
     return {};
 }
@@ -184,30 +194,35 @@ getPinnedCertificates()
 std::vector<std::string>
 pinCertificate(const std::vector<uint8_t>& certificate, bool local)
 {
+    ring::sip_utils::register_thread();
     return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
 }
 
 void
 pinCertificatePath(const std::string& path)
 {
+    ring::sip_utils::register_thread();
     ring::tls::CertificateStore::instance().pinCertificatePath(path);
 }
 
 bool
 unpinCertificate(const std::string& certId)
 {
+    ring::sip_utils::register_thread();
     return ring::tls::CertificateStore::instance().unpinCertificate(certId);
 }
 
 unsigned
 unpinCertificatePath(const std::string& path)
 {
+    ring::sip_utils::register_thread();
     return ring::tls::CertificateStore::instance().unpinCertificatePath(path);
 }
 
 bool
 pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->findCertificate(certId);
     return false;
@@ -216,6 +231,7 @@ pinRemoteCertificate(const std::string& accountId, const std::string& certId)
 bool
 setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
 {
+    ring::sip_utils::register_thread();
     try {
         if (accountId.empty()) {
             ring::tls::CertificateStore::instance().setTrustedCertificate(certId, ring::tls::trustStatusFromStr(ststr.c_str()));
@@ -235,6 +251,7 @@ setCertificateStatus(const std::string& accountId, const std::string& certId, co
 std::vector<std::string>
 getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
 {
+    ring::sip_utils::register_thread();
      auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->getCertificatesByStatus(status);
@@ -244,36 +261,42 @@ getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
 void
 setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setAccountDetails(accountID, details);
 }
 
 void
 setAccountActive(const std::string& accountID, bool enable)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setAccountActive(accountID, enable);
 }
 
 void
 sendRegister(const std::string& accountID, bool enable)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().sendRegister(accountID, enable);
 }
 
 void
 registerAllAccounts()
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().registerAccounts();
 }
 
 uint64_t
 sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
 
 int
 getMessageStatus(uint64_t id)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getMessageStatus(id);
 }
 
@@ -281,6 +304,7 @@ getMessageStatus(uint64_t id)
 std::map<std::string, std::string>
 getTrustRequests(const std::string& accountId)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->getTrustRequests();
     return {};
@@ -289,6 +313,7 @@ getTrustRequests(const std::string& accountId)
 bool
 acceptTrustRequest(const std::string& accountId, const std::string& from)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->acceptTrustRequest(from);
     return false;
@@ -297,6 +322,7 @@ acceptTrustRequest(const std::string& accountId, const std::string& from)
 bool
 discardTrustRequest(const std::string& accountId, const std::string& from)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         return acc->discardTrustRequest(from);
     return false;
@@ -305,6 +331,7 @@ discardTrustRequest(const std::string& accountId, const std::string& from)
 void
 sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         acc->sendTrustRequest(to, payload);
 }
@@ -315,12 +342,14 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
 int
 exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password)
 {
+    ring::sip_utils::register_thread();
     return ring::Archiver::instance().exportAccounts(accountIDs, filepath, password);
 }
 
 int
 importAccounts(std::string archivePath, std::string password)
 {
+    ring::sip_utils::register_thread();
     return ring::Archiver::instance().importAccounts(archivePath, password);
 }
 
@@ -328,6 +357,7 @@ importAccounts(std::string archivePath, std::string password)
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
 {
+    ring::sip_utils::register_thread();
     if (accountType == Account::ProtocolNames::RING)
         return ring::RingAccount("dummy", false).getAccountDetails();
     else if (accountType == Account::ProtocolNames::SIP)
@@ -338,18 +368,21 @@ getAccountTemplate(const std::string& accountType)
 std::string
 addAccount(const std::map<std::string, std::string>& details)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().addAccount(details);
 }
 
 void
 removeAccount(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().removeAccount(accountID);
 }
 
 std::vector<std::string>
 getAccountList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAccountList();
 }
 
@@ -360,6 +393,7 @@ getAccountList()
 std::vector<unsigned>
 getCodecList()
 {
+    ring::sip_utils::register_thread();
     std::vector<unsigned> list {ring::getSystemCodecContainer()->getSystemCodecInfoIdList(ring::MEDIA_ALL)};
     if (list.empty())
         ring::emitSignal<ConfigurationSignal::Error>(CODECS_NOT_LOADED);
@@ -369,12 +403,14 @@ getCodecList()
 std::vector<std::string>
 getSupportedTlsMethod()
 {
+    ring::sip_utils::register_thread();
     return SIPAccount::getSupportedTlsProtocols();
 }
 
 std::vector<std::string>
 getSupportedCiphers(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return SIPAccount::getSupportedTlsCiphers();
     RING_ERR("SIP account %s doesn't exist", accountID.c_str());
@@ -387,6 +423,7 @@ setCodecDetails(const std::string& accountID,
                 const unsigned& codecId,
                 const  std::map<std::string, std::string>& details)
 {
+    ring::sip_utils::register_thread();
     auto acc = ring::Manager::instance().getAccount(accountID);
     if (!acc) {
         RING_ERR("Could not find account %s. can not set codec details"
@@ -435,6 +472,7 @@ setCodecDetails(const std::string& accountID,
 std::map<std::string, std::string>
 getCodecDetails(const std::string& accountID, const unsigned& codecId)
 {
+    ring::sip_utils::register_thread();
     auto acc = ring::Manager::instance().getAccount(accountID);
     if (!acc)
     {
@@ -465,6 +503,7 @@ getCodecDetails(const std::string& accountID, const unsigned& codecId)
 std::vector<unsigned>
 getActiveCodecList(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount(accountID))
         return acc->getActiveCodecs();
     RING_ERR("Could not find account %s, returning default", accountID.c_str());
@@ -475,6 +514,7 @@ void
 setActiveCodecList(const std::string& accountID
         , const std::vector<unsigned>& list)
 {
+    ring::sip_utils::register_thread();
     if (auto acc = ring::Manager::instance().getAccount(accountID))
     {
         acc->setActiveCodecs(list);
@@ -487,66 +527,77 @@ setActiveCodecList(const std::string& accountID
 std::vector<std::string>
 getAudioPluginList()
 {
+    ring::sip_utils::register_thread();
     return {PCM_DEFAULT, PCM_DMIX_DSNOOP};
 }
 
 void
 setAudioPlugin(const std::string& audioPlugin)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().setAudioPlugin(audioPlugin);
 }
 
 std::vector<std::string>
 getAudioOutputDeviceList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAudioOutputDeviceList();
 }
 
 std::vector<std::string>
 getAudioInputDeviceList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAudioInputDeviceList();
 }
 
 void
 setAudioOutputDevice(int32_t index)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().setAudioDevice(index, DeviceType::PLAYBACK);
 }
 
 void
 setAudioInputDevice(int32_t index)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().setAudioDevice(index, DeviceType::CAPTURE);
 }
 
 void
 setAudioRingtoneDevice(int32_t index)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().setAudioDevice(index, DeviceType::RINGTONE);
 }
 
 std::vector<std::string>
 getCurrentAudioDevicesIndex()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getCurrentAudioDevicesIndex();
 }
 
 int32_t
 getAudioInputDeviceIndex(const std::string& name)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAudioInputDeviceIndex(name);
 }
 
 int32_t
 getAudioOutputDeviceIndex(const std::string& name)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAudioOutputDeviceIndex(name);
 }
 
 std::string
 getCurrentAudioOutputPlugin()
 {
+    ring::sip_utils::register_thread();
     auto plugin = ring::Manager::instance().getCurrentAudioOutputPlugin();
     RING_DBG("Get audio plugin %s", plugin.c_str());
     return plugin;
@@ -555,78 +606,91 @@ getCurrentAudioOutputPlugin()
 bool
 getNoiseSuppressState()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getNoiseSuppressState();
 }
 
 void
 setNoiseSuppressState(bool state)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setNoiseSuppressState(state);
 }
 
 bool
 isAgcEnabled()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().isAGCEnabled();
 }
 
 void
 setAgcState(bool enabled)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setAGCState(enabled);
 }
 
 std::string
 getRecordPath()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().audioPreference.getRecordPath();
 }
 
 void
 setRecordPath(const std::string& recPath)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().audioPreference.setRecordPath(recPath);
 }
 
 bool
 getIsAlwaysRecording()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getIsAlwaysRecording();
 }
 
 void
 setIsAlwaysRecording(bool rec)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setIsAlwaysRecording(rec);
 }
 
 int32_t
 getHistoryLimit()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getHistoryLimit();
 }
 
 void
 setHistoryLimit(int32_t days)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setHistoryLimit(days);
 }
 
 bool
 setAudioManager(const std::string& api)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().setAudioManager(api);
 }
 
 std::string
 getAudioManager()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getAudioManager();
 }
 
 void
 setVolume(const std::string& device, double value)
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver()) {
         RING_DBG("set volume for %s: %f", device.c_str(), value);
 
@@ -644,6 +708,7 @@ setVolume(const std::string& device, double value)
 double
 getVolume(const std::string& device)
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver()) {
         if (device == "speaker")
             return audiolayer->getPlaybackGain();
@@ -660,18 +725,21 @@ getVolume(const std::string& device)
 bool
 isDtmfMuted()
 {
+    ring::sip_utils::register_thread();
     return not ring::Manager::instance().voipPreferences.getPlayDtmf();
 }
 
 void
 muteDtmf(bool mute)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().voipPreferences.setPlayDtmf(not mute);
 }
 
 bool
 isCaptureMuted()
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->isCaptureMuted();
 
@@ -682,6 +750,7 @@ isCaptureMuted()
 void
 muteCapture(bool mute)
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->muteCapture(mute);
 
@@ -692,6 +761,7 @@ muteCapture(bool mute)
 bool
 isPlaybackMuted()
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->isPlaybackMuted();
 
@@ -702,6 +772,7 @@ isPlaybackMuted()
 void
 mutePlayback(bool mute)
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->mutePlayback(mute);
 
@@ -712,6 +783,7 @@ mutePlayback(bool mute)
 bool
 isRingtoneMuted()
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->isRingtoneMuted();
 
@@ -722,6 +794,7 @@ isRingtoneMuted()
 void
 muteRingtone(bool mute)
 {
+    ring::sip_utils::register_thread();
     if (auto audiolayer = ring::Manager::instance().getAudioDriver())
         return audiolayer->muteRingtone(mute);
 
@@ -732,6 +805,7 @@ muteRingtone(bool mute)
 std::map<std::string, std::string>
 getHookSettings()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().hookPreference.toMap();
 }
 
@@ -739,41 +813,48 @@ void
 setHookSettings(const std::map<std::string,
                 std::string>& settings)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().hookPreference = HookPreference(settings);
 }
 
 void setAccountsOrder(const std::string& order)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().setAccountsOrder(order);
 }
 
 std::string
 getAddrFromInterfaceName(const std::string& interface)
 {
+    ring::sip_utils::register_thread();
     return ring::ip_utils::getInterfaceAddr(interface);
 }
 
 std::vector<std::string>
 getAllIpInterface()
 {
+    ring::sip_utils::register_thread();
     return ring::ip_utils::getAllIpInterface();
 }
 
 std::vector<std::string>
 getAllIpInterfaceByName()
 {
+    ring::sip_utils::register_thread();
     return ring::ip_utils::getAllIpInterfaceByName();
 }
 
 std::map<std::string, std::string>
 getShortcuts()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().shortcutPreferences.getShortcuts();
 }
 
 void
 setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().shortcutPreferences.setShortcuts(shortcutsMap);
     ring::Manager::instance().saveConfig();
 }
@@ -781,6 +862,7 @@ setShortcuts(const std::map<std::string, std::string>& shortcutsMap)
 std::vector<std::map<std::string, std::string>>
 getCredentials(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return sipaccount->getCredentials();
     return {};
@@ -790,6 +872,7 @@ void
 setCredentials(const std::string& accountID,
                const std::vector<std::map<std::string, std::string>>& details)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         sipaccount->doUnregister([&](bool /* transport_free */) {
             sipaccount->setCredentials(details);
@@ -802,6 +885,7 @@ setCredentials(const std::string& accountID,
 void
 connectivityChanged()
 {
+    ring::sip_utils::register_thread();
     RING_WARN("received connectivity changed - trying to re-connect enabled accounts");
 
     // reset the UPnP context
