@@ -3,6 +3,7 @@
  *
  *  Author: Patrick Keroulas <patrick.keroulas@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -35,6 +36,7 @@
 #include "sip/sippresence.h"
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
+#include "sip/sip_utils.h"
 #include "compiler_intrinsics.h"
 
 namespace DRing {
@@ -68,6 +70,7 @@ registerPresHandlers(const std::map<std::string,
 void
 subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_SUBSCRIBE)) {
@@ -86,6 +89,7 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
 void
 publish(const std::string& accountID, bool status, const std::string& note)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         auto pres = sipaccount->getPresence();
         if (pres and pres->isEnabled() and pres->isSupported(PRESENCE_FUNCTION_PUBLISH)) {
@@ -103,6 +107,7 @@ publish(const std::string& accountID, bool status, const std::string& note)
 void
 answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
 {
+    ring::sip_utils::register_thread();
 #if 0 // DISABLED: removed IP2IP support, tuleap: #448
     auto account = ring::Manager::instance().getIP2IPAccount();
     if (auto sipaccount = static_cast<SIPAccount *>(account.get())) {
@@ -126,6 +131,7 @@ answerServerRequest(UNUSED const std::string& uri, UNUSED bool flag)
 std::vector<std::map<std::string, std::string> >
 getSubscriptions(const std::string& accountID)
 {
+    ring::sip_utils::register_thread();
     std::vector<std::map<std::string, std::string>> ret;
 
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
@@ -150,6 +156,7 @@ getSubscriptions(const std::string& accountID)
 void
 setSubscriptions(const std::string& accountID, const std::vector<std::string>& uris)
 {
+    ring::sip_utils::register_thread();
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID)) {
         if (auto pres = sipaccount->getPresence()) {
             for (const auto &u : uris)
