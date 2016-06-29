@@ -4,6 +4,7 @@
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
+ *  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +32,7 @@
 #include "system_codec_container.h"
 #include "video/sinkclient.h"
 #include "client/ring_signal.h"
+#include "sip/sip_utils.h"
 
 #include <functional>
 #include <memory>
@@ -59,24 +61,28 @@ registerVideoHandlers(const std::map<std::string,
 std::vector<std::string>
 getDeviceList()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceList();
 }
 
 VideoCapabilities
 getCapabilities(const std::string& name)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getCapabilities(name);
 }
 
 std::string
 getDefaultDevice()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDefaultDevice();
 }
 
 void
 setDefaultDevice(const std::string& name)
 {
+    ring::sip_utils::register_thread();
     RING_DBG("Setting default device to %s", name.c_str());
     ring::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(name);
 }
@@ -84,6 +90,7 @@ setDefaultDevice(const std::string& name)
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(name).to_map();
 }
 
@@ -91,12 +98,14 @@ void
 applySettings(const std::string& name,
               const std::map<std::string, std::string>& settings)
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(name, settings);
 }
 
 void
 startCamera()
 {
+    ring::sip_utils::register_thread();
     ring::Manager::instance().getVideoManager().videoPreview = ring::getVideoCamera();
     ring::Manager::instance().getVideoManager().started = switchToCamera();
 }
@@ -104,6 +113,7 @@ startCamera()
 void
 stopCamera()
 {
+    ring::sip_utils::register_thread();
     if (switchInput(""))
         ring::Manager::instance().getVideoManager().started = false;
     ring::Manager::instance().getVideoManager().videoPreview.reset();
@@ -112,6 +122,7 @@ stopCamera()
 bool
 switchInput(const std::string& resource)
 {
+    ring::sip_utils::register_thread();
     if (auto call = ring::Manager::instance().getCurrentCall()) {
         // TODO remove this part when clients are updated to use Callring::Manager::switchInput
         call->switchInput(resource);
@@ -127,22 +138,25 @@ switchInput(const std::string& resource)
 bool
 switchToCamera()
 {
+    ring::sip_utils::register_thread();
     return switchInput(ring::Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice());
 }
 
 bool
 hasCameraStarted()
 {
+    ring::sip_utils::register_thread();
     return ring::Manager::instance().getVideoManager().started;
 }
 
 void
 registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
 {
-   if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
-       sink->registerTarget(target);
-   else
-       RING_WARN("No sink found for id '%s'", sinkId.c_str());
+    ring::sip_utils::register_thread();
+    if (auto sink = ring::Manager::instance().getSinkClient(sinkId))
+        sink->registerTarget(target);
+    else
+        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
 #ifdef __ANDROID__
@@ -182,6 +196,7 @@ namespace ring {
 std::shared_ptr<video::VideoFrameActiveWriter>
 getVideoCamera()
 {
+    ring::sip_utils::register_thread();
     auto& vmgr = Manager::instance().getVideoManager();
     if (auto input = vmgr.videoInput.lock())
         return input;
@@ -195,6 +210,7 @@ getVideoCamera()
 video::VideoDeviceMonitor&
 getVideoDeviceMonitor()
 {
+    ring::sip_utils::register_thread();
     return Manager::instance().getVideoManager().videoDeviceMonitor;
 }
 
