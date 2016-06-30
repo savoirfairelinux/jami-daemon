@@ -197,14 +197,12 @@ class HookPreference : public Serializable {
                 return "";
         }
 
-        bool getIax2Enabled() const { return iax2Enabled_; }
         const std::string & getUrlCommand() const { return urlCommand_; }
 
         std::map<std::string, std::string> toMap() const;
         void runHook(pjsip_msg *msg);
 
     private:
-        bool iax2Enabled_;
         std::string numberAddPrefix_;
         bool numberEnabled_;
         bool sipEnabled_;

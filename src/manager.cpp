@@ -1609,7 +1609,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
         call.setIPToIP(true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
-        // when placing new call from history (if call is IAX, do nothing)
+        // when placing new call from history.
         std::string peerNumber(call.getPeerNumber());
 
         const char SIP_PREFIX[] = "sip:";

@@ -257,7 +257,7 @@ Account::unserialize(const YAML::Node& node)
 void
 Account::setAccountDetails(const std::map<std::string, std::string> &details)
 {
-    // Account setting common to SIP and IAX
+    // Account setting common to any account type
     parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
     parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);

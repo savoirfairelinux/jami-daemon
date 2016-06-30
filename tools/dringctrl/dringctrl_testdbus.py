@@ -63,9 +63,6 @@ class SflPhoneTests():
         for account in self.getAllSipAccounts():
             print "  " + account
 
-        for account in self.getAllIaxAccounts():
-            print "  " + account
-
     def test_create_account(self):
         """Create a new sip account"""
 
