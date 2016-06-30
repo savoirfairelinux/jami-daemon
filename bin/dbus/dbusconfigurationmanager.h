@@ -103,7 +103,6 @@ class DBusConfigurationManager :
         std::string getAudioManager();
         bool setAudioManager(const std::string& api);
         std::vector<std::string> getSupportedAudioManagers();
-        int32_t isIax2Enabled();
         std::string getRecordPath();
         void setRecordPath(const std::string& recPath);
         bool getIsAlwaysRecording();

@@ -326,12 +326,6 @@ DBusConfigurationManager::getSupportedAudioManagers()
 }
 
 auto
-DBusConfigurationManager::isIax2Enabled() -> decltype(DRing::isIax2Enabled())
-{
-    return DRing::isIax2Enabled();
-}
-
-auto
 DBusConfigurationManager::getRecordPath() -> decltype(DRing::getRecordPath())
 {
     return DRing::getRecordPath();

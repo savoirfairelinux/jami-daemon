@@ -257,16 +257,4 @@ im::parseSipMessage(const pjsip_msg* msg)
     return ret;
 }
 
-#if HAVE_IAX
-void
-im::sendIaxMessage(iax_session* session, const std::string& /* id */,
-                                 const std::vector<std::string>& chunks)
-{
-    //TODO: implement multipart message creation for IAX via the pjsip api and then convert
-    //      into string for sending
-    for (const auto& msg: chunks)
-        iax_send_text(session, msg.c_str());
-}
-#endif
-
 } // namespace ring

@@ -87,7 +87,6 @@ static const char * const ZID_FILE_KEY = "zidFile";
 
 // hooks preferences
 constexpr const char * const HookPreference::CONFIG_LABEL;
-static const char * const IAX2_ENABLED_KEY = "iax2Enabled";
 static const char * const NUMBER_ADD_PREFIX_KEY = "numberAddPrefix";
 static const char * const NUMBER_ENABLED_KEY = "numberEnabled";
 static const char * const SIP_ENABLED_KEY = "sipEnabled";
@@ -240,18 +239,16 @@ void VoipPreference::unserialize(const YAML::Node &in)
     parseValue(node, ZID_FILE_KEY, zidFile_);
 }
 
-HookPreference::HookPreference() :
-    iax2Enabled_(false)
-    , numberAddPrefix_("")
+HookPreference::HookPreference()
+    : numberAddPrefix_("")
     , numberEnabled_(false)
     , sipEnabled_(false)
     , urlCommand_("x-www-browser")
     , urlSipField_("X-ring-url")
 {}
 
-HookPreference::HookPreference(const std::map<std::string, std::string> &settings) :
-    iax2Enabled_(settings.find("URLHOOK_IAX2_ENABLED")->second == "true")
-    , numberAddPrefix_(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second)
+HookPreference::HookPreference(const std::map<std::string, std::string> &settings)
+    : numberAddPrefix_(settings.find("PHONE_NUMBER_HOOK_ADD_PREFIX")->second)
     , numberEnabled_(settings.find("PHONE_NUMBER_HOOK_ENABLED")->second == "true")
     , sipEnabled_(settings.find("URLHOOK_SIP_ENABLED")->second == "true")
     , urlCommand_(settings.find("URLHOOK_COMMAND")->second)
@@ -261,7 +258,6 @@ HookPreference::HookPreference(const std::map<std::string, std::string> &setting
 std::map<std::string, std::string> HookPreference::toMap() const
 {
     std::map<std::string, std::string> settings;
-    settings["URLHOOK_IAX2_ENABLED"] = iax2Enabled_ ? "true" : "false";
     settings["PHONE_NUMBER_HOOK_ADD_PREFIX"] = numberAddPrefix_;
     settings["PHONE_NUMBER_HOOK_ENABLED"] = numberEnabled_ ? "true" : "false";
     settings["URLHOOK_SIP_ENABLED"] = sipEnabled_ ? "true" : "false";
@@ -274,7 +270,6 @@ std::map<std::string, std::string> HookPreference::toMap() const
 void HookPreference::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << IAX2_ENABLED_KEY << YAML::Value << iax2Enabled_;
     out << YAML::Key << NUMBER_ADD_PREFIX_KEY << YAML::Value << numberAddPrefix_;
     out << YAML::Key << SIP_ENABLED_KEY << YAML::Value << sipEnabled_;
     out << YAML::Key << URL_COMMAND_KEY << YAML::Value << urlCommand_;
@@ -286,7 +281,6 @@ void HookPreference::unserialize(const YAML::Node &in)
 {
     const auto &node = in[CONFIG_LABEL];
 
-    parseValue(node, IAX2_ENABLED_KEY, iax2Enabled_);
     parseValue(node, NUMBER_ADD_PREFIX_KEY, numberAddPrefix_);
     parseValue(node, SIP_ENABLED_KEY, sipEnabled_);
     parseValue(node, URL_COMMAND_KEY, urlCommand_);

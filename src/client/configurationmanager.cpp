@@ -38,9 +38,6 @@
 #include "ip_utils.h"
 #include "sip/sipaccount.h"
 #include "ringdht/ringaccount.h"
-#if HAVE_IAX
-#include "iax/iaxaccount.h"
-#endif
 #include "audio/audiolayer.h"
 #include "system_codec_container.h"
 #include "account_const.h"
@@ -350,10 +347,6 @@ getAccountTemplate(const std::string& accountType)
         return ring::RingAccount("dummy", false).getAccountDetails();
     else if (accountType == Account::ProtocolNames::SIP)
         return ring::SIPAccount("dummy", false).getAccountDetails();
-#if HAVE_IAX
-    else if (accountType == Account::ProtocolNames::IAX)
-        return ring::IAXAccount("dummy").getAccountDetails();
-#endif
     return {};
 }
 
@@ -598,12 +591,6 @@ void
 setAgcState(bool enabled)
 {
     ring::Manager::instance().setAGCState(enabled);
-}
-
-int32_t
-isIax2Enabled()
-{
-    return HAVE_IAX;
 }
 
 std::string

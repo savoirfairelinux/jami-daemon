@@ -279,7 +279,6 @@ END
                             pushd contrib/native
                             ../bootstrap
                             # only fetch it, don't build it
-                            make iax
                             make dht
                         else
                             pushd libs

@@ -530,22 +530,6 @@ AS_CASE(["$with_opus"],
   [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1], [HAVE_OPUS=0])])
 AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
 
-AC_ARG_WITH([iax],
-    AS_HELP_STRING([--without-iax], [Ignore presence of iax and disable it]))
-
-AS_IF([test "x$with_iax" != "xno"],
-      [AC_CHECK_HEADER("iax/iax-client.h", [have_iax=yes], [have_iax=no])],
-      [have_iax=no])
-
-# only fail if IAX was explicitly requested but not found
-AS_IF([test "x$have_iax" = "xyes"],
-      [AC_DEFINE([HAVE_IAX], 1, [Define if you have libiax])
-       AM_CONDITIONAL(USE_IAX, `true`)],
-      [AS_IF([test "x$with_iax" = "xyes"],
-             [AC_MSG_ERROR([iax requested but not found])])
-       AC_DEFINE([HAVE_IAX], 0, [Define if you have libiax])
-       AM_CONDITIONAL(USE_IAX, `false`)])
-
 # dht is default-enabled, but requires gnutls
 AC_ARG_ENABLE([dht],
   AS_HELP_STRING([--disable-dht], [disable support for dht]))
@@ -617,7 +601,6 @@ AC_CONFIG_FILES([Makefile \
                  src/Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
-                 src/iax/Makefile \
                  src/ringdht/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
