@@ -22,7 +22,7 @@ Introduction
 Ring is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
-- fully compatible with Asterisk (SIP and IAX protocols)
+- compatible with Asterisk (using SIP account)
 - de-centralized call (P2P-DHT)
 - customizable
 

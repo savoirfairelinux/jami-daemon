@@ -72,7 +72,7 @@ class VoipLinkException : public std::runtime_error
 
 /**
  * @file account.h
- * @brief Interface to protocol account (SIPAccount, IAXAccount)
+ * @brief Interface to protocol account (ex: SIPAccount)
  * It can be enable on loading or activate after.
  * It contains account, configuration, VoIP Link and Calls (inside the VoIPLink)
  */

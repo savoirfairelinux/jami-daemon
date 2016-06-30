@@ -173,7 +173,6 @@ addressbook:
   mobile: true
   photo: true
 hooks:
-  iax2Enabled: false
   numberAddPrefix:
   numberEnabled: false
   sipEnabled: false

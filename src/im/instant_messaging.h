@@ -30,10 +30,6 @@
 
 #include "config.h"
 
-#if HAVE_IAX
-#include <iax/iax-client.h>
-#endif
-
 struct pjsip_inv_session;
 struct pjsip_rx_data;
 struct pjsip_msg;
@@ -76,11 +72,6 @@ void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std:
  * @return map of content types and message payloads
  */
 std::map<std::string, std::string> parseSipMessage(const pjsip_msg* msg);
-
-#if HAVE_IAX
-void sendIaxMessage(iax_session* session, const std::string& id,
-                    const std::vector<std::string>& chunks);
-#endif
 
 void fillPJSIPMessageBody(pjsip_tx_data& tdata, const std::map<std::string, std::string>& payloads);
 

@@ -28,14 +28,6 @@ INSTANT_MESSAGING_SUBDIR = im
 IM_LIBA=./im/libim.la
 endif
 
-# Redefine the USE_IAX variable here, so that it could be used in manager
-if USE_IAX
-IAX_SUBDIR=iax
-IAX_CXXFLAG=-DUSE_IAX
-IAX_LIBA=./iax/libiaxlink.la
-IAX_LIB=-liax
-endif
-
 if USE_DHT
 RINGACC_SUBDIR=ringdht
 RINGACC_CXXFLAG=-DUSE_DHT
@@ -47,7 +39,7 @@ TLS_LIB = @GNUTLS_LIBS@
 TLS_CFLAGS = @GNUTLS_CFLAGS@
 endif
 
-SUBDIRS = client media config hooks sip upnp security $(IAX_SUBDIR) $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -62,7 +54,6 @@ libring_la_LIBADD = \
 	./security/libsecurity.la \
 	./upnp/libupnpcontrol.la \
 	$(RINGACC_LIBA) \
-	$(IAX_LIBA) \
 	$(IM_LIBA) \
 	$(RING_VIDEO_LIBS)
 
@@ -78,7 +69,6 @@ libring_la_LDFLAGS = \
 		@LIBUPNP_LIBS@ \
 		@PORTAUDIO_LIBS@ \
 		$(TLS_LIB) \
-		$(IAX_LIB) \
 		$(IM_LIB) \
 		$(PCRE_LIBS)
 

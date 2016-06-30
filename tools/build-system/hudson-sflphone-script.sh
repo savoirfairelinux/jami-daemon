@@ -218,8 +218,8 @@ while getopts ":b: t a v c" opt; do
             DOPTS="--disable-video $DOPTS"
             ;;
         m)
-            echo "-m is set, disabling dbus, video, iax, nm and pulse" >&2
-            DOPTS="--disable-video --without-iax --without-dbus --without-pulse --without-networkmanager $DOPTS"
+            echo "-m is set, disabling dbus, video, nm and pulse" >&2
+            DOPTS="--disable-video --without-dbus --without-pulse --without-networkmanager $DOPTS"
             ;;
         c)
             echo "-c is set, clang compiler is used" >&2
