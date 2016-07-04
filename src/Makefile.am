@@ -28,18 +28,7 @@ INSTANT_MESSAGING_SUBDIR = im
 IM_LIBA=./im/libim.la
 endif
 
-if USE_DHT
-RINGACC_SUBDIR=ringdht
-RINGACC_CXXFLAG=-DUSE_DHT
-RINGACC_LIBA=./ringdht/libringacc.la
-endif
-
-if BUILD_TLS
-TLS_LIB = @GNUTLS_LIBS@
-TLS_CFLAGS = @GNUTLS_CFLAGS@
-endif
-
-SUBDIRS = client media config hooks sip upnp security $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security ringdht $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -53,7 +42,7 @@ libring_la_LIBADD = \
 	./hooks/libhooks.la \
 	./security/libsecurity.la \
 	./upnp/libupnpcontrol.la \
-	$(RINGACC_LIBA) \
+	./ringdht/libringacc.la \
 	$(IM_LIBA) \
 	$(RING_VIDEO_LIBS)
 
@@ -68,13 +57,10 @@ libring_la_LDFLAGS = \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
 		@PORTAUDIO_LIBS@ \
-		$(TLS_LIB) \
+		@GNUTLS_LIBS@ \
+		@OPENDHT_LIBS@ \
 		$(IM_LIB) \
 		$(PCRE_LIBS)
-
-if USE_DHT
-libring_la_LDFLAGS += $(OPENDHT_LIBS)
-endif
 
 if HAVE_OSX
 #FIXME necessary for -lintl
@@ -89,13 +75,10 @@ libring_la_CFLAGS = \
 		@LIBUPNP_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		@PORTAUDIO_CFLAGS@ \
-		$(TLS_CFLAGS)
+		@GNUTLS_CFLAGS@ \
+		@OPENDHT_CFLAGS@
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
-
-if USE_DHT
-libring_la_CFLAGS += $(OPENDHT_CFLAGS)
-endif
 
 libring_la_SOURCES = \
 		buildinfo.cpp \

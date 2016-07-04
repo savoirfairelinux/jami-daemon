@@ -571,8 +571,6 @@ class SIPAccount : public SIPAccountBase {
          */
         pjsip_transport_type_e transportType_ {PJSIP_TRANSPORT_UNSPECIFIED};
 
-#if HAVE_TLS
-
         /**
          * Maps a string description of the SSL method
          * to the corresponding enum value in pjsip_ssl_method.
@@ -591,8 +589,6 @@ class SIPAccount : public SIPAccountBase {
          * great, so this function forces our cipher list to fit this constraint.
          */
         void trimCiphers();
-
-#endif
 
         /**
          * Initializes STUN config from the config file

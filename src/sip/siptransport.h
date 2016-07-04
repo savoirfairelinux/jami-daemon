@@ -169,22 +169,18 @@ public:
 
     std::shared_ptr<SipTransport> getUdpTransport(const SipTransportDescr&);
 
-#if HAVE_TLS
     std::shared_ptr<TlsListener>
     getTlsListener(const SipTransportDescr&, const pjsip_tls_setting*);
 
     std::shared_ptr<SipTransport>
     getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote, const std::string& remote_name = {});
-#endif
 
-#if HAVE_DHT
     std::shared_ptr<SipTransport>
     getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
 
     std::shared_ptr<SipTransport>
     getTlsIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id,
                        const tls::TlsParams&);
-#endif
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
@@ -221,9 +217,7 @@ private:
     /**
      * Storage for SIP/ICE transport instances.
      */
-#if HAVE_DHT
     int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
-#endif
 
     pj_caching_pool& cp_;
     pj_pool_t& pool_;

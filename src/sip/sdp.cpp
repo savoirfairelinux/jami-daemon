@@ -41,12 +41,8 @@
 #include "system_codec_container.h"
 #include "intrin.h" // for UNUSED
 
-#if HAVE_DHT
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
-#else
-using random_device = std::random_device;
-#endif
 
 #include <algorithm>
 #include <cassert>
