@@ -32,10 +32,8 @@
 
 #include <pjsip.h>
 #include <pjsip/sip_types.h>
-#if HAVE_TLS
 #include <pjsip/sip_transport_tls.h>
 #include <pj/ssl_sock.h>
-#endif
 #include <pjnath.h>
 #include <pjnath/stun_config.h>
 #include <pjlib.h>
@@ -123,7 +121,6 @@ SipTransport::stateCallback(pjsip_transport_state state,
 {
     connected_ = state == PJSIP_TP_STATE_CONNECTED;
 
-#if HAVE_TLS
     auto extInfo = static_cast<const pjsip_tls_state_info*>(info->ext_info);
     if (isSecure() && extInfo && extInfo->ssl_sock_info && extInfo->ssl_sock_info->established) {
         auto tlsInfo = extInfo->ssl_sock_info;
@@ -142,7 +139,6 @@ SipTransport::stateCallback(pjsip_transport_state state,
     } else {
         tlsInfos_ = {};
     }
-#endif
 
     std::vector<SipTransportStateCallback> cbs;
     {
@@ -180,11 +176,11 @@ SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool) :
 cp_(cp), pool_(pool), endpt_(endpt)
 {
-/*#if HAVE_DHT
+/*
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
                                   pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
                                   &ice_pj_transport_type_);
-#endif*/
+*/
     RING_DBG("SipTransportBroker@%p", this);
 }
 
@@ -353,7 +349,6 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     return ret;
 }
 
-#if HAVE_TLS
 std::shared_ptr<TlsListener>
 SipTransportBroker::getTlsListener(const SipTransportDescr& d, const pjsip_tls_setting* settings)
 {
@@ -423,9 +418,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
     }
     return ret;
 }
-#endif
 
-#if HAVE_DHT
 std::shared_ptr<SipTransport>
 SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
                                     unsigned comp_id)
@@ -464,6 +457,5 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
     }
     return sip_tr;
 }
-#endif
 
 } // namespace ring

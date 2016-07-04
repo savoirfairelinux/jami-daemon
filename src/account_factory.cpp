@@ -25,9 +25,7 @@
 #include "account_factory.h"
 
 #include "sip/sipaccount.h"
-#if HAVE_DHT
 #include "ringdht/ringaccount.h"
-#endif
 
 #include <stdexcept>
 
@@ -40,11 +38,9 @@ AccountFactory::AccountFactory()
     auto sipfunc = [](const std::string& id){ return std::make_shared<SIPAccount>(id, true); };
     generators_.insert(std::make_pair(SIPAccount::ACCOUNT_TYPE, sipfunc));
     RING_DBG("registered %s account", SIPAccount::ACCOUNT_TYPE);
-#if HAVE_DHT
     auto dhtfunc = [](const std::string& id){ return std::make_shared<RingAccount>(id, false); };
     generators_.insert(std::make_pair(RingAccount::ACCOUNT_TYPE, dhtfunc));
     RING_DBG("registered %s account", RingAccount::ACCOUNT_TYPE);
-#endif
 }
 
 std::shared_ptr<Account>

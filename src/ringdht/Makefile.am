@@ -1,7 +1,5 @@
 include $(top_srcdir)/globals.mak
 
-if USE_DHT
-
 noinst_LTLIBRARIES = libringacc.la
 libringacc_la_CXXFLAGS = @CXXFLAGS@
 
@@ -14,5 +12,3 @@ libringacc_la_SOURCES = \
         sip_transport_ice.h \
         sips_transport_ice.cpp \
         sips_transport_ice.h
-
-endif

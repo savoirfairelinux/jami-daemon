@@ -32,9 +32,7 @@
 #include "sipcall.h"
 #include "sipaccount.h"
 
-#if HAVE_DHT
 #include "ringdht/ringaccount.h"
-#endif
 
 #include "manager.h"
 #if HAVE_SDES
@@ -637,7 +635,6 @@ SIPVoIPLink::guessAccount(const std::string& userName,
     std::shared_ptr<SIPAccountBase> IP2IPAccount;
     MatchRank best = MatchRank::NONE;
 
-#if HAVE_DHT
     // DHT accounts
     for (const auto& account : Manager::instance().getAllAccounts<RingAccount>()) {
         if (!account)
@@ -652,7 +649,6 @@ SIPVoIPLink::guessAccount(const std::string& userName,
             result = account;
         }
     }
-#endif
 
     // SIP accounts
     for (const auto& account : Manager::instance().getAllAccounts<SIPAccount>()) {

@@ -185,10 +185,8 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
         family = ipv6 ? pj_AF_INET6() : pj_AF_INET();
 
         // TODO: resolve remote host using SIPVoIPLink::resolveSrvName
-        std::shared_ptr<SipTransport> t =
-#if HAVE_TLS
-            isTlsEnabled() ? link_->sipTransportBroker->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
-#endif
+        std::shared_ptr<SipTransport> t = isTlsEnabled() ?
+            link_->sipTransportBroker->getTlsTransport(tlsListener_, IpAddr(sip_utils::getHostFromUri(to))) :
             transport_;
         setTransport(t);
         call->setTransport(t);
@@ -655,7 +653,6 @@ SIPAccount::getVolatileAccountDetails() const
         a.emplace(Conf::CONFIG_PRESENCE_NOTE,       presence_->getNote());
     }
 
-#if HAVE_TLS
     if (transport_ and transport_->isSecure() and transport_->isConnected()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         auto cipher = pj_ssl_cipher_name(tlsInfos.cipher);
@@ -673,7 +670,6 @@ SIPAccount::getVolatileAccountDetails() const
         }
         a.emplace(DRing::TlsTransport::TLS_PEER_CA_NUM,    ring::to_string(n));
     }
-#endif
 
     return a;
 }
@@ -788,7 +784,6 @@ void SIPAccount::doRegister2_()
         ipv6 = hostIp_.isIpv6();
 #endif
 
-#if HAVE_TLS
     // Init TLS settings if the user wants to use TLS
     if (tlsEnable_) {
         RING_DBG("TLS is enabled for account %s", accountID_.c_str());
@@ -810,9 +805,7 @@ void SIPAccount::doRegister2_()
                 return;
             }
         }
-    } else
-#endif
-    {
+    } else {
         tlsListener_.reset();
         transportType_ = ipv6 ? PJSIP_TRANSPORT_UDP6 : PJSIP_TRANSPORT_UDP;
     }
@@ -837,12 +830,9 @@ void SIPAccount::doRegister2_()
     try {
         RING_WARN("Creating transport");
         transport_.reset();
-#if HAVE_TLS
         if (isTlsEnabled()) {
             setTransport(link_->sipTransportBroker->getTlsTransport(tlsListener_, hostIp_, tlsServerName_.empty() ? hostname_ : tlsServerName_));
-        } else
-#endif
-        {
+        } else {
             setTransport(link_->sipTransportBroker->getUdpTransport(
                 SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
             ));
@@ -1143,7 +1133,6 @@ SIPAccount::sendUnregister()
     }
 }
 
-#if HAVE_TLS
 pj_uint32_t
 SIPAccount::tlsProtocolFromString(const std::string& method)
 {
@@ -1231,8 +1220,6 @@ void SIPAccount::initTlsConfiguration()
     tlsSetting_.qos_ignore_error = PJ_TRUE;
 }
 
-#endif
-
 void SIPAccount::initStunConfiguration()
 {
     size_t pos;
@@ -1260,13 +1247,10 @@ void SIPAccount::loadConfig()
     if (registrationExpire_ == 0)
         registrationExpire_ = DEFAULT_REGISTRATION_TIME; /** Default expire value for registration */
 
-#if HAVE_TLS
-
     if (tlsEnable_) {
         initTlsConfiguration();
         transportType_ = PJSIP_TRANSPORT_TLS;
     } else
-#endif
         transportType_ = PJSIP_TRANSPORT_UDP;
 }
 
