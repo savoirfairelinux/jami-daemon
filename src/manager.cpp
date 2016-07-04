@@ -1637,7 +1637,6 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 }
 
 //THREAD=VoIP
-#if HAVE_INSTANT_MESSAGING
 void
 Manager::sendTextMessageToConference(const Conference& conf,
                                      const std::map<std::string, std::string>& messages,
@@ -1718,7 +1717,6 @@ Manager::sendCallTextMessage(const std::string& callID,
         }
     }
 }
-#endif // HAVE_INSTANT_MESSAGING
 
 //THREAD=VoIP CALL=Outgoing
 void

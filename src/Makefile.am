@@ -23,23 +23,7 @@ RING_VIDEO_LIBS+= \
 endif
 endif
 
-if BUILD_INSTANT_MESSAGING
-INSTANT_MESSAGING_SUBDIR = im
-IM_LIBA=./im/libim.la
-endif
-
-if USE_DHT
-RINGACC_SUBDIR=ringdht
-RINGACC_CXXFLAG=-DUSE_DHT
-RINGACC_LIBA=./ringdht/libringacc.la
-endif
-
-if BUILD_TLS
-TLS_LIB = @GNUTLS_LIBS@
-TLS_CFLAGS = @GNUTLS_CFLAGS@
-endif
-
-SUBDIRS = client media config hooks sip upnp security $(RINGACC_SUBDIR) $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security ringdht im $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -53,8 +37,8 @@ libring_la_LIBADD = \
 	./hooks/libhooks.la \
 	./security/libsecurity.la \
 	./upnp/libupnpcontrol.la \
-	$(RINGACC_LIBA) \
-	$(IM_LIBA) \
+	./ringdht/libringacc.la \
+	./im/libim.la \
 	$(RING_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \

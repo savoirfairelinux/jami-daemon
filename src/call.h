@@ -299,7 +299,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         virtual void carryingDTMFdigits(char code) = 0;
 
-#if HAVE_INSTANT_MESSAGING
         /**
          * Send a message to a call identified by its callid
          *
@@ -308,7 +307,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
                                      const std::string &from) = 0;
-#endif
 
         void removeCall();
 
