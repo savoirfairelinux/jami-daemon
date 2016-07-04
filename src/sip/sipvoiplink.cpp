@@ -39,10 +39,7 @@
 #include "sdes_negotiator.h"
 #endif
 
-#if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
-#endif
-
 #include "system_codec_container.h"
 #include "audio/audio_rtp_session.h"
 
@@ -1109,7 +1106,6 @@ static void
 onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg,
                  SIPCall& call)
 {
-#if HAVE_INSTANT_MESSAGING
     if (!msg->body)
         return;
 
@@ -1118,8 +1114,6 @@ onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg
     //      in the future
     Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
                                         im::parseSipMessage(msg));
-
-#endif // HAVE_INSTANT_MESSAGING
 }
 
 static void

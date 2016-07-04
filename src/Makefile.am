@@ -23,12 +23,7 @@ RING_VIDEO_LIBS+= \
 endif
 endif
 
-if BUILD_INSTANT_MESSAGING
-INSTANT_MESSAGING_SUBDIR = im
-IM_LIBA=./im/libim.la
-endif
-
-SUBDIRS = client media config hooks sip upnp security ringdht $(INSTANT_MESSAGING_SUBDIR) $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security ringdht im $(RING_VIDEO_SUBDIR)
 
 # libring
 
@@ -43,7 +38,7 @@ libring_la_LIBADD = \
 	./security/libsecurity.la \
 	./upnp/libupnpcontrol.la \
 	./ringdht/libringacc.la \
-	$(IM_LIBA) \
+	./im/libim.la \
 	$(RING_VIDEO_LIBS)
 
 libring_la_LDFLAGS = \

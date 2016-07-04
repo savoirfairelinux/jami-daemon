@@ -377,7 +377,6 @@ class Manager {
          */
         void peerHungupCall(Call& call);
 
-#if HAVE_INSTANT_MESSAGING
         /**
          * Notify the client with an incoming message
          * @param accountId     The account identifier
@@ -396,7 +395,6 @@ class Manager {
         void sendCallTextMessage(const std::string& callID,
                                  const std::map<std::string, std::string>& messages,
                                  const std::string& from, bool isMixed);
-#endif // HAVE_INSTANT_MESSAGING
 
         /**
          * Notify the client he has voice mails
@@ -1041,11 +1039,9 @@ class Manager {
         /* Sink ID mapping */
         std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
 
-#if HAVE_INSTANT_MESSAGING
         void sendTextMessageToConference(const Conference& conf,
                                          const std::map<std::string, std::string>& messages,
                                          const std::string& from) const noexcept;
-#endif
 
 #ifdef RING_VIDEO
     std::unique_ptr<VideoManager> videoManager_;

@@ -324,9 +324,7 @@ acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
 void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
-#if HAVE_INSTANT_MESSAGING
    ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);
-#endif
 }
 
 } // namespace DRing
