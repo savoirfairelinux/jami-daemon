@@ -34,15 +34,9 @@
 #include "string_utils.h"
 #include "upnp/upnp_control.h"
 #include "sip_utils.h"
-
 #include "audio/audio_rtp_session.h"
-
 #include "system_codec_container.h"
-
-#if HAVE_INSTANT_MESSAGING
 #include "im/instant_messaging.h"
-#endif
-
 #include "dring/call_const.h"
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
@@ -666,7 +660,6 @@ SIPCall::carryingDTMFdigits(char code)
     dtmfSend(*this, code, getSIPAccount().getDtmfType());
 }
 
-#if HAVE_INSTANT_MESSAGING
 void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
                          const std::string& /* from */)
@@ -680,7 +673,6 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 
     im::sendSipMessage(inv.get(), messages);
 }
-#endif // HAVE_INSTANT_MESSAGING
 
 void
 SIPCall::onFailure(signed cause)

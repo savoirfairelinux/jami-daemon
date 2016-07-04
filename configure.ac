@@ -416,15 +416,6 @@ AS_IF([test "x$enable_video" != "xno"],
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
-# Instant Messaging
-AC_ARG_WITH([instant_messaging],
-    [AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging])],
-    [],
-    [with_instant_messaging=yes])
-
-AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
-AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
-
 
 # PTHREAD
 # required dependency(ies): libxpat
