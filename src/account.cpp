@@ -36,12 +36,8 @@
 #include "logger.h"
 #include "manager.h"
 
-#if HAVE_DHT
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
-#else
-using random_device = std::random_device;
-#endif
 
 #include "client/ring_signal.h"
 #include "account_schema.h"

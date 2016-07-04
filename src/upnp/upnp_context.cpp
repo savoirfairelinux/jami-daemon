@@ -43,12 +43,8 @@
 #include "upnp_igd.h"
 #include "intrin.h"
 
-#if HAVE_DHT
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
-#else
-using random_device = std::random_device;
-#endif
 
 namespace ring { namespace upnp {
 

@@ -52,13 +52,9 @@ libring_la_LDFLAGS = \
 		@SPEEXDSP_LIBS@ \
 		@LIBUPNP_LIBS@ \
 		@PORTAUDIO_LIBS@ \
-		$(TLS_LIB) \
-		$(IM_LIB) \
+		@GNUTLS_LIBS@ \
+		@OPENDHT_LIBS@ \
 		$(PCRE_LIBS)
-
-if USE_DHT
-libring_la_LDFLAGS += $(OPENDHT_LIBS)
-endif
 
 if HAVE_OSX
 #FIXME necessary for -lintl
@@ -73,13 +69,10 @@ libring_la_CFLAGS = \
 		@LIBUPNP_CFLAGS@ \
 		@SPEEXDSP_CFLAGS@ \
 		@PORTAUDIO_CFLAGS@ \
-		$(TLS_CFLAGS)
+		@GNUTLS_CFLAGS@ \
+		@OPENDHT_CFLAGS@
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
-
-if USE_DHT
-libring_la_CFLAGS += $(OPENDHT_CFLAGS)
-endif
 
 libring_la_SOURCES = \
 		buildinfo.cpp \
