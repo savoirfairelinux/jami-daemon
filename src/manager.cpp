@@ -39,13 +39,9 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
-#if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
-#else
-using random_device = std::random_device;
-#endif
 
 #include "call_factory.h"
 
@@ -149,7 +145,6 @@ setSipLogLevel()
     pj_log_set_level(level);
 }
 
-#if HAVE_TLS
 /**
  * Set gnutls's log level based on the RING_TLS_LOGLEVEL environment variable.
  * RING_TLS_LOGLEVEL = 0 minimum logging (default)
@@ -182,7 +177,6 @@ setGnuTlsLogLevel()
     gnutls_global_set_log_level(level);
     gnutls_global_set_log_function(tls_print_logs);
 }
-#endif // HAVE_TLS
 
 Manager&
 Manager::instance()
@@ -276,10 +270,8 @@ Manager::init(const std::string &config_file)
     RING_DBG("pjsip version %s for %s initialized",
              pj_get_version(), PJ_OS_NAME);
 
-#if HAVE_TLS
     setGnuTlsLogLevel();
     RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
-#endif
 
     ice_tf_.reset(new IceTransportFactory());
 
@@ -2825,7 +2817,6 @@ Manager::newOutgoingCall(const std::string& toUrl,
 {
     auto preferred = getAccount(preferredAccountId);
 
-#if HAVE_DHT
     if (toUrl.find("ring:") != std::string::npos) {
         if (preferred && preferred->getAccountType() == RingAccount::ACCOUNT_TYPE)
             return preferred->newOutgoingCall(toUrl);
@@ -2834,7 +2825,6 @@ Manager::newOutgoingCall(const std::string& toUrl,
             if (acc->isEnabled())
                 return acc->newOutgoingCall(toUrl);
     }
-#endif
     // If peer url is an IP, and the preferred account is not an "IP2IP like",
     // we try to find a suitable one in all SIPAccount's.
     auto strippedToUrl = toUrl;

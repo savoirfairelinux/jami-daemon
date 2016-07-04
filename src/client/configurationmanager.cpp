@@ -28,10 +28,8 @@
 #include "configurationmanager_interface.h"
 #include "account_schema.h"
 #include "manager.h"
-#if HAVE_TLS && HAVE_DHT
 #include "security/tlsvalidator.h"
 #include "security/certstore.h"
-#endif
 #include "logger.h"
 #include "fileutils.h"
 #include "archiver.h"
@@ -119,17 +117,12 @@ std::map<std::string, std::string>
 validateCertificate(const std::string&,
                     const std::string& certificate)
 {
-#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
-#else
-    RING_WARN("TLS not supported");
-    return {};
-#endif
 }
 
 std::map<std::string, std::string>
@@ -139,38 +132,28 @@ validateCertificatePath(const std::string&,
                     const std::string& privateKeyPass,
                     const std::string& caList)
 {
-#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
         return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
     }
-#else
-    RING_WARN("TLS not supported");
-    return {};
-#endif
 }
 
 std::map<std::string, std::string>
 getCertificateDetails(const std::string& certificate)
 {
-#if HAVE_TLS && HAVE_DHT
     try {
         return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
     }
-#else
-    RING_WARN("TLS not supported");
-#endif
     return {};
 }
 
 std::map<std::string, std::string>
 getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
 {
-#if HAVE_TLS && HAVE_DHT
     try {
         auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
         TlsValidator validator {certificate, privateKey, privateKeyPassword};
@@ -179,20 +162,13 @@ getCertificateDetailsPath(const std::string& certificate, const std::string& pri
     } catch(const std::runtime_error& e) {
         RING_WARN("Certificate loading failed: %s", e.what());
     }
-#else
-    RING_WARN("TLS not supported");
-#endif
     return {};
 }
 
 std::vector<std::string>
 getPinnedCertificates()
 {
-#if HAVE_TLS && HAVE_DHT
     return ring::tls::CertificateStore::instance().getPinnedCertificates();
-#else
-    RING_WARN("TLS not supported");
-#endif
     return {};
 }
 
@@ -390,11 +366,9 @@ getSupportedTlsMethod()
 std::vector<std::string>
 getSupportedCiphers(const std::string& accountID)
 {
-#if HAVE_TLS
     if (auto sipaccount = ring::Manager::instance().getAccount<SIPAccount>(accountID))
         return SIPAccount::getSupportedTlsCiphers();
     RING_ERR("SIP account %s doesn't exist", accountID.c_str());
-#endif
     return {};
 }
 

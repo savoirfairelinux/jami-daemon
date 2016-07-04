@@ -413,19 +413,8 @@ AS_IF([test "x$enable_video" != "xno"],
      AM_CONDITIONAL(RING_VIDEO, false)
      ]);
 
-dnl TLS support is enabled if it's installed and up to date
-AC_ARG_WITH([tls],
-  [AS_HELP_STRING([--with-tls],
-    [support tls @<:@default=check@:>@])],
-  [],
-  [with_tls=check])
-AS_CASE(["$with_tls"],
-  [yes], [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3], [HAVE_GNUTLS=1])],
-  [no], [HAVE_GNUTLS=0],
-  [PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])])
-
-AC_DEFINE_UNQUOTED([HAVE_TLS], `if test $HAVE_GNUTLS -eq 1; then echo 1; else echo 0; fi`, [Define if you have tls support])
-AM_CONDITIONAL(BUILD_TLS, test "$HAVE_GNUTLS" -eq 1)
+dnl check for GnuTLS
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.3], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 # Instant Messaging
 AC_ARG_WITH([instant_messaging],
@@ -530,20 +519,8 @@ AS_CASE(["$with_opus"],
   [PKG_CHECK_MODULES([opus], [opus], [HAVE_OPUS=1], [HAVE_OPUS=0])])
 AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
 
-# dht is default-enabled, but requires gnutls
-AC_ARG_ENABLE([dht],
-  AS_HELP_STRING([--disable-dht], [disable support for dht]))
-
-AS_IF([test "x$enable_dht" != "xno" -a "$HAVE_GNUTLS" -eq 1],
-      [AC_DEFINE([HAVE_DHT], 1, [Define to enable dht])
-       PKG_CHECK_MODULES([OPENDHT], opendht,
-                         AC_DEFINE([HAVE_DHT], 1, [Define to enable dht])
-                         AM_CONDITIONAL(USE_DHT, true),
-                         AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
-                         AM_CONDITIONAL(USE_DHT, false)
-                         AC_MSG_WARN([Missing OpenDHT]))],
-      [AC_DEFINE([HAVE_DHT], 0, [Define to enable dht])
-       AM_CONDITIONAL(USE_DHT, false)])
+dnl check for openDHT
+PKG_CHECK_MODULES([OPENDHT], opendht,, AC_MSG_WARN([Missing OpenDHT]))
 
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
