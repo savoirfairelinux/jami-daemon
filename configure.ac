@@ -427,15 +427,6 @@ AS_CASE(["$with_tls"],
 AC_DEFINE_UNQUOTED([HAVE_TLS], `if test $HAVE_GNUTLS -eq 1; then echo 1; else echo 0; fi`, [Define if you have tls support])
 AM_CONDITIONAL(BUILD_TLS, test "$HAVE_GNUTLS" -eq 1)
 
-# Instant Messaging
-AC_ARG_WITH([instant_messaging],
-    [AS_HELP_STRING([--without-instant_messaging], [disable support for instant-messaging])],
-    [],
-    [with_instant_messaging=yes])
-
-AC_DEFINE_UNQUOTED([HAVE_INSTANT_MESSAGING], `if test "x$with_instant_messaging" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have instant messaging support])
-AM_CONDITIONAL(BUILD_INSTANT_MESSAGING, test "x$with_instant_messaging" = "xyes" )
-
 
 # PTHREAD
 # required dependency(ies): libxpat
