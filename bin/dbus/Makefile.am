@@ -5,7 +5,8 @@ noinst_LTLIBRARIES = libclient_dbus.la
 BUILT_SOURCES=                      \
     dbuscallmanager.adaptor.h       \
     dbusconfigurationmanager.adaptor.h \
-    dbusinstance.adaptor.h
+    dbusinstance.adaptor.h \
+    dbusdatatransfer.adaptor.h
 
 BUILT_SOURCES+=dbuspresencemanager.adaptor.h
 dbuspresencemanager.adaptor.h: cx.ring.Ring.PresenceManager.xml Makefile.am
@@ -29,6 +30,10 @@ dbusconfigurationmanager.adaptor.h: cx.ring.Ring.ConfigurationManager.xml Makefi
 dbusinstance.adaptor.h: cx.ring.Ring.Instance.xml Makefile.am
 	dbusxx-xml2cpp $< --adaptor=$@
 
+# Rule to generate the binding headers
+dbusdatatransfer.adaptor.h: cx.ring.Ring.DataTransfer.xml Makefile.am
+	dbusxx-xml2cpp $< --adaptor=$@
+
 libclient_dbus_la_SOURCES = \
     dbuscallmanager.cpp \
     dbuscallmanager.h \
@@ -41,6 +46,8 @@ libclient_dbus_la_SOURCES = \
     dbus_cpp.h \
     dbuspresencemanager.cpp \
     dbuspresencemanager.h \
+    dbusdatatransfer.cpp \
+    dbusdatatransfer.h \
     $(BUILT_SOURCES)
 
 if RING_VIDEO
@@ -64,7 +71,8 @@ interfacedir = $(datadir)/dbus-1/interfaces
 interface_DATA = cx.ring.Ring.CallManager.xml \
                  cx.ring.Ring.ConfigurationManager.xml \
                  cx.ring.Ring.Instance.xml \
-                 cx.ring.Ring.PresenceManager.xml
+                 cx.ring.Ring.PresenceManager.xml \
+                 cx.ring.Ring.DataTransfer.xml
 
 if RING_VIDEO
 interface_DATA += cx.ring.Ring.VideoManager.xml
