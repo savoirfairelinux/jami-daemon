@@ -4,6 +4,7 @@ noinst_LTLIBRARIES = libosxvideo.la
 
 libosxvideo_la_SOURCES = \
 	video_device_impl.mm \
-	video_device_monitor_impl.mm
+	video_device_monitor_impl.mm \
+	videotoolbox.cpp
 
 AM_OBJCXXFLAGS = -std=c++11
