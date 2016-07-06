@@ -419,31 +419,31 @@ dnl hwaccel is enabled by default
 AC_ARG_ENABLE([hwaccel], AS_HELP_STRING([--disable-hwaccel], [Disable hardware acceleration]))
 AS_IF([test "x$enable_hwaccel" != "xno"], [
   AC_DEFINE([USE_HWACCEL], [1], [Allows use of hardware acceleration])
-  AM_CONDITIONAL([USE_HWACCEL], [true])
+
   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
     PKG_CHECK_MODULES(LIBVA, [libva], , [AC_MSG_WARN([Missing libva package])])
     PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
       AC_DEFINE([HAVE_VAAPI_DRM], [1], [Have vaapi drm])
-      AM_CONDITIONAL([HAVE_VAAPI_DRM], [true])
       ], [AC_MSG_WARN([Could not find libva-drm])
            AC_DEFINE([HAVE_VAAPI_DRM], [0], [Don't use vaapi drm])
-           AM_CONDITIONAL([HAVE_VAAPI_DRM], [false])
          ])
     PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
       AC_DEFINE([HAVE_VAAPI_X11], [1], [Have vaapi x11])
-      AM_CONDITIONAL([HAVE_VAAPI_X11], [true])
       ], [AC_MSG_WARN([Could not find libva-x11])
            AC_DEFINE([HAVE_VAAPI_X11], [0], [Don't use vaapi x11])
-           AM_CONDITIONAL([HAVE_VAAPI_X11], [false])
          ])
   ])
-], [
-  AC_DEFINE([USE_HWACCEL], [0], [Allows use of hardware acceleration])
-  AM_CONDITIONAL([USE_HWACCEL], [false])
-  AC_DEFINE([HAVE_VAAPI_DRM], [0], [Don't use vaapi drm])
-  AM_CONDITIONAL([HAVE_VAAPI_DRM], [false])
-  AC_DEFINE([HAVE_VAAPI_X11], [0], [Don't use vaapi x11])
-  AM_CONDITIONAL([HAVE_VAAPI_X11], [false])
+
+  AS_IF([test "$SYS" = "darwin"], [
+    [AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h],
+      [AC_DEFINE([HAVE_VIDEOTOOLBOX], [1], [Videotoolbox found])],
+      [AC_MSG_WARN([Videotoolbox headers not found])])
+    ]
+    [AC_CHECK_HEADER([VideoDecodeAcceleration/VDADecoder.h],
+      [AC_DEFINE([HAVE_VDA], [1], [VDA found])],
+      [AC_MSG_WARN([VDA headers not found])])
+    ]
+  ])
 ])
 
 # PTHREAD
