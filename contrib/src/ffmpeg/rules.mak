@@ -9,6 +9,10 @@ ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
+ifdef HAVE_OSX
+PKGS += ffmpeg
+endif
+
 FFMPEGCONF = \
 		--cc="$(CC)" \
 		--pkg-config="$(PKG_CONFIG)"
