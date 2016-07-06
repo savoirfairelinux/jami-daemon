@@ -420,6 +420,7 @@ AC_ARG_ENABLE([hwaccel], AS_HELP_STRING([--disable-hwaccel], [Disable hardware a
 AS_IF([test "x$enable_hwaccel" != "xno"], [
   AC_DEFINE([USE_HWACCEL], [1], [Allows use of hardware acceleration])
   AM_CONDITIONAL([USE_HWACCEL], [true])
+
   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
     PKG_CHECK_MODULES(LIBVA, [libva], , [AC_MSG_WARN([Missing libva package])])
     PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
@@ -437,12 +438,13 @@ AS_IF([test "x$enable_hwaccel" != "xno"], [
            AM_CONDITIONAL([HAVE_VAAPI_X11], [false])
          ])
   ])
+
+  AS_IF([test "$SYS" = "darwin"], [
+    dnl check for videotoolbox, if not found, check for vda
+  ])
 ], [
-  AC_DEFINE([USE_HWACCEL], [0], [Allows use of hardware acceleration])
   AM_CONDITIONAL([USE_HWACCEL], [false])
-  AC_DEFINE([HAVE_VAAPI_DRM], [0], [Don't use vaapi drm])
   AM_CONDITIONAL([HAVE_VAAPI_DRM], [false])
-  AC_DEFINE([HAVE_VAAPI_X11], [0], [Don't use vaapi x11])
   AM_CONDITIONAL([HAVE_VAAPI_X11], [false])
 ])
 

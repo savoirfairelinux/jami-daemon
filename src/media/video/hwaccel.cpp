@@ -47,11 +47,10 @@ static enum AVPixelFormat get_format(AVCodecContext *s, const enum AVPixelFormat
             break;
 
         hwaccel = get_hwaccel(*p);
-        if (!hwaccel ||
-            (rhw->hwaccel_id != HWACCEL_AUTO && rhw->hwaccel_id != hwaccel->id))
+        if (!hwaccel || (!rhw->auto_detect && rhw->hwaccel_id != hwaccel->id))
             continue;
 
-        if (rhw->hwaccel_id == HWACCEL_AUTO)
+        if (rhw->auto_detect)
             RING_DBG("Automatically detected hwaccel %s, attempting to initialize...",
                       hwaccel->name);
 
@@ -64,6 +63,7 @@ static enum AVPixelFormat get_format(AVCodecContext *s, const enum AVPixelFormat
             }
             continue;
         }
+        rhw->hwaccel_id = hwaccel->id;
         rhw->hwaccel_pix_fmt = *p;
         break;
     }
@@ -88,9 +88,12 @@ int find_hwaccel(AVCodecContext *avctx, const char* requested_hwaccel) {
         return -1;
     }
 
+    rhw->auto_detect = 0;
     const char *hwaccel_name = requested_hwaccel;
-    if (!hwaccel_name || !hwaccel_name[0] || !strcmp(hwaccel_name, "auto"))
-        rhw->hwaccel_id = HWACCEL_AUTO;
+    if (!hwaccel_name || !hwaccel_name[0] || !strcmp(hwaccel_name, "auto")) {
+        rhw->auto_detect = 1;
+        rhw->hwaccel_id = HWACCEL_NONE; // will be chosen in get_format callback
+    }
     else if (!strcmp(hwaccel_name, "none"))
         rhw->hwaccel_id = HWACCEL_NONE;
     else {
