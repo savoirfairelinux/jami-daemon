@@ -7,5 +7,5 @@ RUN apt-get install -y devscripts debianutils debhelper build-essential tar \
  libboost-dev libdbus-c++-dev libsndfile1-dev libxext-dev libgnutls-dev \
  libxfixes-dev yasm autopoint unbound-anchor git-core libspeex-dev \
  libspeexdsp-dev autotools-dev chrpath check astyle \
- uuid-dev libudev-dev cmake libjsoncpp-dev \
+ uuid-dev libudev-dev cmake libjsoncpp-dev libnatpmp-dev \
  libavcodec-dev libavcodec-extra libavdevice-dev libavformat-dev --fix-missing
