@@ -7,4 +7,5 @@ RUN yum install rpm-build tar rsync git make autoconf automake cmake \
     dbus-c++-devel dbus-devel libsndfile-devel libXext-devel libXfixes-devel \
     yasm git speex-devel chrpath check astyle uuid-c++-devel libupnp-devel \
     gettext-devel gcc-c++ which alsa-lib-devel systemd-devel libuuid-devel \
-    uuid-devel gnutls-devel nettle-devel opus-devel patch jsoncpp-devel -y
+    uuid-devel gnutls-devel nettle-devel opus-devel patch jsoncpp-devel \
+    libnatpmp-devel -y
