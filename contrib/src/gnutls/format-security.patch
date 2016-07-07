@@ -1,6 +1,0 @@
-diff -rU0 gnutls-old/lib/x509/ocsp_output.c gnutls/lib/x509/ocsp_output.c
---- gnutls-old/lib/x509/ocsp_output.c
-+++ gnutls/lib/x509/ocsp_output.c
-@@ -289 +289 @@
--					addf(str, _("\tResponder Key ID: "));
-+					adds(str, _("\tResponder Key ID: "));

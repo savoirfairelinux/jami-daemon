@@ -5,12 +5,9 @@ NETTLE_URL := $(GNU)/nettle/nettle-$(NETTLE_VERSION).tar.gz
 
 PKGS += nettle
 
-# TEMPORARY DISABLED
-# Force nettle contrib until gnutls major patches are upstream and released
-# See gnutls rules.mak for more information
-#ifeq ($(call need_pkg,"nettle >= 3.1"),)
-#PKGS_FOUND += nettle
-#endif
+ifeq ($(call need_pkg,"nettle >= 3.1"),)
+PKGS_FOUND += nettle
+endif
 
 $(TARBALLS)/nettle-$(NETTLE_VERSION).tar.gz:
 	$(call download,$(NETTLE_URL))
