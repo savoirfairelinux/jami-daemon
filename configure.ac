@@ -384,6 +384,22 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
+dnl Check for ring-api, an alternative to D-Bus using Python & RESTful server
+AC_ARG_WITH([api],
+    [AS_HELP_STRING([--with-api], [enable API support using ring-api Python module])],
+    [with_api=yes],
+    [with_api=no])
+
+AS_IF([test "x$with_api" = xyes], [
+    AS_AC_EXPAND(SBINDIR, $sbindir)
+    AC_SUBST(SBINDIR)
+
+    # check if has pip and contribs
+
+    AC_CONFIG_FILES([bin/ring-api/Makefile])
+
+    AM_CONDITIONAL(RING_API, true)],
+    AM_CONDITIONAL(RING_API, false));
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
