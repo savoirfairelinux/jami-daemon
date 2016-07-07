@@ -31,3 +31,20 @@ dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
 
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
 endif
+
+if RING_API
+SUBDIRS=ring-api
+
+all:
+	cp ring-api/run dring-api
+	chmod +x dring-api
+
+install:
+	sudo cp dring-api $(libdir)/dring-api
+
+uninstall:
+	sudo rm $(libdir)/dring-api
+
+clean:
+	rm dring-api
+endif
