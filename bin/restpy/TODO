@@ -1,0 +1,3 @@
+- makefile.am clean
+    - doesn't get called
+    - change .so for automake variable (cross-platform)
