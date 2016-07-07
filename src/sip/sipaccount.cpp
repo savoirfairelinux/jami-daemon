@@ -86,7 +86,7 @@ static constexpr int MIN_REGISTRATION_TIME = 60;  // seconds
 static constexpr unsigned DEFAULT_REGISTRATION_TIME = 3600;  // seconds
 static constexpr unsigned REGISTRATION_FIRST_RETRY_INTERVAL = 60; // seconds
 static constexpr unsigned REGISTRATION_RETRY_INTERVAL = 300; // seconds
-static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1", "SSLv3"};
+static const char *const VALID_TLS_PROTOS[] = {"Default", "TLSv1.2", "TLSv1.1", "TLSv1"};
 
 constexpr const char * const SIPAccount::ACCOUNT_TYPE;
 
@@ -1144,8 +1144,6 @@ SIPAccount::tlsProtocolFromString(const std::string& method)
         return PJ_SSL_SOCK_PROTO_TLS1_2 | PJ_SSL_SOCK_PROTO_TLS1_1;
     if (method == "TLSv1")
         return PJ_SSL_SOCK_PROTO_TLS1_2 | PJ_SSL_SOCK_PROTO_TLS1_1 | PJ_SSL_SOCK_PROTO_TLS1;
-    if (method == "SSLv3")
-        return PJ_SSL_SOCK_PROTO_SSL3;
     return PJSIP_SSL_DEFAULT_PROTO;
 }
 
