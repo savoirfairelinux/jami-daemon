@@ -1355,14 +1355,14 @@ Manager::removeAudio(Call& call)
     getRingBufferPool().unBindAll(call_id);
 }
 
-// Not thread-safe, SHOULD be called in same thread that run poolEvents()
+// Not thread-safe, SHOULD be called in same thread that run pollEvents()
 void
 Manager::registerEventHandler(uintptr_t handlerId, EventHandler handler)
 {
     eventHandlerMap_[handlerId] = handler;
 }
 
-// Not thread-safe, SHOULD be called in same thread that run poolEvents()
+// Not thread-safe, SHOULD be called in same thread that run pollEvents()
 void
 Manager::unregisterEventHandler(uintptr_t handlerId)
 {
@@ -1375,10 +1375,10 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
     }
 }
 
-// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 Manager::addTask(const std::function<bool()>&& task)
 {
+    std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     pendingTaskList_.emplace_back(std::move(task));
 }
 
@@ -1441,8 +1441,11 @@ void Manager::pollEvents()
 
     //-- Tasks
     {
-        auto tmpList = std::move(pendingTaskList_);
-        pendingTaskList_.clear();
+        decltype(pendingTaskList_) tmpList;
+        {
+            std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
+            std::swap(pendingTaskList_, tmpList);
+        }
         auto iter = std::begin(tmpList);
         while (iter != tmpList.cend()) {
             if (finished_)
@@ -1460,7 +1463,10 @@ void Manager::pollEvents()
                 tmpList.erase(iter);
             iter = next;
         }
-        pendingTaskList_.splice(std::end(pendingTaskList_), tmpList);
+        {
+            std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
+            pendingTaskList_.splice(std::end(pendingTaskList_), tmpList);
+        }
     }
 }
 
