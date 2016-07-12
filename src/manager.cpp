@@ -77,6 +77,8 @@ using random_device = dht::crypto::random_device;
 #include "libav_utils.h"
 #include "video/sinkclient.h"
 
+#include "data_transfer.h"
+
 #include <cerrno>
 #include <algorithm>
 #include <ctime>
@@ -355,9 +357,13 @@ Manager::finish() noexcept
         }
 
         ice_tf_.reset();
+        RING_DBG("/!\\ Shutdown PJSIP /!\\");
         pj_shutdown();
     } catch (const VoipLinkException &err) {
-        RING_ERR("%s", err.what());
+        RING_ERR("VoipLinkException: %s", err.what());
+    } catch (const std::exception& e) {
+        RING_ERR("Fatal exception: %s", e.what());
+        std::terminate();
     }
 }
 
@@ -1383,24 +1389,23 @@ Manager::addTask(const std::function<bool()>&& task)
 }
 
 std::shared_ptr<Manager::Runnable>
-Manager::scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when)
+Manager::scheduleTask(const std::function<void()>&& callable, std::chrono::steady_clock::time_point when)
 {
-    auto runnable = std::make_shared<Runnable>(std::move(task));
+    auto runnable = std::make_shared<Runnable>(std::move(callable));
     scheduleTask(runnable, when);
     return runnable;
 }
-
 
 void
 Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when)
 {
     std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     scheduledTasks_.emplace(when, task);
-    RING_DBG("Task scheduled. Next in %" PRId64, std::chrono::duration_cast<std::chrono::seconds>(scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
 }
 
 // Must be invoked periodically by a timer from the main event loop
-void Manager::pollEvents()
+void
+Manager::pollEvents()
 {
     //-- Handlers
     {
@@ -2881,5 +2886,16 @@ Manager::getSinkClient(const std::string& id)
     return nullptr;
 }
 #endif // RING_VIDEO
+
+DRing::DataTransferId
+Manager::sendFile(const std::string& accountId,
+                  const std::string& peerUri,
+                  const std::string& pathname,
+                  const std::string& name)
+{
+    if (auto acc = getAccount(accountId))
+        return acc->sendFile(peerUri, pathname, name);
+    return {};
+}
 
 } // namespace ring
