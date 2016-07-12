@@ -75,6 +75,10 @@ tags
 TAGS.LST
 ID
 
+# Gcov coverage files
+*.gcno
+*.gcov
+
 # IDE stuffs
 nbproject
 *.kdev*
