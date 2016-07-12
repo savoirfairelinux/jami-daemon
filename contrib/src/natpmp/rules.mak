@@ -17,5 +17,5 @@ natpmp: libnatpmp-$(NATPMP_VERSION).tar.gz .sum-natpmp
 	$(MOVE)
 
 .natpmp: natpmp
-	cd $< && $(MAKE) INSTALLPREFIX="$(PREFIX)" install
+	cd $< && $(MAKE) INSTALLPREFIX="$(PREFIX)" $(HOSTVARS) install
 	touch $@
