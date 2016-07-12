@@ -532,6 +532,7 @@ AS_IF([test "x$with_upnp" = "xyes"],
       ])
 
 # LIBNATPMP
+if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then
 dnl check for libnatpmp
 AC_ARG_WITH([natpmp], [AS_HELP_STRING([--without-natpmp],
             [disable support for NAT-PMP])], [], [with_natpmp=yes])
@@ -544,6 +545,7 @@ AS_IF([test "x$with_natpmp" != xno],
         ],[])
 
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP], `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`, [Define if you have libnatpmp])
+fi
 
 AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
 	[Define if you have shared memory support])
