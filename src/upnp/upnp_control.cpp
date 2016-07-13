@@ -46,14 +46,19 @@ Controller::~Controller()
 {
     /* remove all mappings */
     removeMappings();
+#if HAVE_LIBUPNP
     if (listToken_ and upnpContext_)
         upnpContext_->removeIGDListener(listToken_);
+#endif
 }
 
 bool
 Controller::hasValidIGD(std::chrono::seconds timeout)
 {
+#if HAVE_LIBUPNP
     return upnpContext_ and upnpContext_->hasValidIGD(timeout);
+#endif
+    return false;
 }
 
 void
@@ -61,9 +66,11 @@ Controller::setIGDListener(IGDFoundCallback&& cb)
 {
     if (not upnpContext_)
         return;
+#if HAVE_LIBUPNP
     if (listToken_)
         upnpContext_->removeIGDListener(listToken_);
     listToken_ = cb ? upnpContext_->addIGDListener(std::move(cb)) : 0;
+#endif
 }
 
 bool
@@ -74,6 +81,7 @@ Controller::addAnyMapping(uint16_t port_desired,
                           bool unique,
                           uint16_t *port_used)
 {
+#if HAVE_LIBUPNP
     if (not upnpContext_)
         return false;
 
@@ -89,6 +97,7 @@ Controller::addAnyMapping(uint16_t port_desired,
         instanceMappings.emplace(usedPort, std::move(mapping));
         return true;
     }
+#endif
     return false;
 }
 
@@ -104,6 +113,7 @@ Controller::addAnyMapping(uint16_t port_desired,
 
 void
 Controller::removeMappings(PortType type) {
+#if HAVE_LIBUPNP
     if (not upnpContext_)
         return;
 
@@ -113,28 +123,34 @@ Controller::removeMappings(PortType type) {
         upnpContext_->removeMapping(mapping);
         iter = instanceMappings.erase(iter);
     }
+#endif
 }
-
 void
 Controller::removeMappings()
 {
+#if HAVE_LIBUPNP
     removeMappings(PortType::UDP);
     removeMappings(PortType::TCP);
+#endif
 }
 
 IpAddr
 Controller::getLocalIP() const
 {
+#if HAVE_LIBUPNP
     if (upnpContext_)
         return upnpContext_->getLocalIP();
+#endif
     return {}; //  empty address
 }
 
 IpAddr
 Controller::getExternalIP() const
 {
+#if HAVE_LIBUPNP
     if (upnpContext_)
         return upnpContext_->getExternalIP();
+#endif
     return {}; //  empty address
 }
 
