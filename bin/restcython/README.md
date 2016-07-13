@@ -2,6 +2,8 @@
 
 The documentation is located in the [Wiki](https://github.com/sevaivanov/ring-api/wiki).
 
+Tested and stable at [e064788](https://github.com/sevaivanov/ring-api/commit/e064788ca7921e866717a53ee20c329db13508a2).
+
 ## Roadmap
 
 * ~~Initialize Ring~~
@@ -15,37 +17,36 @@ The documentation is located in the [Wiki](https://github.com/sevaivanov/ring-ap
 * ~~Register callbacks~~
 * ~~Define python callbacks API~~
 * Segment wrappers into multiple files
-* Decide whether to use REST + Sockets or only Sockets (and which ones)
-* Freezed: Select a multi-threaded RESTful server [See: Wiki](https://github.com/sevaivanov/ring-api/wiki/Questions#restful-http-server)
-* Freezed: Define RESTful API standards [See: Wiki](https://github.com/sevaivanov/ring-api/wiki/Architecture#layout)
-* Write how call client from Ring-daemon with *--without-dbus* option
-* Rewrite interfaces definitions from */usr/include/dring/*:
-
-    Keep in mind that not everything needs to be rewritten. It depends on the usage.
-
-    * Done
-
-            dring.h                             ->    dring.pxd
-
-    * In Progress
-
-            configurationmanager_interface.h    ->    configuration_manager.pxd
-
-    * To do
-
-            account_const.h
-            call_const.h
-            callmanager_interface.h
-            media_const.h
-            presencemanager_interface.h
-            security_const.h
-            videomanager_interface.h
-
-* ~~Write a Wiki~~
+* ~~Decide whether to use REST + WebSockets or only WebSockets~~
+* ~~Select multi-threaded RESTful server~~
+* ~~Define RESTful API standards~~
+* ~~Define RESTful API in json~~
+* ~~Implement RESTful API using Flask-REST~~
+* Implement WebSockets structure for server initiated callbacks
+* ~~Write a wiki base~~
+* Wiki: write how it works with and draw a diagram
+* Wiki: document the server and WebSockets software choices
 * Add unit tests
 * Add integration tests
+* Integrate the project to Ring-daemon Autotools using the *--without-dbus* option
+* Implement the functionalities:
 
-## Getting started
+    **It considered done when it's implement in both Cython and the RESTful server.**
+
+    - ~~possibility to talk to the REST http interface of the daemon (the framework that you've written so far)~~
+    - ~~control the "static" configuration of the daemon: add/remove an account, modify properties, enable/disable them~~
+    - ~~be able to listen to the changes from the daemon (framework for signals)~~
+    - execute dynamic features:
+      - receive a message text (IM) out-of-call
+      - send an IM out-of-call
+      - be able to accept/refuse an incoming call
+      - be able to display the status of a call and stop a call
+      - tx/rx IM in-call
+      - ~~display video, in-call and preview for camera setup (audio is fully controlled by the daemon)~~
+      - add full call controls (media pause, transfer, audio controls, conferences, ...)
+      - add full "smart list" features
+      - ~~certificates controls~~
+
 
 ### Installation
 

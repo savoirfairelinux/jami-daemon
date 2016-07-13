@@ -30,10 +30,19 @@ from ring_api.interfaces.dring cimport *
 
 cdef extern from "configurationmanager_interface.h" namespace "DRing":
 
-    # account id != ring id
+    map[string, string] getAccountDetails(const string& accountID)
+    void setAccountDetails(const string& accountID, const map[string, string]& details)
+    void setAccountActive(const string& accountID, const boolean& active)
+    map[string, string] getAccountTemplate(const string& accountType)
+    string addAccount(const map[string, string]& details)
+    void removeAccount(const string& accoundID)
     vector[string] getAccountList()
-    map[string, string] getAccountDetails(const string& accountID);
-
-    # to: ring_id_dest, payloads: map[<mime-type>, <message>]
     uint64_t sendAccountTextMessage(const string& accountID, const string& to,
-            const map[string, string]& payloads);
+        const map[string, string]& payloads)
+    map[string, string] validateCertificate(const string& accountId, const string& certificate)
+    map[string, string] getCertificateDetails(const string& certificate)
+    vector[string] getPinnedCertificates()
+    vector[string] pinCertificate(const vector[uint8_t]& certificate, const boolean& local)
+    boolean unpinCertificate(const string& certId)
+    boolean pinRemoteCertificate(const string& accountId, const string& certId)
+    boolean setCertificateStatus(const string& account, const string& certId, const string& status)

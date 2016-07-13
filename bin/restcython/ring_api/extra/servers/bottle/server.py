@@ -1,6 +1,6 @@
 from bottle import run
 
-from ring_api.restfulserver.bottle.api import root, ring, user
+from ring_api.server.bottle.api import root, ring, user
 
 class BottleServer:
 

@@ -2,7 +2,7 @@ import json
 
 from bottle import request, get
 
-from ring_api.restfulserver.bottle.api import ring, user
+from ring_api.server.bottle.api import ring, user
 
 api = {
     'routes': '/routes/',

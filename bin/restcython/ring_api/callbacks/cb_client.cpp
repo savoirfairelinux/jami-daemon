@@ -29,6 +29,7 @@ void CallbacksClient::registerEvents()
     /* Must be executed after DRing::init() and before DRing:start() methods.
      * Binding after Cython methods from the generated C header.
      */
+
     using namespace std::placeholders;
 
     using std::bind;

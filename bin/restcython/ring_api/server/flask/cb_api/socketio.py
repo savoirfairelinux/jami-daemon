@@ -2,7 +2,6 @@
 # Copyright (C) 2016 Savoir-faire Linux Inc
 #
 # Author: Seva Ivanov <seva.ivanov@savoirfairelinux.com>
-#         Simon Zeni <simon.zeni@savoirfairelinux.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,27 +18,24 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-from setuptools import setup, Extension
-from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+# It's an implementation of Python callbacks API using Socket.IO.
+# Based on ring_api/callbacks/cb_api.py template.
 
-# It will generate a shared library (.so)
-setup(name='dring_cython',
-    ext_modules = cythonize(Extension(
-        'dring_cython', # library name
-        sources=['wrappers/dring_cython.pyx',
-            'callbacks/cb_client.cpp'],
-        language='c++',
-        extra_compile_args=['-std=c++11'],
-        include_dirs = [
-            '../../../src/dring',
-            '/usr/include/dring',
-            'extra/hpp/',
-            'callbacks/',
-            'wrappers/'
-        ],
-        library_dirs=['../../../src/.libs'],
-        libraries=['ring'],
-    )),
-    cmdclass = {'build_ext' : build_ext}
-)
+# Function names should be the same as the keys from callbacks_to_register().
+# Each method should contain a docstring that describes it.
+
+def text_message(socketio, account_id, from_ring_id, content):
+    """Receives a text message
+
+    Keyword arguments:
+    socketio        -- context as instance to emit to websockets
+    account_id      -- account id string
+    from_ring_id    -- ring id string
+    content         -- dict of content defined as [<mime-type>, <message>]
+    """
+    print(id(socketio)) # TODO remove
+    socketio.emit('text_message', {
+        'account_id': account_id,
+        'from_ring_id': from_ring_id,
+        'content': content
+    })

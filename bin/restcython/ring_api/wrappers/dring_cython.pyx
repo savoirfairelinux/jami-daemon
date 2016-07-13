@@ -27,13 +27,20 @@ from libcpp.string cimport string
 from libcpp.map cimport map as map
 
 from ring_api.utils.std cimport *
+from ring_api.utils.cython import *
+
 from ring_api.interfaces cimport dring as dring_cpp
 from ring_api.interfaces cimport configuration_manager as confman_cpp
+from ring_api.interfaces cimport call_manager as callman_cpp
 from ring_api.interfaces cimport video_manager as videoman_cpp
 from ring_api.interfaces cimport cb_client as cb_client_cpp
 
-global python_callbacks
-python_callbacks = dict.fromkeys(['text_message'])
+# python callbacks
+global py_cbs
+py_cbs = dict.fromkeys(['text_message'])
+
+# python callbacks context
+global py_cbs_ctx
 
 cdef public void incoming_account_message(
         const string& raw_account_id,
@@ -49,9 +56,13 @@ cdef public void incoming_account_message(
         key = raw_key.decode()
         content[key] = raw_content_dict[raw_key].decode()
 
-    global python_callbacks
-    callback = python_callbacks['text_message']
-    if (callback):
+    global py_cbs_ctx
+    global py_cbs
+    callback = py_cbs['text_message']
+
+    if (callback and py_cbs_ctx):
+        callback(py_cbs_ctx, str(account_id), str(from_ring_id), content)
+    elif (callback):
         callback(str(account_id), str(from_ring_id), content)
 
 cdef class CallbacksClient:
@@ -70,35 +81,79 @@ cdef class CallbacksClient:
 
 cdef class ConfigurationManager:
 
-    def accounts(self):
-        """List user accounts (not ring ids)
-
-        Return: accounts list
-        """
-        accounts = list()
-        raw_accounts = confman_cpp.getAccountList()
-
-        for i, account in enumerate(raw_accounts):
-            accounts.append(account.decode())
-
-        return accounts
-
     def account_details(self, account_id):
         """Gets account details
 
-        Keyword arguments:
+        Keyword argument:
         account_id -- account id string
 
-        Return: account details dict
+        Return: account_details dict
         """
         cdef string raw_id = account_id.encode()
-        details = dict()
-        raw_dict = confman_cpp.getAccountDetails(raw_id)
 
-        for key, value in raw_dict.iteritems():
-            details[key.decode()] = value.decode()
+        return raw_dict_to_dict(confman_cpp.getAccountDetails(raw_id))
 
-        return details
+    def set_details(self, account_id, details):
+        cdef string raw_id = account_id.encode()
+        cdef map[string, string] raw_details
+
+        for key in details:
+            raw_details[key.encode()] = details[key].encode()
+
+        confman_cpp.setAccountDetails(raw_id, raw_details)
+
+    def set_account_active(self, account_id, active):
+        """Activates the account
+
+        Keyword arguments:
+        account_id   -- account id string
+        active       -- status bool
+        """
+        confman_cpp.setAccountActive(account_id.encode(), active)
+
+    def get_account_template(self, account_type):
+        """Generates a template for the account
+
+        Keyword argument:
+        account_type -- account type string (SIP, IAX, IP2IP, RING)
+
+        Return: template dict
+        """
+        raw_template = confman_cpp.getAccountTemplate(account_type.encode())
+
+        return raw_dict_to_dict(raw_template)
+
+    def add_account(self, details):
+        """Adds a new account
+
+        Keyword argument:
+        details -- account details template dict
+
+        Return: account_id string
+        """
+        cdef map[string, string] raw_details
+
+        for key in details:
+            raw_details[key.encode()] = details[key].encode()
+
+        cdef string raw_account_id = confman_cpp.addAccount(raw_details)
+
+        return raw_account_id.decode()
+
+    def remove_account(self, account_id):
+        """Removes an account from the daemon
+
+        Keywork argument:
+        account_id -- account id string
+        """
+        confman_cpp.removeAccount(account_id.encode())
+
+    def accounts(self):
+        """Lists the user accounts (ring_id != account_id)
+
+        Return: accounts list
+        """
+        return raw_list_to_list(confman_cpp.getAccountList())
 
     def send_text_message(self, account_id, ring_id, content):
         """Sends a text message
@@ -120,19 +175,202 @@ cdef class ConfigurationManager:
         confman_cpp.sendAccountTextMessage(
                 raw_account_id, raw_ring_id, raw_content)
 
+    def validate_certificate(self, account_id, certificate):
+        """TODO
+
+        Keyword arguments:
+        account_id  -- account id string
+        certificate -- certificate string
+
+        Return: list of valid certificates ? TODO
+        """
+        raw_valid_certif = confman_cpp.validateCertificate(account_id.encode(), certificate.encode())
+
+        return raw_dict_to_dict(raw_valid_certif)
+
+    def get_certificate_details(self, certificate):
+        """Gets the certificate details
+
+        Keyword argument:
+        certificate -- certificate string
+
+        Return: dict of certificate details
+        """
+        return raw_dict_to_dict(confman_cpp.getCertificateDetails(certificate.encode()))
+
+    def get_pinned_certificates(self):
+        """Gets all known certificate IDs
+
+        Return: list of pinned certificates
+        """
+        return raw_list_to_list(confman_cpp.getPinnedCertificates())
+
+    def pin_certificate(self, certificate, local):
+        """TODO
+
+        Keyword arguments:
+        certificate -- raw certificate int list
+        local       -- true to save bool
+
+        Return: list of ids of the pinned certificate
+        """
+        return raw_list_to_list(confman_cpp.pinCertificate(certificate, local))
+
+    def unpin_certificate(self, cert_id):
+        """TODO
+
+        Keyword arguments:
+        cert_id     -- certificate id string
+
+        Return: boolean of the operation success
+        """
+        return confman_cpp.unpinCertificate(cert_id.encode())
+
+    def pin_remote_certificate(account_id, cert_id):
+        """TODO
+
+        Keyword arguments:
+        account_id  -- account id string
+        cert_id     -- certificate id string
+
+        Return: boolean of the operation success
+        """
+        return confman_cpp.pinRemoteCertificate(account_id.encode(), cert_id.encode())
+
+    def set_certificate_status(account_id, cert_id, status):
+        """Sets the status of an account certificate
+
+        Keyword arguments:
+        account_id  -- account id string
+        cert_id     -- certificate id string
+        status      -- status string (UNDEFINED, ALLOWED, BANNED)
+
+        Return: boolean of the operation success
+        """
+        return confman_cpp.setCertificateStatus(account_id.encode(),
+            cert_id.encode(),
+            status.encode())
+
 cdef class VideoManager:
     def devices(self):
-        """List the available video devices
+        """Lists the available video devices
 
-        Return: devices list
+        Return: list of devices
         """
-        devices = list()
-        raw_devices = videoman_cpp.getDeviceList()
+        return raw_list_to_list(videoman_cpp.getDeviceList())
 
-        for device in raw_devices:
-            devices.append(device.decode())
+    def get_settings(self, name):
+        """Gets the settings of a given device
 
-        return devices
+        Keyword arguments:
+        name      -- device id string
+
+        Return: dict of settings
+        """
+        return raw_dict_to_dict(videoman_cpp.getSettings(name.encode()))
+
+    def apply_settings(self, name, settings):
+        """Changes the settings of a given device
+
+        Keyword arguments:
+        name      -- device id string
+        settings  -- settings dict
+        """
+        cdef map[string, string] raw_settings
+
+        for key, value in settings.iteritems():
+            raw_settings[key.encode()] = value.encode()
+
+        videoman_cpp.applySettings(name.encode(), raw_settings)
+
+    def set_default_device(self, dev):
+        videoman_cpp.setDefaultDevice(dev.encode())
+
+    def get_default_device(self):
+        return videoman_cpp.getDefaultDevice().decode()
+
+    def start_camera(self):
+        videoman_cpp.startCamera()
+
+    def stop_camera(self):
+        videoman_cpp.stopCamera()
+
+    def switch_input(self, resource):
+        "TODO what is resource?"
+        return videoman_cpp.switchInput(resource.encode())
+
+    def has_camera_started(self):
+        return videoman_cpp.hasCameraStarted()
+
+cdef class CallManager:
+
+    def place_call(self, account_id, to):
+        """Places a call between two users
+
+        Keyword argument:
+        account_id  -- account string
+        to          -- ring_id string
+
+        Return: string of the call_id
+        """
+
+        raw_call_id = callman_cpp.placeCall(account_id.encode(), to.encode());
+
+        return raw_call_id.decode()
+
+    def refuse(self, call_id):
+        """Refuses an incoming call
+
+        Keyword argument:
+        call_id -- call id string
+
+        Return: boolean of operation success
+        """
+        return callman_cpp.refuse(call_id.encode());
+
+    def accept(self, call_id):
+        """Accepts an incoming call
+
+        Keyword argument:
+        call_id -- call id string
+
+        Return: boolean of operation success
+        """
+        return callman_cpp.accept(call_id.encode());
+
+    def hang_up(self, call_id):
+        """Hangs up a call which is in state (CURRENT, HOLD)
+
+        Keyword argument:
+        call_id -- call id string
+
+        Return: boolean of operation success
+        """
+        return callman_cpp.hangUp(call_id.encode());
+
+    def hold(self, call_id):
+        """Places a call which is in state (HOLD)
+
+        Keyword argument:
+        call_id -- call id string
+
+        Return: boolean of operation success
+        """
+        return callman_cpp.hold(call_id.encode());
+
+    def unhold(self, call_id):
+        """Takes a call from (HOLD) and place it in (CURRENT) state
+
+        Keyword argument:
+        call_id -- call id string
+
+        Return: boolean of operation success
+        """
+        return callman_cpp.unhold(call_id.encode());
+
+
+cdef class PresenceManager:
+    pass
 
 cdef class Dring:
     cdef:
@@ -142,6 +380,8 @@ cdef class Dring:
 
     cdef public ConfigurationManager config
     cdef public VideoManager video
+    cdef public CallManager call
+    cdef public PresenceManager pres
     cdef CallbacksClient cb_client
 
     def __cinit__(self):
@@ -154,6 +394,14 @@ cdef class Dring:
             raise RuntimeError
 
         self.video = VideoManager()
+        if (not self.video):
+            raise RuntimeError
+
+        self.call = CallManager()
+        if (not self.video):
+            raise RuntimeError
+
+        self.pres = PresenceManager()
         if (not self.video):
             raise RuntimeError
 
@@ -179,22 +427,27 @@ cdef class Dring:
         return dring_cpp.version().decode()
 
     def callbacks_to_register(self):
-        """Returns the python callbacks that will be triggered dring signals.
-        The signals are the dict keys.
-        """
-        global python_callbacks
-        return python_callbacks
+        """Returns a dict for callbacks to register as keys values"""
+        global py_cbs
+        return py_cbs
 
-    def register_callbacks(self, callbacks):
+    def register_callbacks(self, callbacks, context=None):
         """Registers the python callbacks received as dict values.
-        The corresponding signals are defined as keys.
-        Expects the dict with keys defined by the callbacks() method.
+
+        Keyword argument:
+        callbacks -- dict of functions to callback
+                     the corresponding signals are defined as keys
+                     keys immutable and defined by the callbacks() method
+        context -- context which will be passed as argument to the callbacks
 
         No return
         """
-        global python_callbacks
+        global py_cbs
         try:
-            for key, value in python_callbacks.items():
-                python_callbacks[key] = callbacks[key]
+            for key, value in py_cbs.items():
+                py_cbs[key] = callbacks[key]
         except KeyError as e:
             raise KeyError("KeyError: %s. You can't change the keys." % e)
+
+        global py_cbs_ctx
+        py_cbs_ctx = context

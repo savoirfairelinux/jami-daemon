@@ -1,7 +1,8 @@
 #
 # Copyright (C) 2016 Savoir-faire Linux Inc
 #
-# Author: Seva Ivanov <seva.ivanov@savoirfairelinux.com>
+# Authors:  Seva Ivanov <seva.ivanov@savoirfairelinux.com>
+#           Simon Zeni  <simon.zeni@savoirfairelinux.com>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +26,7 @@ import threading, time
 from queue import Queue
 
 from ring_api.dring_cython import Dring
-from ring_api.restfulserver.bottle.server import BottleServer
+from ring_api.server.flask.server import FlaskServer
 
 def options():
     usage = 'usage: %prog [options] arg1 arg2'
@@ -98,27 +99,23 @@ class Client:
         self.dring_thread.setDaemon(not self.options.persistent)
 
         if (self.options.rest):
-            self.restapp = BottleServer(
-                    self.options.host, self.options.port, self.dring)
-            self.restapp_thread = threading.Thread(target=self.restapp.start)
+            # create the rest server
+            self.restapp = FlaskServer(
+                self.options.host, self.options.port, self.dring)
+
+            # init websockets asyncio eventloop thread
+            self.restapp_ws_eventloop_thread = threading.Thread(
+                target=self.restapp.start_ws_eventloop)
+
+            # init restapp thread
+            self.restapp_thread = threading.Thread(
+                target=self.restapp.start_rest)
 
         if (self.options.interpreter):
-            self.mother_thread = threading.Thread(target=self._start_main_loop)
+            # main loop as daemon (foreground process)
+            self.mother_thread = threading.Thread(
+                    target=self._start_main_loop)
             self.mother_thread.setDaemon(True)
-
-    def options_to_bitflags(self, options):
-        flags = 0
-
-        if (options.console):
-            flags |= self.dring._FLAG_CONSOLE_LOG
-
-        if (options.debug):
-            flags |= self.dring._FLAG_DEBUG
-
-        if (options.autoanswer):
-            flags |= self.dring._FLAG_AUTOANSWER
-
-        return flags
 
     def start(self):
         try:
@@ -134,7 +131,16 @@ class Client:
         self.dring_thread.start()
 
         if (self.options.rest):
+            # give dring time to init
             time.sleep(3)
+
+            # start websockets asyncio eventloop in a thread
+            self.restapp_ws_eventloop_thread.start()
+
+            # register callbacks which will use the server instace
+            self.restapp.register_callbacks(self.restapp)
+
+            # start restapp in a thread
             self.restapp_thread.start()
 
         while True:
@@ -149,3 +155,17 @@ class Client:
 
         if hasattr(self, 'restapp'):
             self.restapp.stop()
+
+    def options_to_bitflags(self, options):
+        flags = 0
+
+        if (options.console):
+            flags |= self.dring._FLAG_CONSOLE_LOG
+
+        if (options.debug):
+            flags |= self.dring._FLAG_DEBUG
+
+        if (options.autoanswer):
+            flags |= self.dring._FLAG_AUTOANSWER
+
+        return flags

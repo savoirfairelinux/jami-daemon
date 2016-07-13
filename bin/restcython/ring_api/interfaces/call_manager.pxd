@@ -17,6 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
+
 from libc.stdint cimport *
 
 from libcpp.string cimport string
@@ -27,14 +28,11 @@ from libcpp.vector cimport vector
 from ring_api.utils.std cimport *
 from ring_api.interfaces.dring cimport *
 
-cdef extern from "videomanager_interface.h" namespace "DRing":
+cdef extern from "callmanager_interface.h" namespace "DRing":
 
-    vector[string] getDeviceList()
-    map[string, string] getSettings(const string& name)
-    void applySettings(const string& name, const map[string, string]& settings)
-    void setDefaultDevice(const string& dev)
-    string getDefaultDevice()
-    void startCamera()
-    void stopCamera()
-    boolean switchInput(const string& resource)
-    boolean hasCameraStarted()
+    string placeCall(const string& accountID, const string& to);
+    boolean refuse(const string& callID);
+    boolean accept(const string& callID);
+    boolean hangUp(const string& callID);
+    boolean hold(const string& callID);
+    boolean unhold(const string& callID);
