@@ -110,6 +110,12 @@ public:
      */
     int handleUPnPEvents(Upnp_EventType event_type, void* event);
 
+    /**
+     * Inform the UPnP context that the network status has changed. This clears the list of known
+     * IGDs
+     */
+    void connectivityChanged();
+
 #else
     /* use default constructor and destructor */
     UPnPContext() = default;

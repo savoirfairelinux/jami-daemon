@@ -254,7 +254,7 @@ class RingAccount : public SIPAccountBase {
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
-        void connectivityChanged();
+        void connectivityChanged() override;
 
     private:
         NON_COPYABLE(RingAccount);
@@ -286,6 +286,8 @@ class RingAccount : public SIPAccountBase {
          * Maps require port via UPnP
          */
         bool mapPortUPnP();
+
+        void igdChanged();
 
         dht::DhtRunner dht_ {};
 
