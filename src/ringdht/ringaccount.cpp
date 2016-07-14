@@ -748,7 +748,7 @@ RingAccount::mapPortUPnP()
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
     upnp_->setIGDListener([w] {
         if (auto shared = w.lock())
-            shared->connectivityChanged();
+            shared->igdChanged();
     });
     return added;
 }
@@ -1395,7 +1395,7 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 }
 
 void
-RingAccount::connectivityChanged()
+RingAccount::igdChanged()
 {
     if (not dht_.isRunning())
         return;

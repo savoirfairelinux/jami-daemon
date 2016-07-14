@@ -296,6 +296,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         mutable std::mt19937_64 rand_;
 
+        /**
+         * Inform the account that the network status has changed with a hint about whether or not
+         * the network is online. Note that being online does not guarantee that all hosts are
+         * reachable, this is why this is only a hint.
+         */
+        virtual void connectivityChanged(bool /* online */) {};
+
     private:
         NON_COPYABLE(Account);
 
