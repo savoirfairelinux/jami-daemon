@@ -40,6 +40,7 @@
 #include "system_codec_container.h"
 #include "account_const.h"
 #include "client/ring_signal.h"
+#include "upnp/upnp_context.h"
 
 #include <dirent.h>
 
@@ -787,6 +788,22 @@ setCredentials(const std::string& accountID,
             if (sipaccount->isEnabled())
                 sipaccount->doRegister();
         });
+    }
+}
+
+void
+connectivityChanged(bool online)
+{
+    RING_WARN("received connectivity changed - trying to re-connect enabled accounts");
+
+    // reset the UPnP context
+    ring::upnp::getUPnPContext()->connectivityChanged(online);
+
+    auto account_list = ring::Manager::instance().getAccountList();
+    for (auto account_id : account_list) {
+        if (auto account = ring::Manager::instance().getAccount(account_id)) {
+            account->connectivityChanged(online);
+        }
     }
 }
 

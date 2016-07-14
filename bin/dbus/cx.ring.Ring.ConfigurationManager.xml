@@ -1103,5 +1103,21 @@
            </arg>
        </signal>
 
+       <method name="connectivityChanged" tp:name-for-bindings="connectivityChanged">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               This notifies the daemon that the network connectivity has changed, eg:
+               - interface has disconnected for the network
+               - interface connected to a different network
+               - connected interface has changed (wifi to eth)
+           </tp:docstring>
+           <arg type="b" name="online" direction="in">
+               <tp:docstring>
+                   <p>This is a hint to the daemon about the current status of the network; it will try to reconnect even if it is 'false'.</p>
+               </tp:docstring>
+           </arg>
+
+       </method>
+
    </interface>
 </node>
