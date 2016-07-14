@@ -110,6 +110,13 @@ public:
      */
     int handleUPnPEvents(Upnp_EventType event_type, void* event);
 
+    /**
+     * Inform the UPnP context that the network status has changed with a hint about whether or not
+     * the network is online. This will result in resetting of the UPnP context since the same
+     * interface may no longer be available.
+     */
+    void connectivityChanged(bool online);
+
 #else
     /* use default constructor and destructor */
     UPnPContext() = default;

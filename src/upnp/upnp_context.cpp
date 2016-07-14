@@ -180,6 +180,25 @@ UPnPContext::~UPnPContext()
 }
 
 void
+UPnPContext::connectivityChanged(bool /* online */)
+{
+    {
+        std::lock_guard<std::mutex> lock(validIGDMutex_);
+
+        /* when the network changes, we're likely no longer connected to the same IGD, thus we clear
+         * the list and notify the listeners (in the case that there is no longer an IGD at all)
+         */
+        validIGDs_.clear();
+        validIGDCondVar_.notify_all();
+        for (const auto& l : igdListeners_)
+            l.second();
+    }
+
+    // send out a new search request
+    searchForIGD();
+}
+
+void
 UPnPContext::searchForIGD()
 {
     if (not clientRegistered_) {

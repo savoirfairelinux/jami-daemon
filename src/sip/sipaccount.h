@@ -493,6 +493,8 @@ class SIPAccount : public SIPAccountBase {
                                      const std::map<std::string, std::string>& payloads,
                                      uint64_t id) override;
 
+        void connectivityChanged(bool /* online */) override;
+
     private:
         void doRegister1_();
         void doRegister2_();
