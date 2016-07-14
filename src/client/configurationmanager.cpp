@@ -790,4 +790,22 @@ setCredentials(const std::string& accountID,
     }
 }
 
+void
+connectivityChanged(bool online)
+{
+    RING_WARN("received connectivity changed - trying to re-connect enabled accounts");
+    auto account_list = ring::Manager::instance().getAccountList();
+    for (auto account_id : account_list) {
+        if (auto account = ring::Manager::instance().getAccount(account_id)) {
+            if (account->isEnabled()) {
+                // TODO: whats the proper way to re-connect?
+                account->doUnregister([account](bool /* transport_free */) {
+                    if (account->isEnabled())
+                        account->doRegister();
+                });
+            }
+        }
+    }
+}
+
 } // namespace DRing
