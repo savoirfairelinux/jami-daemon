@@ -932,7 +932,8 @@ SIPCall::onMediaUpdate()
             }
             if (not this_->iceTransport_->isRunning())
                 return true;
-            startAllMedia();
+            if (getState() != CallState::HOLD)
+                startAllMedia();
             return false;
         });
     } else {
