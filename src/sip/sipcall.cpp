@@ -842,12 +842,17 @@ SIPCall::startAllMedia()
 #endif
 
         rtp->updateMedia(remote, local);
-        if (isIceRunning()) {
-            rtp->start(newIceSocket(ice_comp_id + 0),
-                       newIceSocket(ice_comp_id + 1));
-            ice_comp_id += 2;
-        } else
-            rtp->start();
+
+        // Not restarting media loop on hold as it's a huge waste of CPU ressources
+        // because of the audio loop
+        if (getState() != CallState::HOLD) {
+            if (isIceRunning()) {
+                rtp->start(newIceSocket(ice_comp_id + 0),
+                           newIceSocket(ice_comp_id + 1));
+                ice_comp_id += 2;
+            } else
+                rtp->start();
+        }
 
         switch (local.type) {
 #ifdef RING_VIDEO
