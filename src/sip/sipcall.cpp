@@ -790,6 +790,10 @@ SIPCall::startAllMedia()
         onFailure(EPROTONOSUPPORT);
         return;
     }
+    // Not restarting media on hold as it's a huge waste of CPU ressources because
+    // of the audio loop
+    if (getState() == CallState::HOLD)
+        return;
     auto slots = sdp_->getMediaSlots();
     unsigned ice_comp_id = 0;
     bool peer_holding {true};
