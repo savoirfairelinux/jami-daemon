@@ -755,7 +755,7 @@ RingAccount::mapPortUPnP()
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
     upnp_->setIGDListener([w] {
         if (auto shared = w.lock())
-            shared->connectivityChanged();
+            shared->igdChanged();
     });
     return added;
 }
@@ -1064,6 +1064,22 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
     if (released_cb)
         released_cb(false);
 }
+
+void
+RingAccount::connectivityChanged()
+{
+    if (not isUsable()) {
+        // nothing to do
+        return;
+    }
+
+    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    doUnregister([shared](bool /* transport_free */) {
+        if (shared->isUsable())
+            shared->doRegister();
+    });
+}
+
 
 bool
 RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb)
@@ -1402,7 +1418,7 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
 }
 
 void
-RingAccount::connectivityChanged()
+RingAccount::igdChanged()
 {
     if (not dht_.isRunning())
         return;

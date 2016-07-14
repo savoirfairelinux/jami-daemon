@@ -296,6 +296,11 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         mutable std::mt19937_64 rand_;
 
+        /**
+         * Inform the account that the network status has changed.
+         */
+        virtual void connectivityChanged() {};
+
     private:
         NON_COPYABLE(Account);
 

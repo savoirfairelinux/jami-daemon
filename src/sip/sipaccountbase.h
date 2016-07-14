@@ -247,6 +247,8 @@ public:
 
     void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
 
+    void connectivityChanged() override {};
+
 protected:
     virtual void serialize(YAML::Emitter &out) override;
     virtual void serializeTls(YAML::Emitter &out);
