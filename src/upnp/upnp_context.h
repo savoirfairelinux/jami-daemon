@@ -110,6 +110,13 @@ public:
      */
     int handleUPnPEvents(Upnp_EventType event_type, void* event);
 
+    /**
+     * Inform the UPnP context that the network status has changed with a hint about whether or not
+     * the network is online. This will result in resetting of the UPnP context since the same
+     * interface may no longer be available.
+     */
+    void connectivityChanged(bool online);
+
 #else
     /* use default constructor and destructor */
     UPnPContext() = default;
@@ -178,6 +185,12 @@ private:
      * 0 is the invalid token.
      */
     size_t listenerToken_ {0};
+
+    /**
+     * performs the initiation routine; should ONLY be called either in the constructor or after
+     * UpnpFinish() has completed
+     */
+    void init();
 
     /**
      * chooses the IGD to use (currently selects the first one in the map)

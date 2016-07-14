@@ -879,6 +879,21 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     upnp_->removeMappings();
 }
 
+void
+SIPAccount::connectivityChanged(bool /* online */)
+{
+    if (not isUsable()) {
+        // nothing to do
+        return;
+    }
+
+    auto shared = std::static_pointer_cast<SIPAccount>(shared_from_this());
+    doUnregister([shared](bool /* transport_free */) {
+        if (shared->isUsable())
+            shared->doRegister();
+    });
+}
+
 void SIPAccount::startKeepAliveTimer()
 {
     if (isTlsEnabled())

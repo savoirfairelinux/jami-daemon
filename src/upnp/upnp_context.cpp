@@ -108,6 +108,34 @@ cp_callback(Upnp_EventType event_type, void* event, void* user_data)
 
 UPnPContext::UPnPContext()
 {
+    init();
+}
+
+UPnPContext::~UPnPContext()
+{
+    /* make sure everything is unregistered, freed, and UpnpFinish() is called */
+
+    {
+        std::lock_guard<std::mutex> lock(validIGDMutex_);
+        for( auto const &it : validIGDs_) {
+            removeMappingsByLocalIPAndDescription(it.second.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
+        }
+    }
+
+    if (clientRegistered_)
+        UpnpUnRegisterClient( ctrlptHandle_ );
+
+    if (deviceRegistered_)
+        UpnpUnRegisterRootDevice( deviceHandle_ );
+// FIXME : on windows thread have already been destroyed at this point resulting in a deadlock
+#ifndef _WIN32
+    UpnpFinish();
+#endif
+}
+
+void
+UPnPContext::init()
+{
     int upnp_err;
     char* ip_address = nullptr;
     unsigned short port = 0;
@@ -157,26 +185,23 @@ UPnPContext::UPnPContext()
     searchForIGD();
 }
 
-UPnPContext::~UPnPContext()
+void
+UPnPContext::connectivityChanged(bool /* online */)
 {
-    /* make sure everything is unregistered, freed, and UpnpFinish() is called */
-
     {
         std::lock_guard<std::mutex> lock(validIGDMutex_);
-        for( auto const &it : validIGDs_) {
-            removeMappingsByLocalIPAndDescription(it.second.get(), Mapping::UPNP_DEFAULT_MAPPING_DESCRIPTION);
-        }
+
+        /* in the case that we've disconencted from the previous IGD (router) there is no point in trying
+         * to remove the current port mappings... just re-init UPnP, any exisint Ring related port
+         * mappings will be attempted to be removed once we (re)connect to an IGD
+         */
+        // TODO: it should probably be possible to handle this in handleUPnPEvents() ie: detect when the
+        // previous IGD is no longer there and add a new IGD to the list
+        validIGDs_.clear();
     }
 
-    if (clientRegistered_)
-        UpnpUnRegisterClient( ctrlptHandle_ );
-
-    if (deviceRegistered_)
-        UpnpUnRegisterRootDevice( deviceHandle_ );
-// FIXME : on windows thread have already been destroyed at this point resulting in a deadlock
-#ifndef _WIN32
-    UpnpFinish();
-#endif
+    // send out a new search request
+    searchForIGD();
 }
 
 void
