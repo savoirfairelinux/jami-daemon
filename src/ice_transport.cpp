@@ -843,12 +843,13 @@ int
 IceTransport::waitForInitialization(unsigned timeout)
 {
     std::unique_lock<std::mutex> lk(iceMutex_);
-    if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
-                         [this]{ return _isInitialized() or _isFailed(); })) {
-        RING_WARN("waitForInitialization: timeout");
-        return -1;
-    }
-    return not _isFailed();
+    // if (!iceCV_.wait_for(lk, std::chrono::seconds(timeout),
+    //                      [this]{ return _isInitialized() or _isFailed(); })) {
+    //     RING_WARN("waitForInitialization: timeout");
+    //     return -1;
+    // }
+    // return not _isFailed();
+    return _isInitialized() or _isFailed();
 }
 
 int
