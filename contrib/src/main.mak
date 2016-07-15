@@ -232,7 +232,9 @@ endif
 endif
 SVN ?= $(error subversion client (svn) not found!)
 
-ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
+ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
+download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
+else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
 download = curl -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
@@ -316,6 +318,9 @@ HOSTVARS := $(HOSTTOOLS) \
 	CXXFLAGS="$(CXXFLAGS) $(PIC)" \
 	LDFLAGS="$(LDFLAGS)"
 
+ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
+download_git = $(error Trying to clone $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
+else
 download_git = \
 	rm -Rf $(@:.tar.xz=) && \
 	$(GIT) clone $(2:%=--branch %) $(1) $(@:.tar.xz=) && \
@@ -324,6 +329,8 @@ download_git = \
 	(cd $(dir $@) && \
 	tar cvJ $(notdir $(@:.tar.xz=))) > $@ && \
 	rm -Rf $(@:.tar.xz=)
+endif
+
 checksum = \
 	$(foreach f,$(filter $(TARBALLS)/%,$^), \
 		grep -- " $(f:$(TARBALLS)/%=%)$$" \
