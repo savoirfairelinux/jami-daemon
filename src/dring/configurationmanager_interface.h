@@ -41,7 +41,7 @@ void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWr
 std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
 void setAccountDetails(const std::string& accountID, const std::map<std::string, std::string>& details);
-std::map<std::string, std::string> testAccountICEInitialization(const std::string& accountID);
+uint64_t testAccountICEInitialization(const std::string& accountID);
 void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 std::string addAccount(const std::map<std::string, std::string>& details);
@@ -237,6 +237,13 @@ struct ConfigurationSignal {
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
         };
 #endif
+};
+
+struct AccountSignal {
+        struct TestAccountICEInitializationResult {
+                constexpr static const char* name = "TestAccountICEInitializationResult";
+                using cb_type = void(const std::string& /*account_id*/, const uint64_t /*id*/, const std::map<std::string, std::string>& /* result */);
+        };
 };
 
 } // namespace DRing

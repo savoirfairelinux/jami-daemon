@@ -50,11 +50,12 @@ DBusConfigurationManager::setAccountDetails(const std::string& accountID, const 
 }
 
 auto
-DBusConfigurationManager::testAccountICEInitialization(const std::string& accountID) -> decltype(DRing::testAccountICEInitialization(accountID))
+DBusConfigurationManager::testAccountICEInitialization(const std::string& accountID) -> decltype(DRing::testAccountICEInitialization(accountID, id))
 {
-    return DRing::testAccountICEInitialization(accountID);
+    auto id = std::time(nullptr);
+    DRing::testAccountICEInitialization(accountID, id);
+    return id;
 }
-
 
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
