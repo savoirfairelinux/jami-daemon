@@ -184,6 +184,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
         exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::MediaParametersChanged>(bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1 )),
+        exportable_callback<AccountSignal::TestAccountICEInitializationResult>(),
     };
 
     // Presence event handlers
@@ -192,6 +193,10 @@ DBusClient::initLibrary(int flags)
         exportable_callback<PresenceSignal::ServerError>(bind(&DBusPresenceManager::serverError, presM, _1, _2, _3)),
         exportable_callback<PresenceSignal::NewBuddyNotification>(bind(&DBusPresenceManager::newBuddyNotification, presM, _1, _2, _3, _4)),
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&DBusPresenceManager::subscriptionStateChanged, presM, _1, _2, _3)),
+    };
+
+    const std::map<std::string, SharedCallback> audioEvHandlers = {
+        exportable_callback<AudioSignal::DeviceEvent>(bind(&DBusConfigurationManager::audioDeviceEvent, confM)),
     };
 
     const std::map<std::string, SharedCallback> audioEvHandlers = {
