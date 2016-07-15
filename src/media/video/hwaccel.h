@@ -29,6 +29,7 @@
 
 enum HWAccelID {
     HWACCEL_NONE = 0,
+    HWACCEL_VDPAU,
     HWACCEL_VAAPI,
     HWACCEL_VIDEOTOOLBOX,
     HWACCEL_VDA
@@ -61,11 +62,15 @@ typedef struct RingHWContext {
 } RingHWContext;
 
 extern "C" {
+int vdpau_init(AVCodecContext *avctx);
 int vaapi_decode_init(AVCodecContext *avctx);
 int videotoolbox_init(AVCodecContext *avctx);
 }
 
 const HWAccel hwaccels[] = {
+#if HAVE_VDPAU_X11
+    { "vdpau", vdpau_init, HWACCEL_VDPAU, AV_PIX_FMT_VDPAU },
+#endif
 #if HAVE_VAAPI_DRM || HAVE_VAAPI_X11
     { "vaapi", vaapi_decode_init, HWACCEL_VAAPI, AV_PIX_FMT_VAAPI },
 #endif

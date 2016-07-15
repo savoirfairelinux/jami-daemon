@@ -421,6 +421,12 @@ AS_IF([test "x$enable_hwaccel" != "xno"], [
   AC_DEFINE([USE_HWACCEL], [1], [Allows use of hardware acceleration])
 
   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
+    AC_CHECK_HEADER([X11/Xlib.h], , [AC_MSG_WARN([Can't find X11 headers])])
+
+    PKG_CHECK_MODULES([VDPAU], [vdpau], [
+      AC_DEFINE([HAVE_VDPAU_X11], [1], [VDPAU found])
+    ], [AC_MSG_WARN([Missing vdpau package])])
+
     PKG_CHECK_MODULES(LIBVA, [libva], , [AC_MSG_WARN([Missing libva package])])
     PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
       AC_DEFINE([HAVE_VAAPI_DRM], [1], [Have vaapi drm])

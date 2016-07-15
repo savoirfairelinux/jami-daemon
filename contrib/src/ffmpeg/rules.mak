@@ -101,6 +101,9 @@ endif
 
 ifdef HAVE_LINUX
 FFMPEGCONF += \
+		--enable-vdpau \
+		--enable-hwaccel=h264_vdpau \
+		--enable-hwaccel=mpeg4_vdpau \
 		--enable-vaapi \
 		--enable-hwaccel=h264_vaapi \
 		--enable-hwaccel=mpeg4_vaapi \
