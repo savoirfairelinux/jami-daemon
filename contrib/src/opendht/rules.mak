@@ -29,6 +29,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz .sum-opendht
 
 .opendht: opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --enable-debug --disable-tools --disable-python --disable-doc $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
