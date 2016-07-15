@@ -165,7 +165,15 @@
            <arg type="s" name="accountID" direction="in">
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map">
+       </method>
+
+       <signal name="TestAccountICEInitializationResult" tp:name-for-bindings="TestAccountICEInitializationResult">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients of the result of a call to testAccountICEInitialization
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="a{ss}" name="result">
                <tp:docstring>
                    A string map.
                    Available attributes:
@@ -175,7 +183,8 @@
                    </ul>
                </tp:docstring>
            </arg>
-       </method>
+
+       </signal>
 
        <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
            <tp:docstring>
