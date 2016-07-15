@@ -72,6 +72,9 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
 
+        /* Account */
+        exported_callback<DRing::AccountSignal::TestAccountICEInitializationResult>(),
+
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
         exported_callback<DRing::PresenceSignal::ServerError>(),

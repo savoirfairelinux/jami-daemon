@@ -2462,9 +2462,22 @@ Manager::setAccountDetails(const std::string& accountID,
     });
 }
 
-std::map <std::string, std::string>
-Manager::testAccountICEInitialization(const std::string& accountID)
+void
+Manager::testAccountICEInitialization(const std::string& accountID, const uint64_t id)
 {
+    // We have to register the external thread so it could access the pjsip frameworks
+    if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+        static thread_local pj_thread_desc desc;
+        static thread_local pj_thread_t *this_thread;
+#else
+        static __thread pj_thread_desc desc;
+        static __thread pj_thread_t *this_thread;
+#endif
+        pj_thread_register(NULL, desc, &this_thread);
+        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+    }
+
     const auto account = getAccount(accountID);
     const auto transportOptions = account->getIceOptions();
 
@@ -2486,7 +2499,7 @@ Manager::testAccountICEInitialization(const std::string& accountID)
         result["MESSAGE"] = "";
     }
 
-    return result;
+    emitSignal<DRing::AccountSignal::TestAccountICEInitializationResult>(accountID, id, result);
 }
 
 std::string
