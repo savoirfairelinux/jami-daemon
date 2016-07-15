@@ -184,6 +184,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
         exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::MediaParametersChanged>(bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1 )),
+        exportable_callback<AccountSignal::TestAccountICEInitializationResult>(),
     };
 
     // Presence event handlers
