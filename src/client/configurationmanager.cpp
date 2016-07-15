@@ -94,10 +94,14 @@ getVolatileAccountDetails(const std::string& accountID)
     return ring::Manager::instance().getVolatileAccountDetails(accountID);
 }
 
-std::map<std::string, std::string>
+uint64_t
 testAccountICEInitialization(const std::string& accountID)
 {
-    return ring::Manager::instance().testAccountICEInitialization(accountID);
+    auto manager = &ring::Manager::instance();
+    auto id = std::time(nullptr);
+    std::thread th(&ring::Manager::testAccountICEInitialization, manager, accountID, id);
+    th.detach();
+    return id;
 }
 
 std::map<std::string, std::string>
