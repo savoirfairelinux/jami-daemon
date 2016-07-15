@@ -55,7 +55,6 @@ DBusConfigurationManager::testAccountICEInitialization(const std::string& accoun
     return DRing::testAccountICEInitialization(accountID);
 }
 
-
 void
 DBusConfigurationManager::setAccountActive(const std::string& accountID, const bool& active)
 {
