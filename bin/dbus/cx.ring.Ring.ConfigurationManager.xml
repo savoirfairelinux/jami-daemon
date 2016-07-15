@@ -165,17 +165,26 @@
            <arg type="s" name="accountID" direction="in">
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
-           <arg type="a{ss}" name="result" direction="out" tp:type="String_String_Map">
-               <tp:docstring>
-                   A string map.
-                   Available attributes:
-                   <ul>
-                       <li>STATUS: 0 for success, non-0 for error</li>
-                       <li>MESSAGE: message explaining the status</li>
-                   </ul>
-               </tp:docstring>
-           </arg>
        </method>
+
+       <signal name="TestAccountICEInitializationResult" tp:name-for-bindings="TestAccountICEInitializationResult">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients of the result of a call to testAccountICEInitialization
+           </tp:docstring>
+           <arg type="s" name="accountID"/>
+           <arg type="a{ss}" name="result">
+               <tp:docstring>
+-                   A string map.
+-                   Available attributes:
+-                   <ul>
+-                       <li>STATUS: 0 for success, non-0 for error</li>
+-                       <li>MESSAGE: message explaining the status</li>
+-                   </ul>
+-               </tp:docstring>
+           </arg>
+
+       </signal>
 
        <method name="setAccountsOrder" tp:name-for-bindings="setAccountsOrder">
            <tp:docstring>
