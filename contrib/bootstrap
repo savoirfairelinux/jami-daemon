@@ -21,11 +21,12 @@
 usage()
 {
 	echo "Usage: $0 [--build=BUILD] [--host=HOST] [--prefix=PREFIX]"
-	echo "  --build=BUILD    configure for building on BUILD"
-	echo "  --host=HOST      cross-compile to build to run on HOST"
-	echo "  --prefix=PREFIX  install files in PREFIX"
-	echo "  --disable-FOO    configure to not build package FOO"
-	echo "  --enable-FOO     configure to build package FOO"
+	echo "  --build=BUILD       configure for building on BUILD"
+	echo "  --host=HOST         cross-compile to build to run on HOST"
+	echo "  --prefix=PREFIX     install files in PREFIX"
+	echo "  --disable-downloads don't download packages from the internet"
+	echo "  --disable-FOO       configure to not build package FOO"
+	echo "  --enable-FOO        configure to build package FOO"
 }
 
 BUILD=
@@ -49,6 +50,9 @@ do
 		--help|-h)
 			usage
 			exit 0
+			;;
+		--disable-downloads)
+			DISABLE_CONTRIB_DOWNLOADS="TRUE"
 			;;
 		--host=*)
 			HOST="${1#--host=}"
@@ -108,6 +112,7 @@ HOST := $HOST
 CROSS_COMPILE ?= $HOST-
 PKGS_DISABLE := $PKGS_DISABLE
 PKGS_ENABLE := $PKGS_ENABLE
+DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
 EOF
 
 add_make()
