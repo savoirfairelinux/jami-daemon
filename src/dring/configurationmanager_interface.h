@@ -193,7 +193,7 @@ struct ConfigurationSignal {
         };
         struct IncomingAccountMessage {
                 constexpr static const char* name = "IncomingAccountMessage";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payloads*/);
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& /*payloads*/, const long /*date*/);
         };
         struct AccountMessageStatusChanged {
                 constexpr static const char* name = "AccountMessageStatusChanged";
