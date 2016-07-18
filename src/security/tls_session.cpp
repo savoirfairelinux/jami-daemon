@@ -40,7 +40,7 @@ namespace ring { namespace tls {
 
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr int DTLS_MTU {1400}; // limit for networks like ADSL
+static constexpr int DTLS_MTU {1452}; // limit for networks like ADSL, must not be below 1232, (1280-40-8, 1280 is the IPv6 lower bound)
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
@@ -782,6 +782,12 @@ TlsSession::process()
 
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
+}
+
+IpAddr
+TlsSession::getRemoteAddress() const
+{
+    return socket_->getRemoteAddress();
 }
 
 DhParams
