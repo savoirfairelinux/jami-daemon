@@ -236,8 +236,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
+            auto date = rdata->pkt_info.timestamp.sec;
             if (payloads.size() > 0)
-                account->onTextMessage(peerNumber, payloads);
+                account->onTextMessage(peerNumber, payloads, date);
             return PJ_FALSE;
         }
 

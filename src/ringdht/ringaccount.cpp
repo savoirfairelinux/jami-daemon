@@ -973,9 +973,10 @@ RingAccount::doRegister_()
 
                 auto from = v.from.toString();
                 auto now = system_clock::to_time_t(system_clock::now());
+                auto sentDate = v.date;
                 std::map<std::string, std::string> payloads = {{"text/plain",
                                                                 utf8_make_valid(v.msg)}};
-                shared->onTextMessage(from, payloads);
+                shared->onTextMessage(from, payloads, sentDate);
                 RING_DBG("Sending message confirmation %" PRIu64, v.id);
                 this_.dht_.putEncrypted(inboxKey,
                           v.from,
