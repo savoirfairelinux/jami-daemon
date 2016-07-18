@@ -118,7 +118,7 @@ struct CallSignal {
         };
         struct IncomingMessage {
                 constexpr static const char* name = "IncomingMessage";
-                using cb_type = void(const std::string&, const std::string&, const std::map<std::string, std::string>&);
+                using cb_type = void(const std::string&, const std::string&, const std::map<std::string, std::string>&, const long timestamp);
         };
         struct IncomingCall {
                 constexpr static const char* name = "IncomingCall";

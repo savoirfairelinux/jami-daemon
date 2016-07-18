@@ -1657,7 +1657,8 @@ Manager::sendTextMessageToConference(const Conference& conf,
 void
 Manager::incomingMessage(const std::string& callID,
                          const std::string& from,
-                         const std::map<std::string, std::string>& messages)
+                         const std::map<std::string, std::string>& messages,
+                         const long timestamp)
 {
     if (isConferenceParticipant(callID)) {
         auto conf = getConferenceFromCallID(callID);
@@ -1670,9 +1671,9 @@ Manager::incomingMessage(const std::string& callID,
         sendTextMessageToConference(*conf, messages, from);
 
         // in case of a conference we must notify client using conference id
-        emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages);
+        emitSignal<DRing::CallSignal::IncomingMessage>(conf->getConfID(), from, messages, timestamp);
     } else
-        emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, messages);
+        emitSignal<DRing::CallSignal::IncomingMessage>(callID, from, messages, timestamp);
 }
 
 void
