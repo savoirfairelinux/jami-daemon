@@ -384,7 +384,8 @@ class Manager {
          */
         void incomingMessage(const std::string& callID,
                              const std::string& from,
-                             const std::map<std::string, std::string>& messages);
+                             const std::map<std::string, std::string>& messages,
+                             const long timestamp);
 
         /**
          * Send a new text message to the call, if participate to a conference, send to all participant.

@@ -507,6 +507,7 @@
             <arg type="s" name="from" />
             <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
             <arg type="a{ss}" name="messages" />
+            <arg type="t" name="timestamp" />
         </signal>
 
         <signal name="callStateChanged" tp:name-for-bindings="callStateChanged">

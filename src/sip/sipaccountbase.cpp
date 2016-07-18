@@ -351,10 +351,11 @@ SIPAccountBase::getIceOptions() const noexcept
 
 void
 SIPAccountBase::onTextMessage(const std::string& from,
-                              const std::map<std::string, std::string>& payloads)
+                              const std::map<std::string, std::string>& payloads,
+                              const long timestamp)
 {
     RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
-    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+    emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads, date);
 }
 
 void
