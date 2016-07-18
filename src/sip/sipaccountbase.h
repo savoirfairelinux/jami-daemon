@@ -245,7 +245,7 @@ public:
         return messageEngine_.getStatus(id);
     }
 
-    void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
+    void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads, const long timestamp);
 
 protected:
     virtual void serialize(YAML::Emitter &out) override;

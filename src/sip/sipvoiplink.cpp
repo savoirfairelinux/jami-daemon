@@ -236,8 +236,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
+            //Pjsip only provide received timestamp
+            auto timestamp = rdata->pkt_info.timestamp.sec;
             if (payloads.size() > 0)
-                account->onTextMessage(peerNumber, payloads);
+                account->onTextMessage(peerNumber, payloads, timestamp);
             return PJ_FALSE;
         }
 
@@ -1103,7 +1105,7 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
 }
 
 static void
-onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg,
+onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* rdata, pjsip_msg* msg,
                  SIPCall& call)
 {
     if (!msg->body)
@@ -1112,8 +1114,9 @@ onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg
     //TODO: for now we assume that the "from" is the message sender, this may not be true in the
     //      case of conferences; a content type containing this info will be added to the messages
     //      in the future
+    auto timestamp = rdata->pkt_info.timestamp.sec;
     Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        im::parseSipMessage(msg));
+                                        im::parseSipMessage(msg), timestamp);
 }
 
 static void
