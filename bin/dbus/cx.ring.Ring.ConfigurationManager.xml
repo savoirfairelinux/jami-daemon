@@ -321,7 +321,8 @@
            <arg type="s" name="accountID"/>
            <arg type="s" name="from"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
-          <arg type="a{ss}" name="payloads"/>
+           <arg type="a{ss}" name="payloads"/>
+           <arg type="t" name="date"/>
        </signal>
 
        <signal name="accountMessageStatusChanged" tp:name-for-bindings="accountMessageStatusChanged">
