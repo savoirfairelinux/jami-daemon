@@ -34,6 +34,7 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
+#include "datatransfer_interface.h"
 #include "intrin.h" // UNUSED
 
 #include <functional>
@@ -86,6 +87,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Virtual destructor
          */
         virtual ~Account();
+
+        std::weak_ptr<Account> weak_from_this() { return shared_from_this(); }
 
         /**
          * Free all ressources related to this account.
@@ -300,6 +303,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Inform the account that the network status has changed.
          */
         virtual void connectivityChanged() {};
+
+        virtual DRing::DataTransferId sendFile(UNUSED const std::string& peer_uri,
+                                               UNUSED const std::string& pathname,
+                                               UNUSED const std::string& name) {
+            return {}; // not supported by default
+        }
 
     private:
         NON_COPYABLE(Account);

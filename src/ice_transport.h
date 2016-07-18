@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef ICE_TRANSPORT_H
-#define ICE_TRANSPORT_H
+#pragma once
 
 #include "ice_socket.h"
 #include "ip_utils.h"
@@ -61,7 +60,7 @@ struct IceTransportOptions {
     std::string turnServerRealm {};     //!< non-empty for long-term credential
 };
 
-class IceTransport {
+class IceTransport : public std::enable_shared_from_this<IceTransport> {
     public:
         using Attribute = struct {
                 std::string ufrag;
@@ -181,9 +180,10 @@ class IceTransport {
 
         void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
-        ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+        ssize_t recv(int comp_id, uint8_t* buf, size_t len);
+        std::vector<uint8_t> recv(int comp_id);
 
-        ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+        ssize_t send(int comp_id, const uint8_t* buf, size_t len);
 
         ssize_t getNextPacketSize(int comp_id);
 
@@ -194,6 +194,14 @@ class IceTransport {
         ssize_t waitForData(int comp_id, unsigned int timeout);
 
         unsigned getComponentCount() const {return component_count_;}
+
+        std::shared_ptr<IceTransport> getSharedPtr() { return shared_from_this(); }
+
+        /**
+         * Return True if called in the thread that handles IOs
+         * Usefull to prevent destroying of the transport by itself
+         */
+        bool calledFromThread() const;
 
     private:
         static constexpr int MAX_CANDIDATES {32};
@@ -313,6 +321,4 @@ class IceTransportFactory {
         pj_ice_strans_cfg ice_cfg_;
 };
 
-};
-
-#endif /* ICE_TRANSPORT_H */
+} // namespace ring
