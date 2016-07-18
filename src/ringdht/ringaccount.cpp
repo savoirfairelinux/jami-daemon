@@ -980,9 +980,10 @@ RingAccount::doRegister_()
 
                 auto from = v.from.toString();
                 auto now = system_clock::to_time_t(system_clock::now());
+                auto sentDate = v.date;
                 std::map<std::string, std::string> payloads = {{"text/plain",
                                                                 utf8_make_valid(v.msg)}};
-                shared->onTextMessage(from, payloads);
+                shared->onTextMessage(from, payloads, sentDate);
                 RING_DBG("Sending message confirmation %" PRIu64, v.id);
                 this_.dht_.putEncrypted(inboxKey,
                           v.from,
@@ -1434,7 +1435,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
     auto toUri = parseRingUri(to);
     auto toH = dht::InfoHash(toUri);
-    auto now = system_clock::to_time_t(system_clock::now());
+    auto now = std::chrono::time_point_cast<std::chrono::seconds>(std::chrono::steady_clock::now()).time_since_epoch().count();
 
     // Single-part message
     if (payloads.size() == 1) {
