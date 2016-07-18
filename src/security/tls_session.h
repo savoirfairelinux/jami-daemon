@@ -22,6 +22,7 @@
 #pragma once
 
 #include "threadloop.h"
+#include "ip_utils.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
@@ -147,6 +148,8 @@ public:
 
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
+
+    IpAddr getRemoteAddress() const;
 
     // Return maximum application payload size in bytes
     // Returned value must be checked and considered valid only if not 0 (session is initialized)

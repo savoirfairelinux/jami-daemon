@@ -22,7 +22,6 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "socket_pair.h"
-#include "ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -54,6 +53,8 @@ extern "C" {
 #ifdef __APPLE__
 #include <fcntl.h>
 #endif
+
+#include "ice_socket.h"
 
 namespace ring {
 
@@ -189,8 +190,8 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
     return udp_fd;
 }
 
-// Maximal size allowed for a RTP packet, this value of 1460 bytes is PPoE safe.
-static const size_t RTP_BUFFER_SIZE = 1460;
+// Maximal size allowed for a RTP packet, this value of 1452 bytes is PPoE+TURN safe.
+static const size_t RTP_BUFFER_SIZE = 1452;
 static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
