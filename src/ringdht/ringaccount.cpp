@@ -182,29 +182,34 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING);
+
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
-
-    // Create an ICE transport for SIP channel
-    auto ice = createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                  ICE_COMPONENTS, true, getIceOptions());
-    if (not ice) {
-        call->removeCall();
-        return nullptr;
-    }
-
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
-    auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     std::weak_ptr<SIPCall> weak_call = call;
-    manager.addTask([shared_this, weak_call, ice, iceInitTimeout, toUri] {
+    manager.addTask([shared_this, weak_call, toUri] {
         auto call = weak_call.lock();
 
         if (not call)
             return false;
+
+        // Create an ICE transport for SIP channel
+        std::shared_ptr<IceTransport> ice {};
+
+        try {
+            ice = shared_this->createIceTransport(("sip:" + call->getCallId()).c_str(),
+                                                  ICE_COMPONENTS, true, shared_this->getIceOptions());
+        } catch (std::runtime_error& e) {
+            RING_ERR("%s", e.what());
+            call->onFailure();
+            return false;
+        }
+
+        auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
         /* First step: wait for an initialized ICE transport for SIP channel */
         if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
