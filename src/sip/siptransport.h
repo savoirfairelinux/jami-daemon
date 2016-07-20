@@ -157,6 +157,9 @@ class IceTransport;
 namespace tls {
    struct TlsParams;
 };
+namespace ReliableSocket {
+   class DataStream;
+};
 
 /**
  * Manages the transports and receive callbacks from PJSIP
@@ -181,6 +184,9 @@ public:
     std::shared_ptr<SipTransport>
     getTlsIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id,
                        const tls::TlsParams&);
+
+    std::shared_ptr<SipTransport>
+    getMultiStreamTransport(const std::shared_ptr<ReliableSocket::DataStream> stream);
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 

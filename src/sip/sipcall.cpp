@@ -40,6 +40,7 @@
 #include "dring/call_const.h"
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
+#include "data_transfer.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -1063,6 +1064,16 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
         }
     }
     return result;
+}
+
+void
+SIPCall::onDataConnected()
+{
+    RING_DBG("[call:%s] connected", getCallId().c_str());
+    if (!peerStream_)
+        peerStream_.reset(new ReliableSocket::DataStream(1));
+    dc_->attachStream(peerStream_);
+    setTransport(getSIPVoIPLink()->sipTransportBroker->getMultiStreamTransport(peerStream_));
 }
 
 } // namespace ring
