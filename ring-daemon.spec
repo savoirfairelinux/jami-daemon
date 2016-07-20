@@ -76,7 +76,7 @@ echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
 
 %files
 %defattr(-,root,root,-)
-%{_sbindir}/dring
+%{_bindir}/dring
 %{_datadir}/ring/ringtones
 %{_datadir}/dbus-1/services/*
 %{_datadir}/dbus-1/interfaces/*
