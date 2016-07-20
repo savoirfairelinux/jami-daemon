@@ -54,6 +54,7 @@ libring_la_LDFLAGS = \
 		@PORTAUDIO_LIBS@ \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
+		-lz \
 		$(PCRE_LIBS)
 
 if HAVE_OSX
