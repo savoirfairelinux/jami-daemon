@@ -367,8 +367,8 @@ AC_ARG_WITH([dbus],
 AS_IF([test "x$with_dbus" = "xyes"], [
        PKG_CHECK_MODULES(DBUSCPP, dbus-c++-1,, AC_MSG_WARN([Missing dbus development files]))
 
-       AS_AC_EXPAND(SBINDIR, $sbindir)
-       AC_SUBST(SBINDIR)
+       AS_AC_EXPAND(BINDIR, $bindir)
+       AC_SUBST(BINDIR)
 
        AC_CONFIG_FILES([bin/dbus/Makefile
                         bin/dbus/cx.ring.Ring.service])
