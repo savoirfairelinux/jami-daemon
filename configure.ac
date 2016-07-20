@@ -158,7 +158,6 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
-AC_CHECK_LIB(zlib, zlib)
 
 PKG_PROG_PKG_CONFIG()
 
@@ -238,7 +237,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
         export PKG_CONFIG_PATH_CUSTOM
   ])
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
-  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib -lz"
+  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
 
   AS_IF([test "${SYS}" = "darwin"], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
@@ -257,6 +256,9 @@ AS_IF([test -d "${TOOLS_DIR}"], [
   TOOLS_DIR=`cd "${TOOLS_DIR}" && pwd`
   export PATH="${TOOLS_DIR}":$PATH
 ])
+
+dnl Check for zlib
+PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
