@@ -19,7 +19,7 @@ endif
 if RING_DBUS
 SUBDIRS=dbus
 
-sbin_PROGRAMS = dring
+bin_PROGRAMS = dring
 
 dring_SOURCES = main.cpp
 
