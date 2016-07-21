@@ -228,7 +228,7 @@ CertificateStore::pinCertificate(const std::vector<uint8_t>& cert,
                                  bool local) noexcept
 {
     try {
-        return pinCertificate(cert, local);
+        return pinCertificate(crypto::Certificate(cert), local);
     } catch (const std::exception& e) {}
     return {};
 }
