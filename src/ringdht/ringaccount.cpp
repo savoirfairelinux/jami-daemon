@@ -95,6 +95,7 @@ static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
+static constexpr auto CONNECTION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 
 // Limit number of ICE data msg request/msg that waiting for handling
@@ -180,22 +181,8 @@ RingAccount::~RingAccount()
 std::shared_ptr<SIPCall>
 RingAccount::newIncomingCall(const std::string& from)
 {
-    std::lock_guard<std::mutex> lock(callsMutex_);
-    auto call_it = pendingSipCalls_.begin();
-    while (call_it != pendingSipCalls_.end()) {
-        auto call = call_it->call.lock();
-        if (not call) {
-            RING_WARN("newIncomingCall: discarding deleted call");
-            call_it = pendingSipCalls_.erase(call_it);
-        } else if (call->getPeerNumber() == from) {
-            pendingSipCalls_.erase(call_it);
-            RING_DBG("newIncomingCall: found matching call for %s", from.c_str());
-            return call;
-        } else {
-            ++call_it;
-        }
-    }
-    RING_ERR("newIncomingCall: can't find matching call for %s", from.c_str());
+    if (auto dc = obtainDataConnection(from, false))
+        return incomingCall(from, dc);
     return nullptr;
 }
 
@@ -203,101 +190,30 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    const std::string toUri = parseRingUri(toUrl);
-    RING_DBG("Calling DHT peer %s", toUri.c_str());
+    const std::string peer_id = parseRingUri(toUrl);
+    RING_DBG("Calling DHT peer %s", peer_id.c_str());
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING);
-
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
     // TODO: for now, we automatically trust all explicitly called peers
-    setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
+    setCertificateStatus(peer_id, tls::TrustStore::PermissionStatus::ALLOWED);
 
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
-    std::weak_ptr<SIPCall> weak_call = call;
-    manager.addTask([shared_this, weak_call, toUri] {
-        auto call = weak_call.lock();
+    // Asynchronous launch of a peer reliable connection
+    auto dc = obtainDataConnection(peer_id);
+    if (not dc) {
+        call->removeCall();
+        return nullptr;
+    }
 
-        if (not call) {
-            call->onFailure();
-            return false;
-        }
+    call->setDataConnection(dc);
 
-        // Create an ICE transport for SIP channel
-        std::shared_ptr<IceTransport> ice {};
-
-        try {
-            ice = shared_this->createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                                  ICE_COMPONENTS, true, shared_this->getIceOptions());
-        } catch (std::runtime_error& e) {
-            RING_ERR("%s", e.what());
-            call->onFailure();
-            return false;
-        }
-
-        auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
-
-        /* First step: wait for an initialized ICE transport for SIP channel */
-        if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
-            RING_DBG("ice init failed (or timeout)");
-            call->onFailure();
-            return false;
-        }
-
-        if (not ice->isInitialized())
-            return true; // process task again!
-
-        /* Next step: sent the ICE data to peer through DHT */
-        const dht::Value::Id callvid  = udist(shared_this->rand_);
-        const dht::Value::Id vid  = udist(shared_this->rand_);
-        const auto toH = dht::InfoHash(toUri);
-        const auto callkey = dht::InfoHash::get("callto:" + toUri);
-        dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
-        val.id = vid;
-
-        call->setState(Call::ConnectionState::TRYING);
-        shared_this->dht_.putEncrypted(
-            callkey, toH,
-            std::move(val),
-            [=](bool ok) { // Put complete callback
-                if (!ok) {
-                    RING_WARN("Can't put ICE descriptor on DHT");
-                    if (auto call = weak_call.lock())
-                        call->onFailure();
-                } else
-                    RING_DBG("Successfully put ICE descriptor on DHT");
-            }
-        );
-
-        auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
-            callkey,
-            [=] (dht::IceCandidates&& msg) {
-                if (msg.id != callvid or msg.from != toH)
-                    return true;
-                RING_WARN("ICE request replied from DHT peer %s\n%s", toH.toString().c_str(),
-                          std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
-                if (auto call = weak_call.lock())
-                    call->setState(Call::ConnectionState::PROGRESSING);
-                if (!ice->start(msg.ice_data)) {
-                    call->onFailure();
-                    return true;
-                }
-                return false;
-            }
-        );
-
-        shared_this->pendingCalls_.emplace_back(PendingCall{
-            std::chrono::steady_clock::now(),
-            ice, weak_call,
-            std::move(listenKey),
-            callkey, toH
-        });
-
-        return false;
-    });
+    // Continue to scan the connection progress into the mainloop
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    pendingCalls_.emplace_back(call);
 
     return call;
 }
@@ -612,42 +528,25 @@ RingAccount::handleEvents()
 void
 RingAccount::handlePendingCallList()
 {
-    // Process pending call into a local list to not block threads depending on this list,
-    // as incoming call handlers.
-    decltype(pendingCalls_) pending_calls;
-    {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pending_calls = std::move(pendingCalls_);
-        pendingCalls_.clear();
-    }
+    std::unique_lock<std::mutex> lk(callsMutex_);
 
-    static const dht::InfoHash invalid_hash; // Invariant
-
-    auto pc_iter = std::begin(pending_calls);
-    while (pc_iter != std::end(pending_calls)) {
-        bool incoming = pc_iter->call_key == invalid_hash; // do it now, handlePendingCall may invalidate pc data
+    auto it = std::begin(pendingCalls_);
+    while (it != std::end(pendingCalls_)) {
         bool handled;
 
+        lk.unlock();
         try {
-            handled = handlePendingCall(*pc_iter, incoming);
+            handled = handlePendingCall(*it);
         } catch (const std::exception& e) {
             RING_ERR("[DHT] exception during pending call handling: %s", e.what());
             handled = true; // drop from pending list
         }
+        lk.lock();
 
-        if (handled) {
-            // Cancel pending listen (outgoing call)
-            if (not incoming)
-                dht_.cancelListen(pc_iter->call_key, pc_iter->listen_key.share());
-            pc_iter = pending_calls.erase(pc_iter);
-        } else
-            ++pc_iter;
-    }
-
-    // Re-integrate non-handled and valid pending calls
-    {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.splice(std::end(pendingCalls_), pending_calls);
+        if (handled)
+            it = pendingCalls_.erase(it);
+        else
+            ++it;
     }
 }
 
@@ -690,23 +589,30 @@ check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t
 }
 
 bool
-RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
+RingAccount::handlePendingCall(std::weak_ptr<SIPCall>& weak_call)
 {
-    auto call = pc.call.lock();
+    auto call = weak_call.lock();
     if (not call)
         return true;
 
-    auto ice = pc.ice_sp.get();
-    if (not ice or ice->isFailed()) {
-        RING_ERR("[call:%s] Null or failed ICE transport", call->getCallId().c_str());
+    auto dc = call->getDataConnection();
+    if (!dc or dc->isFailed()) {
+        RING_ERR("[call:%s] connection failed", call->getCallId().c_str());
         call->onFailure();
         return true;
     }
 
+    DRing::DataConnectionInfo info;
+    dc->getInfo(info);
+
     // Return to pending list if not negotiated yet and not in timeout
-    if (not ice->isRunning()) {
-        if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
-            RING_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
+    if (info.code < 200)
+        return false;
+
+    if (info.code >= 400) {
+        auto creationTime = call->getCreationTime();
+        if ((decltype(creationTime)::clock::now() - creationTime) >= CONNECTION_TIMEOUT) {
+            RING_WARN("[call:%s] Connection timeout", call->getCallId().c_str());
             call->onFailure();
             return true;
         }
@@ -714,41 +620,14 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         return call->getState() == Call::CallState::OVER;
     }
 
-    // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
-    auto remote_h = pc.from;
-    auto id(loadIdentity());
+    // Now info.code is a definitive 2xx code
 
-    tls::TlsParams tlsParams {
-        .ca_list = "",
-        .cert = id.second,
-        .cert_key = id.first,
-        .dh_params = dhParams_,
-        .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
-                                 unsigned cert_num) -> pj_status_t {
-            try {
-                return check_peer_certificate(remote_h, status, cert_list, cert_num);
-            } catch (const std::exception& e) {
-                RING_ERR("[peer:%s] TLS certificate check exception: %s",
-                         remote_h.toString().c_str(), e.what());
-                return PJ_SSL_CERT_EUNKNOWN;
-            }
-        }
-    };
-    auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
-                                                            tlsParams);
-    call->setTransport(tr);
-
-    // Notify of fully available connection between peers
-    RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
+    call->onDataConnected();
     call->setState(Call::ConnectionState::PROGRESSING);
 
-    // Incoming call?
-    if (incoming) {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
-    } else
-        createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+    // Outgoing call?
+    if (info.isClient)
+        createOutgoingCall(call, info.peer, dc->getRemoteAddress());
 
     return true;
 }
@@ -912,6 +791,7 @@ RingAccount::doRegister_()
         callKey_ = dht::InfoHash::get("callto:"+dht_.getId().toString());
         RING_DBG("[DHT:%s] callto key: %s", getAccountID().c_str(), callKey_.toString().c_str());
 
+#if 0
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
@@ -963,7 +843,8 @@ RingAccount::doRegister_()
                 runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg)); });
                 return true;
             }
-        );
+            );
+#endif
 
         auto inboxKey = dht::InfoHash::get("inbox:"+dht_.getId().toString());
         RING_DBG("[DHT:%s] inbox key: %s", getAccountID().c_str(), inboxKey.toString().c_str());
@@ -1026,6 +907,58 @@ RingAccount::doRegister_()
         dht_.listen<IceDataCandidates>(
             inboxKey,
             [shared] (IceDataCandidates&& msg) {
+                auto& this_ = *shared;
+
+                // forbid self connection
+                if (msg.from == this_.dht_.getId()) {
+                    RING_WARN("Discarding loopback DHT connection request");
+                    return true;
+                }
+
+                // quick check in case we already explicilty banned this public key
+                auto trustStatus = this_.trust_.getCertificateStatus(msg.from.toString());
+                if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+                    RING_WARN("Discarding DHT connection request from banned peer %s", msg.from.toString().c_str());
+                    return true;
+                }
+
+                auto res = this_.treatedCalls_.insert(msg.id);
+                this_.saveTreatedCalls();
+                if (!res.second)
+                    return true;
+
+                if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
+                    this_.findCertificate(
+                        msg.from,
+                        [shared, msg](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
+                            if (!cert or cert->getId() != msg.from) {
+                                RING_WARN("Can't find certificate of %s for incoming call.",
+                                          msg.from.toString().c_str());
+                                return;
+                            }
+
+                            tls::CertificateStore::instance().pinCertificate(cert);
+
+                            auto& this_ = *shared;
+                            if (!this_.trust_.isAllowed(*cert)) {
+                                RING_WARN("Discarding incoming DHT call from untrusted peer %s.",
+                                          msg.from.toString().c_str());
+                                return;
+                            }
+
+                            runOnMainThread([shared, msg]() mutable {
+                                    if (msg.id & 1)
+                                        shared->onDataTransactionReply(msg);
+                                    else
+                                        shared->onDataTransactionRequest(std::move(msg));
+                                });
+                        }
+                    );
+                    return true;
+                }
+                else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::BANNED) {
+                    this_.findCertificate(msg.from.toString().c_str());
+                }
                 if (msg.id & 1)
                     shared->onDataTransactionReply(msg);
                 else
@@ -1038,11 +971,12 @@ RingAccount::doRegister_()
     }
 }
 
+#if 0
 void
-RingAccount::incomingCall(dht::IceCandidates&& msg)
+RingAccount::legacyIncomingCall(dht::IceCandidates&& msg)
 {
     auto from = msg.from.toString();
-    RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
+    RING_WARN("Legacy incoming call from peer %s, ICE msg:\n%s", from.c_str(),
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
@@ -1051,12 +985,11 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
     val.id = vid;
 
     std::weak_ptr<SIPCall> weak_call = call;
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         msg.from,
         std::move(val),
-        [weak_call, shared_this, vid](bool ok) {
+        [weak_call, vid](bool ok) {
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
                 if (auto call = weak_call.lock())
@@ -1073,7 +1006,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
     call->initRecFilename(from);
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall {
+        pendingLegacyCalls_.emplace_back(PendingCall {
             .start = std::chrono::steady_clock::now(),
             .ice_sp = ice,
             .call = weak_call,
@@ -1082,6 +1015,24 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
             .from = msg.from
         });
     }
+}
+#endif
+
+std::shared_ptr<SIPCall>
+RingAccount::incomingCall(const std::string& peer_id, std::shared_ptr<ReliableSocket::DataConnection> dc)
+{
+    RING_DBG("[DHT:%s] incoming call from peer %s", getAccountID().c_str(), peer_id.c_str());
+    auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
+
+    call->setPeerNumber(peer_id);
+    call->initRecFilename(peer_id);
+    call->setDataConnection(dc);
+
+    // Continue to scan the connection progress into the mainloop
+    std::lock_guard<std::mutex> lock(callsMutex_);
+    pendingCalls_.emplace_back(call);
+
+    return call;
 }
 
 void
@@ -1367,10 +1318,10 @@ RingAccount::getContactHeader(pjsip_transport* t)
     }
 
     // FIXME: be sure that given transport is from SipIceTransport
-    auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
-    auto address = tlsTr->getLocalAddress();
+    //auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
+    IpAddr address {"localhost"}; // TODO: ???
     contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "%s%s<sips:%s%s%s;transport=tls>",
+                                     "%s%s<sips:%s%s%s;transport=udp>",
                                      displayName_.c_str(),
                                      (displayName_.empty() ? "" : " "),
                                      ringid.c_str(),
@@ -1562,6 +1513,8 @@ private:
     std::chrono::seconds creationTimepoint;
 
     std::shared_ptr<ReliableSocket::DataConnection> dataConnection_ {};
+
+    std::shared_ptr<SIPCall> call_ {};
 
     // DTLS session
     std::unique_ptr<tls::TlsSession> tls_;
@@ -1917,9 +1870,11 @@ SecureIceTransport::createTlsSession(dht::crypto::Identity& id,
     };
     tls::TlsSession::TlsSessionCallbacks tls_cbs = {
         .onStateChange = [this](tls::TlsSessionState state) {
-            if (state == tls::TlsSessionState::ESTABLISHED)
+            if (state == tls::TlsSessionState::ESTABLISHED) {
                 dataConnection_->connect(tls_.get());
-            else if (state == tls::TlsSessionState::SHUTDOWN)
+                if (tid & 1)
+                    call_ = account.newIncomingCall(peer_id);
+            } else if (state == tls::TlsSessionState::SHUTDOWN)
                 dataConnection_->disconnect();
         },
         .onRxData = [this](std::vector<uint8_t>&& buf) {
