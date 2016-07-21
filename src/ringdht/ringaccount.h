@@ -312,7 +312,8 @@ class RingAccount : public SIPAccountBase {
         NON_COPYABLE(RingAccount);
 
         void doRegister_();
-        void incomingCall(dht::IceCandidates&& msg);
+        void legacyIncomingCall(dht::IceCandidates&& msg);
+        std::shared_ptr<SIPCall> incomingCall(const std::string&, std::shared_ptr<ReliableSocket::DataConnection>);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -346,27 +347,18 @@ class RingAccount : public SIPAccountBase {
 
         dht::InfoHash callKey_;
 
-        struct PendingCall {
-            std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice_sp;
-            std::weak_ptr<SIPCall> call;
-            std::future<size_t> listen_key;
-            dht::InfoHash call_key;
-            dht::InfoHash from;
-        };
-
         void handlePendingCallList();
-        bool handlePendingCall(PendingCall& pc, bool incoming);
+        bool handlePendingCall(std::weak_ptr<SIPCall>&);
 
         /**
          * DHT calls waiting for ICE negotiation
          */
-        std::list<PendingCall> pendingCalls_ {};
+        std::list<std::weak_ptr<SIPCall>> pendingCalls_ {};
 
         /**
          * Incoming DHT calls that are not yet actual SIP calls.
          */
-        std::list<PendingCall> pendingSipCalls_ {};
+        std::list<std::weak_ptr<SIPCall>> pendingSipCalls_ {};
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};
 
