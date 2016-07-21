@@ -47,6 +47,11 @@ class VoIPLink;
 class Account;
 class AccountVideoCodecInfo;
 
+namespace ReliableSocket {
+class DataConnection;
+class DataStream;
+}
+
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
 /*
@@ -310,6 +315,11 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void removeCall();
 
+        void setDataConnection(std::shared_ptr<ReliableSocket::DataConnection> dc) { dc_ = dc; }
+        std::shared_ptr<ReliableSocket::DataConnection> getDataConnection() const { return dc_; }
+
+        virtual void onDataConnected() = 0;
+
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
 
         int waitForIceInitialization(unsigned timeout);
@@ -331,6 +341,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaSender() = 0;
 
+        std::chrono::steady_clock::time_point getCreationTime() const { return creationTime_; }
+
     protected:
         /**
          * Constructor of a call
@@ -339,6 +351,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         Call(Account& account, const std::string& id, Call::CallType type);
 
+        const std::chrono::steady_clock::time_point creationTime_;
+
+        std::shared_ptr<ReliableSocket::DataConnection> dc_ {};
+        std::shared_ptr<ReliableSocket::DataStream> peerStream_;
         std::shared_ptr<IceTransport> iceTransport_ {};
 
         bool isAudioMuted_{false};
@@ -387,8 +403,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         /** Peer Display Name */
         std::string peerDisplayName_ {};
-
-        time_t timestamp_start_ {0};
 };
 
 } // namespace ring

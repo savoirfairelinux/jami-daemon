@@ -34,17 +34,18 @@
 #include "call_factory.h"
 #include "string_utils.h"
 #include "enumclass_utils.h"
+#include "data_transfer.h"
 
 #include "errno.h"
 
 namespace ring {
 
 Call::Call(Account& account, const std::string& id, Call::CallType type)
-    : id_(id)
+    : creationTime_()
+    , id_(id)
     , type_(type)
     , account_(account)
 {
-    time(&timestamp_start_);
     account_.attachCall(id_);
 }
 
@@ -283,7 +284,7 @@ Call::getDetails() const
         {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
         {DRing::Call::Details::CALL_STATE,       getStateStr()},
         {DRing::Call::Details::CONF_ID,          confID_},
-        {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
+        {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(std::chrono::duration_cast<std::chrono::seconds>(creationTime_.time_since_epoch()).count())},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},

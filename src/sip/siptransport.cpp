@@ -25,6 +25,7 @@
 
 #include "ringdht/sip_transport_ice.h"
 #include "ringdht/sips_transport_ice.h"
+#include "multistream_siptransport.h"
 
 #include "array_size.h"
 #include "intrin.h"
@@ -455,6 +456,19 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
         // (member of new SipIceTransport instance)
         transports_.emplace(std::make_pair(tr, sip_tr));
     }
+    return sip_tr;
+}
+
+std::shared_ptr<SipTransport>
+SipTransportBroker::getMultiStreamTransport(const std::shared_ptr<ReliableSocket::DataStream> stream)
+{
+    auto mss_tr = std::unique_ptr<MultiStreamSipTransport>(new MultiStreamSipTransport(endpt_, stream));
+    auto tr = mss_tr->getTransportBase();
+    auto sip_tr = std::make_shared<SipTransport>(tr);
+    mss_tr.release(); // managed by PJSIP now
+
+    std::lock_guard<std::mutex> lock(transportMapMutex_);
+    transports_.emplace(std::make_pair(tr, sip_tr));
     return sip_tr;
 }
 
