@@ -6,6 +6,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,8 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DRING_CONFIGURATIONMANAGERI_H
-#define DRING_CONFIGURATIONMANAGERI_H
+#pragma once
 
 #include <vector>
 #include <map>
@@ -52,6 +52,8 @@ void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
 uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads);
 int getMessageStatus(uint64_t id);
+
+std::string addRingDevices(const std::string& accountID, const std::string& password);
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -245,5 +247,3 @@ struct ConfigurationSignal {
 };
 
 } // namespace DRing
-
-#endif // DRING_CONFIGURATIONMANAGERI_H

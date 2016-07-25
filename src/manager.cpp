@@ -2470,6 +2470,12 @@ Manager::getNewAccountId()
 }
 
 std::string
+Manager::addRingDevices(const std::string& accountID, const std::string& password)
+{
+    const auto account = getAccount(accountID);
+}
+
+std::string
 Manager::addAccount(const std::map<std::string, std::string>& details, const std::string& accountId)
 {
     /** @todo Deal with both the accountMap_ and the Configuration */

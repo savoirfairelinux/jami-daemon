@@ -158,10 +158,15 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
 
+    for (auto& l : stateChangedListeners_)
+        l(callState_, connectionState_, code);
+
     if (old_client_state != new_client_state) {
-        RING_DBG("[call:%s] emit client call state change %s, code %d",
-                 id_.c_str(), new_client_state.c_str(), code);
-        emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
+        if (not quiet) {
+            RING_DBG("[call:%s] emit client call state change %s, code %d",
+                     id_.c_str(), new_client_state.c_str(), code);
+            emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
+        }
     }
 
     return true;
@@ -353,5 +358,76 @@ Call::peerHungup()
     setState(ConnectionState::DISCONNECTED,
              aborted ? ECONNABORTED : ECONNREFUSED);
 }
+
+void
+Call::addSubCall(const std::shared_ptr<Call>& call)
+{
+    if (connectionState_ == ConnectionState::CONNECTED
+           || callState_ == CallState::ACTIVE
+           || callState_ == CallState::OVER) {
+        call->removeCall();
+    } else {
+        std::lock_guard<std::recursive_mutex> lk (callMutex_);
+        if (not subcalls.emplace(call).second)
+            return;
+        call->quiet = true;
+        std::weak_ptr<Call> wthis = shared_from_this();
+        std::weak_ptr<Call> wcall = call;
+        call->addStateListener([wcall,wthis](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+            if (auto call = wcall.lock()) {
+                RING_WARN("DeviceCall call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
+                if (auto sthis = wthis.lock()) {
+                    auto& this_ = *sthis;
+                    if (new_state == CallState::OVER) {
+                        std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
+                        this_.subcalls.erase(call);
+                        /*if (this_.subcalls.empty()) {
+                            setState(CallState::INACTIVE);
+                        }*/
+                    } else if (new_state == CallState::ACTIVE && this_.callState_ == CallState::INACTIVE) {
+                        this_.setState(new_state);
+                    }
+                    if (/*this_.callState_ == CallState::ACTIVE && new_state == CallState::ACTIVE && */
+                        (unsigned)this_.connectionState_ < (unsigned)new_cstate) {
+                        this_.setState(new_cstate);
+                    }
+                    if (new_state == CallState::ACTIVE && new_cstate == ConnectionState::CONNECTED) {
+                        std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
+                        for (auto& sub : this_.subcalls) {
+                            if (sub != call)
+                                sub->hangup(0);
+                        }
+                        this_.subcalls.clear();
+
+                        //runOnMainThread([call, sthis]() {
+                        this_.merge(call);
+                        //});
+                        //return false;
+                    }
+                }
+            }
+        });
+        setState(ConnectionState::TRYING);
+    }
+}
+
+void
+Call::merge(std::shared_ptr<Call> scall)
+{
+    RING_WARN("Call::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
+    auto& call = *scall;
+    std::lock(callMutex_, call.callMutex_);
+    std::lock_guard<std::recursive_mutex> lk1 (callMutex_, std::adopt_lock);
+    std::lock_guard<std::recursive_mutex> lk2 (call.callMutex_, std::adopt_lock);
+    iceTransport_ = std::move(call.iceTransport_);
+    peerDisplayName_ = std::move(call.peerDisplayName_);
+    localAddr_ = call.localAddr_;
+    localAudioPort_ = call.localAudioPort_;
+    localVideoPort_ = call.localVideoPort_;
+    setState(call.getState());
+    setState(call.getConnectionState());
+    scall->removeCall();
+}
+
 
 } // namespace ring
