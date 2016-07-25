@@ -146,6 +146,7 @@ private:
      * assumes you already have a lock on igd_mutex_
      */
     IGD* chooseIGD_unlocked() const;
+    bool hasValidIGD_unlocked() const;
 
     /* tries to add mapping, assumes you alreayd have lock on igd_mutex_ */
     Mapping addMapping(IGD* igd,

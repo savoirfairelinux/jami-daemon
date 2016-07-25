@@ -293,12 +293,12 @@ UPnPContext::hasValidIGD(std::chrono::seconds timeout)
 
     std::unique_lock<std::mutex> lock(validIGDMutex_);
     if (!validIGDCondVar_.wait_for(lock, timeout,
-                                   [this]{return not validIGDs_.empty();})) {
+                                   [this]{return hasValidIGD_unlocked();})) {
         RING_WARN("UPnP: check for valid IGD timeout");
         return false;
     }
 
-    return not validIGDs_.empty();
+    return hasValidIGD_unlocked();
 }
 
 size_t
@@ -317,6 +317,16 @@ UPnPContext::removeIGDListener(size_t token)
     auto it = igdListeners_.find(token);
     if (it != igdListeners_.end())
         igdListeners_.erase(it);
+}
+
+bool
+UPnPContext::hasValidIGD_unlocked() const
+{
+    return
+#if HAVE_LIBNATPMP
+    pmpIGD_ or
+#endif
+    not validIGDs_.empty();
 }
 
 /**
