@@ -48,6 +48,10 @@
 #include <cstring>
 #include <sstream>
 
+#ifdef _WIN32
+#undef interface
+#endif
+
 namespace DRing {
 
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
