@@ -622,7 +622,6 @@ UPnPContext::PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& n
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
         auto r = readnatpmpresponseorretry(&natpmp, &response);
         if (r < 0 && r != NATPMP_TRYAGAIN) {
-            RING_WARN("NAT-PMP: can't find device");
             pmp_igd->renewal_ = clock::now() + std::chrono::minutes(5);
             break;
         }
