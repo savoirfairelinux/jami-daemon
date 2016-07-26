@@ -65,14 +65,6 @@ make -j %{?_smp_mflags}
 %install
 mkdir -p %{buildroot}/ring-daemon
 make DESTDIR=%{buildroot} install
-mkdir -p %{buildroot}/%{_sysconfdir}/yum.repos.d/
-echo '[ring]' > %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-echo 'name=Ring - $basearch - Nightly' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-echo 'baseurl=http://nightly.yum.ring.cx/fedora_$releasever' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-echo 'gpgcheck=1' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-echo 'gpgkey=http://gpl.savoirfairelinux.net/ring-download/ring.pub.key' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-echo 'enabled=1' >> %{buildroot}/%{_sysconfdir}/yum.repos.d/ring-nightly.repo
-
 
 %files
 %defattr(-,root,root,-)
