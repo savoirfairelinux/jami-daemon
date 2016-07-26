@@ -205,11 +205,14 @@ using time_point = clock::time_point;
 
 class PMPIGD : public IGD {
 public:
-
-    void clearAll() {
+    void clear() {
         toRemove_.clear();
         udpMappings.clear();
         tcpMappings.clear();
+    }
+
+    void clearMappings() {
+        clear();
         clearAll_ = true;
     }
 
