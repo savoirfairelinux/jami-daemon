@@ -37,6 +37,13 @@ HAVE_WIN64="0"
 HAVE_IOS="0"
 HAVE_OSX="0"
 
+LT_INIT([dlopen win32-dll shared disable-static])
+
+dnl Define C++ as default language
+LT_LANG(C++)
+
+DOLT
+
 case "${host_os}" in
   "")
     SYS=unknown
@@ -128,13 +135,6 @@ dnl otherwise libtool linking of shared libraries will
 dnl fail on anything other than pass_all.
 AC_CACHE_VAL(lt_cv_deplibs_check_method,
     [lt_cv_deplibs_check_method=pass_all])
-
-LT_INIT([dlopen win32-dll shared disable-static])
-
-dnl Define C++ as default language
-LT_LANG(C++)
-
-DOLT
 
 lt_cv_deplibs_check_method=pass_all
 
