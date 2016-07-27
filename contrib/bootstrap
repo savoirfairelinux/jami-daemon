@@ -24,6 +24,7 @@ usage()
 	echo "  --build=BUILD       configure for building on BUILD"
 	echo "  --host=HOST         cross-compile to build to run on HOST"
 	echo "  --prefix=PREFIX     install files in PREFIX"
+	echo "  --no-checksums      don't verify checksums (allows to replace tarballs)"
 	echo "  --disable-downloads don't download packages from the internet"
 	echo "  --disable-FOO       configure to not build package FOO"
 	echo "  --enable-FOO        configure to build package FOO"
@@ -50,6 +51,9 @@ do
 		--help|-h)
 			usage
 			exit 0
+			;;
+		--no-checksums)
+			DISABLE_CONTRIB_CHECKSUMS="TRUE"
 			;;
 		--disable-downloads)
 			DISABLE_CONTRIB_DOWNLOADS="TRUE"
@@ -113,6 +117,7 @@ CROSS_COMPILE ?= $HOST-
 PKGS_DISABLE := $PKGS_DISABLE
 PKGS_ENABLE := $PKGS_ENABLE
 DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
+DISABLE_CONTRIB_CHECKSUMS := $DISABLE_CONTRIB_CHECKSUMS
 EOF
 
 add_make()

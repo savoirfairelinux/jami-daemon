@@ -337,7 +337,11 @@ checksum = \
 			"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS" &&) \
 	(cd $(TARBALLS) && $(1) /dev/stdin) < \
 		"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS"
-CHECK_SHA512 = $(call checksum,$(SHA512SUM),SHA512)
+ifeq ($(DISABLE_CONTRIB_CHECKSUMS),TRUE)
+    CHECK_SHA512 = @echo "Skipping checksum verification..."
+else
+    CHECK_SHA512 = $(call checksum,$(SHA512SUM),SHA512)
+endif
 UNPACK = $(RM) -R $@ \
 	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xvzf $(f)) \
 	$(foreach f,$(filter %.tar.bz2,$^), && tar xvjf $(f)) \
