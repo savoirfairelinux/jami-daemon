@@ -73,7 +73,6 @@ make DESTDIR=%{buildroot} install
 %{_datadir}/dbus-1/services/*
 %{_datadir}/dbus-1/interfaces/*
 %doc %{_mandir}/man1/dring*
-%config %{_sysconfdir}/yum.repos.d/ring-nightly.repo
 
 %files devel
 %defattr(-,root,root,-)
