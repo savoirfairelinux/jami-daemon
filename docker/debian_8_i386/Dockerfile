@@ -6,5 +6,5 @@ RUN apt-get install -y devscripts debianutils debhelper build-essential tar \
  libdbus-1-dev libasound2-dev libexpat1-dev libpcre3-dev libyaml-cpp-dev \
  libboost-dev libdbus-c++-dev libsndfile1-dev libxext-dev libnatpmp-dev \
  libxfixes-dev yasm autopoint unbound-anchor git-core libspeex-dev \
- libspeexdsp-dev autotools-dev chrpath check astyle \
+ libspeexdsp-dev autotools-dev chrpath check astyle libupnp-dev \
  uuid-dev libudev-dev cmake libjsoncpp-dev --fix-missing
