@@ -217,17 +217,7 @@
         "fedora_23": "0 0 0 * * THU",
         "fedora_23_i386": "0 0 0 * * THU",
         "fedora_24": "0 0 0 * * THU",
-        "fedora_24_i386": "0 0 0 * * THU",
-        "debian_8": "0 0 0 * * THU",
-        "debian_8_i386": "0 0 0 * * THU",
-        "debian_9": "0 0 0 * * THU",
-        "debian_9_i386": "0 0 0 * * THU",
-        "ubuntu_14.04": "0 0 0 * * THU",
-        "ubuntu_14.04_i386": "0 0 0 * * THU",
-        "ubuntu_15.10": "0 0 0 * * THU",
-        "ubuntu_15.10_i386": "0 0 0 * * THU",
-        "ubuntu_16.04": "0 0 0 * * THU",
-        "ubuntu_16.04_i386": "0 0 0 * * THU"
+        "fedora_24_i386": "0 0 0 * * THU"
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
