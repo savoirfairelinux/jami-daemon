@@ -74,6 +74,12 @@ DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& d
     return DRing::addAccount(details);
 }
 
+auto
+DBusConfigurationManager::addRingDevice(const std::string& accountID, const std::string& password) -> decltype(DRing::addRingDevice(accountID, password))
+{
+    return DRing::addRingDevice(accountID, password);
+}
+
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
