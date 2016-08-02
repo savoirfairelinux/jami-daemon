@@ -213,7 +213,6 @@ Account::serialize(YAML::Emitter& out)
     out << YAML::Key << RINGTONE_PATH_KEY << YAML::Value << ringtonePath_;
     out << YAML::Key << HAS_CUSTOM_USER_AGENT_KEY << YAML::Value << hasCustomUserAgent_;
     out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
-    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
@@ -226,7 +225,6 @@ Account::unserialize(const YAML::Node& node)
 
     parseValue(node, ALIAS_KEY, alias_);
     parseValue(node, ACCOUNT_ENABLE_KEY, enabled_);
-    parseValue(node, USERNAME_KEY, username_);
     parseValue(node, ACCOUNT_AUTOANSWER_KEY, autoAnswerEnabled_);
     parseValue(node, ACCOUNT_ACTIVE_CALL_LIMIT_KEY, activeCallLimit_);
     //parseValue(node, PASSWORD_KEY, password_);
@@ -257,7 +255,6 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     parseString(details, Conf::CONFIG_ACCOUNT_ALIAS, alias_);
     parseString(details, Conf::CONFIG_ACCOUNT_DISPLAYNAME, displayName_);
     parseBool(details, Conf::CONFIG_ACCOUNT_ENABLE, enabled_);
-    parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
     parseString(details, Conf::CONFIG_ACCOUNT_HOSTNAME, hostname_);
     parseString(details, Conf::CONFIG_ACCOUNT_MAILBOX, mailBox_);
     parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
