@@ -249,36 +249,6 @@ DBusCallManager::startTone(const int32_t& start, const int32_t& type)
 }
 
 void
-DBusCallManager::setSASVerified(const std::string& callID)
-{
-    DRing::setSASVerified(callID);
-}
-
-void
-DBusCallManager::resetSASVerified(const std::string& callID)
-{
-    DRing::resetSASVerified(callID);
-}
-
-void
-DBusCallManager::setConfirmGoClear(const std::string& callID)
-{
-    DRing::setConfirmGoClear(callID);
-}
-
-void
-DBusCallManager::requestGoClear(const std::string& callID)
-{
-    DRing::requestGoClear(callID);
-}
-
-void
-DBusCallManager::acceptEnrollment(const std::string& callID, const bool& accepted)
-{
-    DRing::acceptEnrollment(callID, accepted);
-}
-
-void
 DBusCallManager::sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const bool& isMixed)
 {
     DRing::sendTextMessage(callID, messages, "Me", isMixed);

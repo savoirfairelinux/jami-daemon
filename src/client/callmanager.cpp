@@ -292,36 +292,6 @@ switchInput(const std::string& callID, const std::string& resource)
 }
 
 void
-setSASVerified(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-resetSASVerified(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-setConfirmGoClear(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-requestGoClear(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
 sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed)
 {
    ring::Manager::instance().sendCallTextMessage(callID, messages, from, isMixed);

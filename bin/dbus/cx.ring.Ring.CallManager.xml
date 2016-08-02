@@ -722,73 +722,11 @@
             <arg type="s" name="callID" />
         </signal>
 
-        <!-- ZRTP Methods and Signals -->
-        <signal name="secureZrtpOn" tp:name-for-bindings="secureZrtpOn">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID"  />
-            <arg type="s" name="cipher"  />
-        </signal>
-
-        <signal name="secureZrtpOff" tp:name-for-bindings="secureZrtpOff">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" />
-        </signal>
-
-        <signal name="confirmGoClear" tp:name-for-bindings="confirmGoClear">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" />
-        </signal>
-
         <signal name="recordingStateChanged" tp:name-for-bindings="recordingStateChange">
            <tp:added version="1.3.0"/>
            <arg type="s" name="callID" />
            <arg type="b" name="recordingState"/>
         </signal>
-
-        <signal name="zrtpNegotiationFailed" tp:name-for-bindings="zrtpNegotiationFailed">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" />
-            <arg type="s" name="reason"  />
-            <arg type="s" name="severity" />
-        </signal>
-
-        <signal name="zrtpNotSuppOther" tp:name-for-bindings="zrtpNotSuppOther">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" />
-        </signal>
-
-        <signal name="showSAS" tp:name-for-bindings="showSAS">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" />
-            <arg type="s" name="sas"  />
-            <arg type="b" name="verified"/>
-        </signal>
-
-        <method name="setSASVerified" tp:name-for-bindings="setSASVerified">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-        </method>
-
-        <method name="resetSASVerified" tp:name-for-bindings="resetSASVerified">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-        </method>
-
-        <method name="setConfirmGoClear" tp:name-for-bindings="setConfirmGoClear">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-        </method>
-
-        <method name="requestGoClear" tp:name-for-bindings="requestGoClear">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-        </method>
-
-        <method name="acceptEnrollment" tp:name-for-bindings="acceptEnrollment">
-            <tp:added version="0.9.7"/>
-            <arg type="s" name="callID" direction="in"/>
-            <arg type="b" name="accepted" direction="in"/>
-        </method>
 
         <signal name="onRtcpReportReceived" tp:name-for-bindings="onRtcpReportReceived">
             <tp:added version="1.3.0"/>

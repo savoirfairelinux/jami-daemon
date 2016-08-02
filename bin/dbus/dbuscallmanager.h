@@ -91,11 +91,6 @@ class DBusCallManager :
         std::string getCurrentAudioCodecName(const std::string& callID);
         void playDTMF(const std::string& key);
         void startTone(const int32_t& start, const int32_t& type);
-        void setSASVerified(const std::string& callID);
-        void resetSASVerified(const std::string& callID);
-        void setConfirmGoClear(const std::string& callID);
-        void requestGoClear(const std::string& callID);
-        void acceptEnrollment(const std::string& callID, const bool& accepted);
         void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const bool& isMixed);
 };
 

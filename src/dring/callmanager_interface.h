@@ -164,26 +164,6 @@ struct CallSignal {
                 constexpr static const char* name = "SecureSdesOff";
                 using cb_type = void(const std::string&);
         };
-        struct SecureZrtpOn {
-                constexpr static const char* name = "SecureZrtpOn";
-                using cb_type = void(const std::string&, const std::string&);
-        };
-        struct SecureZrtpOff {
-                constexpr static const char* name = "SecureZrtpOff";
-                using cb_type = void(const std::string&);
-        };
-        struct ShowSAS {
-                constexpr static const char* name = "ShowSAS";
-                using cb_type = void(const std::string&, const std::string&, int);
-        };
-        struct ZrtpNotSuppOther {
-                constexpr static const char* name = "ZrtpNotSuppOther";
-                using cb_type = void(const std::string&);
-        };
-        struct ZrtpNegotiationFailed {
-                constexpr static const char* name = "ZrtpNegotiationFailed";
-                using cb_type = void(const std::string&, const std::string&, const std::string&);
-        };
         struct RtcpReportReceived {
                 constexpr static const char* name = "RtcpReportReceived";
                 using cb_type = void(const std::string&, const std::map<std::string, int>&);

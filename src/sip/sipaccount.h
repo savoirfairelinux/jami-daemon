@@ -55,13 +55,6 @@ namespace Conf {
     const char *const SRTP_ENABLE_KEY = "enable";
     const char *const KEY_EXCHANGE_KEY = "keyExchange";
     const char *const RTP_FALLBACK_KEY = "rtpFallback";
-
-    // TODO: wirte an object to store zrtp params wich implement serializable
-    const char *const ZRTP_KEY = "zrtp";
-    const char *const DISPLAY_SAS_KEY = "displaySas";
-    const char *const DISPLAY_SAS_ONCE_KEY = "displaySasOnce";
-    const char *const HELLO_HASH_ENABLED_KEY = "helloHashEnabled";
-    const char *const NOT_SUPP_WARNING_KEY = "notSuppWarning";
 }
 
 typedef std::vector<pj_ssl_cipher> CipherArray;
@@ -384,10 +377,6 @@ class SIPAccount : public SIPAccountBase {
             return srtpFallback_;
         }
 
-        bool getZrtpHelloHash() const {
-            return zrtpHelloHash_;
-        }
-
         void setReceivedParameter(const std::string &received) {
             receivedParameter_ = received;
             via_addr_.host.ptr = (char *) receivedParameter_.c_str();
@@ -681,7 +670,7 @@ class SIPAccount : public SIPAccountBase {
         std::string tlsNegotiationTimeoutSec_;
 
         /**
-         * Specifies the type of key exchange used for SRTP  (sdes/zrtp), if any.
+         * Specifies the type of key exchange used for SRTP, if any.
          * This only determine if the media channel is secured.
          */
         sip_utils::KeyExchangeProtocol srtpKeyExchange_ {sip_utils::KeyExchangeProtocol::NONE};
@@ -692,21 +681,6 @@ class SIPAccount : public SIPAccountBase {
          * played through the audio device.
          */
         bool srtpFallback_ {};
-
-        /**
-         * Determine if the SAS sould be displayed on client side. SAS is a 4-charcter string
-         * that end users should verbaly validate to ensure the channel is secured. Used especially
-         * to prevent man-in-the-middle attack.
-         */
-        bool zrtpDisplaySas_;
-
-        /**
-         * Only display SAS 4-character string once at the begining of the call.
-         */
-        bool zrtpDisplaySasOnce_;
-
-        bool zrtpHelloHash_;
-        bool zrtpNotSuppWarning_;
 
         /**
          * Details about the registration state.
