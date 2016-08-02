@@ -53,10 +53,6 @@
                         <li>SRTP_KEY_EXCHANGE</li>
                         <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
                         <li>SRTP_RTP_FALLBACK</li>
-                        <li>ZRTP_DISPLAY_SAS</li>
-                        <li>ZRTP_DISPLAY_SAS_ONCE</li>
-                        <li>ZRTP_HELLO_HASH</li>
-                        <li>ZRTP_NOT_SUPP_WARNING</li>
                         <li>TLS_LISTENER_PORT: TLS listening port (Default: 5061)</li>
                         <li>TLS_ENABLE: Whether or not signalling is encrypted - True or False (Default: False)</li>
                         <li>TLS_CA_LIST_FILE</li>

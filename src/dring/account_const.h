@@ -189,16 +189,6 @@ constexpr static const char RTP_FALLBACK       [] = "SRTP.rtpFallback";
 
 } //namespace DRing::Account::ConfProperties::SRTP
 
-
-namespace ZRTP {
-
-constexpr static const char DISPLAY_SAS        [] = "ZRTP.displaySAS";
-constexpr static const char NOT_SUPP_WARNING   [] = "ZRTP.notSuppWarning";
-constexpr static const char HELLO_HASH         [] = "ZRTP.helloHashEnable";
-constexpr static const char DISPLAY_SAS_ONCE   [] = "ZRTP.displaySasOnce";
-
-} //namespace DRing::Account::ConfProperties::ZRTP
-
 namespace TLS {
 
 constexpr static const char LISTENER_PORT      [] = "TLS.listenerPort";
