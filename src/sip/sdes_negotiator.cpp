@@ -166,7 +166,7 @@ SdesNegotiator::negotiate(const std::vector<std::string>& attributes) const
         auto cryptoAttributeVector(parse(attributes));
         for (const auto& iter_offer : cryptoAttributeVector) {
             for (const auto& iter_local : localCapabilities_) {
-                if (iter_offer.getCryptoSuite().compare(iter_local.name))
+                if (iter_offer.getCryptoSuite() == iter_local.name)
                     return iter_offer;
             }
         }
