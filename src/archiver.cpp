@@ -224,6 +224,7 @@ Archiver::compress(const std::string& str, int compressionlevel)
     auto destSize = compressBound(str.size());
     std::vector<uint8_t> outbuffer(destSize);
     int ret = ::compress(reinterpret_cast<Bytef*>(outbuffer.data()), &destSize, (Bytef*)str.data(), str.size());
+    outbuffer.resize(destSize);
 
     if (ret != Z_OK) {
         std::ostringstream oss;
