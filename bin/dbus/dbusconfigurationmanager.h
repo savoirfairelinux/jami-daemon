@@ -63,6 +63,7 @@ class DBusConfigurationManager :
         void setAccountActive(const std::string& accountID, const bool& active);
         std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
         std::string addAccount(const std::map<std::string, std::string>& details);
+        std::string addRingDevice(const std::string& accountID, const std::string& password);
         void removeAccount(const std::string& accoundID);
         std::vector<std::string> getAccountList();
         void sendRegister(const std::string& accoundID, const bool& enable);
