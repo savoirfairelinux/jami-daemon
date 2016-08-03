@@ -53,6 +53,8 @@ constexpr static const char ERROR_CONF_STUN           [] = "ERROR_CONF_STUN";
 constexpr static const char ERROR_EXIST_STUN          [] = "ERROR_EXIST_STUN";
 constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERROR_SERVICE_UNAVAILABLE";
 constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERROR_NOT_ACCEPTABLE";
+constexpr static const char ERROR_MISSING_ID          [] = "ERROR_MISSING_ID";
+constexpr static const char ERROR_PASSWORD_REQUIRED   [] = "ERROR_PASSWORD_REQUIRED";
 constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
 
 } //namespace DRing::Account
