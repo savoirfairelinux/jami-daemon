@@ -204,6 +204,11 @@ expand_path(const std::string &path)
 #endif
 }
 
+bool isFile (const std::string& path) {
+  struct stat s;
+  return (stat (path.c_str(), &s) == 0) and not (s.st_mode & S_IFDIR);
+}
+
 bool isDirectory(const std::string& path)
 {
     struct stat s;
