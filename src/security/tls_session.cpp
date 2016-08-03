@@ -788,7 +788,6 @@ DhParams
 DhParams::generate()
 {
     using clock = std::chrono::high_resolution_clock;
-    return {};
 
     auto bits = gnutls_sec_param_to_pk_bits(GNUTLS_PK_DH, /* GNUTLS_SEC_PARAM_HIGH */ GNUTLS_SEC_PARAM_HIGH);
     RING_DBG("Generating DH params with %u bits", bits);
