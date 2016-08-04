@@ -212,12 +212,6 @@
         "git pull"
     ],
     "AutoDeploySchedule": {
-        "fedora_22": "0 0 0 * * THU",
-        "fedora_22_i386": "0 0 0 * * THU",
-        "fedora_23": "0 0 0 * * THU",
-        "fedora_23_i386": "0 0 0 * * THU",
-        "fedora_24": "0 0 0 * * THU",
-        "fedora_24_i386": "0 0 0 * * THU"
     },
     "DeployScript": "ring-nightly-sign-deploy.sh",
     "NotificationMailAdress": ["Awesome Ring Team", "ring-dev@lists.savoirfairelinux.net"]
