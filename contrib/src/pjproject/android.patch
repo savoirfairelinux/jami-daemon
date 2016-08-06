@@ -1,0 +1,13 @@
+--- a/pjlib/include/pj/config.h
++++ b/pjlib/include/pj/config.h
+@@ -293,6 +293,10 @@
+  */
+ #include <pj/config_site.h>
+ 
++#define PJ_CONFIG_ANDROID 1
++#define PJ_JNI_HAS_JNI_ONLOAD 0
++#include <pj/config_site_sample.h>
++
+ /********************************************************************
+  * PJLIB Features.
+  */

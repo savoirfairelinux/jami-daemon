@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 2.4.5
+PJPROJECT_VERSION := 2.5.5
 PJPROJECT_URL := http://www.pjsip.org/release/$(PJPROJECT_VERSION)/pjproject-$(PJPROJECT_VERSION).tar.bz2
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -67,6 +67,9 @@ endif
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
+ifdef HAVE_ANDROID
+	$(APPLY) $(SRC)/pjproject/android.patch
+endif
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
