@@ -347,7 +347,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     pjsip_dialog *dialog = nullptr;
-    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
+    if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
         RING_ERR("Could not create uas");
         call.reset();
         try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
@@ -357,18 +357,18 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tpselector tp_sel  = SIPVoIPLink::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Could not set transport for dialog");
+        if (dialog) pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
     }
 
     pjsip_inv_session* inv = nullptr;
     pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), PJSIP_INV_SUPPORT_ICE, &inv);
-
     if (!inv) {
         RING_ERR("Call invite is not initialized");
+        pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
     }
 
-    pjsip_dlg_inc_lock(inv->dlg);
     inv->mod_data[mod_ua_.id] = call.get();
     call->inv.reset(inv);
 
