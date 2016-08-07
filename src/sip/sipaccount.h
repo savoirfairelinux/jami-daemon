@@ -377,6 +377,8 @@ class SIPAccount : public SIPAccountBase {
         }
 
         virtual sip_utils::KeyExchangeProtocol getSrtpKeyExchange() const override {
+            if (tlsEnable_ && srtpKeyExchange_ == sip_utils::KeyExchangeProtocol::NONE)
+                return sip_utils::KeyExchangeProtocol::SDES;
             return srtpKeyExchange_;
         }
 
