@@ -23,6 +23,8 @@
 #define SRTP_H
 
 #include <stdint.h>
+#include <gnutls/gnutls.h>
+#include <nettle/gcm.h>
 
 struct AVAES;
 struct AVHMAC;
@@ -31,15 +33,19 @@ struct SRTPContext {
     struct AVAES *aes;
     struct AVHMAC *hmac;
     int rtp_hmac_size, rtcp_hmac_size;
-    uint8_t master_key[16];
+    uint8_t master_key[32];
     uint8_t master_salt[14];
-    uint8_t rtp_key[16],  rtcp_key[16];
+    uint8_t rtp_key[32],  rtcp_key[32];
     uint8_t rtp_salt[14], rtcp_salt[14];
     uint8_t rtp_auth[20], rtcp_auth[20];
     int seq_largest, seq_initialized;
     uint32_t roc;
 
     uint32_t rtcp_index;
+
+    int aead;
+    struct gcm_aes256_ctx aead_rtp_ctx;
+    struct gcm_aes256_ctx aead_rtcp_ctx;
 };
 
 int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
