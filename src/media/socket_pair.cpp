@@ -68,14 +68,14 @@ public:
                      const char* in_suite, const char* in_key) {
         if (out_suite && out_key) {
             // XXX: see srtp_open from libavformat/srtpproto.c
-            if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
+            if (ff_srtp_set_crypto(&srtp_out, "SRTP_AEAD_AES_256_GCM"/*out_suite*/, out_key) < 0) {
                 srtp_close();
                 throw std::runtime_error("Could not set crypto on output");
             }
         }
 
         if (in_suite && in_key) {
-            if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
+            if (ff_srtp_set_crypto(&srtp_in, "SRTP_AEAD_AES_256_GCM"/*in_suite*/, in_key) < 0) {
                 srtp_close();
                 throw std::runtime_error("Could not set crypto on input");
             }
