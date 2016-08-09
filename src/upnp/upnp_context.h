@@ -158,16 +158,17 @@ private:
     uint16_t chooseRandomPort(const IGD& igd, PortType type);
 
 #if HAVE_LIBNATPMP
-    std::thread pmpThread_;
-    std::mutex pmpMutex_;
-    std::condition_variable pmpCv_;
+    std::thread pmpThread_ {};
+    std::mutex pmpMutex_ {};
+    std::condition_variable pmpCv_ {};
+    std::shared_ptr<PMPIGD> pmpIGD_ {};
     std::atomic_bool pmpRun_ {true};
-    std::shared_ptr<PMPIGD> pmpIGD_;
 
     void PMPsearchForIGD(const std::shared_ptr<PMPIGD>& pmp_igd, natpmp_t& natpmp);
     void PMPaddPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, GlobalMapping& mapping, bool remove=false) const;
     void PMPdeleteAllPortMapping(const PMPIGD& pmp_igd, natpmp_t& natpmp, int proto) const;
-
+#else
+    static constexpr bool pmpRun_ {false};
 #endif
 
 #if HAVE_LIBUPNP
