@@ -108,9 +108,8 @@ constexpr static int UPNP_E_SUCCESS = 0;
 #endif // HAVE_LIBUPNP
 
 UPnPContext::UPnPContext()
-{
 #if HAVE_LIBNATPMP
-    pmpThread_ = std::thread([this]() {
+    : pmpThread_([this]() {
         auto pmp_igd = std::make_shared<PMPIGD>();
         natpmp_t natpmp;
 
@@ -155,12 +154,10 @@ UPnPContext::UPnPContext()
         }
         closenatpmp(&natpmp);
         RING_DBG("NAT-PMP: ended");
-    });
-    clientRegistered_ = true;
+    })
 #endif
-
+{
 #if HAVE_LIBUPNP
-
     int upnp_err;
     char* ip_address = nullptr;
     unsigned short port = 0;
@@ -176,38 +173,31 @@ UPnPContext::UPnPContext()
      /* TODO: figure out why ipv6 version doesn't work  */
      // upnp_err = UpnpInit2(0, 0);
  #endif
-    RING_DBG("UPnP: using IPv4");
     upnp_err = UpnpInit(0, 0);
-
     if ( upnp_err != UPNP_E_SUCCESS ) {
+        RING_ERR("UPnP: can't initialize libupnp: %s", UpnpGetErrorMessage(upnp_err));
         UpnpFinish();
-        throw std::runtime_error(UpnpGetErrorMessage(upnp_err));
+    } else {
+        RING_DBG("UPnP: using IPv4");
+        ip_address = UpnpGetServerIpAddress(); // do not free, it is freed by UpnpFinish()
+        port = UpnpGetServerPort();
+
+        RING_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
+
+        // relax the parser to allow malformed XML text
+        ixmlRelaxParser( 1 );
+
+        // Register a control point to start looking for devices right away
+        upnp_err = UpnpRegisterClient( cp_callback, this, &ctrlptHandle_ );
+        if ( upnp_err != UPNP_E_SUCCESS ) {
+            RING_ERR("UPnP: can't register client: %s", UpnpGetErrorMessage(upnp_err));
+            UpnpFinish();
+        } else {
+            clientRegistered_ = true;
+            // start gathering a list of available devices
+            searchForIGD();
+        }
     }
-
-    ip_address = UpnpGetServerIpAddress(); /* do not free, it is freed by UpnpFinish() */
-    port = UpnpGetServerPort();
-
-    RING_DBG("UPnP: initialiazed on %s:%u", ip_address, port);
-
-    /* relax the parser to allow malformed XML text */
-    ixmlRelaxParser( 1 );
-
-    /* Register a control point to start looking for devices right away */
-    upnp_err = UpnpRegisterClient( cp_callback, this, &ctrlptHandle_ );
-    if ( upnp_err != UPNP_E_SUCCESS ) {
-        UpnpFinish();
-        throw std::runtime_error(UpnpGetErrorMessage(upnp_err));
-    }
-
-    RING_DBG("UPnP: ctrlptrHandle=%d", ctrlptHandle_);
-    clientRegistered_ = true;
-
-    /* send out async searches;
-     * even if no account is using UPnP currently we might as well start
-     * gathering a list of available devices;
-     * we will probably receive their advertisements either way
-     */
-    searchForIGD();
 #endif
 }
 
@@ -288,7 +278,7 @@ UPnPContext::connectivityChanged()
 bool
 UPnPContext::hasValidIGD(std::chrono::seconds timeout)
 {
-    if (not clientRegistered_) {
+    if (not clientRegistered_ and not pmpRun_) {
         RING_WARN("UPnP: Control Point not registered");
         return false;
     }
