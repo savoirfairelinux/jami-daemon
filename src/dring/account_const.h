@@ -53,6 +53,8 @@ constexpr static const char ERROR_CONF_STUN           [] = "ERROR_CONF_STUN";
 constexpr static const char ERROR_EXIST_STUN          [] = "ERROR_EXIST_STUN";
 constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERROR_SERVICE_UNAVAILABLE";
 constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERROR_NOT_ACCEPTABLE";
+constexpr static const char ERROR_MISSING_ID          [] = "ERROR_MISSING_ID";
+constexpr static const char ERROR_PASSWORD_REQUIRED   [] = "ERROR_PASSWORD_REQUIRED";
 constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
 
 } //namespace DRing::Account
@@ -125,7 +127,9 @@ constexpr static const char HAS_CUSTOM_USER_AGENT   [] = "Account.hasCustomUserA
 constexpr static const char ALLOW_CERT_FROM_HISTORY [] = "Account.allowCertFromHistory";
 constexpr static const char ALLOW_CERT_FROM_CONTACT [] = "Account.allowCertFromContact";
 constexpr static const char ALLOW_CERT_FROM_TRUSTED [] = "Account.allowCertFromTrusted";
-
+constexpr static const char ARCHIVE_PASSWORD        [] = "Account.archivePassword";
+constexpr static const char ARCHIVE_PATH            [] = "Account.archivePath";
+constexpr static const char ARCHIVE_PIN             [] = "Account.archivePIN";
 
 namespace Audio {
 
@@ -228,8 +232,8 @@ constexpr static const char ALLOW_FROM_TRUSTED [] = "DHT.AllowFromTrusted";
 
 namespace ETH {
 
-constexpr static const char KEY_FILE   		   [] = "ETH.keyFile";
-constexpr static const char ACCOUNT    		   [] = "ETH.account";
+constexpr static const char KEY_FILE           [] = "ETH.keyFile";
+constexpr static const char ACCOUNT            [] = "ETH.account";
 
 } //namespace DRing::Account::ETH
 
