@@ -411,6 +411,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
 
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+
     // each credential is a map, and we can have multiple credentials
     out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
@@ -483,6 +485,8 @@ validate(std::string &member, const std::string &param, const T& valid)
 void SIPAccount::unserialize(const YAML::Node &node)
 {
     SIPAccountBase::unserialize(node);
+    parseValue(node, USERNAME_KEY, username_);
+
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
@@ -490,9 +494,17 @@ void SIPAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PORT_KEY, port);
     localPort_ = port;
 
-    if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
-
-    if (not isIP2IP()) parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    if (not isIP2IP()) {
+        parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
+        parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+        parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
+        const auto& credsNode = node[Conf::CRED_KEY];
+        setCredentials(parseVectorMap(credsNode, {
+            Conf::CONFIG_ACCOUNT_REALM,
+            Conf::CONFIG_ACCOUNT_USERNAME,
+            Conf::CONFIG_ACCOUNT_PASSWORD
+        }));
+    }
 
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
@@ -506,17 +518,8 @@ void SIPAccount::unserialize(const YAML::Node &node)
         presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, subscribeSupported);
     }
 
-    if (not isIP2IP()) parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
-
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
-
-    const auto &credsNode = node[Conf::CRED_KEY];
-    setCredentials(parseVectorMap(credsNode, {
-        Conf::CONFIG_ACCOUNT_REALM,
-        Conf::CONFIG_ACCOUNT_USERNAME,
-        Conf::CONFIG_ACCOUNT_PASSWORD
-    }));
 
     // get zrtp submap
     const auto &zrtpMap = node[Conf::ZRTP_KEY];
@@ -555,6 +558,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
+    parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
 
