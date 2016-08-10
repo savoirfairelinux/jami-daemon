@@ -261,11 +261,13 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
 std::vector<rtcpRRHeader>
 SocketPair::getRtcpInfo()
 {
-    std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
-    std::vector<rtcpRRHeader> vect(listRtcpHeader_.size());
-    std::copy_n(listRtcpHeader_.begin(), listRtcpHeader_.size(), vect.begin());
-    listRtcpHeader_.clear();
-    return vect;
+    decltype(listRtcpHeader_) l;
+    {
+        std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
+        l = std::move(listRtcpHeader_);
+        listRtcpHeader_.clear();
+    }
+    return {std::make_move_iterator(l.begin()), std::make_move_iterator(l.end())};
 }
 
 void
