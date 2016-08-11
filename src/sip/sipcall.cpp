@@ -179,12 +179,18 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 void
 SIPCall::setTransport(std::shared_ptr<SipTransport> t)
 {
+    if (isSecure() and t and not t->isSecure()) {
+        RING_ERR("Can't set unsecure transport to secure call.");
+        return;
+    }
+
     const auto list_id = reinterpret_cast<uintptr_t>(this);
     if (transport_)
         transport_->removeStateListener(list_id);
     transport_ = t;
 
     if (transport_) {
+        setSecure(transport_->isSecure());
         std::weak_ptr<SIPCall> wthis_ = std::static_pointer_cast<SIPCall>(shared_from_this());
 
         // listen for transport destruction
