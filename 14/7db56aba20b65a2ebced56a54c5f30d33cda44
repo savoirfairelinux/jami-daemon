@@ -1,0 +1,7 @@
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Verified+1: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Thu, 11 Aug 2016 18:33:40 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/4676
+Project: ring-daemon
+Branch: refs/heads/wip/foobar
