@@ -294,7 +294,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         }
     }
     call->setTransport(transport);
-    call->setSecure(transport->isSecure());
 
     // FIXME : for now, use the same address family as the SIP transport
     auto family = pjsip_transport_type_get_af(pjsip_transport_get_type_from_flag(transport->get()->flag));
