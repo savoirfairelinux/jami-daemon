@@ -175,6 +175,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::OUTGOING);
+    call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
         bool ipv6 = false;
@@ -204,9 +205,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
 
     auto toUri = getToUri(to);
     call->initIceTransport(true);
-
     call->setIPToIP(isIP2IP());
-    call->setSecure(isTlsEnabled());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 
