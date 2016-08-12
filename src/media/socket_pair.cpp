@@ -58,7 +58,11 @@ extern "C" {
 namespace ring {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
-static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
+
+// Maximal size allowed for a RTP packet.
+// This value of 1232 bytes is an IPv6 minimum (1280 - 40 IPv6 header - 8 UDP header).
+static const size_t RTP_BUFFER_SIZE = 1232; // also used for RTPC
+static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10; // minus biggest authentication tag (=> SRTP_AES128_CM_HMAC_SHA1_80)
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -88,7 +92,7 @@ public:
 
     SRTPContext srtp_out {};
     SRTPContext srtp_in {};
-    uint8_t encryptbuf[RTP_MAX_PACKET_LENGTH];
+    uint8_t encryptbuf[SRTP_BUFFER_SIZE];
 
 private:
     void srtp_close() noexcept {
@@ -188,10 +192,6 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
 
     return udp_fd;
 }
-
-// Maximal size allowed for a RTP packet, this value of 1232 bytes is an IPv6 minimum (1280 - 40 IPv6 header - 8 UDP header).
-static const size_t RTP_BUFFER_SIZE = 1232;
-static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
     : rtp_sock_()
