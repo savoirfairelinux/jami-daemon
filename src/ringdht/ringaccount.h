@@ -272,6 +272,16 @@ class RingAccount : public SIPAccountBase {
 
         void addDevice(const std::string& password);
 
+        std::map<std::string, std::string> getKnownDevices() const {
+            std::map<std::string, std::string> ids;
+            for (auto& d : knownDevices_) {
+                auto id = d.first.toString();
+                auto label = id.substr(0, 8);
+                ids.emplace(std::move(id), std::move(label));
+            }
+            return ids;
+        }
+
         void connectivityChanged() override;
 
     private:
@@ -405,6 +415,7 @@ class RingAccount : public SIPAccountBase {
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
+        std::map<dht::InfoHash, std::shared_ptr<dht::crypto::Certificate>> knownDevices_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
@@ -433,6 +444,9 @@ class RingAccount : public SIPAccountBase {
 
         void loadTreatedMessages();
         void saveTreatedMessages() const;
+
+        void loadKnownDevices();
+        void saveKnownDevices() const;
 
         static tls::DhParams loadDhParams(const std::string path);
 
