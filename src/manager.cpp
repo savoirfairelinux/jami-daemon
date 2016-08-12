@@ -39,9 +39,13 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
+#if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
+#else
+using random_device = std::random_device;
+#endif
 
 #include "call_factory.h"
 
@@ -84,6 +88,12 @@ using random_device = dht::crypto::random_device;
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#ifdef WIN32_NATIVE
+#include <sys/types.h>
+#include <sys/stat.h> 
+#endif
+
 #include <memory>
 #include <mutex>
 
@@ -145,6 +155,7 @@ setSipLogLevel()
     pj_log_set_level(level);
 }
 
+#if HAVE_TLS
 /**
  * Set gnutls's log level based on the RING_TLS_LOGLEVEL environment variable.
  * RING_TLS_LOGLEVEL = 0 minimum logging (default)
@@ -177,6 +188,7 @@ setGnuTlsLogLevel()
     gnutls_global_set_log_level(level);
     gnutls_global_set_log_function(tls_print_logs);
 }
+#endif // HAVE_TLS
 
 Manager&
 Manager::instance()
@@ -270,8 +282,10 @@ Manager::init(const std::string &config_file)
     RING_DBG("pjsip version %s for %s initialized",
              pj_get_version(), PJ_OS_NAME);
 
+#if HAVE_TLS
     setGnuTlsLogLevel();
     RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
+#endif
 
     ice_tf_.reset(new IceTransportFactory());
 
@@ -1355,14 +1369,14 @@ Manager::removeAudio(Call& call)
     getRingBufferPool().unBindAll(call_id);
 }
 
-// Not thread-safe, SHOULD be called in same thread that run pollEvents()
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 Manager::registerEventHandler(uintptr_t handlerId, EventHandler handler)
 {
     eventHandlerMap_[handlerId] = handler;
 }
 
-// Not thread-safe, SHOULD be called in same thread that run pollEvents()
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 Manager::unregisterEventHandler(uintptr_t handlerId)
 {
@@ -1375,10 +1389,10 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
     }
 }
 
+// Not thread-safe, SHOULD be called in same thread that run poolEvents()
 void
 Manager::addTask(const std::function<bool()>&& task)
 {
-    std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     pendingTaskList_.emplace_back(std::move(task));
 }
 
@@ -1441,11 +1455,8 @@ void Manager::pollEvents()
 
     //-- Tasks
     {
-        decltype(pendingTaskList_) tmpList;
-        {
-            std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
-            std::swap(pendingTaskList_, tmpList);
-        }
+        auto tmpList = std::move(pendingTaskList_);
+        pendingTaskList_.clear();
         auto iter = std::begin(tmpList);
         while (iter != tmpList.cend()) {
             if (finished_)
@@ -1463,10 +1474,7 @@ void Manager::pollEvents()
                 tmpList.erase(iter);
             iter = next;
         }
-        {
-            std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
-            pendingTaskList_.splice(std::end(pendingTaskList_), tmpList);
-        }
+        pendingTaskList_.splice(std::end(pendingTaskList_), tmpList);
     }
 }
 
@@ -1607,7 +1615,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
         call.setIPToIP(true);
     else {
         // strip sip: which is not required and bring confusion with ip to ip calls
-        // when placing new call from history.
+        // when placing new call from history (if call is IAX, do nothing)
         std::string peerNumber(call.getPeerNumber());
 
         const char SIP_PREFIX[] = "sip:";
@@ -1635,6 +1643,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 }
 
 //THREAD=VoIP
+#if HAVE_INSTANT_MESSAGING
 void
 Manager::sendTextMessageToConference(const Conference& conf,
                                      const std::map<std::string, std::string>& messages,
@@ -1715,6 +1724,7 @@ Manager::sendCallTextMessage(const std::string& callID,
         }
     }
 }
+#endif // HAVE_INSTANT_MESSAGING
 
 //THREAD=VoIP CALL=Outgoing
 void
@@ -1912,8 +1922,13 @@ Manager::playRingtone(const std::string& accountID)
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
+#ifndef WIN32_NATIVE
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#else
+        ringchoice = std::string("") + DIR_SEPARATOR_STR
+                     + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#endif
     }
 
     {
@@ -2821,6 +2836,7 @@ Manager::newOutgoingCall(const std::string& toUrl,
 {
     auto preferred = getAccount(preferredAccountId);
 
+#if HAVE_DHT
     if (toUrl.find("ring:") != std::string::npos) {
         if (preferred && preferred->getAccountType() == RingAccount::ACCOUNT_TYPE)
             return preferred->newOutgoingCall(toUrl);
@@ -2829,6 +2845,7 @@ Manager::newOutgoingCall(const std::string& toUrl,
             if (acc->isEnabled())
                 return acc->newOutgoingCall(toUrl);
     }
+#endif
     // If peer url is an IP, and the preferred account is not an "IP2IP like",
     // we try to find a suitable one in all SIPAccount's.
     auto strippedToUrl = toUrl;

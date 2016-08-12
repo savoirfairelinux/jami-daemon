@@ -35,6 +35,8 @@
 #include <fstream>
 #include <sys/stat.h>
 
+#define BLOBIZE(X)  dht::Blob(X.begin(), X.end())
+
 namespace ring {
 
 Archiver&
@@ -97,7 +99,7 @@ Archiver::exportAccounts(std::vector<std::string> accountIDs,
     }
 
     // Encrypt using provided password
-    auto encrypted = dht::crypto::aesEncrypt(compressed, password);
+    auto encrypted = dht::crypto::aesEncrypt(compressed, BLOBIZE(password));
 
     // Write
     try {
@@ -151,7 +153,7 @@ Archiver::importAccounts(std::string archivePath, std::string password)
 
     // Decrypt
     try {
-        file = dht::crypto::aesDecrypt(file, password);
+        file = dht::crypto::aesDecrypt(file, BLOBIZE(password));
     } catch (const std::exception& ex) {
         RING_ERR("Decryption failed: %s", ex.what());
         return EPERM;
@@ -224,7 +226,6 @@ Archiver::compress(const std::string& str, int compressionlevel)
     auto destSize = compressBound(str.size());
     std::vector<uint8_t> outbuffer(destSize);
     int ret = ::compress(reinterpret_cast<Bytef*>(outbuffer.data()), &destSize, (Bytef*)str.data(), str.size());
-    outbuffer.resize(destSize);
 
     if (ret != Z_OK) {
         std::ostringstream oss;

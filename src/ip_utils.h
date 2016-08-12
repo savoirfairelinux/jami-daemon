@@ -27,9 +27,12 @@
  #include <config.h>
 #endif
 
-#ifdef _WIN32
-    #include <ws2tcpip.h>
+#include <ciso646>
 
+#ifdef _WIN32
+#define WINVER 0x0A00
+#define _WIN32_WINNT 0x0A00
+#include <ws2tcpip.h>
     //define in mingw
     #ifdef interface
     #undef interface

@@ -23,8 +23,11 @@
 #include <memory>
 #include <functional>
 
-namespace ring {
+#ifdef WIN32_NATIVE
+#include <utf8_utils.h>
+#endif
 
+namespace ring {
 class IceTransport;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 
