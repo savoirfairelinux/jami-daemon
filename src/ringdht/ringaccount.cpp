@@ -228,12 +228,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                               Call::CallType::OUTGOING);
                 std::weak_ptr<SIPCall> weak_dev_call = dev_call;
-                /*dev_call->addStateListener([weak_dev_call](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
-                    if (auto call = weak_dev_call.lock())
-                        RING_WARN("DeviceCall call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
-                        //if (new_state == Call::)
-                });
-                dev_call->quiet = true;*/
                 dev_call->setIPToIP(true);
                 dev_call->setSecure(isTlsEnabled());
                 auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
@@ -1307,13 +1301,13 @@ RingAccount::doRegister()
         return;
     }
 
-    if (not dhParams_.valid()) {
-        generateDhParams();
-    }
-
     // looking for account over the DHT
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
+
+    if (not dhParams_.valid()) {
+        generateDhParams();
+    }
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if ( upnpEnabled_ ) {
@@ -1426,15 +1420,30 @@ RingAccount::doRegister_()
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+
         // Put device annoucement
         if (announce_) {
-            RING_DBG("Announcing device at %s: %s", dht::InfoHash(ringAccountId_).toString().c_str(), announce_->toString().c_str());
-            dht_.put(dht::InfoHash(ringAccountId_), announce_, dht::DoneCallback{}, {}, true);
+            auto h = dht::InfoHash(ringAccountId_);
+            RING_DBG("Announcing device at %s: %s", h.toString().c_str(), announce_->toString().c_str());
+            loadKnownDevices();
+            dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
+            dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
+                shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
+                    auto& this_ = *shared;
+                    if (this_.knownDevices_.emplace(crt->getId(), crt).second) {
+                        RING_DBG("Found known account device: %s", crt->getId().toString().c_str());
+                        tls::CertificateStore::instance().pinCertificate(crt);
+                        this_.saveKnownDevices();
+                        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(this_.getAccountID(), this_.getKnownDevices());
+                    }
+                });
+                return true;
+            });
         }
 
         // Listen for incoming calls
         auto ringDeviceId = identity_.first->getPublicKey().getId().toString();
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         callKey_ = dht::InfoHash::get("callto:"+ringDeviceId);
         RING_DBG("Listening on callto:%s : %s", ringDeviceId.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(
@@ -1688,10 +1697,11 @@ RingAccount::getCertificatesByStatus(tls::TrustStore::PermissionStatus status)
     return trust_.getCertificatesByStatus(status);
 }
 
-std::set<dht::Value::Id>
+template<typename ID=dht::Value::Id>
+std::set<ID>
 loadIdList(const std::string& path)
 {
-    std::set<dht::Value::Id> ids;
+    std::set<ID> ids;
     std::ifstream file(path);
     if (!file.is_open()) {
         RING_DBG("Could not load %s", path.c_str());
@@ -1700,15 +1710,16 @@ loadIdList(const std::string& path)
     std::string line;
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        dht::Value::Id vid;
+        ID vid;
         if (!(iss >> std::hex >> vid)) { break; }
         ids.insert(vid);
     }
     return ids;
 }
 
+template<typename ID=dht::Value::Id>
 void
-saveIdList(const std::string& path, const std::set<dht::Value::Id>& ids)
+saveIdList(const std::string& path, const std::set<ID>& ids)
 {
     std::ofstream file(path, std::ios::trunc);
     if (!file.is_open()) {
@@ -1743,6 +1754,29 @@ RingAccount::saveTreatedMessages() const
 {
     fileutils::check_dir(cachePath_.c_str());
     saveIdList(cachePath_+DIR_SEPARATOR_STR "treatedMessages", treatedMessages_);
+}
+
+void
+RingAccount::loadKnownDevices()
+{
+    auto knownDevices = loadIdList<dht::InfoHash>(idPath_+DIR_SEPARATOR_STR "knownDevices");
+    for (const auto& d : knownDevices)
+        if (auto crt = tls::CertificateStore::instance().getCertificate(d.toString()))
+            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
+                knownDevices_.emplace(d, crt);
+            else
+                RING_ERR("Known device certificate not matching identity.");
+        else
+            RING_WARN("Can't find known device certificate.");
+}
+
+void
+RingAccount::saveKnownDevices() const
+{
+    std::set<dht::InfoHash> ids;
+    for (const auto& id : knownDevices_)
+        ids.emplace(id.first);
+    saveIdList<dht::InfoHash>(idPath_+DIR_SEPARATOR_STR "knownDevices", ids);
 }
 
 void
