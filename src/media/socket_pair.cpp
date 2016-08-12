@@ -62,7 +62,7 @@ static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 // Maximal size allowed for a RTP packet.
 // This value of 1232 bytes is an IPv6 minimum (1280 - 40 IPv6 header - 8 UDP header).
 static const size_t RTP_BUFFER_SIZE = 1232; // also used for RTPC
-static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10; // minus biggest authentication tag (=> SRTP_AES128_CM_HMAC_SHA1_80)
+static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 16; // minus biggest authentication tag (=> SRTP_AEAD_AES_256_GCM)
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -72,14 +72,14 @@ public:
                      const char* in_suite, const char* in_key) {
         if (out_suite && out_key) {
             // XXX: see srtp_open from libavformat/srtpproto.c
-            if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
+            if (ff_srtp_set_crypto(&srtp_out, "SRTP_AEAD_AES_256_GCM", out_key) < 0) {
                 srtp_close();
                 throw std::runtime_error("Could not set crypto on output");
             }
         }
 
         if (in_suite && in_key) {
-            if (ff_srtp_set_crypto(&srtp_in, in_suite, in_key) < 0) {
+            if (ff_srtp_set_crypto(&srtp_in, "SRTP_AEAD_AES_256_GCM", in_key) < 0) {
                 srtp_close();
                 throw std::runtime_error("Could not set crypto on input");
             }
