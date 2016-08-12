@@ -151,8 +151,11 @@ Sdp::generateSdesAttribute()
 {
     static constexpr const unsigned cryptoSuite = 0;
     std::vector<uint8_t> keyAndSalt;
+#if 0
     keyAndSalt.resize(ring::CryptoSuites[cryptoSuite].masterKeyLength / 8
                     + ring::CryptoSuites[cryptoSuite].masterSaltLength/ 8);
+#endif
+    keyAndSalt.resize(32+12); // AES-GCM-256 master-key + salt
     // generate keys
     randomFill(keyAndSalt);
 
