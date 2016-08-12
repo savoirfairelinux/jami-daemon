@@ -27,6 +27,8 @@
 #include <mutex>
 #include <cstddef> // for size_t
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 typedef int16_t AudioSample;

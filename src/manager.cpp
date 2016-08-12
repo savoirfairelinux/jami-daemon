@@ -39,9 +39,13 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
+#if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
+#else
+using random_device = std::random_device;
+#endif
 
 #include "call_factory.h"
 
@@ -84,6 +88,12 @@ using random_device = dht::crypto::random_device;
 #include <iostream>
 #include <fstream>
 #include <sstream>
+
+#ifdef WIN32_NATIVE
+#include <sys/types.h>
+#include <sys/stat.h>
+#endif
+
 #include <memory>
 #include <mutex>
 
@@ -1375,6 +1385,7 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
     }
 }
 
+// Not thread-safe, SHOULD be called in same thread that run pollEvents()
 void
 Manager::addTask(const std::function<bool()>&& task)
 {
@@ -1912,8 +1923,13 @@ Manager::playRingtone(const std::string& accountID)
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
+#ifndef WIN32_NATIVE
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#else
+        ringchoice = std::string("") + DIR_SEPARATOR_STR
+                     + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+#endif
     }
 
     {
