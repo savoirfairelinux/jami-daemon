@@ -64,6 +64,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
         exported_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(),
+        exported_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__
