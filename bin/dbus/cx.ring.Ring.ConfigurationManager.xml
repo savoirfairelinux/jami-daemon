@@ -173,6 +173,30 @@
            </arg>
        </method>
 
+       <signal name="knownDevicesChanged" tp:name-for-bindings="knownDevicesChanged">
+           <tp:docstring>
+               Notify clients when a new device linked to this account is found.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="as" name="devices">
+           </arg>
+       </signal>
+
+       <method name="getKnownRingDevices" tp:name-for-bindings="getKnownRingDevices">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorString"/>
+           <arg type="as" name="devices" direction="out">
+               <tp:docstring>
+                   A list of device IDs
+               </tp:docstring>
+           </arg>
+       </method>
+
        <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
            <tp:docstring>
                Test initializing an ICE transport with the current account configuration.
