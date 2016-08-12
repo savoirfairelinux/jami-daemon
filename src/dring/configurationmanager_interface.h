@@ -46,6 +46,7 @@ void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 std::string addAccount(const std::map<std::string, std::string>& details);
 std::string addRingDevice(const std::string& accountID, const std::string& password);
+std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 
 void removeAccount(const std::string& accountID);
 void setAccountEnabled(const std::string& accountID, bool enable);
@@ -210,6 +211,10 @@ struct ConfigurationSignal {
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
+        };
+        struct KnownDevicesChanged {
+                constexpr static const char* name = "KnownDevicesChanged";
+                using cb_type = void(const std::string& /*account_id*/, const std::vector<std::string>& devices);
         };
         struct CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";
