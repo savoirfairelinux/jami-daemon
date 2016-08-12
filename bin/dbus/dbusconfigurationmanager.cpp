@@ -80,6 +80,12 @@ DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::
     return DRing::exportOnRing(accountID, password);
 }
 
+auto
+DBusConfigurationManager::getKnownRingDevices(const std::string& accountID) -> decltype(DRing::getKnownRingDevices(accountID))
+{
+    return DRing::getKnownRingDevices(accountID);
+}
+
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
