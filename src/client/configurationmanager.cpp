@@ -283,6 +283,14 @@ addRingDevice(const std::string& accountID, const std::string& password)
     return ring::Manager::instance().addRingDevice(accountID, password);
 }
 
+std::vector<std::string>
+getKnownRingDevices(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getKnownDevices();
+    return {};
+}
+
 /* contact requests */
 std::map<std::string, std::string>
 getTrustRequests(const std::string& accountId)
