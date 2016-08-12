@@ -228,12 +228,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                 auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                               Call::CallType::OUTGOING);
                 std::weak_ptr<SIPCall> weak_dev_call = dev_call;
-                /*dev_call->addStateListener([weak_dev_call](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
-                    if (auto call = weak_dev_call.lock())
-                        RING_WARN("DeviceCall call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
-                        //if (new_state == Call::)
-                });
-                dev_call->quiet = true;*/
                 dev_call->setIPToIP(true);
                 dev_call->setSecure(isTlsEnabled());
                 auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
@@ -1393,15 +1387,25 @@ RingAccount::doRegister_()
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+
         // Put device annoucement
         if (announce_) {
-            RING_DBG("Announcing device at %s: %s", dht::InfoHash(ringAccountId_).toString().c_str(), announce_->toString().c_str());
-            dht_.put(dht::InfoHash(ringAccountId_), announce_, dht::DoneCallback{}, {}, true);
+            auto h = dht::InfoHash(ringAccountId_);
+            RING_DBG("Announcing device at %s: %s", h.toString().c_str(), announce_->toString().c_str());
+            dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
+            dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
+                shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
+                    auto& this_ = *shared;
+                    if (this_.knownDevices_.emplace(crt->getId(), crt).second)
+                        RING_DBG("Found known account device: %s", crt->getId().toString().c_str());
+                });
+                return true;
+            });
         }
 
         // Listen for incoming calls
         auto ringDeviceId = identity_.first->getPublicKey().getId().toString();
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         callKey_ = dht::InfoHash::get("callto:"+ringDeviceId);
         RING_DBG("Listening on callto:%s : %s", ringDeviceId.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(

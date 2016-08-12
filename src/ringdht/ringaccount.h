@@ -272,6 +272,13 @@ class RingAccount : public SIPAccountBase {
 
         std::string addDevice(const std::string& password);
 
+        std::vector<std::string> getKnownDevices() const {
+            std::vector<std::string> ids;
+            for(auto& d : knownDevices_)
+                ids.emplace_back(d.first.toString());
+            return ids;
+        }
+
         void connectivityChanged() override;
 
     private:
@@ -404,6 +411,7 @@ class RingAccount : public SIPAccountBase {
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
+        std::map<dht::InfoHash, std::shared_ptr<dht::crypto::Certificate>> knownDevices_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
 
