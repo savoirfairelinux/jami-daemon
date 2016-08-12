@@ -29,6 +29,8 @@
 #include <windows.h>
 #endif
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 #ifdef _WIN32
