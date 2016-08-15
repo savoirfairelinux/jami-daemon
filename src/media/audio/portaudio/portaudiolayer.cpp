@@ -61,11 +61,11 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name,
 {
 
     int numDevices = 0;
-    (void) type;
+    (void)type;
 
     numDevices = Pa_GetDeviceCount();
     if (numDevices < 0)
-        this->handleError(numDevices);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     else {
         const PaDeviceInfo *deviceInfo;
         for (int i = 0; i < numDevices; i++) {
@@ -80,7 +80,7 @@ PortAudioLayer::getAudioDeviceIndex(const std::string& name,
 std::string
 PortAudioLayer::getAudioDeviceName(int index, DeviceType type) const
 {
-    (void) type;
+    (void)type;
     const PaDeviceInfo *deviceInfo;
     deviceInfo = Pa_GetDeviceInfo(index);
     return deviceInfo->name;
@@ -126,12 +126,16 @@ PortAudioLayer::stopStream()
 
     for (int i = 0; i < Direction::End; i++) {
         auto err = Pa_StopStream(streams[i]);
-        if(err != paNoError)
-            this->handleError(err);
+        if (err != paNoError)
+            RING_ERR("Pa_StopStream error : %s %s",
+            (i == Direction::Input ? "Input" : "Output"),
+                Pa_GetErrorText(err));
 
         err = Pa_CloseStream(streams[i]);
         if (err != paNoError)
-            this->handleError(err);
+            RING_ERR("Pa_CloseStream error : %s %s",
+            (i == Direction::Input ? "Input" : "Output"),
+                Pa_GetErrorText(err));
     }
 
     {
@@ -149,31 +153,31 @@ PortAudioLayer::updatePreference(AudioPreference &preference,
     int index, DeviceType type)
 {
     switch (type) {
-        case DeviceType::PLAYBACK:
+    case DeviceType::PLAYBACK:
         {
             auto playbackList = getDeviceByType(true);
-            if (playbackList.size() > (size_t) index) {
+            if (playbackList.size() > (size_t)index) {
                 auto realIdx = getAudioDeviceIndex(playbackList.at(index), type);
                 preference.setAlsaCardout(realIdx);
             }
         }
         break;
 
-        case DeviceType::CAPTURE:
+    case DeviceType::CAPTURE:
         {
             auto captureList = getDeviceByType(false);
-            if (captureList.size() > (size_t) index) {
+            if (captureList.size() > (size_t)index) {
                 auto realIdx = getAudioDeviceIndex(captureList.at(index), type);
                 preference.setAlsaCardin(realIdx);
             }
         }
         break;
 
-        case DeviceType::RINGTONE:
+    case DeviceType::RINGTONE:
         preference.setAlsaCardring(index);
         break;
 
-        default:
+    default:
         break;
     }
 }
@@ -186,14 +190,15 @@ PortAudioLayer::getDeviceByType(const bool& playback) const
 
     numDevices = Pa_GetDeviceCount();
     if (numDevices < 0)
-        this->handleError(numDevices);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(numDevices));
     else {
         for (int i = 0; i < numDevices; i++) {
             const auto deviceInfo = Pa_GetDeviceInfo(i);
             if (playback) {
                 if (deviceInfo->maxOutputChannels > 0)
                     ret.push_back(deviceInfo->name);
-            } else {
+            }
+            else {
                 if (deviceInfo->maxInputChannels > 0)
                     ret.push_back(deviceInfo->name);
             }
@@ -210,9 +215,9 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
     void *userData)
 {
 
-    (void) inputBuffer;
-    (void) timeInfo;
-    (void) statusFlags;
+    (void)inputBuffer;
+    (void)timeInfo;
+    (void)statusFlags;
 
     auto ref = (PortAudioLayer*)userData;
     auto out = (AudioSample*)outputBuffer;
@@ -250,7 +255,7 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
         if (resample) {
             resampleFactor =
                 static_cast<double>(ref->audioFormat_.sample_rate)
-                    / mainBufferAudioFormat.sample_rate;
+                / mainBufferAudioFormat.sample_rate;
             readableSamples = std::ceil(framesPerBuffer / resampleFactor);
         }
 
@@ -267,7 +272,8 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
             ref->resampler_->resample(ref->playbackBuff_, resampledOutput);
 
             resampledOutput.interleave(out);
-        } else {
+        }
+        else {
             ref->playbackBuff_.interleave(out);
         }
     }
@@ -280,9 +286,11 @@ PortAudioLayer::paOutputCallback(const void *inputBuffer, void *outputBuffer,
 
         if (tone) {
             tone->getNext(ref->playbackBuff_, ref->playbackGain_);
-        } else if (file_tone) {
+        }
+        else if (file_tone) {
             file_tone->getNext(ref->playbackBuff_, ref->playbackGain_);
-        } else {
+        }
+        else {
             //RING_WARN("No tone or file_tone!");
             ref->playbackBuff_.reset();
         }
@@ -299,9 +307,9 @@ PortAudioLayer::paInputCallback(const void *inputBuffer, void *outputBuffer,
     void *userData)
 {
 
-    (void) outputBuffer;
-    (void) timeInfo;
-    (void) statusFlags;
+    (void)outputBuffer;
+    (void)timeInfo;
+    (void)statusFlags;
 
     auto ref = (PortAudioLayer*)userData;
     auto in = (AudioSample*)inputBuffer;
@@ -331,18 +339,12 @@ PortAudioLayer::paInputCallback(const void *inputBuffer, void *outputBuffer,
         ref->inputResampler_->resample(inBuff, out);
         ref->dcblocker_.process(out);
         ref->mainRingBuffer_->put(out);
-    } else {
+    }
+    else {
         ref->dcblocker_.process(inBuff);
         ref->mainRingBuffer_->put(inBuff);
     }
     return paContinue;
-}
-
-// PRIVATE METHOD
-void
-PortAudioLayer::handleError(const PaError& err) const
-{
-    RING_ERR("PortAudioLayer error : %s",  Pa_GetErrorText(err));
 }
 
 void
@@ -351,19 +353,25 @@ PortAudioLayer::init()
     RING_DBG("Init PortAudioLayer");
     const auto err = Pa_Initialize();
     if (err != paNoError) {
-        this->handleError(err);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
         this->terminate();
     }
 
+#ifdef WIN32_NATIVE
+    indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
+    indexIn_ = indexIn_ == Pa_GetDefaultInputDevice();
+#else
     indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
     indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
+#endif
 
     if (indexOut_ != paNoDevice) {
         if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
             audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
             audioFormat_.sample_rate = outputDeviceInfo->defaultSampleRate;
             hardwareFormatAvailable(audioFormat_);
-        } else {
+        }
+        else {
             indexOut_ = paNoDevice;
         }
     }
@@ -373,7 +381,8 @@ PortAudioLayer::init()
             audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
             audioInputFormat_.sample_rate = inputDeviceInfo->defaultSampleRate;
             hardwareInputFormatAvailable(audioInputFormat_);
-        } else {
+        }
+        else {
             indexIn_ = paNoDevice;
         }
     }
@@ -388,7 +397,7 @@ PortAudioLayer::terminate() const
     RING_DBG("PortAudioLayer terminate.");
     const auto err = Pa_Terminate();
     if (err != paNoError)
-        this->handleError(err);
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
 }
 
 void
@@ -402,7 +411,8 @@ PortAudioLayer::initStream()
 
     if (outputParameters.device == paNoDevice) {
         RING_ERR("Error: No valid output device. There will be no sound.");
-    } else {
+    }
+    else {
         const auto outputDeviceInfo =
             Pa_GetDeviceInfo(outputParameters.device);
         outputParameters.channelCount =
@@ -420,8 +430,8 @@ PortAudioLayer::initStream()
             paNoFlag,
             &PortAudioLayer::paOutputCallback,
             this);
-        if(err != paNoError)
-            this->handleError(err);
+        if (err != paNoError)
+            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
     }
 
     RING_DBG("Open PortAudio Input Stream");
@@ -429,7 +439,8 @@ PortAudioLayer::initStream()
     inputParameters.device = indexIn_;
     if (inputParameters.device == paNoDevice) {
         RING_ERR("Error: No valid input device. There will be no mic.");
-    } else {
+    }
+    else {
         const auto inputDeviceInfo =
             Pa_GetDeviceInfo(inputParameters.device);
         inputParameters.channelCount =
@@ -447,8 +458,8 @@ PortAudioLayer::initStream()
             paNoFlag,
             &PortAudioLayer::paInputCallback,
             this);
-        if(err != paNoError)
-            this->handleError(err);
+        if (err != paNoError)
+            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
     }
 
     RING_DBG("Start PortAudio Streams");
@@ -456,7 +467,7 @@ PortAudioLayer::initStream()
         if (streams[i]) {
             auto err = Pa_StartStream(streams[i]);
             if (err != paNoError)
-                this->handleError(err);
+                RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
         }
     }
 
