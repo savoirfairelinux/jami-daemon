@@ -139,6 +139,9 @@ RingAccount::createIceTransport(Args... args)
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_()
 {
+#ifdef WIN32_NATIVE
+    gnutls_global_init();
+#endif
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
@@ -146,6 +149,9 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 
 RingAccount::~RingAccount()
 {
+#ifdef WIN32_NATIVE
+    gnutls_global_deinit();
+#endif
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     dht_.join();
 }
@@ -174,7 +180,7 @@ RingAccount::newIncomingCall(const std::string& from)
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingSIPCall(const std::string& toUrl)
 {
     const std::string toUri = parseRingUri(toUrl);
     RING_DBG("Calling DHT peer %s", toUri.c_str());
@@ -324,7 +330,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 std::shared_ptr<Call>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+    return newOutgoingSIPCall(toUrl);
 }
 
 bool
@@ -694,12 +700,12 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     auto id(loadIdentity());
 
     tls::TlsParams tlsParams {
-        .ca_list = "",
-        .cert = id.second,
-        .cert_key = id.first,
-        .dh_params = dhParams_,
-        .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
+        /*.ca_list = */"",
+        /*.cert = */id.second,
+        /*.cert_key = */id.first,
+        /*.dh_params = */dhParams_,
+        /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
+        /*.cert_check = */[remote_h](unsigned status, const gnutls_datum_t* cert_list,
                                  unsigned cert_num) -> pj_status_t {
             try {
                 return check_peer_certificate(remote_h, status, cert_list, cert_num);
@@ -953,9 +959,9 @@ RingAccount::doRegister_()
                     }
                 if (req == this_.trustRequests_.end()) {
                     this_.trustRequests_.emplace_back(TrustRequest{
-                        .from = v.from,
-                        .received = std::chrono::system_clock::now(),
-                        .payload = v.payload
+                        /*.from = */v.from,
+                        /*.received = */std::chrono::system_clock::now(),
+                        /*.payload = */v.payload
                     });
                     req = std::prev(this_.trustRequests_.end());
                 }
@@ -1033,12 +1039,12 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.emplace_back(PendingCall {
-            .start = std::chrono::steady_clock::now(),
-            .ice_sp = ice,
-            .call = weak_call,
-            .listen_key = {},
-            .call_key = {},
-            .from = msg.from
+            /*.start = */std::chrono::steady_clock::now(),
+            /*.ice_sp = */ice,
+            /*.call = */weak_call,
+            /*.listen_key = */{},
+            /*.call_key = */{},
+            /*.from = */msg.from
         });
     }
 }
@@ -1467,11 +1473,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     return true;
                 auto e = this_->sentMessages_.find(msg.id);
                 if (e == this_->sentMessages_.end()) {
-                        RING_DBG("Message not found for %" PRIu64, token);
+                    RING_DBG("Message not found for %" PRIu64, token);
                 }
                 if (e->second.to != msg.from) {
-                        RING_DBG("Unrelated text message : from %s != second %s",
-                                 msg.from.toString().c_str(), e->second.to.toString().c_str());
+                    RING_DBG("Unrelated text message : from %s != second %s",
+                            msg.from.toString().c_str(), e->second.to.toString().c_str());
                 }
                 if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
                     RING_DBG("Unrelated text message reply for %" PRIu64, token);
