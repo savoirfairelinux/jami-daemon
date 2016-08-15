@@ -30,6 +30,7 @@
 #include <utility> // for std::pair
 #include <cstdlib>
 #include <cstring>
+#include <algorithm>
 
 namespace ring {
 
