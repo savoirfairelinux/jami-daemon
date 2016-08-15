@@ -34,6 +34,7 @@
 #include <memory>
 #include <set>
 #include <mutex>
+#include <ciso646>
 
 class AVPacket;
 class AVDictionary;
