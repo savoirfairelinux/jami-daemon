@@ -26,6 +26,7 @@
 #include <new> // std::bad_alloc
 #include <cstdlib>
 #include <cstring> // std::memset
+#include <ciso646>
 
 namespace ring {
 
