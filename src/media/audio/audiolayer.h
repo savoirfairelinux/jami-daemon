@@ -29,6 +29,12 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 
+#ifdef WIN32_NATIVE
+#include <time.h>
+#else
+#include <sys/time.h>
+#endif
+
 #include <sys/time.h>
 #include <mutex>
 #include <vector>
