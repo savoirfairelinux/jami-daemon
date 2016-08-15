@@ -1,0 +1,751 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{f736d6c2-8f80-4157-89a4-4d08a50c8d08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\client">
+      <UniqueIdentifier>{67e7684e-f8ef-4874-abec-f3418e7c1f1f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\config">
+      <UniqueIdentifier>{13b91865-0ca1-4d2f-a3d3-5b79b0ff31f5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\dring">
+      <UniqueIdentifier>{98145e0c-2c23-47fc-8f64-4a38feaf3601}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\hooks">
+      <UniqueIdentifier>{b438ed7e-41d8-4b88-a2b3-551fe66915a0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\im">
+      <UniqueIdentifier>{eaf1e622-510d-4b77-97c5-88cef96ac97d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media">
+      <UniqueIdentifier>{303dc61e-fe87-4fe8-99e9-79a11ce3d13b}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\audio">
+      <UniqueIdentifier>{6baf2769-c547-4afc-b51b-e853493d688c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\audio\sound">
+      <UniqueIdentifier>{661b0aa7-98ea-4b22-a3c1-5bb4d88472d0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\audio\portaudio">
+      <UniqueIdentifier>{97250dbc-5ee0-4195-8b9a-f0abefea57af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\video">
+      <UniqueIdentifier>{250d421b-dc17-448b-a691-41b1c17e0b43}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\video\winvideo">
+      <UniqueIdentifier>{ae8de5f8-719d-4fc3-be99-71e5fbfe046f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ringdht">
+      <UniqueIdentifier>{6661a3cb-975d-4b0f-b4ea-2e987f122fdb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\security">
+      <UniqueIdentifier>{cb9596a1-62a9-42c8-9e1a-1e2ff3919fa2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\sip">
+      <UniqueIdentifier>{0a742ba2-c5f4-4ccf-a32a-fcf4b2fe842e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\upnp">
+      <UniqueIdentifier>{72c623e2-31b4-4673-9a0a-0fdd84b9cf16}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\client">
+      <UniqueIdentifier>{894192e5-4916-4178-86fe-d66e6382f0b0}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\config">
+      <UniqueIdentifier>{95a22afb-0436-4dba-83af-9170ef08afe3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\hooks">
+      <UniqueIdentifier>{57b5ce42-715c-42cd-b3e5-f22146f3c2a9}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\im">
+      <UniqueIdentifier>{2478ae12-a6dc-46da-b5ee-062924508aec}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media">
+      <UniqueIdentifier>{e7e7fd7c-de10-4de4-b348-de84e40ae9e3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\audio">
+      <UniqueIdentifier>{dbe42d24-9f0c-4069-9ff4-68977d10564a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\audio\sound">
+      <UniqueIdentifier>{79d22538-cdf8-4648-b693-08df9ebd0cbc}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\audio\portaudio">
+      <UniqueIdentifier>{7fcbdda8-a837-4cad-afcf-2c212e2e1aad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\video">
+      <UniqueIdentifier>{79038082-1478-4202-923a-0af34dc8d704}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\video\winvideo">
+      <UniqueIdentifier>{dd032b50-fe88-459c-8d19-2bb1a892e124}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ringdht">
+      <UniqueIdentifier>{44a8a1a1-b597-480e-92d9-77c76445a0bd}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\security">
+      <UniqueIdentifier>{317a43bc-0867-4f68-a38f-9847958ad71e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\sip">
+      <UniqueIdentifier>{beda8708-2be9-47cf-832e-57319e7c58e1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\upnp">
+      <UniqueIdentifier>{4dc7f6c7-24a7-4741-a626-0fa5dbaa4461}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\wingetopt">
+      <UniqueIdentifier>{fcd61206-2c0a-4479-ab82-a7aa9247416a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\wingetopt">
+      <UniqueIdentifier>{8d887069-2909-462e-85f6-ba95a2c1a7db}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\media\video\uwpvideo">
+      <UniqueIdentifier>{52e3514f-c7d8-45d9-a75f-a82e34ec8590}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\media\video\uwpvideo">
+      <UniqueIdentifier>{13ad5c25-d522-4562-8bab-f322fdd2a243}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\client\ring_signal.h">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\client\videomanager.h">
+      <Filter>Header Files\client</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\config\serializable.h">
+      <Filter>Header Files\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\config\yamlparser.h">
+      <Filter>Header Files\config</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\videomanager_interface.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\security_const.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\presencemanager_interface.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\media_const.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\dring.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\configurationmanager_interface.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\callmanager_interface.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\call_const.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dring\account_const.h">
+      <Filter>Header Files\dring</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\hooks\urlhook.h">
+      <Filter>Header Files\hooks</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\im\instant_messaging.h">
+      <Filter>Header Files\im</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audio_rtp_session.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audiobuffer.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audiolayer.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audioloop.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audiorecord.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\audiorecorder.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\dcblocker.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\dsp.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\resampler.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\ringbuffer.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\ringbufferpool.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\tonecontrol.h">
+      <Filter>Header Files\media\audio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\sound\dtmf.h">
+      <Filter>Header Files\media\audio\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\sound\dtmfgenerator.h">
+      <Filter>Header Files\media\audio\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\sound\tone.h">
+      <Filter>Header Files\media\audio\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\sound\tonelist.h">
+      <Filter>Header Files\media\audio\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\shm_header.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\sinkclient.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_base.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_device.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_device_monitor.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_input.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_mixer.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_receive_thread.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_rtp_session.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_scaler.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\video_sender.h">
+      <Filter>Header Files\media\video</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\winvideo\capture_graph_interfaces.h">
+      <Filter>Header Files\media\video\winvideo</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\libav_deps.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\libav_utils.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_buffer.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_codec.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_decoder.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_device.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_encoder.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_io_handle.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\recordable.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\rtp_session.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\socket_pair.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\srtp.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\system_codec_container.h">
+      <Filter>Header Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\account.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\account_factory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\account_schema.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\array_size.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\call.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\call_factory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\conference.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dirent.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\dlfcn.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\enumclass_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\fileutils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ice_socket.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ice_transport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ip_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\logger.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\map_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\noncopyable.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\plugin_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\plugin_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\preferences.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rational.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\registration_states.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ring_plugin.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ring_types.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\rw_mutex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\string_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sys_time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\threadloop.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\utf8_utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\winsyslog.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\ringaccount.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\sip_transport_ice.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\sips_transport_ice.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\upnp_control.h">
+      <Filter>Header Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\upnp_igd.h">
+      <Filter>Header Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\upnp\upnp_context.h">
+      <Filter>Header Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\base64.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\pattern.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\pres_sub_client.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\pres_sub_server.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sdes_negotiator.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sdp.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sip_utils.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sipaccount.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sipaccountbase.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sipcall.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sippresence.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\siptransport.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\sip\sipvoiplink.h">
+      <Filter>Header Files\sip</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\security\certstore.h">
+      <Filter>Header Files\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\security\tls_session.h">
+      <Filter>Header Files\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\security\tlsvalidator.h">
+      <Filter>Header Files\security</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\sound\audiofile.h">
+      <Filter>Header Files\media\audio\sound</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\im\message_engine.h">
+      <Filter>Header Files\im</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\archiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\audio\portaudio\portaudiolayer.h">
+      <Filter>Header Files\media\audio\portaudio</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\wingetopt\wingetopt.h">
+      <Filter>Header Files\wingetopt</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\uwpvideo\capture_graph_interfaces.h">
+      <Filter>Header Files\media\video\uwpvideo</Filter>
+    </ClInclude>
+    <ClInclude Include="unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\src\preferences.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ring_api.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\string_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\threadloop.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\utf8_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\winsyslog.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\account.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\account_factory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\buildinfo.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\call.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\call_factory.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\conference.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\dlfcn.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\fileutils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ice_transport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ip_utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\plugin_loader_dl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\plugin_manager.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\configurationmanager.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\presencemanager.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\ring_signal.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\videomanager.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\client\callmanager.cpp">
+      <Filter>Source Files\client</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\config\yamlparser.cpp">
+      <Filter>Source Files\config</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\hooks\urlhook.cpp">
+      <Filter>Source Files\hooks</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\im\instant_messaging.cpp">
+      <Filter>Source Files\im</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\libav_utils.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_buffer.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_codec.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_decoder.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_encoder.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_io_handle.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\recordable.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\socket_pair.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\srtp.c">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\system_codec_container.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\sound\dtmfgenerator.cpp">
+      <Filter>Source Files\media\audio\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\sound\tone.cpp">
+      <Filter>Source Files\media\audio\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\sound\tonelist.cpp">
+      <Filter>Source Files\media\audio\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\sound\dtmf.cpp">
+      <Filter>Source Files\media\audio\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audio_rtp_session.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audiobuffer.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audiolayer.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audioloop.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audiorecord.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\audiorecorder.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\dcblocker.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\dsp.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\resampler.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\ringbuffer.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\ringbufferpool.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\tonecontrol.cpp">
+      <Filter>Source Files\media\audio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\sinkclient.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_base.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_device_monitor.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_input.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_mixer.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_receive_thread.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_rtp_session.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_scaler.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\video_sender.cpp">
+      <Filter>Source Files\media\video</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\winvideo\video_device_impl.cpp">
+      <Filter>Source Files\media\video\winvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\winvideo\video_device_monitor_impl.cpp">
+      <Filter>Source Files\media\video\winvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\ringaccount.cpp">
+      <Filter>Source Files\ringdht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\sip_transport_ice.cpp">
+      <Filter>Source Files\ringdht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp">
+      <Filter>Source Files\ringdht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\upnp_context.cpp">
+      <Filter>Source Files\upnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\upnp_control.cpp">
+      <Filter>Source Files\upnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\upnp\upnp_igd.cpp">
+      <Filter>Source Files\upnp</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sdes_negotiator.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sdp.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sip_utils.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sipaccount.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sipaccountbase.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sipcall.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sippresence.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\siptransport.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\sipvoiplink.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\pattern.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\pres_sub_client.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\pres_sub_server.cpp">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\sip\base64.c">
+      <Filter>Source Files\sip</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\security\tls_session.cpp">
+      <Filter>Source Files\security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\security\tlsvalidator.cpp">
+      <Filter>Source Files\security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\security\certstore.cpp">
+      <Filter>Source Files\security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\sound\audiofile.cpp">
+      <Filter>Source Files\media\audio\sound</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\archiver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\im\message_engine.cpp">
+      <Filter>Source Files\im</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\audio\portaudio\portaudiolayer.cpp">
+      <Filter>Source Files\media\audio\portaudio</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\wingetopt\wingetopt.c">
+      <Filter>Source Files\wingetopt</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\uwpvideo\video_device_impl.cpp">
+      <Filter>Source Files\media\video\uwpvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\uwpvideo\video_device_monitor_impl.cpp">
+      <Filter>Source Files\media\video\uwpvideo</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>
