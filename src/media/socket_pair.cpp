@@ -39,6 +39,7 @@ extern "C" {
 #include <stdexcept>
 #include <unistd.h>
 #include <sys/types.h>
+#include <ciso646>
 
 #ifdef _WIN32
 #define SOCK_NONBLOCK FIONBIO
