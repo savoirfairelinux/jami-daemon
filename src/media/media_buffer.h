@@ -24,6 +24,10 @@
 
 #include <memory>
 
+#ifdef WIN32_NATIVE
+#include <functional>
+#endif
+
 class AVFrame;
 
 namespace DRing {
