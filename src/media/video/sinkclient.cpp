@@ -41,6 +41,7 @@
 #ifndef _WIN32
 #include <sys/mman.h>
 #endif
+#include <ciso646>
 #include <fcntl.h>
 #include <cstdio>
 #include <sstream>

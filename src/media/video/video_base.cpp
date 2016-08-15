@@ -26,6 +26,7 @@
 #include "logger.h"
 
 #include <cassert>
+#include <ciso646>
 
 namespace ring { namespace video {
 
