@@ -1,0 +1,7 @@
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Verified+1: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Mon, 15 Aug 2016 14:45:29 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/4688
+Project: ring-daemon
+Branch: refs/heads/wip/srtp_aes_gcm
