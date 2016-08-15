@@ -46,8 +46,8 @@ class IceSocket;
 } // namespace ring
 
 namespace dht { namespace crypto {
-class Certificate;
-class PrivateKey;
+struct Certificate;
+struct PrivateKey;
 }} // namespace dht::crypto
 
 namespace ring { namespace tls {
@@ -64,6 +64,10 @@ class DhParams {
 public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
+
+    DhParams& operator =(const DhParams&){
+        return *this;
+    }
 
     /** Take ownership of gnutls_dh_params */
     explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};

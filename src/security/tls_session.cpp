@@ -388,7 +388,7 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
         const char* const suite = gnutls_cipher_suite_info(i, cs_id.data(), &kx, &cipher, &mac,
                                                            nullptr);
         if (!suite)
-          break;
+            break;
         if (cipher == s_cipher && kx == s_kx && mac == s_mac)
             return suite;
     }
