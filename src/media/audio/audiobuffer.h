@@ -32,6 +32,8 @@
 
 #include "ring_types.h"
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 /**
@@ -343,7 +345,9 @@ class AudioBuffer {
 
     private:
         int sampleRate_;
-
+#ifdef WIN32_NATIVE
+    public:
+#endif
         // buffers holding data for each channels
         std::vector<std::vector<AudioSample> > samples_;
 };
