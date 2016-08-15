@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := 0.6.3
+OPENDHT_VERSION := crypto
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
