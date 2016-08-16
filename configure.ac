@@ -102,7 +102,7 @@ AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
-                    `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,
+                    `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,
                     [Define if you have CoreAudio])
 
 dnl Android is linux, but a bit different
