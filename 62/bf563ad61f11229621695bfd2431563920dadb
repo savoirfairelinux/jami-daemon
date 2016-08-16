@@ -1,0 +1,7 @@
+Code-Review+2: Nicolas Jager <nicolas.jager@savoirfairelinux.com>
+Verified+1: Nicolas Jager <nicolas.jager@savoirfairelinux.com>
+Submitted-by: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Submitted-at: Tue, 16 Aug 2016 10:17:34 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/4701
+Project: ring-daemon
+Branch: refs/heads/wip/windows-uwp
