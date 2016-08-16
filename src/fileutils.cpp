@@ -259,8 +259,8 @@ loadFile(const std::string& path)
     if (!file)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
-    std::streamsize size = file.tellg();
-    if ((unsigned)size > std::numeric_limits<unsigned>::max())
+    auto size = file.tellg();
+    if (size > std::numeric_limits<unsigned>::max())
         throw std::runtime_error("File is too big: "+path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
