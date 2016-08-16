@@ -525,7 +525,7 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
-    const auto sdp_size = outputCtx_->streams[0]->codecpar->extradata_size + 2048;
+    const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
     std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);

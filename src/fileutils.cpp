@@ -28,6 +28,11 @@
 #include "logger.h"
 #include "compiler_intrinsics.h"
 
+#ifdef WIN32_NATIVE
+#include <io.h>
+#include <windows.h>
+#endif
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -79,6 +84,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstddef>
+#include <ciso646>
 
 namespace ring { namespace fileutils {
 

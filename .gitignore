@@ -107,3 +107,9 @@ bin/ringcli
 doltcompile
 doltlibtool
 __pycache__
+
+#contribs
+contrib/*
+!contrib/bootstrap
+!contrib/src
+!contrib/tarballs

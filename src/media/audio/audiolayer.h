@@ -35,7 +35,6 @@
 #include <sys/time.h>
 #endif
 
-#include <sys/time.h>
 #include <mutex>
 #include <vector>
 #include <atomic>
