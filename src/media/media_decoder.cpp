@@ -483,6 +483,7 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
         break;
     case AV_PIX_FMT_YUVJ440P :
         pix_fmt = AV_PIX_FMT_YUV440P;
+        break;
     default:
         pix_fmt = input_pix_fmt;
         break;
