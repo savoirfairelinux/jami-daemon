@@ -178,7 +178,6 @@ RingAccount::newIncomingCall(const std::string& from)
     return nullptr;
 }
 
-template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingSIPCall(const std::string& toUrl)
 {

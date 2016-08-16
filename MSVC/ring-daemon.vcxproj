@@ -192,8 +192,8 @@
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">
@@ -227,8 +227,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;avcodecd.lib;avdeviced.lib;avfilterd.lib;avformatd.lib;avutild.lib;ixml.lib;libaacs.lib;libavutil.lib;libbaseclasses.lib;libgcrypt.lib;libgmp.lib;libgpg-error.lib;libgsmcodec.lib;libgtest.lib;libhogweed.lib;libiconv.lib;libilbccodec.lib;libmilenage.lib;libnettle.lib;libogg.lib;liboggd.lib;libpjproject.lib;libresample.lib;libsamplerate.lib;libsndfile.lib;libspeex.lib;libspeexdsp.lib;libsrtp.lib;libupnp.lib;libuuid.lib;libvorbis.lib;libvpx.lib;libx264.lib;libx265.lib;libx265_10b.lib;libx265_12b.lib;libyaml-cpp.lib;libzlib.lib;msgpack.lib;opendht.lib;opus.lib;pcred.lib;portaudio.lib;pjlib.lib;pjlib_util.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjmedia.lib;pjmedia_codec.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;swresampled.lib;swscaled.lib;lib_json.lib;Strmiids.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -262,8 +262,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">
@@ -293,8 +293,8 @@ del intrin.h</Command>
       <AdditionalLibraryDirectories>..\contrib\lib\x64;</AdditionalLibraryDirectories>
     </Lib>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -329,8 +329,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'">
@@ -366,8 +366,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libsamplerate.lib;libsndfile.lib;libgnutls.lib;lib_json.lib;opendht.lib;argon.lib;blake.lib;pcre.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -405,8 +405,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">
@@ -436,8 +436,8 @@ del intrin.h</Command>
       <LinkLibraryDependencies>false</LinkLibraryDependencies>
     </ProjectReference>
     <PreBuildEvent>
-      <Command>cd ../src
-del intrin.h</Command>
+      <Command>
+      </Command>
     </PreBuildEvent>
     <Lib>
       <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libsndfile.lib;libgnutls.lib;lib_json.lib;opendht.lib;argon.lib;blake.lib;pcre.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -514,7 +514,6 @@ del intrin.h</Command>
     <ClInclude Include="..\src\media\system_codec_container.h" />
     <ClInclude Include="..\src\media\video\shm_header.h" />
     <ClInclude Include="..\src\media\video\sinkclient.h" />
-    <ClInclude Include="..\src\media\video\uwpvideo\capture_graph_interfaces.h" />
     <ClInclude Include="..\src\media\video\video_base.h" />
     <ClInclude Include="..\src\media\video\video_device.h" />
     <ClInclude Include="..\src\media\video\video_device_monitor.h" />
@@ -524,9 +523,6 @@ del intrin.h</Command>
     <ClInclude Include="..\src\media\video\video_rtp_session.h" />
     <ClInclude Include="..\src\media\video\video_scaler.h" />
     <ClInclude Include="..\src\media\video\video_sender.h" />
-    <ClInclude Include="..\src\media\video\winvideo\capture_graph_interfaces.h">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-    </ClInclude>
     <ClInclude Include="..\src\noncopyable.h" />
     <ClInclude Include="..\src\plugin_loader.h" />
     <ClInclude Include="..\src\plugin_manager.h" />
@@ -562,7 +558,6 @@ del intrin.h</Command>
     <ClInclude Include="..\src\upnp\upnp_control.h" />
     <ClInclude Include="..\src\upnp\upnp_igd.h" />
     <ClInclude Include="..\src\utf8_utils.h" />
-    <ClInclude Include="..\src\wingetopt\wingetopt.h" />
     <ClInclude Include="..\src\winsyslog.h" />
     <ClInclude Include="config.h" />
     <ClInclude Include="unistd.h" />
@@ -629,12 +624,6 @@ del intrin.h</Command>
     <ClCompile Include="..\src\media\video\video_rtp_session.cpp" />
     <ClCompile Include="..\src\media\video\video_scaler.cpp" />
     <ClCompile Include="..\src\media\video\video_sender.cpp" />
-    <ClCompile Include="..\src\media\video\winvideo\video_device_impl.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\src\media\video\winvideo\video_device_monitor_impl.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-    </ClCompile>
     <ClCompile Include="..\src\plugin_loader_dl.cpp" />
     <ClCompile Include="..\src\plugin_manager.cpp" />
     <ClCompile Include="..\src\preferences.cpp" />
@@ -664,13 +653,6 @@ del intrin.h</Command>
     <ClCompile Include="..\src\upnp\upnp_control.cpp" />
     <ClCompile Include="..\src\upnp\upnp_igd.cpp" />
     <ClCompile Include="..\src\utf8_utils.cpp" />
-    <ClCompile Include="..\src\main.cpp">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">true</ExcludedFromBuild>
-    </ClCompile>
-    <ClCompile Include="..\src\wingetopt\wingetopt.c" />
     <ClCompile Include="..\src\winsyslog.c" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
