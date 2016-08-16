@@ -282,7 +282,7 @@ private:
     bool privateKeyMatch_ {false};
 
     bool caChecked_ {false};
-    unsigned int caValidationOutput_;
+    unsigned int caValidationOutput_ {0}; // 0 means "no flags set", where flags are ones from gnutls_certificate_status_t
 
     mutable char copy_buffer[4096];
 
