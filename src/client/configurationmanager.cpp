@@ -178,7 +178,6 @@ std::vector<std::string>
 getPinnedCertificates()
 {
     return ring::tls::CertificateStore::instance().getPinnedCertificates();
-    return {};
 }
 
 std::vector<std::string>
