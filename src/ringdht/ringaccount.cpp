@@ -114,7 +114,7 @@ parseRingUri(const std::string& toUrl)
  */
 template <class... Args>
 std::shared_ptr<IceTransport>
-RingAccount::createIceTransport(Args... args)
+RingAccount::createIceTransport(const Args&... args)
 {
     // We need a public address in case of NAT'ed network
     // Trying to use one discovered by DHT service
