@@ -42,7 +42,7 @@
 namespace DRing {
 
 bool
-init(enum InitFlag flags) noexcept
+init(enum InitFlag flags, const char* app_path) noexcept
 {
     ::setDebugMode(flags & DRING_FLAG_DEBUG);
     ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
@@ -55,6 +55,9 @@ init(enum InitFlag flags) noexcept
     try {
         // current implementation use static variable
         auto& manager = ring::Manager::instance();
+#ifdef WIN32_NATIVE
+        manager.setUWPAppPath(app_path);
+#endif
         manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
         return true;
     } catch (...) {

@@ -49,6 +49,7 @@
 
 #if defined _WIN32 || defined WIN32_NATIVE
 #include "winsyslog.h"
+#include "client\ring_signal.h"
 #endif
 
 #define BLACK "\033[22;30m"
@@ -205,6 +206,11 @@ vlogger(const int level, const char *format, va_list ap)
             std::string ctx(format, sep - format);
             format = sep + 2;
             fputs(getHeader(ctx.c_str()).c_str(), stderr);
+#ifdef WIN32_NATIVE
+            char tmp[2048];
+            vsprintf(tmp, format, ap);
+            ring::emitSignal<DRing::Debug::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
+#endif
 #ifndef _WIN32
             fputs(END_COLOR, stderr);
 #else

@@ -26,6 +26,10 @@ SignalHandlerMap&
 getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
+#ifdef WIN32_NATIVE
+        /* UWP Debug */
+        exported_callback<DRing::Debug::MessageSend>(),
+#endif
         /* Call */
         exported_callback<DRing::CallSignal::StateChange>(),
         exported_callback<DRing::CallSignal::TransferFailed>(),
