@@ -187,6 +187,12 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 	$(APPLY) $(SRC)/ffmpeg/0004-avformat-fix-find_stream_info-not-considering-extradata.patch
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
+endif
+ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
+endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg

@@ -21,6 +21,9 @@ sndfile: libsndfile-$(SNDFILE_VERSION).tar.gz .sum-sndfile
 	$(APPLY) $(SRC)/sndfile/autotools.patch
 	$(APPLY) $(SRC)/sndfile/disable_programs.patch
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR) && mv config.guess config.sub Cfg && autoreconf -fi
+ifdef HAVE_IOS
+	rm -Rf examples
+endif
 	$(MOVE)
 
 .sndfile: sndfile
