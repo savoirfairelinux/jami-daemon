@@ -10,11 +10,15 @@ $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
 
 gmp: gmp-$(GMP_VERSION).tar.bz2 .sum-gmp
 	$(UNPACK)
+    ifdef HAVE_IOS
+	$(APPLY) $(SRC)/gmp/clock_gettime.patch
+    endif
 	$(MOVE)
 
 .gmp: gmp
 ifdef HAVE_IOS
-	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure --disable-assembly $(HOSTCONF)
+	$(RECONF)
+	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure --disable-assembly --without-clock-gettime $(HOSTCONF)
 else
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
 endif
