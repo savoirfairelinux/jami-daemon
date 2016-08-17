@@ -24,18 +24,19 @@
 #include <cstdint>
 #include <semaphore.h>
 
-// Implementation note: double-buffering
-// Shared memory is divided in two regions, each representing one frame.
-// First byte of each frame is warranted to by aligned on 16 bytes.
-// One region is marked readable: this region can be safely read.
-// The other region is writeable: only the producer can use it.
+/* Implementation note: double-buffering
+ * Shared memory is divided in two regions, each representing one frame.
+ * First byte of each frame is guaranteed to be aligned on 16 bytes.
+ * One region is marked as readable: this region can be safely read.
+ * The other region is writeable: only the producer can use it.
+ */
 
 struct SHMHeader {
-    sem_t mutex;                // Lock it before any operations on following fields.
-    sem_t frameGenMutex;        // unlocked by producer when frameGen modified
+    sem_t mutex;                // lock it before any operations on these fields
+    sem_t frameGenMutex;        // unlocked by producer when frameGen is modified
     unsigned frameGen;          // monotonically incremented when a producer changes readOffset
     unsigned frameSize;         // size in bytes of 1 frame
-    unsigned mapSize;           // size to map if you need to see all data
+    unsigned mapSize;           // size to map if you need all the data
     unsigned readOffset;        // offset of readable frame in data
     unsigned writeOffset;       // offset of writable frame in data
     uint8_t data[];             // the whole shared memory
