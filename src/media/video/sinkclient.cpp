@@ -157,8 +157,11 @@ ShmHolder::~ShmHolder()
     if (area_ == MAP_FAILED)
         return;
 
+    ::sem_wait(&area_->mutex);
     area_->frameSize = 0;
-    ::sem_post(&area_->frameGenMutex);
+    ::sem_post(&area_->mutex);
+
+    ::sem_post(&area_->frameGenMutex); // unlock waiting client before leaving
     unMapShmArea();
 }
 
