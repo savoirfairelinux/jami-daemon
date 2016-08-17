@@ -413,7 +413,7 @@ class RingAccount : public SIPAccountBase {
         pjsip_transport* via_tp_ {nullptr};
 
         template <class... Args>
-        std::shared_ptr<IceTransport> createIceTransport(Args... args);
+        std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 };
 
 } // namespace ring
