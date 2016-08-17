@@ -168,6 +168,9 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar xv --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
+endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg
