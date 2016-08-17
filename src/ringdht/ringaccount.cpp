@@ -1467,7 +1467,8 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     return true;
                 auto e = this_->sentMessages_.find(msg.id);
                 if (e == this_->sentMessages_.end()) {
-                        RING_DBG("Message not found for %" PRIu64, token);
+                    RING_DBG("Message not found for %" PRIu64, token);
+                    return true;
                 }
                 if (e->second.to != msg.from) {
                         RING_DBG("Unrelated text message : from %s != second %s",
