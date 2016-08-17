@@ -1970,7 +1970,13 @@ std::string
 Manager::retrieveConfigPath() const
 {
     static const char * const PROGNAME = "dring";
+#ifdef WIN32_NATIVE
+    return UWPAppPath_ +
+        DIR_SEPARATOR_STR + std::string(".config") +
+        DIR_SEPARATOR_STR + PROGNAME + ".yml";
+#else
     return fileutils::get_config_dir() + DIR_SEPARATOR_STR + PROGNAME + ".yml";
+#endif
 }
 
 /**
@@ -2566,6 +2572,18 @@ std::vector<std::string>
 Manager::loadAccountOrder() const
 {
     return split_string(preferences.getAccountOrder(), '/');
+}
+
+void
+Manager::setUWPAppPath(const char* app_path)
+{
+    UWPAppPath_ = std::string(app_path);
+}
+
+std::string
+Manager::getUWPAppPath() const
+{
+    return UWPAppPath_;
 }
 
 void
