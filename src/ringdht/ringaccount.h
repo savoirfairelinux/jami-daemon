@@ -389,9 +389,10 @@ class RingAccount : public SIPAccountBase {
         std::shared_future<tls::DhParams> dhParams_;
         std::mutex dhParamsMtx_;
         std::condition_variable dhParamsCv_;
-        bool allowPeersFromHistory_;
-        bool allowPeersFromContact_;
-        bool allowPeersFromTrusted_;
+
+        bool allowPeersFromHistory_ {true};
+        bool allowPeersFromContact_ {true};
+        bool allowPeersFromTrusted_ {true};
 
         /**
          * Optional: "received" parameter from VIA header
