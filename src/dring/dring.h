@@ -46,9 +46,10 @@ const char* version() noexcept;
  * Initialize globals, create underlaying daemon.
  *
  * @param flags  Flags to customize this initialization
+ * @param app_path  Universal Windows Platform Application path
  * @returns      true if initialization succeed else false.
  */
-bool init(enum InitFlag flags) noexcept;
+bool init(enum InitFlag flags, const char* app_path = "") noexcept;
 
 /**
  * Start asynchronously daemon created by init().

@@ -94,6 +94,16 @@ void acceptEnrollment(const std::string& callID, bool accepted);
 /* Instant messaging */
 void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
 
+#ifdef WIN32_NATIVE
+/* Debug for UWP Client */
+struct Debug {
+    struct MessageSend {
+        constexpr static const char* name = "MessageSend";
+        using cb_type = void(const std::string&);
+    };
+};
+#endif
+
 // Call signal type definitions
 struct CallSignal {
         struct StateChange {

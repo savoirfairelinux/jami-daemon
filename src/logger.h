@@ -72,7 +72,11 @@ void strErr();
 #define XSTR(X) STR(X)
 
 // Line return char in a string
+#ifdef WIN32_NATIVE
+#define ENDL " "
+#else
 #define ENDL "\n"
+#endif
 
 // Do not remove the "| " in following without modifying vlogger() code
 #ifndef WIN32_NATIVE
