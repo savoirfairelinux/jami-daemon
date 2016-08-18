@@ -7,7 +7,7 @@ noinst_LTLIBRARIES = libringacc.la
 
 AM_LDFLAGS = $(BOOST_LDFLAGS)
 
-libringacc_la_CXXFLAGS = @CXXFLAGS@
+libringacc_la_CXXFLAGS = @CXXFLAGS@ @JSONCPP_CFLAGS@
 
 libringacc_la_LIBADD = $(DHT_LIBS) \
     $(BOOST_SYSTEM_LIB) \

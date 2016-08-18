@@ -522,7 +522,7 @@ AS_IF([test "${SYS}" = "mingw32"],[
 ], [
   AC_CHECK_LIB([cryptopp], [main], [], [
       AC_MSG_FAILURE([cryptopp link test failed.])
-  ])
+  ],[-lpthread])
   AX_BOOST_BASE([1.48],,[AC_MSG_ERROR([Ring needs Boost but it was not found in your system])])
   AC_CHECK_LIB([boost_filesystem], exit, , [AC_MSG_FAILURE(['Can't find boost filesystem'])])
   AC_CHECK_LIB([boost_system], exit, , [AC_MSG_FAILURE(['Can't find boost system'])])

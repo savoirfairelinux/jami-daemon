@@ -158,6 +158,21 @@
            </arg>
        </method>
 
+       <method name="addRingDevice" tp:name-for-bindings="addRingDevice">
+           <tp:docstring>
+               Export account on the DHT using the given password and generated PIN (returned).
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+           </arg>
+           <arg type="s" name="PIN" direction="out">
+               <tp:docstring>
+                    A PIN to show to the user to import the account from somewhere else.
+               </tp:docstring>
+           </arg>
+       </method>
+
        <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
            <tp:docstring>
                Test initializing an ICE transport with the current account configuration.

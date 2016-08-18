@@ -126,7 +126,9 @@ libring_la_SOURCES = \
 		string_utils.cpp \
 		rw_mutex.h \
 		ring_api.cpp \
-		rational.h
+		rational.h \
+        base64.h \
+        base64.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
