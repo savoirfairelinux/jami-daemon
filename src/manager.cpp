@@ -342,6 +342,11 @@ Manager::finish() noexcept
             hangupCall(call->getCallId());
         callFactory.clear();
 
+        for (const auto &account : getAllAccounts<RingAccount>()) {
+            if (account->getRegistrationState() == RegistrationState::INITIALIZING)
+                removeAccount(account->getAccountID());
+        }
+
         saveConfig();
 
         // Disconnect accounts, close link stacks and free allocated ressources
@@ -2467,6 +2472,15 @@ Manager::getNewAccountId()
              != accountList.end());
 
     return newAccountID;
+}
+
+std::string
+Manager::addRingDevice(const std::string& accountID, const std::string& password)
+{
+    const auto account = getAccount<RingAccount>(accountID);
+    if (account)
+        return account->addDevice(password);
+    return "";
 }
 
 std::string
