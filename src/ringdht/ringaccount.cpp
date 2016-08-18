@@ -142,9 +142,19 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 #ifdef WIN32_NATIVE
     gnutls_global_init();
 #endif
+#ifdef WIN32_NATIVE
+    cachePath_ = Manager::instance().getUWPAppPath() +
+                DIR_SEPARATOR_STR + std::string(".cache") +
+                DIR_SEPARATOR_STR + getAccountID();
+    dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
+    idPath_ = Manager::instance().getUWPAppPath() +
+                DIR_SEPARATOR_STR + std::string(".cache") +
+                DIR_SEPARATOR_STR + getAccountID();
+#else
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
+#endif
 }
 
 RingAccount::~RingAccount()
