@@ -30,6 +30,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "ice_socket.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -41,6 +42,8 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <deque>
+#include <fstream>
 
 /**
  * @file ringaccount.h
@@ -54,6 +57,44 @@ class Emitter;
 
 namespace ring {
 
+class FileSender;
+
+class IceDataCandidates : public dht::EncryptedValue<IceDataCandidates>
+{
+public:
+    static dht::ValueType TYPE;
+
+    IceDataCandidates() {}
+    IceDataCandidates(dht::Value::Id msg_id, dht::Blob ice) : id(msg_id), ice_data(ice) {
+        auto now = std::chrono::system_clock::now().time_since_epoch();
+        timestamp = std::chrono::duration_cast<std::chrono::seconds>(now);
+    }
+
+    // Fully re-implement BaseClass as we need to pack 3 values, not 2
+    template <typename Packer>
+    void msgpack_pack(Packer& pk) const {
+        pk.pack_array(3);
+        pk.pack(id);
+
+        pk.pack_bin(ice_data.size());
+        pk.pack_bin_body((const char*)ice_data.data(), ice_data.size());
+
+        pk.pack(static_cast<uint64_t>(timestamp.count()));
+    }
+
+    void msgpack_unpack(msgpack::object o) {
+        if (o.type != msgpack::type::ARRAY) throw msgpack::type_error();
+        if (o.via.array.size < 3) throw msgpack::type_error();
+        id = o.via.array.ptr[0].as<dht::Value::Id>();
+        ice_data = dht::unpackBlob(o.via.array.ptr[1]);
+        timestamp = std::chrono::seconds(o.via.array.ptr[2].as<uint64_t>());
+    }
+
+    dht::Value::Id id;
+    dht::Blob ice_data;
+    std::chrono::seconds timestamp;
+};
+
 namespace Conf {
 const char *const DHT_PORT_KEY = "dhtPort";
 const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
@@ -65,7 +106,12 @@ const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
 const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
 }
 
+namespace ReliableSocket {
+class DataConnection;
+}
+
 class IceTransport;
+class SecureIceTransport;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -256,6 +302,12 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged() override;
 
+        DRing::DataTransferId sendFile(const std::string& peer_uri,
+                                       const std::string& pathname,
+                                       const std::string& name) override;
+
+        void cancelDataTransaction(const std::string& peer_id);
+
     private:
         NON_COPYABLE(RingAccount);
 
@@ -288,6 +340,7 @@ class RingAccount : public SIPAccountBase {
         bool mapPortUPnP();
 
         void igdChanged();
+        dht::crypto::Identity dht_id_; // set by calling loadIdentity
 
         dht::DhtRunner dht_ {};
 
@@ -415,6 +468,27 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
+
+        /**
+         * Data connection
+         */
+
+        void onDataTransactionReply(const IceDataCandidates&);
+        void onDataTransactionRequest(IceDataCandidates&&);
+
+        void onDataIceInitSuccess(const std::string&);
+        void onDataIceNegoSuccess(const std::string&);
+
+        std::shared_ptr<ReliableSocket::DataConnection> obtainDataConnection(const std::string&, bool creation=true);
+        std::unique_ptr<SecureIceTransport> newSecureIceTransport(const std::string&, bool is_initiator=true,
+                                                                  IceDataCandidates&& remote_ice={});
+
+        bool initSecureIceTransport(const std::string&);
+        void cancelSecureIceTransport(const std::string&);
+
+        std::mutex sitMutex_ {}; // protect following maps
+        std::map<std::string, std::unique_ptr<SecureIceTransport>> pendingSITMap_; // not peer connected SIT
+        std::map<std::string, std::unique_ptr<SecureIceTransport>> establishedSITMap_; // connected SIT
 };
 
 } // namespace ring

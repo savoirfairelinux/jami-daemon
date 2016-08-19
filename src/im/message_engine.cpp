@@ -65,13 +65,13 @@ MessageEngine::reschedule()
     std::lock_guard<std::mutex> lock(messagesMutex_);
     if (messages_.empty())
         return;
-    std::weak_ptr<Account> w = std::static_pointer_cast<Account>(account_.shared_from_this());
+    auto weak_acc = account_.weak_from_this();
     auto next = nextEvent();
     if (next != clock::time_point::max())
-        Manager::instance().scheduleTask([w,this](){
-            if (auto s = w.lock())
-                retrySend();
-        }, next);
+        Manager::instance().scheduleTask([weak_acc, this](){
+                if (auto s = weak_acc.lock())
+                    retrySend();
+            }, next);
 }
 
 MessageEngine::clock::time_point

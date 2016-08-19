@@ -33,6 +33,7 @@ class DBusCallManager;
 class DBusNetworkManager;
 class DBusInstance;
 class DBusPresenceManager;
+class DBusDataTransfer;
 
 #ifdef RING_VIDEO
 class DBusVideoManager;
@@ -62,6 +63,7 @@ class DBusClient {
         std::unique_ptr<DBusConfigurationManager> configurationManager_;
         std::unique_ptr<DBusPresenceManager>      presenceManager_;
         std::unique_ptr<DBusInstance>             instanceManager_;
+        std::unique_ptr<DBusDataTransfer>         dataXfer_;
 
 #ifdef RING_VIDEO
         std::unique_ptr<DBusVideoManager>         videoManager_;

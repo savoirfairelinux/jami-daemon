@@ -100,6 +100,8 @@ libring_la_SOURCES = \
 		ice_transport.h \
 		plugin_manager.cpp \
 		plugin_loader_dl.cpp \
+		data_transfer.cpp \
+		data_transfer.h \
 		ring_plugin.h \
 		plugin_loader.h \
 		plugin_manager.h \
@@ -139,6 +141,7 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/callmanager_interface.h \
 		dring/configurationmanager_interface.h \
 		dring/presencemanager_interface.h \
+		dring/datatransfer_interface.h \
 		dring/account_const.h \
 		dring/call_const.h \
 		dring/media_const.h

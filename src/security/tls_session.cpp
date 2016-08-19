@@ -784,6 +784,12 @@ TlsSession::process()
         callbacks_.onStateChange(new_state);
 }
 
+IpAddr
+TlsSession::getRemoteAddress() const
+{
+    return socket_->getRemoteAddress();
+}
+
 DhParams
 DhParams::generate()
 {

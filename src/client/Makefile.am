@@ -16,6 +16,7 @@ libclient_la_SOURCES = \
 	ring_signal.cpp \
 	callmanager.cpp \
 	configurationmanager.cpp \
+	datatransfer.cpp \
 	$(PRESENCE_SRC) \
 	$(VIDEO_SRC)
 

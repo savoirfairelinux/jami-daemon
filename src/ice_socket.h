@@ -20,6 +20,8 @@
 #ifndef ICE_SOCKET_H
 #define ICE_SOCKET_H
 
+#include "ip_utils.h"
+
 #include <memory>
 #include <functional>
 
@@ -39,11 +41,12 @@ class IceSocket
             : ice_transport_(iceTransport), compId_(compId) {}
 
         void close();
-        ssize_t recv(unsigned char* buf, size_t len);
-        ssize_t send(const unsigned char* buf, size_t len);
+        ssize_t recv(uint8_t* buf, size_t len);
+        ssize_t send(const uint8_t* buf, size_t len);
         ssize_t getNextPacketSize() const;
         ssize_t waitForData(unsigned int timeout);
         void setOnRecv(IceRecvCb cb);
+        IpAddr getRemoteAddress() const;
 };
 
 };

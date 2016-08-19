@@ -22,7 +22,6 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "socket_pair.h"
-#include "ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
 
@@ -54,6 +53,8 @@ extern "C" {
 #ifdef __APPLE__
 #include <fcntl.h>
 #endif
+
+#include "ice_socket.h"
 
 namespace ring {
 

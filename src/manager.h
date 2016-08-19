@@ -48,6 +48,8 @@
 #include "audio/audiolayer.h"
 #include "audio/tonecontrol.h"
 
+#include "datatransfer_interface.h"
+
 #include "preferences.h"
 #include "noncopyable.h"
 
@@ -769,6 +771,15 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        /**
+         * Send a file to a peer using given account
+         * @return a transfer id
+         */
+         DRing::DataTransferId sendFile(const std::string& accountId,
+                                        const std::string& peerUri,
+                                        const std::string& pathname,
+                                        const std::string& name);
+
     private:
         std::atomic_bool autoAnswer_ {false};
 
@@ -949,8 +960,7 @@ class Manager {
 
         /**
          * Call periodically to poll for VoIP events */
-        void
-        pollEvents();
+        void pollEvents();
 
         /**
          * Create a new outgoing call
@@ -988,8 +998,18 @@ class Manager {
             std::function<void()> cb;
             Runnable(const std::function<void()>&& t) : cb(std::move(t)) {}
         };
-        std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
+
+        std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& callable, std::chrono::steady_clock::time_point when);
+
+        template <class T>
+        std::shared_ptr<Manager::Runnable>
+        scheduleTask(const std::function<void()>&& callable, const T& delay) {
+            return scheduleTask(std::move(callable), std::chrono::steady_clock::now() + delay);
+        }
+
         void scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when);
+
+        std::mt19937_64& getRandomEngine() noexcept { return rand_; }
 
 #ifdef RING_VIDEO
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
@@ -1004,6 +1024,7 @@ class Manager {
         decltype(eventHandlerMap_)::iterator nextEventHandler_;
 
         std::list<std::function<bool()>> pendingTaskList_;
+
         std::multimap<std::chrono::steady_clock::time_point, std::shared_ptr<Runnable>> scheduledTasks_;
         std::mutex scheduledTasksMutex_;
 

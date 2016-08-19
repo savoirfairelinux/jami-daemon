@@ -64,7 +64,7 @@ getVideoSettings()
 #endif
 
 static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
-static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
+static constexpr auto DEFAULT_ICE_NEGO_TIMEOUT = std::chrono::seconds(60);
 
 // SDP media Ids
 static constexpr int SDP_AUDIO_MEDIA_ID {0};
@@ -929,7 +929,7 @@ SIPCall::onMediaUpdate()
     if (startIce()) {
         auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
         auto ice = iceTransport_;
-        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+        auto iceTimeout = std::chrono::steady_clock::now() + DEFAULT_ICE_NEGO_TIMEOUT;
         Manager::instance().addTask([=] {
             if (ice != this_->iceTransport_) {
                 RING_WARN("[call:%s] ICE transport replaced", getCallId().c_str());
@@ -937,7 +937,7 @@ SIPCall::onMediaUpdate()
             }
             /* First step: wait for an ICE transport for SIP channel */
             if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
-                RING_DBG("[call:%s] ICE init failed (or timeout)", getCallId().c_str());
+                RING_ERR("[call:%s] ICE init failed (or timeout)", getCallId().c_str());
                 this_->onFailure(ETIMEDOUT);
                 return false;
             }

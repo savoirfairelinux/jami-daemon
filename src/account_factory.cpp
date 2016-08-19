@@ -115,6 +115,19 @@ template <> void
 AccountFactory::clear()
 {
     std::lock_guard<std::recursive_mutex> lk(mutex_);
+    for (auto& map_item : accountMaps_) {
+        for (auto& item : map_item.second) {
+            auto id {item.second->getAccountID()};
+            auto name {item.second->getAccountType()};
+            RING_DBG("Account[%s]: %ld", id.c_str(), item.second.use_count());
+            if (!item.second.unique()) {
+                std::ostringstream msg;
+                msg << "couldn't clear account " << name << "-" << id
+                    << ",  ownership remains";
+                throw std::runtime_error(msg.str());
+            }
+        }
+    }
     accountMaps_.clear();
 }
 
