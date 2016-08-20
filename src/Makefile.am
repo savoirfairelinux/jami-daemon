@@ -93,6 +93,7 @@ libring_la_SOURCES = \
 		fileutils.cpp \
 		archiver.cpp \
 		threadloop.cpp \
+		thread_pool.cpp \
 		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
@@ -104,6 +105,7 @@ libring_la_SOURCES = \
 		plugin_loader.h \
 		plugin_manager.h \
 		threadloop.h \
+		thread_pool.h \
 		conference.h \
 		account_factory.h \
 		call_factory.h \
