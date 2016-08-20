@@ -22,6 +22,7 @@
 
 #include "client/ring_signal.h"
 
+#include "thread_pool.h"
 #include "fileutils.h"
 #include "logger.h"
 
@@ -179,7 +180,7 @@ readCertificates(const std::string& path)
 void
 CertificateStore::pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb)
 {
-    std::thread([&, path, cb]() {
+    ThreadPool::instance().run([&, path, cb]() {
         auto certs = readCertificates(path);
         std::vector<std::string> ids;
         std::vector<std::weak_ptr<crypto::Certificate>> scerts;
@@ -201,7 +202,7 @@ CertificateStore::pinCertificatePath(const std::string& path, std::function<void
         if (cb)
             cb(ids);
         emitSignal<DRing::ConfigurationSignal::CertificatePathPinned>(path, ids);
-    }).detach();
+    });
 }
 
 unsigned
