@@ -25,6 +25,8 @@
 #include "config.h"
 #endif
 
+#include "thread_pool.h"
+
 #include "sip/sdp.h"
 #include "sip/sipvoiplink.h"
 #include "sip/sipcall.h"
@@ -1305,11 +1307,7 @@ RingAccount::generateDhParams()
 {
     //make sure cachePath_ is writable
     fileutils::check_dir(cachePath_.c_str(), 0700);
-
-    std::packaged_task<decltype(loadDhParams)> task(loadDhParams);
-    dhParams_ = task.get_future();
-    std::thread task_td(std::move(task), cachePath_ + DIR_SEPARATOR_STR "dhParams");
-    task_td.detach();
+    dhParams_ = ThreadPool::instance().get<tls::DhParams>(std::bind(loadDhParams, cachePath_ + DIR_SEPARATOR_STR "dhParams"));
 }
 
 MatchRank
