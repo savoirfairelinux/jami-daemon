@@ -142,19 +142,9 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 #ifdef WIN32_NATIVE
     gnutls_global_init();
 #endif
-//#ifdef WIN32_NATIVE
-//    cachePath_ = Manager::instance().getUWPAppPath() +
-//                DIR_SEPARATOR_STR + std::string(".cache") +
-//                DIR_SEPARATOR_STR + getAccountID();
-//    dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
-//    idPath_ = Manager::instance().getUWPAppPath() +
-//                DIR_SEPARATOR_STR + std::string(".cache") +
-//                DIR_SEPARATOR_STR + getAccountID();
-//#else
     cachePath_ = fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID();
     dataPath_ = cachePath_ + DIR_SEPARATOR_STR "values";
     idPath_ = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-//#endif
 }
 
 RingAccount::~RingAccount()
@@ -468,12 +458,8 @@ RingAccount::checkIdentityPath()
         return;
     }
 
-//ifndef WIN32_NATIVE
     const auto idPath = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
-//#else
-//    const auto idPath = Manager::instance().getUWPAppPath() + DIR_SEPARATOR_STR +
-//            std::string(".data") + DIR_SEPARATOR_STR + getAccountID();
-//#endif
+
     tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
     tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
     loadIdentity();
@@ -505,12 +491,9 @@ RingAccount::loadIdentity()
         if (!id.first || !id.second) {
             throw VoipLinkException("Can't generate identity for this account.");
         }
-//#ifndef WIN32_NATIVE
+
         idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
-//#else
-        //idPath_ = Manager::instance().getUWPAppPath() + DIR_SEPARATOR_STR +
-            //std::string(".data") + DIR_SEPARATOR_STR + getAccountID();
-//#endif
+
         fileutils::check_dir(idPath_.c_str(), 0700);
 
         fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 0600);

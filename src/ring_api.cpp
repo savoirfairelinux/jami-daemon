@@ -42,7 +42,7 @@
 namespace DRing {
 
 bool
-init(enum InitFlag flags, const char* app_path) noexcept
+init(enum InitFlag flags) noexcept
 {
     ::setDebugMode(flags & DRING_FLAG_DEBUG);
     ::setConsoleLog(flags & DRING_FLAG_CONSOLE_LOG);
