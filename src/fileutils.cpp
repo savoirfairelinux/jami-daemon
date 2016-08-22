@@ -382,7 +382,7 @@ get_cache_dir()
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
         cache_path = paths[0];
-    return cache_path + DIR_SEPARATOR_STR + std::string("cache");
+    return cache_path + DIR_SEPARATOR_STR + std::string(".cache");
 #else
     const std::string cache_home(XDG_CACHE_HOME);
 
@@ -502,7 +502,7 @@ get_config_dir()
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
         files_path = paths[0];
-    return files_path + DIR_SEPARATOR_STR + std::string(".data");
+    return files_path + DIR_SEPARATOR_STR + std::string(".config");
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
