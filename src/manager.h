@@ -769,16 +769,6 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
-        /**
-        * @param app_path The Universal Windows Application path
-        */
-        void setUWPAppPath(const char* app_path);
-
-        /**
-        * @return std::string The Universal Windows Application path
-        */
-        std::string getUWPAppPath() const;
-
     private:
         std::atomic_bool autoAnswer_ {false};
 
@@ -874,11 +864,6 @@ class Manager {
          * Path of the ConfigFile
          */
         std::string path_;
-
-        /**
-        * Universal Windows Platform Application path
-        */
-        std::string UWPAppPath_;
 
         /**
          * Load the account map from configuration

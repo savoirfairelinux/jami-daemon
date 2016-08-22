@@ -77,6 +77,9 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
+#ifdef WIN32_NATIVE
+        exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
+#endif
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
