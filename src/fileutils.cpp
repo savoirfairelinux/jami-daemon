@@ -381,8 +381,14 @@ get_cache_dir()
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
-        cache_path = paths[0];
-    return cache_path + DIR_SEPARATOR_STR + std::string(".cache");
+        cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
+
+    if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", cache_path.c_str());
+    }
+    return cache_path;
 #else
     const std::string cache_home(XDG_CACHE_HOME);
 
@@ -470,8 +476,14 @@ get_data_dir()
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
-        files_path = paths[0];
-    return files_path + DIR_SEPARATOR_STR + std::string(".data");
+        files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
+
+    if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", files_path.c_str());
+    }
+    return files_path;
 #else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
@@ -501,8 +513,14 @@ get_config_dir()
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
-        files_path = paths[0];
-    return files_path + DIR_SEPARATOR_STR + std::string(".config");
+        config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
+
+    if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", config_path.c_str());
+    }
+    return config_path;
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
