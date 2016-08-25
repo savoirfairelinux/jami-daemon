@@ -1,0 +1,29 @@
+ {a => b}/getgateway.h | 2 ++
+ {a => b}/natpmp.h     | 1 +
+ 2 files changed, 3 insertions(+)
+
+diff --git a/getgateway.h b/getgateway.h
+index 5d3df73..7cf34f1 100644
+--- a/getgateway.h
++++ b/getgateway.h
+@@ -37,6 +37,8 @@ typedef unsigned long uint32_t;
+ typedef unsigned short uint16_t;
+ #endif
+ #define in_addr_t uint32_t
++#else
++#include <arpa/inet.h>
+ #endif
+ /* #include "declspec.h" */
+ 
+diff --git a/natpmp.h b/natpmp.h
+index 7889d20..f1a81c3 100644
+--- a/natpmp.h
++++ b/natpmp.h
+@@ -50,6 +50,7 @@ typedef unsigned short uint16_t;
+ #else	/* WIN32 */
+ #define LIBSPEC
+ #include <netinet/in.h>
++#include <arpa/inet.h>
+ #endif	/* WIN32 */
+ 
+ /* causes problem when installing. Maybe should it be inlined ? */

@@ -3,10 +3,8 @@ NATPMP_VERSION := 20150609
 NATPMP_URL := http://miniupnp.free.fr/files/download.php?file=libnatpmp-$(NATPMP_VERSION).tar.gz
 
 ifndef HAVE_WIN32
-ifndef HAVE_ANDROID
 ifndef HAVE_IOS
 PKGS += natpmp
-endif
 endif
 endif
 
@@ -21,6 +19,7 @@ $(TARBALLS)/libnatpmp-$(NATPMP_VERSION).tar.gz:
 
 natpmp: libnatpmp-$(NATPMP_VERSION).tar.gz .sum-natpmp
 	$(UNPACK)
+	$(APPLY) $(SRC)/natpmp/inet.patch
 	$(MOVE)
 
 .natpmp: natpmp
