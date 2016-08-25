@@ -327,7 +327,7 @@ MediaDecoder::decode(VideoFrame& result)
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(target - now));
+                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
         return Status::FrameFinished;
@@ -378,7 +378,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
-                std::this_thread::sleep_for(std::chrono::milliseconds(target - now));
+                std::this_thread::sleep_for(std::chrono::microseconds(target - now));
             }
         }
         return Status::FrameFinished;
