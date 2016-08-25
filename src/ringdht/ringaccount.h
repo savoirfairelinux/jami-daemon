@@ -55,7 +55,6 @@ class Emitter;
 
 namespace dev
 {
-    class SecretStore;
     template <unsigned N> class FixedHash;
     using h160 = FixedHash<20>;
     using Address = h160;
@@ -64,16 +63,22 @@ namespace dev
 namespace ring {
 
 namespace Conf {
-const char *const DHT_PORT_KEY = "dhtPort";
-const char *const DHT_VALUES_PATH_KEY = "dhtValuesPath";
-const char *const DHT_CONTACTS = "dhtContacts";
-const char *const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
-const char *const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
-const char *const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
-const char *const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
-const char *const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
-const char *const ETH_PATH = "ethPath";
-const char *const ETH_ACCOUNT = "ethAccount";
+constexpr const char* const DHT_PORT_KEY = "dhtPort";
+constexpr const char* const DHT_VALUES_PATH_KEY = "dhtValuesPath";
+constexpr const char* const DHT_CONTACTS = "dhtContacts";
+constexpr const char* const DHT_PUBLIC_PROFILE = "dhtPublicProfile";
+constexpr const char* const DHT_PUBLIC_IN_CALLS = "dhtPublicInCalls";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_HISTORY = "allowPeersFromHistory";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_CONTACT = "allowPeersFromContact";
+constexpr const char* const DHT_ALLOW_PEERS_FROM_TRUSTED = "allowPeersFromTrusted";
+constexpr const char* const ETH_KEY = "ethKey";
+constexpr const char* const ETH_PATH = "ethPath";
+constexpr const char* const ETH_ACCOUNT = "ethAccount";
+constexpr const char* const RING_CA_KEY = "ringCaKey";
+constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
+constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
+constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
+constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
 }
 
 class IceTransport;
@@ -137,7 +142,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Disconnect from the DHT.
          */
-        void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) override;
+        void doUnregister(std::function<void(bool)> cb = {}) override;
 
         /**
          * @return pj_str_t "From" uri based on account information.
@@ -265,13 +270,71 @@ class RingAccount : public SIPAccountBase {
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
+        void addDevice(const std::string& password);
+
         void connectivityChanged() override;
 
     private:
         NON_COPYABLE(RingAccount);
 
+        struct PendingCall {
+            std::chrono::steady_clock::time_point start;
+            std::shared_ptr<IceTransport> ice_sp;
+            std::weak_ptr<SIPCall> call;
+            std::future<size_t> listen_key;
+            dht::InfoHash call_key;
+            dht::InfoHash from;
+            std::shared_ptr<dht::crypto::Certificate> from_cert;
+        };
+
+        struct PendingMessage {
+            dht::InfoHash to;
+            std::chrono::steady_clock::time_point received;
+        };
+
+        struct TrustRequest {
+            dht::InfoHash from;
+            std::chrono::system_clock::time_point received;
+            std::vector<uint8_t> payload;
+        };
+
+        /**
+         * Crypto material contained in the archive,
+         * not persisted in the account configuration
+         */
+        struct ArchiveContent {
+            /** Account main private key and certificate chain */
+            dht::crypto::Identity id;
+
+            /** Generated CA key (for self-signed certificates) */
+            dht::crypto::PrivateKey ca_key;
+
+            /** Ethereum private key */
+            std::vector<uint8_t> eth_key;
+
+            /** Account configuration */
+            std::map<std::string, std::string> config;
+        };
+
+        /**
+         * Device announcement stored on DHT.
+         */
+        struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement> {
+        private:
+            using BaseClass = dht::SignedValue<DeviceAnnouncement>;
+        public:
+            static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+            dht::InfoHash dev;
+            MSGPACK_DEFINE_MAP(dev);
+        };
+
+        /**
+         * Compute archive encryption key and DHT storage location from password and PIN.
+         */
+        static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
+
         void doRegister_();
-        void incomingCall(dht::IceCandidates&& msg);
+        void incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -301,17 +364,9 @@ class RingAccount : public SIPAccountBase {
         void igdChanged();
 
         dht::DhtRunner dht_ {};
+        dht::crypto::Identity identity_ {};
 
         dht::InfoHash callKey_;
-
-        struct PendingCall {
-            std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice_sp;
-            std::weak_ptr<SIPCall> call;
-            std::future<size_t> listen_key;
-            dht::InfoHash call_key;
-            dht::InfoHash from;
-        };
 
         void handlePendingCallList();
         bool handlePendingCall(PendingCall& pc, bool incoming);
@@ -328,35 +383,46 @@ class RingAccount : public SIPAccountBase {
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};
 
-        struct PendingMessage {
-            dht::InfoHash to;
-            std::chrono::steady_clock::time_point received;
-        };
-
         std::map<dht::Value::Id, PendingMessage> sentMessages_ {};
         std::set<dht::Value::Id> treatedMessages_ {};
 
+        std::string ringAccountId_ {};
+        std::string ringDeviceId_ {};
         std::string idPath_ {};
         std::string cachePath_ {};
         std::string dataPath_ {};
         std::string ethPath_ {};
         std::string ethAccount_ {};
 
-        struct TrustRequest {
-            dht::InfoHash from;
-            std::chrono::system_clock::time_point received;
-            std::vector<uint8_t> payload;
-        };
+        std::string archivePath_ {};
+
+        std::string receipt_ {};
+        std::vector<uint8_t> receiptSignature_ {};
+        dht::Value announceVal_;
 
         std::vector<TrustRequest> trustRequests_;
 
         tls::TrustStore trust_;
 
-        /**
-         * Validate the values for privkeyPath_ and certPath_.
-         * If one of these fields is empty, reset them to the default values.
-         */
-        void checkIdentityPath();
+        std::shared_ptr<dht::Value> announce_;
+
+        void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
+        void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+
+        bool hasCertificate() const;
+        bool hasPrivateKey() const;
+        bool hasSignedReceipt();
+
+        std::string makeReceipt(const dht::crypto::Identity& id);
+        void createRingDevice(const dht::crypto::Identity& id);
+        void initRingDevice(const ArchiveContent& a);
+
+        void createAccount(const std::string& archive_password);
+        std::vector<uint8_t> makeArchive(const ArchiveContent& content) const;
+        void saveArchive(const ArchiveContent& content, const std::string& pwd);
+        ArchiveContent readArchive(const std::string& pwd) const;
+        static ArchiveContent loadArchive(const std::vector<uint8_t>& data);
+        std::vector<std::pair<sockaddr_storage, socklen_t>> loadBootstrap() const;
 
         void saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
         void saveNodes(const std::vector<dht::NodeExport>&) const;
@@ -369,9 +435,6 @@ class RingAccount : public SIPAccountBase {
         void saveTreatedMessages() const;
 
         static tls::DhParams loadDhParams(const std::string path);
-
-        std::unique_ptr<dev::SecretStore> store_;
-        dev::Address loadEthAccount();
 
         /**
          * If privkeyPath_ is a valid private key file (PEM or DER),

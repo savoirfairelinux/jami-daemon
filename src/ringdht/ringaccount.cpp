@@ -54,12 +54,15 @@
 #include "fileutils.h"
 #include "string_utils.h"
 #include "array_size.h"
+#include "archiver.h"
 
 #include "config/yamlparser.h"
 #include "security/certstore.h"
-#include "libdevcrypto/SecretStore.h"
+#include "libdevcrypto/Common.h"
+#include "base64.h"
 
 #include <yaml-cpp/yaml.h>
+#include <json/json.h>
 
 #include <unistd.h>
 
@@ -81,10 +84,10 @@ static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
+const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
+static constexpr const char* const RING_URI_PREFIX = "ring:";
 
-static constexpr const char * const RING_URI_PREFIX = "ring:";
-
-constexpr const char * const RingAccount::ACCOUNT_TYPE;
+constexpr const char* const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
 static std::uniform_int_distribution<dht::Value::Id> udist;
@@ -109,6 +112,14 @@ parseRingUri(const std::string& toUrl)
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
     return toUri;
+}
+
+
+static constexpr const char*
+dhtStatusStr(dht::NodeStatus status) {
+    return status == dht::NodeStatus::Connected  ? "connected"  : (
+           status == dht::NodeStatus::Connecting ? "connecting" :
+                                                   "disconnected");
 }
 
 /**
@@ -144,9 +155,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     : SIPAccountBase(accountID), via_addr_(),
     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
     dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
-    idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID()),
-    ethPath_(idPath_ + DIR_SEPARATOR_STR "eth"),
-    store_(new dev::SecretStore(ethPath_))
+    idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
 {}
 
 RingAccount::~RingAccount()
@@ -165,9 +174,11 @@ RingAccount::newIncomingCall(const std::string& from)
         if (not call) {
             RING_WARN("newIncomingCall: discarding deleted call");
             call_it = pendingSipCalls_.erase(call_it);
-        } else if (call->getPeerNumber() == from) {
-            pendingSipCalls_.erase(call_it);
+        } else if (call->getPeerNumber() == from || (call_it->from_cert and
+                                                     call_it->from_cert->issuer and
+                                                     call_it->from_cert->issuer->getId().toString() == from)) {
             RING_DBG("newIncomingCall: found matching call for %s", from.c_str());
+            pendingSipCalls_.erase(call_it);
             return call;
         } else {
             ++call_it;
@@ -191,90 +202,121 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    const auto toH = dht::InfoHash(toUri);
+
+    call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> weak_call = call;
-    manager.addTask([shared_this, weak_call, toUri] {
-        auto call = weak_call.lock();
 
-        if (not call) {
-            call->onFailure();
-            return false;
-        }
+    auto treatedDevices_ = std::make_shared<std::set<dht::InfoHash>>();
 
-        // Create an ICE transport for SIP channel
-        std::shared_ptr<IceTransport> ice {};
+    // Find listening Ring devices for this account
+    shared_this->dht_.get<DeviceAnnouncement>(toH, [=](DeviceAnnouncement&& dev) {
+        if (dev.from != toH)
+            return true;
+        if (not treatedDevices_->emplace(dev.dev).second)
+            return true;
+        RING_WARN("DeviceAnnouncement callback %s", dev.dev.toString().c_str());
 
-        try {
-            ice = shared_this->createIceTransport(("sip:" + call->getCallId()).c_str(),
-                                                  ICE_COMPONENTS, true, shared_this->getIceOptions());
-        } catch (std::runtime_error& e) {
-            RING_ERR("%s", e.what());
-            call->onFailure();
-            return false;
-        }
+        runOnMainThread([=](){
+            if (auto call = weak_call.lock()) {
+                RING_WARN("[call %s] Found device %s", call->getCallId().c_str(), dev.dev.toString().c_str());
 
-        auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
-
-        /* First step: wait for an initialized ICE transport for SIP channel */
-        if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
-            RING_DBG("ice init failed (or timeout)");
-            call->onFailure();
-            return false;
-        }
-
-        if (not ice->isInitialized())
-            return true; // process task again!
-
-        /* Next step: sent the ICE data to peer through DHT */
-        const dht::Value::Id callvid  = udist(shared_this->rand_);
-        const dht::Value::Id vid  = udist(shared_this->rand_);
-        const auto toH = dht::InfoHash(toUri);
-        const auto callkey = dht::InfoHash::get("callto:" + toUri);
-        dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
-        val.id = vid;
-
-        call->setState(Call::ConnectionState::TRYING);
-        shared_this->dht_.putEncrypted(
-            callkey, toH,
-            std::move(val),
-            [=](bool ok) { // Put complete callback
-                if (!ok) {
-                    RING_WARN("Can't put ICE descriptor on DHT");
-                    if (auto call = weak_call.lock())
-                        call->onFailure();
-                } else
-                    RING_DBG("Successfully put ICE descriptor on DHT");
-            }
-        );
-
-        auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
-            callkey,
-            [=] (dht::IceCandidates&& msg) {
-                if (msg.id != callvid or msg.from != toH)
-                    return true;
-                RING_WARN("ICE request replied from DHT peer %s\n%s", toH.toString().c_str(),
-                          std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
-                if (auto call = weak_call.lock())
-                    call->setState(Call::ConnectionState::PROGRESSING);
-                if (!ice->start(msg.ice_data)) {
-                    call->onFailure();
-                    return true;
+                auto& manager = Manager::instance();
+                auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
+                                                                              Call::CallType::OUTGOING);
+                std::weak_ptr<SIPCall> weak_dev_call = dev_call;
+                dev_call->setIPToIP(true);
+                dev_call->setSecure(isTlsEnabled());
+                auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+                                              ICE_COMPONENTS, true, getIceOptions());
+                if (not ice) {
+                    RING_WARN("Can't create ICE");
+                    dev_call->removeCall();
+                    return;
                 }
-                return false;
+
+                call->addSubCall(dev_call);
+
+                auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
+
+                manager.addTask([shared_this, weak_dev_call, ice, iceInitTimeout, toUri, dev] {
+                    auto call = weak_dev_call.lock();
+
+                    if (not call)
+                        return false;
+
+                    if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
+                        RING_DBG("ice init failed (or timeout)");
+                        call->onFailure();
+                        return false;
+                    }
+
+                    if (not ice->isInitialized())
+                        return true; // process task again!
+
+                    RING_WARN("ICE initialised");
+
+                    // Next step: sent the ICE data to peer through DHT
+                    const dht::Value::Id callvid  = udist(shared_this->rand_);
+                    const dht::Value::Id vid  = udist(shared_this->rand_);
+                    const auto callkey = dht::InfoHash::get("callto:" + dev.dev.toString());
+                    dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
+                    val.id = vid;
+
+                    //RING_WARN("ICE initialised");
+                    shared_this->dht_.putEncrypted(
+                        callkey, dev.dev,
+                        std::move(val),
+                        [=](bool ok) { // Put complete callback
+                            if (!ok) {
+                                RING_WARN("Can't put ICE descriptor on DHT");
+                                if (auto call = weak_dev_call.lock())
+                                    call->onFailure();
+                            } else
+                                RING_DBG("Successfully put ICE descriptor on DHT");
+                        }
+                    );
+
+                    auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
+                        callkey,
+                        [=] (dht::IceCandidates&& msg) {
+                            if (msg.id != callvid or msg.from != dev.dev)
+                                return true;
+                            RING_WARN("ICE request replied from DHT peer %s\n%s", dev.dev.toString().c_str(),
+                                      std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+                            if (auto call = weak_dev_call.lock())
+                                call->setState(Call::ConnectionState::PROGRESSING);
+                            if (!ice->start(msg.ice_data)) {
+                                call->onFailure();
+                                return true;
+                            }
+                            return false;
+                        }
+                    );
+
+                    shared_this->pendingCalls_.emplace_back(PendingCall{
+                        std::chrono::steady_clock::now(),
+                        ice, weak_dev_call,
+                        std::move(listenKey),
+                        callkey, dev.dev
+                    });
+                    return false;
+                });
             }
-        );
-
-        shared_this->pendingCalls_.emplace_back(PendingCall{
-            std::chrono::steady_clock::now(),
-            ice, weak_call,
-            std::move(listenKey),
-            callkey, toH
         });
-
-        return false;
+        return true;
+    }, [=](bool ok){
+        RING_WARN("newOutgoingCall: found %lu devices", treatedDevices_->size());
+        if (treatedDevices_->empty()) {
+            if (auto call = weak_call.lock()) {
+                call->onFailure();
+            }
+        }
     });
 
     return call;
@@ -404,6 +446,7 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         return false;
     }
 
+    RING_ERR("Sending SIP invite");
     if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
         RING_ERR("Unable to send invite message for this call");
         return false;
@@ -416,6 +459,9 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
 void RingAccount::serialize(YAML::Emitter &out)
 {
+    if (registrationState_ == RegistrationState::INITIALIZING)
+        return;
+
     out << YAML::BeginMap;
     SIPAccountBase::serialize(out);
     out << YAML::Key << Conf::DHT_PORT_KEY << YAML::Value << dhtPort_;
@@ -423,6 +469,11 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_HISTORY << YAML::Value << allowPeersFromHistory_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
+
+    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
+    out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
+    out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
+    out << YAML::Key << DRing::Account::ConfProperties::ETH::ACCOUNT << YAML::Value << ethAccount_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -437,59 +488,172 @@ void RingAccount::unserialize(const YAML::Node &node)
     using yaml_utils::parseValue;
 
     SIPAccountBase::unserialize(node);
-
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
+
+    try {
+        parseValue(node, DRing::Account::ConfProperties::ETH::ACCOUNT, ethAccount_);
+    } catch (const std::exception& e) {
+        RING_WARN("can't read eth account: %s", e.what());
+    }
+
+    try {
+        parseValue(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_);
+    } catch (const std::exception& e) {
+        RING_WARN("can't read archive path: %s", e.what());
+    }
+
+    try {
+        parseValue(node, Conf::RING_ACCOUNT_RECEIPT, receipt_);
+        auto receipt_sig = node[Conf::RING_ACCOUNT_RECEIPT_SIG].as<YAML::Binary>();
+        receiptSignature_ = {receipt_sig.data(), receipt_sig.data()+receipt_sig.size()};
+    } catch (const std::exception& e) {
+        RING_WARN("can't read receipt: %s", e.what());
+    }
+
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
 
-    checkIdentityPath();
+    loadAccount();
 }
 
 void
-RingAccount::checkIdentityPath()
+RingAccount::createRingDevice(const dht::crypto::Identity& id)
 {
-    if (not tlsPrivateKeyFile_.empty() and not tlsCertificateFile_.empty()) {
-        loadIdentity();
-        return;
+    RING_WARN("createRingDevice");
+    auto dev_id = dht::crypto::generateIdentity("Ring device", id);
+    if (!dev_id.first || !dev_id.second) {
+        throw VoipLinkException("Can't generate identity for this account.");
     }
+    idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
+    fileutils::check_dir(idPath_.c_str(), 0700);
 
-    const auto idPath = fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID();
-    tlsPrivateKeyFile_ = idPath + DIR_SEPARATOR_STR "dht.key";
-    tlsCertificateFile_ = idPath + DIR_SEPARATOR_STR "dht.crt";
-    loadIdentity();
+    // save the chain including CA
+    saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "dht");
+    tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
+    tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+    tlsPassword_ = {};
+    identity_ = dev_id;
+    ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
+
+    receipt_ = makeReceipt(id);
+    RING_WARN("createRingDevice with %s", id.first->getPublicKey().getId().toString().c_str());
+    receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
 }
 
-dev::Address
-RingAccount::loadEthAccount()
+void
+RingAccount::initRingDevice(const ArchiveContent& a)
 {
-    auto keys = store_->keys();
-    RING_WARN("Ethereum: %lu keys in wallet", keys.size());
-    if (keys.empty()) {
-        dev::KeyPair keypair {dev::Secret::random()};
-        store_->importSecret(keypair.secret().ref(), "");
-        ethAccount_ = dht::InfoHash(keypair.address().asArray()).toString();
-        RING_WARN("Created key: %s", ethAccount_.c_str());
-        return keypair.address();
-    } else {
-        for (const auto& k : keys) {
-            dht::InfoHash h {store_->getAddress(k).asArray()};
-            ethAccount_ = h.toString();
-            //auto a = store_->getAddress(k);
-            RING_WARN("Ethereum account: %s", ethAccount_.c_str());
-            break;
-        }
+    RING_WARN("initRingDevice");
+    SIPAccountBase::setAccountDetails(a.config);
+    parseInt(a.config, Conf::CONFIG_DHT_PORT, dhtPort_);
+    parseBool(a.config, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
+    parseBool(a.config, DRing::Account::ConfProperties::ALLOW_CERT_FROM_HISTORY, allowPeersFromHistory_);
+    parseBool(a.config, DRing::Account::ConfProperties::ALLOW_CERT_FROM_CONTACT, allowPeersFromContact_);
+    parseBool(a.config, DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_);
+    ringAccountId_ = a.id.second->getId().toString();
+    username_ = RING_URI_PREFIX+ringAccountId_;
+    ethAccount_ = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
+    createRingDevice(a.id);
+}
+
+std::string
+RingAccount::makeReceipt(const dht::crypto::Identity& id)
+{
+    RING_WARN("making receipt");
+    DeviceAnnouncement announcement;
+    announcement.dev = identity_.second->getId();
+    dht::Value ann_val {announcement};
+    ann_val.sign(*id.first);
+
+    std::ostringstream is;
+    is << "{\"id\":\"" << id.second->getId()
+       << "\",\"dev\":\"" << identity_.second->getId()
+       << "\",\"eth\":\"" << ethAccount_
+       << "\",\"announce\":\"" << base64::encode(ann_val.getPacked()) << "\"}";
+
+    announce_ = std::make_shared<dht::Value>(std::move(ann_val));
+    return is.str();
+}
+
+bool
+RingAccount::hasSignedReceipt()
+{
+    if (receipt_.empty() or receiptSignature_.empty())
+        return false;
+
+    if (not identity_.first or not identity_.second) {
+        RING_WARN("hasSignedReceipt() no identity");
+        return false;
     }
+
+    auto pk = identity_.second->issuer->getPublicKey();
+    RING_WARN("hasSignedReceipt() with %s", pk.getId().toString().c_str());
+    if (!pk.checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_)) {
+        RING_WARN("hasSignedReceipt() signature check failed");
+        return false;
+    }
+
+    Json::Value root;
+    Json::Reader reader;
+    if (!reader.parse(receipt_, root))
+        return false;
+
+    auto dev_id = root["dev"].asString();
+    if (dev_id != identity_.second->getId().toString()) {
+        RING_WARN("hasSignedReceipt() dev_id not matching");
+        return false;
+    }
+    auto id = root["id"].asString();
+    if (id != pk.getId().toString()) {
+        RING_WARN("hasSignedReceipt() id not matching");
+        return false;
+    }
+
+    dht::Value announce_val;
+    try {
+        auto announce = base64::decode(root["announce"].asString());
+        msgpack::object_handle announce_msg = msgpack::unpack((const char*)announce.data(), announce.size());
+        //dht::Value announce_val (announce_msg.get());
+        announce_val.msgpack_unpack(announce_msg.get());
+        if (not announce_val.checkSignature()) {
+            RING_WARN("hasSignedReceipt() announce signature check failed");
+            return false;
+        }
+        DeviceAnnouncement da;
+        da.unpackValue(announce_val);
+        if (da.from.toString() != id or da.dev.toString() != dev_id) {
+            RING_WARN("hasSignedReceipt() announce not matching");
+            return false;
+        }
+    } catch (const std::exception& e) {
+        RING_WARN("hasSignedReceipt(): can't read announce: %s", e.what());
+        return false;
+    }
+
+    ringAccountId_ = id;
+    ringDeviceId_ = identity_.first->getPublicKey().getId().toString();
+    username_ = RING_URI_PREFIX + id;
+    announce_ = std::make_shared<dht::Value>(std::move(announce_val));
+
+    auto eth_addr = root["eth"].asString();
+    if (eth_addr != ethAccount_) {
+        RING_WARN("hasSignedReceipt() eth_addr not matching");
+        ethAccount_ = eth_addr;
+    }
+
+    RING_WARN("hasSignedReceipt() -> true");
+    return true;
 }
 
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
-    loadEthAccount();
+    RING_WARN("loadIdentity() %s %s", tlsCertificateFile_.c_str(), tlsPrivateKeyFile_.c_str());
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
     try {
@@ -501,41 +665,225 @@ RingAccount::loadIdentity()
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
 #endif
+        auto crt_id = dht_cert.getId();
+        if (crt_id != dht_key.getPublicKey().getId())
+            return {};
+
+        identity_ = {
+            std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
+            std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
+        };
     }
     catch (const std::exception& e) {
         RING_ERR("Error loading identity: %s", e.what());
-        auto ca = dht::crypto::generateIdentity("Ring CA");
-        if (!ca.first || !ca.second) {
-            throw VoipLinkException("Can't generate CA for this account.");
-        }
-        auto id = dht::crypto::generateIdentity("Ring", ca);
-        if (!id.first || !id.second) {
-            throw VoipLinkException("Can't generate identity for this account.");
-        }
-        idPath_ = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID();
-        fileutils::check_dir(idPath_.c_str(), 0700);
-        fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "ca.key", ca.first->serialize(), 0600);
-
-        // save the chain including CA
-        saveIdentity(id, idPath_ + DIR_SEPARATOR_STR "dht");
-#if TARGET_OS_IPHONE
-        tlsCertificateFile_ = "dht.crt";
-        tlsPrivateKeyFile_ =  "dht.key";
-#else
-        tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
-        tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
-#endif
-        tlsPassword_ = {};
-
-        username_ = RING_URI_PREFIX+id.second->getId().toString();
-        return id;
     }
 
-    username_ = RING_URI_PREFIX+dht_cert.getId().toString();
-    return {
-        std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
-        std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
-    };
+    return identity_;
+}
+
+RingAccount::ArchiveContent
+RingAccount::readArchive(const std::string& pwd) const
+{
+    RING_WARN("readArchive()");
+
+    // Read file
+    std::vector<uint8_t> file = fileutils::loadFile(archivePath_);
+
+    // Decrypt
+    file = dht::crypto::aesDecrypt(file, pwd);
+
+    // Load
+    return loadArchive(file);
+}
+
+
+RingAccount::ArchiveContent
+RingAccount::loadArchive(const std::vector<uint8_t>& dat)
+{
+    ArchiveContent c;
+    RING_WARN("loadArchive()");
+
+    std::vector<uint8_t> file;
+
+    // Decompress
+    try {
+        file = archiver::decompress(dat);
+    } catch (const std::exception& ex) {
+        RING_ERR("Decompression failed: %s", ex.what());
+        throw std::runtime_error("failed to read file.");
+    }
+
+    // Decode string
+    std::string decoded {file.begin(), file.end()};
+    Json::Value value;
+    Json::Reader reader;
+    if (!reader.parse(decoded.c_str(),value)) {
+        RING_ERR("Failed to parse %s", reader.getFormattedErrorMessages().c_str());
+        throw std::runtime_error("failed to parse JSON.");
+    }
+
+    // Import content
+    try {
+        c.config = DRing::getAccountTemplate(ACCOUNT_TYPE);
+        for (Json::ValueIterator itr = value.begin() ; itr != value.end() ; itr++) {
+            if (itr->asString().empty())
+                continue;
+            if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
+            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+            } else if (itr.key().asString().compare(Conf::RING_CA_KEY) == 0) {
+                c.ca_key = {base64::decode(itr->asString())};
+            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_KEY) == 0) {
+                c.id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
+            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CERT) == 0) {
+                c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
+            } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
+                c.eth_key = base64::decode(itr->asString());
+            } else
+                c.config[itr.key().asString()] = itr->asString();
+        }
+    } catch (const std::exception& ex) {
+        RING_ERR("Can't parse JSON: %s", ex.what());
+    }
+
+    return c;
+}
+
+
+std::vector<uint8_t>
+RingAccount::makeArchive(const ArchiveContent& archive) const
+{
+    RING_WARN("makeArchive()");
+
+    Json::Value root;
+
+    auto details = getAccountDetails();
+    for (auto it : details) {
+        if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0) {
+            // Ringtone path is not exportable
+        } else if (it.first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
+                it.first.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0 ||
+                it.first.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+            // replace paths by the files content
+            if (not it.second.empty()) {
+                try {
+                    root[it.first] = base64::encode(fileutils::loadFile(it.second));
+                } catch (...) {}
+            }
+        } else
+            root[it.first] = it.second;
+    }
+
+    root[Conf::RING_CA_KEY] = base64::encode(archive.ca_key.serialize());
+    root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
+    root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
+    root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+
+    Json::FastWriter fastWriter;
+    std::string output = fastWriter.write(root);
+
+    // Compress
+    return archiver::compress(output);
+}
+
+void
+RingAccount::saveArchive(const ArchiveContent& archive_content, const std::string& pwd)
+{
+    std::vector<uint8_t> archive;
+    try {
+        archive = makeArchive(archive_content);
+    } catch (const std::runtime_error& ex) {
+        RING_ERR("Can't export archive: %s", ex.what());
+        return;
+    }
+
+    // Encrypt using provided password
+    auto encrypted = dht::crypto::aesEncrypt(archive, pwd);
+
+    // Write
+    try {
+        if (archivePath_.empty())
+            archivePath_ = idPath_ + DIR_SEPARATOR_STR "export.gz";
+        fileutils::saveFile(archivePath_, encrypted);
+    } catch (const std::runtime_error& ex) {
+        RING_ERR("Export failed: %s", ex.what());
+        return;
+    }
+}
+
+std::pair<std::vector<uint8_t>, dht::InfoHash>
+RingAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
+{
+    // Compute time seed
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto tseed = now.count() / std::chrono::duration_cast<std::chrono::seconds>(EXPORT_KEY_RENEWAL_TIME).count();
+    if (previous)
+        tseed--;
+    std::stringstream ss;
+    ss << std::hex << tseed;
+    auto tseed_str = ss.str();
+
+    // Generate key for archive encryption, using PIN as the salt
+    std::vector<uint8_t> salt_key;
+    salt_key.reserve(pin.size() + tseed_str.size());
+    salt_key.insert(salt_key.end(), pin.begin(), pin.end());
+    salt_key.insert(salt_key.end(), tseed_str.begin(), tseed_str.end());
+    auto key = dht::crypto::stretchKey(password, salt_key, 256/8);
+
+    // Generate public storage location as SHA1(key).
+    auto loc = dht::InfoHash::get(key);
+
+    return {key, loc};
+}
+
+void
+RingAccount::addDevice(const std::string& password)
+{
+    auto this_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+    ThreadPool::instance().run([this_,password]() {
+        std::vector<uint8_t> key;
+        dht::InfoHash loc;
+        std::string pin_str;
+        ArchiveContent a;
+        try {
+            RING_DBG("Exporting Ring account %s", this_->getAccountID().c_str());
+
+            a = this_->readArchive(password);
+
+            // Generate random 32bits PIN
+            std::uniform_int_distribution<uint32_t> dis;
+            auto pin = dis(this_->rand_);
+            // Manipulate PIN as hex
+            std::stringstream ss;
+            ss << std::hex << pin;
+            pin_str = ss.str();
+            std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::toupper);
+
+            std::tie(key, loc) = computeKeys(password, pin_str);
+        } catch (const std::exception& e) {
+            RING_ERR("Can't add device: %s", e.what());
+            emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 1, "");
+            return;
+        }
+        try {
+            auto archive = this_->makeArchive(a);
+            auto encrypted = dht::crypto::aesEncrypt(archive, key);
+            if (not this_->dht_.isRunning())
+                throw std::runtime_error("DHT is not running..");
+            this_->dht_.put(loc, encrypted, [this_,pin_str](bool ok) {
+                RING_WARN("Done publishing account archive: %s", ok ? "success" : "failure");
+                if (ok)
+                    emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 0, pin_str);
+                else
+                    emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
+            });
+            RING_WARN("Adding new device with PIN: %s at %s (size %zu)", pin_str.c_str(), loc.toString().c_str(), encrypted.size());
+        } catch (const std::exception& e) {
+            RING_ERR("Can't add device: %s", e.what());
+            emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
+            return;
+        }
+    });
 }
 
 void
@@ -545,6 +893,199 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
         fileutils::saveFile(path + ".key", id.first->serialize(), 0600);
     if (id.second)
         fileutils::saveFile(path + ".crt", id.second->getPacked(), 0600);
+}
+
+void
+RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin)
+{
+    setRegistrationState(RegistrationState::INITIALIZING);
+
+    // launch dedicated dht instance
+    if (dht_.isRunning()) {
+        RING_ERR("DHT already running (stopping it first).");
+        dht_.join();
+    }
+    dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
+        RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
+    });
+    dht_.run((in_port_t)dhtPortUsed_, {}, true);
+    dht_.bootstrap(loadNodes());
+    auto bootstrap = loadBootstrap();
+    if (not bootstrap.empty())
+        dht_.bootstrap(bootstrap);
+
+    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto state_old = std::make_shared<std::pair<bool, bool>>(false, true);
+    auto state_new = std::make_shared<std::pair<bool, bool>>(false, true);
+    auto found = std::make_shared<bool>(false);
+
+    auto archiveFound = [w,found,archive_password](const ArchiveContent& a) {
+        *found =  true;
+        if (auto this_ = w.lock()) {
+            this_->initRingDevice(a);
+            this_->saveArchive(a, archive_password);
+            this_->registrationState_ = RegistrationState::UNREGISTERED;
+            Manager::instance().saveConfig();
+            this_->doRegister();
+        }
+    };
+    auto searchEnded = [w,found,state_old,state_new](){
+        if (*found)
+            return;
+        if (state_old->first && state_new->first) {
+            bool network_error = !state_old->second && !state_new->second;
+            RING_WARN("Failure looking for archive on DHT: %s", network_error ? "network error" : "not found");
+            if (auto this_ = w.lock()) {
+                this_->setRegistrationState(network_error ? RegistrationState::ERROR_NETWORK : RegistrationState::ERROR_GENERIC);
+                runOnMainThread([=]() {
+                    Manager::instance().removeAccount(this_->getAccountID());
+                });
+            }
+        }
+    };
+
+    auto search = [w,found,archive_password,archive_pin,archiveFound,searchEnded](bool previous, std::shared_ptr<std::pair<bool, bool>>& state) {
+        std::vector<uint8_t> key;
+        dht::InfoHash loc;
+
+        // compute archive location and decryption keys
+        try {
+            std::tie(key, loc) = computeKeys(archive_password, archive_pin, previous);
+            RING_DBG("Trying to load account from DHT with %s at %s", archive_pin.c_str(), loc.toString().c_str());
+            if (auto this_ = w.lock()) {
+                this_->dht_.get(loc, [w,key,found,archive_password,archiveFound](std::shared_ptr<dht::Value> val) {
+                    std::vector<uint8_t> decrypted;
+                    try {
+                        decrypted = dht::crypto::aesDecrypt(val->data, key);
+                    } catch (const std::exception& ex) {
+                        return true;
+                    }
+                    RING_DBG("Found archive on the DHT");
+                    runOnMainThread([=]() {
+                        try {
+                            archiveFound(loadArchive(decrypted));
+                        } catch (const std::exception& e) {
+                            RING_WARN("Error reading archive: %s", e.what());
+                            if (auto this_ = w.lock()) {
+                                this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                                Manager::instance().removeAccount(this_->getAccountID());
+                            }
+                        }
+                    });
+                    return not *found;
+                }, [=](bool ok) {
+                    RING_DBG("DHT archive search ended at %s", loc.toString().c_str());
+                    state->first = true;
+                    state->second = ok;
+                    searchEnded();
+                });
+            }
+        } catch (const std::exception& e) {
+            RING_ERR("Error computing keys: %s", e.what());
+            state->first = true;
+            state->second = true;
+            searchEnded();
+            return;
+        }
+    };
+
+    ThreadPool::instance().run(std::bind(search, true, state_old));
+    ThreadPool::instance().run(std::bind(search, false, state_new));
+}
+
+void
+RingAccount::createAccount(const std::string& archive_password)
+{
+    RING_WARN("Creating new Ring account");
+    setRegistrationState(RegistrationState::INITIALIZING);
+    auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
+    ThreadPool::instance().run([sthis,archive_password](){
+        ArchiveContent a;
+        auto& this_ = *sthis;
+
+        RING_WARN("Generating ETH key");
+        auto keypair = dev::KeyPair::create();
+        this_.ethAccount_ = keypair.address().hex();
+        a.eth_key = keypair.secret().makeInsecure().asBytes();
+
+        try {
+            if (this_.identity_.first and this_.identity_.second) {
+                RING_WARN("Converting certificate from old ring account");
+                a.id = this_.identity_;
+                try {
+                    a.ca_key = fileutils::loadFile(this_.idPath_ + DIR_SEPARATOR_STR "ca.key");
+                } catch (...) {}
+            } else {
+                auto ca = dht::crypto::generateIdentity("Ring CA");
+                if (!ca.first || !ca.second) {
+                    throw VoipLinkException("Can't generate CA for this account.");
+                }
+                a.id = dht::crypto::generateIdentity("Ring", ca, 4096, true);
+                if (!a.id.first || !a.id.second) {
+                    throw VoipLinkException("Can't generate identity for this account.");
+                }
+                RING_WARN("New account: CA: %s, RingID: %s", ca.second->getId().toString().c_str(), a.id.second->getId().toString().c_str());
+                a.ca_key = std::move(*ca.first);
+            }
+            this_.ringAccountId_ = a.id.second->getId().toString();
+            this_.createRingDevice(a.id);
+            this_.username_ = RING_URI_PREFIX+this_.ringAccountId_;
+            this_.saveArchive(a, archive_password);
+        } catch (...) {
+            this_.setRegistrationState(RegistrationState::ERROR_GENERIC);
+            runOnMainThread([sthis]() {
+                Manager::instance().removeAccount(sthis->getAccountID());
+            });
+        }
+        this_.registrationState_ = RegistrationState::UNREGISTERED;
+        Manager::instance().saveConfig();
+        this_.doRegister();
+    });
+}
+
+void
+RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
+{
+    if (registrationState_ == RegistrationState::INITIALIZING)
+        return;
+
+    RING_WARN("RingAccount::loadAccount");
+    try {
+        loadIdentity();
+
+        if (hasSignedReceipt()) {
+            if (archivePath_.empty() or not fileutils::isFile(archivePath_))
+                RING_WARN("Account archive not found, won't be able to add new devices.");
+            // normal account loading path
+            return;
+        }
+
+        if (archivePath_.empty() or not fileutils::isFile(archivePath_)) {
+            // no receipt or archive, creating new account
+            if (archive_password.empty()) {
+                RING_WARN("Password needed to create archive");
+                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            } else {
+                if (archive_pin.empty()) {
+                    createAccount(archive_password);
+                } else {
+                    loadAccountFromDHT(archive_password, archive_pin);
+                }
+            }
+        } else {
+            if (archive_password.empty()) {
+                RING_WARN("Password needed to read archive");
+                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            } else {
+                RING_WARN("Archive present but no valid receipt: creating new device");
+                initRingDevice(readArchive(archive_password));
+                Manager::instance().saveConfig();
+            }
+        }
+    } catch (const std::exception& e) {
+        RING_WARN("Error loading account: %s", e.what());
+        setRegistrationState(RegistrationState::ERROR_GENERIC);
+    }
 }
 
 void
@@ -561,7 +1102,15 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
-    checkIdentityPath();
+
+    std::string archive_password;
+    std::string archive_pin;
+    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
+    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN,      archive_pin);
+    std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
+    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
+
+    loadAccount(archive_password, archive_pin);
 }
 
 std::map<std::string, std::string>
@@ -570,6 +1119,7 @@ RingAccount::getAccountDetails() const
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
 
     /* these settings cannot be changed (read only), but clients should still be
      * able to read what they are */
@@ -589,7 +1139,7 @@ RingAccount::getAccountDetails() const
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
 
-    a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
+    //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
     a.emplace(DRing::Account::ConfProperties::ETH::ACCOUNT,                ethAccount_);
 
     return a;
@@ -657,7 +1207,7 @@ RingAccount::handlePendingCallList()
 
 pj_status_t
 check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t* cert_list,
-                       unsigned cert_num)
+                       unsigned cert_num, std::shared_ptr<dht::crypto::Certificate>& cert_out)
 {
     if (cert_num == 0) {
         RING_ERR("[peer:%s] No certificate", from.toString().c_str());
@@ -674,8 +1224,12 @@ check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t
         return PJ_SSL_CERT_EUNTRUSTED;
     }
 
-    std::vector<uint8_t> crt_blob(cert_list[0].data, cert_list[0].data + cert_list[0].size);
-    dht::crypto::Certificate crt(crt_blob);
+    // Assumes the chain has already been checked by GnuTLS.
+    std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
+    crt_data.reserve(cert_num);
+    for (unsigned i=0; i<cert_num; i++)
+        crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
+    dht::crypto::Certificate crt(crt_data);
 
     const auto tls_id = crt.getId();
     if (crt.getUID() != tls_id.toString()) {
@@ -690,6 +1244,9 @@ check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t
     }
 
     RING_DBG("[peer:%s] Certificate verified", from.toString().c_str());
+
+    cert_out = std::make_shared<dht::crypto::Certificate>(std::move(crt));
+
     return PJ_SUCCESS;
 }
 
@@ -720,18 +1277,38 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
     auto remote_h = pc.from;
-    auto id(loadIdentity());
+    if (not identity_.first or not identity_.second)
+        throw std::runtime_error("No identity configured for this account.");
 
+    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
     tls::TlsParams tlsParams {
         .ca_list = "",
-        .cert = id.second,
-        .cert_key = id.first,
+        .cert = identity_.second,
+        .cert_key = identity_.first,
         .dh_params = dhParams_,
         .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        .cert_check = [remote_h](unsigned status, const gnutls_datum_t* cert_list,
-                                 unsigned cert_num) -> pj_status_t {
+        .cert_check = [w,call,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
             try {
-                return check_peer_certificate(remote_h, status, cert_list, cert_num);
+                if (auto sthis = w.lock()) {
+                    auto& this_ = *sthis;
+                    std::shared_ptr<dht::crypto::Certificate> peer_cert;
+                    auto ret = check_peer_certificate(remote_h, status, cert_list, cert_num, peer_cert);
+                    if (ret == PJ_SUCCESS and peer_cert) {
+                        std::lock_guard<std::mutex> lock(this_.callsMutex_);
+                        for (auto& pscall : this_.pendingSipCalls_) {
+                            if (auto pcall = pscall.call.lock()) {
+                                if (pcall == call and not pscall.from_cert) {
+                                    RING_DBG("[call:%s] got peer certificate from TLS negotiation", call->getCallId().c_str());
+                                    tls::CertificateStore::instance().pinCertificate(peer_cert);
+                                    pscall.from_cert = peer_cert;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    return ret;
+                } else
+                    return PJ_SSL_CERT_EUNTRUSTED;
             } catch (const std::exception& e) {
                 RING_ERR("[peer:%s] TLS certificate check exception: %s",
                          remote_h.toString().c_str(), e.what());
@@ -739,9 +1316,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             }
         }
     };
-    auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
-                                                            tlsParams);
-    call->setTransport(tr);
+    call->setTransport(link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
+                                                            tlsParams));
 
     // Notify of fully available connection between peers
     RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
@@ -773,6 +1349,7 @@ RingAccount::mapPortUPnP()
          */
         uint16_t port_used;
         std::lock_guard<std::mutex> lock(upnp_mtx);
+        upnp_->removeMappings();
         added = upnp_->addAnyMapping(dhtPort_, ring::upnp::PortType::UDP, false, &port_used);
         if (added) {
             if (port_used != dhtPort_)
@@ -801,6 +1378,10 @@ RingAccount::doRegister()
         generateDhParams();
     }
 
+    // looking for account over the DHT
+    if (registrationState_ == RegistrationState::INITIALIZING)
+        return;
+
     /* if UPnP is enabled, then wait for IGD to complete registration */
     if ( upnpEnabled_ ) {
         auto shared = shared_from_this();
@@ -817,24 +1398,50 @@ RingAccount::doRegister()
 
 }
 
-static constexpr const char*
-dhtStatusStr(dht::NodeStatus status) {
-    return status == dht::NodeStatus::Connected  ? "connected"  : (
-           status == dht::NodeStatus::Connecting ? "connecting" :
-                                                    "disconnected");
+
+std::vector<std::pair<sockaddr_storage, socklen_t>>
+RingAccount::loadBootstrap() const
+{
+    std::vector<std::pair<sockaddr_storage, socklen_t>> bootstrap;
+    if (!hostname_.empty()) {
+        std::stringstream ss(hostname_);
+        std::string node_addr;
+        while (std::getline(ss, node_addr, ';')) {
+            auto ips = ip_utils::getAddrList(node_addr);
+            if (ips.empty()) {
+                IpAddr resolved(node_addr);
+                if (resolved) {
+                    if (resolved.getPort() == 0)
+                        resolved.setPort(DHT_DEFAULT_PORT);
+                    bootstrap.emplace_back(resolved, resolved.getLength());
+                }
+            } else {
+                for (auto& ip : ips) {
+                    if (ip.getPort() == 0)
+                        ip.setPort(DHT_DEFAULT_PORT);
+                    bootstrap.emplace_back(ip, ip.getLength());
+                }
+            }
+        }
+        for (auto ip : bootstrap)
+            RING_DBG("Bootstrap node: %s", IpAddr(ip.first).toString(true).c_str());
+    }
+    return bootstrap;
 }
 
 void
 RingAccount::doRegister_()
 {
     try {
+        if (not identity_.first or not identity_.second)
+            throw std::runtime_error("No identity configured for this account.");
+
         loadTreatedCalls();
         loadTreatedMessages();
         if (dht_.isRunning()) {
             RING_ERR("DHT already running (stopping it first).");
             dht_.join();
         }
-        auto identity = loadIdentity();
 
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
@@ -856,7 +1463,7 @@ RingAccount::doRegister_()
                 setRegistrationState(state);
             });
 
-        dht_.run((in_port_t)dhtPortUsed_, identity, false);
+        dht_.run((in_port_t)dhtPortUsed_, identity_, false);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             auto& store = tls::CertificateStore::instance();
@@ -868,7 +1475,7 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#if 1 // enable if dht_ logging is needed
+#if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
             [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
             [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
@@ -882,36 +1489,21 @@ RingAccount::doRegister_()
         setRegistrationState(RegistrationState::TRYING);
 
         dht_.bootstrap(loadNodes());
-        if (!hostname_.empty()) {
-            std::stringstream ss(hostname_);
-            std::vector<std::pair<sockaddr_storage, socklen_t>> bootstrap;
-            std::string node_addr;
-            while (std::getline(ss, node_addr, ';')) {
-                auto ips = ip_utils::getAddrList(node_addr);
-                if (ips.empty()) {
-                    IpAddr resolved(node_addr);
-                    if (resolved) {
-                        if (resolved.getPort() == 0)
-                            resolved.setPort(DHT_DEFAULT_PORT);
-                        bootstrap.emplace_back(resolved, resolved.getLength());
-                    }
-                } else {
-                    for (auto& ip : ips) {
-                        if (ip.getPort() == 0)
-                            ip.setPort(DHT_DEFAULT_PORT);
-                        bootstrap.emplace_back(ip, ip.getLength());
-                    }
-                }
-            }
-            for (auto ip : bootstrap)
-                RING_DBG("Bootstrap node: %s", IpAddr(ip.first).toString(true).c_str());
+        auto bootstrap = loadBootstrap();
+        if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
+
+        // Put device annoucement
+        if (announce_) {
+            RING_DBG("Announcing device at %s: %s", dht::InfoHash(ringAccountId_).toString().c_str(), announce_->toString().c_str());
+            dht_.put(dht::InfoHash(ringAccountId_), announce_, dht::DoneCallback{}, {}, true);
         }
 
         // Listen for incoming calls
+        auto ringDeviceId = identity_.first->getPublicKey().getId().toString();
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        callKey_ = dht::InfoHash::get("callto:"+dht_.getId().toString());
-        RING_DBG("Listening on callto:%s : %s", dht_.getId().toString().c_str(), callKey_.toString().c_str());
+        callKey_ = dht::InfoHash::get("callto:"+ringDeviceId);
+        RING_DBG("Listening on callto:%s : %s", ringDeviceId.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
@@ -919,6 +1511,8 @@ RingAccount::doRegister_()
                 auto& this_ = *shared;
                 if (msg.from == this_.dht_.getId())
                     return true;
+
+                RING_WARN("ICE candidate from %s.", msg.from.toString().c_str());
 
                 // quick check in case we already explicilty banned this public key
                 auto trustStatus = this_.trust_.getCertificateStatus(msg.from.toString());
@@ -932,40 +1526,40 @@ RingAccount::doRegister_()
                 if (!res.second)
                     return true;
 
-                if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
-                    this_.findCertificate(
-                        msg.from,
-                        [shared, msg](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
-                            if (!cert or cert->getId() != msg.from) {
-                                RING_WARN("Can't find certificate of %s for incoming call.",
-                                          msg.from.toString().c_str());
-                                return;
-                            }
-
-                            tls::CertificateStore::instance().pinCertificate(cert);
-
-                            auto& this_ = *shared;
-                            if (!this_.trust_.isAllowed(*cert)) {
-                                RING_WARN("Discarding incoming DHT call from untrusted peer %s.",
-                                          msg.from.toString().c_str());
-                                return;
-                            }
-
-                            runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg)); });
+                RING_WARN("findCertificate");
+                this_.findCertificate( msg.from,
+                    [shared, msg, trustStatus](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
+                    RING_WARN("findCertificate: found %p", cert.get());
+                    auto& this_ = *shared;
+                    if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
+                        if (!cert or cert->getId() != msg.from) {
+                            RING_WARN("Can't find certificate of %s for incoming call.",
+                                      msg.from.toString().c_str());
+                            return;
                         }
-                    );
-                    return true;
-                }
-                else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::BANNED) {
-                    this_.findCertificate(msg.from.toString().c_str());
-                }
+
+                        tls::CertificateStore::instance().pinCertificate(cert);
+
+                        auto& this_ = *shared;
+                        if (!this_.trust_.isAllowed(*cert)) {
+                            RING_WARN("Discarding incoming DHT call from untrusted peer %s.",
+                                      msg.from.toString().c_str());
+                            return;
+                        }
+
+                        runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), cert); });
+                    } else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::BANNED) {
+                        //this_.findCertificate(msg.from.toString().c_str());
+                        runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), cert); });
+                    }
+                });
                 // public incoming calls allowed or we explicitly authorised this public key
-                runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg)); });
+                //runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), {}); });
                 return true;
             }
         );
 
-        auto inboxKey = dht::InfoHash::get("inbox:"+dht_.getId().toString());
+        auto inboxKey = dht::InfoHash::get("inbox:"+ringAccountId_);
         dht_.listen<dht::TrustRequest>(
             inboxKey,
             [shared](dht::TrustRequest&& v) {
@@ -1027,7 +1621,7 @@ RingAccount::doRegister_()
 }
 
 void
-RingAccount::incomingCall(dht::IceCandidates&& msg)
+RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from_cert)
 {
     auto from = msg.from.toString();
     RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
@@ -1067,7 +1661,8 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
             .call = weak_call,
             .listen_key = {},
             .call_key = {},
-            .from = msg.from
+            .from = msg.from,
+            .from_cert = from_cert
         });
     }
 }
@@ -1075,6 +1670,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg)
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    RING_WARN("doUnregister");
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -1097,18 +1693,15 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
 void
 RingAccount::connectivityChanged()
 {
+    RING_WARN("connectivityChanged");
     if (not isUsable()) {
         // nothing to do
         return;
     }
 
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-    doUnregister([shared](bool /* transport_free */) {
-        if (shared->isUsable())
-            shared->doRegister();
-    });
+    dht_.connectivityChanged();
 }
-
 
 bool
 RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb)
@@ -1166,7 +1759,7 @@ loadIdList(const std::string& path)
     std::set<dht::Value::Id> ids;
     std::ifstream file(path);
     if (!file.is_open()) {
-        RING_WARN("Could not load %s", path.c_str());
+        RING_DBG("Could not load %s", path.c_str());
         return ids;
     }
     std::string line;
@@ -1254,7 +1847,7 @@ RingAccount::loadNodes() const
     {
         std::ifstream file(nodesPath);
         if (!file.is_open()) {
-            RING_ERR("Could not load nodes from %s", nodesPath.c_str());
+            RING_DBG("Could not load nodes from %s", nodesPath.c_str());
             return nodes;
         }
         std::string line;
@@ -1298,12 +1891,12 @@ RingAccount::loadDhParams(const std::string path)
         // writeTime throw exception if file doesn't exist
         auto duration = system_clock::now() - fileutils::writeTime(path);
         if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
-            throw std::runtime_error("too old file");
+            throw std::runtime_error("file too old");
 
         RING_DBG("Loading DhParams from file '%s'", path.c_str());
         return {fileutils::loadFile(path)};
     } catch (const std::exception& e) {
-        RING_WARN("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
+        RING_DBG("Failed to load DhParams file '%s': %s", path.c_str(), e.what());
         if (auto params = tls::DhParams::generate()) {
             try {
                 fileutils::saveFile(path, params.serialize(), 0600);
@@ -1313,6 +1906,7 @@ RingAccount::loadDhParams(const std::string path)
             }
             return params;
         }
+        RING_ERR("Can't generate DH params.");
         return {};
     }
 }
@@ -1328,8 +1922,7 @@ RingAccount::generateDhParams()
 MatchRank
 RingAccount::matches(const std::string &userName, const std::string &server) const
 {
-    auto dhtId = dht_.getId().toString();
-    if (userName == dhtId || server == dhtId) {
+    if (userName == ringAccountId_ || server == ringAccountId_ || userName == ringDeviceId_) {
         RING_DBG("Matching account id in request with username %s", userName.c_str());
         return MatchRank::FULL;
     } else {
@@ -1340,42 +1933,42 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
 std::string
 RingAccount::getFromUri() const
 {
-    const std::string uri = "<sip:" + dht_.getId().toString() + "@ring.dht>";
+    const std::string uri = "<sip:" + ringAccountId_ + "@ring.dht>";
     if (not displayName_.empty())
         return "\"" + displayName_ + "\" " + uri;
+    RING_DBG("getFromUri %s", uri.c_str());
     return uri;
 }
 
 std::string
 RingAccount::getToUri(const std::string& to) const
 {
+    RING_DBG("getToUri %s", to.c_str());
     return "<sips:" + to + ";transport=tls>";
 }
 
 pj_str_t
 RingAccount::getContactHeader(pjsip_transport* t)
 {
-    auto ringid = dht_.getId().toString();
-    if (!t) {
+    if (t) {
+        // FIXME: be sure that given transport is from SipIceTransport
+        auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
+        auto address = tlsTr->getLocalAddress().toString(true);
+        contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
+                                         "%s%s<sips:%s%s%s;transport=tls>",
+                                         displayName_.c_str(),
+                                         (displayName_.empty() ? "" : " "),
+                                         identity_.second->getId().toString().c_str(),
+                                         (address.empty() ? "" : "@"),
+                                         address.c_str());
+    } else {
         RING_ERR("getContactHeader: no SIP transport provided");
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
                                          "%s%s<sips:%s@ring.dht>",
                                          displayName_.c_str(),
                                          (displayName_.empty() ? "" : " "),
-                                         ringid.c_str());
-        return contact_;
+                                         identity_.second->getId().toString().c_str());
     }
-
-    // FIXME: be sure that given transport is from SipIceTransport
-    auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
-    auto address = tlsTr->getLocalAddress();
-    contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                     "%s%s<sips:%s%s%s;transport=tls>",
-                                     displayName_.c_str(),
-                                     (displayName_.empty() ? "" : " "),
-                                     ringid.c_str(),
-                                     (ringid.empty() ? "" : "@"),
-                                     address.toString(true).c_str());
     return contact_;
 }
 

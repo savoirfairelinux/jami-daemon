@@ -3,6 +3,9 @@ BOOST_VERSION := 1_61_0
 BOOST_URL := https://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_$(BOOST_VERSION).tar.bz2
 
 PKGS += boost
+ifdef HAVE_LINUX
+PKGS_FOUND += boost
+endif
 
 BOOST_B2_OPTS := variant=release \
 				 link=static \
