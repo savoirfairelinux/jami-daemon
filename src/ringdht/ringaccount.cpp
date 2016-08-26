@@ -79,6 +79,10 @@ static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 
 static constexpr const char * const RING_URI_PREFIX = "ring:";
+static constexpr const char * DEFAULT_TURN_SERVER = "turn.ring.cx";
+static constexpr const char * DEFAULT_TURN_USERNAME = "ring";
+static constexpr const char * DEFAULT_TURN_PWD = "ring";
+static constexpr const char * DEFAULT_TURN_REALM = "ring";
 
 constexpr const char * const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
@@ -525,6 +529,16 @@ void
 RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
+
+    // Force the SFL turn server if none provided yet
+    if (turnServer_.empty()) {
+        turnServer_ = DEFAULT_TURN_SERVER;
+        turnServerUserName_ = DEFAULT_TURN_USERNAME;
+        turnServerPwd_ = DEFAULT_TURN_PWD;
+        turnServerRealm_ = DEFAULT_TURN_REALM;
+        turnEnabled_ = true;
+    }
+
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
