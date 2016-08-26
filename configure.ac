@@ -518,7 +518,8 @@ PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT])
 
 AC_CHECK_HEADER([cryptopp/cryptlib.h], , AC_MSG_FAILURE([Unable to find the cryptopp headers (you may need to install the dev package).]))
 AS_IF([test "${SYS}" = "mingw32"],[
-    LDFLAGS += " -lcryptopp -lboost_system -lboost_random"
+    LDFLAGS+=" -lcryptopp -lboost_random -lboost_system"
+    CPPFLAGS+="-DBOOST_SYSTEM_NO_DEPRECATED"
 ], [
   AC_CHECK_LIB([cryptopp], [main], [], [
       AC_MSG_FAILURE([cryptopp link test failed.])

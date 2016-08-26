@@ -7,6 +7,27 @@ ifdef HAVE_LINUX
 PKGS_FOUND += boost
 endif
 
+ifdef HAVE_WIN32
+BOOST_B2_OPTS := variant=release \
+				 link=static \
+				 target-os=windows \
+				 threadapi=win32 \
+				 runtime-link=static \
+				 binary-format=pe \
+				 architecture=x86 \
+				 --user-config=user-config.jam \
+				 --prefix="$(PREFIX)" \
+				 --includedir="$(PREFIX)/include" \
+				 --libdir="$(PREFIX)/lib" \
+				 --build="$(BUILD)" \
+				 --host="$(HOST)" \
+				 --target="$(HOST)" \
+				 --program-prefix="" \
+				 --with-system --with-random \
+				 cxxflags="-std=c++11 -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4" \
+				 define="BOOST_SYSTEM_NO_DEPRECATED" \
+				 -sNO_BZIP2=1
+else
 BOOST_B2_OPTS := variant=release \
 				 link=static \
 				 --prefix="$(PREFIX)" \
@@ -18,6 +39,7 @@ BOOST_B2_OPTS := variant=release \
 				 --program-prefix="" \
 				 --with-system --with-random \
 				 -sNO_BZIP2=1 cxxflags=-fPIC cflags=-fPIC define="BOOST_SYSTEM_NO_DEPRECATED"
+endif
 
 $(TARBALLS)/boost_$(BOOST_VERSION).tar.bz2:
 	$(call download,$(BOOST_URL))
@@ -29,6 +51,13 @@ boost: boost_$(BOOST_VERSION).tar.bz2 .sum-boost
 	$(MOVE)
 
 .boost: boost
+ifdef HAVE_WIN32
+	cd $< && echo "using gcc : mingw64 : ${HOST}-g++" > user-config.jam
+	cd $< && echo ":" >> user-config.jam
+	cd $< && echo "<rc>${HOST}-windres" >> user-config.jam
+	cd $< && echo "<archiver>${HOST}-ar" >> user-config.jam
+	cd $< && echo ";" >> user-config.jam
+endif
 	cd $< && $(HOSTVARS) ./bootstrap.sh
 	cd $< && $(HOSTVARS) ./b2 $(BOOST_B2_OPTS) install
 	touch $@
