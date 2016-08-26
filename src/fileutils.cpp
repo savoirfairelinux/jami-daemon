@@ -91,7 +91,10 @@ bool check_dir(const char *path,
             return false;
         }
 #ifndef _WIN32
-        chmod(path, dirmode);
+        if (chmod(path, dirmode) < 0) {
+            RING_ERR("fileutils::check_dir(): chmod() failed on '%s', %s", path, strerror(errno));
+            return false;
+        }
 #endif
     } else
         closedir(dir);
@@ -281,7 +284,8 @@ saveFile(const std::string& path,
     }
     file.write((char*)data.data(), data.size());
 #ifndef _WIN32
-    chmod(path.c_str(), mode);
+    if (chmod(path.c_str(), mode) < 0)
+        RING_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
 #endif
 }
 
