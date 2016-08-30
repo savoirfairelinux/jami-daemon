@@ -410,6 +410,15 @@ AS_IF([test "x$with_restcpp" = "xyes"], [
   AM_CONDITIONAL(RING_RESTCPP, false)
 );
 
+dnl Check for restpy, an alternative to D-Bus using Python bindings
+AC_ARG_WITH([restpy],
+    AS_HELP_STRING([--with-restpy], [enable RESTful server support using Python module]))
+
+AS_IF([test "x$with_restpy" = "xyes"], [
+    AC_CONFIG_FILES([bin/restpy/Makefile])
+    AM_CONDITIONAL(RING_RESTPY, true)],
+    AM_CONDITIONAL(RING_RESTPY, false));
+
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"

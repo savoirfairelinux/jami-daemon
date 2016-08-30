@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>WebSocket demo</title>
+    </head>
+    <body>
+        <script>
+            var a = new WebSocket("ws://127.0.0.1:5678/");
+
+            a.onmessage = function (event) {
+                console.log(event.data);
+            };
+
+            a.onopen = function (event) {
+                console.log('opened');
+                //console.log(event);
+            };
+
+            a.send('HELLO');
+
+            a.onclose = function (event) {
+                console.log('closed');
+                //console.log(event);
+            };
+
+        </script>
+    </body>
+</html>

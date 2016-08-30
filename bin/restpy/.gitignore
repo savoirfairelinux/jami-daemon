@@ -1,0 +1,8 @@
+__*
+*.pyc
+*.so
+*.swp
+*~
+ring_api/build/
+ring_api/wrappers/dring_cython.cpp
+ring_api/wrappers/dring_cython.h
