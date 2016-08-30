@@ -1,0 +1,61 @@
+/account/
+GET: curl http://localhost:8080/account/\?type\=RING
+POST: curl -d '{"details":{"foo":"bar"}}' http://localhost:8080/account/
+
+/accounts/
+GET: curl http://localhost:8080/accounts/
+
+/accounts/<account_id>/
+DELETE: curl -X DELETE http://localhost:8080/accounts/<account_id>/
+
+/accounts/<account_id>/details/
+GET: curl http://localhost:8080/accounts/<account_id>/details/\?type\=<type>
+PUT: curl -X PUT -d '{"details":{"foo":"bar"}}' http://localhost:8080/accounts/<account_id>/details/
+
+/accounts/<account_id>/ciphers/
+GET: curl http://localhost:8080/accounts/<account_id>/ciphers/
+
+/accounts/<account_id>/codecs/
+GET: curl http://localhost:8080/accounts/<account_id>/codecs/
+PUT: curl -X PUT -d '{"codecs":["1","2"]}' http://localhost:8080/accounts/d2b7c497cf083aef/codecs/
+
+/accounts/<account_id>/codecs/<codec_id>/
+GET: curl http://localhost:8080/accounts/<account_id>/codecs/<codec_id>/
+PUT: curl -d '{"details":{"foo":"bar"}}' http://localhost:8080/accounts/<account_id>/codecs/<codec_id>/
+
+/accounts/<account_id>/call/
+POST: curl -d '{"ring_id":"<ring_id>"}' http://localhost:8080/accounts/<account_id>/call/
+
+/accounts/<account_id>/certificates/<cert_id>/
+GET: curl http://localhost:8080/accounts/<account_id>/certificates/<cert_id>/?action=<action>
+PUT: curl -X PUT http://localhost:8080/accounts/<account_id>/certificates/<cert_id>/?status=<status>
+
+/calls/<call_id>
+PUT: curl -X PUT -d '{"action":"<action>"}' http://localhost:8080/calls/<call_id>/
+
+/codecs/
+GET: curl http://localhost:8080/codecs/
+
+/crypto/tls/
+GET: curl http://localhost:8080/crypto/tls/?type=<type>
+
+/certificate/
+GET: curl http://localhost:8080/certificates/
+
+/certificate/<cert_id>/
+GET: curl http://localhost:8080/certificate/<cert_id>/
+
+/audio/plugins/
+GET: curl http://localhost:8080/audio/plugins/
+
+/video/devices/
+GET: curl http://localhost:8080/video/devices/?type=<type>
+PUT: curl -X PUT -d '{"device":"<device_name>"}' http://localhost:8080/video/devices/?type=default
+
+/video/<device_name>/settings/
+GET: curl http://localhost:8080/video/<device_name>/settings/ (use %20 for the spaces in the device name)
+PUT: curl -X PUT -d '{"settings": {<settings>}}' http://localhost:8080/video/devices/?type=default
+
+/video/camera/
+GET: curl http://localhost:8080/video/camera/
+PUT: curl -X PUT -d '{"action":"<action>"}' http://localhost:8080/video/camera/

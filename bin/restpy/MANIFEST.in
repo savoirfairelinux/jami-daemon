@@ -1,0 +1,1 @@
+recursive-include ring_api *.{py,pyx,pxd,h,cpp}
