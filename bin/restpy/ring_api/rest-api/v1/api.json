@@ -1,0 +1,231 @@
+{
+    "api": {
+        "version": "1",
+        "name": "Ring API - REST documentation",
+        "description": "To list the available Server <-> Daemon bindings",
+        "license": "GPLv3+",
+        "url": "https://github.com/sevaivanov/ring-api",
+        "authors": {
+            "Seva Ivanov": "seva.ivanov@savoirfairelinux.com",
+            "Simon Zeni": "simon.zeni@savoirfairelinux.com"
+        },
+
+        "syntax": {
+            "todo": {
+                "description": "Unfinished tasks",
+                "things": [
+                    "write human text explaining this API"
+                ]
+            },
+            "comments": "Important comment",
+
+            "types": {
+                "comments": [
+                    "Types are requests supported types",
+                    "Every POST, PUT and response data is in JSON format",
+                    "Responses includes 'success' and a html 'status' variables"
+                ],
+                "GET": "Get",
+                "POST": "Create",
+                "PUT": "Update",
+                "DELETE": "Delete action"
+            },
+
+            "structure": {
+                "description": "Template of resource structure",
+                "comments": {
+                    "values": "Not specified -- perform GET request",
+                    "arguments": "Not specified -- are listed"
+                },
+                "/<resource>/": {
+                    "<type1>": "Function name of libring <interface.h>",
+                    "<type2>": {
+                        "<argument>": "Function name of libring <interface.h>"
+                    },
+                    "<type3>": {
+                        "<argument>": {
+                            "<value2>": "Function name of libring <interface.h>",
+                            "<value2>": "Function name of libring <interface.h>"
+                        }
+                    },
+                    "<type4>": {
+                        "args": ["<argument1>", "<argument2>"],
+                        "function": "Function name of libring <interface.h>"
+                    }
+                }
+            },
+
+            "empty_lines": {
+                "1": "Resources are under the same root resource",
+                "2": "Resources are different root resources"
+            }
+        }
+    },
+
+    "urls": {
+        "/api/v1/websocket/port/": {
+            "GET": "Returns the connection port"
+        },
+
+        "/api/v1/account/": {
+           "GET": {
+                "type": {
+                    "SIP": "getAccountTemplate",
+                    "IAX": "getAccountTemplate",
+                    "RING": "getAccountTemplate"
+                }
+            },
+            "POST": {
+                "details": "addAccount"
+            }
+        },
+
+        "/api/v1/accounts/": {
+            "GET": "getAccountList"
+        },
+
+        "/api/v1/accounts/<account_id>/": {
+            "DELETE": "removeAccount"
+        },
+
+        "/api/v1/accounts/<account_id>/details/": {
+            "GET": {
+                "type": {
+                    "default": "getAccountDetails",
+                    "volatile": "getVolatileAccountDetails"
+                }
+            },
+            "PUT": "setAccountDetails"
+        },
+
+        "/api/v1/accounts/<account_id>/ciphers/": {
+            "GET": "getSupportedCiphers"
+        },
+
+        "/api/v1/accounts/<account_id>/codecs/": {
+            "GET": "getActiveCodecList",
+            "PUT": "setActiveCodecList"
+        },
+
+        "/api/v1/accounts/<account_id>/codecs/<codec_id>/": {
+            "GET": "getCodecDetails",
+            "PUT": "setCodecDetails"
+        },
+
+        "/api/v1/accounts/<account_id>/call/": {
+            "POST": {
+                "ring_id": "placeCall"
+            }
+        },
+
+        "/api/v1/accounts/<account_id>/certificates/<cert_id>/": {
+            "GET": {
+                "action": {
+                    "validate": "validateCertificate",
+                    "pin" : "pinRemoteCertificate"
+                }
+            },
+            "PUT": {
+                "status": {
+                    "UNDEFINED": "setCertificateStatus",
+                    "ALLOWED": "setCertificateStatus",
+                    "BANNED": "setCertificateStatus"
+                }
+            }
+        },
+
+        "/api/v1/accounts/<account_id>/message/": {
+            "POST": {
+                "args": ["ring_id", "mime_type", "message"],
+                "function": "sendAccountTextMessage"
+            }
+        },
+
+
+        "/api/v1/message/mime_types/": {
+            "GET": "todo"
+        },
+
+        "/api/v1/messages/<message_id>/": {
+            "GET": "getMessageStatus"
+        },
+
+
+        "/api/v1/calls/<call_id>/": {
+            "PUT": {
+                "action": [
+                    "accept",
+                    "refuse",
+                    "hangup",
+                    "hold",
+                    "unhold"
+                ]
+            }
+        },
+
+
+        "/api/v1/codecs/": {
+            "GET": "getCodecList"
+        },
+
+
+        "/api/v1/crypto/tls/": {
+            "GET": {
+                "type": {
+                    "settings": "getTlsDefaultSettings",
+                    "method": "getSupportedTlsMethod"
+                }
+            }
+        },
+
+
+        "/api/v1/certificates/": {
+            "GET": "getPinnedCertificates"
+        },
+
+        "/api/v1/certificate/<cert_id>/": {
+            "GET": "getCertificateDetails",
+            "POST": {
+                "action": {
+                    "pin": "pinCertificate",
+                    "unpin": "unpinCertificate"
+                }
+            }
+        },
+
+
+        "/api/v1/audio/plugins/": {
+            "GET": "getAudioPluginList"
+        },
+
+
+        "/api/v1/video/devices/": {
+            "GET": {
+                "type": {
+                    "all": "getDeviceList",
+                    "default": "getDefaultDevice"
+                }
+            },
+            "PUT": {
+                "type": {
+                    "default": "setDefaultDevice"
+                }
+            }
+        },
+
+        "/api/v1/video/<device_name>/settings/": {
+            "GET": "getSettings",
+            "PUT": "applySettings"
+        },
+
+        "/api/v1/video/camera/": {
+            "GET": "hasCameraStarted",
+            "PUT": {
+                "action": {
+                    "start": "startCamera",
+                    "stop": "stopCamera"
+                }
+            }
+        }
+    }
+}

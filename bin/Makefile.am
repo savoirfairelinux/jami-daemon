@@ -53,3 +53,20 @@ restdring_CXXFLAGS= -g \
 
 restdring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
 endif
+
+if RING_RESTPY
+SUBDIRS=restpy
+
+all:
+	cp restpy/extra/run/force-rest.py dring-rest.py
+	chmod +x dring-rest.py
+
+install:
+	cp dring-rest.py $(bindir)/dring-rest.py
+
+uninstall:
+	rm $(bindir)/dring-rest.py
+
+clean:
+	rm dring-rest.py
+endif
