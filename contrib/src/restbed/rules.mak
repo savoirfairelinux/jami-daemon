@@ -47,3 +47,5 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz
 	cd $< && cmake $(RESTBED_CONF) .
 	cd $< && $(MAKE) install
 	touch $@
+
+.sum-restbed: restbed-$(RESTBED_VERSION).tar.gz
