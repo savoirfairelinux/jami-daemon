@@ -2384,6 +2384,25 @@ Manager::getVolatileAccountDetails(const std::string& accountID) const
     }
 }
 
+bool
+Manager::registerRingDevice(const std::string& accountID, const bool& visibleOverUpnp) const
+{
+    const auto account = getAccount(accountID);
+
+    if(account && account->getAccountType() == RingAccount::ACCOUNT_TYPE) {
+        // Return false if nothing is to be registered. True otherwise.
+        return account->registerRingDevice(account->getUsername(), visibleOverUpnp);
+    } else {
+        RING_ERR("Could not get account with accountID %s or account is not a valid Ring account.", accountID.c_str());
+        return false;
+    }
+}
+
+std::vector<std::shared_ptr<ring::upnp::RingDevice>>
+Manager::getAutodiscoveryList() const
+{
+    return Account::getAutodiscoveryList();
+}
 
 // method to reduce the if/else mess.
 // Even better, switch to XML !

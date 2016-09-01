@@ -40,7 +40,7 @@
 #include "system_codec_container.h"
 #include "account_const.h"
 #include "client/ring_signal.h"
-#include "upnp/upnp_context.h"
+#include "upnp/upnp_rd.h"
 
 #ifdef WIN32_NATIVE
 #include "windirent.h"
@@ -178,6 +178,7 @@ std::vector<std::string>
 getPinnedCertificates()
 {
     return ring::tls::CertificateStore::instance().getPinnedCertificates();
+    return {};
 }
 
 std::vector<std::string>
