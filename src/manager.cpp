@@ -2510,11 +2510,13 @@ void Manager::removeAccounts()
         removeAccount(acc);
 }
 
-void Manager::removeAccount(const std::string& accountID)
+void Manager::removeAccount(const std::string& accountID, bool flush)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
         remAccount->doUnregister();
+        if (flush)
+            remAccount->flush();
         accountFactory_.removeAccount(*remAccount);
     }
 
