@@ -53,6 +53,15 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
 
 SIPAccountBase::~SIPAccountBase() {}
 
+void
+SIPAccountBase::flush()
+{
+    // Class base method
+    Account::flush();
+
+    fileutils::remove(fileutils::get_cache_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR "messages");
+}
+
 template <typename T>
 static void
 validate(std::string &member, const std::string &param, const T& valid)
