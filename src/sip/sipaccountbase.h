@@ -252,6 +252,9 @@ public:
 
     void connectivityChanged() override {};
 
+public: // overloaded methods
+    virtual void remove() override;
+
 protected:
     virtual void serialize(YAML::Emitter &out) override;
     virtual void serializeTls(YAML::Emitter &out);

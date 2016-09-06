@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <cstdio>
 
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
@@ -51,6 +52,11 @@ namespace ring { namespace fileutils {
     std::string get_config_dir();
     std::string get_data_dir();
     std::string get_cache_dir();
+
+    /**
+     * Direct binding on std::remove, with std::string as argument
+     */
+    static inline int remove(const std::string& path) {	return std::remove(path.c_str()); }
 
     /**
      * Check directory existance and create it with given mode if it doesn't.
