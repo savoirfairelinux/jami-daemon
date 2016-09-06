@@ -778,7 +778,7 @@ TlsSession::process()
 
     // update state_ with taking care for external state change
     if (not std::atomic_compare_exchange_strong(&state_, &old_state, new_state))
-        new_state = state_;
+        new_state = old_state;
 
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);
