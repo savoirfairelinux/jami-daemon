@@ -152,6 +152,17 @@ RingAccount::~RingAccount()
     dht_.join();
 }
 
+void
+RingAccount::flush()
+{
+    // Class base method
+    SIPAccountBase::flush();
+
+    fileutils::removeAll(dataPath_);
+    fileutils::removeAll(cachePath_);
+    fileutils::removeAll(idPath_);
+}
+
 std::shared_ptr<SIPCall>
 RingAccount::newIncomingCall(const std::string& from)
 {
@@ -1255,7 +1266,7 @@ RingAccount::loadValues() const
         } catch (const std::exception& e) {
             RING_ERR("Error reading value: %s", e.what());
         }
-        remove(file.c_str());
+        fileutils::remove(file);
     }
     RING_DBG("Loaded %zu values", values.size());
     return values;
