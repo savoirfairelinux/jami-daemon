@@ -256,7 +256,10 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged() override;
 
-    private:
+	public: // overloaded methods
+		void remove() override;
+
+	private:
         NON_COPYABLE(RingAccount);
 
         void doRegister_();

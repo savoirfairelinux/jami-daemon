@@ -150,6 +150,35 @@ RingAccount::~RingAccount()
     dht_.join();
 }
 
+void
+RingAccount::remove()
+{
+    // Class base method
+    SIPAccountBase::remove();
+
+    // remove files first
+    fileutils::remove(tlsPrivateKeyFile_);
+    fileutils::remove(tlsCertificateFile_);
+    fileutils::remove(idPath_ + DIR_SEPARATOR_STR "ca.key");
+    fileutils::remove(idPath_ + DIR_SEPARATOR_STR "ca_list.pem"); // was created by old Ring
+    fileutils::remove(cachePath_ + DIR_SEPARATOR_STR "dhParams");
+    fileutils::remove(cachePath_ + DIR_SEPARATOR_STR "nodes");
+    fileutils::remove(cachePath_ + DIR_SEPARATOR_STR "treatedCalls");
+    fileutils::remove(cachePath_ + DIR_SEPARATOR_STR "treatedMessages");
+
+    // prune Values directory of its contents, then remove it
+    for (auto& entry : fileutils::readDirectory(dataPath_)) {
+        if (fileutils::isDirectory(entry))
+            continue;
+        fileutils::remove(dataPath_ + DIR_SEPARATOR_STR + entry);
+    }
+    fileutils::remove(dataPath_);
+
+    // remove directories (fails if not empty)
+    fileutils::remove(idPath_);
+    fileutils::remove(cachePath_);
+}
+
 std::shared_ptr<SIPCall>
 RingAccount::newIncomingCall(const std::string& from)
 {
@@ -1256,7 +1285,7 @@ RingAccount::loadValues() const
         } catch (const std::exception& e) {
             RING_ERR("Error reading value: %s", e.what());
         }
-        remove(file.c_str());
+        std::remove(file.c_str());
     }
     RING_DBG("Loaded %zu values", values.size());
     return values;
