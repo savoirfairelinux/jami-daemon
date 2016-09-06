@@ -514,9 +514,10 @@ class Manager {
         /**
          * Delete an existing account, unregister VoIPLink associated, and
          * purge from configuration.
+		 * If 'flush' argument is true, filesystem entries are also removed.
          * @param accountID	The account unique ID
          */
-        void removeAccount(const std::string& accountID);
+        void removeAccount(const std::string& accountID, bool flush=false);
 
         /**
          * Set input audio plugin

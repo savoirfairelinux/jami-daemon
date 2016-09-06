@@ -24,8 +24,8 @@
 #include "config.h"
 #endif
 
-#include "fileutils.h"
 #include "logger.h"
+#include "fileutils.h"
 #include "compiler_intrinsics.h"
 
 #ifdef __APPLE__
@@ -220,6 +220,20 @@ bool isDirectory(const std::string& path)
 bool isDirectoryWritable(const std::string &directory)
 {
     return access(directory.c_str(), W_OK) == 0;
+}
+
+bool isSymLink(const std::string& path)
+{
+#ifndef _WIN32
+    struct stat s;
+    if (lstat(path.c_str(), &s) == 0)
+        return S_ISLNK(s.st_mode);
+#else
+    DWORD attr = GetFileAttributes(ring::to_wstring(path).c_str());
+    if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
+        return true;
+#endif
+    return false;
 }
 
 std::chrono::system_clock::time_point
@@ -509,6 +523,21 @@ recursive_mkdir(const std::string& path, mode_t mode)
         }
     }
     return true;
+}
+
+int
+removeAll(const std::string& path)
+{
+    if (path.empty())
+        return -1;
+    if (isDirectory(path) and !isSymLink(path)) {
+        auto dir = path;
+        if (dir.back() != DIR_SEPARATOR_CH)
+            dir += DIR_SEPARATOR_CH;
+        for (auto& entry : fileutils::readDirectory(dir))
+            removeAll(dir + entry);
+    }
+    return remove(path);
 }
 
 }} // namespace ring::fileutils

@@ -301,6 +301,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void connectivityChanged() {};
 
+    public: // virtual methods that has to be implemented by concrete classes
+        /**
+         * This method is called to request removal  of any of possible traces on the system,
+		 * like internal account setup files.
+         */
+        virtual void flush() { /* nothing to do here - overload */ };
+
     private:
         NON_COPYABLE(Account);
 
