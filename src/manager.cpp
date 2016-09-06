@@ -2514,7 +2514,7 @@ void Manager::removeAccount(const std::string& accountID)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
-        remAccount->doUnregister();
+        remAccount->remove();
         accountFactory_.removeAccount(*remAccount);
     }
 
