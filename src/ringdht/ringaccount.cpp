@@ -1150,8 +1150,47 @@ RingAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+#if HAVE_RINGNS
+    if (not registeredName_.empty())
+        a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+#endif
     return a;
 }
+
+#if HAVE_RINGNS
+void
+RingAccount::lookupName(const std::string& name)
+{
+    auto acc = getAccountID();
+    nameDir_.lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
+        if (response == NameDirectory::Response::found) {
+            emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, result, name);
+        }
+    });
+}
+
+void
+RingAccount::lookupAddress(const std::string& addr)
+{
+    auto acc = getAccountID();
+    nameDir_.lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
+        if (response == NameDirectory::Response::found) {
+            emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, addr, result);
+        }
+    });
+}
+
+void
+RingAccount::registerName(const std::string& password, const std::string& name)
+{
+    auto acc = getAccountID();
+    nameDir_.registerName(ringAccountId_, name, [acc,name](NameDirectory::RegistrationResponse response){
+        int res = (response == NameDirectory::RegistrationResponse::success) ? 0 : (
+                  (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 2 : 3);
+        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+    });
+}
+#endif
 
 void
 RingAccount::handleEvents()
@@ -1446,6 +1485,18 @@ RingAccount::doRegister_()
             dht_.join();
         }
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::weak_ptr<RingAccount> w {shared};
+
+#if HAVE_RINGNS
+        // Look for registered name on the blockchain
+        nameDir_.lookupAddress(ringAccountId_, [w](const std::string& result, const NameDirectory::Response& response) {
+            if (response == NameDirectory::Response::found)
+                if (auto this_ = w.lock())
+                    this_->registeredName_ = result;
+        });
+#endif
+
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
                 RegistrationState state;
@@ -1495,8 +1546,6 @@ RingAccount::doRegister_()
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
-
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
 
         // Put device annoucement
         if (announce_) {
@@ -1651,6 +1700,14 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
     val.id = vid;
 
     std::weak_ptr<SIPCall> weak_call = call;
+#if HAVE_RINGNS
+    nameDir_.lookupAddress(from, [weak_call](const std::string& result, const NameDirectory::Response& response){
+        if (response == NameDirectory::Response::found)
+            if (auto call = weak_call.lock())
+                call->setPeerRegistredName(result);
+    });
+#endif
+
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
