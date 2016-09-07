@@ -35,15 +35,15 @@ endif
 if RING_RESTCPP
 SUBDIRS=restcpp
 
-sbin_PROGRAMS = dring
+sbin_PROGRAMS = restdring
 
-dring_SOURCES = main.cpp
+restdring_SOURCES = main.cpp
 
-dring_CXXFLAGS= -g \
+restdring_CXXFLAGS= -g \
                 -I$(top_srcdir)/src \
                 -I$(top_srcdir)/src/dring \
                 -DREST_API \
                 -DTOP_BUILDDIR=\"$$(cd "$(top_builddir)"; pwd)\"
 
-dring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
+restdring_LDADD = restcpp/libclient_rest.la $(top_builddir)/src/libring.la
 endif

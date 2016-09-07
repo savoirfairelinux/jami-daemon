@@ -86,6 +86,24 @@ DBusConfigurationManager::getKnownRingDevices(const std::string& accountID) -> d
     return DRing::getKnownRingDevices(accountID);
 }
 
+auto
+DBusConfigurationManager::lookupName(const std::string& account, const std::string& name) -> decltype(DRing::lookupName(account, name))
+{
+    return DRing::lookupName(account, name);
+}
+
+auto
+DBusConfigurationManager::lookupAddress(const std::string& account, const std::string& address) -> decltype(DRing::lookupAddress(account, address))
+{
+    return DRing::lookupAddress(account, address);
+}
+
+auto
+DBusConfigurationManager::registerName(const std::string& account, const std::string& password, const std::string& name) -> decltype(DRing::registerName(account, password, name))
+{
+    return DRing::registerName(account, password, name);
+}
+
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {
