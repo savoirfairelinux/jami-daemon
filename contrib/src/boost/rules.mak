@@ -9,39 +9,30 @@ PKGS_FOUND += boost
 endif
 endif
 
-ifdef HAVE_WIN32
 BOOST_B2_OPTS := variant=release \
 				 link=static \
-				 target-os=windows \
+				 --prefix="$(PREFIX)" \
+				 --includedir="$(PREFIX)/include" \
+				 --libdir="$(PREFIX)/lib" \
+				 --build="$(BUILD)" \
+				 --host="$(HOST)" \
+				 --target="$(HOST)" \
+				 --program-prefix="" \
+				 --with-system --with-random \
+				 define="BOOST_SYSTEM_NO_DEPRECATED" \
+				 -sNO_BZIP2=1 cxxflags=-fPIC cflags=-fPIC
+
+ifdef HAVE_WIN32
+BOOST_B2_OPTS += target-os=windows \
 				 threadapi=win32 \
 				 runtime-link=static \
 				 binary-format=pe \
 				 architecture=x86 \
 				 --user-config=user-config.jam \
-				 --prefix="$(PREFIX)" \
-				 --includedir="$(PREFIX)/include" \
-				 --libdir="$(PREFIX)/lib" \
-				 --build="$(BUILD)" \
-				 --host="$(HOST)" \
-				 --target="$(HOST)" \
-				 --program-prefix="" \
-				 --with-system --with-random \
-				 cxxflags="-std=c++11 -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4" \
-				 define="BOOST_SYSTEM_NO_DEPRECATED" \
-				 -sNO_BZIP2=1
-else
-BOOST_B2_OPTS := variant=release \
-				 link=static \
-				 --user-config=user-config.jam \
-				 --prefix="$(PREFIX)" \
-				 --includedir="$(PREFIX)/include" \
-				 --libdir="$(PREFIX)/lib" \
-				 --build="$(BUILD)" \
-				 --host="$(HOST)" \
-				 --target="$(HOST)" \
-				 --program-prefix="" \
-				 --with-system --with-random \
-				 -sNO_BZIP2=1 cxxflags=-fPIC cflags=-fPIC define="BOOST_SYSTEM_NO_DEPRECATED"
+				 cxxflags="-std=c++11 -fPIC -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4"
+endif
+ifdef HAVE_ANDROID
+BOOST_B2_OPTS += --user-config=user-config.jam
 endif
 
 $(TARBALLS)/boost_$(BOOST_VERSION).tar.bz2:

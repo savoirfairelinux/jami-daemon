@@ -42,6 +42,10 @@
 #include <list>
 #include <future>
 
+#if HAVE_RINGNS
+#include "namedirectory.h"
+#endif
+
 /**
  * @file ringaccount.h
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -337,6 +341,11 @@ class RingAccount : public SIPAccountBase {
             dht::InfoHash dev;
             MSGPACK_DEFINE_MAP(dev);
         };
+
+#if HAVE_RINGNS
+        NameDirectory nameDir_ {};
+        std::string registeredName_;
+#endif
 
         /**
          * Compute archive encryption key and DHT storage location from password and PIN.

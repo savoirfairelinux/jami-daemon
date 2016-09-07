@@ -1103,7 +1103,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
 
-    std::string archive_password;
+    std::string archive_password {"toto"};
     std::string archive_pin;
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN,      archive_pin);
@@ -1150,6 +1150,10 @@ RingAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+#if HAVE_RINGNS
+    if (not registeredName_.empty())
+        a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+#endif
     return a;
 }
 
@@ -1446,6 +1450,18 @@ RingAccount::doRegister_()
             dht_.join();
         }
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::weak_ptr<RingAccount> w {shared};
+
+#if HAVE_RINGNS
+        // Look for registered name on the blockchain
+        nameDir_.addrLookup(ringAccountId_, [w](const std::string& result, const NameDirectory::Response& response) {
+            if (response == NameDirectory::Response::found)
+                if (auto this_ = w.lock())
+                    this_->registeredName_ = result;
+        });
+#endif
+
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
                 RegistrationState state;
@@ -1495,8 +1511,6 @@ RingAccount::doRegister_()
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
-
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
 
         // Put device annoucement
         if (announce_) {
@@ -1651,6 +1665,12 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
     val.id = vid;
 
     std::weak_ptr<SIPCall> weak_call = call;
+    nameDir_.addrLookup(from, [weak_call](const std::string& result, const NameDirectory::Response& response){
+        if (response == NameDirectory::Response::found)
+            if (auto call = weak_call.lock())
+                call->setPeerRegistredName(result);
+    });
+
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,

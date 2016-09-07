@@ -122,7 +122,7 @@ private:
 
 // Unary operators
 template <typename I> rational<I> operator+ (const rational<I>& r) { return r; }
-template <typename I> rational<I> operator- (const rational<I>& r) { return {-r.numerator(), r.denominator()}; };
+template <typename I> rational<I> operator- (const rational<I>& r) { return {-r.numerator(), r.denominator()}; }
 
 // Reversed order operators for - and / between (types convertible to) I and rational
 template <typename I, typename II> inline rational<I> operator- (II i, const rational<I>& r);
