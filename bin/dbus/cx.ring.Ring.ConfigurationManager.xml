@@ -220,6 +220,74 @@
            </arg>
        </method>
 
+      <method name="lookupName" tp:name-for-bindings="lookupName">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+      </method>
+      <method name="lookupAddress" tp:name-for-bindings="lookupAddress">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="address" direction="in">
+           </arg>
+      </method>
+       <signal name="RegisteredNameFound" tp:name-for-bindings="RegisteredNameFound">
+           <tp:docstring>
+               Notify clients when a new registred address-name mapping is known.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="address">
+           </arg>
+           <arg type="s" name="name">
+           </arg>
+       </signal>
+
+      <method name="registerName" tp:name-for-bindings="registerName">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+             <tp:docstring>
+                 Ring account main password.
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+      </method>
+       <signal name="nameRegistrationEnded" tp:name-for-bindings="nameRegistrationEnded">
+           <tp:docstring>
+               Notify clients when the registerName operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Name is now registered.</li>
+                      <li>WRONG_PASSWORD = 1  registration failed: wrong password.</li>
+                      <li>ALREADY_TAKEN = 2   registration failed: name is already taken.</li>
+                      <li>NETWORK_ERROR = 3   registration failed: network or server error.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="name">
+               <tp:docstring>
+                   The name that was attempted to register.
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
            <tp:docstring>
                Test initializing an ICE transport with the current account configuration.
