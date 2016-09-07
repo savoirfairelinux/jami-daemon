@@ -220,6 +220,50 @@
            </arg>
        </method>
 
+      <method name="lookupName" tp:name-for-bindings="lookupName">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+      </method>
+      <method name="lookupAddress" tp:name-for-bindings="lookupAddress">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="address" direction="in">
+           </arg>
+      </method>
+      <method name="registerName" tp:name-for-bindings="registerName">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+             <tp:docstring>
+                 Ring account main password.
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+      </method>
+       <signal name="RegisteredNameFound" tp:name-for-bindings="RegisteredNameFound">
+           <tp:docstring>
+               Notify clients when a new registred address-name mapping is known.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="address">
+           </arg>
+           <arg type="s" name="name">
+           </arg>
+       </signal>
+
        <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
            <tp:docstring>
                Test initializing an ICE transport with the current account configuration.

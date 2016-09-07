@@ -48,6 +48,10 @@ std::string addAccount(const std::map<std::string, std::string>& details);
 bool exportOnRing(const std::string& accountID, const std::string& password);
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 
+void lookupName(const std::string& account, const std::string& name);
+void lookupAddress(const std::string& account, const std::string& address);
+void registerName(const std::string& account, const std::string& password, const std::string& name);
+
 void removeAccount(const std::string& accountID);
 void setAccountEnabled(const std::string& accountID, bool enable);
 std::vector<std::string> getAccountList();
@@ -219,6 +223,10 @@ struct ConfigurationSignal {
         struct KnownDevicesChanged {
                 constexpr static const char* name = "KnownDevicesChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& devices);
+        };
+        struct RegisteredNameFound {
+                constexpr static const char* name = "RegisteredNameFound";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*address*/, const std::string& /*name*/);
         };
         struct CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";
