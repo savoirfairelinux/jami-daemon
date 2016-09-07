@@ -220,6 +220,109 @@
            </arg>
        </method>
 
+      <method name="lookupName" tp:name-for-bindings="lookupName">
+           <tp:docstring>
+               Performs name lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+              The account to use. If empty, use the default RingNS server.
+           </arg>
+           <arg type="s" name="nameserver" direction="in">
+              The name server to use, considered only if accountID is empty.
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. registeredNameFound will be trigered on completion.
+               </tp:docstring>
+           </arg>
+      </method>
+      <method name="lookupAddress" tp:name-for-bindings="lookupAddress">
+           <tp:docstring>
+               Performs address lookup with RingNS protocol for the specified account (if any) or using the default nameserver.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+              The account to use. If empty, use the default RingNS server.
+           </arg>
+           <arg type="s" name="nameserver" direction="in">
+              The name server to use, considered only if accountID is empty.
+           </arg>
+           <arg type="s" name="address" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. registeredNameFound will be trigered on completion.
+               </tp:docstring>
+           </arg>
+      </method>
+       <signal name="registeredNameFound" tp:name-for-bindings="registeredNameFound">
+           <tp:docstring>
+               Notify clients when a new registred address-name mapping is known.
+               If status is not success (0), requested field (name or address) is left empty.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="i" name="status">
+               <tp:docstring>
+                  Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Name/address pair was found.</li>
+                      <li>NOT_FOUND = 1       everything went fine. Name/address pair was not found.</li>
+                      <li>ERROR = 2           An error happened</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="address">
+           </arg>
+           <arg type="s" name="name">
+           </arg>
+       </signal>
+
+      <method name="registerName" tp:name-for-bindings="registerName">
+           <tp:docstring>
+               Performs name registration with RingNS protocol for the specified account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+             <tp:docstring>
+                 Ring account main password.
+             </tp:docstring>
+           </arg>
+           <arg type="s" name="name" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. nameRegistrationEnded will be trigered on completion.
+               </tp:docstring>
+           </arg>
+      </method>
+       <signal name="nameRegistrationEnded" tp:name-for-bindings="nameRegistrationEnded">
+           <tp:docstring>
+               Notify clients when the registerName operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Name is now registered.</li>
+                      <li>WRONG_PASSWORD = 1  registration failed: wrong password.</li>
+                      <li>INVALID_NAME = 2    registration failed: invalid name.</li>
+                      <li>ALREADY_TAKEN = 3   registration failed: name is already taken.</li>
+                      <li>NETWORK_ERROR = 4   registration failed: network or server error.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="name">
+               <tp:docstring>
+                   The name that was attempted to register.
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <method name="testAccountICEInitialization" tp:name-for-bindings="testAccountICEInitialization">
            <tp:docstring>
                Test initializing an ICE transport with the current account configuration.
