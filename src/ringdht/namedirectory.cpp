@@ -1,0 +1,195 @@
+/*
+ *  Copyright (C) 2016 Savoir-faire Linux Inc.
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+#include "namedirectory.h"
+
+#include "logger.h"
+#include "string_utils.h"
+
+#include <json/json.h>
+#include <restbed>
+
+/* for visual studio */
+#include <ciso646>
+#include <sstream>
+
+namespace ring {
+
+constexpr const char* const QUERY_NAME {"/name/"};
+constexpr const char* const QUERY_ADDR {"/addr/"};
+
+NameDirectory& NameDirectory::instance(const std::string& server)
+{
+    const std::string& s = server.empty() ? DEFAULT_SERVER : server;
+    static std::map<std::string, NameDirectory> instances {};
+    auto it = instances.emplace(s, NameDirectory{s});
+    return it.first->second;
+}
+
+void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
+{
+    auto cacheRes = nameCache_.find(addr);
+    if (cacheRes != nameCache_.end()) {
+        cb(cacheRes->second, NameDirectory::Response::found);
+        return;
+    }
+    RING_DBG("Address lookup for %s", addr.c_str());
+
+    auto req = std::make_shared<restbed::Request>(restbed::Uri("http://" + server_ + QUERY_ADDR + addr));
+    req->set_header("Accept", "*/*");
+    req->set_header("Host", server_);
+
+    restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>,
+                                             const std::shared_ptr<restbed::Response> reply) {
+        if (reply->get_status_code() == 200) {
+            size_t length = 0;
+            /*length =*/ reply->get_header("Content-Length", length);
+            restbed::Http::fetch(length, reply);
+            std::string body;
+            reply->get_body(body);
+
+            Json::Value json;
+            Json::Reader reader;
+            if (!reader.parse(body, json)) {
+                RING_ERR("Address lookup for %s: can't parse server response: %s", addr.c_str(), body.c_str());
+                cb("", NameDirectory::Response::notFound);
+                return;
+            }
+            auto name = json["name"].asString();
+            if (not name.empty()) {
+                RING_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
+                addrCache_.emplace(name, addr);
+                nameCache_.emplace(addr, name);
+                cb(name, NameDirectory::Response::found);
+            } else {
+                cb("", NameDirectory::Response::notFound);
+            }
+        } else {
+            cb("", NameDirectory::Response::error);
+        }
+    });
+}
+
+void NameDirectory::lookupName(const std::string& name, LookupCallback cb)
+{
+    auto cacheRes = addrCache_.find(name);
+    if (cacheRes != addrCache_.end()) {
+        cb(cacheRes->second, NameDirectory::Response::found);
+        return;
+    }
+
+    restbed::Uri uri("http://" + server_ + QUERY_NAME + name);
+    auto request = std::make_shared<restbed::Request>(uri);
+    request->set_header("Accept", "*/*");
+    request->set_header("Host", server_);
+
+    RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
+
+    restbed::Http::async(request, [this,cb,name](const std::shared_ptr<restbed::Request>,
+                                                 const std::shared_ptr<restbed::Response> reply) {
+        auto code = reply->get_status_code();
+        if (code != 200)
+            RING_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
+        if (code >= 200 && code < 300) {
+            size_t length = 0;
+            /*length =*/ reply->get_header("Content-Length", length);
+            restbed::Http::fetch(length, reply);
+            std::string body;
+            reply->get_body(body);
+
+            Json::Value json;
+            Json::Reader reader;
+            if (!reader.parse(body, json)) {
+                RING_ERR("Name lookup for %s: can't parse server response: %s", name.c_str(), body.c_str());
+                cb("", NameDirectory::Response::notFound);
+                return;
+            }
+            auto addr = json["addr"].asString();
+            if (not addr.empty()) {
+                RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
+                addrCache_.emplace(name, addr);
+                nameCache_.emplace(addr, name);
+                cb(addr, NameDirectory::Response::found);
+            } else {
+                cb("", NameDirectory::Response::notFound);
+            }
+        } else if (code >= 400 && code < 500) {
+            cb("", NameDirectory::Response::notFound);
+        } else {
+            cb("", NameDirectory::Response::error);
+        }
+    });
+}
+
+void NameDirectory::registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb)
+{
+    auto cacheRes = addrCache_.find(name);
+    if (cacheRes != addrCache_.end()) {
+        if (cacheRes->second == addr)
+            cb(RegistrationResponse::success);
+        else
+            cb(RegistrationResponse::alreadyTaken);
+        return;
+    }
+
+    auto request = std::make_shared<restbed::Request>(restbed::Uri("http://" + server_ + QUERY_NAME + name));
+    request->set_header("Accept", "*/*");
+    request->set_header("Host", server_);
+    request->set_header("Content-Type", "application/json");
+    request->set_method("POST");
+    std::string body;
+    {
+        std::stringstream ss;
+        ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner << "\"}";
+        body = ss.str();
+    }
+    request->set_body(body);
+    request->set_header("Content-Length", ring::to_string(body.size()));
+
+    restbed::Http::async(request, [this,cb,addr,name](const std::shared_ptr<restbed::Request>,
+                                                      const std::shared_ptr<restbed::Response> reply) {
+        auto code = reply->get_status_code();
+        RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
+        if (code >= 200 && code < 300) {
+            size_t length = 0;
+            /*length =*/ reply->get_header("Content-Length", length);
+            restbed::Http::fetch(length, reply);
+            std::string body;
+            reply->get_body(body);
+
+            Json::Value json;
+            Json::Reader reader;
+            if (!reader.parse(body, json)) {
+                cb(RegistrationResponse::error);
+                return;
+            }
+            auto success = json["success"].asBool();
+            RING_DBG("Got reply for registration of %s -> %s: %s", name.c_str(), addr.c_str(), success ? "success" : "failure");
+            if (success) {
+                addrCache_.emplace(name, addr);
+                nameCache_.emplace(addr, name);
+            }
+            cb(success ? RegistrationResponse::success : RegistrationResponse::error);
+        } else if (code >= 400 && code < 500) {
+            cb(RegistrationResponse::alreadyTaken);
+        } else {
+            cb(RegistrationResponse::error);
+        }
+    });
+}
+
+}
