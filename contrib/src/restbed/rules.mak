@@ -20,6 +20,8 @@
 
 RESTBED_VERSION := 4.0
 RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
+ASIO_VERSION := 722f7e2be05a51c69644662ec514d6149b2b7ef8
+ASIO_URL := https://github.com/Corvusoft/asio-dependency/archive/$(ASIO_VERSION).tar.gz
 
 ifeq ($(call need_pkg,"restbed >= 4.0"),)
 PKGS_FOUND += restbed
@@ -27,6 +29,9 @@ endif
 
 $(TARBALLS)/restbed-$(RESTBED_VERSION).tar.gz:
 	$(call download,$(RESTBED_URL))
+
+$(TARBALLS)/asio-dependency-$(ASIO_VERSION).tar.gz:
+	$(call download,$(ASIO_URL))
 
 RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
@@ -36,9 +41,16 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DCMAKE_CXX_COMPILER=g++ \
 			-DCMAKE_INSTALL_PREFIX=$(PREFIX)
 
-restbed: restbed-$(RESTBED_VERSION).tar.gz
+restbed-asio-dependency: asio-dependency-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
-	git clone https://github.com/Corvusoft/asio-dependency.git $(UNPACK_DIR)/dependency/asio/
+	$(MOVE)
+
+.restbed-asio-dependency: restbed-asio-dependency
+	touch $@
+
+restbed: restbed-$(RESTBED_VERSION).tar.gz .restbed-asio-dependency
+	$(UNPACK)
+	cp -r restbed-asio-dependency/asio $(UNPACK_DIR)/dependency/asio
 	cd $(UNPACK_DIR)/dependency/asio/asio && patch -fp1 < ../../../../../src/restbed/conditional_sslv3.patch
 	cd $(UNPACK_DIR)/ && ls && patch -p0 < ../../src/restbed/CMakeLists.patch
 	$(MOVE)
