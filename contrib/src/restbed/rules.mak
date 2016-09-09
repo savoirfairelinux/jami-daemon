@@ -20,6 +20,7 @@
 
 RESTBED_VERSION := 4.0
 RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
+ASIO_REF := 722f7e2be05a51c69644662ec514d6149b2b7ef8
 
 ifeq ($(call need_pkg,"restbed >= 4.0"),)
 PKGS_FOUND += restbed
@@ -39,6 +40,7 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 restbed: restbed-$(RESTBED_VERSION).tar.gz
 	$(UNPACK)
 	git clone https://github.com/Corvusoft/asio-dependency.git $(UNPACK_DIR)/dependency/asio/
+	cd $(UNPACK_DIR)/dependency/asio/ && git reset --hard $(ASIO_REF)
 	cd $(UNPACK_DIR)/dependency/asio/asio && patch -fp1 < ../../../../../src/restbed/conditional_sslv3.patch
 	cd $(UNPACK_DIR)/ && ls && patch -p0 < ../../src/restbed/CMakeLists.patch
 	$(MOVE)
