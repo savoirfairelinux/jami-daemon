@@ -279,8 +279,15 @@ TlsSession::initCredentials()
 
     // Load user-given identity (key and passwd)
     if (params_.cert) {
-        ret = gnutls_certificate_set_x509_key(*xcred_, &params_.cert->cert, 1,
-                                              params_.cert_key->x509_key);
+        std::vector<gnutls_x509_crt_t> certs;
+        certs.reserve(3);
+        auto crt = params_.cert;
+        while (crt) {
+            certs.emplace_back(crt->cert);
+            crt = crt->issuer;
+        }
+
+        ret = gnutls_certificate_set_x509_key(*xcred_, certs.data(), certs.size(), params_.cert_key->x509_key);
         if (ret < 0)
             throw std::runtime_error("can't load certificate: "
                                      + std::string(gnutls_strerror(ret)));
@@ -778,7 +785,7 @@ TlsSession::process()
 
     // update state_ with taking care for external state change
     if (not std::atomic_compare_exchange_strong(&state_, &old_state, new_state))
-        new_state = state_;
+        new_state = old_state;
 
     if (old_state != new_state and callbacks_.onStateChange)
         callbacks_.onStateChange(new_state);

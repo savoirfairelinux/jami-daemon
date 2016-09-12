@@ -80,10 +80,6 @@ static const char *const CONFIG_TURN_SERVER_REALM               = "TURN.realm";
 static const char *const CONFIG_SRTP_ENABLE                     = "SRTP.enable";
 static const char *const CONFIG_SRTP_KEY_EXCHANGE               = "SRTP.keyExchange";
 static const char *const CONFIG_SRTP_RTP_FALLBACK               = "SRTP.rtpFallback";
-static const char *const CONFIG_ZRTP_HELLO_HASH                 = "ZRTP.helloHashEnable";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS                = "ZRTP.displaySAS";
-static const char *const CONFIG_ZRTP_NOT_SUPP_WARNING           = "ZRTP.notSuppWarning";
-static const char *const CONFIG_ZRTP_DISPLAY_SAS_ONCE           = "ZRTP.displaySasOnce";
 
 static const char *const CONFIG_TLS_LISTENER_PORT               = "TLS.listenerPort";
 static const char *const CONFIG_TLS_ENABLE                      = "TLS.enable";

@@ -54,6 +54,7 @@ libring_la_LDFLAGS = \
 		@PORTAUDIO_LIBS@ \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
+		@ZLIB_LIBS@ \
 		$(PCRE_LIBS)
 
 if HAVE_OSX
@@ -74,6 +75,11 @@ libring_la_CFLAGS = \
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 
+if HAVE_LINUX
+#needed to compile the .so
+libring_la_CXXFLAGS += -fPIC
+endif
+
 libring_la_SOURCES = \
 		buildinfo.cpp \
 		conference.cpp \
@@ -87,6 +93,7 @@ libring_la_SOURCES = \
 		fileutils.cpp \
 		archiver.cpp \
 		threadloop.cpp \
+		thread_pool.cpp \
 		ip_utils.h \
 		ip_utils.cpp \
 		utf8_utils.cpp \
@@ -98,6 +105,7 @@ libring_la_SOURCES = \
 		plugin_loader.h \
 		plugin_manager.h \
 		threadloop.h \
+		thread_pool.h \
 		conference.h \
 		account_factory.h \
 		call_factory.h \
@@ -111,7 +119,7 @@ libring_la_SOURCES = \
 		noncopyable.h \
 		utf8_utils.h \
 		ring_types.h \
-		compiler_intrinsics.h \
+		intrin.h \
 		array_size.h \
 		account_schema.h \
 		registration_states.h \
@@ -120,7 +128,11 @@ libring_la_SOURCES = \
 		string_utils.cpp \
 		rw_mutex.h \
 		ring_api.cpp \
-		rational.h
+		rational.h \
+		smartools.cpp \
+		smartools.h \
+        base64.h \
+        base64.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \

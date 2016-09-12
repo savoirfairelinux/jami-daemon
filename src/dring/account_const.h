@@ -53,7 +53,10 @@ constexpr static const char ERROR_CONF_STUN           [] = "ERROR_CONF_STUN";
 constexpr static const char ERROR_EXIST_STUN          [] = "ERROR_EXIST_STUN";
 constexpr static const char ERROR_SERVICE_UNAVAILABLE [] = "ERROR_SERVICE_UNAVAILABLE";
 constexpr static const char ERROR_NOT_ACCEPTABLE      [] = "ERROR_NOT_ACCEPTABLE";
+constexpr static const char ERROR_MISSING_ID          [] = "ERROR_MISSING_ID";
+constexpr static const char ERROR_NEED_MIGRATION      [] = "ERROR_NEED_MIGRATION";
 constexpr static const char REQUEST_TIMEOUT           [] = "Request Timeout";
+constexpr static const char INITIALIZING              [] = "INITIALIZING";
 
 } //namespace DRing::Account
 
@@ -125,7 +128,10 @@ constexpr static const char HAS_CUSTOM_USER_AGENT   [] = "Account.hasCustomUserA
 constexpr static const char ALLOW_CERT_FROM_HISTORY [] = "Account.allowCertFromHistory";
 constexpr static const char ALLOW_CERT_FROM_CONTACT [] = "Account.allowCertFromContact";
 constexpr static const char ALLOW_CERT_FROM_TRUSTED [] = "Account.allowCertFromTrusted";
-
+constexpr static const char ARCHIVE_PASSWORD        [] = "Account.archivePassword";
+constexpr static const char ARCHIVE_PATH            [] = "Account.archivePath";
+constexpr static const char ARCHIVE_PIN             [] = "Account.archivePIN";
+constexpr static const char RING_DEVICE_ID          [] = "Account.deviceID";
 
 namespace Audio {
 
@@ -189,16 +195,6 @@ constexpr static const char RTP_FALLBACK       [] = "SRTP.rtpFallback";
 
 } //namespace DRing::Account::ConfProperties::SRTP
 
-
-namespace ZRTP {
-
-constexpr static const char DISPLAY_SAS        [] = "ZRTP.displaySAS";
-constexpr static const char NOT_SUPP_WARNING   [] = "ZRTP.notSuppWarning";
-constexpr static const char HELLO_HASH         [] = "ZRTP.helloHashEnable";
-constexpr static const char DISPLAY_SAS_ONCE   [] = "ZRTP.displaySasOnce";
-
-} //namespace DRing::Account::ConfProperties::ZRTP
-
 namespace TLS {
 
 constexpr static const char LISTENER_PORT      [] = "TLS.listenerPort";
@@ -225,6 +221,13 @@ constexpr static const char PUBLIC_IN_CALLS    [] = "DHT.PublicInCalls";
 constexpr static const char ALLOW_FROM_TRUSTED [] = "DHT.AllowFromTrusted";
 
 } //namespace DRing::Account::DHT
+
+namespace ETH {
+
+constexpr static const char KEY_FILE           [] = "ETH.keyFile";
+constexpr static const char ACCOUNT            [] = "ETH.account";
+
+} //namespace DRing::Account::ETH
 
 namespace CodecInfo {
 

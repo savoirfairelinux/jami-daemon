@@ -33,6 +33,8 @@
 #include "logger.h"
 #include "manager.h"
 
+#include "smartools.h"
+
 namespace DRing {
 
 void
@@ -140,6 +142,18 @@ void
 removeConference(const std::string& conference_id)
 {
    ring::Manager::instance().removeConference(conference_id);
+}
+
+void
+startSmartInfo(uint32_t refreshTimeMs)
+{
+    ring::Smartools::getInstance().start(std::chrono::milliseconds(refreshTimeMs));
+}
+
+void
+stopSmartInfo()
+{
+    ring::Smartools::getInstance().stop();
 }
 
 bool
@@ -289,36 +303,6 @@ bool
 switchInput(const std::string& callID, const std::string& resource)
 {
     return ring::Manager::instance().switchInput(callID, resource);
-}
-
-void
-setSASVerified(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-resetSASVerified(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-setConfirmGoClear(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-requestGoClear(const std::string& /*callID*/)
-{
-    RING_ERR("ZRTP not supported");
-}
-
-void
-acceptEnrollment(const std::string& /*callID*/, bool /*accepted*/)
-{
-    RING_ERR("ZRTP not supported");
 }
 
 void

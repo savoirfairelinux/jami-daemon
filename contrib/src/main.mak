@@ -485,7 +485,7 @@ endif
 	touch $@
 
 .sum-%:
-	$(error Download and check target not defined for $*)
+	$(error Download and check '$@' target not defined for $* contrib)
 
 # Dummy dependency on found packages
 $(patsubst %,.dep-%,$(PKGS_FOUND)): .dep-%:

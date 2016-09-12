@@ -202,16 +202,6 @@ class Sdp {
         using MediaSlot = std::pair<MediaDescription, MediaDescription>;
         std::vector<MediaSlot> getMediaSlots() const;
 
-        /**
-         * Set the zrtp hash that was previously calculated from the hello message in the zrtp layer.
-         * This hash value is unique at the media level. Therefore, if video support is added, one would
-         * have to set the correct zrtp-hash value in the corresponding media section.
-         * @param hash The hello hash of a rtp session. (Only audio at the moment)
-         */
-        void setZrtpHash(const std::string& hash) {
-            zrtpHelloHash_ = hash;
-        }
-
         unsigned int getTelephoneEventType() const {
             return telephoneEventPayload_;
         }
@@ -290,7 +280,6 @@ class Sdp {
         int localVideoControlPort_ {0};
 
         SdesNegotiator sdesNego_;
-        std::string zrtpHelloHash_;
 
         unsigned int telephoneEventPayload_;
 
@@ -325,18 +314,6 @@ class Sdp {
          * @throw SdpException
          */
         void addSdesAttribute(const std::vector<std::string>& crypto);
-
-        /*
-         * Adds a zrtp-hash  attribute to
-         * the given media section. The hello hash is
-         * available only after is has been computed
-         * in the AudioZrtpSession constructor.
-         *
-         * @param media The media to add the zrtp-hash attribute to
-         * @param hash  The hash to which the attribute should be set to
-         * @throw SdpException
-         */
-        void addZrtpAttribute(pjmedia_sdp_media* media, std::string hash);
 
         void addRTCPAttribute(pjmedia_sdp_media *med);
 

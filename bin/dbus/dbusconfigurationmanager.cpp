@@ -74,6 +74,18 @@ DBusConfigurationManager::addAccount(const std::map<std::string, std::string>& d
     return DRing::addAccount(details);
 }
 
+auto
+DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::string& password) -> decltype(DRing::exportOnRing(accountID, password))
+{
+    return DRing::exportOnRing(accountID, password);
+}
+
+auto
+DBusConfigurationManager::getKnownRingDevices(const std::string& accountID) -> decltype(DRing::getKnownRingDevices(accountID))
+{
+    return DRing::getKnownRingDevices(accountID);
+}
+
 void
 DBusConfigurationManager::removeAccount(const std::string& accountID)
 {

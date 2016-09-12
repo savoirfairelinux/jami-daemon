@@ -48,15 +48,11 @@ getSignalHandlers()
         exported_callback<DRing::CallSignal::RecordingStateChanged>(),
         exported_callback<DRing::CallSignal::SecureSdesOn>(),
         exported_callback<DRing::CallSignal::SecureSdesOff>(),
-        exported_callback<DRing::CallSignal::SecureZrtpOn>(),
-        exported_callback<DRing::CallSignal::SecureZrtpOff>(),
-        exported_callback<DRing::CallSignal::ShowSAS>(),
-        exported_callback<DRing::CallSignal::ZrtpNotSuppOther>(),
-        exported_callback<DRing::CallSignal::ZrtpNegotiationFailed>(),
         exported_callback<DRing::CallSignal::RtcpReportReceived>(),
         exported_callback<DRing::CallSignal::PeerHold>(),
         exported_callback<DRing::CallSignal::VideoMuted>(),
         exported_callback<DRing::CallSignal::AudioMuted>(),
+        exported_callback<DRing::CallSignal::SmartInfo>(),
 
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
@@ -71,6 +67,8 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::IncomingAccountMessage>(),
         exported_callback<DRing::ConfigurationSignal::AccountMessageStatusChanged>(),
         exported_callback<DRing::ConfigurationSignal::IncomingTrustRequest>(),
+        exported_callback<DRing::ConfigurationSignal::ExportOnRingEnded>(),
+        exported_callback<DRing::ConfigurationSignal::KnownDevicesChanged>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__

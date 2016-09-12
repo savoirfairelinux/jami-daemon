@@ -53,10 +53,6 @@
                         <li>SRTP_KEY_EXCHANGE</li>
                         <li>SRTP_ENABLE: Whether or not voice communication are encrypted - True or False (Default: False)</li>
                         <li>SRTP_RTP_FALLBACK</li>
-                        <li>ZRTP_DISPLAY_SAS</li>
-                        <li>ZRTP_DISPLAY_SAS_ONCE</li>
-                        <li>ZRTP_HELLO_HASH</li>
-                        <li>ZRTP_NOT_SUPP_WARNING</li>
                         <li>TLS_LISTENER_PORT: TLS listening port (Default: 5061)</li>
                         <li>TLS_ENABLE: Whether or not signalling is encrypted - True or False (Default: False)</li>
                         <li>TLS_CA_LIST_FILE</li>
@@ -154,6 +150,72 @@
            <arg type="s" name="createdAccountId" direction="out">
                <tp:docstring>
                     A new account ID
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <method name="exportOnRing" tp:name-for-bindings="exportOnRing">
+           <tp:docstring>
+               Export account on the DHT using the given password and generated PIN (returned through exportOnRingEnded signal).
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully. exportOnRingEnded will be trigered on completion.
+               </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="exportOnRingEnded" tp:name-for-bindings="exportOnRingEnded">
+           <tp:docstring>
+               Notify clients when the exportOnRing operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. PIN is set.</li>
+                      <li>WRONG_PASSWORD = 1  wrong password provided.</li>
+                      <li>NETWORK_ERROR = 2   can't publish archive on the network.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="PIN">
+               <tp:docstring>
+                   A PIN to show to the user to import the account from somewhere else.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <signal name="knownDevicesChanged" tp:name-for-bindings="knownDevicesChanged">
+           <tp:docstring>
+               Notify clients when a new device linked to this account is found.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <arg type="a{ss}" name="devices" tp:type="String_String_Map">
+               <tp:docstring>
+                   A map of device IDs with corresponding labels.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+       <method name="getKnownRingDevices" tp:name-for-bindings="getKnownRingDevices">
+           <tp:docstring>
+               Gets list of known devices for this account.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="devices" direction="out">
+               <tp:docstring>
+                   A map of device IDs with corresponding labels.
                </tp:docstring>
            </arg>
        </method>
