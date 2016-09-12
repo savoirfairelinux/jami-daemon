@@ -331,7 +331,7 @@ dnl check for libportaudio
 AS_IF([test "${SYS}" = "mingw32"],[
 AC_ARG_WITH([portaudio], [AS_HELP_STRING([--without-portaudio],
             [disable support for portaudio])], [], [with_portaudio=yes])
-
+])
 AS_IF([test "x$with_portaudio" = "xyes"],
       [PKG_CHECK_MODULES(PORTAUDIO, [portaudio-2.0],
         [AC_DEFINE([HAVE_PORTAUDIO], 1, [Define if you have portaudio])],
@@ -339,7 +339,7 @@ AS_IF([test "x$with_portaudio" = "xyes"],
          AC_DEFINE([HAVE_PORTAUDIO], 0, [Define if you have portaudio])
         ])
       ])
-])
+
 AM_CONDITIONAL(BUILD_PORTAUDIO, test "x$with_portaudio" = "xyes")
 AM_CONDITIONAL(HAVE_PORTAUDIO, test "x$with_portaudio" = "xyes")
 
