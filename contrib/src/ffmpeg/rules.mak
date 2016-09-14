@@ -1,5 +1,5 @@
 FFMPEG_HASH := c40983a6f631d22fede713d535bb9c31d5c9740c
-FFMPEG_GITURL := https://github.com/FFmpeg/FFmpeg.git
+FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 ifdef HAVE_WIN32
 PKGS += ffmpeg
@@ -157,10 +157,10 @@ PKGS_FOUND += ffmpeg
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
-	$(call download_git,$(FFMPEG_GITURL),release/2.6, $(FFMPEG_HASH))
+	$(call download,$(FFMPEG_URL))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
-	$(warning Not implemented.)
+	$(warning $@ is not implemented.)
 	touch $@
 
 ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
