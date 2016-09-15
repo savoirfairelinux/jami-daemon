@@ -39,6 +39,7 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_SHARED=NO \
 			-DCMAKE_C_COMPILER=gcc \
 			-DCMAKE_CXX_COMPILER=g++ \
+			-DCMAKE_POSITION_INDEPENDENT_CODE=on \
 			-DCMAKE_INSTALL_PREFIX=$(PREFIX)
 
 restbed-asio-dependency: asio-dependency-$(ASIO_VERSION).tar.gz
