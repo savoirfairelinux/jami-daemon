@@ -529,7 +529,7 @@
     <ClInclude Include="..\src\thread_pool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\base64.h">
+    <ClInclude Include="..\src\ring_base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -846,7 +846,7 @@
     <ClCompile Include="..\src\thread_pool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\base64.cpp">
+    <ClCompile Include="..\src\ring_base64.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

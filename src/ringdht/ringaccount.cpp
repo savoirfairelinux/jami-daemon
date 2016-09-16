@@ -59,7 +59,7 @@
 #include "config/yamlparser.h"
 #include "security/certstore.h"
 #include "libdevcrypto/Common.h"
-#include "base64.h"
+#include "ring_base64.h"
 
 #include <yaml-cpp/yaml.h>
 #include <json/json.h>

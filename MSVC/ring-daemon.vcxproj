@@ -454,7 +454,7 @@
     <ClInclude Include="..\src\account_schema.h" />
     <ClInclude Include="..\src\archiver.h" />
     <ClInclude Include="..\src\array_size.h" />
-    <ClInclude Include="..\src\base64.h" />
+    <ClInclude Include="..\src\ring_base64.h" />
     <ClInclude Include="..\src\call.h" />
     <ClInclude Include="..\src\call_factory.h" />
     <ClInclude Include="..\src\client\ring_signal.h" />
@@ -593,7 +593,7 @@
     <ClCompile Include="..\src\account.cpp" />
     <ClCompile Include="..\src\account_factory.cpp" />
     <ClCompile Include="..\src\archiver.cpp" />
-    <ClCompile Include="..\src\base64.cpp" />
+    <ClCompile Include="..\src\ring_base64.cpp" />
     <ClCompile Include="..\src\buildinfo.cpp" />
     <ClCompile Include="..\src\call.cpp" />
     <ClCompile Include="..\src\call_factory.cpp" />
