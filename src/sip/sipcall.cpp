@@ -63,7 +63,7 @@ getVideoSettings()
 }
 #endif
 
-static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
+static constexpr int DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 
 // SDP media Ids
@@ -725,8 +725,9 @@ SIPCall::setupLocalSDPFromIce()
         return;
     }
 
-    if (waitForIceInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-        RING_ERR("[call:%s] Local ICE init failed", getCallId().c_str());
+    // we need an initialized ICE to progress further
+    if (iceTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) != 0) {
+        RING_ERR("[call:%s] Medias' ICE init failed", getCallId().c_str());
         return;
     }
 
@@ -768,7 +769,7 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
-    if (not iceTransport_ or iceTransport_->isFailed())
+    if (not iceTransport_ or iceTransport_->isFailed() or not iceTransport_->isInitialized())
         return false;
     if (iceTransport_->isStarted()) {
         RING_DBG("[call:%s] ICE already started", getCallId().c_str());
