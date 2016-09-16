@@ -76,7 +76,6 @@ using std::chrono::system_clock;
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
-static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 
@@ -127,7 +126,7 @@ RingAccount::createIceTransport(const Args&... args)
     }
 
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
-    if (!ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
+    if (!ice)
         throw std::runtime_error("ICE transport creation failed");
 
     if (const auto& publicIP = getPublishedIpAddress()) {
@@ -196,29 +195,31 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     }
 
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
-    auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
     std::weak_ptr<SIPCall> weak_call = call;
-    manager.addTask([shared_this, weak_call, ice, iceInitTimeout, toUri] {
+    manager.addTask([shared_this, weak_call, ice, toUri] {
         auto call = weak_call.lock();
 
+        // Call aborted?
         if (not call)
             return false;
 
-        /* First step: wait for an initialized ICE transport for SIP channel */
-        if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
-            RING_DBG("ice init failed (or timeout)");
-            call->onFailure();
+        if (ice->isFailed()) {
+            RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+            call->onFailure(EIO);
             return false;
         }
 
+        // Loop until ICE transport is initialized.
+        // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+        // and we let upper layers decide when the call shall be aborded (our first check upper).
         if (not ice->isInitialized())
-            return true; // process task again!
+            return true;
 
-        /* Next step: sent the ICE data to peer through DHT */
+        // Next step: sent the ICE data to peer through DHT
         const dht::Value::Id callvid  = udist(shared_this->rand_);
         const dht::Value::Id vid  = udist(shared_this->rand_);
         const auto toH = dht::InfoHash(toUri);
