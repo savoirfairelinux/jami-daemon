@@ -850,9 +850,9 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
     if (privateKeyPath_.empty())
        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-    char* dup = strdup(privateKeyPath_.c_str());
 #ifndef WIN32_NATIVE
-    const char* dir = dirname(dup);
+    auto path = std::unique_ptr<char, decltype(free)&> (strdup(privateKeyPath_.c_str()), free);
+    const char* dir = dirname(path.get());
 #else
     char* dir;
     _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);
@@ -873,9 +873,9 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
 
 TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
 {
-    char* dup = strdup(certificatePath_.c_str());
 #ifndef WIN32_NATIVE
-    const char* dir = dirname(dup);
+    auto path = std::unique_ptr<char, decltype(free)&>(strdup(certificatePath_.c_str()), free);
+    const char* dir = dirname(path.get());
 #else
     char* dir;
     _splitpath(certificatePath_.c_str(), nullptr, dir, nullptr, nullptr);

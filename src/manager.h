@@ -61,7 +61,6 @@ class YamlEmitter;
 namespace video {
 class SinkClient;
 }
-
 class PluginManager;
 class AudioFile;
 class DTMF;
@@ -769,6 +768,12 @@ class Manager {
          */
         std::vector<std::string> loadAccountOrder() const;
 
+        /**
+         * Get the Call referred by callID. If the Call does not exist, return
+         * empty std::shared_ptr<Call> instance
+         */
+        std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
+
     private:
         std::atomic_bool autoAnswer_ {false};
 
@@ -779,10 +784,6 @@ class Manager {
         // Set the ringtone or recorded call to be played
         void updateAudioFile(const std::string &file, int sampleRate);
 
-        /**
-         * Get the Call referred to by callID. If the Call does not exist, return NULL
-         */
-        std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
 
         /**
          * Process remaining participant given a conference and the current call id.

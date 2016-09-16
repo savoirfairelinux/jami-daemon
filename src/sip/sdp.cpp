@@ -62,7 +62,6 @@ Sdp::Sdp(const std::string& id)
     , publishedIpAddr_()
     , publishedIpAddrType_()
     , sdesNego_ {CryptoSuites}
-    , zrtpHelloHash_()
     , telephoneEventPayload_(101) // same as asterisk
 {
     memPool_.reset(pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory,
@@ -259,10 +258,7 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
             SdpException("Could not add sdes attribute to media");
-    } /* else if (kx == sip_utils::KeyExchangeProtocol::ZRTP) {
-        if (!zrtpHelloHash_.empty())
-            addZrtpAttribute(med, zrtpHelloHash_);
-    } */
+    }
 
     return med;
 }
@@ -650,16 +646,6 @@ Sdp::getMediaSlots() const
     for (decltype(slot_n) i=0; i<slot_n; i++)
         s.emplace_back(std::move(loc[i]), std::move(rem[i]));
     return s;
-}
-
-void Sdp::addZrtpAttribute(pjmedia_sdp_media* media, std::string hash)
-{
-    /* Format: ":version value" */
-    std::string val = "1.10 " + hash;
-    pj_str_t value = { (char*)val.c_str(), static_cast<pj_ssize_t>(val.size()) };
-    pjmedia_sdp_attr *attr = pjmedia_sdp_attr_create(memPool_.get(), "zrtp-hash", &value);
-    if (pjmedia_sdp_media_add_attr(media, attr) != PJ_SUCCESS)
-        throw SdpException("Could not add zrtp attribute to media");
 }
 
 void

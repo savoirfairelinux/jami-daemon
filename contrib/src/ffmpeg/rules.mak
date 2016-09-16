@@ -153,7 +153,7 @@ FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
 ifeq ($(call need_pkg,"ffmpeg >= 2.6.1"),)
-PKGS_FOUND += ffmepg
+PKGS_FOUND += ffmpeg
 endif
 
 $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:

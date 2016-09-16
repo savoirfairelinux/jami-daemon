@@ -4,7 +4,7 @@ dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
 AC_INIT([Ring],[2.3.0],[ring@lists.savoirfairelinux.net],[ring])
 
-AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2015]])
+AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2016]])
 AC_REVISION([$Revision$])
 
 dnl Where to find configure files
@@ -29,6 +29,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_LANG(C++)
 
 dnl
 dnl  Check the operating system
@@ -50,14 +51,14 @@ case "${host_os}" in
     ;;
   darwin*)
     SYS=darwin
-
-    AC_EGREP_CPP(yes,
-            [#import <TargetConditionals.h>
-             #if TARGET_OS_IPHONE
-             yes
-             #endif],
-             [HAVE_IOS="1"],
-             [HAVE_OSX="1"])
+    AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
+        [[#import <TargetConditionals.h>
+          #if TARGET_OS_IPHONE == 0
+          #error this is not an IPHONE
+          #endif
+        ]])],
+        [HAVE_IOS="1"],
+        [HAVE_OSX="1"])
     ;;
   mingw32*)
     SYS=mingw32
@@ -102,7 +103,7 @@ AM_CONDITIONAL(HAVE_IOS,   test "${HAVE_IOS}" = "1")
 
 dnl FIXME this should be deduced automatically
 AC_DEFINE_UNQUOTED([HAVE_COREAUDIO],
-                    `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,
+                    `if test "${HAVE_OSX}" = "1" || test "${HAVE_IOS}" = "1"; then echo 1; else echo 0; fi`,
                     [Define if you have CoreAudio])
 
 dnl Android is linux, but a bit different
@@ -158,7 +159,6 @@ AC_TYPE_SIZE_T
 AC_HEADER_TIME
 AC_C_VOLATILE
 AC_CHECK_TYPES([ptrdiff_t])
-AC_CHECK_LIB(zlib, zlib)
 
 PKG_PROG_PKG_CONFIG()
 
@@ -238,7 +238,7 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
         export PKG_CONFIG_PATH_CUSTOM
   ])
   export PKG_CONFIG_PATH="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig:$PKG_CONFIG_PATH"
-  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib -lz"
+  LDFLAGS="${LDFLAGS} -L${CONTRIB_DIR}/lib"
 
   AS_IF([test "${SYS}" = "darwin"], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
@@ -257,6 +257,9 @@ AS_IF([test -d "${TOOLS_DIR}"], [
   TOOLS_DIR=`cd "${TOOLS_DIR}" && pwd`
   export PATH="${TOOLS_DIR}":$PATH
 ])
+
+dnl Check for zlib
+PKG_CHECK_MODULES(ZLIB, zlib,, AC_MSG_ERROR([zlib not found]))
 
 dnl Check for pjproject
 PKG_CHECK_MODULES(PJPROJECT, libpjproject,, AC_MSG_ERROR([Missing pjproject files]))
@@ -284,12 +287,12 @@ if test "${SYS}" = "linux"; then
 dnl Check for alsa development package - name: libasound2-dev
 ALSA_MIN_VERSION=1.0
 AC_ARG_WITH([alsa],
-	[AS_HELP_STRING([--without-alsa], [disable support for alsa])],
-	[],
-	[with_alsa=yes])
+    [AS_HELP_STRING([--without-alsa], [disable support for alsa])],
+    [],
+    [with_alsa=yes])
 AS_IF([test "x$with_alsa" = "xyes"], [
        PKG_CHECK_MODULES(ALSA, alsa >= ${ALSA_MIN_VERSION},, AC_MSG_ERROR([Missing alsa development files]))
-	]);
+    ]);
 
 AC_DEFINE_UNQUOTED([HAVE_ALSA], `if test "x$with_alsa" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have alsa])
 fi
@@ -384,6 +387,20 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
+# Rest C++ with restbed
+AC_ARG_WITH([restcpp],
+    AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
+
+AS_IF([test "x$with_restcpp" = "xyes"], [
+    PKG_CHECK_MODULES(RESTBED, librestbed,, AC_MSG_WARN([Missing restbed files]))
+
+    AS_AC_EXPAND(SBINDIR, $sbindir)
+    AC_SUBST(SBINDIR)
+
+    AC_CONFIG_FILES([bin/restcpp/Makefile])
+
+    AM_CONDITIONAL(RING_RESTCPP, true)],
+    AM_CONDITIONAL(RING_RESTCPP, false));
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
@@ -513,6 +530,20 @@ AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
 dnl check for openDHT
 PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT]))
 
+AC_CHECK_HEADER([cryptopp/cryptlib.h], , AC_MSG_FAILURE([Unable to find the cryptopp headers (you may need to install the dev package).]))
+AS_IF([test "${SYS}" = "mingw32"],[
+    LDFLAGS+=" -lcryptopp -lboost_random -lboost_system"
+    CPPFLAGS+="-DBOOST_SYSTEM_NO_DEPRECATED"
+], [
+  AC_CHECK_LIB([cryptopp], [main], [], [
+      AC_MSG_FAILURE([cryptopp link test failed.])
+  ],[-lpthread])
+  AX_BOOST_BASE([1.48],,[AC_MSG_ERROR([Ring needs Boost but it was not found in your system])])
+  AC_CHECK_LIB([boost_system], exit, , [AC_MSG_FAILURE(['Can't find boost system'])])
+  AC_CHECK_LIB([boost_random], exit, , [AC_MSG_FAILURE(['Can't find boost random'])])
+  CPPFLAGS+="-DBOOST_SYSTEM_NO_DEPRECATED"
+])
+
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
 
@@ -546,7 +577,7 @@ AS_IF([test "x$with_natpmp" != xno],
 AC_DEFINE_UNQUOTED([HAVE_LIBNATPMP], `if test "x$with_natpmp" != xno; then echo 1; else echo 0; fi`, [Define if you have libnatpmp])
 
 AC_DEFINE_UNQUOTED([HAVE_SHM], `if test -z "${HAVE_LINUX_TRUE}" && test -z "${HAVE_ANDROID_FALSE}" ; then echo 1; else echo 0; fi`,
-	[Define if you have shared memory support])
+    [Define if you have shared memory support])
 
 # DOXYGEN
 # required dependency(ies): doxygen
@@ -584,6 +615,8 @@ AC_CONFIG_FILES([Makefile \
                  src/sip/Makefile \
                  src/im/Makefile \
                  src/ringdht/Makefile \
+                 src/ringdht/eth/libdevcore/Makefile \
+                 src/ringdht/eth/libdevcrypto/Makefile \
                  src/media/Makefile \
                  src/media/audio/Makefile \
                  src/media/audio/pulseaudio/Makefile \

@@ -482,7 +482,7 @@ SipsIceTransport::updateTransportState(pjsip_transport_state state)
     bool connected = state == PJSIP_TP_STATE_CONNECTED;
     {
         std::lock_guard<std::mutex> lk {txMutex_};
-        syncTx_ = true;
+        syncTx_ = connected;
     }
     getInfo(&ev.ssl_info, connected);
     if (connected)

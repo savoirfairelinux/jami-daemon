@@ -158,15 +158,11 @@ DBusClient::initLibrary(int flags)
         exportable_callback<CallSignal::RecordingStateChanged>(bind(&DBusCallManager::recordingStateChanged, callM, _1, _2)),
         exportable_callback<CallSignal::SecureSdesOn>(bind(&DBusCallManager::secureSdesOn, callM, _1)),
         exportable_callback<CallSignal::SecureSdesOff>(bind(&DBusCallManager::secureSdesOff, callM, _1)),
-        exportable_callback<CallSignal::SecureZrtpOn>(bind(&DBusCallManager::secureZrtpOn, callM, _1, _2)),
-        exportable_callback<CallSignal::SecureZrtpOff>(bind(&DBusCallManager::secureZrtpOff, callM, _1)),
-        exportable_callback<CallSignal::ShowSAS>(bind(&DBusCallManager::showSAS, callM, _1, _2, _3)),
-        exportable_callback<CallSignal::ZrtpNotSuppOther>(bind(&DBusCallManager::zrtpNotSuppOther, callM, _1)),
-        exportable_callback<CallSignal::ZrtpNegotiationFailed>(bind(&DBusCallManager::zrtpNegotiationFailed, callM, _1, _2, _3)),
         exportable_callback<CallSignal::RtcpReportReceived>(bind(&DBusCallManager::onRtcpReportReceived, callM, _1, _2)),
         exportable_callback<CallSignal::PeerHold>(bind(&DBusCallManager::peerHold, callM, _1, _2)),
         exportable_callback<CallSignal::AudioMuted>(bind(&DBusCallManager::audioMuted, callM, _1, _2)),
-        exportable_callback<CallSignal::VideoMuted>(bind(&DBusCallManager::videoMuted, callM, _1, _2))
+        exportable_callback<CallSignal::VideoMuted>(bind(&DBusCallManager::videoMuted, callM, _1, _2)),
+        exportable_callback<CallSignal::SmartInfo>(bind(&DBusCallManager::SmartInfo, callM, _1))
     };
 
     // Configuration event handlers
@@ -179,6 +175,8 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::Error>(bind(&DBusConfigurationManager::errorAlert, confM, _1)),
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&DBusConfigurationManager::incomingAccountMessage, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&DBusConfigurationManager::incomingTrustRequest, confM, _1, _2, _3, _4 )),
+        exportable_callback<ConfigurationSignal::ExportOnRingEnded>(bind(&DBusConfigurationManager::exportOnRingEnded, confM, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&DBusConfigurationManager::knownDevicesChanged, confM, _1, _2 )),
         exportable_callback<ConfigurationSignal::CertificatePinned>(bind(&DBusConfigurationManager::certificatePinned, confM, _1 )),
         exportable_callback<ConfigurationSignal::CertificatePathPinned>(bind(&DBusConfigurationManager::certificatePathPinned, confM, _1, _2 )),
         exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),

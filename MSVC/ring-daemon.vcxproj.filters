@@ -95,6 +95,24 @@
     <Filter Include="Source Files\media\video\uwpvideo">
       <UniqueIdentifier>{13ad5c25-d522-4562-8bab-f322fdd2a243}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\ringdht\eth">
+      <UniqueIdentifier>{a351b980-057f-4e56-9b7f-4cbf27b49a7e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ringdht\eth\libdevcore">
+      <UniqueIdentifier>{a39b6b13-7f71-4508-bbc8-20f69720f6af}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\ringdht\eth\libdevcrypto">
+      <UniqueIdentifier>{c9a4b0a8-0da9-41d6-bb80-3fc1d31a2986}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ringdht\eth">
+      <UniqueIdentifier>{db320a5a-b2ac-4504-8c10-9a87548eaf0c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ringdht\eth\libdevcore">
+      <UniqueIdentifier>{ddb27107-f5f8-43ad-a7c5-516214932a85}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\ringdht\eth\libdevcrypto">
+      <UniqueIdentifier>{255ccb5c-fdc7-48c8-a4f7-df183608e573}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\client\ring_signal.h">
@@ -376,9 +394,6 @@
     <ClInclude Include="..\src\upnp\upnp_context.h">
       <Filter>Header Files\upnp</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\sip\base64.h">
-      <Filter>Header Files\sip</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\sip\pattern.h">
       <Filter>Header Files\sip</Filter>
     </ClInclude>
@@ -437,6 +452,84 @@
       <Filter>Header Files\media\audio\portaudio</Filter>
     </ClInclude>
     <ClInclude Include="unistd.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\AES.h">
+      <Filter>Header Files\ringdht\eth\libdevcrypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Common.h">
+      <Filter>Header Files\ringdht\eth\libdevcrypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\CryptoPP.h">
+      <Filter>Header Files\ringdht\eth\libdevcrypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\ECDHE.h">
+      <Filter>Header Files\ringdht\eth\libdevcrypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Exceptions.h">
+      <Filter>Header Files\ringdht\eth\libdevcrypto</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Assertions.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Base64.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Common.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\CommonData.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\concurrent_queue.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\debugbreak.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Diff.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Exceptions.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\FixedHash.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Guards.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Hash.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\picosha2.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\RLP.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\SHA3.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\Terminal.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\UndefMacros.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\vector_ref.h">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\eth\libdevcore\boost_multiprecision_number_compare_bug_workaround.hpp">
+      <Filter>Header Files\ringdht\eth\libdevcore</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\smartools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\thread_pool.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -684,9 +777,6 @@
     <ClCompile Include="..\src\sip\pres_sub_server.cpp">
       <Filter>Source Files\sip</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\sip\base64.c">
-      <Filter>Source Files\sip</Filter>
-    </ClCompile>
     <ClCompile Include="..\src\security\tls_session.cpp">
       <Filter>Source Files\security</Filter>
     </ClCompile>
@@ -713,6 +803,51 @@
     </ClCompile>
     <ClCompile Include="..\src\media\video\uwpvideo\video_device_monitor_impl.cpp">
       <Filter>Source Files\media\video\uwpvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\Base64.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\Common.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\CommonData.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\FixedHash.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\Guards.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\Hash.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\RLP.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcore\SHA3.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcrypto\AES.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcrypto\Common.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcrypto\CryptoPP.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\eth\libdevcrypto\ECDHE.cpp">
+      <Filter>Source Files\ringdht\eth\libdevcrypto</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\smartools.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\thread_pool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\base64.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

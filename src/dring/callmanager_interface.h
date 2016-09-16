@@ -67,6 +67,10 @@ std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+/* Statistic related methods */
+void startSmartInfo(uint32_t refreshTimeMs);
+void stopSmartInfo();
+
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
 void stopRecordedFilePlayback(const std::string& filepath);
@@ -174,26 +178,6 @@ struct CallSignal {
                 constexpr static const char* name = "SecureSdesOff";
                 using cb_type = void(const std::string&);
         };
-        struct SecureZrtpOn {
-                constexpr static const char* name = "SecureZrtpOn";
-                using cb_type = void(const std::string&, const std::string&);
-        };
-        struct SecureZrtpOff {
-                constexpr static const char* name = "SecureZrtpOff";
-                using cb_type = void(const std::string&);
-        };
-        struct ShowSAS {
-                constexpr static const char* name = "ShowSAS";
-                using cb_type = void(const std::string&, const std::string&, int);
-        };
-        struct ZrtpNotSuppOther {
-                constexpr static const char* name = "ZrtpNotSuppOther";
-                using cb_type = void(const std::string&);
-        };
-        struct ZrtpNegotiationFailed {
-                constexpr static const char* name = "ZrtpNegotiationFailed";
-                using cb_type = void(const std::string&, const std::string&, const std::string&);
-        };
         struct RtcpReportReceived {
                 constexpr static const char* name = "RtcpReportReceived";
                 using cb_type = void(const std::string&, const std::map<std::string, int>&);
@@ -210,8 +194,12 @@ struct CallSignal {
                 constexpr static const char* name = "AudioMuted";
                 using cb_type = void(const std::string&, bool);
         };
+        struct SmartInfo {
+                constexpr static const char* name = "SmartInfo";
+                using cb_type = void(const std::map<std::string, std::string>&);
+        };
 };
 
-} // namespace DRing
+}; // namespace DRing
 
 #endif // DRING_CALLMANAGERI_H

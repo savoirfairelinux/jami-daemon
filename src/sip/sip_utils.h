@@ -43,11 +43,10 @@ namespace ring { namespace sip_utils {
 static constexpr int DEFAULT_SIP_PORT {5060};
 static constexpr int DEFAULT_SIP_TLS_PORT {5061};
 
-enum class KeyExchangeProtocol { NONE, SDES, ZRTP };
+enum class KeyExchangeProtocol { NONE, SDES };
 
-constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
-    return kx == KeyExchangeProtocol::SDES ? "sdes" : (
-        kx == KeyExchangeProtocol::ZRTP ? "zrtp" : "");
+static constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
+    return kx == KeyExchangeProtocol::SDES ? "sdes" : "";
 }
 
 static inline KeyExchangeProtocol getKeyExchangeProtocol(const char* name) {

@@ -123,7 +123,6 @@ static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
 static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
-static const char * const ZRTP_ZIDFILE = "zidFile";     /** The filename used for storing ZIDs */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
 
 Preferences::Preferences() :
@@ -215,7 +214,6 @@ VoipPreference::VoipPreference() :
     , playTones_(true)
     , pulseLength_(atoi(DFT_PULSE_LENGTH_STR))
     , symmetricRtp_(true)
-    , zidFile_(ZRTP_ZIDFILE)
 {}
 
 void VoipPreference::serialize(YAML::Emitter &out)

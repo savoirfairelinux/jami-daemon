@@ -20,7 +20,8 @@
 #
 
 # List all files in current directory
-FILES=`find -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.i" -o -name "README" -o -name "*.sh" -o -name "*.py" -o -name "*.mm" -o -name "update-copyright" -o -name "*.patch" -o -name "copyright"`
+FILES=`find -name "*.h" -o -name "*.c" -o -name "*.cpp" -o -name "*.i" -o -name "*.sh" -o -name "*.py" -o -name "*.mm" -o -name "*.patch" -o -name "README"`
+FILES+=" ./configure.ac ./tools/update-copyright"
 year=`date +%Y`
 
 # Loop and replace

@@ -125,10 +125,6 @@ SIPAccount::SIPAccount(const std::string& accountID, bool presenceEnabled)
     , tlsVerifyClient_(true)
     , tlsRequireClientCertificate_(true)
     , tlsNegotiationTimeoutSec_("2")
-    , zrtpDisplaySas_(true)
-    , zrtpDisplaySasOnce_(false)
-    , zrtpHelloHash_(true)
-    , zrtpNotSuppWarning_(true)
     , registrationStateDetailed_()
     , keepAliveEnabled_(false)
     , keepAliveTimer_()
@@ -174,6 +170,7 @@ SIPAccount::newOutgoingSIPCall(const std::string& toUrl)
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::OUTGOING);
+    call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
         bool ipv6 = false;
@@ -203,9 +200,7 @@ SIPAccount::newOutgoingSIPCall(const std::string& toUrl)
 
     auto toUri = getToUri(to);
     call->initIceTransport(true);
-
     call->setIPToIP(isIP2IP());
-    call->setSecure(isTlsEnabled());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
 
@@ -411,6 +406,8 @@ void SIPAccount::serialize(YAML::Emitter &out)
 
     out << YAML::Key << Conf::PORT_KEY << YAML::Value << localPort_;
 
+    out << YAML::Key << USERNAME_KEY << YAML::Value << username_;
+
     // each credential is a map, and we can have multiple credentials
     out << YAML::Key << Conf::CRED_KEY << YAML::Value << getCredentials();
     out << YAML::Key << Conf::KEEP_ALIVE_ENABLED << YAML::Value << keepAliveEnabled_;
@@ -440,14 +437,6 @@ void SIPAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::SRTP_KEY << YAML::Value << YAML::BeginMap;
     out << YAML::Key << Conf::KEY_EXCHANGE_KEY << YAML::Value << sip_utils::getKeyExchangeName(srtpKeyExchange_);
     out << YAML::Key << Conf::RTP_FALLBACK_KEY << YAML::Value << srtpFallback_;
-    out << YAML::EndMap;
-
-    // zrtp submap
-    out << YAML::Key << Conf::ZRTP_KEY << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << Conf::DISPLAY_SAS_KEY << YAML::Value << zrtpDisplaySas_;
-    out << YAML::Key << Conf::DISPLAY_SAS_ONCE_KEY << YAML::Value << zrtpDisplaySasOnce_;
-    out << YAML::Key << Conf::HELLO_HASH_ENABLED_KEY << YAML::Value << zrtpHelloHash_;
-    out << YAML::Key << Conf::NOT_SUPP_WARNING_KEY << YAML::Value << zrtpNotSuppWarning_;
     out << YAML::EndMap;
 
     out << YAML::EndMap;
@@ -483,6 +472,8 @@ validate(std::string &member, const std::string &param, const T& valid)
 void SIPAccount::unserialize(const YAML::Node &node)
 {
     SIPAccountBase::unserialize(node);
+    parseValue(node, USERNAME_KEY, username_);
+
     if (not publishedSameasLocal_)
         usePublishedAddressPortInVIA();
 
@@ -490,9 +481,17 @@ void SIPAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::PORT_KEY, port);
     localPort_ = port;
 
-    if (not isIP2IP()) parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
-
-    if (not isIP2IP()) parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+    if (not isIP2IP()) {
+        parseValue(node, Preferences::REGISTRATION_EXPIRE_KEY, registrationExpire_);
+        parseValue(node, Conf::KEEP_ALIVE_ENABLED, keepAliveEnabled_);
+        parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
+        const auto& credsNode = node[Conf::CRED_KEY];
+        setCredentials(parseVectorMap(credsNode, {
+            Conf::CONFIG_ACCOUNT_REALM,
+            Conf::CONFIG_ACCOUNT_USERNAME,
+            Conf::CONFIG_ACCOUNT_PASSWORD
+        }));
+    }
 
     bool presEnabled = false;
     parseValue(node, PRESENCE_MODULE_ENABLED_KEY, presEnabled);
@@ -506,8 +505,6 @@ void SIPAccount::unserialize(const YAML::Node &node)
         presence_->support(PRESENCE_FUNCTION_SUBSCRIBE, subscribeSupported);
     }
 
-    if (not isIP2IP()) parseValue(node, Conf::SERVICE_ROUTE_KEY, serviceRoute_);
-
     // Init stun server name with default server name
     stunServerName_ = pj_str((char*) stunServer_.data());
 
@@ -517,14 +514,6 @@ void SIPAccount::unserialize(const YAML::Node &node)
         Conf::CONFIG_ACCOUNT_USERNAME,
         Conf::CONFIG_ACCOUNT_PASSWORD
     }));
-
-    // get zrtp submap
-    const auto &zrtpMap = node[Conf::ZRTP_KEY];
-
-    parseValue(zrtpMap, Conf::DISPLAY_SAS_KEY, zrtpDisplaySas_);
-    parseValue(zrtpMap, Conf::DISPLAY_SAS_ONCE_KEY, zrtpDisplaySasOnce_);
-    parseValue(zrtpMap, Conf::HELLO_HASH_ENABLED_KEY, zrtpHelloHash_);
-    parseValue(zrtpMap, Conf::NOT_SUPP_WARNING_KEY, zrtpNotSuppWarning_);
 
     // get tls submap
     const auto &tlsMap = node[Conf::TLS_KEY];
@@ -555,6 +544,7 @@ void SIPAccount::unserialize(const YAML::Node &node)
 void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &details)
 {
     SIPAccountBase::setAccountDetails(details);
+    parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
 
@@ -573,12 +563,6 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     bool presenceEnabled = false;
     parseBool(details, Conf::CONFIG_PRESENCE_ENABLED, presenceEnabled);
     enablePresence(presenceEnabled);
-
-    // srtp settings
-    parseBool(details, Conf::CONFIG_ZRTP_DISPLAY_SAS, zrtpDisplaySas_);
-    parseBool(details, Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE, zrtpDisplaySasOnce_);
-    parseBool(details, Conf::CONFIG_ZRTP_NOT_SUPP_WARNING, zrtpNotSuppWarning_);
-    parseBool(details, Conf::CONFIG_ZRTP_HELLO_HASH, zrtpHelloHash_);
 
     // TLS settings
     parseBool(details, Conf::CONFIG_TLS_ENABLE, tlsEnable_);
@@ -645,10 +629,7 @@ SIPAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_SRTP_KEY_EXCHANGE,               sip_utils::getKeyExchangeName(srtpKeyExchange_));
     a.emplace(Conf::CONFIG_SRTP_ENABLE,                     isSrtpEnabled() ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK,               srtpFallback_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_ZRTP_DISPLAY_SAS,                zrtpDisplaySas_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_ZRTP_DISPLAY_SAS_ONCE,           zrtpDisplaySasOnce_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_ZRTP_HELLO_HASH,                 zrtpHelloHash_ ? TRUE_STR : FALSE_STR);
-    a.emplace(Conf::CONFIG_ZRTP_NOT_SUPP_WARNING,           zrtpNotSuppWarning_ ? TRUE_STR : FALSE_STR);
+
     return a;
 }
 

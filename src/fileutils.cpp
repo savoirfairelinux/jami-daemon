@@ -102,7 +102,10 @@ bool check_dir(const char *path,
             return false;
         }
 #ifndef _WIN32
-        chmod(path, dirmode);
+        if (chmod(path, dirmode) < 0) {
+            RING_ERR("fileutils::check_dir(): chmod() failed on '%s', %s", path, strerror(errno));
+            return false;
+        }
 #endif
     } else
         closedir(dir);
@@ -217,6 +220,11 @@ expand_path(const std::string &path)
 #endif
 }
 
+bool isFile (const std::string& path) {
+  struct stat s;
+  return (stat (path.c_str(), &s) == 0) and not (s.st_mode & S_IFDIR);
+}
+
 bool isDirectory(const std::string& path)
 {
     struct stat s;
@@ -270,8 +278,8 @@ loadFile(const std::string& path)
     if (!file)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
-    std::streamsize size = file.tellg();
-    if ((unsigned)size > std::numeric_limits<unsigned>::max())
+    auto size = file.tellg();
+    if (size > std::numeric_limits<unsigned>::max())
         throw std::runtime_error("File is too big: "+path);
     buffer.resize(size);
     file.seekg(0, std::ios::beg);
@@ -292,7 +300,8 @@ saveFile(const std::string& path,
     }
     file.write((char*)data.data(), data.size());
 #ifndef _WIN32
-    chmod(path.c_str(), mode);
+    if (chmod(path.c_str(), mode) < 0)
+        RING_WARN("fileutils::saveFile(): chmod() failed on '%s', %s", path.c_str(), strerror(errno));
 #endif
 }
 
