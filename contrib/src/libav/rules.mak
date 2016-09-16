@@ -1,6 +1,6 @@
 #Libav 11-1 (git version packaged for ubuntu  14.10)
 LIBAV_HASH := f851477889ae48e2f17073cf7486e1d5561b7ae4
-LIBAV_GITURL := git://git.libav.org/libav.git
+LIBAV_URL := https://git.libav.org/?p=libav.git;a=snapshot;h=$(LIBAV_HASH);sf=tgz
 
 ifndef HAVE_WIN32
 PKGS += libav
@@ -171,10 +171,10 @@ PKGS_FOUND += libav
 endif
 
 $(TARBALLS)/libav-$(LIBAV_HASH).tar.xz:
-	$(call download_git,$(LIBAV_GITURL),master,$(LIBAV_HASH))
+	$(call download,$(LIBAV_URL))
 
 .sum-libav: libav-$(LIBAV_HASH).tar.xz
-	$(warning Not implemented.)
+	$(warning $@ is not implemented.)
 	touch $@
 
 libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
