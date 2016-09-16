@@ -1,7 +1,7 @@
 #
 #  Copyright (C) 2016 Savoir-faire Linux Inc.
 #
-#  Author: Simon Zeni <simon.zeni@savoirfairelinux.com>
+#  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,36 +18,25 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := 4.0
-RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
+ASIO_VERSION := 428ec47e43acf3aa0c7be7f3527bfdea2fbcd6e8
+ASIO_URL := https://github.com/Corvusoft/asio-dependency/archive/$(ASIO_VERSION).tar.gz
 
-ifndef HAVE_WIN32
-PKGS += restbed
-endif
+PKGS += asio
 
-ifeq ($(call need_pkg,"restbed >= 4.0"),)
-PKGS_FOUND += restbed
-endif
+$(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
+	$(call download,$(ASIO_URL))
 
-$(TARBALLS)/restbed-$(RESTBED_VERSION).tar.gz:
-	$(call download,$(RESTBED_URL))
-
-DEPS_restbed = asio
-
-RESTBED_CONF = -DBUILD_TESTS=NO \
-			-DBUILD_EXAMPLES=NO \
-			-DBUILD_SSL=NO \
-			-DBUILD_SHARED=NO \
-			-DCMAKE_INSTALL_PREFIX=$(PREFIX)
-
-restbed: restbed-$(RESTBED_VERSION).tar.gz
+asio: asio-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
-	$(APPLY) $(SRC)/restbed/CMakeLists.patch
+	mv asio-dependency-$(ASIO_VERSION)/asio asio-$(ASIO_VERSION) && rm -rf asio-dependency-$(ASIO_VERSION)
+	#$(APPLY) $(SRC)/asio/conditional_sslv3.patch
+	$(APPLY) $(SRC)/asio/no_tests_examples.patch
 	$(MOVE)
 
-.restbed: restbed toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) $(RESTBED_CONF) .
+.asio: asio .sum-asio
+	cd $< && ./autogen.sh
+	cd $< && $(HOSTVARS) ./configure --without-boost $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
 
-.sum-restbed: restbed-$(RESTBED_VERSION).tar.gz
+.sum-asio: asio-$(ASIO_VERSION).tar.gz
