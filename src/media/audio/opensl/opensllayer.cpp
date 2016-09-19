@@ -195,11 +195,11 @@ OpenSLLayer::dbgEngineGetBufCount() {
     return count_player;
 }
 
-bool
+void
 OpenSLLayer::engineServicePlay(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return false;
+        return;
     }
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
@@ -214,14 +214,13 @@ OpenSLLayer::engineServicePlay(bool waiting) {
         } else
             break;
     }
-    return true;
 }
 
-bool
+void
 OpenSLLayer::engineServiceRing(bool waiting) {
     if (waiting) {
         playCv.notify_one();
-        return false;
+        return;
     }
     sample_buf* buf;
     while (ringtone_ and freeRingBufQueue_.front(&buf)) {
@@ -239,14 +238,13 @@ OpenSLLayer::engineServiceRing(bool waiting) {
             break;
         }
     }
-    return true;
 }
 
-bool
+void
 OpenSLLayer::engineServiceRec(bool waiting) {
     playCv.notify_one();
     recCv.notify_one();
-    return true;
+    return;
 }
 
 void
