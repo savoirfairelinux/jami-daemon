@@ -15,9 +15,12 @@ PJPROJECT_OPTIONS := --disable-oss          \
                      --disable-speex-codec  \
                      --disable-ilbc-codec   \
                      --disable-opencore-amr \
+                     --disable-silk         \
                      --disable-sdl          \
                      --disable-ffmpeg       \
                      --disable-v4l2         \
+                     --disable-openh264     \
+                     --disable-resample     \
                      --enable-ssl=gnutls
 
 ifdef HAVE_ANDROID
@@ -30,7 +33,8 @@ ifdef HAVE_IOS
 PJPROJECT_OPTIONS += --with-ssl=$(PREFIX)
 endif
 
-PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CAND=32 -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2
+PJPROJECT_EXTRA_CFLAGS = -DPJ_ICE_MAX_CAND=32 -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2 -std=gnu11
+PJPROJECT_EXTRA_CXXFLAGS = -DPJ_ICE_MAX_CAND=32 -DPJ_ICE_MAX_CHECKS=150 -DPJ_ICE_COMP_BITS=2 -std=gnu++11
 
 ifdef HAVE_WIN64
 PJPROJECT_EXTRA_CFLAGS += -DPJ_WIN64=1
@@ -76,5 +80,5 @@ ifdef HAVE_IOS
 else
 	cd $< && $(HOSTVARS) ./aconfigure $(HOSTCONF) $(PJPROJECT_OPTIONS)
 endif
-	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" $(MAKE) && $(MAKE) install
+	cd $< && CFLAGS="$(PJPROJECT_EXTRA_CFLAGS)" CXXFLAGS="$(PJPROJECT_EXTRA_CXXFLAGS)" $(MAKE) && $(MAKE) install
 	touch $@

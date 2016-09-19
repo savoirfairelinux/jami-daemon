@@ -117,8 +117,8 @@ endif
 endif
 
 ifdef HAVE_ANDROID
-CC :=  $(CROSS_COMPILE)gcc --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
-CXX := $(CROSS_COMPILE)g++ --sysroot=$(ANDROID_NDK)/platforms/$(ANDROID_API)/arch-$(PLATFORM_SHORT_ARCH)
+CC := clang
+CXX := clang++
 endif
 
 ifdef HAVE_MACOSX

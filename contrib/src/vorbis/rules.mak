@@ -30,6 +30,9 @@ ifndef HAVE_IOS
 else
 	$(APPLY) $(SRC)/vorbis/ios.patch
 endif
+ifdef HAVE_ANDROID
+	$(APPLY) $(SRC)/vorbis/android.patch
+endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
