@@ -1,10 +1,10 @@
 # libvpx
 
 #Libav doesnt support new vpx version
-ifdef HAVE_IOS
-VPX_HASH := cbecf57f3e0d85a7b7f97f3ab7c507f6fe640a93
-else
+ifdef HAVE_MACOSX
 VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
+else
+VPX_HASH := v1.6.0
 endif
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
@@ -115,9 +115,9 @@ LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
 # vpx configure.sh overrides our sysroot and it looks for it itself, and
 # uses that path to look for the compiler (which we already know)
-VPX_CONF += --sdk-path=$(shell dirname $(shell which $(CROSS_COMPILE)gcc))
+VPX_CONF += --sdk-path=$(ANDROID_TOOLCHAIN)/bin
 # needed for cpu-features.h
-VPX_CONF += --extra-cflags="-I $(ANDROID_NDK)/sources/cpufeatures/"
+VPX_CONF += --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/"
 # set an explicit alternative libc since the sysroot override can make it blank
 VPX_CONF += --libc=$(SYSROOT)
 LOCAL_HOSTVARS=$(HOSTVARS)
