@@ -61,6 +61,7 @@ namespace DRing {
 constexpr unsigned CODECS_NOT_LOADED = 0x1000; /** Codecs not found */
 
 using ring::SIPAccount;
+using ring::RingAccount;
 using ring::tls::TlsValidator;
 using ring::tls::CertificateStore;
 using ring::DeviceType;
@@ -828,12 +829,52 @@ connectivityChanged()
         RING_ERR("UPnP context error: %s", e.what());
     }
 
-    auto account_list = ring::Manager::instance().getAccountList();
-    for (auto account_id : account_list) {
-        if (auto account = ring::Manager::instance().getAccount(account_id)) {
-            account->connectivityChanged();
-        }
+    for (const auto &account : ring::Manager::instance().getAllAccounts()) {
+        account->connectivityChanged();
     }
+}
+
+bool lookupName(const std::string& account, const std::string& name)
+{
+#if HAVE_RINGNS
+    if (account.empty()) {
+        ring::NameDirectory::instance().lookupName(name, [name](const std::string& result, ring::NameDirectory::Response response) {
+            ring::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, result, name);
+        });
+        return true;
+    } else if (auto acc = ring::Manager::instance().getAccount<RingAccount>(account)) {
+        acc->lookupName(name);
+        return true;
+    }
+#endif
+    return false;
+}
+
+bool lookupAddress(const std::string& account, const std::string& address)
+{
+#if HAVE_RINGNS
+    if (account.empty()) {
+        ring::NameDirectory::instance().lookupAddress(address, [address](const std::string& result, ring::NameDirectory::Response response) {
+            ring::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, address, result);
+        });
+        return true;
+    } else if (auto acc = ring::Manager::instance().getAccount<RingAccount>(account)) {
+        acc->lookupAddress(address);
+        return true;
+    }
+#endif
+    return false;
+}
+
+bool registerName(const std::string& account, const std::string& password, const std::string& name)
+{
+#if HAVE_RINGNS
+    if (auto acc = ring::Manager::instance().getAccount<RingAccount>(account)) {
+        acc->registerName(password, name);
+        return true;
+    }
+#endif
+    return false;
 }
 
 } // namespace DRing
