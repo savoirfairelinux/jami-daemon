@@ -1,0 +1,11 @@
+--- libvorbis/configure.ac.orig	2012-09-07 00:17:47.000000000 +0200
++++ libvorbis/configure.ac	2012-09-07 00:18:01.000000000 +0200
+@@ -130,5 +130,5 @@
+ 		DEBUG="-g -Wall -Wextra -D_REENTRANT -D__NO_MATH_INLINES -fsigned-char" 
+-		CFLAGS="-O20 -ffast-math -mno-ieee-fp -D_REENTRANT -fsigned-char"
++		CFLAGS="-O20 -ffast-math -D_REENTRANT -fsigned-char"
+ #              	PROFILE="-Wall -Wextra -pg -g -O20 -ffast-math -D_REENTRANT -fsigned-char -fno-inline -static"
+-		PROFILE="-Wall -Wextra -pg -g -O20 -ffast-math -mno-ieee-fp -D_REENTRANT -fsigned-char -fno-inline"
++		PROFILE="-Wall -Wextra -pg -g -O20 -ffast-math -D_REENTRANT -fsigned-char -fno-inline"
+ 
+
