@@ -44,7 +44,10 @@ ToneControl::setSampleRate(unsigned rate)
 {
     std::lock_guard<std::mutex> lk(mutex_);
     sampleRate_ = rate;
-    telephoneTone_.reset(new TelephoneTone(prefs_.getZoneToneChoice(), rate));
+    if (!telephoneTone_)
+        telephoneTone_.reset(new TelephoneTone(prefs_.getZoneToneChoice(), rate));
+    else
+        telephoneTone_->setSampleRate(rate);
 }
 
 AudioLoop*
