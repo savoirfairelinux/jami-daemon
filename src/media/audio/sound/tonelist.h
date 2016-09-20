@@ -46,6 +46,7 @@ class TelephoneTone {
         ~TelephoneTone();
 
         void setCurrentTone(Tone::TONEID toneId);
+        void setSampleRate(unsigned int sampleRate);
         Tone* getCurrentTone();
 
     private:
@@ -53,6 +54,8 @@ class TelephoneTone {
 
         static COUNTRYID getCountryId(const std::string& countryName);
 
+        void buildTones(unsigned int sampleRate);
+        COUNTRYID countryId_;
         Tone* tone_[Tone::TONE_NULL];
         Tone::TONEID currentTone_;
 };

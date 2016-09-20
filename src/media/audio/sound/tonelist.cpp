@@ -91,14 +91,9 @@ TelephoneTone::getCountryId(const std::string& countryName)
 }
 
 TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sampleRate) :
-    currentTone_(Tone::TONE_NULL)
+    currentTone_(Tone::TONE_NULL), countryId_(getCountryId(countryName))
 {
-    TelephoneTone::COUNTRYID countryId = getCountryId(countryName);
-
-    tone_[Tone::TONE_DIALTONE] = new Tone(toneZone[countryId][Tone::TONE_DIALTONE], sampleRate);
-    tone_[Tone::TONE_BUSY] = new Tone(toneZone[countryId][Tone::TONE_BUSY], sampleRate);
-    tone_[Tone::TONE_RINGTONE] = new Tone(toneZone[countryId][Tone::TONE_RINGTONE], sampleRate);
-    tone_[Tone::TONE_CONGESTION] = new Tone(toneZone[countryId][Tone::TONE_CONGESTION], sampleRate);
+    buildTones(sampleRate);
 }
 
 TelephoneTone::~TelephoneTone()
@@ -116,6 +111,14 @@ TelephoneTone::setCurrentTone(Tone::TONEID toneId)
     currentTone_ = toneId;
 }
 
+void
+TelephoneTone::setSampleRate(unsigned int sampleRate)
+{
+    for (size_t i=0; i < Tone::TONE_NULL; i++)
+        delete tone_[i];
+    buildTones(sampleRate);
+}
+
 Tone*
 TelephoneTone::getCurrentTone()
 {
@@ -123,6 +126,15 @@ TelephoneTone::getCurrentTone()
         return NULL;
 
     return tone_[currentTone_];
+}
+
+void
+TelephoneTone::buildTones(unsigned int sampleRate)
+{
+    tone_[Tone::TONE_DIALTONE] = new Tone(toneZone[countryId_][Tone::TONE_DIALTONE], sampleRate);
+    tone_[Tone::TONE_BUSY] = new Tone(toneZone[countryId_][Tone::TONE_BUSY], sampleRate);
+    tone_[Tone::TONE_RINGTONE] = new Tone(toneZone[countryId_][Tone::TONE_RINGTONE], sampleRate);
+    tone_[Tone::TONE_CONGESTION] = new Tone(toneZone[countryId_][Tone::TONE_CONGESTION], sampleRate);
 }
 
 } // namespace ring
