@@ -17,9 +17,7 @@ libsiplink_la_SOURCES = \
         sipvoiplink.h \
         siptransport.h \
         sip_utils.cpp \
-        sip_utils.h \
-        base64.h \
-        base64.c
+        sip_utils.h
 
 libsiplink_la_SOURCES+=sippresence.cpp \
                        sippresence.h \
