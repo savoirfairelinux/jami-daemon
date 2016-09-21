@@ -1213,9 +1213,15 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
 }
 
 void
-SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
+SIPVoIPLink::resolveSrvName(const std::string& name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
-    if (name.length() >= PJ_MAX_HOSTNAME) {
+    // PJSIP limits hostname to be longer than PJ_MAX_HOSTNAME.
+    // But, resolver prefix the given name by a string like "_sip._udp."
+    // causing a check against PJ_MAX_HOSTNAME to be useless.
+    // It's not easy to pre-determinate as it's implementation dependent.
+    // So we just choose a security marge enough for most cases, preventing a crash later
+    // in the call of pjsip_endpt_resolve().
+    if (name.length() > (PJ_MAX_HOSTNAME - 12)) {
         RING_ERR("Hostname is too long");
         cb({});
         return;
