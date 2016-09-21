@@ -22,7 +22,6 @@
 
 #include "preferences.h"
 #include "audio/sound/tone.h"  // for Tone::TONEID declaration
-#include "audio/sound/tonelist.h"
 #include "audio/sound/audiofile.h"
 
 #include <mutex>
@@ -35,6 +34,8 @@ namespace ring {
  * Having an application wide instance gives a way to handle
  * complexes interactions occuring in a multi-call context.
  */
+
+class TelephoneTone;
 
 class ToneControl {
     public:
