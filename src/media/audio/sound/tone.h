@@ -20,8 +20,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef __TONE_H__
-#define __TONE_H__
+
+#pragma once
 
 #include <string>
 #include "audio/audioloop.h"
@@ -35,6 +35,8 @@ namespace ring {
 
 class Tone : public AudioLoop {
     public:
+        Tone() : AudioLoop() {}
+
         /**
          * Constructor
          * @param definition String that contain frequency/time of the tone
@@ -70,5 +72,3 @@ class Tone : public AudioLoop {
 };
 
 } // namespace ring
-
-#endif // __TONE_H__
