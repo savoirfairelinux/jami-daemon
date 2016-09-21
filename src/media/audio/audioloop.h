@@ -36,7 +36,11 @@ namespace ring {
 
 class AudioLoop {
     public:
+        AudioLoop() {}
+
         AudioLoop(unsigned int sampleRate);
+
+        AudioLoop& operator=(AudioLoop&& o) noexcept = default;
 
         virtual ~AudioLoop();
 
@@ -70,10 +74,10 @@ class AudioLoop {
         }
     protected:
         /** The data buffer */
-        AudioBuffer * buffer_;
+        AudioBuffer * buffer_ {nullptr};
 
         /** current position, set to 0, when initialize */
-        size_t pos_;
+        size_t pos_ {0};
 
     private:
         NON_COPYABLE(AudioLoop);
