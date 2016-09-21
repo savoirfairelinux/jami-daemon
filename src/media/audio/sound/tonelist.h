@@ -21,10 +21,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __TONELIST_H__
-#define __TONELIST_H__
+#pragma once
 
 #include "tone.h"
+
+#include <string>
+#include <array>
+#include <memory>
 
 namespace ring {
 
@@ -43,11 +46,10 @@ class TelephoneTone {
         };
 
         TelephoneTone(const std::string& countryName, unsigned int sampleRate);
-        ~TelephoneTone();
 
         void setCurrentTone(Tone::TONEID toneId);
         void setSampleRate(unsigned int sampleRate);
-        Tone* getCurrentTone();
+        Tone* getCurrentTone() const;
 
     private:
         NON_COPYABLE(TelephoneTone);
@@ -55,11 +57,10 @@ class TelephoneTone {
         static COUNTRYID getCountryId(const std::string& countryName);
 
         void buildTones(unsigned int sampleRate);
+
         COUNTRYID countryId_;
-        Tone* tone_[Tone::TONE_NULL];
+        std::array<std::unique_ptr<Tone>, Tone::TONE_NULL> tones_;
         Tone::TONEID currentTone_;
 };
 
 } // namespace ring
-
-#endif
