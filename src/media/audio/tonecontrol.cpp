@@ -23,6 +23,7 @@
 #endif
 
 #include "audio/tonecontrol.h"
+#include "sound/tonelist.h"
 #include "client/ring_signal.h"
 #include "dring/callmanager_interface.h" // for CallSignal
 
