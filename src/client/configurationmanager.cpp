@@ -276,6 +276,16 @@ getMessageStatus(uint64_t id)
     return ring::Manager::instance().getMessageStatus(id);
 }
 
+bool
+exportOnRing(const std::string& accountID, const std::string& password)
+{
+    if (const auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        account->addDevice(password);
+        return true;
+    }
+    return false;
+}
+
 /* contact requests */
 std::map<std::string, std::string>
 getTrustRequests(const std::string& accountId)
@@ -314,13 +324,13 @@ sendTrustRequest(const std::string& accountId, const std::string& to, const std:
 int
 exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password)
 {
-    return ring::Archiver::instance().exportAccounts(accountIDs, filepath, password);
+    return ring::archiver::exportAccounts(accountIDs, filepath, password);
 }
 
 int
 importAccounts(std::string archivePath, std::string password)
 {
-    return ring::Archiver::instance().importAccounts(archivePath, password);
+    return ring::archiver::importAccounts(archivePath, password);
 }
 
 ///This function is used as a base for new accounts for clients that support it
