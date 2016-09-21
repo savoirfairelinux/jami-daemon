@@ -20,8 +20,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef __AUDIOLOOP_H__
-#define __AUDIOLOOP_H__
+
+#pragma once
 
 #include "ring_types.h"
 #include "noncopyable.h"
@@ -36,7 +36,11 @@ namespace ring {
 
 class AudioLoop {
     public:
+        AudioLoop() {}
+
         AudioLoop(unsigned int sampleRate);
+
+        AudioLoop& operator=(AudioLoop&& o) noexcept = default;
 
         virtual ~AudioLoop();
 
@@ -70,10 +74,10 @@ class AudioLoop {
         }
     protected:
         /** The data buffer */
-        AudioBuffer * buffer_;
+        AudioBuffer * buffer_ {nullptr};
 
         /** current position, set to 0, when initialize */
-        size_t pos_;
+        size_t pos_ {0};
 
     private:
         NON_COPYABLE(AudioLoop);
@@ -82,4 +86,3 @@ class AudioLoop {
 
 } // namespace ring
 
-#endif // __AUDIOLOOP_H__
