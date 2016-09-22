@@ -24,9 +24,9 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/gnutls/no-create-time-h.patch
 endif
-#ifdef HAVE_MACOSX
-#	$(APPLY) $(SRC)/gnutls/gnutls-pkgconfig-osx.patch
-#endif
+ifdef HAVE_MACOSX
+	$(APPLY) $(SRC)/gnutls/gnutls-disable-getentropy-osx.patch
+endif
 	$(APPLY) $(SRC)/gnutls/gnutls-no-egd.patch
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
 ifndef HAVE_IOS
