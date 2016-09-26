@@ -334,8 +334,11 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #if defined(RING_VIDEO) && defined(RING_ACCEL)
-        if (accel_ && !accel_->extractData(decoderCtx_, result))
-            return Status::DecodeError;
+        if (accel_) {
+            if (!accel_->hasFailed())
+                accel_->extractData(decoderCtx_, result);
+            // TODO else restart the media decoder
+        }
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
@@ -418,8 +421,13 @@ MediaDecoder::flush(VideoFrame& result)
     if (len <= 0)
         return Status::DecodeError;
 
-    if (frameFinished)
+    if (frameFinished) {
+#ifdef RING_ACCEL
+        if (accel_ && !accel_->hasFailed())
+            accel_->extractData(decoderCtx_, result);
+#endif // RING_ACCEL
         return Status::FrameFinished;
+    }
 
     return Status::Success;
 }
