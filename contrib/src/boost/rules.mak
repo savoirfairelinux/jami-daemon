@@ -53,7 +53,7 @@ ifdef HAVE_WIN32
 	cd $< && echo ";" >> user-config.jam
 endif
 ifdef HAVE_ANDROID
-	cd $< && echo "using gcc : android : clang++" > user-config.jam
+	cd $< && echo "using gcc : android : g++" > user-config.jam
 	cd $< && echo ":" >> user-config.jam
 	cd $< && echo "<archiver>${HOST}-ar" >> user-config.jam
 	cd $< && echo "<compileflags>-DANDROID" >> user-config.jam
