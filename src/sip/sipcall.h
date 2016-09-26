@@ -203,6 +203,8 @@ class SIPCall : public Call
 
         void restartMediaSender() override;
 
+        void restartMediaReceiver() override;
+
         bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
 
         virtual std::map<std::string, std::string> getDetails() const override;
