@@ -37,13 +37,15 @@ namespace ring { namespace video {
 using std::string;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
-                                       const std::string &sdp) :
+                                       const std::string &sdp,
+                                       const DeviceParams& args) :
     VideoGenerator::VideoGenerator()
-    , args_()
+    , args_(args)
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
+    , restartDecoder_(false)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , requestKeyFrameCallback_(0)
@@ -175,6 +177,11 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
+            break;
+
+        case MediaDecoder::Status::RestartRequired:
+            restartDecoder_ = true;
+            break;
 
         case MediaDecoder::Status::Success:
         case MediaDecoder::Status::EOFError:
@@ -215,5 +222,9 @@ int VideoReceiveThread::getHeight() const
 
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
+
+bool
+VideoReceiveThread::restartDecoder() const
+{ return restartDecoder_.load(); }
 
 }} // namespace ring::video
