@@ -64,7 +64,8 @@ class MediaDecoder {
             FrameFinished,
             EOFError,
             ReadError,
-            DecodeError
+            DecodeError,
+            RestartRequired
         };
 
         MediaDecoder();

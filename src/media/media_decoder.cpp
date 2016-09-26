@@ -340,7 +340,7 @@ MediaDecoder::decode(VideoFrame& result)
             if (!accel_->hasFailed())
                 accel_->extractData(decoderCtx_, result);
             else
-                return Status::DecodeError;
+                return Status::RestartRequired;
         }
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
@@ -426,6 +426,8 @@ MediaDecoder::flush(VideoFrame& result)
 
     if (frameFinished) {
 #ifdef RING_ACCEL
+        // flush is called when closing the stream
+        // so don't restart the media decoder
         if (accel_ && !accel_->hasFailed())
             accel_->extractData(decoderCtx_, result);
 #endif // RING_ACCEL
