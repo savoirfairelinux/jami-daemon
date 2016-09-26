@@ -331,6 +331,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaSender() = 0;
 
+        virtual void restartMediaReceiver() = 0;
+
     protected:
         /**
          * Constructor of a call

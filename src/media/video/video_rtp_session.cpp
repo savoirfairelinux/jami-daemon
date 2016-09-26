@@ -130,7 +130,7 @@ void VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
         if (receiveThread_)
-            RING_WARN("restarting video receiver");
+            RING_WARN("Restarting video receiver");
         receiveThread_.reset(
             new VideoReceiveThread(callID_, receive_.receiving_sdp)
         );
@@ -147,6 +147,19 @@ void VideoRtpSession::startReceiver()
         receiveThread_.reset();
     }
 }
+
+void
+VideoRtpSession::restartReceiver()
+{
+    std::lock_guard<std::recursive_mutex> lock(mutex_);
+
+    // ensure that start has been called before restart
+    if (not socketPair_)
+        return;
+
+    startReceiver(); // disable accel
+}
+
 void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
                             std::unique_ptr<IceSocket> rtcp_sock)
 {
@@ -527,8 +540,22 @@ VideoRtpSession::setupRtcpChecker()
 }
 
 void
+VideoRtpSession::checkReceiver()
+{
+    if (receiveThread_ && receiveThread_->restartDecoder()) {
+        const auto& cid = callID_;
+        runOnMainThread([cid]{
+            if (auto call = Manager::instance().callFactory.getCall(cid)) {
+                call->restartMediaReceiver();
+            }
+        });
+    }
+}
+
+void
 VideoRtpSession::processRtcpChecker()
 {
+    checkReceiver();
     adaptQualityAndBitrate();
     rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
 }

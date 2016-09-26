@@ -34,6 +34,7 @@
 #include <climits>
 #include <sstream>
 #include <memory>
+#include <atomic>
 
 namespace ring {
 class SocketPair;
@@ -59,11 +60,14 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    bool restartDecoder() const;
 
 private:
     NON_COPYABLE(VideoReceiveThread);
 
     DeviceParams args_;
+
+    std::atomic<bool> restartDecoder_;
 
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */

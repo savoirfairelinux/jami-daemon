@@ -83,7 +83,7 @@ VaapiAccel::extractData(AVCodecContext* codecCtx, VideoFrame& container)
         av_frame_unref(input);
         av_frame_move_ref(input, output);
     } catch (const std::runtime_error& e) {
-        fail();
+        fail(codecCtx, false);
         RING_ERR("%s", e.what());
         return false;
     }
@@ -117,7 +117,7 @@ VaapiAccel::init(AVCodecContext* codecCtx)
         { AV_CODEC_ID_H264, h264 },
         { AV_CODEC_ID_MPEG4, mpeg4 },
         { AV_CODEC_ID_H263, h263 },
-        { AV_CODEC_ID_H263P, h263 } // no clue if this'll work, #ffmpeg isn't answering me
+        { AV_CODEC_ID_H263P, h263 }
     };
 
     VAStatus status;

@@ -44,6 +44,7 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
+    , restartDecoder_(false)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , requestKeyFrameCallback_(0)
@@ -92,6 +93,14 @@ bool VideoReceiveThread::setup()
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
         videoDecoder_->setIOContext(&sdpContext_);
+    }
+
+    // if videoDecoder_ asked to be restarted, sink_ will be null (only weak references left)
+    // disable acceleration (most likely cause of the restart)
+    if (!sink_) {
+        RING_WARN("Creating a new sink client");
+        sink_ = Manager::instance().createSinkClient(id_);
+        args_.enableAccel = "0";
     }
 
     EXIT_IF_FAIL(!videoDecoder_->openInput(args_),
@@ -175,6 +184,11 @@ bool VideoReceiveThread::decodeFrame()
         case MediaDecoder::Status::ReadError:
             RING_ERR("fatal error, read failed");
             loop_.stop();
+            break;
+
+        case MediaDecoder::Status::RestartRequired:
+            restartDecoder_ = true;
+            break;
 
         case MediaDecoder::Status::Success:
         case MediaDecoder::Status::EOFError:
@@ -215,5 +229,9 @@ int VideoReceiveThread::getHeight() const
 
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
+
+bool
+VideoReceiveThread::restartDecoder() const
+{ return restartDecoder_.load(); }
 
 }} // namespace ring::video
