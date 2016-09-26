@@ -83,7 +83,7 @@ VaapiAccel::extractData(AVCodecContext* codecCtx, VideoFrame& container)
         av_frame_unref(input);
         av_frame_move_ref(input, output);
     } catch (const std::runtime_error& e) {
-        fail();
+        fail(codecCtx);
         RING_ERR("%s", e.what());
         return false;
     }

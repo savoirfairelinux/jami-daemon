@@ -57,7 +57,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
         }
     }
 
-    accel->fail(true);
+    accel->fail(codecCtx, true);
     RING_WARN("Falling back to software decoding");
     codecCtx->get_format = avcodec_default_get_format;
     codecCtx->get_buffer2 = avcodec_default_get_buffer2;
@@ -80,7 +80,7 @@ allocateBufferCb(AVCodecContext* codecCtx, AVFrame* frame, int flags)
             return 0;
         }
 
-        accel->fail();
+        accel->fail(codecCtx);
     }
 
     return avcodec_default_get_buffer2(codecCtx, frame, flags);
@@ -140,12 +140,14 @@ HardwareAccel::HardwareAccel(const AccelInfo& info)
 }
 
 void
-HardwareAccel::fail(bool forceFallback)
+HardwareAccel::fail(AVCodecContext* codecCtx, bool forceFallback)
 {
     ++failCount_;
     if (failCount_ >= MAX_ACCEL_FAILURES || forceFallback) {
         fallback_ = true;
         failCount_ = 0;
+        codecCtx->get_format = avcodec_default_get_format;
+        codecCtx->get_buffer2 = avcodec_default_get_buffer2;
         // force reinit of media decoder to correctly set thread count
     }
 }

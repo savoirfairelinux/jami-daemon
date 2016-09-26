@@ -60,7 +60,7 @@ class HardwareAccel {
         void setHeight(int height) { height_ = height; }
         void setProfile(int profile) { profile_ = profile; }
 
-        void fail(bool forceFallback = false);
+        void fail(AVCodecContext* codecCtx, bool forceFallback = false);
         void succeed() { failCount_ = 0; } // call on success of allocateBuffer or extractData
 
     public: // must be implemented by derived classes

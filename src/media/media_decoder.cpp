@@ -334,7 +334,7 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #if defined(RING_VIDEO) && defined(RING_ACCEL)
-        if (accel_ && !accel_->extractData(decoderCtx_, result))
+        if (accel_ && !accel_->extractData(decoderCtx_, result) && !accel_->hasFailed())
             return Status::DecodeError;
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
