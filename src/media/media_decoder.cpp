@@ -340,7 +340,7 @@ MediaDecoder::decode(VideoFrame& result)
             if (!accel_->hasFailed())
                 accel_->extractData(decoderCtx_, result);
             else
-                return Status::DecodeError;
+                return Status::RestartRequired;
         }
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
