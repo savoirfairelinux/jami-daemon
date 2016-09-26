@@ -34,6 +34,7 @@
 #include <climits>
 #include <sstream>
 #include <memory>
+#include <atomic>
 
 namespace ring {
 class SocketPair;
@@ -46,7 +47,7 @@ class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp);
+    VideoReceiveThread(const std::string &id, const std::string &sdp, const DeviceParams& args);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -59,6 +60,7 @@ public:
     int getWidth() const;
     int getHeight() const;
     int getPixelFormat() const;
+    bool restartDecoder() const;
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -76,6 +78,7 @@ private:
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
+    std::atomic<bool> restartDecoder_;
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();
