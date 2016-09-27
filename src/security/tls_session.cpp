@@ -30,6 +30,7 @@
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
 
+#include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
 
@@ -723,6 +724,9 @@ TlsSession::handleStateEstablished(TlsSessionState state)
     if (state != TlsSessionState::ESTABLISHED)
         return state;
 
+    RING_DBG("PATH MTU DISCOVERY");
+    pathMtuHeartbeat();
+
     // Handle RX data from network
     if (!rxQueue_.empty()) {
         std::vector<uint8_t> buf(8*1024);
@@ -810,6 +814,134 @@ DhParams::generate()
     std::chrono::duration<double> time_span = clock::now() - start;
     RING_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return params;
+}
+
+PossibleMTU
+next(PossibleMTU mtu) {
+    switch(mtu){
+    case PossibleMTU::NONE:
+        return PossibleMTU::IPV4_MIN;
+    case PossibleMTU::IPV4_MIN:
+        return PossibleMTU::IPV6_MIN;
+    case PossibleMTU::IPV6_MIN:
+        return PossibleMTU::ETH;
+    case PossibleMTU::ETH:
+        return PossibleMTU::JUMBO;
+    case PossibleMTU::JUMBO:
+        return PossibleMTU::END;
+    default:
+        return PossibleMTU::NONE;
+    }
+}
+
+PossibleMTU
+pre(PossibleMTU mtu) {
+    switch(mtu){
+    case PossibleMTU::IPV4_MIN:
+        return PossibleMTU::NONE;
+    case PossibleMTU::IPV6_MIN:
+        return PossibleMTU::IPV4_MIN;
+    case PossibleMTU::ETH:
+        return PossibleMTU::IPV6_MIN;
+    case PossibleMTU::JUMBO:
+        return PossibleMTU::ETH;
+    case PossibleMTU::END:
+        return PossibleMTU::JUMBO;
+    default:
+        return PossibleMTU::NONE;
+    }
+}
+
+int
+mtuToInt(PossibleMTU mtu){ return static_cast<int>(mtu);}
+
+int
+TlsSession::pathMtuHeartbeat() {
+    int errno_ping = GNUTLS_E_TIMEDOUT, errno_pong = GNUTLS_E_TIMEDOUT; //non zero initialisation
+    // make sure heartbeat is on
+    gnutls_heartbeat_enable(session_, GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    // set timeouts accordingly to number of mtus to test; tend to little timings to preserve QoS.
+    gnutls_heartbeat_set_timeouts(session_, 250, 4000);
+
+    //server side: managing pong on heartbeat
+    if(isServer()){
+        RING_DBG("Heartbeat PMTUD: server side");
+        char *buf;
+        for (auto mtu = next(PossibleMTU::NONE); mtuToInt(mtu) != 0;){
+
+            do {
+                buf = (char*) calloc(4, mtuToInt(mtu)/8);
+                errno_ping = gnutls_record_recv(session_, buf, mtuToInt(mtu)/8);
+                free(buf);
+            } while (errno_ping == GNUTLS_E_AGAIN || GNUTLS_E_INTERRUPTED);
+
+            if(errno_ping == GNUTLS_E_HEARTBEAT_PING_RECEIVED){ //heartbeat ping received
+                RING_DBG("Heartbeat PMTUD: ping received for mtu = %d, sending pong",mtuToInt(mtu));
+                errno_pong = gnutls_heartbeat_pong(session_, 0);
+
+                if (errno_pong != GNUTLS_E_SUCCESS){
+                    RING_DBG("Heartbeat PMTUD: failed on pong with error %d: %s; aborting TLS connection", errno_pong,
+                             gnutls_strerror(errno_pong));
+
+                    break;
+                }
+
+                mtu = next(mtu);
+
+            } else if (errno_ping == GNUTLS_E_TIMEDOUT){ // timeout considered as packet to big on current mtu
+                mtu = pre(mtu);
+
+                if (mtu == PossibleMTU::NONE) {
+                    RING_DBG("Heartbeat PMTUD: no mtu determined, path mtu < %d or link broken", mtuToInt(next(PossibleMTU::NONE)));
+                    break;
+                } else {
+                    RING_DBG("Path MTU found @ %d", mtuToInt(mtu));
+                    return mtuToInt(mtu);
+                }
+
+            } else {
+                RING_DBG("Heartbeat PMTUD: failed on ping never received with error %d: %s",errno_ping , gnutls_strerror(errno_ping));
+                break;
+            }
+        }
+
+	// client side: managing ping on heartbeat
+    } else {
+        RING_DBG("Heartbeat PMTUD: client side");
+        for (auto mtu = PossibleMTU::IPV4_MIN; mtu != PossibleMTU::END;){
+            do {
+                errno_ping = gnutls_heartbeat_ping(session_, mtuToInt(mtu) - 19, 2, GNUTLS_HEARTBEAT_WAIT);
+                //mtu - 19 -> 19 = heartbeat header + DEFAULT_PADDING_SIZE defines in heartbeat.c in gnutls library
+                RING_DBG("Heartbeat PMTUD: Ping with mtu %d", mtuToInt(mtu));
+            }
+            while (errno_ping == GNUTLS_E_AGAIN || errno_ping == GNUTLS_E_INTERRUPTED);
+
+            if (errno_ping == GNUTLS_E_SUCCESS) {
+                mtu = next(mtu);
+            } else if (errno_ping == GNUTLS_E_TIMEDOUT){ //timeout is considered as a packet loss, then the good mtu is the precedent.
+                mtu = pre(mtu);
+
+                if (mtu == PossibleMTU::NONE) {
+                    RING_DBG("Heartbeat PMTUD: no mtu determined, path mtu < %d or link broken", mtuToInt(next(PossibleMTU::NONE)));
+                    break;
+                } else {
+                    RING_DBG("Path MTU found @ %d", mtuToInt(mtu));
+                    return mtuToInt(mtu);
+                }
+
+            } else {
+                RING_DBG("Heartbeat PMTUD: ping failed: error %d: %s",errno_ping , gnutls_strerror(errno_ping));
+                break;
+            }
+	}
+    }
+    if (errno_ping == GNUTLS_E_SUCCESS || errno_pong == GNUTLS_E_SUCCESS){
+        RING_DBG("Path MTU found @ %d", mtuToInt(pre(PossibleMTU::END)));
+        return mtuToInt(pre(PossibleMTU::END)); //for loop over, setting mtu to last mtu of PossibleMTU enum
+    } else {
+        RING_ERR("Heartbeat PMTUD failed");
+    }
+
 }
 
 }} // namespace ring::tls
