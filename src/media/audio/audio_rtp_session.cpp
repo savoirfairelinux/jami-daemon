@@ -48,7 +48,8 @@ class AudioSender {
                     const std::string& dest,
                     const MediaDescription& args,
                     SocketPair& socketPair,
-                    const uint16_t seqVal);
+                    const uint16_t seqVal,
+                    const uint16_t mtu);
         ~AudioSender();
 
         void setMuted(bool isMuted);
@@ -69,6 +70,7 @@ class AudioSender {
         AudioBuffer micData_;
         AudioBuffer resampledData_;
         const uint16_t seqVal_;
+        uint16_t mtu_;
 
         using seconds = std::chrono::duration<double, std::ratio<1>>;
         const seconds secondsPerPacket_ {0.02}; // 20 ms
@@ -82,11 +84,13 @@ AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
                          const MediaDescription& args,
                          SocketPair& socketPair,
-                         const uint16_t seqVal) :
+                         const uint16_t seqVal,
+                         const uint16_t mtu) :
     id_(id),
     dest_(dest),
     args_(args),
     seqVal_(seqVal),
+    mtu_(mtu),
     loop_([&] { return setup(socketPair); },
           std::bind(&AudioSender::process, this),
           std::bind(&AudioSender::cleanup, this))
@@ -103,7 +107,7 @@ bool
 AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
-    muxContext_.reset(socketPair.createIOContext());
+    muxContext_.reset(socketPair.createIOContext(mtu_));
 
     try {
         /* Encoder setup */
@@ -193,7 +197,8 @@ class AudioReceiveThread
     public:
         AudioReceiveThread(const std::string &id,
                            const AudioFormat& format,
-                           const std::string& sdp);
+                           const std::string& sdp,
+                           const uint16_t mtu);
         ~AudioReceiveThread();
         void addIOContext(SocketPair &socketPair);
         void startLoop();
@@ -224,6 +229,8 @@ class AudioReceiveThread
 
         std::shared_ptr<RingBuffer> ringbuffer_;
 
+        uint16_t mtu_;
+
         ThreadLoop loop_;
         bool setup();
         void process();
@@ -232,10 +239,12 @@ class AudioReceiveThread
 
 AudioReceiveThread::AudioReceiveThread(const std::string& id,
                                        const AudioFormat& format,
-                                       const std::string& sdp)
+                                       const std::string& sdp,
+                                       const uint16_t mtu)
     : id_(id)
     , format_(format)
     , stream_(sdp)
+    , mtu_(mtu)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,
                                     0, 0, this))
     , loop_(std::bind(&AudioReceiveThread::setup, this),
@@ -339,7 +348,7 @@ AudioReceiveThread::interruptCb(void* data)
 void
 AudioReceiveThread::addIOContext(SocketPair& socketPair)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
 void
@@ -385,7 +394,7 @@ AudioRtpSession::startSender()
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_, initSeqVal_));
+                                      *socketPair_, initSeqVal_, mtu_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         send_.enabled = false;
@@ -417,7 +426,8 @@ AudioRtpSession::startReceiver()
 
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
-                                                receive_.receiving_sdp));
+                                                receive_.receiving_sdp,
+                                                mtu_));
     receiveThread_->addIOContext(*socketPair_);
     receiveThread_->startLoop();
 }

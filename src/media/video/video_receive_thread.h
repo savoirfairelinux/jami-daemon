@@ -46,7 +46,7 @@ class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp);
+    VideoReceiveThread(const std::string &id, const std::string &sdp, int mtu);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -76,6 +76,8 @@ private:
     MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
+    int mtu_;
+
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();
