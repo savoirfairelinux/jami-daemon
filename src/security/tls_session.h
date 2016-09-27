@@ -60,6 +60,20 @@ enum class TlsSessionState {
     SHUTDOWN
 };
 
+enum class PossibleMTU : int {
+    NONE, //reserved for marking start of enum
+    IPV4_MIN = 500,
+    IPV6_MIN = 1280,
+    ETH = 1492,
+    JUMBO = 3000,
+    // do not set possibles MTU over 16000, this will result in GNUTLS_E_UNEXEPECTED_PACKET_SIZE
+    END //reserved for marking end of enum
+};
+
+int mtuToInt(PossibleMTU mtu);
+PossibleMTU next(PossibleMTU mtu);
+PossibleMTU pre(PossibleMTU mtu);
+
 class DhParams {
 public:
     DhParams() = default;
@@ -231,6 +245,9 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    //Path mtu discovery
+    int pathMtuHeartbeat();
 };
 
 }} // namespace ring::tls
