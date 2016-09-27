@@ -703,4 +703,10 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     return PJ_EPENDING;
 }
 
+uint16_t
+SipsIceTransport::getTlsSessionMtu()
+{
+    return tls_->getMtu();
+}
+
 }} // namespace ring::tls
