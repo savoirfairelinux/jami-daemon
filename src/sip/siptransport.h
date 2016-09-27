@@ -138,6 +138,8 @@ class SipTransport
         /** Only makes sense for connection-oriented transports */
         bool isConnected() const noexcept { return connected_; }
 
+        int getTlsTransportMtu();
+
     private:
         NON_COPYABLE(SipTransport);
 

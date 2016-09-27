@@ -172,6 +172,12 @@ SipTransport::removeStateListener(uintptr_t lid)
     return false;
 }
 
+int
+SipTransport::getTlsTransportMtu(){
+    auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
+    return tls_tr->getTlsSessionMtu();
+}
+
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool) :
 cp_(cp), pool_(pool), endpt_(endpt)

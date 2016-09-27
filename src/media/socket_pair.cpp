@@ -333,9 +333,11 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
 }
 
 MediaIOHandle*
-SocketPair::createIOContext()
+SocketPair::createIOContext(int mtu)
 {
-    return new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
+    int rtp_buffer_size = mtu;
+    int srtp_buffer_size = rtp_buffer_size;
+    return new MediaIOHandle(srtpContext_ ? srtp_buffer_size : rtp_buffer_size, true,
                              [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
                              [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
                              0, reinterpret_cast<void*>(this));
