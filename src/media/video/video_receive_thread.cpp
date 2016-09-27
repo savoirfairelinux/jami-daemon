@@ -38,13 +38,15 @@ using std::string;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
-                                       const bool isReset) :
+                                       const bool isReset,
+                                       uint16_t mtu) :
     VideoGenerator::VideoGenerator()
     , args_()
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
+    , mtu_(mtu)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , restartDecoder_(false)
@@ -162,7 +164,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 
 void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
 bool VideoReceiveThread::decodeFrame()
