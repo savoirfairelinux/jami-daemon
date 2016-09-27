@@ -44,6 +44,8 @@
 namespace ring {
 
 static constexpr unsigned STUN_MAX_PACKET_SIZE {8192};
+static constexpr uint16_t IPV6_HEADER_SIZE = 40; // Size in bytes of IPV6 packet header
+static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPV4 packet header
 
 // TODO: C++14 ? remove me and use std::min
 template< class T >
@@ -1059,6 +1061,11 @@ IceSocket::setOnRecv(IceRecvCb cb)
     if (!ice_transport_.get())
         return;
     return ice_transport_->setOnRecv(compId_, cb);
+}
+
+uint16_t
+IceSocket::getTransportOverhead(){
+    return (ice_transport_->getRemoteAddress(compId_).getFamily() == AF_INET) ? IPV4_HEADER_SIZE : IPV6_HEADER_SIZE;
 }
 
 } // namespace ring

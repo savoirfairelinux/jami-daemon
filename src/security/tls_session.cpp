@@ -30,22 +30,38 @@
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
 
+#include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
 
 #include <algorithm>
 #include <cstring> // std::memset
 
+#include <cstdlib>
+#include <unistd.h>
+
 namespace ring { namespace tls {
 
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr int DTLS_MTU {1232}; // (1280 from IPv6 minimum MTU - 40 IPv6 header - 8 UDP header)
+static constexpr uint16_t MIN_MTU {512};
+static constexpr uint16_t INPUT_BUFFER_SIZE {16*1024}; // to be coherent with the maximum size advised in path mtu discovery
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
 static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(1000); // Delay between two handshake request on DTLS
 static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
+static constexpr uint8_t UDP_HEADER_SIZE = 8;   // Size in bytes of UDP packet header
+static constexpr uint8_t HEARTBEAT_RETRIES = 1; // Number of tries at each heartbeat ping send (1 + 1 if error)
+static constexpr auto HEARTBEAT_RETRANS_TIMEOUT = std::chrono::milliseconds(700); // gnutls heartbeat retransmission timeout for each ping (in milliseconds)
+static constexpr auto HEARTBEAT_TOTAL_TIMEOUT = HEARTBEAT_RETRANS_TIMEOUT * HEARTBEAT_RETRIES; // gnutls heartbeat time limit for heartbeat procedure (in milliseconds)
+
+// mtus array to test, do not add mtu over the interface MTU, this will result in false result due to packet fragmentation.
+// also do not set over 16000 this will result in a gnutls error (unexpected packet size)
+// neither under MIN_MTU because it makes no sense and could result in underflow of certain variables.
+// Put mtus values in ascending order in the array to avoid sorting
+static constexpr std::array<uint16_t,4> mtus = {MIN_MTU, 800, 1280, 1500};
 
 // Helper to cast any duration into an integer number of milliseconds
 template <class Rep, class Period>
@@ -209,6 +225,9 @@ TlsSessionState
 TlsSession::setupClient()
 {
     auto ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
+    RING_WARN("[TLS] set heartbeat reception for retrocompatibility check on server");
+    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
@@ -529,6 +548,7 @@ TlsSession::setup()
     fsmHandlers_[TlsSessionState::SETUP] = [this](TlsSessionState s){ return handleStateSetup(s); };
     fsmHandlers_[TlsSessionState::COOKIE] = [this](TlsSessionState s){ return handleStateCookie(s); };
     fsmHandlers_[TlsSessionState::HANDSHAKE] = [this](TlsSessionState s){ return handleStateHandshake(s); };
+    fsmHandlers_[TlsSessionState::MTU_DISCOVERY] = [this](TlsSessionState s){ return handleStateMtuDiscovery(s); };
     fsmHandlers_[TlsSessionState::ESTABLISHED] = [this](TlsSessionState s){ return handleStateEstablished(s); };
     fsmHandlers_[TlsSessionState::SHUTDOWN] = [this](TlsSessionState s){ return handleStateShutdown(s); };
 
@@ -636,6 +656,9 @@ TlsSession::handleStateCookie(TlsSessionState state)
     RING_DBG("[TLS] cookie ok");
 
     ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
+    RING_WARN("[TLS] set heartbeat reception");
+    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
         return TlsSessionState::SHUTDOWN;
@@ -716,9 +739,102 @@ TlsSession::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
+    return TlsSessionState::MTU_DISCOVERY;
+}
+
+TlsSessionState
+TlsSession::handleStateMtuDiscovery(TlsSessionState state)
+{
+    //set dtls mtu to be over each and every mtus tested
+    gnutls_dtls_set_mtu(session_, mtus.back());
+    // retrocompatibility check
+    if(gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
+        if (!isServer()){
+            RING_WARN("[TLS] HEARTBEAT PATH MTU DISCOVERY");
+            pathMtuHeartbeat();
+            pmtudOver_ = true;
+            RING_WARN("[TLS] HEARTBEAT PATH MTU DISCOVERY OVER");
+        }
+    } else {
+        RING_ERR("[TLS] PEER HEARTBEAT DISABLED: setting minimal value to MTU @%d for retrocompatibility", DTLS_MTU);
+        gnutls_dtls_set_mtu(session_, DTLS_MTU);
+        pmtudOver_ = true;
+    }
     maxPayload_ = gnutls_dtls_get_data_mtu(session_);
+    if (pmtudOver_)
+        RING_WARN("[TLS] maxPayload for dtls : %d B", getMaxPayload());
+
     return TlsSessionState::ESTABLISHED;
 }
+
+/*
+ * Path MTU discovery heuristic
+ * heuristic description:
+ * The two members of the current tls connection will exchange dtls heartbeat messages
+ * of increasing size until the heartbeat times out which will be considered as a packet
+ * drop from the network due to the size of the packet. (one retry to test for a buffer issue)
+ * when timeout happens or all the values have been tested, the mtu will be returned.
+ * In case of unexpected error the first (and minimal) value of the mtu array
+ */
+void
+TlsSession::pathMtuHeartbeat()
+{
+    int errno_send = 1; // non zero initialisation
+    auto tls_overhead = gnutls_record_overhead_size(session_);
+    RING_WARN("[TLS] tls session overhead : %d", tls_overhead);
+    transportOverhead_ = socket_->getTransportOverhead();
+    gnutls_heartbeat_set_timeouts(session_, HEARTBEAT_RETRANS_TIMEOUT.count(), HEARTBEAT_TOTAL_TIMEOUT.count());
+    RING_DBG("[TLS] Heartbeat PMTUD : retransmission timeout set to: %d ms", HEARTBEAT_RETRANS_TIMEOUT);
+
+    // server side: managing pong in state established
+    // client side: managing ping on heartbeat
+    uint16_t bytesToSend;
+    mtuProbe_ = mtus.cbegin();
+    RING_DBG("[TLS] Heartbeat PMTUD : client side");
+
+    while (mtuProbe_ != mtus.cend()){
+        bytesToSend = (*mtuProbe_) - 3 - tls_overhead - UDP_HEADER_SIZE - transportOverhead_;
+        do {
+            RING_DBG("[TLS] Heartbeat PMTUD : ping with mtu %d and effective payload %d", *mtuProbe_, bytesToSend);
+            errno_send = gnutls_heartbeat_ping(session_, bytesToSend, HEARTBEAT_RETRIES, GNUTLS_HEARTBEAT_WAIT);
+            RING_DBG("[TLS] Heartbeat PMTUD : ping sequence over with errno %d: %s", errno_send,
+                     gnutls_strerror(errno_send));
+        }
+        while (errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED);
+
+        if (errno_send == GNUTLS_E_SUCCESS) {
+            ++mtuProbe_;
+        } else if (errno_send == GNUTLS_E_TIMEDOUT){ // timeout is considered as a packet loss, then the good mtu is the precedent.
+            if (mtuProbe_ == mtus.cbegin()) {
+                RING_WARN("[TLS] Heartbeat PMTUD : no response on first ping, setting minimal MTU value @%d", MIN_MTU);
+                gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
+
+            } else {
+                --mtuProbe_;
+                RING_DBG("[TLS] Heartbeat PMTUD : timed out: Path MTU found @ %d", *mtuProbe_);
+                gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
+            }
+            return;
+        } else {
+            RING_WARN("[TLS] Heartbeat PMTUD : client ping failed: error %d: %s", errno_send,
+                      gnutls_strerror(errno_send));
+            if (mtuProbe_ != mtus.begin())
+                --mtuProbe_;
+            gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
+            return;
+        }
+    }
+
+
+    if (errno_send == GNUTLS_E_SUCCESS) {
+        RING_WARN("[TLS] Heartbeat PMTUD completed : reached test value %d", mtus.back());
+        --mtuProbe_; // for loop over, setting mtu to last valid mtu
+    }
+
+    gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
+    RING_WARN("[TLS] Heartbeat PMTUD : new mtu set to %d", *mtuProbe_);
+}
+
 
 TlsSessionState
 TlsSession::handleStateEstablished(TlsSessionState state)
@@ -732,12 +848,39 @@ TlsSession::handleStateEstablished(TlsSessionState state)
 
     // Handle RX data from network
     if (!rxQueue_.empty()) {
-        std::vector<uint8_t> buf(8*1024);
+        std::vector<uint8_t> buf(INPUT_BUFFER_SIZE);
         unsigned char sequence[8];
 
         lk.unlock();
         auto ret = gnutls_record_recv_seq(session_, buf.data(), buf.size(), sequence);
-        if (ret > 0) {
+        if (ret > 0 && pmtudOver_) {
+            buf.resize(ret);
+            // TODO: handle sequence re-order
+            if (callbacks_.onRxData)
+                callbacks_.onRxData(std::move(buf));
+            return state;
+        } else if (ret == GNUTLS_E_HEARTBEAT_PING_RECEIVED) {
+
+            RING_DBG("[TLS] Heartbeat PMTUD : ping received sending pong");
+            auto errno_send = gnutls_heartbeat_pong(session_, 0);
+
+            if (errno_send != GNUTLS_E_SUCCESS){
+                RING_WARN("[TLS] Heartbeat PMTUD : failed on pong with error %d: %s", errno_send,
+                          gnutls_strerror(errno_send));
+            } else {
+                ++hbPingRecved_;
+            }
+
+        } else if (ret > 0 && pmtudOver_ == false){
+            if (hbPingRecved_ > 0){
+                gnutls_dtls_set_mtu(session_, mtus[hbPingRecved_ - 1] - UDP_HEADER_SIZE - transportOverhead_);
+                maxPayload_ = gnutls_dtls_get_data_mtu(session_);
+            } else {
+                gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
+                maxPayload_ = gnutls_dtls_get_data_mtu(session_);
+            }
+            RING_WARN("[TLS] maxPayload for dtls : %d B", getMaxPayload());
+            pmtudOver_ = true;
             buf.resize(ret);
             // TODO: handle sequence re-order
             if (callbacks_.onRxData)
@@ -817,6 +960,12 @@ DhParams::generate()
     std::chrono::duration<double> time_span = clock::now() - start;
     RING_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return params;
+}
+
+uint16_t
+TlsSession::getMtu()
+{
+    return gnutls_dtls_get_mtu(session_);
 }
 
 }} // namespace ring::tls
