@@ -174,6 +174,35 @@ releaseFrame(void* frame)
         (*input).releaseFrame(frame);
 }
 #endif
+#ifdef WIN32_NATIVE
+void
+addVideoDevice(const std::string &node)
+{
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node);
+}
+
+void
+removeVideoDevice(const std::string &node)
+{
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.removeDevice(node);
+}
+
+void*
+obtainFrame(int length)
+{
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
+        return (*input).obtainFrame(length);
+
+    return nullptr;
+}
+
+void
+releaseFrame(void* frame)
+{
+    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
+        (*input).releaseFrame(frame);
+}
+#endif
 
 } // namespace DRing
 
