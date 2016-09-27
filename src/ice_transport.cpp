@@ -1061,4 +1061,9 @@ IceSocket::setOnRecv(IceRecvCb cb)
     return ice_transport_->setOnRecv(compId_, cb);
 }
 
+uint16_t
+IceSocket::getTransportFamily(){
+    return ice_transport_->getRemoteAddress(compId_).getFamily();
+}
+
 } // namespace ring

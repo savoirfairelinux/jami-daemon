@@ -47,7 +47,7 @@ class SinkClient;
 
 class VideoReceiveThread : public VideoGenerator {
 public:
-    VideoReceiveThread(const std::string &id, const std::string &sdp, const bool isReset);
+    VideoReceiveThread(const std::string &id, const std::string &sdp, const bool isReset, uint16_t mtu);
     ~VideoReceiveThread();
     void startLoop();
 
@@ -80,6 +80,8 @@ private:
     std::shared_ptr<SinkClient> sink_;
     std::atomic_bool restartDecoder_;
     bool isReset_;
+    uint16_t mtu_;
+
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
     bool decodeFrame();
