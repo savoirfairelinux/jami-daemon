@@ -60,6 +60,8 @@ namespace ring {
 
 static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
+static constexpr auto UDP_HEADER_SIZE = 8;
+static constexpr auto SRTP_OVERHEAD = 10;
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -189,10 +191,6 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
 
     return udp_fd;
 }
-
-// Maximal size allowed for a RTP packet, this value of 1232 bytes is an IPv6 minimum (1280 - 40 IPv6 header - 8 UDP header).
-static const size_t RTP_BUFFER_SIZE = 1232;
-static const size_t SRTP_BUFFER_SIZE = RTP_BUFFER_SIZE - 10;
 
 SocketPair::SocketPair(const char *uri, int localPort)
     : rtp_sock_()
@@ -334,9 +332,11 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
 }
 
 MediaIOHandle*
-SocketPair::createIOContext()
+SocketPair::createIOContext(const uint16_t mtu)
 {
-    return new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
+    auto ip_header_size = rtp_sock_->getTransportOverhead();
+    return new MediaIOHandle( mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
+                              true,
                              [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
                              [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
                              0, reinterpret_cast<void*>(this));
