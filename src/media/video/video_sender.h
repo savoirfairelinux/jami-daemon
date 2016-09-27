@@ -46,7 +46,8 @@ public:
                 const DeviceParams& dev,
                 const MediaDescription& args,
                 SocketPair& socketPair,
-                const uint16_t seqVal);
+                const uint16_t seqVal,
+                int mtu);
 
     ~VideoSender();
 

@@ -51,6 +51,8 @@ public:
     bool isSending() const noexcept { return send_.enabled; }
     bool isReceiving() const noexcept { return receive_.enabled; }
 
+    virtual void setMtu(int mtu) { mtu_ = mtu; }
+
 protected:
     std::recursive_mutex mutex_;
     std::unique_ptr<SocketPair> socketPair_;
@@ -58,6 +60,8 @@ protected:
 
     MediaDescription send_;
     MediaDescription receive_;
+
+    int mtu_;
 
     std::string getRemoteRtpUri() const {
         return "rtp://" + send_.addr.toString(true);
