@@ -74,6 +74,9 @@ struct SipsIceTransport
     IpAddr getLocalAddress() const { return local_; }
     IpAddr getRemoteAddress() const { return remote_; }
 
+    // uses the tls_ uniquepointer internal gnutls_session_t, to call its method to get its MTU
+    uint16_t getTlsSessionMtu();
+
 private:
     NON_COPYABLE(SipsIceTransport);
 
