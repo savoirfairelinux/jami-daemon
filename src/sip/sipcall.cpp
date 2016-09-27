@@ -856,11 +856,15 @@ SIPCall::startAllMedia()
             continue;
         }
 
+        auto new_mtu = transport_->getTlsMtu();
+        avformatrtp_->setMtu(new_mtu);
+
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO)
             videortp_->switchInput(videoInput_);
-#endif
 
+        videortp_->setMtu(new_mtu);
+#endif
         rtp->updateMedia(remote, local);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources

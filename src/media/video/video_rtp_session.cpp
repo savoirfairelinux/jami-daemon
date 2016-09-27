@@ -102,7 +102,7 @@ void VideoRtpSession::startSender()
             sender_.reset();
             socketPair_->stopSendOp(false);
             sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_,
-                                          send_, *socketPair_, initSeqVal_));
+                                          send_, *socketPair_, initSeqVal_, mtu_));
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
             send_.enabled = false;
@@ -138,8 +138,9 @@ void VideoRtpSession::startReceiver()
             isReset = true;
         }
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, receive_.receiving_sdp, isReset)
+                             new VideoReceiveThread(callID_, receive_.receiving_sdp, isReset, mtu_)
         );
+
         /* ebail: keyframe requests can lead to timeout if they are not answered.
          * we decided so to disable them for the moment
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
