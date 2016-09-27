@@ -48,6 +48,8 @@
 #include "manager.h"
 #include "utf8_utils.h"
 
+#include <gnutls/dtls.h>
+
 #ifdef RING_VIDEO
 #include "libav_utils.h"
 #endif
@@ -709,10 +711,10 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             }
         }
     };
+
     auto tr = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
                                                             tlsParams);
     call->setTransport(tr);
-
     // Notify of fully available connection between peers
     RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
     call->setState(Call::ConnectionState::PROGRESSING);
@@ -723,6 +725,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
     } else
         createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+
+
 
     return true;
 }

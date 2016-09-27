@@ -74,6 +74,9 @@ struct SipsIceTransport
     IpAddr getLocalAddress() const { return local_; }
     IpAddr getRemoteAddress() const { return remote_; }
 
+    //uses the tls_ uniquepointer internal gnutls_session_t, to call its method to get its MTU
+    int getTlsSessionMtu();
+
 private:
     NON_COPYABLE(SipsIceTransport);
 
@@ -130,6 +133,7 @@ private:
     void onRxData(std::vector<uint8_t>&&);
     void onCertificatesUpdate(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int);
     int verifyCertificate(gnutls_session_t);
+
 };
 
 }} // namespace ring::tls

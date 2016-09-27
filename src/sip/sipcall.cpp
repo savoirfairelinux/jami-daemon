@@ -846,7 +846,10 @@ SIPCall::startAllMedia()
         if (local.type == MEDIA_VIDEO)
             videortp_.switchInput(videoInput_);
 #endif
-
+        int new_mtu = transport_->getTlsTransportMtu();
+        RING_WARN("TLS INFO: TLS MTU = %d", new_mtu);
+        avformatrtp_->setMtu(new_mtu);
+        videortp_.setMtu(new_mtu);
         rtp->updateMedia(remote, local);
 
         // Not restarting media loop on hold as it's a huge waste of CPU ressources
