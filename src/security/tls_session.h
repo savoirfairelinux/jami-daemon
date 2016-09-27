@@ -231,6 +231,9 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    //Path mtu discovery
+    int pathMtuHeartbeat();
 };
 
 }} // namespace ring::tls
