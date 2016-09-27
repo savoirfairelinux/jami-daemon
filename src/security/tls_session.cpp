@@ -30,11 +30,14 @@
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
 
+#include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
 #include <gnutls/abstract.h>
 
 #include <algorithm>
 #include <cstring> // std::memset
+
+#include <stdlib.h>
 
 namespace ring { namespace tls {
 
@@ -709,6 +712,9 @@ TlsSession::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
+    RING_DBG("[TLS] PATH MTU DISCOVERY");
+    pathMtuHeartbeat();
+
     maxPayload_ = gnutls_dtls_get_data_mtu(session_);
     return TlsSessionState::ESTABLISHED;
 }
@@ -810,6 +816,144 @@ DhParams::generate()
     std::chrono::duration<double> time_span = clock::now() - start;
     RING_DBG("Generated DH params with %u bits in %lfs", bits, time_span.count());
     return params;
+}
+
+PossibleMTU
+next(PossibleMTU mtu) {
+    switch(mtu){
+    case PossibleMTU::NONE:
+        return PossibleMTU::IPV4_MIN;
+    case PossibleMTU::IPV4_MIN:
+        return PossibleMTU::IPV6_MIN;
+    case PossibleMTU::IPV6_MIN:
+        return PossibleMTU::ETH;
+    case PossibleMTU::ETH:
+        return PossibleMTU::JUMBO;
+    case PossibleMTU::JUMBO:
+        return PossibleMTU::END;
+    default:
+        return PossibleMTU::NONE;
+    }
+}
+
+PossibleMTU
+pre(PossibleMTU mtu) {
+    switch(mtu){
+    case PossibleMTU::IPV4_MIN:
+        return PossibleMTU::NONE;
+    case PossibleMTU::IPV6_MIN:
+        return PossibleMTU::IPV4_MIN;
+    case PossibleMTU::ETH:
+        return PossibleMTU::IPV6_MIN;
+    case PossibleMTU::JUMBO:
+        return PossibleMTU::ETH;
+    case PossibleMTU::END:
+        return PossibleMTU::JUMBO;
+    default:
+        return PossibleMTU::NONE;
+    }
+}
+
+int
+mtuToInt(PossibleMTU mtu){ return static_cast<int>(mtu);}
+
+int
+TlsSession::pathMtuHeartbeat() {
+    int errno_recv = GNUTLS_E_TIMEDOUT, errno_send = GNUTLS_E_TIMEDOUT, slow = 0; //non zero initialisation
+
+    //server side: managing pong on heartbeat
+    if(isServer()){
+        RING_DBG("[TLS] Heartbeat PMTUD: server side");
+        int MAX_SIZE = mtuToInt(PossibleMTU::END);
+        char buf[MAX_SIZE];
+
+        for (auto mtu = next(PossibleMTU::NONE); mtu != PossibleMTU::END;){
+
+            RING_DBG("[TLS] Heartbeat PMTUD: awaiting ping with buffer size %d", mtuToInt(mtu));
+            do {
+                errno_recv = gnutls_record_recv(session_, buf, mtuToInt(mtu));
+
+            } while (errno_recv == GNUTLS_E_AGAIN || errno_recv == GNUTLS_E_INTERRUPTED);
+
+            if(errno_recv == GNUTLS_E_HEARTBEAT_PING_RECEIVED || errno_recv == GNUTLS_E_SUCCESS){ //heartbeat ping received
+                RING_DBG("[TLS] Heartbeat PMTUD: ping received for mtu = %d, sending pong",mtuToInt(mtu));
+                errno_send = gnutls_heartbeat_pong(session_, 0);
+
+                if (errno_send != GNUTLS_E_SUCCESS){
+                    RING_WARN("[TLS] Heartbeat PMTUD: failed on pong with error %d: %s; aborting TLS connection",
+                             errno_send,
+                             gnutls_strerror(errno_send));
+
+                    break;
+                }
+
+                mtu = next(mtu);
+
+            } else if (errno_recv == GNUTLS_E_TIMEDOUT){ // timeout considered as packet to big on current mtu
+                mtu = pre(mtu);
+
+                if (mtu == PossibleMTU::NONE) {
+                    RING_WARN("[TLS] Heartbeat PMTUD: no mtu determined, path mtu < %d or link broken",
+                             mtuToInt(next(PossibleMTU::NONE)));
+                    break;
+                } else {
+                    RING_DBG("[TLS] Path MTU found @ %d", mtuToInt(mtu));
+                    return mtuToInt(mtu);
+                }
+
+            } else {
+                RING_WARN("[TLS] Heartbeat PMTUD: failed on ping never received with error %d: %s",
+                         errno_recv,
+                     gnutls_strerror(errno_recv));
+                break;
+            }
+        }
+
+        // client side: managing ping on heartbeat
+    } else {
+
+        RING_DBG("[TLS] Heartbeat PMTUD: client side");
+
+        gnutls_heartbeat_enable(session_,GNUTLS_HB_LOCAL_ALLOWED_TO_SEND);
+
+        RING_DBG("[TLS] Heartbeat PMTUD: timeout set to: %d", gnutls_heartbeat_get_timeout(session_));
+        for (auto mtu = PossibleMTU::IPV4_MIN; mtu != PossibleMTU::END;){
+            do {
+                RING_DBG("[TLS] Heartbeat PMTUD: Ping with mtu %d", mtuToInt(mtu));
+                errno_send = gnutls_heartbeat_ping(session_, mtuToInt(mtu) - 48, 2, GNUTLS_HEARTBEAT_WAIT);
+                //mtu - 48 -> 48 = heartbeat header + IPV6 header
+                RING_DBG("[TLS] Heartbeat PMTUD:ping sequence over with errno %d: %s", errno_recv,
+                         gnutls_strerror(errno_recv));
+            }
+            while (errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED);
+
+            if (errno_send == GNUTLS_E_SUCCESS) {
+                mtu = next(mtu);
+            } else if (errno_send == GNUTLS_E_TIMEDOUT){ //timeout is considered as a packet loss, then the good mtu is the precedent.
+                mtu = pre(mtu);
+
+                if (mtu == PossibleMTU::NONE) {
+                    RING_WARN("[TLS] Heartbeat PMTUD: no mtu determined, path mtu < %d or link broken",
+                             mtuToInt(next(PossibleMTU::NONE)));
+                    break;
+                } else {
+                    RING_DBG("[TLS] Heartbeat PMTUD: Path MTU found @ %d", mtuToInt(mtu));
+                    return mtuToInt(mtu);
+                }
+
+            } else {
+                RING_WARN("[TLS] Heartbeat PMTUD: ping failed: error %d: %s",errno_send , gnutls_strerror(errno_send));
+                break;
+            }
+	}
+    }
+    if (errno_send == GNUTLS_E_SUCCESS || errno_recv == GNUTLS_E_SUCCESS){
+        RING_DBG("[TLS] Path MTU found @ %d", mtuToInt(pre(PossibleMTU::END)));
+        return mtuToInt(pre(PossibleMTU::END)); //for loop over, setting mtu to last mtu of PossibleMTU enum
+    } else {
+        RING_ERR("[TLS] Heartbeat PMTUD failed");
+    }
+
 }
 
 }} // namespace ring::tls
