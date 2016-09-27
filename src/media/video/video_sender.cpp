@@ -37,8 +37,9 @@ using std::string;
 
 VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
                          const MediaDescription& args, SocketPair& socketPair,
-                         const uint16_t seqVal)
-    : muxContext_(socketPair.createIOContext())
+                         const uint16_t seqVal,
+                         uint16_t mtu)
+    : muxContext_(socketPair.createIOContext(mtu))
     , videoEncoder_(new MediaEncoder)
 {
     videoEncoder_->setDeviceOptions(dev);
