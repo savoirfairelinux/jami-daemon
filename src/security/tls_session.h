@@ -56,6 +56,7 @@ enum class TlsSessionState {
     SETUP,
     COOKIE, // server only
     HANDSHAKE,
+    MTUDISC,
     ESTABLISHED,
     SHUTDOWN
 };
@@ -182,6 +183,7 @@ private:
     TlsSessionState handleStateSetup(TlsSessionState state);
     TlsSessionState handleStateCookie(TlsSessionState state);
     TlsSessionState handleStateHandshake(TlsSessionState state);
+    TlsSessionState handleStateMtuDiscovery(TlsSessionState state);
     TlsSessionState handleStateEstablished(TlsSessionState state);
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
@@ -231,6 +233,9 @@ private:
     bool setup();
     void process();
     void cleanup();
+
+    //Path mtu discovery
+    int pathMtuHeartbeat();
 };
 
 }} // namespace ring::tls
