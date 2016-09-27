@@ -49,6 +49,7 @@ class IceSocket
         ssize_t getNextPacketSize() const;
         ssize_t waitForData(unsigned int timeout);
         void setOnRecv(IceRecvCb cb);
+        uint16_t getTransportFamily();
 };
 
 };
