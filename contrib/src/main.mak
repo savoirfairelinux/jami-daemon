@@ -33,6 +33,9 @@ PKGS_ALL := $(patsubst $(SRC)/%/rules.mak,%,$(wildcard $(SRC)/*/rules.mak))
 DATE := $(shell date +%Y%m%d)
 VPATH := $(TARBALLS)
 
+# Set following to non-empty to remove uneeded progression reports (i.e. with automatics builds)
+# BATCH_MODE = 1
+
 # Common download locations
 GNU := http://ftpmirror.gnu.org/
 SF := http://heanet.dl.sourceforge.net/sourceforge
@@ -235,10 +238,10 @@ SVN ?= $(error subversion client (svn) not found!)
 ifeq ($(DISABLE_CONTRIB_DOWNLOADS),TRUE)
 download = $(error Trying to download $(1) but DISABLE_CONTRIB_DOWNLOADS is TRUE, aborting.)
 else ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = curl -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
+download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
-	wget --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
+	wget $(if ${BATCH_MODE},-nv) --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
 	touch $@.tmp && \
 	mv $@.tmp $@
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
@@ -343,10 +346,10 @@ else
     CHECK_SHA512 = $(call checksum,$(SHA512SUM),SHA512)
 endif
 UNPACK = $(RM) -R $@ \
-	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xvzf $(f)) \
-	$(foreach f,$(filter %.tar.bz2,$^), && tar xvjf $(f)) \
-	$(foreach f,$(filter %.tar.xz,$^), && tar xvJf $(f)) \
-	$(foreach f,$(filter %.zip,$^), && unzip $(f))
+	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xzf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.tar.bz2,$^), && tar xjf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.tar.xz,$^), && tar xJf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.zip,$^), && unzip $(if ${BATCH_MODE},-q) $(f))
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -fp1) <
 APPLY_BIN = (cd $(UNPACK_DIR) && patch --binary -flp1) <
