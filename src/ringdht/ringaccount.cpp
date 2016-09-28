@@ -195,11 +195,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     std::weak_ptr<SIPCall> weak_call = call;
     manager.addTask([shared_this, weak_call, toUri] {
         auto call = weak_call.lock();
-
-        if (not call) {
-            call->onFailure();
+        if (not call)
             return false;
-        }
 
         // Create an ICE transport for SIP channel
         std::shared_ptr<IceTransport> ice {};
