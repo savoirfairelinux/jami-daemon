@@ -25,10 +25,10 @@ AUTOCONF=$(PREFIX)/bin/autoconf
 export AUTOCONF
 
 ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
-download = curl -f -L -- "$(1)" > "$@"
+download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
 download = rm -f $@.tmp && \
-	wget --passive -c -p -O $@.tmp "$(1)" && \
+	wget $(if ${BATCH_MODE},-nv) --passive -t 2 -w 10 -c -p -O $@.tmp "$(1)" && \
 	touch $@.tmp && \
 	mv $@.tmp $@
 else ifeq ($(which fetch >/dev/null 2>&1 || echo FAIL),)
@@ -41,10 +41,10 @@ download = $(error Neither curl nor wget found!)
 endif
 
 UNPACK = $(RM) -R $@ \
-    $(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xvzf $(f)) \
-    $(foreach f,$(filter %.tar.bz2,$^), && tar xvjf $(f)) \
-    $(foreach f,$(filter %.tar.xz,$^), && tar xvJf $(f)) \
-    $(foreach f,$(filter %.zip,$^), && unzip $(f))
+	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xzf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.tar.bz2,$^), && tar xjf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.tar.xz,$^), && tar xJf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.zip,$^), && unzip $(if ${BATCH_MODE},-q) $(f))
 
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -p1) <

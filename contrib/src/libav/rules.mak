@@ -182,7 +182,7 @@ $(TARBALLS)/libav-$(LIBAV_HASH).tar.xz:
 libav: libav-$(LIBAV_HASH).tar.xz .sum-libav
 	rm -Rf $@ $@-$(LIBAV_HASH)
 	mkdir -p $@-$(LIBAV_HASH)
-	(cd $@-$(LIBAV_HASH) && tar xv --strip-components=1 -f ../$<)
+	(cd $@-$(LIBAV_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/libav/0005-avfoundation-simple-capture.patch
