@@ -19,7 +19,7 @@ $(TARBALLS)/speex-git.tar.gz:
 speex: speex-$(SPEEX_VERSION).tar.gz .sum-speex
 	rm -Rf $@-git $@
 	mkdir -p $@-git
-	$(ZCAT) "$<" | (cd $@-git && tar xv --strip-components=1)
+	$(ZCAT) "$<" | (cd $@-git && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
 	$(MOVE)
 
 SPEEX_CONF := --disable-binaries

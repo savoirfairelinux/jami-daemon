@@ -19,7 +19,7 @@ $(TARBALLS)/speexdsp-git.tar.gz:
 speexdsp: speexdsp-$(SPEEXDSP_VERSION).tar.gz .sum-speexdsp
 	rm -Rf $@-git $@
 	mkdir -p $@-git
-	$(ZCAT) "$<" | (cd $@-git && tar xv --strip-components=1)
+	$(ZCAT) "$<" | (cd $@-git && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
 	$(MOVE)
 
 SPEEXDSP_CONF := --enable-resample-full-sinc-table --disable-examples

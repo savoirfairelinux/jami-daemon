@@ -184,7 +184,7 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
 ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
-	(cd $@-$(FFMPEG_HASH) && tar xv --strip-components=1 -f ../$<)
+	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 	$(APPLY) $(SRC)/ffmpeg/0004-avformat-fix-find_stream_info-not-considering-extradata.patch
 	$(MOVE)
