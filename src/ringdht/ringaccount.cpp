@@ -94,9 +94,9 @@ constexpr const char* const RingAccount::ACCOUNT_TYPE;
 static std::uniform_int_distribution<dht::Value::Id> udist;
 
 static const std::string
-parseRingUri(const std::string& toUrl)
+stripPrefix(const std::string& toUrl)
 {
-    auto dhtf = toUrl.find("ring:");
+    auto dhtf = toUrl.find(RING_URI_PREFIX);
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
     } else {
@@ -105,16 +105,31 @@ parseRingUri(const std::string& toUrl)
     }
     while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
         dhtf++;
+    return toUrl.substr(dhtf);
+}
 
-    if (toUrl.length() - dhtf < 40)
+static const std::string
+parseRingUri(const std::string& toUrl)
+{
+    auto sufix = stripPrefix(toUrl);
+    if (sufix.length() < 40)
         throw std::invalid_argument("id must be a ring infohash");
 
-    const std::string toUri = toUrl.substr(dhtf, 40);
+    const std::string toUri = sufix.substr(0, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
     return toUri;
 }
 
+static bool
+isRingHash(const std::string& uri)
+{
+    if (uri.length() < 40)
+        return false;
+    if (std::find_if_not(uri.cbegin(), uri.cbegin()+40, ::isxdigit) != uri.cend())
+        return false;
+    return true;
+}
 
 static constexpr const char*
 dhtStatusStr(dht::NodeStatus status) {
@@ -205,16 +220,41 @@ template <>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    const std::string toUri = parseRingUri(toUrl);
-    RING_DBG("Calling DHT peer %s", toUri.c_str());
-
+    auto sufix = stripPrefix(toUrl);
+    RING_DBG("Calling DHT peer %s", sufix.c_str());
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING);
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
+    try {
+        const std::string toUri = parseRingUri(sufix);
+        startOutgoingCall(call, toUri);
+    } catch (...) {
+        std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+        nameDir_.get().lookupName(sufix, [wthis_,call](const std::string& result, NameDirectory::Response response) mutable {
+            runOnMainThread([=]() mutable {
+                if (auto sthis = wthis_.lock()) {
+                    try {
+                        const std::string toUri = parseRingUri(result);
+                        sthis->startOutgoingCall(call, toUri);
+                    } catch (...) {
+                        call->onFailure(ENOENT);
+                    }
+                } else {
+                    call->onFailure();
+                }
+            });
+        });
+    }
 
+    return call;
+}
+
+void
+RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string toUri)
+{
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
 
     // TODO: for now, we automatically trust all explicitly called peers
@@ -331,8 +371,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
             }
         }
     });
-
-    return call;
 }
 
 void
@@ -1181,7 +1219,7 @@ RingAccount::lookupName(const std::string& name)
 {
     auto acc = getAccountID();
     nameDir_.get().lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
-        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, 0, result, name);
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
     });
 }
 
@@ -1190,7 +1228,7 @@ RingAccount::lookupAddress(const std::string& addr)
 {
     auto acc = getAccountID();
     nameDir_.get().lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
-        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, 0, addr, result);
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, addr, result);
     });
 }
 
