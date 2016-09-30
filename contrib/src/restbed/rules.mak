@@ -22,9 +22,7 @@
 RESTBED_VERSION := 34187502642144ab9f749ab40f5cdbd8cb17a54a
 RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
 
-ifndef HAVE_WIN32
 PKGS += restbed
-endif
 
 ifeq ($(call need_pkg,"restbed >= 4.0"),)
 PKGS_FOUND += restbed
@@ -45,6 +43,7 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz
 	$(UNPACK)
 	$(APPLY) $(SRC)/restbed/CMakeLists.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
+	$(APPLY) $(SRC)/restbed/uri_cpp.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
