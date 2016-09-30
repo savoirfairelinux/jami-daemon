@@ -2858,14 +2858,8 @@ Manager::newOutgoingCall(const std::string& toUrl,
 std::shared_ptr<video::SinkClient>
 Manager::createSinkClient(const std::string& id, bool mixer)
 {
-    const auto& iter = sinkMap_.find(id);
-    if (iter != std::end(sinkMap_)) {
-        if (iter->second.expired())
-            sinkMap_.erase(iter);
-        else
-            return nullptr;
-    }
-
+    if (auto sink = getSinkClient(id))
+        return sink;
     auto sink = std::make_shared<video::SinkClient>(id, mixer);
     sinkMap_.emplace(id, sink);
     return sink;
