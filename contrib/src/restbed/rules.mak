@@ -37,8 +37,6 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
 			-DBUILD_SSL=NO \
 			-DBUILD_SHARED=NO \
-			-DCMAKE_C_COMPILER=gcc \
-			-DCMAKE_CXX_COMPILER=g++ \
 			-DCMAKE_INSTALL_PREFIX=$(PREFIX)
 
 restbed-asio-dependency: asio-dependency-$(ASIO_VERSION).tar.gz
@@ -53,6 +51,7 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz .restbed-asio-dependency
 	cp -r restbed-asio-dependency/asio $(UNPACK_DIR)/dependency/asio
 	cd $(UNPACK_DIR)/dependency/asio/asio && patch -fp1 < ../../../../../src/restbed/conditional_sslv3.patch
 	cd $(UNPACK_DIR)/ && ls && patch -p0 < ../../src/restbed/CMakeLists.patch
+	$(APPLY) $(SRC)/restbed/uri_cpp.patch
 	$(MOVE)
 
 .restbed: restbed
