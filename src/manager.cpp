@@ -2860,10 +2860,9 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 {
     const auto& iter = sinkMap_.find(id);
     if (iter != std::end(sinkMap_)) {
-        if (iter->second.expired())
-            sinkMap_.erase(iter);
-        else
-            return nullptr;
+        if (auto sink = iter->second.lock())
+            return sink;
+        sinkMap_.erase(iter); // remove expired weak_ptr
     }
 
     auto sink = std::make_shared<video::SinkClient>(id, mixer);
