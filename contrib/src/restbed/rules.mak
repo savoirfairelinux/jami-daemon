@@ -45,6 +45,7 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz
 	$(UNPACK)
 	$(APPLY) $(SRC)/restbed/CMakeLists.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
+	$(APPLY) $(SRC)/restbed/uri_cpp.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
