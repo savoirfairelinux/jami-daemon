@@ -96,7 +96,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
-    enableAccel_ = (params.enableAccel == "1");
+    enableAccel_ = (params.enableAccel != "0");
 
     int ret = avformat_open_input(
         &inputCtx_,
@@ -267,8 +267,10 @@ int MediaDecoder::setupFromVideoData()
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
 #ifdef RING_ACCEL
-    accel_ = video::makeHardwareAccel(decoderCtx_);
-    decoderCtx_->opaque = accel_.get();
+    if (enableAccel_) {
+        accel_ = video::makeHardwareAccel(decoderCtx_);
+        decoderCtx_->opaque = accel_.get();
+    }
 #endif // RING_ACCEL
 
     // find the decoder for the video stream
@@ -334,8 +336,12 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #if defined(RING_VIDEO) && defined(RING_ACCEL)
-        if (accel_ && !accel_->extractData(decoderCtx_, result))
-            return Status::DecodeError;
+        if (accel_) {
+            if (!accel_->hasFailed())
+                accel_->extractData(decoderCtx_, result);
+            else
+                return Status::DecodeError;
+        }
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
@@ -418,8 +424,13 @@ MediaDecoder::flush(VideoFrame& result)
     if (len <= 0)
         return Status::DecodeError;
 
-    if (frameFinished)
+    if (frameFinished) {
+#ifdef RING_ACCEL
+        if (accel_ && !accel_->hasFailed())
+            accel_->extractData(decoderCtx_, result);
+#endif // RING_ACCEL
         return Status::FrameFinished;
+    }
 
     return Status::Success;
 }
