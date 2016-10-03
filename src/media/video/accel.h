@@ -36,8 +36,7 @@ enum class AccelID {
     Vdpau,
     VideoToolbox,
     Dxva2,
-    Vaapi,
-    Vda
+    Vaapi
 };
 
 struct AccelInfo {

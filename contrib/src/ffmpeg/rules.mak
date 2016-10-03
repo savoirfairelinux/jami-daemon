@@ -13,6 +13,10 @@ ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
+ifdef HAVE_MACOSX
+PKGS += ffmpeg
+endif
+
 FFMPEGCONF = \
 		--cc="$(CC)" \
 		--pkg-config="$(PKG_CONFIG)"
@@ -110,7 +114,11 @@ endif
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
 	--enable-indev=avfcapture \
-	--enable-indev=avfgrab
+	--enable-indev=avfgrab \
+	--enable-videotoolbox \
+	--enable-hwaccel=h263_videotoolbox \
+	--enable-hwaccel=h264_videotoolbox \
+	--enable-hwaccel=mpeg4_videotoolbox
 endif
 
 ifdef HAVE_IOS
