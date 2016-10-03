@@ -456,9 +456,27 @@ AS_IF([test "${SYS}" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
     ], [vaapi_available=no])
   ])
 ])
+AS_IF([test "${SYS}" = darwin], [
+  vt_available="no"
+  vda_available="no"
+  AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
+    AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
+      AC_DEFINE([HAVE_VIDEOTOOLBOX_ACCEL], [1], [VideoToolbox found])
+      vt_available="yes"
+    ], [])
+  ], [])
+  AC_CHECK_HEADER([VideoDecodeAcceleration/VDADecoder.h], [
+    AC_CHECK_HEADER([libavcodec/vda.h], [
+      AC_DEFINE([HAVE_VDA_ACCEL], [1], [VDA found])
+      vda_available="yes"
+    ], [])
+  ], [])
+])
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
 AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
+AC_ARG_ENABLE([videotoolbox], AS_HELP_STRING([--disable-videotoolbox], [Disable VideoToolbox hardware acceleration]))
+AC_ARG_ENABLE([vda], AS_HELP_STRING([--disable-vda], [Disable VDA hardware acceleration]))
 
 dnl video acceleration only works if there's video
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
@@ -470,9 +488,23 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
       AC_DEFINE([RING_VAAPI], [1], [VAAPI is available in Ring])
     ])
   ])
+  AS_IF([test "x$enable-videotoolbox" != "xno"], [
+    AS_IF([test "x${vt_available}" = "xyes"], [
+      ring_vt="yes"
+      AC_DEFINE([RING_VIDEOTOOLBOX], [1], [VideoToolbox is available in Ring])
+    ])
+  ])
+  AS_IF([test "x$enable-vda" != "xno"], [
+    AS_IF([test "x${vda_available}" = "xyes"], [
+      ring_vda="yes"
+      AC_DEFINE([RING_VIDEOTOOLBOX], [1], [VideoToolbox is available in Ring])
+    ])
+  ])
 ])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
+AM_CONDITIONAL([RING_VIDEOTOOLBOX], [test "x${ring_vt}" = "xyes"])
+AM_CONDITIONAL([RING_VDA], [test "x${ring_vda}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
