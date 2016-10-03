@@ -27,6 +27,10 @@
 #include "v4l2/vaapi.h"
 #endif
 
+#ifdef HAVE_VIDEOTOOLBOX_ACCEL
+#include "osxvideo/videotoolbox.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -151,6 +155,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
 {
     enum class AccelID {
         Vaapi,
+        VideoToolbox,
     };
 
     struct AccelInfo {
@@ -177,6 +182,9 @@ makeHardwareAccel(AVCodecContext* codecCtx)
 #if RING_VAAPI
         { AccelID::Vaapi, "vaapi", AV_PIX_FMT_VAAPI, makeHardwareAccel<VaapiAccel> },
 #endif
+#ifdef HAVE_VIDEOTOOLBOX_ACCEL
+        { AccelID::VideoToolbox, AV_PIX_FMT_VIDEOTOOLBOX, "videotoolbox", makeHardwareAccel<VideoToolboxAccel> },
+#endif
     };
 
     std::vector<AccelID> possibleAccels = {};
@@ -185,6 +193,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
         case AV_CODEC_ID_MPEG4:
         case AV_CODEC_ID_H263P:
             possibleAccels.push_back(AccelID::Vaapi);
+            possibleAccels.push_back(AccelID::VideoToolbox);
             break;
         case AV_CODEC_ID_VP8:
             break;
