@@ -27,6 +27,10 @@
 #include "v4l2/vaapi.h"
 #endif
 
+#ifdef HAVE_VIDEOTOOLBOX_ACCEL
+#include "osxvideo/videotoolbox.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -112,6 +116,9 @@ getAccelInfo(std::initializer_list<AccelID> codecAccels)
 #if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
         { AccelID::Vaapi, AV_PIX_FMT_VAAPI, "vaapi", makeHardwareAccel<VaapiAccel> },
 #endif
+#ifdef HAVE_VIDEOTOOLBOX_ACCEL
+        { AccelID::VideoToolbox, AV_PIX_FMT_VIDEOTOOLBOX, "videotoolbox", makeHardwareAccel<VideoToolboxAccel> },
+#endif
     };
 
     for (auto& accel : accels) {
@@ -163,8 +170,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
                 AccelID::Vdpau,
                 AccelID::VideoToolbox,
                 AccelID::Dxva2,
-                AccelID::Vaapi,
-                AccelID::Vda
+                AccelID::Vaapi
             });
             break;
         case AV_CODEC_ID_MPEG4:
@@ -172,7 +178,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
         case AV_CODEC_ID_H263P:
             info = getAccelInfo({
                 AccelID::Vdpau,
-                AccelID::VideoToolbox,
                 AccelID::Vaapi
             });
             break;

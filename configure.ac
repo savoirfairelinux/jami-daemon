@@ -451,6 +451,12 @@ AS_IF([test "x$enable_accel" != "xno"], [
       ])
     ])
   ])
+  AS_IF([test "$SYS" = "darwin"],[
+    AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h],[
+      AC_DEFINE([HAVE_VIDEOTOOLBOX_ACCEL], [1], [VideoToolbox found])
+      ],[AC_MSG_ERROR([Could not find VideoToolbox])
+    ])
+  ])
 ], AM_CONDITIONAL(RING_ACCEL, false))
 
 # PTHREAD
