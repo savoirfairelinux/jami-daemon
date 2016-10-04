@@ -30,7 +30,7 @@
 #include "sipaccount.h"
 #include "sipvoiplink.h"
 #include "string_utils.h"
-#include "ring_base64.h"
+#include "base64.h"
 
 #include "manager.h"
 #include "logger.h"

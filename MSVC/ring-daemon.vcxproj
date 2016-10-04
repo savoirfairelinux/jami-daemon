@@ -454,7 +454,7 @@
     <ClInclude Include="..\src\account_schema.h" />
     <ClInclude Include="..\src\archiver.h" />
     <ClInclude Include="..\src\array_size.h" />
-    <ClInclude Include="..\src\ring_base64.h" />
+    <ClInclude Include="..\src\base64.h" />
     <ClInclude Include="..\src\call.h" />
     <ClInclude Include="..\src\call_factory.h" />
     <ClInclude Include="..\src\client\ring_signal.h" />
@@ -532,14 +532,9 @@
     <ClInclude Include="..\src\preferences.h" />
     <ClInclude Include="..\src\rational.h" />
     <ClInclude Include="..\src\registration_states.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Assertions.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Base64.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\boost_multiprecision_number_compare_bug_workaround.hpp" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\Common.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\CommonData.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\concurrent_queue.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\debugbreak.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Diff.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\Exceptions.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\FixedHash.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\Guards.h" />
@@ -547,8 +542,6 @@
     <ClInclude Include="..\src\ringdht\eth\libdevcore\picosha2.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\RLP.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\SHA3.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\Terminal.h" />
-    <ClInclude Include="..\src\ringdht\eth\libdevcore\UndefMacros.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\vector_ref.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcrypto\AES.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Common.h" />
@@ -593,7 +586,7 @@
     <ClCompile Include="..\src\account.cpp" />
     <ClCompile Include="..\src\account_factory.cpp" />
     <ClCompile Include="..\src\archiver.cpp" />
-    <ClCompile Include="..\src\ring_base64.cpp" />
+    <ClCompile Include="..\src\base64.cpp" />
     <ClCompile Include="..\src\buildinfo.cpp" />
     <ClCompile Include="..\src\call.cpp" />
     <ClCompile Include="..\src\call_factory.cpp" />
@@ -655,7 +648,6 @@
     <ClCompile Include="..\src\plugin_loader_dl.cpp" />
     <ClCompile Include="..\src\plugin_manager.cpp" />
     <ClCompile Include="..\src\preferences.cpp" />
-    <ClCompile Include="..\src\ringdht\eth\libdevcore\Base64.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\Common.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\CommonData.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\FixedHash.cpp" />
