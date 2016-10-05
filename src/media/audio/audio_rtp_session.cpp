@@ -37,7 +37,11 @@
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
 #include "manager.h"
+
+#ifndef WIN32_NATIVE
 #include "smartools.h"
+#endif
+
 #include <sstream>
 
 namespace ring {
@@ -167,7 +171,9 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
+#ifndef WIN32_NATIVE
         Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
+#endif
         if (audioEncoder_->encode_audio(resampledData_) < 0)
             RING_ERR("encoding failed");
     } else {
@@ -283,8 +289,10 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
+#ifndef WIN32_NATIVE
             // Refresh the remote audio codec in the callback SmartInfo
             Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
+#endif
             return;
 
         case MediaDecoder::Status::DecodeError:

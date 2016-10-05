@@ -37,7 +37,10 @@
 #include "dring/videomanager_interface.h"
 #include "libav_utils.h"
 #include "video_scaler.h"
+
+#ifndef WIN32_NATIVE
 #include "smartools.h"
+#endif
 
 #ifndef _WIN32
 #include <sys/mman.h>
@@ -326,7 +329,9 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         std::ostringstream fps;
         fps << frameCount_ / seconds.count();
         // Send the framerate in smartInfo
+#ifndef WIN32_NATIVE
         Smartools::getInstance().setFrameRate(id_, fps.str());
+#endif
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;
     }

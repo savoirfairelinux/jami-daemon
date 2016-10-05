@@ -67,9 +67,11 @@ std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
+#ifndef WIN32_NATIVE
 /* Statistic related methods */
 void startSmartInfo(uint32_t refreshTimeMs);
 void stopSmartInfo();
+#endif
 
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
