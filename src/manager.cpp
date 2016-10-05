@@ -1808,6 +1808,9 @@ Manager::callFailure(Call& call)
 
     checkAudio();
     removeWaitingCall(call_id);
+    if (not incomingCallsWaiting())
+        stopTone();
+    removeAudio(call);
 }
 
 //THREAD=VoIP
