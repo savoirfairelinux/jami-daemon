@@ -24,15 +24,6 @@
 
 #include "upnp_context.h"
 
-#include <string>
-#include <set>
-#include <mutex>
-#include <memory>
-#include <condition_variable>
-#include <random>
-#include <chrono>
-#include <cstdlib> // for std::free
-
 #if HAVE_LIBUPNP
 #include <upnp/upnp.h>
 #include <upnp/upnptools.h>
@@ -49,6 +40,15 @@
 
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
+
+#include <string>
+#include <set>
+#include <mutex>
+#include <memory>
+#include <condition_variable>
+#include <random>
+#include <chrono>
+#include <cstdlib> // for std::free
 
 namespace ring { namespace upnp {
 
