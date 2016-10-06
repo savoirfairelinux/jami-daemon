@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __CALL_H__
-#define __CALL_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -40,6 +39,7 @@
 #include <memory>
 #include <vector>
 #include <condition_variable>
+#include <set>
 
 namespace ring {
 
@@ -331,7 +331,19 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaSender() = 0;
 
+<<<<<<< HEAD
         virtual void restartMediaReceiver() = 0;
+=======
+        using StateListener = std::function<void(CallState, int)>;
+
+        template<class T>
+        void addStateListener(T&& list) {
+            stateChangedListeners_.emplace_back(std::forward<T>(list));
+        }
+        void addSubCall(const std::shared_ptr<Call>& call);
+
+        virtual void merge(std::shared_ptr<Call> scall);
+>>>>>>> 50b79a7... multi-device: initial implementation
 
     protected:
         /**
@@ -345,12 +357,17 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         bool isAudioMuted_{false};
         bool isVideoMuted_{false};
+        bool quiet {false};
+        std::set<std::shared_ptr<Call>> subcalls {};
 
     private:
+
         bool validStateTransition(CallState newState);
 
         /** Protect every attribute that can be changed by two threads */
         mutable std::recursive_mutex callMutex_ {};
+
+        std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
         // Informations about call socket / audio
 
@@ -394,5 +411,3 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 };
 
 } // namespace ring
-
-#endif // __CALL_H__
