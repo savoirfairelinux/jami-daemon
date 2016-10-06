@@ -33,6 +33,11 @@
 #include <algorithm>
 #include <vector>
 
+extern "C" {
+#include <sys/types.h>
+#include <dirent.h>
+}
+
 #include "logger.h"
 
 namespace ring { namespace video {
@@ -95,6 +100,42 @@ VaapiAccel::extractData(AVCodecContext* codecCtx, VideoFrame& container)
 bool
 VaapiAccel::init(AVCodecContext* codecCtx)
 {
+#ifdef HAVE_VAAPI_ACCEL_DRM
+    // try all possible devices, use first one that works
+    const std::string dri = "/dev/dri/";
+    bool flag = false;
+    DIR *dp;
+    struct dirent *ep;
+    dp = opendir(dri.c_str());
+    if (dp) {
+        const std::string prefixCard = "card";
+        const std::string prefixNode = "renderD";
+        while(ep = readdir(dp)) {
+            // a drm device is either a card or a render node, check both
+            auto filename = std::string(ep->d_name);
+            if (!filename.compare(0, prefixCard.size(), prefixCard.c_str())) {
+                if (open(codecCtx, dri + filename)) {
+                    flag = true;
+                    break;
+                }
+            } else if (!filename.compare(0, prefixNode.size(), prefixNode.c_str())) {
+                if (open(codecCtx, dri + filename)) {
+                    flag = true;
+                    break;
+                }
+            }
+        }
+        closedir(dp);
+        return flag;
+    }
+#elif HAVE_VAAPI_ACCEL_X11
+    return open(codecCtx, ":0"); // this is the default x11 device
+#endif
+}
+
+bool
+VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
+{
     vaProfile_ = VAProfileNone;
     vaEntryPoint_ = VAEntrypointVLD;
     using ProfileMap = std::map<int, VAProfile>;
@@ -121,15 +162,8 @@ VaapiAccel::init(AVCodecContext* codecCtx)
     };
 
     VAStatus status;
-
-#ifdef HAVE_VAAPI_ACCEL_DRM
-    const char* deviceName = "/dev/dri/card0"; // check for renderDX first?
-#else
-    const char* deviceName = nullptr; // use default device
-#endif
-
     AVBufferRef* hardwareDeviceCtx;
-    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName, nullptr, 0) < 0) {
+    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) < 0) {
         RING_ERR("Failed to create VAAPI device");
         av_buffer_unref(&hardwareDeviceCtx);
         return false;
@@ -216,7 +250,7 @@ VaapiAccel::init(AVCodecContext* codecCtx)
         return false;
     }
 
-    RING_DBG("VAAPI decoder initialized");
+    RING_DBG("VAAPI decoder initialized via device: %s", deviceName.c_str());
 
     ffmpegAccelCtx_.display = hardwareContext->display;
     ffmpegAccelCtx_.config_id = vaConfig_;
