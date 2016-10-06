@@ -1,10 +1,10 @@
 # libvpx
 
 #Libav doesnt support new vpx version
-ifdef HAVE_MACOSX
-VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
-else
+ifdef HAVE_ANDROID
 VPX_HASH := v1.6.0
+else
+VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
 endif
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
