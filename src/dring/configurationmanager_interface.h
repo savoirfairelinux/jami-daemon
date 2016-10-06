@@ -6,6 +6,7 @@
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -22,8 +23,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef DRING_CONFIGURATIONMANAGERI_H
-#define DRING_CONFIGURATIONMANAGERI_H
+#pragma once
 
 #include <vector>
 #include <map>
@@ -45,6 +45,8 @@ std::map<std::string, std::string> testAccountICEInitialization(const std::strin
 void setAccountActive(const std::string& accountID, bool active);
 std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
 std::string addAccount(const std::map<std::string, std::string>& details);
+bool exportOnRing(const std::string& accountID, const std::string& password);
+
 void removeAccount(const std::string& accountID);
 void setAccountEnabled(const std::string& accountID, bool enable);
 std::vector<std::string> getAccountList();
@@ -52,6 +54,7 @@ void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
 uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& payloads);
 int getMessageStatus(uint64_t id);
+
 
 std::map<std::string, std::string> getTlsDefaultSettings();
 
@@ -208,6 +211,10 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "IncomingTrustRequest";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
         };
+        struct ExportOnRingEnded {
+                constexpr static const char* name = "ExportOnRingEnded";
+                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
+        };
         struct CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";
                 using cb_type = void(const std::string& /*certId*/);
@@ -245,5 +252,3 @@ struct ConfigurationSignal {
 };
 
 } // namespace DRing
-
-#endif // DRING_CONFIGURATIONMANAGERI_H
