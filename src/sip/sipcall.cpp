@@ -112,7 +112,7 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
     , avformatrtp_(new AudioRtpSession(id))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls
-    , videortp_(id, getVideoSettings())
+    , videortp_(new video::VideoRtpSession(id, getVideoSettings()))
     , videoInput_(Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice())
 #endif
     , sdp_(new Sdp(id))
@@ -326,7 +326,7 @@ SIPCall::answer()
     auto& account = getSIPAccount();
 
     if (not inv)
-        throw VoipLinkException("No invite session for this call");
+        throw VoipLinkException("[call:" + getCallId() + "] answer: no invite session for this call");
 
     if (!inv->neg) {
         RING_WARN("[call:%s] Negotiator is NULL, we've received an INVITE without an SDP",
@@ -372,7 +372,7 @@ SIPCall::hangup(int reason)
 
     if (not inv or not inv->dlg) {
         removeCall();
-        throw VoipLinkException("No invite session for this call");
+        throw VoipLinkException("[call:" + getCallId() + "] hangup: no invite session for this call");
     }
 
     pjsip_route_hdr *route = inv->dlg->route_set.next;
@@ -653,10 +653,11 @@ SIPCall::peerHungup()
     // Stop all RTP streams
     stopAllMedia();
 
-    if (not inv)
-        throw VoipLinkException("No invite session for this call");
+    if (inv)
+        terminateSipSession(PJSIP_SC_NOT_FOUND);
+    else
+        RING_ERR("[call:%s] peerHungup: no invite session for this call", getCallId().c_str());
 
-    terminateSipSession(PJSIP_SC_NOT_FOUND);
     Call::peerHungup();
 }
 
@@ -668,16 +669,20 @@ SIPCall::carryingDTMFdigits(char code)
 
 void
 SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
-                         const std::string& /* from */)
+                         const std::string& from)
 {
-    if (not inv)
-        throw VoipLinkException("No invite session for this call");
-
     //TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
-
-    im::sendSipMessage(inv.get(), messages);
+    if (inv)
+        im::sendSipMessage(inv.get(), messages);
+    else {
+        if (not subcalls.empty()) {
+            for (auto& c : subcalls)
+                c->sendTextMessage(messages, from);
+        } else
+            throw VoipLinkException("[call:" + getCallId() + "] sendTextMessage: no invite session for this call");
+    }
 }
 
 void
@@ -781,8 +786,8 @@ bool
 SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
 {
 #ifdef RING_VIDEO
-    if (videortp_.isSending())
-        return videortp_.useCodec(codec);
+    if (videortp_->isSending())
+        return videortp_->useCodec(codec);
 #endif
     return false;
 }
@@ -790,6 +795,7 @@ SIPCall::useVideoCodec(const AccountVideoCodecInfo* codec) const
 void
 SIPCall::startAllMedia()
 {
+    RING_WARN("[call:%s] startAllMedia()", getCallId().c_str());
     if (isSecure() && not transport_->isSecure()) {
         RING_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
                  getCallId().c_str());
@@ -815,7 +821,7 @@ SIPCall::startAllMedia()
         RtpSession* rtp = local.type == MEDIA_AUDIO
             ? static_cast<RtpSession*>(avformatrtp_.get())
 #ifdef RING_VIDEO
-            : static_cast<RtpSession*>(&videortp_);
+            : static_cast<RtpSession*>(videortp_.get());
 #else
             : nullptr;
 #endif
@@ -844,7 +850,7 @@ SIPCall::startAllMedia()
 
 #ifdef RING_VIDEO
         if (local.type == MEDIA_VIDEO)
-            videortp_.switchInput(videoInput_);
+            videortp_->switchInput(videoInput_);
 #endif
 
         rtp->updateMedia(remote, local);
@@ -873,7 +879,7 @@ SIPCall::startAllMedia()
         }
     }
 
-    if (peerHolding_ != peer_holding) {
+    if (not quiet and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
@@ -885,7 +891,7 @@ SIPCall::restartMediaSender()
     RING_DBG("[call:%s] restarting TX media streams", getCallId().c_str());
     avformatrtp_->restartSender();
 #ifdef RING_VIDEO
-    videortp_.restartSender();
+    videortp_->restartSender();
 #endif
 }
 
@@ -895,7 +901,7 @@ SIPCall::restartMediaReceiver()
     RING_DBG("[call:%s] restarting RX media streams", getCallId().c_str());
     avformatrtp_->restartReceiver();
 #ifdef RING_VIDEO
-    videortp_.restartReceiver();
+    videortp_->restartReceiver();
 #endif
 }
 
@@ -905,7 +911,7 @@ SIPCall::stopAllMedia()
     RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
     avformatrtp_->stop();
 #ifdef RING_VIDEO
-    videortp_.stop();
+    videortp_->stop();
 #endif
 }
 
@@ -919,41 +925,49 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
-        emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
+        if (not quiet)
+            emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
         if (mute == isAudioMuted_) return;
         RING_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
-        emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
+        if (not quiet)
+            emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
     }
 }
 
 void
 SIPCall::onMediaUpdate()
 {
+    RING_WARN("[call:%s] onMediaUpdate", getCallId().c_str());
     stopAllMedia();
     openPortsUPnP();
 
     if (startIce()) {
-        auto this_ = std::static_pointer_cast<SIPCall>(shared_from_this());
         auto ice = iceTransport_;
         auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        Manager::instance().addTask([=] {
-            if (ice != this_->iceTransport_) {
-                RING_WARN("[call:%s] ICE transport replaced", getCallId().c_str());
-                return false;
+        if (not wthis_)
+            wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
+        auto wthis = wthis_;
+        Manager::instance().addTask([wthis,ice,iceTimeout] {
+            if (auto sthis = wthis->lock()) {
+                auto& this_ = *sthis;
+                if (ice != this_.iceTransport_) {
+                    RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
+                    return false;
+                }
+                /* First step: wait for an ICE transport for SIP channel */
+                if (this_.iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
+                    RING_DBG("[call:%s] ICE init failed (or timeout)", this_.getCallId().c_str());
+                    this_.onFailure(ETIMEDOUT);
+                    return false;
+                }
+                if (not this_.iceTransport_->isRunning())
+                    return true;
+                this_.startAllMedia();
             }
-            /* First step: wait for an ICE transport for SIP channel */
-            if (this_->iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
-                RING_DBG("[call:%s] ICE init failed (or timeout)", getCallId().c_str());
-                this_->onFailure(ETIMEDOUT);
-                return false;
-            }
-            if (not this_->iceTransport_->isRunning())
-                return true;
-            startAllMedia();
             return false;
         });
     } else {
@@ -1084,6 +1098,26 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
         }
     }
     return result;
+}
+
+void
+SIPCall::merge(std::shared_ptr<SIPCall> scall)
+{
+    Call::merge(scall);
+    RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
+    inv = std::move(scall->inv);
+    inv->mod_data[getSIPVoIPLink()->getModId()] = this;
+    if (not wthis_)
+        wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
+    *scall->wthis_ = *wthis_;
+    avformatrtp_ = std::move(scall->avformatrtp_);
+    videortp_ = std::move(scall->videortp_);
+    setTransport(scall->transport_);
+    sdp_ = std::move(scall->sdp_);
+    peerHolding_ = scall->peerHolding_;
+    upnp_ = std::move(scall->upnp_);
+    std::copy_n(scall->contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
+    pj_strcpy(&contactHeader_, &scall->contactHeader_);
 }
 
 } // namespace ring
