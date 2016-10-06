@@ -24,15 +24,6 @@
 #include "config.h"
 #endif
 
-#include <set>
-#include <map>
-#include <mutex>
-#include <memory>
-#include <condition_variable>
-#include <chrono>
-#include <atomic>
-#include <thread>
-
 #if HAVE_LIBUPNP
 #ifdef _WIN32
 #define UPNP_STATIC_LIB
@@ -49,6 +40,15 @@
 
 #include "noncopyable.h"
 #include "upnp_igd.h"
+
+#include <set>
+#include <map>
+#include <mutex>
+#include <memory>
+#include <condition_variable>
+#include <chrono>
+#include <atomic>
+#include <thread>
 
 namespace ring {
 class IpAddr;

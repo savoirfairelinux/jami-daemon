@@ -37,9 +37,7 @@ FFMPEGCONF += \
 
 #librairies
 ifndef HAVE_ANDROID
-FFMPEGCONF += \
-		--enable-libx264 \
-		--enable-libvpx
+FFMPEGCONF += --enable-libx264
 endif
 
 #encoders/decoders
@@ -66,6 +64,7 @@ FFMPEGCONF += \
 		--enable-decoder=mjpegb \
 		--enable-libspeex \
 		--enable-libopus \
+		--enable-libvpx \
 		--enable-encoder=libspeex \
 		--enable-decoder=libspeex \
 		--enable-encoder=libopus \
