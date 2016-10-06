@@ -76,6 +76,8 @@ class VaapiAccel : public HardwareAccel {
         VAContextID vaContext_;
 
         struct vaapi_context ffmpegAccelCtx_;
+
+        bool open(AVCodecContext* codecCtx, std::string deviceName);
 };
 
 }} // namespace ring::video
