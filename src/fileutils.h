@@ -74,8 +74,8 @@ namespace ring { namespace fileutils {
 
     /**
      * Read content of the directory.
-     * The result is a list of full paths of files in the directory,
-     * without "." and "..".
+     * The result is a list of relative (to @param dir) paths of files in the
+     * directory, without "." and "..".
      */
     std::vector<std::string> readDirectory(const std::string &dir);
 
