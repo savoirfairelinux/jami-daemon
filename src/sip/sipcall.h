@@ -218,6 +218,10 @@ class SIPCall : public Call
         }
         virtual void merge(std::shared_ptr<SIPCall> scall);
 
+        void setPeerRegistredName(const std::string& name) {
+            peerRegistredName_ = name;
+        }
+
     private:
         NON_COPYABLE(SIPCall);
 
@@ -261,6 +265,8 @@ class SIPCall : public Call
          */
         std::unique_ptr<Sdp> sdp_;
         bool peerHolding_ {false};
+
+        std::string peerRegistredName_ {};
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
