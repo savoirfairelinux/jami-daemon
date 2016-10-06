@@ -69,6 +69,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
+	$(APPLY) $(SRC)/pjproject/isblank.patch
 endif
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
