@@ -131,8 +131,12 @@ CertificateStore::findIssuer(std::shared_ptr<crypto::Certificate> crt) const
 {
     std::shared_ptr<crypto::Certificate> ret {};
     auto n = crt->getIssuerUID();
-    if (not n.empty())
-        ret = findCertificateByUID(n);
+    if (not n.empty()) {
+        if (crt->issuer and crt->issuer->getUID() == n)
+            ret = crt->issuer;
+        else
+            ret = findCertificateByUID(n);
+    }
     if (not ret) {
         n = crt->getIssuerName();
         if (not n.empty())
@@ -471,9 +475,23 @@ TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status)
 bool
 TrustStore::isAllowed(const crypto::Certificate& crt)
 {
-    if (getCertificateStatus(crt.getId().toString()) == PermissionStatus::ALLOWED)
+    // Match by certificate pinning (device)
+    auto status = getCertificateStatus(crt.getId().toString());
+    if (status == PermissionStatus::ALLOWED)
         return true;
+    else if (status == PermissionStatus::BANNED)
+        return false;
 
+    // Match by certificate pinning (Ring account)
+    if (crt.issuer) {
+        status = getCertificateStatus(crt.issuer->getId().toString());
+        if (status == PermissionStatus::ALLOWED)
+            return true;
+        else if (status == PermissionStatus::BANNED)
+            return false;
+    }
+
+    // Match by certificate chain
     updateKnownCerts();
     return matchTrustStore(getChain(crt), allowed_);
 }
