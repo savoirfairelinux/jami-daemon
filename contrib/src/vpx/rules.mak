@@ -117,7 +117,7 @@ ifdef HAVE_ANDROID
 # uses that path to look for the compiler (which we already know)
 VPX_CONF += --sdk-path=$(ANDROID_TOOLCHAIN)/bin
 # needed for cpu-features.h
-VPX_CONF += --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/"
+VPX_CONF += --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/ -fvisibility=hidden"
 # set an explicit alternative libc since the sysroot override can make it blank
 VPX_CONF += --libc=$(SYSROOT)
 LOCAL_HOSTVARS=$(HOSTVARS)

@@ -25,10 +25,6 @@
 #include <string>
 #include <vector>
 
-#ifdef __ANDROID__
-#include <sstream>
-#endif
-
 namespace ring {
 
 constexpr static const char* TRUE_STR = "true";
@@ -48,42 +44,6 @@ std::wstring to_wstring(const std::string& s);
 
 #endif
 
-#ifdef __ANDROID__
-
-// Rationale:
-// Some strings functions are not available on Android NDK as explained here:
-// http://stackoverflow.com/questions/17950814/how-to-use-stdstoul-and-stdstoull-in-android/18124627#18124627
-// We implement them by ourself as well as possible here.
-
-template <typename T>
-inline std::string
-to_string(T &&value)
-{
-    std::ostringstream os;
-    os << value;
-    return os.str();
-}
-
-static inline int
-stoi(const std::string& str)
-{
-    int v;
-    std::istringstream os(str);
-    os >> v;
-    return v;
-}
-
-static inline double
-stod(const std::string& str)
-{
-    double v;
-    std::istringstream os(str);
-    os >> v;
-    return v;
-}
-
-#else
-
 template <typename T>
 inline std::string
 to_string(T &&value)
@@ -102,8 +62,6 @@ stod(const std::string& str)
 {
     return std::stod(str);
 }
-
-#endif
 
 std::string trim(const std::string &s);
 
