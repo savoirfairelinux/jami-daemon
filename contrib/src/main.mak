@@ -505,3 +505,8 @@ $(patsubst %,.dep-%,$(filter-out $(PKGS_FOUND),$(PKGS_ALL))): .dep-%: .%
 $(foreach p,$(PKGS_ALL),.$(p)): .%: $$(foreach d,$$(DEPS_$$*),.dep-$$(d))
 
 .DELETE_ON_ERROR:
+
+# Disable -j option for the top Makefile as this framework doesn't support well
+# this and some contrib may be not well build or even not build at all.
+# Notice that projects' rules.mak file use parallel jobs even with this.
+.NOTPARALLEL:
