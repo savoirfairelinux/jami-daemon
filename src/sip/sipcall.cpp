@@ -367,35 +367,26 @@ SIPCall::answer()
 void
 SIPCall::hangup(int reason)
 {
+    if (inv and inv->dlg) {
+        pjsip_route_hdr *route = inv->dlg->route_set.next;
+        while (route and route != &inv->dlg->route_set) {
+            char buf[1024];
+            int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
+            if (printed >= 0) {
+                buf[printed] = '\0';
+                RING_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
+            }
+            route = route->next;
+        }
+        const int status = reason ? reason :
+                           inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
+                           PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
+                           inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
+        // Notify the peer
+        terminateSipSession(status);
+    }
     // Stop all RTP streams
     stopAllMedia();
-
-    if (not inv or not inv->dlg) {
-        removeCall();
-        throw VoipLinkException("[call:" + getCallId() + "] hangup: no invite session for this call");
-    }
-
-    pjsip_route_hdr *route = inv->dlg->route_set.next;
-    while (route and route != &inv->dlg->route_set) {
-        char buf[1024];
-        int printed = pjsip_hdr_print_on(route, buf, sizeof(buf));
-
-        if (printed >= 0) {
-            buf[printed] = '\0';
-            RING_DBG("[call:%s] Route header %s", getCallId().c_str(), buf);
-        }
-
-        route = route->next;
-    }
-
-    const int status = reason ? reason :
-                       inv->state <= PJSIP_INV_STATE_EARLY and inv->role != PJSIP_ROLE_UAC ?
-                       PJSIP_SC_CALL_TSX_DOES_NOT_EXIST :
-                       inv->state >= PJSIP_INV_STATE_DISCONNECTED ? PJSIP_SC_DECLINE : 0;
-
-    // Notify the peer
-    terminateSipSession(status);
-
     setState(Call::ConnectionState::DISCONNECTED, reason);
     removeCall();
 }
