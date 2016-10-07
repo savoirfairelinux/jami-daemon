@@ -26,6 +26,8 @@ $(TARBALLS)/cryptopp-$(CRYPTOPP_VERSION).tar.gz:
 cryptopp: cryptopp-$(CRYPTOPP_VERSION).tar.gz .sum-cryptopp
 	$(UNPACK)
 ifdef HAVE_ANDROID
+	sed -e 's///' cryptopp-$(CRYPTOPP_VERSION)/CMakeLists.txt > CMakeLists.txt2
+	mv CMakeLists.txt2 cryptopp-$(CRYPTOPP_VERSION)/CMakeLists.txt
 	$(APPLY_BIN) $(SRC)/cryptopp/cmake-crosscompile.patch
 endif
 	$(MOVE)

@@ -50,7 +50,8 @@ endif
 ifdef HAVE_ANDROID
 	cd $< && echo "using gcc : android : clang++" > user-config.jam
 	cd $< && echo ":" >> user-config.jam
-	cd $< && echo "<archiver>${HOST}-ar" >> user-config.jam
+	cd $< && echo "<archiver>$(ANDROID_TOOLCHAIN)/bin/${HOST}-ar" >> user-config.jam
+	cd $< && echo "<ranlib>$(ANDROID_TOOLCHAIN)/bin/${HOST}-ranlib" >> user-config.jam
 	cd $< && echo "<compileflags>-DANDROID" >> user-config.jam
 	cd $< && echo "<compileflags>-D__ANDROID__" >> user-config.jam
 	cd $< && echo "<compileflags>-I$(ANDROID_TOOLCHAIN)/include/c++/4.9" >> user-config.jam
