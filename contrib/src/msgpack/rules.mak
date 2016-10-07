@@ -21,6 +21,7 @@ $(TARBALLS)/msgpack-c-$(MSGPACK_VERSION).tar.gz:
 
 msgpack: msgpack-c-$(MSGPACK_VERSION).tar.gz .sum-msgpack
 	$(UNPACK)
+	$(APPLY) $(SRC)/msgpack/0001-add-Wno-error-unused-command-line-argument.patch
 	$(MOVE)
 
 .msgpack: msgpack toolchain.cmake

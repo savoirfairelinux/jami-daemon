@@ -1,0 +1,29 @@
+From 93c7341f9b7442569db4a288a7468f7677a221c8 Mon Sep 17 00:00:00 2001
+From: Alexandre Lision <alexandre.lision@gmail.com>
+Date: Tue, 1 Nov 2016 20:09:55 -0400
+Subject: [PATCH] add -Wno-error=unused-command-line-argument
+
+clang toolchain on OSX automatically adds -mmacosx-version-min
+---
+ CMakeLists.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 50779ae..064f7e2 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -191,9 +191,9 @@ ENDIF ()
+ 
+ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+     IF (MSGPACK_ENABLE_SHARED)
+-        SET_PROPERTY (TARGET msgpackc APPEND_STRING PROPERTY COMPILE_FLAGS "-Wall -Wextra -Werror -g -O3 -DPIC")
++        SET_PROPERTY (TARGET msgpackc APPEND_STRING PROPERTY COMPILE_FLAGS "-Wall -Wextra -Werror -Wno-error=unused-command-line-argument -g -O3 -DPIC")
+     ENDIF ()
+-    SET_PROPERTY (TARGET msgpackc-static APPEND_STRING PROPERTY COMPILE_FLAGS "-Wall -Wextra -Werror -g -O3" )
++    SET_PROPERTY (TARGET msgpackc-static APPEND_STRING PROPERTY COMPILE_FLAGS "-Wall -Wextra -Werror -Wno-error=unused-command-line-argument -g -O3" )
+ ENDIF ()
+ 
+ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+-- 
+2.9.3
+
