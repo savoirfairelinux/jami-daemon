@@ -57,6 +57,10 @@ libring_la_LDFLAGS = \
 		@ZLIB_LIBS@ \
 		$(PCRE_LIBS)
 
+if HAVE_WIN32
+libring_la_LDFLAGS += -lws2_32 -no-undefined -avoid-version
+endif
+
 if HAVE_OSX
 #FIXME necessary for -lintl
 libring_la_LDFLAGS += -L/usr/local/opt/gettext/lib
