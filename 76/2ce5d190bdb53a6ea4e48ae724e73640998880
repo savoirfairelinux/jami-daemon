@@ -1,0 +1,8 @@
+Code-Review+2: loic.siret <loic.siret@savoirfairelinux.com>
+Code-Review+1: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Fri, 07 Oct 2016 14:09:47 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/4220
+Project: ring-daemon
+Branch: refs/heads/master
