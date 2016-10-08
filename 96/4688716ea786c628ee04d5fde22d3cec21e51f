@@ -1,0 +1,7 @@
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Sat, 08 Oct 2016 00:59:02 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5102
+Project: ring-daemon
+Branch: refs/heads/releases/beta1-production
