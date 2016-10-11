@@ -1532,9 +1532,8 @@ RingAccount::doRegister_()
         }
 
         // Listen for incoming calls
-        auto ringDeviceId = identity_.first->getPublicKey().getId().toString();
-        callKey_ = dht::InfoHash::get("callto:"+ringDeviceId);
-        RING_DBG("Listening on callto:%s : %s", ringDeviceId.c_str(), callKey_.toString().c_str());
+        callKey_ = dht::InfoHash::get("callto:"+ringDeviceId_);
+        RING_DBG("Listening on callto:%s : %s", ringDeviceId_.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
@@ -1623,9 +1622,10 @@ RingAccount::doRegister_()
             }
         );
 
+        auto inboxDeviceKey = dht::InfoHash::get("inbox:"+ringDeviceId_);
         dht_.listen<dht::ImMessage>(
-            inboxKey,
-            [shared, inboxKey](dht::ImMessage&& v) {
+            inboxDeviceKey,
+            [shared, inboxDeviceKey](dht::ImMessage&& v) {
                 auto& this_ = *shared.get();
                 auto res = this_.treatedMessages_.insert(v.id);
                 if (!res.second)
@@ -1638,7 +1638,7 @@ RingAccount::doRegister_()
                                                                 utf8_make_valid(v.msg)}};
                 shared->onTextMessage(from, payloads);
                 RING_DBG("Sending message confirmation %" PRIu64, v.id);
-                this_.dht_.putEncrypted(inboxKey,
+                this_.dht_.putEncrypted(inboxDeviceKey,
                           v.from,
                           dht::ImMessage(v.id, std::string(), now));
                 return true;
@@ -2121,20 +2121,40 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         messageEngine_.onMessageSent(token, false);
         return;
     }
+    if (payloads.size() != 1) {
+        // Multi-part message
+        // TODO: not supported yet
+        RING_ERR("Multi-part im is not supported yet by RingAccount");
+        messageEngine_.onMessageSent(token, false);
+        return;
+    }
 
+    std::weak_ptr<RingAccount> wshared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto toUri = parseRingUri(to);
     auto toH = dht::InfoHash(toUri);
     auto now = system_clock::to_time_t(system_clock::now());
+    auto treatedDevices_ = std::make_shared<std::set<dht::InfoHash>>();
 
-    // Single-part message
-    if (payloads.size() == 1) {
+    struct PendingConfirmation {
+        bool replied {false};
+        std::map<dht::InfoHash, std::future<size_t>> listenTokens {};
+    };
+    auto confirm = std::make_shared<PendingConfirmation>();
+
+    // Find listening Ring devices for this account
+    dht_.get<DeviceAnnouncement>(toH, [=](DeviceAnnouncement&& dev) {
+        if (dev.from != toH)
+            return true;
+        if (not treatedDevices_->emplace(dev.dev).second)
+            return true;
+
         auto e = sentMessages_.emplace(token, PendingMessage {});
-        e.first->second.to = toH;
+        e.first->second.to = dev.dev;
 
-        auto h = dht::InfoHash::get("inbox:"+toUri);
-        std::weak_ptr<RingAccount> wshared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        auto h = dht::InfoHash::get("inbox:"+dev.dev.toString());
+        RING_DBG("Found device to send message %s -> %s", dev.dev.toString().c_str(), h.toString().c_str());
 
-        dht_.listen<dht::ImMessage>(h, [wshared,token](dht::ImMessage&& msg) {
+        auto list_token = dht_.listen<dht::ImMessage>(h, [h,wshared,token,confirm](dht::ImMessage&& msg) {
             if (auto this_ = wshared.lock()) {
                 // check expected message confirmation
                 if (msg.id != token)
@@ -2163,27 +2183,29 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 this_->saveTreatedMessages();
 
                 // report message as confirmed received
+                for (auto& t : confirm->listenTokens)
+                    this_->dht_.cancelListen(t.first, t.second.get());
+                confirm->listenTokens.clear();
+                confirm->replied = true;
                 this_->messageEngine_.onMessageSent(token, true);
             }
             return false;
         });
+        confirm->listenTokens.emplace(h, std::move(list_token));
 
         dht_.putEncrypted(h,
-                          toH,
+                          dev.dev,
                           dht::ImMessage(token, std::string(payloads.begin()->second), now),
-                          [wshared,token](bool ok) {
+                          [wshared,token,confirm,h](bool ok) {
                             if (auto this_ = wshared.lock()) {
-                                if (not ok)
-                                    this_->messageEngine_.onMessageSent(token, false);
+                                if (not ok) {
+                                    confirm->listenTokens.erase(h);
+                                    if (confirm->listenTokens.empty() and not confirm->replied)
+                                        this_->messageEngine_.onMessageSent(token, false);
+                                }
                             }
                         });
-        return;
-    }
-
-    // Multi-part message
-    // TODO: not supported yet
-    RING_ERR("Multi-part im is not supported yet by RingAccount");
-    messageEngine_.onMessageSent(token, false);
+    });
 }
 
 } // namespace ring
