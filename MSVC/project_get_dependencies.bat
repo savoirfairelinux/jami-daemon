@@ -11,7 +11,8 @@ pcre, ^
 libupnp, ^
 jsoncpp, ^
 yaml-cpp, ^
-pjproject ^
+pjproject, ^
+cryptopp ^
 )
 
 SET PASSDEPENDENCIES=%~1
