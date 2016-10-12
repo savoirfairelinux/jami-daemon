@@ -214,7 +214,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
 
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
 
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
@@ -222,30 +222,30 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     const auto toH = dht::InfoHash(toUri);
 
     call->setState(Call::ConnectionState::TRYING);
-    std::weak_ptr<SIPCall> weak_call = call;
+    std::weak_ptr<SIPCall> wCall = call;
 
-    auto treatedDevices_ = std::make_shared<std::set<dht::InfoHash>>();
+    auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
 
     // Find listening Ring devices for this account
-    shared_this->dht_.get<DeviceAnnouncement>(toH, [=](DeviceAnnouncement&& dev) {
+    dht_.get<DeviceAnnouncement>(toH, [sthis,treatedDevices,wCall,toH, toUri](DeviceAnnouncement&& dev) {
         if (dev.from != toH)
             return true;
-        if (not treatedDevices_->emplace(dev.dev).second)
+        if (not treatedDevices->emplace(dev.dev).second)
             return true;
         RING_WARN("Found device to place call %s", dev.dev.toString().c_str());
 
         runOnMainThread([=](){
-            if (auto call = weak_call.lock()) {
+            if (auto call = wCall.lock()) {
                 RING_WARN("[call %s] Found device %s", call->getCallId().c_str(), dev.dev.toString().c_str());
 
                 auto& manager = Manager::instance();
-                auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
+                auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
                                                                               Call::CallType::OUTGOING);
                 std::weak_ptr<SIPCall> weak_dev_call = dev_call;
                 dev_call->setIPToIP(true);
-                dev_call->setSecure(isTlsEnabled());
-                auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
-                                              ICE_COMPONENTS, true, getIceOptions());
+                dev_call->setSecure(sthis->isTlsEnabled());
+                auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+                                              ICE_COMPONENTS, true, sthis->getIceOptions());
                 if (not ice) {
                     RING_WARN("Can't create ICE");
                     dev_call->removeCall();
@@ -256,7 +256,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
                 auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
 
-                manager.addTask([shared_this, weak_dev_call, ice, iceInitTimeout, toUri, dev] {
+                manager.addTask([sthis, weak_dev_call, ice, iceInitTimeout, toUri, dev] {
                     auto call = weak_dev_call.lock();
 
                     if (not call)
@@ -274,14 +274,14 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                     RING_WARN("ICE initialised");
 
                     // Next step: sent the ICE data to peer through DHT
-                    const dht::Value::Id callvid  = udist(shared_this->rand_);
-                    const dht::Value::Id vid  = udist(shared_this->rand_);
+                    const dht::Value::Id callvid  = udist(sthis->rand_);
+                    const dht::Value::Id vid  = udist(sthis->rand_);
                     const auto callkey = dht::InfoHash::get("callto:" + dev.dev.toString());
                     dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
                     val.id = vid;
 
                     //RING_WARN("ICE initialised");
-                    shared_this->dht_.putEncrypted(
+                    sthis->dht_.putEncrypted(
                         callkey, dev.dev,
                         std::move(val),
                         [=](bool ok) { // Put complete callback
@@ -294,7 +294,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                         }
                     );
 
-                    auto listenKey = shared_this->dht_.listen<dht::IceCandidates>(
+                    auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
                         callkey,
                         [=] (dht::IceCandidates&& msg) {
                             if (msg.id != callvid or msg.from != dev.dev)
@@ -311,7 +311,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                         }
                     );
 
-                    shared_this->pendingCalls_.emplace_back(PendingCall{
+                    sthis->pendingCalls_.emplace_back(PendingCall{
                         std::chrono::steady_clock::now(),
                         ice, weak_dev_call,
                         std::move(listenKey),
@@ -323,9 +323,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
         });
         return true;
     }, [=](bool ok){
-        RING_WARN("newOutgoingCall: found %lu devices", treatedDevices_->size());
-        if (treatedDevices_->empty()) {
-            if (auto call = weak_call.lock()) {
+        RING_WARN("newOutgoingCall: found %lu devices", treatedDevices->size());
+        if (treatedDevices->empty()) {
+            if (auto call = wCall.lock()) {
                 call->onFailure();
             }
         }
@@ -1633,15 +1633,47 @@ RingAccount::doRegister_()
                     return true;
                 this_.saveTreatedMessages();
 
-                auto from = v.from.toString();
-                auto now = system_clock::to_time_t(system_clock::now());
-                std::map<std::string, std::string> payloads = {{"text/plain",
-                                                                utf8_make_valid(v.msg)}};
-                shared->onTextMessage(from, payloads);
-                RING_DBG("Sending message confirmation %" PRIu64, v.id);
-                this_.dht_.putEncrypted(inboxDeviceKey,
-                          v.from,
-                          dht::ImMessage(v.id, std::string(), now));
+                // quick check in case we already explicilty banned this public key
+                auto trustStatus = this_.trust_.getCertificateStatus(v.from.toString());
+                if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+                    RING_WARN("Discarding incoming DHT message from banned peer %s", v.from.toString().c_str());
+                    return true;
+                }
+
+                RING_WARN("findCertificate %s", v.from.toString().c_str());
+                this_.findCertificate( v.from,
+                    [shared, v, trustStatus, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
+                    RING_WARN("findCertificate: found %p", cert.get());
+                    auto& this_ = *shared;
+                    if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
+                        if (!cert or cert->getId() != v.from) {
+                            RING_WARN("Can't find certificate of %s for incoming message.", v.from.toString().c_str());
+                            return;
+                        }
+
+                        tls::CertificateStore::instance().pinCertificate(cert);
+
+                        auto& this_ = *shared;
+                        if (!this_.trust_.isAllowed(*cert)) {
+                            RING_WARN("Discarding incoming DHT message from untrusted peer %s.", v.from.toString().c_str());
+                            return;
+                        }
+                    } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+                        RING_WARN("Discarding incoming DHT message from untrusted or banned peer %s.", v.from.toString().c_str());
+                        return;
+                    }
+
+                    auto from_acc_id = cert ? (cert->issuer ? cert->issuer->getId().toString() : cert->getId().toString()) : v.from.toString();
+
+                    auto now = system_clock::to_time_t(system_clock::now());
+                    std::map<std::string, std::string> payloads = {{"text/plain",
+                                                                    utf8_make_valid(v.msg)}};
+                    shared->onTextMessage(from_acc_id, payloads);
+                    RING_DBG("Sending message confirmation %" PRIu64, v.id);
+                    this_.dht_.putEncrypted(inboxDeviceKey,
+                              v.from,
+                              dht::ImMessage(v.id, std::string(), now));
+                });
                 return true;
             }
         );
@@ -2132,11 +2164,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         return;
     }
 
-    std::weak_ptr<RingAccount> wshared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto toUri = parseRingUri(to);
     auto toH = dht::InfoHash(toUri);
     auto now = system_clock::to_time_t(system_clock::now());
-    auto treatedDevices_ = std::make_shared<std::set<dht::InfoHash>>();
+    auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
 
     struct PendingConfirmation {
         bool replied {false};
@@ -2145,19 +2177,20 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto confirm = std::make_shared<PendingConfirmation>();
 
     // Find listening Ring devices for this account
-    dht_.get<DeviceAnnouncement>(toH, [=](DeviceAnnouncement&& dev) {
+    dht_.get<DeviceAnnouncement>(toH, [confirm,shared,treatedDevices,toH,token,payloads,now](DeviceAnnouncement&& dev) {
         if (dev.from != toH)
             return true;
-        if (not treatedDevices_->emplace(dev.dev).second)
+        if (not treatedDevices->emplace(dev.dev).second)
             return true;
 
-        auto e = sentMessages_.emplace(token, PendingMessage {});
+        auto e = shared->sentMessages_.emplace(token, PendingMessage {});
         e.first->second.to = dev.dev;
 
         auto h = dht::InfoHash::get("inbox:"+dev.dev.toString());
         RING_DBG("Found device to send message %s -> %s", dev.dev.toString().c_str(), h.toString().c_str());
 
-        auto list_token = dht_.listen<dht::ImMessage>(h, [h,wshared,token,confirm](dht::ImMessage&& msg) {
+        std::weak_ptr<RingAccount> wshared = shared;
+        auto list_token = shared->dht_.listen<dht::ImMessage>(h, [h,wshared,token,confirm](dht::ImMessage&& msg) {
             if (auto this_ = wshared.lock()) {
                 // check expected message confirmation
                 if (msg.id != token)
@@ -2194,9 +2227,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             }
             return false;
         });
+        RING_DBG("Adding listen token at %s", h.toString().c_str());
         confirm->listenTokens.emplace(h, std::move(list_token));
+        RING_DBG("Added listen token at %s", h.toString().c_str());
 
-        dht_.putEncrypted(h,
+        shared->dht_.putEncrypted(h,
                           dev.dev,
                           dht::ImMessage(token, std::string(payloads.begin()->second), now),
                           [wshared,token,confirm,h](bool ok) {
@@ -2208,6 +2243,10 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                                 }
                             }
                         });
+        RING_DBG("Put encrypted message at %s for %s", h.toString().c_str(), dev.dev.toString().c_str());
+        return true;
+    }, [=](bool ok){
+        RING_WARN("sendTextMessage: found %lu devices", treatedDevices->size());
     });
 }
 
