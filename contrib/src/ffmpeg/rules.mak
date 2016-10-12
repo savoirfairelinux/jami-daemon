@@ -86,8 +86,6 @@ FFMPEGCONF += \
 		--enable-encoder=tiff \
 		--enable-decoder=tiff
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
-
 ifdef HAVE_WIN32
 FFMPEGCONF += \
 	--enable-indev=dshow \
@@ -194,8 +192,6 @@ ifdef HAVE_IOS
 endif
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
-	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
-	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
 endif
 	$(MOVE)
 
