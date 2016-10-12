@@ -134,6 +134,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual void doUnregister(std::function<void(bool)> cb = std::function<void(bool)>()) = 0;
 
+        RegistrationState getRegistrationState() const { return registrationState_; }
+
         /**
          * Create a new outgoing call.
          *

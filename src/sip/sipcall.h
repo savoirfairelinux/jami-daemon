@@ -103,7 +103,7 @@ class SIPCall : public Call
          * Returns a pointer to the VideoRtp object
          */
         video::VideoRtpSession& getVideoRtp () {
-            return videortp_;
+            return *videortp_;
         }
 #endif
 
@@ -212,8 +212,16 @@ class SIPCall : public Call
         bool initIceTransport(bool master, unsigned channel_num=4) override;
 
         void terminateSipSession(int status);
+
+        virtual void merge(std::shared_ptr<Call> scall) {
+            merge(std::dynamic_pointer_cast<SIPCall>(scall));
+        }
+        virtual void merge(std::shared_ptr<SIPCall> scall);
+
     private:
         NON_COPYABLE(SIPCall);
+
+        void waitForIceAndStartMedia();
 
         void stopAllMedia();
 
@@ -234,7 +242,7 @@ class SIPCall : public Call
         /**
          * Video Rtp Session factory
          */
-        video::VideoRtpSession videortp_;
+        std::unique_ptr<video::VideoRtpSession> videortp_;
 
         std::string videoInput_;
 #endif
@@ -258,6 +266,8 @@ class SIPCall : public Call
         pj_str_t contactHeader_ {contactBuffer_, 0};
 
         std::unique_ptr<ring::upnp::Controller> upnp_;
+
+        std::shared_ptr<std::weak_ptr<SIPCall>> wthis_;
 };
 
 } // namespace ring
