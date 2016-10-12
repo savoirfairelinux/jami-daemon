@@ -109,9 +109,20 @@ VideoDeviceMonitor::getMRLForDefaultDevice() const
 void
 VideoDeviceMonitor::setDefaultDevice(const std::string& name)
 {
-    const auto it = findDeviceByName(name);
-    if (it != devices_.end())
-        defaultDevice_ = it->name;
+    const auto itDev = findDeviceByName(name);
+    if (itDev != devices_.end()) {
+        defaultDevice_ = itDev->name;
+
+        // place it at the begining of the prefs
+        auto itPref = findPreferencesByName(name);
+        if (itPref != preferences_.end()) {
+            auto settings = *itPref;
+            preferences_.erase(itPref);
+            preferences_.insert(preferences_.begin(), settings);
+        } else {
+            preferences_.insert(preferences_.begin(), itDev->getSettings());
+        }
+    }
 }
 
 DeviceParams
