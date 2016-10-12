@@ -79,6 +79,7 @@ setDefaultDevice(const std::string& name)
 {
     RING_DBG("Setting default device to %s", name.c_str());
     ring::Manager::instance().getVideoManager().videoDeviceMonitor.setDefaultDevice(name);
+    ring::Manager::instance().saveConfig();
 }
 
 std::map<std::string, std::string>
