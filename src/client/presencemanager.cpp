@@ -37,6 +37,8 @@
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
 
+#include <ringdht/ringaccount.h>
+
 namespace DRing {
 
 using ring::SIPAccount;
@@ -75,7 +77,10 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
                      flag ? "S" : "Uns", accountID.c_str(), uri.c_str());
             pres->subscribeClient(uri, flag);
         }
-    } else
+    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        ringaccount->trackAccountPresence(uri);
+    }
+    else
         RING_ERR("Could not find account %s", accountID.c_str());
 }
 

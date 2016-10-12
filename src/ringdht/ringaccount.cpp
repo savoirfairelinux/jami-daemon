@@ -1445,6 +1445,29 @@ RingAccount::loadBootstrap() const
     return bootstrap;
 }
 
+void RingAccount::trackAccountPresence(const std::string& account_id) {
+    auto this_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto h = dht::InfoHash(account_id);
+    auto already_tracked = trackedAccounts_.emplace(
+            h,
+            std::map<dht::InfoHash, std::chrono::steady_clock::time_point> {}
+    ).second;
+    dht_.listen<DeviceAnnouncement>(h, [h,this_](DeviceAnnouncement&& dev) {
+        auto accp = this_->trackedAccounts_.find(h);
+        if (accp != this_->trackedAccounts_.end()) {
+            auto& account = accp->second;
+            account[dev.dev] = std::chrono::steady_clock::now();
+            RING_DBG("Buddy online: (account: %s, device: %s)", h.toString().c_str(), dev.dev.toString().c_str());
+            emitSignal<DRing::PresenceSignal::NewBuddyNotification>(this_->getAccountID(), h.toString(), 1,  nullptr);
+        }
+        return true;
+    });
+    if (not already_tracked)
+        RING_DBG("Now tracking account %s.", h.toString().c_str());
+    else
+        RING_WARN("Account %s is already being tracked.", h.toString().c_str());
+}
+
 void
 RingAccount::doRegister_()
 {
@@ -2026,23 +2049,6 @@ RingAccount::getContactHeader(pjsip_transport* t)
                                          identity_.second->getId().toString().c_str());
     }
     return contact_;
-}
-
-/**
- *  Enable the presence module
- */
-void
-RingAccount::enablePresence(const bool& /* enabled */)
-{
-}
-
-/**
- *  Set the presence (PUBLISH/SUBSCRIBE) support flags
- *  and process the change.
- */
-void
-RingAccount::supportPresence(int /* function */, bool /* enabled*/)
-{
 }
 
 /* trust requests */
