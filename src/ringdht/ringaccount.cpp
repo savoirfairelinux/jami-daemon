@@ -1050,7 +1050,8 @@ RingAccount::createAccount(const std::string& archive_password)
                 Manager::instance().removeAccount(sthis->getAccountID());
             });
         }
-        this_.registrationState_ = RegistrationState::UNREGISTERED;
+        RING_DBG("Account generation ended, saving...");
+        this_.setRegistrationState(RegistrationState::UNREGISTERED);
         Manager::instance().saveConfig();
         this_.doRegister();
     });
