@@ -11,9 +11,7 @@ libringacc_la_CXXFLAGS = @CXXFLAGS@ @JSONCPP_CFLAGS@
 
 libringacc_la_LIBADD = $(DHT_LIBS) \
     $(BOOST_SYSTEM_LIB) \
-    $(BOOST_FILESYSTEM_LIB) \
     $(BOOST_RANDOM_LIB) \
-    $(BOOST_THREAD_LIB) \
     ./eth/libdevcore/libdevcore.la \
     ./eth/libdevcrypto/libdevcrypto.la
 
@@ -24,3 +22,9 @@ libringacc_la_SOURCES = \
         sip_transport_ice.h \
         sips_transport_ice.cpp \
         sips_transport_ice.h
+
+if RINGNS
+libringacc_la_SOURCES += \
+        namedirectory.cpp \
+        namedirectory.h
+endif
