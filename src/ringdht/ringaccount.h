@@ -135,6 +135,14 @@ class RingAccount : public SIPAccountBase {
         void loadConfig() override {}
 
         /**
+         * Adds an account id to the list of accounts to track on the DHT for
+         * buddy presence.
+         *
+         * @param account_id  The account id.
+         */
+        void trackAccountPresence(const std::string& account_id);
+
+        /**
          * Connect to the DHT.
          */
         void doRegister() override;
@@ -198,18 +206,6 @@ class RingAccount : public SIPAccountBase {
 
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname) const override;
-
-        /**
-         * Activate the module.
-         * @param function Publish or subscribe to enable
-         * @param enable Flag
-         */
-        void enablePresence(const bool& enable);
-        /**
-         * Activate the publish/subscribe.
-         * @param enable Flag
-         */
-        void supportPresence(int function, bool enable);
 
         /**
          * Implementation of Account::newOutgoingCall()
@@ -346,6 +342,9 @@ class RingAccount : public SIPAccountBase {
          */
         static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
 
+        /* TODO */
+        /* void foreachDevice(const std::string& account_id, std::function<void(std::vector<DeviceAnnouncement>)> cb); */
+
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from);
 
@@ -418,7 +417,11 @@ class RingAccount : public SIPAccountBase {
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
+        /* this ring account associated devices */
         std::map<dht::InfoHash, std::shared_ptr<dht::crypto::Certificate>> knownDevices_;
+
+        /* tracked accounts presence */
+        std::map<dht::InfoHash, std::map<dht::InfoHash, std::chrono::steady_clock::time_point>> trackedAccounts_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
