@@ -3,6 +3,7 @@
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,6 +76,14 @@
 #include <string>
 
 namespace ring {
+
+struct RingAccount::BuddyInfo {
+    dht::InfoHash id;
+    std::map<dht::InfoHash, std::chrono::steady_clock::time_point> devicesTimestamps;
+    std::shared_ptr<Manager::Runnable> updateInfo;
+
+    BuddyInfo(dht::InfoHash id) : id(id) {}
+};
 
 using sip_utils::CONST_PJ_STR;
 using std::chrono::system_clock;
@@ -353,8 +362,10 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
+    std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto toH = dht::InfoHash(toUri);
     // Find listening Ring devices for this account
-    forEachDevice(dht::InfoHash(toUri), [wCall](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
+    forEachDevice(toH, [wCall](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
         runOnMainThread([=](){
             auto call = wCall.lock();
@@ -444,6 +455,9 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         });
     }, [=](bool ok){
         if (not ok) {
+            /* the peer's account doesn't seem to be online */
+            if (auto sthis = wthis_.lock())
+                sthis->trackedBuddyIsOffline(toH);
             if (auto call = wCall.lock())
                 call->onFailure();
         }
@@ -1629,6 +1643,87 @@ RingAccount::loadBootstrap() const
 }
 
 void
+RingAccount::trackBuddyPresence(const std::string& buddy_id)
+{
+    if (not dht_.isRunning()) {
+        RING_ERR("DHT node not running. Cannot track buddy %s", buddy_id.c_str());
+        return;
+    }
+    std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto h = dht::InfoHash(parseRingUri(buddy_id));
+    auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
+    if (buddy_infop.second) {
+        auto& buddy_info = buddy_infop.first->second;
+        buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
+            if (auto shared_this = weak_this.lock()) {
+                shared_this->forEachDevice(h, [h](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& device_h) {
+                    auto buddy_info_it = sthis->trackedBuddies_.find(h);
+                    if (buddy_info_it != sthis->trackedBuddies_.end()) {
+                        auto& buddy_info = buddy_info_it->second;
+                        buddy_info.devicesTimestamps[device_h] = std::chrono::steady_clock::now();
+                        RING_DBG("Buddy %s online: (device: %s)", h.toString().c_str(), device_h.toString().c_str());
+                        emitSignal<DRing::PresenceSignal::NewBuddyNotification>(sthis->getAccountID(), h.toString(), 1,  "");
+                        return true;
+                    } else /* this buddy is not tracked anymore */
+                        return false;
+                }, [h, weak_this] (bool ok) {
+                    if (auto shared_this = weak_this.lock()) {
+                        auto buddy_info_it = shared_this->trackedBuddies_.find(h);
+                        if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
+
+                        if (not ok)
+                            shared_this->trackedBuddyIsOffline(h);
+                        auto& buddy_info = buddy_info_it->second;
+                        if (buddy_info.updateInfo)
+                            Manager::instance().scheduleTask(
+                                    buddy_info.updateInfo,
+                                    std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
+                            );
+                    }
+                });
+            }
+        }, std::chrono::steady_clock::now());
+        RING_DBG("Now tracking buddy %s", h.toString().c_str());
+    }
+    else
+        RING_WARN("Buddy %s is already being tracked.", h.toString().c_str());
+}
+
+std::map<std::string, bool>
+RingAccount::getTrackedBuddyIDsPresence() const
+{
+    std::map<std::string, bool> presence_info;
+    const auto shared_this = std::static_pointer_cast<const RingAccount>(shared_from_this());
+    for (const auto& buddy_info_p : shared_this->trackedBuddies_) {
+        const auto& devices_ts = buddy_info_p.second.devicesTimestamps;
+        const auto& last_seen_device_id = std::max_element(devices_ts.cbegin(), devices_ts.cend(),
+            [](decltype(buddy_info_p.second.devicesTimestamps)::value_type ld,
+               decltype(buddy_info_p.second.devicesTimestamps)::value_type rd)
+            {
+                return ld.second < rd.second;
+            }
+        );
+        presence_info.emplace(buddy_info_p.first.toString(), last_seen_device_id != devices_ts.cend()
+            ? last_seen_device_id->second > std::chrono::steady_clock::now() - DeviceAnnouncement::TYPE.expiration
+            : false);
+    }
+    return presence_info;
+}
+
+void
+RingAccount::trackedBuddyIsOffline(const dht::InfoHash& buddy_id)
+{
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto buddy_it = trackedBuddies_.find(buddy_id);
+    if (buddy_it != trackedBuddies_.end()) {
+        /* update the tracked info */
+        RING_DBG("Buddy %s offline", buddy_it->first.toString().c_str());
+        emitSignal<DRing::PresenceSignal::NewBuddyNotification>(shared_this->getAccountID(), buddy_it->first.toString(), 0,  "");
+        buddy_it->second.devicesTimestamps.clear();
+    }
+}
+
+void
 RingAccount::doRegister_()
 {
     try {
@@ -2418,23 +2513,6 @@ RingAccount::getContactHeader(pjsip_transport* t)
     return contact_;
 }
 
-/**
- *  Enable the presence module
- */
-void
-RingAccount::enablePresence(const bool& /* enabled */)
-{
-}
-
-/**
- *  Set the presence (PUBLISH/SUBSCRIBE) support flags
- *  and process the change.
- */
-void
-RingAccount::supportPresence(int /* function */, bool /* enabled*/)
-{
-}
-
 /* trust requests */
 std::map<std::string, std::string>
 RingAccount::getTrustRequests() const
@@ -2600,7 +2678,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     auto confirm = std::make_shared<PendingConfirmation>();
 
     // Find listening Ring devices for this account
-    forEachDevice(toH, [confirm,token,payloads,now](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
+    forEachDevice(toH, [confirm,token,payloads,now,toH](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
     {
         auto e = shared->sentMessages_.emplace(token, PendingMessage {});
         e.first->second.to = dev;
@@ -2652,9 +2730,11 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
         shared->dht_.putEncrypted(h, dev,
             dht::ImMessage(token, std::string(payloads.begin()->second), now),
-            [wshared,token,confirm,h](bool ok) {
+            [wshared,token,confirm,h,toH](bool ok) {
                 if (auto this_ = wshared.lock()) {
                     if (not ok) {
+                        /* the peer's account doesn't seem to be online */
+                        this_->trackedBuddyIsOffline(toH);
                         confirm->listenTokens.erase(h);
                         if (confirm->listenTokens.empty() and not confirm->replied)
                             this_->messageEngine_.onMessageSent(token, false);
