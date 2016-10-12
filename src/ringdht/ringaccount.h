@@ -2,6 +2,7 @@
  *  Copyright (C) 2014-2016 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Simon Désaulniers <simon.desaulniers@gmail.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -139,6 +140,22 @@ class RingAccount : public SIPAccountBase {
         void loadConfig() override {}
 
         /**
+         * Adds an account id to the list of accounts to track on the DHT for
+         * buddy presence.
+         *
+         * @param buddy_id  The buddy id.
+         */
+        void trackBuddyPresence(const std::string& buddy_id);
+
+        /**
+         * Tells for each tracked account id if it has been seen online so far
+         * in the last DeviceAnnouncement::TYPE.expiration minutes.
+         *
+         * @return map of buddy_uri to bool (online or not)
+         */
+        std::map<std::string, bool> getTrackedBuddyPresence();
+
+        /**
          * Connect to the DHT.
          */
         void doRegister() override;
@@ -202,18 +219,6 @@ class RingAccount : public SIPAccountBase {
 
         /* Returns true if the username and/or hostname match this account */
         MatchRank matches(const std::string &username, const std::string &hostname) const override;
-
-        /**
-         * Activate the module.
-         * @param function Publish or subscribe to enable
-         * @param enable Flag
-         */
-        void enablePresence(const bool& enable);
-        /**
-         * Activate the publish/subscribe.
-         * @param enable Flag
-         */
-        void supportPresence(int function, bool enable);
 
         /**
          * Implementation of Account::newOutgoingCall()
@@ -308,6 +313,7 @@ class RingAccount : public SIPAccountBase {
         struct ArchiveContent;
         struct DeviceAnnouncement;
         struct DeviceSync;
+        struct BuddyInfo;
 
         void syncDevices();
         void onReceiveDeviceSync(DeviceSync&& sync);
@@ -322,6 +328,21 @@ class RingAccount : public SIPAccountBase {
          * Compute archive encryption key and DHT storage location from password and PIN.
          */
         static std::pair<std::vector<uint8_t>, dht::InfoHash> computeKeys(const std::string& password, const std::string& pin, bool previous=false);
+
+        /**
+         * Update tracking info when buddy appears offline.
+         *
+         * @param buddy_info_it  An iterator over the map trackedBuddies_
+         */
+        void onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it);
+
+        /**
+         * Update tracking info when buddy appears offline.
+         *
+         * @param buddy_info_it  An iterator over the map trackedBuddies_
+         * @param device_id       The device id
+         */
+        void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id);
 
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from);
@@ -402,7 +423,12 @@ class RingAccount : public SIPAccountBase {
 
         std::shared_ptr<dht::Value> announce_;
 
+        /* this ring account associated devices */
         std::map<dht::InfoHash, KnownDevice> knownDevices_;
+
+        /* tracked buddies presence */
+        std::recursive_mutex buddyInfoMtx;
+        std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
