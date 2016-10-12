@@ -198,6 +198,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
+    call->initRecFilename(toUri);
 
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
