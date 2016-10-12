@@ -228,6 +228,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
+    //call->setPeerNumber(toUrl);
+    call->initRecFilename(sufix);
     try {
         const std::string toUri = parseRingUri(sufix);
         startOutgoingCall(call, toUri);
@@ -285,6 +287,8 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
                 std::weak_ptr<SIPCall> weak_dev_call = dev_call;
                 dev_call->setIPToIP(true);
                 dev_call->setSecure(isTlsEnabled());
+
+                dev_call->initRecFilename(dev_call->getCallId());
                 auto ice = createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
                                               ICE_COMPONENTS, true, getIceOptions());
                 if (not ice) {
