@@ -153,6 +153,9 @@ RingAccount::createIceTransport(const Args&... args)
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_(),
+#if HAVE_RINGNS
+    nameDir_(NameDirectory::instance()),
+#endif
     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
     dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
     idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
@@ -481,10 +484,13 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
+#if HAVE_RINGNS
+    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameDir_.get().getServer();
+#endif
+
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::ETH::ACCOUNT << YAML::Value << ethAccount_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -504,12 +510,6 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
 
     try {
-        parseValue(node, DRing::Account::ConfProperties::ETH::ACCOUNT, ethAccount_);
-    } catch (const std::exception& e) {
-        RING_WARN("can't read eth account: %s", e.what());
-    }
-
-    try {
         parseValue(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_);
     } catch (const std::exception& e) {
         RING_WARN("can't read archive path: %s", e.what());
@@ -526,6 +526,12 @@ void RingAccount::unserialize(const YAML::Node &node)
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
+
+#if HAVE_RINGNS
+    std::string ringns_server;
+    parseValue(node, DRing::Account::ConfProperties::RingNS::URI, ringns_server);
+    nameDir_ = NameDirectory::instance(ringns_server);
+#endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
 
@@ -650,12 +656,7 @@ RingAccount::hasSignedReceipt()
     ringDeviceId_ = identity_.first->getPublicKey().getId().toString();
     username_ = RING_URI_PREFIX + id;
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
-
-    auto eth_addr = root["eth"].asString();
-    if (eth_addr != ethAccount_) {
-        RING_WARN("hasSignedReceipt() eth_addr not matching");
-        ethAccount_ = eth_addr;
-    }
+    ethAccount_ = root["eth"].asString();
 
     RING_WARN("hasSignedReceipt() -> true");
     return true;
@@ -1124,6 +1125,12 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
 
+#if HAVE_RINGNS
+    std::string ringns_server;
+    parseString(details, DRing::Account::ConfProperties::RingNS::URI,     ringns_server);
+    nameDir_ = NameDirectory::instance(ringns_server);
+#endif
+
     loadAccount(archive_password, archive_pin);
 }
 
@@ -1154,7 +1161,10 @@ RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
 
     //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
-    a.emplace(DRing::Account::ConfProperties::ETH::ACCOUNT,                ethAccount_);
+    a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT,               ethAccount_);
+#if HAVE_RINGNS
+    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                  nameDir_.get().getServer());
+#endif
 
     return a;
 }
@@ -1164,8 +1174,49 @@ RingAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+#if HAVE_RINGNS
+    if (not registeredName_.empty())
+        a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+#endif
     return a;
 }
+
+#if HAVE_RINGNS
+void
+RingAccount::lookupName(const std::string& name)
+{
+    auto acc = getAccountID();
+    nameDir_.get().lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, 0, result, name);
+    });
+}
+
+void
+RingAccount::lookupAddress(const std::string& addr)
+{
+    auto acc = getAccountID();
+    nameDir_.get().lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, 0, addr, result);
+    });
+}
+
+void
+RingAccount::registerName(const std::string& password, const std::string& name)
+{
+    auto acc = getAccountID();
+    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    nameDir_.get().registerName(ringAccountId_, name, ethAccount_, [acc,name,w](NameDirectory::RegistrationResponse response){
+        int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
+                  (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
+                  (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4));
+        if (response == NameDirectory::RegistrationResponse::success) {
+            if (auto this_ = w.lock())
+                this_->registeredName_ = name;
+        }
+        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+    });
+}
+#endif
 
 void
 RingAccount::handleEvents()
@@ -1460,6 +1511,22 @@ RingAccount::doRegister_()
             dht_.join();
         }
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::weak_ptr<RingAccount> w {shared};
+
+#if HAVE_RINGNS
+        // Look for registered name on the blockchain
+        nameDir_.get().lookupAddress(ringAccountId_, [w](const std::string& result, const NameDirectory::Response& response) {
+            if (response == NameDirectory::Response::found)
+                if (auto this_ = w.lock()) {
+                    if (this_->registeredName_ != result) {
+                        this_->registeredName_ = result;
+                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                    }
+                }
+        });
+#endif
+
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
                 RegistrationState state;
@@ -1509,8 +1576,6 @@ RingAccount::doRegister_()
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
-
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
 
         // Put device annoucement
         if (announce_) {
@@ -1699,6 +1764,15 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
     val.id = vid;
 
     std::weak_ptr<SIPCall> weak_call = call;
+#if HAVE_RINGNS
+    auto from_acc_id = from_cert ? (from_cert->issuer ? from_cert->issuer->getId().toString() : from_cert->getId().toString()) : from;
+    nameDir_.get().lookupAddress(from_acc_id, [weak_call](const std::string& result, const NameDirectory::Response& response){
+        if (response == NameDirectory::Response::found)
+            if (auto call = weak_call.lock())
+                call->setPeerRegistredName(result);
+    });
+#endif
+
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
@@ -1736,6 +1810,12 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    if (registrationState_ == RegistrationState::INITIALIZING
+     || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
+        if (released_cb) released_cb(false);
+        return;
+    }
+
     RING_WARN("doUnregister");
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
