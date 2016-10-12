@@ -3,6 +3,7 @@
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -372,6 +373,8 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
     }, [=](bool ok){
         RING_WARN("newOutgoingCall: found %lu devices", treatedDevices->size());
         if (treatedDevices->empty()) {
+            /* the peer's account doesn't seem to be online */
+            sthis->trackedBuddyIsOffline(toH);
             if (auto call = wCall.lock()) {
                 call->onFailure();
             }
@@ -1548,6 +1551,69 @@ RingAccount::loadBootstrap() const
 }
 
 void
+RingAccount::trackBuddyPresence(const std::string& buddy_id)
+{
+    if (not dht_.isRunning()) {
+        RING_ERR("DHT node not running. Cannot track buddy %s", buddy_id.c_str());
+        return;
+    }
+    std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto h = dht::InfoHash(parseRingUri(buddy_id));
+    auto already_tracked = not trackedBuddiesIDs_.emplace(h, decltype(trackedBuddiesIDs_)::mapped_type {}).second;
+    if (not already_tracked) {
+        dht_.listen<DeviceAnnouncement>(h, [h,weak_this](DeviceAnnouncement&& announcement) {
+            if (auto shared_this = weak_this.lock()) {
+                auto devices_id_it = shared_this->trackedBuddiesIDs_.find(h);
+                if (devices_id_it != shared_this->trackedBuddiesIDs_.end()) {
+                    auto& devices_id = devices_id_it->second;
+                    devices_id[announcement.dev] = std::chrono::steady_clock::now();
+                    RING_DBG("Buddy %s online: (device: %s)", h.toString().c_str(), announcement.dev.toString().c_str());
+                    emitSignal<DRing::PresenceSignal::NewBuddyNotification>(shared_this->getAccountID(), h.toString(), 1,  nullptr);
+                    return true;
+                } else /* this buddy is not tracked anymore */
+                    return false;
+            }
+        });
+        RING_DBG("Now tracking buddy %s", h.toString().c_str());
+    }
+    else
+        RING_WARN("Buddy %s is already being tracked.", h.toString().c_str());
+}
+
+std::map<std::string, bool>
+RingAccount::getTrackedBuddyIDsPresence() const
+{
+    std::map<std::string, bool> presence_info;
+    const auto shared_this = std::static_pointer_cast<const RingAccount>(shared_from_this());
+    for (const auto& tracked_id : shared_this->trackedBuddiesIDs_) {
+        const auto& devices_id = tracked_id.second;
+        const auto& last_seen_device_id = std::max_element(devices_id.cbegin(), devices_id.cend(),
+            [](decltype(tracked_id.second)::value_type ld, decltype(tracked_id.second)::value_type rd)
+            {
+                return ld.second < rd.second;
+            }
+        );
+        presence_info.emplace(tracked_id.first.toString(), last_seen_device_id != devices_id.cend()
+            ? last_seen_device_id->second > std::chrono::steady_clock::now() - DeviceAnnouncement::TYPE.expiration
+            : false);
+    }
+    return presence_info;
+}
+
+void
+RingAccount::trackedBuddyIsOffline(const dht::InfoHash& buddy_id)
+{
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto buddy_it = trackedBuddiesIDs_.find(buddy_id);
+    if (buddy_it != trackedBuddiesIDs_.end()) {
+        /* update the tracked info */
+        RING_DBG("Buddy %s offline", buddy_it->first.toString().c_str());
+        emitSignal<DRing::PresenceSignal::NewBuddyNotification>(shared_this->getAccountID(), buddy_it->first.toString(), 0,  nullptr);
+        buddy_it->second.clear();
+    }
+}
+
+void
 RingAccount::doRegister_()
 {
     try {
@@ -2254,23 +2320,6 @@ RingAccount::getContactHeader(pjsip_transport* t)
     return contact_;
 }
 
-/**
- *  Enable the presence module
- */
-void
-RingAccount::enablePresence(const bool& /* enabled */)
-{
-}
-
-/**
- *  Set the presence (PUBLISH/SUBSCRIBE) support flags
- *  and process the change.
- */
-void
-RingAccount::supportPresence(int /* function */, bool /* enabled*/)
-{
-}
-
 /* trust requests */
 std::map<std::string, std::string>
 RingAccount::getTrustRequests() const
@@ -2438,6 +2487,9 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         return true;
     }, [=](bool ok){
         RING_WARN("sendTextMessage: found %lu devices", treatedDevices->size());
+        if (treatedDevices->empty())
+            /* the peer's account doesn't seem to be online */
+            shared->trackedBuddyIsOffline(toH);
     });
 }
 
