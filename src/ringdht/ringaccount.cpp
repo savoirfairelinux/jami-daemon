@@ -3,6 +3,7 @@
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -75,6 +76,15 @@
 #include <string>
 
 namespace ring {
+
+struct RingAccount::BuddyInfo {
+    dht::InfoHash id;                                                                 /* the buddy id */
+    std::map<dht::InfoHash, std::chrono::steady_clock::time_point> devicesTimestamps; /* the presence timestamps */
+    std::function<void()> updateInfo {};                                              /* The callable object to update
+                                                                                         buddy info */
+
+    BuddyInfo(dht::InfoHash id) : id(id) {}
+};
 
 using sip_utils::CONST_PJ_STR;
 using std::chrono::system_clock;
@@ -1272,6 +1282,7 @@ RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
+    a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
 
     /* these settings cannot be changed (read only), but clients should still be
      * able to read what they are */
@@ -1626,6 +1637,88 @@ RingAccount::loadBootstrap() const
             RING_DBG("Bootstrap node: %s", IpAddr(ip.first).toString(true).c_str());
     }
     return bootstrap;
+}
+
+void
+RingAccount::trackBuddyPresence(const std::string& buddy_id)
+{
+    if (not dht_.isRunning()) {
+        RING_ERR("DHT node not running. Cannot track buddy %s", buddy_id.c_str());
+        return;
+    }
+    std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto h = dht::InfoHash(parseRingUri(buddy_id));
+    auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
+    if (buddy_infop.second) {
+        auto& buddy_info = buddy_infop.first->second;
+        buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
+            if (auto shared_this = weak_this.lock()) {
+                /* ::forEachDevice call will update buddy info accordingly. */
+                shared_this->forEachDevice(h, {}, [h, weak_this] (bool /* ok */) {
+                    if (auto shared_this = weak_this.lock()) {
+                        std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
+                        auto buddy_info_it = shared_this->trackedBuddies_.find(h);
+                        if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
+
+                        auto& buddy_info = buddy_info_it->second;
+                        if (buddy_info.updateInfo) {
+                            auto cb = buddy_info.updateInfo;
+                            Manager::instance().scheduleTask(
+                                std::move(cb),
+                                std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
+                            );
+                        }
+                    }
+                });
+            }
+        }, std::chrono::steady_clock::now())->cb;
+        RING_DBG("Now tracking buddy %s", h.toString().c_str());
+    } else
+        RING_WARN("Buddy %s is already being tracked.", h.toString().c_str());
+}
+
+std::map<std::string, bool>
+RingAccount::getTrackedBuddyPresence()
+{
+    std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
+    std::map<std::string, bool> presence_info;
+    const auto shared_this = std::static_pointer_cast<const RingAccount>(shared_from_this());
+    for (const auto& buddy_info_p : shared_this->trackedBuddies_) {
+        const auto& devices_ts = buddy_info_p.second.devicesTimestamps;
+        const auto& last_seen_device_id = std::max_element(devices_ts.cbegin(), devices_ts.cend(),
+            [](decltype(buddy_info_p.second.devicesTimestamps)::value_type ld,
+               decltype(buddy_info_p.second.devicesTimestamps)::value_type rd)
+            {
+                return ld.second < rd.second;
+            }
+        );
+        presence_info.emplace(buddy_info_p.first.toString(), last_seen_device_id != devices_ts.cend()
+            ? last_seen_device_id->second > std::chrono::steady_clock::now() - DeviceAnnouncement::TYPE.expiration
+            : false);
+    }
+    return presence_info;
+}
+
+void
+RingAccount::onTrackedBuddyOnline(std::shared_ptr<RingAccount> sthis, std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id)
+{
+    std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
+    if (buddy_info_it != trackedBuddies_.end()) {
+        RING_DBG("Buddy %s online: (device: %s)", buddy_info_it->second.id.toString().c_str(), device_id.toString().c_str());
+        buddy_info_it->second.devicesTimestamps[device_id] = std::chrono::steady_clock::now();
+        emitSignal<DRing::PresenceSignal::NewBuddyNotification>(sthis->getAccountID(), buddy_info_it->second.id.toString(), 1,  "");
+    }
+}
+
+void
+RingAccount::onTrackedBuddyOffline(std::shared_ptr<RingAccount> sthis, std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it)
+{
+    std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
+    if (buddy_info_it != trackedBuddies_.end()) {
+        RING_DBG("Buddy %s offline", buddy_info_it->first.toString().c_str());
+        emitSignal<DRing::PresenceSignal::NewBuddyNotification>(sthis->getAccountID(), buddy_info_it->first.toString(), 0,  "");
+        buddy_info_it->second.devicesTimestamps.clear();
+    }
 }
 
 void
@@ -2418,23 +2511,6 @@ RingAccount::getContactHeader(pjsip_transport* t)
     return contact_;
 }
 
-/**
- *  Enable the presence module
- */
-void
-RingAccount::enablePresence(const bool& /* enabled */)
-{
-}
-
-/**
- *  Set the presence (PUBLISH/SUBSCRIBE) support flags
- *  and process the change.
- */
-void
-RingAccount::supportPresence(int /* function */, bool /* enabled*/)
-{
-}
-
 /* trust requests */
 std::map<std::string, std::string>
 RingAccount::getTrustRequests() const
@@ -2569,6 +2645,18 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
             op(shared, dev.dev);
         return true;
     }, [=](bool /*ok*/){
+        {
+            std::lock_guard<std::recursive_mutex> lock(shared->buddyInfoMtx);
+            auto buddy_info_it = shared->trackedBuddies_.find(to);
+            if (buddy_info_it != shared->trackedBuddies_.end()) {
+                if (not treatedDevices->empty()) {
+                    for (auto& device_id : *treatedDevices)
+                        shared->onTrackedBuddyOnline(shared, buddy_info_it, device_id);
+                }
+                else
+                    shared->onTrackedBuddyOffline(shared, buddy_info_it);
+            }
+        }
         RING_WARN("forEachDevice: found %lu devices", treatedDevices->size());
         if (end) end(not treatedDevices->empty());
     });
