@@ -1041,6 +1041,11 @@ SIPCall::getDetails() const
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
 #endif
 
+#if HAVE_RINGNS
+    if (not peerRegistredName_.empty())
+        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
+#endif
+
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
