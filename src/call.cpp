@@ -60,6 +60,7 @@ Call::removeCall()
     Manager::instance().callFactory.removeCall(*this);
     iceTransport_.reset();
     setState(CallState::OVER);
+    recAudio_->closeFile();
 }
 
 const std::string&
