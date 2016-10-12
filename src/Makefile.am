@@ -130,7 +130,9 @@ libring_la_SOURCES = \
 		ring_api.cpp \
 		rational.h \
 		smartools.cpp \
-		smartools.h
+		smartools.h \
+        base64.h \
+        base64.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
