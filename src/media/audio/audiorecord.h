@@ -53,7 +53,7 @@ class AudioRecord {
         std::string getFilename() const;
 
         /**
-         * Check if no otehr file is opened, then create a new one
+         * Check if no other file is opened, then create a new one
          * @param filename A string containing teh file (with/without extension)
          * @param type     The sound file format (FILE_RAW, FILE_WAVE)
          * @param format   Internal sound format (INT16 / INT32)
@@ -62,7 +62,7 @@ class AudioRecord {
         bool openFile();
 
         /**
-         * Close the opend recording file. If wave: cout the number of byte
+         * Close the opened recording file. If wave: cout the number of byte
          */
         void closeFile();
 

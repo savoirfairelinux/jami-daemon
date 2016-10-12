@@ -212,6 +212,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
+    call->initRecFilename(toUri);
 
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
 
