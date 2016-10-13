@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Thu, 13 Oct 2016 16:56:56 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5128
+Project: ring-daemon
+Branch: refs/heads/master
