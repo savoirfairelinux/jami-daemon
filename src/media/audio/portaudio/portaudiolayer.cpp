@@ -354,7 +354,7 @@ PortAudioLayer::init()
 
 #ifdef WIN32_NATIVE
     indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
-    indexIn_ = indexIn_ == Pa_GetDefaultInputDevice();
+    indexIn_ = Pa_GetDefaultInputDevice();
 #else
     indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
     indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
