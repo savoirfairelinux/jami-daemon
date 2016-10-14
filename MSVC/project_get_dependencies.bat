@@ -11,8 +11,6 @@ pcre, ^
 libupnp, ^
 jsoncpp, ^
 yaml-cpp, ^
-cryptopp, ^
-redist, ^
 pjproject ^
 )
 
