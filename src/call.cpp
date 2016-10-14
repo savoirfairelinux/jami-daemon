@@ -421,6 +421,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                                 sub->hangup(0);
                         }
                         this_.merge(call);
+                        Manager::instance().peerAnsweredCall(this_);
                     }
                     RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), this_.subcalls.size());
                 } else {

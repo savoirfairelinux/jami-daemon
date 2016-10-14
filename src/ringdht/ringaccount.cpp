@@ -1038,11 +1038,12 @@ RingAccount::createAccount(const std::string& archive_password)
                 a.ca_key = std::move(*ca.first);
             }
             this_.ringAccountId_ = a.id.second->getId().toString();
-            this_.createRingDevice(a.id);
             this_.username_ = RING_URI_PREFIX+this_.ringAccountId_;
             auto keypair = future_keypair.get();
             this_.ethAccount_ = keypair.address().hex();
             a.eth_key = keypair.secret().makeInsecure().asBytes();
+
+            this_.createRingDevice(a.id);
             this_.saveArchive(a, archive_password);
         } catch (...) {
             this_.setRegistrationState(RegistrationState::ERROR_GENERIC);
@@ -1515,14 +1516,14 @@ RingAccount::doRegister_()
         // Put device annoucement
         if (announce_) {
             auto h = dht::InfoHash(ringAccountId_);
-            RING_DBG("Announcing device at %s: %s", h.toString().c_str(), announce_->toString().c_str());
+            RING_WARN("Announcing device at %s: %s", h.toString().c_str(), announce_->toString().c_str());
             loadKnownDevices();
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
                 shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
                     auto& this_ = *shared;
                     if (this_.knownDevices_.emplace(crt->getId(), crt).second) {
-                        RING_DBG("[Account %s] Found known account device: %s", this_.getAccountID().c_str(), crt->getId().toString().c_str());
+                        RING_WARN("[Account %s] Found known account device: %s", this_.getAccountID().c_str(), crt->getId().toString().c_str());
                         tls::CertificateStore::instance().pinCertificate(crt);
                         this_.saveKnownDevices();
                         emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(this_.getAccountID(), this_.getKnownDevices());
@@ -1530,6 +1531,8 @@ RingAccount::doRegister_()
                 });
                 return true;
             });
+        } else {
+            RING_WARN("Can't announce device: no annoucement...");
         }
 
         // Listen for incoming calls

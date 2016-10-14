@@ -102,6 +102,15 @@ void VideoInput::processAndroid()
     std::unique_lock<std::mutex> lck(mutex_);
 
     frame_cv_.wait(lck, [this] { return waitForBufferFull(); });
+    std::weak_ptr<VideoInput> wthis;
+    // shared_from_this throws in destructor
+    // assumes C++17
+    try {
+        wthis = shared_from_this();
+    } catch (...) {
+        return;
+    }
+
     for (auto& buffer : buffers_) {
         if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
             auto& frame = getNewFrame();
@@ -109,7 +118,12 @@ void VideoInput::processAndroid()
 
             buffer.status = BUFFER_PUBLISHED;
             frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
-                                std::bind(&VideoInput::releaseBufferCb, this, std::placeholders::_1));
+                                [wthis](uint8_t* ptr) {
+                                    if (auto sthis = wthis.lock())
+                                        sthis->releaseBufferCb(ptr);
+                                    else
+                                        std::free(ptr);
+                                });
             publish_index_++;
             lck.unlock();
             publishFrame();
