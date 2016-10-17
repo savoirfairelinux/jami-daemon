@@ -171,7 +171,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     local_ = ice->getLocalAddress(comp_id);
     remote_ = ice->getRemoteAddress(comp_id);
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
-    base.key.type = PJSIP_TRANSPORT_TLS;
+    base.key.type = local_.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
     base.type_name = (char*)pjsip_transport_get_type_name((pjsip_transport_type_e)base.key.type);
     base.flag = pjsip_transport_get_flag_from_type((pjsip_transport_type_e)base.key.type);
     base.info = (char*) pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH);
