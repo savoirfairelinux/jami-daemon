@@ -1,0 +1,7 @@
+Code-Review+2: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Mon, 17 Oct 2016 19:06:08 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/4654
+Project: ring-daemon
+Branch: refs/heads/master
