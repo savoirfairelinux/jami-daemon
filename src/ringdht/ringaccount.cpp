@@ -81,7 +81,6 @@ using std::chrono::system_clock;
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
-static constexpr int ICE_INIT_TIMEOUT {10};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
 static constexpr auto TLS_TIMEOUT = std::chrono::seconds(30);
 const constexpr auto EXPORT_KEY_RENEWAL_TIME = std::chrono::minutes(20);
@@ -141,7 +140,7 @@ RingAccount::createIceTransport(const Args&... args)
     }
 
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
-    if (!ice or ice->waitForInitialization(ICE_INIT_TIMEOUT) <= 0)
+    if (!ice)
         throw std::runtime_error("ICE transport creation failed");
 
     if (const auto& publicIP = getPublishedIpAddress()) {
@@ -254,24 +253,24 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 
                 call->addSubCall(dev_call);
 
-                auto iceInitTimeout = std::chrono::steady_clock::now() + std::chrono::seconds {ICE_INIT_TIMEOUT};
-
-                manager.addTask([sthis, weak_dev_call, ice, iceInitTimeout, toUri, dev] {
+                manager.addTask([sthis, weak_dev_call, ice, toUri, dev] {
                     auto call = weak_dev_call.lock();
 
+                    // call aborted?
                     if (not call)
                         return false;
 
-                    if (ice->isFailed() or std::chrono::steady_clock::now() >= iceInitTimeout) {
-                        RING_DBG("ice init failed (or timeout)");
-                        call->onFailure();
+                    if (ice->isFailed()) {
+                        RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                        call->onFailure(EIO);
                         return false;
                     }
 
+                    // Loop until ICE transport is initialized.
+                    // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+                    // and we let upper layers decide when the call shall be aborded (our first check upper).
                     if (not ice->isInitialized())
-                        return true; // process task again!
-
-                    RING_WARN("ICE initialised");
+                        return true;
 
                     // Next step: sent the ICE data to peer through DHT
                     const dht::Value::Id callvid  = udist(sthis->rand_);
@@ -280,7 +279,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
                     dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
                     val.id = vid;
 
-                    //RING_WARN("ICE initialised");
                     sthis->dht_.putEncrypted(
                         callkey, dev.dev,
                         std::move(val),
