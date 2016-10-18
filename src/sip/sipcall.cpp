@@ -678,12 +678,11 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 }
 
 void
-SIPCall::onTextMessage(const std::map<std::string, std::string>& messages)
+SIPCall::removeCall()
 {
-    if (quiet)
-        pendingMessages_.emplace_back(messages, "");
-    else
-        Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
+    Call::removeCall();
+    inv.reset();
+    setTransport({});
 }
 
 void
@@ -692,7 +691,6 @@ SIPCall::onFailure(signed cause)
     setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause);
     Manager::instance().callFailure(*this);
     removeCall();
-    setTransport({});
 }
 
 void
@@ -701,7 +699,6 @@ SIPCall::onClosed()
     Manager::instance().peerHungupCall(*this);
     removeCall();
     Manager::instance().checkAudio();
-    setTransport({});
 }
 
 void

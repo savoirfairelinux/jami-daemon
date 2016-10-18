@@ -362,6 +362,15 @@ Call::newIceSocket(unsigned compId)
 }
 
 void
+Call::onTextMessage(std::map<std::string, std::string>&& messages)
+{
+    if (quiet)
+        pendingMessages_.emplace_back(std::move(messages), "");
+    else
+        Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
+}
+
+void
 Call::peerHungup()
 {
     const auto state = getState();

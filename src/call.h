@@ -310,9 +310,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
                                      const std::string &from) = 0;
 
 
-        virtual void onTextMessage(const std::map<std::string, std::string>& messages) = 0;
+        void onTextMessage(std::map<std::string, std::string>&& messages);
 
-        void removeCall();
+        virtual void removeCall();
 
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
 
