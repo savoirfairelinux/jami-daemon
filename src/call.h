@@ -40,6 +40,7 @@
 #include <vector>
 #include <condition_variable>
 #include <set>
+#include <list>
 
 namespace ring {
 
@@ -308,6 +309,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual void sendTextMessage(const std::map<std::string, std::string>& messages,
                                      const std::string &from) = 0;
 
+
+        virtual void onTextMessage(const std::map<std::string, std::string>& messages) = 0;
+
         void removeCall();
 
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
@@ -356,6 +360,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         bool isVideoMuted_{false};
         bool quiet {false};
         std::set<std::shared_ptr<Call>> subcalls {};
+        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingMessages_ {};
 
     private:
 

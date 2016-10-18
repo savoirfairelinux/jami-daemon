@@ -669,6 +669,7 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
         im::sendSipMessage(inv.get(), messages);
     else {
         if (not subcalls.empty()) {
+            pendingMessages_.emplace_back(messages, from);
             for (auto& c : subcalls)
                 c->sendTextMessage(messages, from);
         } else
@@ -677,11 +678,21 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 }
 
 void
+SIPCall::onTextMessage(const std::map<std::string, std::string>& messages)
+{
+    if (quiet)
+        pendingMessages_.emplace_back(messages, "");
+    else
+        Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
+}
+
+void
 SIPCall::onFailure(signed cause)
 {
     setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause);
     Manager::instance().callFailure(*this);
     removeCall();
+    setTransport({});
 }
 
 void
@@ -690,6 +701,7 @@ SIPCall::onClosed()
     Manager::instance().peerHungupCall(*this);
     removeCall();
     Manager::instance().checkAudio();
+    setTransport({});
 }
 
 void
@@ -952,11 +964,9 @@ SIPCall::waitForIceAndStartMedia()
 {
     auto ice = iceTransport_;
     auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-    if (not wthis_)
-        wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-    auto wthis = wthis_;
+    auto wthis = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
     Manager::instance().addTask([wthis,ice,iceTimeout] {
-        if (auto sthis = wthis->lock()) {
+        if (auto sthis = wthis.lock()) {
             auto& this_ = *sthis;
             if (ice != this_.iceTransport_) {
                 RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
@@ -1042,6 +1052,11 @@ SIPCall::getDetails() const
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
 #endif
 
+#if HAVE_RINGNS
+    if (not peerRegistredName_.empty())
+        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
+#endif
+
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
@@ -1107,12 +1122,6 @@ SIPCall::merge(std::shared_ptr<SIPCall> scall)
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
-    if (not wthis_)
-        wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-    if (not scall->wthis_)
-        scall->wthis_  = wthis_;
-    else
-        *scall->wthis_ = *wthis_;
     setTransport(scall->transport_);
     sdp_ = std::move(scall->sdp_);
     peerHolding_ = scall->peerHolding_;
