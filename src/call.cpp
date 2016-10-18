@@ -160,11 +160,12 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     auto new_client_state = getStateStr();
 
     if (call_state == CallState::OVER) {
-        RING_DBG("[call:%s] %lu subcalls", id_.c_str(), subcalls.size());
+        RING_DBG("[call:%s] %lu subcalls %lu listeners", id_.c_str(), subcalls.size(), stateChangedListeners_.size());
         if (not subcalls.empty()) {
             auto subs = std::move(subcalls);
             for (auto c : subs)
                 c->hangup(0);
+            pendingMessages_.clear();
         }
     }
 
@@ -381,6 +382,10 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
         if (not subcalls.emplace(call).second)
             return;
         call->quiet = true;
+
+        for (auto& pmsg : pendingMessages_)
+            call->sendTextMessage(pmsg.first, pmsg.second);
+
         std::weak_ptr<Call> wthis = shared_from_this();
         std::weak_ptr<Call> wcall = call;
         call->addStateListener([wcall,wthis](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
@@ -397,7 +402,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                     } else if (new_state == CallState::ACTIVE && this_.callState_ == CallState::INACTIVE) {
                         this_.setState(new_state);
                     }
-                    if ((unsigned)this_.connectionState_ < (unsigned)new_cstate && (unsigned)new_cstate < (unsigned)ConnectionState::RINGING) {
+                    if ((unsigned)this_.connectionState_ < (unsigned)new_cstate && (unsigned)new_cstate <= (unsigned)ConnectionState::RINGING) {
                         this_.setState(new_cstate);
                     } else if (new_cstate == ConnectionState::DISCONNECTED && new_state == CallState::ACTIVE) {
                         std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
@@ -425,6 +430,8 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                         Manager::instance().peerAnsweredCall(this_);
                     }
                     RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), this_.subcalls.size());
+                    if (this_.subcalls.empty())
+                        this_.pendingMessages_.clear();
                 } else {
                     RING_WARN("DeviceCall IGNORED call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
                 }
@@ -442,6 +449,7 @@ Call::merge(std::shared_ptr<Call> scall)
     std::lock(callMutex_, call.callMutex_);
     std::lock_guard<std::recursive_mutex> lk1 (callMutex_, std::adopt_lock);
     std::lock_guard<std::recursive_mutex> lk2 (call.callMutex_, std::adopt_lock);
+    auto pendingMessages = std::move(call.pendingMessages_);
     iceTransport_ = std::move(call.iceTransport_);
     peerDisplayName_ = std::move(call.peerDisplayName_);
     localAddr_ = call.localAddr_;
@@ -450,6 +458,8 @@ Call::merge(std::shared_ptr<Call> scall)
     setState(call.getState());
     setState(call.getConnectionState());
     scall->removeCall();
+    for (const auto& msg : pendingMessages)
+        Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
 }
 
 
