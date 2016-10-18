@@ -545,18 +545,33 @@ IceTransport::_isFailed() const
 IpAddr
 IceTransport::getLocalAddress(unsigned comp_id) const
 {
+    // Return the local IP of negotiated connection pair
+    if (isRunning()) {
+        if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1)) {
+            return sess->lcand->addr;
+        }
+        RING_WARN("Non-negotiated transport: try to return default local IP");
+    }
+
+    // Return the default IP (could be not nominated and valid after negotiation)
     if (isInitialized())
         return cand_[comp_id].addr;
+
+    RING_ERR("bad call: non-initialized transport");
     return {};
 }
 
 IpAddr
 IceTransport::getRemoteAddress(unsigned comp_id) const
 {
-    if (isInitialized()) {
+    // Return the remote IP of negotiated connection pair
+    if (isRunning()) {
         if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1))
             return sess->rcand->addr;
+        RING_ERR("runtime error: negotiated transport without valid pair");
     }
+
+    RING_ERR("bad call: non-negotiated transport");
     return {};
 }
 
