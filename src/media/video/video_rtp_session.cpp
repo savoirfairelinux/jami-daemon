@@ -55,6 +55,9 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , rtcpCheckerThread_(std::bind(&VideoRtpSession::setupRtcpChecker, this),
             std::bind(&VideoRtpSession::processRtcpChecker, this),
             std::bind(&VideoRtpSession::cleanupRtcpChecker, this))
+    , receiverRestartThread_([]{ return true; },
+            [this]{ processReceiverRestart(); },
+            []{})
 {}
 
 VideoRtpSession::~VideoRtpSession()
@@ -141,10 +144,12 @@ void VideoRtpSession::startReceiver()
          * we decided so to disable them for the moment
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         */
+        receiverRestartThread_.start();
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
         RING_DBG("Video receiving disabled");
+        receiverRestartThread_.join();
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
@@ -200,6 +205,7 @@ void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     rtcpCheckerThread_.join();
+    receiverRestartThread_.join();
 
     if (videoLocal_)
         videoLocal_->detach(sender_.get());
@@ -558,7 +564,6 @@ VideoRtpSession::checkReceiver()
 void
 VideoRtpSession::processRtcpChecker()
 {
-    checkReceiver();
     adaptQualityAndBitrate();
     rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
 }
@@ -566,5 +571,12 @@ VideoRtpSession::processRtcpChecker()
 void
 VideoRtpSession::cleanupRtcpChecker()
 {}
+
+void
+VideoRtpSession::processReceiverRestart()
+{
+    checkReceiver();
+    receiverRestartThread_.wait_for(std::chrono::seconds(RECEIVER_RESTART_INTERVAL));
+}
 
 }} // namespace ring::video
