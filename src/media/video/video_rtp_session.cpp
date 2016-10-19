@@ -129,13 +129,13 @@ VideoRtpSession::restartSender()
 void VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
-        DeviceParams receiverArgs = {};
+        bool isReset = false;
         if (receiveThread_) {
             RING_WARN("Restarting video receiver");
-            receiverArgs.enableAccel = "0"; // most likely cause of this restart
+            isReset = true;
         }
         receiveThread_.reset(
-            new VideoReceiveThread(callID_, receive_.receiving_sdp, receiverArgs)
+            new VideoReceiveThread(callID_, receive_.receiving_sdp, isReset)
         );
         /* ebail: keyframe requests can lead to timeout if they are not answered.
          * we decided so to disable them for the moment
@@ -160,7 +160,7 @@ VideoRtpSession::restartReceiver()
     if (not socketPair_)
         return;
 
-    startReceiver(); // disable accel
+    startReceiver();
 }
 
 void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
