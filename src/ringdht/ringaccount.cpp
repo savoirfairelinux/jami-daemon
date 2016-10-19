@@ -1694,42 +1694,81 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
               std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
+
+    std::weak_ptr<SIPCall> wcall = call;
+    auto account = std::static_pointer_cast<RingAccount>(shared_from_this());
+    Manager::instance().addTask([account, wcall, ice, msg, from_cert] {
+            auto call = wcall.lock();
+
+            // call aborted?
+            if (not call)
+                return false;
+
+            if (ice->isFailed()) {
+                RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                call->onFailure(EIO);
+                return false;
+            }
+
+            // Loop until ICE transport is initialized.
+            // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+            // and we let upper layers decide when the call shall be aborded (our first check upper).
+            if (not ice->isInitialized())
+                return true;
+
+            account->replyToIncomingIceMsg(call, ice, msg, from_cert);
+            return false;
+        });
+}
+
+void
+RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
+                                  std::shared_ptr<IceTransport> ice,
+                                  const dht::IceCandidates& peer_ice_msg,
+                                  std::shared_ptr<dht::crypto::Certificate> peer_cert)
+{
     const auto vid = udist(rand_);
-    dht::Value val { dht::IceCandidates(msg.id, ice->getLocalAttributesAndCandidates()) };
+    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->getLocalAttributesAndCandidates()) };
     val.id = vid;
 
-    std::weak_ptr<SIPCall> weak_call = call;
-    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    // Asynchronous DHT put of our local ICE data
+    std::weak_ptr<SIPCall> wcall = call;
     dht_.putEncrypted(
         callKey_,
-        msg.from,
+        peer_ice_msg.from,
         std::move(val),
-        [weak_call, shared_this, vid](bool ok) {
+        [wcall, vid](bool ok) {
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
-                if (auto call = weak_call.lock())
+                if (auto call = wcall.lock())
                     call->onFailure();
             } else
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
-        }
-    );
-    if (!ice->start(msg.ice_data)) {
-        call->onFailure();
+        });
+
+    auto started_time = std::chrono::steady_clock::now();
+
+    // During the ICE reply we can start the ICE negotiation
+    if (!ice->start(peer_ice_msg.ice_data)) {
+        call->onFailure(EIO);
         return;
     }
+
+    auto from = peer_ice_msg.from.toString();
     call->setPeerNumber(from);
     call->initRecFilename(from);
+
+    // Let the call handled by the PendingCall handler loop
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.emplace_back(PendingCall {
-            .start = std::chrono::steady_clock::now(),
-            .ice_sp = ice,
-            .call = weak_call,
-            .listen_key = {},
-            .call_key = {},
-            .from = msg.from,
-            .from_cert = from_cert
-        });
+                .start = started_time,
+                .ice_sp = ice,
+                .call = wcall,
+                .listen_key = {},
+                .call_key = {},
+                .from = peer_ice_msg.from,
+                .from_cert = peer_cert });
     }
 }
 
