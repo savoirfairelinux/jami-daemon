@@ -19,7 +19,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 Introduction
 ------------
 
-Ring is a Voice-over-IP software phone. We want it to be:
+GNU Ring is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
 - compatible with Asterisk (using SIP account)
@@ -27,17 +27,17 @@ Ring is a Voice-over-IP software phone. We want it to be:
 - customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
-it is easy to provide different user interfaces. Ring comes with
+it is easy to provide different user interfaces. GNU Ring comes with
 various graphical user interfaces and even scripts to control the daemon from
 the shell.
 
-Ring is currently used by the support team of Savoir-faire Linux Inc.
+GNU Ring is currently used by the support team of Savoir-faire Linux Inc.
 
 More information is available on the project homepage:
   http://www.ring.cx/
 
 This source tree contains the daemon application only, DRing, that handles
-the business logic of Ring. UIs are located in differents repositories. See
+the business logic of GNU Ring. UIs are located in differents repositories. See
 the Contributing section for more information.
 
 
@@ -136,7 +136,7 @@ dbus is not available the client should implement all the methods in the
 How to compile with the REST API
 --------------------------------
 
-Ring offers two REST API. One written in C++, and the other written in Cython.
+GNU Ring offers two REST API. One written in C++, and the other written in Cython.
 Up to this date, only the C++ API is available. The Cython API will soon follow.
 
 To compile Ring-daemon with the C++ REST API, follow these two steps :
@@ -163,7 +163,7 @@ clients (KDE and GNOME).
 By doing this, you will be able to call other accounts known to this server.
 
 
-Contributing to Ring
+Contributing to GNU Ring
 ------------------------
 
 Of course we love patches. And contributions. And spring rolls.
@@ -176,10 +176,10 @@ contains the client subprojects:
  - https://gerrit-ring.savoirfairelinux.com/#/admin/projects/
 
 Do not hesitate to join us and post comments, suggestions, questions
-and general feedback on the Ring mailing-list:
+and general feedback on the GNU Ring mailing-list:
 http://lists.savoirfairelinux.net/mailman/listinfo/ring
 
 IRC (on #freenode):
  - #ring
 
-  -- The Ring Team
+  -- The GNU Ring Team
