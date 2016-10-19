@@ -117,6 +117,11 @@ class Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
+        /**
+         * Video preferences
+         */
+        VideoPreferences videoPreferences;
+
         // Manager should not be accessed until initialized.
         // FIXME this is an evil hack!
         static std::atomic_bool initialized;
@@ -1013,6 +1018,10 @@ class Manager {
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
         VideoManager& getVideoManager() const { return *videoManager_; }
+
+        bool getDecodingAccelerated() const;
+
+        void setDecodingAccelerated(bool isAccelerated);
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable

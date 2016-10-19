@@ -303,9 +303,7 @@ VideoDeviceMonitor::overwritePreferences(VideoSettings settings)
 void
 VideoDeviceMonitor::serialize(YAML::Emitter &out)
 {
-    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
     out << YAML::Key << "devices" << YAML::Value << preferences_;
-    out << YAML::EndMap;
 }
 
 void
