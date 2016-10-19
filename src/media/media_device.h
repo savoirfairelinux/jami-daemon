@@ -45,7 +45,6 @@ struct DeviceParams {
     std::string sdp_flags {};
     unsigned offset_x {};
     unsigned offset_y {};
-    std::string enableAccel {};
 };
 
 }
