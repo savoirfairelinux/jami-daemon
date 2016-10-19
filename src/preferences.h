@@ -439,6 +439,26 @@ class ShortcutPreferences : public Serializable {
         constexpr static const char * const CONFIG_LABEL = "shortcuts";
 };
 
+class VideoPreferences : public Serializable {
+    public:
+        VideoPreferences();
+
+        void serialize(YAML::Emitter &out);
+        void unserialize(const YAML::Node &in);
+
+        bool getDecodingAccelerated() const {
+            return decodingAccelerated_;
+        }
+
+        void setDecodingAccelerated(bool decodingAccelerated) {
+            decodingAccelerated_ = decodingAccelerated;
+        }
+
+    private:
+        bool decodingAccelerated_;
+        constexpr static const char* const CONFIG_LABEL = "video";
+};
+
 } // namespace ring
 
 #endif

@@ -45,6 +45,8 @@
 #endif
 #endif /* HAVE_OPENSL */
 
+#include "client/videomanager.h"
+
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <yaml-cpp/yaml.h>
@@ -121,6 +123,10 @@ static const char * const PICKUP_SHORT_KEY = "pickUp";
 static const char * const POPUP_SHORT_KEY = "popupWindow";
 static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
 static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
+
+// video preferences
+constexpr const char * const VideoPreferences::CONFIG_LABEL;
+static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
@@ -531,6 +537,29 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, POPUP_SHORT_KEY, popup_);
     parseValue(node, TOGGLE_HOLD_SHORT_KEY, toggleHold_);
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
+}
+
+VideoPreferences::VideoPreferences()
+    : decodingAccelerated_(false)
+{
+}
+
+void VideoPreferences::serialize(YAML::Emitter &out)
+{
+    out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
+    getVideoDeviceMonitor().serialize(out);
+    out << YAML::EndMap;
+}
+
+void VideoPreferences::unserialize(const YAML::Node &in)
+{
+    const auto &node = in[CONFIG_LABEL];
+    // value may or may not be present
+    try {
+        parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
+    } catch (...) { decodingAccelerated_ = false; } // experimental, so disabled by default
+    getVideoDeviceMonitor().unserialize(node);
 }
 
 } // namespace ring
