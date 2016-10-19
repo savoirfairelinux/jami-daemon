@@ -116,6 +116,14 @@ class Preferences : public Serializable {
             md5Hash_ = md5;
         }
 
+        bool getAcceleratedDecoding() const {
+            return acceleratedDecoding_;
+        }
+
+        void setAcceleratedDecoding(bool acceleratedDecoding) {
+            acceleratedDecoding_ = acceleratedDecoding;
+        }
+
     private:
         std::string accountOrder_;
         int historyLimit_;
@@ -125,6 +133,7 @@ class Preferences : public Serializable {
         int portNum_;
         bool searchBarDisplay_;
         bool md5Hash_;
+        bool acceleratedDecoding_;
         constexpr static const char * const CONFIG_LABEL = "preferences";
 };
 
