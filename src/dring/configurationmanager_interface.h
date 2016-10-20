@@ -259,6 +259,10 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "GetAppDataPath";
                 using cb_type = void(std::vector<std::string>* paths);
         };
+        struct GetAppUserName {
+                constexpr static const char* name = "GetAppUserName";
+                using cb_type = void(std::vector<std::string>* names);
+        };
 #endif
 };
 

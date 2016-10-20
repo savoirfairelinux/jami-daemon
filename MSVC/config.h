@@ -62,7 +62,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_LIBINTL_H 0
 
 /* Define if you have libupnp */
-#define HAVE_LIBUPNP 0
+#define HAVE_LIBUPNP 1
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1

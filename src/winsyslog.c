@@ -65,7 +65,9 @@ getLastErrorText(                   // converts "Lasr Error" code into text
 
 void closelog(void)
 {
+#ifndef WIN32_NATIVE
     DeregisterEventSource(loghdl);
+#endif
     free(loghdr);
 }
 
@@ -83,6 +85,7 @@ void closelog(void)
 
     vsprintf(tmp, format, arglist);
 
+#ifndef WIN32_NATIVE
     arr[0] = tmp;
     BOOL err = ReportEvent(loghdl, (unsigned short) level, (unsigned short)level,
         level, NULL, 1, 0, arr, NULL);
@@ -92,6 +95,7 @@ void closelog(void)
         CHAR errText[1024];
         puts(getLastErrorText(errText, 1024));
     }
+#endif
 }
 
 /* Emulator for BSD openlog() routine
@@ -106,7 +110,9 @@ void closelog(void)
     if (loghdl) {
         closelog();
     }
+#ifndef WIN32_NATIVE
     loghdl = RegisterEventSource(NULL, ident);
+#endif
     sprintf(tmp, (logopt & WINLOG_PID) ? "%s[%d]" : "%s", ident, getpid());
     loghdr = _strdup(tmp);  /* save header for later */
 }

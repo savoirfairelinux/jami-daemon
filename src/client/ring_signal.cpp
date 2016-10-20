@@ -77,6 +77,7 @@ getSignalHandlers()
 #endif
 #ifdef WIN32_NATIVE
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
+        exported_callback<DRing::ConfigurationSignal::GetAppUserName>(),
 #endif
 
         /* Presence */

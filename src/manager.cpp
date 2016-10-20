@@ -141,7 +141,9 @@ static constexpr const char* SIPLOGLEVEL = "SIPLOGLEVEL";
 static void
 setSipLogLevel()
 {
+#ifndef WIN32_NATIVE
     char* envvar = getenv(SIPLOGLEVEL);
+
     int level = 0;
 
     if (envvar != nullptr) {
@@ -153,6 +155,9 @@ setSipLogLevel()
     }
 
     pj_log_set_level(level);
+#else
+    pj_log_set_level(0);
+#endif
 }
 
 /**
@@ -172,6 +177,7 @@ tls_print_logs(int level, const char* msg)
 static void
 setGnuTlsLogLevel()
 {
+#ifndef WIN32_NATIVE
     char* envvar = getenv("RING_TLS_LOGLEVEL");
     int level = RING_TLS_LOGLEVEL;
 
@@ -185,6 +191,9 @@ setGnuTlsLogLevel()
     }
 
     gnutls_global_set_log_level(level);
+#else
+    gnutls_global_set_log_level(RING_TLS_LOGLEVEL);
+#endif
     gnutls_global_set_log_function(tls_print_logs);
 }
 

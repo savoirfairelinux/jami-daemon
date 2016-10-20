@@ -248,7 +248,11 @@ writeTime(const std::string& path)
         throw std::runtime_error("Can't check write time for: " + path);
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
+#if WIN32_NATIVE
+    HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr);
+#else
     HANDLE h = CreateFileW(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+#endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
     FILETIME lastWriteTime;

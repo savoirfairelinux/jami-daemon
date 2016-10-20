@@ -1294,13 +1294,9 @@ std::string SIPAccount::getLoginName()
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
 #elif defined (WIN32_NATIVE)
-    TCHAR username[UNLEN + 1];
-    DWORD size = UNLEN + 1;
-    std::string uname;
-    if (GetUserName((TCHAR*)username, &size)) {
-        uname = username;
-    }
-    return uname;
+    std::vector<std::string> unames;
+    emitSignal<DRing::ConfigurationSignal::GetAppUserName>(&unames);
+    return unames[0];
 #else
     TCHAR username[UNLEN + 1];
     DWORD size = UNLEN + 1;
