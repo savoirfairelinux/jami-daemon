@@ -4,8 +4,14 @@ CRYPTOPP_URL := https://github.com/weidai11/cryptopp/archive/$(CRYPTOPP_VERSION)
 
 PKGS += cryptopp
 
+# Debian/Ubuntu
 ifeq ($(call need_pkg,'libcrypto++'),)
 PKGS_FOUND += cryptopp
+else
+# Redhat/Fedora
+ifeq ($(call need_pkg,'cryptopp'),)
+PKGS_FOUND += cryptopp
+endif
 endif
 
 CRYPTOPP_CMAKECONF := -DBUILD_TESTING=Off \
