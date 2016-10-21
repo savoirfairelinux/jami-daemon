@@ -76,6 +76,7 @@ enum class testAccountICEInitializationStatus : int {
 namespace VolatileProperties {
 
 constexpr static const char ACTIVE                    [] = "Account.active";
+constexpr static const char REGISTERED_NAME           [] = "Account.registredName";
 
 // Volatile parameters
 namespace Registration {
@@ -222,12 +223,12 @@ constexpr static const char ALLOW_FROM_TRUSTED [] = "DHT.AllowFromTrusted";
 
 } //namespace DRing::Account::DHT
 
-namespace ETH {
+namespace RingNS {
 
-constexpr static const char KEY_FILE           [] = "ETH.keyFile";
-constexpr static const char ACCOUNT            [] = "ETH.account";
+constexpr static const char URI         [] = "RingNS.uri";
+constexpr static const char ACCOUNT     [] = "RingNS.account";
 
-} //namespace DRing::Account::ETH
+} //namespace DRing::Account::RingNS
 
 namespace CodecInfo {
 
