@@ -149,9 +149,12 @@ RingAccount::createIceTransport(const Args&... args)
     // We need a public address in case of NAT'ed network
     // Trying to use one discovered by DHT service
     if (getPublishedAddress().empty()) {
-        const auto& addresses = dht_.getPublicAddress(AF_INET);
-        if (addresses.size())
-            setPublishedAddress(IpAddr{addresses[0].first});
+        const auto& addresses4 = dht_.getPublicAddress(AF_INET);
+        if (addresses4.size())
+            setPublishedAddress(IpAddr{addresses4[0].first});
+        const auto& addresses6 = dht_.getPublicAddress(AF_INET6);
+        if (addresses6.size())
+            setPublishedAddress(IpAddr{addresses6[0].first});
     }
 
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
