@@ -165,8 +165,13 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
             auto subs = std::move(subcalls);
             for (auto c : subs)
                 c->hangup(0);
-            pendingMessages_.clear();
+            pendingInMessages_.clear();
+            pendingOutMessages_.clear();
         }
+    } else if (call_state == CallState::ACTIVE and not pendingOutMessages_.empty()) {
+        for (const auto& msg : pendingOutMessages_)
+            sendTextMessage(msg.first, msg.second);
+        pendingOutMessages_.clear();
     }
 
     for (auto& l : stateChangedListeners_)
@@ -365,7 +370,7 @@ void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
     if (quiet)
-        pendingMessages_.emplace_back(std::move(messages), "");
+        pendingInMessages_.emplace_back(std::move(messages), "");
     else
         Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
 }
@@ -392,7 +397,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
             return;
         call->quiet = true;
 
-        for (auto& pmsg : pendingMessages_)
+        for (auto& pmsg : pendingOutMessages_)
             call->sendTextMessage(pmsg.first, pmsg.second);
 
         std::weak_ptr<Call> wthis = shared_from_this();
@@ -440,7 +445,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                     }
                     RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), this_.subcalls.size());
                     if (this_.subcalls.empty())
-                        this_.pendingMessages_.clear();
+                        this_.pendingOutMessages_.clear();
                 } else {
                     RING_WARN("DeviceCall IGNORED call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
                 }
@@ -458,7 +463,7 @@ Call::merge(std::shared_ptr<Call> scall)
     std::lock(callMutex_, call.callMutex_);
     std::lock_guard<std::recursive_mutex> lk1 (callMutex_, std::adopt_lock);
     std::lock_guard<std::recursive_mutex> lk2 (call.callMutex_, std::adopt_lock);
-    auto pendingMessages = std::move(call.pendingMessages_);
+    auto pendingInMessages = std::move(call.pendingInMessages_);
     iceTransport_ = std::move(call.iceTransport_);
     peerDisplayName_ = std::move(call.peerDisplayName_);
     localAddr_ = call.localAddr_;
@@ -466,9 +471,9 @@ Call::merge(std::shared_ptr<Call> scall)
     localVideoPort_ = call.localVideoPort_;
     setState(call.getState());
     setState(call.getConnectionState());
-    scall->removeCall();
-    for (const auto& msg : pendingMessages)
+    for (const auto& msg : pendingInMessages)
         Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
+    scall->removeCall();
 }
 
 
