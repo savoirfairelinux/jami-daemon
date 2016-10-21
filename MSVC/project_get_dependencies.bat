@@ -11,6 +11,9 @@ pcre, ^
 libupnp, ^
 jsoncpp, ^
 yaml-cpp, ^
+cryptopp, ^
+pthreads, ^
+boost, ^
 pjproject ^
 )
 
