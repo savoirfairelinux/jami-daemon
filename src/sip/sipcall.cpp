@@ -678,14 +678,6 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
 }
 
 void
-SIPCall::removeCall()
-{
-    Call::removeCall();
-    inv.reset();
-    setTransport({});
-}
-
-void
 SIPCall::onFailure(signed cause)
 {
     setState(CallState::MERROR, ConnectionState::DISCONNECTED, cause);
