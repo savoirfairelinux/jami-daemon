@@ -76,6 +76,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/multiple_listeners.patch
 	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
+	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
