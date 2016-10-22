@@ -134,9 +134,15 @@ RingAccount::createIceTransport(const Args&... args)
     // We need a public address in case of NAT'ed network
     // Trying to use one discovered by DHT service
     if (getPublishedAddress().empty()) {
-        const auto& addresses = dht_.getPublicAddress(AF_INET);
-        if (addresses.size())
-            setPublishedAddress(IpAddr{addresses[0].first});
+        const auto& addresses4 = dht_.getPublicAddress(AF_INET);
+        const auto& addresses6 = dht_.getPublicAddress(AF_INET6);
+        std::vector<IpAddr> to_pub;
+        to_pub.reserve(2);
+        if (not addresses4.empty())
+            to_pub.emplace_back(IpAddr((const sockaddr*)&addresses4[0].first, addresses4[0].second));
+        if (not addresses6.empty())
+            to_pub.emplace_back(IpAddr((const sockaddr*)&addresses6[0].first, addresses6[0].second));
+        setPublishedAddress(std::move(to_pub));
     }
 
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
@@ -926,6 +932,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         dht_.bootstrap(bootstrap);
 
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    // pair of status flags <over, error>
     auto state_old = std::make_shared<std::pair<bool, bool>>(false, true);
     auto state_new = std::make_shared<std::pair<bool, bool>>(false, true);
     auto found = std::make_shared<bool>(false);

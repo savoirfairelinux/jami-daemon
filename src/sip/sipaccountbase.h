@@ -162,11 +162,15 @@ public:
         return publishedIpAddress_;
     }
 
-    IpAddr getPublishedIpAddress() const {
+    const IpAddr& getPublishedIpAddress() const {
+        return publishedIp_.front();
+    }
+    std::vector<IpAddr> getPublishedIpAddresses() const {
         return publishedIp_;
     }
 
     void setPublishedAddress(const IpAddr& ip_addr);
+    void setPublishedAddress(std::vector<IpAddr>&& ip_addr);
 
     /**
      * Get the published port, which is the port to be advertised as the port
@@ -294,7 +298,7 @@ protected:
      * Published IP address, used only if defined by the user in account
      * configuration
      */
-    IpAddr publishedIp_ {};
+    std::vector<IpAddr> publishedIp_ {IpAddr{}};
 
     std::string publishedIpAddress_ {};
 

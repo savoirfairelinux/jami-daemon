@@ -367,12 +367,20 @@ SIPAccountBase::onTextMessage(const std::string& from,
 }
 
 void
+SIPAccountBase::setPublishedAddress(std::vector<IpAddr>&& ip_addr)
+{
+    publishedIp_ = std::move(ip_addr);
+    if (publishedIp_.empty())
+        publishedIp_.emplace_back();
+    publishedIpAddress_ = publishedIp_.front().toString();
+    RING_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
+                 publishedIpAddress_.c_str());
+}
+
+void
 SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
 {
-    publishedIp_ = ip_addr;
-    publishedIpAddress_ = ip_addr.toString();
-    RING_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
-             publishedIpAddress_.c_str());
+    setPublishedAddress({ip_addr});
 }
 
 } // namespace ring

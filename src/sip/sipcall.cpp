@@ -1107,9 +1107,11 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
 {
     auto result = Call::initIceTransport(master, channel_num);
     if (result) {
-        if (const auto& publicIP = getSIPAccount().getPublishedIpAddress()) {
-            for (unsigned compId = 1; compId <= iceTransport_->getComponentCount(); ++compId)
-                iceTransport_->registerPublicIP(compId, publicIP);
+        const auto& publicIPs = getSIPAccount().getPublishedIpAddresses();
+        for (const auto& publicIP : publicIPs) {
+            if (publicIP)
+                for (unsigned compId = 1; compId <= iceTransport_->getComponentCount(); ++compId)
+                    iceTransport_->registerPublicIP(compId, publicIP);
         }
     }
     return result;

@@ -749,6 +749,7 @@ IceTransport::getLocalAttributesAndCandidates() const
             ss << c << NEW_LINE;
     }
     auto str(ss.str());
+    RING_WARN("Local ICE candidates:\n%s", str.c_str());
     return std::vector<uint8_t>(str.begin(), str.end());
 }
 
