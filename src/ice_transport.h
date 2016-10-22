@@ -50,15 +50,30 @@ using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
+struct StunServerInfo {
+	StunServerInfo& setUri(const std::string& args) { uri = args; return *this; }
+
+	std::string uri;      // server URI, mandatory
+};
+
+struct TurnServerInfo {
+	TurnServerInfo& setUri(const std::string& args) { uri = args; return *this; }
+	TurnServerInfo& setUsername(const std::string& args) { username = args; return *this; }
+	TurnServerInfo& setPassword(const std::string& args) { password = args; return *this; }
+	TurnServerInfo& setRealm(const std::string& args) { realm = args; return *this; }
+
+	std::string uri;      // server URI, mandatory
+	std::string username; // credentials username (optional, empty if not used)
+	std::string password; // credentials password (optional, empty if not used)
+	std::string realm;    // credentials realm (optional, empty if not used)
+};
+
 struct IceTransportOptions {
     bool upnpEnable {false};
     IceTransportCompleteCb onInitDone {};
     IceTransportCompleteCb onNegoDone {};
-    std::string stunServer {};
-    std::string turnServer {};
-    std::string turnServerUserName {};  //!< credential username
-    std::string turnServerPwd {};       //!< credential password
-    std::string turnServerRealm {};     //!< non-empty for long-term credential
+    std::vector<StunServerInfo> stunServers;
+	std::vector<TurnServerInfo> turnServers;
 };
 
 class IceTransport {
