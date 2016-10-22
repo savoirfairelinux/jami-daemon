@@ -159,6 +159,8 @@ class SIPCall : public Call
         void sendTextMessage(const std::map<std::string, std::string>& messages,
                              const std::string& from) override;
 
+        void removeCall() override;
+
         SIPAccountBase& getSIPAccount() const;
 
         void updateSDPFromSTUN();
