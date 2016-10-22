@@ -346,15 +346,17 @@ SIPAccountBase::generateVideoPort() const
 const IceTransportOptions
 SIPAccountBase::getIceOptions() const noexcept
 {
-    auto opts = Account::getIceOptions();
+    auto opts = Account::getIceOptions(); // Local copy of global account ICE settings
+
+    // Note: we don't check of servers pre-existance, let underlaying stack do the job
     if (stunEnabled_)
-        opts.stunServer = stunServer_;
-    if (turnEnabled_) {
-        opts.turnServer = turnServer_;
-        opts.turnServerUserName = turnServerUserName_;
-        opts.turnServerPwd = turnServerPwd_;
-        opts.turnServerRealm = turnServerRealm_;
-    }
+        opts.stunServers.emplace_back(StunServerInfo().setUri(stunServer_));
+    if (turnEnabled_)
+        opts.turnServers.emplace_back(TurnServerInfo()
+                                      .setUri(turnServer_)
+                                      .setUsername(turnServerUserName_)
+                                      .setPassword(turnServerPwd_)
+                                      .setRealm(turnServerRealm_));
     return opts;
 }
 
