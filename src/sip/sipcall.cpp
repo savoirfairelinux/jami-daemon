@@ -665,27 +665,16 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
-    if (not subcalls.empty()) {
-        pendingOutMessages_.emplace_back(messages, from);
-        for (auto& c : subcalls)
-            c->sendTextMessage(messages, from);
-    } else {
-        if (inv) {
-            im::sendSipMessage(inv.get(), messages);
-        } else {
-            pendingOutMessages_.emplace_back(messages, from);
-            RING_ERR("[call:%s] sendTextMessage: no invite session for this call", getCallId().c_str());
-        }
+    if (inv)
+        im::sendSipMessage(inv.get(), messages);
+    else {
+        if (not subcalls.empty()) {
+            pendingMessages_.emplace_back(messages, from);
+            for (auto& c : subcalls)
+                c->sendTextMessage(messages, from);
+        } else
+            throw VoipLinkException("[call:" + getCallId() + "] sendTextMessage: no invite session for this call");
     }
-}
-
-void
-SIPCall::removeCall()
-{
-    RING_WARN("[call:%s] removeCall()", getCallId().c_str());
-    Call::removeCall();
-    inv.reset();
-    setTransport({});
 }
 
 void
@@ -1118,6 +1107,7 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
 void
 SIPCall::merge(std::shared_ptr<SIPCall> scall)
 {
+    Call::merge(scall);
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
@@ -1127,7 +1117,6 @@ SIPCall::merge(std::shared_ptr<SIPCall> scall)
     upnp_ = std::move(scall->upnp_);
     std::copy_n(scall->contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
     pj_strcpy(&contactHeader_, &scall->contactHeader_);
-    Call::merge(scall);
     if (iceTransport_->isStarted())
         waitForIceAndStartMedia();
 }

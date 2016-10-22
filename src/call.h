@@ -360,8 +360,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         bool isVideoMuted_{false};
         bool quiet {false};
         std::set<std::shared_ptr<Call>> subcalls {};
-        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingInMessages_ {};
-        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingOutMessages_ {};
+        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingMessages_ {};
 
     private:
 
