@@ -168,7 +168,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
             pendingInMessages_.clear();
             pendingOutMessages_.clear();
         }
-    } else if (call_state == CallState::ACTIVE and not pendingOutMessages_.empty()) {
+    } else if (call_state == CallState::ACTIVE and connectionState_ == ConnectionState::CONNECTED and not pendingOutMessages_.empty()) {
         for (const auto& msg : pendingOutMessages_)
             sendTextMessage(msg.first, msg.second);
         pendingOutMessages_.clear();
