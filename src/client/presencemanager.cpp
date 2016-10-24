@@ -41,6 +41,7 @@ namespace DRing {
 
 using ring::SIPAccount;
 
+constexpr static const char* BUDDY_KEY      = "Buddy";
 constexpr static const char* STATUS_KEY     = "Status";
 constexpr static const char* LINESTATUS_KEY = "LineStatus";
 constexpr static const char* ONLINE_KEY     = "Online";
@@ -132,9 +133,10 @@ getSubscriptions(const std::string& accountID)
         if (auto pres = sipaccount->getPresence()) {
             for (const auto& s : pres->getClientSubscriptions()) {
                 ret.push_back({
-                        {STATUS_KEY, s->isPresent() ? ONLINE_KEY : OFFLINE_KEY},
-                        {LINESTATUS_KEY, s->getLineStatus()}
-                    });
+                    {BUDDY_KEY, s->getURI()},
+                    {STATUS_KEY, s->isPresent() ? ONLINE_KEY : OFFLINE_KEY},
+                    {LINESTATUS_KEY, s->getLineStatus()}
+                });
             }
         } else
             RING_ERR("Presence not initialized");
