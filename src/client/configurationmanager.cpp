@@ -361,7 +361,7 @@ addAccount(const std::map<std::string, std::string>& details)
 void
 removeAccount(const std::string& accountID)
 {
-    return ring::Manager::instance().removeAccount(accountID);
+    return ring::Manager::instance().removeAccount(accountID, true); // with 'flush' enabled
 }
 
 std::vector<std::string>

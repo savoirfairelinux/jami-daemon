@@ -327,13 +327,15 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
         ip_utils::getAnyHostAddr(family) :
         ip_utils::getInterfaceAddr(d.interface, family);
     listeningAddress.setPort(d.listenerPort);
-
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
+
     pjsip_transport *transport = nullptr;
-    pj_status_t status = listeningAddress.isIpv4()
-        ? pjsip_udp_transport_start (endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress),  nullptr, 1, &transport)
-        : pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress), nullptr, 1, &transport);
-    if (status != PJ_SUCCESS) {
+        pj_status_t status = listeningAddress.isIpv4() ?
+            pjsip_udp_transport_start (endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress),
+                nullptr, 1, &transport) :
+            pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress),
+                nullptr, 1, &transport);
+        if (status != PJ_SUCCESS) {
         RING_ERR("pjsip_udp_transport_start* failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         RING_ERR("UDP IPv%s Transport did not start on %s",
@@ -343,10 +345,7 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     }
 
     RING_DBG("Created UDP transport on %s : %s", d.interface.c_str(), listeningAddress.toString(true).c_str());
-    auto ret = std::make_shared<SipTransport>(transport);
-    // dec ref because the refcount starts at 1 and SipTransport increments it ?
-    // pjsip_transport_dec_ref(transport);
-    return ret;
+    return std::make_shared<SipTransport>(transport);
 }
 
 std::shared_ptr<TlsListener>

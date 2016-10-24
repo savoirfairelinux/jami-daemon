@@ -21,7 +21,9 @@
 #ifndef IP_UTILS_H_
 #define IP_UTILS_H_
 
+extern "C" {
 #include <pjlib.h>
+}
 
 #ifdef HAVE_CONFIG
  #include <config.h>

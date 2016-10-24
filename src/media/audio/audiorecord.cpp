@@ -132,20 +132,20 @@ sanitize(std::string s)
 
 void AudioRecord::initFilename(const std::string &peerNumber)
 {
-    std::string fName(filename_);
-    fName.append("-" + sanitize(peerNumber) + "-" PACKAGE);
-
-    if (filename_.find(".wav") == std::string::npos) {
-        RING_DBG("Concatenate .wav file extension: name : %s", filename_.c_str());
-        fName.append(".wav");
+    RING_DBG("Initialize audio record for peer  : %s", peerNumber.c_str());
+    // if savePath_ don't contains filename
+    if (savePath_.find(".wav") == std::string::npos) {
+        filename_ = createFilename();
+        filename_.append("-" + sanitize(peerNumber) + "-" PACKAGE);
+        filename_.append(".wav");
+    } else {
+        filename_ = "";
     }
-
-    savePath_.append(fName);
 }
 
 std::string AudioRecord::getFilename() const
 {
-    return savePath_;
+    return savePath_ + filename_;
 }
 
 bool
@@ -156,8 +156,8 @@ AudioRecord::openFile()
     const bool doAppend = fileExists();
     const int access = doAppend ? SFM_RDWR : SFM_WRITE;
 
-    RING_DBG("Opening file %s with format %s", savePath_.c_str(), sndFormat_.toString().c_str());
-    fileHandle_.reset(new SndfileHandle (savePath_.c_str(),
+    RING_DBG("Opening file %s with format %s", getFilename().c_str(), sndFormat_.toString().c_str());
+    fileHandle_.reset(new SndfileHandle (getFilename().c_str(),
                                          access,
                                          SF_FORMAT_WAV | SF_FORMAT_PCM_16,
                                          sndFormat_.nb_channels,
@@ -191,7 +191,7 @@ AudioRecord::isOpenFile() const noexcept
 
 bool AudioRecord::fileExists() const
 {
-    return access(savePath_.c_str(), F_OK) != -1;
+    return access(getFilename().c_str(), F_OK) != -1;
 }
 
 bool AudioRecord::isRecording() const
@@ -215,7 +215,7 @@ AudioRecord::toggleRecording()
 void
 AudioRecord::stopRecording() const noexcept
 {
-    RING_DBG("Stop recording %s", savePath_.c_str());
+    RING_DBG("Stop recording %s", getFilename().c_str());
     recordingEnabled_ = false;
 }
 

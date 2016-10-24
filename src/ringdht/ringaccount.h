@@ -281,6 +281,9 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged() override;
 
+    public: // overloaded methods
+        void flush() override;
+
     private:
         NON_COPYABLE(RingAccount);
 
@@ -444,6 +447,11 @@ class RingAccount : public SIPAccountBase {
 
         void loadKnownDevices();
         void saveKnownDevices() const;
+
+        void replyToIncomingIceMsg(std::shared_ptr<SIPCall>,
+                                   std::shared_ptr<IceTransport>,
+                                   const dht::IceCandidates&,
+                                   std::shared_ptr<dht::crypto::Certificate>);
 
         static tls::DhParams loadDhParams(const std::string path);
 

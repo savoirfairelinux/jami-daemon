@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <cstdio>
 
 #ifndef WIN32_NATIVE
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
@@ -72,12 +73,14 @@ namespace ring { namespace fileutils {
     bool isFile(const std::string& path);
     bool isDirectory(const std::string& path);
 
+    bool isSymLink(const std::string& path);
+
     std::chrono::system_clock::time_point writeTime(const std::string& path);
 
     /**
      * Read content of the directory.
-     * The result is a list of full paths of files in the directory,
-     * without "." and "..".
+     * The result is a list of relative (to @param dir) paths of all entries
+     * in the directory, without "." and "..".
      */
     std::vector<std::string> readDirectory(const std::string &dir);
 
@@ -91,6 +94,17 @@ namespace ring { namespace fileutils {
         ~FileHandle();
     };
     FileHandle create_pidfile();
+
+    /**
+     * Direct binding on std::remove, with std::string as argument
+     */
+    static inline int remove(const std::string& path) { return std::remove(path.c_str()); }
+
+    /**
+     * Prune given directory's content and remove it, symlinks are not followed.
+     * Return 0 if succeed, -1 if directory is not removed (content can be removed partially).
+     */
+    int removeAll(const std::string& path);
 
 }} // namespace ring::fileutils
 

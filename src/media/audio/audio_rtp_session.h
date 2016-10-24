@@ -44,6 +44,7 @@ class AudioRtpSession : public RtpSession {
         void start(std::unique_ptr<IceSocket> rtp_sock = nullptr,
                    std::unique_ptr<IceSocket> rtcp_sock = nullptr) override;
         void restartSender() override;
+        void restartReceiver() override;
         void stop() override;
         void setMuted(bool isMuted);
 

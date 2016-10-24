@@ -39,13 +39,9 @@
 #include "map_utils.h"
 #include "account.h"
 #include "string_utils.h"
-#if HAVE_DHT
 #include "ringdht/ringaccount.h"
 #include <opendht/rng.h>
 using random_device = dht::crypto::random_device;
-#else
-using random_device = std::random_device;
-#endif
 
 #include "call_factory.h"
 
@@ -1399,7 +1395,6 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
     }
 }
 
-// Not thread-safe, SHOULD be called in same thread that run pollEvents()
 void
 Manager::addTask(const std::function<bool()>&& task)
 {
@@ -1833,6 +1828,9 @@ Manager::callFailure(Call& call)
 
     checkAudio();
     removeWaitingCall(call_id);
+    if (not incomingCallsWaiting())
+        stopTone();
+    removeAudio(call);
 }
 
 //THREAD=VoIP
@@ -2540,11 +2538,13 @@ void Manager::removeAccounts()
         removeAccount(acc);
 }
 
-void Manager::removeAccount(const std::string& accountID)
+void Manager::removeAccount(const std::string& accountID, bool flush)
 {
     // Get it down and dying
     if (const auto& remAccount = getAccount(accountID)) {
         remAccount->doUnregister();
+        if (flush)
+            remAccount->flush();
         accountFactory_.removeAccount(*remAccount);
     }
 
@@ -2890,10 +2890,9 @@ Manager::createSinkClient(const std::string& id, bool mixer)
 {
     const auto& iter = sinkMap_.find(id);
     if (iter != std::end(sinkMap_)) {
-        if (iter->second.expired())
-            sinkMap_.erase(iter);
-        else
-            return nullptr;
+        if (auto sink = iter->second.lock())
+            return sink;
+        sinkMap_.erase(iter); // remove expired weak_ptr
     }
 
     auto sink = std::make_shared<video::SinkClient>(id, mixer);

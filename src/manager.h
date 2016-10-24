@@ -514,9 +514,10 @@ class Manager {
         /**
          * Delete an existing account, unregister VoIPLink associated, and
          * purge from configuration.
+         * If 'flush' argument is true, filesystem entries are also removed.
          * @param accountID	The account unique ID
          */
-        void removeAccount(const std::string& accountID);
+        void removeAccount(const std::string& accountID, bool flush=false);
 
         /**
          * Set input audio plugin
@@ -993,8 +994,24 @@ class Manager {
         void scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when);
 
 #ifdef RING_VIDEO
+        /**
+         * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
+         * and return it as a shared_ptr. If a SinkClient is already stored for the given id,
+         * this method returns this instance.
+         * @param id SinkClient identifier as a string. Default is empty.
+         * @param mixer true if the SinkCient is the sink of a VideoMixer node. Default is false.
+         * @return share_ptr<SinkClient> A shared pointer on the created instance.
+         */
         std::shared_ptr<video::SinkClient> createSinkClient(const std::string& id="", bool mixer=false);
+
+        /**
+         * Return an existing SinkClient instance as a shared_ptr associated to the given identifier.
+         * Return an empty shared_ptr (nullptr) if nothing found.
+         * @param id SinkClient identifier as a string.
+         * @return share_ptr<SinkClient> A shared pointer on the found instance. Empty if not found.
+         */
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
+
         VideoManager& getVideoManager() const { return *videoManager_; }
 #endif // RING_VIDEO
 

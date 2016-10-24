@@ -159,6 +159,8 @@ class SIPCall : public Call
         void sendTextMessage(const std::map<std::string, std::string>& messages,
                              const std::string& from) override;
 
+        void removeCall() override;
+
         SIPAccountBase& getSIPAccount() const;
 
         void updateSDPFromSTUN();
@@ -203,6 +205,8 @@ class SIPCall : public Call
 
         void restartMediaSender() override;
 
+        void restartMediaReceiver() override;
+
         bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
 
         virtual std::map<std::string, std::string> getDetails() const override;
@@ -216,8 +220,14 @@ class SIPCall : public Call
         }
         virtual void merge(std::shared_ptr<SIPCall> scall);
 
+        void setPeerRegistredName(const std::string& name) {
+            peerRegistredName_ = name;
+        }
+
     private:
         NON_COPYABLE(SIPCall);
+
+        void waitForIceAndStartMedia();
 
         void stopAllMedia();
 
@@ -258,12 +268,12 @@ class SIPCall : public Call
         std::unique_ptr<Sdp> sdp_;
         bool peerHolding_ {false};
 
+        std::string peerRegistredName_ {};
+
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contactHeader_ {contactBuffer_, 0};
 
         std::unique_ptr<ring::upnp::Controller> upnp_;
-
-        std::shared_ptr<std::weak_ptr<SIPCall>> wthis_;
 };
 
 } // namespace ring

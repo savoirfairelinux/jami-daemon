@@ -362,7 +362,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     pjsip_inv_session* inv = nullptr;
     pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), PJSIP_INV_SUPPORT_ICE, &inv);
-
     if (!inv) {
         RING_ERR("Call invite is not initialized");
         return PJ_FALSE;
@@ -1103,20 +1102,6 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
 }
 
 static void
-onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg,
-                 SIPCall& call)
-{
-    if (!msg->body)
-        return;
-
-    //TODO: for now we assume that the "from" is the message sender, this may not be true in the
-    //      case of conferences; a content type containing this info will be added to the messages
-    //      in the future
-    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        im::parseSipMessage(msg));
-}
-
-static void
 transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjsip_event* event)
 {
     auto call = getCallFromInvite(inv);
@@ -1161,7 +1146,8 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     else if (methodName == "NOTIFY")
         onRequestNotify(inv, rdata, msg, *call);
     else if (methodName == "MESSAGE")
-        onRequestMessage(inv, rdata, msg, *call);
+        if (msg->body)
+            call->onTextMessage(im::parseSipMessage(msg));
 }
 
 int SIPVoIPLink::getModId()
@@ -1215,7 +1201,13 @@ resolver_callback(pj_status_t status, void *token, const struct pjsip_server_add
 void
 SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type, SrvResolveCallback cb)
 {
-    if (name.length() >= PJ_MAX_HOSTNAME) {
+    // PJSIP limits hostname to be longer than PJ_MAX_HOSTNAME.
+    // But, resolver prefix the given name by a string like "_sip._udp."
+    // causing a check against PJ_MAX_HOSTNAME to be useless.
+    // It's not easy to pre-determinate as it's implementation dependent.
+    // So we just choose a security marge enough for most cases, preventing a crash later
+    // in the call of pjsip_endpt_resolve().
+    if (name.length() > (PJ_MAX_HOSTNAME - 12)) {
         RING_ERR("Hostname is too long");
         cb({});
         return;

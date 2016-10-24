@@ -63,7 +63,7 @@ getVideoSettings()
 }
 #endif
 
-static constexpr int DEFAULT_ICE_INIT_TIMEOUT {10}; // seconds
+static constexpr int DEFAULT_ICE_INIT_TIMEOUT {35}; // seconds
 static constexpr int DEFAULT_ICE_NEGO_TIMEOUT {60}; // seconds
 
 // SDP media Ids
@@ -665,15 +665,27 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
-    if (inv)
-        im::sendSipMessage(inv.get(), messages);
-    else {
-        if (not subcalls.empty()) {
-            for (auto& c : subcalls)
-                c->sendTextMessage(messages, from);
-        } else
-            throw VoipLinkException("[call:" + getCallId() + "] sendTextMessage: no invite session for this call");
+    if (not subcalls.empty()) {
+        pendingOutMessages_.emplace_back(messages, from);
+        for (auto& c : subcalls)
+            c->sendTextMessage(messages, from);
+    } else {
+        if (inv) {
+            im::sendSipMessage(inv.get(), messages);
+        } else {
+            pendingOutMessages_.emplace_back(messages, from);
+            RING_ERR("[call:%s] sendTextMessage: no invite session for this call", getCallId().c_str());
+        }
     }
+}
+
+void
+SIPCall::removeCall()
+{
+    RING_WARN("[call:%s] removeCall()", getCallId().c_str());
+    Call::removeCall();
+    inv.reset();
+    setTransport({});
 }
 
 void
@@ -695,9 +707,11 @@ SIPCall::onClosed()
 void
 SIPCall::onAnswered()
 {
+    RING_WARN("[call:%s] onAnswered()", getCallId().c_str());
     if (getConnectionState() != ConnectionState::CONNECTED) {
         setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-        Manager::instance().peerAnsweredCall(*this);
+        if (not quiet)
+            Manager::instance().peerAnsweredCall(*this);
     }
 }
 
@@ -716,8 +730,9 @@ SIPCall::setupLocalSDPFromIce()
         return;
     }
 
-    if (waitForIceInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
-        RING_ERR("[call:%s] Local ICE init failed", getCallId().c_str());
+    // we need an initialized ICE to progress further
+    if (iceTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
+        RING_ERR("[call:%s] Medias' ICE init failed", getCallId().c_str());
         return;
     }
 
@@ -759,7 +774,7 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
-    if (not iceTransport_ or iceTransport_->isFailed())
+    if (not iceTransport_ or iceTransport_->isFailed() or not iceTransport_->isInitialized())
         return false;
     if (iceTransport_->isStarted()) {
         RING_DBG("[call:%s] ICE already started", getCallId().c_str());
@@ -887,6 +902,16 @@ SIPCall::restartMediaSender()
 }
 
 void
+SIPCall::restartMediaReceiver()
+{
+    RING_DBG("[call:%s] restarting RX media streams", getCallId().c_str());
+    avformatrtp_->restartReceiver();
+#ifdef RING_VIDEO
+    videortp_->restartReceiver();
+#endif
+}
+
+void
 SIPCall::stopAllMedia()
 {
     RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
@@ -925,36 +950,40 @@ SIPCall::onMediaUpdate()
     RING_WARN("[call:%s] onMediaUpdate", getCallId().c_str());
     stopAllMedia();
     openPortsUPnP();
-
     if (startIce()) {
-        auto ice = iceTransport_;
-        auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-        if (not wthis_)
-            wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-        auto wthis = wthis_;
-        Manager::instance().addTask([wthis,ice,iceTimeout] {
-            if (auto sthis = wthis->lock()) {
-                auto& this_ = *sthis;
-                if (ice != this_.iceTransport_) {
-                    RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
-                    return false;
-                }
-                /* First step: wait for an ICE transport for SIP channel */
-                if (this_.iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
-                    RING_DBG("[call:%s] ICE init failed (or timeout)", this_.getCallId().c_str());
-                    this_.onFailure(ETIMEDOUT);
-                    return false;
-                }
-                if (not this_.iceTransport_->isRunning())
-                    return true;
-                this_.startAllMedia();
-            }
-            return false;
-        });
+        if (not quiet)
+            waitForIceAndStartMedia();
     } else {
         RING_WARN("[call:%s] ICE not used for media", getCallId().c_str());
         startAllMedia();
     }
+}
+
+void
+SIPCall::waitForIceAndStartMedia()
+{
+    auto ice = iceTransport_;
+    auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
+    auto wthis = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
+    Manager::instance().addTask([wthis,ice,iceTimeout] {
+        if (auto sthis = wthis.lock()) {
+            auto& this_ = *sthis;
+            if (ice != this_.iceTransport_) {
+                RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
+                return false;
+            }
+            /* First step: wait for an ICE transport for SIP channel */
+            if (this_.iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
+                RING_DBG("[call:%s] ICE init failed (or timeout)", this_.getCallId().c_str());
+                this_.onFailure(ETIMEDOUT);
+                return false;
+            }
+            if (not this_.iceTransport_->isRunning())
+                return true;
+            this_.startAllMedia();
+        }
+        return false;
+    });
 }
 
 void
@@ -1023,6 +1052,11 @@ SIPCall::getDetails() const
     details.emplace(DRing::Call::Details::VIDEO_SOURCE, acc.isVideoEnabled() ? videoInput_ : "");
 #endif
 
+#if HAVE_RINGNS
+    if (not peerRegistredName_.empty())
+        details.emplace(DRing::Call::Details::REGISTERED_NAME, peerRegistredName_);
+#endif
+
     if (transport_ and transport_->isSecure()) {
         const auto& tlsInfos = transport_->getTlsInfos();
         const auto& cipher = pj_ssl_cipher_name(tlsInfos.cipher);
@@ -1084,21 +1118,18 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
 void
 SIPCall::merge(std::shared_ptr<SIPCall> scall)
 {
-    Call::merge(scall);
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
-    if (not wthis_)
-        wthis_ = std::make_shared<std::weak_ptr<SIPCall>>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-    *scall->wthis_ = *wthis_;
-    avformatrtp_ = std::move(scall->avformatrtp_);
-    videortp_ = std::move(scall->videortp_);
     setTransport(scall->transport_);
     sdp_ = std::move(scall->sdp_);
     peerHolding_ = scall->peerHolding_;
     upnp_ = std::move(scall->upnp_);
     std::copy_n(scall->contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
     pj_strcpy(&contactHeader_, &scall->contactHeader_);
+    Call::merge(scall);
+    if (iceTransport_->isStarted())
+        waitForIceAndStartMedia();
 }
 
 } // namespace ring

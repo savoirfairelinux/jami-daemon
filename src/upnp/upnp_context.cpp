@@ -22,8 +22,6 @@
 #include "config.h"
 #endif
 
-#include "upnp_context.h"
-
 #include <string>
 #include <set>
 #include <mutex>
@@ -32,6 +30,8 @@
 #include <random>
 #include <chrono>
 #include <cstdlib> // for std::free
+
+#include "upnp_context.h"
 
 #if HAVE_LIBUPNP
 #include <upnp/upnp.h>
