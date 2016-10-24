@@ -146,6 +146,13 @@ getSubscriptions(const std::string& accountID)
             }
         } else
             RING_ERR("Presence not initialized");
+    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        for (const auto& tracked_id : ringaccount->getTrackedAccountIDsPresence()) {
+            ret.push_back({
+                    {BUDDY_KEY, tracked_id.first},
+                    {STATUS_KEY, tracked_id.second ? ONLINE_KEY : OFFLINE_KEY}
+                });
+        }
     } else
         RING_ERR("Could not find account %s.", accountID.c_str());
 
