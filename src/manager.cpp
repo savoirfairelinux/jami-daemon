@@ -120,6 +120,34 @@ restore_backup(const std::string &path)
 }
 
 /**
+ * Set OpenDHT's log level based on the DHTLOGLEVEL environment variable.
+ * DHTLOGLEVEL = 0 minimum logging (=disable)
+ * DHTLOGLEVEL = 1 (=ERROR only)
+ * DHTLOGLEVEL = 2 (+=WARN)
+ * DHTLOGLEVEL = 3 maximum logging (+=DEBUG)
+ */
+
+/** Environment variable used to set OpenDHT's logging level */
+static constexpr const char* DHTLOGLEVEL = "DHTLOGLEVEL";
+
+static void
+setDhtLogLevel()
+{
+    char* envvar = getenv(DHTLOGLEVEL);
+    int level = 0;
+
+    if (envvar != nullptr) {
+        if (not (std::istringstream(envvar) >> level))
+            level = 0;
+
+        // From 0 (min) to 3 (max)
+        level = std::max(0, std::min(level, 3));
+    }
+
+    Manager::instance().dhtLogLevel = level;
+}
+
+/**
  * Set pjsip's log level based on the SIPLOGLEVEL environment variable.
  * SIPLOGLEVEL = 0 minimum logging
  * SIPLOGLEVEL = 6 maximum logging
@@ -272,6 +300,8 @@ Manager::init(const std::string &config_file)
 
     setGnuTlsLogLevel();
     RING_DBG("GNU TLS version %s initialized", gnutls_check_version(nullptr));
+
+    setDhtLogLevel();
 
     ice_tf_.reset(new IceTransportFactory());
 
