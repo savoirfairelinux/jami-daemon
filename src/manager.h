@@ -1015,6 +1015,8 @@ class Manager {
         VideoManager& getVideoManager() const { return *videoManager_; }
 #endif // RING_VIDEO
 
+        std::atomic<unsigned> dhtLogLevel {0}; // default = disable
+
     private:
         NON_COPYABLE(Manager);
 
