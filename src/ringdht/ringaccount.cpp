@@ -1579,27 +1579,24 @@ RingAccount::trackAccountPresence(const std::string& account_id)
         RING_WARN("Account %s is already being tracked.", h.toString().c_str());
 }
 
-bool
-RingAccount::isTrackedAccountOnline(const std::string& account_id) const
+std::map<std::string, bool>
+RingAccount::getTrackedAccountIDsPresence() const
 {
+    std::map<std::string, bool> presence_info;
     const auto shared_this = std::static_pointer_cast<const RingAccount>(shared_from_this());
-    auto h = dht::InfoHash(parseRingUri(account_id));
-    const auto& devices_id_it = shared_this->trackedAccountsIDs_.find(h);
-    if (devices_id_it == shared_this->trackedAccountsIDs_.cend()) {
-        RING_ERR("No info! Account %s is not tracked!", h.toString().c_str());
-        return false;
-    } else {
-        auto& devices_id = devices_id_it->second;
+    for (const auto& tracked_id : shared_this->trackedAccountsIDs_) {
+        const auto& devices_id = tracked_id.second;
         const auto& last_seen_device_id = std::max_element(devices_id.cbegin(), devices_id.cend(),
-            [](decltype(devices_id_it->second)::value_type ld, decltype(devices_id_it->second)::value_type rd)
+            [](decltype(tracked_id.second)::value_type ld, decltype(tracked_id.second)::value_type rd)
             {
                 return ld.second < rd.second;
             }
         );
-        return last_seen_device_id != devices_id.cend()
+        presence_info.emplace(tracked_id.first.toString(), last_seen_device_id != devices_id.cend()
             ? last_seen_device_id->second > std::chrono::steady_clock::now() - DeviceAnnouncement::TYPE.expiration
-            : false;
+            : false);
     }
+    return presence_info;
 }
 
 void
