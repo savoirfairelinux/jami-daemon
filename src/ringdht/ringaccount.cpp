@@ -1492,13 +1492,17 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#if 0 // enable if dht_ logging is needed
-        dht_.setLoggers(
-            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
-            [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
-        );
-#endif
+        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        if (dht_log_level > 0) {
+            static auto silent = [](char const* m, va_list args) {};
+            static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
+            static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
+            static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };
+            dht_.setLoggers(
+                log_error,
+                (dht_log_level > 1) ? log_warn : silent,
+                (dht_log_level > 2) ? log_debug : silent);
+        }
 
         dht_.importValues(loadValues());
 
