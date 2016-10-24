@@ -347,8 +347,8 @@ class RingAccount : public SIPAccountBase {
             using BaseClass = dht::SignedValue<DeviceAnnouncement>;
         public:
             static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-            dht::InfoHash dev;
-            MSGPACK_DEFINE_MAP(dev);
+            dht::InfoHash device_id;
+            MSGPACK_DEFINE_MAP(device_id)
         };
 
 #if HAVE_RINGNS
