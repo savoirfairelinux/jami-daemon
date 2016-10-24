@@ -348,7 +348,7 @@ class RingAccount : public SIPAccountBase {
         public:
             static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
             dht::InfoHash dev;
-            MSGPACK_DEFINE_MAP(dev);
+            MSGPACK_DEFINE_MAP(dev)
         };
 
 #if HAVE_RINGNS
