@@ -144,14 +144,12 @@ class RingAccount : public SIPAccountBase {
         void trackAccountPresence(const std::string& account_id);
 
         /**
-         * Tells if the account has been seen online so far in the last
-         * DeviceAnnouncement::TYPE.duration minutes.
+         * Tells for each tracked account id if it has been seen online so far
+         * in the last DeviceAnnouncement::TYPE.expiration minutes.
          *
-         * @param account_id  The account id;
-         *
-         * @return true if the account has been seen online, else false.
+         * @return map of buddy_uri to bool (online or not)
          */
-        bool isTrackedAccountOnline(const std::string& account_id) const;
+        std::map<std::string, bool> getTrackedAccountIDsPresence() const;
 
         /**
          * Connect to the DHT.
