@@ -3,6 +3,7 @@
  *
  *  Author: Patrick Keroulas <patrick.keroulas@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -36,6 +37,8 @@
 #include "sip/pres_sub_client.h"
 #include "client/ring_signal.h"
 #include "compiler_intrinsics.h"
+
+#include <ringdht/ringaccount.h>
 
 namespace DRing {
 
@@ -76,6 +79,8 @@ subscribeBuddy(const std::string& accountID, const std::string& uri, bool flag)
                      flag ? "S" : "Uns", accountID.c_str(), uri.c_str());
             pres->subscribeClient(uri, flag);
         }
+    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        ringaccount->trackBuddyPresence(uri);
     } else
         RING_ERR("Could not find account %s", accountID.c_str());
 }
@@ -140,6 +145,13 @@ getSubscriptions(const std::string& accountID)
             }
         } else
             RING_ERR("Presence not initialized");
+    } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        for (const auto& tracked_id : ringaccount->getTrackedBuddyPresence()) {
+            ret.push_back({
+                    {BUDDY_KEY, tracked_id.first},
+                    {STATUS_KEY, tracked_id.second ? ONLINE_KEY : OFFLINE_KEY}
+                });
+        }
     } else
         RING_ERR("Could not find account %s.", accountID.c_str());
 
