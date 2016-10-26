@@ -635,8 +635,10 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
         return false;
 
     // Register only if no NAT traversal methods exists
-    if (upnp_ or config_.stun.port > 0 or config_.turn.port > 0)
+    if (upnp_) {
+        RING_WARN("[ice:%p] PublicIP not registered as upnp is available", this);
         return false;
+    }
 
     // Find the local candidate corresponding to local host,
     // then register a rflx candidate using given public address
@@ -661,13 +663,54 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 void
 IceTransport::addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr)
 {
+    // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
+    // WARNING: following implementation is a HACK of PJNATH !!
+    // ice_strans doesn't have any API that permit to inject ICE any kind of candidates.
+    // So, the hack consists in accessing hidden ICE session using a patched PJPNATH
+    // library with a new API exposing this session (pj_ice_strans_get_ice_sess).
+    // Then call pj_ice_sess_add_cand() with a carfully forged candidate:
+    // the transport_id field uses an index in ICE transport STUN servers array
+    // corresponding to a STUN server with the same address familly.
+    // This implies we hope they'll not be modification of transport_id meaning in future
+    // and no conflics with the borrowed STUN config.
+    // HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK-HACK
+
+    // borrowed from pjproject/pjnath/ice_strans.c, modified to be C++11'ized.
+    static constexpr auto CREATE_TP_ID = [](pj_uint8_t type, pj_uint8_t idx) {
+        return (pj_uint8_t)((type << 6) | idx);
+    };
+    static constexpr int SRFLX_PREF = 65535;
+    static constexpr int TP_STUN = 1;
+
+    // find a compatible STUN host with same address familly, normally all system enabled
+    // host addresses are represented, so we expect to always found this host
+    int idx = -1;
+    auto af = addr.getFamily();
+    if (af == AF_UNSPEC) {
+        RING_ERR("[ice] Unable to add reflective IP %s: unknown addess familly",
+                 addr.toString().c_str());
+        return;
+    }
+
+    for (unsigned i=0; i < config_.stun_tp_cnt; ++i) {
+        if (config_.stun_tp[i].af == af) {
+            idx = i;
+            break;
+        }
+    }
+    if (idx < 0) {
+        RING_ERR("[ice] Unable to add reflective IP %s: no suitable local STUN host found",
+                 addr.toString().c_str());
+        return;
+    }
+
     pj_ice_sess_cand cand;
 
     cand.type = PJ_ICE_CAND_TYPE_SRFLX;
-    cand.status = PJ_EPENDING; /* not used */
+    cand.status = PJ_EPENDING; // not used
     cand.comp_id = comp_id;
-    cand.transport_id = 1; /* 1 = STUN */
-    cand.local_pref = 65535; /* host */
+    cand.transport_id = CREATE_TP_ID(TP_STUN, idx); // HACK!!
+    cand.local_pref = SRFLX_PREF; // reflective
     /* cand.foundation = ? */
     /* cand.prio = calculated by ice session */
     /* make base and addr the same since we're not going through a server */
