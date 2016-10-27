@@ -325,7 +325,7 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
                     const dht::Value::Id callvid  = udist(sthis->rand_);
                     const dht::Value::Id vid  = udist(sthis->rand_);
                     const auto callkey = dht::InfoHash::get("callto:" + dev.dev.toString());
-                    dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
+                    dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
                     val.id = vid;
 
                     sthis->dht_.putEncrypted(
@@ -1842,7 +1842,7 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
     registerDhtAddress(*ice);
 
     const auto vid = udist(rand_);
-    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->getLocalAttributesAndCandidates()) };
+    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
     val.id = vid;
 
     std::weak_ptr<SIPCall> wcall = call;
