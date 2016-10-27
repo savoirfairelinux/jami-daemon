@@ -70,6 +70,9 @@ ToneControl::getTelephoneFile(void)
 bool
 ToneControl::setAudioFile(const std::string& file)
 {
+    if (file.empty())
+        return false;
+
     std::lock_guard<std::mutex> lk(mutex_);
 
     if (audioFile_) {

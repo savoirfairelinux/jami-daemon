@@ -564,7 +564,7 @@ TrustStore::updateKnownCerts()
 void
 TrustStore::setStoreCertStatus(const crypto::Certificate& crt, TrustStore::PermissionStatus status)
 {
-    if (not crt.isCA())
+    if (not crt.isCA() || not allowed_)
         return;
 
     if (status == PermissionStatus::ALLOWED)

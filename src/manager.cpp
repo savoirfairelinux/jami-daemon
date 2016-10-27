@@ -1939,8 +1939,7 @@ Manager::playRingtone(const std::string& accountID)
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
 #else
-        ringchoice = std::string("") + DIR_SEPARATOR_STR
-                     + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
+        ringchoice = std::string("");
 #endif
     }
 
