@@ -146,22 +146,9 @@ template <class... Args>
 std::shared_ptr<IceTransport>
 RingAccount::createIceTransport(const Args&... args)
 {
-    // We need a public address in case of NAT'ed network
-    // Trying to use one discovered by DHT service
-    if (getPublishedAddress().empty()) {
-        const auto& addresses = dht_.getPublicAddress(AF_INET);
-        if (addresses.size())
-            setPublishedAddress(IpAddr{addresses[0].first});
-    }
-
     auto ice = Manager::instance().getIceTransportFactory().createTransport(args...);
     if (!ice)
         throw std::runtime_error("ICE transport creation failed");
-
-    if (const auto& publicIP = getPublishedIpAddress()) {
-        for (unsigned compId = 1; compId <= ice->getComponentCount(); ++compId)
-            ice->registerPublicIP(compId, publicIP);
-    }
 
     return ice;
 }
@@ -320,6 +307,8 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
                     // and we let upper layers decide when the call shall be aborded (our first check upper).
                     if (not ice->isInitialized())
                         return true;
+
+                    sthis->registerDhtAddress(*ice);
 
                     // Next step: sent the ICE data to peer through DHT
                     const dht::Value::Id callvid  = udist(sthis->rand_);
@@ -1839,6 +1828,8 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
                                   const dht::IceCandidates& peer_ice_msg,
                                   std::shared_ptr<dht::crypto::Certificate> peer_cert)
 {
+    registerDhtAddress(*ice);
+
     const auto vid = udist(rand_);
     dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->getLocalAttributesAndCandidates()) };
     val.id = vid;
@@ -2417,6 +2408,29 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     }, [=](bool ok){
         RING_WARN("sendTextMessage: found %lu devices", treatedDevices->size());
     });
+}
+
+void
+RingAccount::registerDhtAddress(IceTransport& ice)
+{
+    auto ip = getPublishedAddress();
+
+    // We need a public address in case of NAT'ed network
+    // Trying to use one discovered by DHT service
+    if (ip.empty()) {
+        const auto& addresses = dht_.getPublicAddress(AF_INET);
+        if (addresses.size()) {
+            ip = IpAddr {addresses[0].first};
+            setPublishedAddress(ip);
+        }
+    }
+
+    if (!ip.empty()) {
+        RING_DBG("[dht] Using pub IP: %s", ip.c_str());
+        for (unsigned compId = 1; compId <= ice.getComponentCount(); ++compId)
+            ice.registerPublicIP(compId, ip);
+    } else
+        RING_WARN("[dht] No public IP found!");
 }
 
 } // namespace ring
