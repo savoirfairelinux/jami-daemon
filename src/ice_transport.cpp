@@ -41,6 +41,8 @@
 
 namespace ring {
 
+static constexpr unsigned STUN_MAX_PACKET_SIZE {8192};
+
 // TODO: C++14 ? remove me and use std::min
 template< class T >
 static constexpr const T& min( const T& a, const T& b ) {
@@ -63,6 +65,83 @@ register_thread()
         RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
     }
 }
+
+/**
+ * Add stun/turn servers or default host as candidates
+ */
+static void
+add_stun_server(pj_ice_strans_cfg& cfg, int af)
+{
+    if (cfg.stun_tp_cnt >= PJ_ICE_MAX_STUN)
+        throw std::runtime_error("Too many STUN servers");
+    auto& stun = cfg.stun_tp[cfg.stun_tp_cnt++];
+
+    pj_ice_strans_stun_cfg_default(&stun);
+    stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+    stun.af = af;
+
+    RING_DBG("[ice] added host stun server");
+}
+
+static void
+add_stun_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const StunServerInfo& info)
+{
+    if (cfg.stun_tp_cnt >= PJ_ICE_MAX_STUN)
+        throw std::runtime_error("Too many STUN servers");
+
+    IpAddr ip {info.uri};
+
+    // Given URI cannot be DNS resolved or not IPv4 or IPv6?
+    // This prevents a crash into PJSIP when ip.toString() is called.
+    if (ip.getFamily() == AF_UNSPEC) {
+        RING_WARN("[ice] STUN server '%s' not used, unresolvable address", info.uri.c_str());
+        return;
+    }
+
+    auto& stun = cfg.stun_tp[cfg.stun_tp_cnt++];
+    pj_ice_strans_stun_cfg_default(&stun);
+    pj_strdup2_with_null(&pool, &stun.server, ip.toString().c_str());
+    stun.af = ip.getFamily();
+    stun.port = PJ_STUN_PORT;
+    stun.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+
+    RING_DBG("[ice] added stun server '%s', port %d", pj_strbuf(&stun.server), stun.port);
+}
+
+static void
+add_turn_server(pj_pool_t& pool, pj_ice_strans_cfg& cfg, const TurnServerInfo& info)
+{
+    if (cfg.turn_tp_cnt >= PJ_ICE_MAX_TURN)
+        throw std::runtime_error("Too many TURN servers");
+
+    IpAddr ip {info.uri};
+
+    // Same comment as add_stun_server()
+    if (ip.getFamily() == AF_UNSPEC) {
+        RING_WARN("[ice] TURN server '%s' not used, unresolvable address", info.uri.c_str());
+        return;
+    }
+
+    auto& turn = cfg.turn_tp[cfg.turn_tp_cnt++];
+    pj_ice_strans_turn_cfg_default(&turn);
+    pj_strdup2_with_null(&pool, &turn.server, ip.toString().c_str());
+    turn.af = ip.getFamily();
+    turn.port = PJ_STUN_PORT;
+    turn.cfg.max_pkt_size = STUN_MAX_PACKET_SIZE;
+
+    // Authorization (only static plain password supported yet)
+    if (not info.password.empty()) {
+        turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
+        turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
+        pj_cstr(&turn.auth_cred.data.static_cred.realm, info.realm.c_str());
+        pj_cstr(&turn.auth_cred.data.static_cred.username, info.username.c_str());
+        pj_cstr(&turn.auth_cred.data.static_cred.data, info.password.c_str());
+    }
+
+    RING_DBG("[ice] added turn server '%s', port %d", pj_strbuf(&turn.server), turn.port);
+}
+
+//##################################################################################################
 
 IceTransport::Packet::Packet(void *pkt, pj_size_t size)
     : data(new char[size]), datalen(size)
@@ -109,7 +188,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
         upnp_.reset(new upnp::Controller());
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    config_ = iceTransportFactory.getIceCfg();
+    config_ = iceTransportFactory.getIceCfg(); // config copy
 
     pool_.reset(pj_pool_create(iceTransportFactory.getPoolFactory(),
                                "IceTransport.pool", 512, 512, NULL));
@@ -121,50 +200,13 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
     icecb.on_rx_data = cb_on_rx_data;
     icecb.on_ice_complete = cb_on_ice_complete;
 
-    /* STUN */
-    if (not options.stunServer.empty()) {
-        const auto n = options.stunServer.rfind(':');
-        if (n != std::string::npos) {
-            const auto p = options.stunServer.c_str();
-            pj_strset(&config_.stun.server, (char*)p, n);
-            config_.stun.port = (pj_uint16_t)std::atoi(p+n+1);
-        } else {
-            pj_cstr(&config_.stun.server, options.stunServer.c_str());
-            config_.stun.port = PJ_STUN_PORT;
-        }
-        RING_WARN("ICE: STUN='%s', PORT=%d", options.stunServer.c_str(),
-                 config_.stun.port);
-    } else
-        config_.stun.port = 0;
+    // Add STUN servers
+    for (auto& server : options.stunServers)
+        add_stun_server(*pool_, config_, server);
 
-    /* TURN */
-    if (not options.turnServer.empty()) {
-        const auto n = options.turnServer.rfind(':');
-        if (n != std::string::npos) {
-            const auto p = options.turnServer.c_str();
-            pj_strset(&config_.turn.server, (char*)p, n);
-            config_.turn.port = (pj_uint16_t)std::atoi(p+n+1);
-        } else {
-            pj_cstr(&config_.turn.server, options.turnServer.c_str());
-            config_.turn.port = PJ_STUN_PORT;
-        }
-
-        // Authorization (only static plain password supported yet)
-        if (not options.turnServerPwd.empty()) {
-            config_.turn.auth_cred.type = PJ_STUN_AUTH_CRED_STATIC;
-            config_.turn.auth_cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-            pj_cstr(&config_.turn.auth_cred.data.static_cred.realm, options.turnServerRealm.c_str());
-            pj_cstr(&config_.turn.auth_cred.data.static_cred.username, options.turnServerUserName.c_str());
-            pj_cstr(&config_.turn.auth_cred.data.static_cred.data, options.turnServerPwd.c_str());
-        }
-
-        // Only UDP yet
-        config_.turn.conn_type = PJ_TURN_TP_UDP;
-
-        RING_WARN("ICE: TURN='%s', PORT=%d", options.turnServer.c_str(),
-                 config_.turn.port);
-    } else
-        config_.turn.port = 0;
+    // Add TURN servers
+    for (auto& server : options.turnServers)
+        add_turn_server(*pool_, config_, server);
 
     static constexpr auto IOQUEUE_MAX_HANDLES = min(PJ_IOQUEUE_MAX_HANDLES, 64);
     TRY( pj_timer_heap_create(pool_.get(), 100, &config_.stun_cfg.timer_heap) );
@@ -504,18 +546,33 @@ IceTransport::_isFailed() const
 IpAddr
 IceTransport::getLocalAddress(unsigned comp_id) const
 {
+    // Return the local IP of negotiated connection pair
+    if (isRunning()) {
+        if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1)) {
+            return sess->lcand->addr;
+        }
+        RING_WARN("Non-negotiated transport: try to return default local IP");
+    }
+
+    // Return the default IP (could be not nominated and valid after negotiation)
     if (isInitialized())
         return cand_[comp_id].addr;
+
+    RING_ERR("bad call: non-initialized transport");
     return {};
 }
 
 IpAddr
 IceTransport::getRemoteAddress(unsigned comp_id) const
 {
-    if (isInitialized()) {
+    // Return the remote IP of negotiated connection pair
+    if (isRunning()) {
         if (auto sess = pj_ice_strans_get_valid_pair(icest_.get(), comp_id+1))
             return sess->rcand->addr;
+        RING_ERR("runtime error: negotiated transport without valid pair");
     }
+
+    RING_ERR("bad call: non-negotiated transport");
     return {};
 }
 
@@ -877,6 +934,8 @@ IceTransport::waitForData(int comp_id, unsigned int timeout)
     return io.queue.front().datalen;
 }
 
+//##################################################################################################
+
 IceTransportFactory::IceTransportFactory()
     : cp_()
     , pool_(nullptr, pj_pool_release)
@@ -894,14 +953,13 @@ IceTransportFactory::IceTransportFactory()
     // v2.4.5 of PJNATH has a default of 100ms but RFC 5389 since version 14 requires
     // a minimum of 500ms on fixed-line links. Our usual case is wireless links.
     // This solves too long ICE exchange by DHT.
-    // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 31s before timeout.
+    // Using 500ms with default PJ_STUN_MAX_TRANSMIT_COUNT (7) gives around 33s before timeout.
     ice_cfg_.stun_cfg.rto_msec = 500;
 
-    ice_cfg_.af = pj_AF_INET();
+    // Add local hosts (IPv4, IPv6) as stun candidates
+    add_stun_server(ice_cfg_, pj_AF_INET6());
+    add_stun_server(ice_cfg_, pj_AF_INET());
 
-    ice_cfg_.stun.cfg.max_pkt_size = 8192;
-    ice_cfg_.turn.cfg.max_pkt_size = 8192;
-    //ice_cfg_.stun.max_host_cands = icedemo.opt.max_host;
     ice_cfg_.opt.aggressive = PJ_FALSE;
 }
 

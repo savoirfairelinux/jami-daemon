@@ -78,7 +78,8 @@ case "${host_os}" in
     AC_DEFINE([WIN32_LEAN_AND_MEAN],[1], [Define to limit the scope of <windows.h>.])
 
     CPPFLAGS+="-D_WIN32_WINNT=0x0601 -DWINVER=0x0601 -D__USE_MINGW_ANSI_STDIO=1"
-    LDFLAGS+="-no-undefined -avoid-version -Wl,--nxcompat -Wl,--dynamicbase"
+    LDFLAGS+="-Wl,--nxcompat -Wl,--dynamicbase"
+    LIBS+=" -lws2_32"
     ac_default_prefix="`pwd`/_win32"
     DESTDIR="`pwd`/_win32/"
     AC_SUBST(WINDOWS_ARCH)
@@ -384,20 +385,26 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AM_CONDITIONAL(RING_DBUS, true)],
        AM_CONDITIONAL(RING_DBUS, false));
 
+dnl Ring name service is default-enabled
+AC_ARG_ENABLE([ringns], AS_HELP_STRING([--disable-ringns], [Enable Ring Name Service]))
+AM_CONDITIONAL([RINGNS], test "x$enable_ringns" != "xno", [Define if you use the Ring Name Service])
+AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo 1; else echo 0; fi`, [Define if you use the Ring Name Service])
+
 # Rest C++ with restbed
 AC_ARG_WITH([restcpp],
     AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
 
-AS_IF([test "x$with_restcpp" = "xyes"], [
-    PKG_CHECK_MODULES(RESTBED, librestbed,, AC_MSG_WARN([Missing restbed files]))
+AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
+  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
 
+AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
     AC_SUBST(SBINDIR)
-
     AC_CONFIG_FILES([bin/restcpp/Makefile])
-
-    AM_CONDITIONAL(RING_RESTCPP, true)],
-    AM_CONDITIONAL(RING_RESTCPP, false));
+    AM_CONDITIONAL(RING_RESTCPP, true)
+  ],
+  AM_CONDITIONAL(RING_RESTCPP, false)
+);
 
 dnl Check for libav
 PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))

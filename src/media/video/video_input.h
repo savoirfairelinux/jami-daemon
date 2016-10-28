@@ -61,7 +61,7 @@ struct VideoFrameBuffer {
                          status(BUFFER_NOT_ALLOCATED), index(0) {}
 };
 
-class VideoInput : public VideoGenerator
+class VideoInput : public VideoGenerator, public std::enable_shared_from_this<VideoInput>
 {
 public:
     VideoInput();

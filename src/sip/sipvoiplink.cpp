@@ -1103,20 +1103,6 @@ onRequestNotify(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg*
 }
 
 static void
-onRequestMessage(pjsip_inv_session* /*inv*/, pjsip_rx_data* /*rdata*/, pjsip_msg* msg,
-                 SIPCall& call)
-{
-    if (!msg->body)
-        return;
-
-    //TODO: for now we assume that the "from" is the message sender, this may not be true in the
-    //      case of conferences; a content type containing this info will be added to the messages
-    //      in the future
-    Manager::instance().incomingMessage(call.getCallId(), call.getPeerNumber(),
-                                        im::parseSipMessage(msg));
-}
-
-static void
 transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjsip_event* event)
 {
     auto call = getCallFromInvite(inv);
@@ -1161,7 +1147,8 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     else if (methodName == "NOTIFY")
         onRequestNotify(inv, rdata, msg, *call);
     else if (methodName == "MESSAGE")
-        onRequestMessage(inv, rdata, msg, *call);
+        if (msg->body)
+            call->onTextMessage(im::parseSipMessage(msg));
 }
 
 int SIPVoIPLink::getModId()
