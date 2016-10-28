@@ -533,6 +533,8 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
+
+        void registerDhtAddress(IceTransport&);
 };
 
 } // namespace ring
