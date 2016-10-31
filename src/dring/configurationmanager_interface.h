@@ -48,6 +48,10 @@ std::string addAccount(const std::map<std::string, std::string>& details);
 bool exportOnRing(const std::string& accountID, const std::string& password);
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 
+bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);
+bool lookupAddress(const std::string& account, const std::string& nameserver, const std::string& address);
+bool registerName(const std::string& account, const std::string& password, const std::string& name);
+
 void removeAccount(const std::string& accountID);
 void setAccountEnabled(const std::string& accountID, bool enable);
 std::vector<std::string> getAccountList();
@@ -216,9 +220,17 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "ExportOnRingEnded";
                 using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
         };
+        struct NameRegistrationEnded {
+                constexpr static const char* name = "NameRegistrationEnded";
+                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& name);
+        };
         struct KnownDevicesChanged {
                 constexpr static const char* name = "KnownDevicesChanged";
                 using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& devices);
+        };
+        struct RegisteredNameFound {
+                constexpr static const char* name = "RegisteredNameFound";
+                using cb_type = void(const std::string& /*account_id*/, int state, const std::string& /*address*/, const std::string& /*name*/);
         };
         struct CertificatePinned {
                 constexpr static const char* name = "CertificatePinned";

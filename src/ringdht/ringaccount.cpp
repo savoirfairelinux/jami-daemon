@@ -93,9 +93,9 @@ constexpr const char* const RingAccount::ACCOUNT_TYPE;
 static std::uniform_int_distribution<dht::Value::Id> udist;
 
 static const std::string
-parseRingUri(const std::string& toUrl)
+stripPrefix(const std::string& toUrl)
 {
-    auto dhtf = toUrl.find("ring:");
+    auto dhtf = toUrl.find(RING_URI_PREFIX);
     if (dhtf != std::string::npos) {
         dhtf = dhtf+5;
     } else {
@@ -104,16 +104,31 @@ parseRingUri(const std::string& toUrl)
     }
     while (dhtf < toUrl.length() && toUrl[dhtf] == '/')
         dhtf++;
+    return toUrl.substr(dhtf);
+}
 
-    if (toUrl.length() - dhtf < 40)
+static const std::string
+parseRingUri(const std::string& toUrl)
+{
+    auto sufix = stripPrefix(toUrl);
+    if (sufix.length() < 40)
         throw std::invalid_argument("id must be a ring infohash");
 
-    const std::string toUri = toUrl.substr(dhtf, 40);
+    const std::string toUri = sufix.substr(0, 40);
     if (std::find_if_not(toUri.cbegin(), toUri.cend(), ::isxdigit) != toUri.cend())
         throw std::invalid_argument("id must be a ring infohash");
     return toUri;
 }
 
+static bool
+isRingHash(const std::string& uri)
+{
+    if (uri.length() < 40)
+        return false;
+    if (std::find_if_not(uri.cbegin(), uri.cbegin()+40, ::isxdigit) != uri.cend())
+        return false;
+    return true;
+}
 
 static constexpr const char*
 dhtStatusStr(dht::NodeStatus status) {
@@ -153,6 +168,9 @@ RingAccount::createIceTransport(const Args&... args)
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
     : SIPAccountBase(accountID), via_addr_(),
+#if HAVE_RINGNS
+    nameDir_(NameDirectory::instance()),
+#endif
     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
     dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
     idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
@@ -209,17 +227,47 @@ RingAccount::newIncomingCall(const std::string& from)
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingSIPCall(const std::string& toUrl)
 {
-    const std::string toUri = parseRingUri(toUrl);
-    RING_DBG("Calling DHT peer %s", toUri.c_str());
-
+    auto sufix = stripPrefix(toUrl);
+    RING_DBG("Calling DHT peer %s", sufix.c_str());
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING);
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
-    call->initRecFilename(toUri);
+    call->initRecFilename(toUrl);
 
+    try {
+        const std::string toUri = parseRingUri(sufix);
+        startOutgoingCall(call, toUri);
+    } catch (...) {
+#if HAVE_RINGNS
+        std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
+        nameDir_.get().lookupName(sufix, [wthis_,call](const std::string& result, NameDirectory::Response response) mutable {
+            runOnMainThread([=]() mutable {
+                if (auto sthis = wthis_.lock()) {
+                    try {
+                        const std::string toUri = parseRingUri(result);
+                        sthis->startOutgoingCall(call, toUri);
+                    } catch (...) {
+                        call->onFailure(ENOENT);
+                    }
+                } else {
+                    call->onFailure();
+                }
+            });
+        });
+#else
+        call->onFailure(ENOENT);
+#endif
+    }
+
+    return call;
+}
+
+void
+RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string toUri)
+{
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
 
     // TODO: for now, we automatically trust all explicitly called peers
@@ -335,8 +383,6 @@ RingAccount::newOutgoingSIPCall(const std::string& toUrl)
             }
         }
     });
-
-    return call;
 }
 
 void
@@ -487,10 +533,13 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
+#if HAVE_RINGNS
+    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameDir_.get().getServer();
+#endif
+
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
-    out << YAML::Key << DRing::Account::ConfProperties::ETH::ACCOUNT << YAML::Value << ethAccount_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -510,12 +559,6 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
 
     try {
-        parseValue(node, DRing::Account::ConfProperties::ETH::ACCOUNT, ethAccount_);
-    } catch (const std::exception& e) {
-        RING_WARN("can't read eth account: %s", e.what());
-    }
-
-    try {
         parseValue(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_);
     } catch (const std::exception& e) {
         RING_WARN("can't read archive path: %s", e.what());
@@ -532,6 +575,12 @@ void RingAccount::unserialize(const YAML::Node &node)
     if (not dhtPort_)
         dhtPort_ = getRandomEvenPort(DHT_PORT_RANGE);
     dhtPortUsed_ = dhtPort_;
+
+#if HAVE_RINGNS
+    std::string ringns_server;
+    parseValue(node, DRing::Account::ConfProperties::RingNS::URI, ringns_server);
+    nameDir_ = NameDirectory::instance(ringns_server);
+#endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
 
@@ -656,12 +705,7 @@ RingAccount::hasSignedReceipt()
     ringDeviceId_ = identity_.first->getPublicKey().getId().toString();
     username_ = RING_URI_PREFIX + id;
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
-
-    auto eth_addr = root["eth"].asString();
-    if (eth_addr != ethAccount_) {
-        RING_WARN("hasSignedReceipt() eth_addr not matching");
-        ethAccount_ = eth_addr;
-    }
+    ethAccount_ = root["eth"].asString();
 
     RING_WARN("hasSignedReceipt() -> true");
     return true;
@@ -1130,6 +1174,12 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
 
+#if HAVE_RINGNS
+    std::string ringns_server;
+    parseString(details, DRing::Account::ConfProperties::RingNS::URI,     ringns_server);
+    nameDir_ = NameDirectory::instance(ringns_server);
+#endif
+
     loadAccount(archive_password, archive_pin);
 }
 
@@ -1160,7 +1210,10 @@ RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
 
     //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
-    a.emplace(DRing::Account::ConfProperties::ETH::ACCOUNT,                ethAccount_);
+    a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT,               ethAccount_);
+#if HAVE_RINGNS
+    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                  nameDir_.get().getServer());
+#endif
 
     return a;
 }
@@ -1170,8 +1223,49 @@ RingAccount::getVolatileAccountDetails() const
 {
     auto a = SIPAccountBase::getVolatileAccountDetails();
     a.emplace(DRing::Account::VolatileProperties::InstantMessaging::OFF_CALL, TRUE_STR);
+#if HAVE_RINGNS
+    if (not registeredName_.empty())
+        a.emplace(DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+#endif
     return a;
 }
+
+#if HAVE_RINGNS
+void
+RingAccount::lookupName(const std::string& name)
+{
+    auto acc = getAccountID();
+    nameDir_.get().lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
+    });
+}
+
+void
+RingAccount::lookupAddress(const std::string& addr)
+{
+    auto acc = getAccountID();
+    nameDir_.get().lookupAddress(addr, [acc,addr](const std::string& result, NameDirectory::Response response) {
+        emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, addr, result);
+    });
+}
+
+void
+RingAccount::registerName(const std::string& password, const std::string& name)
+{
+    auto acc = getAccountID();
+    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    nameDir_.get().registerName(ringAccountId_, name, ethAccount_, [acc,name,w](NameDirectory::RegistrationResponse response){
+        int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
+                  (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
+                  (response == NameDirectory::RegistrationResponse::alreadyTaken) ? 3 : 4));
+        if (response == NameDirectory::RegistrationResponse::success) {
+            if (auto this_ = w.lock())
+                this_->registeredName_ = name;
+        }
+        emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
+    });
+}
+#endif
 
 void
 RingAccount::handleEvents()
@@ -1466,6 +1560,22 @@ RingAccount::doRegister_()
             dht_.join();
         }
 
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        std::weak_ptr<RingAccount> w {shared};
+
+#if HAVE_RINGNS
+        // Look for registered name on the blockchain
+        nameDir_.get().lookupAddress(ringAccountId_, [w](const std::string& result, const NameDirectory::Response& response) {
+            if (response == NameDirectory::Response::found)
+                if (auto this_ = w.lock()) {
+                    if (this_->registeredName_ != result) {
+                        this_->registeredName_ = result;
+                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                    }
+                }
+        });
+#endif
+
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
                 RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
                 RegistrationState state;
@@ -1498,25 +1608,27 @@ RingAccount::doRegister_()
             return ret;
         });
 
-#if 0 // enable if dht_ logging is needed
-        dht_.setLoggers(
-            [](char const* m, va_list args){
-            //vlogger(LOG_ERR, m, args);
-            char tmp[2048];
-            vsprintf(tmp, m, args);
-            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-            ring::emitSignal<DRing::Debug::MessageSend>(std::to_string(now) + " " + std::string(tmp));
-        },
-            [](char const* m, va_list args){
-            //vlogger(LOG_WARNING, m, args);
-            char tmp[2048];
-            vsprintf(tmp, m, args);
-            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
-            ring::emitSignal<DRing::Debug::MessageSend>(std::to_string(now) + " " + std::string(tmp));
-        },
-            [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
-        );
+        auto dht_log_level = Manager::instance().dhtLogLevel.load();
+        if (dht_log_level > 0) {
+            static auto silent = [](char const* m, va_list args) {};
+#ifndef WIN32_NATIVE
+            static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
+            static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
+            static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };
+            dht_.setLoggers(
+                log_error,
+                (dht_log_level > 1) ? log_warn : silent,
+                (dht_log_level > 2) ? log_debug : silent);
+#else
+            static auto log_all = [](char const* m, va_list args) {
+                char tmp[2048];
+                vsprintf(tmp, m, args);
+                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                ring::emitSignal<DRing::Debug::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+            };
+            dht_.setLoggers(log_all, log_all, silent);
 #endif
+        }
 
         dht_.importValues(loadValues());
 
@@ -1527,8 +1639,6 @@ RingAccount::doRegister_()
         auto bootstrap = loadBootstrap();
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
-
-        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
 
         // Put device annoucement
         if (announce_) {
@@ -1749,8 +1859,18 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
     dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->getLocalAttributesAndCandidates()) };
     val.id = vid;
 
-    // Asynchronous DHT put of our local ICE data
     std::weak_ptr<SIPCall> wcall = call;
+#if HAVE_RINGNS
+    auto from_acc_id = peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId().toString() : peer_cert->getId().toString()) : peer_ice_msg.from.toString();
+    nameDir_.get().lookupAddress(from_acc_id, [wcall](const std::string& result, const NameDirectory::Response& response){
+        if (response == NameDirectory::Response::found)
+            if (auto call = wcall.lock())
+                call->setPeerRegistredName(result);
+    });
+#endif
+
+    // Asynchronous DHT put of our local ICE data
+    auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         peer_ice_msg.from,
@@ -1793,6 +1913,12 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    if (registrationState_ == RegistrationState::INITIALIZING
+     || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
+        if (released_cb) released_cb(false);
+        return;
+    }
+
     RING_WARN("doUnregister");
     {
         std::lock_guard<std::mutex> lock(callsMutex_);

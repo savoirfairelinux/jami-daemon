@@ -34,7 +34,7 @@ struct ThreadPool::ThreadState
 };
 
 ThreadPool::ThreadPool()
- : maxThreads_(std::thread::hardware_concurrency())
+ : maxThreads_(std::max<size_t>(std::thread::hardware_concurrency(), 4))
 {
     threads_.reserve(maxThreads_);
 }

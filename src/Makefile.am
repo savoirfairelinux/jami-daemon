@@ -55,7 +55,12 @@ libring_la_LDFLAGS = \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
 		@ZLIB_LIBS@ \
-		$(PCRE_LIBS)
+		$(PCRE_LIBS) \
+		@LIBS@
+
+if HAVE_WIN32
+libring_la_LDFLAGS += -no-undefined -avoid-version
+endif
 
 if HAVE_OSX
 #FIXME necessary for -lintl

@@ -42,6 +42,10 @@
 #include <list>
 #include <future>
 
+#if HAVE_RINGNS
+#include "namedirectory.h"
+#endif
+
 /**
  * @file ringaccount.h
  * @brief Ring Account is build on top of SIPAccountBase and uses DHT to handle call connectivity.
@@ -281,8 +285,14 @@ class RingAccount : public SIPAccountBase {
 
         void connectivityChanged() override;
 
-    public: // overloaded methods
+        // overloaded methods
         void flush() override;
+
+#if HAVE_RINGNS
+        void lookupName(const std::string& name);
+        void lookupAddress(const std::string& address);
+        void registerName(const std::string& password, const std::string& name);
+#endif
 
     private:
         NON_COPYABLE(RingAccount);
@@ -338,6 +348,11 @@ class RingAccount : public SIPAccountBase {
             MSGPACK_DEFINE_MAP(dev);
         };
 
+#if HAVE_RINGNS
+        std::reference_wrapper<NameDirectory> nameDir_;
+        std::string registeredName_;
+#endif
+
         /**
          * Compute archive encryption key and DHT storage location from password and PIN.
          */
@@ -357,6 +372,8 @@ class RingAccount : public SIPAccountBase {
          * @param The map containing the account information.
          */
         virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
+
+        void startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string toUri);
 
         /**
          * Start a SIP Call
