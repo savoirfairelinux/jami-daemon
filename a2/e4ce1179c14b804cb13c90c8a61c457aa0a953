@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+Submitted-by: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+Submitted-at: Mon, 31 Oct 2016 13:26:14 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5266
+Project: ring-daemon
+Branch: refs/heads/master
