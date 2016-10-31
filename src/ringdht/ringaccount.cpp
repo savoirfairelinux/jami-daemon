@@ -1500,8 +1500,20 @@ RingAccount::doRegister_()
 
 #if 0 // enable if dht_ logging is needed
         dht_.setLoggers(
-            [](char const* m, va_list args){ vlogger(LOG_ERR, m, args); },
-            [](char const* m, va_list args){ vlogger(LOG_WARNING, m, args); },
+            [](char const* m, va_list args){
+            //vlogger(LOG_ERR, m, args);
+            char tmp[2048];
+            vsprintf(tmp, m, args);
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+            ring::emitSignal<DRing::Debug::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+        },
+            [](char const* m, va_list args){
+            //vlogger(LOG_WARNING, m, args);
+            char tmp[2048];
+            vsprintf(tmp, m, args);
+            auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+            ring::emitSignal<DRing::Debug::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+        },
             [](char const* m, va_list args){ /*vlogger(LOG_DEBUG, m, args);*/ }
         );
 #endif

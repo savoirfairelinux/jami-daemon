@@ -329,14 +329,12 @@ SipTransportBroker::createUdpTransport(const SipTransportDescr& d)
     listeningAddress.setPort(d.listenerPort);
     RETURN_IF_FAIL(listeningAddress, nullptr, "Could not determine IP address for this transport");
 
+    pjsip_udp_transport_cfg pj_cfg;
+    pjsip_udp_transport_cfg_default(&pj_cfg, family);
+    pj_cfg.bind_addr = listeningAddress;
     pjsip_transport *transport = nullptr;
-        pj_status_t status = listeningAddress.isIpv4() ?
-            pjsip_udp_transport_start (endpt_, &static_cast<const pj_sockaddr_in&>(listeningAddress),
-                nullptr, 1, &transport) :
-            pjsip_udp_transport_start6(endpt_, &static_cast<const pj_sockaddr_in6&>(listeningAddress),
-                nullptr, 1, &transport);
-        if (status != PJ_SUCCESS) {
-        RING_ERR("pjsip_udp_transport_start* failed with error %d: %s", status,
+    if (pj_status_t status = pjsip_udp_transport_start2(endpt_, &pj_cfg, &transport)) {
+        RING_ERR("pjsip_udp_transport_start2 failed with error %d: %s", status,
                  sip_utils::sip_strerror(status).c_str());
         RING_ERR("UDP IPv%s Transport did not start on %s",
             listeningAddress.isIpv4() ? "4" : "6",
