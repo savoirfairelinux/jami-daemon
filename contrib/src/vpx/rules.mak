@@ -3,6 +3,8 @@
 #Libav doesnt support new vpx version
 ifdef HAVE_ANDROID
 VPX_HASH := v1.6.0
+else ifdef HAVE_IOS
+VPX_HASH := v1.5.0
 else
 VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
 endif
@@ -13,8 +15,6 @@ $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
 	$(call download,$(VPX_URL))
 
 .sum-vpx: libvpx-$(VPX_HASH).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
 libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
 	rm -Rf $@-$(VPX_HASH)
