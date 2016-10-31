@@ -447,20 +447,9 @@ AS_IF([test "x$enable_accel" != "xno"], [
   AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
   AM_CONDITIONAL(RING_ACCEL, true)
   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
-    PKG_CHECK_MODULES(LIBVA, [libva], ,
-      [AC_MSG_ERROR([Missing libva package])])
-    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-      AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Have vaapi drm])
-      ], [AC_MSG_ERROR([Could not find libva-drm])
-    ])
-    AC_CHECK_HEADER([X11/Xlib.h], [
-      AC_CHECK_LIB(X11, XOpenDisplay, [], [AC_MSG_ERROR([Could not find X11])])
-      AC_DEFINE([HAVE_X11], [1], [Have x11])
-      PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
-        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Have vaapi x11])
-        ], [AC_MSG_ERROR([Could not find libva-x11])
-      ])
-    ])
+    PKG_CHECK_MODULES([LIBVA], [libva libva-drm], [
+      AC_DEFINE([HAVE_VAAPI_ACCEL], [1], [Have vaapi drm])
+    ], [AC_MSG_ERROR([Missing libva/libva-drm package])])
   ])
 ], AM_CONDITIONAL(RING_ACCEL, false))
 

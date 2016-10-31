@@ -23,7 +23,7 @@
 
 #include "accel.h"
 
-#if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
+#ifdef HAVE_VAAPI_ACCEL
 #include "v4l2/vaapi.h"
 #endif
 
@@ -109,7 +109,7 @@ getAccelInfo(std::initializer_list<AccelID> codecAccels)
      * in this array.
      */
     static const AccelInfo accels[] = {
-#if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
+#ifdef HAVE_VAAPI_ACCEL
         { AccelID::Vaapi, AV_PIX_FMT_VAAPI, "vaapi", makeHardwareAccel<VaapiAccel> },
 #endif
     };
