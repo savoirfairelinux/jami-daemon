@@ -97,7 +97,6 @@ VaapiAccel::extractData(AVCodecContext* codecCtx, VideoFrame& container)
 bool
 VaapiAccel::init(AVCodecContext* codecCtx)
 {
-#ifdef HAVE_VAAPI_ACCEL_DRM
     // try all possible devices, use first one that works
     const std::string path = "/dev/dri/";
     for (auto& entry : ring::fileutils::readDirectory(path)) {
@@ -113,9 +112,6 @@ VaapiAccel::init(AVCodecContext* codecCtx)
                 return true;
     }
     return false;
-#elif HAVE_VAAPI_ACCEL_X11
-    return open(codecCtx, ":0"); // this is the default x11 device
-#endif
 }
 
 bool

@@ -33,12 +33,7 @@ extern "C" {
 #include <unistd.h>
 
 #include <va/va.h>
-#ifdef HAVE_VAAPI_ACCEL_DRM
-#   include <va/va_drm.h>
-#endif
-#ifdef HAVE_VAAPI_ACCEL_X11
-#   include <va/va_x11.h>
-#endif
+#include <va/va_drm.h>
 
 #include <libavutil/avconfig.h>
 #include <libavutil/buffer.h>

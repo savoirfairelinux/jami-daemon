@@ -121,7 +121,7 @@ DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
 ifdef HAVE_LINUX
 FFMPEGCONF += --target-os=linux --enable-pic
 ifndef HAVE_ANDROID
-FFMPEGCONF += --enable-indev=v4l2 --enable-indev=x11grab_xcb --enable-indev=x11grab --enable-x11grab
+FFMPEGCONF += --enable-indev=v4l2 --enable-libxcb --disable-xlib --enable-indev=x11grab_xcb
 else
 # used to avoid Text Relocations
 FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
