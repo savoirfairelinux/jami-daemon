@@ -139,6 +139,7 @@ static constexpr const char* DHTLOGLEVEL = "DHTLOGLEVEL";
 static void
 setDhtLogLevel()
 {
+#ifndef WIN32_NATIVE
     char* envvar = getenv(DHTLOGLEVEL);
     int level = 0;
 
@@ -151,6 +152,9 @@ setDhtLogLevel()
         RING_DBG("DHTLOGLEVEL=%u", level);
     }
     Manager::instance().dhtLogLevel = level;
+#else
+    Manager::instance().dhtLogLevel = 0;
+#endif
 }
 
 /**
