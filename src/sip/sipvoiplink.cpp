@@ -347,7 +347,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     }
 
     pjsip_dialog *dialog = nullptr;
-    if (pjsip_dlg_create_uas(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
+    if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
         RING_ERR("Could not create uas");
         call.reset();
         try_respond_stateless(endpt_, rdata, PJSIP_SC_INTERNAL_SERVER_ERROR, nullptr, nullptr, nullptr);
@@ -357,6 +357,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_tpselector tp_sel  = SIPVoIPLink::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Could not set transport for dialog");
+        if (dialog) pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
     }
 
@@ -364,10 +365,10 @@ transaction_request_cb(pjsip_rx_data *rdata)
     pjsip_inv_create_uas(dialog, rdata, call->getSDP().getLocalSdpSession(), PJSIP_INV_SUPPORT_ICE, &inv);
     if (!inv) {
         RING_ERR("Call invite is not initialized");
+        pjsip_dlg_dec_lock(dialog);
         return PJ_FALSE;
     }
 
-    pjsip_dlg_inc_lock(inv->dlg);
     inv->mod_data[mod_ua_.id] = call.get();
     call->inv.reset(inv);
 
@@ -673,7 +674,7 @@ SIPVoIPLink::handleEvents()
 {
     // We have to register the external thread so it could access the pjsip frameworks
     if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined WIN32_NATIVE
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined(WIN32_NATIVE)
         static thread_local pj_thread_desc desc;
         static thread_local pj_thread_t *this_thread;
 #else
@@ -1227,9 +1228,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
     RING_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
 
     pjsip_host_info host_info {
-        /*.flag = */0,
-        /*.type = */type,
-        /*.addr = */{{(char*)name.c_str(), name_size}, port},
+        /*.flag =*/ 0,
+        /*.type =*/ type,
+        /*.addr =*/ {{(char*)name.c_str(), name_size}, port},
     };
 
     const auto token = std::hash<std::string>()(name + to_string(type));
