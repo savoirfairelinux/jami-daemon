@@ -154,7 +154,7 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
         return false;
     }
 
-    deviceBufferRef_.reset(av_buffer_ref(hardwareDeviceCtx));
+    deviceBufferRef_.reset(hardwareDeviceCtx);
 
     auto device = reinterpret_cast<AVHWDeviceContext*>(deviceBufferRef_->data);
     vaConfig_ = VA_INVALID_ID;
