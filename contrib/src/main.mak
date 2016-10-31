@@ -337,9 +337,8 @@ endif
 checksum = \
 	$(foreach f,$(filter $(TARBALLS)/%,$^), \
 		grep -- " $(f:$(TARBALLS)/%=%)$$" \
-			"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS" &&) \
-	(cd $(TARBALLS) && $(1) /dev/stdin) < \
-		"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS"
+			"$(SRC)/$(patsubst .sum-%,%,$@)/$(2)SUMS" |) \
+	(cd $(TARBALLS) && $(1))
 ifeq ($(DISABLE_CONTRIB_CHECKSUMS),TRUE)
     CHECK_SHA512 = @echo "Skipping checksum verification..."
 else
