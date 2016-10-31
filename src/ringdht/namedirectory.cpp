@@ -58,6 +58,16 @@ NameDirectory& NameDirectory::instance(const std::string& server)
     return it.first->second;
 }
 
+size_t getContentLength(restbed::Response& reply)
+{
+    size_t length = 0;
+#ifndef RESTBED_OLD_API
+    length =
+#endif
+    reply.get_header("Content-Length", length);
+    return length;
+}
+
 void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 {
     auto cacheRes = nameCache_.find(addr);
@@ -76,8 +86,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
     auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>,
                                              const std::shared_ptr<restbed::Response> reply) {
         if (reply->get_status_code() == 200) {
-            size_t length = 0;
-            length = reply->get_header("Content-Length", length);
+            size_t length = getContentLength(*reply);
             if (length > MAX_RESPONSE_SIZE) {
                 cb("", Response::error);
                 return;
@@ -139,8 +148,7 @@ void NameDirectory::lookupName(const std::string& name, LookupCallback cb)
         if (code != 200)
             RING_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
         if (code >= 200 && code < 300) {
-            size_t length = 0;
-            length = reply->get_header("Content-Length", length);
+            size_t length = getContentLength(*reply);
             if (length > MAX_RESPONSE_SIZE) {
                 cb("", Response::error);
                 return;
@@ -224,8 +232,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& nam
         auto code = reply->get_status_code();
         RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
         if (code >= 200 && code < 300) {
-            size_t length = 0;
-            length = reply->get_header("Content-Length", length);
+            size_t length = getContentLength(*reply);
             if (length > MAX_RESPONSE_SIZE) {
                 cb(RegistrationResponse::error);
                 return;
