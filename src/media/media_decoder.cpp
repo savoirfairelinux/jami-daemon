@@ -341,7 +341,7 @@ MediaDecoder::decode(VideoFrame& result)
 #if defined(RING_VIDEO) && defined(RING_ACCEL)
         if (accel_) {
             if (!accel_->hasFailed())
-                accel_->extractData(decoderCtx_, result);
+                accel_->extractData(result);
             else
                 return Status::RestartRequired;
         }
@@ -432,7 +432,7 @@ MediaDecoder::flush(VideoFrame& result)
         // flush is called when closing the stream
         // so don't restart the media decoder
         if (accel_ && !accel_->hasFailed())
-            accel_->extractData(decoderCtx_, result);
+            accel_->extractData(result);
 #endif // RING_ACCEL
         return Status::FrameFinished;
     }
