@@ -1,0 +1,7 @@
+Code-Review+2: Alexandre Viau <alexandre@alexandreviau.net>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Alexandre Viau <alexandre@alexandreviau.net>
+Submitted-at: Tue, 01 Nov 2016 16:50:38 -0400
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5316
+Project: ring-daemon
+Branch: refs/heads/master
