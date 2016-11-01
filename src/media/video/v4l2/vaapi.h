@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-#if defined(RING_VIDEO) && defined(RING_ACCEL)
+#ifdef RING_VAAPI
 
 extern "C" {
 #include <sys/types.h>
@@ -58,12 +58,13 @@ namespace ring { namespace video {
 
 class VaapiAccel : public HardwareAccel {
     public:
-        VaapiAccel(AccelInfo info);
+        VaapiAccel(const std::string name, const AVPixelFormat format);
         ~VaapiAccel();
 
-        bool init(AVCodecContext* codecCtx) override;
-        int allocateBuffer(AVCodecContext* codecCtx, AVFrame* frame, int flags) override;
-        bool extractData(AVCodecContext* codecCtx, VideoFrame& container) override;
+        bool check() override;
+        bool init() override;
+        int allocateBuffer(AVFrame* frame, int flags) override;
+        void extractData(VideoFrame& input, VideoFrame& output) override;
 
     private:
         using AVBufferRefPtr = std::unique_ptr<AVBufferRef, std::function<void(AVBufferRef*)>>;
@@ -77,9 +78,9 @@ class VaapiAccel : public HardwareAccel {
 
         struct vaapi_context ffmpegAccelCtx_;
 
-        bool open(AVCodecContext* codecCtx, std::string deviceName);
+        std::string deviceName_;
 };
 
 }} // namespace ring::video
 
-#endif // defined(RING_VIDEO) && defined(RING_ACCEL)
+#endif // RING_VAAPI
