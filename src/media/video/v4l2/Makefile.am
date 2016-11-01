@@ -6,7 +6,7 @@ libv4l2_la_SOURCES = \
 	video_device_impl.cpp \
 	video_device_monitor_impl.cpp
 
-if RING_ACCEL
+if RING_VAAPI
 libv4l2_la_SOURCES += vaapi.h vaapi.cpp
 endif
 
