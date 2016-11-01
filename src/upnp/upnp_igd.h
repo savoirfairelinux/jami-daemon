@@ -28,6 +28,7 @@
 #include <map>
 #include <functional>
 #include <chrono>
+#include <algorithm>
 
 #include "noncopyable.h"
 #include "ip_utils.h"

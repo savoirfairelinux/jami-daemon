@@ -35,6 +35,7 @@
 #endif
 
 #if HAVE_LIBNATPMP
+#define STATICLIB
 #include <natpmp.h>
 #endif
 
