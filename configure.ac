@@ -441,28 +441,34 @@ AS_IF([test "x$enable_video" != "xno"],
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
-dnl hardware acceleration is enabled by default
-AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable hardware acceleration]))
+AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
+AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
 AS_IF([test "x$enable_accel" != "xno"], [
   AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
   AM_CONDITIONAL(RING_ACCEL, true)
-  AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
-    PKG_CHECK_MODULES(LIBVA, [libva], ,
-      [AC_MSG_ERROR([Missing libva package])])
-    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-      AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Have vaapi drm])
-      ], [AC_MSG_ERROR([Could not find libva-drm])
-    ])
-    AC_CHECK_HEADER([X11/Xlib.h], [
-      AC_CHECK_LIB(X11, XOpenDisplay, [], [AC_MSG_ERROR([Could not find X11])])
-      AC_DEFINE([HAVE_X11], [1], [Have x11])
-      PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
-        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Have vaapi x11])
-        ], [AC_MSG_ERROR([Could not find libva-x11])
+  AS_IF([test "x$enable_vaapi" != "xno"], [
+    AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
+      dnl FFmpeg's VAAPI implementation requires X11
+      PKG_CHECK_MODULES([X11], [x11], [
+        PKG_CHECK_MODULES([LIBVA], [libva], [
+          AC_DEFINE([RING_VAAPI], [1], [Have libva])
+          AM_CONDITIONAL([RING_VAAPI], [true])
+        ], [AC_MSG_ERROR([Could not find libva package])])
+        PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+          AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Have vaapi-drm])
+        ], [AC_MSG_ERROR([Could not find libva-drm package])])
+        PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
+          AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Have vaapi-x11])
+        ], [AC_MSG_ERROR([Could not find libva-x11 package])])
+      ], [
+        AC_MSG_WARN([Disabling VAAPI, X11 not found])
       ])
     ])
-  ])
-], AM_CONDITIONAL(RING_ACCEL, false))
+  ], [])
+], [
+  AM_CONDITIONAL([RING_ACCEL], [false])
+  AM_CONDITIONAL([RING_VAAPI], [false])
+])
 
 # PTHREAD
 # required dependency(ies): libxpat
