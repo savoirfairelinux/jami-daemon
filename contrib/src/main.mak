@@ -346,9 +346,9 @@ else
     CHECK_SHA512 = $(call checksum,$(SHA512SUM),SHA512)
 endif
 UNPACK = $(RM) -R $@ \
-	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xzf $(f) $(if ${BATCH_MODE},,-v)) \
-	$(foreach f,$(filter %.tar.bz2,$^), && tar xjf $(f) $(if ${BATCH_MODE},,-v)) \
-	$(foreach f,$(filter %.tar.xz,$^), && tar xJf $(f) $(if ${BATCH_MODE},,-v)) \
+	$(foreach f,$(filter %.tar.gz %.tgz,$^), && tar xzf $(f) $(if ${BATCH_MODE},-v,)) \
+	$(foreach f,$(filter %.tar.bz2,$^), && tar xjf $(f) $(if ${BATCH_MODE},-v,)) \
+	$(foreach f,$(filter %.tar.xz,$^), && tar xJf $(f) $(if ${BATCH_MODE},-v,)) \
 	$(foreach f,$(filter %.zip,$^), && unzip $(if ${BATCH_MODE},-q) $(f))
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
 APPLY = (cd $(UNPACK_DIR) && patch -fp1) <
