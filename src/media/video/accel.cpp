@@ -30,7 +30,7 @@
 #include "string_utils.h"
 #include "logger.h"
 
-#include <initializer_list>
+#include <sstream>
 #include <algorithm>
 
 namespace ring { namespace video {
@@ -51,13 +51,14 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             accel->setWidth(codecCtx->coded_width);
             accel->setHeight(codecCtx->coded_height);
             accel->setProfile(codecCtx->profile);
-            if (accel->init(codecCtx))
+            accel->setCodecCtx(codecCtx);
+            if (accel->init())
                 return accel->format();
             break;
         }
     }
 
-    accel->fail(codecCtx, true);
+    accel->fail(true);
     RING_WARN("Falling back to software decoding");
     codecCtx->get_format = avcodec_default_get_format;
     codecCtx->get_buffer2 = avcodec_default_get_buffer2;
@@ -75,62 +76,20 @@ static int
 allocateBufferCb(AVCodecContext* codecCtx, AVFrame* frame, int flags)
 {
     if (auto accel = static_cast<HardwareAccel*>(codecCtx->opaque)) {
-        if (!accel->hasFailed() && accel->allocateBuffer(codecCtx, frame, flags) == 0) {
+        if (!accel->hasFailed() && accel->allocateBuffer(frame, flags) == 0) {
             accel->succeed();
             return 0;
         }
 
-        accel->fail(codecCtx, false);
+        accel->fail(false);
     }
 
     return avcodec_default_get_buffer2(codecCtx, frame, flags);
 }
 
-template <class T>
-static std::unique_ptr<HardwareAccel>
-makeHardwareAccel(const AccelInfo& info) {
-    return std::unique_ptr<HardwareAccel>(new T(info));
-}
-
-static const AccelInfo*
-getAccelInfo(std::initializer_list<AccelID> codecAccels)
-{
-    /* Each item in this array reprensents a fully implemented hardware acceleration in Ring.
-     * Each item should be enclosed in an #ifdef to prevent its compilation on an
-     * unsupported platform (VAAPI for Linux Intel won't compile on a Mac).
-     * A new item should be added when support for an acceleration has been added to Ring,
-     * which is also supported by FFmpeg.
-     * Steps to add an acceleration (after its implementation):
-     * - If it doesn't yet exist, add a unique AccelID
-     * - Specify its AVPixelFormat (the one used by FFmpeg)
-     * - Give it a name (this is used for the daemon logs)
-     * - Add a function pointer that returns an instance (makeHardwareAccel does this already)
-     * Note: the acceleration's header file must be guarded by the same #ifdef as
-     * in this array.
-     */
-    static const AccelInfo accels[] = {
-#if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
-        { AccelID::Vaapi, AV_PIX_FMT_VAAPI, "vaapi", makeHardwareAccel<VaapiAccel> },
-#endif
-    };
-
-    for (auto& accel : accels) {
-        for (auto& ca : codecAccels) {
-            if (accel.type == ca) {
-                RING_DBG("Found '%s' hardware acceleration", accel.name.c_str());
-                return &accel;
-            }
-        }
-    }
-
-    RING_DBG("Did not find a matching hardware acceleration");
-    return nullptr;
-}
-
-HardwareAccel::HardwareAccel(const AccelInfo& info)
-    : type_(info.type)
-    , format_(info.format)
-    , name_(info.name)
+HardwareAccel::HardwareAccel(const std::string name, const AVPixelFormat format)
+    : name_(name)
+    , format_(format)
 {
     failCount_ = 0;
     fallback_ = false;
@@ -140,56 +99,112 @@ HardwareAccel::HardwareAccel(const AccelInfo& info)
 }
 
 void
-HardwareAccel::fail(AVCodecContext* codecCtx, bool forceFallback)
+HardwareAccel::fail(bool forceFallback)
 {
     ++failCount_;
     if (failCount_ >= MAX_ACCEL_FAILURES || forceFallback) {
         RING_ERR("Hardware acceleration failure");
         fallback_ = true;
         failCount_ = 0;
-        codecCtx->get_format = avcodec_default_get_format;
-        codecCtx->get_buffer2 = avcodec_default_get_buffer2;
+        codecCtx_->get_format = avcodec_default_get_format;
+        codecCtx_->get_buffer2 = avcodec_default_get_buffer2;
     }
+}
+
+bool
+HardwareAccel::extractData(VideoFrame& input)
+{
+    try {
+        auto inFrame = input.pointer();
+
+        if (inFrame->format != format_) {
+            std::stringstream buf;
+            buf << "Frame format mismatch: expected " << av_get_pix_fmt_name(format_);
+            buf << ", got " << av_get_pix_fmt_name((AVPixelFormat)inFrame->format);
+            throw std::runtime_error(buf.str());
+        }
+
+        auto output = new VideoFrame();
+        auto outFrame = output->pointer();
+        outFrame->format = AV_PIX_FMT_YUV420P;
+
+        extractData(input, *output);
+    } catch (const std::runtime_error& e) {
+        fail(false);
+        RING_ERR("%s", e.what());
+        return false;
+    }
+
+    succeed();
+    return true;
+}
+
+template <class T>
+static std::unique_ptr<HardwareAccel>
+makeHardwareAccel(const std::string name, const AVPixelFormat format) {
+    return std::unique_ptr<HardwareAccel>(new T(name, format));
 }
 
 std::unique_ptr<HardwareAccel>
 makeHardwareAccel(AVCodecContext* codecCtx)
 {
-    const AccelInfo* info = nullptr;
+    enum class AccelID {
+        Vaapi,
+    };
 
+    struct AccelInfo {
+        AccelID type;
+        std::string name;
+        AVPixelFormat format;
+        std::unique_ptr<HardwareAccel> (*create)(const std::string name, const AVPixelFormat format);
+    };
+
+    /* Each item in this array reprensents a fully implemented hardware acceleration in Ring.
+     * Each item should be enclosed in an #ifdef to prevent its compilation on an
+     * unsupported platform (VAAPI for Linux Intel won't compile on a Mac).
+     * A new item should be added when support for an acceleration has been added to Ring,
+     * which is also supported by FFmpeg.
+     * Steps to add an acceleration (after its implementation):
+     * - Create an AccelID and add it to the switch statement
+     * - Give it a name (this is used for the daemon logs)
+     * - Specify its AVPixelFormat (the one used by FFmpeg: check pixfmt.h)
+     * - Add a function pointer that returns an instance (makeHardwareAccel<> does this already)
+     * Note: the include of the acceleration's header file must be guarded by the same #ifdef as
+     * in this array.
+     */
+    const AccelInfo accels[] = {
+#if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
+        { AccelID::Vaapi, "vaapi", AV_PIX_FMT_VAAPI, makeHardwareAccel<VaapiAccel> },
+#endif
+    };
+
+    std::vector<AccelID> possibleAccels = {};
     switch (codecCtx->codec_id) {
         case AV_CODEC_ID_H264:
-            info = getAccelInfo({
-                AccelID::Vdpau,
-                AccelID::VideoToolbox,
-                AccelID::Dxva2,
-                AccelID::Vaapi,
-                AccelID::Vda
-            });
-            break;
         case AV_CODEC_ID_MPEG4:
-        case AV_CODEC_ID_H263:
         case AV_CODEC_ID_H263P:
-            info = getAccelInfo({
-                AccelID::Vdpau,
-                AccelID::VideoToolbox,
-                AccelID::Vaapi
-            });
+            possibleAccels.push_back(AccelID::Vaapi);
+            break;
+        case AV_CODEC_ID_VP8:
             break;
         default:
             break;
     }
 
-    if (info && info->type != AccelID::NoAccel) {
-        if (auto accel = info->create(*info)) {
-            codecCtx->get_format = getFormatCb;
-            codecCtx->get_buffer2 = allocateBufferCb;
-            codecCtx->thread_safe_callbacks = 1;
-            codecCtx->thread_count = 1;
-            RING_DBG("Hardware acceleration setup has succeeded");
-            return accel;
-        } else
-            RING_ERR("Failed to create %s hardware acceleration", info->name.c_str());
+    for (auto& info : accels) {
+        for (auto& pa : possibleAccels) {
+            if (info.type == pa) {
+                auto accel = info.create(info.name, info.format);
+                if (accel) {
+                    codecCtx->get_format = getFormatCb;
+                    codecCtx->get_buffer2 = allocateBufferCb;
+                    codecCtx->thread_safe_callbacks = 1;
+                    codecCtx->thread_count = 1;
+                    RING_DBG("Succesfully set up '%s' acceleration", accel->name().c_str());
+                    return accel;
+                }
+            }
+        }
     }
 
     RING_WARN("Not using hardware acceleration");
