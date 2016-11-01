@@ -838,9 +838,13 @@ bool lookupName(const std::string& account, const std::string& nameserver, const
 {
 #if HAVE_RINGNS
     if (account.empty()) {
-        ring::NameDirectory::instance(nameserver).lookupName(name, [name](const std::string& result, ring::NameDirectory::Response response) {
+        auto cb = [name](const std::string& result, ring::NameDirectory::Response response) {
             ring::emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>("", (int)response, result, name);
-        });
+        };
+        if (nameserver.empty())
+            ring::NameDirectory::lookupUri(name, "", cb);
+        else
+            ring::NameDirectory::instance(nameserver).lookupName(name, cb);
         return true;
     } else if (auto acc = ring::Manager::instance().getAccount<RingAccount>(account)) {
         acc->lookupName(name);
