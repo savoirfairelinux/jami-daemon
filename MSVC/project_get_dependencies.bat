@@ -9,6 +9,7 @@ libsndfile, ^
 libsamplerate, ^
 pcre, ^
 libupnp, ^
+libnatpmp, ^
 jsoncpp, ^
 yaml-cpp, ^
 cryptopp, ^
