@@ -438,31 +438,44 @@ AS_IF([test "x$enable_video" != "xno"],
      AM_CONDITIONAL(RING_VIDEO, false)
      ]);
 
-dnl check for GnuTLS
-PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
-
-dnl hardware acceleration is enabled by default
-AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable hardware acceleration]))
-AS_IF([test "x$enable_video" != "xno" && test "x$enable_accel" != "xno"], [
-  AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
-  AM_CONDITIONAL(RING_ACCEL, true)
-  AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[
-    PKG_CHECK_MODULES(LIBVA, [libva], ,
-      [AC_MSG_ERROR([Missing libva package])])
-    PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-      AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Have vaapi drm])
-      ], [AC_MSG_ERROR([Could not find libva-drm])
-    ])
-    AC_CHECK_HEADER([X11/Xlib.h], [
-      AC_CHECK_LIB(X11, XOpenDisplay, [], [AC_MSG_ERROR([Could not find X11])])
-      AC_DEFINE([HAVE_X11], [1], [Have x11])
-      PKG_CHECK_MODULES(LIBVA_X11, [libva-x11], [
-        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Have vaapi x11])
-        ], [AC_MSG_ERROR([Could not find libva-x11])
+dnl Ring video acceleration compile-time dependencies
+AS_IF([test "${SYS}" = linux], [
+  x11_available="no"
+  vaapi_available="no"
+  dnl ffmpeg's vaapi implementation depends on x11
+  PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [])
+  AS_IF([test "${x11_available}" = "yes"], [
+    PKG_CHECK_MODULES([LIBVA], [libva], [
+      PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+        AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Vaapi via DRM found])
       ])
+      PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
+        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Vaapi via X11 found])
+      ])
+      AC_CHECK_HEADERS([libavcodec/vaapi.h], [vaapi_available="yes"])
     ])
   ])
-], AM_CONDITIONAL(RING_ACCEL, false))
+])
+
+AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
+AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
+
+dnl video acceleration only works if there's video
+AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
+  ring_accel="yes"
+  AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
+  AS_IF([test "x$enable_vaapi" != "xno"], [
+    AS_IF([test "x${vaapi_available}" = "xyes"], [
+      ring_vaapi="yes"
+      AC_DEFINE([RING_VAAPI], [1], [VAAPI is available in Ring])
+    ])
+  ])
+])
+AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
+AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
+
+dnl check for GnuTLS
+PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 # PTHREAD
 # required dependency(ies): libxpat
