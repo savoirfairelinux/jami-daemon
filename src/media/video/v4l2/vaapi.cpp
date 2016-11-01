@@ -41,7 +41,8 @@ namespace ring { namespace video {
 
 static auto avBufferRefDeleter = [](AVBufferRef* buf){ av_buffer_unref(&buf); };
 
-VaapiAccel::VaapiAccel(AccelInfo info) : HardwareAccel(info)
+VaapiAccel::VaapiAccel(const std::string name, const AVPixelFormat format)
+    : HardwareAccel(name, format)
     , deviceBufferRef_(nullptr, avBufferRefDeleter)
     , framesBufferRef_(nullptr, avBufferRefDeleter)
 {
@@ -52,74 +53,59 @@ VaapiAccel::~VaapiAccel()
 }
 
 int
-VaapiAccel::allocateBuffer(AVCodecContext* codecCtx, AVFrame* frame, int flags)
+VaapiAccel::allocateBuffer(AVFrame* frame, int flags)
 {
     return av_hwframe_get_buffer(framesBufferRef_.get(), frame, 0);
 }
 
-bool
-VaapiAccel::extractData(AVCodecContext* codecCtx, VideoFrame& container)
+void
+VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
 {
-    try {
-        auto input = container.pointer();
+    auto inFrame = input.pointer();
+    auto outFrame = output.pointer();
 
-        if (input->format != format_) {
-            std::stringstream buf;
-            buf << "Frame format mismatch: expected " << av_get_pix_fmt_name(format_);
-            buf << ", got " << av_get_pix_fmt_name((AVPixelFormat)input->format);
-            throw std::runtime_error(buf.str());
-        }
-
-        auto outContainer = new VideoFrame();
-        auto output = outContainer->pointer();
-        output->format = AV_PIX_FMT_YUV420P;
-
-        if (av_hwframe_transfer_data(output, input, 0) < 0) {
-            throw std::runtime_error("Unable to extract data from VAAPI frame");
-        }
-
-        if (av_frame_copy_props(output, input) < 0 ) {
-            av_frame_unref(output);
-        }
-
-        av_frame_unref(input);
-        av_frame_move_ref(input, output);
-    } catch (const std::runtime_error& e) {
-        fail(codecCtx, false);
-        RING_ERR("%s", e.what());
-        return false;
+    if (av_hwframe_transfer_data(outFrame, inFrame, 0) < 0) {
+        throw std::runtime_error("Unable to extract data from VAAPI frame");
     }
 
-    succeed();
-    return true;
+    if (av_frame_copy_props(outFrame, inFrame) < 0 ) {
+        av_frame_unref(outFrame);
+    }
+
+    av_frame_unref(inFrame);
+    av_frame_move_ref(inFrame, outFrame);
 }
 
 bool
-VaapiAccel::init(AVCodecContext* codecCtx)
+VaapiAccel::check()
 {
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // try all possible devices, use first one that works
     const std::string path = "/dev/dri/";
     for (auto& entry : ring::fileutils::readDirectory(path)) {
-        // a drm device is either a card or a render node, check both
-        const std::string prefixCard = "card";
-        if (!entry.compare(0, prefixCard.size(), prefixCard.c_str()))
-            if (open(codecCtx, path + entry))
-                return true;
-
-        const std::string prefixNode = "renderD";
-        if (!entry.compare(0, prefixNode.size(), prefixNode.c_str()))
-            if (open(codecCtx, path + entry))
-                return true;
+        std::string deviceName = path + entry;
+        AVBufferRef* hardwareDeviceCtx;
+        if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) == 0) {
+            deviceName_ = deviceName;
+            deviceBufferRef_.reset(hardwareDeviceCtx);
+            return true;
+        }
     }
-    return false;
 #elif HAVE_VAAPI_ACCEL_X11
-    return open(codecCtx, ":0"); // this is the default x11 device
+    deviceName_ = ":0";
+    AVBufferRef* hardwareDeviceCtx;
+    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) == 0) {
+        deviceName_ = deviceName;
+        deviceBufferRef_.reset(hardwareDeviceCtx);
+        return true;
+    }
 #endif
+
+    return false;
 }
 
 bool
-VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
+VaapiAccel::init()
 {
     vaProfile_ = VAProfileNone;
     vaEntryPoint_ = VAEntrypointVLD;
@@ -146,21 +132,12 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
         { AV_CODEC_ID_H263P, h263 }
     };
 
-    VAStatus status;
-    AVBufferRef* hardwareDeviceCtx;
-    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) < 0) {
-        RING_ERR("Failed to create VAAPI device using %s", deviceName.c_str());
-        av_buffer_unref(&hardwareDeviceCtx);
-        return false;
-    }
-
-    deviceBufferRef_.reset(hardwareDeviceCtx);
-
     auto device = reinterpret_cast<AVHWDeviceContext*>(deviceBufferRef_->data);
     vaConfig_ = VA_INVALID_ID;
     vaContext_ = VA_INVALID_ID;
     auto hardwareContext = static_cast<AVVAAPIDeviceContext*>(device->hwctx);
 
+    VAStatus status;
     int numProfiles = vaMaxNumProfiles(hardwareContext->display);
     auto profiles = std::vector<VAProfile>(numProfiles);
     status = vaQueryConfigProfiles(hardwareContext->display, profiles.data(), &numProfiles);
@@ -170,10 +147,10 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
     }
 
     VAProfile codecProfile;
-    auto itOuter = profileMap.find(codecCtx->codec_id);
+    auto itOuter = profileMap.find(codecCtx_->codec_id);
     if (itOuter != profileMap.end()) {
         auto innerMap = itOuter->second;
-        auto itInner = innerMap.find(codecCtx->profile);
+        auto itInner = innerMap.find(codecCtx_->profile);
         if (itInner != innerMap.end()) {
             codecProfile = itInner->second;
         }
@@ -211,8 +188,8 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
     }
 
     int numSurfaces = 16; // based on codec instead?
-    if (codecCtx->active_thread_type & FF_THREAD_FRAME)
-        numSurfaces += codecCtx->thread_count; // need extra surface per thread
+    if (codecCtx_->active_thread_type & FF_THREAD_FRAME)
+        numSurfaces += codecCtx_->thread_count; // need extra surface per thread
 
     framesBufferRef_.reset(av_hwframe_ctx_alloc(deviceBufferRef_.get()));
     auto frames = reinterpret_cast<AVHWFramesContext*>(framesBufferRef_->data);
@@ -235,12 +212,12 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
         return false;
     }
 
-    RING_DBG("VAAPI decoder initialized via device: %s", deviceName.c_str());
+    RING_DBG("VAAPI decoder initialized via device: %s", deviceName_.c_str());
 
     ffmpegAccelCtx_.display = hardwareContext->display;
     ffmpegAccelCtx_.config_id = vaConfig_;
     ffmpegAccelCtx_.context_id = vaContext_;
-    codecCtx->hwaccel_context = (void*)&ffmpegAccelCtx_;
+    codecCtx_->hwaccel_context = (void*)&ffmpegAccelCtx_;
     return true;
 }
 
