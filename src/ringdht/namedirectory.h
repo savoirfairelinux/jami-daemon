@@ -26,20 +26,24 @@ namespace ring {
 class NameDirectory
 {
 public:
-    NameDirectory() {}
-    NameDirectory(const std::string& s);
-
-    static NameDirectory& instance(const std::string& server);
-    static NameDirectory& instance() { return instance(DEFAULT_SERVER_URI); }
-
     enum class Response : int { found = 0, invalidName, notFound, error };
     enum class RegistrationResponse : int { success = 0, invalidName, alreadyTaken, error };
 
     using LookupCallback = std::function<void(const std::string& result, Response response)>;
+    using RegistrationCallback = std::function<void(RegistrationResponse response)>;
+
+    NameDirectory() {}
+    NameDirectory(const std::string& s);
+    void load();
+
+    static NameDirectory& instance(const std::string& server);
+    static NameDirectory& instance() { return instance(DEFAULT_SERVER_URI); }
+
+    static void lookupUri(const std::string& uri, const std::string& default_server, LookupCallback cb);
+
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
 
-    using RegistrationCallback = std::function<void(RegistrationResponse response)>;
     void registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb);
 
     const std::string& getServer() const {
@@ -54,8 +58,12 @@ private:
     std::map<std::string, std::string> nameCache_;
     std::map<std::string, std::string> addrCache_;
 
+    const std::string cachePath_;
+
     bool validateName(const std::string& name) const;
 
+    void saveCache();
+    void loadCache();
 };
 
 }

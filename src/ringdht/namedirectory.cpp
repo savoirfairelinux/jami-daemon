@@ -20,7 +20,9 @@
 #include "logger.h"
 #include "string_utils.h"
 #include "thread_pool.h"
+#include "fileutils.h"
 
+#include <msgpack.hpp>
 #include <json/json.h>
 #include <restbed>
 
@@ -28,13 +30,16 @@
 #include <ciso646>
 #include <sstream>
 #include <regex>
+#include <fstream>
 
 namespace ring {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
+
+/** Parser for Ring URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
+const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
 const std::regex NAME_VALIDATOR {"^[a-z0-9-_]{3,32}$"};
-const std::regex URI_VALIDATOR {"^(:?[a-zA-Z]+://)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
 
@@ -42,20 +47,50 @@ std::string hostFromUri(const std::string& uri)
 {
     std::smatch pieces_match;
     if (std::regex_search(uri, pieces_match, URI_VALIDATOR))
-        if (pieces_match.size() == 3)
-            return pieces_match[2].str();
+        if (pieces_match.size() == 4)
+            return pieces_match[3].str();
     return uri;
 }
 
-NameDirectory::NameDirectory(const std::string& s) : serverUri_(s), serverHost_(hostFromUri(s))
+void
+NameDirectory::lookupUri(const std::string& uri, const std::string& default_server, LookupCallback cb)
+{
+    RING_WARN("lookupUri: %s", uri.c_str());
+    std::smatch pieces_match;
+    if (std::regex_search(uri, pieces_match, URI_VALIDATOR)) {
+        if (pieces_match.size() == 4) {
+            if (pieces_match[2].length() == 0)
+                instance(default_server).lookupName(pieces_match[3], cb);
+            else
+                instance("http://"+pieces_match[3].str()).lookupName(pieces_match[2], cb);
+            return;
+        }
+    }
+    RING_ERR("Can't parse URI: %s", uri.c_str());
+    cb("", Response::error);
+}
+
+NameDirectory::NameDirectory(const std::string& s)
+   : serverUri_(s),
+     serverHost_(hostFromUri(s)),
+     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache"+DIR_SEPARATOR_STR+serverHost_)
 {}
+
+void
+NameDirectory::load()
+{
+    loadCache();
+}
 
 NameDirectory& NameDirectory::instance(const std::string& server)
 {
     const std::string& s = server.empty() ? DEFAULT_SERVER_URI : server;
     static std::map<std::string, NameDirectory> instances {};
-    auto it = instances.emplace(s, NameDirectory{s});
-    return it.first->second;
+    auto r = instances.emplace(s, NameDirectory{s});
+    RING_WARN("NameDirectory: %s %p", s.c_str(), &r.first->second);
+    if (r.second)
+        r.first->second.load();
+    return r.first->second;
 }
 
 size_t getContentLength(restbed::Response& reply)
@@ -108,6 +143,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 addrCache_.emplace(name, addr);
                 nameCache_.emplace(addr, name);
                 cb(name, Response::found);
+                saveCache();
             } else {
                 cb("", Response::notFound);
             }
@@ -172,6 +208,7 @@ void NameDirectory::lookupName(const std::string& name, LookupCallback cb)
                 addrCache_.emplace(name, addr);
                 nameCache_.emplace(addr, name);
                 cb(addr, Response::found);
+                saveCache();
             } else {
                 cb("", Response::notFound);
             }
@@ -263,6 +300,44 @@ void NameDirectory::registerName(const std::string& addr, const std::string& nam
 
     // avoid blocking on future destruction
     ThreadPool::instance().run([ret](){ ret.get(); });
+}
+
+void
+NameDirectory::saveCache()
+{
+    fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache");
+    std::ofstream file(cachePath_, std::ios::trunc);
+    msgpack::pack(file, nameCache_);
+    RING_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
+}
+
+void
+NameDirectory::loadCache()
+{
+    msgpack::unpacker pac;
+
+    // read file
+    {
+        std::ifstream file(cachePath_);
+        if (!file.is_open()) {
+            RING_DBG("Could not load %s", cachePath_.c_str());
+            return;
+        }
+        std::string line;
+        while (std::getline(file, line)) {
+            pac.reserve_buffer(line.size());
+            memcpy(pac.buffer(), line.data(), line.size());
+            pac.buffer_consumed(line.size());
+        }
+    }
+
+    // load values
+    msgpack::object_handle oh;
+    if (pac.next(oh))
+        oh.get().convert(nameCache_);
+    for (const auto& m : nameCache_)
+        addrCache_.emplace(m.second, m.first);
+    RING_DBG("Loaded %lu name-address mappings", (long unsigned)nameCache_.size());
 }
 
 }
