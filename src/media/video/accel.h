@@ -29,54 +29,42 @@
 
 namespace ring { namespace video {
 
-class HardwareAccel;
-
-enum class AccelID {
-    NoAccel = 0,
-    Vdpau,
-    VideoToolbox,
-    Dxva2,
-    Vaapi,
-    Vda
-};
-
-struct AccelInfo {
-    AccelID type;
-    AVPixelFormat format;
-    std::string name;
-    std::unique_ptr<HardwareAccel> (*create)(const AccelInfo& info);
-};
-
 class HardwareAccel {
     public:
-        HardwareAccel(const AccelInfo& info);
+        HardwareAccel(const std::string& name, const AVPixelFormat format);
         virtual ~HardwareAccel() {};
 
         AVPixelFormat format() const { return format_; }
         std::string name() const { return name_; }
         bool hasFailed() const { return fallback_; }
 
+        void setCodecCtx(AVCodecContext* codecCtx) { codecCtx_ = codecCtx; }
         void setWidth(int width) { width_ = width; }
         void setHeight(int height) { height_ = height; }
         void setProfile(int profile) { profile_ = profile; }
 
-        void fail(AVCodecContext* codecCtx, bool forceFallback);
+        void fail(bool forceFallback);
         void succeed() { failCount_ = 0; } // call on success of allocateBuffer or extractData
 
+        // wrapper to take care of boilerplate before calling the derived class's implementation
+        bool extractData(VideoFrame& input);
+
     public: // must be implemented by derived classes
-        virtual bool init(AVCodecContext* codecCtx) = 0;
-        virtual int allocateBuffer(AVCodecContext* codecCtx, AVFrame* frame, int flags) = 0;
-        virtual bool extractData(AVCodecContext* codecCtx, VideoFrame& container) = 0;
+        virtual bool init() = 0;
+        virtual int allocateBuffer(AVFrame* frame, int flags) = 0;
+        // The reference to the extracted frame should be moved to input
+        // as that's the frame returned to the MediaDecoder
+        virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
 
     protected:
-        AccelID type_;
-        AVPixelFormat format_;
+        AVCodecContext* codecCtx_;
         std::string name_;
-        unsigned failCount_; // how many failures in a row, reset on success
-        bool fallback_; // true when failCount_ exceeds a certain number
-        int width_;
-        int height_;
-        int profile_;
+        AVPixelFormat format_;
+        unsigned failCount_ = 0; // how many failures in a row, reset on success
+        bool fallback_ = false; // true when failCount_ exceeds a certain number
+        int width_ = -1;
+        int height_ = -1;
+        int profile_ = -1;
 };
 
 // HardwareAccel factory
