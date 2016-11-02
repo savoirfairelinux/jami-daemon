@@ -4,7 +4,7 @@ YAML_CPP_URL := https://github.com/jbeder/yaml-cpp/archive/$(YAML_CPP_VERSION).t
 
 PKGS += yaml-cpp
 
-ifeq ($(call need_pkg,'yaml-cpp'),)
+ifeq ($(call need_pkg,'yaml-cpp >= 0.5.3'),)
 PKGS_FOUND += yaml-cpp
 endif
 
