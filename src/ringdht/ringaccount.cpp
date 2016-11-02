@@ -572,12 +572,11 @@ void RingAccount::unserialize(const YAML::Node &node)
 
 #if HAVE_RINGNS
     try {
-        //std::string ringns_server;
         parseValue(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
-        nameDir_ = NameDirectory::instance(nameServer_);
     } catch (const std::exception& e) {
         RING_WARN("can't read name server: %s", e.what());
     }
+    nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
