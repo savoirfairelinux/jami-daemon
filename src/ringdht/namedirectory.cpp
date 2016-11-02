@@ -259,7 +259,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& nam
     request->set_header("Content-Length", ring::to_string(body.size()));
 
     auto params = std::make_shared<restbed::Settings>();
-    params->set_connection_timeout(std::chrono::seconds(60));
+    params->set_connection_timeout(std::chrono::seconds(120));
 
     RING_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
     auto ret = restbed::Http::async(request,
