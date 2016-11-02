@@ -559,7 +559,7 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
     } catch (...) { decodingAccelerated_ = false; } // experimental, so disabled by default
-    getVideoDeviceMonitor().unserialize(node);
+    getVideoDeviceMonitor().unserialize(in);
 }
 
 } // namespace ring
