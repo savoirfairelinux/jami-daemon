@@ -51,7 +51,7 @@ public:
     }
 
 private:
-    constexpr static const char* const DEFAULT_SERVER_HOST = "5.196.89.112:3000";
+    constexpr static const char* const DEFAULT_SERVER_HOST = "ns.ring.cx";
 
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;
