@@ -65,7 +65,7 @@ systems. This function is required for `alloca.c' support on those systems.
 #define HAVE_LIBUPNP 1
 
 /* Define if you have natpmp */
-#define HAVE_LIBNATPMP 1
+#define HAVE_LIBNATPMP 0
 
 /* Define to 1 if you have the <limits.h> header file. */
 #define HAVE_LIMITS_H 1
@@ -178,6 +178,9 @@ your system. */
 
 /* Video support enabled */
 #define RING_VIDEO /**/
+
+/* Name directory service support enabled */
+#define HAVE_RINGNS 1
 
 /* If using the C implementation of alloca, define if you know the
 direction of stack growth for your system; otherwise it will be

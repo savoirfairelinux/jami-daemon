@@ -175,16 +175,10 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
     idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
 {
-#ifdef WIN32_NATIVE
-    gnutls_global_init();
-#endif
 }
 
 RingAccount::~RingAccount()
 {
-#ifdef WIN32_NATIVE
-    gnutls_global_deinit();
-#endif
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     dht_.join();
 }

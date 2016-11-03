@@ -508,6 +508,9 @@
     <ClInclude Include="..\src\base64.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ringdht\namedirectory.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\preferences.cpp">
@@ -818,6 +821,9 @@
     </ClCompile>
     <ClCompile Include="..\src\base64.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\namedirectory.cpp">
+      <Filter>Source Files\ringdht</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
