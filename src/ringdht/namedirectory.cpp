@@ -36,20 +36,17 @@ namespace ring {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
+constexpr const char* const HTTP_PROTO {"http://"};
 
 /** Parser for Ring URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
-const std::regex NAME_VALIDATOR {"^[a-z0-9-_]{3,32}$"};
+const std::regex NAME_VALIDATOR {"^[a-zA-Z0-9-_]{3,32}$"};
 
 constexpr size_t MAX_RESPONSE_SIZE {1024 * 1024};
 
-std::string hostFromUri(const std::string& uri)
+void toLower(std::string& string)
 {
-    std::smatch pieces_match;
-    if (std::regex_search(uri, pieces_match, URI_VALIDATOR))
-        if (pieces_match.size() == 4)
-            return pieces_match[3].str();
-    return uri;
+    std::transform(string.begin(), string.end(), string.begin(), ::tolower);
 }
 
 void
@@ -57,12 +54,12 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
 {
     RING_WARN("lookupUri: %s", uri.c_str());
     std::smatch pieces_match;
-    if (std::regex_search(uri, pieces_match, URI_VALIDATOR)) {
+    if (std::regex_match(uri, pieces_match, URI_VALIDATOR)) {
         if (pieces_match.size() == 4) {
             if (pieces_match[2].length() == 0)
                 instance(default_server).lookupName(pieces_match[3], cb);
             else
-                instance("http://"+pieces_match[3].str()).lookupName(pieces_match[2], cb);
+                instance(pieces_match[3].str()).lookupName(pieces_match[2], cb);
             return;
         }
     }
@@ -71,8 +68,7 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
 }
 
 NameDirectory::NameDirectory(const std::string& s)
-   : serverUri_(s),
-     serverHost_(hostFromUri(s)),
+   : serverHost_(s),
      cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache"+DIR_SEPARATOR_STR+serverHost_)
 {}
 
@@ -84,7 +80,7 @@ NameDirectory::load()
 
 NameDirectory& NameDirectory::instance(const std::string& server)
 {
-    const std::string& s = server.empty() ? DEFAULT_SERVER_URI : server;
+    const std::string& s = server.empty() ? DEFAULT_SERVER_HOST : server;
     static std::map<std::string, NameDirectory> instances {};
     auto r = instances.emplace(s, NameDirectory{s});
     RING_WARN("NameDirectory: %s %p", s.c_str(), &r.first->second);
@@ -111,7 +107,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
         return;
     }
 
-    restbed::Uri uri(serverUri_ + QUERY_ADDR + addr);
+    restbed::Uri uri(HTTP_PROTO + serverHost_ + QUERY_ADDR + addr);
     auto req = std::make_shared<restbed::Request>(uri);
     req->set_header("Accept", "*/*");
     req->set_header("Host", serverHost_);
@@ -158,12 +154,14 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 
 static const std::string HEX_PREFIX {"0x"};
 
-void NameDirectory::lookupName(const std::string& name, LookupCallback cb)
+void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
+    std::string name {n};
     if (not validateName(name)) {
         cb(name, Response::invalidName);
         return;
     }
+    toLower(name);
 
     auto cacheRes = addrCache_.find(name);
     if (cacheRes != addrCache_.end()) {
@@ -171,7 +169,7 @@ void NameDirectory::lookupName(const std::string& name, LookupCallback cb)
         return;
     }
 
-    restbed::Uri uri(serverUri_ + QUERY_NAME + name);
+    restbed::Uri uri(HTTP_PROTO + serverHost_ + QUERY_NAME + name);
     auto request = std::make_shared<restbed::Request>(std::move(uri));
     request->set_header("Accept", "*/*");
     request->set_header("Host", serverHost_);
@@ -228,12 +226,14 @@ bool NameDirectory::validateName(const std::string& name) const
     return std::regex_match(name, NAME_VALIDATOR);
 }
 
-void NameDirectory::registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb)
+void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb)
 {
+    std::string name {n};
     if (not validateName(name)) {
         cb(RegistrationResponse::invalidName);
         return;
     }
+    toLower(name);
 
     auto cacheRes = addrCache_.find(name);
     if (cacheRes != addrCache_.end()) {
@@ -244,7 +244,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& nam
         return;
     }
 
-    auto request = std::make_shared<restbed::Request>(restbed::Uri(serverUri_ + QUERY_NAME + name));
+    auto request = std::make_shared<restbed::Request>(restbed::Uri(HTTP_PROTO + serverHost_ + QUERY_NAME + name));
     request->set_header("Accept", "*/*");
     request->set_header("Host", serverHost_);
     request->set_header("Content-Type", "application/json");
