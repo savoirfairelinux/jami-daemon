@@ -671,7 +671,9 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
             c->sendTextMessage(messages, from);
     } else {
         if (inv) {
-            im::sendSipMessage(inv.get(), messages);
+            try {
+                im::sendSipMessage(inv.get(), messages);
+            } catch (...) {}
         } else {
             pendingOutMessages_.emplace_back(messages, from);
             RING_ERR("[call:%s] sendTextMessage: no invite session for this call", getCallId().c_str());
