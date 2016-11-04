@@ -1125,6 +1125,8 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             // no receipt or archive, creating new account
             if (archive_password.empty()) {
                 RING_WARN("Password needed to create archive");
+                if (identity_.first)
+                    ringAccountId_ = identity_.first->getPublicKey().getId().toString();
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
                 if (archive_pin.empty()) {
