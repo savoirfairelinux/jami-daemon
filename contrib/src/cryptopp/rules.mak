@@ -33,5 +33,5 @@ endif
 .cryptopp: cryptopp toolchain.cmake
 	cd $< && rm GNUmakefile*
 	cd $< && $(HOSTVARS) $(CMAKE) . $(CRYPTOPP_CMAKECONF)
-	cd $< && $(MAKE) install
+	cd $< && $(MAKE) VERBOSE=1 install
 	touch $@
