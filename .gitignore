@@ -69,9 +69,10 @@ config_auto.h
 # Ignore temp files
 *~
 
-# Cscope/Ctags files
+# Cscope/Ctags/Etags files
 cscope.*
 tags
+TAGS
 TAGS.LST
 ID
 
