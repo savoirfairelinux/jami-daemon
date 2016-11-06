@@ -1,4 +1,4 @@
-include $(top_srcdir)/globals.mak
+include $(top_srcdir)/globals.mk
 
 TESTS=test_shm test_video_input test_video_rtp
 check_PROGRAMS=test_video_rtp test_video_input test_shm

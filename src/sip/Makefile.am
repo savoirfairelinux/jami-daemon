@@ -1,4 +1,4 @@
-include $(top_srcdir)/globals.mak
+include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libsiplink.la
 libsiplink_la_CXXFLAGS = @CXXFLAGS@ -I$(top_srcdir)/src
