@@ -1,4 +1,4 @@
-include $(top_srcdir)/globals.mak
+include $(top_srcdir)/globals.mk
 
 noinst_LTLIBRARIES = libdevcore.la
 libdevcore_la_CPPFLAGS = @CPPFLAGS@ -DBOOST_SYSTEM_NO_DEPRECATED

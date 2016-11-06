@@ -1,4 +1,4 @@
-include globals.mak
+include globals.mk
 
 # Makefile.am
 
