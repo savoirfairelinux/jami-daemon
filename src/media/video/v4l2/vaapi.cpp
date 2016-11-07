@@ -77,7 +77,7 @@ VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
 }
 
 bool
-VaapiAccel::init()
+VaapiAccel::check()
 {
     AVBufferRef* hardwareDeviceCtx = nullptr;
 #ifdef HAVE_VAAPI_ACCEL_DRM
@@ -100,7 +100,12 @@ VaapiAccel::init()
 #endif
 
     deviceBufferRef_.reset(hardwareDeviceCtx);
+    return true;
+}
 
+bool
+VaapiAccel::init()
+{
     vaProfile_ = VAProfileNone;
     vaEntryPoint_ = VAEntrypointVLD;
     using ProfileMap = std::map<int, VAProfile>;
