@@ -77,7 +77,7 @@ VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
 }
 
 bool
-VaapiAccel::init()
+VaapiAccel::check()
 {
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // try all possible devices, use first one that works
@@ -88,6 +88,7 @@ VaapiAccel::init()
         if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) == 0) {
             deviceName_ = deviceName;
             deviceBufferRef_.reset(hardwareDeviceCtx);
+            return true;
         }
     }
 #elif HAVE_VAAPI_ACCEL_X11
@@ -96,9 +97,16 @@ VaapiAccel::init()
     if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) == 0) {
         deviceName_ = deviceName;
         deviceBufferRef_.reset(hardwareDeviceCtx);
+        return true;
     }
 #endif
 
+    return false;
+}
+
+bool
+VaapiAccel::init()
+{
     vaProfile_ = VAProfileNone;
     vaEntryPoint_ = VAEntrypointVLD;
     using ProfileMap = std::map<int, VAProfile>;
