@@ -29,6 +29,7 @@ getSignalHandlers()
 #ifdef WIN32_NATIVE
         /* UWP Debug */
         exported_callback<DRing::Debug::MessageSend>(),
+        exported_callback<DRing::Debug::AudioMeter>(),
 #endif
         /* Call */
         exported_callback<DRing::CallSignal::StateChange>(),

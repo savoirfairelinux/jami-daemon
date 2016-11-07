@@ -25,6 +25,8 @@
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 
+#include "ring_signal.h"
+
 namespace ring {
 
 PortAudioLayer::PortAudioLayer(const AudioPreference &pref)
@@ -325,6 +327,8 @@ PortAudioLayer::paInputCallback(const void *inputBuffer, void *outputBuffer,
     inBuff.deinterleave(in, framesPerBuffer, ref->audioInputFormat_.nb_channels);
 
     inBuff.applyGain(ref->isCaptureMuted_ ? 0.0 : ref->captureGain_);
+
+    ring::emitSignal<DRing::Debug::AudioMeter>(inBuff.calcRMS(), Direction::Input);
 
     if (resample) {
         auto outSamples =

@@ -107,6 +107,10 @@ struct Debug {
         constexpr static const char* name = "MessageSend";
         using cb_type = void(const std::string&);
     };
+    struct AudioMeter {
+        constexpr static const char* name = "AudioMeter";
+        using cb_type = void(float, int);
+    };
 };
 #endif
 

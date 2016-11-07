@@ -312,6 +312,13 @@ class AudioBuffer {
         void applyGain(double gain);
 
         /**
+         * Calculates RMS of samples.
+         *
+         * @returns Linear volume meter level.
+         */
+        float calcRMS();
+
+        /**
          * Mix samples from the other buffer within this buffer (in-place simple addition).
          * If the other buffer has more channels than this one, only the first this.channels() channels are imported.
          * If the other buffer has less channels than this one, behavior depends on upmix.

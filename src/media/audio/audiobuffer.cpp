@@ -147,6 +147,20 @@ void AudioBuffer::applyGain(double gain)
             sample *= g;
 }
 
+float AudioBuffer::calcRMS()
+{
+    // Only consider every second sample
+    float sum = 0;
+    int n = samples_[0].size() / 2;
+
+    for (auto sample = samples_[0].begin() ; sample != samples_[0].end(); sample += 2) {
+        float a = static_cast<float>(*sample) * .000030517578125f;
+        sum += pow(a, 2);
+    }
+
+    return sqrt(sum / n);
+}
+
 size_t AudioBuffer::channelToFloat(float* out, const int& channel) const
 {
 
