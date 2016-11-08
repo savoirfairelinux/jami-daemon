@@ -1,0 +1,34 @@
+From 343def5cd4670a270a69d3d0625c4b8ef71c281b Mon Sep 17 00:00:00 2001
+From: philippegorley <gorley.philippe@gmail.com>
+Date: Thu, 3 Nov 2016 10:35:17 -0400
+Subject: [PATCH] hwcontext_vdpau: fix linesize bounds checking not using array
+ values
+
+---
+ libavutil/hwcontext_vdpau.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/libavutil/hwcontext_vdpau.c b/libavutil/hwcontext_vdpau.c
+index 49c44fe..420c545 100644
+--- a/libavutil/hwcontext_vdpau.c
++++ b/libavutil/hwcontext_vdpau.c
+@@ -305,7 +305,7 @@ static int vdpau_transfer_data_from(AVHWFramesContext *ctx, AVFrame *dst,
+
+     for (i = 0; i< FF_ARRAY_ELEMS(data) && dst->data[i]; i++) {
+         data[i] = dst->data[i];
+-        if (dst->linesize[i] < 0 || (uint64_t)dst->linesize > UINT32_MAX) {
++        if (dst->linesize[i] < 0 || dst->linesize[i] > UINT32_MAX) {
+             av_log(ctx, AV_LOG_ERROR,
+                    "The linesize %d cannot be represented as uint32\n",
+                    dst->linesize[i]);
+@@ -356,7 +356,7 @@ static int vdpau_transfer_data_to(AVHWFramesContext *ctx, AVFrame *dst,
+
+     for (i = 0; i< FF_ARRAY_ELEMS(data) && src->data[i]; i++) {
+         data[i] = src->data[i];
+-        if (src->linesize[i] < 0 || (uint64_t)src->linesize > UINT32_MAX) {
++        if (src->linesize[i] < 0 || src->linesize[i] > UINT32_MAX) {
+             av_log(ctx, AV_LOG_ERROR,
+                    "The linesize %d cannot be represented as uint32\n",
+                    src->linesize[i]);
+--
+2.7.4
