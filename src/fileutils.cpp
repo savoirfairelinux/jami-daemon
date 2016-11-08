@@ -75,6 +75,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstddef>
+#include <ciso646> // fix windows compiler bug
 
 namespace ring { namespace fileutils {
 

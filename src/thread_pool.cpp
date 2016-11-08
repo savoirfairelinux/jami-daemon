@@ -23,6 +23,8 @@
 #include <atomic>
 #include <thread>
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 struct ThreadPool::ThreadState

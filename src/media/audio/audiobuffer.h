@@ -32,6 +32,8 @@
 
 #include "ring_types.h"
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 /**
