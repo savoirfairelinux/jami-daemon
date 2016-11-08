@@ -1,9 +1,9 @@
---- a/configure	2016-08-17 10:38:51.000000000 -0400
-+++ b/configure	2016-08-17 10:38:53.000000000 -0400
-@@ -5293,7 +5293,7 @@
+--- a/configure	2017-05-17 11:54:39.000000000 -0500
++++ b/configure	2017-05-17 11:55:14.000000000 -0500
+@@ -5549,7 +5549,7 @@
 
  check_func  access
- check_func  arc4random
+ check_func_headers stdlib.h arc4random
 -check_func_headers time.h clock_gettime || { check_func_headers time.h clock_gettime -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
 +#check_func_headers time.h clock_gettime || { check_func_headers time.h clock_gettime -lrt && add_extralibs -lrt && LIBRT="-lrt"; }
  check_func  fcntl
