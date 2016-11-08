@@ -1852,9 +1852,10 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
     dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
     val.id = vid;
 
+    auto from_acc_id = peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId().toString() : peer_cert->getId().toString()) : peer_ice_msg.from.toString();
+
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
-    auto from_acc_id = peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId().toString() : peer_cert->getId().toString()) : peer_ice_msg.from.toString();
     nameDir_.get().lookupAddress(from_acc_id, [wcall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
             if (auto call = wcall.lock())
@@ -1886,8 +1887,8 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
     }
 
     auto from = peer_ice_msg.from.toString();
-    call->setPeerNumber(from);
-    call->initRecFilename(from);
+    call->setPeerNumber(from_acc_id);
+    call->initRecFilename(from_acc_id);
 
     // Let the call handled by the PendingCall handler loop
     {
