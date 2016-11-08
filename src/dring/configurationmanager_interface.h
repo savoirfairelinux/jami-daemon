@@ -266,6 +266,15 @@ struct ConfigurationSignal {
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
         };
 #endif
+#ifdef RING_UWP
+/* Debug for UWP Client */
+struct DebugSignal {
+    struct MessageSend {
+        constexpr static const char* name = "MessageSend";
+        using cb_type = void(const std::string&);
+    };
+};
+#endif
 };
 
 } // namespace DRing
