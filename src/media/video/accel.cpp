@@ -27,6 +27,10 @@
 #include "v4l2/vaapi.h"
 #endif
 
+#ifdef RING_VDPAU
+#include "v4l2/vdpau.h"
+#endif
+
 #include "string_utils.h"
 #include "logger.h"
 
@@ -149,6 +153,7 @@ std::unique_ptr<HardwareAccel>
 makeHardwareAccel(AVCodecContext* codecCtx)
 {
     enum class AccelID {
+        Vdpau,
         Vaapi,
     };
 
@@ -173,6 +178,9 @@ makeHardwareAccel(AVCodecContext* codecCtx)
      * in this array.
      */
     const AccelInfo accels[] = {
+#ifdef RING_VDPAU
+        { AccelID::Vdpau, "vdpau", AV_PIX_FMT_VDPAU, makeHardwareAccel<VdpauAccel> },
+#endif
 #if defined(HAVE_VAAPI_ACCEL_X11) || defined(HAVE_VAAPI_ACCEL_DRM)
         { AccelID::Vaapi, "vaapi", AV_PIX_FMT_VAAPI, makeHardwareAccel<VaapiAccel> },
 #endif
@@ -183,6 +191,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
         case AV_CODEC_ID_H264:
         case AV_CODEC_ID_MPEG4:
         case AV_CODEC_ID_H263P:
+            possibleAccels.push_back(AccelID::Vdpau);
             possibleAccels.push_back(AccelID::Vaapi);
             break;
         case AV_CODEC_ID_VP8:
