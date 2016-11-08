@@ -442,12 +442,26 @@ dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
+AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration]))
 AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
 AM_CONDITIONAL([RING_ACCEL], [false])
 AM_CONDITIONAL([RING_VAAPI], [false])
 AS_IF([test "x$enable_accel" != "xno"], [
   AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
   AM_CONDITIONAL(RING_ACCEL, true)
+  AS_IF([test "x$enable_vdpau" != "xno"], [
+    AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
+      dnl FFmpeg's VDPAU implementation requires X11
+      PKG_CHECK_MODULES([X11], [x11], [
+        PKG_CHECK_MODULES([VDPAU], [vdpau], [
+          AC_DEFINE([RING_VDPAU], [1], [Have libvdpau])
+          AM_CONDITIONAL([RING_VDPAU], [true])
+        ], [AC_MSG_ERROR([Could not find libvdpau package])])
+      ], [
+        AC_MSG_WARN([Disabling VDPAU, X11 not found])
+      ])
+    ])
+  ], [])
   AS_IF([test "x$enable_vaapi" != "xno"], [
     AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
       dnl FFmpeg's VAAPI implementation requires X11
