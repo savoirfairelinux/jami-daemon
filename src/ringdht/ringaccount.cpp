@@ -278,7 +278,6 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
             return true;
         if (not treatedDevices->emplace(dev.dev).second)
             return true;
-        RING_WARN("Found device to place call %s", dev.dev.toString().c_str());
 
         runOnMainThread([=](){
             if (auto call = wCall.lock()) {
@@ -1600,10 +1599,9 @@ RingAccount::doRegister_()
         dht_.run((in_port_t)dhtPortUsed_, identity_, false);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
-            auto& store = tls::CertificateStore::instance();
-            auto cert = store.getCertificate(pk_id.toString());
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-            if (cert)
+            auto& store = tls::CertificateStore::instance();
+            if (auto cert = store.getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
             RING_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
             return ret;
@@ -1639,13 +1637,7 @@ RingAccount::doRegister_()
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
                 shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
-                    auto& this_ = *shared;
-                    if (this_.knownDevices_.emplace(crt->getId(), crt).second) {
-                        RING_WARN("[Account %s] Found known account device: %s", this_.getAccountID().c_str(), crt->getId().toString().c_str());
-                        tls::CertificateStore::instance().pinCertificate(crt);
-                        this_.saveKnownDevices();
-                        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(this_.getAccountID(), this_.getKnownDevices());
-                    }
+                    shared->foundKnownDevice(crt);
                 });
                 return true;
             });
@@ -1678,10 +1670,8 @@ RingAccount::doRegister_()
                 if (!res.second)
                     return true;
 
-                RING_WARN("findCertificate");
                 this_.findCertificate( msg.from,
                     [shared, msg, trustStatus](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
-                    RING_WARN("findCertificate: found %p", cert.get());
                     auto& this_ = *shared;
                     if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
                         if (!cert or cert->getId() != msg.from) {
@@ -1705,8 +1695,6 @@ RingAccount::doRegister_()
                         runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), cert); });
                     }
                 });
-                // public incoming calls allowed or we explicitly authorised this public key
-                //runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), {}); });
                 return true;
             }
         );
@@ -1761,10 +1749,8 @@ RingAccount::doRegister_()
                     return true;
                 }
 
-                RING_WARN("findCertificate %s", v.from.toString().c_str());
                 this_.findCertificate( v.from,
                     [shared, v, trustStatus, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
-                    RING_WARN("findCertificate: found %p", cert.get());
                     auto& this_ = *shared;
                     if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
                         if (!cert or cert->getId() != v.from) {
@@ -1838,6 +1824,32 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
             account->replyToIncomingIceMsg(call, ice, msg, from_cert);
             return false;
         });
+}
+
+bool
+RingAccount::foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt)
+{
+    if (not crt)
+        return false;
+
+    // Trust store with Ring account main certificate as the only CA
+    tls::TrustStore account_trust;
+    account_trust.setCertificateStatus(identity_.second->issuer, tls::TrustStore::PermissionStatus::ALLOWED, false);
+
+    // match certificate chain
+    if (not account_trust.isAllowed(*crt)) {
+        RING_WARN("[Account %s] Found invalid account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        return false;
+    }
+
+    // insert device
+    if (knownDevices_.emplace(crt->getId(), crt).second) {
+        RING_WARN("[Account %s] Found known account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        tls::CertificateStore::instance().pinCertificate(crt);
+        saveKnownDevices();
+        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
+    }
+    return true;
 }
 
 void
