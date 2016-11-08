@@ -442,7 +442,8 @@ dnl Ring video acceleration compile-time dependencies
 AS_IF([test "${SYS}" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
   x11_available="no"
   vaapi_available="no"
-  dnl ffmpeg's vaapi implementation depends on x11
+  vdpau_available="no"
+  dnl ffmpeg's vaapi and vdpau implementations depend on x11
   PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [])
   AS_IF([test "${x11_available}" = "yes"], [
     PKG_CHECK_MODULES([LIBVA], [libva], [
@@ -454,13 +455,18 @@ AS_IF([test "${SYS}" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
       ])
       AC_CHECK_HEADERS([libavcodec/vaapi.h], [vaapi_available="yes"])
     ], [vaapi_available=no])
+    PKG_CHECK_MODULES([VDPAU], [vdpau], [
+      AC_CHECK_HEADERS([libavcodec/vdpau.h], [
+        AC_DEFINE([HAVE_VDPAU_ACCEL], [1], [Vdpau found])
+        vdpau_available="yes"
+      ])
+    ], [vdpau_available="no"])
   ])
 ])
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
+AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration]))
 AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
-
-dnl video acceleration only works if there's video
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   ring_accel="yes"
   AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
@@ -470,9 +476,16 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
       AC_DEFINE([RING_VAAPI], [1], [VAAPI is available in Ring])
     ])
   ])
+  AS_IF([test "x$enable_vdpau" != "xno"], [
+    AS_IF([test "x${vdpau_available}" = "xyes"], [
+      ring_vdpau="yes"
+      AC_DEFINE([RING_VDPAU], [1], [VDPAU is available in Ring])
+    ])
+  ])
 ])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
+AM_CONDITIONAL([RING_VDPAU], [test "x${ring_vdpau}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])

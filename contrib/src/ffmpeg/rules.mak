@@ -94,7 +94,9 @@ endif
 
 ifdef HAVE_LINUX
 FFMPEGCONF += \
-	--disable-vdpau \
+	--enable-vdpau \
+	--enable-hwaccel=h264_vdpau \
+	--enable-hwaccel=mpeg4_vdpau \
 	--enable-vaapi \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
@@ -190,6 +192,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 	$(APPLY) $(SRC)/ffmpeg/0004-avformat-fix-find_stream_info-not-considering-extradata.patch
+	$(APPLY) $(SRC)/ffmpeg/fix_vdpau.patch
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
 endif
