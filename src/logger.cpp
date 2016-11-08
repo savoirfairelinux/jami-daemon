@@ -24,8 +24,13 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <sys/time.h>
 #include <ciso646> // fix windows compiler bug
+
+#ifdef RING_UWP
+#include <sys_time.h>
+#else
+#include <sys/time.h>
+#endif
 
 #include <string>
 #include <sstream>
