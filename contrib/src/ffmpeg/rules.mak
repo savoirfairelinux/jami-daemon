@@ -1,4 +1,4 @@
-FFMPEG_HASH := c46d22a4a58467bdc7885685b06a2114dd181c43
+FFMPEG_HASH := f7e9275f83ec116fc859367d61998eae8af438fc
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 ifdef HAVE_WIN32
@@ -93,12 +93,16 @@ FFMPEGCONF += \
 endif
 
 ifdef HAVE_LINUX
+ifndef HAVE_ANDROID
 FFMPEGCONF += \
-	--disable-vdpau \
+	--enable-vdpau \
+	--enable-hwaccel=h264_vdpau \
+	--enable-hwaccel=mpeg4_vdpau
 	--enable-vaapi \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi
+endif
 endif
 
 ifdef HAVE_MACOSX
@@ -173,7 +177,7 @@ FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
-ifeq ($(call need_pkg,"libavcodec >= 57.48.101 libavformat >= 57.41.100 libswscale >= 4.1.100 libavdevice >= 57.0.101 libavutil >= 55.28.100"),)
+ifeq ($(call need_pkg,"libavcodec >= 57.89.100 libavformat >= 57.71.100 libswscale >= 4.6.100 libavdevice >= 57.6.100 libavutil >= 55.58.100"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -189,7 +193,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-	$(APPLY) $(SRC)/ffmpeg/0004-avformat-fix-find_stream_info-not-considering-extradata.patch
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
 endif
