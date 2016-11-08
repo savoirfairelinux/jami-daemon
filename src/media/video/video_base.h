@@ -34,6 +34,7 @@
 #include <memory>
 #include <set>
 #include <mutex>
+#include <ciso646> // fix windows compiler bug
 
 class AVPacket;
 class AVDictionary;

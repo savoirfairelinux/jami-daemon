@@ -20,6 +20,8 @@
 
 #include "dcblocker.h"
 
+#include <ciso646> // fix windows compiler bug
+
 namespace ring {
 
 DcBlocker::DcBlocker(unsigned channels /* = 1 */)

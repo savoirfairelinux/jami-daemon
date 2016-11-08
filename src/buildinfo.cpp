@@ -25,6 +25,8 @@
 #include "dring.h"
 #include <string>
 
+#include <ciso646> // fix windows compiler bug
+
 namespace DRing {
 
 const char*
