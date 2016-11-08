@@ -94,6 +94,10 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::StartCapture>(),
         exported_callback<DRing::VideoSignal::StopCapture>(),
 #endif
+#ifdef RING_UWP
+        /* UWP Debug */
+        exported_callback<DRing::DebugSignal::MessageSend>(),
+#endif
 #endif
     };
 
