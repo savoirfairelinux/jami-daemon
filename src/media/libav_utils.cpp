@@ -33,6 +33,7 @@
 #include <thread>
 #include <mutex>
 #include <exception>
+#include <ciso646> // fix windows compiler bug
 
 namespace ring { namespace libav_utils {
 

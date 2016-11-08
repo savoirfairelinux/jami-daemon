@@ -25,6 +25,7 @@
 #include <errno.h>
 #include <time.h>
 #include <sys/time.h>
+#include <ciso646> // fix windows compiler bug
 
 #include <string>
 #include <sstream>

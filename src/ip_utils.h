@@ -29,6 +29,8 @@ extern "C" {
  #include <config.h>
 #endif
 
+#include <ciso646> // fix windows compiler bug
+
 #ifdef _WIN32
     #include <ws2tcpip.h>
 
