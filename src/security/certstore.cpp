@@ -390,7 +390,7 @@ TrustStore::setCertificateStatus(const std::string& cert_id,
 }
 
 bool
-TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert,
+TrustStore::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                                  const TrustStore::PermissionStatus status, bool local)
 {
     CertificateStore::instance().pinCertificate(cert, local);
@@ -422,7 +422,7 @@ TrustStore::setCertificateStatus(const std::string& cert_id, const TrustStatus s
 }
 
 bool
-TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert,
+TrustStore::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                                  const TrustStatus status, bool local)
 {
     CertificateStore::instance().pinCertificate(cert, local);

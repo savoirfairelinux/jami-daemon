@@ -112,10 +112,10 @@ public:
     static const char* statusToStr(PermissionStatus s);
 
     bool setCertificateStatus(const std::string& cert_id, const PermissionStatus status);
-    bool setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
+    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
 
     bool setCertificateStatus(const std::string& cert_id, const TrustStatus status);
-    bool setCertificateStatus(std::shared_ptr<crypto::Certificate>& cert, TrustStatus status, bool local = true);
+    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, TrustStatus status, bool local = true);
 
     PermissionStatus getCertificateStatus(const std::string& cert_id) const;
     TrustStatus getCertificateTrustStatus(const std::string& cert_id) const;

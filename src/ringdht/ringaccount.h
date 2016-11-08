@@ -386,6 +386,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
+        bool foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt);
 
         /**
          * Maps require port via UPnP
