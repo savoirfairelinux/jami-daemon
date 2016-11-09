@@ -528,7 +528,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
 #if HAVE_RINGNS
-    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameDir_.get().getServer();
+    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
 #endif
 
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
@@ -1213,7 +1213,7 @@ RingAccount::getAccountDetails() const
     //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
     a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT,               ethAccount_);
 #if HAVE_RINGNS
-    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameServer_);
+    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameDir_.get().getServer());
 #endif
 
     return a;
