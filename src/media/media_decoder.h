@@ -94,7 +94,9 @@ class MediaDecoder {
         int getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);
+#if defined(RING_VIDEO) && defined(RING_ACCEL)
         void enableAccel(const bool enableAccel) { enableAccel_ = enableAccel; }
+#endif
 
     private:
         NON_COPYABLE(MediaDecoder);
@@ -122,8 +124,8 @@ class MediaDecoder {
         // maximum time a packet can be queued (in ms)
         const unsigned jitterBufferMaxDelay_ {100000};
 
-        bool enableAccel_ = true;
 #if defined(RING_VIDEO) && defined(RING_ACCEL)
+        bool enableAccel_ = true;
         std::unique_ptr<video::HardwareAccel> accel_;
 #endif
 
