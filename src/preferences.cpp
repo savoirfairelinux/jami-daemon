@@ -45,7 +45,9 @@
 #endif
 #endif /* HAVE_OPENSL */
 
+#ifdef RING_VIDEO
 #include "client/videomanager.h"
+#endif
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
@@ -124,9 +126,13 @@ static const char * const POPUP_SHORT_KEY = "popupWindow";
 static const char * const TOGGLE_HOLD_SHORT_KEY = "toggleHold";
 static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 
+#ifdef RING_VIDEO
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
+#ifdef RING_ACCEL
 static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
+#endif
+#endif
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
@@ -539,15 +545,20 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
     parseValue(node, TOGGLE_PICKUP_HANGUP_SHORT_KEY, togglePickupHangup_);
 }
 
+#ifdef RING_VIDEO
 VideoPreferences::VideoPreferences()
+#ifdef RING_ACCEL
     : decodingAccelerated_(false)
+#endif
 {
 }
 
 void VideoPreferences::serialize(YAML::Emitter &out)
 {
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
+#ifdef RING_ACCEL
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
+#endif
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
 }
@@ -555,11 +566,14 @@ void VideoPreferences::serialize(YAML::Emitter &out)
 void VideoPreferences::unserialize(const YAML::Node &in)
 {
     const auto &node = in[CONFIG_LABEL];
+#ifdef RING_ACCEL
     // value may or may not be present
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
     } catch (...) { decodingAccelerated_ = false; } // experimental, so disabled by default
+#endif
     getVideoDeviceMonitor().unserialize(in);
 }
+#endif // RING_VIDEO
 
 } // namespace ring

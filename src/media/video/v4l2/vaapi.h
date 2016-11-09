@@ -24,7 +24,7 @@
 
 #include "config.h"
 
-#if defined(RING_VIDEO) && defined(RING_ACCEL)
+#ifdef RING_ACCEL
 
 extern "C" {
 #include <sys/types.h>
@@ -82,4 +82,4 @@ class VaapiAccel : public HardwareAccel {
 
 }} // namespace ring::video
 
-#endif // defined(RING_VIDEO) && defined(RING_ACCEL)
+#endif // RING_ACCEL
