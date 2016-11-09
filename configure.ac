@@ -443,7 +443,7 @@ PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0]
 
 dnl hardware acceleration is enabled by default
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable hardware acceleration]))
-AS_IF([test "x$enable_accel" != "xno"], [
+AS_IF([test "x$enable_video" != "xno" && test "x$enable_accel" != "xno"], [
   AC_DEFINE([RING_ACCEL], [1], [Allows use of hardware acceleration])
   AM_CONDITIONAL(RING_ACCEL, true)
   AS_IF([test "$SYS" = linux && test -z "${HAVE_ANDROID_FALSE}"],[

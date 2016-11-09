@@ -230,7 +230,9 @@ Manager::Manager() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences()
+#ifdef RING_VIDEO
     , videoPreferences()
+#endif
     , hasTriedToRegister_(false)
     , toneCtrl_(preferences)
     , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO())
@@ -2921,6 +2923,7 @@ Manager::getSinkClient(const std::string& id)
     return nullptr;
 }
 
+#ifdef RING_ACCEL
 bool
 Manager::getDecodingAccelerated() const
 {
@@ -2932,6 +2935,7 @@ Manager::setDecodingAccelerated(bool isAccelerated)
 {
     videoPreferences.setDecodingAccelerated(isAccelerated);
 }
+#endif // RING_ACCEL
 #endif // RING_VIDEO
 
 } // namespace ring

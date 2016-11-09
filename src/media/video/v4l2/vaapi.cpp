@@ -22,7 +22,7 @@
 
 #include "config.h"
 
-#if defined(RING_VIDEO) && defined(RING_ACCEL)
+#ifdef RING_ACCEL
 
 #include "video/v4l2/vaapi.h"
 #include "video/accel.h"
@@ -246,4 +246,4 @@ VaapiAccel::open(AVCodecContext* codecCtx, std::string deviceName)
 
 }}
 
-#endif // defined(RING_VIDEO) && defined(RING_ACCEL)
+#endif // RING_ACCEL
