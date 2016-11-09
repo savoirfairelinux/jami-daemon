@@ -28,7 +28,7 @@
 #include "audio/resampler.h"
 #include "manager.h"
 
-#if defined(RING_VIDEO) && defined(RING_ACCEL)
+#ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
 
@@ -97,9 +97,11 @@ int MediaDecoder::openInput(const DeviceParams& params)
     RING_DBG("Trying to open device %s with format %s, pixel format %s, size %dx%d, rate %lf", params.input.c_str(),
                                                         params.format.c_str(), params.pixel_format.c_str(), params.width, params.height, params.framerate.real());
 
+#ifdef RING_ACCEL
     // if there was a fallback to software decoding, do not enable accel
     // it has been disabled already by the video_receive_thread
     enableAccel_ &= Manager::instance().getDecodingAccelerated();
+#endif
 
     int ret = avformat_open_input(
         &inputCtx_,
@@ -338,7 +340,7 @@ MediaDecoder::decode(VideoFrame& result)
 
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
-#if defined(RING_VIDEO) && defined(RING_ACCEL)
+#ifdef RING_ACCEL
         if (accel_) {
             if (!accel_->hasFailed())
                 accel_->extractData(decoderCtx_, result);

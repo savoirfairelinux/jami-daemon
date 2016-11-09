@@ -117,10 +117,12 @@ class Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
+#ifdef RING_VIDEO
         /**
          * Video preferences
          */
         VideoPreferences videoPreferences;
+#endif
 
         // Manager should not be accessed until initialized.
         // FIXME this is an evil hack!
@@ -1019,9 +1021,11 @@ class Manager {
 
         VideoManager& getVideoManager() const { return *videoManager_; }
 
+#ifdef RING_ACCEL
         bool getDecodingAccelerated() const;
 
         void setDecodingAccelerated(bool isAccelerated);
+#endif
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
