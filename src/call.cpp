@@ -465,6 +465,8 @@ Call::merge(std::shared_ptr<Call> scall)
     std::lock_guard<std::recursive_mutex> lk2 (call.callMutex_, std::adopt_lock);
     auto pendingInMessages = std::move(call.pendingInMessages_);
     iceTransport_ = std::move(call.iceTransport_);
+    if (peerNumber_.empty())
+        peerNumber_ = std::move(call.peerNumber_);
     peerDisplayName_ = std::move(call.peerDisplayName_);
     localAddr_ = call.localAddr_;
     localAudioPort_ = call.localAudioPort_;
