@@ -45,26 +45,11 @@ typedef struct {
 } uwp_fmt;
 
 // have all formats map to bgra
-static const std::array<uwp_fmt, 19> uwp_formats {
+static const std::array<uwp_fmt, 4> uwp_formats {
     uwp_fmt { "MJPG",                                           VIDEO_PIXFMT_BGRA       },
     uwp_fmt { "RGB24",                                          VIDEO_PIXFMT_BGRA       },
     uwp_fmt { "NV12",                                           VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "YUY2",                                           VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{30323449-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{56555949-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb78-524f-11ce-9f53-0020af0ba7701}",        VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb7d-524f-11ce-9f53-0020af0ba7701}",        VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb7e-524f-11ce-9f53-0020af0ba770}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb79-524f-11ce-9f53-0020af0ba770}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb7c-524f-11ce-9f53-0020af0ba770}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb7b-524f-11ce-9f53-0020af0ba770}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{e436eb7a-524f-11ce-9f53-0020af0ba770}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{59565955-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{1d4a45f2-e5f6-4b44-8388-f0ae5c0e0c37}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{32595559-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{31313259-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{39555659-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "{55595659-0000-0010-8000-00AA00389B71}",         VIDEO_PIXFMT_BGRA       }
+    uwp_fmt { "YUY2",                                           VIDEO_PIXFMT_BGRA       }
 };
 
 class VideoDeviceImpl {

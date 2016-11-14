@@ -1,4 +1,4 @@
-include $(top_srcdir)/globals.mak
+include $(top_srcdir)/globals.mk
 
 AM_CPPFLAGS += -I../
 noinst_LTLIBRARIES = libdevcrypto.la

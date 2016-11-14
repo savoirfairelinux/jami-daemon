@@ -94,6 +94,7 @@ class MediaDecoder {
         int getPixelFormat() const;
 
         void setOptions(const std::map<std::string, std::string>& options);
+        void enableAccel(const bool enableAccel) { enableAccel_ = enableAccel; }
 
     private:
         NON_COPYABLE(MediaDecoder);

@@ -2,7 +2,7 @@ dnl Ring - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring],[2.3.0],[ring@lists.savoirfairelinux.net],[ring])
+AC_INIT([Ring],[3.0.0],[ring@lists.savoirfairelinux.net],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2016]])
 AC_REVISION([$Revision$])
@@ -396,6 +396,10 @@ AC_DEFINE_UNQUOTED([HAVE_RINGNS], `if test "x$enable_ringns" != "xno"; then echo
 # Rest C++ with restbed
 AC_ARG_WITH([restcpp],
     AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
+AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
+AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
+  AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
+])
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
   AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));

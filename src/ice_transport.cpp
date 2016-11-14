@@ -26,8 +26,10 @@
 #include "upnp/upnp_control.h"
 
 #include <pjlib.h>
+#include <msgpack.hpp>
 
 #include <utility>
+#include <tuple>
 #include <algorithm>
 #include <sstream>
 #include <chrono>
@@ -438,56 +440,48 @@ IceTransport::start(const Attribute& rem_attrs,
     return true;
 }
 
-std::string
-IceTransport::unpackLine(std::vector<uint8_t>::const_iterator& begin,
-                         std::vector<uint8_t>::const_iterator& end)
-{
-    if (std::distance(begin, end) <= 0)
-        return {};
-
-    // Search for EOL
-    std::vector<uint8_t>::const_iterator line_end(begin);
-    while (line_end != end && *line_end != NEW_LINE && *line_end)
-        ++line_end;
-
-    if (std::distance(begin, line_end) <= 0)
-        return {};
-
-    std::string str(begin, line_end);
-
-    // Consume the new line character
-    if (std::distance(line_end, end) > 0)
-        ++line_end;
-
-    begin = line_end;
-    return str;
-}
-
 bool
 IceTransport::start(const std::vector<uint8_t>& rem_data)
 {
-    auto begin = rem_data.cbegin();
-    auto end = rem_data.cend();
-    auto rem_ufrag = unpackLine(begin, end);
-    auto rem_pwd = unpackLine(begin, end);
-    if (rem_pwd.empty() or rem_pwd.empty()) {
-        RING_ERR("ICE remote attributes parsing error");
-        return false;
-    }
+    std::string rem_ufrag;
+    std::string rem_pwd;
     std::vector<IceCandidate> rem_candidates;
+
+    auto data = reinterpret_cast<const char*>(rem_data.data());
+    auto size = rem_data.size();
+
     try {
-        while (true) {
-            IceCandidate candidate;
-            const auto line = unpackLine(begin, end);
-            if (line.empty())
-                break;
-            if (getCandidateFromSDP(line, candidate))
-                rem_candidates.push_back(candidate);
+        std::size_t offset = 0;
+        auto result = msgpack::unpack(data, size, offset);
+        auto version = result.get().as<uint8_t>();
+        RING_DBG("[ice:%p] rx msg v%u", this, version);
+        if (version == 1) {
+            result = msgpack::unpack(data, size, offset);
+            std::tie(rem_ufrag, rem_pwd) = result.get().as<std::pair<std::string, std::string>>();
+            result = msgpack::unpack(data, size, offset);
+            auto comp_cnt = result.get().as<uint8_t>();
+            while (comp_cnt-- > 0) {
+                result = msgpack::unpack(data, size, offset);
+                IceCandidate cand;
+                for (const auto& line : result.get().as<std::vector<std::string>>()) {
+                    if (getCandidateFromSDP(line, cand))
+                        rem_candidates.emplace_back(std::move(cand));
+                }
+            }
+        } else {
+            RING_ERR("[ice:%p] invalid msg version", this);
+            return false;
         }
-    } catch (std::exception& e) {
-        RING_ERR("ICE remote candidates parsing error");
+    } catch (const msgpack::unpack_error& e) {
+        RING_ERR("[ice:%p] remote msg unpack error: %s", this, e.what());
         return false;
     }
+
+    if (rem_pwd.empty() or rem_pwd.empty() or rem_candidates.empty()) {
+        RING_ERR("[ice:%p] invalid remote attributes", this);
+        return false;
+    }
+
     return start({rem_ufrag, rem_pwd}, rem_candidates);
 }
 
@@ -736,19 +730,20 @@ IceTransport::selectUPnPIceCandidates()
 }
 
 std::vector<uint8_t>
-IceTransport::getLocalAttributesAndCandidates() const
+IceTransport::packIceMsg() const
 {
+    static constexpr uint8_t ICE_MSG_VERSION = 1;
+
     if (not isInitialized())
         return {};
 
     std::stringstream ss;
-    ss << local_ufrag_ << NEW_LINE;
-    ss << local_pwd_ << NEW_LINE;
-    for (unsigned i=0; i<component_count_; i++) {
-        const auto& candidates = getLocalCandidates(i);
-        for (const auto& c : candidates)
-            ss << c << NEW_LINE;
-    }
+    msgpack::pack(ss, ICE_MSG_VERSION);
+    msgpack::pack(ss, std::make_pair(local_ufrag_, local_pwd_));
+    msgpack::pack(ss, static_cast<uint8_t>(component_count_));
+    for (unsigned i=0; i<component_count_; i++)
+        msgpack::pack(ss, getLocalCandidates(i));
+
     auto str(ss.str());
     return std::vector<uint8_t>(str.begin(), str.end());
 }

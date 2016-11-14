@@ -237,7 +237,7 @@ RingAccount::newOutgoingSIPCall(const std::string& toUrl)
     } catch (...) {
 #if HAVE_RINGNS
         std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
-        nameDir_.get().lookupName(sufix, [wthis_,call](const std::string& result, NameDirectory::Response response) mutable {
+        NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result, NameDirectory::Response response) mutable {
             runOnMainThread([=]() mutable {
                 if (auto sthis = wthis_.lock()) {
                     try {
@@ -269,6 +269,7 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
 
     const auto toH = dht::InfoHash(toUri);
 
+    call->setPeerNumber(toUri + "@ring.dht");
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
@@ -325,7 +326,7 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
                     const dht::Value::Id callvid  = udist(sthis->rand_);
                     const dht::Value::Id vid  = udist(sthis->rand_);
                     const auto callkey = dht::InfoHash::get("callto:" + dev.dev.toString());
-                    dht::Value val { dht::IceCandidates(callvid, ice->getLocalAttributesAndCandidates()) };
+                    dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
                     val.id = vid;
 
                     sthis->dht_.putEncrypted(
@@ -528,7 +529,7 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
 #if HAVE_RINGNS
-    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameDir_.get().getServer();
+    out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
 #endif
 
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
@@ -571,9 +572,12 @@ void RingAccount::unserialize(const YAML::Node &node)
     dhtPortUsed_ = dhtPort_;
 
 #if HAVE_RINGNS
-    std::string ringns_server;
-    parseValue(node, DRing::Account::ConfProperties::RingNS::URI, ringns_server);
-    nameDir_ = NameDirectory::instance(ringns_server);
+    try {
+        parseValue(node, DRing::Account::ConfProperties::RingNS::URI, nameServer_);
+    } catch (const std::exception& e) {
+        RING_WARN("can't read name server: %s", e.what());
+    }
+    nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
     parseValue(node, Conf::DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
@@ -1122,6 +1126,10 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             // no receipt or archive, creating new account
             if (archive_password.empty()) {
                 RING_WARN("Password needed to create archive");
+                if (identity_.first) {
+                    ringAccountId_ = identity_.first->getPublicKey().getId().toString();
+                    username_ = RING_URI_PREFIX+ringAccountId_;
+                }
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
                 if (archive_pin.empty()) {
@@ -1169,9 +1177,9 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
 
 #if HAVE_RINGNS
-    std::string ringns_server;
-    parseString(details, DRing::Account::ConfProperties::RingNS::URI,     ringns_server);
-    nameDir_ = NameDirectory::instance(ringns_server);
+    //std::string ringns_server;
+    parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
+    nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
     loadAccount(archive_password, archive_pin);
@@ -1206,7 +1214,7 @@ RingAccount::getAccountDetails() const
     //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
     a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT,               ethAccount_);
 #if HAVE_RINGNS
-    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                  nameDir_.get().getServer());
+    a.emplace(DRing::Account::ConfProperties::RingNS::URI,                   nameDir_.get().getServer());
 #endif
 
     return a;
@@ -1229,7 +1237,7 @@ void
 RingAccount::lookupName(const std::string& name)
 {
     auto acc = getAccountID();
-    nameDir_.get().lookupName(name, [acc,name](const std::string& result, NameDirectory::Response response) {
+    NameDirectory::lookupUri(name, nameServer_, [acc,name](const std::string& result, NameDirectory::Response response) {
         emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, result, name);
     });
 }
@@ -1850,13 +1858,14 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
                                   std::shared_ptr<dht::crypto::Certificate> peer_cert)
 {
     const auto vid = udist(rand_);
-    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->getLocalAttributesAndCandidates()) };
+    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
     val.id = vid;
+
+    auto from = (peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId() : peer_cert->getId()) : peer_ice_msg.from).toString();
 
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
-    auto from_acc_id = peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId().toString() : peer_cert->getId().toString()) : peer_ice_msg.from.toString();
-    nameDir_.get().lookupAddress(from_acc_id, [wcall](const std::string& result, const NameDirectory::Response& response){
+    nameDir_.get().lookupAddress(from, [wcall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
             if (auto call = wcall.lock())
                 call->setPeerRegistredName(result);
@@ -1886,7 +1895,6 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
         return;
     }
 
-    auto from = peer_ice_msg.from.toString();
     call->setPeerNumber(from);
     call->initRecFilename(from);
 

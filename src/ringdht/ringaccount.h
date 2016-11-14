@@ -350,6 +350,7 @@ class RingAccount : public SIPAccountBase {
 
 #if HAVE_RINGNS
         std::reference_wrapper<NameDirectory> nameDir_;
+        std::string nameServer_;
         std::string registeredName_;
 #endif
 

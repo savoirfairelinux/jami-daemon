@@ -41,14 +41,15 @@ using std::string;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
-                                       const DeviceParams& args) :
+                                       const bool isReset) :
     VideoGenerator::VideoGenerator()
-    , args_(args)
+    , args_()
     , dstWidth_(0)
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
     , restartDecoder_(false)
+    , isReset_(isReset)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , requestKeyFrameCallback_(0)
@@ -73,6 +74,9 @@ VideoReceiveThread::startLoop()
 bool VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder());
+
+    // disable accel if there was a fallback to software decoding
+    videoDecoder_->enableAccel(!isReset_);
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;

@@ -190,7 +190,7 @@ class IceTransport {
         /**
          * Returns serialized ICE attributes and candidates.
          */
-        std::vector<uint8_t> getLocalAttributesAndCandidates() const;
+        std::vector<uint8_t> packIceMsg() const;
 
         bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
 
@@ -227,9 +227,6 @@ class IceTransport {
         static void cb_on_ice_complete(pj_ice_strans *ice_st,
                                        pj_ice_strans_op op,
                                        pj_status_t status);
-
-        static std::string unpackLine(std::vector<uint8_t>::const_iterator& begin,
-                                      std::vector<uint8_t>::const_iterator& end);
 
         struct IceSTransDeleter {
                 void operator ()(pj_ice_strans* ptr) {

@@ -248,8 +248,9 @@ Manager::setAutoAnswer(bool enable)
 Manager::Manager() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
-    hookPreference(),  audioPreference(), shortcutPreferences(),
-    hasTriedToRegister_(false)
+    hookPreference(),  audioPreference(), shortcutPreferences()
+    , videoPreferences()
+    , hasTriedToRegister_(false)
     , toneCtrl_(preferences)
     , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO())
     , audioLayerMutex_()
@@ -1556,7 +1557,7 @@ Manager::saveConfig()
         hookPreference.serialize(out);
         audioPreference.serialize(out);
 #ifdef RING_VIDEO
-        getVideoDeviceMonitor().serialize(out);
+        videoPreferences.serialize(out);
 #endif
         shortcutPreferences.serialize(out);
 
@@ -2662,7 +2663,7 @@ Manager::loadAccountMap(const YAML::Node &node)
     int errorCount = 0;
     try {
 #ifdef RING_VIDEO
-        getVideoDeviceMonitor().unserialize(node);
+        videoPreferences.unserialize(node);
 #endif
     } catch (const YAML::Exception &e) {
         RING_ERR("%s: No video node in config file", e.what());
@@ -2941,6 +2942,18 @@ Manager::getSinkClient(const std::string& id)
         if (auto sink = iter->second.lock())
             return sink;
     return nullptr;
+}
+
+bool
+Manager::getDecodingAccelerated() const
+{
+    return videoPreferences.getDecodingAccelerated();
+}
+
+void
+Manager::setDecodingAccelerated(bool isAccelerated)
+{
+    videoPreferences.setDecodingAccelerated(isAccelerated);
 }
 #endif // RING_VIDEO
 
