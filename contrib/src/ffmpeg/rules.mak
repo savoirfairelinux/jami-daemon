@@ -170,7 +170,7 @@ FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
-ifeq ($(call need_pkg,"ffmpeg >= 3.1.3"),)
+ifeq ($(call need_pkg,"libavcodec >= 57.48.101 libavformat >= 57.41.100 libswscale >= 4.1.100 libavdevice >= 57.0.101 libavutil >= 55.28.100"),)
 PKGS_FOUND += ffmpeg
 endif
 
