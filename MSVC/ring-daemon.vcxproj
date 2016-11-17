@@ -415,7 +415,8 @@
       <Optimization>MaxSpeed</Optimization>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <SDLCheck>false</SDLCheck>
+      <SDLCheck>
+      </SDLCheck>
       <AdditionalIncludeDirectories>..\..\FFmpegInterop\ffmpeg\Build\Windows10\x64\include;$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\contrib\pjproject\pjlib\include;$(ProjectDir)..\contrib\pjproject\pjnath\include;$(ProjectDir)..\contrib\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\pjproject\pjsip\include;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\contrib\pjproject\third_party;$(ProjectDir)..\contrib\pjproject\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;$(ProjectDir)..\contrib\boost;$(ProjectDir)..\contrib\cryptopp;$(ProjectDir)..\..\restbed\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>BOOST_SYSTEM_NO_DEPRECATED;PJ_OS_HAS_CHECK_STACK=1;STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
@@ -423,6 +424,7 @@
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
     </ClCompile>
     <Link>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
