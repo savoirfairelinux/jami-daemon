@@ -1,6 +1,7 @@
 # Boost
-BOOST_VERSION := 1_61_0
-BOOST_URL := https://downloads.sourceforge.net/project/boost/boost/1.61.0/boost_$(BOOST_VERSION).tar.bz2
+BOOST_VERSION_1 := 1.61.0
+BOOST_VERSION_2 := 1_61_0
+BOOST_URL := https://downloads.sourceforge.net/project/boost/boost/$(BOOST_VERSION_1)/boost_$(BOOST_VERSION_2).tar.bz2
 
 PKGS += boost
 
@@ -30,12 +31,12 @@ ifdef HAVE_ANDROID
 BOOST_B2_OPTS += --user-config=user-config.jam
 endif
 
-$(TARBALLS)/boost_$(BOOST_VERSION).tar.bz2:
+$(TARBALLS)/boost_$(BOOST_VERSION_2).tar.bz2:
 	$(call download,$(BOOST_URL))
 
-.sum-boost: boost_$(BOOST_VERSION).tar.bz2
+.sum-boost: boost_$(BOOST_VERSION_2).tar.bz2
 
-boost: boost_$(BOOST_VERSION).tar.bz2 .sum-boost
+boost: boost_$(BOOST_VERSION_2).tar.bz2 .sum-boost
 	$(UNPACK)
 	$(MOVE)
 
@@ -56,6 +57,16 @@ ifdef HAVE_ANDROID
 	cd $< && echo "<compileflags>-I$(ANDROID_TOOLCHAIN)/include/c++/4.9" >> user-config.jam
 	cd $< && echo ";" >> user-config.jam
 endif
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/boost/0001-Add-build-boost-for-iOS-script.patch
+	cd $< && chmod +x build-boost-iOS-libc++
+	cd $< && ./build-boost-iOS-libc++ \
+		$(HOSTCONF) \
+		$(HOSTVARS) \
+		--boostVersion1=$(BOOST_VERSION_1) \
+		--boostVersion2=$(BOOST_VERSION_2)
+else
 	cd $< && $(HOSTVARS) ./bootstrap.sh
 	cd $< && $(HOSTVARS) ./b2 $(BOOST_B2_OPTS) install
+endif
 	touch $@
