@@ -56,6 +56,14 @@ ifdef HAVE_ANDROID
 	cd $< && echo "<compileflags>-I$(ANDROID_TOOLCHAIN)/include/c++/4.9" >> user-config.jam
 	cd $< && echo ";" >> user-config.jam
 endif
+ifdef HAVE_IOS
+	$(APPLY) $(SRC)/boost/0001-Add-build-boost-for-iOS-script.patch
+	cd $< && chmod +x build-boost-iOS-libc++
+	cd $< && echo ${HOSTVARS}
+	cd $< && echo ${HOSTCONF}
+	cd $< && ./build-boost-iOS-libc++ $(HOSTCONF)
+else
 	cd $< && $(HOSTVARS) ./bootstrap.sh
 	cd $< && $(HOSTVARS) ./b2 $(BOOST_B2_OPTS) install
+endif
 	touch $@
