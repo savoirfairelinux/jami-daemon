@@ -133,6 +133,7 @@ constexpr static const char ARCHIVE_PASSWORD        [] = "Account.archivePasswor
 constexpr static const char ARCHIVE_PATH            [] = "Account.archivePath";
 constexpr static const char ARCHIVE_PIN             [] = "Account.archivePIN";
 constexpr static const char RING_DEVICE_ID          [] = "Account.deviceID";
+constexpr static const char RING_DEVICE_NAME        [] = "Account.deviceName";
 
 namespace Audio {
 
