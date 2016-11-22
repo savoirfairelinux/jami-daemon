@@ -280,7 +280,7 @@ class RingAccount : public SIPAccountBase {
             std::map<std::string, std::string> ids;
             for (auto& d : knownDevices_) {
                 auto id = d.first.toString();
-                auto label = id.substr(0, 8);
+                auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
                 ids.emplace(std::move(id), std::move(label));
             }
             return ids;
@@ -386,7 +386,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
-        bool foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt);
+        bool foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {});
 
         /**
          * Maps require port via UPnP
@@ -420,6 +420,7 @@ class RingAccount : public SIPAccountBase {
 
         std::string ringAccountId_ {};
         std::string ringDeviceId_ {};
+        std::string ringDeviceName_ {};
         std::string idPath_ {};
         std::string cachePath_ {};
         std::string dataPath_ {};
@@ -437,7 +438,13 @@ class RingAccount : public SIPAccountBase {
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
-        std::map<dht::InfoHash, std::shared_ptr<dht::crypto::Certificate>> knownDevices_;
+
+        struct KnownDevice {
+            std::shared_ptr<dht::crypto::Certificate> certificate;
+            std::string name {};
+            std::chrono::system_clock::time_point last_sync {std::chrono::system_clock::time_point::min()};
+        };
+        std::map<dht::InfoHash, KnownDevice> knownDevices_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
@@ -467,6 +474,7 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
+        void loadKnownDevicesOld();
         void loadKnownDevices();
         void saveKnownDevices() const;
 
