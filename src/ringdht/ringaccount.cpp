@@ -323,10 +323,8 @@ RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string
 
                     // Next step: sent the ICE data to peer through DHT
                     const dht::Value::Id callvid  = udist(sthis->rand_);
-                    const dht::Value::Id vid  = udist(sthis->rand_);
                     const auto callkey = dht::InfoHash::get("callto:" + dev.dev.toString());
                     dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
-                    val.id = vid;
 
                     sthis->dht_.putEncrypted(
                         callkey, dev.dev,
@@ -1588,24 +1586,24 @@ RingAccount::doRegister_()
 #endif
 
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
-                RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
-                RegistrationState state;
-                switch (std::max(s4, s6)) {
-                    case dht::NodeStatus::Connecting:
-                        state = RegistrationState::TRYING;
-                        break;
-                    case dht::NodeStatus::Connected:
-                        state = RegistrationState::REGISTERED;
-                        break;
-                    case dht::NodeStatus::Disconnected:
-                        state = RegistrationState::UNREGISTERED;
-                        break;
-                    default:
-                        state = RegistrationState::ERROR_GENERIC;
-                        break;
-                }
-                setRegistrationState(state);
-            });
+            RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
+            RegistrationState state;
+            switch (std::max(s4, s6)) {
+                case dht::NodeStatus::Connecting:
+                    state = RegistrationState::TRYING;
+                    break;
+                case dht::NodeStatus::Connected:
+                    state = RegistrationState::REGISTERED;
+                    break;
+                case dht::NodeStatus::Disconnected:
+                    state = RegistrationState::UNREGISTERED;
+                    break;
+                default:
+                    state = RegistrationState::ERROR_GENERIC;
+                    break;
+            }
+            setRegistrationState(state);
+        });
 
         dht_.run((in_port_t)dhtPortUsed_, identity_, false);
 
@@ -1651,6 +1649,7 @@ RingAccount::doRegister_()
                 });
                 return true;
             });
+            syncDevices();
         } else {
             RING_WARN("Can't announce device: no annoucement...");
         }
@@ -1738,6 +1737,26 @@ RingAccount::doRegister_()
                     req->payload,
                     std::chrono::system_clock::to_time_t(req->received)
                 );
+                return true;
+            }
+        );
+
+        auto syncDeviceKey = dht::InfoHash::get("inbox:"+ringDeviceId_);
+        dht_.listen<DeviceSync>(
+            syncDeviceKey,
+            [shared](DeviceSync&& sync) {
+                // Received device sync data.
+                // check device certificate
+                shared->findCertificate(sync.from, [shared,sync](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
+                    if (!cert or cert->getId() != sync.from) {
+                        RING_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
+                        return;
+                    }
+                    if (not shared->foundKnownDevice(cert))
+                        return;
+                    shared->onReceiveDeviceSync(std::move(sync));
+                });
+
                 return true;
             }
         );
@@ -1879,9 +1898,7 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
 {
     registerDhtAddress(*ice);
 
-    const auto vid = udist(rand_);
     dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
-    val.id = vid;
 
     auto from = (peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId() : peer_cert->getId()) : peer_ice_msg.from).toString();
 
@@ -1900,7 +1917,7 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
         callKey_,
         peer_ice_msg.from,
         std::move(val),
-        [wcall, vid](bool ok) {
+        [wcall](bool ok) {
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
                 if (auto call = wcall.lock())
@@ -2367,6 +2384,53 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
     dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
                       dht::InfoHash(to),
                       dht::TrustRequest(DHT_TYPE_NS, payload));
+}
+
+void
+RingAccount::syncDevices()
+{
+    DeviceSync sync_data;
+    sync_data.date = std::chrono::system_clock::now().time_since_epoch().count();
+    sync_data.device_name = ringDeviceName_;
+    RING_WARN("Building device sync for %s %s", ringDeviceName_.c_str(), ringDeviceId_.c_str());
+    for (const auto& dev : knownDevices_) {
+        if (dev.first.toString() == ringDeviceId_)
+            sync_data.devices_known.emplace(dev.first, ringDeviceName_);
+        else
+            sync_data.devices_known.emplace(dev.first, dev.second.name);
+    }
+    for (const auto& dev : knownDevices_) {
+        RING_WARN("Sending device sync to %s %s", dev.second.name.c_str(), dev.first.toString().c_str());
+        auto syncDeviceKey = dht::InfoHash::get("inbox:"+dev.first.toString());
+        dht_.putEncrypted(syncDeviceKey, dev.first, sync_data);
+    }
+}
+
+void
+RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
+{
+    auto it = knownDevices_.find(sync.from);
+    if (it == knownDevices_.end()) {
+        RING_WARN("onReceiveDeviceSync: unknown device");
+        return;
+    }
+    using clock = std::chrono::system_clock;
+    auto sync_date = clock::time_point(clock::duration(sync.date));
+    if (it->second.last_sync >= sync_date) {
+        RING_DBG("onReceiveDeviceSync: dropping outdated sync data");
+        return;
+    }
+    RING_WARN("Received device sync data %zu", sync.devices_known.size());
+    for (const auto& d : sync.devices_known) {
+        auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+        findCertificate(d.first, [shared,d](const std::shared_ptr<dht::crypto::Certificate> crt) {
+            if (not crt)
+                return;
+            shared->foundKnownDevice(crt, d.second);
+        });
+    }
+    it->second.last_sync = sync_date;
+    saveKnownDevices();
 }
 
 void
