@@ -263,15 +263,28 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    pj_str_t methodName = CONST_PJ_STR("INFO");
-    pjsip_method method;
-    pjsip_method_init_np(&method, &methodName);
+    auto dlg = inv->dlg;
 
-    /* Create request message. */
-    pjsip_tx_data *tdata;
+    // Create request
+    static constexpr pjsip_method method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("INFO")};
+    pjsip_tx_data* tdata = nullptr;
+    pjsip_dlg_inc_lock(dlg);
+    auto status = pjsip_endpt_create_request_from_hdr(dlg->endpt,
+                                                      &method,
+                                                      dlg->target,
+                                                      dlg->local.info,
+                                                      dlg->remote.info,
+                                                      nullptr,
+                                                      dlg->call_id,
+                                                      ++dlg->local.cseq,
+                                                      nullptr,
+                                                      &tdata);
+    pjsip_dlg_dec_lock(dlg);
 
-    if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
-        RING_ERR("[call:%s] Could not create dialog", getCallId().c_str());
+    if (status != PJ_SUCCESS or !tdata) {
+        RING_ERR("[call:%s] Could not create INFO request", getCallId().c_str());
+        if (tdata)
+            pjsip_tx_data_dec_ref(tdata);
         return;
     }
 
@@ -282,11 +295,19 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pj_str_t pj_subtype;
     pj_cstr(&pj_subtype, subtype);
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
-
-    if (tdata->msg->body == NULL)
+    if (tdata->msg->body == nullptr) {
+        RING_ERR("[call:%s] Could not create INFO msg body", getCallId().c_str());
         pjsip_tx_data_dec_ref(tdata);
-    else
-        pjsip_dlg_send_request(inv->dlg, tdata, getSIPVoIPLink()->getModId(), NULL);
+        return;
+    }
+
+    // Send the request
+    status = pjsip_endpt_send_request_stateless(dlg->endpt, tdata, nullptr, nullptr);
+    if (status != PJ_SUCCESS) {
+        RING_ERR("[call:%s] Could not send INFO request", getCallId().c_str());
+        pjsip_tx_data_dec_ref(tdata);
+        return;
+    }
 }
 
 void
