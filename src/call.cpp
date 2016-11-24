@@ -37,7 +37,10 @@
 
 #include "errno.h"
 
+
 namespace ring {
+
+
 
 Call::Call(Account& account, const std::string& id, Call::CallType type)
     : id_(id)
@@ -154,10 +157,10 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
         return true; // no changes as no-op
 
     // Emit client state only if changed
-    auto old_client_state = getStateStr();
+    auto old_client_state = getStateStr().first;
     callState_ = call_state;
     connectionState_ = cnx_state;
-    auto new_client_state = getStateStr();
+    auto new_client_state = getStateStr().first;
 
     if (call_state == CallState::OVER) {
         RING_DBG("[call:%s] %lu subcalls %lu listeners", id_.c_str(), subcalls.size(), stateChangedListeners_.size());
@@ -202,58 +205,166 @@ Call::setState(ConnectionState cnx_state, signed code)
     return setState(callState_, cnx_state, code);
 }
 
-std::string
-Call::getStateStr() const
+
+
+void CallState_::configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager){
+        RING_WARN("Call state not recognized");
+}
+
+const std::string IncomingCall::getState() const {
+    return "Incoming";
+}
+
+void IncomingCall::configureConference(std::shared_ptr<Conference>& conf, 
+    const std::string& callId, Manager* manager){
+    conf->bindParticipant(callId);
+    manager->offHoldCall(callId);
+}
+
+const std::string HoldCall::getState() const {
+    return "Hold";
+}
+
+void HoldCall::configureConference(std::shared_ptr<Conference>& conf, 
+    const std::string& callId, Manager* manager){
+    conf->bindParticipant(callId);
+    manager->offHoldCall(callId);
+}
+
+const std::string CurrentCall::getState() const {
+    return "Current";
+}
+
+void CurrentCall::configureConference(std::shared_ptr<Conference>& conf, 
+    const std::string& callId, Manager* manager){
+    conf->bindParticipant(callId);
+}
+
+const std::string InactiveCall::getState() const {
+    return "Inactive";
+}
+
+void InactiveCall::configureConference(std::shared_ptr<Conference>& conf, 
+    const std::string& callId, Manager* manager){
+    conf->bindParticipant(callId);
+    manager->offHoldCall(callId);
+}
+
+const std::string ConnectingCall::getState() const {
+    return "Connecting";
+}
+
+const std::string RingingCall::getState() const {
+    return "Ringing";
+}
+
+const std::string HungupCall::getState() const {
+    return "Hungup";
+}
+
+const std::string BusyCall::getState() const {
+    return "Busy";
+}
+
+const std::string OverCall::getState() const {
+    return "Over";
+}
+
+const std::string FailureCall::getState() const {
+    return "Failure";
+}
+
+
+std::pair<std::string, CallState_*>
+Call::onActiveState(Call::ConnectionState connectionState_) const
 {
     using namespace DRing::Call;
-
-    switch (getState()) {
-        case CallState::ACTIVE:
-            switch (getConnectionState()) {
-                case ConnectionState::PROGRESSING:
-                    return StateEvent::CONNECTING;
-
-                case ConnectionState::RINGING:
-                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
-
-                case ConnectionState::DISCONNECTED:
-                    return StateEvent::HUNGUP;
-
-                case ConnectionState::CONNECTED:
-                default:
-                    return StateEvent::CURRENT;
-            }
-
-        case CallState::HOLD:
-            if(getConnectionState() == ConnectionState::DISCONNECTED)
-                return StateEvent::HUNGUP;
-            return StateEvent::HOLD;
-
-        case CallState::BUSY:
-            return StateEvent::BUSY;
-
-        case CallState::INACTIVE:
-            switch (getConnectionState()) {
-                case ConnectionState::PROGRESSING:
-                    return StateEvent::CONNECTING;
-
-                case ConnectionState::RINGING:
-                    return isIncoming() ? StateEvent::INCOMING : StateEvent::RINGING;
-
-                case ConnectionState::CONNECTED:
-                    return StateEvent::CURRENT;
-
-                default:
-                    return StateEvent::INACTIVE;
-            }
-
-        case CallState::OVER:
-            return StateEvent::OVER;
-
-        case CallState::MERROR:
-        default:
-            return StateEvent::FAILURE;
+    if(connectionState_ == ConnectionState::PROGRESSING)
+    {        
+        return std::make_pair(StateEvent::CONNECTING, new ConnectingCall());
     }
+    else if(connectionState_ == ConnectionState::RINGING)
+    {        
+        if(isIncoming())
+            return std::make_pair(StateEvent::INCOMING, new IncomingCall());
+        else
+            return std::make_pair(StateEvent::RINGING, new RingingCall());
+    }
+    else if(connectionState_ == ConnectionState::DISCONNECTED)
+    {
+        return std::make_pair(StateEvent::HUNGUP, new HungupCall());
+    }
+    else if (connectionState_ == ConnectionState::CONNECTED)
+    {
+        return std::make_pair(StateEvent::CURRENT, new CurrentCall());
+    }
+    else
+    {
+        return std::make_pair(StateEvent::CURRENT, new CurrentCall());
+    }
+}
+
+std::pair<std::string, CallState_*>
+Call::onInactiveState(Call::ConnectionState connectionState_) const
+{
+    using namespace DRing::Call;
+    if(connectionState_ == ConnectionState::PROGRESSING)
+    {        
+        return std::make_pair(StateEvent::CONNECTING, new ConnectingCall());
+    }
+    else if(connectionState_ == ConnectionState::RINGING)
+    {        
+        if(isIncoming())
+            return std::make_pair(StateEvent::INCOMING, new IncomingCall());
+        else 
+            return std::make_pair(StateEvent::RINGING, new RingingCall());
+    }
+    else if (connectionState_ == ConnectionState::CONNECTED)
+    {
+        return std::make_pair(StateEvent::CURRENT, new CurrentCall());        
+    }
+    else
+    {
+        return std::make_pair(StateEvent::INACTIVE, new InactiveCall());
+    }
+}
+
+std::pair<std::string, CallState_*>
+Call::getStateStr() const
+{
+   using namespace DRing::Call;
+   Call::CallState callState = getState();
+   Call::ConnectionState connectionState = getConnectionState();
+
+   if(callState == CallState::ACTIVE)
+   {
+        return onActiveState(connectionState);
+   }
+   else if(callState == CallState::HOLD)
+   {
+        if(connectionState == ConnectionState::DISCONNECTED)
+            return std::make_pair(StateEvent::HUNGUP, new HungupCall());
+        return std::make_pair(StateEvent::HOLD, new HoldCall());
+   }
+   else if(callState == CallState::BUSY)
+   {
+        return std::make_pair(StateEvent::BUSY, new BusyCall());
+   }
+   else if (callState == CallState::INACTIVE)
+   {
+        return onInactiveState(connectionState);
+   }
+   else if (callState == CallState::OVER)
+   {
+        return std::make_pair(StateEvent::OVER, new OverCall());
+
+   }
+   else if(callState == CallState::MERROR)
+   {
+        return std::make_pair(StateEvent::FAILURE, new FailureCall());
+   }
+    return std::make_pair(StateEvent::FAILURE, new FailureCall());
 }
 
 IpAddr
@@ -295,6 +406,12 @@ Call::toggleRecording()
     return startRecording;
 }
 
+CallState_*
+Call::getCallState()
+{
+    return getStateStr().second;
+}
+
 std::map<std::string, std::string>
 Call::getDetails() const
 {
@@ -302,7 +419,7 @@ Call::getDetails() const
         {DRing::Call::Details::CALL_TYPE,        ring::to_string((unsigned)type_)},
         {DRing::Call::Details::PEER_NUMBER,      peerNumber_},
         {DRing::Call::Details::DISPLAY_NAME,     peerDisplayName_},
-        {DRing::Call::Details::CALL_STATE,       getStateStr()},
+        {DRing::Call::Details::CALL_STATE,       getStateStr().first},
         {DRing::Call::Details::CONF_ID,          confID_},
         {DRing::Call::Details::TIMESTAMP_START,  ring::to_string(timestamp_start_)},
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
@@ -465,8 +582,6 @@ Call::merge(std::shared_ptr<Call> scall)
     std::lock_guard<std::recursive_mutex> lk2 (call.callMutex_, std::adopt_lock);
     auto pendingInMessages = std::move(call.pendingInMessages_);
     iceTransport_ = std::move(call.iceTransport_);
-    if (peerNumber_.empty())
-        peerNumber_ = std::move(call.peerNumber_);
     peerDisplayName_ = std::move(call.peerDisplayName_);
     localAddr_ = call.localAddr_;
     localAudioPort_ = call.localAudioPort_;
