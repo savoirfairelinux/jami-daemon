@@ -24,6 +24,7 @@
 
 #include "logger.h"
 #include "sip/sip_utils.h"
+#include "sip/sipvoiplink.h"
 
 #include <pjsip_ua.h>
 #include <pjsip.h>
@@ -153,37 +154,61 @@ im::fillPJSIPMessageBody(pjsip_tx_data& tdata,
     }
 }
 
+static void
+im_callback(void* /*token*/, pjsip_event* e)
+{
+    if (e->type == PJSIP_EVENT_TSX_STATE) {
+        auto* tsx = e->body.tsx_state.tsx;
+        RING_DBG("[IM] status code %u", tsx->status_code);
+    }
+}
+
 void
-im::sendSipMessage(pjsip_inv_session* session,
-                                 const std::map<std::string, std::string>& payloads)
+im::sendSipMessage(const std::map<std::string, std::string>& payloads, pjsip_dialog* dlg)
 {
     if (payloads.empty()) {
         RING_WARN("the payloads argument is empty; ignoring message");
         return;
     }
 
-    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    auto link = getSIPVoIPLink();
+    auto* endpt = link->getEndpoint();
 
-    {
-        auto dialog = session->dlg;
-        sip_utils::PJDialogLock dialog_lock {dialog};
+    // Create request message
+    static constexpr pjsip_method method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    pjsip_tx_data* tdata = nullptr;
+    pjsip_dlg_inc_lock(dlg);
+    auto status = pjsip_endpt_create_request_from_hdr(endpt,
+                                                      &method,
+                                                      dlg->target,
+                                                      dlg->local.info,
+                                                      dlg->remote.info,
+                                                      nullptr,
+                                                      dlg->call_id,
+                                                      ++dlg->local.cseq,
+                                                      nullptr,
+                                                      &tdata);
+    pjsip_dlg_dec_lock(dlg);
 
-        pjsip_tx_data* tdata = nullptr;
-        auto status = pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata);
-        if (status != PJ_SUCCESS) {
-            RING_ERR("pjsip_dlg_create_request failed: %s",
-                      sip_utils::sip_strerror(status).c_str());
-            throw InstantMessageException("Internal SIP error");
-        }
+    if (status != PJ_SUCCESS or !tdata) {
+        RING_ERR("[IM] Could not create MESSAGE request");
+        if (tdata)
+            pjsip_tx_data_dec_ref(tdata);
+        throw InstantMessageException("Internal SIP error");
+    }
 
-        fillPJSIPMessageBody(*tdata, payloads);
+    // Use dialog's transport
+    pjsip_tx_data_set_transport(tdata, &dlg->tp_sel);
 
-        status = pjsip_dlg_send_request(dialog, tdata, -1, nullptr);
-        if (status != PJ_SUCCESS) {
-            RING_ERR("pjsip_dlg_send_request failed: %s",
-                     sip_utils::sip_strerror(status).c_str());
-            throw InstantMessageException("Internal SIP error");
-        }
+    // Fill message body
+    fillPJSIPMessageBody(*tdata, payloads);
+
+    // Send the request
+    status = pjsip_endpt_send_request(endpt, tdata, -1, nullptr, &im_callback);
+    if (status != PJ_SUCCESS) {
+        RING_ERR("[IM] Could not send MESSAGE request");
+        pjsip_tx_data_dec_ref(tdata);
+        throw InstantMessageException("Internal SIP error");
     }
 }
 

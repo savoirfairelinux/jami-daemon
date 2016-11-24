@@ -346,6 +346,9 @@ SIPAccount::SIPStartCall(std::shared_ptr<SIPCall>& call)
         return false;
     }
 
+    // Add our instant message module as usage of created dialog
+    link_->registerDialog(dialog, call.get());
+
     auto subj_hdr_name = CONST_PJ_STR("Subject");
     pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 

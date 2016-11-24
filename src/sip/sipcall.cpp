@@ -670,9 +670,9 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
         for (auto& c : subcalls)
             c->sendTextMessage(messages, from);
     } else {
-        if (inv) {
+        if (inv and inv->dlg) {
             try {
-                im::sendSipMessage(inv.get(), messages);
+                im::sendSipMessage(messages, inv->dlg);
             } catch (...) {}
         } else {
             pendingOutMessages_.emplace_back(messages, from);
@@ -1123,6 +1123,7 @@ SIPCall::merge(std::shared_ptr<SIPCall> scall)
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
+    pjsip_dlg_set_mod_data(inv->dlg, getSIPVoIPLink()->getImModule().id, this);
     setTransport(scall->transport_);
     sdp_ = std::move(scall->sdp_);
     peerHolding_ = scall->peerHolding_;
