@@ -230,9 +230,7 @@ Manager::Manager() :
     pluginManager_(new PluginManager)
     , preferences(), voipPreferences(),
     hookPreference(),  audioPreference(), shortcutPreferences()
-#ifdef RING_VIDEO
     , videoPreferences()
-#endif
     , hasTriedToRegister_(false)
     , toneCtrl_(preferences)
     , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO())
@@ -496,6 +494,10 @@ Manager::outgoingCall(const std::string& preferred_account_id,
 bool
 Manager::answerCall(const std::string& call_id)
 {
+    std::cout << "############################################" << std::endl;
+    RING_DBG("#######################################################");
+    // return false;
+
     bool result = true;
 
     auto call = getCallFromCallID(call_id);
@@ -1059,6 +1061,18 @@ Manager::getCallFromCallID(const std::string& callID) const
     return callFactory.getCall(callID);
 }
 
+CallState_*
+Manager::getCallState(const std::string &callID)
+{
+    if (auto call = getCallFromCallID(callID)) {
+        return call->getCallState();
+    } 
+    else {
+        RING_ERR("Call is NULL");
+        return 0;
+    }
+}
+
 bool
 Manager::joinParticipant(const std::string& callId1,
                              const std::string& callId2)
@@ -1088,8 +1102,20 @@ Manager::joinParticipant(const std::string& callId1,
     if (isConferenceParticipant(callId2))
         detachParticipant(callId2);
 
-    std::map<std::string, std::string> call1Details(getCallDetails(callId1));
-    std::map<std::string, std::string> call2Details(getCallDetails(callId2));
+
+    CallState_* call1state = getCallState(callId1);
+    CallState_* call2state = getCallState(callId2);
+
+    //test if call1 or call2 is nul
+    if(!call1state || !call2state)
+    {
+        if(call1state)
+            delete call1state;
+        if(call2state)
+            delete call2state;
+        return false;
+    }
+
 
     std::string current_call_id(getCurrentCallId());
     RING_DBG("Current Call ID %s", current_call_id.c_str());
@@ -1113,40 +1139,13 @@ Manager::joinParticipant(const std::string& callId1,
     getRingBufferPool().unBindAll(callId2);
 
     // Process call1 according to its state
-    std::string call1_state_str(call1Details.find("CALL_STATE")->second);
-    RING_DBG("Process call %s state: %s", callId1.c_str(), call1_state_str.c_str());
-
-    if (call1_state_str == "HOLD") {
-        conf->bindParticipant(callId1);
-        offHoldCall(callId1);
-    } else if (call1_state_str == "INCOMING") {
-        conf->bindParticipant(callId1);
-        answerCall(callId1);
-    } else if (call1_state_str == "CURRENT") {
-        conf->bindParticipant(callId1);
-    } else if (call1_state_str == "INACTIVE") {
-        conf->bindParticipant(callId1);
-        answerCall(callId1);
-    } else
-        RING_WARN("Call state not recognized");
+    //configure conference with call1
+    call1state->configureConference(conf, callId1, this);
 
     // Process call2 according to its state
-    std::string call2_state_str(call2Details.find("CALL_STATE")->second);
-    RING_DBG("Process call %s state: %s", callId2.c_str(), call2_state_str.c_str());
+    //configure conference with call2
+    call2state->configureConference(conf, callId2, this); 
 
-    if (call2_state_str == "HOLD") {
-        conf->bindParticipant(callId2);
-        offHoldCall(callId2);
-    } else if (call2_state_str == "INCOMING") {
-        conf->bindParticipant(callId2);
-        answerCall(callId2);
-    } else if (call2_state_str == "CURRENT") {
-        conf->bindParticipant(callId2);
-    } else if (call2_state_str == "INACTIVE") {
-        conf->bindParticipant(callId2);
-        answerCall(callId2);
-    } else
-        RING_WARN("Call state not recognized");
 
     // Switch current call id to this conference
     switchCall(conf->getConfID());
@@ -1155,9 +1154,10 @@ Manager::joinParticipant(const std::string& callId1,
     // set recording sampling rate
     conf->setRecordingAudioFormat(ringbufferpool_->getInternalAudioFormat());
 
+    delete call1state;
+    delete call2state;
     return true;
 }
-
 void
 Manager::createConfFromParticipantList(const std::vector< std::string > &participantList)
 {
@@ -2923,7 +2923,6 @@ Manager::getSinkClient(const std::string& id)
     return nullptr;
 }
 
-#ifdef RING_ACCEL
 bool
 Manager::getDecodingAccelerated() const
 {
@@ -2935,7 +2934,6 @@ Manager::setDecodingAccelerated(bool isAccelerated)
 {
     videoPreferences.setDecodingAccelerated(isAccelerated);
 }
-#endif // RING_ACCEL
 #endif // RING_VIDEO
 
 } // namespace ring
