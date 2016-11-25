@@ -303,6 +303,7 @@ class RingAccount : public SIPAccountBase {
          */
         struct PendingCall;
         struct PendingMessage;
+        struct SavedTrustRequest;
         struct TrustRequest;
         struct KnownDevice;
         struct ArchiveContent;
@@ -415,7 +416,9 @@ class RingAccount : public SIPAccountBase {
         std::vector<uint8_t> receiptSignature_ {};
         dht::Value announceVal_;
 
-        std::vector<TrustRequest> trustRequests_;
+        std::map<dht::InfoHash, TrustRequest> trustRequests_;
+        void loadTrustRequests();
+        void saveTrustRequests();
 
         tls::TrustStore trust_;
 
