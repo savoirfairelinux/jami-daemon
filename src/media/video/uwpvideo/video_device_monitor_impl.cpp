@@ -94,7 +94,6 @@ VideoDeviceMonitorImpl::~VideoDeviceMonitorImpl()
 void
 VideoDeviceMonitorImpl::run()
 {
-    RING_DBG("VideoDeviceMonitorImpl::run");
 }
 
 VideoDeviceMonitor::VideoDeviceMonitor()

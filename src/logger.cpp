@@ -118,7 +118,7 @@ getHeader(const char* ctx)
 
     // Context
     if (ctx)
-        out << "|" << std::setw(24) << ctx;
+        out << "|" << std::setw(32) << ctx;
 
     out << "] ";
 
@@ -211,7 +211,7 @@ vlogger(const int level, const char *format, va_list ap)
             format = sep + 2;
             fputs(getHeader(ctx.c_str()).c_str(), stderr);
 #ifdef WIN32_NATIVE
-            char tmp[2048];
+            char tmp[4096];
             vsprintf(tmp, format, ap);
             ring::emitSignal<DRing::Debug::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
 #endif
