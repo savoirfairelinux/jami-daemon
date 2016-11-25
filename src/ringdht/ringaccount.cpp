@@ -111,11 +111,24 @@ struct RingAccount::PendingMessage
     std::chrono::steady_clock::time_point received;
 };
 
-struct RingAccount::TrustRequest
-{
-    dht::InfoHash from;
+struct
+RingAccount::SavedTrustRequest {
+    dht::InfoHash device;
+    time_t received;
+    std::vector<uint8_t> payload;
+    MSGPACK_DEFINE_MAP(device, received, payload)
+};
+
+struct
+RingAccount::TrustRequest {
+    dht::InfoHash from_device;
     std::chrono::system_clock::time_point received;
     std::vector<uint8_t> payload;
+    TrustRequest() {}
+    TrustRequest(dht::InfoHash device, std::chrono::system_clock::time_point r, std::vector<uint8_t>&& payload)
+            : from_device(device), received(r), payload(std::move(payload)) {}
+    TrustRequest(SavedTrustRequest&& sr)
+        : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
 };
 
 /**
@@ -1283,6 +1296,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     try {
         loadIdentity();
         loadKnownDevices();
+        loadTrustRequests();
 
         bool hasArchive = not archivePath_.empty() and fileutils::isFile(archivePath_);
         bool hasReceipt = hasSignedReceipt();
@@ -1935,35 +1949,41 @@ RingAccount::doRegister_()
             }
         );
 
-        auto inboxKey = dht::InfoHash::get("inbox:"+ringAccountId_);
+        auto inboxKey = dht::InfoHash::get("inbox:"+ringDeviceId_);
         dht_.listen<dht::TrustRequest>(
             inboxKey,
             [shared](dht::TrustRequest&& v) {
-                auto& this_ = *shared.get();
                 if (v.service != DHT_TYPE_NS)
                     return true;
-                // if the invite exists, update it
-                auto req = this_.trustRequests_.begin();
-                for (;req != this_.trustRequests_.end(); ++req)
-                    if (req->from == v.from) {
-                        req->received = std::chrono::system_clock::now();
-                        req->payload = v.payload;
-                        break;
+
+                shared->findCertificate(v.from, [shared, v](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
+                    auto& this_ = *shared.get();
+
+                    // check peer certificate
+                    dht::InfoHash peer_account;
+                    if (not this_.foundPeerDevice(cert, peer_account)) {
+                        return;
                     }
-                if (req == this_.trustRequests_.end()) {
-                    this_.trustRequests_.emplace_back(TrustRequest{
-                        /*.from = */v.from,
-                        /*.received = */std::chrono::system_clock::now(),
-                        /*.payload = */v.payload
-                    });
-                    req = std::prev(this_.trustRequests_.end());
-                }
-                emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
-                    this_.getAccountID(),
-                    req->from.toString(),
-                    req->payload,
-                    std::chrono::system_clock::to_time_t(req->received)
-                );
+
+                    RING_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
+                    auto req = this_.trustRequests_.find(peer_account);
+                    if (req == this_.trustRequests_.end()) {
+                        req = this_.trustRequests_.emplace(peer_account, TrustRequest{
+                            v.from, std::chrono::system_clock::now(), std::move(v.payload)
+                        }).first;
+                    } else {
+                        req->second.from_device = v.from;
+                        req->second.received = std::chrono::system_clock::now();
+                        req->second.payload = std::move(v.payload);
+                    }
+                    this_.saveTrustRequests();
+                    emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
+                        this_.getAccountID(),
+                        req->first.toString(),
+                        req->second.payload,
+                        std::chrono::system_clock::to_time_t(req->second.received)
+                    );
+                });
                 return true;
             }
         );
@@ -2071,27 +2091,27 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
     std::weak_ptr<SIPCall> wcall = call;
     auto account = std::static_pointer_cast<RingAccount>(shared_from_this());
     Manager::instance().addTask([account, wcall, ice, msg, from_cert] {
-            auto call = wcall.lock();
+        auto call = wcall.lock();
 
-            // call aborted?
-            if (not call)
-                return false;
-
-            if (ice->isFailed()) {
-                RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
-                call->onFailure(EIO);
-                return false;
-            }
-
-            // Loop until ICE transport is initialized.
-            // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
-            // and we let upper layers decide when the call shall be aborted (our first check upper).
-            if (not ice->isInitialized())
-                return true;
-
-            account->replyToIncomingIceMsg(call, ice, msg, from_cert);
+        // call aborted?
+        if (not call)
             return false;
-        });
+
+        if (ice->isFailed()) {
+            RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+            call->onFailure(EIO);
+            return false;
+        }
+
+        // Loop until ICE transport is initialized.
+        // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+        // and we let upper layers decide when the call shall be aborted (our first check upper).
+        if (not ice->isInitialized())
+            return true;
+
+        account->replyToIncomingIceMsg(call, ice, msg, from_cert);
+        return false;
+    });
 }
 
 bool
@@ -2619,7 +2639,7 @@ RingAccount::getTrustRequests() const
 {
     std::map<std::string, std::string> ret;
     for (const auto& r : trustRequests_)
-        ret.emplace(r.from.toString(), ring::to_string(std::chrono::system_clock::to_time_t(r.received)));
+        ret.emplace(r.first.toString(), ring::to_string(std::chrono::system_clock::to_time_t(r.second.received)));
     return ret;
 }
 
@@ -2627,12 +2647,12 @@ bool
 RingAccount::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    for (auto i = std::begin(trustRequests_); i != std::end(trustRequests_); ++i) {
-        if (i->from == f) {
-            trust_.setCertificateStatus(from, tls::TrustStore::PermissionStatus::ALLOWED);
-            trustRequests_.erase(i);
-            return true;
-        }
+    auto i = trustRequests_.find(f);
+    if (i != trustRequests_.end()) {
+        trust_.setCertificateStatus(from, tls::TrustStore::PermissionStatus::ALLOWED);
+        trustRequests_.erase(i);
+        saveTrustRequests();
+        return true;
     }
     return false;
 }
@@ -2641,11 +2661,9 @@ bool
 RingAccount::discardTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    for (auto i = std::begin(trustRequests_); i != std::end(trustRequests_); ++i) {
-        if (i->from == f) {
-            trustRequests_.erase(i);
-            return true;
-        }
+    if (trustRequests_.erase(f) > 0) {
+        saveTrustRequests();
+        return true;
     }
     return false;
 }
@@ -2654,9 +2672,53 @@ void
 RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
     setCertificateStatus(to, tls::TrustStore::PermissionStatus::ALLOWED);
-    dht_.putEncrypted(dht::InfoHash::get("inbox:"+to),
-                      dht::InfoHash(to),
-                      dht::TrustRequest(DHT_TYPE_NS, payload));
+    auto toH = dht::InfoHash(to);
+    forEachDevice(toH, [toH,payload](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
+    {
+        RING_WARN("Sending trust request to: %s / %s", toH.toString().c_str(), dev.toString().c_str());
+        shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
+                          dev,
+                          dht::TrustRequest(DHT_TYPE_NS, payload));
+    });
+}
+
+void
+RingAccount::saveTrustRequests()
+{
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc);
+
+    std::map<dht::InfoHash, SavedTrustRequest> requests;
+    for (const auto& req : trustRequests_)
+        requests.emplace(req.first, SavedTrustRequest{req.second.from_device, system_clock::to_time_t(req.second.received), req.second.payload});
+
+    msgpack::pack(file, requests);
+}
+
+void
+RingAccount::loadTrustRequests()
+{
+    std::map<dht::InfoHash, SavedTrustRequest> requests;
+    try {
+        // read file
+        auto file = fileutils::loadFile(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests");
+        // load values
+        msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
+        oh.get().convert(requests);
+    } catch (const std::exception& e) {
+        RING_WARN("Error loading trust requests: %s", e.what());
+        return;
+    }
+
+    for (auto& d : requests)
+        trustRequests_.emplace(d.first, TrustRequest(std::move(d.second)));
+    for (auto& r : trustRequests_) {
+        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
+            getAccountID(),
+            r.first.toString(),
+            r.second.payload,
+            std::chrono::system_clock::to_time_t(r.second.received)
+        );
+    }
 }
 
 void
