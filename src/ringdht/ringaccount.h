@@ -315,11 +315,8 @@ class RingAccount : public SIPAccountBase {
             std::chrono::steady_clock::time_point received;
         };
 
-        struct TrustRequest {
-            dht::InfoHash from;
-            std::chrono::system_clock::time_point received;
-            std::vector<uint8_t> payload;
-        };
+        struct SavedTrustRequest;
+        struct TrustRequest;
 
         /**
          * Crypto material contained in the archive,
@@ -448,7 +445,9 @@ class RingAccount : public SIPAccountBase {
         std::vector<uint8_t> receiptSignature_ {};
         dht::Value announceVal_;
 
-        std::vector<TrustRequest> trustRequests_;
+        std::map<dht::InfoHash, TrustRequest> trustRequests_;
+        void loadTrustRequests();
+        void saveTrustRequests();
 
         tls::TrustStore trust_;
 
