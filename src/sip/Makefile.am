@@ -7,12 +7,14 @@ libsiplink_la_SOURCES = \
         sipaccountbase.cpp \
         sdp.cpp \
         sipaccount.cpp \
+        sipaccountdb.cpp \
         sipcall.cpp \
         sipvoiplink.cpp \
         siptransport.cpp \
         sipaccountbase.h \
         sdp.h \
         sipaccount.h \
+        sipaccountdb.h \
         sipcall.h \
         sipvoiplink.h \
         siptransport.h \
