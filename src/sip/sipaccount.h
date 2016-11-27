@@ -487,8 +487,8 @@ class SIPAccount : public SIPAccountBase {
         void connectivityChanged() override;
 
     private:
-        void doRegister1_();
-        void doRegister2_();
+        void doRegisterUpnpDisabled();
+        void doRegisterIPToIP();
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
