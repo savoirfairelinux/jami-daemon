@@ -34,20 +34,25 @@ struct ThreadPool::ThreadState
 };
 
 ThreadPool::ThreadPool()
- : maxThreads_(std::max<size_t>(std::thread::hardware_concurrency(), 4))
+ : maxThreads_(std::max<size_t>(std::thread::hardware_concurrency(), 4)),
+  canStartThread_(true)
 {
     threads_.reserve(maxThreads_);
 }
 
 ThreadPool::~ThreadPool()
 {
-    join();
+    finish();
 }
 
 void
 ThreadPool::run(std::function<void()>&& cb)
 {
     std::unique_lock<std::mutex> l(lock_);
+    std::unique_lock<std::mutex> al(addThreadLock_);
+    if (!canStartThread_) {
+        throw ThreadStartException();
+    }
 
     // launch new thread if necessary
     if (not readyThreads_ && threads_.size() < maxThreads_) {
@@ -81,6 +86,7 @@ ThreadPool::run(std::function<void()>&& cb)
             }
         });
     }
+    al.unlock();
 
     // push task to queue
     tasks_.emplace(std::move(cb));
@@ -91,14 +97,28 @@ ThreadPool::run(std::function<void()>&& cb)
 }
 
 void
-ThreadPool::join()
+ThreadPool::joinAllThreads(bool terminate)
 {
+    // Prevent creation of thread while we join them
+    std::unique_lock<std::mutex> l(addThreadLock_);
+
     for (auto& t : threads_)
         t->run = false;
     cv_.notify_all();
     for (auto& t : threads_)
         t->thread.join();
     threads_.clear();
+    canStartThread_ = !terminate;
+}
+
+/*
+ * Flush every thread of the pool by joining them and
+ * prevent creation of any new ones
+ */
+void
+ThreadPool::finish()
+{
+    joinAllThreads(true);
 }
 
 }
