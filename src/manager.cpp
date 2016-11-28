@@ -34,6 +34,7 @@
 #include "manager.h"
 #include "account_schema.h"
 #include "plugin_manager.h"
+#include "thread_pool.h"
 
 #include "fileutils.h"
 #include "map_utils.h"
@@ -394,6 +395,7 @@ Manager::finish() noexcept
 
         ice_tf_.reset();
         pj_shutdown();
+        ThreadPool::instance().join();
     } catch (const VoipLinkException &err) {
         RING_ERR("%s", err.what());
     }
