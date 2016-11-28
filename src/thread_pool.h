@@ -26,6 +26,12 @@
 
 namespace ring {
 
+class ThreadStartException : std::exception {
+    const char* what() const noexcept {
+        return "Cannot start a thread in this pool\n";
+    }
+};
+
 class ThreadPool {
 public:
     static ThreadPool& instance() {
@@ -47,15 +53,17 @@ public:
         return ret->get_future();
     }
 
-    void join();
+    void joinAllThreads(bool terminate);
+    void finish();
 
 private:
     struct ThreadState;
     std::queue<std::function<void()>> tasks_ {};
     std::vector<std::unique_ptr<ThreadState>> threads_;
     unsigned readyThreads_ {0};
-    std::mutex lock_ {};
+    std::mutex lock_ {}, addThreadLock_ {};
     std::condition_variable cv_ {};
+    bool canStartThread_;
 
     const unsigned maxThreads_;
 };
