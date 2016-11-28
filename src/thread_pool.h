@@ -48,6 +48,7 @@ public:
     }
 
     void join();
+    void finish();
 
 private:
     struct ThreadState;
