@@ -39,10 +39,7 @@ ThreadPool::ThreadPool()
     threads_.reserve(maxThreads_);
 }
 
-ThreadPool::~ThreadPool()
-{
-    join();
-}
+ThreadPool::~ThreadPool() {}
 
 void
 ThreadPool::run(std::function<void()>&& cb)
@@ -99,6 +96,13 @@ ThreadPool::join()
     for (auto& t : threads_)
         t->thread.join();
     threads_.clear();
+}
+
+
+void
+ThreadPool::finish()
+{
+  join();
 }
 
 }
