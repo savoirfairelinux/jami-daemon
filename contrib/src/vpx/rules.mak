@@ -3,8 +3,10 @@
 #Libav doesnt support new vpx version
 ifdef HAVE_ANDROID
 VPX_HASH := v1.6.0
+else ifdef HAVE_IOS
+VPX_HASH := v1.5.0
 else
-VPX_HASH := c74bf6d889992c3cabe017ec353ca85c323107cd
+VPX_HASH := v1.4.0
 endif
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 #VPX_GITURL := https://code.google.com/p/webm.libvpx
@@ -13,8 +15,6 @@ $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
 	$(call download,$(VPX_URL))
 
 .sum-vpx: libvpx-$(VPX_HASH).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
 libvpx: libvpx-$(VPX_HASH).tar.gz .sum-vpx
 	rm -Rf $@-$(VPX_HASH)
