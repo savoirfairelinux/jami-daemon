@@ -730,16 +730,16 @@ void SIPAccount::doRegister()
             auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
             if ( not this_->mapPortUPnP())
                 RING_WARN("UPnP: Could not successfully map SIP port with UPnP, continuing with account registration anyways.");
-            this_->doRegister1_();
+            this_->doRegisterUpnpDisabled();
         }}.detach();
     } else
-        doRegister1_();
+        doRegisterUpnpDisabled();
 }
 
-void SIPAccount::doRegister1_()
+void SIPAccount::doRegisterUpnpDisabled()
 {
     if (isIP2IP()) {
-        doRegister2_();
+        doRegisterIPToIP();
         return;
     }
 
@@ -755,12 +755,12 @@ void SIPAccount::doRegister1_()
                 return;
             }
             this_->hostIp_ = host_ips[0];
-            this_->doRegister2_();
+            this_->doRegisterIPToIP();
         }
     );
 }
 
-void SIPAccount::doRegister2_()
+void SIPAccount::doRegisterIPToIP()
 {
     bool ipv6 = false;
     if (isIP2IP()) {
