@@ -348,6 +348,19 @@ class RingAccount : public SIPAccountBase {
             MSGPACK_DEFINE_MAP(dev);
         };
 
+        struct DeviceSync : public dht::EncryptedValue<DeviceSync> {
+            static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+            uint64_t date;
+            std::string device_name;
+            std::map<dht::InfoHash, std::string> devices_known;
+            std::set<dht::InfoHash> peers_trusted;
+            std::set<dht::InfoHash> peers_banned;
+            MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers_trusted, peers_banned)
+        };
+
+        void syncDevices();
+        void onReceiveDeviceSync(DeviceSync&& sync);
+
 #if HAVE_RINGNS
         std::reference_wrapper<NameDirectory> nameDir_;
         std::string nameServer_;
