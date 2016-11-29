@@ -34,6 +34,9 @@
 #include <mutex>
 #include <exception>
 #include <ciso646> // fix windows compiler bug
+#ifdef RING_ACCEL
+#include <libavfilter/avfilter.h>
+#endif
 
 namespace ring { namespace libav_utils {
 
@@ -95,6 +98,9 @@ init_once()
     avdevice_register_all();
 #if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(53, 13, 0)
     avformat_network_init();
+#endif
+#ifdef RING_ACCEL
+    avfilter_register_all();
 #endif
 
     av_lockmgr_register(avcodecManageMutex);

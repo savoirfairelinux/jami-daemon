@@ -42,6 +42,8 @@ class AVStream;
 class AVFormatContext;
 class AVDictionary;
 class AVCodec;
+class AVFilterContext;
+class AVFilterGraph;
 
 namespace ring {
 
@@ -88,6 +90,10 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+#ifdef RING_ACCEL
+    void enableAccel(const bool enableAccel) { enableAccel_ = enableAccel; }
+#endif
+
 private:
     NON_COPYABLE(MediaEncoder);
     void setOptions(const MediaDescription& args);
@@ -115,6 +121,16 @@ private:
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
+
+#ifdef RING_ACCEL
+    bool isAccelPossible(int codecId);
+    bool setupHardwareAccel(int codecId);
+
+    bool enableAccel_ = true;
+    AVFilterContext* accelBufferCtx_;
+    AVFilterContext* accelBuffersinkCtx_;
+    AVFilterGraph* accelFiltergraph_;
+#endif
 
 protected:
     AVDictionary *options_ = nullptr;

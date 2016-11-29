@@ -33,6 +33,11 @@
 #include <sstream>
 #include <algorithm>
 #include <thread> // hardware_concurrency
+#ifdef RING_ACCEL
+#include <libavfilter/avfilter.h>
+#include <libavfilter/buffersrc.h>
+#include <libavfilter/buffersink.h>
+#endif
 
 // Define following line if you need to debug libav SDP
 //#define DEBUG_SDP 1
@@ -140,13 +145,22 @@ MediaEncoder::openOutput(const char *filename,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
     /* find the video encoder */
-    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
-        // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
-        // H263-1998 can manage all frame sizes while H263 don't
-        // AV_CODEC_ID_H263 decoder will be used for decoding
-        outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
-    else
-        outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
+    bool encoderFound = false;
+#ifdef RING_ACCEL
+    if (enableAccel_ && args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO
+        && isAccelPossible(args.codec->systemCodecInfo.avcodecId)) {
+        encoderFound = setupHardwareAccel(args.codec->systemCodecInfo.avcodecId);
+    }
+#endif
+    if (!encoderFound) {
+        if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+            // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
+            // H263-1998 can manage all frame sizes while H263 don't
+            // AV_CODEC_ID_H263 decoder will be used for decoding
+            outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
+        else
+            outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
+    }
     if (!outputEncoder_) {
         RING_ERR("Encoder \"%s\" not found!", args.codec->systemCodecInfo.name.c_str());
         throw MediaEncoderException("No output encoder");
@@ -299,6 +313,28 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
+
+#ifdef RING_ACCEL
+    // push frame to filters
+    if (enableAccel_) {
+        if (av_buffersrc_add_frame_flags(accelBufferCtx_, frame, 0) < 0) {
+            RING_ERR("Could not feed filter graph");
+        }
+
+        // pull frame from filters
+        // av_buffersink_get_frame(filter_ctx[stream_index].buffersink_ctx, filt_frame);
+        auto filteredFrame = new VideoFrame();
+        auto filtered = filteredFrame->pointer();
+        if (int ret = av_buffersink_get_frame(accelBuffersinkCtx_, filtered) < 0) {
+            if (ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+                RING_ERR("Something went wrong while pulling the frame from the filters");
+            }
+            av_frame_free(&filtered);
+        } else {
+            frame = filtered; // hopefully this works, else there's gonna be a shitton of ifdefs and it will be ugly
+        }
+    }
+#endif
 
     if (is_keyframe) {
 #if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
@@ -694,5 +730,114 @@ MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
     return codec_.get() == codec;
 }
+
+#ifdef RING_ACCEL
+bool
+MediaEncoder::isAccelPossible(int codecId)
+{
+    // These encoders don't need to be in an ifdef because
+    // avcodec_find_encoder_by_name returns NULL if it doesn't exist
+    std::vector<std::string> acceleratedEncoders = {
+        "h264_vaapi",
+    };
+
+    AVCodec* output;
+    std::string codecName = avcodec_get_name((AVCodecID)codecId);
+    auto result = std::find_if(acceleratedEncoders.cbegin(), acceleratedEncoders.cend(),
+        [codecName, &output](std::string enc){
+            // accelerated codecs are suffixed with the accel api (h264 & h264_vaapi)
+            return !enc.compare(0, codecName.size(), codecName) && (output = avcodec_find_encoder_by_name(enc.c_str())) != nullptr;
+        });
+
+    if (result != acceleratedEncoders.cend()) {
+        // outputEncoder_ = avcodec_find_encoder_by_name(result.c_str());
+        return true;
+    }
+    return false;
+}
+
+bool
+MediaEncoder::setupHardwareAccel(int codecId)
+{
+    // accelerated encoders may need to have their frames filtered before they can encode
+    std::map<std::string, std::string> map = {
+        { "h264_vaapi", "format=nv12,hwupload" },
+    };
+
+    // initialize filters
+    auto filterSpec = map[std::string(avcodec_get_name((AVCodecID)codecId))];
+
+    // build string: "video_size=%dx%d:pix_fmt=%d:time_base=%d/%d:pixel_aspect=%d/%d"
+    std::stringstream ss;
+    ss << "video_size=" << device_.width << "x" << device_.height;
+    ss << ":pix_fmt=" << AV_PIX_FMT_YUV420P;
+    ss << ":time_base=" << (int) device_.framerate.numerator() << "/" << (int) device_.framerate.denominator();
+    ss << ":pixel_aspect=0"; // unknown pixel aspect ratio
+    std::string filtergraphArgs = ss.str();
+
+    AVFilter* buffer = avfilter_get_by_name("buffer");
+    AVFilter* buffersink = avfilter_get_by_name("buffersink");
+    AVFilterContext* bufferCtx;
+    AVFilterContext* buffersinkCtx;
+    AVFilterInOut* inputs = avfilter_inout_alloc();
+    AVFilterInOut* outputs = avfilter_inout_alloc();
+    AVFilterGraph* filtergraph = avfilter_graph_alloc();
+    try {
+
+        if (avfilter_graph_create_filter(&bufferCtx, buffer, "in", filtergraphArgs.c_str(), nullptr, filtergraph) < 0) {
+            std::stringstream buf;
+            buf << "Could not create filter graph source for hardware accelerated encoding";
+            throw std::runtime_error(buf.str());
+        }
+
+        if (avfilter_graph_create_filter(&buffersinkCtx, buffersink, "out", filtergraphArgs.c_str(), nullptr, filtergraph) < 0) {
+            std::stringstream buf;
+            buf << "Could not create filter graph sink for hardware accelerated encoding";
+            throw std::runtime_error(buf.str());
+        }
+
+        if (av_opt_set_bin(buffersinkCtx, "pix_fmts",
+            (uint8_t*)&encoderCtx_->pix_fmt, sizeof(encoderCtx_->pix_fmt),
+            AV_OPT_SEARCH_CHILDREN) < 0) {
+            std::stringstream buf;
+            buf << "Could not set hardware encoder pixel format";
+            throw std::runtime_error(buf.str());
+        }
+
+        // filtergraph endpoints
+        outputs->name       = "in";
+        outputs->filter_ctx = bufferCtx;
+        outputs->pad_idx    = 0;
+        outputs->next       = nullptr;
+
+        inputs->name       = "out";
+        inputs->filter_ctx = buffersinkCtx;
+        inputs->pad_idx    = 0;
+        inputs->next       = NULL;
+
+        if (avfilter_graph_parse_ptr(filtergraph, filterSpec.c_str(), &inputs, &outputs, nullptr) < 0) {
+            std::stringstream buf;
+            buf << "Could not parse filter graph";
+            throw std::runtime_error(buf.str());
+        }
+
+        if (avfilter_graph_config(filtergraph, nullptr) < 0) {
+            std::stringstream buf;
+            buf << "Could not configure filter graph";
+            throw std::runtime_error(buf.str());
+        }
+
+        accelBufferCtx_ = bufferCtx;
+        accelBuffersinkCtx_ = buffersinkCtx;
+        accelFiltergraph_ = filtergraph;
+    } catch (std::runtime_error& e) {
+        RING_ERR("%s", e.what());
+        avfilter_inout_free(&inputs);
+        avfilter_inout_free(&outputs);
+        return false;
+    }
+    return true;
+}
+#endif // RING_ACCEL
 
 } // namespace ring

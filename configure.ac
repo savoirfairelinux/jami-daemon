@@ -466,6 +466,7 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
   AS_IF([test "x$enable_vaapi" != "xno"], [
     AS_IF([test "x${vaapi_available}" = "xyes"], [
+      PKG_CHECK_MODULES([LIBAVFILTER], [libavfilter >= 6.65.0],, AC_MSG_ERROR([Missing libavfilter development files]))
       ring_vaapi="yes"
       AC_DEFINE([RING_VAAPI], [1], [VAAPI is available in Ring])
     ])
