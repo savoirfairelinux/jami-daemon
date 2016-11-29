@@ -379,6 +379,8 @@ class RingAccount : public SIPAccountBase {
 
         void handleEvents();
 
+        void forEachDevice(const dht::InfoHash& to, std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)> op, std::function<void(bool)> end = {});
+
         void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
 
         /**
