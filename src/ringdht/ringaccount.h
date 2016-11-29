@@ -277,7 +277,7 @@ class RingAccount : public SIPAccountBase {
             std::map<std::string, std::string> ids;
             for (auto& d : knownDevices_) {
                 auto id = d.first.toString();
-                auto label = id.substr(0, 8);
+                auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
                 ids.emplace(std::move(id), std::move(label));
             }
             return ids;
@@ -383,6 +383,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
+        bool foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {});
 
         /**
          * Maps require port via UPnP
@@ -416,6 +417,7 @@ class RingAccount : public SIPAccountBase {
 
         std::string ringAccountId_ {};
         std::string ringDeviceId_ {};
+        std::string ringDeviceName_ {};
         std::string idPath_ {};
         std::string cachePath_ {};
         std::string dataPath_ {};
@@ -433,7 +435,29 @@ class RingAccount : public SIPAccountBase {
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
-        std::map<dht::InfoHash, std::shared_ptr<dht::crypto::Certificate>> knownDevices_;
+
+        /**
+         * Represents a known device attached to this Ring account
+         */
+        struct KnownDevice {
+            using clock = std::chrono::system_clock;
+            using time_point = clock::time_point;
+
+            /** Device certificate */
+            std::shared_ptr<dht::crypto::Certificate> certificate;
+
+            /** Device name */
+            std::string name {};
+
+            /** Time of last received device sync */
+            time_point last_sync {time_point::min()};
+
+            KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                        const std::string& n = {},
+                        time_point sync = time_point::min())
+             : certificate(cert), name(n), last_sync(sync) {}
+        };
+        std::map<dht::InfoHash, KnownDevice> knownDevices_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
@@ -463,6 +487,7 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
+        void loadKnownDevicesOld();
         void loadKnownDevices();
         void saveKnownDevices() const;
 
@@ -531,6 +556,8 @@ class RingAccount : public SIPAccountBase {
 
         template <class... Args>
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
+
+        void registerDhtAddress(IceTransport&);
 };
 
 } // namespace ring
