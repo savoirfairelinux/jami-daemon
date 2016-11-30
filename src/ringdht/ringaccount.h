@@ -563,7 +563,7 @@ class RingAccount : public SIPAccountBase {
         /**
          * Optional: via_addr construct from received parameters
          */
-        pjsip_host_port via_addr_;
+        pjsip_host_port via_addr_ {};
 
         char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
         pj_str_t contact_ {contactBuffer_, 0};
