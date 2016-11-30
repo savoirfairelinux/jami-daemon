@@ -812,6 +812,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
                 c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
             } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
                 c.eth_key = base64::decode(itr->asString());
+            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                c.revoked = base64::decode(itr->asString());
             } else
                 c.config[itr.key().asString()] = itr->asString();
         }
@@ -851,6 +853,7 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+    root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked.getPacked());
 
     Json::FastWriter fastWriter;
     std::string output = fastWriter.write(root);
@@ -956,6 +959,20 @@ RingAccount::addDevice(const std::string& password)
             emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
             return;
         }
+    });
+}
+
+void
+RingAccount::revokeDevice(const std::string& password, const std::string& device)
+{
+    auto future_archive = ThreadPool::instance().get<ArchiveContent>(std::bind(&RingAccount::readArchive, this, password));
+    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    findCertificate(dht::InfoHash(device), [fa=std::move(future_archive),shared,password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable {
+        shared->foundAccountDevice(crt);
+        auto a = fa.get();
+        a.revoked.revoke(*crt);
+        a.revoked.sign(a.id);
+        shared->saveArchive(a, password);
     });
 }
 

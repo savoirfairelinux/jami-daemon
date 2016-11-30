@@ -83,6 +83,7 @@ constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
 constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
 constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
 constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
+constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
 }
 
 class IceTransport;
@@ -276,6 +277,8 @@ class RingAccount : public SIPAccountBase {
 
         void addDevice(const std::string& password);
 
+        void revokeDevice(const std::string& password, const std::string& device);
+
         std::map<std::string, std::string> getKnownDevices() const {
             std::map<std::string, std::string> ids;
             for (auto& d : knownDevices_) {
@@ -328,6 +331,9 @@ class RingAccount : public SIPAccountBase {
 
             /** Generated CA key (for self-signed certificates) */
             dht::crypto::PrivateKey ca_key;
+
+            /** Revoked devices */
+            dht::crypto::RevocationList revoked;
 
             /** Ethereum private key */
             std::vector<uint8_t> eth_key;
