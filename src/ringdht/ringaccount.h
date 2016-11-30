@@ -276,15 +276,7 @@ class RingAccount : public SIPAccountBase {
 
         void addDevice(const std::string& password);
 
-        std::map<std::string, std::string> getKnownDevices() const {
-            std::map<std::string, std::string> ids;
-            for (auto& d : knownDevices_) {
-                auto id = d.first.toString();
-                auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
-                ids.emplace(std::move(id), std::move(label));
-            }
-            return ids;
-        }
+        std::map<std::string, std::string> getKnownDevices() const;
 
         void connectivityChanged() override;
 
@@ -300,66 +292,16 @@ class RingAccount : public SIPAccountBase {
     private:
         NON_COPYABLE(RingAccount);
 
-        struct PendingCall {
-            std::chrono::steady_clock::time_point start;
-            std::shared_ptr<IceTransport> ice_sp;
-            std::weak_ptr<SIPCall> call;
-            std::future<size_t> listen_key;
-            dht::InfoHash call_key;
-            dht::InfoHash from;
-            std::shared_ptr<dht::crypto::Certificate> from_cert;
-        };
-
-        struct PendingMessage {
-            dht::InfoHash to;
-            std::chrono::steady_clock::time_point received;
-        };
-
-        struct TrustRequest {
-            dht::InfoHash from;
-            std::chrono::system_clock::time_point received;
-            std::vector<uint8_t> payload;
-        };
-
         /**
-         * Crypto material contained in the archive,
-         * not persisted in the account configuration
+         * Private structures
          */
-        struct ArchiveContent {
-            /** Account main private key and certificate chain */
-            dht::crypto::Identity id;
-
-            /** Generated CA key (for self-signed certificates) */
-            dht::crypto::PrivateKey ca_key;
-
-            /** Ethereum private key */
-            std::vector<uint8_t> eth_key;
-
-            /** Account configuration */
-            std::map<std::string, std::string> config;
-        };
-
-        /**
-         * Device announcement stored on DHT.
-         */
-        struct DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement> {
-        private:
-            using BaseClass = dht::SignedValue<DeviceAnnouncement>;
-        public:
-            static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-            dht::InfoHash dev;
-            MSGPACK_DEFINE_MAP(dev);
-        };
-
-        struct DeviceSync : public dht::EncryptedValue<DeviceSync> {
-            static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-            uint64_t date;
-            std::string device_name;
-            std::map<dht::InfoHash, std::string> devices_known;
-            std::set<dht::InfoHash> peers_trusted;
-            std::set<dht::InfoHash> peers_banned;
-            MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers_trusted, peers_banned)
-        };
+        struct PendingCall;
+        struct PendingMessage;
+        struct TrustRequest;
+        struct KnownDevice;
+        struct ArchiveContent;
+        struct DeviceAnnouncement;
+        struct DeviceSync;
 
         void syncDevices();
         void onReceiveDeviceSync(DeviceSync&& sync);
@@ -421,16 +363,16 @@ class RingAccount : public SIPAccountBase {
         /**
          * DHT calls waiting for ICE negotiation
          */
-        std::list<PendingCall> pendingCalls_ {};
+        std::list<PendingCall> pendingCalls_;
 
         /**
          * Incoming DHT calls that are not yet actual SIP calls.
          */
-        std::list<PendingCall> pendingSipCalls_ {};
+        std::list<PendingCall> pendingSipCalls_;
         std::set<dht::Value::Id> treatedCalls_ {};
         mutable std::mutex callsMutex_ {};
 
-        std::map<dht::Value::Id, PendingMessage> sentMessages_ {};
+        std::map<dht::Value::Id, PendingMessage> sentMessages_;
         std::set<dht::Value::Id> treatedMessages_ {};
 
         std::string ringAccountId_ {};
@@ -454,27 +396,6 @@ class RingAccount : public SIPAccountBase {
 
         std::shared_ptr<dht::Value> announce_;
 
-        /**
-         * Represents a known device attached to this Ring account
-         */
-        struct KnownDevice {
-            using clock = std::chrono::system_clock;
-            using time_point = clock::time_point;
-
-            /** Device certificate */
-            std::shared_ptr<dht::crypto::Certificate> certificate;
-
-            /** Device name */
-            std::string name {};
-
-            /** Time of last received device sync */
-            time_point last_sync {time_point::min()};
-
-            KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
-                        const std::string& n = {},
-                        time_point sync = time_point::min())
-             : certificate(cert), name(n), last_sync(sync) {}
-        };
         std::map<dht::InfoHash, KnownDevice> knownDevices_;
 
         void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
