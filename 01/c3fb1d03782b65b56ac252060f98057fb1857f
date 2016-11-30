@@ -1,0 +1,7 @@
+Code-Review+2: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+Verified+1: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Wed, 30 Nov 2016 14:55:17 -0500
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5683
+Project: ring-daemon
+Branch: refs/heads/master
