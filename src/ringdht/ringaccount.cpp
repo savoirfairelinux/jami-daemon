@@ -158,13 +158,13 @@ RingAccount::createIceTransport(const Args&... args)
 }
 
 RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled */)
-    : SIPAccountBase(accountID), via_addr_(),
+    : SIPAccountBase(accountID)
 #if HAVE_RINGNS
-    nameDir_(NameDirectory::instance()),
+    , nameDir_(NameDirectory::instance())
 #endif
-    cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()),
-    dataPath_(cachePath_ + DIR_SEPARATOR_STR "values"),
-    idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
+    , idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
+    , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
+    , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
