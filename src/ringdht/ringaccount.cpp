@@ -79,6 +79,96 @@ namespace ring {
 using sip_utils::CONST_PJ_STR;
 using std::chrono::system_clock;
 
+struct RingAccount::PendingCall
+{
+    std::chrono::steady_clock::time_point start;
+    std::shared_ptr<IceTransport> ice_sp;
+    std::weak_ptr<SIPCall> call;
+    std::future<size_t> listen_key;
+    dht::InfoHash call_key;
+    dht::InfoHash from;
+    std::shared_ptr<dht::crypto::Certificate> from_cert;
+};
+
+struct RingAccount::PendingMessage
+{
+    dht::InfoHash to;
+    std::chrono::steady_clock::time_point received;
+};
+
+struct RingAccount::TrustRequest
+{
+    dht::InfoHash from;
+    std::chrono::system_clock::time_point received;
+    std::vector<uint8_t> payload;
+};
+
+/**
+ * Represents a known device attached to this Ring account
+ */
+struct RingAccount::KnownDevice
+{
+    using clock = std::chrono::system_clock;
+    using time_point = clock::time_point;
+
+    /** Device certificate */
+    std::shared_ptr<dht::crypto::Certificate> certificate;
+
+    /** Device name */
+    std::string name {};
+
+    /** Time of last received device sync */
+    time_point last_sync {time_point::min()};
+
+    KnownDevice(const std::shared_ptr<dht::crypto::Certificate>& cert,
+                const std::string& n = {},
+                time_point sync = time_point::min())
+        : certificate(cert), name(n), last_sync(sync) {}
+};
+
+/**
+ * Crypto material contained in the archive,
+ * not persisted in the account configuration
+ */
+struct RingAccount::ArchiveContent
+{
+    /** Account main private key and certificate chain */
+    dht::crypto::Identity id;
+
+    /** Generated CA key (for self-signed certificates) */
+    dht::crypto::PrivateKey ca_key;
+
+    /** Ethereum private key */
+    std::vector<uint8_t> eth_key;
+
+    /** Account configuration */
+    std::map<std::string, std::string> config;
+};
+
+/**
+ * Device announcement stored on DHT.
+ */
+struct RingAccount::DeviceAnnouncement : public dht::SignedValue<DeviceAnnouncement>
+{
+private:
+    using BaseClass = dht::SignedValue<DeviceAnnouncement>;
+public:
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    dht::InfoHash dev;
+    MSGPACK_DEFINE_MAP(dev);
+};
+
+struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    uint64_t date;
+    std::string device_name;
+    std::map<dht::InfoHash, std::string> devices_known;
+    std::set<dht::InfoHash> peers_trusted;
+    std::set<dht::InfoHash> peers_banned;
+    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers_trusted, peers_banned)
+};
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
@@ -2161,6 +2251,18 @@ RingAccount::saveKnownDevices() const
         devices.emplace(id.first, std::make_pair(id.second.name, system_clock::to_time_t(id.second.last_sync)));
 
     msgpack::pack(file, devices);
+}
+
+std::map<std::string, std::string>
+RingAccount::getKnownDevices() const
+{
+    std::map<std::string, std::string> ids;
+    for (auto& d : knownDevices_) {
+        auto id = d.first.toString();
+        auto label = d.second.name.empty() ? id.substr(0, 8) : d.second.name;
+        ids.emplace(std::move(id), std::move(label));
+    }
+    return ids;
 }
 
 void
