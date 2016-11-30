@@ -26,7 +26,7 @@ BOOST_B2_OPTS += target-os=windows \
 				 binary-format=pe \
 				 architecture=x86 \
 				 --user-config=user-config.jam \
-				 cxxflags="-std=c++11 -fPIC -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4"
+				 cxxflags="-std=c++14 -fPIC -O2 -g -pipe -Wall -Wp,-D_FORTIFY_SOURCE=2 -fexceptions --param=ssp-buffer-size=4"
 endif
 ifdef HAVE_ANDROID
 BOOST_B2_OPTS += --user-config=user-config.jam

@@ -13,7 +13,7 @@ new file mode 100755
 index 0000000..cca155e
 --- /dev/null
 +++ b/build-boost-iOS-libc++
-@@ -0,0 +1,463 @@
+@@ -0,1 +1,463 @@
 +#! /bin/bash
 +#
 +#===============================================================================
@@ -40,7 +40,7 @@ index 0000000..cca155e
 +echo "cd-ing to $here"
 +cd "$here" || exit 1
 +
-+CPPSTD=c++11    #c++89, c++99, c++14
++CPPSTD=c++14    #c++89, c++99, c++14
 +STDLIB=libc++   # libstdc++
 +COMPILER=clang++
 +PARALLEL_MAKE=16   # how many threads to make boost with
