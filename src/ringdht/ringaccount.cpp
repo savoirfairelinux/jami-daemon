@@ -124,16 +124,6 @@ parseRingUri(const std::string& toUrl)
     return toUri;
 }
 
-static bool
-isRingHash(const std::string& uri)
-{
-    if (uri.length() < 40)
-        return false;
-    if (std::find_if_not(uri.cbegin(), uri.cbegin()+40, ::isxdigit) != uri.cend())
-        return false;
-    return true;
-}
-
 static constexpr const char*
 dhtStatusStr(dht::NodeStatus status) {
     return status == dht::NodeStatus::Connected  ? "connected"  : (
@@ -235,7 +225,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     } catch (...) {
 #if HAVE_RINGNS
         std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
-        NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result, NameDirectory::Response response) mutable {
+        NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result,
+                                                                   NameDirectory::Response /*response*/) mutable {
             runOnMainThread([=]() mutable {
                 if (auto sthis = wthis_.lock()) {
                     try {
@@ -1249,7 +1240,7 @@ RingAccount::lookupAddress(const std::string& addr)
 }
 
 void
-RingAccount::registerName(const std::string& password, const std::string& name)
+RingAccount::registerName(const std::string& /*password*/, const std::string& name)
 {
     auto acc = getAccountID();
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
@@ -1608,7 +1599,7 @@ RingAccount::doRegister_()
 
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
-            static auto silent = [](char const* m, va_list args) {};
+            static auto silent = [](char const* /*m*/, va_list /*args*/) {};
             static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
             static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
             static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };
@@ -2139,7 +2130,7 @@ RingAccount::loadKnownDevices()
                     KnownDevice {
                         crt,
                         d.second.first,
-                        system_clock::from_time_t(d.second.second)
+                        clock::from_time_t(d.second.second)
                     });
             else
                 RING_ERR("Known device certificate not matching identity.");
@@ -2472,7 +2463,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
         if (treatedDevices->emplace(dev.dev).second)
             op(shared, dev.dev);
         return true;
-    }, [=](bool ok){
+    }, [=](bool /*ok*/){
         RING_WARN("forEachDevice: found %lu devices", treatedDevices->size());
         if (end) end(not treatedDevices->empty());
     });
