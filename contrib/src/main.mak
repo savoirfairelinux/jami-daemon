@@ -154,7 +154,10 @@ endif
 CCAS=$(CC) -c
 
 ifdef HAVE_IOS
-MIN_IOS_VERSION=8.0
+
+ifndef MIN_IOS_VERSION
+MIN_IOS_VERSION=9.3
+endif
 
 CC=xcrun clang
 CXX=xcrun clang++
