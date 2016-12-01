@@ -316,8 +316,8 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 #if HAVE_RINGNS
         std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
         NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result,
-                                                                   NameDirectory::Response /*response*/) mutable {
-            runOnMainThread([=]() mutable {
+                                                                   NameDirectory::Response /*response*/) {
+            runOnMainThread([=]() {
                 if (auto sthis = wthis_.lock()) {
                     try {
                         const std::string toUri = parseRingUri(result);
@@ -339,7 +339,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 }
 
 void
-RingAccount::startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string toUri)
+RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri)
 {
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);

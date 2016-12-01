@@ -334,7 +334,7 @@ class RingAccount : public SIPAccountBase {
          */
         virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
 
-        void startOutgoingCall(std::shared_ptr<SIPCall>& call, const std::string toUri);
+        void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
 
         /**
          * Start a SIP Call
