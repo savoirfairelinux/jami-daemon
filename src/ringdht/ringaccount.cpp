@@ -316,7 +316,9 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 #if HAVE_RINGNS
         std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
         NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result,
-                                                                   NameDirectory::Response /*response*/) {
+                                                                   NameDirectory::Response response) {
+            if (response != NameDirectory::Response::found)
+                return;
             runOnMainThread([=]() {
                 if (auto sthis = wthis_.lock()) {
                     try {
