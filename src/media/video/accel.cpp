@@ -124,8 +124,11 @@ HardwareAccel::extractData(VideoFrame& input)
         auto outFrame = output->pointer();
         outFrame->format = AV_PIX_FMT_YUV420P;
 
-        // call the acceleration's implementation
         extractData(input, *output);
+
+        // move reference to input frame so the caller can access it
+        av_frame_unref(inFrame);
+        av_frame_move_ref(inFrame, outFrame);
     } catch (const std::runtime_error& e) {
         fail(false);
         RING_ERR("%s", e.what());
