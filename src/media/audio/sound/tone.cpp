@@ -118,9 +118,10 @@ Tone::genBuffer(const std::string& definition)
 void
 Tone::genSin(AudioSample* buffer, int lowFrequency, int highFrequency, size_t nb)
 {
+    static constexpr auto PI = 3.141592653589793238462643383279502884L;
     const double sr = (double)buffer_->getSampleRate();
-    const double dx_h = sr ? 2.0 * M_PI * lowFrequency / sr : 0.0;
-    const double dx_l = sr ? 2.0 * M_PI * highFrequency / sr : 0.0;
+    const double dx_h = sr ? 2.0 * PI * lowFrequency / sr : 0.0;
+    const double dx_l = sr ? 2.0 * PI * highFrequency / sr : 0.0;
     static constexpr double DATA_AMPLITUDE = 2048;
     for (size_t t = 0; t < nb; t ++) {
         buffer[t] = DATA_AMPLITUDE * (sin(t*dx_h) + sin(t*dx_l));
