@@ -1768,12 +1768,13 @@ RingAccount::doRegister_()
                                       msg.from.toString().c_str());
                             return;
                         }
-
-                        runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), cert); });
-                    } else if (this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::BANNED) {
-                        //this_.findCertificate(msg.from.toString().c_str());
-                        runOnMainThread([=]() mutable { shared->incomingCall(std::move(msg), cert); });
+                    } else if (not this_.dhtPublicInCalls_
+                               or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+                        return;
                     }
+
+                    // Peer certificate trusted... go ahead
+                    shared->incomingCall(std::move(msg), cert);
                 });
                 return true;
             }
