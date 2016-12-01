@@ -71,9 +71,6 @@ VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
     if (av_frame_copy_props(outFrame, inFrame) < 0 ) {
         av_frame_unref(outFrame);
     }
-
-    av_frame_unref(inFrame);
-    av_frame_move_ref(inFrame, outFrame);
 }
 
 bool
