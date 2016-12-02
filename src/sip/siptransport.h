@@ -219,6 +219,11 @@ private:
      */
     int ice_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
 
+    /**
+     * Storage for SIP/DTLS transport instances.
+     */
+    int dtls_pj_transport_type_ {PJSIP_TRANSPORT_START_OTHER};
+
     pj_caching_pool& cp_;
     pj_pool_t& pool_;
     pjsip_endpoint *endpt_;

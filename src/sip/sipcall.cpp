@@ -263,28 +263,15 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     if (not inv or not inv->dlg)
         throw VoipLinkException("Couldn't get invite dialog");
 
-    auto dlg = inv->dlg;
+    pj_str_t methodName = CONST_PJ_STR("INFO");
+    pjsip_method method;
+    pjsip_method_init_np(&method, &methodName);
 
-    // Create request
-    static constexpr pjsip_method method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("INFO")};
-    pjsip_tx_data* tdata = nullptr;
-    pjsip_dlg_inc_lock(dlg);
-    auto status = pjsip_endpt_create_request_from_hdr(dlg->endpt,
-                                                      &method,
-                                                      dlg->target,
-                                                      dlg->local.info,
-                                                      dlg->remote.info,
-                                                      nullptr,
-                                                      dlg->call_id,
-                                                      ++dlg->local.cseq,
-                                                      nullptr,
-                                                      &tdata);
-    pjsip_dlg_dec_lock(dlg);
+    /* Create request message. */
+    pjsip_tx_data *tdata;
 
-    if (status != PJ_SUCCESS or !tdata) {
-        RING_ERR("[call:%s] Could not create INFO request", getCallId().c_str());
-        if (tdata)
-            pjsip_tx_data_dec_ref(tdata);
+    if (pjsip_dlg_create_request(inv->dlg, &method, -1, &tdata) != PJ_SUCCESS) {
+        RING_ERR("[call:%s] Could not create dialog", getCallId().c_str());
         return;
     }
 
@@ -295,19 +282,11 @@ SIPCall::sendSIPInfo(const char *const body, const char *const subtype)
     pj_str_t pj_subtype;
     pj_cstr(&pj_subtype, subtype);
     tdata->msg->body = pjsip_msg_body_create(tdata->pool, &type, &pj_subtype, &content);
-    if (tdata->msg->body == nullptr) {
-        RING_ERR("[call:%s] Could not create INFO msg body", getCallId().c_str());
-        pjsip_tx_data_dec_ref(tdata);
-        return;
-    }
 
-    // Send the request
-    status = pjsip_endpt_send_request_stateless(dlg->endpt, tdata, nullptr, nullptr);
-    if (status != PJ_SUCCESS) {
-        RING_ERR("[call:%s] Could not send INFO request", getCallId().c_str());
+    if (tdata->msg->body == NULL)
         pjsip_tx_data_dec_ref(tdata);
-        return;
-    }
+    else
+        pjsip_dlg_send_request(inv->dlg, tdata, getSIPVoIPLink()->getModId(), NULL);
 }
 
 void
@@ -691,9 +670,9 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
         for (auto& c : subcalls)
             c->sendTextMessage(messages, from);
     } else {
-        if (inv and inv->dlg) {
+        if (inv) {
             try {
-                im::sendSipMessage(messages, inv->dlg);
+                im::sendSipMessage(inv.get(), messages);
             } catch (...) {}
         } else {
             pendingOutMessages_.emplace_back(messages, from);
@@ -1144,7 +1123,6 @@ SIPCall::merge(std::shared_ptr<SIPCall> scall)
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
-    pjsip_dlg_set_mod_data(inv->dlg, getSIPVoIPLink()->getImModule().id, this);
     setTransport(scall->transport_);
     sdp_ = std::move(scall->sdp_);
     peerHolding_ = scall->peerHolding_;

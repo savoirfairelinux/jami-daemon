@@ -81,16 +81,8 @@ static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event 
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
-static bool handleMediaControl(SIPCall& call, pjsip_msg_body* body);
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
-
-static void
-TRY(pj_status_t ret)
-{
-    if (ret != PJ_SUCCESS)
-        throw VoipLinkException("PJSIP call failure");
-}
 
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
@@ -362,9 +354,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    // Add our instant message module as usage of created dialog
-    link->registerDialog(dialog, call.get());
-
     pjsip_tpselector tp_sel  = SIPVoIPLink::getTransportSelector(transport->get());
     if (!dialog or pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Could not set transport for dialog");
@@ -497,6 +486,11 @@ SIPVoIPLink::getCachingPool() noexcept
 
 SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 {
+#define TRY(ret) do { \
+    if (ret != PJ_SUCCESS) \
+    throw VoipLinkException(#ret " failed"); \
+} while (0)
+
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 4096, 4096, nullptr));
     if (!pool_)
@@ -564,20 +558,26 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     };
     TRY(pjsip_inv_usage_init(endpt_, &inv_cb));
 
-    registerImModule();
-
     static const pj_str_t allowed[] = {
         CONST_PJ_STR("INFO"),
         CONST_PJ_STR("OPTIONS"),
+        CONST_PJ_STR("MESSAGE"),
         CONST_PJ_STR("PUBLISH"),
     };
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, nullptr, PJ_ARRAY_SIZE(allowed), allowed);
 
+    static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &text_plain);
+
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
+    static const pj_str_t iscomposing = CONST_PJ_STR("application/im-iscomposing+xml");
+    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &iscomposing);
+
     TRY(pjsip_replaces_init_module(endpt_));
+#undef TRY
 
     // ready to handle events
     // Implementation note: we don't use std::bind(xxx, this) here
@@ -775,120 +775,6 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
     call->sendSIPInfo(BODY, "media_control+xml");
 }
 #endif
-
-/*************************************************************************************************/
-
-static constexpr pjsip_method pjsip_message_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
-
-/**
- * Check if we can accept the message.
- */
-static pj_bool_t
-im_accept_message(pjsip_rx_data* /*rdata*/, pjsip_accept_hdr** /*p_accept_hdr*/)
-{
-    // Nothing to do here yet
-    return PJ_TRUE;
-}
-
-static pj_bool_t
-im_on_rx_request(pjsip_rx_data* rdata)
-{
-    auto msg = rdata->msg_info.msg;
-
-    // Handle only MESSAGE requests
-    if (pjsip_method_cmp(&msg->line.req.method, &pjsip_message_method) != 0) {
-        return PJ_FALSE;
-    }
-
-    // Check if we can accept the message
-    pjsip_accept_hdr* accept_hdr;
-    if (!im_accept_message(rdata, &accept_hdr)) {
-        pjsip_hdr hdr_list;
-
-        pj_list_init(&hdr_list);
-        pj_list_push_back(&hdr_list, accept_hdr);
-
-        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE,
-                                      nullptr, &hdr_list, nullptr);
-        return PJ_TRUE;
-    }
-
-    /* Respond with OK (200) first, so that remote doesn't retransmit in case
-     * the UI takes too long to process the message.
-     */
-    pjsip_endpt_respond(endpt_, nullptr, rdata, PJSIP_SC_OK,
-                        nullptr, nullptr, nullptr, nullptr);
-
-    // We need a dialog attached to find the call object
-    auto dlg = pjsip_rdata_get_dlg(rdata);
-    if (dlg == nullptr) {
-        RING_ERR("[IM] no attached dialog");
-        return PJ_TRUE;
-    }
-
-    const auto im_mod_id = getSIPVoIPLink()->getImModule().id;
-    auto call_ptr = static_cast<SIPCall*>(pjsip_dlg_get_mod_data(dlg, im_mod_id));
-    if (!call_ptr) {
-        RING_ERR("[IM] no attached call pointer");
-        return PJ_TRUE;
-    }
-
-    auto call = std::static_pointer_cast<SIPCall>(call_ptr->shared_from_this());
-    if (!call) {
-        RING_ERR("[IM] no attached SIPCall");
-        return PJ_TRUE;
-    }
-
-    if (msg->body) {
-        call->onTextMessage(im::parseSipMessage(msg));
-    } else {
-        RING_ERR("rx msg: <no body>");
-    }
-
-    return PJ_TRUE;
-}
-
-pjsip_module&
-SIPVoIPLink::getImModule()
-{
-    static pjsip_module mod_im = {
-        nullptr, nullptr,               /* prev, next.          */
-        CONST_PJ_STR( "mod-im" ),       /* Name.               */
-        -1,                             /* Id                  */
-        PJSIP_MOD_PRIORITY_APPLICATION, /* Priority             */
-        nullptr,                        /* load()              */
-        nullptr,                        /* start()             */
-        nullptr,                        /* stop()              */
-        nullptr,                        /* unload()            */
-        &im_on_rx_request,              /* on_rx_request()     */
-        nullptr,                        /* on_rx_response()    */
-        nullptr,                        /* on_tx_request.      */
-        nullptr,                        /* on_tx_response()    */
-        nullptr,                        /* on_tsx_state()      */
-    };
-    return mod_im;
-}
-
-void
-SIPVoIPLink::registerImModule()
-{
-    auto& mod = getImModule();
-
-    static constexpr pj_str_t STR_MSG_TAG = CONST_PJ_STR("MESSAGE");
-    static constexpr pj_str_t STR_MIME_TEXT_PLAIN = CONST_PJ_STR("text/plain");
-    static constexpr pj_str_t STR_MIME_APP_ISCOMPOSING = CONST_PJ_STR("application/im-iscomposing+xml");
-
-    TRY(pjsip_endpt_register_module(endpt_, &mod));
-
-    TRY(pjsip_endpt_add_capability(endpt_, &mod, PJSIP_H_ALLOW,
-                                   nullptr, 1, &STR_MSG_TAG));
-
-    TRY(pjsip_endpt_add_capability(endpt_, &mod, PJSIP_H_ACCEPT,
-                                   nullptr, 1, &STR_MIME_APP_ISCOMPOSING));
-
-    TRY(pjsip_endpt_add_capability(endpt_, &mod, PJSIP_H_ACCEPT,
-                                   nullptr, 1, &STR_MIME_TEXT_PLAIN));
-}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Private functions
@@ -1260,6 +1146,9 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
         onRequestInfo(inv, rdata, msg, *call);
     else if (methodName == "NOTIFY")
         onRequestNotify(inv, rdata, msg, *call);
+    else if (methodName == "MESSAGE")
+        if (msg->body)
+            call->onTextMessage(im::parseSipMessage(msg));
 }
 
 int SIPVoIPLink::getModId()
@@ -1485,21 +1374,4 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
 }
 #undef RETURN_IF_NULL
 #undef RETURN_FALSE_IF_NULL
-
-bool
-SIPVoIPLink::registerDialog(pjsip_dialog* dlg, void* mod_data)
-{
-    pjsip_dlg_inc_lock(dlg);
-
-    if (pjsip_dlg_add_usage(dlg, &getImModule(), mod_data) != PJ_SUCCESS) {
-        RING_ERR("Unable to add IM module to a dialog");
-        pjsip_dlg_dec_lock(dlg);
-        return false;
-    }
-
-    pjsip_dlg_inc_session(dlg, &getImModule());
-    pjsip_dlg_dec_lock(dlg);
-    return true;
-}
-
 } // namespace ring

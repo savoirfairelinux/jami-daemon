@@ -30,9 +30,10 @@
 
 #include "config.h"
 
+struct pjsip_inv_session;
+struct pjsip_rx_data;
 struct pjsip_msg;
 struct pjsip_tx_data;
-struct pjsip_dialog;
 
 namespace ring { namespace im {
 
@@ -57,11 +58,10 @@ struct InstantMessageException : std::runtime_error
  * @param session SIP session
  * @param payloads a map where the mime type and optional parameters are the key
  *                 and the message payload is the value
- * @param dlg SIP dialog to attach the message
  *
  * Exception: throw InstantMessageException if no message sent
  */
-void sendSipMessage(const std::map<std::string, std::string>& payloads, pjsip_dialog* dlg);
+void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::string>& payloads);
 
 /**
  * Parses given SIP message into a map where the key is the contents of the Content-Type header
