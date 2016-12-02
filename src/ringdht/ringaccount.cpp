@@ -96,11 +96,24 @@ struct RingAccount::PendingMessage
     std::chrono::steady_clock::time_point received;
 };
 
+struct RingAccount::SavedTrustRequest
+{
+    dht::InfoHash device;
+    time_t received;
+    std::vector<uint8_t> payload;
+    MSGPACK_DEFINE_MAP(device, received, payload)
+};
+
 struct RingAccount::TrustRequest
 {
-    dht::InfoHash from;
+    dht::InfoHash from_device;
     std::chrono::system_clock::time_point received;
     std::vector<uint8_t> payload;
+    TrustRequest() {}
+    TrustRequest(dht::InfoHash device, std::chrono::system_clock::time_point r, std::vector<uint8_t>&& payload)
+            : from_device(device), received(r), payload(std::move(payload)) {}
+    TrustRequest(SavedTrustRequest&& sr)
+        : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
 };
 
 /**
@@ -137,6 +150,9 @@ struct RingAccount::ArchiveContent
 
     /** Generated CA key (for self-signed certificates) */
     dht::crypto::PrivateKey ca_key;
+
+    /** Revoked devices */
+    dht::crypto::RevocationList revoked;
 
     /** Ethereum private key */
     std::vector<uint8_t> eth_key;
@@ -220,26 +236,6 @@ dhtStatusStr(dht::NodeStatus status) {
            status == dht::NodeStatus::Connecting ? "connecting" :
                                                    "disconnected");
 }
-
-struct
-RingAccount::SavedTrustRequest {
-    dht::InfoHash device;
-    time_t received;
-    std::vector<uint8_t> payload;
-    MSGPACK_DEFINE_MAP(device, received, payload)
-};
-
-struct
-RingAccount::TrustRequest {
-    dht::InfoHash from_device;
-    std::chrono::system_clock::time_point received;
-    std::vector<uint8_t> payload;
-    TrustRequest() {}
-    TrustRequest(dht::InfoHash device, std::chrono::system_clock::time_point r, std::vector<uint8_t>&& payload)
-            : from_device(device), received(r), payload(std::move(payload)) {}
-    TrustRequest(SavedTrustRequest&& sr)
-        : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
-};
 
 /**
  * Local ICE Transport factory helper
@@ -895,6 +891,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
                 c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
             } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
                 c.eth_key = base64::decode(itr->asString());
+            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                c.revoked = base64::decode(itr->asString());
             } else
                 c.config[itr.key().asString()] = itr->asString();
         }
@@ -934,6 +932,7 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+    root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked.getPacked());
 
     Json::FastWriter fastWriter;
     std::string output = fastWriter.write(root);
@@ -1039,6 +1038,27 @@ RingAccount::addDevice(const std::string& password)
             emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 2, "");
             return;
         }
+    });
+}
+
+void
+RingAccount::revokeDevice(const std::string& password, const std::string& device)
+{
+    // shared_ptr of future
+    auto fa = ThreadPool::instance().getShared<ArchiveContent>(
+                    std::bind(&RingAccount::readArchive, this, password)
+                );
+    findCertificate(dht::InfoHash(device),
+                    [fa,sthis=shared(),password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
+    {
+        sthis->foundAccountDevice(crt);
+        auto a = fa->get();
+        // Add revoked device to the revocation list and resign it
+        a.revoked.revoke(*crt);
+        a.revoked.sign(a.id);
+        // add to CRL cache
+        tls::CertificateStore::instance().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+        sthis->saveArchive(a, password);
     });
 }
 
@@ -2113,13 +2133,13 @@ RingAccount::connectivityChanged()
 }
 
 bool
-RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb)
+RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
         if (cb)
             cb(cert);
     } else {
-        dht_.findCertificate(h, [=](const std::shared_ptr<dht::crypto::Certificate> crt) {
+        dht_.findCertificate(h, [cb{std::move(cb)}](const std::shared_ptr<dht::crypto::Certificate> crt) {
             if (crt)
                 tls::CertificateStore::instance().pinCertificate(std::move(crt));
             if (cb)
