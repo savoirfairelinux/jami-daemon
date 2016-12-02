@@ -46,6 +46,10 @@ public:
             }, std::move(cb)));
         return ret->get_future();
     }
+    template<class T>
+    std::shared_ptr<std::future<T>> getShared(std::function<T()>&& cb) {
+        return std::make_shared<std::future<T>>(get(std::move(cb)));
+    }
 
     void join();
 
