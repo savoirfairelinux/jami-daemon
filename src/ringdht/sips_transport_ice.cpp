@@ -133,6 +133,7 @@ tls_status_from_err(int err)
 }
 
 SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
+                                   int tp_type,
                                    const TlsParams& param,
                                    const std::shared_ptr<ring::IceTransport>& ice,
                                    int comp_id)
@@ -150,13 +151,13 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     trData_.self = this; // up-link for PJSIP callbacks
 
-    pool_ = std::move(sip_utils::smart_alloc_pool(endpt, "SipsIceTransport.pool",
+    pool_ = std::move(sip_utils::smart_alloc_pool(endpt, "dtls.pool",
                                                   POOL_TP_INIT, POOL_TP_INC));
 
     auto& base = trData_.base;
-    std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
+    std::memset(&base, 0, sizeof(base));
 
-    pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "SipsIceTransport");
+    pj_ansi_snprintf(base.obj_name, PJ_MAX_OBJ_NAME, "dtls%p", &base);
     base.endpt = endpt;
     base.tpmgr = pjsip_endpt_get_tpmgr(endpt);
     base.pool = pool_.get();
@@ -164,24 +165,24 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     if (pj_atomic_create(pool_.get(), 0, &base.ref_cnt) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP atomic.");
 
-    if (pj_lock_create_recursive_mutex(pool_.get(), "SipsIceTransport.mutex",
+    if (pj_lock_create_recursive_mutex(pool_.get(), "dtls",
                                        &base.lock) != PJ_SUCCESS)
         throw std::runtime_error("Can't create PJSIP mutex.");
 
     local_ = ice->getLocalAddress(comp_id);
     remote_ = ice->getRemoteAddress(comp_id);
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
-    base.key.type = local_.isIpv6() ? PJSIP_TRANSPORT_TLS6 : PJSIP_TRANSPORT_TLS;
-    base.type_name = (char*)pjsip_transport_get_type_name((pjsip_transport_type_e)base.key.type);
-    base.flag = pjsip_transport_get_flag_from_type((pjsip_transport_type_e)base.key.type);
-    base.info = (char*) pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH);
+    base.key.type = tp_type;
+    auto raw_tp_type = static_cast<pjsip_transport_type_e>(base.key.type);
+    base.type_name = const_cast<char*>(pjsip_transport_get_type_name(raw_tp_type));
+    base.flag = pjsip_transport_get_flag_from_type(raw_tp_type);
+    base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH));
 
-    char print_addr[PJ_INET6_ADDRSTRLEN+10];
+    auto remote_addr = remote_.toString();
     pj_ansi_snprintf(base.info, TRANSPORT_INFO_LENGTH, "%s to %s", base.type_name,
-                     pj_sockaddr_print(remote_.pjPtr(), print_addr, sizeof(print_addr), 3));
+                     remote_addr.c_str());
     base.addr_len = remote_.getLength();
     base.dir = PJSIP_TP_DIR_NONE;
-    base.data = nullptr;
 
     /* Set initial local address */
     auto local = ice->getDefaultLocalAddress();
@@ -223,7 +224,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     /* Init rdata_ */
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_ = std::move(sip_utils::smart_alloc_pool(endpt, "SipsIceTransport.rxPool",
+    rxPool_ = std::move(sip_utils::smart_alloc_pool(endpt, "dtls.rxPool",
                                                     PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN));
     rdata_.tp_info.pool = rxPool_.get();
     rdata_.tp_info.transport = &base;
@@ -308,6 +309,7 @@ SipsIceTransport::handleEvents()
             if (evdata.state != PJSIP_TP_STATE_DISCONNECTED) {
                 (*state_cb)(&trData_.base, evdata.state, &evdata.state_info);
             } else {
+                RING_WARN("[SIPS] got disconnected event!");
                 disconnectedEvent = std::move(evdata);
                 disconnected = true;
                 break;
@@ -384,8 +386,10 @@ SipsIceTransport::handleEvents()
     }
 
     // Time to deliver disconnected event if exists
-    if (disconnected and state_cb)
+    if (disconnected and state_cb) {
+        RING_WARN("[SIPS] process disconnect event");
         (*state_cb)(&trData_.base, disconnectedEvent.state, &disconnectedEvent.state_info);
+    }
 }
 
 void

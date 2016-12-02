@@ -130,8 +130,6 @@ class SIPVoIPLink {
         pjsip_endpoint * getEndpoint();
         pjsip_module * getMod();
 
-        void registerModuleIM();
-
         pj_caching_pool* getCachingPool() noexcept;
         pj_pool_t* getPool() noexcept;
 
@@ -163,10 +161,6 @@ class SIPVoIPLink {
             pjsip_tpselector tp = {PJSIP_TPSELECTOR_TRANSPORT, {transport}};
             return tp;
         }
-
-        static pjsip_module& getImModule();
-        void registerImModule();
-        bool registerDialog(pjsip_dialog* dlg, void* mod_data);
 
     private:
         NON_COPYABLE(SIPVoIPLink);

@@ -534,9 +534,6 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
         return false;
     }
 
-    // Add our instant message module as usage of created dialog
-    link_->registerDialog(dialog, call.get());
-
     pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
     pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
 
@@ -2393,7 +2390,7 @@ std::string
 RingAccount::getToUri(const std::string& to) const
 {
     RING_DBG("getToUri %s", to.c_str());
-    return "<sips:" + to + ";transport=tls>";
+    return "<sips:" + to + ";transport=dtls>";
 }
 
 pj_str_t
@@ -2404,7 +2401,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
         auto tlsTr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(t)->self;
         auto address = tlsTr->getLocalAddress().toString(true);
         contact_.slen = pj_ansi_snprintf(contact_.ptr, PJSIP_MAX_URL_SIZE,
-                                         "%s%s<sips:%s%s%s;transport=tls>",
+                                         "%s%s<sips:%s%s%s;transport=dtls>",
                                          displayName_.c_str(),
                                          (displayName_.empty() ? "" : " "),
                                          identity_.second->getId().toString().c_str(),
