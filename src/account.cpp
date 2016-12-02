@@ -395,30 +395,61 @@ Account::getDefaultCodecDetails(const unsigned& codecId)
     return {};
 }
 
-#define find_iter()                                    \
-    const auto& iter = details.find(key);               \
-    if (iter == details.end()) {                       \
-        RING_ERR("Couldn't find key \"%s\"", key);     \
-        return;                                        \
+std::map<std::string, std::string>::const_iterator
+Account::findDetail(const std::map<std::string, std::string>& details, const char* key)
+{
+    const auto& iter = details.find(key);
+
+    if (iter == details.end()) {                       
+        RING_ERR("Couldn't find key \"%s\"", key);     
     }
+
+    return iter;
+}
 
 void
 Account::parseString(const std::map<std::string, std::string>& details,
                      const char* key, std::string& s)
 {
-    find_iter();
-    s = iter->second;
+    auto iter = findDetail(details, key);
+
+    if(iter != details.end()) {
+        s = iter->second;
+    }
 }
 
 void
 Account::parseBool(const std::map<std::string, std::string>& details,
                    const char* key, bool &b)
 {
-    find_iter();
-    b = iter->second == TRUE_STR;
+    auto iter = findDetail(details, key);
+
+    if(iter != details.end()) {
+        b = iter->second == TRUE_STR;
+    }
 }
 
-#undef find_iter
+void
+Account::parseInt(const std::map<std::string, std::string>& details, 
+                  const char* key, int& i) 
+{
+    auto iter = findDetail(details, key);
+
+    if(iter != details.end()) {
+        i = atoi(iter->second.c_str());
+    }
+}
+
+void
+Account::parseInt(const std::map<std::string, std::string>& details, 
+                  const char* key, pj_uint16_t& i) 
+{
+    auto iter = findDetail(details, key);
+
+    if(iter != details.end()) {
+        i = atoi(iter->second.c_str());
+    }
+}
 
 /**
  * Get the UPnP IP (external router) address.

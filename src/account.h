@@ -324,19 +324,12 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         std::set<std::string> callIDSet_;
 
     protected:
+        static std::map<std::string, std::string>::const_iterator findDetail(const std::map<std::string, std::string>& details, const char* key);
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
-
-        template<class T>
-        static inline void
-        parseInt(const std::map<std::string, std::string>& details, const char* key, T& i) {
-            const auto& iter = details.find(key);
-            if (iter == details.end()) {
-                RING_ERR("Couldn't find key \"%s\"", key);
-                return;
-            }
-            i = atoi(iter->second.c_str());
-        }
+        static void parseInt(const std::map<std::string, std::string>& details, const char* key, int& i);
+        static void parseInt(const std::map<std::string, std::string>& details, const char* key, pj_uint16_t& i);
+        
 
         friend class ConfigurationTest;
 

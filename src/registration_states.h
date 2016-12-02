@@ -41,7 +41,8 @@ enum class RegistrationState {
     ERROR_EXIST_STUN,
     ERROR_NOT_ACCEPTABLE,
     ERROR_NEED_MIGRATION,
-    INITIALIZING
+    INITIALIZING,
+    TOTAL_VAL
 };
 
 } // namespace ring

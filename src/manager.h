@@ -888,6 +888,18 @@ class Manager {
          */
         std::unique_ptr<RingBufferPool> ringbufferpool_;
 
+        /**
+         * Verifies if a call actually exists
+         * @param the call id
+         */
+        bool doesCallExist(const std::string& callId) const;
+
+        /**
+         * Process a call according to its state and ID
+         * @param the call id
+         */
+        bool joinCall(const std::string& callId, std::shared_ptr<Conference> conf);
+
     public:
 
         /**
