@@ -287,6 +287,15 @@ exportOnRing(const std::string& accountID, const std::string& password)
     return false;
 }
 
+bool
+revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID)
+{
+    if (const auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        return account->revokeDevice(password, deviceID);
+    }
+    return false;
+}
+
 std::map<std::string, std::string>
 getKnownRingDevices(const std::string& accountId)
 {
