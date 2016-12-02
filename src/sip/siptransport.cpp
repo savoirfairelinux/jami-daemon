@@ -176,11 +176,12 @@ SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
                                        pj_caching_pool& cp, pj_pool_t& pool) :
 cp_(cp), pool_(pool), endpt_(endpt)
 {
-/*
     pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM, "ICE",
                                   pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_UDP),
                                   &ice_pj_transport_type_);
-*/
+    pjsip_transport_register_type(PJSIP_TRANSPORT_DATAGRAM | PJSIP_TRANSPORT_SECURE, "DTLS",
+                                  pjsip_transport_get_default_port_for_type(PJSIP_TRANSPORT_TLS),
+                                  &dtls_pj_transport_type_);
     RING_DBG("SipTransportBroker@%p", this);
 }
 
@@ -441,7 +442,7 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
                                        const tls::TlsParams& params)
 {
     auto sip_ice_tr = std::unique_ptr<tls::SipsIceTransport>(
-        new tls::SipsIceTransport(endpt_, params, ice, comp_id));
+        new tls::SipsIceTransport(endpt_, dtls_pj_transport_type_, params, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_ice_tr.release(); // managed by PJSIP now

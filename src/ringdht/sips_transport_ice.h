@@ -62,7 +62,7 @@ struct SipsIceTransport
     static_assert(std::is_standard_layout<TransportData>::value,
                   "TranportData requires standard-layout");
 
-    SipsIceTransport(pjsip_endpoint* endpt, const TlsParams& param,
+    SipsIceTransport(pjsip_endpoint* endpt, int tp_type, const TlsParams& param,
                     const std::shared_ptr<IceTransport>& ice, int comp_id);
     ~SipsIceTransport();
 

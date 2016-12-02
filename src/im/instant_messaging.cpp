@@ -154,15 +154,6 @@ im::fillPJSIPMessageBody(pjsip_tx_data& tdata,
     }
 }
 
-static void
-im_callback(void* /*token*/, pjsip_event* e)
-{
-    if (e->type == PJSIP_EVENT_TSX_STATE) {
-        auto* tsx = e->body.tsx_state.tsx;
-        RING_DBG("[IM] status code %u", tsx->status_code);
-    }
-}
-
 void
 im::sendSipMessage(const std::map<std::string, std::string>& payloads, pjsip_dialog* dlg)
 {
@@ -171,25 +162,11 @@ im::sendSipMessage(const std::map<std::string, std::string>& payloads, pjsip_dia
         return;
     }
 
-    auto link = getSIPVoIPLink();
-    auto* endpt = link->getEndpoint();
-
     // Create request message
     static constexpr pjsip_method method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
     pjsip_tx_data* tdata = nullptr;
-    pjsip_dlg_inc_lock(dlg);
-    auto status = pjsip_endpt_create_request_from_hdr(endpt,
-                                                      &method,
-                                                      dlg->target,
-                                                      dlg->local.info,
-                                                      dlg->remote.info,
-                                                      nullptr,
-                                                      dlg->call_id,
-                                                      ++dlg->local.cseq,
-                                                      nullptr,
-                                                      &tdata);
-    pjsip_dlg_dec_lock(dlg);
-
+    sip_utils::PJDialogLock dialog_lock {dlg};
+    auto status = pjsip_dlg_create_request(dlg, &method, -1, &tdata);
     if (status != PJ_SUCCESS or !tdata) {
         RING_ERR("[IM] Could not create MESSAGE request");
         if (tdata)
@@ -197,14 +174,11 @@ im::sendSipMessage(const std::map<std::string, std::string>& payloads, pjsip_dia
         throw InstantMessageException("Internal SIP error");
     }
 
-    // Use dialog's transport
-    pjsip_tx_data_set_transport(tdata, &dlg->tp_sel);
-
     // Fill message body
     fillPJSIPMessageBody(*tdata, payloads);
 
     // Send the request
-    status = pjsip_endpt_send_request(endpt, tdata, -1, nullptr, &im_callback);
+    status = pjsip_dlg_send_request(dlg, tdata, -1, nullptr);
     if (status != PJ_SUCCESS) {
         RING_ERR("[IM] Could not send MESSAGE request");
         pjsip_tx_data_dec_ref(tdata);
