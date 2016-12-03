@@ -173,9 +173,9 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     remote_ = ice->getRemoteAddress(comp_id);
     pj_sockaddr_cp(&base.key.rem_addr, remote_.pjPtr());
     base.key.type = tp_type;
-    auto raw_tp_type = static_cast<pjsip_transport_type_e>(base.key.type);
-    base.type_name = const_cast<char*>(pjsip_transport_get_type_name(raw_tp_type));
-    base.flag = pjsip_transport_get_flag_from_type(raw_tp_type);
+    auto registred_tp_type = static_cast<pjsip_transport_type_e>(tp_type);
+    base.type_name = const_cast<char*>(pjsip_transport_get_type_name(registred_tp_type));
+    base.flag = pjsip_transport_get_flag_from_type(registred_tp_type);
     base.info = static_cast<char*>(pj_pool_alloc(pool_.get(), TRANSPORT_INFO_LENGTH));
 
     auto remote_addr = remote_.toString();
