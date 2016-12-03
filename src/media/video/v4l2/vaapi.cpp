@@ -55,6 +55,7 @@ VaapiAccel::~VaapiAccel()
 int
 VaapiAccel::allocateBuffer(AVFrame* frame, int flags)
 {
+    (void) flags; // unused
     return av_hwframe_get_buffer(framesBufferRef_.get(), frame, 0);
 }
 
