@@ -22,6 +22,7 @@
 #include "siptransport.h"
 #include "sip_utils.h"
 #include "ip_utils.h"
+#include "ice_transport.h"
 
 #include "ringdht/sip_transport_ice.h"
 #include "ringdht/sips_transport_ice.h"
@@ -443,8 +444,10 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
                                        unsigned comp_id,
                                        const tls::TlsParams& params)
 {
+    auto ipv6 = ice->getLocalAddress(comp_id).isIpv6();
+    auto type = dtls_pj_transport_type_ + ipv6 ? PJSIP_TRANSPORT_IPV6 : 0;
     auto sip_ice_tr = std::unique_ptr<tls::SipsIceTransport>(
-        new tls::SipsIceTransport(endpt_, dtls_pj_transport_type_, params, ice, comp_id));
+        new tls::SipsIceTransport(endpt_, type, params, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
     sip_ice_tr.release(); // managed by PJSIP now
