@@ -77,6 +77,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/pj_ice_sess.patch
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
+	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
