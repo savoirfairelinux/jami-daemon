@@ -33,7 +33,7 @@ static const char encoding_table[] = {
     '3', '4', '5', '6', '7', '8', '9', '+', '/'
 };
 
-static const int mod_table[] = { 0, 2, 1 };
+static const size_t mod_table[] = { 0, 2, 1 };
 
 char *ring_base64_encode(const uint8_t *input, size_t input_length,
                              char *output, size_t *output_length)
@@ -71,7 +71,7 @@ uint8_t *ring_base64_decode(const char *input, size_t input_length,
 
     uint8_t c;
     for (c = 0; c < 64; c++)
-        decoding_table[encoding_table[c]] = c;
+        decoding_table[static_cast<int>(encoding_table[c])] = c;
 
     if (input_length % 4 != 0)
         return NULL;
@@ -88,13 +88,13 @@ uint8_t *ring_base64_decode(const char *input, size_t input_length,
 
     for (i = 0, j = 0; i < input_length;) {
         uint8_t sextet_a = input[i] == '=' ? 0 & i++
-                                          : decoding_table[input[i++]];
+            : decoding_table[static_cast<int>(input[i++])];
         uint8_t sextet_b = input[i] == '=' ? 0 & i++
-                                          : decoding_table[input[i++]];
+            : decoding_table[static_cast<int>(input[i++])];
         uint8_t sextet_c = input[i] == '=' ? 0 & i++
-                                          : decoding_table[input[i++]];
+            : decoding_table[static_cast<int>(input[i++])];
         uint8_t sextet_d = input[i] == '=' ? 0 & i++
-                                          : decoding_table[input[i++]];
+            : decoding_table[static_cast<int>(input[i++])];
 
         uint32_t triple = (sextet_a << 3 * 6) +
                           (sextet_b << 2 * 6) +

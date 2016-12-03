@@ -438,7 +438,8 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                     std::chrono::steady_clock::now(),
                     ice, weak_dev_call,
                     std::move(listenKey),
-                    callkey, dev
+                    callkey, dev,
+                    nullptr
                 });
                 return false;
             });

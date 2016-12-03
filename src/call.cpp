@@ -402,15 +402,18 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
 
         std::weak_ptr<Call> wthis = shared_from_this();
         std::weak_ptr<Call> wcall = call;
-        call->addStateListener([wcall,wthis](Call::CallState new_state, Call::ConnectionState new_cstate, int code) {
+        call->addStateListener([wcall, wthis](Call::CallState new_state,
+                                              Call::ConnectionState new_cstate,
+                                              UNUSED int code) {
             if (auto call = wcall.lock()) {
                 if (auto sthis = wthis.lock()) {
                     auto& this_ = *sthis;
                     auto sit = this_.subcalls.find(call);
                     if (sit == this_.subcalls.end())
                         return;
-                    RING_WARN("[call %s] DeviceCall call %s state changed %d %d", this_.getCallId().c_str(), call->getCallId().c_str(),
-                        static_cast<int>(new_state), static_cast<int>(new_cstate));
+                    RING_WARN("[call:%s] DeviceCall call %s state changed %d %d",
+                              this_.getCallId().c_str(), call->getCallId().c_str(),
+                              static_cast<int>(new_state), static_cast<int>(new_cstate));
                     if (new_state == CallState::OVER) {
                         std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
                         this_.subcalls.erase(call);
@@ -421,21 +424,22 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                         this_.setState(new_cstate);
                     } else if (new_cstate == ConnectionState::DISCONNECTED && new_state == CallState::ACTIVE) {
                         std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
-                        RING_WARN("[call %s] peer hangup", this_.getCallId().c_str());
+                        RING_WARN("[call:%s] peer hangup", this_.getCallId().c_str());
                         auto subcalls = std::move(this_.subcalls);
                         for (auto& sub : subcalls) {
                             if (sub != call)
                                 try {
                                     sub->hangup(0);
                                 } catch(const std::exception& e) {
-                                    RING_WARN("[call %s] error hanging up: %s", this_.getCallId().c_str(), e.what());
+                                    RING_WARN("[call:%s] error hanging up: %s",
+                                              this_.getCallId().c_str(), e.what());
                                 }
                         }
                         this_.peerHungup();
                     }
                     if (new_state == CallState::ACTIVE && new_cstate == ConnectionState::CONNECTED) {
                         std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
-                        RING_WARN("[call %s] peer answer", this_.getCallId().c_str());
+                        RING_WARN("[call:%s] peer answer", this_.getCallId().c_str());
                         auto subcalls = std::move(this_.subcalls);
                         for (auto& sub : subcalls) {
                             if (sub != call)
@@ -444,12 +448,14 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                         this_.merge(call);
                         Manager::instance().peerAnsweredCall(this_);
                     }
-                    RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), static_cast<int>(this_.subcalls.size()));
+                    RING_WARN("[call:%s] Remaining %zu subcalls", this_.getCallId().c_str(),
+                              this_.subcalls.size());
                     if (this_.subcalls.empty())
                         this_.pendingOutMessages_.clear();
                 } else {
-                    RING_WARN("DeviceCall IGNORED call %s state changed %d %d", call->getCallId().c_str(),
-                        static_cast<int>(new_state), static_cast<int>(new_cstate));
+                    RING_WARN("DeviceCall IGNORED call %s state changed %d %d",
+                              call->getCallId().c_str(), static_cast<int>(new_state),
+                              static_cast<int>(new_cstate));
                 }
             }
         });
@@ -460,7 +466,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
 void
 Call::merge(std::shared_ptr<Call> scall)
 {
-    RING_WARN("[call %s] merge to -> [call %s]", scall->getCallId().c_str(), getCallId().c_str());
+    RING_WARN("[call:%s] merge to -> [call:%s]", scall->getCallId().c_str(), getCallId().c_str());
     auto& call = *scall;
     std::lock(callMutex_, call.callMutex_);
     std::lock_guard<std::recursive_mutex> lk1 (callMutex_, std::adopt_lock);

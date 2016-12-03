@@ -743,7 +743,7 @@ void AlsaLayer::playback()
     auto& playBuff = getToPlay(audioFormat_, maxFrames);
     auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
 
-    if (!toPlay.frames() > 0)
+    if (!(toPlay.frames() > 0))
         return;
 
     toPlay.interleave(playbackIBuff_);
