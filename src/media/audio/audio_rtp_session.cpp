@@ -52,7 +52,8 @@ class AudioSender {
                     const std::string& dest,
                     const MediaDescription& args,
                     SocketPair& socketPair,
-                    const uint16_t seqVal);
+                    const uint16_t seqVal,
+                    bool muteState);
         ~AudioSender();
 
         void setMuted(bool isMuted);
@@ -73,6 +74,7 @@ class AudioSender {
         AudioBuffer micData_;
         AudioBuffer resampledData_;
         const uint16_t seqVal_;
+        bool muteState_ = false;
 
         using seconds = std::chrono::duration<double, std::ratio<1>>;
         const seconds secondsPerPacket_ {0.02}; // 20 ms
@@ -86,11 +88,13 @@ AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
                          const MediaDescription& args,
                          SocketPair& socketPair,
-                         const uint16_t seqVal) :
+                         const uint16_t seqVal,
+                         bool muteState) :
     id_(id),
     dest_(dest),
     args_(args),
     seqVal_(seqVal),
+    muteState_(muteState),
     loop_([&] { return setup(socketPair); },
           std::bind(&AudioSender::process, this),
           std::bind(&AudioSender::cleanup, this))
@@ -112,6 +116,7 @@ AudioSender::setup(SocketPair& socketPair)
     try {
         /* Encoder setup */
         RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
+        audioEncoder_->setMuted(muteState_);
         audioEncoder_->openOutput(dest_.c_str(), args_);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_);
@@ -184,6 +189,7 @@ AudioSender::process()
 void
 AudioSender::setMuted(bool isMuted)
 {
+    muteState_ = isMuted;
     audioEncoder_->setMuted(isMuted);
 }
 
@@ -393,7 +399,7 @@ AudioRtpSession::startSender()
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_, initSeqVal_));
+                                      *socketPair_, initSeqVal_, muteState_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         send_.enabled = false;
@@ -488,8 +494,10 @@ void
 AudioRtpSession::setMuted(bool isMuted)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (sender_)
+    if (sender_) {
+        muteState_ = isMuted;
         sender_->setMuted(isMuted);
+    }
 }
 
 } // namespace ring
