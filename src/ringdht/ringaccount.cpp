@@ -1786,7 +1786,7 @@ RingAccount::doRegister_()
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
                 shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
-                    shared->foundKnownDevice(crt);
+                    shared->foundAccountDevice(crt);
                 });
                 return true;
             });
@@ -1806,44 +1806,16 @@ RingAccount::doRegister_()
                 if (msg.from == this_.dht_.getId())
                     return true;
 
-                RING_WARN("ICE candidate from %s.", msg.from.toString().c_str());
-
-                // quick check in case we already explicilty banned this public key
-                auto trustStatus = this_.trust_.getCertificateStatus(msg.from.toString());
-                if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-                    RING_WARN("Discarding incoming DHT call request from banned peer %s", msg.from.toString().c_str());
-                    return true;
-                }
-
                 auto res = this_.treatedCalls_.insert(msg.id);
                 this_.saveTreatedCalls();
                 if (!res.second)
                     return true;
 
-                this_.findCertificate( msg.from,
-                    [shared, msg, trustStatus](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
-                    auto& this_ = *shared;
-                    if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
-                        if (!cert or cert->getId() != msg.from) {
-                            RING_WARN("Can't find certificate of %s for incoming call.",
-                                      msg.from.toString().c_str());
-                            return;
-                        }
+                RING_WARN("ICE candidate from %s.", msg.from.toString().c_str());
 
-                        tls::CertificateStore::instance().pinCertificate(cert);
-
-                        auto& this_ = *shared;
-                        if (!this_.trust_.isAllowed(*cert)) {
-                            RING_WARN("Discarding incoming DHT call from untrusted peer %s.",
-                                      msg.from.toString().c_str());
-                            return;
-                        }
-                    } else if (not this_.dhtPublicInCalls_
-                               or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-                        return;
-                    }
-
-                    // Peer certificate trusted... go ahead
+                this_.onPeerMessage(msg.from, [shared, msg](const std::shared_ptr<dht::crypto::Certificate>& cert,
+                                                            const dht::InfoHash& /*account*/) mutable
+                {
                     shared->incomingCall(std::move(msg), cert);
                 });
                 return true;
@@ -1894,7 +1866,7 @@ RingAccount::doRegister_()
                         RING_WARN("Can't find certificate for device %s", sync.from.toString().c_str());
                         return;
                     }
-                    if (not shared->foundKnownDevice(cert))
+                    if (not shared->foundAccountDevice(cert))
                         return;
                     shared->onReceiveDeviceSync(std::move(sync));
                 });
@@ -1912,43 +1884,15 @@ RingAccount::doRegister_()
                 if (!res.second)
                     return true;
                 this_.saveTreatedMessages();
-
-                // quick check in case we already explicilty banned this public key
-                auto trustStatus = this_.trust_.getCertificateStatus(v.from.toString());
-                if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-                    RING_WARN("Discarding incoming DHT message from banned peer %s", v.from.toString().c_str());
-                    return true;
-                }
-
-                this_.findCertificate( v.from,
-                    [shared, v, trustStatus, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
-                    auto& this_ = *shared;
-                    if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
-                        if (!cert or cert->getId() != v.from) {
-                            RING_WARN("Can't find certificate of %s for incoming message.", v.from.toString().c_str());
-                            return;
-                        }
-
-                        tls::CertificateStore::instance().pinCertificate(cert);
-
-                        auto& this_ = *shared;
-                        if (!this_.trust_.isAllowed(*cert)) {
-                            RING_WARN("Discarding incoming DHT message from untrusted peer %s.", v.from.toString().c_str());
-                            return;
-                        }
-                    } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-                        RING_WARN("Discarding incoming DHT message from untrusted or banned peer %s.", v.from.toString().c_str());
-                        return;
-                    }
-
-                    auto from_acc_id = cert ? (cert->issuer ? cert->issuer->getId().toString() : cert->getId().toString()) : v.from.toString();
-
+                this_.onPeerMessage(v.from, [shared, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
+                                                                        const dht::InfoHash& peer_account)
+                {
                     auto now = system_clock::to_time_t(system_clock::now());
                     std::map<std::string, std::string> payloads = {{"text/plain",
                                                                     utf8_make_valid(v.msg)}};
-                    shared->onTextMessage(from_acc_id, payloads);
+                    shared->onTextMessage(peer_account.toString(), payloads);
                     RING_DBG("Sending message confirmation %" PRIu64, v.id);
-                    this_.dht_.putEncrypted(inboxDeviceKey,
+                    shared->dht_.putEncrypted(inboxDeviceKey,
                               v.from,
                               dht::ImMessage(v.id, std::string(), now));
                 });
@@ -1962,12 +1906,52 @@ RingAccount::doRegister_()
     }
 }
 
+
+void
+RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)> cb)
+{
+    // quick check in case we already explicilty banned this public key
+    auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
+    if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+        RING_WARN("Discarding message from banned peer %s", peer_device.toString().c_str());
+        return;
+    }
+
+    auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
+    findCertificate(peer_device,
+        [shared, peer_device, trustStatus, cb](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+        auto& this_ = *shared;
+
+        dht::InfoHash peer_account_id;
+        if (not this_.foundPeerDevice(cert, peer_account_id)) {
+            RING_WARN("Discarding message from invalid peer certificate %s.", peer_device.toString().c_str());
+            return;
+        }
+
+        if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
+            if (!cert or cert->getId() != peer_device) {
+                RING_WARN("Can't find certificate of %s for incoming message.", peer_device.toString().c_str());
+                return;
+            }
+
+            auto& this_ = *shared;
+            if (!this_.trust_.isAllowed(*cert)) {
+                RING_WARN("Discarding message from untrusted peer %s.", peer_device.toString().c_str());
+                return;
+            }
+        } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+            RING_WARN("Discarding message from untrusted or banned peer %s.", peer_device.toString().c_str());
+            return;
+        }
+
+        cb(cert, peer_account_id);
+    });
+}
+
 void
 RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from_cert)
 {
-    auto from = msg.from.toString();
-    RING_WARN("ICE incoming from DHT peer %s\n%s", from.c_str(),
-              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+    RING_WARN("ICE incoming from DHT peer %s", msg.from.toString().c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
 
@@ -1998,7 +1982,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto:
 }
 
 bool
-RingAccount::foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name)
+RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name)
 {
     if (not crt)
         return false;
@@ -2031,6 +2015,36 @@ RingAccount::foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& c
             emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
         }
     }
+    return true;
+}
+
+bool
+RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id)
+{
+    if (not crt)
+        return false;
+
+    auto top_issuer = crt;
+    while (top_issuer->issuer)
+        top_issuer = top_issuer->issuer;
+
+    // Device certificate can't be self-signed
+    if (top_issuer == crt) {
+        RING_WARN("[Account %s] Found invalid peer device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        return false;
+    }
+
+    // Check peer certificate chain
+    // Trust store with top issuer as the only CA
+    tls::TrustStore peer_trust;
+    peer_trust.setCertificateStatus(top_issuer, tls::TrustStore::PermissionStatus::ALLOWED, false);
+
+    if (not peer_trust.isAllowed(*crt)) {
+        RING_WARN("[Account %s] Found invalid peer device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        return false;
+    }
+
+    account_id = crt->issuer->getId();
     return true;
 }
 
@@ -2592,7 +2606,7 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
         findCertificate(d.first, [shared,d](const std::shared_ptr<dht::crypto::Certificate> crt) {
             if (not crt)
                 return;
-            shared->foundKnownDevice(crt, d.second);
+            shared->foundAccountDevice(crt, d.second);
         });
     }
     it->second.last_sync = sync_date;
