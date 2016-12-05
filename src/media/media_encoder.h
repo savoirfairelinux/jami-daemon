@@ -28,6 +28,10 @@
 #include "video/video_scaler.h"
 #endif
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
 #include "noncopyable.h"
 #include "media_buffer.h"
 #include "media_device.h"
@@ -88,6 +92,10 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+#ifdef RING_ACCEL
+        void enableAccel(const bool enableAccel) { enableAccel_ = enableAccel; }
+#endif
+
 private:
     NON_COPYABLE(MediaEncoder);
     void setOptions(const MediaDescription& args);
@@ -115,6 +123,13 @@ private:
     int encoderBufferSize_ = 0;
 #endif
     bool is_muted = false;
+
+#ifdef RING_ACCEL
+    bool isAccelPossible(int codecId); // sets outputEncoder_ if true
+
+    bool enableAccel_ = true;
+    std::unique_ptr<video::HardwareAccel> accel_;
+#endif
 
 protected:
     AVDictionary *options_ = nullptr;

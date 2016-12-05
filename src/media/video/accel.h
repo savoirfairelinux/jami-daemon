@@ -49,11 +49,13 @@ class HardwareAccel {
         // wrapper to take care of boilerplate before calling the derived class's implementation
         bool extractData(VideoFrame& input);
 
-    public: // must be implemented by derived classes
+    public: // must be implemented by derived classes, if not applicable, return false or negative value
         virtual bool check() = 0;
-        virtual bool init() = 0;
+        virtual bool initDecoder() = 0;
         virtual int allocateBuffer(AVFrame* frame, int flags) = 0;
         virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
+        virtual bool initEncoder() = 0;
+        virtual bool prepareFrameForEncoding(VideoFrame& frame) = 0;
 
     protected:
         AVCodecContext* codecCtx_;
@@ -68,6 +70,7 @@ class HardwareAccel {
 
 // HardwareAccel factory
 // Checks if codec acceleration is possible
-std::unique_ptr<HardwareAccel> makeHardwareAccel(AVCodecContext* codecCtx);
+std::unique_ptr<HardwareAccel> makeHardwareAccel(int codecId);
+void setCallbacks(AVCodecContext* codecCtx);
 
 }} // namespace ring::video
