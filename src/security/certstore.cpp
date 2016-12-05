@@ -40,39 +40,54 @@ CertificateStore::instance()
 }
 
 CertificateStore::CertificateStore()
-    : certPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"certificates")
+    : certPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"certificates"),
+      crlPath_(fileutils::get_data_dir()+DIR_SEPARATOR_CH+"crls")
 {
     fileutils::check_dir(certPath_.c_str());
-    loadLocalCertificates(certPath_);
+    fileutils::check_dir(crlPath_.c_str());
+    loadLocalCertificates();
 }
 
 unsigned
-CertificateStore::loadLocalCertificates(const std::string& path)
+CertificateStore::loadLocalCertificates()
 {
     std::lock_guard<std::mutex> l(lock_);
 
-    auto dir_content = fileutils::readDirectory(path);
+    auto dir_content = fileutils::readDirectory(certPath_);
     unsigned n = 0;
     for (const auto& f : dir_content) {
         try {
-            auto crt = std::make_shared<crypto::Certificate>(fileutils::loadFile(path+DIR_SEPARATOR_CH+f));
+            auto crt = std::make_shared<crypto::Certificate>(fileutils::loadFile(certPath_+DIR_SEPARATOR_CH+f));
             auto id = crt->getId().toString();
             if (id != f)
                 throw std::logic_error({});
-            certs_.emplace(id, crt);
-            ++n;
-            crt = crt->issuer;
             while (crt) {
-                certs_.emplace(crt->getId().toString(), crt);
+                auto id_str = crt->getId().toString();
+                certs_.emplace(id_str, crt);
+                loadRevocations(*crt);
                 crt = crt->issuer;
                 ++n;
             }
         } catch (const std::exception& e) {
-            remove((path+DIR_SEPARATOR_CH+f).c_str());
+            remove((certPath_+DIR_SEPARATOR_CH+f).c_str());
         }
     }
     RING_DBG("CertificateStore: loaded %u local certificates.", n);
     return n;
+}
+
+void
+CertificateStore::loadRevocations(crypto::Certificate& crt)
+{
+    auto dir = crlPath_+DIR_SEPARATOR_CH+crt.getId().toString();
+    auto crl_dir_content = fileutils::readDirectory(dir);
+    for (const auto& crl : crl_dir_content) {
+        try {
+            crt.addRevocationList(std::make_shared<crypto::RevocationList>(fileutils::loadFile(dir+DIR_SEPARATOR_CH+crl)));
+        } catch (const std::exception& e) {
+            RING_WARN("Can't load revocation list: %s", e.what());
+        }
+    }
 }
 
 std::vector<std::string>
@@ -156,13 +171,13 @@ CertificateStore::findIssuer(std::shared_ptr<crypto::Certificate> crt) const
 }
 
 static std::vector<crypto::Certificate>
-readCertificates(const std::string& path)
+readCertificates(const std::string& path, const std::string& crl_path)
 {
     std::vector<crypto::Certificate> ret;
     if (fileutils::isDirectory(path)) {
         auto files = fileutils::readDirectory(path);
         for (const auto& file : files) {
-            auto certs = readCertificates(path+"/"+file);
+            auto certs = readCertificates(path+DIR_SEPARATOR_CH+file, crl_path);
             ret.insert(std::end(ret),
                        std::make_move_iterator(std::begin(certs)),
                        std::make_move_iterator(std::end(certs)));
@@ -185,7 +200,7 @@ void
 CertificateStore::pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb)
 {
     ThreadPool::instance().run([&, path, cb]() {
-        auto certs = readCertificates(path);
+        auto certs = readCertificates(path, crlPath_);
         std::vector<std::string> ids;
         std::vector<std::weak_ptr<crypto::Certificate>> scerts;
         ids.reserve(certs.size());
@@ -245,8 +260,7 @@ CertificateStore::pinCertificate(crypto::Certificate&& cert, bool local)
 }
 
 std::vector<std::string>
-CertificateStore::pinCertificate(std::shared_ptr<crypto::Certificate> cert,
-                                 bool local)
+CertificateStore::pinCertificate(std::shared_ptr<crypto::Certificate> cert, bool local)
 {
     bool sig {false};
     std::vector<std::string> ids {};
@@ -258,12 +272,20 @@ CertificateStore::pinCertificate(std::shared_ptr<crypto::Certificate> cert,
             auto id = c->getId().toString();
             decltype(certs_)::iterator it;
             std::tie(it, inserted) = certs_.emplace(id, c);
+            if (not inserted)
+                it->second = c;
+            if (local) {
+                for (const auto& crl : c->getRevocationLists())
+                    pinRevocationList(id, *crl);
+            }
             ids.emplace_back(id);
             c = c->issuer;
             sig |= inserted;
         }
-        if (sig and local)
-            fileutils::saveFile(certPath_+DIR_SEPARATOR_CH+ids.front(), cert->getPacked());
+        if (local) {
+            if (sig)
+                fileutils::saveFile(certPath_+DIR_SEPARATOR_CH+ids.front(), cert->getPacked());
+        }
     }
     for (const auto& id : ids)
         emitSignal<DRing::ConfigurationSignal::CertificatePinned>(id);
@@ -309,6 +331,26 @@ CertificateStore::getTrustedCertificates() const
     for (auto& crt : trustedCerts_)
         crts.emplace_back(crt->cert);
     return crts;
+}
+
+void
+CertificateStore::pinRevocationList(const std::string& id, const std::shared_ptr<dht::crypto::RevocationList>& crl)
+{
+    if (auto c = getCertificate(id))
+        c->addRevocationList(crl);
+    pinRevocationList(id, *crl);
+}
+
+void
+CertificateStore::pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl)
+{
+    auto v = crl.getNumber();
+    std::stringstream ss;
+    ss << std::hex;
+    for (const auto& b : v)
+        ss << (unsigned)b;
+
+    fileutils::saveFile(crlPath_+DIR_SEPARATOR_CH+id+DIR_SEPARATOR_CH+ss.str(), crl.getPacked());
 }
 
 TrustStore::PermissionStatus
@@ -365,6 +407,15 @@ TrustStore::~TrustStore()
 {
     //gnutls_x509_trust_list_deinit(trust_, false);
     gnutls_x509_trust_list_deinit(allowed_, false);
+}
+
+bool
+TrustStore::addRevocationList(dht::crypto::RevocationList&& crl)
+{
+    auto packed = crl.getPacked();
+    revokedList_.emplace_back(std::forward<dht::crypto::RevocationList>(crl));
+    auto crlp = crl.get();
+    return gnutls_x509_trust_list_add_crls(allowed_, &crlp, 1, GNUTLS_TL_VERIFY_CRL, 0) > 0;
 }
 
 bool
@@ -547,6 +598,17 @@ getChain(const crypto::Certificate& crt)
     return crts;
 }
 
+std::vector<gnutls_x509_crl_t>
+getRevocationList(const crypto::Certificate& crt)
+{
+    std::vector<gnutls_x509_crl_t> crls_ret;
+    const auto& crls = crt.getRevocationLists();
+    crls_ret.reserve(crls.size());
+    for (const auto& crl : crls)
+        crls_ret.emplace_back(crl->get());
+    return crls_ret;
+}
+
 void
 TrustStore::updateKnownCerts()
 {
@@ -567,8 +629,13 @@ TrustStore::setStoreCertStatus(const crypto::Certificate& crt, TrustStore::Permi
     if (not crt.isCA())
         return;
 
-    if (status == PermissionStatus::ALLOWED)
+    if (status == PermissionStatus::ALLOWED) {
         gnutls_x509_trust_list_add_cas(allowed_, &crt.cert, 1, 0);
+        auto crls = getRevocationList(crt);
+        if (not crls.empty())
+            if (gnutls_x509_trust_list_add_crls(allowed_, crls.data(), crls.size(), GNUTLS_TL_VERIFY_CRL, 0) == 0)
+                RING_WARN("No CRLs where added");
+    }
     else
         gnutls_x509_trust_list_remove_cas(allowed_, &crt.cert, 1);
 
