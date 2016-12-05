@@ -418,16 +418,17 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
                 auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
                     callkey,
-                    [=] (dht::IceCandidates&& msg) {
+                    [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
                         if (msg.id != callvid or msg.from != dev)
                             return true;
                         RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
                                   std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
-                        if (auto call = weak_dev_call.lock())
+                        if (auto call = weak_dev_call.lock()) {
                             call->setState(Call::ConnectionState::PROGRESSING);
-                        if (!ice->start(msg.ice_data)) {
-                            call->onFailure();
-                            return true;
+                            if (!ice->start(msg.ice_data)) {
+                                call->onFailure();
+                                return true;
+                            }
                         }
                         return false;
                     }
