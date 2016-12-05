@@ -273,8 +273,10 @@ int MediaDecoder::setupFromVideoData()
 
 #ifdef RING_ACCEL
     if (enableAccel_) {
-        accel_ = video::makeHardwareAccel(decoderCtx_);
-        decoderCtx_->opaque = accel_.get();
+        if (accel_ = video::makeHardwareAccel(decoderCtx_->codec_id)) {
+            video::setCallbacks(decoderCtx_);
+            decoderCtx_->opaque = accel_.get();
+        }
     }
 #endif // RING_ACCEL
 

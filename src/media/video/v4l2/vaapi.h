@@ -62,9 +62,11 @@ class VaapiAccel : public HardwareAccel {
         ~VaapiAccel();
 
         bool check() override;
-        bool init() override;
+        bool initDecoder() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
         void extractData(VideoFrame& input, VideoFrame& output) override;
+        bool initEncoder() override;
+        bool prepareFrameForEncoding(VideoFrame& frame) override;
 
     private:
         using AVBufferRefPtr = std::unique_ptr<AVBufferRef, std::function<void(AVBufferRef*)>>;
@@ -77,6 +79,8 @@ class VaapiAccel : public HardwareAccel {
         VAContextID vaContext_;
 
         struct vaapi_context ffmpegAccelCtx_;
+
+        SwsContext* swsCtx_ = nullptr;
 
         std::string deviceName_;
 };

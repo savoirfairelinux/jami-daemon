@@ -66,8 +66,13 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     if (is_keyframe)
         --forceKeyFrame_;
 
-    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
+    if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0) {
         RING_ERR("encoding failed");
+        if (videoEncoder_->resetRequired()) {
+            RING_WARN("Restarting encoder");
+            resetRequired_ = true;
+        }
+    }
 
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
