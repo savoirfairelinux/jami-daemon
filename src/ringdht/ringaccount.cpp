@@ -151,6 +151,9 @@ struct RingAccount::ArchiveContent
     /** Generated CA key (for self-signed certificates) */
     dht::crypto::PrivateKey ca_key;
 
+    /** Revoked devices */
+    std::shared_ptr<dht::crypto::RevocationList> revoked;
+
     /** Ethereum private key */
     std::vector<uint8_t> eth_key;
 
@@ -687,9 +690,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     fileutils::check_dir(idPath_.c_str(), 0700);
 
     // save the chain including CA
-    saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "dht");
-    tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
-    tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
@@ -746,10 +747,16 @@ RingAccount::hasSignedReceipt()
         return false;
     }
 
-    auto pk = identity_.second->issuer->getPublicKey();
-    RING_WARN("hasSignedReceipt() with %s", pk.getId().toString().c_str());
+    auto accountCertificate = identity_.second->issuer;
+    if (not accountCertificate) {
+        RING_WARN("Device certificate must be signed by the account certificate");
+        return false;
+    }
+
+    auto pk = accountCertificate->getPublicKey();
+    RING_WARN("Checking device receipt for account %s", pk.getId().toString().c_str());
     if (!pk.checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_)) {
-        RING_WARN("hasSignedReceipt() signature check failed");
+        RING_WARN("Device receipt signature check failed");
         return false;
     }
 
@@ -818,6 +825,13 @@ RingAccount::loadIdentity()
         auto crt_id = dht_cert.getId();
         if (crt_id != dht_key.getPublicKey().getId())
             return {};
+
+        if (not dht_cert.issuer) {
+            RING_ERR("Device certificate has no issuer");
+            return {};
+        }
+        // load revocation lists for device authority (account certificate).
+        tls::CertificateStore::instance().loadRevocations(*dht_cert.issuer);
 
         identity_ = {
             std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
@@ -889,6 +903,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
                 c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
             } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
                 c.eth_key = base64::decode(itr->asString());
+            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                c.revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
             } else
                 c.config[itr.key().asString()] = itr->asString();
         }
@@ -928,6 +944,7 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+    root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked->getPacked());
 
     Json::FastWriter fastWriter;
     std::string output = fastWriter.write(root);
@@ -955,6 +972,7 @@ RingAccount::saveArchive(const ArchiveContent& archive_content, const std::strin
         if (archivePath_.empty())
             archivePath_ = idPath_ + DIR_SEPARATOR_STR "export.gz";
         fileutils::saveFile(archivePath_, encrypted);
+        //fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "crl.der", archive_content.revoked->getPacked());
     } catch (const std::runtime_error& ex) {
         RING_ERR("Export failed: %s", ex.what());
         return;
@@ -1036,13 +1054,37 @@ RingAccount::addDevice(const std::string& password)
     });
 }
 
-void
+bool
+RingAccount::revokeDevice(const std::string& password, const std::string& device)
+{
+    // shared_ptr of future
+    auto fa = ThreadPool::instance().getShared<ArchiveContent>(
+                    std::bind(&RingAccount::readArchive, this, password)
+                );
+    findCertificate(dht::InfoHash(device),
+                    [fa,sthis=shared(),password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
+    {
+        sthis->foundAccountDevice(crt);
+        auto a = fa->get();
+        // Add revoked device to the revocation list and resign it
+        a.revoked->revoke(*crt);
+        a.revoked->sign(a.id);
+        // add to CRL cache
+        tls::CertificateStore::instance().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+        sthis->saveArchive(a, password);
+    });
+    return true;
+}
+
+std::pair<std::string, std::string>
 RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
+    auto paths = std::make_pair(path + ".key", path + ".crt");
     if (id.first)
-        fileutils::saveFile(path + ".key", id.first->serialize(), 0600);
+        fileutils::saveFile(paths.first, id.first->serialize(), 0600);
     if (id.second)
-        fileutils::saveFile(path + ".crt", id.second->getPacked(), 0600);
+        fileutils::saveFile(paths.second, id.second->getPacked(), 0600);
+    return paths;
 }
 
 void
@@ -2105,13 +2147,13 @@ RingAccount::connectivityChanged()
 }
 
 bool
-RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb)
+RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
         if (cb)
             cb(cert);
     } else {
-        dht_.findCertificate(h, [=](const std::shared_ptr<dht::crypto::Certificate> crt) {
+        dht_.findCertificate(h, [cb{std::move(cb)}](const std::shared_ptr<dht::crypto::Certificate> crt) {
             if (crt)
                 tls::CertificateStore::instance().pinCertificate(std::move(crt));
             if (cb)
