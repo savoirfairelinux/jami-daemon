@@ -52,7 +52,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             accel->setHeight(codecCtx->coded_height);
             accel->setProfile(codecCtx->profile);
             accel->setCodecCtx(codecCtx);
-            if (accel->init())
+            if (accel->initDecoder())
                 return accel->format();
             break;
         }
@@ -147,7 +147,7 @@ makeHardwareAccel(const std::string name, const AVPixelFormat format) {
 }
 
 std::unique_ptr<HardwareAccel>
-makeHardwareAccel(AVCodecContext* codecCtx)
+makeHardwareAccel(int codecId)
 {
     enum class AccelID {
         Vaapi,
@@ -180,7 +180,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
     };
 
     std::vector<AccelID> possibleAccels = {};
-    switch (codecCtx->codec_id) {
+    switch (codecId) {
         case AV_CODEC_ID_H264:
         case AV_CODEC_ID_MPEG4:
         case AV_CODEC_ID_H263P:
@@ -198,10 +198,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
                 auto accel = info.create(info.name, info.format);
                 // don't break if the check fails, we want to check every possibility
                 if (accel->check()) {
-                    codecCtx->get_format = getFormatCb;
-                    codecCtx->get_buffer2 = allocateBufferCb;
-                    codecCtx->thread_safe_callbacks = 1;
-                    codecCtx->thread_count = 1;
                     RING_DBG("Succesfully set up '%s' acceleration", accel->name().c_str());
                     return accel;
                 }
@@ -211,6 +207,15 @@ makeHardwareAccel(AVCodecContext* codecCtx)
 
     RING_WARN("Not using hardware acceleration");
     return nullptr;
+}
+
+void
+setCallbacks(AVCodecContext* codecCtx)
+{
+    codecCtx->thread_safe_callbacks = 1;
+    codecCtx->thread_count = 1;
+    codecCtx->get_format = getFormatCb;
+    codecCtx->get_buffer2 = allocateBufferCb;
 }
 
 }} // namespace ring::video

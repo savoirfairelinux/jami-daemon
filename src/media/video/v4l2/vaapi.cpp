@@ -35,6 +35,8 @@
 #include <algorithm>
 #include <vector>
 
+class SwsContext;
+
 #include "logger.h"
 
 namespace ring { namespace video {
@@ -50,6 +52,8 @@ VaapiAccel::VaapiAccel(const std::string name, const AVPixelFormat format)
 
 VaapiAccel::~VaapiAccel()
 {
+    if (swsCtx_)
+        sws_freeContext(swsCtx_);
 }
 
 int
@@ -101,7 +105,7 @@ VaapiAccel::check()
 }
 
 bool
-VaapiAccel::init()
+VaapiAccel::initDecoder()
 {
     vaProfile_ = VAProfileNone;
     vaEntryPoint_ = VAEntrypointVLD;
@@ -213,6 +217,74 @@ VaapiAccel::init()
     ffmpegAccelCtx_.config_id = vaConfig_;
     ffmpegAccelCtx_.context_id = vaContext_;
     codecCtx_->hwaccel_context = (void*)&ffmpegAccelCtx_;
+    return true;
+}
+
+bool
+VaapiAccel::initEncoder()
+{
+    framesBufferRef_.reset(av_hwframe_ctx_alloc(deviceBufferRef_.get()));
+    auto frames = reinterpret_cast<AVHWFramesContext*>(framesBufferRef_->data);
+    frames->format = AV_PIX_FMT_VAAPI;
+    frames->sw_format = AV_PIX_FMT_NV12;
+    frames->width = width_;
+    frames->height = height_;
+    if (av_hwframe_ctx_init(framesBufferRef_.get()) < 0) {
+        RING_ERR("Failed to initialize VAAPI frame context");
+        fail(true);
+        return false;
+    }
+    return true;
+}
+
+bool
+VaapiAccel::prepareFrameForEncoding(VideoFrame& frame)
+{
+    // the standalone vaapi encoder needs nv12 frames
+    AVPixelFormat format = AV_PIX_FMT_NV12;
+    auto input = frame.pointer();
+
+    swsCtx_ = sws_getCachedContext(
+        swsCtx_,
+        input->width,
+        input->height,
+        (AVPixelFormat)input->format,
+        input->width,
+        input->height,
+        format,
+        SWS_FAST_BILINEAR,
+        nullptr, nullptr, nullptr);
+
+    if (!swsCtx_) {
+        RING_ERR("Unable to create a scaler context");
+        fail(false);
+        return false;
+    }
+
+    std::vector<uint8_t> frameBuffer;
+    auto frameSize = videoFrameSize(format, codecCtx_->width, codecCtx_->height);
+    frameBuffer.reserve(frameSize);
+    auto temp = std::unique_ptr<VideoFrame>(new VideoFrame());
+    temp->setFromMemory(frameBuffer.data(), format, codecCtx_->width, codecCtx_->height);
+    auto output = temp->pointer();
+
+    sws_scale(swsCtx_, input->data, input->linesize, 0,
+              input->height, output->data, output->linesize);
+
+    // put converted frame into input, as that is what allocateBuffer and extractData expect
+    av_frame_unref(input);
+    av_frame_move_ref(input, output);
+
+    try {
+        allocateBuffer(input, 0);
+        extractData(frame, *temp);
+    } catch (std::runtime_error& e) {
+        fail(false);
+        RING_ERR("%s", e.what());
+        return false;
+    }
+
+    succeed();
     return true;
 }
 

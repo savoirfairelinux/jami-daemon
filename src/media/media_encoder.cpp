@@ -140,7 +140,20 @@ MediaEncoder::openOutput(const char *filename,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 
     /* find the video encoder */
-    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+#ifdef RING_ACCEL
+    if (enableAccel_ && args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO
+        && isAccelPossible(args.codec->systemCodecInfo.avcodecId)) {
+        accel_ = video::makeHardwareAccel(args.codec->systemCodecInfo.avcodecId);
+        accel_->setWidth(device_.width);
+        accel_->setHeight(device_.height);
+        if (!accel_->initEncoder()) {
+            outputEncoder_ = nullptr;
+            accel_.reset();
+            RING_WARN("Failed to set up hardware encoder, falling back to software encoder");
+        }
+    }
+#endif
+    if (!outputEncoder_ && args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
         // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
         // H263-1998 can manage all frame sizes while H263 don't
         // AV_CODEC_ID_H263 decoder will be used for decoding
@@ -209,6 +222,12 @@ MediaEncoder::openOutput(const char *filename,
         encoderCtx_->rc_buffer_size = maxBitrate;
         RING_DBG("Using Max bitrate %d", maxBitrate);
     }
+
+#ifdef RING_ACCEL
+    if (enableAccel_ && accel_) {
+        accel_->setCodecCtx(encoderCtx_);
+    }
+#endif
 
     int ret;
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
@@ -296,6 +315,15 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     yuv422_clear_to_black(scaledFrame_); // to fill blank space left by the "keep aspect"
 
     scaler_.scale_with_aspect(input, scaledFrame_);
+
+#ifdef RING_ACCEL
+    if (enableAccel_ && accel_) {
+        if (!accel_->hasFailed())
+            accel_->prepareFrameForEncoding(scaledFrame_);
+        else
+            return -1; // fallback to software encoder
+    }
+#endif
 
     auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
@@ -694,5 +722,31 @@ MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
     return codec_.get() == codec;
 }
+
+#ifdef RING_ACCEL
+bool
+MediaEncoder::isAccelPossible(int codecId)
+{
+    // avcodec_find_encoder_by_name returns NULL if not found
+    std::vector<std::string> acceleratedEncoders = {
+        "h264_vaapi"
+    };
+
+    std::string codecName = avcodec_get_name((AVCodecID)codecId);
+    auto result = std::find_if(acceleratedEncoders.cbegin(), acceleratedEncoders.cend(),
+        [codecName](std::string enc){
+            return enc.compare(0, codecName.size(), codecName) == 0 && (avcodec_find_encoder_by_name(enc.c_str())) != nullptr;
+        }
+    );
+
+    if (result != acceleratedEncoders.cend()) {
+        RING_WARN("Attempting to use hardware encoder '%s'", result->c_str());
+        outputEncoder_ = avcodec_find_encoder_by_name(result->c_str());
+        return true;
+    }
+
+    return false;
+}
+#endif // RING_ACCEL
 
 } // namespace ring
