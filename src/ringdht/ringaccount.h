@@ -343,26 +343,7 @@ class RingAccount : public SIPAccountBase {
          */
         bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
 
-        /**
-         * Inform that a potential account device have been found.
-         * Returns true if the device have been validated to be part of this account
-         */
-        bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {});
-
-        /**
-         * Inform that a potential peer device have been found.
-         * Returns true only if the device certificate is a valid Ring device certificate.
-         * In that case (true is returned) the account_id parameter is set to the peer account ID.
-         */
-        bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
-
-        /**
-         * Check that a peer is authorised to talk to us.
-         * If everything is in order, calls the callback with the
-         * peer certificate chain (down to the peer device certificate),
-         * and the peer account id.
-         */
-        void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>);
+        bool foundKnownDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {});
 
         /**
          * Maps require port via UPnP
