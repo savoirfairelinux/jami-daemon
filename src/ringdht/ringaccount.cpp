@@ -356,92 +356,90 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // Find listening Ring devices for this account
     forEachDevice(dht::InfoHash(toUri), [wCall](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
-        runOnMainThread([=](){
-            auto call = wCall.lock();
-            if (not call) return;
-            RING_WARN("[call %s] Found device %s", call->getCallId().c_str(), dev.toString().c_str());
+        auto call = wCall.lock();
+        if (not call) return;
+        RING_WARN("[call %s] Found device %s", call->getCallId().c_str(), dev.toString().c_str());
 
-            auto& manager = Manager::instance();
-            auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
+        auto& manager = Manager::instance();
+        auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING);
-            std::weak_ptr<SIPCall> weak_dev_call = dev_call;
-            dev_call->setIPToIP(true);
-            dev_call->setSecure(sthis->isTlsEnabled());
-            auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
-                                          ICE_COMPONENTS, true, sthis->getIceOptions());
-            if (not ice) {
-                RING_WARN("Can't create ICE");
-                dev_call->removeCall();
-                return;
+        std::weak_ptr<SIPCall> weak_dev_call = dev_call;
+        dev_call->setIPToIP(true);
+        dev_call->setSecure(sthis->isTlsEnabled());
+        auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+                                             ICE_COMPONENTS, true, sthis->getIceOptions());
+        if (not ice) {
+            RING_WARN("Can't create ICE");
+            dev_call->removeCall();
+            return;
+        }
+
+        call->addSubCall(dev_call);
+
+        manager.addTask([sthis, weak_dev_call, ice, dev] {
+            auto call = weak_dev_call.lock();
+
+            // call aborted?
+            if (not call)
+                return false;
+
+            if (ice->isFailed()) {
+                RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                call->onFailure(EIO);
+                return false;
             }
 
-            call->addSubCall(dev_call);
+            // Loop until ICE transport is initialized.
+            // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+            // and we let upper layers decide when the call shall be aborded (our first check upper).
+            if (not ice->isInitialized())
+                return true;
 
-            manager.addTask([sthis, weak_dev_call, ice, dev] {
-                auto call = weak_dev_call.lock();
+            sthis->registerDhtAddress(*ice);
 
-                // call aborted?
-                if (not call)
-                    return false;
+            // Next step: sent the ICE data to peer through DHT
+            const dht::Value::Id callvid  = udist(sthis->rand_);
+            const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
+            dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
 
-                if (ice->isFailed()) {
-                    RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
-                    call->onFailure(EIO);
+            sthis->dht_.putEncrypted(
+                callkey, dev,
+                std::move(val),
+                [=](bool ok) { // Put complete callback
+                    if (!ok) {
+                        RING_WARN("Can't put ICE descriptor on DHT");
+                        if (auto call = weak_dev_call.lock())
+                            call->onFailure();
+                    } else
+                        RING_DBG("Successfully put ICE descriptor on DHT");
+                }
+            );
+
+            auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
+                callkey,
+                [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
+                    if (msg.id != callvid or msg.from != dev)
+                        return true;
+                    RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
+                              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+                    if (auto call = weak_dev_call.lock()) {
+                        call->setState(Call::ConnectionState::PROGRESSING);
+                        if (!ice->start(msg.ice_data)) {
+                            call->onFailure();
+                            return true;
+                        }
+                    }
                     return false;
                 }
+            );
 
-                // Loop until ICE transport is initialized.
-                // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
-                // and we let upper layers decide when the call shall be aborded (our first check upper).
-                if (not ice->isInitialized())
-                    return true;
-
-                sthis->registerDhtAddress(*ice);
-
-                // Next step: sent the ICE data to peer through DHT
-                const dht::Value::Id callvid  = udist(sthis->rand_);
-                const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
-                dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
-
-                sthis->dht_.putEncrypted(
-                    callkey, dev,
-                    std::move(val),
-                    [=](bool ok) { // Put complete callback
-                        if (!ok) {
-                            RING_WARN("Can't put ICE descriptor on DHT");
-                            if (auto call = weak_dev_call.lock())
-                                call->onFailure();
-                        } else
-                            RING_DBG("Successfully put ICE descriptor on DHT");
-                    }
-                );
-
-                auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
-                    callkey,
-                    [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
-                        if (msg.id != callvid or msg.from != dev)
-                            return true;
-                        RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
-                                  std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
-                        if (auto call = weak_dev_call.lock()) {
-                            call->setState(Call::ConnectionState::PROGRESSING);
-                            if (!ice->start(msg.ice_data)) {
-                                call->onFailure();
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-                );
-
-                sthis->pendingCalls_.emplace_back(PendingCall{
-                    std::chrono::steady_clock::now(),
-                    ice, weak_dev_call,
-                    std::move(listenKey),
-                    callkey, dev
-                });
-                return false;
+            sthis->pendingCalls_.emplace_back(PendingCall{
+                std::chrono::steady_clock::now(),
+                ice, weak_dev_call,
+                std::move(listenKey),
+                callkey, dev
             });
+            return false;
         });
     }, [=](bool ok){
         if (not ok) {
