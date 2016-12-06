@@ -38,7 +38,7 @@ VPATH := $(TARBALLS)
 
 # Common download locations
 GNU := http://ftpmirror.gnu.org/
-SF := http://heanet.dl.sourceforge.net/sourceforge
+SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= http://downloads.videolan.org/pub/contrib
 
 #

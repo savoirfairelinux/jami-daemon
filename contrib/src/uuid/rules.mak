@@ -1,7 +1,7 @@
 # libuuid part of util-linux
 
 UUID_VERSION := 1.0.2
-UUID_URL := $(SF)/libuuid/libuuid-$(UUID_VERSION).tar.gz
+UUID_URL := $(SF)/libuuid/files/libuuid-$(UUID_VERSION).tar.gz/download
 
 ifndef HAVE_IOS
 ifeq ($(call need_pkg,"uuid >= 2.0.0"),)

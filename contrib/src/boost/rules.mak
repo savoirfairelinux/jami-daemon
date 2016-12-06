@@ -1,7 +1,7 @@
 # Boost
 BOOST_VERSION_1 := 1.61.0
 BOOST_VERSION_2 := 1_61_0
-BOOST_URL := https://downloads.sourceforge.net/project/boost/boost/$(BOOST_VERSION_1)/boost_$(BOOST_VERSION_2).tar.bz2
+BOOST_URL := $(SF)/boost/files/boost/$(BOOST_VERSION_1)/boost_$(BOOST_VERSION_2).tar.bz2/download
 
 PKGS += boost
 
