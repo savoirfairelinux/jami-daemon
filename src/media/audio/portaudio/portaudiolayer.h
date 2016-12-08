@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Edric Ladent-Milaret <edric.ladent-milaret@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,25 +19,24 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef PORTAUDIO_LAYER_H
-#define PORTAUDIO_LAYER_H
-
-#include <portaudio.h>
+#pragma once
 
 #include "audio/audiolayer.h"
 #include "noncopyable.h"
+
+#include <memory>
+#include <array>
 
 namespace ring {
 
 class PortAudioLayer : public AudioLayer {
 
 public:
-    PortAudioLayer(const AudioPreference &pref);
-    ~PortAudioLayer();
+    PortAudioLayer(const AudioPreference& pref);
+    virtual ~PortAudioLayer() = default;
 
     virtual std::vector<std::string> getCaptureDeviceList() const;
     virtual std::vector<std::string> getPlaybackDeviceList() const;
-
     virtual int getAudioDeviceIndex(const std::string& name, DeviceType type) const;
     virtual std::string getAudioDeviceName(int index, DeviceType type) const;
     virtual int getIndexCapture() const;
@@ -55,39 +55,13 @@ public:
      */
     virtual void stopStream();
 
-    virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
+    virtual void updatePreference(AudioPreference& pref, int index, DeviceType type);
 
- private:
+private:
     NON_COPYABLE(PortAudioLayer);
 
-    void init(void);
-    void terminate(void) const;
-    void initStream(void);
-    std::vector<std::string> getDeviceByType(const bool& playback) const;
+    struct PortAudioLayerImpl;
+    std::unique_ptr<PortAudioLayerImpl> pimpl_;
+};
 
-    PaDeviceIndex   indexIn_;
-    PaDeviceIndex   indexOut_;
-    PaDeviceIndex   indexRing_;
-
-    AudioBuffer playbackBuff_;
-
-    std::shared_ptr<RingBuffer> mainRingBuffer_;
-
-    enum Direction {Input=0, Output=1, End=2};
-    PaStream*   streams[(int)Direction::End];
-
-    static int paOutputCallback(const void *inputBuffer, void* outputBuffer,
-                            unsigned long framesPerBuffer,
-                            const PaStreamCallbackTimeInfo* timeInfo,
-                            PaStreamCallbackFlags statusFlags,
-                            void *userData);
-
-    static int paInputCallback(const void *inputBuffer, void* outputBuffer,
-                            unsigned long framesPerBuffer,
-                            const PaStreamCallbackTimeInfo* timeInfo,
-                            PaStreamCallbackFlags statusFlags,
-                            void *userData);
- };
- }
-
-#endif
+} // namespace ring
