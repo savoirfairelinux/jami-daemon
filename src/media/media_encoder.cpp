@@ -315,10 +315,41 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     memset(&pkt, 0, sizeof(pkt));
     av_init_packet(&pkt);
 
-#if LIBAVCODEC_VERSION_MAJOR >= 54
+    int ret = 0;
+#if LIBAVFORMAT_VERSION_CHECK(57, 48, 101, 25, 0)
+    ret = avcodec_send_frame(encoderCtx_, frame);
+    if (ret < 0)
+        return -1;
+
+    while (1) {
+        ret = avcodec_receive_packet(encoderCtx_, &pkt);
+        if (ret == AVERROR(EAGAIN))
+            break;
+        if (ret < 0)
+            return -1;
+
+        if (pkt.size) {
+            if (pkt.pts != AV_NOPTS_VALUE)
+                pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
+                                       stream_->time_base);
+            if (pkt.dts != AV_NOPTS_VALUE)
+                pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
+                                       stream_->time_base);
+
+            pkt.stream_index = stream_->index;
+
+            // write the compressed frame
+            ret = av_write_frame(outputCtx_, &pkt);
+            if (ret < 0)
+                print_averror("av_write_frame", ret);
+            else
+                break;
+        }
+    }
+#elif LIBAVCODEC_VERSION_MAJOR >= 54
 
     int got_packet;
-    int ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
+    ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
     if (ret < 0) {
         print_averror("avcodec_encode_video2", ret);
         av_free_packet(&pkt);
@@ -342,8 +373,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     }
 
 #else
-
-    int ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
+    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
                                    encoderBufferSize_, frame);
     if (ret < 0) {
         print_averror("avcodec_encode_video", ret);
@@ -448,9 +478,41 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         av_init_packet(&pkt);
         pkt.data = NULL; // packet data will be allocated by the encoder
         pkt.size = 0;
+        int ret = 0;
 
+#if LIBAVFORMAT_VERSION_CHECK(57, 48, 101, 25, 0)
+        ret = avcodec_send_frame(encoderCtx_, frame);
+        if (ret < 0)
+            return -1;
+
+        while (1) {
+            ret = avcodec_receive_packet(encoderCtx_, &pkt);
+            if (ret == AVERROR(EAGAIN))
+                break;
+            if (ret < 0)
+                return -1;
+
+            if (pkt.size) {
+                if (pkt.pts != AV_NOPTS_VALUE)
+                    pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
+                                           stream_->time_base);
+                if (pkt.dts != AV_NOPTS_VALUE)
+                    pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
+                                           stream_->time_base);
+
+                pkt.stream_index = stream_->index;
+
+                // write the compressed frame
+                ret = av_write_frame(outputCtx_, &pkt);
+                if (ret < 0)
+                    print_averror("av_write_frame", ret);
+                else
+                    break;
+            }
+        }
+#else
         int got_packet;
-        int ret = avcodec_encode_audio2(encoderCtx_, &pkt, frame, &got_packet);
+        ret = avcodec_encode_audio2(encoderCtx_, &pkt, frame, &got_packet);
         if (ret < 0) {
             print_averror("avcodec_encode_audio2", ret);
             av_free_packet(&pkt);
@@ -473,6 +535,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             if (ret < 0)
                 print_averror("av_write_frame", ret);
         }
+#endif
 
         av_free_packet(&pkt);
         av_frame_free(&frame);
@@ -531,7 +594,11 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+    const auto sdp_size = outputCtx_->streams[0]->codecpar->extradata_size + 2048;
+#else
     const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
+#endif
     std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
