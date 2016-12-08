@@ -267,42 +267,45 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
     (void) timeInfo;
     (void) statusFlags;
 
-    AudioFormat mainBufferAudioFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = parent.audioFormat_.sample_rate != mainBufferAudioFormat.sample_rate;
+    auto& manager = Manager::instance();
+    auto& buffer_pool = manager.getRingBufferPool();
+
+    auto mainbuffer_format = buffer_pool.getInternalAudioFormat();
+    auto layer_format = parent.audioFormat_;
+    auto resample = layer_format.sample_rate != mainbuffer_format.sample_rate;
+
     auto urgentFramesToGet = parent.urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
-
     if (urgentFramesToGet > 0) {
-        RING_WARN("Getting urgent frames.");
-        size_t totSample = std::min(framesPerBuffer, (unsigned long)urgentFramesToGet);
+        RING_WARN("Getting urgent frames");
+        auto totSample = std::min(framesPerBuffer, (unsigned long)urgentFramesToGet);
 
-        playbackBuff_.setFormat(parent.audioFormat_);
+        playbackBuff_.setFormat(layer_format);
         playbackBuff_.resize(totSample);
         parent.urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
 
         playbackBuff_.applyGain(parent.isPlaybackMuted_ ? 0.0 : parent.playbackGain_);
-
         playbackBuff_.interleave(outputBuffer);
 
-        Manager::instance().getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
+        manager.getRingBufferPool().discard(totSample, RingBufferPool::DEFAULT_ID);
     }
 
-    unsigned normalFramesToGet =
-        Manager::instance().getRingBufferPool().availableForGet(RingBufferPool::DEFAULT_ID);
+    auto normalFramesToGet = buffer_pool.availableForGet(RingBufferPool::DEFAULT_ID);
     if (normalFramesToGet > 0) {
-        double resampleFactor = 1.0;
-        unsigned readableSamples = framesPerBuffer;
+        double resampleFactor;
+        decltype(normalFramesToGet) readableSamples;
 
         if (resample) {
-            resampleFactor = static_cast<double>(parent.audioFormat_.sample_rate)
-                / mainBufferAudioFormat.sample_rate;
+            resampleFactor = static_cast<double>(layer_format.sample_rate) / mainbuffer_format.sample_rate;
             readableSamples = std::ceil(framesPerBuffer / resampleFactor);
+        } else {
+            resampleFactor = 1.0;
+            readableSamples = framesPerBuffer;
         }
-
         readableSamples = std::min(readableSamples, normalFramesToGet);
 
         playbackBuff_.setFormat(parent.audioFormat_);
         playbackBuff_.resize(readableSamples);
-        Manager::instance().getRingBufferPool().getData(playbackBuff_, RingBufferPool::DEFAULT_ID);
+        buffer_pool.getData(playbackBuff_, RingBufferPool::DEFAULT_ID);
         playbackBuff_.applyGain(parent.isPlaybackMuted_ ? 0.0 : parent.playbackGain_);
 
         if (resample) {
@@ -313,10 +316,9 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
         } else {
             playbackBuff_.interleave(outputBuffer);
         }
-    }
-    if (normalFramesToGet <= 0) {
-        auto tone = Manager::instance().getTelephoneTone();
-        auto file_tone = Manager::instance().getTelephoneFile();
+    } else {
+        auto tone = manager.getTelephoneTone();
+        auto file_tone = manager.getTelephoneFile();
 
         playbackBuff_.setFormat(parent.audioFormat_);
         playbackBuff_.resize(framesPerBuffer);
@@ -326,11 +328,11 @@ PortAudioLayer::PortAudioLayerImpl::paOutputCallback(PortAudioLayer& parent,
         } else if (file_tone) {
             file_tone->getNext(playbackBuff_, parent.playbackGain_);
         } else {
-            //RING_WARN("No tone or file_tone!");
             playbackBuff_.reset();
         }
         playbackBuff_.interleave(outputBuffer);
     }
+
     return paContinue;
 }
 
@@ -361,10 +363,8 @@ PortAudioLayer::PortAudioLayerImpl::paInputCallback(PortAudioLayer& parent,
     inBuff.applyGain(parent.isCaptureMuted_ ? 0.0 : parent.captureGain_);
 
     if (resample) {
-        auto outSamples =
-            framesPerBuffer
-            / (static_cast<double>(parent.audioInputFormat_.sample_rate)
-                / mainBufferFormat.sample_rate);
+        auto sample_factor = static_cast<double>(parent.audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate;
+        auto outSamples = framesPerBuffer / sample_factor;
         AudioBuffer out(outSamples, mainBufferFormat);
         parent.inputResampler_->resample(inBuff, out);
         parent.dcblocker_.process(out);
@@ -416,7 +416,36 @@ void
 PortAudioLayer::PortAudioLayerImpl::terminate() const
 {
     RING_DBG("PortAudioLayer terminate.");
-    const auto err = Pa_Terminate();
+    auto err = Pa_Terminate();
+    if (err != paNoError)
+        RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+}
+
+static void
+openStreamDevice(PaStream** stream,
+                 PaDeviceIndex device, Direction direction,
+                 PaStreamCallback* callback, void* user_data)
+{
+    auto is_out = direction == Direction::Output;
+    auto device_info = Pa_GetDeviceInfo(device);
+
+    PaStreamParameters params;
+    params.device = device;
+    params.channelCount = is_out ? device_info->maxOutputChannels : device_info->maxInputChannels;
+    params.sampleFormat = paInt16;
+    params.suggestedLatency = is_out ? device_info->defaultLowOutputLatency: device_info->defaultLowInputLatency;
+    params.hostApiSpecificStreamInfo = nullptr;
+
+    auto err = Pa_OpenStream(
+        stream,
+        is_out ? nullptr : &params,
+        is_out ? &params : nullptr,
+        device_info->defaultSampleRate,
+        paFramesPerBufferUnspecified,
+        paNoFlag,
+        callback,
+        user_data);
+
     if (err != paNoError)
         RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
 }
@@ -427,79 +456,51 @@ PortAudioLayer::PortAudioLayerImpl::initStream(PortAudioLayer& parent)
     parent.dcblocker_.reset();
 
     RING_DBG("Open PortAudio Output Stream");
-    PaStreamParameters outputParameters;
-    outputParameters.device = indexOut_;
-
-    if (outputParameters.device == paNoDevice) {
-        RING_ERR("Error: No valid output device. There will be no sound.");
+    if (indexOut_ != paNoDevice) {
+        openStreamDevice(&streams_[Direction::Output],
+                         indexOut_,
+                         Direction::Output,
+                         [](const void* inputBuffer,
+                            void* outputBuffer,
+                            unsigned long framesPerBuffer,
+                            const PaStreamCallbackTimeInfo* timeInfo,
+                            PaStreamCallbackFlags statusFlags,
+                            void* userData) -> int {
+                             auto layer = static_cast<PortAudioLayer*>(userData);
+                             return layer->pimpl_->paOutputCallback(*layer,
+                                                                    static_cast<const AudioSample*>(inputBuffer),
+                                                                    static_cast<AudioSample*>(outputBuffer),
+                                                                    framesPerBuffer,
+                                                                    timeInfo,
+                                                                    statusFlags);
+                         },
+                         &parent);
     } else {
-        const auto outputDeviceInfo = Pa_GetDeviceInfo(outputParameters.device);
-        outputParameters.channelCount = parent.audioFormat_.nb_channels = outputDeviceInfo->maxOutputChannels;
-        outputParameters.sampleFormat = paInt16;
-        outputParameters.suggestedLatency = outputDeviceInfo->defaultLowOutputLatency;
-        outputParameters.hostApiSpecificStreamInfo = nullptr;
-
-        auto err = Pa_OpenStream(
-            &streams_[Direction::Output],
-            nullptr,
-            &outputParameters,
-            outputDeviceInfo->defaultSampleRate,
-            paFramesPerBufferUnspecified,
-            paNoFlag,
-            [](const void* inputBuffer, void* outputBuffer,
-               unsigned long framesPerBuffer,
-               const PaStreamCallbackTimeInfo* timeInfo,
-               PaStreamCallbackFlags statusFlags,
-               void* userData) -> int {
-                auto layer = static_cast<PortAudioLayer*>(userData);
-                return layer->pimpl_->paOutputCallback(*layer,
-                                                       static_cast<const AudioSample*>(inputBuffer),
-                                                       static_cast<AudioSample*>(outputBuffer),
-                                                       framesPerBuffer,
-                                                       timeInfo,
-                                                       statusFlags);
-            },
-            &parent);
-        if(err != paNoError)
-            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+        RING_ERR("Error: No valid output device. There will be no sound.");
     }
 
     RING_DBG("Open PortAudio Input Stream");
-    PaStreamParameters inputParameters;
-    inputParameters.device = indexIn_;
-
-    if (inputParameters.device == paNoDevice) {
-        RING_ERR("Error: No valid input device. There will be no mic.");
+    if (indexIn_ != paNoDevice) {
+        openStreamDevice(&streams_[Direction::Input],
+                         indexIn_,
+                         Direction::Input,
+                         [](const void* inputBuffer,
+                            void* outputBuffer,
+                            unsigned long framesPerBuffer,
+                            const PaStreamCallbackTimeInfo* timeInfo,
+                            PaStreamCallbackFlags statusFlags,
+                            void* userData) -> int {
+                             auto layer = static_cast<PortAudioLayer*>(userData);
+                             return layer->pimpl_->paInputCallback(*layer,
+                                                                   static_cast<const AudioSample*>(inputBuffer),
+                                                                   static_cast<AudioSample*>(outputBuffer),
+                                                                   framesPerBuffer,
+                                                                   timeInfo,
+                                                                   statusFlags);
+                         },
+                         &parent);
     } else {
-        const auto inputDeviceInfo = Pa_GetDeviceInfo(inputParameters.device);
-        inputParameters.channelCount = parent.audioInputFormat_.nb_channels = inputDeviceInfo->maxInputChannels;
-        inputParameters.sampleFormat = paInt16;
-        inputParameters.suggestedLatency = inputDeviceInfo->defaultLowInputLatency;
-        inputParameters.hostApiSpecificStreamInfo = nullptr;
-
-        auto err = Pa_OpenStream(
-            &streams_[Direction::Input],
-            &inputParameters,
-            nullptr,
-            inputDeviceInfo->defaultSampleRate,
-            paFramesPerBufferUnspecified,
-            paNoFlag,
-            [](const void* inputBuffer, void* outputBuffer,
-               unsigned long framesPerBuffer,
-               const PaStreamCallbackTimeInfo* timeInfo,
-               PaStreamCallbackFlags statusFlags,
-               void* userData) -> int {
-                auto layer = static_cast<PortAudioLayer*>(userData);
-                return layer->pimpl_->paInputCallback(*layer,
-                                                      static_cast<const AudioSample*>(inputBuffer),
-                                                      static_cast<AudioSample*>(outputBuffer),
-                                                      framesPerBuffer,
-                                                      timeInfo,
-                                                      statusFlags);
-            },
-            &parent);
-        if (err != paNoError)
-            RING_ERR("PortAudioLayer error : %s", Pa_GetErrorText(err));
+        RING_ERR("Error: No valid input device. There will be no mic.");
     }
 
     RING_DBG("Start PortAudio Streams");
