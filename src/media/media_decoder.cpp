@@ -41,6 +41,10 @@
 
 namespace ring {
 
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+static AVCodecContext* getCodecCtx(AVCodecParameters* codecpar, bool isVideo);
+#endif
+
 using std::string;
 
 MediaDecoder::MediaDecoder() :
@@ -170,7 +174,11 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 
     // find the first audio stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
+#else
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
+#endif
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
@@ -180,7 +188,11 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+    decoderCtx_ = getCodecCtx(avStream_->codecpar, false);
+#else
     decoderCtx_ = avStream_->codec;
+#endif
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
@@ -253,7 +265,11 @@ int MediaDecoder::setupFromVideoData()
 
     // find the first video stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
+#else
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
+#endif
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
@@ -263,7 +279,11 @@ int MediaDecoder::setupFromVideoData()
 
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+    decoderCtx_ = getCodecCtx(avStream_->codecpar, true);
+#else
     decoderCtx_ = avStream_->codec;
+#endif
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
@@ -348,8 +368,13 @@ MediaDecoder::decode(VideoFrame& result)
                 return Status::RestartRequired;
         }
 #endif // RING_ACCEL
+#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
+        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -399,8 +424,13 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     if (frameFinished) {
+#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
+        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -526,5 +556,42 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
     }
     return pix_fmt;
 }
+
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+static AVCodecContext*
+getCodecCtx(AVCodecParameters* codecpar, bool isVideo)
+{
+    AVCodecContext* avctx;// = std::unique_ptr<AVCodecContext>(new AVCodecContext());
+    avctx->codec_type = codecpar->codec_type;
+    avctx->codec_id = codecpar->codec_id;
+    avctx->codec_tag = codecpar->codec_tag;
+    avctx->extradata = codecpar->extradata;
+    avctx->extradata_size = codecpar->extradata_size;
+    if (isVideo)
+        avctx->pix_fmt = (AVPixelFormat)codecpar->format;
+    else
+        avctx->sample_fmt = (AVSampleFormat)codecpar->format;
+    avctx->bit_rate = codecpar->bit_rate;
+    avctx->bits_per_coded_sample = codecpar->bits_per_coded_sample;
+    avctx->bits_per_raw_sample = codecpar->bits_per_raw_sample;
+    avctx->profile = codecpar->profile;
+    avctx->level = codecpar->level;
+    avctx->width = codecpar->width;
+    avctx->height = codecpar->height;
+    avctx->sample_aspect_ratio = codecpar->sample_aspect_ratio;
+    avctx->field_order = codecpar->field_order;
+    avctx->color_range = codecpar->color_range;
+    avctx->color_primaries = codecpar->color_primaries;
+    avctx->color_trc = codecpar->color_trc;
+    avctx->colorspace = codecpar->color_space;
+    avctx->chroma_sample_location = codecpar->chroma_location;
+    avctx->channel_layout = codecpar->channel_layout;
+    avctx->channels = codecpar->channels;
+    avctx->sample_rate = codecpar->sample_rate;
+    avctx->block_align = codecpar->block_align;
+    avctx->frame_size = codecpar->frame_size;
+    return avctx;
+}
+#endif
 
 } // namespace ring

@@ -39,6 +39,10 @@
 
 namespace ring {
 
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+static AVCodecParameters* getCodecPar(AVCodecContext* avctx, bool isVideo);
+#endif
+
 MediaEncoder::MediaEncoder()
     : outputCtx_(avformat_alloc_context())
 {}
@@ -228,7 +232,11 @@ MediaEncoder::openOutput(const char *filename,
     if (!stream_)
         throw MediaEncoderException("Could not allocate stream");
 
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+    stream_->codecpar = getCodecPar(encoderCtx_, args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
+#else
     stream_->codec = encoderCtx_;
+#endif
 #ifdef RING_VIDEO
     if (args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
@@ -531,7 +539,11 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+    const auto sdp_size = outputCtx_->streams[0]->codecpar->extradata_size + 2048;
+#else
     const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
+#endif
     std::string result;
     std::string sdp(sdp_size, '\0');
     av_sdp_create(&outputCtx_, 1, &(*sdp.begin()), sdp_size);
@@ -694,5 +706,39 @@ MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
     return codec_.get() == codec;
 }
+
+#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
+static AVCodecParameters*
+getCodecPar(AVCodecContext* avctx, bool isVideo)
+{
+    AVCodecParameters* codecpar;
+    codecpar->codec_type = avctx->codec_type;
+    codecpar->codec_id = avctx->codec_id;
+    codecpar->codec_tag = avctx->codec_tag;
+    codecpar->extradata = avctx->extradata;
+    codecpar->extradata_size = avctx->extradata_size;
+    codecpar->format = isVideo ? avctx->pix_fmt : avctx->sample_fmt;
+    codecpar->bit_rate = avctx->bit_rate;
+    codecpar->bits_per_coded_sample = avctx->bits_per_coded_sample;
+    codecpar->bits_per_raw_sample = avctx->bits_per_raw_sample;
+    codecpar->profile = avctx->profile;
+    codecpar->level = avctx->level;
+    codecpar->width = avctx->width;
+    codecpar->height = avctx->height;
+    codecpar->sample_aspect_ratio = avctx->sample_aspect_ratio;
+    codecpar->field_order = avctx->field_order;
+    codecpar->color_range = avctx->color_range;
+    codecpar->color_primaries = avctx->color_primaries;
+    codecpar->color_trc = avctx->color_trc;
+    codecpar->color_space = avctx->colorspace;
+    codecpar->chroma_location = avctx->chroma_sample_location;
+    codecpar->channel_layout = avctx->channel_layout;
+    codecpar->channels = avctx->channels;
+    codecpar->sample_rate = avctx->sample_rate;
+    codecpar->block_align = avctx->block_align;
+    codecpar->frame_size = avctx->frame_size;
+    return codecpar;
+}
+#endif
 
 } // namespace ring
