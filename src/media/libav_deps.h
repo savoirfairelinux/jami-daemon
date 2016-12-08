@@ -100,5 +100,9 @@ static inline const AVPixFmtDescriptor *av_pix_fmt_desc_get(enum AVPixelFormat p
                                                   (x)->width, (x)->height)
 #endif
 
+#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 24, 102)
+#define av_free_packet(pkt) av_packet_unref(pkt)
+#endif
+
 
 #endif // __LIBAV_DEPS_H__
