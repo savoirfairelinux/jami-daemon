@@ -124,10 +124,10 @@ VideoScaler::scale_and_pad(const VideoFrame& input, VideoFrame& output,
             x_shift = -((-x_shift) >> out_desc->log2_chroma_w);
             y_shift = -((-y_shift) >> out_desc->log2_chroma_h);
         }
-#if LIBAVUTIL_VERSION_MAJOR < 56
-        auto x_step = out_desc->comp[i].step_minus1 + 1; // using deprecated api
-#else
+#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 17, 103)
         auto x_step = out_desc->comp[i].step;
+#else
+        auto x_step = out_desc->comp[i].step_minus1 + 1;
 #endif
         tmp_data_[i] = output_frame->data[i] + y_shift * output_frame->linesize[i] + x_shift * x_step;
     }
