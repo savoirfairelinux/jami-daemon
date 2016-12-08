@@ -348,8 +348,13 @@ MediaDecoder::decode(VideoFrame& result)
                 return Status::RestartRequired;
         }
 #endif // RING_ACCEL
+#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
+        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -399,8 +404,13 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     if (frameFinished) {
+#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
+        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
+#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
