@@ -73,6 +73,8 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
+        /* Debug */
+        exported_callback<DRing::DebugSignal::MessageSend>(),
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
