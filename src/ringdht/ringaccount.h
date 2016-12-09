@@ -279,6 +279,10 @@ class RingAccount : public SIPAccountBase {
         bool acceptTrustRequest(const std::string& from);
         bool discardTrustRequest(const std::string& from);
 
+        void addContact(const std::string& uri);
+        void removeContact(const std::string& uri);
+        std::vector<std::string> getContacts() const;
+
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
@@ -313,6 +317,7 @@ class RingAccount : public SIPAccountBase {
         struct ArchiveContent;
         struct DeviceAnnouncement;
         struct DeviceSync;
+        struct Contact;
 
         void syncDevices();
         void onReceiveDeviceSync(DeviceSync&& sync);
@@ -423,6 +428,10 @@ class RingAccount : public SIPAccountBase {
         std::map<dht::InfoHash, TrustRequest> trustRequests_;
         void loadTrustRequests();
         void saveTrustRequests();
+
+        std::map<dht::InfoHash, Contact> contacts_;
+        void loadContacts();
+        void saveContact();
 
         tls::TrustStore trust_;
 

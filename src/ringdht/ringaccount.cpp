@@ -116,6 +116,24 @@ RingAccount::TrustRequest {
         : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
 };
 
+struct RingAccount::Contact
+{
+    //dht::InfoHash uri;
+
+    /** Time of contact addition */
+    time_t added {0};
+
+    /** Time of contact removal */
+    time_t removed {0};
+
+    /** True if we got confirmation that this contact also added us */
+    bool confimed {false};
+
+    bool isActive() const { return added > removed; }
+
+    MSGPACK_DEFINE_MAP(added, removed, confimed)
+};
+
 /**
  * Represents a known device attached to this Ring account
  */
@@ -180,9 +198,8 @@ struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     uint64_t date;
     std::string device_name;
     std::map<dht::InfoHash, std::string> devices_known;
-    std::set<dht::InfoHash> peers_trusted;
-    std::set<dht::InfoHash> peers_banned;
-    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers_trusted, peers_banned)
+    std::map<dht::InfoHash, Contact> peers;
+    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers)
 };
 
 static constexpr int ICE_COMPONENTS {1};
@@ -810,7 +827,7 @@ RingAccount::hasSignedReceipt()
 dht::crypto::Identity
 RingAccount::loadIdentity()
 {
-    RING_WARN("loadIdentity() %s %s", tlsCertificateFile_.c_str(), tlsPrivateKeyFile_.c_str());
+    RING_DBG("loadIdentity() %s %s", tlsCertificateFile_.c_str(), tlsPrivateKeyFile_.c_str());
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
     try {
@@ -1247,7 +1264,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    RING_WARN("RingAccount::loadAccount");
+    RING_DBG("RingAccount::loadAccount");
     try {
         loadIdentity();
         loadKnownDevices();
@@ -2043,6 +2060,8 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
         return false;
     }
 
+    RING_WARN("foundPeerDevice dev:%s CA:%s", crt->getId().toString().c_str(), top_issuer->getId().toString().c_str());
+
     // Check peer certificate chain
     // Trust store with top issuer as the only CA
     tls::TrustStore peer_trust;
@@ -2526,6 +2545,42 @@ RingAccount::supportPresence(int /* function */, bool /* enabled*/)
 {
 }
 
+/* contacts */
+
+void
+RingAccount::addContact(const std::string& uri)
+{
+    dht::InfoHash h (uri);
+    auto c = contacts_.find(h);
+    if (c == contacts_.end())
+        c = contacts_.emplace(h, Contact{}).first;
+    c->second.added = std::time(nullptr);
+    c->second.removed = 0;
+    syncDevices();
+}
+
+void
+RingAccount::removeContact(const std::string& uri)
+{
+    dht::InfoHash h (uri);
+    auto c = contacts_.find(h);
+    if (c != contacts_.end()) {
+        c->second.removed = std::time(nullptr);
+        syncDevices();
+    }
+}
+
+std::vector<std::string>
+RingAccount::getContacts() const
+{
+    std::vector<std::string> ret;
+    ret.reserve(contacts_.size());
+    for (const auto& c : contacts_)
+        if (c.second.isActive())
+            ret.emplace_back(c.first.toString());
+    return ret;
+}
+
 /* trust requests */
 std::map<std::string, std::string>
 RingAccount::getTrustRequests() const
@@ -2542,6 +2597,7 @@ RingAccount::acceptTrustRequest(const std::string& from)
     dht::InfoHash f(from);
     auto i = trustRequests_.find(f);
     if (i != trustRequests_.end()) {
+        addContact(from);
         trust_.setCertificateStatus(from, tls::TrustStore::PermissionStatus::ALLOWED);
         trustRequests_.erase(i);
         saveTrustRequests();
