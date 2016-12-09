@@ -409,7 +409,8 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                     auto sit = this_.subcalls.find(call);
                     if (sit == this_.subcalls.end())
                         return;
-                    RING_WARN("[call %s] DeviceCall call %s state changed %d %d", this_.getCallId().c_str(), call->getCallId().c_str(), new_state, new_cstate);
+                    RING_WARN("[call %s] DeviceCall call %s state changed %d %d", this_.getCallId().c_str(), call->getCallId().c_str(),
+                        static_cast<int>(new_state), static_cast<int>(new_cstate));
                     if (new_state == CallState::OVER) {
                         std::lock_guard<std::recursive_mutex> lk (this_.callMutex_);
                         this_.subcalls.erase(call);
@@ -427,7 +428,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                                 try {
                                     sub->hangup(0);
                                 } catch(const std::exception& e) {
-                                    RING_WARN("[call %s] error hanging up: %s", this_.getCallId().c_str());
+                                    RING_WARN("[call %s] error hanging up: %s", this_.getCallId().c_str(), e.what());
                                 }
                         }
                         this_.peerHungup();
@@ -443,11 +444,12 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
                         this_.merge(call);
                         Manager::instance().peerAnsweredCall(this_);
                     }
-                    RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), this_.subcalls.size());
+                    RING_WARN("[call %s] Remaining %d subcalls", this_.getCallId().c_str(), static_cast<int>(this_.subcalls.size()));
                     if (this_.subcalls.empty())
                         this_.pendingOutMessages_.clear();
                 } else {
-                    RING_WARN("DeviceCall IGNORED call %s state changed %d %d", call->getCallId().c_str(), new_state, new_cstate);
+                    RING_WARN("DeviceCall IGNORED call %s state changed %d %d", call->getCallId().c_str(),
+                        static_cast<int>(new_state), static_cast<int>(new_cstate));
                 }
             }
         });
