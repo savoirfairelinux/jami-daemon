@@ -192,6 +192,23 @@
            </arg>
        </signal>
 
+       <method name="revokeDevice" tp:name-for-bindings="revokeDevice">
+           <tp:docstring>
+               Revoke device attached to the given Ring account, and publish the new revocation list.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="password" direction="in">
+           </arg>
+           <arg type="s" name="deviceId" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was performed successfully.
+               </tp:docstring>
+           </arg>
+       </method>
+
        <signal name="knownDevicesChanged" tp:name-for-bindings="knownDevicesChanged">
            <tp:docstring>
                Notify clients when a new device linked to this account is found.
