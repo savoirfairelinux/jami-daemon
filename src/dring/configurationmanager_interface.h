@@ -268,4 +268,12 @@ struct ConfigurationSignal {
 #endif
 };
 
+// Can be used when a client's stdout is not available
+struct DebugSignal {
+    struct MessageSend {
+        constexpr static const char* name = "MessageSend";
+        using cb_type = void(const std::string&);
+    };
+};
+
 } // namespace DRing
