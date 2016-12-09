@@ -26,6 +26,8 @@
 #include <time.h>
 #include <ciso646> // fix windows compiler bug
 
+#include "client\ring_signal.h"
+
 #ifdef RING_UWP
 #include <sys_time.h>
 #else
@@ -212,6 +214,7 @@ vlogger(const int level, const char *format, va_list ap)
 #ifdef RING_UWP
             char tmp[2048];
             vsprintf(tmp, format, ap);
+            ring::emitSignal<DRing::DebugSignal::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
 #endif
 #ifndef _WIN32
             fputs(END_COLOR, stderr);
