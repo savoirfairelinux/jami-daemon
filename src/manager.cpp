@@ -2385,6 +2385,8 @@ Manager::setAccountsOrder(const std::string& order)
     preferences.setAccountOrder(order);
 
     saveConfig();
+
+    emitSignal<DRing::ConfigurationSignal::AccountsChanged>();
 }
 
 std::vector<std::string>
