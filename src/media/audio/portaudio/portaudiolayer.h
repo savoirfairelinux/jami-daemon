@@ -60,7 +60,6 @@ public:
  private:
     NON_COPYABLE(PortAudioLayer);
 
-    void handleError(const PaError& err) const;
     void init(void);
     void terminate(void) const;
     void initStream(void);
