@@ -139,7 +139,7 @@ static const char * const ALSA_DFT_CARD    = "0";          /** Default sound car
 
 Preferences::Preferences() :
     accountOrder_("")
-    , historyLimit_(30)
+    , historyLimit_(0)
     , historyMaxCalls_(20)
     , zoneToneChoice_(DFT_ZONE) // DFT_ZONE
     , registrationExpire_(180)
