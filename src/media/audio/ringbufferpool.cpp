@@ -27,7 +27,7 @@
 #include <limits>
 #include <utility> // for std::pair
 #include <cstring>
-#include <algorithm> // for std::min
+#include <algorithm>
 
 namespace ring {
 
