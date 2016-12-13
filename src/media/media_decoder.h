@@ -50,12 +50,12 @@ class HardwareAccel;
 }
 #endif
 
-class AudioFrame;
+struct AudioFrame;
 class AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;
-class DeviceParams;
+struct DeviceParams;
 
 class MediaDecoder {
     public:

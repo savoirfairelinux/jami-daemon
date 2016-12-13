@@ -594,7 +594,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         auto v = av_dict_get(options_, "sample_rate", NULL, 0);
         if (v) {
             encoderCtx_->sample_rate = atoi(v->value);
-            encoderCtx_->time_base = (AVRational) {1, encoderCtx_->sample_rate};
+            encoderCtx_->time_base = AVRational{1, encoderCtx_->sample_rate};
         } else {
             RING_WARN("[%s] No sample rate set", encoderName);
             encoderCtx_->sample_rate = 8000;
