@@ -1,0 +1,7 @@
+Code-Review+2: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+Verified+1: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Tue, 13 Dec 2016 16:38:17 -0500
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5776
+Project: ring-daemon
+Branch: refs/heads/master
