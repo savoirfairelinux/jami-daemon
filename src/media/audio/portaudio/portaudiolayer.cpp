@@ -348,8 +348,13 @@ PortAudioLayer::init()
         this->terminate();
     }
 
+#ifdef RING_UWP
+    indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
+    indexIn_ = Pa_GetDefaultInputDevice();
+#else
     indexRing_ = indexOut_ = indexOut_ == paNoDevice ? Pa_GetDefaultOutputDevice() : indexOut_;
     indexIn_ = indexIn_ == paNoDevice ? Pa_GetDefaultInputDevice() : indexIn_;
+#endif
 
     if (indexOut_ != paNoDevice) {
         if (const auto outputDeviceInfo = Pa_GetDeviceInfo(indexOut_)) {
