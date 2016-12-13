@@ -33,6 +33,7 @@
 #include <map>
 #include <vector>
 #include <fstream>
+#include <algorithm>
 
 typedef std::map<std::string, size_t> ReadOffset;
 
