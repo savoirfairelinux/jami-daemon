@@ -73,7 +73,7 @@ void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
 void releaseFrame(void* frame);
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
@@ -112,7 +112,7 @@ struct VideoSignal {
             using cb_type = void(void);
         };
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
         struct GetCameraInfo {
             constexpr static const char* name = "GetCameraInfo";
             using cb_type = void(const std::string& device, std::vector<std::string> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);

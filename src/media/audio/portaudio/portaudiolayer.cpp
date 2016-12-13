@@ -352,7 +352,7 @@ PortAudioLayer::init()
         this->terminate();
     }
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     indexRing_ = indexOut_ = Pa_GetDefaultOutputDevice();
     indexIn_ = Pa_GetDefaultInputDevice();
 #else

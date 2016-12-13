@@ -38,7 +38,7 @@
 #include "libav_utils.h"
 #include "video_scaler.h"
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include "smartools.h"
 #endif
 
@@ -329,7 +329,7 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         std::ostringstream fps;
         fps << frameCount_ / seconds.count();
         // Send the framerate in smartInfo
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
         Smartools::getInstance().setFrameRate(id_, fps.str());
 #endif
         frameCount_ = 0;

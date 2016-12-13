@@ -29,7 +29,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <time.h>
 #else
 #include <sys/time.h>

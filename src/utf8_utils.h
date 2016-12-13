@@ -26,7 +26,7 @@
 #include <cstdlib>
 #include <string>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 # ifndef _SSIZE_T_DEFINED
 #  ifndef HAVE_SSIZE_T
 #   define HAVE_SSIZE_T

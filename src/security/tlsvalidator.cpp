@@ -45,7 +45,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include <libgen.h>
 #endif
 
@@ -60,7 +60,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include "windirent.h"
 #endif
 
@@ -850,7 +850,7 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
     if (privateKeyPath_.empty())
        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     auto path = std::unique_ptr<char, decltype(free)&> (strdup(privateKeyPath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else
@@ -873,7 +873,7 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
 
 TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     auto path = std::unique_ptr<char, decltype(free)&>(strdup(certificatePath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else

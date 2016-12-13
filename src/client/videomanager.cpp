@@ -175,7 +175,7 @@ releaseFrame(void* frame)
         (*input).releaseFrame(frame);
 }
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 void
 addVideoDevice(const std::string &node)
 {

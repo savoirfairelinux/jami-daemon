@@ -33,7 +33,7 @@
 #include <algorithm>
 #include <sstream> // for stringstream
 #include <cstdio>
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <io.h>
 #else
 #include <unistd.h>

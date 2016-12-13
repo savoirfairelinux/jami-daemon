@@ -28,7 +28,7 @@
 #include <string>
 #include <thread>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <io.h>
 #else
 #include <unistd.h>

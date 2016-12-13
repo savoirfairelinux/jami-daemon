@@ -38,7 +38,7 @@
 #include "audio/resampler.h"
 #include "manager.h"
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include "smartools.h"
 #endif
 
@@ -171,7 +171,7 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
         Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
 #endif
         if (audioEncoder_->encode_audio(resampledData_) < 0)
@@ -289,7 +289,7 @@ AudioReceiveThread::process()
         case MediaDecoder::Status::FrameFinished:
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
             // Refresh the remote audio codec in the callback SmartInfo
             Smartools::getInstance().setRemoteAudioCodec(audioDecoder_->getDecoderName());
 #endif

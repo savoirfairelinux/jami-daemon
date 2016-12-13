@@ -26,7 +26,7 @@
 #include <chrono>
 #include <cstdio>
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
 #else

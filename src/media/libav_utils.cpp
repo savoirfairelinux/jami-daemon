@@ -76,7 +76,7 @@ static constexpr const char* AVLOGLEVEL = "AVLOGLEVEL";
 static void
 setAvLogLevel()
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     char* envvar = getenv(AVLOGLEVEL);
     signed level = AV_LOG_WARNING;
 

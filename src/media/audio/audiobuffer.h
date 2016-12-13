@@ -345,7 +345,7 @@ class AudioBuffer {
 
     private:
         int sampleRate_;
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     public:
 #endif
         // buffers holding data for each channels

@@ -32,7 +32,7 @@ namespace DRing {
 const char*
 version() noexcept
 {
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     return PACKAGE_VERSION;
 #else
     return RING_REVISION[0] and RING_DIRTY_REPO[0] ?

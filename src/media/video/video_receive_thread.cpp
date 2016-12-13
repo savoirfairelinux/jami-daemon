@@ -28,7 +28,7 @@
 #include "sinkclient.h"
 #include "logger.h"
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include "smartools.h"
 #endif
 
@@ -129,7 +129,7 @@ bool VideoReceiveThread::setup()
     if (!conf)
         exitConference();
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     // Send remote video codec in SmartInfo
     Smartools::getInstance().setRemoteVideoCodec(videoDecoder_->getDecoderName(), id_);
 #endif

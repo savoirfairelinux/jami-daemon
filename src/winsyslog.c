@@ -65,7 +65,7 @@ getLastErrorText(                   // converts "Lasr Error" code into text
 
 void closelog(void)
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     DeregisterEventSource(loghdl);
 #endif
     free(loghdr);
@@ -85,7 +85,7 @@ void closelog(void)
 
     vsprintf(tmp, format, arglist);
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     arr[0] = tmp;
     BOOL err = ReportEvent(loghdl, (unsigned short) level, (unsigned short)level,
         level, NULL, 1, 0, arr, NULL);
@@ -110,7 +110,7 @@ void closelog(void)
     if (loghdl) {
         closelog();
     }
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     loghdl = RegisterEventSource(NULL, ident);
 #endif
     sprintf(tmp, (logopt & WINLOG_PID) ? "%s[%d]" : "%s", ident, getpid());

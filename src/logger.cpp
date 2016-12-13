@@ -25,7 +25,7 @@
 #include <errno.h>
 #include <time.h>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <sys_time.h>
 #include <ciso646>
 #else
@@ -47,7 +47,7 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#if defined _WIN32 || defined WIN32_NATIVE
+#if defined _WIN32 || defined RING_UWP
 #include "winsyslog.h"
 #include "client\ring_signal.h"
 #endif
@@ -72,7 +72,7 @@
 #define YELLOW "\033[01;33m"
 #define CYAN "\033[22;36m"
 #else
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #define FOREGROUND_WHITE 0x000f
 #define RED FOREGROUND_RED + 0x0008
 #define YELLOW FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
@@ -125,7 +125,7 @@ getHeader(const char* ctx)
     return out.str();
 }
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 void
 wlogger(const int level, const char* file, const char* format, ...)
 {
@@ -170,7 +170,7 @@ vlogger(const int level, const char *format, va_list ap)
         const char* color_header = CYAN;
         const char* color_prefix = "";
 #else
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
         WORD color_prefix = LIGHT_GREEN;
 #else
         WORD color_prefix = FOREGROUND_GREEN;
@@ -191,7 +191,7 @@ vlogger(const int level, const char *format, va_list ap)
         }
 
 #ifdef _WIN32
-#if !defined(WIN32_NATIVE)
+#if !defined(RING_UWP)
         GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
         saved_attributes = consoleInfo.wAttributes;
 #endif
@@ -203,14 +203,14 @@ vlogger(const int level, const char *format, va_list ap)
 #ifndef _WIN32
             fputs(color_header, stderr);
 #else
-#if !defined(WIN32_NATIVE)
+#if !defined(RING_UWP)
             SetConsoleTextAttribute(hConsole, color_header);
 #endif
 #endif
             std::string ctx(format, sep - format);
             format = sep + 2;
             fputs(getHeader(ctx.c_str()).c_str(), stderr);
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
             char tmp[4096];
             vsprintf(tmp, format, ap);
             ring::emitSignal<DRing::Debug::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
@@ -218,7 +218,7 @@ vlogger(const int level, const char *format, va_list ap)
 #ifndef _WIN32
             fputs(END_COLOR, stderr);
 #else
-#if !defined(WIN32_NATIVE)
+#if !defined(RING_UWP)
             SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
 #endif
@@ -226,7 +226,7 @@ vlogger(const int level, const char *format, va_list ap)
 #ifndef _WIN32
         fputs(color_prefix, stderr);
 #else
-#if !defined(WIN32_NATIVE)
+#if !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, color_prefix);
 #endif
 #endif
@@ -238,7 +238,7 @@ vlogger(const int level, const char *format, va_list ap)
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
 #else
-#if !defined(WIN32_NATIVE)
+#if !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, saved_attributes);
 #endif
 #endif

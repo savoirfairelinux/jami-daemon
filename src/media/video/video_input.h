@@ -82,7 +82,7 @@ public:
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
@@ -141,7 +141,7 @@ private:
     void releaseBufferCb(uint8_t* ptr);
     std::vector<struct VideoFrameBuffer> buffers_;
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     void processUWP();
     void cleanupUWP();
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);

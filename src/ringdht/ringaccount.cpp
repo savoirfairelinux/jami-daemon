@@ -246,7 +246,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
 {
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     //gnutls_global_init();
 #endif
     // Force the SFL turn server if none provided yet
@@ -1694,7 +1694,7 @@ RingAccount::doRegister_()
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* m, va_list args) {};
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
             static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
             static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
             static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };

@@ -247,7 +247,7 @@ HookPreference::HookPreference()
     : numberAddPrefix_("")
     , numberEnabled_(false)
     , sipEnabled_(false)
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     , urlCommand_("x-www-browser")
 #else
     , urlCommand_("@START")

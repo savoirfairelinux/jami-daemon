@@ -47,7 +47,7 @@ class Controller;
 class IceTransport;
 
 using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 #endif
 using IceCandidate = pj_ice_sess_cand;

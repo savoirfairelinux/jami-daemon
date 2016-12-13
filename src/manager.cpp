@@ -85,7 +85,7 @@ using random_device = dht::crypto::random_device;
 #include <fstream>
 #include <sstream>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <sys/types.h>
 #include <sys/stat.h>
 #endif
@@ -139,7 +139,7 @@ static constexpr const char* DHTLOGLEVEL = "DHTLOGLEVEL";
 static void
 setDhtLogLevel()
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     char* envvar = getenv(DHTLOGLEVEL);
     int level = 0;
 
@@ -169,7 +169,7 @@ static constexpr const char* SIPLOGLEVEL = "SIPLOGLEVEL";
 static void
 setSipLogLevel()
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     char* envvar = getenv(SIPLOGLEVEL);
 
     int level = 0;
@@ -205,7 +205,7 @@ tls_print_logs(int level, const char* msg)
 static void
 setGnuTlsLogLevel()
 {
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     char* envvar = getenv("RING_TLS_LOGLEVEL");
     int level = RING_TLS_LOGLEVEL;
 
@@ -1970,7 +1970,7 @@ Manager::playRingtone(const std::string& accountID)
     if (ringchoice.find(DIR_SEPARATOR_STR) == std::string::npos) {
         // check inside global share directory
         static const char * const RINGDIR = "ringtones";
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
         ringchoice = std::string(PROGSHAREDIR) + DIR_SEPARATOR_STR
                      + RINGDIR + DIR_SEPARATOR_STR + ringchoice;
 #else

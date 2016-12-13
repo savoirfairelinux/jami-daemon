@@ -26,7 +26,7 @@ SignalHandlerMap&
 getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
         /* UWP Debug */
         exported_callback<DRing::Debug::MessageSend>(),
 #endif
@@ -77,7 +77,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
         exported_callback<DRing::ConfigurationSignal::GetAppUserName>(),
 #endif
@@ -102,7 +102,7 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::StartCapture>(),
         exported_callback<DRing::VideoSignal::StopCapture>(),
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
         exported_callback<DRing::VideoSignal::GetCameraInfo>(),
         exported_callback<DRing::VideoSignal::SetParameters>(),
         exported_callback<DRing::VideoSignal::StartCapture>(),

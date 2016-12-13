@@ -33,7 +33,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include "smartools.h"
 #endif
 
@@ -146,7 +146,7 @@ removeConference(const std::string& conference_id)
    ring::Manager::instance().removeConference(conference_id);
 }
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 void
 startSmartInfo(uint32_t refreshTimeMs)
 {

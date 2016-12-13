@@ -28,7 +28,7 @@
 #include "fileutils.h"
 #include "compiler_intrinsics.h"
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <io.h>
 #include <windows.h>
 #endif
@@ -47,11 +47,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include <libgen.h>
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include "ring_signal.h"
 #include "windirent.h"
 #else
@@ -180,7 +180,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined WIN32_NATIVE || defined WIN32 || TARGET_OS_IPHONE
+#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || TARGET_OS_IPHONE
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -244,7 +244,7 @@ bool isSymLink(const std::string& path)
     struct stat s;
     if (lstat(path.c_str(), &s) == 0)
         return S_ISLNK(s.st_mode);
-#elif !defined(WIN32_NATIVE)
+#elif !defined(RING_UWP)
     DWORD attr = GetFileAttributes(ring::to_wstring(path).c_str());
     if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
         return true;
@@ -262,7 +262,7 @@ writeTime(const std::string& path)
         throw std::runtime_error("Can't check write time for: " + path);
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
-#if WIN32_NATIVE
+#if RING_UWP
     HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr);
 #else
     HANDLE h = CreateFileW(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -389,7 +389,7 @@ FileHandle::~FileHandle()
     }
 }
 
-#if defined(__ANDROID__) || defined(WIN32_NATIVE)
+#if defined(__ANDROID__) || defined(RING_UWP)
 static std::string files_path;
 static std::string cache_path;
 static std::string config_path;
@@ -404,7 +404,7 @@ void set_program_dir(char *program_path)
 std::string
 get_cache_dir()
 {
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
@@ -437,7 +437,7 @@ get_cache_dir()
         return get_home_dir() + DIR_SEPARATOR_STR +
             ".cache" + DIR_SEPARATOR_STR + PACKAGE;
 #endif
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     }
 #endif
 }
@@ -451,7 +451,7 @@ get_home_dir()
     if (not paths.empty())
         files_path = paths[0];
     return files_path;
-#elif defined WIN32_NATIVE
+#elif defined RING_UWP
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
@@ -499,7 +499,7 @@ get_data_dir()
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
             + DIR_SEPARATOR_STR + PACKAGE;
-#elif defined (WIN32_NATIVE)
+#elif defined (RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())
@@ -536,7 +536,7 @@ get_config_dir()
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
         + "Library" + DIR_SEPARATOR_STR + "Application Support"
         + DIR_SEPARATOR_STR + PACKAGE;
-#elif defined(WIN32_NATIVE)
+#elif defined(RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
     if (not paths.empty())

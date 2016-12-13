@@ -27,7 +27,7 @@
 #include "logger.h"
 #include "manager.h"
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include "smartools.h"
 #endif
 
@@ -72,7 +72,7 @@ VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
     if (videoEncoder_->encode(input_frame, is_keyframe, frameNumber_++) < 0)
         RING_ERR("encoding failed");
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
     // Send local video codec in SmartInfo
     Smartools::getInstance().setLocalVideoCodec(videoEncoder_->getEncoderName());
 #endif

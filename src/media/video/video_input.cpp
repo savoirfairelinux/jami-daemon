@@ -39,7 +39,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <io.h>
 #else
 #include <unistd.h>
@@ -58,7 +58,7 @@ VideoInput::VideoInput()
             std::bind(&VideoInput::processAndroid, this),
             std::bind(&VideoInput::cleanupAndroid, this))
     , mutex_(), frame_cv_(), buffers_(8)
-#elif defined(WIN32_NATIVE)
+#elif defined(RING_UWP)
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::processUWP, this),
             std::bind(&VideoInput::cleanupUWP, this))
@@ -72,7 +72,7 @@ VideoInput::VideoInput()
 
 VideoInput::~VideoInput()
 {
-#if defined(__ANDROID__) || defined(WIN32_NATIVE)
+#if defined(__ANDROID__) || defined(RING_UWP)
     /* we need to stop the loop and notify the condition variable
      * to unblock the process loop */
     loop_.stop();
@@ -159,7 +159,7 @@ void VideoInput::cleanupAndroid()
     }
 }
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 bool VideoInput::waitForBufferFull()
 {
     for(auto& buffer : buffers_) {
@@ -388,7 +388,7 @@ VideoInput::releaseFrame(void *ptr)
     }
 }
 #endif
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
 {
     b.data = std::malloc(length);
@@ -700,7 +700,7 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
-#if defined(__ANDROID__) || defined(WIN32_NATIVE)
+#if defined(__ANDROID__) || defined(RING_UWP)
 int VideoInput::getWidth() const
 { return decOpts_.width; }
 

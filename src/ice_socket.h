@@ -23,7 +23,7 @@
 #include <memory>
 #include <functional>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <utf8_utils.h>
 #endif
 

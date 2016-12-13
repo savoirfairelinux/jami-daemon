@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include <functional>
 #endif
 

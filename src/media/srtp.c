@@ -127,7 +127,7 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 {
     uint8_t iv[16] = { 0 }, hmac[20];
     int len = *lenptr;
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #warning seq_largest and roc may be unitialized
 #endif
     int av_uninit(seq_largest);

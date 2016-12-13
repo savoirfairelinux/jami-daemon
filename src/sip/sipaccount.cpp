@@ -715,7 +715,7 @@ void SIPAccount::doRegister()
         std::thread{ [shared] {
             /* We have to register the external thread so it could access the pjsip frameworks */
             if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined WIN32_NATIVE
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined RING_UWP
                     static thread_local pj_thread_desc desc;
                     static thread_local pj_thread_t *this_thread;
 #else
@@ -1293,7 +1293,7 @@ std::string SIPAccount::getLoginName()
 #ifndef _WIN32
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
-#elif defined (WIN32_NATIVE)
+#elif defined (RING_UWP)
     std::vector<std::string> unames;
     emitSignal<DRing::ConfigurationSignal::GetAppUserName>(&unames);
     return unames[0];

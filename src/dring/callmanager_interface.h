@@ -67,7 +67,7 @@ std::vector<std::string> getDisplayNames(const std::string& confID);
 std::string getConferenceId(const std::string& callID);
 std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 /* Statistic related methods */
 void startSmartInfo(uint32_t refreshTimeMs);
 void stopSmartInfo();
@@ -100,7 +100,7 @@ void acceptEnrollment(const std::string& callID, bool accepted);
 /* Instant messaging */
 void sendTextMessage(const std::string& callID, const std::map<std::string, std::string>& messages, const std::string& from, bool isMixed);
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 /* Debug for UWP Client */
 struct Debug {
     struct MessageSend {
