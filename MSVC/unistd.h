@@ -26,6 +26,7 @@
 #include <process.h>
 #include <direct.h>
 #include <fcntl.h>
+#include <io.h>
 
 #define R_OK    4
 #define W_OK    2
