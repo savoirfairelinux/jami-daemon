@@ -127,7 +127,11 @@ int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
 {
     uint8_t iv[16] = { 0 }, hmac[20];
     int len = *lenptr;
+#ifdef _MSC_VER
+#pragma message (__FILE__ "(" STR2(__LINE__) ") : -NOTE- " seq_largest and roc may be unitialized)
+#else
 #warning seq_largest and roc may be unitialized
+#endif
     int av_uninit(seq_largest);
     uint32_t ssrc, av_uninit(roc);
     uint64_t index;

@@ -23,6 +23,7 @@
 #include "config.h"
 
 #include <memory>
+#include <functional>
 
 class AVFrame;
 
