@@ -29,7 +29,7 @@
 #include "dcblocker.h"
 #include "noncopyable.h"
 
-#include <sys/time.h>
+#include <chrono>
 #include <mutex>
 #include <vector>
 #include <atomic>
@@ -311,7 +311,7 @@ class AudioLayer {
         /**
          * Time of the last incoming call notification
          */
-        time_t lastNotificationTime_;
+        std::chrono::system_clock::time_point lastNotificationTime_;
 };
 
 } // namespace ring

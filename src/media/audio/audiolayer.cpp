@@ -41,7 +41,7 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
     , resampler_(new Resampler{audioFormat_.sample_rate})
     , inputResampler_(new Resampler{audioInputFormat_.sample_rate})
-    , lastNotificationTime_(0)
+    , lastNotificationTime_()
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
 }
@@ -93,10 +93,10 @@ void AudioLayer::notifyIncomingCall()
     if (!Manager::instance().incomingCallsWaiting())
         return;
 
-    time_t now = time(NULL);
+    auto now = std::chrono::system_clock::now();
 
     // Notify maximum once every 5 seconds
-    if (difftime(now, lastNotificationTime_) < 5)
+    if ((now - lastNotificationTime_) < std::chrono::seconds(5))
         return;
 
     lastNotificationTime_ = now;
