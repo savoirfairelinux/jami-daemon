@@ -25,12 +25,12 @@
 namespace ring {
 
 DcBlocker::DcBlocker(unsigned channels /* = 1 */)
-    : states(channels, (struct StreamState){0, 0, 0, 0})
+    : states(channels, StreamState{0, 0, 0, 0})
 {}
 
 void DcBlocker::reset()
 {
-    states.assign(states.size(), (struct StreamState){0, 0, 0, 0});
+    states.assign(states.size(), StreamState{0, 0, 0, 0});
 }
 
 void DcBlocker::doProcess(AudioSample *out, AudioSample *in, unsigned samples, struct StreamState * state)
@@ -58,7 +58,7 @@ void DcBlocker::process(AudioBuffer& buf)
     const size_t chans = buf.channels();
     const size_t samples = buf.frames();
     if (chans > states.size())
-        states.resize(buf.channels(), (struct StreamState){0, 0, 0, 0});
+        states.resize(buf.channels(), StreamState{0, 0, 0, 0});
 
     unsigned i;
     for(i=0; i<chans; i++) {
