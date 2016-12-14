@@ -42,11 +42,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 #include <libgen.h>
 #endif
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #include "windirent.h"
 #else
 #include <dirent.h>
@@ -381,7 +381,7 @@ static std::string cache_path;
 static std::string config_path;
 #else
 static char *program_dir = NULL;
-#ifndef WIN32_NATIVE
+#ifndef RING_UWP
 void set_program_dir(char *program_path)
 {
     program_dir = dirname(program_path);
