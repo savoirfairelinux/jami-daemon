@@ -1605,16 +1605,16 @@ void SIPAccount::setCredentials(const std::vector<std::map<std::string, std::str
             c.computePasswordHash();
 
         cred_.emplace_back(pjsip_cred_info {
-            .realm     = pj_str((char*) c.realm.c_str()),
-            .scheme    = pj_str((char*) "digest"),
-            .username  = pj_str((char*) c.username.c_str()),
-            .data_type = (c.password_h.empty()
+            /*.realm     = */pj_str((char*) c.realm.c_str()),
+            /*.scheme    = */pj_str((char*) "digest"),
+            /*.username  = */pj_str((char*) c.username.c_str()),
+            /*.data_type = */(c.password_h.empty()
                            ? PJSIP_CRED_DATA_PLAIN_PASSWD
                            : PJSIP_CRED_DATA_DIGEST),
-            .data      = pj_str((char*) (c.password_h.empty()
+            /*.data      = */pj_str((char*) (c.password_h.empty()
                            ? c.password.c_str()
                            : c.password_h.c_str())),
-            .ext       = {}
+            /*.ext       = */{}
         });
     }
 }

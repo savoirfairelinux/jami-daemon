@@ -1228,9 +1228,9 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
     RING_DBG("try to resolve '%s' (port: %u)", name.c_str(), port);
 
     pjsip_host_info host_info {
-        .flag = 0,
-        .type = type,
-        .addr = {{(char*)name.c_str(), name_size}, port},
+        /*.flag = */0,
+        /*.type = */type,
+        /*.addr = */{{(char*)name.c_str(), name_size}, port},
     };
 
     const auto token = std::hash<std::string>()(name + to_string(type));

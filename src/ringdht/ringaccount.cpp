@@ -1478,12 +1478,12 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
     tls::TlsParams tlsParams {
-        .ca_list = "",
-        .cert = identity_.second,
-        .cert_key = identity_.first,
-        .dh_params = dhParams_,
-        .timeout = std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        .cert_check = [w,call,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
+        /*.ca_list = */"",
+        /*.cert = */identity_.second,
+        /*.cert_key = */identity_.first,
+        /*.dh_params = */dhParams_,
+        /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
+        /*.cert_check = */[w,call,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
             try {
                 if (auto sthis = w.lock()) {
                     auto& this_ = *sthis;
@@ -1799,9 +1799,9 @@ RingAccount::doRegister_()
                     }
                 if (req == this_.trustRequests_.end()) {
                     this_.trustRequests_.emplace_back(TrustRequest{
-                        .from = v.from,
-                        .received = std::chrono::system_clock::now(),
-                        .payload = v.payload
+                        /*.from = */v.from,
+                        /*.received = */std::chrono::system_clock::now(),
+                        /*.payload = */v.payload
                     });
                     req = std::prev(this_.trustRequests_.end());
                 }
@@ -2017,13 +2017,13 @@ RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.emplace_back(PendingCall {
-                .start = started_time,
-                .ice_sp = ice,
-                .call = wcall,
-                .listen_key = {},
-                .call_key = {},
-                .from = peer_ice_msg.from,
-                .from_cert = peer_cert });
+                /*.start = */started_time,
+                /*.ice_sp = */ice,
+                /*.call = */wcall,
+                /*.listen_key = */{},
+                /*.call_key = */{},
+                /*.from = */peer_ice_msg.from,
+                /*.from_cert = */peer_cert });
     }
 }
 
