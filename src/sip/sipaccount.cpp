@@ -716,7 +716,7 @@ void SIPAccount::doRegister()
         std::thread{ [shared] {
             /* We have to register the external thread so it could access the pjsip frameworks */
             if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8)
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined RING_UWP
                     static thread_local pj_thread_desc desc;
                     static thread_local pj_thread_t *this_thread;
 #else
