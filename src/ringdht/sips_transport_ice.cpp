@@ -243,11 +243,11 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
     TlsSession::TlsSessionCallbacks cbs = {
-        .onStateChange = [this](TlsSessionState state){ onTlsStateChange(state); },
-        .onRxData = [this](std::vector<uint8_t>&& buf){ onRxData(std::move(buf)); },
-        .onCertificatesUpdate = [this](const gnutls_datum_t* l, const gnutls_datum_t* r,
+        /*.onStateChange = */[this](TlsSessionState state){ onTlsStateChange(state); },
+        /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onRxData(std::move(buf)); },
+        /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
                                        unsigned int n){ onCertificatesUpdate(l, r, n); },
-        .verifyCertificate = [this](gnutls_session_t session){ return verifyCertificate(session); }
+        /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
     };
     tls_.reset(new TlsSession(ice, comp_id, param, cbs));
 
