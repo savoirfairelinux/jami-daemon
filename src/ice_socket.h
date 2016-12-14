@@ -23,6 +23,11 @@
 #include <memory>
 #include <functional>
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+using ssize_t = SSIZE_T;
+#endif
+
 namespace ring {
 
 class IceTransport;
