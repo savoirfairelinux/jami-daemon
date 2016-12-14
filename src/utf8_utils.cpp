@@ -25,6 +25,11 @@
 #include <cassert>
 #include "utf8_utils.h"
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+using ssize_t = SSIZE_T;
+#endif
+
 /*
  * The LIKELY and UNLIKELY macros let the programmer give hints to
  * the compiler about the expected result of an expression. Some compilers
