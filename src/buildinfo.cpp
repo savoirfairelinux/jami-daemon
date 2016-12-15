@@ -27,6 +27,18 @@
 
 #include <ciso646> // fix windows compiler bug
 
+#ifndef RING_REVISION
+#define RING_REVISION ""
+#endif
+
+#ifndef RING_DIRTY_REPO
+#define RING_DIRTY_REPO ""
+#endif
+
+#ifndef PACKAGE_VERSION
+#define PACKAGE_VERSION "unknown"
+#endif
+
 namespace DRing {
 
 const char*
