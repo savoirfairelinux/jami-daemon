@@ -25,20 +25,16 @@
 #include "dring.h"
 #include <string>
 
-#include <ciso646> // fix windows compiler bug
+#include <ciso646>
 
 namespace DRing {
 
 const char*
 version() noexcept
 {
-#ifdef RING_UWP
-    return PACKAGE_VERSION;
-#else
     return RING_REVISION[0] and RING_DIRTY_REPO[0] ?
         PACKAGE_VERSION "-" RING_REVISION "-" RING_DIRTY_REPO :
         (RING_REVISION[0] ? PACKAGE_VERSION "-" RING_REVISION : PACKAGE_VERSION);
-#endif
 }
 
 } // namespace DRing

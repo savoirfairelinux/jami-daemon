@@ -23,8 +23,9 @@
 #include <memory>
 #include <functional>
 
-#ifdef RING_UWP
-#include <utf8_utils.h>
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+using ssize_t = SSIZE_T;
 #endif
 
 namespace ring {

@@ -6,6 +6,11 @@ systems. This function is required for `alloca.c' support on those systems.
 */
 /* #undef CRAY_STACKSEG_END */
 
+// Windows compatability
+#define PROGSHAREDIR    ""
+#define RING_REVISION   ""
+#define RING_DIRTY_REPO ""
+
 /* Define to 1 if using `alloca.c'. */
 /* #undef C_ALLOCA */
 

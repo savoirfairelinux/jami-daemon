@@ -29,8 +29,7 @@
 #include "compiler_intrinsics.h"
 
 #ifdef RING_UWP
-#include <io.h>
-#include <windows.h>
+#include <io.h> // for access and close
 #endif
 
 #ifdef __APPLE__

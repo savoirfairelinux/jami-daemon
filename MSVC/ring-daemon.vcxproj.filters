@@ -514,6 +514,9 @@
     <ClInclude Include="..\src\compiler_intrinsics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\smartools.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\preferences.cpp">
@@ -827,6 +830,9 @@
     </ClCompile>
     <ClCompile Include="..\src\ringdht\namedirectory.cpp">
       <Filter>Source Files\ringdht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\smartools.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

@@ -33,9 +33,9 @@
 #include "logger.h"
 #include "manager.h"
 
-#ifndef RING_UWP
+//#ifndef RING_UWP
 #include "smartools.h"
-#endif
+//#endif
 
 namespace DRing {
 
@@ -146,7 +146,7 @@ removeConference(const std::string& conference_id)
    ring::Manager::instance().removeConference(conference_id);
 }
 
-#ifndef RING_UWP
+//#ifndef RING_UWP
 void
 startSmartInfo(uint32_t refreshTimeMs)
 {
@@ -158,7 +158,7 @@ stopSmartInfo()
 {
     ring::Smartools::getInstance().stop();
 }
-#endif
+//#endif
 
 bool
 addParticipant(const std::string& callID, const std::string& confID)

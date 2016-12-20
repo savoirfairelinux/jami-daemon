@@ -38,9 +38,9 @@
 #include "audio/resampler.h"
 #include "manager.h"
 
-#ifndef RING_UWP
+//#ifndef RING_UWP
 #include "smartools.h"
-#endif
+//#endif
 
 #include <sstream>
 
@@ -176,9 +176,9 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
-#ifndef RING_UWP
+//#ifndef RING_UWP
         Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
-#endif
+//#endif
         if (audioEncoder_->encode_audio(resampledData_) < 0)
             RING_ERR("encoding failed");
     } else {

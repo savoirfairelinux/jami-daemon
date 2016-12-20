@@ -26,19 +26,7 @@
 #include <cstdlib>
 #include <string>
 
-#ifdef RING_UWP
-# ifndef _SSIZE_T_DEFINED
-#  ifndef HAVE_SSIZE_T
-#   define HAVE_SSIZE_T
-#   ifdef  _WIN64
-typedef __int64    ssize_t;
-#   else
-typedef long ssize_t;
-#   endif
-#   define _SSIZE_T_DEFINED
-#  endif
-# endif
-#endif
+
 
 namespace ring {
 
