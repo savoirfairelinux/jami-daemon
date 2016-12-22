@@ -51,7 +51,22 @@
 #include "preferences.h"
 #include "noncopyable.h"
 
+
+
 namespace ring {
+class ConfCallStage;
+class IncomingCall;
+class HoldCall;
+class CurrentCall;
+class InactiveCall;
+class ActiveCall;
+class ConnectingCall;
+class RingingCall;
+class HungupCall;
+class BusyCall;
+class OverCall;
+class FailureCall;
+
 
 namespace Conf {
 class YamlParser;
@@ -85,6 +100,11 @@ class Manager {
         std::unique_ptr<PluginManager> pluginManager_;
 
     public:
+
+        
+        CallState_* getCallState(const std::string& callID);
+
+
         Manager();
         ~Manager();
 
@@ -117,12 +137,10 @@ class Manager {
          */
         ShortcutPreferences shortcutPreferences;
 
-#ifdef RING_VIDEO
         /**
          * Video preferences
          */
         VideoPreferences videoPreferences;
-#endif
 
         // Manager should not be accessed until initialized.
         // FIXME this is an evil hack!
@@ -1021,11 +1039,9 @@ class Manager {
 
         VideoManager& getVideoManager() const { return *videoManager_; }
 
-#ifdef RING_ACCEL
         bool getDecodingAccelerated() const;
 
         void setDecodingAccelerated(bool isAccelerated);
-#endif
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable

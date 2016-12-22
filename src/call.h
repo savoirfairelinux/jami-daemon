@@ -32,6 +32,7 @@
 #include "recordable.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "conference.h"
 
 #include <mutex>
 #include <map>
@@ -41,12 +42,73 @@
 #include <condition_variable>
 #include <set>
 #include <list>
+#include <utility>
+
 
 namespace ring {
 
 class VoIPLink;
 class Account;
 class AccountVideoCodecInfo;
+class Manager;
+
+class CallState_ {
+public:
+
+    virtual const std::string getState() const =0;
+    virtual ~CallState_(){}
+    virtual void configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager);
+};
+class IncomingCall : public CallState_ {
+public:
+
+    virtual const std::string getState() const;
+    virtual void configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager);
+};
+class HoldCall : public CallState_ {
+public:
+    virtual const std::string getState() const;
+    virtual void configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager);
+};
+class CurrentCall : public CallState_ {
+public:
+    virtual const std::string getState() const;
+    virtual void configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager);
+};
+class InactiveCall : public CallState_ {
+public:
+    virtual const std::string getState() const;
+    virtual void configureConference(std::shared_ptr<Conference>& conf, 
+        const std::string& callId, Manager* manager);
+};
+class ConnectingCall: public CallState_ {
+public:
+    virtual const std::string getState() const ;
+};
+class RingingCall : public CallState_ {
+public:
+    virtual const std::string getState() const ;
+};
+class HungupCall : public CallState_ {
+public:
+    virtual const std::string getState() const;
+};
+class BusyCall : public CallState_ {
+public:
+    virtual const std::string getState() const ;
+};
+class OverCall : public CallState_ {
+public:
+    virtual const std::string getState() const ;
+};
+class FailureCall : public CallState_ {
+public:
+    virtual const std::string getState() const ;
+};
 
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
@@ -186,7 +248,14 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         ConnectionState getConnectionState() const;
 
-        std::string getStateStr() const;
+        std::pair<std::string, CallState_*> getStateStr() const;
+        
+        //new
+        std::pair<std::string, CallState_*> onInactiveState(ConnectionState connectionState_) const;
+        std::pair<std::string, CallState_*> onActiveState(ConnectionState connectionState_) const;
+        CallState_* getCallState();
+
+
 
         void setIPToIP(bool IPToIP) {
             isIPToIP_ = IPToIP;
@@ -345,6 +414,12 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void addSubCall(const std::shared_ptr<Call>& call);
 
         virtual void merge(std::shared_ptr<Call> scall);
+
+
+
+
+
+
 
     protected:
         /**
