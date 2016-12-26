@@ -228,9 +228,15 @@ class RingAccount : public SIPAccountBase {
          *      The type of this instance is given in template argument.
          *      This type can be any base class of SIPCall class (included).
          */
+#ifndef RING_UWP
         template <class T=SIPCall>
         std::shared_ptr<enable_if_base_of<T, SIPCall> >
         newOutgoingCall(const std::string& toUrl);
+#else
+        template <class T>
+        std::shared_ptr<T>
+        newOutgoingCall(const std::string& toUrl);
+#endif
 
         /**
          * Create incoming SIPCall.
