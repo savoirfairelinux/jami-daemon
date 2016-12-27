@@ -461,6 +461,7 @@
     <ClInclude Include="..\src\call_factory.h" />
     <ClInclude Include="..\src\client\ring_signal.h" />
     <ClInclude Include="..\src\client\videomanager.h" />
+    <ClInclude Include="..\src\compiler_intrinsics.h" />
     <ClInclude Include="..\src\conference.h" />
     <ClInclude Include="..\src\config\serializable.h" />
     <ClInclude Include="..\src\config\yamlparser.h" />
