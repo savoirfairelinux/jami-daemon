@@ -23,7 +23,7 @@
 #ifndef INTRIN_H_
 #define INTRIN_H_
 
-#ifdef WIN32_NATIVE
+#ifdef RING_UWP
 #define UNUSED
 #else
 #define UNUSED __attribute__((__unused__))
