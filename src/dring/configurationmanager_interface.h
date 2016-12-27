@@ -266,6 +266,12 @@ struct ConfigurationSignal {
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
         };
 #endif
+#ifdef RING_UWP
+        struct GetAppDataPath {
+                constexpr static const char* name = "GetAppDataPath";
+                using cb_type = void(std::vector<std::string>* paths);
+        };
+#endif
 };
 
 // Can be used when a client's stdout is not available
