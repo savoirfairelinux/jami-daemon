@@ -28,6 +28,11 @@
 #include "fileutils.h"
 #include "compiler_intrinsics.h"
 
+#ifdef RING_UWP
+#include <io.h> // for access and close
+#include "ring_signal.h"
+#endif
+
 #ifdef __APPLE__
 #include <TargetConditionals.h>
 #endif
@@ -75,7 +80,7 @@
 #include <cstring>
 #include <cerrno>
 #include <cstddef>
-#include <ciso646> // fix windows compiler bug
+#include <ciso646>
 
 namespace ring { namespace fileutils {
 
@@ -170,7 +175,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined WIN32 || TARGET_OS_IPHONE
+#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || TARGET_OS_IPHONE
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -234,7 +239,7 @@ bool isSymLink(const std::string& path)
     struct stat s;
     if (lstat(path.c_str(), &s) == 0)
         return S_ISLNK(s.st_mode);
-#else
+#elif !defined(RING_UWP)
     DWORD attr = GetFileAttributes(ring::to_wstring(path).c_str());
     if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
         return true;
@@ -252,7 +257,18 @@ writeTime(const std::string& path)
         throw std::runtime_error("Can't check write time for: " + path);
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
+#if RING_UWP
+    _CREATEFILE2_EXTENDED_PARAMETERS ext_params = { 0 };
+    ext_params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+    ext_params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    ext_params.dwFileFlags = FILE_FLAG_NO_BUFFERING;
+    ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+    ext_params.lpSecurityAttributes = nullptr;
+    ext_params.hTemplateFile = nullptr;
+    HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
+#else
     HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+#endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
     FILETIME lastWriteTime;
@@ -373,28 +389,40 @@ FileHandle::~FileHandle()
     }
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 static std::string files_path;
 static std::string cache_path;
 static std::string config_path;
 #else
 static char *program_dir = NULL;
-#ifndef RING_UWP
 void set_program_dir(char *program_path)
 {
     program_dir = dirname(program_path);
 }
 #endif
-#endif
 
 std::string
 get_cache_dir()
 {
+#ifdef RING_UWP
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    if (not paths.empty())
+        cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
+
+    if (fileutils::recursive_mkdir(cache_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", cache_path.c_str());
+    }
+    return cache_path;
+#else
     const std::string cache_home(XDG_CACHE_HOME);
 
     if (not cache_home.empty()) {
         return cache_home;
     } else {
+#endif
 #ifdef __ANDROID__
         std::vector<std::string> paths;
         emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
@@ -409,7 +437,9 @@ get_cache_dir()
         return get_home_dir() + DIR_SEPARATOR_STR +
             ".cache" + DIR_SEPARATOR_STR + PACKAGE;
 #endif
+#ifndef RING_UWP
     }
+#endif
 }
 
 std::string
@@ -418,6 +448,12 @@ get_home_dir()
 #if defined __ANDROID__
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
+    if (not paths.empty())
+        files_path = paths[0];
+    return files_path;
+#elif defined RING_UWP
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         files_path = paths[0];
     return files_path;
@@ -463,6 +499,18 @@ get_data_dir()
     return get_home_dir() + DIR_SEPARATOR_STR
             + "Library" + DIR_SEPARATOR_STR + "Application Support"
             + DIR_SEPARATOR_STR + PACKAGE;
+#elif defined (RING_UWP)
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    if (not paths.empty())
+        files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
+
+    if (fileutils::recursive_mkdir(files_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", files_path.c_str());
+    }
+    return files_path;
 #else
     const std::string data_home(XDG_DATA_HOME);
     if (not data_home.empty())
@@ -483,15 +531,26 @@ get_config_dir()
     if (not paths.empty())
         config_path = paths[0];
     return config_path;
-#else
-#ifdef __APPLE__
+
+#elif defined( __APPLE__ )
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
         + "Library" + DIR_SEPARATOR_STR + "Application Support"
         + DIR_SEPARATOR_STR + PACKAGE;
+#elif defined(RING_UWP)
+    std::vector<std::string> paths;
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
+    if (not paths.empty())
+        config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
+
+    if (fileutils::recursive_mkdir(config_path.data(), 0700) != true) {
+        // If directory creation failed
+        if (errno != EEXIST)
+            RING_DBG("Cannot create directory: %s!", config_path.c_str());
+    }
+    return config_path;
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
-#endif
 
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
