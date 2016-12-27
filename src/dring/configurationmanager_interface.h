@@ -252,18 +252,26 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
         };
-#ifdef __ANDROID__
         /**
-         * These are special getters for Android so the daemon can retreive
-         * some informations only accessible through Java APIs
+         * These are special getters for Android and UWP, so the daemon can retreive
+         * information only accessible through their respective platform APIs
          */
+#ifdef __ANDROID__
         struct GetHardwareAudioFormat {
                 constexpr static const char* name = "GetHardwareAudioFormat";
                 using cb_type = void(std::vector<int32_t>* /* params_ret */);
         };
+#endif
+#if defined(__ANDROID__) || defined(RING_UWP)
         struct GetAppDataPath {
                 constexpr static const char* name = "GetAppDataPath";
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
+        };
+#endif
+#ifdef RING_UWP
+        struct GetAppUserName {
+                constexpr static const char* name = "GetAppUserName";
+                using cb_type = void(std::vector<std::string>* name);
         };
 #endif
 };
