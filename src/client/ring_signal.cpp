@@ -71,8 +71,11 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
+#endif
+#if defined(__ANDROID__) || defined(RING_UWP)
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
+
         /* Debug */
         exported_callback<DRing::DebugSignal::MessageSend>(),
 
