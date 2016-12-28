@@ -304,6 +304,27 @@ getKnownRingDevices(const std::string& accountId)
     return {};
 }
 
+/* contacts */
+
+void addContact(const std::string& accountId, const std::string& uri)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->addContact(uri);
+}
+
+void removeContact(const std::string& accountId, const std::string& uri)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->removeContact(uri);
+}
+
+std::vector<std::string> getContacts(const std::string& accountId)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getContacts();
+    return {};
+}
+
 /* contact requests */
 std::map<std::string, std::string>
 getTrustRequests(const std::string& accountId)
