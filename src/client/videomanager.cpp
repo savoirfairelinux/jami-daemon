@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Pierre-Luc Beaudoin <pierre-luc.beaudoin@savoirfairelinux.com>
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
@@ -83,6 +83,22 @@ setDefaultDevice(const std::string& name)
 }
 
 std::map<std::string, std::string>
+getDeviceParams(const std::string& name)
+{
+    auto params = ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(name);
+    std::stringstream width, height, rate;
+    width << params.width;
+    height << params.height;
+    rate << params.framerate;
+    return {
+        {"format", params.format},
+        {"width", width.str()},
+        {"height", height.str()},
+        {"rate", rate.str()}
+    };
+}
+
+std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
     return ring::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(name).to_map();
@@ -146,11 +162,11 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 void
-addVideoDevice(const std::string &node)
+addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)
 {
-    ring::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node);
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node, devInfo);
 }
 
 void
