@@ -1251,6 +1251,55 @@
            </arg>
        </method>
 
+       <method name="addContact" tp:name-for-bindings="addContact">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="uri" direction="in">
+           </arg>
+       </method>
+
+       <method name="removeContact" tp:name-for-bindings="removeContact">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="uri" direction="in">
+           </arg>
+       </method>
+
+       <method name="getContacts" tp:name-for-bindings="getContacts">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="as" name="contacts" direction="out">
+             <tp:docstring>
+                 The list of contact IDs.
+             </tp:docstring>
+           </arg>
+       </method>
+
+       <signal name="contactAdded" tp:name-for-bindings="contactAdded">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new contact has been added.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="uri">
+           </arg>
+       </signal>
+
+       <signal name="contactRemoved" tp:name-for-bindings="contactRemoved">
+           <tp:added version="2.2.0"/>
+           <tp:docstring>
+               Notify clients that a new contact has been removed.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="uri">
+           </arg>
+       </signal>
+
        <method name="getAddrFromInterfaceName" tp:name-for-bindings="getAddrFromInterfaceName">
            <arg type="s" name="interface" direction="in">
            </arg>
