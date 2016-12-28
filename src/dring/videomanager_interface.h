@@ -67,7 +67,7 @@ bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
@@ -88,7 +88,7 @@ struct VideoSignal {
                 constexpr static const char* name = "DecodingStopped";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
         struct GetCameraInfo {
             constexpr static const char* name = "GetCameraInfo";
             using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
