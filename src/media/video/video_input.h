@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2011-2016 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
@@ -74,10 +74,10 @@ public:
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
     /*
-     * these fonctions are used to pass buffer from/to the daemon
-     * to the Java application
+     * these functions are used to pass buffer from/to the daemon
+     * on the Android and UWP builds
      */
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
@@ -120,9 +120,7 @@ private:
     bool captureFrame();
     bool isCapturing() const noexcept;
 
-#ifdef __ANDROID__
-    void processAndroid();
-    void cleanupAndroid();
+#if defined(__ANDROID__) || defined(RING_UWP)
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
     void freeOneBuffer(struct VideoFrameBuffer& b);
     bool waitForBufferFull();

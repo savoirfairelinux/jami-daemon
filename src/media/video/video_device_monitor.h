@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
@@ -57,7 +57,7 @@ class VideoDeviceMonitor : public Serializable
         std::string getMRLForDefaultDevice() const;
         void setDefaultDevice(const std::string& name);
 
-        void addDevice(const std::string &node);
+        void addDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo);
         void removeDevice(const std::string &node);
 
         /**
