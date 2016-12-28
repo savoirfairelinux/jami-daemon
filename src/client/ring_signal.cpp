@@ -90,7 +90,7 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
         exported_callback<DRing::VideoSignal::GetCameraInfo>(),
         exported_callback<DRing::VideoSignal::SetParameters>(),
         exported_callback<DRing::VideoSignal::StartCapture>(),
