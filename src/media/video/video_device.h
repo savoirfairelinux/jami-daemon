@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include "videomanager_interface.h"
 #include "string_utils.h"
@@ -46,7 +47,7 @@ class VideoDeviceImpl;
 class VideoDevice {
 public:
 
-    VideoDevice(const std::string& path);
+    VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>* devInfo = nullptr);
     ~VideoDevice();
 
     /*
