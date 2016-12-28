@@ -146,7 +146,7 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 void
 addVideoDevice(const std::string &node)
 {
