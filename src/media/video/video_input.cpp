@@ -39,7 +39,11 @@
 #include <string>
 #include <sstream>
 #include <cassert>
+#ifdef RING_UWP
+#include <io.h> // for access
+#else
 #include <unistd.h>
+#endif
 
 namespace ring { namespace video {
 
@@ -49,21 +53,17 @@ static constexpr unsigned default_grab_height = 480;
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
     , sink_ {Manager::instance().createSinkClient("local")}
-#ifndef __ANDROID__
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
-#else
-    , loop_(std::bind(&VideoInput::setup, this),
-            std::bind(&VideoInput::processAndroid, this),
-            std::bind(&VideoInput::cleanupAndroid, this))
+#if defined(__ANDROID__) || defined(RING_UWP)
     , mutex_(), frame_cv_(), buffers_(8)
 #endif
 {}
 
 VideoInput::~VideoInput()
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
     /* we need to stop the loop and notify the condition variable
      * to unblock the process loop */
     loop_.stop();
@@ -72,7 +72,7 @@ VideoInput::~VideoInput()
     loop_.join();
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 bool VideoInput::waitForBufferFull()
 {
     for(auto& buffer : buffers_) {
@@ -84,7 +84,7 @@ bool VideoInput::waitForBufferFull()
     return !isCapturing();
 }
 
-void VideoInput::processAndroid()
+void VideoInput::process()
 {
     foundDecOpts(decOpts_);
 
@@ -132,7 +132,7 @@ void VideoInput::processAndroid()
     }
 }
 
-void VideoInput::cleanupAndroid()
+void VideoInput::cleanup()
 {
     emitSignal<DRing::VideoSignal::StopCapture>();
 
@@ -149,21 +149,7 @@ void VideoInput::cleanupAndroid()
         }
     }
 }
-#endif
-
-bool VideoInput::setup()
-{
-    if (not attach(sink_.get())) {
-        RING_ERR("attach sink failed");
-        return false;
-    }
-
-    if (!sink_->start())
-        RING_ERR("start sink failed");
-
-    RING_DBG("VideoInput ready to capture");
-    return true;
-}
+#else
 
 void
 VideoInput::process()
@@ -184,6 +170,21 @@ VideoInput::cleanup()
     detach(sink_.get());
     sink_->stop();
     RING_DBG("VideoInput closed");
+}
+
+#endif
+bool VideoInput::setup()
+{
+    if (not attach(sink_.get())) {
+        RING_ERR("attach sink failed");
+        return false;
+    }
+
+    if (!sink_->start())
+        RING_ERR("start sink failed");
+
+    RING_DBG("VideoInput ready to capture");
+    return true;
 }
 
 void VideoInput::clearOptions()
@@ -230,7 +231,7 @@ bool VideoInput::captureFrame()
     }
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
 {
     b.data = std::malloc(length);
@@ -542,7 +543,7 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 int VideoInput::getWidth() const
 { return decOpts_.width; }
 

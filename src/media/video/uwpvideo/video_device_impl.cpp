@@ -1,8 +1,8 @@
 /*
- *  Copyright (C) 2011-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2015-2017 Savoir-faire Linux Inc.
  *
- *  Author: Rafaël Carré <rafael.carre@savoirfairelinux.com>
- *  Author: Vivien Didelot <vivien.didelot@savoirfairelinux.com>
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,109 +19,98 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include <array>
+
 #include "logger.h"
 #include "../video_device.h"
 
-#include "client/ring_signal.h"
+#include "ring_signal.h"
 
-#include <algorithm>
-#include <map>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <array>
+//#include <ciso646>
 
 namespace ring { namespace video {
 
-/*
- * Array to match Android formats. List formats in ascending
- * preferrence: the format with the lower index will be picked.
- */
-struct android_fmt {
-    int             code;
-    std::string     name;
-    enum VideoPixelFormat ring_format;
+typedef struct
+{
+    std::string             name;
+    enum VideoPixelFormat   ring_format;
+} uwp_fmt;
+
+// have all formats map to bgra
+static const std::array<uwp_fmt, 4> uwp_formats
+{
+    uwp_fmt { "MJPG",   VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "RGB24",  VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "NV12",   VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "YUY2",   VIDEO_PIXFMT_BGRA   }
 };
 
-static const std::array<android_fmt, 2> and_formats {
-    android_fmt { 17,           "NV21",     VIDEO_PIXFMT_NV21    },
-    android_fmt { 842094169,    "YUV420",   VIDEO_PIXFMT_YUV420P },
-};
-
-class VideoDeviceImpl {
+class VideoDeviceImpl
+{
     public:
-        /**
-         * @throw std::runtime_error
-         */
-        VideoDeviceImpl(const std::string& path);
+        VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo);
 
         std::string name;
 
         DeviceParams getDeviceParams() const;
+
         void setDeviceParams(const DeviceParams&);
+        void selectFormat();
 
         std::vector<VideoSize> getSizeList() const;
         std::vector<FrameRate> getRateList() const;
+
     private:
-        void selectFormat();
+
         VideoSize getSize(VideoSize size) const;
         FrameRate getRate(FrameRate rate) const;
 
-        std::vector<int> formats_ {};
+        std::vector<std::string> formats_ {};
         std::vector<VideoSize> sizes_ {};
         std::vector<FrameRate> rates_ {};
 
-        const android_fmt* fmt_ {nullptr};
+        const uwp_fmt* fmt_ {nullptr};
         VideoSize size_ {};
         FrameRate rate_ {};
+
 };
 
 void
 VideoDeviceImpl::selectFormat()
 {
-    /*
-     * formats_ contains camera parameters as returned by the GetCameraInfo
-     * signal, find the matching V4L2 formats
-     */
     unsigned best = UINT_MAX;
     for(auto fmt : formats_) {
-        auto f = and_formats.begin();
-        for (; f != and_formats.end(); ++f) {
-            if (f->code == fmt) {
-                auto pos = std::distance(and_formats.begin(), f);
+        auto f = uwp_formats.begin();
+        for (; f != uwp_formats.end(); ++f) {
+            if (f->name == fmt) {
+                auto pos = std::distance(uwp_formats.begin(), f);
                 if (pos < best)
                     best = pos;
                 break;
             }
         }
-        if (f == and_formats.end())
-            RING_WARN("AndroidVideo: No format matching %d", fmt);
+        if (f == uwp_formats.end())
+            RING_WARN("Video: No format matching %s", fmt.c_str());
     }
 
     if (best != UINT_MAX) {
-        fmt_ = &and_formats[best];
-        RING_DBG("AndroidVideo: picked format %s", fmt_->name.c_str());
+        fmt_ = &uwp_formats[best];
+        RING_DBG("Video: picked format %s", fmt_->name.c_str());
     }
     else {
-        fmt_ = &and_formats[0];
-        RING_ERR("AndroidVideo: Could not find a known format to use");
+        fmt_ = &uwp_formats[0];
+        RING_ERR("Video: Could not find a known format to use");
     }
 }
 
-VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
+VideoDeviceImpl::VideoDeviceImpl(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
+    : name(path)
 {
-    std::vector<unsigned> sizes;
-    std::vector<unsigned> rates;
-    formats_.reserve(16);
-    sizes.reserve(16);
-    rates.reserve(16);
-    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
-    for (size_t i=0, n=sizes.size(); i<n; i+=2)
-        sizes_.emplace_back(sizes[i], sizes[i+1]);
-    for (const auto& r : rates)
-        rates_.emplace_back(r, 1000);
-
+    for (auto& setting : devInfo) {
+        formats_.emplace_back(setting.at("format"));
+        sizes_.emplace_back(std::stoi(setting.at("width")), std::stoi(setting.at("height")));
+        rates_.emplace_back(std::stoi(setting.at("rate")), 1);
+    }
     selectFormat();
 }
 
@@ -164,11 +153,11 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     std::stringstream ss1, ss2;
-    char sep;
 
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
 
+    params.format = fmt_->name;
     params.name = name;
     params.input = name;
     params.channel =  0;
@@ -184,12 +173,13 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     size_ = getSize({params.width, params.height});
     rate_ = getRate(params.framerate);
-    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->code, size_.first, size_.second, rate_.real());
+    emitSignal<DRing::VideoSignal::ParametersChanged>(name);
 }
 
-VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>&) :
-    deviceImpl_(new VideoDeviceImpl(path))
+VideoDevice::VideoDevice(const std::string& path, const std::vector<std::map<std::string, std::string>>& devInfo)
+    : deviceImpl_(new VideoDeviceImpl(path, devInfo))
 {
+    node_ = path;
     name = deviceImpl_->name;
 }
 
