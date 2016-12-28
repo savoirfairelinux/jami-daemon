@@ -135,7 +135,7 @@ void *dlopen( const char *file, int mode )
 	UINT uMode;
 	current_error = NULL;
 /* Do not let Windows display the critical-error-handler message box */
-	uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
+	//uMode = SetErrorMode( SEM_FAILCRITICALERRORS );
 	if( file == 0 )
 	{
 /* POSIX says that if the value of file is 0, a handle on a global
@@ -146,7 +146,7 @@ void *dlopen( const char *file, int mode )
 * symbols only from the original program file. For objects loaded with
 * the RTLD_GLOBAL flag, we create our own list later on.
 */
-hModule = GetModuleHandle( NULL );
+//hModule = GetModuleHandle( NULL );
 if( !hModule )
 	save_err_ptr_str( file );
 }
@@ -170,8 +170,8 @@ else
 * to UNIX's search paths (start with system folders instead of current
 * folder).
 */
-hModule = LoadLibraryEx( (LPSTR) lpFileName, NULL,
-	LOAD_WITH_ALTERED_SEARCH_PATH );
+//hModule = LoadLibraryEx( (LPSTR) lpFileName, NULL,
+//	LOAD_WITH_ALTERED_SEARCH_PATH );
 /* If the object was loaded with RTLD_GLOBAL, add it to list of global
 * objects, so that its symbols may be retrieved even if the handle for
 * the original program file is passed. POSIX says that if the same
@@ -185,7 +185,7 @@ else if( (mode & RTLD_GLOBAL) )
 	global_add( hModule );
 }
 /* Return to previous state of the error-mode bit flags. */
-SetErrorMode( uMode );
+//SetErrorMode( uMode );
 return (void *) hModule;
 }
 int dlclose( void *handle )
@@ -216,7 +216,7 @@ void *dlsym( void *handle, const char *name )
 /* If the handle for the original program file is passed, also search
 * in all globally loaded objects.
 */
-hModule = GetModuleHandle( NULL );
+//hModule = GetModuleHandle( NULL );
 if( hModule == handle )
 {
 	global_object *pobject;

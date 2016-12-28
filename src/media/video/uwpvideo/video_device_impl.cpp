@@ -1,6 +1,7 @@
 /*
  *  Copyright (C) 2015-2016 Savoir-faire Linux Inc.
  *
+ *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,16 +19,6 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <algorithm>
-#include <cassert>
-#include <climits>
-#include <map>
-#include <string>
-#include <sstream>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <memory>
 #include <array>
 
 #include "logger.h"
@@ -35,24 +26,27 @@
 
 #include "ring_signal.h"
 
-#include <ciso646>
+//#include <ciso646>
 
 namespace ring { namespace video {
 
-typedef struct {
+typedef struct
+{
     std::string             name;
     enum VideoPixelFormat   ring_format;
 } uwp_fmt;
 
 // have all formats map to bgra
-static const std::array<uwp_fmt, 4> uwp_formats {
-    uwp_fmt { "MJPG",                                           VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "RGB24",                                          VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "NV12",                                           VIDEO_PIXFMT_BGRA       },
-    uwp_fmt { "YUY2",                                           VIDEO_PIXFMT_BGRA       }
+static const std::array<uwp_fmt, 4> uwp_formats
+{
+    uwp_fmt { "MJPG",   VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "RGB24",  VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "NV12",   VIDEO_PIXFMT_BGRA   },
+    uwp_fmt { "YUY2",   VIDEO_PIXFMT_BGRA   }
 };
 
-class VideoDeviceImpl {
+class VideoDeviceImpl
+{
     public:
         VideoDeviceImpl(const std::string& path);
 
@@ -96,16 +90,16 @@ VideoDeviceImpl::selectFormat()
             }
         }
         if (f == uwp_formats.end())
-            RING_WARN("UWPVideo: No format matching %s", fmt.c_str());
+            RING_WARN("Video: No format matching %s", fmt.c_str());
     }
 
     if (best != UINT_MAX) {
         fmt_ = &uwp_formats[best];
-        RING_DBG("UWPVideo: picked format %s", fmt_->name.c_str());
+        RING_DBG("Video: picked format %s", fmt_->name.c_str());
     }
     else {
         fmt_ = &uwp_formats[0];
-        RING_ERR("UWPVideo: Could not find a known format to use");
+        RING_ERR("Video: Could not find a known format to use");
     }
 }
 

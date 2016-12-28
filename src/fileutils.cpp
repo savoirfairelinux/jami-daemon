@@ -262,9 +262,16 @@ writeTime(const std::string& path)
     return std::chrono::system_clock::from_time_t(s.st_mtime);
 #else
 #if RING_UWP
-    HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, nullptr);
+    _CREATEFILE2_EXTENDED_PARAMETERS ext_params = { 0 };
+    ext_params.dwSize = sizeof(CREATEFILE2_EXTENDED_PARAMETERS);
+    ext_params.dwFileAttributes = FILE_ATTRIBUTE_NORMAL;
+    ext_params.dwFileFlags = FILE_FLAG_NO_BUFFERING;
+    ext_params.dwSecurityQosFlags = SECURITY_ANONYMOUS;
+    ext_params.lpSecurityAttributes = nullptr;
+    ext_params.hTemplateFile = nullptr;
+    HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
 #else
-    HANDLE h = CreateFileW(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -550,6 +557,8 @@ get_config_dir()
 #else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
+
+    const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
 

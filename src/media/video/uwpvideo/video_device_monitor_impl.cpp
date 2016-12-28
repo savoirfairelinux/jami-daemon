@@ -1,8 +1,8 @@
 /*
  *  Copyright (C) 2015-2016 Savoir-faire Linux Inc.
  *
- *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
+ *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,32 +19,17 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <algorithm>
-#include <cerrno>
-#include <cstdio>
 #include <mutex>
-#include <sstream>
-#include <stdexcept> // for std::runtime_error
-#include <string>
 #include <thread>
-
-#ifdef RING_UWP
-#include <io.h>
-#else
-#include <unistd.h>
-#endif
-
-#include <vector>
 
 #include "../video_device_monitor.h"
 #include "logger.h"
 #include "noncopyable.h"
 
-#include <dbt.h>
-
 namespace ring { namespace video {
 
-class VideoDeviceMonitorImpl {
+class VideoDeviceMonitorImpl
+{
     public:
         /*
         * This is the only restriction to the pImpl design:

@@ -226,7 +226,8 @@ class RingAccount : public SIPAccountBase {
          * @param[in] toUrl The address to call
          * @return std::shared_ptr<SIPCall> A shared pointer to the created call.
          */
-        std::shared_ptr<SIPCall>
+        template <class T>
+        std::shared_ptr<T>
         newOutgoingSIPCall(const std::string& toUrl);
 
         /**

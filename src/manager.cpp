@@ -85,11 +85,6 @@ using random_device = dht::crypto::random_device;
 #include <fstream>
 #include <sstream>
 
-#ifdef RING_UWP
-#include <sys/types.h>
-#include <sys/stat.h>
-#endif
-
 #include <memory>
 #include <mutex>
 

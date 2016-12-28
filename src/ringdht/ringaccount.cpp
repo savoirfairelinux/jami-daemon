@@ -298,6 +298,7 @@ RingAccount::newIncomingCall(const std::string& from)
     return nullptr;
 }
 
+template<>
 std::shared_ptr<SIPCall>
 RingAccount::newOutgoingSIPCall(const std::string& toUrl)
 {
@@ -501,7 +502,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 std::shared_ptr<Call>
 RingAccount::newOutgoingCall(const std::string& toUrl)
 {
-    return newOutgoingSIPCall(toUrl);
+    return newOutgoingSIPCall<SIPCall>(toUrl);
 }
 
 bool
