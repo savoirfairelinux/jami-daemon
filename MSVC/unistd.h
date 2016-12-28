@@ -51,4 +51,8 @@
 typedef int mode_t;
 #include <BaseTsd.h>
 
+#ifndef HOST_NAME_MAX
+#define HOST_NAME_MAX MAX_COMPUTERNAME_LENGTH
+#endif
+
 #endif

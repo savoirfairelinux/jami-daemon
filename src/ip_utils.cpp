@@ -36,6 +36,15 @@ WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pA
 
 namespace ring {
 
+std::string
+ip_utils::getHostname()
+{
+    char hostname[HOST_NAME_MAX];
+    if (gethostname(hostname, HOST_NAME_MAX))
+        return {};
+    return hostname;
+}
+
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
 {
