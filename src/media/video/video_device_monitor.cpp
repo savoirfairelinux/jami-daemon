@@ -186,7 +186,7 @@ notify()
 }
 
 void
-VideoDeviceMonitor::addDevice(const string& node)
+VideoDeviceMonitor::addDevice(const string& node, const std::vector<std::map<std::string, std::string>>* devInfo)
 {
     if (findDeviceByNode(node) != devices_.end())
         return;
@@ -194,6 +194,10 @@ VideoDeviceMonitor::addDevice(const string& node)
     // instantiate a new unique device
     try {
         VideoDevice dev {node};
+
+        if (devInfo)
+            dev.setDeviceInfo(*devInfo);
+
         if (dev.getChannelList().empty())
             return;
 
@@ -214,6 +218,7 @@ VideoDeviceMonitor::addDevice(const string& node)
 
         devices_.emplace_back(std::move(dev));
         notify();
+
     } catch (const std::exception& e) {
         RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
         return;

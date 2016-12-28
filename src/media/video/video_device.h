@@ -31,6 +31,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <sstream>
 
 #include "videomanager_interface.h"
 #include "string_utils.h"
@@ -161,6 +162,11 @@ public:
         params.framerate = rateFromString(settings.channel, size, settings.framerate);
         setDeviceParams(params);
     }
+
+    /*
+     * Sets the device implementation's device information
+     */
+    void setDeviceInfo(const std::vector<std::map<std::string, std::string>>& devInfo);
 
     /**
      * Returns the parameters needed for actual use of the device
