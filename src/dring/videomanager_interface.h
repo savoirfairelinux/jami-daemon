@@ -58,6 +58,9 @@ VideoCapabilities getCapabilities(const std::string& name);
 std::map<std::string, std::string> getSettings(const std::string& name);
 void applySettings(const std::string& name, const std::map<std::string, std::string>& settings);
 void setDefaultDevice(const std::string& name);
+
+std::map<std::string, std::string> getDeviceParams(const std::string& name);
+
 std::string getDefaultDevice();
 std::string getCurrentCodecName(const std::string& callID);
 void startCamera();
@@ -67,8 +70,8 @@ bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 
-#ifdef __ANDROID__
-void addVideoDevice(const std::string &node);
+#if defined(__ANDROID__) || defined(RING_UWP)
+void addVideoDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
 void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
 void releaseFrame(void* frame);
@@ -88,24 +91,32 @@ struct VideoSignal {
                 constexpr static const char* name = "DecodingStopped";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
-#ifdef __ANDROID__
-        struct GetCameraInfo {
-            constexpr static const char* name = "GetCameraInfo";
-            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
-        };
+#if __ANDROID__
         struct SetParameters {
             constexpr static const char* name = "SetParameters";
             using cb_type = void(const std::string& device, const int format, const int width, const int height, const int rate);
         };
+        struct GetCameraInfo {
+            constexpr static const char* name = "GetCameraInfo";
+            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
+        };
+#endif
         struct StartCapture {
             constexpr static const char* name = "StartCapture";
-            using cb_type = void(const std::string& device);
+            using cb_type = void(const std::string& /*device*/);
         };
         struct StopCapture {
             constexpr static const char* name = "StopCapture";
             using cb_type = void(void);
         };
-#endif
+        struct DeviceAdded {
+            constexpr static const char* name = "DeviceAdded";
+            using cb_type = void(const std::string& /*device*/);
+        };
+        struct ParametersChanged {
+            constexpr static const char* name = "ParametersChanged";
+            using cb_type = void(const std::string& /*device*/);
+        };
 };
 
 } // namespace DRing
