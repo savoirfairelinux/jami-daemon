@@ -628,6 +628,10 @@ void RingAccount::unserialize(const YAML::Node &node)
     } catch (const std::exception& e) {
         RING_WARN("can't read device name: %s", e.what());
     }
+    if (ringDeviceName_.empty()) {
+        ringDeviceName_ = ip_utils::getHostname();
+        RING_WARN("No device name set, using: %s", ringDeviceName_.c_str());
+    }
 
     try {
         parseValue(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_);
@@ -682,7 +686,9 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     tlsPassword_ = {};
     identity_ = dev_id;
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
-    ringDeviceName_ = ringDeviceId_.substr(8);
+    ringDeviceName_ = ip_utils::getHostname();
+    if (ringDeviceName_.empty())
+        ringDeviceName_ = ringDeviceId_.substr(8);
 
     receipt_ = makeReceipt(id);
     RING_WARN("createRingDevice with %s", id.first->getPublicKey().getId().toString().c_str());
