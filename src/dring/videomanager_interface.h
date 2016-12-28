@@ -67,7 +67,7 @@ bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 void addVideoDevice(const std::string &node);
 void removeVideoDevice(const std::string &node);
 void* obtainFrame(int length);
@@ -88,15 +88,26 @@ struct VideoSignal {
                 constexpr static const char* name = "DecodingStopped";
                 using cb_type = void(const std::string& /*id*/, const std::string& /*shm_path*/, bool /*is_mixer*/);
         };
-#ifdef __ANDROID__
-        struct GetCameraInfo {
-            constexpr static const char* name = "GetCameraInfo";
-            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
-        };
+#if __ANDROID__
         struct SetParameters {
             constexpr static const char* name = "SetParameters";
             using cb_type = void(const std::string& device, const int format, const int width, const int height, const int rate);
         };
+        struct GetCameraInfo {
+            constexpr static const char* name = "GetCameraInfo";
+            using cb_type = void(const std::string& device, std::vector<int> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
+        };
+#elif RING_UWP
+        struct SetParameters {
+            constexpr static const char* name = "SetParameters";
+            using cb_type = void(const std::string& device, std::string format, const int width, const int height, const int rate);
+        };
+        struct GetCameraInfo {
+            constexpr static const char* name = "GetCameraInfo";
+            using cb_type = void(const std::string& device, std::vector<std::string> *formats, std::vector<unsigned> *sizes, std::vector<unsigned> *rates);
+        };
+#endif
+#if defined(__ANDROID__) || defined(RING_UWP)
         struct StartCapture {
             constexpr static const char* name = "StartCapture";
             using cb_type = void(const std::string& device);
