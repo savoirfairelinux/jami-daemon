@@ -74,12 +74,21 @@ public:
     bool setTrustedCertificate(const std::string& id, TrustStatus status);
     std::vector<gnutls_x509_crt_t> getTrustedCertificates() const;
 
+    void pinRevocationList(const std::string& id, const std::shared_ptr<dht::crypto::RevocationList>& crl);
+    void pinRevocationList(const std::string& id, dht::crypto::RevocationList&& crl) {
+        pinRevocationList(id, std::make_shared<dht::crypto::RevocationList>(std::forward<dht::crypto::RevocationList>(crl)));
+    }
+
+    void loadRevocations(crypto::Certificate& crt);
+
 private:
     NON_COPYABLE(CertificateStore);
 
-    unsigned loadLocalCertificates(const std::string& path);
+    unsigned loadLocalCertificates();
+    void pinRevocationList(const std::string& id, const dht::crypto::RevocationList& crl);
 
     const std::string certPath_;
+    const std::string crlPath_;
 
     mutable std::mutex lock_;
     std::map<std::string, std::shared_ptr<crypto::Certificate>> certs_;
@@ -110,6 +119,8 @@ public:
 
     static PermissionStatus statusFromStr(const char* str);
     static const char* statusToStr(PermissionStatus s);
+
+    bool addRevocationList(dht::crypto::RevocationList&& crl);
 
     bool setCertificateStatus(const std::string& cert_id, const PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
@@ -142,9 +153,11 @@ private:
     // unknown certificates with known status
     std::map<std::string, Status> unknownCertStatus_;
     std::map<std::string, std::pair<std::shared_ptr<crypto::Certificate>, Status>> certStatus_;
+    std::vector<dht::crypto::RevocationList> revokedList_;
     gnutls_x509_trust_list_st* allowed_;
 };
 
 std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt);
+std::vector<gnutls_x509_crl_t> getRevocationList(const crypto::Certificate& crt);
 
 }} // namespace ring::tls
