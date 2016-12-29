@@ -28,13 +28,32 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <limits.h>
 
 #ifdef _WIN32
 #define InetPtonA inet_pton
 WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
 #endif
 
+#ifndef HOST_NAME_MAX
+#ifdef MAX_COMPUTERNAME_LENGTH
+#define HOST_NAME_MAX MAX_COMPUTERNAME_LENGTH
+#else
+// Max 255 chars as per RFC 1035
+#define HOST_NAME_MAX 255
+#endif
+#endif
+
 namespace ring {
+
+std::string
+ip_utils::getHostname()
+{
+    char hostname[HOST_NAME_MAX];
+    if (gethostname(hostname, HOST_NAME_MAX))
+        return {};
+    return hostname;
+}
 
 std::vector<IpAddr>
 ip_utils::getAddrList(const std::string &name, pj_uint16_t family)
