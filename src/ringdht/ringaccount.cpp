@@ -166,6 +166,9 @@ struct RingAccount::ArchiveContent
     /** Generated CA key (for self-signed certificates) */
     std::shared_ptr<dht::crypto::PrivateKey> ca_key;
 
+    /** Revoked devices */
+    std::shared_ptr<dht::crypto::RevocationList> revoked;
+
     /** Ethereum private key */
     std::vector<uint8_t> eth_key;
 
@@ -761,10 +764,16 @@ RingAccount::hasSignedReceipt()
         return false;
     }
 
-    auto pk = identity_.second->issuer->getPublicKey();
-    RING_WARN("hasSignedReceipt() with %s", pk.getId().toString().c_str());
+    auto accountCertificate = identity_.second->issuer;
+    if (not accountCertificate) {
+        RING_WARN("Device certificate must be signed by the account certificate");
+        return false;
+    }
+
+    auto pk = accountCertificate->getPublicKey();
+    RING_WARN("Checking device receipt for account %s", pk.getId().toString().c_str());
     if (!pk.checkSignature({receipt_.begin(), receipt_.end()}, receiptSignature_)) {
-        RING_WARN("hasSignedReceipt() signature check failed");
+        RING_WARN("Device receipt signature check failed");
         return false;
     }
 
@@ -833,6 +842,13 @@ RingAccount::loadIdentity()
         auto crt_id = dht_cert.getId();
         if (crt_id != dht_key.getPublicKey().getId())
             return {};
+
+        if (not dht_cert.issuer) {
+            RING_ERR("Device certificate has no issuer");
+            return {};
+        }
+        // load revocation lists for device authority (account certificate).
+        tls::CertificateStore::instance().loadRevocations(*dht_cert.issuer);
 
         identity_ = {
             std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
@@ -905,6 +921,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
                     c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
                 } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
                     c.eth_key = base64::decode(itr->asString());
+            	} else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                	c.revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
                 } else
                     c.config[itr.key().asString()] = itr->asString();
             } catch (const std::exception& ex) {
@@ -948,6 +966,8 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+    if (archive.revoked)
+        root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked->getPacked());
 
     Json::FastWriter fastWriter;
     std::string output = fastWriter.write(root);
@@ -975,6 +995,7 @@ RingAccount::saveArchive(const ArchiveContent& archive_content, const std::strin
         if (archivePath_.empty())
             archivePath_ = idPath_ + DIR_SEPARATOR_STR "export.gz";
         fileutils::saveFile(archivePath_, encrypted);
+        //fileutils::saveFile(idPath_ + DIR_SEPARATOR_STR "crl.der", archive_content.revoked->getPacked());
     } catch (const std::runtime_error& ex) {
         RING_ERR("Export failed: %s", ex.what());
         return;
@@ -1054,6 +1075,31 @@ RingAccount::addDevice(const std::string& password)
             return;
         }
     });
+}
+
+bool
+RingAccount::revokeDevice(const std::string& password, const std::string& device)
+{
+    // shared_ptr of future
+    auto fa = ThreadPool::instance().getShared<ArchiveContent>(
+                    std::bind(&RingAccount::readArchive, this, password)
+                );
+    findCertificate(dht::InfoHash(device),
+                    [fa,sthis=shared(),password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
+    {
+        sthis->foundAccountDevice(crt);
+        auto a = fa->get();
+        // Add revoked device to the revocation list and resign it
+        if (not a.revoked)
+            a.revoked = std::make_shared<decltype(a.revoked)::element_type>();
+        a.revoked->revoke(*crt);
+        a.revoked->sign(a.id);
+        // add to CRL cache
+        tls::CertificateStore::instance().pinRevocationList(a.id.second->getId().toString(), a.revoked);
+        tls::CertificateStore::instance().loadRevocations(*sthis->identity_.second->issuer);
+        sthis->saveArchive(a, password);
+    });
+    return true;
 }
 
 std::pair<std::string, std::string>
@@ -1911,10 +1957,21 @@ RingAccount::doRegister_()
             auto h = dht::InfoHash(ringAccountId_);
             RING_WARN("Announcing device at %s: %s", h.toString().c_str(), announce_->toString().c_str());
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
+            for (const auto& crl : identity_.second->issuer->getRevocationLists())
+                dht_.put(h, crl, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
                 shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
                     shared->foundAccountDevice(crt);
                 });
+                return true;
+            });
+            dht_.listen<dht::crypto::RevocationList>(h, [shared](dht::crypto::RevocationList&& crl) {
+                if (crl.isSignedBy(*shared->identity_.second->issuer)) {
+                    RING_WARN("Found CRL for account.");
+                    tls::CertificateStore::instance().pinRevocationList(
+                        shared->ringAccountId_,
+                        std::make_shared<dht::crypto::RevocationList>(std::move(crl)));
+                }
                 return true;
             });
             syncDevices();
@@ -2285,13 +2342,13 @@ RingAccount::connectivityChanged()
 }
 
 bool
-RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb)
+RingAccount::findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb)
 {
     if (auto cert = tls::CertificateStore::instance().getCertificate(h.toString())) {
         if (cb)
             cb(cert);
     } else {
-        dht_.findCertificate(h, [=](const std::shared_ptr<dht::crypto::Certificate> crt) {
+        dht_.findCertificate(h, [cb{std::move(cb)}](const std::shared_ptr<dht::crypto::Certificate> crt) {
             if (crt)
                 tls::CertificateStore::instance().pinCertificate(std::move(crt));
             if (cb)
@@ -2802,6 +2859,10 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
 {
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
+    dht_.get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
+        tls::CertificateStore().instance().pinRevocationList(to.toString(), std::move(crl));
+        return true;
+    });
     dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
         if (dev.from != to)
             return true;
