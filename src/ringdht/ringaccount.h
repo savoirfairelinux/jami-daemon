@@ -84,6 +84,7 @@ constexpr const char* const RING_ACCOUNT_KEY = "ringAccountKey";
 constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
 constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
 constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
+constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
 }
 
 class IceTransport;
@@ -99,6 +100,13 @@ class RingAccount : public SIPAccountBase {
 
         const char* getAccountType() const override {
             return ACCOUNT_TYPE;
+        }
+
+        std::shared_ptr<RingAccount> shared() {
+            return std::static_pointer_cast<RingAccount>(shared_from_this());
+        }
+        std::shared_ptr<RingAccount const> shared() const {
+            return std::static_pointer_cast<RingAccount const>(shared_from_this());
         }
 
         /**
@@ -275,7 +283,7 @@ class RingAccount : public SIPAccountBase {
         std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
 
         bool findCertificate(const std::string& id);
-        bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>)> cb = {});
+        bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
         /* contact requests */
         std::map<std::string, std::string> getTrustRequests() const;
@@ -286,6 +294,8 @@ class RingAccount : public SIPAccountBase {
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
         void addDevice(const std::string& password);
+
+        bool revokeDevice(const std::string& password, const std::string& device);
 
         std::map<std::string, std::string> getKnownDevices() const;
 
