@@ -244,24 +244,6 @@ CLEAN_PKG += sed
 DISTCLEAN_PKG += sed-$(SED_VERSION).tar.bz2
 CLEAN_FILE += .sed
 
-# Apache ANT
-
-apache-ant-$(ANT_VERSION).tar.bz2:
-	$(call download,$(ANT_URL))
-
-ant: apache-ant-$(ANT_VERSION).tar.bz2
-	$(UNPACK)
-	$(MOVE)
-
-.ant: ant
-	(mkdir -p $(PREFIX)/bin && cp $</bin/* $(PREFIX)/bin/)
-	(mkdir -p $(PREFIX)/lib && cp $</lib/* $(PREFIX)/lib/)
-	touch $@
-
-CLEAN_PKG += ant
-DISTCLEAN_PKG += apache-ant-$(ANT_VERSION).tar.bz2
-CLEAN_FILE += .ant
-
 # GNU gettext
 
 gettext-$(GETTEXT_VERSION).tar.gz:

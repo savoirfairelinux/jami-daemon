@@ -37,8 +37,5 @@ GAS_URL=http://git.libav.org/?p=gas-preprocessor.git;a=snapshot;h=$(GAS_VERSION)
 SED_VERSION=4.2.2
 SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
 
-ANT_VERSION=1.9.7
-ANT_URL=$(APACHE)/ant/binaries/apache-ant-$(ANT_VERSION)-bin.tar.bz2
-
 GETTEXT_VERSION=0.19.6
 GETTEXT_URL=$(GNU)/gettext/gettext-$(GETTEXT_VERSION).tar.gz
