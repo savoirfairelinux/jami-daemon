@@ -504,7 +504,7 @@ index 0000000..37bcaba
 +#include <pj/timer.h>
 +#include <pj/file_io.h>
 +
-+#if GNUTLS_VERSION_NUMBER < 0x030306
++#if GNUTLS_VERSION_NUMBER < 0x030306 && !defined(_MSC_VER)
 +#include <dirent.h>
 +#endif
 +
@@ -535,7 +535,7 @@ index 0000000..37bcaba
 +#include <gnutls/abstract.h>
 +
 +#ifdef _MSC_VER
-+#  pragma comment( lib, "gnutls")
++#  pragma comment( lib, "libgnutls")
 +#endif
 +
 +
@@ -2134,7 +2134,7 @@ index 0000000..37bcaba
 +            /* Decrypt received data using GnuTLS (will read our input
 +             * circular buffer) */
 +            int decrypted_size = gnutls_record_recv(ssock->session,
-+                                                    app_read_data->data +
++                                                    ((read_data_t *)app_read_data->data) +
 +                                                    app_read_data->len,
 +                                                    app_data_size);
 +
@@ -2940,7 +2940,7 @@ index 0000000..37bcaba
 +     * (or fails in a fatal way). */
 +    while (total_written < size) {
 +        /* Try encrypting using GnuTLS */
-+        nwritten = gnutls_record_send(ssock->session, data + total_written,
++        nwritten = gnutls_record_send(ssock->session, ((read_data_t *)data) + total_written,
 +                                      size);
 +
 +        if (nwritten > 0) {
