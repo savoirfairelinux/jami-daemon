@@ -410,10 +410,12 @@ class RingAccount : public SIPAccountBase {
         bool hasCertificate() const;
         bool hasPrivateKey() const;
         bool hasSignedReceipt();
+        bool needsMigration() const;
 
         std::string makeReceipt(const dht::crypto::Identity& id);
         void createRingDevice(const dht::crypto::Identity& id);
         void initRingDevice(const ArchiveContent& a);
+        bool migrateAccount(const std::string& pwd);
 
         void createAccount(const std::string& archive_password);
         std::vector<uint8_t> makeArchive(const ArchiveContent& content) const;
