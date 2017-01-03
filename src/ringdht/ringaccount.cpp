@@ -118,8 +118,6 @@ RingAccount::TrustRequest {
 
 struct RingAccount::Contact
 {
-    //dht::InfoHash uri;
-
     /** Time of contact addition */
     time_t added {0};
 
@@ -130,6 +128,22 @@ struct RingAccount::Contact
     bool confirmed {false};
 
     bool isActive() const { return added > removed; }
+
+    Contact() = default;
+    Contact(time_t a, time_t r, bool c=false) : added(a), removed(r), confirmed(c) {}
+    Contact(const Json::Value& json) {
+        added = json["added"].asInt();
+        removed = json["removed"].asInt();
+        confirmed = json["confirmed"].asBool();
+    }
+
+    Json::Value toJson() const {
+        Json::Value json;
+        json["added"] = Json::Int64(added);
+        json["removed"] = Json::Int64(removed);
+        json["confirmed"] = confirmed;
+        return json;
+    }
 
     MSGPACK_DEFINE_MAP(added, removed, confirmed)
 };
@@ -174,6 +188,9 @@ struct RingAccount::ArchiveContent
 
     /** Ethereum private key */
     std::vector<uint8_t> eth_key;
+
+    /** Contacts */
+    std::map<dht::InfoHash, Contact> contacts;
 
     /** Account configuration */
     std::map<std::string, std::string> config;
@@ -739,7 +756,9 @@ RingAccount::initRingDevice(const ArchiveContent& a)
     ringAccountId_ = a.id.second->getId().toString();
     username_ = RING_URI_PREFIX+ringAccountId_;
     ethAccount_ = dev::KeyPair(dev::Secret(a.eth_key)).address().hex();
+    contacts_ = a.contacts;
     createRingDevice(a.id);
+    saveContacts();
 }
 
 std::string
@@ -915,23 +934,32 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
     try {
         c.config = DRing::getAccountTemplate(ACCOUNT_TYPE);
         for (Json::ValueIterator itr = value.begin() ; itr != value.end() ; itr++) {
-            if (itr->asString().empty())
-                continue;
-            if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
-            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
-            } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
-            } else if (itr.key().asString().compare(Conf::RING_CA_KEY) == 0) {
-                c.ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_KEY) == 0) {
-                c.id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CERT) == 0) {
-                c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
-            } else if (itr.key().asString().compare(Conf::ETH_KEY) == 0) {
-                c.eth_key = base64::decode(itr->asString());
-            } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CRL) == 0) {
-                c.revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
-            } else
-                c.config[itr.key().asString()] = itr->asString();
+            try {
+                const auto key = itr.key().asString();
+                if (key.empty())
+                    continue;
+                if (key.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
+                } else if (key.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
+                } else if (key.compare(Conf::RING_CA_KEY) == 0) {
+                    c.ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
+                } else if (key.compare(Conf::RING_ACCOUNT_KEY) == 0) {
+                    c.id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
+                } else if (key.compare(Conf::RING_ACCOUNT_CERT) == 0) {
+                    c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
+                } else if (key.compare(Conf::RING_ACCOUNT_CONTACTS) == 0) {
+                    for (Json::ValueIterator citr = itr->begin() ; citr != itr->end() ; citr++) {
+                        c.contacts.emplace(citr.key().asString(), Contact{*citr});
+                    }
+                } else if (key.compare(Conf::ETH_KEY) == 0) {
+                    c.eth_key = base64::decode(itr->asString());
+                } else if (key.compare(Conf::RING_ACCOUNT_CRL) == 0) {
+                    c.revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
+                } else
+                    c.config[key] = itr->asString();
+            } catch (const std::exception& ex) {
+                RING_ERR("Can't parse JSON entry with value of type %d: %s", (unsigned)itr->type(), ex.what());
+            }
         }
     } catch (const std::exception& ex) {
         RING_ERR("Can't parse JSON: %s", ex.what());
@@ -969,8 +997,15 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
+
     if (archive.revoked)
         root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked->getPacked());
+
+    if (not contacts_.empty()) {
+        Json::Value& contacts = root[Conf::RING_ACCOUNT_CONTACTS];
+        for (const auto& c : contacts_)
+            contacts[c.first.toString()] = c.second.toJson();
+    }
 
     Json::FastWriter fastWriter;
     std::string output = fastWriter.write(root);
