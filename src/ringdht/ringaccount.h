@@ -410,10 +410,12 @@ class RingAccount : public SIPAccountBase {
         bool hasCertificate() const;
         bool hasPrivateKey() const;
         bool hasSignedReceipt();
+        bool needsMigration() const;
 
         std::string makeReceipt(const dht::crypto::Identity& id);
         void createRingDevice(const dht::crypto::Identity& id);
         void initRingDevice(const ArchiveContent& a);
+        bool migrateAccount(const std::string& pwd);
 
         void createAccount(const std::string& archive_password);
         std::vector<uint8_t> makeArchive(const ArchiveContent& content) const;
@@ -422,7 +424,7 @@ class RingAccount : public SIPAccountBase {
         static ArchiveContent loadArchive(const std::vector<uint8_t>& data);
         std::vector<std::pair<sockaddr_storage, socklen_t>> loadBootstrap() const;
 
-        void saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
+        std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
         void saveNodes(const std::vector<dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::ValuesExport>&) const;
 
