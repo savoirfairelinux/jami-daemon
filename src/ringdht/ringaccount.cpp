@@ -136,7 +136,7 @@ struct RingAccount::ArchiveContent
     dht::crypto::Identity id;
 
     /** Generated CA key (for self-signed certificates) */
-    dht::crypto::PrivateKey ca_key;
+    std::shared_ptr<dht::crypto::PrivateKey> ca_key;
 
     /** Ethereum private key */
     std::vector<uint8_t> eth_key;
@@ -665,6 +665,9 @@ void
 RingAccount::createRingDevice(const dht::crypto::Identity& id)
 {
     RING_WARN("createRingDevice");
+    if (not id.second->isCA()) {
+        RING_ERR("Trying to sign a certificate with a non-CA.");
+    }
     auto dev_id = dht::crypto::generateIdentity("Ring device", id);
     if (!dev_id.first || !dev_id.second) {
         throw VoipLinkException("Can't generate identity for this account.");
@@ -673,9 +676,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     fileutils::check_dir(idPath_.c_str(), 0700);
 
     // save the chain including CA
-    saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "dht");
-    tlsCertificateFile_ = idPath_ + DIR_SEPARATOR_STR "dht.crt";
-    tlsPrivateKeyFile_ = idPath_ + DIR_SEPARATOR_STR "dht.key";
+    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
@@ -868,7 +869,7 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
             } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
             } else if (itr.key().asString().compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
             } else if (itr.key().asString().compare(Conf::RING_CA_KEY) == 0) {
-                c.ca_key = {base64::decode(itr->asString())};
+                c.ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
             } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_KEY) == 0) {
                 c.id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
             } else if (itr.key().asString().compare(Conf::RING_ACCOUNT_CERT) == 0) {
@@ -910,7 +911,7 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
             root[it.first] = it.second;
     }
 
-    root[Conf::RING_CA_KEY] = base64::encode(archive.ca_key.serialize());
+    root[Conf::RING_CA_KEY] = base64::encode(archive.ca_key->serialize());
     root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
     root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
     root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
@@ -1022,13 +1023,15 @@ RingAccount::addDevice(const std::string& password)
     });
 }
 
-void
+std::pair<std::string, std::string>
 RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
 {
+    auto paths = std::make_pair(path + ".key", path + ".crt");
     if (id.first)
-        fileutils::saveFile(path + ".key", id.first->serialize(), 0600);
+        fileutils::saveFile(paths.first, id.first->serialize(), 0600);
     if (id.second)
-        fileutils::saveFile(path + ".crt", id.second->getPacked(), 0600);
+        fileutils::saveFile(paths.second, id.second->getPacked(), 0600);
+    return paths;
 }
 
 void
@@ -1147,7 +1150,7 @@ RingAccount::createAccount(const std::string& archive_password)
                 RING_WARN("Converting certificate from old ring account");
                 a.id = this_.identity_;
                 try {
-                    a.ca_key = fileutils::loadFile(this_.idPath_ + DIR_SEPARATOR_STR "ca.key");
+                    a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(this_.idPath_ + DIR_SEPARATOR_STR "ca.key"));
                 } catch (...) {}
             } else {
                 auto ca = dht::crypto::generateIdentity("Ring CA");
@@ -1159,7 +1162,7 @@ RingAccount::createAccount(const std::string& archive_password)
                     throw VoipLinkException("Can't generate identity for this account.");
                 }
                 RING_WARN("New account: CA: %s, RingID: %s", ca.second->getId().toString().c_str(), a.id.second->getId().toString().c_str());
-                a.ca_key = std::move(*ca.first);
+                a.ca_key = ca.first;
             }
             this_.ringAccountId_ = a.id.second->getId().toString();
             this_.username_ = RING_URI_PREFIX+this_.ringAccountId_;
@@ -1182,6 +1185,66 @@ RingAccount::createAccount(const std::string& archive_password)
     });
 }
 
+bool
+RingAccount::needsMigration() const
+{
+    if (not identity_.second)
+        return true;
+    auto cert = identity_.second->issuer;
+    while (cert) {
+        if (not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now())
+            return true;
+        cert = cert->issuer;
+    }
+    return false;
+}
+
+bool
+RingAccount::migrateAccount(const std::string& pwd)
+{
+    using Certificate = dht::crypto::Certificate;
+
+    auto archive = readArchive(pwd);
+
+    // We need the CA key to resign certificates
+    if (not archive.id.first or
+        not *archive.id.first or
+        not archive.id.second or
+        not archive.ca_key or
+        not *archive.ca_key)
+        return false;
+
+    // Currently set the CA flag and update expiration dates
+    bool updated = false;
+
+    // Update CA if possible and relevant
+    auto cert = archive.id.second;
+    auto ca = cert->issuer;
+    if (ca and not ca->issuer and *archive.ca_key) {
+        if (not ca->isCA() or ca->getExpiration() < std::chrono::system_clock::now()) {
+            ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
+            updated = true;
+        }
+    }
+
+    // Update certificate
+    if (updated or not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now()) {
+        cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Ring", dht::crypto::Identity{archive.ca_key, ca}, true));
+        archive.id.second = cert;
+        updated = true;
+    }
+
+    if (updated) {
+        // update device certificate
+        identity_.second = std::make_shared<Certificate>(Certificate::generate(*identity_.first, "Ring device", archive.id));
+
+        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
+        saveArchive(archive, pwd);
+    }
+
+    return true;
+}
+
 void
 RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
 {
@@ -1193,14 +1256,33 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
         loadIdentity();
         loadKnownDevices();
 
-        if (hasSignedReceipt()) {
-            if (archivePath_.empty() or not fileutils::isFile(archivePath_))
-                RING_WARN("Account archive not found, won't be able to add new devices.");
+        bool hasArchive = not archivePath_.empty() and fileutils::isFile(archivePath_);
+        bool hasReceipt = hasSignedReceipt();
+        bool needMigration = hasReceipt and needsMigration();
+
+        if (not needMigration and hasReceipt) {
+            if (not hasArchive)
+                RING_WARN("[Account %s] account archive not found, won't be able to add new devices.", getAccountID().c_str());
             // normal account loading path
             return;
         }
 
-        if (archivePath_.empty() or not fileutils::isFile(archivePath_)) {
+        if (hasArchive) {
+            if (archive_password.empty()) {
+                RING_WARN("[Account %s] password needed to read archive", getAccountID().c_str());
+                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            } else {
+                if (needMigration) {
+                    RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
+                    migrateAccount(archive_password);
+                }
+                else {
+                    RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
+                    initRingDevice(readArchive(archive_password));
+                }
+                Manager::instance().saveConfig();
+            }
+        } else {
             // no receipt or archive, creating new account
             if (archive_password.empty()) {
                 RING_WARN("Password needed to create archive");
@@ -1216,16 +1298,8 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                     loadAccountFromDHT(archive_password, archive_pin);
                 }
             }
-        } else {
-            if (archive_password.empty()) {
-                RING_WARN("Password needed to read archive");
-                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
-            } else {
-                RING_WARN("Archive present but no valid receipt: creating new device");
-                initRingDevice(readArchive(archive_password));
-                Manager::instance().saveConfig();
-            }
         }
+
     } catch (const std::exception& e) {
         RING_WARN("Error loading account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
