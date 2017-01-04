@@ -1,6 +1,5 @@
 # speex
 
-SPEEX_VERSION := git
 SPEEX_HASH := 9172c7ef85fbf058027528d48ededbc7ca847908
 SPEEX_GITURL := http://git.xiph.org/?p=speex.git;a=snapshot;h=$(SPEEX_HASH);sf=tgz
 
@@ -9,17 +8,17 @@ ifeq ($(call need_pkg,"speex >= 1.0.5"),)
 PKGS_FOUND += speex
 endif
 
-$(TARBALLS)/speex-git.tar.gz:
+$(TARBALLS)/speex-$(SPEEX_HASH).tar.gz:
 	$(call download,$(SPEEX_GITURL))
 
-.sum-speex: speex-$(SPEEX_VERSION).tar.gz
+.sum-speex: speex-$(SPEEX_HASH).tar.gz
 	$(warning $@ not implemented)
 	touch $@
 
-speex: speex-$(SPEEX_VERSION).tar.gz .sum-speex
-	rm -Rf $@-git $@
-	mkdir -p $@-git
-	$(ZCAT) "$<" | (cd $@-git && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
+speex: speex-$(SPEEX_HASH).tar.gz .sum-speex
+	rm -Rf $@ $@-$(SPEEX_HASH)
+	mkdir -p $@-$(SPEEX_HASH)
+	$(ZCAT) "$<" | (cd $@-$(SPEEX_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
 	$(MOVE)
 
 SPEEX_CONF := --disable-binaries
