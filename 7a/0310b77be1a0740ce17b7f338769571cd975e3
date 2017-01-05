@@ -1,0 +1,8 @@
+Code-Review+1: Anthony Léonard <anthony.leonard@savoirfairelinux.com>
+Code-Review+2: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+Submitted-at: Thu, 05 Jan 2017 18:33:51 -0500
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/5793
+Project: ring-daemon
+Branch: refs/heads/master
