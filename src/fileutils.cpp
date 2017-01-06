@@ -336,10 +336,8 @@ std::vector<std::string>
 readDirectory(const std::string& dir)
 {
     DIR *dp = opendir(dir.c_str());
-    if (!dp) {
-        RING_ERR("Could not open %s", dir.c_str());
+    if (!dp)
         return {};
-    }
 
     size_t size = dirent_buf_size(dp);
     if (size == (size_t)(-1))
