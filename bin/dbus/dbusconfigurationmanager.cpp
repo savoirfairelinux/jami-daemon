@@ -511,6 +511,24 @@ DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const s
     DRing::sendTrustRequest(accountId, to, payload);
 }
 
+void
+DBusConfigurationManager::addContact(const std::string& accountId, const std::string& uri)
+{
+    DRing::addContact(accountId, uri);
+}
+
+void
+DBusConfigurationManager::removeContact(const std::string& accountId, const std::string& uri)
+{
+    DRing::removeContact(accountId, uri);
+}
+
+auto
+DBusConfigurationManager::getContacts(const std::string& accountId) -> decltype(DRing::getContacts(accountId))
+{
+    return DRing::getContacts(accountId);
+}
+
 auto
 DBusConfigurationManager::getCredentials(const std::string& accountID) -> decltype(DRing::getCredentials(accountID))
 {
