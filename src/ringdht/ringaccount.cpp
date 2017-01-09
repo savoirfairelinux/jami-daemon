@@ -2857,24 +2857,33 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 void
 RingAccount::registerDhtAddress(IceTransport& ice)
 {
+    static const auto reg_addr =                    \
+        [](IceTransport& ice, const IpAddr& ip) {
+            RING_DBG("[dht] using public IP: %s", ip.toString().c_str());
+            for (unsigned compId = 1; compId <= ice.getComponentCount(); ++compId)
+                ice.registerPublicIP(compId, ip);
+            return ip;
+        };
+
     auto ip = getPublishedAddress();
-
-    // We need a public address in case of NAT'ed network
-    // Trying to use one discovered by DHT service
     if (ip.empty()) {
-        const auto& addresses = dht_.getPublicAddress(AF_INET);
-        if (addresses.size()) {
-            ip = IpAddr {addresses[0].first};
-            setPublishedAddress(ip);
-        }
-    }
+        // We need a public address in case of NAT'ed network
+        // Trying to use one discovered by DHT service
 
-    if (!ip.empty()) {
+        // IPv4
+        const auto& addr4 = dht_.getPublicAddress(AF_INET);
+        if (addr4.size())
+            setPublishedAddress(reg_addr(ice, addr4[0].first));
+
+        // IPv6 (must be put after IPv4 as SDP support only one address, we priorize IPv6)
+        const auto& addr6 = dht_.getPublicAddress(AF_INET6);
+        if (addr6.size())
+            setPublishedAddress(reg_addr(ice, addr6[0].first));
+
+    } else {
         RING_DBG("[dht] Using pub IP: %s", ip.c_str());
-        for (unsigned compId = 1; compId <= ice.getComponentCount(); ++compId)
-            ice.registerPublicIP(compId, ip);
-    } else
-        RING_WARN("[dht] No public IP found!");
+        reg_addr(ice, ip);
+    }
 }
 
 } // namespace ring
