@@ -74,19 +74,14 @@ public:
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
     /*
-     * these fonctions are used to pass buffer from/to the daemon
-     * to the Java application
+     * these functions are used to pass buffer from/to the daemon
+     * on the Android and UWP builds
      */
     void* obtainFrame(int length);
     void releaseFrame(void *frame);
 #endif
-#ifdef RING_UWP
-    void* obtainFrame(int length);
-    void releaseFrame(void *frame);
-#endif
-
 
 private:
     NON_COPYABLE(VideoInput);
@@ -125,25 +120,7 @@ private:
     bool captureFrame();
     bool isCapturing() const noexcept;
 
-#ifdef __ANDROID__
-    void processAndroid();
-    void cleanupAndroid();
-    int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
-    void freeOneBuffer(struct VideoFrameBuffer& b);
-    bool waitForBufferFull();
-
-    std::mutex mutex_;
-    std::condition_variable frame_cv_;
-    int capture_index_ = 0;
-    int publish_index_ = 0;
-
-    /* Get notified when libav is done with this buffer */
-    void releaseBufferCb(uint8_t* ptr);
-    std::vector<struct VideoFrameBuffer> buffers_;
-#endif
-#ifdef RING_UWP
-    void processUWP();
-    void cleanupUWP();
+#if defined(__ANDROID__) || defined(RING_UWP)
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
     void freeOneBuffer(struct VideoFrameBuffer& b);
     bool waitForBufferFull();

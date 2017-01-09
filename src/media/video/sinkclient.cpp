@@ -330,7 +330,8 @@ SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
         fps << frameCount_ / seconds.count();
         // Send the framerate in smartInfo
 //#ifndef RING_UWP
-        Smartools::getInstance().setFrameRate(id_, fps.str());
+        RING_DBG("FPS:  %s",fps.str());
+        //Smartools::getInstance().setFrameRate(id_, fps.str());
 //#endif
         frameCount_ = 0;
         lastFrameDebug_ = currentTime;

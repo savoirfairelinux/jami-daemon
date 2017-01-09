@@ -39,8 +39,8 @@ namespace ring {
 std::string
 ip_utils::getHostname()
 {
-    char hostname[HOST_NAME_MAX];
-    if (gethostname(hostname, HOST_NAME_MAX))
+    char hostname[MAX_COMPUTERNAME_LENGTH];
+    if (gethostname(hostname, MAX_COMPUTERNAME_LENGTH))
         return {};
     return hostname;
 }

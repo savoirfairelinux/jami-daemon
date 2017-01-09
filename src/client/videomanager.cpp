@@ -82,6 +82,28 @@ setDefaultDevice(const std::string& name)
     ring::Manager::instance().saveConfig();
 }
 
+void
+setDeviceInfo(const std::string& name, const std::vector<std::map<std::string, std::string>>& devInfo)
+{
+    ring::Manager::instance().getVideoManager().videoDeviceMonitor.setDeviceInfo(name, devInfo);
+}
+
+std::map<std::string, std::string>
+getDeviceParams(const std::string& name)
+{
+    auto params = ring::Manager::instance().getVideoManager().videoDeviceMonitor.getDeviceParams(name);
+    std::stringstream width, height, rate;
+    width << params.width;
+    height << params.height;
+    rate << params.framerate;
+    return {
+        {"format", params.format},
+        {"width", width.str()},
+        {"height", height.str()},
+        {"rate", rate.str()}
+    };
+}
+
 std::map<std::string, std::string>
 getSettings(const std::string& name)
 {
@@ -146,36 +168,7 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
-#ifdef __ANDROID__
-void
-addVideoDevice(const std::string &node)
-{
-    ring::Manager::instance().getVideoManager().videoDeviceMonitor.addDevice(node);
-}
-
-void
-removeVideoDevice(const std::string &node)
-{
-    ring::Manager::instance().getVideoManager().videoDeviceMonitor.removeDevice(node);
-}
-
-void*
-obtainFrame(int length)
-{
-    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
-        return (*input).obtainFrame(length);
-
-    return nullptr;
-}
-
-void
-releaseFrame(void* frame)
-{
-    if (auto input = ring::Manager::instance().getVideoManager().videoInput.lock())
-        (*input).releaseFrame(frame);
-}
-#endif
-#ifdef RING_UWP
+#if defined(__ANDROID__) || defined(RING_UWP)
 void
 addVideoDevice(const std::string &node)
 {

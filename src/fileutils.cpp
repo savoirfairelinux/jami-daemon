@@ -70,10 +70,6 @@
 #   include <wordexp.h>
 #endif
 
-#if defined _MSC_VER
-#include <direct.h>
-#endif
-
 #include <sstream>
 #include <fstream>
 #include <iostream>
@@ -412,7 +408,7 @@ get_cache_dir()
 {
 #ifdef RING_UWP
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         cache_path = paths[0] + DIR_SEPARATOR_STR + std::string(".cache");
 
@@ -459,7 +455,7 @@ get_home_dir()
     return files_path;
 #elif defined RING_UWP
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         files_path = paths[0];
     return files_path;
@@ -507,7 +503,7 @@ get_data_dir()
             + DIR_SEPARATOR_STR + PACKAGE;
 #elif defined (RING_UWP)
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         files_path = paths[0] + DIR_SEPARATOR_STR + std::string(".data");
 
@@ -544,7 +540,7 @@ get_config_dir()
         + DIR_SEPARATOR_STR + PACKAGE;
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
-    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>(&paths);
+    emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
     if (not paths.empty())
         config_path = paths[0] + DIR_SEPARATOR_STR + std::string(".config");
 

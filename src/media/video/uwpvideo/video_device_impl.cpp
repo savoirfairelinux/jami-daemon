@@ -55,13 +55,14 @@ class VideoDeviceImpl
         DeviceParams getDeviceParams() const;
 
         void setDeviceParams(const DeviceParams&);
+        void setDeviceInfo(const std::vector<std::map<std::string, std::string>>& devInfo);
+        void selectFormat();
 
         std::vector<VideoSize> getSizeList() const;
         std::vector<FrameRate> getRateList() const;
 
     private:
 
-        void selectFormat();
         VideoSize getSize(VideoSize size) const;
         FrameRate getRate(FrameRate rate) const;
 
@@ -104,19 +105,23 @@ VideoDeviceImpl::selectFormat()
 }
 
 VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
-{
-    std::vector<unsigned> sizes;
-    std::vector<unsigned> rates;
-    formats_.reserve(16);
-    sizes.reserve(32);
-    rates.reserve(16);
-    emitSignal<DRing::VideoSignal::GetCameraInfo>(name, &formats_, &sizes, &rates);
-    for (size_t i=0, n=sizes.size(); i<n; i+=2)
-        sizes_.emplace_back(sizes[i], sizes[i+1]);
-    for (const auto& r : rates)
-        rates_.emplace_back(r, 1);
+{}
 
-    selectFormat();
+void
+VideoDevice::setDeviceInfo(const std::vector<std::map<std::string, std::string>>& devInfo)
+{
+    deviceImpl_->setDeviceInfo(devInfo);
+    deviceImpl_->selectFormat();
+}
+
+void
+VideoDeviceImpl::setDeviceInfo(const std::vector<std::map<std::string, std::string>>& devInfo)
+{
+    for (auto& setting : devInfo) {
+        formats_.emplace_back(setting.at("format"));
+        sizes_.emplace_back(std::stoi(setting.at("width")), std::stoi(setting.at("height")));
+        rates_.emplace_back(std::stoi(setting.at("rate")), 1);
+    }
 }
 
 VideoSize
@@ -162,6 +167,7 @@ VideoDeviceImpl::getDeviceParams() const
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
 
+    params.format = fmt_->name;
     params.name = name;
     params.input = name;
     params.channel =  0;
@@ -177,7 +183,8 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 {
     size_ = getSize({params.width, params.height});
     rate_ = getRate(params.framerate);
-    emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->name, size_.first, size_.second, rate_.real());
+    //emitSignal<DRing::VideoSignal::SetParameters>(name, fmt_->name, size_.first, size_.second, rate_.real());
+    emitSignal<DRing::VideoSignal::ParametersChanged>(name);
 }
 
 VideoDevice::VideoDevice(const std::string& path)

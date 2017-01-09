@@ -168,6 +168,8 @@ public:
     DeviceParams getDeviceParams() const;
     std::vector<std::string> getChannelList() const;
 
+    void setDeviceInfo(const std::vector<std::map<std::string, std::string>>& devInfo);
+
 private:
 
     std::vector<VideoSize> getSizeList(const std::string& channel) const;

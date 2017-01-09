@@ -26,10 +26,6 @@ SignalHandlerMap&
 getSignalHandlers()
 {
     static SignalHandlerMap handlers = {
-#ifdef RING_UWP
-        /* UWP Debug */
-        exported_callback<DRing::Debug::MessageSend>(),
-#endif
         /* Call */
         exported_callback<DRing::CallSignal::StateChange>(),
         exported_callback<DRing::CallSignal::TransferFailed>(),
@@ -75,12 +71,12 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
+#endif
+#if defined(__ANDROID__) || defined(RING_UWP)
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
-#ifdef RING_UWP
-        exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
-        exported_callback<DRing::ConfigurationSignal::GetAppUserName>(),
-#endif
+        /* Debug */
+        exported_callback<DRing::Debug::MessageSend>(),
 
         /* Presence */
         exported_callback<DRing::PresenceSignal::NewServerSubscriptionRequest>(),
@@ -96,18 +92,14 @@ getSignalHandlers()
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
         exported_callback<DRing::VideoSignal::DecodingStarted>(),
         exported_callback<DRing::VideoSignal::DecodingStopped>(),
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
         exported_callback<DRing::VideoSignal::GetCameraInfo>(),
         exported_callback<DRing::VideoSignal::SetParameters>(),
+#endif
         exported_callback<DRing::VideoSignal::StartCapture>(),
         exported_callback<DRing::VideoSignal::StopCapture>(),
-#endif
-#ifdef RING_UWP
-        exported_callback<DRing::VideoSignal::GetCameraInfo>(),
-        exported_callback<DRing::VideoSignal::SetParameters>(),
-        exported_callback<DRing::VideoSignal::StartCapture>(),
-        exported_callback<DRing::VideoSignal::StopCapture>(),
-#endif
+        exported_callback<DRing::VideoSignal::DeviceAdded>(),
+        exported_callback<DRing::VideoSignal::ParametersChanged>(),
 #endif
     };
 

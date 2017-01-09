@@ -67,6 +67,17 @@ VideoDeviceMonitor::getCapabilities(const string& name) const
     return iter->getCapabilities();
 }
 
+void
+VideoDeviceMonitor::setDeviceInfo(const std::string& name, std::vector<std::map<std::string, std::string>> devInfo)
+{
+    const auto iter = findDeviceByName(name);
+
+    if (iter == devices_.end())
+        return;
+
+    iter->setDeviceInfo(devInfo);
+}
+
 VideoSettings
 VideoDeviceMonitor::getSettings(const string& name)
 {
@@ -193,11 +204,20 @@ VideoDeviceMonitor::addDevice(const string& node)
 
     // instantiate a new unique device
     try {
-        VideoDevice dev {node};
-        if (dev.getChannelList().empty())
+        VideoDevice dev_tmp {node};
+        if (dev_tmp.getChannelList().empty())
             return;
 
-        giveUniqueName(dev, devices_);
+        giveUniqueName(dev_tmp, devices_);
+
+        // in case there is no default device on a fresh run
+        if (defaultDevice_.empty())
+            defaultDevice_ = dev_tmp.name;
+
+        devices_.emplace_back(std::move(dev_tmp));
+        auto& dev = devices_.back();
+
+        emitSignal<DRing::VideoSignal::DeviceAdded>(node);
 
         // restore its preferences if any, or store the defaults
         auto it = findPreferencesByName(dev.name);
@@ -208,12 +228,8 @@ VideoDeviceMonitor::addDevice(const string& node)
             preferences_.emplace_back(dev.getSettings());
         }
 
-        // in case there is no default device on a fresh run
-        if (defaultDevice_.empty())
-            defaultDevice_ = dev.name;
-
-        devices_.emplace_back(std::move(dev));
         notify();
+
     } catch (const std::exception& e) {
         RING_ERR("Failed to add device %s: %s", node.c_str(), e.what());
         return;

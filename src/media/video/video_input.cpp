@@ -40,7 +40,7 @@
 #include <sstream>
 #include <cassert>
 #ifdef RING_UWP
-#include <io.h>
+#include <io.h> // for access
 #else
 #include <unistd.h>
 #endif
@@ -53,20 +53,11 @@ static constexpr unsigned default_grab_height = 480;
 VideoInput::VideoInput()
     : VideoGenerator::VideoGenerator()
     , sink_ {Manager::instance().createSinkClient("local")}
-#if defined(__ANDROID__)
-    , loop_(std::bind(&VideoInput::setup, this),
-            std::bind(&VideoInput::processAndroid, this),
-            std::bind(&VideoInput::cleanupAndroid, this))
-    , mutex_(), frame_cv_(), buffers_(8)
-#elif defined(RING_UWP)
-    , loop_(std::bind(&VideoInput::setup, this),
-            std::bind(&VideoInput::processUWP, this),
-            std::bind(&VideoInput::cleanupUWP, this))
-    , mutex_(), frame_cv_(), buffers_(8)
-#else
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
+#if defined(__ANDROID__) || defined(RING_UWP)
+    , mutex_(), frame_cv_(), buffers_(8)
 #endif
 {}
 
@@ -81,7 +72,7 @@ VideoInput::~VideoInput()
     loop_.join();
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 bool VideoInput::waitForBufferFull()
 {
     for(auto& buffer : buffers_) {
@@ -93,7 +84,7 @@ bool VideoInput::waitForBufferFull()
     return !isCapturing();
 }
 
-void VideoInput::processAndroid()
+void VideoInput::process()
 {
     foundDecOpts(decOpts_);
 
@@ -141,7 +132,7 @@ void VideoInput::processAndroid()
     }
 }
 
-void VideoInput::cleanupAndroid()
+void VideoInput::cleanup()
 {
     emitSignal<DRing::VideoSignal::StopCapture>();
 
@@ -158,85 +149,7 @@ void VideoInput::cleanupAndroid()
         }
     }
 }
-#endif
-#ifdef RING_UWP
-bool VideoInput::waitForBufferFull()
-{
-    for(auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_FULL)
-            return true;
-    }
-
-    /* If the loop is stopped, returned true so we can quit the process loop */
-    return !isCapturing();
-}
-
-void VideoInput::processUWP()
-{
-    foundDecOpts(decOpts_);
-
-    if (switchPending_.exchange(false)) {
-        RING_DBG("Switching input to '%s'", decOpts_.input.c_str());
-        if (decOpts_.input.empty()) {
-            loop_.stop();
-            return;
-        }
-
-        emitSignal<DRing::VideoSignal::StopCapture>();
-        emitSignal<DRing::VideoSignal::StartCapture>(decOpts_.input);
-    }
-
-    std::unique_lock<std::mutex> lck(mutex_);
-
-    frame_cv_.wait(lck, [this] { return waitForBufferFull(); });
-    for (auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_FULL && buffer.index == publish_index_) {
-            auto& frame = getNewFrame();
-            int format = getPixelFormat();
-
-            buffer.status = BUFFER_PUBLISHED;
-            frame.setFromMemory((uint8_t*)buffer.data, format, decOpts_.width, decOpts_.height,
-                                std::bind(&VideoInput::releaseBufferCb, this, std::placeholders::_1));
-            publish_index_++;
-            lck.unlock();
-            publishFrame();
-            break;
-        }
-    }
-}
-
-void VideoInput::cleanupUWP()
-{
-    emitSignal<DRing::VideoSignal::StopCapture>();
-
-    if (detach(sink_.get()))
-        sink_->stop();
-
-    std::lock_guard<std::mutex> lck(mutex_);
-    for (auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_AVAILABLE ||
-            buffer.status == BUFFER_FULL) {
-            freeOneBuffer(buffer);
-        } else if (buffer.status != BUFFER_NOT_ALLOCATED) {
-            RING_ERR("Failed to free buffer [%p]", buffer.data);
-        }
-    }
-}
-#endif
-
-bool VideoInput::setup()
-{
-    if (not attach(sink_.get())) {
-        RING_ERR("attach sink failed");
-        return false;
-    }
-
-    if (!sink_->start())
-        RING_ERR("start sink failed");
-
-    RING_DBG("VideoInput ready to capture");
-    return true;
-}
+#else
 
 void
 VideoInput::process()
@@ -257,6 +170,21 @@ VideoInput::cleanup()
     detach(sink_.get());
     sink_->stop();
     RING_DBG("VideoInput closed");
+}
+
+#endif
+bool VideoInput::setup()
+{
+    if (not attach(sink_.get())) {
+        RING_ERR("attach sink failed");
+        return false;
+    }
+
+    if (!sink_->start())
+        RING_ERR("start sink failed");
+
+    RING_DBG("VideoInput ready to capture");
+    return true;
 }
 
 void VideoInput::clearOptions()
@@ -303,7 +231,7 @@ bool VideoInput::captureFrame()
     }
 }
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(RING_UWP)
 int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
 {
     b.data = std::malloc(length);
@@ -348,91 +276,6 @@ VideoInput::obtainFrame(int length)
 
     /* allocate buffers. This is done there because it's only when the Android
      * application requests a buffer that we know its size
-     */
-    for(auto& buffer : buffers_) {
-        if (buffer.status == BUFFER_NOT_ALLOCATED) {
-            allocateOneBuffer(buffer, length);
-        }
-    }
-
-    /* search for an available frame */
-    for(auto& buffer : buffers_) {
-        if (buffer.length == length && buffer.status == BUFFER_AVAILABLE) {
-            buffer.status = BUFFER_CAPTURING;
-            return buffer.data;
-        }
-    }
-
-    RING_WARN("No buffer found");
-    return nullptr;
-}
-
-void
-VideoInput::releaseFrame(void *ptr)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-    for(auto& buffer : buffers_) {
-        if (buffer.data  == ptr) {
-            if (buffer.status != BUFFER_CAPTURING)
-                RING_ERR("Released a buffer with status %d, expected %d",
-                         buffer.status, BUFFER_CAPTURING);
-            if (isCapturing()) {
-                buffer.status = BUFFER_FULL;
-                buffer.index = capture_index_++;
-                frame_cv_.notify_one();
-            } else {
-                freeOneBuffer(buffer);
-            }
-            break;
-        }
-    }
-}
-#endif
-#ifdef RING_UWP
-int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
-{
-    b.data = std::malloc(length);
-    if (b.data) {
-        b.status = BUFFER_AVAILABLE;
-        b.length = length;
-        RING_DBG("Allocated buffer [%p]", b.data);
-        return 0;
-    }
-
-    RING_DBG("Failed to allocate memory for one buffer");
-    return -ENOMEM;
-}
-
-void VideoInput::freeOneBuffer(struct VideoFrameBuffer& b)
-{
-    RING_DBG("Free buffer [%p]", b.data);
-    std::free(b.data);
-    b.data = nullptr;
-    b.length = 0;
-    b.status = BUFFER_NOT_ALLOCATED;
-}
-
-void VideoInput::releaseBufferCb(uint8_t* ptr)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-
-    for(auto &buffer : buffers_) {
-        if (buffer.data == ptr) {
-            buffer.status = BUFFER_AVAILABLE;
-            if (!isCapturing())
-                freeOneBuffer(buffer);
-            break;
-        }
-    }
-}
-
-void*
-VideoInput::obtainFrame(int length)
-{
-    std::lock_guard<std::mutex> lck(mutex_);
-
-    /* allocate buffers. This is done here because it's only when the UWP
-     * application requests a buffer, that we know its size
      */
     for(auto& buffer : buffers_) {
         if (buffer.status == BUFFER_NOT_ALLOCATED) {
