@@ -252,7 +252,7 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
         };
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(__APPLE__)
         /**
          * These are special getters for Android so the daemon can retreive
          * some informations only accessible through Java APIs

@@ -809,15 +809,10 @@ RingAccount::loadIdentity()
     dht::crypto::Certificate dht_cert;
     dht::crypto::PrivateKey dht_key;
     try {
-#if TARGET_OS_IPHONE
-        const auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR;
-        dht_cert = dht::crypto::Certificate(fileutils::loadFile(path + tlsCertificateFile_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(path + tlsPrivateKeyFile_), tlsPassword_);
-#else
         dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
         dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
-#endif
-        auto crt_id = dht_cert.getId();
+        
+	auto crt_id = dht_cert.getId();
         if (crt_id != dht_key.getPublicKey().getId())
             return {};
 

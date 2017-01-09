@@ -69,11 +69,10 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::RegisteredNameFound>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
-#ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
-#endif
-        /* Debug */
+ 
+       /* Debug */
         exported_callback<DRing::DebugSignal::MessageSend>(),
 
         /* Presence */
