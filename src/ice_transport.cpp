@@ -634,7 +634,7 @@ IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
     // even if on the public side it have strong probabilities to not exist.
     // But as this candidate is made after initialization, it's not used during
     // negotiation, only to exchanged candidates between peers.
-    auto localIP = ip_utils::getLocalAddr();
+    auto localIP = ip_utils::getLocalAddr(publicIP.getFamily());
     auto pubIP = publicIP;
     for (const auto& addr : getLocalCandidatesAddr(compId)) {
         auto port = addr.getPort();
