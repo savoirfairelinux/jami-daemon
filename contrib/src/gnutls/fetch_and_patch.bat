@@ -1,5 +1,4 @@
-set BUILD=..\..\build
-set SRC=..\..\src
+set BUILD=%SRC%..\build
 
 mkdir %BUILD%
 cd %BUILD%

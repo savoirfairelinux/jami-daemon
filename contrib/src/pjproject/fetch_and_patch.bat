@@ -1,13 +1,12 @@
-set BUILD=..\..\build
-set SRC=..\..\src
+set BUILD=%SRC%..\build
 
 mkdir %BUILD%
 wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
-unzip pjproject-2.5.5.zip -d ..\..\build
+unzip pjproject-2.5.5.zip -d %BUILD%
 del pjproject-2.5.5.zip
-rename ..\..\build\pjproject-2.5.5 pjproject
+rename %BUILD%\pjproject-2.5.5 pjproject
 
-cd ..\..\build\pjproject
+cd %BUILD%\pjproject
 
 git apply --reject --whitespace=fix %SRC%\pjproject\intptr_t.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_win.patch
