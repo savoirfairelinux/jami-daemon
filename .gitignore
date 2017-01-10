@@ -96,6 +96,9 @@ nbproject
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
 
+#UWP
+/contrib/build/
+
 #iOS
 /build-ios*
 
