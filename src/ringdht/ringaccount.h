@@ -291,11 +291,16 @@ class RingAccount : public SIPAccountBase {
         bool acceptTrustRequest(const std::string& from);
         bool discardTrustRequest(const std::string& from);
 
-        void addContact(const std::string& uri);
+        /**
+         * Add contact to the account contact list.
+         * Set confirmed if we know the contact also added us.
+         */
+        void addContact(const std::string& uri, bool confirmed = false);
         void removeContact(const std::string& uri);
         std::vector<std::map<std::string, std::string>> getContacts() const;
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
+        void sendTrustRequestConfirm(const dht::InfoHash& to);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
         void addDevice(const std::string& password);

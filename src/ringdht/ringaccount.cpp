@@ -2080,6 +2080,9 @@ RingAccount::doRegister_()
                         // Contact exists, update confirmation status
                         contact->second.confirmed = true;
                         emitSignal<DRing::ConfigurationSignal::ContactAdded>(this_.getAccountID(), peer_account.toString(), true);
+                        // Send confirmation
+                        if (not v.confirm)
+                            this_.sendTrustRequestConfirm(peer_account);
                         this_.syncDevices();
                     } else {
                         // Add trust request
@@ -2756,13 +2759,14 @@ RingAccount::getContactHeader(pjsip_transport* t)
 /* contacts */
 
 void
-RingAccount::addContact(const std::string& uri)
+RingAccount::addContact(const std::string& uri, bool confirmed)
 {
     dht::InfoHash h (uri);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact{}).first;
     c->second.added = std::time(nullptr);
+    c->second.confirmed = confirmed or c->second.confirmed;
     trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::ALLOWED);
     saveContacts();
     emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, c->second.confirmed);
@@ -2813,7 +2817,7 @@ RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
         c->second.added = std::max(contact.added, c->second.added);
         c->second.removed = std::max(contact.removed, c->second.removed);
         if (contact.confirmed != c->second.confirmed) {
-            c->second.confirmed = std::max(contact.confirmed, c->second.confirmed);
+            c->second.confirmed = contact.confirmed or c->second.confirmed;
             emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), c->second.confirmed);
         }
     }
@@ -2862,13 +2866,20 @@ RingAccount::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
     auto i = trustRequests_.find(f);
-    if (i != trustRequests_.end()) {
-        addContact(from);
-        trustRequests_.erase(i);
-        saveTrustRequests();
-        return true;
-    }
-    return false;
+    if (i == trustRequests_.end())
+        return false;
+
+    // The contact sent us a TR so we are in its contact list
+    addContact(from, true);
+
+    // Clear trust request
+    auto treq = std::move(i->second);
+    trustRequests_.erase(i);
+    saveTrustRequests();
+
+    // Send confirmation
+    sendTrustRequestConfirm(f);
+    return true;
 }
 
 bool
@@ -2894,6 +2905,18 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
         shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()),
                           dev,
                           dht::TrustRequest(DHT_TYPE_NS, payload));
+    });
+}
+
+void
+RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
+{
+    dht::TrustRequest answer {DHT_TYPE_NS};
+    answer.confirm = true;
+    forEachDevice(to, [to,answer](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
+    {
+        RING_WARN("[Account %s] sending trust request reply: %s / %s", shared->getAccountID().c_str(), to.toString().c_str(), dev.toString().c_str());
+        shared->dht_.putEncrypted(dht::InfoHash::get("inbox:"+dev.toString()), dev, answer);
     });
 }
 
