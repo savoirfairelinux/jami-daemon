@@ -314,7 +314,7 @@ SinkClient::SinkClient(const std::string& id, bool mixer)
 
 void
 SinkClient::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
-                   std::shared_ptr<VideoFrame> frame_p)
+                   const std::shared_ptr<VideoFrame>& frame_p)
 {
     auto& f = *frame_p;
 

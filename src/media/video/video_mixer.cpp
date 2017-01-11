@@ -101,7 +101,7 @@ VideoMixer::detached(Observable<std::shared_ptr<VideoFrame>>* ob)
 
 void
 VideoMixer::update(Observable<std::shared_ptr<VideoFrame>>* ob,
-                   std::shared_ptr<VideoFrame> frame_p)
+                   const std::shared_ptr<VideoFrame>& frame_p)
 {
     auto lock(rwMutex_.read());
 

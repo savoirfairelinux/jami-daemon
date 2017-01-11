@@ -49,7 +49,7 @@ public:
     int getPixelFormat() const override;
 
     // as VideoFramePassiveReader
-    void update(Observable<std::shared_ptr<VideoFrame>>* ob, std::shared_ptr<VideoFrame> v) override;
+    void update(Observable<std::shared_ptr<VideoFrame>>* ob, const std::shared_ptr<VideoFrame>& v) override;
     void attached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
     void detached(Observable<std::shared_ptr<VideoFrame>>* ob) override;
 

@@ -1172,7 +1172,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
             std::tie(key, loc) = computeKeys(archive_password, archive_pin, previous);
             RING_DBG("Trying to load account from DHT with %s at %s", archive_pin.c_str(), loc.toString().c_str());
             if (auto this_ = w.lock()) {
-                this_->dht_.get(loc, [w,key,found,archive_password,archiveFound](std::shared_ptr<dht::Value> val) {
+                this_->dht_.get(loc, [w,key,found,archive_password,archiveFound](const std::shared_ptr<dht::Value>& val) {
                     std::vector<uint8_t> decrypted;
                     try {
                         decrypted = dht::crypto::aesDecrypt(val->data, key);
@@ -1961,7 +1961,7 @@ RingAccount::doRegister_()
             for (const auto& crl : identity_.second->issuer->getRevocationLists())
                 dht_.put(h, crl, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
-                shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate> crt) {
+                shared->findCertificate(dev.dev, [shared](const std::shared_ptr<dht::crypto::Certificate>& crt) {
                     shared->foundAccountDevice(crt);
                 });
                 return true;
@@ -2014,7 +2014,7 @@ RingAccount::doRegister_()
                 if (v.service != DHT_TYPE_NS)
                     return true;
 
-                shared->findCertificate(v.from, [shared, v](const std::shared_ptr<dht::crypto::Certificate> cert) mutable {
+                shared->findCertificate(v.from, [shared, v](const std::shared_ptr<dht::crypto::Certificate>& cert) mutable {
                     auto& this_ = *shared.get();
 
                     // check peer certificate
@@ -2140,7 +2140,7 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
 }
 
 void
-RingAccount::incomingCall(dht::IceCandidates&& msg, std::shared_ptr<dht::crypto::Certificate> from_cert)
+RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert)
 {
     RING_WARN("ICE incoming from DHT peer %s", msg.from.toString().c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
@@ -2240,10 +2240,10 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
 }
 
 void
-RingAccount::replyToIncomingIceMsg(std::shared_ptr<SIPCall> call,
-                                  std::shared_ptr<IceTransport> ice,
-                                  const dht::IceCandidates& peer_ice_msg,
-                                  std::shared_ptr<dht::crypto::Certificate> peer_cert)
+RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
+                                   const std::shared_ptr<IceTransport>& ice,
+                                   const dht::IceCandidates& peer_ice_msg,
+                                   const std::shared_ptr<dht::crypto::Certificate>& peer_cert)
 {
     registerDhtAddress(*ice);
 
@@ -2819,7 +2819,7 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
     RING_WARN("Received device sync data %zu", sync.devices_known.size());
     for (const auto& d : sync.devices_known) {
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-        findCertificate(d.first, [shared,d](const std::shared_ptr<dht::crypto::Certificate> crt) {
+        findCertificate(d.first, [shared,d](const std::shared_ptr<dht::crypto::Certificate>& crt) {
             if (not crt)
                 return;
             shared->foundAccountDevice(crt, d.second);

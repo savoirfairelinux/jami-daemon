@@ -453,7 +453,7 @@ Manager::switchCall(const std::string& id)
 }
 
 void
-Manager::switchCall(std::shared_ptr<Call> call)
+Manager::switchCall(const std::shared_ptr<Call>& call)
 {
     switchCall(call->getCallId());
 }
@@ -1445,7 +1445,7 @@ Manager::scheduleTask(const std::function<void()>&& task, std::chrono::steady_cl
 
 
 void
-Manager::scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when)
+Manager::scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when)
 {
     std::lock_guard<std::mutex> lock(scheduledTasksMutex_);
     scheduledTasks_.emplace(when, task);

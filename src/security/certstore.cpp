@@ -142,7 +142,7 @@ CertificateStore::findCertificateByUID(const std::string& uid) const
 }
 
 std::shared_ptr<crypto::Certificate>
-CertificateStore::findIssuer(std::shared_ptr<crypto::Certificate> crt) const
+CertificateStore::findIssuer(const std::shared_ptr<crypto::Certificate>& crt) const
 {
     std::shared_ptr<crypto::Certificate> ret {};
     auto n = crt->getIssuerUID();
@@ -260,13 +260,13 @@ CertificateStore::pinCertificate(crypto::Certificate&& cert, bool local)
 }
 
 std::vector<std::string>
-CertificateStore::pinCertificate(std::shared_ptr<crypto::Certificate> cert, bool local)
+CertificateStore::pinCertificate(const std::shared_ptr<crypto::Certificate>& cert, bool local)
 {
     bool sig {false};
     std::vector<std::string> ids {};
     {
-        std::lock_guard<std::mutex> l(lock_);
         auto c = cert;
+        std::lock_guard<std::mutex> l(lock_);
         while (c) {
             bool inserted;
             auto id = c->getId().toString();

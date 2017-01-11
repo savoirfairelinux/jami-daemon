@@ -135,10 +135,10 @@ class RingBufferPool {
 
         void removeReadBindings(const std::string& call_id);
 
-        void addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+        void addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                    const std::string& call_id);
 
-        void removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+        void removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                         const std::string& call_id);
 
         // A cache of created RingBuffers listed by IDs.

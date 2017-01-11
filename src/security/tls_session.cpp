@@ -152,7 +152,7 @@ private:
     T creds_;
 };
 
-TlsSession::TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id,
+TlsSession::TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id,
                        const TlsParams& params, const TlsSessionCallbacks& cbs, bool anonymous)
     : socket_(new IceSocket(ice, ice_comp_id))
     , isServer_(not ice->isInitiator())

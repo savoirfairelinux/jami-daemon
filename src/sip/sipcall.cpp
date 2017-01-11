@@ -177,7 +177,7 @@ void SIPCall::setContactHeader(pj_str_t *contact)
 }
 
 void
-SIPCall::setTransport(std::shared_ptr<SipTransport> t)
+SIPCall::setTransport(const std::shared_ptr<SipTransport>& t)
 {
     if (isSecure() and t and not t->isSecure()) {
         RING_ERR("Can't set unsecure transport to secure call.");
@@ -1118,7 +1118,7 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
 }
 
 void
-SIPCall::merge(std::shared_ptr<SIPCall> scall)
+SIPCall::merge(const std::shared_ptr<SIPCall>& scall)
 {
     RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
     inv = std::move(scall->inv);

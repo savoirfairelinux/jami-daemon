@@ -142,7 +142,7 @@ RingBufferPool::removeReadBindings(const std::string& call_id)
  * Make given call ID a reader of given ring buffer
  */
 void
-RingBufferPool::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+RingBufferPool::addReaderToRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                   const std::string& call_id)
 {
     if (call_id != DEFAULT_ID and rbuf->id == call_id)
@@ -154,7 +154,7 @@ RingBufferPool::addReaderToRingBuffer(std::shared_ptr<RingBuffer> rbuf,
 }
 
 void
-RingBufferPool::removeReaderFromRingBuffer(std::shared_ptr<RingBuffer> rbuf,
+RingBufferPool::removeReaderFromRingBuffer(const std::shared_ptr<RingBuffer>& rbuf,
                                        const std::string& call_id)
 {
     if (auto bindings = getReadBindings(call_id)) {

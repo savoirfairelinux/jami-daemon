@@ -54,7 +54,7 @@ public:
 
     // as VideoFramePassiveReader
     void update(Observable<std::shared_ptr<VideoFrame>>* obs,
-                std::shared_ptr<VideoFrame> frame_p) override;
+                const std::shared_ptr<VideoFrame>& frame_p) override;
 
     void setMuted(bool isMuted);
     uint16_t getLastSeqValue();

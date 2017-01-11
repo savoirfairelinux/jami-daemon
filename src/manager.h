@@ -809,7 +809,7 @@ class Manager {
         void unsetCurrentCall();
 
         void switchCall(const std::string& id);
-        void switchCall(std::shared_ptr<Call> call);
+        void switchCall(const std::shared_ptr<Call>& call);
 
         /** Application wide tone controler */
         ToneControl toneCtrl_;
@@ -998,7 +998,7 @@ class Manager {
             Runnable(const std::function<void()>&& t) : cb(std::move(t)) {}
         };
         std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
-        void scheduleTask(std::shared_ptr<Runnable> task, std::chrono::steady_clock::time_point when);
+        void scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when);
 
 #ifdef RING_VIDEO
         /**

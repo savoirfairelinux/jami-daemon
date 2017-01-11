@@ -344,7 +344,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         }
         void addSubCall(const std::shared_ptr<Call>& call);
 
-        virtual void merge(std::shared_ptr<Call> scall);
+        virtual void merge(const std::shared_ptr<Call>& scall);
 
     protected:
         /**

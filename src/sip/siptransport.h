@@ -176,10 +176,10 @@ public:
     getTlsTransport(const std::shared_ptr<TlsListener>&, const IpAddr& remote, const std::string& remote_name = {});
 
     std::shared_ptr<SipTransport>
-    getIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id);
+    getIceTransport(const std::shared_ptr<IceTransport>&, unsigned comp_id);
 
     std::shared_ptr<SipTransport>
-    getTlsIceTransport(const std::shared_ptr<IceTransport>, unsigned comp_id,
+    getTlsIceTransport(const std::shared_ptr<IceTransport>&, unsigned comp_id,
                        const tls::TlsParams&);
 
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);

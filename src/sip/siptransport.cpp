@@ -418,7 +418,7 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
+SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport>& ice,
                                     unsigned comp_id)
 {
     auto sip_ice_tr = std::unique_ptr<SipIceTransport>(
@@ -437,7 +437,7 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport> ice,
 }
 
 std::shared_ptr<SipTransport>
-SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport> ice,
+SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>& ice,
                                        unsigned comp_id,
                                        const tls::TlsParams& params)
 {

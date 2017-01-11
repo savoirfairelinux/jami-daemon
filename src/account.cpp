@@ -331,8 +331,8 @@ Account::setActiveCodecs(const std::vector<unsigned>& list)
 
     std::sort(std::begin(accountCodecInfoList_),
               std::end  (accountCodecInfoList_),
-              [](std::shared_ptr<AccountCodecInfo> a,
-                 std::shared_ptr<AccountCodecInfo> b) {
+              [](const std::shared_ptr<AccountCodecInfo>& a,
+                 const std::shared_ptr<AccountCodecInfo>& b) {
                   return a->order < b->order;
               });
 

@@ -136,7 +136,7 @@ public:
         VerifyCertificate verifyCertificate;
     };
 
-    TlsSession(std::shared_ptr<IceTransport> ice, int ice_comp_id, const TlsParams& params,
+    TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id, const TlsParams& params,
                const TlsSessionCallbacks& cbs, bool anonymous=true);
     ~TlsSession();
 

@@ -128,7 +128,7 @@ class SIPCall : public Call
 
         void setContactHeader(pj_str_t *contact);
 
-        void setTransport(std::shared_ptr<SipTransport> t);
+        void setTransport(const std::shared_ptr<SipTransport>& t);
 
         inline SipTransport* getTransport() {
             return transport_.get();
@@ -215,10 +215,10 @@ class SIPCall : public Call
 
         void terminateSipSession(int status);
 
-        virtual void merge(std::shared_ptr<Call> scall) {
+        virtual void merge(const std::shared_ptr<Call>& scall) {
             merge(std::dynamic_pointer_cast<SIPCall>(scall));
         }
-        virtual void merge(std::shared_ptr<SIPCall> scall);
+        virtual void merge(const std::shared_ptr<SIPCall>& scall);
 
         void setPeerRegistredName(const std::string& name) {
             peerRegistredName_ = name;

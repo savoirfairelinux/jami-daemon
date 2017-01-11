@@ -464,7 +464,7 @@ Call::addSubCall(const std::shared_ptr<Call>& call)
 }
 
 void
-Call::merge(std::shared_ptr<Call> scall)
+Call::merge(const std::shared_ptr<Call>& scall)
 {
     RING_WARN("[call:%s] merge to -> [call:%s]", scall->getCallId().c_str(), getCallId().c_str());
     auto& call = *scall;

@@ -113,8 +113,8 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 
         RING_DBG("Address lookup for %s: %s", addr.c_str(), uri.to_string().c_str());
 
-        auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>,
-                                                 const std::shared_ptr<restbed::Response> reply) {
+        auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>&,
+                                                 const std::shared_ptr<restbed::Response>& reply) {
             if (reply->get_status_code() == 200) {
                 size_t length = getContentLength(*reply);
                 if (length > MAX_RESPONSE_SIZE) {
@@ -180,8 +180,8 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 
         RING_DBG("Name lookup for %s: %s", name.c_str(), uri.to_string().c_str());
 
-        auto ret = restbed::Http::async(request, [this,cb,name](const std::shared_ptr<restbed::Request>,
-                                                     const std::shared_ptr<restbed::Response> reply) {
+        auto ret = restbed::Http::async(request, [this,cb,name](const std::shared_ptr<restbed::Request>&,
+                                                     const std::shared_ptr<restbed::Response>& reply) {
             auto code = reply->get_status_code();
             if (code != 200)
                 RING_DBG("Name lookup for %s: got reply code %d", name.c_str(), code);
@@ -272,8 +272,8 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
 
         RING_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
         auto ret = restbed::Http::async(request,
-                             [this,cb,addr,name](const std::shared_ptr<restbed::Request>,
-                                                 const std::shared_ptr<restbed::Response> reply)
+                             [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
+                                                 const std::shared_ptr<restbed::Response>& reply)
         {
             auto code = reply->get_status_code();
             RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);

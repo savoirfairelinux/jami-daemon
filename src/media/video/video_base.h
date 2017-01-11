@@ -116,7 +116,7 @@ class Observer
 {
 public:
     virtual ~Observer() {};
-    virtual void update(Observable<T>*, T) = 0;
+    virtual void update(Observable<T>*, const T&) = 0;
     virtual void attached(Observable<T>*) {};
     virtual void detached(Observable<T>*) {};
 };

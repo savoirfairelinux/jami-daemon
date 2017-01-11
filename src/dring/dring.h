@@ -118,7 +118,7 @@ class CallbackWrapper : public CallbackWrapperBase {
         // Create and initialize a wrapper from a generic CallbackWrapperBase
         // shared pointer.
         // Note: the given callback is copied into internal storage.
-        CallbackWrapper(std::shared_ptr<CallbackWrapperBase> p) noexcept {
+        CallbackWrapper(const std::shared_ptr<CallbackWrapperBase>& p) noexcept {
             if (p)
                 cb_ = ((CallbackWrapper<TProto>*)p.get())->cb_;
         }
