@@ -156,8 +156,13 @@ std::vector<std::string> getCertificatesByStatus(const std::string& account, con
 std::map<std::string, std::string> getTrustRequests(const std::string& accountId);
 bool acceptTrustRequest(const std::string& accountId, const std::string& from);
 bool discardTrustRequest(const std::string& accountId, const std::string& from);
-
 void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
+
+/* Contacts */
+
+void addContact(const std::string& accountId, const std::string& uri);
+void removeContact(const std::string& accountId, const std::string& uri);
+std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
 
 /*
  * Import/Export accounts
@@ -216,6 +221,14 @@ struct ConfigurationSignal {
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
                 using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
+        };
+        struct ContactAdded {
+                constexpr static const char* name = "ContactAdded";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed);
+        };
+        struct ContactRemoved {
+                constexpr static const char* name = "ContactRemoved";
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned);
         };
         struct ExportOnRingEnded {
                 constexpr static const char* name = "ExportOnRingEnded";
