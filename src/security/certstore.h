@@ -65,7 +65,7 @@ public:
 
     std::vector<std::string> pinCertificate(const std::vector<uint8_t>& crt, bool local = true) noexcept;
     std::vector<std::string> pinCertificate(crypto::Certificate&& crt, bool local = true);
-    std::vector<std::string> pinCertificate(std::shared_ptr<crypto::Certificate> crt, bool local = true);
+    std::vector<std::string> pinCertificate(const std::shared_ptr<crypto::Certificate>& crt, bool local = true);
     bool unpinCertificate(const std::string&);
 
     void pinCertificatePath(const std::string& path, std::function<void(const std::vector<std::string>&)> cb = {});
