@@ -8,6 +8,7 @@ gmp, ^
 gnutls, ^
 iconv, ^
 opendht, ^
+msgpack, ^
 nettle, ^
 pjproject ^
 zlib ^
