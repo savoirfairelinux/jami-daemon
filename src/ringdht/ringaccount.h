@@ -85,6 +85,7 @@ constexpr const char* const RING_ACCOUNT_CERT = "ringAccountCert";
 constexpr const char* const RING_ACCOUNT_RECEIPT = "ringAccountReceipt";
 constexpr const char* const RING_ACCOUNT_RECEIPT_SIG = "ringAccountReceiptSignature";
 constexpr const char* const RING_ACCOUNT_CRL = "ringAccountCRL";
+constexpr const char* const RING_ACCOUNT_CONTACTS = "ringAccountContacts";
 }
 
 class IceTransport;
