@@ -7,4 +7,7 @@ cd %BUILD%
 
 git clone %REPOURL%
 
+cd zlib
+git apply --reject --whitespace=fix %SRC%\zlib\zlib-uwp.patch
+
 cd %SRC%

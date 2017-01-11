@@ -7,4 +7,7 @@ cd %BUILD%
 
 git clone %REPOURL%
 
+cd nettle
+git apply --reject --whitespace=fix %SRC%\nettle\nettle-uwp.patch
+
 cd %SRC%

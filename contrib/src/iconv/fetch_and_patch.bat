@@ -7,4 +7,7 @@ cd %BUILD%
 
 git clone %REPOURL%
 
+cd libiconv
+git apply --reject --whitespace=fix %SRC%\iconv\libiconv-uwp.patch
+
 cd %SRC%
