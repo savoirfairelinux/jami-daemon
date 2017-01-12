@@ -533,9 +533,10 @@ get_config_dir()
     return config_path;
 
 #elif defined( __APPLE__ )
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
+    std::string config_path = fileutils::get_home_dir() + DIR_SEPARATOR_STR
         + "Library" + DIR_SEPARATOR_STR + "Application Support"
         + DIR_SEPARATOR_STR + PACKAGE;
+    return config_path;
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
