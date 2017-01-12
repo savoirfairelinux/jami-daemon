@@ -532,10 +532,6 @@ get_config_dir()
         config_path = paths[0];
     return config_path;
 
-#elif defined( __APPLE__ )
-    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
-        + "Library" + DIR_SEPARATOR_STR + "Application Support"
-        + DIR_SEPARATOR_STR + PACKAGE;
 #elif defined(RING_UWP)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("", &paths);
@@ -549,9 +545,14 @@ get_config_dir()
     }
     return config_path;
 #else
+#if defined(__APPLE__)
+    std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR
+        + "Library" + DIR_SEPARATOR_STR + "Application Support"
+        + DIR_SEPARATOR_STR + PACKAGE;
+#else
     std::string configdir = fileutils::get_home_dir() + DIR_SEPARATOR_STR +
                             ".config" + DIR_SEPARATOR_STR + PACKAGE;
-
+#endif
     const std::string xdg_env(XDG_CONFIG_HOME);
     if (not xdg_env.empty())
         configdir = xdg_env + DIR_SEPARATOR_STR + PACKAGE;
