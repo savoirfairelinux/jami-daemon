@@ -1,0 +1,13 @@
+--- a/.gitmodules
++++ b/.gitmodules
+@@ -8,5 +8,5 @@
+ 	branch = master
+ [submodule "dependency/openssl"]
+ 	path = dependency/openssl
+-	url = https://github.com/corvusoft/openssl-dependency
+-	branch = OpenSSL_1_0_2-stable
++	url = https://github.com/Microsoft/openssl
++	branch = OpenSSL_1_0_2_WinRT-stable
+-- 
+2.8.1.windows.1
+
