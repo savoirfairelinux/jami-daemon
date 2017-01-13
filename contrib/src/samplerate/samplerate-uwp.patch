@@ -1,0 +1,381 @@
+--- /dev/null
++++ b/MSVC/libsamplerate.sln
+@@ -0,0 +1,28 @@
++﻿
++Microsoft Visual Studio Solution File, Format Version 12.00
++# Visual Studio 14
++VisualStudioVersion = 14.0.25123.0
++MinimumVisualStudioVersion = 10.0.40219.1
++Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsamplerate", "libsamplerate.vcxproj", "{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}"
++EndProject
++Global
++	GlobalSection(SolutionConfigurationPlatforms) = preSolution
++		Debug|x64 = Debug|x64
++		Debug|x86 = Debug|x86
++		Release|x64 = Release|x64
++		Release|x86 = Release|x86
++	EndGlobalSection
++	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x64.ActiveCfg = Debug|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x64.Build.0 = Debug|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x86.ActiveCfg = Debug|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x86.Build.0 = Debug|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x64.ActiveCfg = Release|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x64.Build.0 = Release|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x86.ActiveCfg = Release|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x86.Build.0 = Release|Win32
++	EndGlobalSection
++	GlobalSection(SolutionProperties) = preSolution
++		HideSolutionNode = FALSE
++	EndGlobalSection
++EndGlobal
+--- /dev/null
++++ b/MSVC/libsamplerate.vcxproj
+@@ -0,0 +1,190 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}</ProjectGuid>
++    <RootNamespace>libsamplerate</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="Shared">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <TargetExt>.lib</TargetExt>
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <TargetExt>.lib</TargetExt>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <TargetExt>.lib</TargetExt>
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <TargetExt>.lib</TargetExt>
++    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
++  </PropertyGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++    </ClCompile>
++    <PreBuildEvent>
++      <Command>
++      </Command>
++    </PreBuildEvent>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++    </ClCompile>
++    <PreBuildEvent>
++      <Command>
++      </Command>
++    </PreBuildEvent>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x64
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x64
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(ProjectDir)..\..\lib
++mkdir $(ProjectDir)..\..\lib\x64
++copy $(OutDir)$(TargetName)$(TargetExt) $(ProjectDir)..\..\lib\x64
++mkdir $(ProjectDir)..\..\include
++xcopy /S /Y $(ProjectDir)..\src\*.h $(ProjectDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemGroup>
++    <ClCompile Include="..\src\samplerate.c" />
++    <ClCompile Include="..\src\src_linear.c" />
++    <ClCompile Include="..\src\src_sinc.c" />
++    <ClCompile Include="..\src\src_zoh.c" />
++  </ItemGroup>
++  <ItemGroup>
++    <ClInclude Include="..\src\common.h" />
++    <ClInclude Include="..\src\config.h" />
++    <ClInclude Include="..\src\fastest_coeffs.h" />
++    <ClInclude Include="..\src\float_cast.h" />
++    <ClInclude Include="..\src\high_qual_coeffs.h" />
++    <ClInclude Include="..\src\mid_qual_coeffs.h" />
++    <ClInclude Include="..\src\samplerate.h" />
++  </ItemGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+--- /dev/null
++++ b/src/config.h
+@@ -0,0 +1,150 @@
++/* src/config.h.  Generated from config.h.in by configure.  */
++/* src/config.h.in.  Generated from configure.ac by autoheader.  */
++
++/* Set to 1 if the compile is GNU GCC. */
++#define COMPILER_IS_GCC 1
++
++/* Target processor clips on negative float to int conversion. */
++#define CPU_CLIPS_NEGATIVE 1
++
++/* Target processor clips on positive float to int conversion. */
++#define CPU_CLIPS_POSITIVE 0
++
++/* Target processor is big endian. */
++#define CPU_IS_BIG_ENDIAN 0
++
++/* Target processor is little endian. */
++#define CPU_IS_LITTLE_ENDIAN 1
++
++/* Major version of GCC or 3 otherwise. */
++#define GCC_MAJOR_VERSION 5
++
++/* Define to 1 if you have the `alarm' function. */
++#define HAVE_ALARM 1
++
++/* Define to 1 if you have the `calloc' function. */
++#define HAVE_CALLOC 1
++
++/* Define to 1 if you have the `ceil' function. */
++#define HAVE_CEIL 1
++
++/* Define to 1 if you have the <dlfcn.h> header file. */
++#define HAVE_DLFCN_H 1
++
++/* Set to 1 if you have libfftw3. */
++#define HAVE_FFTW3 0
++
++/* Define to 1 if you have the `floor' function. */
++#define HAVE_FLOOR 1
++
++/* Define to 1 if you have the `fmod' function. */
++#define HAVE_FMOD 1
++
++/* Define to 1 if you have the `free' function. */
++#define HAVE_FREE 1
++
++/* Define to 1 if you have the <inttypes.h> header file. */
++#define HAVE_INTTYPES_H 1
++
++/* Define to 1 if you have the `m' library (-lm). */
++#define HAVE_LIBM 1
++
++/* Define if you have C99's lrint function. */
++#define HAVE_LRINT 1
++
++/* Define if you have C99's lrintf function. */
++#define HAVE_LRINTF 1
++
++/* Define to 1 if you have the `malloc' function. */
++#define HAVE_MALLOC 1
++
++/* Define to 1 if you have the `memcpy' function. */
++#define HAVE_MEMCPY 1
++
++/* Define to 1 if you have the `memmove' function. */
++#define HAVE_MEMMOVE 1
++
++/* Define to 1 if you have the <memory.h> header file. */
++#define HAVE_MEMORY_H 1
++
++/* Define if you have signal SIGALRM. */
++#define HAVE_SIGALRM 1
++
++/* Define to 1 if you have the `signal' function. */
++#define HAVE_SIGNAL 1
++
++/* Set to 1 if you have libsndfile. */
++#define HAVE_SNDFILE 0
++
++/* Define to 1 if you have the <stdint.h> header file. */
++#define HAVE_STDINT_H 1
++
++/* Define to 1 if you have the <stdlib.h> header file. */
++#define HAVE_STDLIB_H 1
++
++/* Define to 1 if you have the <strings.h> header file. */
++#define HAVE_STRINGS_H 1
++
++/* Define to 1 if you have the <string.h> header file. */
++#define HAVE_STRING_H 1
++
++/* Define to 1 if you have the <sys/stat.h> header file. */
++#define HAVE_SYS_STAT_H 1
++
++/* Define to 1 if you have the <sys/times.h> header file. */
++#define HAVE_SYS_TIMES_H 1
++
++/* Define to 1 if you have the <sys/types.h> header file. */
++#define HAVE_SYS_TYPES_H 1
++
++/* Define to 1 if you have the <unistd.h> header file. */
++#define HAVE_UNISTD_H 1
++
++/* Define to the sub-directory in which libtool stores uninstalled libraries.
++   */
++#define LT_OBJDIR ".libs/"
++
++/* Define to 1 if your C compiler doesn't accept -c and -o together. */
++/* #undef NO_MINUS_C_MINUS_O */
++
++/* Set to 1 if compiling for Win32 */
++#define OS_IS_WIN32 0
++
++/* Name of package */
++#define PACKAGE "libsamplerate"
++
++/* Define to the address where bug reports for this package should be sent. */
++#define PACKAGE_BUGREPORT "erikd@mega-nerd.com"
++
++/* Define to the full name of this package. */
++#define PACKAGE_NAME "libsamplerate"
++
++/* Define to the full name and version of this package. */
++#define PACKAGE_STRING "libsamplerate 0.1.8"
++
++/* Define to the one symbol short name of this package. */
++#define PACKAGE_TARNAME "libsamplerate"
++
++/* Define to the home page for this package. */
++#define PACKAGE_URL "http://www.mega-nerd.com/libsamplerate/"
++
++/* Define to the version of this package. */
++#define PACKAGE_VERSION "0.1.8"
++
++/* The size of `double', as computed by sizeof. */
++#define SIZEOF_DOUBLE 8
++
++/* The size of `float', as computed by sizeof. */
++#define SIZEOF_FLOAT 4
++
++/* The size of `int', as computed by sizeof. */
++#define SIZEOF_INT 4
++
++/* The size of `long', as computed by sizeof. */
++#define SIZEOF_LONG 4
++
++/* Define to 1 if you have the ANSI C header files. */
++#define STDC_HEADERS 1
++
++/* Version number of package */
++#define VERSION "0.1.8"
+-- 
+2.8.1.windows.1
+
