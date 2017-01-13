@@ -2,7 +2,7 @@ set BUILD=%SRC%..\build
 
 mkdir %BUILD%
 wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
-unzip pjproject-2.5.5.zip -d %BUILD%
+unzip -q pjproject-2.5.5.zip -d %BUILD%
 del pjproject-2.5.5.zip
 rename %BUILD%\pjproject-2.5.5 pjproject
 

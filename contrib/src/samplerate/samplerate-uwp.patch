@@ -1,0 +1,228 @@
+--- /dev/null
++++ b/MSVC/libsamplerate.sln
+@@ -0,0 +1,28 @@
++﻿
++Microsoft Visual Studio Solution File, Format Version 12.00
++# Visual Studio 14
++VisualStudioVersion = 14.0.25123.0
++MinimumVisualStudioVersion = 10.0.40219.1
++Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libsamplerate", "libsamplerate.vcxproj", "{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}"
++EndProject
++Global
++	GlobalSection(SolutionConfigurationPlatforms) = preSolution
++		Debug|x64 = Debug|x64
++		Debug|x86 = Debug|x86
++		Release|x64 = Release|x64
++		Release|x86 = Release|x86
++	EndGlobalSection
++	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x64.ActiveCfg = Debug|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x64.Build.0 = Debug|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x86.ActiveCfg = Debug|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Debug|x86.Build.0 = Debug|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x64.ActiveCfg = Release|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x64.Build.0 = Release|x64
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x86.ActiveCfg = Release|Win32
++		{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}.Release|x86.Build.0 = Release|Win32
++	EndGlobalSection
++	GlobalSection(SolutionProperties) = preSolution
++		HideSolutionNode = FALSE
++	EndGlobalSection
++EndGlobal
+--- /dev/null
++++ b/MSVC/libsamplerate.vcxproj
+@@ -0,0 +1,190 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{0DC9504B-4FF5-4590-97B3-FFD4C04F2893}</ProjectGuid>
++    <RootNamespace>libsamplerate</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="Shared">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <TargetExt>.lib</TargetExt>
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <TargetExt>.lib</TargetExt>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <TargetExt>.lib</TargetExt>
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <TargetExt>.lib</TargetExt>
++    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\</OutDir>
++  </PropertyGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++    </ClCompile>
++    <PreBuildEvent>
++      <Command>
++      </Command>
++    </PreBuildEvent>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++    </ClCompile>
++    <PreBuildEvent>
++      <Command>
++      </Command>
++    </PreBuildEvent>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x64
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x64
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)$(TargetName)$(TargetExt) $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\src\*.h $(SolutionDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++      <DisableSpecificWarnings>4244;4305;</DisableSpecificWarnings>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(ProjectDir)..\..\lib
++mkdir $(ProjectDir)..\..\lib\x64
++copy $(OutDir)$(TargetName)$(TargetExt) $(ProjectDir)..\..\lib\x64
++mkdir $(ProjectDir)..\..\include
++xcopy /S /Y $(ProjectDir)..\src\*.h $(ProjectDir)..\..\include
++</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemGroup>
++    <ClCompile Include="..\src\samplerate.c" />
++    <ClCompile Include="..\src\src_linear.c" />
++    <ClCompile Include="..\src\src_sinc.c" />
++    <ClCompile Include="..\src\src_zoh.c" />
++  </ItemGroup>
++  <ItemGroup>
++    <ClInclude Include="..\src\common.h" />
++    <ClInclude Include="..\src\config.h" />
++    <ClInclude Include="..\src\fastest_coeffs.h" />
++    <ClInclude Include="..\src\float_cast.h" />
++    <ClInclude Include="..\src\high_qual_coeffs.h" />
++    <ClInclude Include="..\src\mid_qual_coeffs.h" />
++    <ClInclude Include="..\src\samplerate.h" />
++  </ItemGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+-- 
+2.8.1.windows.1
+

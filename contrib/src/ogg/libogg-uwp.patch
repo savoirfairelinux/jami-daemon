@@ -1,0 +1,945 @@
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,34 @@
++aclocal.m4
++autom4te.cache
++ChangeLog
++compile
++config.guess
++config.h
++config.h.in
++config.h.in~
++config.log
++config.status
++config.sub
++configure
++depcomp
++install-sh
++libogg.spec
++libtool
++ltmain.sh
++Makefile
++Makefile.in
++missing
++mkinstalldirs
++ogg.pc
++ogg-uninstalled.pc
++stamp-h1
++.project
++include/ogg/config_types.h
++src/*.o
++src/*.lo
++src/lib*.la
++src/.libs
++src/.deps
++src/test_*
++macosx/build/
++
+--- /dev/null
++++ b/MSVC/.gitattributes
+@@ -0,0 +1,3 @@
++*.sln              text=auto
++*.vcxproj          text=auto
++*.vcxproj.filters  text=auto
+\ No newline at end of file
+--- /dev/null
++++ b/MSVC/.gitignore
+@@ -0,0 +1,28 @@
++*.obj
++*.lib
++*.log
++*.tlog
++*.pdb
++*.ildb
++*.pgd
++*.pch
++*.manifest
++*.suo
++*.user
++*.sdf
++*.opensdf
++[Oo]bj/
++*.exe
++!*.h
++!*.c
++!*.asm
++!*.def
++!*.rc
++*.sbr
++*.iobj
++*.ipdb
++.vs/
++*.VC.db
++*.opendb
++*.ilk
++[Bb]in/
+\ No newline at end of file
+--- /dev/null
++++ b/MSVC/libogg.def
+@@ -0,0 +1,78 @@
++; $Id$
++;
++; ogg.def
++;
++
++EXPORTS
++;
++oggpack_writeinit
++oggpack_writetrunc
++oggpack_writealign
++oggpack_writecopy
++oggpack_reset
++oggpack_writeclear
++oggpack_readinit
++oggpack_write
++oggpack_look
++oggpack_look1
++oggpack_adv
++oggpack_adv1
++oggpack_read
++oggpack_read1
++oggpack_bytes
++oggpack_bits
++oggpack_get_buffer
++;
++oggpackB_writeinit
++oggpackB_writetrunc
++oggpackB_writealign
++oggpackB_writecopy
++oggpackB_reset
++oggpackB_writeclear
++oggpackB_readinit
++oggpackB_write
++oggpackB_look
++oggpackB_look1
++oggpackB_adv
++oggpackB_adv1
++oggpackB_read
++oggpackB_read1
++oggpackB_bytes
++oggpackB_bits
++oggpackB_get_buffer
++;
++ogg_stream_packetin
++ogg_stream_pageout
++ogg_stream_flush
++;
++ogg_sync_init
++ogg_sync_clear
++ogg_sync_reset
++ogg_sync_destroy
++ogg_sync_buffer
++ogg_sync_wrote
++ogg_sync_pageseek
++ogg_sync_pageout
++ogg_stream_pagein
++ogg_stream_packetout
++ogg_stream_packetpeek
++;
++ogg_stream_init
++ogg_stream_clear
++ogg_stream_reset
++ogg_stream_reset_serialno
++ogg_stream_destroy
++ogg_stream_eos
++;
++ogg_page_checksum_set
++ogg_page_version
++ogg_page_continued
++ogg_page_bos
++ogg_page_eos
++ogg_page_granulepos
++ogg_page_serialno
++ogg_page_pageno
++ogg_page_packets
++ogg_packet_clear
++                                                        
++
+--- /dev/null
++++ b/MSVC/libogg.sln
+@@ -0,0 +1,45 @@
++﻿
++Microsoft Visual Studio Solution File, Format Version 12.00
++VisualStudioVersion = 12.0.30501.0
++MinimumVisualStudioVersion = 10.0.40219.1
++Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libogg", "libogg.vcxproj", "{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}"
++EndProject
++Global
++	GlobalSection(SolutionConfigurationPlatforms) = preSolution
++		Debug|Win32 = Debug|Win32
++		Debug|x64 = Debug|x64
++		DebugDLL|Win32 = DebugDLL|Win32
++		DebugDLL|x64 = DebugDLL|x64
++		Release|Win32 = Release|Win32
++		Release|x64 = Release|x64
++		ReleaseDLL|Win32 = ReleaseDLL|Win32
++		ReleaseDLL|x64 = ReleaseDLL|x64
++		ReleaseLTO|Win32 = ReleaseLTO|Win32
++		ReleaseLTO|x64 = ReleaseLTO|x64
++	EndGlobalSection
++	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Debug|Win32.ActiveCfg = Debug|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Debug|Win32.Build.0 = Debug|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Debug|x64.ActiveCfg = Debug|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Debug|x64.Build.0 = Debug|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.DebugDLL|Win32.ActiveCfg = DebugDLL|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.DebugDLL|Win32.Build.0 = DebugDLL|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.DebugDLL|x64.ActiveCfg = DebugDLL|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.DebugDLL|x64.Build.0 = DebugDLL|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Release|Win32.ActiveCfg = Release|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Release|Win32.Build.0 = Release|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Release|x64.ActiveCfg = Release|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.Release|x64.Build.0 = Release|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseDLL|Win32.ActiveCfg = ReleaseDLL|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseDLL|Win32.Build.0 = ReleaseDLL|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseDLL|x64.ActiveCfg = ReleaseDLL|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseDLL|x64.Build.0 = ReleaseDLL|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseLTO|Win32.ActiveCfg = ReleaseLTO|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseLTO|Win32.Build.0 = ReleaseLTO|Win32
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseLTO|x64.ActiveCfg = ReleaseLTO|x64
++		{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}.ReleaseLTO|x64.Build.0 = ReleaseLTO|x64
++	EndGlobalSection
++	GlobalSection(SolutionProperties) = preSolution
++		HideSolutionNode = FALSE
++	EndGlobalSection
++EndGlobal
+--- /dev/null
++++ b/MSVC/libogg.vcxproj
+@@ -0,0 +1,691 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="DebugDLL|Win32">
++      <Configuration>DebugDLL</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="DebugDLL|x64">
++      <Configuration>DebugDLL</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="ReleaseDLL|Win32">
++      <Configuration>ReleaseDLL</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="ReleaseDLL|x64">
++      <Configuration>ReleaseDLL</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="ReleaseLTO|Win32">
++      <Configuration>ReleaseLTO</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="ReleaseLTO|x64">
++      <Configuration>ReleaseLTO</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{1C2315EC-E08C-4E8F-AD66-917DC9C30B98}</ProjectGuid>
++    <RootNamespace>libogg</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="Configuration">
++    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="Configuration">
++    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="Configuration">
++    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="Configuration">
++    <ConfigurationType>DynamicLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '14.0'">v140</PlatformToolset>
++    <PlatformToolset Condition="'$(VisualStudioVersion)' == '12.0'">v120</PlatformToolset>
++    <CharacterSet>Unicode</CharacterSet>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'" Label="PropertySheets">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>liboggd</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>liboggd</TargetName>
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>oggd</TargetName>
++    <LinkIncremental>false</LinkIncremental>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>oggd</TargetName>
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <LinkIncremental>false</LinkIncremental>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>libogg</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'">
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>libogg</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>libogg</TargetName>
++    <OutDir>$(ProjectDir)..\..\</OutDir>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>libogg</TargetName>
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>ogg</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
++    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
++    <TargetName>ogg</TargetName>
++    <OutDir>$(SolutionDir)..\..\</OutDir>
++  </PropertyGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0502;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x86\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX86</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0600;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x64\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX64</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0502;_DEBUG;_WINDOWS;_USRDLL;LIBOGG_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <OutputFile>$(OutDir)\bin\x86\$(TargetName)$(TargetExt)</OutputFile>
++      <ProgramDatabaseFile>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDatabaseFile>
++      <SubSystem>Windows</SubSystem>
++      <ImportLibrary>$(OutDir)\lib\x86\$(TargetName).lib</ImportLibrary>
++      <ProfileGuidedDatabase>$(IntDir)\$(TargetName).pgd</ProfileGuidedDatabase>
++      <ModuleDefinitionFile>libogg.def</ModuleDefinitionFile>
++      <LargeAddressAware>true</LargeAddressAware>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0600;_DEBUG;_WINDOWS;_USRDLL;LIBOGG_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <OutputFile>$(OutDir)\bin\x64\$(TargetName)$(TargetExt)</OutputFile>
++      <ProgramDatabaseFile>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDatabaseFile>
++      <SubSystem>Windows</SubSystem>
++      <ImportLibrary>$(OutDir)\lib\x64\$(TargetName).lib</ImportLibrary>
++      <ProfileGuidedDatabase>$(IntDir)\$(TargetName).pgd</ProfileGuidedDatabase>
++      <ModuleDefinitionFile>libogg.def</ModuleDefinitionFile>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0502;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x86\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX86</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0502;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x86\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX86</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0600;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x64\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX64</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0600;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <InterproceduralOptimization>SingleFile</InterproceduralOptimization>
++      <ProgramDataBaseFileName>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <GenerateDebugInformation>true</GenerateDebugInformation>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++    <Lib>
++      <OutputFile>$(OutDir)\lib\x64\$(TargetName)$(TargetExt)</OutputFile>
++      <TargetMachine>MachineX64</TargetMachine>
++      <SubSystem>Windows</SubSystem>
++    </Lib>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0502;NDEBUG;_WINDOWS;_USRDLL;LIBOGG_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++      <OutputFile>$(OutDir)\bin\x86\$(TargetName)$(TargetExt)</OutputFile>
++      <ProgramDatabaseFile>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDatabaseFile>
++      <SubSystem>Windows</SubSystem>
++      <ImportLibrary>$(OutDir)\lib\x86\$(TargetName).lib</ImportLibrary>
++      <ProfileGuidedDatabase>$(IntDir)\$(TargetName).pgd</ProfileGuidedDatabase>
++      <ModuleDefinitionFile>libogg.def</ModuleDefinitionFile>
++      <LargeAddressAware>true</LargeAddressAware>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseDLL|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <MultiProcessorCompilation>true</MultiProcessorCompilation>
++      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
++      <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
++      <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
++      <OmitFramePointers>true</OmitFramePointers>
++      <StringPooling>true</StringPooling>
++      <BufferSecurityCheck>false</BufferSecurityCheck>
++      <FloatingPointModel>Fast</FloatingPointModel>
++      <FloatingPointExceptions>false</FloatingPointExceptions>
++      <PreprocessorDefinitions>WIN32;_WIN32_WINNT=0x0600;NDEBUG;_WINDOWS;_USRDLL;LIBOGG_EXPORTS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <ExceptionHandling>false</ExceptionHandling>
++      <ProgramDataBaseFileName>$(IntDir)$(TargetName).pdb</ProgramDataBaseFileName>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++      <OutputFile>$(OutDir)\bin\x64\$(TargetName)$(TargetExt)</OutputFile>
++      <ProgramDatabaseFile>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDatabaseFile>
++      <SubSystem>Windows</SubSystem>
++      <ImportLibrary>$(OutDir)\lib\x64\$(TargetName).lib</ImportLibrary>
++      <ProfileGuidedDatabase>$(IntDir)\$(TargetName).pgd</ProfileGuidedDatabase>
++      <ModuleDefinitionFile>libogg.def</ModuleDefinitionFile>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(OutDir)\include
++mkdir $(OutDir)\include\ogg
++copy ..\include\ogg\*.h $(OutDir)\include\ogg
++mkdir $(OutDir)\licenses
++copy ..\COPYING $(OutDir)\licenses\ogg.txt</Command>
++    </PostBuildEvent>
++    <PreBuildEvent>
++      <Command>if exist ..\config.h (
++del ..\config.h
++)
++if exist ..\include\ogg\config_types.h (
++del ..\include\ogg\config_types.h
++)
++if exist $(OutDir)\include\ogg (
++rd /s /q $(OutDir)\include\ogg
++cd ../
++cd $(ProjectDir)
++)</Command>
++    </PreBuildEvent>
++  </ItemDefinitionGroup>
++  <ItemGroup>
++    <ClCompile Include="..\src\bitwise.c" />
++    <ClCompile Include="..\src\framing.c" />
++  </ItemGroup>
++  <ItemGroup>
++    <ClInclude Include="..\include\ogg\ogg.h" />
++    <ClInclude Include="..\include\ogg\os_types.h" />
++  </ItemGroup>
++  <ItemGroup>
++    <None Include="libogg.def" />
++  </ItemGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+--- /dev/null
++++ b/MSVC/libogg.vcxproj.filters
+@@ -0,0 +1,38 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup>
++    <Filter Include="Header Files">
++      <UniqueIdentifier>{ecaeff62-f1fa-48a0-b20b-dd3debb8da9a}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Resource Files">
++      <UniqueIdentifier>{e09258d9-bc0f-4c9e-858c-8c9db4814a8b}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Source Files">
++      <UniqueIdentifier>{448a5453-dd55-4f1c-b7ae-e5a20d2c1be7}</UniqueIdentifier>
++    </Filter>
++    <Filter Include="Header Files\ogg">
++      <UniqueIdentifier>{64bf6fab-510a-4d87-8a0c-2a6abf81643a}</UniqueIdentifier>
++    </Filter>
++  </ItemGroup>
++  <ItemGroup>
++    <ClCompile Include="..\src\bitwise.c">
++      <Filter>Source Files</Filter>
++    </ClCompile>
++    <ClCompile Include="..\src\framing.c">
++      <Filter>Source Files</Filter>
++    </ClCompile>
++  </ItemGroup>
++  <ItemGroup>
++    <ClInclude Include="..\include\ogg\ogg.h">
++      <Filter>Header Files\ogg</Filter>
++    </ClInclude>
++    <ClInclude Include="..\include\ogg\os_types.h">
++      <Filter>Header Files\ogg</Filter>
++    </ClInclude>
++  </ItemGroup>
++  <ItemGroup>
++    <None Include="libogg.def">
++      <Filter>Resource Files</Filter>
++    </None>
++  </ItemGroup>
++</Project>
+\ No newline at end of file
+-- 
+2.8.1.windows.1
+
