@@ -1,0 +1,147 @@
+--- a/makefiles/msvc2010/lib_json.vcxproj
++++ b/makefiles/msvc2010/lib_json.vcxproj
+@@ -1,5 +1,5 @@
+ ﻿<?xml version="1.0" encoding="utf-8"?>
+-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+   <ItemGroup Label="ProjectConfigurations">
+     <ProjectConfiguration Include="Debug|Win32">
+       <Configuration>Debug</Configuration>
+@@ -32,29 +32,34 @@
+     <ProjectGuid>{1E6C2C1C-6453-4129-AE3F-0EE8E6599C89}</ProjectGuid>
+     <Keyword>Win32Proj</Keyword>
+     <RootNamespace>jsoncpp</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+     <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>true</UseDebugLibraries>
+     <CharacterSet>Unicode</CharacterSet>
++    <PlatformToolset>v140</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+     <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>true</UseDebugLibraries>
+     <CharacterSet>Unicode</CharacterSet>
++    <PlatformToolset>v140</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+     <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>false</UseDebugLibraries>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+     <CharacterSet>Unicode</CharacterSet>
++    <PlatformToolset>v140</PlatformToolset>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+     <ConfigurationType>StaticLibrary</ConfigurationType>
+     <UseDebugLibraries>false</UseDebugLibraries>
+     <WholeProgramOptimization>true</WholeProgramOptimization>
+     <CharacterSet>Unicode</CharacterSet>
++    <PlatformToolset>v140</PlatformToolset>
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+   <ImportGroup Label="ExtensionSettings">
+@@ -72,7 +77,15 @@
+     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+   </ImportGroup>
+   <PropertyGroup Label="UserMacros" />
+-  <PropertyGroup />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <TargetName>$(ProjectName)d</TargetName>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <OutDir>$(ProjectDir)..\..\MSVC\$(Platform)\$(Configuration)\</OutDir>
++  </PropertyGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+     <ClCompile>
+       <PrecompiledHeader>NotUsing</PrecompiledHeader>
+@@ -80,12 +93,19 @@
+       <Optimization>Disabled</Optimization>
+       <PreprocessorDefinitions>WIN32;_DEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+     </ClCompile>
+     <Link>
+       <SubSystem>Windows</SubSystem>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+     </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)lib_jsond.lib $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\include\*.h $(SolutionDir)..\..\include</Command>
++    </PostBuildEvent>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+     <ClCompile>
+@@ -100,6 +120,13 @@
+       <SubSystem>Windows</SubSystem>
+       <GenerateDebugInformation>true</GenerateDebugInformation>
+     </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x64
++copy $(OutDir)lib_jsond.lib $(SolutionDir)..\..\lib\x64
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\include\*.h $(SolutionDir)..\..\include</Command>
++    </PostBuildEvent>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+     <ClCompile>
+@@ -110,7 +137,8 @@
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
+     </ClCompile>
+     <Link>
+       <SubSystem>Windows</SubSystem>
+@@ -118,6 +146,13 @@
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+       <OptimizeReferences>true</OptimizeReferences>
+     </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(SolutionDir)..\..\lib
++mkdir $(SolutionDir)..\..\lib\x86
++copy $(OutDir)lib_json.lib $(SolutionDir)..\..\lib\x86
++mkdir $(SolutionDir)..\..\include
++xcopy /S /Y $(SolutionDir)..\include\*.h $(SolutionDir)..\..\include</Command>
++    </PostBuildEvent>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+     <ClCompile>
+@@ -128,7 +163,8 @@
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <PreprocessorDefinitions>WIN32;NDEBUG;_LIB;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+       <AdditionalIncludeDirectories>../../include</AdditionalIncludeDirectories>
+-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
++      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
++      <WholeProgramOptimization>false</WholeProgramOptimization>
+     </ClCompile>
+     <Link>
+       <SubSystem>Windows</SubSystem>
+@@ -136,6 +172,13 @@
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
+       <OptimizeReferences>true</OptimizeReferences>
+     </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(ProjectDir)..\..\..\lib
++mkdir $(ProjectDir)..\..\..\lib\x64
++copy $(OutDir)lib_json.lib $(ProjectDir)..\..\..\lib\x64
++mkdir $(ProjectDir)..\..\..\include
++xcopy /S /Y $(ProjectDir)..\..\include\*.h $(ProjectDir)..\..\..\include</Command>
++    </PostBuildEvent>
+   </ItemDefinitionGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+   <ImportGroup Label="ExtensionTargets">
+-- 
+2.8.1.windows.1
+
