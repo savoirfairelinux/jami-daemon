@@ -4,13 +4,23 @@ SETLOCAL EnableDelayedExpansion
 set SRC=%~dp0
 
 set DEPENDENCIES=( ^
+boost, ^
+cryptopp, ^
+flac, ^
 gmp, ^
 gnutls, ^
 iconv, ^
-opendht, ^
+jsoncpp, ^
 msgpack, ^
 nettle, ^
-pjproject ^
+opendht, ^
+ogg, ^
+pcre, ^
+pjproject, ^
+restbed, ^
+samplerate, ^
+vorbis, ^
+yaml-cpp, ^
 zlib ^
 )
 
