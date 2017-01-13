@@ -1,0 +1,612 @@
+--- /dev/null
++++ b/MSVC/boost.sln
+@@ -0,0 +1,48 @@
++﻿
++Microsoft Visual Studio Solution File, Format Version 12.00
++# Visual Studio 14
++VisualStudioVersion = 14.0.25420.1
++MinimumVisualStudioVersion = 10.0.40219.1
++Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "system", "system\system.vcxproj", "{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}"
++EndProject
++Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "random", "random\random.vcxproj", "{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}"
++EndProject
++Global
++	GlobalSection(SolutionConfigurationPlatforms) = preSolution
++		Debug|ARM = Debug|ARM
++		Debug|x64 = Debug|x64
++		Debug|x86 = Debug|x86
++		Release|ARM = Release|ARM
++		Release|x64 = Release|x64
++		Release|x86 = Release|x86
++	EndGlobalSection
++	GlobalSection(ProjectConfigurationPlatforms) = postSolution
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|ARM.ActiveCfg = Debug|ARM
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|ARM.Build.0 = Debug|ARM
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|x64.ActiveCfg = Debug|x64
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|x64.Build.0 = Debug|x64
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|x86.ActiveCfg = Debug|Win32
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Debug|x86.Build.0 = Debug|Win32
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|ARM.ActiveCfg = Release|ARM
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|ARM.Build.0 = Release|ARM
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|x64.ActiveCfg = Release|x64
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|x64.Build.0 = Release|x64
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|x86.ActiveCfg = Release|Win32
++		{A02FD1CC-618B-428D-AC46-91A2A12D0DCD}.Release|x86.Build.0 = Release|Win32
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|ARM.ActiveCfg = Debug|ARM
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|ARM.Build.0 = Debug|ARM
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|x64.ActiveCfg = Debug|x64
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|x64.Build.0 = Debug|x64
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|x86.ActiveCfg = Debug|Win32
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Debug|x86.Build.0 = Debug|Win32
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|ARM.ActiveCfg = Release|ARM
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|ARM.Build.0 = Release|ARM
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|x64.ActiveCfg = Release|x64
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|x64.Build.0 = Release|x64
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|x86.ActiveCfg = Release|Win32
++		{039AC2C4-C1BE-4B3F-BC4A-4541B2066293}.Release|x86.Build.0 = Release|Win32
++	EndGlobalSection
++	GlobalSection(SolutionProperties) = preSolution
++		HideSolutionNode = FALSE
++	EndGlobalSection
++EndGlobal
+--- /dev/null
++++ b/MSVC/boost.vcxproj
+@@ -0,0 +1,117 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{CE7BD1A1-3856-4D2E-BA98-B940E30EB13B}</ProjectGuid>
++    <RootNamespace>boost</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>Application</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>Application</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>Application</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>Application</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <CharacterSet>MultiByte</CharacterSet>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="Shared">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup />
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++    </ClCompile>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>Disabled</Optimization>
++      <SDLCheck>true</SDLCheck>
++    </ClCompile>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <WarningLevel>Level3</WarningLevel>
++      <Optimization>MaxSpeed</Optimization>
++      <FunctionLevelLinking>true</FunctionLevelLinking>
++      <IntrinsicFunctions>true</IntrinsicFunctions>
++      <SDLCheck>true</SDLCheck>
++    </ClCompile>
++    <Link>
++      <EnableCOMDATFolding>true</EnableCOMDATFolding>
++      <OptimizeReferences>true</OptimizeReferences>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemGroup>
++  </ItemGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+--- /dev/null
++++ b/MSVC/random/random.vcxproj
+@@ -0,0 +1,209 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="Debug|ARM">
++      <Configuration>Debug</Configuration>
++      <Platform>ARM</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|ARM">
++      <Configuration>Release</Configuration>
++      <Platform>ARM</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <ItemGroup>
++    <ClCompile Include="..\..\libs\random\src\random_device.cpp" />
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{039ac2c4-c1be-4b3f-bc4a-4541b2066293}</ProjectGuid>
++    <Keyword>StaticLibrary</Keyword>
++    <RootNamespace>random</RootNamespace>
++    <DefaultLanguage>en-US</DefaultLanguage>
++    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
++    <AppContainerApplication>true</AppContainerApplication>
++    <ApplicationType>Windows Store</ApplicationType>
++    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformMinVersion>10.0.10586.0</WindowsTargetPlatformMinVersion>
++    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="Shared">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <GenerateManifest>false</GenerateManifest>
++    <TargetName>boost_random</TargetName>
++  </PropertyGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>true</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <PreprocessorDefinitions>BOOST_ALL_NO_LIB;BOOST_RANDOM_WINDOWS_RUNTIME;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(ProjectDir)..\..\..\lib
++mkdir $(ProjectDir)..\..\..\lib\x64
++xcopy /S /Y $(OutDir)boost_random.lib $(ProjectDir)..\..\..\lib\x64</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+--- /dev/null
++++ b/MSVC/system/system.vcxproj
+@@ -0,0 +1,209 @@
++﻿<?xml version="1.0" encoding="utf-8"?>
++<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
++  <ItemGroup Label="ProjectConfigurations">
++    <ProjectConfiguration Include="Debug|ARM">
++      <Configuration>Debug</Configuration>
++      <Platform>ARM</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|Win32">
++      <Configuration>Debug</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Debug|x64">
++      <Configuration>Debug</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|ARM">
++      <Configuration>Release</Configuration>
++      <Platform>ARM</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|Win32">
++      <Configuration>Release</Configuration>
++      <Platform>Win32</Platform>
++    </ProjectConfiguration>
++    <ProjectConfiguration Include="Release|x64">
++      <Configuration>Release</Configuration>
++      <Platform>x64</Platform>
++    </ProjectConfiguration>
++  </ItemGroup>
++  <ItemGroup>
++    <ClCompile Include="..\..\libs\system\src\error_code.cpp" />
++  </ItemGroup>
++  <PropertyGroup Label="Globals">
++    <ProjectGuid>{a02fd1cc-618b-428d-ac46-91a2a12d0dcd}</ProjectGuid>
++    <Keyword>StaticLibrary</Keyword>
++    <RootNamespace>system</RootNamespace>
++    <DefaultLanguage>en-US</DefaultLanguage>
++    <MinimumVisualStudioVersion>14.0</MinimumVisualStudioVersion>
++    <AppContainerApplication>true</AppContainerApplication>
++    <ApplicationType>Windows Store</ApplicationType>
++    <WindowsTargetPlatformVersion>10.0.14393.0</WindowsTargetPlatformVersion>
++    <WindowsTargetPlatformMinVersion>10.0.10586.0</WindowsTargetPlatformMinVersion>
++    <ApplicationTypeRevision>10.0</ApplicationTypeRevision>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>true</UseDebugLibraries>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
++    <ConfigurationType>StaticLibrary</ConfigurationType>
++    <UseDebugLibraries>false</UseDebugLibraries>
++    <WholeProgramOptimization>true</WholeProgramOptimization>
++    <PlatformToolset>v140</PlatformToolset>
++  </PropertyGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
++  <ImportGroup Label="ExtensionSettings">
++  </ImportGroup>
++  <ImportGroup Label="Shared">
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
++  </ImportGroup>
++  <PropertyGroup Label="UserMacros" />
++  <PropertyGroup />
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|ARM'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|ARM'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <GenerateManifest>false</GenerateManifest>
++  </PropertyGroup>
++  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <GenerateManifest>false</GenerateManifest>
++    <TargetName>boost_system</TargetName>
++  </PropertyGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|arm'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|arm'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++  </ItemDefinitionGroup>
++  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
++    <ClCompile>
++      <PrecompiledHeader>NotUsing</PrecompiledHeader>
++      <CompileAsWinRT>false</CompileAsWinRT>
++      <SDLCheck>true</SDLCheck>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\;$(ProjectDir);$(GeneratedFilesDir);$(IntDir);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <PreprocessorDefinitions>BOOST_ALL_NO_LIB;BOOST_RANDOM_WINDOWS_RUNTIME;_UNICODE;UNICODE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++    </ClCompile>
++    <Link>
++      <SubSystem>Console</SubSystem>
++      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
++      <GenerateWindowsMetadata>false</GenerateWindowsMetadata>
++    </Link>
++    <PostBuildEvent>
++      <Command>mkdir $(ProjectDir)..\..\..\lib
++mkdir $(ProjectDir)..\..\..\lib\x64
++xcopy /S /Y $(OutDir)boost_system.lib $(ProjectDir)..\..\..\lib\x64</Command>
++    </PostBuildEvent>
++  </ItemDefinitionGroup>
++  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
++  <ImportGroup Label="ExtensionTargets">
++  </ImportGroup>
++</Project>
+\ No newline at end of file
+--- a/boost/config.hpp
++++ b/boost/config.hpp
+@@ -17,6 +17,8 @@
+ #ifndef BOOST_CONFIG_HPP
+ #define BOOST_CONFIG_HPP
+ 
++#define BOOST_ALL_NO_LIB
++
+ // if we don't have a user config, then use the default location:
+ #if !defined(BOOST_USER_CONFIG) && !defined(BOOST_NO_USER_CONFIG)
+ #  define BOOST_USER_CONFIG <boost/config/user.hpp>
+-- 
+2.8.1.windows.1
+
