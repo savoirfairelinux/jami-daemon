@@ -21,7 +21,8 @@
 
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "video_receive_thread.h"
-#include "media/media_decoder.h"
+#include "media_decoder.h"
+#include "media_io_handle.h"
 #include "socket_pair.h"
 #include "manager.h"
 #include "client/videomanager.h"
@@ -45,7 +46,6 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
-    , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , restartDecoder_(false)
     , isReset_(isReset)
@@ -99,7 +99,8 @@ bool VideoReceiveThread::setup()
         args_.sdp_flags = "custom_io";
 
         EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
-        videoDecoder_->setIOContext(&sdpContext_);
+        videoDecoder_->setIOContext(new MediaIOHandle(stream_.str().size(), false, &readFunction,
+                                                      0, 0, this));
     }
 
     EXIT_IF_FAIL(!videoDecoder_->openInput(args_),

@@ -19,12 +19,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _VIDEO_RECEIVE_THREAD_H_
-#define _VIDEO_RECEIVE_THREAD_H_
+#pragma once
 
 #include "video_base.h"
 #include "media_codec.h"
-#include "media_io_handle.h"
 #include "media_device.h"
 #include "threadloop.h"
 #include "noncopyable.h"
@@ -38,6 +36,7 @@
 
 namespace ring {
 class MediaDecoder;
+class MediaIOHandle;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -74,7 +73,6 @@ private:
     int dstHeight_;
     const std::string id_;
     std::istringstream stream_;
-    MediaIOHandle sdpContext_;
     std::unique_ptr<MediaIOHandle> demuxContext_;
     std::shared_ptr<SinkClient> sink_;
     std::atomic_bool restartDecoder_;
@@ -94,5 +92,3 @@ private:
 };
 
 }} // namespace ring::video
-
-#endif // _VIDEO_RECEIVE_THREAD_H_
