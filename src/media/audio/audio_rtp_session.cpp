@@ -107,7 +107,7 @@ bool
 AudioSender::setup(SocketPair& socketPair)
 {
     audioEncoder_.reset(new MediaEncoder);
-    muxContext_.reset(socketPair.createIOContext());
+    muxContext_ = socketPair.createIOContext();
 
     try {
         /* Encoder setup */
@@ -345,7 +345,7 @@ AudioReceiveThread::interruptCb(void* data)
 void
 AudioReceiveThread::addIOContext(SocketPair& socketPair)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_ = socketPair.createIOContext();
 }
 
 void
