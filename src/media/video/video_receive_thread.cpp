@@ -162,7 +162,7 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 
 void VideoReceiveThread::addIOContext(SocketPair &socketPair)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_ = socketPair.createIOContext();
 }
 
 bool VideoReceiveThread::decodeFrame()

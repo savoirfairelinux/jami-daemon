@@ -102,7 +102,7 @@ void VideoRtpSession::startSender()
             sender_.reset();
             socketPair_->stopSendOp(false);
             sender_.reset(new VideoSender(getRemoteRtpUri(), localVideoParams_,
-                                          send_, *socketPair_, initSeqVal_));
+                                          send_, socketPair_->createIOContext(), initSeqVal_));
         } catch (const MediaEncoderException &e) {
             RING_ERR("%s", e.what());
             send_.enabled = false;
