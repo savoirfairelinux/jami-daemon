@@ -47,7 +47,7 @@ class AudioSender {
         AudioSender(const std::string& id,
                     const std::string& dest,
                     const MediaDescription& args,
-                    SocketPair& socketPair,
+                    std::unique_ptr<MediaIOHandle> io_handle,
                     const uint16_t seqVal,
                     bool muteState);
         ~AudioSender();
@@ -57,8 +57,6 @@ class AudioSender {
 
     private:
         NON_COPYABLE(AudioSender);
-
-        bool setup(SocketPair& socketPair);
 
         std::string id_;
         std::string dest_;
@@ -76,6 +74,7 @@ class AudioSender {
         const seconds secondsPerPacket_ {0.02}; // 20 ms
 
         ThreadLoop loop_;
+        bool setup();
         void process();
         void cleanup();
 };
@@ -83,17 +82,18 @@ class AudioSender {
 AudioSender::AudioSender(const std::string& id,
                          const std::string& dest,
                          const MediaDescription& args,
-                         SocketPair& socketPair,
+                         std::unique_ptr<MediaIOHandle> io_handle,
                          const uint16_t seqVal,
                          bool muteState) :
     id_(id),
     dest_(dest),
     args_(args),
+    muxContext_(std::move(io_handle)),
     seqVal_(seqVal),
     muteState_(muteState),
-    loop_([&] { return setup(socketPair); },
-          std::bind(&AudioSender::process, this),
-          std::bind(&AudioSender::cleanup, this))
+    loop_([this] { return setup(); },
+          [this] { process(); },
+          [this] { cleanup(); })
 {
     loop_.start();
 }
@@ -104,10 +104,9 @@ AudioSender::~AudioSender()
 }
 
 bool
-AudioSender::setup(SocketPair& socketPair)
+AudioSender::setup()
 {
     audioEncoder_.reset(new MediaEncoder);
-    muxContext_.reset(socketPair.createIOContext());
 
     try {
         /* Encoder setup */
@@ -201,7 +200,7 @@ class AudioReceiveThread
                            const AudioFormat& format,
                            const std::string& sdp);
         ~AudioReceiveThread();
-        void addIOContext(SocketPair &socketPair);
+        void addIOContext(std::unique_ptr<MediaIOHandle> io_handle);
         void startLoop();
 
     private:
@@ -343,9 +342,9 @@ AudioReceiveThread::interruptCb(void* data)
 }
 
 void
-AudioReceiveThread::addIOContext(SocketPair& socketPair)
+AudioReceiveThread::addIOContext(std::unique_ptr<MediaIOHandle> io_handle)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_ = std::move(io_handle);
 }
 
 void
@@ -391,7 +390,7 @@ AudioRtpSession::startSender()
         sender_.reset();
         socketPair_->stopSendOp(false);
         sender_.reset(new AudioSender(callID_, getRemoteRtpUri(), send_,
-                                      *socketPair_, initSeqVal_, muteState_));
+                                      socketPair_->createIOContext(), initSeqVal_, muteState_));
     } catch (const MediaEncoderException &e) {
         RING_ERR("%s", e.what());
         send_.enabled = false;
@@ -424,7 +423,7 @@ AudioRtpSession::startReceiver()
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(receive_.codec);
     receiveThread_.reset(new AudioReceiveThread(callID_, accountAudioCodec->audioformat,
                                                 receive_.receiving_sdp));
-    receiveThread_->addIOContext(*socketPair_);
+    receiveThread_->addIOContext(socketPair_->createIOContext());
     receiveThread_->startLoop();
 }
 

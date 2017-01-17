@@ -160,9 +160,10 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
     return is.gcount();
 }
 
-void VideoReceiveThread::addIOContext(SocketPair &socketPair)
+void
+VideoReceiveThread::addIOContext(std::unique_ptr<MediaIOHandle> io_handle)
 {
-    demuxContext_.reset(socketPair.createIOContext());
+    demuxContext_ = std::move(io_handle);
 }
 
 bool VideoReceiveThread::decodeFrame()

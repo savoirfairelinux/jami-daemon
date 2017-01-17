@@ -37,7 +37,6 @@
 #include <atomic>
 
 namespace ring {
-class SocketPair;
 class MediaDecoder;
 } // namespace ring
 
@@ -51,7 +50,7 @@ public:
     ~VideoReceiveThread();
     void startLoop();
 
-    void addIOContext(SocketPair &socketPair);
+    void addIOContext(std::unique_ptr<MediaIOHandle> io_handle);
     void setRequestKeyFrameCallback(void (*)(const std::string &));
     void enterConference();
     void exitConference();
