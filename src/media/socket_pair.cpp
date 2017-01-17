@@ -333,13 +333,19 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
               local_rtp_port, local_rtcp_port, hostname, rtp_port, rtcp_port);
 }
 
-MediaIOHandle*
+std::unique_ptr<MediaIOHandle>
 SocketPair::createIOContext()
 {
-    return new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
-                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },
-                             [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->writeCallback(buf, len); },
-                             0, reinterpret_cast<void*>(this));
+    return std::unique_ptr<MediaIOHandle>(
+        new MediaIOHandle(srtpContext_ ? SRTP_BUFFER_SIZE : RTP_BUFFER_SIZE, true,
+                          [](void* sp, uint8_t* buf, int len){
+                              return static_cast<SocketPair*>(sp)->readCallback(buf, len);
+                          },
+                          [](void* sp, uint8_t* buf, int len){
+                              return static_cast<SocketPair*>(sp)->writeCallback(buf, len);
+                          },
+                          0, reinterpret_cast<void*>(this))
+        );
 }
 
 int

@@ -80,7 +80,7 @@ class SocketPair {
 
         void interrupt();
 
-        MediaIOHandle* createIOContext();
+        std::unique_ptr<MediaIOHandle> createIOContext();
 
         void openSockets(const char* uri, int localPort);
         void closeSockets();

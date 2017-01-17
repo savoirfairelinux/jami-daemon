@@ -19,12 +19,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __VIDEO_SENDER_H__
-#define __VIDEO_SENDER_H__
+#pragma once
 
 #include "noncopyable.h"
 #include "media_encoder.h"
-#include "media_io_handle.h"
 
 #include <map>
 #include <string>
@@ -33,7 +31,7 @@
 
 // Forward declarations
 namespace ring {
-class SocketPair;
+class MediaIOHandle;
 class AccountVideoCodecInfo;
 }
 
@@ -45,7 +43,7 @@ public:
     VideoSender(const std::string& dest,
                 const DeviceParams& dev,
                 const MediaDescription& args,
-                SocketPair& socketPair,
+                std::unique_ptr<MediaIOHandle> io_handle,
                 const uint16_t seqVal);
 
     ~VideoSender();
@@ -70,13 +68,11 @@ private:
     void encodeAndSendVideo(VideoFrame&);
 
     // encoder MUST be deleted before muxContext
-    std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
-    std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
+    std::unique_ptr<MediaIOHandle> muxContext_;
+    std::unique_ptr<MediaEncoder> videoEncoder_;
 
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
 };
 }} // namespace ring::video
-
-#endif // __VIDEO_SENDER_H__

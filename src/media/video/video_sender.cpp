@@ -21,8 +21,8 @@
  */
 
 #include "video_sender.h"
+#include "media_io_handle.h"
 #include "video_mixer.h"
-#include "socket_pair.h"
 #include "client/videomanager.h"
 #include "logger.h"
 #include "manager.h"
@@ -36,9 +36,9 @@ namespace ring { namespace video {
 using std::string;
 
 VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
-                         const MediaDescription& args, SocketPair& socketPair,
+                         const MediaDescription& args, std::unique_ptr<MediaIOHandle> io_handle,
                          const uint16_t seqVal)
-    : muxContext_(socketPair.createIOContext())
+    : muxContext_(std::move(io_handle))
     , videoEncoder_(new MediaEncoder)
 {
     videoEncoder_->setDeviceOptions(dev);
