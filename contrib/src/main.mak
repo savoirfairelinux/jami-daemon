@@ -501,6 +501,10 @@ $(patsubst %,.dep-%,$(PKGS_FOUND)): .dep-%:
 $(patsubst %,.dep-%,$(filter-out $(PKGS_FOUND),$(PKGS_ALL))): .dep-%: .%
 	touch -r $< $@
 
+# dump list of packages to build
+list-build-packages:
+	@echo ${PKGS}
+
 .SECONDEXPANSION:
 
 # Dependency propagation (convert 'DEPS_foo = bar' to '.foo: .bar')
