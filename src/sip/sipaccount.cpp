@@ -1294,6 +1294,8 @@ std::string SIPAccount::getLoginName()
 #ifndef _WIN32
     struct passwd * user_info = getpwuid(getuid());
     return user_info ? user_info->pw_name : "";
+#elif defined (RING_UWP)
+    return "Unknown";
 #else
     TCHAR username[UNLEN + 1];
     DWORD size = UNLEN + 1;

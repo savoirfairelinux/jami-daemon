@@ -65,6 +65,10 @@ public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
 
+    DhParams& operator =(const DhParams& other){
+        return *this;
+    }
+
     /** Take ownership of gnutls_dh_params */
     explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
 

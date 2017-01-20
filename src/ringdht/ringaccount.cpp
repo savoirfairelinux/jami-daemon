@@ -1140,7 +1140,7 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
                     [fa,sthis,password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
     {
         sthis->foundAccountDevice(crt);
-        auto a = fa->get();
+        ArchiveContent a = fa->get();
         // Add revoked device to the revocation list and resign it
         if (not a.revoked)
             a.revoked = std::make_shared<decltype(a.revoked)::element_type>();
@@ -1986,6 +1986,7 @@ RingAccount::doRegister_()
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {};
+#ifndef RING_UWP
             static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
             static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
             static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };
@@ -1993,6 +1994,15 @@ RingAccount::doRegister_()
                 log_error,
                 (dht_log_level > 1) ? log_warn : silent,
                 (dht_log_level > 2) ? log_debug : silent);
+#else
+            static auto log_all = [](char const* m, va_list args) {
+                char tmp[2048];
+                vsprintf(tmp, m, args);
+                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                ring::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
+            };
+            dht_.setLoggers(log_all, log_all, silent);
+#endif
         }
 
         dht_.importValues(loadValues());
