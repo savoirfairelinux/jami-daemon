@@ -1443,6 +1443,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 
     } catch (const std::exception& e) {
         RING_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
+        identity_ = dht::crypto::Identity{};
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
