@@ -157,7 +157,6 @@ VideoDeviceImpl::getDeviceParams() const
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
 
-    params.format = fmt_->name;
     params.name = name;
     params.input = name;
     params.channel =  0;
