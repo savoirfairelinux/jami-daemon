@@ -47,8 +47,8 @@ namespace ring {
 
 class AudioBuffer;
 class MediaIOHandle;
-class MediaDescription;
-class AccountCodecInfo;
+struct MediaDescription;
+struct AccountCodecInfo;
 
 class MediaEncoderException : public std::runtime_error {
     public:

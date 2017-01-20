@@ -22,13 +22,6 @@
 #include "config.h"
 #endif
 
-#include "upnp_context.h"
-
-#if HAVE_LIBUPNP
-#include <upnp/upnp.h>
-#include <upnp/upnptools.h>
-#endif
-
 #if HAVE_LIBNATPMP
 #include <natpmp.h>
 #endif
@@ -49,6 +42,8 @@ using random_device = dht::crypto::random_device;
 #include <random>
 #include <chrono>
 #include <cstdlib> // for std::free
+
+#include "upnp_context.h"
 
 namespace ring { namespace upnp {
 

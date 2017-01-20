@@ -55,10 +55,16 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #else
+#ifndef RING_UWP
 #define close(x) closesocket(x)
+#endif
 #endif
 #include <unistd.h>
 #include <fcntl.h>
+
+#ifdef RING_UWP
+#include "windirent.h"
+#endif
 
 namespace ring { namespace tls {
 

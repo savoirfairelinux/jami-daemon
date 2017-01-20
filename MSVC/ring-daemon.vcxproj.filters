@@ -337,12 +337,6 @@
     <ClInclude Include="..\src\noncopyable.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\plugin_loader.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\plugin_manager.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\preferences.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -362,9 +356,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\string_utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="..\src\sys_time.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\src\threadloop.h">
@@ -512,6 +503,18 @@
       <Filter>Header Files\ringdht</Filter>
     </ClInclude>
     <ClInclude Include="..\src\compiler_intrinsics.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="sys_time.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\plugin_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\plugin_manager.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\smartools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -827,6 +830,9 @@
     </ClCompile>
     <ClCompile Include="..\src\ringdht\namedirectory.cpp">
       <Filter>Source Files\ringdht</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\smartools.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

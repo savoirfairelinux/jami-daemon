@@ -46,7 +46,7 @@ namespace ring {
 
 class VoIPLink;
 class Account;
-class AccountVideoCodecInfo;
+struct AccountVideoCodecInfo;
 
 template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 

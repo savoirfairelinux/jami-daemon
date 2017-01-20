@@ -605,7 +605,7 @@ SIPVoIPLink::~SIPVoIPLink()
     for (int timeout = 0;
          pjsip_tsx_layer_get_tsx_count() and timeout < MAX_TIMEOUT_ON_LEAVING;
          timeout++)
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
