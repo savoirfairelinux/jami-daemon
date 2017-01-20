@@ -202,6 +202,9 @@ STACK_DIRECTION = 0 => direction of growth unknown */
 /* Version number of package */
 #define VERSION "2.3.0"
 
+// UWP compatability
+#define PROGSHAREDIR ""
+
 /* Define to limit the scope of <windows.h>. */
 /* #undef WIN32_LEAN_AND_MEAN */
 
