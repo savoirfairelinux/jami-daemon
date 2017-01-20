@@ -28,7 +28,9 @@
 #include "fileutils.h"
 #include "manager.h"
 
+#ifndef RING_UWP
 #include <sndfile.hh>
+#endif
 
 #include <algorithm>
 #include <sstream> // for stringstream
@@ -147,6 +149,7 @@ std::string AudioRecord::getFilename() const
 bool
 AudioRecord::openFile()
 {
+#ifndef RING_UWP
     fileHandle_.reset(); // do it before calling fileExists()
 
     const bool doAppend = fileExists();
@@ -170,6 +173,9 @@ AudioRecord::openFile()
         RING_WARN("Couldn't seek to the end of the file ");
 
     return true;
+#else
+    return false;
+#endif
 }
 
 void
@@ -218,6 +224,7 @@ AudioRecord::stopRecording() const noexcept
 void
 AudioRecord::recData(AudioBuffer& buffer)
 {
+#ifndef RING_UWP
     if (not recordingEnabled_)
         return;
 
@@ -228,6 +235,7 @@ AudioRecord::recData(AudioBuffer& buffer)
     } else {
         fileHandle_->writeSync();
     }
+#endif
 }
 
 } // namespace ring

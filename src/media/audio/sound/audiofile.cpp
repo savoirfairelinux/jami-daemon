@@ -26,7 +26,10 @@
 #include <cstring>
 #include <vector>
 #include <climits>
+
+#ifndef RING_UWP
 #include <sndfile.hh>
+#endif
 
 #include "audiofile.h"
 #include "audio/resampler.h"
@@ -59,6 +62,7 @@ AudioFile::onBufferFinish()
 AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
+#ifndef RING_UWP
     int format;
     bool hasHeader = true;
 
@@ -127,6 +131,7 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
         delete buffer_;
         buffer_ = buffer;
     }
+#endif
 }
 
 } // namespace ring
