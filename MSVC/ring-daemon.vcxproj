@@ -418,7 +418,7 @@
       <SDLCheck>
       </SDLCheck>
       <AdditionalIncludeDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\include;$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\build;$(ProjectDir)..\contrib\build\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party\speex\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\boost;$(ProjectDir)..\contrib\build\cryptopp;$(ProjectDir)..\contrib\build\restbed\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BOOST_SYSTEM_NO_DEPRECATED;PJ_OS_HAS_CHECK_STACK=1;STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;RING_UWP;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>BOOST_SYSTEM_NO_DEPRECATED;PJ_OS_HAS_CHECK_STACK=1;STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;RING_UWP;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -444,7 +444,7 @@
       </Command>
     </PreBuildEvent>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libsndfile.lib;libgnutls.lib;lib_json.lib;opendht.lib;argon.lib;blake.lib;pcre.lib;yaml-cpp.lib;portaudio-UWP.lib;libupnp.lib;cryptlib.lib;boost_system.lib;boost_random.lib;pjsip-core-x86_64-x64-vc14-Release.lib;pjsip-simple-x86_64-x64-vc14-Release.lib;pjsua2-lib-x86_64-x64-vc14-Release.lib;pjsua-lib-x86_64-x64-vc14-Release.lib;pjsip-ua-x86_64-x64-vc14-Release.lib;pjmedia-codec-x86_64-x64-vc14-Release.lib;pjmedia-x86_64-x64-vc14-Release.lib;pjlib-util-x86_64-x64-vc14-Release.lib;libspeex-x86_64-x64-vc14-Release.lib;pjlib-x86_64-x64-vc14-Release.lib;pjnath-x86_64-x64-vc14-Release.lib;restbed.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libgnutls.lib;lib_json.lib;opendht.lib;argon.lib;blake.lib;pcre.lib;yaml-cpp.lib;portaudio-UWP.lib;libupnp.lib;cryptlib.lib;boost_system.lib;boost_random.lib;pjsip-core-x86_64-x64-vc14-Release.lib;pjsip-simple-x86_64-x64-vc14-Release.lib;pjsua2-lib-x86_64-x64-vc14-Release.lib;pjsua-lib-x86_64-x64-vc14-Release.lib;pjsip-ua-x86_64-x64-vc14-Release.lib;pjmedia-codec-x86_64-x64-vc14-Release.lib;pjmedia-x86_64-x64-vc14-Release.lib;pjlib-util-x86_64-x64-vc14-Release.lib;libspeex-x86_64-x64-vc14-Release.lib;pjlib-x86_64-x64-vc14-Release.lib;pjnath-x86_64-x64-vc14-Release.lib;restbed.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\bin;$(ProjectDir)..\contrib\build\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\libnatpmp\msvc\x64\Release;$(ProjectDir)..\contrib\build\restbed\build\Release;$(ProjectDir)..\contrib\build\restbed\dependency\openssl\out32dll</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -466,7 +466,9 @@
     <ClInclude Include="..\src\config\serializable.h" />
     <ClInclude Include="..\src\config\yamlparser.h" />
     <ClInclude Include="..\src\dirent.h" />
-    <ClInclude Include="..\src\dlfcn.h" />
+    <ClInclude Include="..\src\dlfcn.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\src\dring\account_const.h" />
     <ClInclude Include="..\src\dring\callmanager_interface.h" />
     <ClInclude Include="..\src\dring\call_const.h" />
@@ -530,8 +532,12 @@
     <ClInclude Include="..\src\media\video\video_scaler.h" />
     <ClInclude Include="..\src\media\video\video_sender.h" />
     <ClInclude Include="..\src\noncopyable.h" />
-    <ClInclude Include="..\src\plugin_loader.h" />
-    <ClInclude Include="..\src\plugin_manager.h" />
+    <ClInclude Include="..\src\plugin_loader.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClInclude>
+    <ClInclude Include="..\src\plugin_manager.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\src\preferences.h" />
     <ClInclude Include="..\src\rational.h" />
     <ClInclude Include="..\src\registration_states.h" />
@@ -573,8 +579,8 @@
     <ClInclude Include="..\src\sip\siptransport.h" />
     <ClInclude Include="..\src\sip\sipvoiplink.h" />
     <ClInclude Include="..\src\sip\sip_utils.h" />
+    <ClInclude Include="..\src\smartools.h" />
     <ClInclude Include="..\src\string_utils.h" />
-    <ClInclude Include="..\src\sys_time.h" />
     <ClInclude Include="..\src\threadloop.h" />
     <ClInclude Include="..\src\thread_pool.h" />
     <ClInclude Include="..\src\upnp\upnp_context.h" />
@@ -583,6 +589,7 @@
     <ClInclude Include="..\src\utf8_utils.h" />
     <ClInclude Include="..\src\winsyslog.h" />
     <ClInclude Include="config.h" />
+    <ClInclude Include="sys_time.h" />
     <ClInclude Include="unistd.h" />
   </ItemGroup>
   <ItemGroup>
@@ -600,7 +607,9 @@
     <ClCompile Include="..\src\client\videomanager.cpp" />
     <ClCompile Include="..\src\conference.cpp" />
     <ClCompile Include="..\src\config\yamlparser.cpp" />
-    <ClCompile Include="..\src\dlfcn.c" />
+    <ClCompile Include="..\src\dlfcn.c">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\fileutils.cpp" />
     <ClCompile Include="..\src\hooks\urlhook.cpp" />
     <ClCompile Include="..\src\ice_transport.cpp" />
@@ -648,8 +657,12 @@
     <ClCompile Include="..\src\media\video\video_rtp_session.cpp" />
     <ClCompile Include="..\src\media\video\video_scaler.cpp" />
     <ClCompile Include="..\src\media\video\video_sender.cpp" />
-    <ClCompile Include="..\src\plugin_loader_dl.cpp" />
-    <ClCompile Include="..\src\plugin_manager.cpp" />
+    <ClCompile Include="..\src\plugin_loader_dl.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClCompile>
+    <ClCompile Include="..\src\plugin_manager.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\preferences.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\Common.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\CommonData.cpp" />
@@ -682,6 +695,7 @@
     <ClCompile Include="..\src\sip\siptransport.cpp" />
     <ClCompile Include="..\src\sip\sipvoiplink.cpp" />
     <ClCompile Include="..\src\sip\sip_utils.cpp" />
+    <ClCompile Include="..\src\smartools.cpp" />
     <ClCompile Include="..\src\string_utils.cpp" />
     <ClCompile Include="..\src\threadloop.cpp" />
     <ClCompile Include="..\src\thread_pool.cpp" />

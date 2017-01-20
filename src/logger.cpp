@@ -212,7 +212,7 @@ vlogger(const int level, const char *format, va_list ap)
             format = sep + 2;
             fputs(getHeader(ctx.c_str()).c_str(), stderr);
 #ifdef RING_UWP
-            char tmp[2048];
+            char tmp[4096];
             vsprintf(tmp, format, ap);
             ring::emitSignal<DRing::DebugSignal::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
 #endif
