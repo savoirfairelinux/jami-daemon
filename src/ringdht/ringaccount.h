@@ -499,7 +499,7 @@ class RingAccount : public SIPAccountBase {
         static ArchiveContent loadArchive(const std::vector<uint8_t>& data);
         std::vector<std::pair<sockaddr_storage, socklen_t>> loadBootstrap() const;
 
-        std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path) const;
+        static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
         void saveNodes(const std::vector<dht::NodeExport>&) const;
         void saveValues(const std::vector<dht::ValuesExport>&) const;
 
@@ -525,7 +525,7 @@ class RingAccount : public SIPAccountBase {
          * and certPath_ a valid certificate file, load and returns them.
          * Otherwise, generate a new identity and returns it.
          */
-        static dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd);
+        dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
         std::vector<dht::NodeExport> loadNodes() const;
         std::vector<dht::ValuesExport> loadValues() const;
 
