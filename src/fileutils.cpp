@@ -299,12 +299,30 @@ bool isPathRelative(const std::string& path)
 #endif
 }
 
+std::string
+getCleanPath(const std::string& base, const std::string& path)
+{
+    if (base.empty() or path.size() < base.size())
+        return path;
+    auto base_sep = base + DIR_SEPARATOR_STR;
+    if (path.compare(0, base_sep.size(), base_sep) == 0)
+        return path.substr(base_sep.size());
+    else
+        return path;
+}
+
+std::string
+getFullPath(const std::string& base, const std::string& path)
+{
+    bool isRelative {not base.empty() and isPathRelative(path)};
+    return isRelative ? base + DIR_SEPARATOR_STR + path : path;
+}
+
 std::vector<uint8_t>
 loadFile(const std::string& path, const std::string& default_dir)
 {
-    bool isRelative {not default_dir.empty() and isPathRelative(path)};
     std::vector<uint8_t> buffer;
-    std::ifstream file(isRelative ? default_dir + DIR_SEPARATOR_STR + path : path, std::ios::binary);
+    std::ifstream file(getFullPath(default_dir, path), std::ios::binary);
     if (!file)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);

@@ -695,8 +695,17 @@ void RingAccount::serialize(YAML::Emitter &out)
 void RingAccount::unserialize(const YAML::Node &node)
 {
     using yaml_utils::parseValue;
+    using yaml_utils::parsePath;
 
     SIPAccountBase::unserialize(node);
+
+    // get tls submap
+    const auto &tlsMap = node[Conf::TLS_KEY];
+    parsePath(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_, idPath_);
+    parsePath(tlsMap, Conf::CALIST_KEY, tlsCaListFile_, idPath_);
+    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
+    parsePath(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_, idPath_);
+
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
@@ -707,7 +716,7 @@ void RingAccount::unserialize(const YAML::Node &node)
     }
 
     try {
-        parseValue(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_);
+        parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
     } catch (const std::exception& e) {
         RING_WARN("can't read archive path: %s", e.what());
     }
@@ -753,7 +762,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     fileutils::check_dir(idPath_.c_str(), 0700);
 
     // save the chain including CA
-    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_ + DIR_SEPARATOR_STR "ring_device");
+    std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_, "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
@@ -877,13 +886,13 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 }
 
 dht::crypto::Identity
-RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd)
+RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
 {
     RING_DBG("Loading identity: %s %s", crt_path.c_str(), key_path.c_str());
     dht::crypto::Identity id;
     try {
-        dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path));
-        dht::crypto::PrivateKey  dht_key(fileutils::loadFile(key_path), key_pwd);
+        dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, idPath_));
+        dht::crypto::PrivateKey  dht_key(fileutils::loadFile(key_path, idPath_), key_pwd);
         auto crt_id = dht_cert.getId();
         if (crt_id != dht_key.getPublicKey().getId())
             return {};
@@ -916,7 +925,7 @@ RingAccount::readArchive(const std::string& pwd) const
 
     // Read file
     try {
-        data = fileutils::loadFile(archivePath_);
+        data = fileutils::loadFile(archivePath_, idPath_);
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] archive loading error: %s", getAccountID().c_str(), e.what());
         throw;
@@ -1063,8 +1072,8 @@ RingAccount::saveArchive(const ArchiveContent& archive_content, const std::strin
     // Write
     try {
         if (archivePath_.empty())
-            archivePath_ = idPath_ + DIR_SEPARATOR_STR "export.gz";
-        fileutils::saveFile(archivePath_, encrypted);
+            archivePath_ = "export.gz";
+        fileutils::saveFile(fileutils::getFullPath(idPath_, archivePath_), encrypted);
     } catch (const std::runtime_error& ex) {
         RING_ERR("Export failed: %s", ex.what());
         return;
@@ -1177,14 +1186,14 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
 }
 
 std::pair<std::string, std::string>
-RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path) const
+RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name)
 {
-    auto paths = std::make_pair(path + ".key", path + ".crt");
+    auto names = std::make_pair(name + ".key", name + ".crt");
     if (id.first)
-        fileutils::saveFile(paths.first, id.first->serialize(), 0600);
+        fileutils::saveFile(path + DIR_SEPARATOR_STR + names.first, id.first->serialize(), 0600);
     if (id.second)
-        fileutils::saveFile(paths.second, id.second->getPacked(), 0600);
-    return paths;
+        fileutils::saveFile(path + DIR_SEPARATOR_STR + names.second, id.second->getPacked(), 0600);
+    return names;
 }
 
 void
@@ -1404,7 +1413,7 @@ RingAccount::migrateAccount(const std::string& pwd)
     }
 
     if (updateCertificates(archive, identity_)) {
-        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
+        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_, "ring_device");
         saveArchive(archive, pwd);
         setRegistrationState(RegistrationState::UNREGISTERED);
         Migration::setState(accountID_, Migration::State::SUCCESS);
@@ -1420,14 +1429,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
-#if TARGET_OS_IPHONE
-        const auto certPath = idPath_ + DIR_SEPARATOR_STR + tlsCertificateFile_;
-        const auto keyPath = idPath_ + DIR_SEPARATOR_STR + tlsPrivateKeyFile_;
-#else
-        const auto& certPath = tlsCertificateFile_;
-        const auto& keyPath = tlsPrivateKeyFile_;
-#endif
-        auto id = loadIdentity(certPath, keyPath, tlsPassword_);
+        auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasValidId = useIdentity(id);
         bool needMigration = hasValidId and needsMigration(id);
         bool hasArchive = not archivePath_.empty() and fileutils::isFile(archivePath_);
@@ -1483,9 +1485,16 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 }
 
 void
-RingAccount::setAccountDetails(const std::map<std::string, std::string> &details)
+RingAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
     SIPAccountBase::setAccountDetails(details);
+
+    // TLS
+    parsePath(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_, idPath_);
+    parsePath(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_, idPath_);
+    parsePath(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_, idPath_);
+    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
+
     if (hostname_.empty())
         hostname_ = DHT_DEFAULT_BOOTSTRAP;
     parseInt(details, Conf::CONFIG_DHT_PORT, dhtPort_);
@@ -1502,7 +1511,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string> &details
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN,      archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parseString(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_);
+    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_, idPath_);
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
 #if HAVE_RINGNS
@@ -1530,6 +1539,10 @@ RingAccount::getAccountDetails() const
     a.emplace(Conf::CONFIG_SRTP_ENABLE,       isSrtpEnabled() ? TRUE_STR : FALSE_STR);
     a.emplace(Conf::CONFIG_SRTP_RTP_FALLBACK, getSrtpFallback() ? TRUE_STR : FALSE_STR);
 
+    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE,        fileutils::getFullPath(idPath_, tlsCaListFile_));
+    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,    fileutils::getFullPath(idPath_, tlsCertificateFile_));
+    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,    fileutils::getFullPath(idPath_, tlsPrivateKeyFile_));
+    a.emplace(Conf::CONFIG_TLS_PASSWORD,            tlsPassword_);
     a.emplace(Conf::CONFIG_TLS_METHOD,                     "Automatic");
     a.emplace(Conf::CONFIG_TLS_CIPHERS,                    "");
     a.emplace(Conf::CONFIG_TLS_SERVER_NAME,                "");

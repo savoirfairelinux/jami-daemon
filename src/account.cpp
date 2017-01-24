@@ -42,6 +42,7 @@ using random_device = dht::crypto::random_device;
 #include "client/ring_signal.h"
 #include "account_schema.h"
 #include "string_utils.h"
+#include "fileutils.h"
 #include "config/yamlparser.h"
 #include "system_codec_container.h"
 #include "ice_transport.h"
@@ -408,6 +409,14 @@ Account::parseString(const std::map<std::string, std::string>& details,
 {
     find_iter();
     s = iter->second;
+}
+
+void
+Account::parsePath(const std::map<std::string, std::string>& details,
+                   const char *key, std::string &s, const std::string& base)
+{
+    find_iter();
+    s = fileutils::getCleanPath(base, iter->second);
 }
 
 void
