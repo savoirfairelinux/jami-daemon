@@ -62,7 +62,6 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
 void
 MessageEngine::reschedule()
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
     if (messages_.empty())
         return;
     std::weak_ptr<Account> w = std::static_pointer_cast<Account>(account_.shared_from_this());
@@ -114,6 +113,7 @@ MessageEngine::retrySend()
     }
     // avoid locking while calling callback
     for (auto& p : pending) {
+        RING_DBG("[message %" PRIx64 "] retrying sending", p.token);
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             account_.getAccountID(),
             p.token,
@@ -134,43 +134,44 @@ MessageEngine::getStatus(MessageToken t) const
 void
 MessageEngine::onMessageSent(MessageToken token, bool ok)
 {
-    RING_DBG("Message %" PRIu64 ": %s", token, ok ? "success" : "failure");
+    RING_DBG("[message %" PRIx64 "] message sent: %s", token, ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto f = messages_.find(token);
     if (f != messages_.end()) {
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
-                RING_DBG("Status SENT for message %" PRIu64, token);
+                RING_DBG("[message %" PRIx64 "] status changed to SENT", token);
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
-            } else if (f->second.retried == MAX_RETRIES) {
+            } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
-                RING_DBG("Status FAILURE for message %" PRIu64, token);
+                RING_WARN("[message %" PRIx64 "] status changed to FAILURE", token);
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
             } else {
                 f->second.status = MessageStatus::IDLE;
-                RING_DBG("Status IDLE for message %" PRIu64, token);
-                // TODO: reschedule sending
+                RING_DBG("[message %" PRIx64 "] status changed to IDLE", token);
+                reschedule();
             }
         }
         else {
-           RING_DBG("Message %" PRIu64 " not SENDING", token);
+           RING_DBG("[message %" PRIx64 "] state is not SENDING", token);
         }
     }
     else {
-        RING_DBG("Can't find message %" PRIu64, token);
+        RING_DBG("[message %" PRIx64 "] can't find message", token);
     }
 }
 
 void
 MessageEngine::load()
 {
+    std::lock_guard<std::mutex> lock(messagesMutex_);
     try {
         std::ifstream file;
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
@@ -181,8 +182,7 @@ MessageEngine::load()
         if (!reader.parse(file, root))
             throw std::runtime_error("can't parse JSON.");
 
-        std::lock_guard<std::mutex> lock(messagesMutex_);
-
+        long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
             const auto& jmsg = *i;
             MessageToken token;
@@ -198,12 +198,14 @@ MessageEngine::load()
             for (auto p = pl.begin(); p != pl.end(); ++p)
                 msg.payloads[p.key().asString()] = p->asString();
            messages_.emplace(token, std::move(msg));
+           loaded++;
         }
+        RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
 
         // everything whent fine, removing the file
         std::remove(savePath_.c_str());
     } catch (const std::exception& e) {
-        RING_ERR("Could not load messages from %s: %s", savePath_.c_str(), e.what());
+        RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
     reschedule();
 }
@@ -235,8 +237,9 @@ MessageEngine::save() const
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         file.open(savePath_, std::ios::trunc);
         file << fastWriter.write(root);
+        RING_DBG("[Account %s] saved %lu messages to %s", account_.getAccountID().c_str(), messages_.size(), savePath_.c_str());
     } catch (const std::exception& e) {
-        RING_ERR("Could not save messages to %s: %s", savePath_.c_str(), e.what());
+        RING_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
 }
 
