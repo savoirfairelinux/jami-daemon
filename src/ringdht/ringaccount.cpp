@@ -1693,34 +1693,37 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         throw std::runtime_error("No identity configured for this account.");
 
     std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
         /*.ca_list = */"",
         /*.cert = */identity_.second,
         /*.cert_key = */identity_.first,
         /*.dh_params = */dhParams_,
         /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        /*.cert_check = */[w,call,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
+        /*.cert_check = */[w,wcall,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
             try {
-                if (auto sthis = w.lock()) {
-                    auto& this_ = *sthis;
-                    std::shared_ptr<dht::crypto::Certificate> peer_cert;
-                    auto ret = check_peer_certificate(remote_h, status, cert_list, cert_num, peer_cert);
-                    if (ret == PJ_SUCCESS and peer_cert) {
-                        std::lock_guard<std::mutex> lock(this_.callsMutex_);
-                        for (auto& pscall : this_.pendingSipCalls_) {
-                            if (auto pcall = pscall.call.lock()) {
-                                if (pcall == call and not pscall.from_cert) {
-                                    RING_DBG("[call:%s] got peer certificate from TLS negotiation", call->getCallId().c_str());
-                                    tls::CertificateStore::instance().pinCertificate(peer_cert);
-                                    pscall.from_cert = peer_cert;
-                                    break;
+                if (auto call = wcall.lock()) {
+                    if (auto sthis = w.lock()) {
+                        auto& this_ = *sthis;
+                        std::shared_ptr<dht::crypto::Certificate> peer_cert;
+                        auto ret = check_peer_certificate(remote_h, status, cert_list, cert_num, peer_cert);
+                        if (ret == PJ_SUCCESS and peer_cert) {
+                            std::lock_guard<std::mutex> lock(this_.callsMutex_);
+                            for (auto& pscall : this_.pendingSipCalls_) {
+                                if (auto pcall = pscall.call.lock()) {
+                                    if (pcall == call and not pscall.from_cert) {
+                                        RING_DBG("[call:%s] got peer certificate from TLS negotiation", call->getCallId().c_str());
+                                        tls::CertificateStore::instance().pinCertificate(peer_cert);
+                                        pscall.from_cert = peer_cert;
+                                        break;
+                                    }
                                 }
                             }
                         }
+                        return ret;
                     }
-                    return ret;
-                } else
-                    return PJ_SSL_CERT_EUNTRUSTED;
+                }
+                return PJ_SSL_CERT_EUNTRUSTED;
             } catch (const std::exception& e) {
                 RING_ERR("[peer:%s] TLS certificate check exception: %s",
                          remote_h.toString().c_str(), e.what());
