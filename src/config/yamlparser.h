@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __YAMLPARSER_H__
-#define __YAMLPARSER_H__
+#pragma once
 
 #include <yaml-cpp/yaml.h>
 
@@ -33,9 +32,9 @@ void parseValue(const YAML::Node &node, const char *key, T &value)
     value = node[key].as<T>(value);
 }
 
+void parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base);
+
 std::vector<std::map<std::string, std::string>>
 parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys);
 
 }} // namespace ring::yaml_utils
-
-#endif

@@ -326,6 +326,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
+        static void parsePath(const std::map<std::string, std::string> &details, const char *key, std::string &s, const std::string& base);
 
         template<class T>
         static inline void

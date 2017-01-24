@@ -59,8 +59,8 @@ namespace ring { namespace fileutils {
 
     /**
      * Check directory existance and create it with given mode if it doesn't.
-     * @path path to check, relative or absolute
-     * @dir last directory creation mode
+     * @param path to check, relative or absolute
+     * @param dir last directory creation mode
      * @param parents default mode for all created directories except the last
      */
     bool check_dir(const char *path, mode_t dir=0755, mode_t parents=0755);
@@ -71,6 +71,16 @@ namespace ring { namespace fileutils {
     bool recursive_mkdir(const std::string& path, mode_t mode=0755);
 
     bool isPathRelative(const std::string& path);
+    /**
+     * If path is contained in base, return the suffix, otherwise return the full path.
+     * @param base must not finish with DIR_SEPARATOR_STR, can be empty
+     * @param path the path
+     */
+    std::string getCleanPath(const std::string& base, const std::string& path);
+    /**
+     * If path is relative, it is appended to base.
+     */
+    std::string getFullPath(const std::string& base, const std::string& path);
 
     bool isFile(const std::string& path);
     bool isDirectory(const std::string& path);

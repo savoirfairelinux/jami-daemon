@@ -196,13 +196,6 @@ void SIPAccountBase::unserialize(const YAML::Node &node)
 
     parseValue(node, Conf::DTMF_TYPE_KEY, dtmfType_);
 
-    // get tls submap
-    const auto &tlsMap = node[Conf::TLS_KEY];
-    parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
-    parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
-    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
-    parseValue(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
-
     unserializeRange(node, Conf::AUDIO_PORT_MIN_KEY, Conf::AUDIO_PORT_MAX_KEY, audioPortRange_);
     unserializeRange(node, Conf::VIDEO_PORT_MIN_KEY, Conf::VIDEO_PORT_MAX_KEY, videoPortRange_);
 
@@ -245,12 +238,6 @@ void SIPAccountBase::setAccountDetails(const std::map<std::string, std::string> 
     updateRange(tmpMin, tmpMax, videoPortRange_);
 #endif
 
-    // TLS
-    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
-    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
-    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
-    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
-
     // ICE - STUN
     parseBool(details, Conf::CONFIG_STUN_ENABLE, stunEnabled_);
     parseString(details, Conf::CONFIG_STUN_SERVER, stunServer_);
@@ -287,11 +274,6 @@ SIPAccountBase::getAccountDetails() const
     a.emplace(Conf::CONFIG_TURN_SERVER_UNAME, turnServerUserName_);
     a.emplace(Conf::CONFIG_TURN_SERVER_PWD, turnServerPwd_);
     a.emplace(Conf::CONFIG_TURN_SERVER_REALM, turnServerRealm_);
-
-    a.emplace(Conf::CONFIG_TLS_CA_LIST_FILE,        tlsCaListFile_);
-    a.emplace(Conf::CONFIG_TLS_CERTIFICATE_FILE,    tlsCertificateFile_);
-    a.emplace(Conf::CONFIG_TLS_PRIVATE_KEY_FILE,    tlsPrivateKeyFile_);
-    a.emplace(Conf::CONFIG_TLS_PASSWORD,            tlsPassword_);
 
     return a;
 }
