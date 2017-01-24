@@ -2158,7 +2158,7 @@ RingAccount::doRegister_()
                     std::map<std::string, std::string> payloads = {{"text/plain",
                                                                     utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
-                    RING_DBG("Sending message confirmation %" PRIu64, v.id);
+                    RING_DBG("Sending message confirmation %" PRIx64, v.id);
                     shared->dht_.putEncrypted(inboxDeviceKey,
                               v.from,
                               dht::ImMessage(v.id, std::string(), now));
@@ -3124,43 +3124,34 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         e.first->second.to = dev;
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
-        RING_DBG("Found device to send message %s -> %s", dev.toString().c_str(), h.toString().c_str());
-
         std::weak_ptr<RingAccount> wshared = shared;
         auto list_token = shared->dht_.listen<dht::ImMessage>(h, [h,wshared,token,confirm](dht::ImMessage&& msg) {
-            if (auto this_ = wshared.lock()) {
+            if (auto sthis = wshared.lock()) {
+                auto& this_ = *sthis;
                 // check expected message confirmation
                 if (msg.id != token)
                     return true;
-                auto e = this_->sentMessages_.find(msg.id);
-                if (e == this_->sentMessages_.end()) {
-                    RING_DBG("Message not found for %" PRIu64, token);
+                auto e = this_.sentMessages_.find(msg.id);
+                if (e == this_.sentMessages_.end() or e->second.to != msg.from) {
+                    RING_DBG("[Account %s] [message %" PRIx64 "] message not found", this_.getAccountID().c_str(), token);
                     return true;
                 }
-                if (e->second.to != msg.from) {
-                        RING_DBG("Unrelated text message : from %s != second %s",
-                                 msg.from.toString().c_str(), e->second.to.toString().c_str());
-                }
-                if (e == this_->sentMessages_.end() || e->second.to != msg.from) {
-                    RING_DBG("Unrelated text message reply for %" PRIu64, token);
-                    return true;
-                }
-                this_->sentMessages_.erase(e);
-                RING_DBG("Relevant text message reply for %" PRIu64, token);
+                this_.sentMessages_.erase(e);
+                RING_DBG("[Account %s] [message %" PRIx64 "] received text message reply", this_.getAccountID().c_str(), token);
 
                 // add treated message
-                auto res = this_->treatedMessages_.insert(msg.id);
+                auto res = this_.treatedMessages_.insert(msg.id);
                 if (!res.second)
                     return true;
 
-                this_->saveTreatedMessages();
+                this_.saveTreatedMessages();
 
                 // report message as confirmed received
                 for (auto& t : confirm->listenTokens)
-                    this_->dht_.cancelListen(t.first, t.second.get());
+                    this_.dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
                 confirm->replied = true;
-                this_->messageEngine_.onMessageSent(token, true);
+                this_.messageEngine_.onMessageSent(token, true);
             }
             return false;
         });
@@ -3169,15 +3160,36 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             dht::ImMessage(token, std::string(payloads.begin()->second), now),
             [wshared,token,confirm,h](bool ok) {
                 if (auto this_ = wshared.lock()) {
+                    RING_DBG("[Account %s] [message %" PRIx64 "] put encrypted %s", this_->getAccountID().c_str(), token, ok ? "ok" : "failed");
                     if (not ok) {
-                        confirm->listenTokens.erase(h);
+                        auto lt = confirm->listenTokens.find(h);
+                        if (lt != confirm->listenTokens.end()) {
+                            this_->dht_.cancelListen(h, lt->second.get());
+                            confirm->listenTokens.erase(lt);
+                        }
                         if (confirm->listenTokens.empty() and not confirm->replied)
                             this_->messageEngine_.onMessageSent(token, false);
                     }
                 }
             });
-        RING_DBG("Put encrypted message at %s for %s", h.toString().c_str(), dev.toString().c_str());
+
+        RING_DBG("[Account %s] [message %" PRIx64 "] sending message for device %s", shared->getAccountID().c_str(), token, dev.toString().c_str());
     });
+
+    // Timeout cleanup
+    std::weak_ptr<RingAccount> wshared = shared();
+    Manager::instance().scheduleTask([wshared, confirm, token]() {
+        if (not confirm->replied and not confirm->listenTokens.empty()) {
+            if (auto this_ = wshared.lock()) {
+                RING_DBG("[Account %s] [message %" PRIx64 "] timeout", this_->getAccountID().c_str(), token);
+                for (auto& t : confirm->listenTokens)
+                    this_->dht_.cancelListen(t.first, t.second.get());
+                confirm->listenTokens.clear();
+                confirm->replied = true;
+                this_->messageEngine_.onMessageSent(token, false);
+            }
+        }
+    }, std::chrono::steady_clock::now() + std::chrono::minutes(1));
 }
 
 void
