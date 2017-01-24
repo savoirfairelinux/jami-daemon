@@ -118,8 +118,13 @@ getHeader(const char* ctx)
     out.fill(prev_fill);
 
     // Context
-    if (ctx)
+    if (ctx) {
+#ifdef RING_UWP
+        out << "|" << std::setw(32) << ctx;
+#else
         out << "|" << std::setw(24) << ctx;
+#endif
+    }
 
     out << "] ";
 
