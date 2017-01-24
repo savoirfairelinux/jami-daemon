@@ -19,13 +19,22 @@
  */
 
 #include "yamlparser.h"
+#include "fileutils.h"
 
-namespace ring {
+namespace ring { namespace yaml_utils {
+
+void
+parsePath(const YAML::Node &node, const char *key, std::string& path, const std::string& base)
+{
+	std::string val;
+	parseValue(node, key, val);
+	path = fileutils::getCleanPath(base, val);
+}
 
 // FIXME: Maybe think of something more clever, this is due to yaml-cpp's poor
 // handling of empty values for nested collections.
 std::vector<std::map<std::string, std::string>>
-yaml_utils::parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys)
+parseVectorMap(const YAML::Node &node, const std::initializer_list<std::string> &keys)
 {
     std::vector<std::map<std::string, std::string>> result;
     for (const auto &n : node) {
@@ -38,4 +47,4 @@ yaml_utils::parseVectorMap(const YAML::Node &node, const std::initializer_list<s
     return result;
 }
 
-} // namespace ring
+}} // namespace ring::yaml_utils

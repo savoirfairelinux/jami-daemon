@@ -499,7 +499,10 @@ void SIPAccount::unserialize(const YAML::Node &node)
 
     // get tls submap
     const auto &tlsMap = node[Conf::TLS_KEY];
-
+    parseValue(tlsMap, Conf::CERTIFICATE_KEY, tlsCertificateFile_);
+    parseValue(tlsMap, Conf::CALIST_KEY, tlsCaListFile_);
+    parseValue(tlsMap, Conf::TLS_PASSWORD_KEY, tlsPassword_);
+    parseValue(tlsMap, Conf::PRIVATE_KEY_KEY, tlsPrivateKeyFile_);
     parseValue(tlsMap, Conf::TLS_ENABLE_KEY, tlsEnable_);
     parseValue(tlsMap, Conf::TLS_PORT_KEY, tlsListenerPort_);
     parseValue(tlsMap, Conf::CIPHERS_KEY, tlsCiphers_);
@@ -529,6 +532,12 @@ void SIPAccount::setAccountDetails(const std::map<std::string, std::string> &det
     parseString(details, Conf::CONFIG_ACCOUNT_USERNAME, username_);
 
     parseInt(details, Conf::CONFIG_LOCAL_PORT, localPort_);
+
+    // TLS
+    parseString(details, Conf::CONFIG_TLS_CA_LIST_FILE, tlsCaListFile_);
+    parseString(details, Conf::CONFIG_TLS_CERTIFICATE_FILE, tlsCertificateFile_);
+    parseString(details, Conf::CONFIG_TLS_PRIVATE_KEY_FILE, tlsPrivateKeyFile_);
+    parseString(details, Conf::CONFIG_TLS_PASSWORD, tlsPassword_);
 
     // SIP specific account settings
     parseString(details, Conf::CONFIG_ACCOUNT_ROUTESET, serviceRoute_);
