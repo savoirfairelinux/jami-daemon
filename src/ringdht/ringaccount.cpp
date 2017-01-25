@@ -792,19 +792,19 @@ RingAccount::makeReceipt(const dht::crypto::Identity& id)
 }
 
 bool
-RingAccount::hasSignedReceipt()
+RingAccount::useIdentity(const dht::crypto::Identity& identity)
 {
     if (receipt_.empty() or receiptSignature_.empty())
         return false;
 
-    if (not identity_.first or not identity_.second) {
-        RING_ERR("[Account %s] no identity loaded", getAccountID().c_str());
+    if (not identity.first or not identity.second) {
+        RING_ERR("[Account %s] no identity provided", getAccountID().c_str());
         return false;
     }
 
-    auto accountCertificate = identity_.second->issuer;
+    auto accountCertificate = identity.second->issuer;
     if (not accountCertificate) {
-        RING_ERR("Device certificate must be signed by the account certificate");
+        RING_ERR("Device certificate must be issued by the account certificate");
         return false;
     }
 
@@ -821,7 +821,7 @@ RingAccount::hasSignedReceipt()
         return false;
 
     auto dev_id = root["dev"].asString();
-    if (dev_id != identity_.second->getId().toString()) {
+    if (dev_id != identity.second->getId().toString()) {
         RING_ERR("[Account %s] device ID mismatch between receipt and certificate", getAccountID().c_str());
         return false;
     }
@@ -852,8 +852,10 @@ RingAccount::hasSignedReceipt()
         return false;
     }
 
+    // success, make use of this identity (certificate chain and private key)
+    identity_ = identity;
     ringAccountId_ = id;
-    ringDeviceId_ = identity_.first->getPublicKey().getId().toString();
+    ringDeviceId_ = identity.first->getPublicKey().getId().toString();
     username_ = RING_URI_PREFIX + id;
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
     ethAccount_ = root["eth"].asString();
@@ -863,20 +865,13 @@ RingAccount::hasSignedReceipt()
 }
 
 dht::crypto::Identity
-RingAccount::loadIdentity()
+RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd)
 {
-    RING_DBG("[Account %s] loading identity: %s %s", getAccountID().c_str(), tlsCertificateFile_.c_str(), tlsPrivateKeyFile_.c_str());
-    dht::crypto::Certificate dht_cert;
-    dht::crypto::PrivateKey dht_key;
+    RING_DBG("Loading identity: %s %s", crt_path.c_str(), key_path.c_str());
+    dht::crypto::Identity id;
     try {
-#if TARGET_OS_IPHONE
-        const auto path = fileutils::get_data_dir() + DIR_SEPARATOR_STR + getAccountID() + DIR_SEPARATOR_STR;
-        dht_cert = dht::crypto::Certificate(fileutils::loadFile(path + tlsCertificateFile_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(path + tlsPrivateKeyFile_), tlsPassword_);
-#else
-        dht_cert = dht::crypto::Certificate(fileutils::loadFile(tlsCertificateFile_));
-        dht_key = dht::crypto::PrivateKey(fileutils::loadFile(tlsPrivateKeyFile_), tlsPassword_);
-#endif
+        dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path));
+        dht::crypto::PrivateKey  dht_key(fileutils::loadFile(key_path), key_pwd);
         auto crt_id = dht_cert.getId();
         if (crt_id != dht_key.getPublicKey().getId())
             return {};
@@ -888,7 +883,7 @@ RingAccount::loadIdentity()
         // load revocation lists for device authority (account certificate).
         tls::CertificateStore::instance().loadRevocations(*dht_cert.issuer);
 
-        identity_ = {
+        id = {
             std::make_shared<dht::crypto::PrivateKey>(std::move(dht_key)),
             std::make_shared<dht::crypto::Certificate>(std::move(dht_cert))
         };
@@ -897,7 +892,7 @@ RingAccount::loadIdentity()
         RING_ERR("Error loading identity: %s", e.what());
     }
 
-    return identity_;
+    return id;
 }
 
 RingAccount::ArchiveContent
@@ -1318,11 +1313,11 @@ RingAccount::createAccount(const std::string& archive_password)
 }
 
 bool
-RingAccount::needsMigration() const
+RingAccount::needsMigration(const dht::crypto::Identity& id)
 {
-    if (not identity_.second)
+    if (not id.second)
         return true;
-    auto cert = identity_.second->issuer;
+    auto cert = id.second->issuer;
     while (cert) {
         if (not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now())
             return true;
@@ -1392,20 +1387,28 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
-        loadIdentity();
-        loadKnownDevices();
-        loadContacts();
-        loadTrustRequests();
-
+#if TARGET_OS_IPHONE
+        const auto certPath = idPath_ + DIR_SEPARATOR_STR + tlsCertificateFile_;
+        const auto keyPath = idPath_ + DIR_SEPARATOR_STR + tlsPrivateKeyFile_;
+#else
+        const auto& certPath = tlsCertificateFile_;
+        const auto& keyPath = tlsPrivateKeyFile_;
+#endif
+        auto id = loadIdentity(certPath, keyPath, tlsPassword_);
+        bool hasValidId = useIdentity(id);
+        bool needMigration = hasValidId and needsMigration(id);
         bool hasArchive = not archivePath_.empty() and fileutils::isFile(archivePath_);
-        bool hasReceipt = hasSignedReceipt();
-        bool needMigration = hasReceipt and needsMigration();
 
-        if (not needMigration and hasReceipt) {
-            if (not hasArchive)
-                RING_WARN("[Account %s] account archive not found, won't be able to add new devices.", getAccountID().c_str());
-            // normal account loading path
-            return;
+        if (hasValidId) {
+            loadKnownDevices();
+            loadContacts();
+            loadTrustRequests();
+            if (not needMigration) {
+                if (not hasArchive)
+                    RING_WARN("[Account %s] account archive not found, won't be able to add new devices.", getAccountID().c_str());
+                // normal account loading path
+                return;
+            }
         }
 
         if (hasArchive) {
@@ -1440,9 +1443,9 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                 }
             }
         }
-
     } catch (const std::exception& e) {
         RING_WARN("[Account %s] error loading account: %s", getAccountID().c_str(), e.what());
+        identity_ = dht::crypto::Identity{};
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
