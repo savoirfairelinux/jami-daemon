@@ -483,8 +483,8 @@ class RingAccount : public SIPAccountBase {
 
         bool hasCertificate() const;
         bool hasPrivateKey() const;
-        bool hasSignedReceipt();
-        bool needsMigration() const;
+        bool useIdentity(const dht::crypto::Identity& id);
+        static bool needsMigration(const dht::crypto::Identity& id);
 
         std::string makeReceipt(const dht::crypto::Identity& id);
         void createRingDevice(const dht::crypto::Identity& id);
@@ -525,7 +525,7 @@ class RingAccount : public SIPAccountBase {
          * and certPath_ a valid certificate file, load and returns them.
          * Otherwise, generate a new identity and returns it.
          */
-        dht::crypto::Identity loadIdentity();
+        static dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd);
         std::vector<dht::NodeExport> loadNodes() const;
         std::vector<dht::ValuesExport> loadValues() const;
 
