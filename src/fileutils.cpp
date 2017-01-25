@@ -290,11 +290,21 @@ writeTime(const std::string& path)
 #endif
 }
 
-std::vector<uint8_t>
-loadFile(const std::string& path)
+bool isPathRelative(const std::string& path)
 {
+#ifndef _WIN32
+    return not path.empty() and not (path[0] == '/');
+#else
+    return not path.empty() and path.find(":") == std::string::npos;
+#endif
+}
+
+std::vector<uint8_t>
+loadFile(const std::string& path, const std::string& default_dir)
+{
+    bool isRelative {not default_dir.empty() and isPathRelative(path)};
     std::vector<uint8_t> buffer;
-    std::ifstream file(path, std::ios::binary);
+    std::ifstream file(isRelative ? default_dir + DIR_SEPARATOR_STR + path : path, std::ios::binary);
     if (!file)
         throw std::runtime_error("Can't read file: "+path);
     file.seekg(0, std::ios::end);
