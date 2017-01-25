@@ -70,6 +70,8 @@ namespace ring { namespace fileutils {
 
     bool recursive_mkdir(const std::string& path, mode_t mode=0755);
 
+    bool isPathRelative(const std::string& path);
+
     bool isFile(const std::string& path);
     bool isDirectory(const std::string& path);
 
@@ -84,7 +86,11 @@ namespace ring { namespace fileutils {
      */
     std::vector<std::string> readDirectory(const std::string &dir);
 
-    std::vector<uint8_t> loadFile(const std::string& path);
+    /**
+     * Read the full content of a file at path.
+     * If path is relative, it is appended to default_dir.
+     */
+    std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
     void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644);
 
     struct FileHandle {
