@@ -587,6 +587,30 @@ TrustStore::matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_t
     if (ret < 0) {
         RING_ERR("Error verifying certificate: %s", gnutls_strerror(ret));
         return false;
+    } else if (result & GNUTLS_CERT_INVALID) {
+        RING_WARN("Certificate check failed with code: %d", result);
+        if (result & GNUTLS_CERT_SIGNATURE_FAILURE)
+            RING_WARN("* The signature verification failed.");
+        if (result & GNUTLS_CERT_REVOKED)
+            RING_WARN("* Certificate is revoked");
+        if (result & GNUTLS_CERT_SIGNER_NOT_FOUND)
+            RING_WARN("* Certificate's issuer is not known");
+        if (result & GNUTLS_CERT_SIGNER_NOT_CA)
+            RING_WARN("* Certificate's issuer not a CA");
+        if (result & GNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE)
+            RING_WARN("* Certificate's signer constraints were violated");
+        if (result & GNUTLS_CERT_INSECURE_ALGORITHM)
+            RING_WARN("* Certificate was signed using an insecure algorithm");
+        if (result & GNUTLS_CERT_NOT_ACTIVATED)
+            RING_WARN("* Certificate is not yet activated");
+        if (result & GNUTLS_CERT_EXPIRED)
+            RING_WARN("* Certificate has expired");
+        if (result & GNUTLS_CERT_UNEXPECTED_OWNER)
+            RING_WARN("* The owner is not the expected one");
+        if (result & GNUTLS_CERT_PURPOSE_MISMATCH)
+            RING_WARN("* Certificate or an intermediate does not match the intended purpose");
+        if (result & GNUTLS_CERT_MISMATCH)
+            RING_WARN("* Certificate presented isn't the expected one");
     }
 
     return !(result & GNUTLS_CERT_INVALID);
