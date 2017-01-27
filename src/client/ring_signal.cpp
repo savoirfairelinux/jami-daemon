@@ -2,6 +2,7 @@
  *  Copyright (C) 2015-2017 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -70,6 +71,7 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::NameRegistrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::RegisteredNameFound>(),
         exported_callback<DRing::ConfigurationSignal::MediaParametersChanged>(),
+        exported_callback<DRing::ConfigurationSignal::MigrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
 #ifdef __ANDROID__
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),

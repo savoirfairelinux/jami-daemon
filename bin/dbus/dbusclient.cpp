@@ -3,6 +3,7 @@
  *
  *  Author: Philippe Proulx <philippe.proulx@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -187,6 +188,7 @@ DBusClient::initLibrary(int flags)
         exportable_callback<ConfigurationSignal::CertificateExpired>(bind(&DBusConfigurationManager::certificateExpired, confM, _1 )),
         exportable_callback<ConfigurationSignal::CertificateStateChanged>(bind(&DBusConfigurationManager::certificateStateChanged, confM, _1, _2, _3 )),
         exportable_callback<ConfigurationSignal::MediaParametersChanged>(bind(&DBusConfigurationManager::mediaParametersChanged, confM, _1 )),
+        exportable_callback<ConfigurationSignal::MigrationEnded>(bind(&DBusConfigurationManager::migrationEnded, confM, _1, _2 )),
     };
 
     // Presence event handlers
