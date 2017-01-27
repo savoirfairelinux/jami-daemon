@@ -904,7 +904,13 @@ RingAccount::readArchive(const std::string& pwd) const
     std::vector<uint8_t> file = fileutils::loadFile(archivePath_);
 
     // Decrypt
-    file = dht::crypto::aesDecrypt(file, pwd);
+    try {
+        file = dht::crypto::aesDecrypt(file, pwd);
+    }
+    catch (const std::exception& e) {
+        RING_ERR("Error decrypting archive: %s", e.what());
+        return RingAccount::ArchiveContent();
+    }
 
     // Load
     return loadArchive(file);
