@@ -266,6 +266,10 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
         };
+        struct MigrationEnded {
+                constexpr static const char* name = "MigrationEnded";
+                using cb_type = void(const std::string& /*accountId*/, const std::string& /*state*/);
+        };
         /**
          * These are special getters for Android and UWP, so the daemon can retreive
          * information only accessible through their respective platform APIs
