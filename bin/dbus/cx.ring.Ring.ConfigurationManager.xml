@@ -1358,5 +1358,23 @@
            </tp:docstring>
        </method>
 
+       <signal name="migrationEnded" tp:name-for-bindings="migrationEnded">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients when migration is ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="Reuslt">
+               <tp:docstring>
+                   The result of the migration.
+               </tp:docstring>
+           </arg>
+       </signal>
+
+
    </interface>
 </node>

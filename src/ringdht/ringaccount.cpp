@@ -40,6 +40,7 @@
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
 #include "dring/account_const.h"
+#include "migration_states.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -79,6 +80,30 @@ namespace ring {
 
 using sip_utils::CONST_PJ_STR;
 using std::chrono::system_clock;
+
+namespace Migration {
+    std::string
+    mapStateNumberToString(const MigrationState migrationState)
+    {
+        #define CASE_STATE(X) case MigrationState::X: \
+                   return #X
+
+        switch (migrationState) {
+            CASE_STATE(INVALID);
+            CASE_STATE(TRYING);
+            CASE_STATE(SUCCESS);
+        }
+    }
+
+    void
+    setMigrationState (const std::string& accountID,
+                       const MigrationState migrationState)
+    {
+        emitSignal<DRing::ConfigurationSignal::MigrationEnded>(
+            accountID,
+            mapStateNumberToString(migrationState));
+    }
+}
 
 struct RingAccount::BuddyInfo
 {
@@ -1372,7 +1397,7 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     return updated;
 }
 
-bool
+void
 RingAccount::migrateAccount(const std::string& pwd)
 {
     auto archive = readArchive(pwd);
@@ -1380,9 +1405,9 @@ RingAccount::migrateAccount(const std::string& pwd)
     if (updateCertificates(archive, identity_)) {
         std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
         saveArchive(archive, pwd);
-        return true;
+        Migration::setMigrationState(accountID_, MigrationState::SUCCESS);
     }
-    return false;
+    Migration::setMigrationState(accountID_, MigrationState::INVALID);
 }
 
 void
