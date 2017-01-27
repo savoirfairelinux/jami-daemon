@@ -4,6 +4,7 @@
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@savoirfairelinux.com>
+ *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -79,6 +80,34 @@ namespace ring {
 
 using sip_utils::CONST_PJ_STR;
 using std::chrono::system_clock;
+
+namespace Migration {
+
+enum class State { // Contains all the Migration states
+    SUCCESS,
+    INVALID
+};
+
+std::string
+mapStateNumberToString(const State migrationState)
+{
+#define CASE_STATE(X) case Migration::State::X: \
+                           return #X
+
+switch (migrationState) {
+    CASE_STATE(INVALID);
+    CASE_STATE(SUCCESS);
+}
+}
+
+void
+setState (const std::string& accountID,
+          const State migrationState)
+{
+    emitSignal<DRing::ConfigurationSignal::MigrationEnded>(accountID,
+        mapStateNumberToString(migrationState));
+}
+}
 
 struct RingAccount::BuddyInfo
 {
@@ -1372,7 +1401,7 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     return updated;
 }
 
-bool
+void
 RingAccount::migrateAccount(const std::string& pwd)
 {
     auto archive = readArchive(pwd);
@@ -1380,9 +1409,10 @@ RingAccount::migrateAccount(const std::string& pwd)
     if (updateCertificates(archive, identity_)) {
         std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
         saveArchive(archive, pwd);
-        return true;
+        setRegistrationState(RegistrationState::UNREGISTERED);
+        Migration::setState(accountID_, Migration::State::SUCCESS);
     }
-    return false;
+    Migration::setState(accountID_, Migration::State::INVALID);
 }
 
 void
