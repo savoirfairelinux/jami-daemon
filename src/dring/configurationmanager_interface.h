@@ -7,6 +7,7 @@
  *  Author: Guillaume Carmel-Archambault <guillaume.carmel-archambault@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Nicolas Jäger <nicolas.jager@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -265,6 +266,10 @@ struct ConfigurationSignal {
         struct MediaParametersChanged {
                 constexpr static const char* name = "MediaParametersChanged";
                 using cb_type = void(const std::string& /*accountId*/);
+        };
+        struct MigrationEnded {
+                constexpr static const char* name = "MigrationEnded";
+                using cb_type = void(const std::string& /*accountId*/, const std::string& /*state*/);
         };
         /**
          * These are special getters for Android and UWP, so the daemon can retreive
