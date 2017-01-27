@@ -516,7 +516,7 @@
        </signal>
 
        <signal name="accountMessageStatusChanged" tp:name-for-bindings="accountMessageStatusChanged">
-           <tp:added version="2.3.0"/>
+           <tp:added version="3.0.0"/>
            <tp:docstring>
                Notify clients that a sent text message status have changed
            </tp:docstring>
@@ -1357,6 +1357,26 @@
                - connected interface has changed (wifi to eth)
            </tp:docstring>
        </method>
+
+       <signal name="migrationEnded" tp:name-for-bindings="migrationEnded">
+           <tp:added version="2.3.0"/>
+           <tp:docstring>
+               Notify clients when migration is ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   An account id.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="Result">
+               <tp:docstring>
+                   The result of the migration.
+                   SUCCESS : account migrated.
+                   INVALID : account migration failed.
+               </tp:docstring>
+           </arg>
+       </signal>
+
 
    </interface>
 </node>
