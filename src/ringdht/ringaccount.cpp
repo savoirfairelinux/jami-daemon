@@ -40,6 +40,7 @@
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
 #include "dring/account_const.h"
+#include "migration_states.h"
 
 #include "upnp/upnp_control.h"
 #include "system_codec_container.h"
@@ -903,14 +904,21 @@ RingAccount::loadIdentity()
 RingAccount::ArchiveContent
 RingAccount::readArchive(const std::string& pwd) const
 {
-    RING_DBG("[Account %s] reading account archive", getAccountID().c_str());
+    RING_WARN("[Account %s] reading account archive", getAccountID().c_str());
 
     // Read file
     std::vector<uint8_t> file = fileutils::loadFile(archivePath_);
-
+RING_WARN("$1");
     // Decrypt
+    try{ 
     file = dht::crypto::aesDecrypt(file, pwd);
-
+    } catch (const std::exception& e)
+    {
+        e.what();
+RING_WARN("DXDS2");        
+     }
+    ///dht::crypto::TEST();
+RING_WARN("$2");
     // Load
     return loadArchive(file);
 }
@@ -920,7 +928,7 @@ RingAccount::ArchiveContent
 RingAccount::loadArchive(const std::vector<uint8_t>& dat)
 {
     ArchiveContent c;
-    RING_DBG("Loading account archive (%lu bytes)", dat.size());
+    RING_WARN("Loading account archive (%lu bytes)", dat.size());
 
     std::vector<uint8_t> file;
 
@@ -1371,17 +1379,25 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     return updated;
 }
 
-bool
+void
 RingAccount::migrateAccount(const std::string& pwd)
 {
+    RING_WARN("@a1@");
     auto archive = readArchive(pwd);
-
+    RING_WARN("@3@");
     if (updateCertificates(archive, identity_)) {
+        RING_WARN("@4@");
         std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
         saveArchive(archive, pwd);
-        return true;
+        emitSignal<DRing::ConfigurationSignal::MigrationEnded>(
+            accountID_,
+            "bon_migrated");
     }
-    return false;
+    RING_WARN("@5@");
+    emitSignal<DRing::ConfigurationSignal::MigrationEnded>(
+            accountID_,
+            "mauvais_migrated");
+    RING_WARN("@2@");
 }
 
 void

@@ -29,6 +29,7 @@ using namespace CryptoPP;
 
 bytes dev::aesDecrypt(bytesConstRef _ivCipher, std::string const& _password, unsigned _rounds, bytesConstRef _salt)
 {
+    cout << "JOJO" << endl;
 	bytes pw = asBytes(_password);
 
 	if (!_salt.size())
@@ -51,7 +52,13 @@ bytes dev::aesDecrypt(bytesConstRef _ivCipher, std::string const& _password, uns
 	}
 	catch (exception const& e)
 	{
-		cerr << e.what() << endl;
+		cerr << "XSXSXSXSX" << e.what() << endl;
 		return bytes();
 	}
+}
+
+void
+dev::TEST()
+{
+    cout << "TEST PASSED";
 }
