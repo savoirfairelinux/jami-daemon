@@ -200,19 +200,10 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     };
     base.do_shutdown = [](pjsip_transport *transport) -> pj_status_t {
         auto& this_ = reinterpret_cast<TransportData*>(transport)->self;
-        RING_DBG("SipsIceTransport@%p: shutdown", this_);
-        {
-            // Flush pending state changes and rx packet before shutdown
-            // or pjsip callbacks will crash
-
-            std::lock_guard<std::mutex> lk{this_->stateChangeEventsMutex_};
-            this_->stateChangeEvents_.clear();
-
-            std::lock_guard<std::mutex> lk2(this_->rxMtx_);
-            this_->rxPending_.clear();
-
-            this_->tls_->shutdown();
-        }
+        RING_DBG("SipsIceTransport@%p {tr=%p {rc=%ld}}: shutdown", this_,
+                 transport, pj_atomic_get(transport->ref_cnt));
+        // Nothing to do here, tls session is not shutdown as some messages could be pending
+        // and application can continue to do IO (if they already own the transport)
         return PJ_SUCCESS;
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
