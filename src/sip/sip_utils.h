@@ -24,11 +24,13 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "media/audio/audiobuffer.h"
+#include "noncopyable.h"
 
 #include <pjsip/sip_msg.h>
 #include <pjlib.h>
 #include <pj/pool.h>
 #include <pjsip/sip_endpoint.h>
+#include <pjsip/sip_dialog.h>
 
 #include <utility>
 #include <string>
@@ -87,13 +89,17 @@ constexpr const pj_str_t CONST_PJ_STR(T (&a)[N]) noexcept {
 // The lock is kept until the local variable is deleted
 class PJDialogLock {
 public:
-    explicit PJDialogLock(pjsip_dialog* dialog);
-    ~PJDialogLock();
-    PJDialogLock() = delete;
-    PJDialogLock(const PJDialogLock&) = delete; // enough to disable all cp/mv stuff
+    explicit PJDialogLock(pjsip_dialog* dialog) : dialog_(dialog) {
+        pjsip_dlg_inc_lock(dialog_);
+    }
+
+    ~PJDialogLock() {
+        pjsip_dlg_dec_lock(dialog_);
+    }
 
 private:
-    pjsip_dialog* dialog_;
+    NON_COPYABLE(PJDialogLock);
+    pjsip_dialog* dialog_ {nullptr};
 };
 
 // Helper on PJSIP memory pool allocation from endpoint
