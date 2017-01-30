@@ -321,10 +321,8 @@ SipsIceTransport::handleEvents()
     decltype(txQueue_) tx_queue;
     {
         std::lock_guard<std::mutex> l(txMutex_);
-        if (syncTx_) {
-            tx_queue = std::move(txQueue_);
-            txQueue_.clear();
-        }
+        tx_queue = std::move(txQueue_);
+        txQueue_.clear();
     }
 
     bool fatal = false;
