@@ -592,30 +592,13 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
              (int)pjTarget.slen, pjTarget.ptr);
 
-    pjsip_dialog *dialog = NULL;
-    if (pjsip_dlg_create_uac(pjsip_ua_instance(), &pjFrom, &pjContact, &pjTo, &pjTarget, &dialog) != PJ_SUCCESS) {
-        RING_ERR("Unable to create SIP dialogs for user agent client when "
-              "calling %s", toUri.c_str());
+
+    auto local_sdp = call->getSDP().getLocalSdpSession();
+    pjsip_dialog* dialog {nullptr};
+    pjsip_inv_session* inv {nullptr};
+    if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, &pjTarget, local_sdp, &dialog, &inv))
         return false;
-    }
 
-    pj_str_t subj_hdr_name = CONST_PJ_STR("Subject");
-    pjsip_hdr* subj_hdr = (pjsip_hdr*) pjsip_parse_hdr(dialog->pool, &subj_hdr_name, (char *) "Phone call", 10, NULL);
-
-    pj_list_push_back(&dialog->inv_hdr, subj_hdr);
-
-    pjsip_inv_session* inv = nullptr;
-    if (pjsip_inv_create_uac(dialog, call->getSDP().getLocalSdpSession(), 0, &inv) != PJ_SUCCESS) {
-        RING_ERR("Unable to create invite session for user agent client");
-        return false;
-    }
-
-    if (!inv) {
-        RING_ERR("Call invite is not initialized");
-        return PJ_FALSE;
-    }
-
-    pjsip_dlg_inc_lock(inv->dlg);
     inv->mod_data[link_->getModId()] = call.get();
     call->inv.reset(inv);
 

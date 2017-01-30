@@ -40,6 +40,7 @@
 #include "client/ring_signal.h"
 #include "string_utils.h"
 #include "fileutils.h"
+#include "sip_utils.h"
 
 #include <type_traits>
 
@@ -52,6 +53,43 @@ SIPAccountBase::SIPAccountBase(const std::string& accountID)
 {}
 
 SIPAccountBase::~SIPAccountBase() {}
+
+bool
+SIPAccountBase::CreateClientDialogAndInvite(const pj_str_t* from,
+                                            const pj_str_t* contact,
+                                            const pj_str_t* to,
+                                            const pj_str_t* target,
+                                            const pjmedia_sdp_session* local_sdp,
+                                            pjsip_dialog** dlg,
+                                            pjsip_inv_session** inv)
+{
+    if (pjsip_dlg_create_uac(pjsip_ua_instance(), from, contact, to, target, dlg) != PJ_SUCCESS) {
+        RING_ERR("Unable to create SIP dialogs for user agent client when calling %s", to->ptr);
+        return false;
+    }
+
+    auto dialog = *dlg;
+
+    {
+        // lock dialog until invite session creation; this one will own the dialog after
+        sip_utils::PJDialogLock dlg_lock {dialog};
+
+        // Append "Subject: Phone Call" header
+        auto subj_hdr_name = sip_utils::CONST_PJ_STR("Subject");
+        auto subj_hdr = reinterpret_cast<pjsip_hdr*>(pjsip_parse_hdr(dialog->pool,
+                                                                     &subj_hdr_name,
+                                                                     const_cast<char *>("Phone call"),
+                                                                     10, nullptr));
+        pj_list_push_back(&dialog->inv_hdr, subj_hdr);
+
+        if (pjsip_inv_create_uac(dialog, local_sdp, 0, inv) != PJ_SUCCESS) {
+            RING_ERR("Unable to create invite session for user agent client");
+            return false;
+        }
+    }
+
+    return true;
+}
 
 void
 SIPAccountBase::flush()

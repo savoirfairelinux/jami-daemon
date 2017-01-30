@@ -41,6 +41,10 @@
 #include <map>
 #include <memory>
 
+struct pjsip_dialog;
+struct pjsip_inv_session;
+struct pjmedia_sdp_session;
+
 namespace ring {
 
 namespace Conf {
@@ -144,6 +148,19 @@ public:
     virtual bool isTlsEnabled() const {
         return false;
     }
+
+    /**
+     * Create UAC attached dialog and invite session
+     * @return true if success. false if failure and dlg and inv pointers
+     *         should not be considered as valid.
+     */
+    bool CreateClientDialogAndInvite(const pj_str_t* from,
+                                     const pj_str_t* contact,
+                                     const pj_str_t* to,
+                                     const pj_str_t* target,
+                                     const pjmedia_sdp_session* local_sdp,
+                                     pjsip_dialog** dlg,
+                                     pjsip_inv_session** inv);
 
     /**
      * Get the local interface name on which this account is bound.
