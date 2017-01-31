@@ -1,7 +1,13 @@
 set BUILD=%SRC%..\build
 
 mkdir %BUILD%
-wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
+
+if %USE_CACHE%==1 (
+    copy %CACHE_DIR%\pjproject-2.5.5.zip %cd%
+) else (
+    wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
+)
+
 unzip -q pjproject-2.5.5.zip -d %BUILD%
 del pjproject-2.5.5.zip
 rename %BUILD%\pjproject-2.5.5 pjproject
