@@ -99,6 +99,7 @@ namespace Migration {
     setMigrationState (const std::string& accountID,
                        const MigrationState migrationState)
     {
+        RING_WARN("ON EST LA");
         emitSignal<DRing::ConfigurationSignal::MigrationEnded>(
             accountID,
             mapStateNumberToString(migrationState));
@@ -1346,6 +1347,7 @@ RingAccount::createAccount(const std::string& archive_password)
 bool
 RingAccount::needsMigration(const dht::crypto::Identity& id)
 {
+    RING_WARN("RingAccount::needsMigration::1");
     if (not id.second)
         return true;
     auto cert = id.second->issuer;
@@ -1400,6 +1402,7 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
 void
 RingAccount::migrateAccount(const std::string& pwd)
 {
+    RING_DBG("@1");
     auto archive = readArchive(pwd);
 
     if (updateCertificates(archive, identity_)) {
@@ -1413,6 +1416,7 @@ RingAccount::migrateAccount(const std::string& pwd)
 void
 RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
 {
+    RING_WARN("RingAccount::loadAccount:1");
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
@@ -1435,6 +1439,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             loadContacts();
             loadTrustRequests();
             if (not needMigration) {
+                RING_WARN("we dont need to migrate");
                 if (not hasArchive)
                     RING_WARN("[Account %s] account archive not found, won't be able to add new devices.", getAccountID().c_str());
                 // normal account loading path
@@ -1443,6 +1448,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
         }
 
         if (hasArchive) {
+            RING_WARN("@3");
             if (archive_password.empty()) {
                 RING_WARN("[Account %s] password needed to read archive", getAccountID().c_str());
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
@@ -1450,6 +1456,10 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (needMigration) {
                     RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
                     migrateAccount(archive_password);
+                    RING_WARN("@2");
+                    setRegistrationState(RegistrationState::UNREGISTERED);
+                    loadAccount();
+                    return;
                 }
                 else {
                     RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
@@ -2285,6 +2295,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 bool
 RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name)
 {
+    RING_WARN("RingAccount::foundAccountDevice:1");
     if (not crt)
         return false;
 
@@ -2584,6 +2595,7 @@ void
 RingAccount::loadKnownDevices()
 {
     loadKnownDevicesOld();
+    RING_WARN("RingAccount::loadKnownDevices:1");
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
@@ -2594,6 +2606,7 @@ RingAccount::loadKnownDevices()
         oh.get().convert(knownDevices);
     } catch (const std::exception& e) {
         RING_WARN("Error loading devices: %s", e.what());
+        RING_WARN("RingAccount::loadKnownDevices:2");
         return;
     }
 
@@ -2615,11 +2628,13 @@ RingAccount::loadKnownDevices()
         else
             RING_WARN("Can't find known device certificate.");
     }
+    RING_WARN("RingAccount::loadKnownDevices:3");
 }
 
 void
 RingAccount::saveKnownDevices() const
 {
+    RING_WARN("RingAccount::saveKnownDevices:1");
     std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc);
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
