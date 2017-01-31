@@ -1,0 +1,77 @@
+--- a/FFmpegConfig.sh
++++ b/FFmpegConfig.sh
+@@ -22,7 +22,7 @@ if [ "$1" == "Win10" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+         --prefix=../../../Build/Windows10/x86
+-        make install
++        make -j install
+         popd
+ 
+     elif [ "$2" == "x64" ]; then
+@@ -43,7 +43,7 @@ if [ "$1" == "Win10" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+         --prefix=../../../Build/Windows10/x64
+-        make install
++        make -j install
+         popd
+ 
+     elif [ "$2" == "ARM" ]; then
+@@ -67,7 +67,7 @@ if [ "$1" == "Win10" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
+         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+         --prefix=../../../Build/Windows10/ARM
+-        make install
++        make -j install
+         popd
+ 
+     fi
+@@ -93,7 +93,7 @@ elif [ "$1" == "Win8.1" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603" \
+         --extra-ldflags="-APPCONTAINER" \
+         --prefix=../../../Build/Windows8.1/x86
+-        make install
++        make -j install
+         popd
+ 
+     elif [ "$2" == "x64" ]; then
+@@ -114,7 +114,7 @@ elif [ "$1" == "Win8.1" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603" \
+         --extra-ldflags="-APPCONTAINER" \
+         --prefix=../../../Build/Windows8.1/x64
+-        make install
++        make -j install
+         popd
+ 
+     elif [ "$2" == "ARM" ]; then
+@@ -138,7 +138,7 @@ elif [ "$1" == "Win8.1" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP" \
+         --extra-ldflags="-APPCONTAINER -MACHINE:ARM" \
+         --prefix=../../../Build/Windows8.1/ARM
+-        make install
++        make -j install
+         popd
+ 
+     fi
+@@ -167,7 +167,7 @@ elif [ "$1" == "Phone8.1" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP" \
+         --extra-ldflags="-APPCONTAINER -MACHINE:ARM -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib" \
+         --prefix=../../../Build/WindowsPhone8.1/ARM
+-        make install
++        make -j install
+         popd
+ 
+     elif [ "$2" == "x86" ]; then
+@@ -188,7 +188,7 @@ elif [ "$1" == "Phone8.1" ]; then
+         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603" \
+         --extra-ldflags="-APPCONTAINER -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib" \
+         --prefix=../../../Build/WindowsPhone8.1/x86
+-        make install
++        make -j install
+         popd
+ 
+     fi
+-- 
+2.8.1.windows.1
+
