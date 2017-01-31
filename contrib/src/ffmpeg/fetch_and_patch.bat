@@ -1,16 +1,41 @@
 set BUILD=%SRC%..\build
 
-set FFMPEG_URL=git://github.com/Microsoft/FFmpegInterop.git
+set FFMPEGINTEROP_VERSION=6f8062f68176a23d4cbc953668677edb07fd7984
+set FFMPEGINTEROP_URL=https://github.com/Microsoft/FFmpegInterop/archive/%FFMPEGINTEROP_VERSION%.tar.gz
 
 mkdir %BUILD%
-cd %BUILD%
 
-git clone --recursive %FFMPEG_URL%
+if %USE_CACHE%==1 (
+    copy %CACHE_DIR%\%FFMPEGINTEROP_VERSION%.tar.gz %cd%
+) else (
+    wget %FFMPEGINTEROP_URL%
+)
 
-cd FFmpegInterop
+7z -y x %FFMPEGINTEROP_VERSION%.tar.gz && 7z -y x %FFMPEGINTEROP_VERSION%.tar -o%BUILD%
+del %FFMPEGINTEROP_VERSION%.tar && del %FFMPEGINTEROP_VERSION%.tar.gz && del %BUILD%\pax_global_header
+rename %BUILD%\FFmpegInterop-%FFMPEGINTEROP_VERSION% FFmpegInterop
+
+cd %BUILD%\FFmpegInterop
+
+rmdir /s /q ffmpeg
+
 git apply --reject --whitespace=fix %SRC%\ffmpeg\ffmpeg-uwp.patch
 
+set FFMPEG_VERSION=12320c08221f0eecf6d9af3a6f12f42e656f0674
+set FFMPEG_URL=https://github.com/FFmpeg/FFmpeg/archive/%FFMPEG_VERSION%.tar.gz
+
+if %USE_CACHE%==1 (
+    copy %CACHE_DIR%\%FFMPEG_VERSION%.tar.gz %cd%
+) else (
+    wget %FFMPEG_URL%
+)
+
+7z -y x %FFMPEG_VERSION%.tar.gz && 7z -y x %FFMPEG_VERSION%.tar
+del %FFMPEG_VERSION%.tar && del %FFMPEG_VERSION%.tar.gz && del pax_global_header
+rename FFmpeg-%FFMPEG_VERSION% ffmpeg
+
 cd ffmpeg
+
 git apply --reject --whitespace=fix %SRC%\ffmpeg\0004-avformat-fix-find_stream_info-not-considering-extradata.patch
 
 cd %SRC%

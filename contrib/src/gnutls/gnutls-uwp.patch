@@ -120,15 +120,6 @@
      <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
    </PropertyGroup>
    <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-@@ -795,7 +795,7 @@
-     <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
-   </PropertyGroup>
-   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
--    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-+    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
-     <TargetName>libgnutls</TargetName>
-     <OutDir>$(ProjectDir)..\..\..\msvc\</OutDir>
-     <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
 @@ -1834,7 +1834,7 @@ del /f /q $(OutDir)\licenses\gnutls.txt
        <BufferSecurityCheck>false</BufferSecurityCheck>
        <FloatingPointModel>Fast</FloatingPointModel>
