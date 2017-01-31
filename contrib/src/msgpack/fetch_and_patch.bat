@@ -1,14 +1,15 @@
 set BUILD=%SRC%..\build
 
 set MSGPACK_VERSION=1df97bc37b363a340c5ad06c5cbcc53310aaff80
-set MSGPACK_URL="https://github.com/msgpack/msgpack-c.git"
+set MSGPACK_URL=https://github.com/msgpack/msgpack-c/archive/%MSGPACK_VERSION%.tar.gz
 
 mkdir %BUILD%
-cd %BUILD%
+wget %MSGPACK_URL%
+7z -y x msgpack-c-%MSGPACK_VERSION%.tar.gz && 7z -y x msgpack-c-%MSGPACK_VERSION%.tar -o%BUILD%
+del msgpack-c-%MSGPACK_VERSION%.tar && del msgpack-c-%MSGPACK_VERSION%.tar.gz && del %BUILD%\pax_global_header
+rename %BUILD%\msgpack-c-%MSGPACK_VERSION% msgpack-c
 
-git clone %MSGPACK_URL%
-cd msgpack-c
-git checkout %MSGPACK_VERSION%
+cd %BUILD%\msgpack-c
 
 git apply --reject --whitespace=fix %SRC%\msgpack\msgpack-uwp.patch
 

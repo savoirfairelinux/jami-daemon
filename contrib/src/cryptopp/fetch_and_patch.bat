@@ -1,14 +1,15 @@
 set BUILD=%SRC%..\build
 
 set CRYPTOPP_VERSION=54557b18275053bbfc34594f7e65808dd92dd1a6
-set CRYPTOPP_URL="https://github.com/weidai11/cryptopp.git"
+set CRYPTOPP_URL=https://github.com/weidai11/cryptopp/archive/%CRYPTOPP_VERSION%.tar.gz
 
 mkdir %BUILD%
-cd %BUILD%
+wget %CRYPTOPP_URL%
+7z -y x cryptopp-%CRYPTOPP_VERSION%.tar.gz && 7z -y x cryptopp-%CRYPTOPP_VERSION%.tar -o%BUILD%
+del cryptopp-%CRYPTOPP_VERSION%.tar && del cryptopp-%CRYPTOPP_VERSION%.tar.gz && del %BUILD%\pax_global_header
+rename %BUILD%\cryptopp-%CRYPTOPP_VERSION% cryptopp
 
-git clone %CRYPTOPP_URL%
-cd cryptopp
-git checkout %CRYPTOPP_VERSION%
+cd %BUILD%\cryptopp
 
 git apply --reject --whitespace=fix %SRC%\cryptopp\cryptopp-uwp.patch
 

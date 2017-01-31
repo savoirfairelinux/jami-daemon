@@ -1,13 +1,16 @@
 set BUILD=%SRC%..\build
 
-set REPOURL="https://github.com/ShiftMediaProject/zlib.git"
+set ZLIB_VERSION=3a062eb61d0c3d4aa30851cd1a6597b977b56597
+set ZLIB_URL=https://github.com/ShiftMediaProject/zlib/archive/%ZLIB_VERSION%.tar.gz
 
 mkdir %BUILD%
-cd %BUILD%
+wget %ZLIB_URL%
+7z -y x zlib-%ZLIB_VERSION%.tar.gz && 7z -y x zlib-%ZLIB_VERSION%.tar -o%BUILD%
+del zlib-%ZLIB_VERSION%.tar && del zlib-%ZLIB_VERSION%.tar.gz && del %BUILD%\pax_global_header
+rename %BUILD%\zlib-%ZLIB_VERSION% zlib
 
-git clone %REPOURL%
+cd %BUILD%\zlib
 
-cd zlib
 git apply --reject --whitespace=fix %SRC%\zlib\zlib-uwp.patch
 
 cd %SRC%

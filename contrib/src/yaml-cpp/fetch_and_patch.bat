@@ -1,14 +1,15 @@
 set BUILD=%SRC%..\build
 
 set YAMLCPP_VERSION=24fa1b33805c9a91df0f32c46c28e314dd7ad96f
-set YAMLCPP_URL="https://github.com/jbeder/yaml-cpp.git"
+set YAMLCPP_URL=https://github.com/jbeder/yaml-cpp/archive/%YAMLCPP_VERSION%.tar.gz
 
 mkdir %BUILD%
-cd %BUILD%
+wget %YAMLCPP_URL%
+7z -y x yaml-cpp-%YAMLCPP_VERSION%.tar.gz && 7z -y x yaml-cpp-%YAMLCPP_VERSION%.tar -o%BUILD%
+del yaml-cpp-%YAMLCPP_VERSION%.tar && del yaml-cpp-%YAMLCPP_VERSION%.tar.gz && del %BUILD%\pax_global_header
+rename %BUILD%\yaml-cpp-%YAMLCPP_VERSION% yaml-cpp
 
-git clone %YAMLCPP_URL%
-cd yaml-cpp
-git checkout %YAMLCPP_VERSION%
+cd %BUILD%\yaml-cpp
 
 git apply --reject --whitespace=fix %SRC%\yaml-cpp\yaml-cpp-uwp.patch
 
