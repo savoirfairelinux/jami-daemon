@@ -1122,14 +1122,18 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
 {
     // shared_ptr of future
     auto fa = ThreadPool::instance().getShared<ArchiveContent>(
-                    std::bind(&RingAccount::readArchive, this, password)
-                );
+        [this, password] { return readArchive(password); });
     auto sthis = shared();
     findCertificate(dht::InfoHash(device),
                     [fa,sthis,password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
     {
         sthis->foundAccountDevice(crt);
-        ArchiveContent a = fa->get();
+        ArchiveContent a;
+        try {
+            a = fa->get();
+        } catch (...) {
+            return false;
+        }
         // Add revoked device to the revocation list and resign it
         if (not a.revoked)
             a.revoked = std::make_shared<decltype(a.revoked)::element_type>();
@@ -1363,7 +1367,12 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
 bool
 RingAccount::migrateAccount(const std::string& pwd)
 {
-    auto archive = readArchive(pwd);
+    ArchiveContent archive;
+    try {
+        archive = readArchive(pwd);
+    } catch (...) {
+        return false;
+    }
 
     if (updateCertificates(archive, identity_)) {
         std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_ + DIR_SEPARATOR_STR "ring_device");
