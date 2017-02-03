@@ -883,22 +883,27 @@ RingAccount::readArchive(const std::string& pwd) const
 {
     RING_DBG("[Account %s] reading account archive", getAccountID().c_str());
 
+    decltype(fileutils::loadFile("")) data;
+
     // Read file
-    std::vector<uint8_t> file = fileutils::loadFile(archivePath_);
+    try {
+        data = fileutils::loadFile(archivePath_);
+    } catch (const std::exception& e) {
+        RING_ERR("[Account %s] archive loading error: %s", getAccountID().c_str(), e.what());
+        throw;
+    }
 
     // Decrypt
     try {
-        file = dht::crypto::aesDecrypt(file, pwd);
-    }
-    catch (const std::exception& e) {
-        RING_ERR("Error decrypting archive: %s", e.what());
-        return RingAccount::ArchiveContent();
+        data = dht::crypto::aesDecrypt(data, pwd);
+    } catch (const std::exception& e) {
+        RING_ERR("[Account %s] archive decrypt error: %s", getAccountID().c_str(), e.what());
+        throw;
     }
 
-    // Load
-    return loadArchive(file);
+    // Unserialize data
+    return loadArchive(data);
 }
-
 
 RingAccount::ArchiveContent
 RingAccount::loadArchive(const std::vector<uint8_t>& dat)
@@ -912,8 +917,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
     try {
         file = archiver::decompress(dat);
     } catch (const std::exception& ex) {
-        RING_ERR("Archive decompression failed: %s", ex.what());
-        throw std::runtime_error("failed to read file.");
+        RING_ERR("Archive decompression error: %s", ex.what());
+        throw std::runtime_error("failed to read file");
     }
 
     // Decode string
@@ -921,8 +926,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
     Json::Value value;
     Json::Reader reader;
     if (!reader.parse(decoded.c_str(),value)) {
-        RING_ERR("Failed to parse archive: %s", reader.getFormattedErrorMessages().c_str());
-        throw std::runtime_error("failed to parse JSON.");
+        RING_ERR("Archive JSON parsing error: %s", reader.getFormattedErrorMessages().c_str());
+        throw std::runtime_error("failed to parse JSON");
     }
 
     // Import content
@@ -1408,8 +1413,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                 if (needMigration) {
                     RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
                     migrateAccount(archive_password);
-                }
-                else {
+                } else {
                     RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
                     initRingDevice(readArchive(archive_password));
                 }
