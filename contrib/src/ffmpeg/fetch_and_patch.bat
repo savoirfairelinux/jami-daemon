@@ -34,8 +34,4 @@ if %USE_CACHE%==1 (
 del %FFMPEG_VERSION%.tar && del %FFMPEG_VERSION%.tar.gz && del pax_global_header
 rename FFmpeg-%FFMPEG_VERSION% ffmpeg
 
-cd ffmpeg
-
-git apply --reject --whitespace=fix %SRC%\ffmpeg\0004-avformat-fix-find_stream_info-not-considering-extradata.patch
-
 cd %SRC%
