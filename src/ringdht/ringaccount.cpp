@@ -1432,7 +1432,8 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
         auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasValidId = useIdentity(id);
         bool needMigration = hasValidId and needsMigration(id);
-        bool hasArchive = not archivePath_.empty() and fileutils::isFile(archivePath_);
+        bool hasArchive = not archivePath_.empty()                      \
+            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
 
         if (hasValidId) {
             loadKnownDevices();
