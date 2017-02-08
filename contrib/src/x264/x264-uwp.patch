@@ -1,0 +1,52 @@
+--- a/SMP/config.h
++++ b/SMP/config.h
+@@ -21,7 +21,7 @@
+ #define ftell _ftelli64
+ #define HAVE_GPL 1
+ #define HAVE_INTERLACED 1
+-#define HAVE_OPENCL 1
++#define HAVE_OPENCL 0
+ #define HAVE_MALLOC_H 0
+ #define HAVE_ALTIVEC 0
+ #define HAVE_ALTIVEC_H 0
+@@ -42,4 +42,4 @@
+ #else
+ #   define HAVE_X86_INLINE_ASM 0
+ #endif
+-#define HAVE_WINRT 0
+\ No newline at end of file
++#define HAVE_WINRT 1
+\ No newline at end of file
+--- a/SMP/libx264.vcxproj
++++ b/SMP/libx264.vcxproj
+@@ -45,6 +45,7 @@
+   <PropertyGroup Label="Globals">
+     <ProjectGuid>{20179127-853B-4FE9-B7C0-9E817E6A3A72}</ProjectGuid>
+     <RootNamespace>libx264</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+@@ -205,7 +206,7 @@
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+     <TargetName>libx264</TargetName>
+-    <OutDir>$(ProjectDir)..\..\..\msvc\</OutDir>
++    <OutDir>$(ProjectDir)output\$(Configuration)\</OutDir>
+     <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
+@@ -1007,7 +1008,9 @@ del /f /q $(OutDir)\licenses\x264.txt
+     <ClCompile Include="..\common\macroblock.c" />
+     <ClCompile Include="..\common\mc.c" />
+     <ClCompile Include="..\common\mvpred.c" />
+-    <ClCompile Include="..\common\opencl.c" />
++    <ClCompile Include="..\common\opencl.c">
++      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
++    </ClCompile>
+     <ClCompile Include="..\common\osdep.c" />
+     <ClCompile Include="..\common\pixel.c" />
+     <ClCompile Include="..\common\predict.c" />
+-- 
+2.8.1.windows.1
+
