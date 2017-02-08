@@ -2,7 +2,7 @@
 
 #Libav doesnt support new vpx version
 ifdef HAVE_ANDROID
-VPX_HASH := v1.6.0
+VPX_HASH := v1.6.1
 else ifdef HAVE_IOS
 VPX_HASH := v1.5.0
 else
@@ -91,6 +91,7 @@ VPX_CONF := \
 	--disable-docs \
 	--disable-examples \
 	--disable-unit-tests \
+	--disable-tools \
 	--disable-install-bins \
 	--disable-install-docs \
 	--enable-realtime-only \
@@ -113,13 +114,6 @@ VPX_CONF += --sdk-path=$(IOS_SDK)
 endif
 LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
-# vpx configure.sh overrides our sysroot and it looks for it itself, and
-# uses that path to look for the compiler (which we already know)
-VPX_CONF += --sdk-path=$(ANDROID_TOOLCHAIN)/bin
-# needed for cpu-features.h
-VPX_CONF += --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/ -fvisibility=hidden"
-# set an explicit alternative libc since the sysroot override can make it blank
-VPX_CONF += --libc=$(SYSROOT)
 LOCAL_HOSTVARS=$(HOSTVARS)
 endif
 
