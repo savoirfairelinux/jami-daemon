@@ -163,6 +163,9 @@ endif
 ifeq ($(ARCH),aarch64)
 FFMPEGCONF += --arch=aarch64
 endif
+ifeq ($(ARCH),arm64)
+FFMPEGCONF += --arch=aarch64
+endif
 
 # Windows
 ifdef HAVE_WIN32
