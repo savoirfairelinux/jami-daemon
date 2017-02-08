@@ -21,6 +21,7 @@ pthreads, ^
 restbed, ^
 samplerate, ^
 upnp, ^
+x264, ^
 yaml-cpp, ^
 zlib ^
 )

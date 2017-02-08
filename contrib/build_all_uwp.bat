@@ -55,6 +55,8 @@ build\portaudio\MSVC\portaudio-UWP\portaudio-UWP.vcxproj, ^
 build\yaml-cpp\MSVC\yaml-cpp.vcxproj, ^
 )
 
+rem * build libx264 *
+call :build build\x264\SMP\libx264.vcxproj
 rem * build ffmpeg *
 cd build\FFmpegInterop
 SET LIB="%VSINSTALLDIR%VC\lib\store\amd64;%VSINSTALLDIR%VC\atlmfc\lib\amd64;%UniversalCRTSdkDir%lib\%UCRTVersion%\ucrt\x64;;%UniversalCRTSdkDir%lib\%UCRTVersion%\um\x64;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x64;;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\Lib\um\x64"
@@ -64,7 +66,7 @@ set MSYS2_BIN="C:\msys64\usr\bin\bash.exe"
 call BuildFFmpeg.bat win10 x64
 cd ..\..
 
-rem * build openssl UWP*
+rem * build openssl UWP *
 cd build\restbed\dependency\openssl
 call perl Configure no-asm no-hw no-dso VC-WINUNIVERSAL
 call ms\do_winuniversal
