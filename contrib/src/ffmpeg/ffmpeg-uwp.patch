@@ -73,5 +73,30 @@
  
      fi
 -- 
+--- a/FFmpegConfig.sh
++++ b/FFmpegConfig.sh
+@@ -33,6 +33,7 @@ if [ "$1" == "Win10" ]; then
+         cd Output/Windows10/x64
+         ../../../configure \
+         --toolchain=msvc \
++        --enable-gpl \
+         --disable-programs \
+         --disable-d3d11va \
+         --disable-dxva2 \
+@@ -40,8 +41,12 @@ if [ "$1" == "Win10" ]; then
+         --enable-shared \
+         --enable-cross-compile \
+         --target-os=win32 \
+-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+-        --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
++        --enable-encoder=libx264 \
++        --enable-decoder=h264 \
++        --enable-parser=h264 \
++        --enable-libx264 \
++        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../x264/SMP/output/Release/include" \
++        --extra-ldflags="-APPCONTAINER WindowsApp.lib -LIBPATH:../../../../../x264/SMP/output/Release/lib/x64" \
+         --prefix=../../../Build/Windows10/x64
+         make -j install
+         popd
 2.8.1.windows.1
 
