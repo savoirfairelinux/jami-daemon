@@ -19,8 +19,6 @@ cd %BUILD%\FFmpegInterop
 
 rmdir /s /q ffmpeg
 
-git apply --reject --whitespace=fix %SRC%\ffmpeg\ffmpeg-uwp.patch
-
 set FFMPEG_VERSION=12320c08221f0eecf6d9af3a6f12f42e656f0674
 set FFMPEG_URL=https://github.com/FFmpeg/FFmpeg/archive/%FFMPEG_VERSION%.tar.gz
 
@@ -33,5 +31,7 @@ if %USE_CACHE%==1 (
 7z -y x %FFMPEG_VERSION%.tar.gz && 7z -y x %FFMPEG_VERSION%.tar
 del %FFMPEG_VERSION%.tar && del %FFMPEG_VERSION%.tar.gz && del pax_global_header
 rename FFmpeg-%FFMPEG_VERSION% ffmpeg
+
+git apply --reject --whitespace=fix %SRC%\ffmpeg\ffmpeg-uwp.patch
 
 cd %SRC%

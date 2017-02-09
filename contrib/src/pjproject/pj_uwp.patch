@@ -53,8 +53,6 @@
        <PrecompiledHeaderOutputFile />
      </ClCompile>
      <Lib>
-diff --git a/PJ_ORIGIN/pjproject-2.5.5/pjsip/src/pjsip/sip_dialog.c b/PJ_MOD/pjproject-2.5.5/pjsip/src/pjsip/sip_dialog.c
-index 800e9f3..71aaee9 100644
 --- a/pjsip/src/pjsip/sip_dialog.c
 +++ b/pjsip/src/pjsip/sip_dialog.c
 @@ -888,7 +888,11 @@ PJ_DEF(void) pjsip_dlg_inc_lock(pjsip_dialog *dlg)
