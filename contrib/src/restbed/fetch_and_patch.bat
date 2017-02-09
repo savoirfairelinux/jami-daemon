@@ -63,7 +63,4 @@ if %USE_CACHE%==1 (
 del %OPENSSL_VERSION%.tar && del %OPENSSL_VERSION%.tar.gz && del pax_global_header
 rename openssl-%OPENSSL_VERSION% openssl
 
-cd openssl
-git apply --reject --whitespace=fix %SRC%\restbed\openssl-uwp.patch
-
 cd %SRC%
