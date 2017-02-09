@@ -1409,6 +1409,7 @@ RingAccount::migrateAccount(const std::string& pwd)
     try {
         archive = readArchive(pwd);
     } catch (...) {
+        Migration::setState(accountID_, Migration::State::INVALID);
         return;
     }
 
@@ -1417,8 +1418,8 @@ RingAccount::migrateAccount(const std::string& pwd)
         saveArchive(archive, pwd);
         setRegistrationState(RegistrationState::UNREGISTERED);
         Migration::setState(accountID_, Migration::State::SUCCESS);
-    }
-    Migration::setState(accountID_, Migration::State::INVALID);
+    } else
+        Migration::setState(accountID_, Migration::State::INVALID);
 }
 
 void
