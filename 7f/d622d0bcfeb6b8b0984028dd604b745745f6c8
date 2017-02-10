@@ -1,0 +1,7 @@
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Code-Review+2: Nicolas Jager <nicolas.jager@savoirfairelinux.com>
+Submitted-by: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+Submitted-at: Fri, 10 Feb 2017 13:22:29 -0500
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/6091
+Project: ring-daemon
+Branch: refs/heads/master
