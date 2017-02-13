@@ -49,7 +49,7 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef WIN32
+#ifdef _WIN32
 #include "winsyslog.h"
 #endif
 
