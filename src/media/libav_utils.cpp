@@ -76,6 +76,7 @@ static constexpr const char* AVLOGLEVEL = "AVLOGLEVEL";
 static void
 setAvLogLevel()
 {
+#ifndef RING_UWP
     char* envvar = getenv(AVLOGLEVEL);
     signed level = AV_LOG_WARNING;
 
@@ -86,6 +87,9 @@ setAvLogLevel()
         level = std::max(AV_LOG_QUIET, std::min(level, AV_LOG_DEBUG));
     }
     av_log_set_level(level);
+#else
+    av_log_set_level(0);
+#endif
 }
 
 static void
