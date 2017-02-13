@@ -1,11 +1,11 @@
 # Nettle
 
-NETTLE_VERSION := 3.1
+NETTLE_VERSION := 3.3
 NETTLE_URL := $(GNU)/nettle/nettle-$(NETTLE_VERSION).tar.gz
 
 PKGS += nettle
 
-ifeq ($(call need_pkg,"nettle >= 3.1"),)
+ifeq ($(call need_pkg,"nettle >= 3.3"),)
 PKGS_FOUND += nettle
 endif
 
