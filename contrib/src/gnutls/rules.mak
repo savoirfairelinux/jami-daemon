@@ -1,7 +1,7 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.4.14
-GNUTLS_URL := ftp://ftp.gnutls.org/gcrypt/gnutls/v3.4/gnutls-$(GNUTLS_VERSION).tar.xz
+GNUTLS_VERSION := 3.5.11
+GNUTLS_URL := ftp://ftp.gnutls.org/gcrypt/gnutls/v3.5/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
 
@@ -24,14 +24,7 @@ endif
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/gnutls/no-create-time-h.patch
 endif
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/gnutls/gnutls-disable-getentropy-osx.patch
-endif
-	$(APPLY) $(SRC)/gnutls/gnutls-no-egd.patch
 	$(APPLY) $(SRC)/gnutls/read-file-limits.h.patch
-ifndef HAVE_IOS
-	$(APPLY) $(SRC)/gnutls/mac-keychain-lookup.patch
-endif
 	$(call pkg_static,"lib/gnutls.pc.in")
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
@@ -43,6 +36,7 @@ GNUTLS_CONF := \
 	--disable-srp-authentication \
 	--disable-psk-authentication-FIXME \
 	--with-included-libtasn1 \
+        --with-included-unistring \
 	--disable-openpgp-authentication \
 	--disable-openssl-compatibility \
 	--disable-guile \
@@ -53,6 +47,10 @@ GNUTLS_CONF := \
 	$(HOSTCONF)
 
 ifdef HAVE_ANDROID
+	GNUTLS_CONF += --disable-hardware-acceleration
+endif
+
+ifdef HAVE_IOS
 	GNUTLS_CONF += --disable-hardware-acceleration
 endif
 
