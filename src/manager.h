@@ -1079,6 +1079,8 @@ class Manager {
 #ifdef RING_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+        void bindCallToConference(Call& call, Conference& conf);
 };
 
 // Helper to install a callback to be called once by the main event loop
