@@ -1074,9 +1074,34 @@ Manager::getCallFromCallID(const std::string& callID) const
     return callFactory.getCall(callID);
 }
 
+void
+Manager::bindCallToConference(Call& call, Conference& conf)
+{
+    const std::string& call_id = call.getCallId();
+
+    call.setConfId(conf.getConfID());
+    getRingBufferPool().unBindAll(call_id);
+
+    auto state = call.getStateStr();
+    RING_DBG("[call:%s] bind conf state %s", call_id.c_str(), state.c_str());
+
+    if (state == "HOLD") {
+        conf.bindParticipant(call_id);
+        offHoldCall(call_id);
+    } else if (state == "INCOMING") {
+        conf.bindParticipant(call_id);
+        answerCall(call_id);
+    } else if (state == "CURRENT") {
+        conf.bindParticipant(call_id);
+    } else if (state == "INACTIVE") {
+        conf.bindParticipant(call_id);
+        answerCall(call_id);
+    } else
+        RING_WARN("[call:%s] call state %s not recognized for conference", call_id.c_str());
+}
+
 bool
-Manager::joinParticipant(const std::string& callId1,
-                             const std::string& callId2)
+Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
 {
     if (callId1 == callId2) {
         RING_ERR("Cannot join participant %s to itself", callId1.c_str());
@@ -1103,10 +1128,7 @@ Manager::joinParticipant(const std::string& callId1,
     if (isConferenceParticipant(callId2))
         detachParticipant(callId2);
 
-    std::map<std::string, std::string> call1Details(getCallDetails(callId1));
-    std::map<std::string, std::string> call2Details(getCallDetails(callId2));
-
-    std::string current_call_id(getCurrentCallId());
+    auto current_call_id = getCurrentCallId();
     RING_DBG("Current Call ID %s", current_call_id.c_str());
 
     // detach from the conference and switch to this conference
@@ -1118,50 +1140,11 @@ Manager::joinParticipant(const std::string& callId1,
             onHoldCall(current_call_id); // currently in a call
     }
 
-
     auto conf = createConference(callId1, callId2);
 
-    call1->setConfId(conf->getConfID());
-    getRingBufferPool().unBindAll(callId1);
-
-    call2->setConfId(conf->getConfID());
-    getRingBufferPool().unBindAll(callId2);
-
-    // Process call1 according to its state
-    std::string call1_state_str(call1Details.find("CALL_STATE")->second);
-    RING_DBG("Process call %s state: %s", callId1.c_str(), call1_state_str.c_str());
-
-    if (call1_state_str == "HOLD") {
-        conf->bindParticipant(callId1);
-        offHoldCall(callId1);
-    } else if (call1_state_str == "INCOMING") {
-        conf->bindParticipant(callId1);
-        answerCall(callId1);
-    } else if (call1_state_str == "CURRENT") {
-        conf->bindParticipant(callId1);
-    } else if (call1_state_str == "INACTIVE") {
-        conf->bindParticipant(callId1);
-        answerCall(callId1);
-    } else
-        RING_WARN("Call state not recognized");
-
-    // Process call2 according to its state
-    std::string call2_state_str(call2Details.find("CALL_STATE")->second);
-    RING_DBG("Process call %s state: %s", callId2.c_str(), call2_state_str.c_str());
-
-    if (call2_state_str == "HOLD") {
-        conf->bindParticipant(callId2);
-        offHoldCall(callId2);
-    } else if (call2_state_str == "INCOMING") {
-        conf->bindParticipant(callId2);
-        answerCall(callId2);
-    } else if (call2_state_str == "CURRENT") {
-        conf->bindParticipant(callId2);
-    } else if (call2_state_str == "INACTIVE") {
-        conf->bindParticipant(callId2);
-        answerCall(callId2);
-    } else
-        RING_WARN("Call state not recognized");
+    // Process calls according to their state
+    bindCallToConference(*call1, *conf);
+    bindCallToConference(*call2, *conf);
 
     // Switch current call id to this conference
     switchCall(conf->getConfID());
