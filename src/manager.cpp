@@ -458,6 +458,17 @@ Manager::switchCall(const std::shared_ptr<Call>& call)
     switchCall(call->getCallId());
 }
 
+template <class T>
+inline std::shared_ptr<T>
+Manager::findAccount(const std::function<bool(const std::shared_ptr<T>&)>& pred)
+{
+    for (const auto& account : getAllAccounts<T>()) {
+        if (pred(account))
+            return account;
+    }
+    return {};
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 // Management of events' IP-phone user
 ///////////////////////////////////////////////////////////////////////////////
@@ -2842,42 +2853,40 @@ Manager::getAudioDriver()
 }
 
 std::shared_ptr<Call>
-Manager::newOutgoingCall(const std::string& toUrl,
-                         const std::string& preferredAccountId)
+Manager::newOutgoingCall(const std::string& toUrl, const std::string& preferredAccountId)
 {
-    auto preferred = getAccount(preferredAccountId);
+    auto account = getAccount(preferredAccountId);
+    if (account and !account->isUsable()) {
+        RING_WARN("Prefered account is not usable for calling");
+        account = nullptr;
+    }
 
+    // If no prefered or not suitable account given,
+    // find first usable account depending on url scheme.
     if (toUrl.find("ring:") != std::string::npos) {
-        if (preferred && preferred->getAccountType() == RingAccount::ACCOUNT_TYPE)
-            return preferred->newOutgoingCall(toUrl);
-        auto dhtAcc = getAllAccounts<RingAccount>();
-        for (const auto& acc : dhtAcc)
-            if (acc->isEnabled())
-                return acc->newOutgoingCall(toUrl);
-    }
-    // If peer url is an IP, and the preferred account is not an "IP2IP like",
-    // we try to find a suitable one in all SIPAccount's.
-    auto strippedToUrl = toUrl;
-    sip_utils::stripSipUriPrefix(strippedToUrl); // FIXME: have a generic version to remove sip dependency
-    if (IpAddr::isValid(strippedToUrl) and !preferred->isIP2IP()) {
-        std::shared_ptr<Account> ip2ip_acc;
-        for (const auto& acc : getAllAccounts<SIPAccount>())
-            if (acc->isEnabled() and acc->isIP2IP())
-                ip2ip_acc = acc;
-        if (!ip2ip_acc) {
-            RING_ERR("No suitable IP2IP account found to call '%s'", toUrl.c_str());
-            return nullptr;
+        if (!account or account->getAccountType() != RingAccount::ACCOUNT_TYPE) {
+            account = findAccount<RingAccount>([](const std::shared_ptr<RingAccount>& acc){
+                                                   return acc->isUsable();
+                                               });
         }
-        preferred = ip2ip_acc;
+    } else if (!account or account->getAccountType() != SIPAccount::ACCOUNT_TYPE) {
+        // For IP url restricts results on IP2IP accounts
+        auto strippedToUrl = toUrl;
+        sip_utils::stripSipUriPrefix(strippedToUrl);
+        auto only_ip = IpAddr::isValid(strippedToUrl);
+
+        account = findAccount<SIPAccount>([only_ip](const std::shared_ptr<SIPAccount>& acc) {
+                                              return acc->isUsable()
+                                                  and (!only_ip or acc->isIP2IP());
+                                          });
     }
 
-    // Sanity checks
-    if (!preferred or !preferred->isUsable()) {
-        RING_ERR("No suitable account found to create outgoing call");
+    if (!account) {
+        RING_ERR("No suitable account to create outgoing call");
         return nullptr;
     }
 
-    return preferred->newOutgoingCall(toUrl);
+    return account->newOutgoingCall(toUrl);
 }
 
 #ifdef RING_VIDEO

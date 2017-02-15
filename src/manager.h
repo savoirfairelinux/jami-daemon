@@ -1073,6 +1073,9 @@ class Manager {
 #endif
 
         void bindCallToConference(Call& call, Conference& conf);
+
+        template <class T>
+        std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
 };
 
 // Helper to install a callback to be called once by the main event loop
