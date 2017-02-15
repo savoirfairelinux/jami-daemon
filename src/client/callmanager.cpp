@@ -169,6 +169,12 @@ addMainParticipant(const std::string& confID)
 }
 
 bool
+detachLocalParticipant()
+{
+    return ring::Manager::instance().detachLocalParticipant();
+}
+
+bool
 detachParticipant(const std::string& callID)
 {
     return ring::Manager::instance().detachParticipant(callID);
