@@ -242,6 +242,16 @@
             <arg type="b" name="addSucceeded" direction="out"/>
         </method>
 
+        <method name="detachLocalParticipant" tp:name-for-bindings="detachLocalParticipant">
+            <tp:added version="3.0.0"/>
+            <tp:docstring>
+                Detach local participant from the conference.
+                Remote participants are placed in hold.
+                The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emited.
+            </tp:docstring>
+            <arg type="b" name="detachSucceeded" direction="out"/>
+        </method>
+
         <method name="detachParticipant" tp:name-for-bindings="detachParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>

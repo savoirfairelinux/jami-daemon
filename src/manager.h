@@ -309,6 +309,12 @@ class Manager {
         bool detachParticipant(const std::string& call_id);
 
         /**
+         * Detach the local participant from curent conference.
+         * Remote participants are placed in hold.
+         */
+        bool detachLocalParticipant();
+
+        /**
          * Remove the conference participant from a conference
          * @param call id
          */

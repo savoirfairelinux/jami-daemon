@@ -509,7 +509,7 @@ Manager::outgoingCall(const std::string& preferred_account_id,
         if (not isConference(current_call_id) and not isConferenceParticipant(current_call_id))
             onHoldCall(current_call_id);
         else if (isConference(current_call_id) and not isConferenceParticipant(call_id))
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
     }
 
     switchCall(call);
@@ -547,7 +547,7 @@ Manager::answerCall(const std::string& call_id)
         } else if (isConference(current_call_id) and not isConferenceParticipant(call_id)) {
             // if we are talking to a conference and we are answering an incoming call
             RING_DBG("Detach main participant from conference");
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
         }
     }
 
@@ -706,7 +706,7 @@ Manager::offHoldCall(const std::string& callId)
             onHoldCall(currentCallId);
         } else if (isConference(currentCallId) and not isConferenceParticipant(callId)) {
             holdConference(currentCallId);
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
         }
     }
 
@@ -971,7 +971,7 @@ Manager::addParticipant(const std::string& callId,
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
         if (isConference(current_call_id))
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
         else
             onHoldCall(current_call_id);
     }
@@ -1022,7 +1022,7 @@ Manager::addMainParticipant(const std::string& conference_id)
         std::string current_call_id(getCurrentCallId());
 
         if (isConference(current_call_id))
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
         else
             onHoldCall(current_call_id);
     }
@@ -1127,7 +1127,7 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     auto current_call_id = getCurrentCallId();
     if ((current_call_id != callId1) and (current_call_id != callId2)) {
         if (isConference(current_call_id))
-            detachParticipant(RingBufferPool::DEFAULT_ID);
+            detachLocalParticipant();
         else
             onHoldCall(current_call_id); // currently in a call
     }
@@ -1191,67 +1191,63 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
 }
 
 bool
-Manager::detachParticipant(const std::string& call_id)
+Manager::detachLocalParticipant()
 {
-    const std::string current_call_id(getCurrentCallId());
+    RING_DBG("Unbind local participant from conference");
+    const auto& current_call_id = getCurrentCallId();
 
-    if (call_id != RingBufferPool::DEFAULT_ID) {
-        auto call = getCallFromCallID(call_id);
-        if (!call) {
-            RING_ERR("Could not find call %s", call_id.c_str());
-            return false;
-        }
-
-        auto conf = getConferenceFromCallID(call_id);
-
-        if (conf == nullptr) {
-            RING_ERR("Call is not conferencing, cannot detach");
-            return false;
-        }
-
-        std::map<std::string, std::string> call_details(getCallDetails(call_id));
-        std::map<std::string, std::string>::iterator iter_details(call_details.find("CALL_STATE"));
-
-        if (iter_details == call_details.end()) {
-            RING_ERR("Could not find CALL_STATE");
-            return false;
-        }
-
-        // Don't hold ringing calls when detaching them from conferences
-        if (iter_details->second != "RINGING")
-            onHoldCall(call_id);
-
-        removeParticipant(call_id);
-
-    } else {
-        RING_DBG("Unbind main participant from conference");
-        getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
-
-        if (not isConference(current_call_id)) {
-            RING_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
-            return false;
-        }
-
-        ConferenceMap::iterator iter = conferenceMap_.find(current_call_id);
-
-        auto conf = iter->second;
-        if (iter == conferenceMap_.end() or conf == 0) {
-            RING_DBG("Conference is NULL");
-            return false;
-        }
-
-        if (conf->getState() == Conference::ACTIVE_ATTACHED)
-            conf->setState(Conference::ACTIVE_DETACHED);
-        else if (conf->getState() == Conference::ACTIVE_ATTACHED_REC)
-            conf->setState(Conference::ACTIVE_DETACHED_REC);
-        else
-            RING_WARN("Undefined behavior, invalid conference state in detach participant");
-
-        emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
-
-        unsetCurrentCall();
+    if (not isConference(current_call_id)) {
+        RING_ERR("Current call id (%s) is not a conference", current_call_id.c_str());
+        return false;
     }
 
+    auto iter = conferenceMap_.find(current_call_id);
+    if (iter == conferenceMap_.end() or iter->second == nullptr) {
+        RING_ERR("Conference is NULL");
+        return false;
+    }
+
+    getRingBufferPool().unBindAll(RingBufferPool::DEFAULT_ID);
+
+    auto conf = iter->second;
+    switch (conf->getState()) {
+        case Conference::ACTIVE_ATTACHED:
+            conf->setState(Conference::ACTIVE_DETACHED);
+            break;
+        case Conference::ACTIVE_ATTACHED_REC:
+            conf->setState(Conference::ACTIVE_DETACHED_REC);
+            break;
+        default:
+            RING_WARN("Undefined behavior, invalid conference state in detach participant");
+    }
+
+    emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
+
+    unsetCurrentCall();
+}
+
+bool
+Manager::detachParticipant(const std::string& call_id)
+{
+    RING_DBG("Detach participant %s", call_id.c_str());
+
+    auto call = getCallFromCallID(call_id);
+    if (!call) {
+        RING_ERR("Could not find call %s", call_id.c_str());
+        return false;
+    }
+
+    auto conf = getConferenceFromCallID(call_id);
+    if (!conf) {
+        RING_ERR("Call is not conferencing, cannot detach");
+        return false;
+    }
+
+    // Don't hold ringing calls when detaching them from conferences
+    if (call->getStateStr() != "RINGING")
+        onHoldCall(call_id);
+
+    removeParticipant(call_id);
     return true;
 }
 

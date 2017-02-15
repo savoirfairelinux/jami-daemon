@@ -129,6 +129,12 @@ DBusCallManager::addMainParticipant(const std::string& confID) -> decltype(DRing
 }
 
 auto
+DBusCallManager::detachLocalParticipant() -> decltype(DRing::detachLocalParticipant())
+{
+    return DRing::detachLocalParticipant();
+}
+
+auto
 DBusCallManager::detachParticipant(const std::string& callID) -> decltype(DRing::detachParticipant(callID))
 {
     return DRing::detachParticipant(callID);

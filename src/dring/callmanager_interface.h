@@ -56,6 +56,7 @@ void createConfFromParticipantList(const std::vector<std::string>& participants)
 bool isConferenceParticipant(const std::string& call_id);
 bool addParticipant(const std::string& callID, const std::string& confID);
 bool addMainParticipant(const std::string& confID);
+bool detachLocalParticipant();
 bool detachParticipant(const std::string& callID);
 bool joinConference(const std::string& sel_confID, const std::string& drag_confID);
 bool hangUpConference(const std::string& confID);
