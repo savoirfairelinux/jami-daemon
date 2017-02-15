@@ -945,12 +945,12 @@ Manager::isConferenceParticipant(const std::string& call_id)
 
 bool
 Manager::addParticipant(const std::string& callId,
-                            const std::string& conferenceId)
+                        const std::string& conferenceId)
 {
     RING_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
-    ConferenceMap::iterator iter = conferenceMap_.find(conferenceId);
 
-    if (iter == conferenceMap_.end()) {
+    auto iter = conferenceMap_.find(conferenceId);
+    if (iter == conferenceMap_.end() or iter->second == nullptr) {
         RING_ERR("Conference id is not valid");
         return false;
     }
@@ -961,12 +961,8 @@ Manager::addParticipant(const std::string& callId,
         return false;
     }
 
-    // ensure that calls are only in one conference at a time
-    if (isConferenceParticipant(callId))
-        detachParticipant(callId);
-
     // store the current call id (it will change in offHoldCall or in answerCall)
-    std::string current_call_id(getCurrentCallId());
+    auto current_call_id = getCurrentCallId();
 
     // detach from prior communication and switch to this conference
     if (current_call_id != callId) {
@@ -976,42 +972,17 @@ Manager::addParticipant(const std::string& callId,
             onHoldCall(current_call_id);
     }
 
+    bindCallToConference(*call, *iter->second);
+
     // TODO: remove this ugly hack => There should be different calls when double clicking
     // a conference to add main participant to it, or (in this case) adding a participant
     // toconference
     unsetCurrentCall();
 
-    // Add main participant
     addMainParticipant(conferenceId);
-
-    auto conf = iter->second;
-    switchCall(conf->getConfID());
-
-    // Add coresponding IDs in conf and call
-    call->setConfId(conf->getConfID());
-    conf->add(callId);
-
-    // Connect new audio streams together
-    getRingBufferPool().unBindAll(callId);
-
-    std::map<std::string, std::string> callDetails(getCallDetails(callId));
-    std::string callState(callDetails.find("CALL_STATE")->second);
-
-    if (callState == "HOLD") {
-        conf->bindParticipant(callId);
-        offHoldCall(callId);
-    } else if (callState == "INCOMING") {
-        conf->bindParticipant(callId);
-        answerCall(callId);
-    } else if (callState == "CURRENT")
-        conf->bindParticipant(callId);
-
-    ParticipantSet participants(conf->getParticipantList());
-
-    if (participants.empty())
-        RING_ERR("Participant list is empty for this conference");
-
+    switchCall(conferenceId);
     addAudio(*call);
+
     return true;
 }
 
