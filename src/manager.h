@@ -238,14 +238,6 @@ class Manager {
         bool refuseCall(const std::string& id);
 
         /**
-         * Create a new conference given two participant
-         * @param the first participant ID
-         * @param the second participant ID
-         */
-        std::shared_ptr<Conference>
-        createConference(const std::string& id1, const std::string& id2);
-
-        /**
          * Delete this conference
          * @param the conference ID
          */
@@ -1079,6 +1071,8 @@ class Manager {
 #ifdef RING_VIDEO
     std::unique_ptr<VideoManager> videoManager_;
 #endif
+
+        void bindCallToConference(Call& call, Conference& conf);
 };
 
 // Helper to install a callback to be called once by the main event loop
