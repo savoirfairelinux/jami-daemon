@@ -44,6 +44,27 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
     , type_(type)
     , account_(account)
 {
+    // pending instant messages handler
+    addStateListener([this](Call::CallState call_state,
+                            Call::ConnectionState cnx_state,
+                            UNUSED int code) {
+        if (call_state == CallState::OVER) {
+            if (not subcalls.empty()) {
+                auto subs = std::move(subcalls);
+                for (auto c : subs)
+                    c->hangup(0);
+                pendingInMessages_.clear();
+                pendingOutMessages_.clear();
+            }
+        } else if (call_state == CallState::ACTIVE
+                   and cnx_state == ConnectionState::CONNECTED
+                   and not pendingOutMessages_.empty()) {
+            for (const auto& msg : pendingOutMessages_)
+                sendTextMessage(msg.first, msg.second);
+            pendingOutMessages_.clear();
+        }
+    });
+
     time(&timestamp_start_);
     account_.attachCall(id_);
 }
@@ -139,51 +160,38 @@ Call::validStateTransition(CallState newState)
 bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
-             (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_,
-             (unsigned)cnx_state, code);
+    decltype(getStateStr()) old_client_state, new_client_state;
 
-    if (callState_ != call_state) {
-        if (not validStateTransition(call_state)) {
-            RING_ERR("[call:%s] invalid call state transition from %u to %u",
-                     id_.c_str(), (unsigned)callState_, (unsigned)call_state);
-            return false;
-        }
-    } else if (connectionState_ == cnx_state)
-        return true; // no changes as no-op
+    {
+        std::lock_guard<std::recursive_mutex> lock(callMutex_);
+        RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
+                 (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_,
+                 (unsigned)cnx_state, code);
+
+        if (callState_ != call_state) {
+            if (not validStateTransition(call_state)) {
+                RING_ERR("[call:%s] invalid call state transition from %u to %u",
+                         id_.c_str(), (unsigned)callState_, (unsigned)call_state);
+                return false;
+            }
+        } else if (connectionState_ == cnx_state)
+            return true; // no changes as no-op
+
+        old_client_state = getStateStr();
+        callState_ = call_state;
+        connectionState_ = cnx_state;
+        new_client_state = getStateStr();
+    }
 
     // Emit client state only if changed
-    auto old_client_state = getStateStr();
-    callState_ = call_state;
-    connectionState_ = cnx_state;
-    auto new_client_state = getStateStr();
-
-    if (call_state == CallState::OVER) {
-        RING_DBG("[call:%s] %lu subcalls %lu listeners", id_.c_str(), subcalls.size(), stateChangedListeners_.size());
-        if (not subcalls.empty()) {
-            auto subs = std::move(subcalls);
-            for (auto c : subs)
-                c->hangup(0);
-            pendingInMessages_.clear();
-            pendingOutMessages_.clear();
-        }
-    } else if (call_state == CallState::ACTIVE and connectionState_ == ConnectionState::CONNECTED and not pendingOutMessages_.empty()) {
-        for (const auto& msg : pendingOutMessages_)
-            sendTextMessage(msg.first, msg.second);
-        pendingOutMessages_.clear();
+    if (old_client_state != new_client_state and not quiet) {
+        RING_DBG("[call:%s] emit client call state change %s, code %d",
+                 id_.c_str(), new_client_state.c_str(), code);
+        emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
     }
 
-    for (auto& l : stateChangedListeners_)
-        l(callState_, connectionState_, code);
-
-    if (old_client_state != new_client_state) {
-        if (not quiet) {
-            RING_DBG("[call:%s] emit client call state change %s, code %d",
-                     id_.c_str(), new_client_state.c_str(), code);
-            emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
-        }
-    }
+    for (auto& callable : stateChangedListeners_)
+        callable(call_state, cnx_state, code);
 
     return true;
 }
