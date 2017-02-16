@@ -113,7 +113,7 @@ VPX_CONF += --sdk-path=$(IOS_SDK)
 endif
 LOCAL_HOSTVARS=
 ifdef HAVE_ANDROID
-VPX_CONF += --disable-tools
+VPX_CONF += --disable-tools --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/ -fvisibility=hidden"
 LOCAL_HOSTVARS=$(HOSTVARS)
 endif
 
