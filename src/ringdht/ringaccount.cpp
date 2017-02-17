@@ -1517,12 +1517,20 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
 #if HAVE_RINGNS
-    //std::string ringns_server;
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
     nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
     loadAccount(archive_password, archive_pin);
+
+    // update device name if necessary
+    auto dev = knownDevices_.find(dht::InfoHash(ringDeviceId_));
+    if (dev != knownDevices_.end()) {
+        if (dev->second.name != ringDeviceName_) {
+            dev->second.name = ringDeviceName_;
+            saveKnownDevices();
+        }
+    }
 }
 
 std::map<std::string, std::string>
