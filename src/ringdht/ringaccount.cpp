@@ -888,7 +888,7 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 dht::crypto::Identity
 RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const
 {
-    RING_DBG("Loading identity: %s %s", crt_path.c_str(), key_path.c_str());
+    RING_DBG("[Account %s] loading identity: %s %s", getAccountID().c_str(), crt_path.c_str(), key_path.c_str());
     dht::crypto::Identity id;
     try {
         dht::crypto::Certificate dht_cert(fileutils::loadFile(crt_path, idPath_));
@@ -898,7 +898,7 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
             return {};
 
         if (not dht_cert.issuer) {
-            RING_ERR("Device certificate has no issuer");
+            RING_ERR("[Account %s] device certificate %s has no issuer", getAccountID().c_str(), dht_cert.getId().toString().c_str());
             return {};
         }
         // load revocation lists for device authority (account certificate).
@@ -921,7 +921,7 @@ RingAccount::readArchive(const std::string& pwd) const
 {
     RING_DBG("[Account %s] reading account archive", getAccountID().c_str());
 
-    decltype(fileutils::loadFile("")) data;
+    std::vector<uint8_t> data;
 
     // Read file
     try {
@@ -1312,7 +1312,7 @@ RingAccount::createAccount(const std::string& archive_password)
                 RING_WARN("Converting certificate from old ring account");
                 a.id = std::move(this_.identity_);
                 try {
-                    a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile(this_.idPath_ + DIR_SEPARATOR_STR "ca.key"));
+                    a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.idPath_));
                 } catch (...) {}
                 updateCertificates(a, this_.identity_);
             } else {
@@ -1355,8 +1355,14 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
         return true;
     auto cert = id.second->issuer;
     while (cert) {
-        if (not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now())
+        if (not cert->isCA()){
+            RING_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
             return true;
+        }
+        if (cert->getExpiration() < std::chrono::system_clock::now()) {
+            RING_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
+            return true;
+        }
         cert = cert->issuer;
     }
     return false;
@@ -1442,10 +1448,11 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             loadTrustRequests();
             if (not needMigration) {
                 if (not hasArchive)
-                    RING_WARN("[Account %s] account archive not found, won't be able to add new devices.", getAccountID().c_str());
+                    RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
                 // normal account loading path
                 return;
-            }
+            } else
+                RING_WARN("[Account %s] account certificates need to be updated", getAccountID().c_str());
         }
 
         if (hasArchive) {
@@ -2006,16 +2013,19 @@ RingAccount::doRegister_()
 #endif
 
         dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
-            RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
+            RING_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s", getAccountID().c_str(), dhtStatusStr(s4), dhtStatusStr(s6));
             RegistrationState state;
             switch (std::max(s4, s6)) {
                 case dht::NodeStatus::Connecting:
+                    RING_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
                     state = RegistrationState::TRYING;
                     break;
                 case dht::NodeStatus::Connected:
+                    RING_WARN("[Account %s] connected to the DHT network", getAccountID().c_str());
                     state = RegistrationState::REGISTERED;
                     break;
                 case dht::NodeStatus::Disconnected:
+                    RING_WARN("[Account %s] disconnected from the DHT network", getAccountID().c_str());
                     state = RegistrationState::UNREGISTERED;
                     break;
                 default:
@@ -2029,8 +2039,7 @@ RingAccount::doRegister_()
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
-            auto& store = tls::CertificateStore::instance();
-            if (auto cert = store.getCertificate(pk_id.toString()))
+            if (auto cert = tls::CertificateStore::instance().getCertificate(pk_id.toString()))
                 ret.emplace_back(std::move(cert));
             RING_DBG("Query for local certificate store: %s: %zu found.", pk_id.toString().c_str(), ret.size());
             return ret;
@@ -2607,17 +2616,17 @@ RingAccount::loadKnownDevices()
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
         // read file
-        auto file = fileutils::loadFile(idPath_+DIR_SEPARATOR_STR "knownDevicesNames");
+        auto file = fileutils::loadFile("knownDevicesNames", idPath_);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(knownDevices);
     } catch (const std::exception& e) {
-        RING_WARN("Error loading devices: %s", e.what());
+        RING_WARN("[Account %s] error loading devices: %s", getAccountID().c_str(), e.what());
         return;
     }
 
     for (const auto& d : knownDevices) {
-        RING_DBG("[Account %s]: loaded known account device %s %s", getAccountID().c_str(),
+        RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
         using clock = std::chrono::system_clock;
@@ -2630,9 +2639,9 @@ RingAccount::loadKnownDevices()
                         clock::from_time_t(d.second.second)
                     });
             else
-                RING_ERR("Known device certificate not matching identity.");
+                RING_WARN("[Account %s] known device certificate not matching identity", getAccountID().c_str());
         else
-            RING_WARN("Can't find known device certificate.");
+            RING_WARN("[Account %s] can't find known device certificate", getAccountID().c_str());
     }
 }
 
@@ -2726,11 +2735,11 @@ RingAccount::loadValues() const
             std::istreambuf_iterator<char> begin(ifs), end;
             values.emplace_back(dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
         } catch (const std::exception& e) {
-            RING_ERR("Error reading value: %s", e.what());
+            RING_ERR("[Account %s] error reading value from cache : %s", getAccountID().c_str(), e.what());
         }
         fileutils::remove(file);
     }
-    RING_DBG("Loaded %zu values", values.size());
+    RING_DBG("[Account %s] loaded %zu values", getAccountID().c_str(), values.size());
     return values;
 }
 
@@ -2898,7 +2907,7 @@ RingAccount::loadContacts()
     decltype(contacts_) contacts;
     try {
         // read file
-        auto file = fileutils::loadFile(idPath_+DIR_SEPARATOR_STR "contacts");
+        auto file = fileutils::loadFile("contacts", idPath_);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(contacts);
@@ -3005,7 +3014,7 @@ RingAccount::loadTrustRequests()
     std::map<dht::InfoHash, SavedTrustRequest> requests;
     try {
         // read file
-        auto file = fileutils::loadFile(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests");
+        auto file = fileutils::loadFile("incomingTrustRequests", idPath_);
         // load values
         msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
         oh.get().convert(requests);
