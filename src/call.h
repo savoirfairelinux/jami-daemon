@@ -371,6 +371,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void checkPendingIM();
 
+        void checkAudio();
+
         /** Protect every attribute that can be changed by two threads */
         mutable std::recursive_mutex callMutex_ {};
 
