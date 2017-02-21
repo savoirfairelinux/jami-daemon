@@ -30,51 +30,33 @@
 #include "config.h"
 #endif
 
+#include "account_factory.h"
+#include "call_factory.h"
+#include "preferences.h"
+#include "audio/audiolayer.h"
+
 #include <string>
 #include <vector>
-#include <list>
 #include <map>
 #include <memory>
-#include <mutex>
-#include <random>
 #include <atomic>
 #include <functional>
 
 #include "conference.h"
 
-#include "account_factory.h"
-#include "call_factory.h"
-
 #include "audio/audiolayer.h"
 #include "audio/tonecontrol.h"
-
-#include "preferences.h"
-#include "noncopyable.h"
-
 namespace ring {
 
 namespace video {
 class SinkClient;
 }
-class PluginManager;
-class DTMF;
 class RingBufferPool;
 class VideoManager;
 
-/** To store conference objects by conference ids */
-typedef std::map<std::string, std::shared_ptr<Conference> > ConferenceMap;
-
-typedef std::set<std::string> CallIDSet;
-
 /** Manager (controller) of Ring daemon */
 class Manager {
-    private:
-        std::unique_ptr<PluginManager> pluginManager_;
-
     public:
-        Manager();
-        ~Manager();
-
         static Manager& instance();
 
         void setAutoAnswer(bool enable);
@@ -506,6 +488,8 @@ class Manager {
          */
         void removeAccount(const std::string& accountID, bool flush=false);
 
+        void removeAccounts();
+
         /**
          * Set input audio plugin
          * @param audioPlugin The audio plugin
@@ -513,10 +497,10 @@ class Manager {
         void setAudioPlugin(const std::string& audioPlugin);
 
         /**
-             * Set audio device
-             * @param index The index of the soundcard
-             * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
-             */
+         * Set audio device
+         * @param index The index of the soundcard
+         * @param the type of stream, either PLAYBACK, CAPTURE, RINGTONE
+         */
         void setAudioDevice(int index, DeviceType streamType);
 
         /**
@@ -744,119 +728,20 @@ class Manager {
         std::vector<std::string> loadAccountOrder() const;
 
         /**
+        * Load the account map from configuration
+        */
+        int loadAccountMap(const YAML::Node& node);
+
+        /**
          * Get the Call referred by callID. If the Call does not exist, return
          * empty std::shared_ptr<Call> instance
          */
         std::shared_ptr<Call> getCallFromCallID(const std::string &callID) const;
 
-    private:
-        std::atomic_bool autoAnswer_ {false};
-
-        void removeAccounts();
-
-        bool parseConfiguration();
-
-        /**
-         * Process remaining participant given a conference and the current call id.
-         * Mainly called when a participant is detached or hagned up
-         * @param current call id
-         * @param conference pointer
-         */
-        void processRemainingParticipants(Conference &conf);
-
-        /**
-         * Create config directory in home user and return configuration file path
-         */
-        std::string retrieveConfigPath() const;
-
-        void unsetCurrentCall();
-
-        void switchCall(const std::string& id);
-        void switchCall(const std::shared_ptr<Call>& call);
-
-        /** Application wide tone controler */
-        ToneControl toneCtrl_;
-
-        /*
-         * Play one tone
-         * @return false if the driver is uninitialize
-         */
-        void playATone(Tone::TONEID toneId);
-
-        int getCurrentDeviceIndex(DeviceType type);
-
-        /** Current Call ID */
-        std::string currentCall_;
-
-        /** Protected current call access */
-        std::mutex currentCallMutex_;
-
-        /** Audio layer */
-        std::shared_ptr<AudioLayer> audiodriver_{nullptr};
-
-        // Main thread
-        std::unique_ptr<DTMF> dtmfKey_;
-
-        /** Buffer to generate DTMF */
-        AudioBuffer dtmfBuf_;
-
-        // To handle volume control
-        // short speakerVolume_;
-        // short micVolume_;
-        // End of sound variable
-
-        /**
-         * Mutex used to protect audio layer
-         */
-        std::mutex audioLayerMutex_;
-
-        /**
-         * Waiting Call Vectors
-         */
-        CallIDSet waitingCalls_;
-
-        /**
-         * Protect waiting call list, access by many voip/audio threads
-         */
-        std::mutex waitingCallsMutex_;
-
-        /**
-         * Add incoming callid to the waiting list
-         * @param id std::string to add
-         */
-        void addWaitingCall(const std::string& id);
-
-        /**
-         * Remove incoming callid to the waiting list
-         * @param id std::string to remove
-         */
-        void removeWaitingCall(const std::string& id);
-
-        /**
-         * Path of the ConfigFile
-         */
-        std::string path_;
-
-        /**
-         * Load the account map from configuration
-         */
-        int loadAccountMap(const YAML::Node &node);
-
-        /**
-         * Instance of the RingBufferPool for the whole application
-         *
-         * In order to send signal to other parts of the application, one must pass through the RingBufferMananger.
-         * Audio instances must be registered into the RingBufferMananger and bound together via the Manager.
-         *
-         */
-        std::unique_ptr<RingBufferPool> ringbufferpool_;
-
-    public:
-
         /**
          * Return a pointer to the instance of the RingBufferPool
          */
-        RingBufferPool& getRingBufferPool() { return *ringbufferpool_; }
+        RingBufferPool& getRingBufferPool();
 
         /**
          * Tell if there is a current call processed
@@ -871,7 +756,7 @@ class Manager {
          */
         template <class T=Account>
         std::shared_ptr<T> getAccount(const std::string& accountID) const {
-            return accountFactory_.getAccount<T>(accountID);
+            return accountFactory.getAccount<T>(accountID);
         }
 
         /**
@@ -885,11 +770,11 @@ class Manager {
 
             // If no order has been set, load the default one ie according to the creation date.
             if (account_order.empty()) {
-                for (const auto &account : accountFactory_.getAllAccounts<T>())
+                for (const auto &account : accountFactory.getAllAccounts<T>())
                     accountList.emplace_back(account);
             } else {
                 for (const auto& id : account_order) {
-                    if (auto acc = accountFactory_.getAccount<T>(id))
+                    if (auto acc = accountFactory.getAccount<T>(id))
                         accountList.push_back(acc);
                 }
             }
@@ -898,18 +783,31 @@ class Manager {
 
         template <class T=Account>
         bool accountCount() const {
-            return accountFactory_.accountCount<T>();
+            return accountFactory.accountCount<T>();
+        }
+
+        template <class T>
+        inline std::shared_ptr<T>
+        findAccount(const std::function<bool(const std::shared_ptr<T>&)>& pred) {
+            for (const auto& account : getAllAccounts<T>()) {
+                if (pred(account))
+                    return account;
+            }
+            return {};
         }
 
         // only used by test framework
-        bool hasAccount(const std::string& accountID) {
-            return accountFactory_.hasAccount(accountID);
-        }
+        bool hasAccount(const std::string& accountID);
 
         /**
          * Send registration for all enabled accounts
          */
         void registerAccounts();
+
+        /**
+         * Send unregister for all enabled accounts
+         */
+        void unregisterAccounts();
 
         /**
          * Suspends Ring's audio processing if no calls remain, allowing
@@ -952,7 +850,7 @@ class Manager {
          */
         void unregisterEventHandler(uintptr_t handlerId);
 
-        IceTransportFactory& getIceTransportFactory() { return *ice_tf_; }
+        IceTransportFactory& getIceTransportFactory();
 
         void addTask(const std::function<bool()>&& task);
 
@@ -982,7 +880,7 @@ class Manager {
          */
         std::shared_ptr<video::SinkClient> getSinkClient(const std::string& id);
 
-        VideoManager& getVideoManager() const { return *videoManager_; }
+        VideoManager& getVideoManager() const;
 
 #ifdef RING_ACCEL
         bool getDecodingAccelerated() const;
@@ -992,61 +890,14 @@ class Manager {
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
+        AccountFactory accountFactory;
 
-    private:
-        NON_COPYABLE(Manager);
+private:
+        Manager();
+        ~Manager();
 
-        std::map<uintptr_t, EventHandler> eventHandlerMap_;
-        decltype(eventHandlerMap_)::iterator nextEventHandler_;
-
-        std::list<std::function<bool()>> pendingTaskList_;
-        std::multimap<std::chrono::steady_clock::time_point, std::shared_ptr<Runnable>> scheduledTasks_;
-        std::mutex scheduledTasksMutex_;
-
-        /**
-         * Test if call is a valid call, i.e. have been created and stored in
-         * call-account map
-         * @param callID the std::string to be tested
-         * @return true if call is created and present in the call-account map
-         */
-        bool isValidCall(const std::string& callID);
-
-        /**
-         * Send unregister for all enabled accounts
-         */
-        void unregisterAccounts();
-
-
-        // Map containing conference pointers
-        ConferenceMap conferenceMap_;
-
-        std::atomic_bool finished_ {false};
-
-        AccountFactory accountFactory_;
-
-        std::mt19937_64 rand_;
-
-        void loadAccount(const YAML::Node &item, int &errorCount,
-                         const std::string &accountOrder);
-
-        /* ICE support */
-        std::unique_ptr<IceTransportFactory> ice_tf_;
-
-        /* Sink ID mapping */
-        std::map<std::string, std::weak_ptr<video::SinkClient>> sinkMap_;
-
-        void sendTextMessageToConference(const Conference& conf,
-                                         const std::map<std::string, std::string>& messages,
-                                         const std::string& from) const noexcept;
-
-#ifdef RING_VIDEO
-    std::unique_ptr<VideoManager> videoManager_;
-#endif
-
-        void bindCallToConference(Call& call, Conference& conf);
-
-        template <class T>
-        std::shared_ptr<T> findAccount(const std::function<bool(const std::shared_ptr<T>&)>&);
+        struct ManagerPimpl;
+        std::unique_ptr<ManagerPimpl> pimpl_;
 };
 
 // Helper to install a callback to be called once by the main event loop
