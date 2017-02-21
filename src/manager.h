@@ -53,29 +53,16 @@
 
 namespace ring {
 
-namespace Conf {
-class YamlParser;
-class YamlEmitter;
-}
-
 namespace video {
 class SinkClient;
 }
 class PluginManager;
-class AudioFile;
 class DTMF;
 class RingBufferPool;
 class VideoManager;
 
-/** To send multiple string */
-typedef std::list<std::string> TokenList;
-
 /** To store conference objects by conference ids */
 typedef std::map<std::string, std::shared_ptr<Conference> > ConferenceMap;
-
-typedef std::set<std::string> CallIDSet;
-
-static const char * const default_conf = "conf";
 
 typedef std::set<std::string> CallIDSet;
 
@@ -333,11 +320,6 @@ class Manager {
          * Save config to file
          */
         void saveConfig();
-
-        /**
-         * @return true if we tried to register once
-         */
-        bool hasTriedToRegister_;
 
         /**
          * Play a ringtone
@@ -649,19 +631,6 @@ class Manager {
          * @return double The number of days
          */
         int getHistoryLimit() const;
-
-        /**
-         * Configure the start-up option
-         * @return int	1 if Ring should start in the system tray
-         *	        0 otherwise
-         */
-        int isStartHidden();
-
-        /**
-         * Configure the start-up option
-         * At startup, Ring can be displayed or start hidden in the system tray
-         */
-        void startHidden();
 
         /**
          * Get the audio manager
