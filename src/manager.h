@@ -42,10 +42,6 @@
 #include <atomic>
 #include <functional>
 
-#include "conference.h"
-
-#include "audio/audiolayer.h"
-#include "audio/tonecontrol.h"
 namespace ring {
 
 namespace video {
@@ -53,6 +49,8 @@ class SinkClient;
 }
 class RingBufferPool;
 class VideoManager;
+class Conference;
+class AudioLoop;
 
 /** Manager (controller) of Ring daemon */
 class Manager {
