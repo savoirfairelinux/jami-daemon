@@ -31,6 +31,7 @@
 #include "logger.h"
 #include "string_utils.h"
 #include "call.h"
+#include "conference.h"
 
 #include "account_const.h"
 
