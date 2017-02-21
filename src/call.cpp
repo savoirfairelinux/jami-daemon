@@ -44,6 +44,10 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
     , type_(type)
     , account_(account)
 {
+    addStateListener([this](UNUSED Call::CallState call_state,
+                            UNUSED Call::ConnectionState cnx_state,
+                            UNUSED int code) { checkPendingIM(); });
+
     time(&timestamp_start_);
     account_.attachCall(id_);
 }
@@ -158,21 +162,6 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
     callState_ = call_state;
     connectionState_ = cnx_state;
     auto new_client_state = getStateStr();
-
-    if (call_state == CallState::OVER) {
-        RING_DBG("[call:%s] %lu subcalls %lu listeners", id_.c_str(), subcalls.size(), stateChangedListeners_.size());
-        if (not subcalls.empty()) {
-            auto subs = std::move(subcalls);
-            for (auto c : subs)
-                c->hangup(0);
-            pendingInMessages_.clear();
-            pendingOutMessages_.clear();
-        }
-    } else if (call_state == CallState::ACTIVE and connectionState_ == ConnectionState::CONNECTED and not pendingOutMessages_.empty()) {
-        for (const auto& msg : pendingOutMessages_)
-            sendTextMessage(msg.first, msg.second);
-        pendingOutMessages_.clear();
-    }
 
     for (auto& l : stateChangedListeners_)
         l(callState_, connectionState_, code);
@@ -486,5 +475,28 @@ Call::merge(const std::shared_ptr<Call>& scall)
     scall->removeCall();
 }
 
+void
+Call::checkPendingIM()
+{
+    using namespace DRing::Call;
+
+    auto state = getStateStr();
+    if (state == StateEvent::OVER) {
+        // Hangup device's call when parent is over
+        if (not subcalls.empty()) {
+            auto subs = std::move(subcalls);
+            for (auto c : subs)
+                c->hangup(0);
+            pendingInMessages_.clear();
+            pendingOutMessages_.clear();
+        }
+    } else if (state == StateEvent::CURRENT) {
+        // Peer connected, time to send pending IM
+        // TODO not thread safe
+        for (const auto& msg : pendingOutMessages_)
+            sendTextMessage(msg.first, msg.second);
+        pendingOutMessages_.clear();
+    }
+}
 
 } // namespace ring
