@@ -247,7 +247,6 @@ Manager::Manager() :
 #ifdef RING_VIDEO
     , videoPreferences()
 #endif
-    , hasTriedToRegister_(false)
     , toneCtrl_(preferences)
     , currentCallMutex_(), dtmfKey_(), dtmfBuf_(0, AudioFormat::MONO())
     , audioLayerMutex_()
