@@ -354,6 +354,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         Call(Account& account, const std::string& id, Call::CallType type);
 
+        // TODO all these members are not protected against multi-thread access
+
         std::shared_ptr<IceTransport> iceTransport_ {};
 
         bool isAudioMuted_{false};
@@ -366,6 +368,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
     private:
 
         bool validStateTransition(CallState newState);
+
+        void checkPendingIM();
 
         /** Protect every attribute that can be changed by two threads */
         mutable std::recursive_mutex callMutex_ {};
