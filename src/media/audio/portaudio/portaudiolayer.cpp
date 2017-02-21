@@ -25,6 +25,7 @@
 #include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audio/audioloop.h"
 
 #include <portaudio.h>
 #include <algorithm>

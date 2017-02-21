@@ -28,6 +28,7 @@
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+#include "audio/audioloop.h"
 
 #include <thread>
 #include <atomic>

@@ -25,6 +25,7 @@
 #include "manager.h"
 #include "audio/ringbufferpool.h"
 #include "audio/resampler.h"
+#include "tonecontrol.h"
 #include "client/ring_signal.h"
 
 #include <ctime>

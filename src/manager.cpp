@@ -77,6 +77,7 @@ using random_device = dht::crypto::random_device;
 
 #include "libav_utils.h"
 #include "video/sinkclient.h"
+#include "audio/tonecontrol.h"
 
 #include <cerrno>
 #include <ctime>
