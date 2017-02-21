@@ -721,7 +721,6 @@ void
 SIPCall::onPeerRinging()
 {
     setState(ConnectionState::RINGING);
-    Manager::instance().peerRingingCall(*this);
 }
 
 void

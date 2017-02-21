@@ -46,7 +46,10 @@ Call::Call(Account& account, const std::string& id, Call::CallType type)
 {
     addStateListener([this](UNUSED Call::CallState call_state,
                             UNUSED Call::ConnectionState cnx_state,
-                            UNUSED int code) { checkPendingIM(); });
+                            UNUSED int code) {
+        checkPendingIM();
+        checkAudio();
+    });
 
     time(&timestamp_start_);
     account_.attachCall(id_);
@@ -496,6 +499,22 @@ Call::checkPendingIM()
         for (const auto& msg : pendingOutMessages_)
             sendTextMessage(msg.first, msg.second);
         pendingOutMessages_.clear();
+    }
+}
+
+/**
+ * Handle tones for RINGING and BUSY calls
+ */
+void
+Call::checkAudio()
+{
+    using namespace DRing::Call;
+
+    auto state = getStateStr();
+    if (state == StateEvent::RINGING) {
+        Manager::instance().peerRingingCall(*this);
+    } else if (state == StateEvent::BUSY) {
+        Manager::instance().callBusy(*this);
     }
 }
 
