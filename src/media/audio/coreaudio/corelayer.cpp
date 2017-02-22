@@ -27,8 +27,6 @@
 #include "audiodevice.h"
 
 #include <cmath>
-#include <thread>
-#include <atomic>
 
 namespace ring {
 
@@ -39,55 +37,52 @@ CoreLayer::CoreLayer(const AudioPreference &pref)
     , indexOut_(pref.getAlsaCardout())
     , indexRing_(pref.getAlsaCardring())
     , playbackBuff_(0, audioFormat_)
-    , captureBuff_(0)
     , mainRingBuffer_(Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID))
 {}
 
 CoreLayer::~CoreLayer()
-{
-    if (captureBuff_) {
-        for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i)
-            free(captureBuff_->mBuffers[i].mData);
-        free(captureBuff_);
-        captureBuff_ = 0;
-    }
-}
+{}
 
-std::vector<std::string> CoreLayer::getCaptureDeviceList() const
+std::vector<std::string>
+CoreLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> ret;
 
 #if !TARGET_OS_IPHONE
-    for (auto x : getDeviceList(true))
+    for (const auto& x : getDeviceList(true))
         ret.push_back(x.name_);
 #endif
 
     return ret;
 }
 
-std::vector<std::string> CoreLayer::getPlaybackDeviceList() const
+std::vector<std::string>
+CoreLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> ret;
 
 #if !TARGET_OS_IPHONE
-    for (auto x : getDeviceList(false))
+    for (const auto& x : getDeviceList(false))
         ret.push_back(x.name_);
 #endif
 
     return ret;
 }
 
-int CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
+int
+CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
     return 0;
 }
 
-std::string CoreLayer::getAudioDeviceName(int index, DeviceType type) const
+std::string
+CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 {
     return "";
 }
 
-void CoreLayer::initAudioLayerIO()
+void
+CoreLayer::initAudioLayerIO()
 {
     // OS X uses Audio Units for output. Steps:
     // 1) Create a description.
@@ -107,8 +102,8 @@ void CoreLayer::initAudioLayerIO()
     desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
     desc.componentManufacturer = kAudioUnitManufacturer_Apple;
 
-    AudioComponent comp = AudioComponentFindNext(NULL, &desc);
-    if (comp == NULL) {
+    auto comp = AudioComponentFindNext(nullptr, &desc);
+    if (comp == nullptr) {
         RING_ERR("Can't find default output audio component.");
         return;
     }
@@ -125,7 +120,8 @@ void CoreLayer::initAudioLayerIO()
             &info,
             &size));
 
-    audioFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    audioFormat_ = {static_cast<unsigned int>(info.mSampleRate),
+                    static_cast<unsigned int>(info.mChannelsPerFrame)};
 
     checkErr(AudioUnitGetProperty(ioUnit_,
             kAudioUnitProperty_StreamFormat,
@@ -154,7 +150,8 @@ void CoreLayer::initAudioLayerIO()
                 &info,
                 &size));
 
-    audioInputFormat_ = {(unsigned int)info.mSampleRate, (unsigned int)info.mChannelsPerFrame};
+    audioInputFormat_ = {static_cast<unsigned int>(info.mSampleRate),
+                         static_cast<unsigned int>(info.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
 
     // Set format on output *SCOPE* in input *BUS*.
@@ -196,15 +193,15 @@ void CoreLayer::initAudioLayerIO()
 #endif
 
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
-    size = offsetof(AudioBufferList, mBuffers[0]) +
-        (sizeof(AudioBuffer) * info.mChannelsPerFrame);
-    captureBuff_ = (AudioBufferList *)malloc(size);
+    size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
+    rawBuff_.reset(new Byte[size + bufferSizeBytes * info.mChannelsPerFrame]);
+    captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
     captureBuff_->mNumberBuffers = info.mChannelsPerFrame;
 
     for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
         captureBuff_->mBuffers[i].mNumberChannels = 1;
         captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
-        captureBuff_->mBuffers[i].mData = malloc(bufferSizeBytes);
+        captureBuff_->mBuffers[i].mData = rawBuff_.get() + bufferSizeBytes * i;
     }
 
     // Input callback setup.
@@ -232,7 +229,8 @@ void CoreLayer::initAudioLayerIO()
                sizeof(AURenderCallbackStruct)));
 }
 
-void CoreLayer::startStream()
+void
+CoreLayer::startStream()
 {
     RING_DBG("START STREAM");
 
@@ -252,14 +250,16 @@ void CoreLayer::startStream()
     checkErr(AudioOutputUnitStart(ioUnit_));
 }
 
-void CoreLayer::destroyAudioLayer()
+void
+CoreLayer::destroyAudioLayer()
 {
     AudioOutputUnitStop(ioUnit_);
     AudioUnitUninitialize(ioUnit_);
     AudioComponentInstanceDispose(ioUnit_);
 }
 
-void CoreLayer::stopStream()
+void
+CoreLayer::stopStream()
 {
     RING_DBG("STOP STREAM");
 
@@ -279,7 +279,8 @@ void CoreLayer::stopStream()
 
 //// PRIVATE /////
 
-OSStatus CoreLayer::outputCallback(void* inRefCon,
+OSStatus
+CoreLayer::outputCallback(void* inRefCon,
     AudioUnitRenderActionFlags* ioActionFlags,
     const AudioTimeStamp* inTimeStamp,
     UInt32 inBusNumber,
@@ -290,7 +291,8 @@ OSStatus CoreLayer::outputCallback(void* inRefCon,
     return kAudioServicesNoError;
 }
 
-void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
+void
+CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     const AudioTimeStamp* inTimeStamp,
     UInt32 inBusNumber,
     UInt32 inNumberFrames,
@@ -303,26 +305,29 @@ void CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
 
     if (toPlay.frames() == 0) {
         for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            memset((Float32*)ioData->mBuffers[i].mData, 0, ioData->mBuffers[i].mDataByteSize);
-    }
-    else {
+            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
+                        ioData->mBuffers[i].mDataByteSize, 0);
+    } else {
         for (int i = 0; i < audioFormat_.nb_channels; ++i)
-            toPlay.channelToFloat((Float32*)ioData->mBuffers[i].mData, i);
+            toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
     }
 }
 
-OSStatus CoreLayer::inputCallback(void* inRefCon,
+OSStatus
+CoreLayer::inputCallback(void* inRefCon,
     AudioUnitRenderActionFlags* ioActionFlags,
     const AudioTimeStamp* inTimeStamp,
     UInt32 inBusNumber,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
+    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber,
+                                            inNumberFrames, ioData);
     return kAudioServicesNoError;
 }
 
-void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
+void
+CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     const AudioTimeStamp* inTimeStamp,
     UInt32 inBusNumber,
     UInt32 inNumberFrames,
@@ -355,12 +360,12 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     bool resample = info.mSampleRate != mainBufferFormat.sample_rate;
 
     // FIXME: Performance! There *must* be a better way. This is testing only.
-    AudioBuffer inBuff(inNumberFrames, audioInputFormat_);
+    auto inBuff = AudioBuffer {inNumberFrames, audioInputFormat_};
 
     for (int i = 0; i < info.mChannelsPerFrame; ++i) {
-        Float32* data = (Float32*)captureBuff_->mBuffers[i].mData;
+        auto data = reinterpret_cast<Float32*>(captureBuff_->mBuffers[i].mData);
         for (int j = 0; j < inNumberFrames; ++j) {
-            (*inBuff.getChannel(i))[j] = (AudioSample)((data)[j] / .000030517578125f);
+            (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] / .000030517578125f);
         }
     }
 
@@ -370,7 +375,7 @@ void CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
         //FIXME: May be a multiplication, check alsa vs pulse implementation.
 
         int outSamples = inNumberFrames / (static_cast<double>(audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate);
-        AudioBuffer out(outSamples, mainBufferFormat);
+        auto out = AudioBuffer {outSamples, mainBufferFormat};
         inputResampler_->resample(inBuff, out);
         dcblocker_.process(out);
         mainRingBuffer_->put(out);
@@ -400,7 +405,8 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
     }
 }
 
-std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
+std::vector<AudioDevice>
+CoreLayer::getDeviceList(bool getCapture) const
 {
     std::vector<AudioDevice> ret;
 #if !TARGET_OS_IPHONE
@@ -409,31 +415,31 @@ std::vector<AudioDevice> CoreLayer::getDeviceList(bool getCapture) const
     AudioObjectPropertyAddress theAddress = {
         kAudioHardwarePropertyDevices,
         kAudioObjectPropertyScopeGlobal,
-        kAudioObjectPropertyElementMaster };
+        kAudioObjectPropertyElementMaster
+    };
 
     verify_noerr(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
-                            &theAddress,
-                            0,
-                            NULL,
-                            &propsize));
+                                                &theAddress,
+                                                0,
+                                                nullptr,
+                                                &propsize));
 
-    size_t nDevices = propsize / sizeof(AudioDeviceID);
-    AudioDeviceID *devids = new AudioDeviceID[nDevices];
+    std::size_t nDevices = propsize / sizeof(AudioDeviceID);
+    auto devids = std::array<AudioDeviceID, nDevices>();
 
     verify_noerr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
-                        &theAddress,
-                        0,
-                        NULL,
-                        &propsize,
-                        devids));
+                                            &theAddress,
+                                            0,
+                                            nullptr,
+                                            &propsize,
+                                            devids.data()));
 
     for (int i = 0; i < nDevices; ++i) {
-        AudioDevice dev(devids[i], getCapture);
+        auto dev = AudioDevice {devids[i], getCapture};
         if (dev.channels_ > 0) { // Channels < 0 if inactive.
-            ret.push_back(dev);
+            ret.push_back(std::move(dev));
         }
     }
-    delete[] devids;
 #endif
     return ret;
 }
