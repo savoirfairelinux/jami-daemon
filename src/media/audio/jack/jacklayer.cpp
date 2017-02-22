@@ -29,6 +29,7 @@
 #include "audio/resampler.h"
 #include "audio/ringbufferpool.h"
 #include "audio/ringbuffer.h"
+#include "audio/audioloop.h"
 #include "manager.h"
 #include "array_size.h"
 
