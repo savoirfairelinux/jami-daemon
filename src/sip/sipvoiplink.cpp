@@ -335,16 +335,8 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->getSDP().receiveOffer(r_sdp,
         account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
         account->getActiveAccountCodecInfoList(account->isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
-        account->getSrtpKeyExchange()
-    );
-    auto ice_attrs = Sdp::getIceAttributes(r_sdp);
-    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
-        if (not call->getIceTransport()) {
-            RING_DBG("Initializing ICE transport");
-            call->initIceTransport(false);
-        }
-        call->setupLocalSDPFromIce();
-    }
+        account->getSrtpKeyExchange());
+    call->setRemoteSdp(r_sdp);
 
     pjsip_dialog *dialog = nullptr;
     if (pjsip_dlg_create_uas_and_inc_lock(pjsip_ua_instance(), rdata, nullptr, &dialog) != PJ_SUCCESS) {
