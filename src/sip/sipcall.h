@@ -224,6 +224,12 @@ class SIPCall : public Call
             peerRegistredName_ = name;
         }
 
+        /**
+         * Give peer SDP to the call for handling
+         * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
+         */
+        void setRemoteSdp(const pjmedia_sdp_session* sdp);
+
     private:
         NON_COPYABLE(SIPCall);
 

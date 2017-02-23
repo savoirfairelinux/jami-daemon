@@ -1000,13 +1000,8 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
         acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
         acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
         acc.getSrtpKeyExchange(),
-        getState() == CallState::HOLD
-    );
-    auto ice_attrs = Sdp::getIceAttributes(offer);
-    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
-        if (initIceTransport(false))
-            setupLocalSDPFromIce();
-    }
+        getState() == CallState::HOLD);
+    setRemoteSdp(offer);
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inv.get(), sdp_->getLocalSdpSession());
 }
@@ -1134,6 +1129,22 @@ SIPCall::merge(const std::shared_ptr<SIPCall>& scall)
     Call::merge(scall);
     if (iceTransport_->isStarted())
         waitForIceAndStartMedia();
+}
+
+void
+SIPCall::setRemoteSdp(const pjmedia_sdp_session* sdp)
+{
+    if (!sdp)
+        return;
+
+    auto ice_attrs = Sdp::getIceAttributes(sdp);
+    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
+        if (not getIceTransport()) {
+            RING_DBG("Initializing ICE transport");
+            initIceTransport(false);
+        }
+        setupLocalSDPFromIce();
+    }
 }
 
 } // namespace ring
