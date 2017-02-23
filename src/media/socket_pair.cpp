@@ -148,7 +148,7 @@ udp_set_url(struct sockaddr_storage* addr, const char* hostname, int port)
 }
 
 static int
-udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
+udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port, int& family)
 {
     int udp_fd = -1;
     struct addrinfo* res0 = nullptr;
@@ -160,12 +160,14 @@ udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port)
     for (res = res0; res; res=res->ai_next) {
 #ifdef __APPLE__
         udp_fd = socket(res->ai_family, SOCK_DGRAM, 0);
-        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1)
+        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1) {
 #else
         udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-        if (udp_fd != -1)
+        if (udp_fd != -1) {
 #endif
-           break;
+            family = res->ai_family;
+            break;
+        }
 
         RING_ERR("socket error");
      }
@@ -317,8 +319,8 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
     socklen_t rtp_len, rtcp_len;
 
     // Open sockets and store addresses for sending
-    if ((rtpHandle_ = udp_socket_create(&rtp_addr, &rtp_len, local_rtp_port)) == -1 or
-        (rtcpHandle_ = udp_socket_create(&rtcp_addr, &rtcp_len, local_rtcp_port)) == -1 or
+    if ((rtpHandle_ = udp_socket_create(&rtp_addr, &rtp_len, local_rtp_port, rtpFamily_)) == -1 or
+        (rtcpHandle_ = udp_socket_create(&rtcp_addr, &rtcp_len, local_rtcp_port, rtcpFamily_)) == -1 or
         (rtpDestAddrLen_ = udp_set_url(&rtpDestAddr_, hostname, rtp_port)) == 0 or
         (rtcpDestAddrLen_ = udp_set_url(&rtcpDestAddr_, hostname, rtcp_port)) == 0) {
 
@@ -334,7 +336,13 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
 MediaIOHandle*
 SocketPair::createIOContext(const uint16_t mtu)
 {
-    auto ip_header_size = rtp_sock_->getTransportOverhead();
+    unsigned ip_header_size;
+    if (rtp_sock_)
+        ip_header_size = rtp_sock_->getTransportOverhead();
+    else if (rtpFamily_ == AF_INET6)
+        ip_header_size = 40;
+    else
+        ip_header_size = 20;
     return new MediaIOHandle( mtu - (srtpContext_ ? SRTP_OVERHEAD : 0) - UDP_HEADER_SIZE - ip_header_size,
                               true,
                              [](void* sp, uint8_t* buf, int len){ return static_cast<SocketPair*>(sp)->readCallback(buf, len); },

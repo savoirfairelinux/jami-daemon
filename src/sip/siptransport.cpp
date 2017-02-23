@@ -23,6 +23,7 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "security/tls_session.h"
 
 #include "ringdht/sip_transport_ice.h"
 #include "ringdht/sips_transport_ice.h"
@@ -174,9 +175,13 @@ SipTransport::removeStateListener(uintptr_t lid)
 }
 
 uint16_t
-SipTransport::getTlsMtu(){
-    auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
-    return tls_tr->getTlsSessionMtu();
+SipTransport::getTlsMtu()
+{
+    if (isSecure()) {
+        auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
+        return tls_tr->getTlsSessionMtu();
+    }
+    return ring::tls::DTLS_MTU;
 }
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
