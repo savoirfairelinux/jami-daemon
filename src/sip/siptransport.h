@@ -138,6 +138,8 @@ class SipTransport
         /** Only makes sense for connection-oriented transports */
         bool isConnected() const noexcept { return connected_; }
 
+        void setIsIceTransport() { isIceTransport_ = true; }
+
         uint16_t getTlsMtu();
 
     private:
@@ -151,6 +153,7 @@ class SipTransport
         std::mutex stateListenersMutex_;
 
         bool connected_ {false};
+        bool isIceTransport_ {false};
         TlsInfos tlsInfos_;
 };
 

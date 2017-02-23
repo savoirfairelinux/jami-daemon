@@ -23,6 +23,7 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "ice_transport.h"
+#include "security/tls_session.h"
 
 #include "ringdht/sip_transport_ice.h"
 #include "ringdht/sips_transport_ice.h"
@@ -174,9 +175,13 @@ SipTransport::removeStateListener(uintptr_t lid)
 }
 
 uint16_t
-SipTransport::getTlsMtu(){
-    auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
-    return tls_tr->getTlsSessionMtu();
+SipTransport::getTlsMtu()
+{
+    if (isIceTransport_ && isSecure()) {
+        auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
+        return tls_tr->getTlsSessionMtu();
+    }
+    return ring::tls::DTLS_MTU;
 }
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
@@ -431,6 +436,7 @@ SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport>& ice,
         new SipIceTransport(endpt_, pool_, ice_pj_transport_type_, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
+    sip_tr->setIsIceTransport();
     sip_ice_tr.release(); // managed by PJSIP now
 
     {
@@ -453,6 +459,7 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
         new tls::SipsIceTransport(endpt_, type, params, ice, comp_id));
     auto tr = sip_ice_tr->getTransportBase();
     auto sip_tr = std::make_shared<SipTransport>(tr);
+    sip_tr->setIsIceTransport();
     sip_ice_tr.release(); // managed by PJSIP now
 
     {

@@ -129,6 +129,8 @@ class SocketPair {
 
         int rtpHandle_ {-1};
         int rtcpHandle_ {-1};
+        int rtpFamily_ {0};
+        int rtcpFamily_ {0};
         sockaddr_storage rtpDestAddr_;
         socklen_t rtpDestAddrLen_;
         sockaddr_storage rtcpDestAddr_;
