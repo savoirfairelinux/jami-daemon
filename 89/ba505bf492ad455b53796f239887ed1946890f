@@ -1,0 +1,7 @@
+Code-Review+2: Olivier SOLDANO <olivier.soldano@savoirfairelinux.com>
+Verified+1: Jenkins CI <jenkins@ring-packaging.cx>
+Submitted-by: Olivier SOLDANO <olivier.soldano@savoirfairelinux.com>
+Submitted-at: Fri, 24 Feb 2017 16:48:26 -0500
+Reviewed-on: https://gerrit-ring.savoirfairelinux.com/6159
+Project: ring-daemon
+Branch: refs/heads/master
