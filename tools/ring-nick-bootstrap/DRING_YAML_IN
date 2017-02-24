@@ -1,0 +1,102 @@
+accounts:
+  - id: #LOCAL_DIRNAME_HERE#
+    alias: toto
+    enable: true
+    type: RING
+    allCodecs: 1/2/3/4/5/6/7/8/9/10/11/
+    mailbox: ""
+    autoAnswer: false
+    activeCallLimit: -1
+    ringtoneEnabled: true
+    ringtonePath: /usr/share/ring/ringtones/default.wav
+    hasCustomUserAgent: false
+    useragent: Ring/3.0.0
+    displayName: toto
+    hostname: bootstrap.ring.cx
+    upnpEnabled: true
+    audioPortMax: 32766
+    audioPortMin: 16384
+    dtmfType: overrtp
+    interface: default
+    publishAddr: ""
+    publishPort: 5060
+    sameasLocal: true
+    videoEnabled: true
+    videoPortMax: 65534
+    videoPortMin: 49152
+    stunEnabled: false
+    stunServer: ""
+    turnEnabled: true
+    turnServer: turn.ring.cx
+    turnServerUserName: ring
+    turnServerPassword: ring
+    turnServerRealm: ring
+    dhtPort: 6410
+    dhtPublicInCalls: true
+    allowPeersFromHistory: true
+    allowPeersFromContact: true
+    allowPeersFromTrusted: true
+    RingNS.uri: ns.ring.cx
+    Account.archivePath: #LOCAL_PATH_HERE#/export.gz
+    ringAccountReceipt: "{\"id\":\"#RING_UID_HERE#\",\"dev\":\"#DUMMY_ACC_RCPT_DEV_HERE#\",\"eth\":\"#DUMMY_ACC_RCPT_ETH_HERE#\",\"announce\":\"#DUMMY_ACC_RCPT_ANN_HERE#\"}"
+    ringAccountReceiptSignature: " !!binary \"#DUMMY_ACC_RCPT_SIG_HERE#\""
+    Account.deviceName: #DUMMY_DEVICE#
+    tls:
+      calist: ""
+      certificate: #LOCAL_PATH_HERE#/ring_device.crt
+      password: ""
+      privateKey: #LOCAL_PATH_HERE#/ring_device.key
+preferences:
+  historyLimit: 0
+  historyMaxCalls: 20
+  md5Hash: false
+  order: #LOCAL_DIRNAME_HERE#
+  portNum: 5060
+  registrationexpire: 180
+  searchBarDisplay: true
+  zoneToneChoice: North America
+voipPreferences:
+  playDtmf: true
+  playTones: true
+  pulseLength: 250
+  symmetric: true
+  zidFile: ""
+hooks:
+  numberAddPrefix: ""
+  sipEnabled: false
+  urlCommand: x-www-browser
+  urlSipField: X-ring-url
+audio:
+  alsa:
+    cardIn: 0
+    cardOut: 0
+    cardRing: 0
+    plugin: default
+    smplRate: 44100
+  alwaysRecording: false
+  audioApi: pulseaudio
+  automaticGainControl: false
+  captureMuted: false
+  noiseReduce: false
+  playbackMuted: false
+  pulse:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  recordPath: ""
+  volumeMic: 1
+  volumeSpkr: 1
+video:
+  decodingAccelerated: false
+  devices:
+    - channel: Camera 1
+      framerate: 30
+      video_size: 960x544
+      name: Integrated Camera
+shortcuts:
+  hangUp: ""
+  pickUp: ""
+  popupWindow: ""
+  toggleHold: ""
+  togglePickupHangup: ""
+
