@@ -631,7 +631,8 @@ Manager::ManagerPimpl::bindCallToConference(Call& call, Conference& conf)
         conf.bindParticipant(call_id);
         base_.answerCall(call_id);
     } else
-        RING_WARN("[call:%s] call state %s not recognized for conference", call_id.c_str());
+        RING_WARN("[call:%s] call state %s not recognized for conference",
+                  call_id.c_str(), state.c_str());
 }
 
 //==============================================================================
