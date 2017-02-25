@@ -1520,6 +1520,7 @@ Manager::detachLocalParticipant()
     emitSignal<DRing::CallSignal::ConferenceChanged>(conf->getConfID(), conf->getStateStr());
 
     pimpl_->unsetCurrentCall();
+    return true;
 }
 
 bool
