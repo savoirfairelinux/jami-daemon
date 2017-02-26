@@ -138,9 +138,13 @@ UPnPContext::UPnPContext()
                     pmp_igd->clearAll_ = false;
                     pmp_igd->toRemove_.clear();
                 } else if (not pmp_igd->toRemove_.empty()) {
-                    for (auto& m : pmp_igd->toRemove_)
-                        PMPaddPortMapping(*pmp_igd, natpmp, m, true);
+                    decltype(pmp_igd->toRemove_) removed = std::move(pmp_igd->toRemove_);
                     pmp_igd->toRemove_.clear();
+                    lk.unlock();
+                    for (auto& m : removed) {
+                        PMPaddPortMapping(*pmp_igd, natpmp, m, true);
+                    }
+                    lk.lock();
                 }
                 auto mapping = pmp_igd->getNextMappingToRenew();
                 if (mapping and mapping->renewal_ < now)
