@@ -423,8 +423,10 @@ bool PresSubClient::lock()
         }
         lock_flag_ = PRESENCE_LOCK_FLAG;
 
-        if (dlg_ == NULL)
+        if (dlg_ == NULL) {
+            pres_->unlock();
             return true;
+        }
 
         if (pjsip_dlg_try_inc_lock(dlg_) != PJ_SUCCESS) {
             lock_flag_ = 0;
