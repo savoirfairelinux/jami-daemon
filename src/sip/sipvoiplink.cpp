@@ -609,7 +609,9 @@ SIPVoIPLink::~SIPVoIPLink()
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
-    handleEvents();
+    try {
+        handleEvents();
+    } catch (...) {}
 
     sipTransportBroker.reset();
 
