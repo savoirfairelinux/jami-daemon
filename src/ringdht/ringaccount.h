@@ -328,7 +328,6 @@ class RingAccount : public SIPAccountBase {
          */
         struct PendingCall;
         struct PendingMessage;
-        struct SavedTrustRequest;
         struct TrustRequest;
         struct KnownDevice;
         struct ArchiveContent;
@@ -412,6 +411,8 @@ class RingAccount : public SIPAccountBase {
          * and the peer account id.
          */
         void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>);
+
+        void onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received , bool confirm, std::vector<uint8_t>&& payload);
 
         /**
          * Maps require port via UPnP
