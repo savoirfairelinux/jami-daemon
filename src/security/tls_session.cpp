@@ -779,10 +779,10 @@ TlsSession::pathMtuHeartbeat()
 {
     int errno_send = 1; // non zero initialisation
     auto tls_overhead = gnutls_record_overhead_size(session_);
-    RING_WARN("[TLS] tls session overhead : %d", tls_overhead);
+    RING_WARN("[TLS] tls session overhead : %lu", tls_overhead);
     transportOverhead_ = socket_->getTransportOverhead();
     gnutls_heartbeat_set_timeouts(session_, HEARTBEAT_RETRANS_TIMEOUT.count(), HEARTBEAT_TOTAL_TIMEOUT.count());
-    RING_DBG("[TLS] Heartbeat PMTUD : retransmission timeout set to: %d ms", HEARTBEAT_RETRANS_TIMEOUT);
+    RING_DBG("[TLS] Heartbeat PMTUD : retransmission timeout set to: %ld ms", HEARTBEAT_RETRANS_TIMEOUT.count());
 
     // server side: managing pong in state established
     // client side: managing ping on heartbeat
