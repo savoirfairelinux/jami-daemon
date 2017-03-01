@@ -79,7 +79,6 @@
 namespace ring {
 
 using sip_utils::CONST_PJ_STR;
-using std::chrono::system_clock;
 
 namespace Migration {
 
@@ -151,13 +150,13 @@ RingAccount::SavedTrustRequest {
 struct
 RingAccount::TrustRequest {
     dht::InfoHash from_device;
-    std::chrono::system_clock::time_point received;
+    time_point received;
     std::vector<uint8_t> payload;
     TrustRequest() {}
-    TrustRequest(dht::InfoHash device, std::chrono::system_clock::time_point r, std::vector<uint8_t>&& payload)
+    TrustRequest(dht::InfoHash device, time_point r, std::vector<uint8_t>&& payload)
             : from_device(device), received(r), payload(std::move(payload)) {}
     TrustRequest(SavedTrustRequest&& sr)
-        : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
+        : from_device(sr.device), received(clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
 };
 
 struct RingAccount::Contact
@@ -197,9 +196,6 @@ struct RingAccount::Contact
  */
 struct RingAccount::KnownDevice
 {
-    using clock = std::chrono::system_clock;
-    using time_point = clock::time_point;
-
     /** Device certificate */
     std::shared_ptr<dht::crypto::Certificate> certificate;
 
@@ -1084,7 +1080,7 @@ std::pair<std::vector<uint8_t>, dht::InfoHash>
 RingAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
 {
     // Compute time seed
-    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
     auto tseed = now.count() / std::chrono::duration_cast<std::chrono::seconds>(EXPORT_KEY_RENEWAL_TIME).count();
     if (previous)
         tseed--;
@@ -1163,13 +1159,19 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
         [this, password] { return readArchive(password); });
     auto sthis = shared();
     findCertificate(dht::InfoHash(device),
-                    [fa,sthis,password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
+                    [fa,sthis,password,device](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
     {
-        sthis->foundAccountDevice(crt);
+        auto& this_ = *sthis;
+        if (not crt) {
+            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 2);
+            return;
+        }
+        this_.foundAccountDevice(crt);
         ArchiveContent a;
         try {
             a = fa->get();
         } catch (...) {
+            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 1);
             return;
         }
         // Add revoked device to the revocation list and resign it
@@ -1179,8 +1181,13 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
         a.revoked->sign(a.id);
         // add to CRL cache
         tls::CertificateStore::instance().pinRevocationList(a.id.second->getId().toString(), a.revoked);
-        tls::CertificateStore::instance().loadRevocations(*sthis->identity_.second->issuer);
-        sthis->saveArchive(a, password);
+        tls::CertificateStore::instance().loadRevocations(*this_.identity_.second->issuer);
+        this_.saveArchive(a, password);
+        this_.knownDevices_.erase(crt->getId());
+        this_.saveKnownDevices();
+        emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 0);
+        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(this_.getAccountID(), this_.getKnownDevices());
+        this_.syncDevices();
     });
     return true;
 }
@@ -1359,7 +1366,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
             RING_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
             return true;
         }
-        if (cert->getExpiration() < std::chrono::system_clock::now()) {
+        if (cert->getExpiration() < clock::now()) {
             RING_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
             return true;
         }
@@ -1388,14 +1395,14 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     auto& cert = archive.id.second;
     auto ca = cert->issuer;
     if (ca and not ca->issuer) {
-        if (not ca->isCA() or ca->getExpiration() < std::chrono::system_clock::now()) {
+        if (not ca->isCA() or ca->getExpiration() < clock::now()) {
             ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
             updated = true;
         }
     }
 
     // Update certificate
-    if (updated or not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now()) {
+    if (updated or not cert->isCA() or cert->getExpiration() < clock::now()) {
         cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Ring", dht::crypto::Identity{archive.ca_key, ca}, true));
         updated = true;
     }
@@ -2172,11 +2179,11 @@ RingAccount::doRegister_()
                         auto req = this_.trustRequests_.find(peer_account);
                         if (req == this_.trustRequests_.end()) {
                             req = this_.trustRequests_.emplace(peer_account, TrustRequest{
-                                v.from, std::chrono::system_clock::now(), std::move(v.payload)
+                                v.from, clock::now(), std::move(v.payload)
                             }).first;
                         } else {
                             req->second.from_device = v.from;
-                            req->second.received = std::chrono::system_clock::now();
+                            req->second.received = clock::now();
                             req->second.payload = std::move(v.payload);
                         }
                         this_.saveTrustRequests();
@@ -2184,7 +2191,7 @@ RingAccount::doRegister_()
                             this_.getAccountID(),
                             req->first.toString(),
                             req->second.payload,
-                            std::chrono::system_clock::to_time_t(req->second.received)
+                            clock::to_time_t(req->second.received)
                         );
                     }
                 });
@@ -2224,7 +2231,7 @@ RingAccount::doRegister_()
                 this_.onPeerMessage(v.from, [shared, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
                                                                         const dht::InfoHash& peer_account)
                 {
-                    auto now = system_clock::to_time_t(system_clock::now());
+                    auto now = clock::to_time_t(clock::now());
                     std::map<std::string, std::string> payloads = {{"text/plain",
                                                                     utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
@@ -2319,7 +2326,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 }
 
 bool
-RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name)
+RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
 {
     if (not crt)
         return false;
@@ -2335,7 +2342,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     }
 
     // insert device
-    auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name});
+    auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
         RING_WARN("[Account %s] Found known account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
@@ -2637,7 +2644,6 @@ RingAccount::loadKnownDevices()
         RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
-        using clock = std::chrono::system_clock;
         if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString()))
             if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
                 knownDevices_.emplace(d.first,
@@ -2660,7 +2666,7 @@ RingAccount::saveKnownDevices() const
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
-        devices.emplace(id.first, std::make_pair(id.second.name, system_clock::to_time_t(id.second.last_sync)));
+        devices.emplace(id.first, std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
 
     msgpack::pack(file, devices);
 }
@@ -2756,7 +2762,7 @@ RingAccount::loadDhParams(const std::string path)
 {
     try {
         // writeTime throw exception if file doesn't exist
-        auto duration = system_clock::now() - fileutils::writeTime(path);
+        auto duration = clock::now() - fileutils::writeTime(path);
         if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
             throw std::runtime_error("file too old");
 
@@ -2942,7 +2948,7 @@ RingAccount::getTrustRequests() const
 {
     std::map<std::string, std::string> ret;
     for (const auto& r : trustRequests_)
-        ret.emplace(r.first.toString(), ring::to_string(std::chrono::system_clock::to_time_t(r.second.received)));
+        ret.emplace(r.first.toString(), ring::to_string(clock::to_time_t(r.second.received)));
     return ret;
 }
 
@@ -3011,7 +3017,7 @@ RingAccount::saveTrustRequests() const
 
     std::map<dht::InfoHash, SavedTrustRequest> requests;
     for (const auto& req : trustRequests_)
-        requests.emplace(req.first, SavedTrustRequest{req.second.from_device, system_clock::to_time_t(req.second.received), req.second.payload});
+        requests.emplace(req.first, SavedTrustRequest{req.second.from_device, clock::to_time_t(req.second.received), req.second.payload});
 
     msgpack::pack(file, requests);
 }
@@ -3038,7 +3044,7 @@ RingAccount::loadTrustRequests()
             getAccountID(),
             r.first.toString(),
             r.second.payload,
-            std::chrono::system_clock::to_time_t(r.second.received)
+            clock::to_time_t(r.second.received)
         );
     }
 }
@@ -3050,7 +3056,7 @@ RingAccount::syncDevices()
 {
     RING_DBG("[Account %s] building device sync from %s %s", getAccountID().c_str(), ringDeviceName_.c_str(), ringDeviceId_.c_str());
     DeviceSync sync_data;
-    sync_data.date = std::chrono::system_clock::now().time_since_epoch().count();
+    sync_data.date = clock::now().time_since_epoch().count();
     sync_data.device_name = ringDeviceName_;
     sync_data.peers = contacts_;
     for (const auto& dev : knownDevices_) {
@@ -3077,7 +3083,6 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
         RING_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
         return;
     }
-    using clock = std::chrono::system_clock;
     auto sync_date = clock::time_point(clock::duration(sync.date));
     if (it->second.last_sync >= sync_date) {
         RING_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
@@ -3179,7 +3184,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
     auto toUri = parseRingUri(to);
     auto toH = dht::InfoHash(toUri);
-    auto now = system_clock::to_time_t(system_clock::now());
+    auto now = clock::to_time_t(clock::now());
 
     struct PendingConfirmation {
         bool replied {false};
