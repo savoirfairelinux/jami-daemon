@@ -323,6 +323,9 @@ class RingAccount : public SIPAccountBase {
     private:
         NON_COPYABLE(RingAccount);
 
+        using clock = std::chrono::system_clock;
+        using time_point = clock::time_point;
+
         /**
          * Private structures
          */
@@ -396,7 +399,7 @@ class RingAccount : public SIPAccountBase {
          * Inform that a potential account device have been found.
          * Returns true if the device have been validated to be part of this account
          */
-        bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {});
+        bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {}, const time_point& last_sync = time_point::min());
 
         /**
          * Inform that a potential peer device have been found.
