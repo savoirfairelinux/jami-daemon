@@ -142,7 +142,7 @@ VaapiAccel::init()
         return false;
     }
 
-    VAProfile codecProfile;
+    VAProfile codecProfile = VAProfileNone;
     auto itOuter = profileMap.find(codecCtx_->codec_id);
     if (itOuter != profileMap.end()) {
         auto innerMap = itOuter->second;
