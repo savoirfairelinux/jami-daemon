@@ -56,7 +56,7 @@ class HardwareAccel {
         virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
 
     protected:
-        AVCodecContext* codecCtx_;
+        AVCodecContext* codecCtx_ = nullptr;
         std::string name_;
         AVPixelFormat format_;
         unsigned failCount_ = 0; // how many failures in a row, reset on success
