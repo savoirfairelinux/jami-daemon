@@ -2168,7 +2168,7 @@ RingAccount::doRegister_()
                             this_.sendTrustRequestConfirm(peer_account);
                         this_.syncDevices();
                     } else {
-                        // Add trust request
+                        // Add/Update trust request
                         auto req = this_.trustRequests_.find(peer_account);
                         if (req == this_.trustRequests_.end()) {
                             req = this_.trustRequests_.emplace(peer_account, TrustRequest{

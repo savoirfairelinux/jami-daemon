@@ -218,18 +218,54 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "AccountMessageStatusChanged";
                 using cb_type = void(const std::string& /*account_id*/, uint64_t /*message_id*/, const std::string& /*to*/, int /*state*/);
         };
-        struct IncomingTrustRequest {
-                constexpr static const char* name = "IncomingTrustRequest";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
-        };
-        struct ContactAdded {
-                constexpr static const char* name = "ContactAdded";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool confirmed);
-        };
-        struct ContactRemoved {
-                constexpr static const char* name = "ContactRemoved";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*uri*/, bool banned);
-        };
+
+    /**
+     * IncomingTrustRequest is emited when a TrustRequest is received by DHT network
+     * or when loaded (at account initialization).
+     *
+     * @param account_id identifier of TR receiving account
+     * @param from hexdigit representation of TR sender's RingID
+     * @param payload associated data
+     * @param received moment when TR has been received by DHT network
+     */
+    struct IncomingTrustRequest {
+        constexpr static const char* name = "IncomingTrustRequest";
+        using cb_type = void(const std::string& account_id,
+                             const std::string& from,
+                             const std::vector<uint8_t>& payload,
+                             time_t received);
+    };
+
+    /**
+     * ContactAdded is emited when the associated account contact list is modified,
+     * by addition or update, not deletion (see ContactRemoved for that).
+     *
+     * @param account_id identifier of account owner
+     * @param uri the contact URI as used by DRing::placeCall method
+     * @param confirmed true if contact has also created a contact for us
+     */
+    struct ContactAdded {
+        constexpr static const char* name = "ContactAdded";
+        using cb_type = void(const std::string& account_id,
+                             const std::string& uri,
+                             bool confirmed);
+    };
+
+    /**
+     * ContactRemoved is emited when associated contact URI is removed
+     * by a call to DRing::removeContact.
+     *
+     * @param account_id identifier of account owner
+     * @param uri the contact URI as used by DRing::placeCall method
+     * @param banned true when ...
+     */
+    struct ContactRemoved {
+        constexpr static const char* name = "ContactRemoved";
+        using cb_type = void(const std::string& account_id,
+                             const std::string& uri,
+                             bool banned);
+    };
+
         struct ExportOnRingEnded {
                 constexpr static const char* name = "ExportOnRingEnded";
                 using cb_type = void(const std::string& /*account_id*/, int state, const std::string& pin);
