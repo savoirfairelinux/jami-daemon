@@ -291,6 +291,9 @@ strErr(void)
     char buf[1000];
     const char *errstr;
 
+#ifdef __ANDROID__
+    errstr = strerror(errno);
+#else
     switch (strerror_r(errno, buf, sizeof(buf))) {
         case 0:
             errstr = buf;
@@ -302,6 +305,7 @@ strErr(void)
             errstr = "unknown (invalid error number)";
             break;
     }
+#endif
 
     RING_ERR("%s", errstr);
 #endif
