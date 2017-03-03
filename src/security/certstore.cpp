@@ -538,15 +538,6 @@ TrustStore::isAllowed(const crypto::Certificate& crt)
     else if (status == PermissionStatus::BANNED)
         return false;
 
-    // Match by certificate pinning (Ring account)
-    if (crt.issuer) {
-        status = getCertificateStatus(crt.issuer->getId().toString());
-        if (status == PermissionStatus::ALLOWED)
-            return true;
-        else if (status == PermissionStatus::BANNED)
-            return false;
-    }
-
     // Match by certificate chain
     updateKnownCerts();
     return matchTrustStore(getChain(crt), allowed_);
