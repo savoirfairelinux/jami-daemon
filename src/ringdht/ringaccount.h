@@ -512,7 +512,6 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
-        void loadKnownDevicesOld();
         void loadKnownDevices();
         void saveKnownDevices() const;
 

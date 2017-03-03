@@ -2607,27 +2607,8 @@ RingAccount::saveTreatedMessages() const
 }
 
 void
-RingAccount::loadKnownDevicesOld()
-{
-    auto knownDevices = loadIdList<dht::InfoHash>(idPath_+DIR_SEPARATOR_STR "knownDevices");
-    for (const auto& d : knownDevices) {
-        RING_DBG("[Account %s]: loaded known account device %s", getAccountID().c_str(), d.toString().c_str());
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d, KnownDevice{crt});
-            else
-                RING_ERR("Known device certificate not matching identity.");
-        else
-            RING_WARN("Can't find known device certificate.");
-    }
-    fileutils::remove(idPath_+DIR_SEPARATOR_STR "knownDevices");
-}
-
-void
 RingAccount::loadKnownDevices()
 {
-    loadKnownDevicesOld();
-
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
         // read file
@@ -2644,18 +2625,13 @@ RingAccount::loadKnownDevices()
         RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d.first,
-                    KnownDevice {
-                        crt,
-                        d.second.first,
-                        clock::from_time_t(d.second.second)
-                    });
-            else
-                RING_WARN("[Account %s] known device certificate not matching identity", getAccountID().c_str());
-        else
-            RING_WARN("[Account %s] can't find known device certificate", getAccountID().c_str());
+        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
+            if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
+                RING_WARN("[Account %s] can't add device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
+        else {
+            RING_WARN("[Account %s] can't find certificate for device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
     }
 }
 
