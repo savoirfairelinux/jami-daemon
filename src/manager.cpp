@@ -2229,6 +2229,12 @@ std::vector<std::string>
 Manager::getAudioOutputDeviceList()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+
+    if (not pimpl_->audiodriver_) {
+        RING_ERR("Audio layer not initialized");
+        return {};
+    }
+
     return pimpl_->audiodriver_->getPlaybackDeviceList();
 }
 
@@ -2239,6 +2245,12 @@ std::vector<std::string>
 Manager::getAudioInputDeviceList()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+
+    if (not pimpl_->audiodriver_) {
+        RING_ERR("Audio layer not initialized");
+        return {};
+    }
+
     return pimpl_->audiodriver_->getCaptureDeviceList();
 }
 
@@ -2249,6 +2261,11 @@ std::vector<std::string>
 Manager::getCurrentAudioDevicesIndex()
 {
     std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
+
+    if (not pimpl_->audiodriver_) {
+        RING_ERR("Audio layer not initialized");
+        return {};
+    }
 
     std::vector<std::string> v;
 
