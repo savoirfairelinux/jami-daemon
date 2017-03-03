@@ -821,8 +821,18 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 
     auto accountCertificate = identity.second->issuer;
     if (not accountCertificate) {
-        RING_ERR("Device certificate must be issued by the account certificate");
+        RING_ERR("[Account %s] device certificate must be issued by the account certificate", getAccountID().c_str());
         return false;
+    }
+    {
+        tls::TrustStore account_trust;
+        account_trust.setCertificateStatus(accountCertificate, tls::TrustStore::PermissionStatus::ALLOWED, false);
+
+        // match certificate chain
+        if (not account_trust.isAllowed(*identity.second)) {
+            RING_ERR("[Account %s] can't use identity: device certificate chain can't be verified", getAccountID().c_str());
+            return false;
+        }
     }
 
     auto pk = accountCertificate->getPublicKey();
@@ -877,7 +887,7 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
     ethAccount_ = root["eth"].asString();
 
-    RING_DBG("[Account %s] device receipt checked successfully", getAccountID().c_str());
+    RING_DBG("[Account %s] ring:%s device %s receipt checked successfully", getAccountID().c_str(), id.c_str(), ringDeviceId_.c_str());
     return true;
 }
 
@@ -2607,27 +2617,8 @@ RingAccount::saveTreatedMessages() const
 }
 
 void
-RingAccount::loadKnownDevicesOld()
-{
-    auto knownDevices = loadIdList<dht::InfoHash>(idPath_+DIR_SEPARATOR_STR "knownDevices");
-    for (const auto& d : knownDevices) {
-        RING_DBG("[Account %s]: loaded known account device %s", getAccountID().c_str(), d.toString().c_str());
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d, KnownDevice{crt});
-            else
-                RING_ERR("Known device certificate not matching identity.");
-        else
-            RING_WARN("Can't find known device certificate.");
-    }
-    fileutils::remove(idPath_+DIR_SEPARATOR_STR "knownDevices");
-}
-
-void
 RingAccount::loadKnownDevices()
 {
-    loadKnownDevicesOld();
-
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
         // read file
@@ -2644,18 +2635,13 @@ RingAccount::loadKnownDevices()
         RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d.first,
-                    KnownDevice {
-                        crt,
-                        d.second.first,
-                        clock::from_time_t(d.second.second)
-                    });
-            else
-                RING_WARN("[Account %s] known device certificate not matching identity", getAccountID().c_str());
-        else
-            RING_WARN("[Account %s] can't find known device certificate", getAccountID().c_str());
+        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
+            if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
+                RING_WARN("[Account %s] can't add device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
+        else {
+            RING_WARN("[Account %s] can't find certificate for device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
     }
 }
 

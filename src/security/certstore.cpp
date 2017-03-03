@@ -538,15 +538,6 @@ TrustStore::isAllowed(const crypto::Certificate& crt)
     else if (status == PermissionStatus::BANNED)
         return false;
 
-    // Match by certificate pinning (Ring account)
-    if (crt.issuer) {
-        status = getCertificateStatus(crt.issuer->getId().toString());
-        if (status == PermissionStatus::ALLOWED)
-            return true;
-        else if (status == PermissionStatus::BANNED)
-            return false;
-    }
-
     // Match by certificate chain
     updateKnownCerts();
     return matchTrustStore(getChain(crt), allowed_);
@@ -566,7 +557,6 @@ TrustStore::getTrustedCertificates() const
 bool
 TrustStore::matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_trust_list_st* store)
 {
-    RING_ERR("TrustStore::matchTrustStore: %lu", crts.size());
     unsigned result = 0;
 
 #if GNUTLS_VERSION_NUMBER > 0x030308
