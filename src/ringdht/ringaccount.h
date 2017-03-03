@@ -470,6 +470,9 @@ class RingAccount : public SIPAccountBase {
         void saveContacts() const;
         void updateContact(const dht::InfoHash&, const Contact&);
 
+        // Trust store with Ring account main certificate as the only CA
+        tls::TrustStore accountTrust_;
+        // Trust store for to match peer certificates
         tls::TrustStore trust_;
 
         std::shared_ptr<dht::Value> announce_;
@@ -512,7 +515,6 @@ class RingAccount : public SIPAccountBase {
         void loadTreatedMessages();
         void saveTreatedMessages() const;
 
-        void loadKnownDevicesOld();
         void loadKnownDevices();
         void saveKnownDevices() const;
 
