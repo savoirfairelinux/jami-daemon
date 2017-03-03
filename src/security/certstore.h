@@ -110,6 +110,8 @@ class TrustStore {
 public:
     TrustStore();
     virtual ~TrustStore();
+    TrustStore(TrustStore&&) = default;
+    TrustStore& operator=(TrustStore&&) = default;
 
     enum class PermissionStatus {
         UNDEFINED = 0,
