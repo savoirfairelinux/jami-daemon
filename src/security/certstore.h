@@ -110,6 +110,23 @@ class TrustStore {
 public:
     TrustStore();
     virtual ~TrustStore();
+    TrustStore(TrustStore&& o) :
+        unknownCertStatus_(std::move(o.unknownCertStatus_)),
+        certStatus_(std::move(o.certStatus_)),
+        revokedList_(std::move(o.revokedList_)),
+        allowed_(std::move(o.allowed_))
+    {
+        o.allowed_ = nullptr;
+    }
+
+    TrustStore& operator=(TrustStore&& o) {
+        unknownCertStatus_ = std::move(o.unknownCertStatus_);
+        certStatus_ = std::move(o.certStatus_);
+        revokedList_ = std::move(o.revokedList_),
+        allowed_ = std::move(o.allowed_);
+        o.allowed_ = nullptr;
+        return *this;
+    }
 
     enum class PermissionStatus {
         UNDEFINED = 0,
