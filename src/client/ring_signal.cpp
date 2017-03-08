@@ -73,10 +73,10 @@ getSignalHandlers()
         exported_callback<DRing::ConfigurationSignal::MigrationEnded>(),
         exported_callback<DRing::ConfigurationSignal::DeviceRevocationEnded>(),
         exported_callback<DRing::ConfigurationSignal::Error>(),
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
         exported_callback<DRing::ConfigurationSignal::GetHardwareAudioFormat>(),
 #endif
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE) || defined(RING_UWP)
         exported_callback<DRing::ConfigurationSignal::GetAppDataPath>(),
 #endif
 

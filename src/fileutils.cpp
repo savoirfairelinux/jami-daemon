@@ -37,7 +37,7 @@
 #include <TargetConditionals.h>
 #endif
 
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
 #include "client/ring_signal.h"
 #endif
 #ifdef _WIN32
@@ -175,7 +175,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || TARGET_OS_IPHONE
+#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || defined TARGET_OS_IPHONE
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -417,7 +417,7 @@ FileHandle::~FileHandle()
     }
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || defined(TARGET_OS_IPHONE)
 static std::string files_path;
 static std::string cache_path;
 static std::string config_path;
@@ -451,7 +451,7 @@ get_cache_dir()
         return cache_home;
     } else {
 #endif
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
         std::vector<std::string> paths;
         emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("cache", &paths);
         if (not paths.empty())
@@ -473,7 +473,7 @@ get_cache_dir()
 std::string
 get_home_dir()
 {
-#if defined __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
@@ -517,7 +517,7 @@ get_home_dir()
 std::string
 get_data_dir()
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("files", &paths);
     if (not paths.empty())
@@ -553,7 +553,7 @@ get_data_dir()
 std::string
 get_config_dir()
 {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
     std::vector<std::string> paths;
     emitSignal<DRing::ConfigurationSignal::GetAppDataPath>("config", &paths);
     if (not paths.empty())
