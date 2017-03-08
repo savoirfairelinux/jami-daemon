@@ -35,6 +35,10 @@
 #include "dring.h"
 #include "logger.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 #include <exception>
 #include <memory>
 #include <map>
