@@ -162,7 +162,8 @@ class CoreLayer : public AudioLayer {
 
         /** Non-interleaved audio buffers */
         AudioBuffer playbackBuff_;
-        ::AudioBufferList* captureBuff_; // CoreAudio buffer.
+        ::AudioBufferList* captureBuff_ {nullptr}; // CoreAudio buffer (pointer is casted rawBuff_)
+        std::unique_ptr<Byte[]> rawBuff_; // raw allocation of captureBuff_
 
         /** Interleaved buffer */
         std::vector<AudioSample> playbackIBuff_;
