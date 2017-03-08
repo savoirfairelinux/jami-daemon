@@ -34,6 +34,10 @@
 #include "dring.h"
 #include "security_const.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 namespace DRing {
 
 void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
@@ -274,13 +278,13 @@ struct ConfigurationSignal {
          * These are special getters for Android and UWP, so the daemon can retreive
          * information only accessible through their respective platform APIs
          */
-#ifdef __ANDROID__
+#if defined(__ANDROID__) || defined(TARGET_OS_IPHONE)
         struct GetHardwareAudioFormat {
                 constexpr static const char* name = "GetHardwareAudioFormat";
                 using cb_type = void(std::vector<int32_t>* /* params_ret */);
         };
 #endif
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || defined(TARGET_OS_IPHONE)
         struct GetAppDataPath {
                 constexpr static const char* name = "GetAppDataPath";
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
