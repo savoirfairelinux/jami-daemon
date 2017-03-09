@@ -208,6 +208,25 @@
                </tp:docstring>
            </arg>
        </method>
+       <signal name="deviceRevocationEnded" tp:name-for-bindings="deviceRevocationEnded">
+           <tp:docstring>
+               Notify clients when the revokeDevice operation ended.
+           </tp:docstring>
+           <arg type="s" name="accountID">
+           </arg>
+           <arg type="s" name="deviceId">
+           </arg>
+           <arg type="i" name="status">
+               <tp:docstring>
+                   Status code: 0 for success
+                  <ul>
+                      <li>SUCCESS = 0         everything went fine. Device is now revoked.</li>
+                      <li>WRONG_PASSWORD = 1  revocation failed: wrong password.</li>
+                      <li>UNKNOWN_DEVICE = 2  revocation failed: unknown device.</li>
+                  </ul>
+               </tp:docstring>
+           </arg>
+       </signal>
 
        <signal name="knownDevicesChanged" tp:name-for-bindings="knownDevicesChanged">
            <tp:docstring>
