@@ -832,6 +832,8 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
         cand.type = PJ_ICE_CAND_TYPE_HOST;
     else if (strcmp(type, "srflx")==0)
         cand.type = PJ_ICE_CAND_TYPE_SRFLX;
+    else if (strcmp(type, "prflx")==0)
+        cand.type = PJ_ICE_CAND_TYPE_PRFLX;
     else if (strcmp(type, "relay")==0)
         cand.type = PJ_ICE_CAND_TYPE_RELAYED;
     else {
