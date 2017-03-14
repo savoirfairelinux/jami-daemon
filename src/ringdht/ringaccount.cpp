@@ -1470,7 +1470,13 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                     migrateAccount(archive_password);
                 } else {
                     RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
-                    initRingDevice(readArchive(archive_password));
+                    try {
+                        initRingDevice(readArchive(archive_password));
+                    } catch (...) {
+                        Migration::setState(accountID_, Migration::State::INVALID);
+                        return;
+                    }
+                    Migration::setState(accountID_, Migration::State::SUCCESS);
                 }
                 Manager::instance().saveConfig();
             }
