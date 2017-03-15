@@ -1391,14 +1391,12 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     // Currently set the CA flag and update expiration dates
     bool updated = false;
 
-    // Update CA if possible and relevant
     auto& cert = archive.id.second;
     auto ca = cert->issuer;
-    if (ca and not ca->issuer) {
-        if (not ca->isCA() or ca->getExpiration() < clock::now()) {
-            ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
-            updated = true;
-        }
+    // Update CA if possible and relevant
+    if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
+        ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
+        updated = true;
     }
 
     // Update certificate
