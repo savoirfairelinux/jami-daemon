@@ -496,10 +496,10 @@ class RingAccount : public SIPAccountBase {
         std::string makeReceipt(const dht::crypto::Identity& id);
         void createRingDevice(const dht::crypto::Identity& id);
         void initRingDevice(const ArchiveContent& a);
-        void migrateAccount(const std::string& pwd);
+        void migrateAccount(const std::string& pwd, dht::crypto::Identity& device);
         static bool updateCertificates(ArchiveContent& archive, dht::crypto::Identity& device);
 
-        void createAccount(const std::string& archive_password);
+        void createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate);
         std::vector<uint8_t> makeArchive(const ArchiveContent& content) const;
         void saveArchive(const ArchiveContent& content, const std::string& pwd);
         ArchiveContent readArchive(const std::string& pwd) const;

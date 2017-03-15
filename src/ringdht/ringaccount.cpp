@@ -750,6 +750,8 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_, "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
+    accountTrust_ = tls::TrustStore{};
+    accountTrust_.setCertificateStatus(id.second, tls::TrustStore::PermissionStatus::ALLOWED, false);
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
     ringDeviceName_ = ip_utils::getHostname();
     if (ringDeviceName_.empty())
@@ -1300,12 +1302,12 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 }
 
 void
-RingAccount::createAccount(const std::string& archive_password)
+RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
     RING_WARN("Creating new Ring account");
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
-    ThreadPool::instance().run([sthis,archive_password](){
+    ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
         ArchiveContent a;
         auto& this_ = *sthis;
 
@@ -1313,13 +1315,13 @@ RingAccount::createAccount(const std::string& archive_password)
         auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
 
         try {
-            if (this_.identity_.first and this_.identity_.second) {
+            if (migrate.first and migrate.second) {
                 RING_WARN("Converting certificate from old ring account");
-                a.id = std::move(this_.identity_);
+                a.id = std::move(migrate);
                 try {
                     a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.idPath_));
                 } catch (...) {}
-                updateCertificates(a, this_.identity_);
+                updateCertificates(a, migrate);
             } else {
                 auto ca = dht::crypto::generateIdentity("Ring CA");
                 if (!ca.first || !ca.second) {
@@ -1414,7 +1416,7 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
 }
 
 void
-RingAccount::migrateAccount(const std::string& pwd)
+RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
 {
     ArchiveContent archive;
     try {
@@ -1424,8 +1426,8 @@ RingAccount::migrateAccount(const std::string& pwd)
         return;
     }
 
-    if (updateCertificates(archive, identity_)) {
-        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_, "ring_device");
+    if (updateCertificates(archive, device)) {
+        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(device, idPath_, "ring_device");
         saveArchive(archive, pwd);
         setRegistrationState(RegistrationState::UNREGISTERED);
         Migration::setState(accountID_, Migration::State::SUCCESS);
@@ -1442,32 +1444,23 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
         auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-        bool hasValidId = useIdentity(id);
-        bool needMigration = hasValidId and needsMigration(id);
-        bool hasArchive = not archivePath_.empty()                      \
-            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
-
-        if (hasValidId) {
+        bool hasArchive = not archivePath_.empty()
+                          and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
+        if (useIdentity(id)) {
+            // normal loading path
             loadKnownDevices();
             loadContacts();
             loadTrustRequests();
-            if (not needMigration) {
-                if (not hasArchive)
-                    RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
-                // normal account loading path
-                return;
-            } else
-                RING_WARN("[Account %s] account certificates need to be updated", getAccountID().c_str());
-        }
-
-        if (hasArchive) {
+            if (not hasArchive)
+                RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
+        } else if (hasArchive) {
             if (archive_password.empty()) {
                 RING_WARN("[Account %s] password needed to read archive", getAccountID().c_str());
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
-                if (needMigration) {
+                if (needsMigration(id)) {
                     RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
-                    migrateAccount(archive_password);
+                    migrateAccount(archive_password, id);
                 } else {
                     RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
                     try {
@@ -1477,21 +1470,23 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                         return;
                     }
                     Migration::setState(accountID_, Migration::State::SUCCESS);
+                    setRegistrationState(RegistrationState::UNREGISTERED);
                 }
                 Manager::instance().saveConfig();
+                loadAccount();
             }
         } else {
             // no receipt or archive, creating new account
             if (archive_password.empty()) {
                 RING_WARN("[Account %s] password needed to create archive", getAccountID().c_str());
-                if (identity_.first) {
-                    ringAccountId_ = identity_.first->getPublicKey().getId().toString();
+                if (id.first) {
+                    ringAccountId_ = id.first->getPublicKey().getId().toString();
                     username_ = RING_URI_PREFIX+ringAccountId_;
                 }
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
                 if (archive_pin.empty()) {
-                    createAccount(archive_password);
+                    createAccount(archive_password, std::move(id));
                 } else {
                     loadAccountFromDHT(archive_password, archive_pin);
                 }
@@ -2356,7 +2351,9 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     // insert device
     auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
-        RING_WARN("[Account %s] Found known account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        RING_WARN("[Account %s] Found account device: %s %s", getAccountID().c_str(),
+                                                              name.c_str(),
+                                                              crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         saveKnownDevices();
         emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
