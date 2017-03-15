@@ -414,6 +414,19 @@ TrustStore::~TrustStore()
     gnutls_x509_trust_list_deinit(allowed_, false);
 }
 
+TrustStore&
+TrustStore::operator=(TrustStore&& o)
+{
+    unknownCertStatus_ = std::move(o.unknownCertStatus_);
+    certStatus_ = std::move(o.certStatus_);
+    revokedList_ = std::move(o.revokedList_);
+    if (allowed_)
+        gnutls_x509_trust_list_deinit(allowed_, false);
+    allowed_ = std::move(o.allowed_);
+    o.allowed_ = nullptr;
+    return *this;
+}
+
 bool
 TrustStore::addRevocationList(dht::crypto::RevocationList&& crl)
 {
