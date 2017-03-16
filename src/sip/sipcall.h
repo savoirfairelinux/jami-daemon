@@ -99,8 +99,9 @@ public: // overridden
     void restartMediaSender() override;
     void restartMediaReceiver() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
-    virtual std::map<std::string, std::string> getDetails() const override;
+    std::map<std::string, std::string> getDetails() const override;
     bool initIceTransport(bool master, unsigned channel_num=4) override;
+    void merge(const std::shared_ptr<Call>& call) override;
 
 public: // SIP related
     /**
@@ -114,7 +115,7 @@ public: // SIP related
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
-    inline SipTransport* getTransport() {
+    SipTransport* getTransport() {
         return transport_.get();
     }
 
@@ -135,6 +136,8 @@ public: // SIP related
      * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
      */
     void setRemoteSdp(const pjmedia_sdp_session* sdp);
+
+    virtual void merge(const std::shared_ptr<SIPCall>& scall);
 
     /**
      * The invite session to be reused in case of transfer
@@ -203,12 +206,6 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     void onMediaUpdate();
 
     void openPortsUPnP();
-
-    virtual void merge(const std::shared_ptr<Call>& scall) {
-        merge(std::dynamic_pointer_cast<SIPCall>(scall));
-    }
-
-    virtual void merge(const std::shared_ptr<SIPCall>& scall);
 
     void setPeerRegistredName(const std::string& name) {
         peerRegistredName_ = name;

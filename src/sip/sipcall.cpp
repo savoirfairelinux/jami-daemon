@@ -1132,6 +1132,16 @@ SIPCall::merge(const std::shared_ptr<SIPCall>& scall)
 }
 
 void
+SIPCall::merge(const std::shared_ptr<Call>& call)
+{
+    if (auto scall = std::dynamic_pointer_cast<SIPCall>(call))
+        merge(scall);
+    else
+        RING_ERR("[SIPCall:%s] cannot merge call %s, not a SIPCall",
+                 getCallId().c_str(), call->getCallId().c_str());
+}
+
+void
 SIPCall::setRemoteSdp(const pjmedia_sdp_session* sdp)
 {
     if (!sdp)
