@@ -21,8 +21,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef __SIPCALL_H__
-#define __SIPCALL_H__
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -62,226 +61,208 @@ class Controller;
  */
 class SIPCall : public Call
 {
-    public:
-        static const char* const LINK_TYPE;
+public:
+    static const char* const LINK_TYPE;
 
-    protected:
-        /**
-         * Constructor (protected)
-         * @param id	The call identifier
-         * @param type  The type of the call. Could be Incoming
-         *						 Outgoing
-         */
-        SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type);
+    /**
+     * Destructor
+     */
+    ~SIPCall();
 
-    public:
-        /**
-         * Destructor
-         */
-        ~SIPCall();
+protected:
+    /**
+     * Constructor (protected)
+     * @param id	The call identifier
+     * @param type  The type of the call. Could be Incoming or Outgoing
+     */
+    SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type);
 
-        /**
-         * Return the SDP's manager of this call
-         */
-        Sdp& getSDP() {
-            return *sdp_;
-        }
+public: // overridden
+    const char* getLinkType() const override {
+        return LINK_TYPE;
+    }
+    void answer() override;
+    void hangup(int reason) override;
+    void refuse() override;
+    void transfer(const std::string& to) override;
+    bool attendedTransfer(const std::string& to) override;
+    bool onhold() override;
+    bool offhold() override;
+    void switchInput(const std::string& resource) override;
+    void peerHungup() override;
+    void carryingDTMFdigits(char code) override;
+    void sendTextMessage(const std::map<std::string, std::string>& messages,
+                         const std::string& from) override;
+    void removeCall() override;
+    void muteMedia(const std::string& mediaType, bool isMuted) override;
+    void restartMediaSender() override;
+    void restartMediaReceiver() override;
+    bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
+    virtual std::map<std::string, std::string> getDetails() const override;
+    bool initIceTransport(bool master, unsigned channel_num=4) override;
 
-        const char* getLinkType() const override {
-            return LINK_TYPE;
-        }
+public: // SIP related
+    /**
+     * Return the SDP's manager of this call
+     */
+    Sdp& getSDP() {
+        return *sdp_;
+    }
 
-        /**
-         * Returns a pointer to the AudioRtpSession object
-         */
-        AudioRtpSession& getAVFormatRTP() const {
-            return *avformatrtp_;
-        }
+    void setContactHeader(pj_str_t *contact);
 
-#ifdef RING_VIDEO
-        /**
-         * Returns a pointer to the VideoRtp object
-         */
-        video::VideoRtpSession& getVideoRtp () {
-            return *videortp_;
-        }
-#endif
+    void setTransport(const std::shared_ptr<SipTransport>& t);
 
-        /**
-         * The invite session to be reused in case of transfer
-         */
-        struct InvSessionDeleter {
-                void operator()(pjsip_inv_session*) const noexcept;
-        };
+    inline SipTransport* getTransport() {
+        return transport_.get();
+    }
 
-        std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
+    void sendSIPInfo(const char *const body, const char *const subtype);
 
-        void setSecure(bool sec);
+    SIPAccountBase& getSIPAccount() const;
 
-        bool isSecure() const {
-            return srtpEnabled_;
-        }
+    void updateSDPFromSTUN();
 
-        void setCallMediaLocal(const pj_sockaddr& localIP);
+    void setupLocalSDPFromIce();
 
-        void generateMediaPorts();
+    void onReceiveOffer(const pjmedia_sdp_session *offer);
 
-        void setContactHeader(pj_str_t *contact);
+    void terminateSipSession(int status);
 
-        void setTransport(const std::shared_ptr<SipTransport>& t);
+    /**
+     * Give peer SDP to the call for handling
+     * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
+     */
+    void setRemoteSdp(const pjmedia_sdp_session* sdp);
 
-        inline SipTransport* getTransport() {
-            return transport_.get();
-        }
+    /**
+     * The invite session to be reused in case of transfer
+     */
+    struct InvSessionDeleter {
+        void operator()(pjsip_inv_session*) const noexcept;
+    };
 
-        void sendSIPInfo(const char *const body, const char *const subtype);
+    std::unique_ptr<pjsip_inv_session, InvSessionDeleter> inv;
 
-        void answer() override;
-
-        void hangup(int reason) override;
-
-        void refuse() override;
-
-        void transfer(const std::string& to) override;
-
-        bool attendedTransfer(const std::string& to) override;
-
-        bool onhold() override;
-
-        bool offhold() override;
-
-        void switchInput(const std::string& resource) override;
-
-        void peerHungup() override;
-
-        void carryingDTMFdigits(char code) override;
-
-        void sendTextMessage(const std::map<std::string, std::string>& messages,
-                             const std::string& from) override;
-
-        void removeCall() override;
-
-        SIPAccountBase& getSIPAccount() const;
-
-        void updateSDPFromSTUN();
-
-        /**
-         * Tell the user that the call is ringing
-         * @param
-         */
-        void onPeerRinging();
-
-        /**
-         * Tell the user that the call was answered
-         * @param
-         */
-        void onAnswered();
-
-        /**
-         * To call in case of server/internal error
-         * @param cause Optionnal error code
-         */
-        void onFailure(signed cause=0);
-
-        /**
-         * Peer close the connection
-         * @param
-         */
-        void onClosed();
-
-        void setupLocalSDPFromIce();
-
-        bool startIce();
-
-        void startAllMedia();
-
-        void onMediaUpdate();
-
-        void onReceiveOffer(const pjmedia_sdp_session *offer);
-
-        void openPortsUPnP();
-
-        void muteMedia(const std::string& mediaType, bool isMuted) override;
-
-        void restartMediaSender() override;
-
-        void restartMediaReceiver() override;
-
-        bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
-
-        virtual std::map<std::string, std::string> getDetails() const override;
-
-        bool initIceTransport(bool master, unsigned channel_num=4) override;
-
-        void terminateSipSession(int status);
-
-        virtual void merge(const std::shared_ptr<Call>& scall) {
-            merge(std::dynamic_pointer_cast<SIPCall>(scall));
-        }
-        virtual void merge(const std::shared_ptr<SIPCall>& scall);
-
-        void setPeerRegistredName(const std::string& name) {
-            peerRegistredName_ = name;
-        }
-
-        /**
-         * Give peer SDP to the call for handling
-         * @param sdp pointer on PJSIP sdp structure, could be nullptr (acts as no-op in such case)
-         */
-        void setRemoteSdp(const pjmedia_sdp_session* sdp);
-
-    private:
-        NON_COPYABLE(SIPCall);
-
-        void waitForIceAndStartMedia();
-
-        void stopAllMedia();
-
-        /**
-         * Transfer method used for both type of transfer
-         */
-        bool transferCommon(pj_str_t *dst);
-
-        bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
-
-        int SIPSessionReinvite();
-
-        std::vector<IceCandidate> getAllRemoteCandidates();
-
-        std::unique_ptr<AudioRtpSession> avformatrtp_;
+public: // NOT SIP RELATED (good candidates to be moved elsewhere)
+    /**
+     * Returns a pointer to the AudioRtpSession object
+     */
+    AudioRtpSession& getAVFormatRTP() const {
+        return *avformatrtp_;
+    }
 
 #ifdef RING_VIDEO
-        /**
-         * Video Rtp Session factory
-         */
-        std::unique_ptr<video::VideoRtpSession> videortp_;
-
-        std::string videoInput_;
+    /**
+     * Returns a pointer to the VideoRtp object
+     */
+    video::VideoRtpSession& getVideoRtp () {
+        return *videortp_;
+    }
 #endif
 
-        bool srtpEnabled_ {false};
+    void setSecure(bool sec);
 
-        /**
-         * Hold the transport used for SIP communication.
-         * Will be different from the account registration transport for
-         * non-IP2IP calls.
-         */
-        std::shared_ptr<SipTransport> transport_ {};
+    bool isSecure() const {
+        return srtpEnabled_;
+    }
 
-        /**
-         * The SDP session
-         */
-        std::unique_ptr<Sdp> sdp_;
-        bool peerHolding_ {false};
+    void setCallMediaLocal(const pj_sockaddr& localIP);
 
-        std::string peerRegistredName_ {};
+    void generateMediaPorts();
 
-        char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
-        pj_str_t contactHeader_ {contactBuffer_, 0};
+    /**
+     * Tell the user that the call is ringing
+     * @param
+     */
+    void onPeerRinging();
 
-        std::unique_ptr<ring::upnp::Controller> upnp_;
+    /**
+     * Tell the user that the call was answered
+     * @param
+     */
+    void onAnswered();
+
+    /**
+     * To call in case of server/internal error
+     * @param cause Optionnal error code
+     */
+    void onFailure(signed cause=0);
+
+    /**
+     * Peer close the connection
+     * @param
+     */
+    void onClosed();
+
+    bool startIce();
+
+    void startAllMedia();
+
+    void onMediaUpdate();
+
+    void openPortsUPnP();
+
+    virtual void merge(const std::shared_ptr<Call>& scall) {
+        merge(std::dynamic_pointer_cast<SIPCall>(scall));
+    }
+
+    virtual void merge(const std::shared_ptr<SIPCall>& scall);
+
+    void setPeerRegistredName(const std::string& name) {
+        peerRegistredName_ = name;
+    }
+
+private:
+    NON_COPYABLE(SIPCall);
+
+    void waitForIceAndStartMedia();
+
+    void stopAllMedia();
+
+    /**
+     * Transfer method used for both type of transfer
+     */
+    bool transferCommon(pj_str_t *dst);
+
+    bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
+
+    int SIPSessionReinvite();
+
+    std::vector<IceCandidate> getAllRemoteCandidates();
+
+    std::unique_ptr<AudioRtpSession> avformatrtp_;
+
+#ifdef RING_VIDEO
+    /**
+     * Video Rtp Session factory
+     */
+    std::unique_ptr<video::VideoRtpSession> videortp_;
+
+    std::string videoInput_;
+#endif
+
+    bool srtpEnabled_ {false};
+
+    /**
+     * Hold the transport used for SIP communication.
+     * Will be different from the account registration transport for
+     * non-IP2IP calls.
+     */
+    std::shared_ptr<SipTransport> transport_ {};
+
+    /**
+     * The SDP session
+     */
+    std::unique_ptr<Sdp> sdp_;
+    bool peerHolding_ {false};
+
+    std::string peerRegistredName_ {};
+
+    char contactBuffer_[PJSIP_MAX_URL_SIZE] {};
+    pj_str_t contactHeader_ {contactBuffer_, 0};
+
+    std::unique_ptr<ring::upnp::Controller> upnp_;
 };
 
 } // namespace ring
-
-#endif // __SIPCALL_H__
