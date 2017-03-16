@@ -201,43 +201,13 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         }
 
         /**
-         * Set local audio port, as seen by me [not protected]
-         * @param port  The local audio port
-         */
-        void setLocalAudioPort(unsigned int port) {
-            localAudioPort_ = port;
-        }
-
-        /**
-         * Set local video port, as seen by me [not protected]
-         * @param port  The local video port
-         */
-        void setLocalVideoPort(unsigned int port)  {
-            localVideoPort_ = port;
-        }
-
-        /**
          * Return my IP [mutex protected]
          * @return std::string The local IP
          */
         IpAddr getLocalIp() const;
 
-        /**
-         * Return port used locally (for my machine) [mutex protected]
-         * @return unsigned int  The local audio port
-         */
-        unsigned int getLocalAudioPort() const;
-
-        /**
-         * Return port used locally (for my machine) [mutex protected]
-         * @return unsigned int  The local video port
-         */
-        unsigned int getLocalVideoPort() const;
-
         virtual std::map<std::string, std::string> getDetails() const;
         static std::map<std::string, std::string> getNullDetails();
-
-        virtual bool toggleRecording();
 
         /**
          * Answer the call
@@ -249,8 +219,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * @param reason
          */
         virtual void hangup(int reason) = 0;
-
-        virtual void switchInput(const std::string&) {};
 
         /**
          * Refuse incoming call
@@ -283,13 +251,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual bool offhold() = 0;
 
         /**
-         * mute/unmute a media of a call
-         * @param mediaType type of media
-         * @param isMuted true for muting, false for unmuting
-         */
-        virtual void muteMedia(const std::string& mediaType, bool isMuted)  = 0;
-
-        /**
          * Peer has hung up a call
          */
         virtual void peerHungup();
@@ -314,6 +275,56 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void removeCall();
 
+        using StateListener = std::function<void(CallState, int)>;
+
+        template<class T>
+        void addStateListener(T&& list) {
+            stateChangedListeners_.emplace_back(std::forward<T>(list));
+        }
+        void addSubCall(const std::shared_ptr<Call>& call);
+
+        virtual void merge(const std::shared_ptr<Call>& scall);
+
+public: // media related
+        /**
+         * Set local audio port, as seen by me [not protected]
+         * @param port  The local audio port
+         */
+        void setLocalAudioPort(unsigned int port) {
+            localAudioPort_ = port;
+        }
+
+        /**
+         * Set local video port, as seen by me [not protected]
+         * @param port  The local video port
+         */
+        void setLocalVideoPort(unsigned int port)  {
+            localVideoPort_ = port;
+        }
+
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local audio port
+         */
+        unsigned int getLocalAudioPort() const;
+
+        /**
+         * Return port used locally (for my machine) [mutex protected]
+         * @return unsigned int  The local video port
+         */
+        unsigned int getLocalVideoPort() const;
+
+        virtual bool toggleRecording();
+
+        virtual void switchInput(const std::string&) {};
+
+        /**
+         * mute/unmute a media of a call
+         * @param mediaType type of media
+         * @param isMuted true for muting, false for unmuting
+         */
+        virtual void muteMedia(const std::string& mediaType, bool isMuted)  = 0;
+
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
 
         int waitForIceInitialization(unsigned timeout);
@@ -332,19 +343,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         virtual bool useVideoCodec(const AccountVideoCodecInfo* /*codec*/) const {
             return false;
         }
-
         virtual void restartMediaSender() = 0;
         virtual void restartMediaReceiver() = 0;
-
-        using StateListener = std::function<void(CallState, int)>;
-
-        template<class T>
-        void addStateListener(T&& list) {
-            stateChangedListeners_.emplace_back(std::forward<T>(list));
-        }
-        void addSubCall(const std::shared_ptr<Call>& call);
-
-        virtual void merge(const std::shared_ptr<Call>& scall);
 
     protected:
         /**
