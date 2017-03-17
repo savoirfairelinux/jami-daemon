@@ -193,14 +193,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         }
 
         /**
-         * Set my IP [not protected]
-         * @param ip  The local IP address
-         */
-        void setLocalIp(const IpAddr& ip) {
-            localAddr_ = ip;
-        }
-
-        /**
          * Set local audio port, as seen by me [not protected]
          * @param port  The local audio port
          */
@@ -215,12 +207,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void setLocalVideoPort(unsigned int port)  {
             localVideoPort_ = port;
         }
-
-        /**
-         * Return my IP [mutex protected]
-         * @return std::string The local IP
-         */
-        IpAddr getLocalIp() const;
 
         /**
          * Return port used locally (for my machine) [mutex protected]
@@ -316,11 +302,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
 
-        int waitForIceInitialization(unsigned timeout);
-
-        int waitForIceNegotiation(unsigned timeout);
-
-        bool isIceUsed() const;
         bool isIceRunning() const;
 
         std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
@@ -379,9 +360,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
         // Informations about call socket / audio
-
-        /** My IP address */
-        IpAddr localAddr_ {};
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_ {0};
