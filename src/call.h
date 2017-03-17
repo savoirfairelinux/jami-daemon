@@ -192,20 +192,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             isIPToIP_ = IPToIP;
         }
 
-        /**
-         * Set my IP [not protected]
-         * @param ip  The local IP address
-         */
-        void setLocalIp(const IpAddr& ip) {
-            localAddr_ = ip;
-        }
-
-        /**
-         * Return my IP [mutex protected]
-         * @return std::string The local IP
-         */
-        IpAddr getLocalIp() const;
-
         virtual std::map<std::string, std::string> getDetails() const;
         static std::map<std::string, std::string> getNullDetails();
 
@@ -327,11 +313,6 @@ public: // media related
 
         virtual bool initIceTransport(bool master, unsigned channel_num=4);
 
-        int waitForIceInitialization(unsigned timeout);
-
-        int waitForIceNegotiation(unsigned timeout);
-
-        bool isIceUsed() const;
         bool isIceRunning() const;
 
         std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
@@ -379,9 +360,6 @@ public: // media related
         std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
 
         // Informations about call socket / audio
-
-        /** My IP address */
-        IpAddr localAddr_ {};
 
         /** Local audio port, as seen by me. */
         unsigned int localAudioPort_ {0};

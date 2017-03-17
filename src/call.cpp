@@ -248,13 +248,6 @@ Call::getStateStr() const
     }
 }
 
-IpAddr
-Call::getLocalIp() const
-{
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    return localAddr_;
-}
-
 unsigned int
 Call::getLocalAudioPort() const
 {
@@ -326,24 +319,6 @@ Call::initIceTransport(bool master, unsigned channel_num)
                                                         channel_num, master,
                                                         account_.getIceOptions());
     return static_cast<bool>(iceTransport_);
-}
-
-int
-Call::waitForIceInitialization(unsigned timeout)
-{
-    return iceTransport_->waitForInitialization(timeout);
-}
-
-int
-Call::waitForIceNegotiation(unsigned timeout)
-{
-    return iceTransport_->waitForNegotiation(timeout);
-}
-
-bool
-Call::isIceUsed() const
-{
-    return iceTransport_ and iceTransport_->isInitialized();
 }
 
 bool
@@ -468,7 +443,6 @@ Call::merge(const std::shared_ptr<Call>& scall)
     if (peerNumber_.empty())
         peerNumber_ = std::move(call.peerNumber_);
     peerDisplayName_ = std::move(call.peerDisplayName_);
-    localAddr_ = call.localAddr_;
     localAudioPort_ = call.localAudioPort_;
     localVideoPort_ = call.localVideoPort_;
     setState(call.getState());

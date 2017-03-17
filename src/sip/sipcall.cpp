@@ -136,8 +136,6 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
 {
-    setLocalIp(localIP);
-
     if (getLocalAudioPort() == 0
 #ifdef RING_VIDEO
         || getLocalVideoPort() == 0
