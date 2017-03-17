@@ -82,6 +82,25 @@ DhParams::DhParams(const std::vector<uint8_t>& data)
             throw std::runtime_error(std::string("Error importing DH params: ") + gnutls_strerror(ret_pem) + " " + gnutls_strerror(ret_der));
 }
 
+DhParams&
+DhParams::operator=(const DhParams& other)
+{
+    if (not params_) {
+        // We need a valid DH params pointer for the copy
+        gnutls_dh_params_t new_params_;
+        auto err = gnutls_dh_params_init(&new_params_);
+        if (err != GNUTLS_E_SUCCESS)
+            throw std::runtime_error(std::string("Error initializing DH params: ") + gnutls_strerror(err));
+        params_.reset(new_params_);
+    }
+
+    auto err = gnutls_dh_params_cpy(params_.get(), other.get());
+    if (err != GNUTLS_E_SUCCESS)
+        throw std::runtime_error(std::string("Error copying DH params: ") + gnutls_strerror(err));
+
+    return *this;
+}
+
 std::vector<uint8_t>
 DhParams::serialize() const
 {
