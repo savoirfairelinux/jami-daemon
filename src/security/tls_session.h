@@ -22,6 +22,7 @@
 #pragma once
 
 #include "threadloop.h"
+#include "noncopyable.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
@@ -41,6 +42,7 @@
 #include <atomic>
 #include <iterator>
 #include <array>
+#include <stdexcept>
 
 namespace ring {
 class IceTransport;
@@ -71,13 +73,18 @@ class DhParams {
 public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
-
-    DhParams& operator =(const DhParams& other){
-        return *this;
+    DhParams(const DhParams& other) {
+        *this = other;
     }
 
-    /** Take ownership of gnutls_dh_params */
-    explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
+    DhParams& operator=(DhParams&& other) = default;
+    DhParams& operator=(const DhParams& other);
+
+    /// \brief Construct by taking ownership of given gnutls DH params
+    ///
+    /// User should not call gnutls_dh_params_deinit on given \a raw_params.
+    /// The object is stolen and its live is manager by our object.
+    explicit DhParams(gnutls_dh_params_t p) : params_ {p, gnutls_dh_params_deinit} {}
 
     /** Deserialize DER or PEM encoded DH-params */
     DhParams(const std::vector<uint8_t>& data);
