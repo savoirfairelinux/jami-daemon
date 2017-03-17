@@ -22,6 +22,7 @@
 #pragma once
 
 #include "threadloop.h"
+#include "noncopyable.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
@@ -72,10 +73,6 @@ public:
     DhParams() = default;
     DhParams(DhParams&&) = default;
 
-    DhParams& operator =(const DhParams& other){
-        return *this;
-    }
-
     /** Take ownership of gnutls_dh_params */
     explicit DhParams(gnutls_dh_params_t p) : params_(p, gnutls_dh_params_deinit) {};
 
@@ -99,6 +96,8 @@ public:
     static DhParams generate();
 
 private:
+    NON_COPYABLE(DhParams);
+
     std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)&> params_ {nullptr, gnutls_dh_params_deinit};
 };
 
