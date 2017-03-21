@@ -2926,12 +2926,19 @@ RingAccount::saveContacts() const
 
 /* trust requests */
 
-std::map<std::string, std::string>
+std::vector<std::map<std::string, std::string>>
 RingAccount::getTrustRequests() const
 {
-    std::map<std::string, std::string> ret;
-    for (const auto& r : trustRequests_)
-        ret.emplace(r.first.toString(), ring::to_string(r.second.received));
+    using Map = std::map<std::string, std::string>;
+    std::vector<Map> ret;
+    ret.reserve(trustRequests_.size());
+    for (const auto& r : trustRequests_) {
+        ret.emplace_back(Map {
+            {"from", r.first.toString()},
+            {"received", std::to_string(r.second.received)},
+            {"payload", std::string(r.second.payload.begin(), r.second.payload.end())}
+        });
+    }
     return ret;
 }
 

@@ -327,7 +327,7 @@ getContacts(const std::string& accountId)
 }
 
 /* contact requests */
-std::map<std::string, std::string>
+std::vector<std::map<std::string, std::string>>
 getTrustRequests(const std::string& accountId)
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))

@@ -1209,12 +1209,15 @@
 
        <method name="getTrustRequests" tp:name-for-bindings="getTrustRequests">
            <tp:added version="2.2.0"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
-           <arg type="a{ss}" name="details" direction="out" tp:type="String_String_Map">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
+           <arg type="aa{ss}" name="requests" direction="out" >
                <tp:docstring>
-                   A list of contact request details.
+                   A list of contact request details. Details:
+                   - from: account ID of sender
+                   - received: UNIX timestamp of reception date
+                   - payload: attached payload
                </tp:docstring>
            </arg>
        </method>

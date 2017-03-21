@@ -287,7 +287,7 @@ class RingAccount : public SIPAccountBase {
         bool findCertificate(const dht::InfoHash& h, std::function<void(const std::shared_ptr<dht::crypto::Certificate>&)>&& cb = {});
 
         /* contact requests */
-        std::map<std::string, std::string> getTrustRequests() const;
+        std::vector<std::map<std::string, std::string>> getTrustRequests() const;
         bool acceptTrustRequest(const std::string& from);
         bool discardTrustRequest(const std::string& from);
 
