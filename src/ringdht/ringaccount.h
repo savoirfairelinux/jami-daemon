@@ -296,7 +296,7 @@ class RingAccount : public SIPAccountBase {
          * Set confirmed if we know the contact also added us.
          */
         void addContact(const std::string& uri, bool confirmed = false);
-        void removeContact(const std::string& uri);
+        void removeContact(const std::string& uri, bool banned = true);
         std::vector<std::map<std::string, std::string>> getContacts() const;
 
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
