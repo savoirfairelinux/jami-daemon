@@ -158,14 +158,43 @@ struct RingAccount::Contact
     /** True if we got confirmation that this contact also added us */
     bool confirmed {false};
 
+    /** True if the contact is banned (if not active) */
+    bool banned {false};
+
+    /** True if the contact is an active contact (not banned nor removed) */
     bool isActive() const { return added > removed; }
+    bool isBanned() const { return not isActive() and banned; }
 
     Contact() = default;
-    Contact(time_t a, time_t r, bool c=false) : added(a), removed(r), confirmed(c) {}
     Contact(const Json::Value& json) {
         added = json["added"].asInt();
         removed = json["removed"].asInt();
         confirmed = json["confirmed"].asBool();
+        banned = json["banned"].asBool();
+    }
+
+    /**
+     * Update this contact using other known contact information,
+     * return true if contact state was changed.
+     */
+    bool update(const Contact& c) {
+        const auto copy = *this;
+        if (c.added > added) {
+            added = c.added;
+        }
+        if (c.removed > removed) {
+            removed = c.removed;
+            banned = c.banned;
+        }
+        if (c.confirmed != confirmed) {
+            confirmed = c.confirmed or confirmed;
+        }
+        return hasSameState(copy);
+    }
+    bool hasSameState(const Contact& other) const {
+        return other.isActive() != isActive()
+            or other.isBanned() != isBanned()
+            or other.confirmed  != confirmed;
     }
 
     Json::Value toJson() const {
@@ -173,10 +202,11 @@ struct RingAccount::Contact
         json["added"] = Json::Int64(added);
         json["removed"] = Json::Int64(removed);
         json["confirmed"] = confirmed;
+        json["banned"] = banned;
         return json;
     }
 
-    MSGPACK_DEFINE_MAP(added, removed, confirmed)
+    MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
 };
 
 /**
@@ -2837,6 +2867,8 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact{}).first;
+    else if (c->second.isActive() and c->second.confirmed == confirmed)
+        return;
     c->second.added = std::time(nullptr);
     c->second.confirmed = confirmed or c->second.confirmed;
     trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::ALLOWED);
@@ -2846,17 +2878,21 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 }
 
 void
-RingAccount::removeContact(const std::string& uri)
+RingAccount::removeContact(const std::string& uri, bool ban)
 {
     dht::InfoHash h (uri);
     auto c = contacts_.find(h);
-    if (c != contacts_.end()) {
-        c->second.removed = std::time(nullptr);
+    if (c == contacts_.end())
+        c = contacts_.emplace(h, Contact{}).first;
+    else if (not c->second.isActive() and c->second.banned == ban)
+        return;
+    c->second.removed = std::time(nullptr);
+    c->second.banned = ban;
+    if (ban)
         trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::BANNED);
-        saveContacts();
-        emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, c->second.confirmed);
-        syncDevices();
-    }
+    saveContacts();
+    emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, ban);
+    syncDevices();
 }
 
 std::vector<std::map<std::string, std::string>>
@@ -2865,13 +2901,15 @@ RingAccount::getContacts() const
     std::vector<std::map<std::string, std::string>> ret;
     ret.reserve(contacts_.size());
     for (const auto& c : contacts_) {
+        if (not (c.second.isActive() or c.second.isBanned()))
+            continue;
         std::map<std::string, std::string> cm {
             {"id", c.first.toString()},
             {"added", std::to_string(c.second.added)}
         };
         if (c.second.isActive())
             cm.emplace("confirmed", c.second.confirmed ? TRUE_STR : FALSE_STR);
-        else
+        else if (c.second.isBanned())
             cm.emplace("banned", TRUE_STR);
         ret.emplace_back(std::move(cm));
     }
@@ -2881,21 +2919,26 @@ RingAccount::getContacts() const
 void
 RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 {
+    bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
         RING_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
         c = contacts_.emplace(id, contact).first;
-        emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), c->second.confirmed);
+        stateChanged = c->second.isActive() or c->second.isBanned();
     } else {
         RING_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
-        c->second.added = std::max(contact.added, c->second.added);
-        c->second.removed = std::max(contact.removed, c->second.removed);
-        if (contact.confirmed != c->second.confirmed) {
-            c->second.confirmed = contact.confirmed or c->second.confirmed;
+        stateChanged = c->second.update(contact);
+    }
+    if (stateChanged) {
+        if (c->second.isActive()) {
+            trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
             emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), c->second.confirmed);
+        } else {
+            if (c->second.banned)
+                trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::BANNED);
+            emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), id.toString(), c->second.banned);
         }
     }
-    trust_.setCertificateStatus(id.toString(), c->second.isActive() ? tls::TrustStore::PermissionStatus::ALLOWED : tls::TrustStore::PermissionStatus::BANNED);
 }
 
 void
