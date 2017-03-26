@@ -57,6 +57,8 @@ template <class T> using CallMap = std::map<std::string, std::shared_ptr<T> >;
 
 class Call : public Recordable, public std::enable_shared_from_this<Call> {
     public:
+        using SubcallSet = std::set<std::shared_ptr<Call>, std::owner_less<std::shared_ptr<Call>>>;
+
         static const char * const DEFAULT_ID;
 
         /**
@@ -342,11 +344,16 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void addStateListener(T&& list) {
             stateChangedListeners_.emplace_back(std::forward<T>(list));
         }
-        void addSubCall(const std::shared_ptr<Call>& call);
 
-        virtual void merge(const std::shared_ptr<Call>& scall);
+        /**
+         * Attach subcall to this instance.
+         * If this subcall is answered, this subcall and this instance will be merged using merge().
+         */
+        void addSubCall(Call& call);
 
     protected:
+        virtual void merge(Call& scall);
+
         /**
          * Constructor of a call
          * @param id Unique identifier of the call
@@ -360,18 +367,26 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         bool isAudioMuted_{false};
         bool isVideoMuted_{false};
-        bool quiet {false};
-        std::set<std::shared_ptr<Call>> subcalls {};
-        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingInMessages_ {};
-        std::list<std::pair<std::map<std::string, std::string>, std::string>> pendingOutMessages_ {};
+
+        ///< MultiDevice: parent call, nullptr otherwise.
+        std::atomic<Call*> parent_ {nullptr};
+
+        ///< MultiDevice: list of attached subcall
+        SubcallSet subcalls_;
+
+        using MsgList = std::list<std::pair<std::map<std::string, std::string>, std::string>>;
+
+        ///< MultiDevice: message waiting to be sent (need a valid subcall)
+        MsgList pendingOutMessages_;
 
     private:
-
         bool validStateTransition(CallState newState);
 
         void checkPendingIM();
 
         void checkAudio();
+
+        void subcallStateChanged(Call&, Call::CallState, Call::ConnectionState);
 
         /** Protect every attribute that can be changed by two threads */
         mutable std::recursive_mutex callMutex_ {};
@@ -417,6 +432,19 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         std::string peerDisplayName_ {};
 
         time_t timestamp_start_ {0};
+
+        ///< MultiDevice: message received by subcall to merged yet
+        MsgList pendingInMessages_;
 };
+
+// Helpers
+
+/**
+ * Obtain a shared smart pointer of instance
+ */
+inline std::shared_ptr<Call> getPtr(Call& call)
+{
+    return call.shared_from_this();
+}
 
 } // namespace ring
