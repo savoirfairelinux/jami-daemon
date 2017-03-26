@@ -453,7 +453,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             return;
         }
 
-        call->addSubCall(dev_call);
+        call->addSubCall(*dev_call);
 
         manager.addTask([sthis, weak_dev_call, ice, dev] {
             auto call = weak_dev_call.lock();
