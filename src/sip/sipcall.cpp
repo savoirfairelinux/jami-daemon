@@ -663,9 +663,9 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     //TODO: for now we ignore the "from" (the previous implementation for sending this info was
     //      buggy and verbose), another way to send the original message sender will be implemented
     //      in the future
-    if (not subcalls.empty()) {
+    if (not subcalls_.empty()) {
         pendingOutMessages_.emplace_back(messages, from);
-        for (auto& c : subcalls)
+        for (auto& c : subcalls_)
             c->sendTextMessage(messages, from);
     } else {
         if (inv) {
@@ -710,7 +710,7 @@ SIPCall::onAnswered()
     RING_WARN("[call:%s] onAnswered()", getCallId().c_str());
     if (getConnectionState() != ConnectionState::CONNECTED) {
         setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-        if (not quiet)
+        if (not parent_.load())
             Manager::instance().peerAnsweredCall(*this);
     }
 }
@@ -888,7 +888,7 @@ SIPCall::startAllMedia()
         }
     }
 
-    if (not quiet and peerHolding_ != peer_holding) {
+    if (not parent_.load() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
@@ -934,7 +934,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
-        if (not quiet)
+        if (not parent_.load())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
@@ -942,7 +942,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         RING_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
-        if (not quiet)
+        if (not parent_.load())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
     }
 }
@@ -954,7 +954,7 @@ SIPCall::onMediaUpdate()
     stopAllMedia();
     openPortsUPnP();
     if (startIce()) {
-        if (not quiet)
+        if (not parent_.load())
             waitForIceAndStartMedia();
     } else {
         RING_WARN("[call:%s] ICE not used for media", getCallId().c_str());
@@ -1113,18 +1113,24 @@ SIPCall::initIceTransport(bool master, unsigned channel_num)
 }
 
 void
-SIPCall::merge(const std::shared_ptr<SIPCall>& scall)
+SIPCall::merge(Call& call)
 {
-    RING_WARN("SIPCall::merge %s -> %s", scall->getCallId().c_str(), getCallId().c_str());
-    inv = std::move(scall->inv);
+    RING_DBG("[sipcall:%s] merge subcall %s", getCallId().c_str(), call.getCallId().c_str());
+
+    // This static cast is safe as this method is private and overload Call::merge
+    auto& subcall = static_cast<SIPCall&>(call);
+
+    inv = std::move(subcall.inv);
     inv->mod_data[getSIPVoIPLink()->getModId()] = this;
-    setTransport(scall->transport_);
-    sdp_ = std::move(scall->sdp_);
-    peerHolding_ = scall->peerHolding_;
-    upnp_ = std::move(scall->upnp_);
-    std::copy_n(scall->contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
-    pj_strcpy(&contactHeader_, &scall->contactHeader_);
-    Call::merge(scall);
+    setTransport(subcall.transport_);
+    sdp_ = std::move(subcall.sdp_);
+    peerHolding_ = subcall.peerHolding_;
+    upnp_ = std::move(subcall.upnp_);
+    std::copy_n(subcall.contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
+    pj_strcpy(&contactHeader_, &subcall.contactHeader_);
+
+    Call::merge(subcall);
+
     if (iceTransport_->isStarted())
         waitForIceAndStartMedia();
 }
