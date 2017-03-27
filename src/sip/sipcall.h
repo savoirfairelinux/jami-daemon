@@ -98,7 +98,7 @@ public: // overridden
     void restartMediaSender() override;
     void restartMediaReceiver() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
-    virtual std::map<std::string, std::string> getDetails() const override;
+    std::map<std::string, std::string> getDetails() const override;
     bool initIceTransport(bool master, unsigned channel_num=4) override;
 
 public: // SIP related
@@ -141,7 +141,7 @@ public: // SIP related
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
-    inline SipTransport* getTransport() {
+    SipTransport* getTransport() {
         return transport_.get();
     }
 
