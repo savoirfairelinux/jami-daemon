@@ -319,7 +319,7 @@ void
 NameDirectory::saveCache()
 {
     fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache");
-    std::ofstream file(cachePath_, std::ios::trunc);
+    std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
     msgpack::pack(file, nameCache_);
     RING_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
 }

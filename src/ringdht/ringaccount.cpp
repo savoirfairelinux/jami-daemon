@@ -2578,7 +2578,7 @@ template<typename ID=dht::Value::Id>
 void
 saveIdList(const std::string& path, const std::set<ID>& ids)
 {
-    std::ofstream file(path, std::ios::trunc);
+    std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         RING_ERR("Could not save to %s", path.c_str());
         return;
@@ -2645,7 +2645,7 @@ RingAccount::loadKnownDevices()
 void
 RingAccount::saveKnownDevices() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc);
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
@@ -2674,7 +2674,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
     fileutils::check_dir(cachePath_.c_str());
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
     {
-        std::ofstream file(nodesPath, std::ios::trunc);
+        std::ofstream file(nodesPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             RING_ERR("Could not save nodes to %s", nodesPath.c_str());
             return;
@@ -2920,7 +2920,7 @@ RingAccount::loadContacts()
 void
 RingAccount::saveContacts() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc);
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, contacts_);
 }
 
@@ -3003,7 +3003,7 @@ RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 void
 RingAccount::saveTrustRequests() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc);
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
     msgpack::pack(file, trustRequests_);
 }
 
