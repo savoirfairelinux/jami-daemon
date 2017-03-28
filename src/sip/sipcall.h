@@ -215,11 +215,6 @@ class SIPCall : public Call
 
         void terminateSipSession(int status);
 
-        virtual void merge(const std::shared_ptr<Call>& scall) {
-            merge(std::dynamic_pointer_cast<SIPCall>(scall));
-        }
-        virtual void merge(const std::shared_ptr<SIPCall>& scall);
-
         void setPeerRegistredName(const std::string& name) {
             peerRegistredName_ = name;
         }
@@ -245,6 +240,8 @@ class SIPCall : public Call
         bool internalOffHold(const std::function<void()> &SDPUpdateFunc);
 
         int SIPSessionReinvite();
+
+        void merge(Call& call) override; // only called by Call
 
         std::vector<IceCandidate> getAllRemoteCandidates();
 
@@ -281,6 +278,16 @@ class SIPCall : public Call
 
         std::unique_ptr<ring::upnp::Controller> upnp_;
 };
+
+// Helpers
+
+/**
+ * Obtain a shared smart pointer of instance
+ */
+inline std::shared_ptr<SIPCall> getPtr(SIPCall& call)
+{
+    return std::static_pointer_cast<SIPCall>(call.shared_from_this());
+}
 
 } // namespace ring
 
