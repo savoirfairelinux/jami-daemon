@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_VERSION := b08b2f14f20e0dbaa00fc2c70347d578c70e49da
+OPENDHT_VERSION := 3c45e1996dd70703668282abb41a17fe5b4d2de3
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
