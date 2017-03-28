@@ -404,14 +404,12 @@ statusToStr(TrustStatus s)
 
 TrustStore::TrustStore()
 {
-    //gnutls_x509_trust_list_init(&trust_, 0);
     gnutls_x509_trust_list_init(&allowed_, 0);
 }
 
 TrustStore::~TrustStore()
 {
-    //gnutls_x509_trust_list_deinit(trust_, false);
-    gnutls_x509_trust_list_deinit(allowed_, false);
+    gnutls_x509_trust_list_deinit(allowed_, true);
 }
 
 TrustStore&
@@ -421,7 +419,7 @@ TrustStore::operator=(TrustStore&& o)
     certStatus_ = std::move(o.certStatus_);
     revokedList_ = std::move(o.revokedList_);
     if (allowed_)
-        gnutls_x509_trust_list_deinit(allowed_, false);
+        gnutls_x509_trust_list_deinit(allowed_, true);
     allowed_ = std::move(o.allowed_);
     o.allowed_ = nullptr;
     return *this;
@@ -638,7 +636,7 @@ getRevocationList(const crypto::Certificate& crt)
     const auto& crls = crt.getRevocationLists();
     crls_ret.reserve(crls.size());
     for (const auto& crl : crls)
-        crls_ret.emplace_back(crl->get());
+        crls_ret.emplace_back(crl->getCopy());
     return crls_ret;
 }
 
@@ -663,10 +661,14 @@ TrustStore::setStoreCertStatus(const crypto::Certificate& crt, TrustStore::Permi
         return;
 
     if (status == PermissionStatus::ALLOWED) {
-        gnutls_x509_trust_list_add_cas(allowed_, &crt.cert, 1, 0);
+        auto crt_copy = crt.getCopy();
+        gnutls_x509_trust_list_add_cas(allowed_, &crt_copy, 1, GNUTLS_TL_NO_DUPLICATES);
         auto crls = getRevocationList(crt);
         if (not crls.empty())
-            if (gnutls_x509_trust_list_add_crls(allowed_, crls.data(), crls.size(), GNUTLS_TL_VERIFY_CRL, 0) == 0)
+            if (gnutls_x509_trust_list_add_crls(
+                    allowed_,
+                    crls.data(), crls.size(),
+                    GNUTLS_TL_VERIFY_CRL & GNUTLS_TL_NO_DUPLICATES, 0) == 0)
                 RING_WARN("No CRLs where added");
     }
     else
