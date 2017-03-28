@@ -1110,8 +1110,6 @@ transaction_state_changed_cb(pjsip_inv_session* inv, pjsip_transaction* tsx, pjs
     if (tsx->role != PJSIP_ROLE_UAS
         or tsx->state != PJSIP_TSX_STATE_TRYING
         or event->body.tsx_state.type != PJSIP_EVENT_RX_MSG) {
-        RING_DBG("[INVITE:%p] tsx_role=%d, tsx_state=%d, ev_type=%d, tsx_state_type=%d", inv,
-                 tsx->role, tsx->state, event->type, event->body.tsx_state.type);
         return;
     }
 
