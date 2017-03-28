@@ -282,13 +282,13 @@ struct ConfigurationSignal {
          * These are special getters for Android and UWP, so the daemon can retreive
          * information only accessible through their respective platform APIs
          */
-#if defined(__ANDROID__) || TARGET_OS_IOS
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         struct GetHardwareAudioFormat {
                 constexpr static const char* name = "GetHardwareAudioFormat";
                 using cb_type = void(std::vector<int32_t>* /* params_ret */);
         };
 #endif
-#if defined(__ANDROID__) || defined(RING_UWP) || TARGET_OS_IOS
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         struct GetAppDataPath {
                 constexpr static const char* name = "GetAppDataPath";
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
