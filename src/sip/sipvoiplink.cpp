@@ -361,6 +361,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
+    // dialog is now owned by invite
+    pjsip_dlg_dec_lock(dialog);
+
     inv->mod_data[mod_ua_.id] = call.get();
     call->inv.reset(inv);
 
