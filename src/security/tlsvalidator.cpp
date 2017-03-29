@@ -473,7 +473,7 @@ unsigned int TlsValidator::compareToCa()
         GNUTLS_PROFILE_TO_VFLAGS(GNUTLS_PROFILE_MEDIUM),
         &caValidationOutput_, nullptr);
 
-    gnutls_x509_trust_list_deinit(trust, false);
+    gnutls_x509_trust_list_deinit(trust, true);
 
     if (err) {
         RING_WARN("gnutls_x509_trust_list_verify_crt2 failed: %s", gnutls_strerror(err));
