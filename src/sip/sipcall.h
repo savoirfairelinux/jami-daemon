@@ -259,6 +259,12 @@ private:
     pj_str_t contactHeader_ {contactBuffer_, 0};
 
     std::unique_ptr<ring::upnp::Controller> upnp_;
+
+    /** Local audio port, as seen by me. */
+    unsigned int localAudioPort_ {0};
+
+    /** Local video port, as seen by me. */
+    unsigned int localVideoPort_ {0};
 };
 
 // Helpers

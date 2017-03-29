@@ -291,20 +291,6 @@ Call::getStateStr() const
     }
 }
 
-unsigned int
-Call::getLocalAudioPort() const
-{
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    return localAudioPort_;
-}
-
-unsigned int
-Call::getLocalVideoPort() const
-{
-    std::lock_guard<std::recursive_mutex> lock(callMutex_);
-    return localVideoPort_;
-}
-
 bool
 Call::toggleRecording()
 {
@@ -515,8 +501,6 @@ Call::merge(Call& subcall)
         if (peerNumber_.empty())
             peerNumber_ = std::move(subcall.peerNumber_);
         peerDisplayName_ = std::move(subcall.peerDisplayName_);
-        localAudioPort_ = subcall.localAudioPort_;
-        localVideoPort_ = subcall.localVideoPort_;
         setState(subcall.getState(), subcall.getConnectionState());
     }
 

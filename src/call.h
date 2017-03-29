@@ -260,34 +260,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         void addSubCall(Call& call);
 
     public: // media management
-        /**
-         * Set local audio port, as seen by me [not protected]
-         * @param port  The local audio port
-         */
-        void setLocalAudioPort(unsigned int port) {
-            localAudioPort_ = port;
-        }
-
-        /**
-         * Set local video port, as seen by me [not protected]
-         * @param port  The local video port
-         */
-        void setLocalVideoPort(unsigned int port)  {
-            localVideoPort_ = port;
-        }
-
-        /**
-         * Return port used locally (for my machine) [mutex protected]
-         * @return unsigned int  The local audio port
-         */
-        unsigned int getLocalAudioPort() const;
-
-        /**
-         * Return port used locally (for my machine) [mutex protected]
-         * @return unsigned int  The local video port
-         */
-        unsigned int getLocalVideoPort() const;
-
         virtual bool toggleRecording();
 
         virtual void switchInput(const std::string&) {};
@@ -380,14 +352,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         mutable std::recursive_mutex callMutex_ {};
 
         std::vector<std::function<void(CallState, ConnectionState, int)>> stateChangedListeners_ {};
-
-        // Informations about call socket / audio
-
-        /** Local audio port, as seen by me. */
-        unsigned int localAudioPort_ {0};
-
-        /** Local video port, as seen by me. */
-        unsigned int localVideoPort_ {0};
 
         /** Unique ID of the call */
         std::string id_;
