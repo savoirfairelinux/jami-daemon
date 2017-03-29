@@ -51,6 +51,7 @@ class RingBufferPool;
 class VideoManager;
 class Conference;
 class AudioLoop;
+class IceTransportFactory;
 
 /** Manager (controller) of Ring daemon */
 class Manager {

@@ -108,7 +108,6 @@ Call::removeCall()
 {
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
-    iceTransport_.reset();
     setState(CallState::OVER);
     recAudio_->closeFile();
 }
@@ -340,28 +339,6 @@ Call::getNullDetails()
     };
 }
 
-bool
-Call::initIceTransport(bool master, unsigned channel_num)
-{
-    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    iceTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
-                                                        channel_num, master,
-                                                        account_.getIceOptions());
-    return static_cast<bool>(iceTransport_);
-}
-
-bool
-Call::isIceRunning() const
-{
-    return iceTransport_ and iceTransport_->isRunning();
-}
-
-std::unique_ptr<IceSocket>
-Call::newIceSocket(unsigned compId)
-{
-    return std::unique_ptr<IceSocket> {new IceSocket(iceTransport_, compId)};
-}
-
 void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
@@ -497,7 +474,6 @@ Call::merge(Call& subcall)
         std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
         std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
         pendingInMessages_ = std::move(subcall.pendingInMessages_);
-        iceTransport_ = std::move(subcall.iceTransport_);
         if (peerNumber_.empty())
             peerNumber_ = std::move(subcall.peerNumber_);
         peerDisplayName_ = std::move(subcall.peerDisplayName_);
