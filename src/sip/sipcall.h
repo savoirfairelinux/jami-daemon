@@ -200,8 +200,6 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void generateMediaPorts();
 
-    bool startIce();
-
     void startAllMedia();
 
     void openPortsUPnP();
@@ -216,8 +214,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
 
-    std::shared_ptr<IceTransport> getIceMediaTransport() const {
-        return mediaTransport_;
+    IceTransport* getIceMediaTransport() const {
+        return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
 
 private:
@@ -280,7 +278,10 @@ private:
     unsigned int localVideoPort_ {0};
 
     ///< Transport used for media streams
-    std::shared_ptr<IceTransport> mediaTransport_ {};
+    std::shared_ptr<IceTransport> mediaTransport_;
+
+    ///< Temporary transport for media. Replace mediaTransport_ when connected with success
+    std::shared_ptr<IceTransport> tmpMediaTransport_;
 };
 
 // Helpers
