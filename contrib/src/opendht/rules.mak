@@ -1,5 +1,5 @@
 # OPENDHT
-OPENDHT_HASH := b08b2f14f20e0dbaa00fc2c70347d578c70e49da
+OPENDHT_HASH := c424eb91609f6731261a9c6c466c9862a1f1b839
 OPENDHT_GITURL := https://github.com/savoirfairelinux/opendht.git
 
 PKGS += opendht
