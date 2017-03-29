@@ -726,25 +726,28 @@ SIPCall::onPeerRinging()
 void
 SIPCall::setupLocalSDPFromIce()
 {
-    if (not mediaTransport_) {
-        RING_WARN("[call:%s] null icetransport, no attributes added to SDP", getCallId().c_str());
+    auto media_tr = getIceMediaTransport();
+
+    if (not media_tr) {
+        RING_WARN("[call:%s] no media ICE transport, SDP not changed", getCallId().c_str());
         return;
     }
 
     // we need an initialized ICE to progress further
-    if (mediaTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
+    if (media_tr->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
         RING_ERR("[call:%s] Medias' ICE init failed", getCallId().c_str());
         return;
     }
 
-    sdp_->addIceAttributes(mediaTransport_->getLocalAttributes());
+    RING_WARN("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
+    sdp_->addIceAttributes(media_tr->getLocalAttributes());
 
     // Add video and audio channels
-    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
-    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
+    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, media_tr->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
+    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, media_tr->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
 #ifdef RING_VIDEO
-    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
-    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
+    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, media_tr->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
+    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, media_tr->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
 #endif
 }
 
@@ -752,12 +755,13 @@ std::vector<IceCandidate>
 SIPCall::getAllRemoteCandidates()
 {
     std::vector<IceCandidate> rem_candidates;
+    auto media_tr = getIceMediaTransport();
 
-    auto addSDPCandidates = [this](unsigned sdpMediaId,
-                                   std::vector<IceCandidate>& out) {
+    auto addSDPCandidates = [&, this](unsigned sdpMediaId,
+                                      std::vector<IceCandidate>& out) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
-            if (mediaTransport_->getCandidateFromSDP(line, cand)) {
+            if (media_tr->getCandidateFromSDP(line, cand)) {
                 RING_DBG("[call:%s] add remote ICE candidate: %s", getCallId().c_str(), line.c_str());
                 out.emplace_back(cand);
             }
@@ -770,23 +774,6 @@ SIPCall::getAllRemoteCandidates()
 #endif
 
     return rem_candidates;
-}
-
-bool
-SIPCall::startIce()
-{
-    if (not mediaTransport_ or mediaTransport_->isFailed() or not mediaTransport_->isInitialized())
-        return false;
-    if (mediaTransport_->isStarted()) {
-        RING_DBG("[call:%s] ICE already started", getCallId().c_str());
-        return true;
-    }
-    auto rem_ice_attrs = sdp_->getIceAttributes();
-    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
-        RING_ERR("[call:%s] ICE empty attributes", getCallId().c_str());
-        return false;
-    }
-    return mediaTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
 }
 
 bool
@@ -949,43 +936,88 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
     }
 }
 
+/// \brief Prepare media transport and launch media stream based on negotiated SDP
+///
+/// This method has to be called by link (ie SipVoIpLink) when SDP is negotiated and
+/// media streams structures are knows.
+/// In case of ICE transport used, the medias streams are launched asynchonously when
+/// the transport is negotiated.
 void
 SIPCall::onMediaUpdate()
 {
-    RING_WARN("[call:%s] onMediaUpdate", getCallId().c_str());
-    stopAllMedia();
-    openPortsUPnP();
-    if (startIce()) {
-        if (not parent_.load())
-            waitForIceAndStartMedia();
-    } else {
-        RING_WARN("[call:%s] ICE not used for media", getCallId().c_str());
+    RING_WARN("[call:%s] medias changed", getCallId().c_str());
+
+    // If ICE is not used, start medias now
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+        RING_WARN("[call:%s] no remote ICE for medias", getCallId().c_str());
+        stopAllMedia();
         startAllMedia();
+        return;
     }
+
+    // If we are a subcall let the parent manage it after merge operation
+    if (not parent_.load())
+        waitForIceAndStartMedia();
 }
 
 void
 SIPCall::waitForIceAndStartMedia()
 {
-    auto ice = mediaTransport_;
-    auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
-    auto wthis = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
-    Manager::instance().addTask([wthis,ice,iceTimeout] {
-        if (auto sthis = wthis.lock()) {
-            auto& this_ = *sthis;
-            if (ice != this_.mediaTransport_) {
-                RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
+    // Initialization waiting task
+    auto weak_call = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
+    Manager::instance().addTask([weak_call] {
+        // TODO: polling algo, to it by event
+        if (auto call = weak_call.lock()) {
+            auto ice = call->getIceMediaTransport();
+
+            if (ice->isFailed()) {
+                RING_ERR("[call:%s] Media ICE init failed", call->getCallId().c_str());
+                call->onFailure(EIO);
                 return false;
             }
-            /* First step: wait for an ICE transport for SIP channel */
-            if (this_.mediaTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
-                RING_DBG("[call:%s] ICE init failed (or timeout)", this_.getCallId().c_str());
-                this_.onFailure(ETIMEDOUT);
-                return false;
-            }
-            if (not this_.mediaTransport_->isRunning())
+
+            if (!ice->isInitialized())
                 return true;
-            this_.startAllMedia();
+
+            // Start transport on SDP data and wait for negotation
+            auto rem_ice_attrs = call->sdp_->getIceAttributes();
+            if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+                RING_ERR("[call:%s] Media ICE attributes empty", call->getCallId().c_str());
+                call->onFailure(EIO);
+                return false;
+            }
+            if (not ice->start(rem_ice_attrs, call->getAllRemoteCandidates())) {
+                RING_ERR("[call:%s] Media ICE start failed", call->getCallId().c_str());
+                call->onFailure(EIO);
+                return false;
+            }
+
+            // Negotiation waiting task
+            Manager::instance().addTask([weak_call] {
+                if (auto call = weak_call.lock()) {
+                    auto ice = call->getIceMediaTransport();
+
+                    if (ice->isFailed()) {
+                        RING_ERR("[call:%s] Media ICE negotation failed", call->getCallId().c_str());
+                        call->onFailure(EIO);
+                        return false;
+                    }
+
+                    if (not ice->isRunning())
+                        return true;
+
+                    // Nego succeed: move to the new media transport
+                    call->stopAllMedia();
+                    if (call->tmpMediaTransport_)
+                        call->mediaTransport_ = std::move(call->tmpMediaTransport_);
+                    call->startAllMedia();
+                    return false;
+                }
+                return false;
+            });
+
+            return false;
         }
         return false;
     });
@@ -1004,6 +1036,7 @@ SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
     setRemoteSdp(offer);
     sdp_->startNegotiation();
     pjsip_inv_set_sdp_answer(inv.get(), sdp_->getLocalSdpSession());
+    openPortsUPnP();
 }
 
 void
@@ -1104,17 +1137,20 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
 bool
 SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
 {
+    RING_DBG("[call:%s] create media ICE transport", getCallId().c_str());
+
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
-    mediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
-                                                          channel_num, master,
-                                                          getAccount().getIceOptions());
-    if (mediaTransport_) {
+    tmpMediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
+                                                             channel_num, master,
+                                                             getAccount().getIceOptions());
+    if (tmpMediaTransport_) {
+        // Add account's public IP as host candidate
         if (const auto& publicIP = getSIPAccount().getPublishedIpAddress()) {
-            for (unsigned compId = 1; compId <= mediaTransport_->getComponentCount(); ++compId)
-                mediaTransport_->registerPublicIP(compId, publicIP);
+            for (unsigned compId = 1; compId <= tmpMediaTransport_->getComponentCount(); ++compId)
+                tmpMediaTransport_->registerPublicIP(compId, publicIP);
         }
     }
-    return static_cast<bool>(mediaTransport_);
+    return static_cast<bool>(tmpMediaTransport_);
 }
 
 void
@@ -1136,11 +1172,11 @@ SIPCall::merge(Call& call)
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
     mediaTransport_ = std::move(subcall.mediaTransport_);
+    tmpMediaTransport_ = std::move(subcall.tmpMediaTransport_);
 
     Call::merge(subcall);
 
-    if (mediaTransport_->isStarted())
-        waitForIceAndStartMedia();
+    waitForIceAndStartMedia();
 }
 
 void
@@ -1149,14 +1185,23 @@ SIPCall::setRemoteSdp(const pjmedia_sdp_session* sdp)
     if (!sdp)
         return;
 
-    auto ice_attrs = Sdp::getIceAttributes(sdp);
-    if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
-        if (not mediaTransport_) {
-            RING_DBG("Initializing ICE transport");
-            initIceMediaTransport(false);
-        }
-        setupLocalSDPFromIce();
+    // If ICE is not used, start medias now
+    auto rem_ice_attrs = sdp_->getIceAttributes();
+    if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
+        RING_WARN("[call:%s] no ICE data in remote SDP", getCallId().c_str());
+        return;
     }
+
+    if (not initIceMediaTransport(false)) {
+        // Fatal condition
+        // TODO: what's SIP rfc says about that?
+        // (same question in waitForIceAndStartMedia)
+        onFailure(EIO);
+        return;
+    }
+
+    // WARNING: This call blocks! (need ice init done)
+    setupLocalSDPFromIce();
 }
 
 bool
