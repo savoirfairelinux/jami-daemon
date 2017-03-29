@@ -200,7 +200,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     }
 
     auto toUri = getToUri(to);
-    call->initIceTransport(true);
+    call->initIceMediaTransport(true);
     call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
     call->initRecFilename(to);
