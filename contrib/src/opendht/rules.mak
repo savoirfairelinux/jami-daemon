@@ -1,6 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := b08b2f14f20e0dbaa00fc2c70347d578c70e49da
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+OPENDHT_HASH := b08b2f14f20e0dbaa00fc2c70347d578c70e49da
+OPENDHT_GITURL := https://github.com/savoirfairelinux/opendht.git
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht'),)
@@ -15,14 +15,14 @@ ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
 DEPS_opendht += gnutls $(DEPS_gnutls)
 endif
 
-$(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
-	$(call download,$(OPENDHT_URL))
+$(TARBALLS)/opendht-$(OPENDHT_HASH).tar.xz:
+	$(call download_git,$(OPENDHT_GITURL),master,$(OPENDHT_HASH),$(GIT) submodule update --init)
 
-.sum-opendht: opendht-$(OPENDHT_VERSION).tar.gz
+.sum-opendht: opendht-$(OPENDHT_HASH).tar.xz
 	$(warning $@ not implemented)
 	touch $@
 
-opendht: opendht-$(OPENDHT_VERSION).tar.gz .sum-opendht
+opendht: opendht-$(OPENDHT_HASH).tar.xz .sum-opendht
 	$(UNPACK)
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
