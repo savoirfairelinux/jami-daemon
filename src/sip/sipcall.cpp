@@ -40,6 +40,7 @@
 #include "dring/call_const.h"
 #include "dring/media_const.h"
 #include "client/ring_signal.h"
+#include "ice_transport.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -232,7 +233,7 @@ SIPCall::SIPSessionReinvite()
                               getState() == CallState::HOLD))
         return !PJ_SUCCESS;
 
-    if (initIceTransport(true))
+    if (initIceMediaTransport(true))
         setupLocalSDPFromIce();
 
     pjsip_tx_data* tdata;
@@ -684,6 +685,7 @@ SIPCall::removeCall()
 {
     RING_WARN("[call:%s] removeCall()", getCallId().c_str());
     Call::removeCall();
+    mediaTransport_.reset();
     inv.reset();
     setTransport({});
 }
@@ -724,25 +726,25 @@ SIPCall::onPeerRinging()
 void
 SIPCall::setupLocalSDPFromIce()
 {
-    if (not iceTransport_) {
+    if (not mediaTransport_) {
         RING_WARN("[call:%s] null icetransport, no attributes added to SDP", getCallId().c_str());
         return;
     }
 
     // we need an initialized ICE to progress further
-    if (iceTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
+    if (mediaTransport_->waitForInitialization(DEFAULT_ICE_INIT_TIMEOUT) <= 0) {
         RING_ERR("[call:%s] Medias' ICE init failed", getCallId().c_str());
         return;
     }
 
-    sdp_->addIceAttributes(iceTransport_->getLocalAttributes());
+    sdp_->addIceAttributes(mediaTransport_->getLocalAttributes());
 
     // Add video and audio channels
-    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
-    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
+    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_AUDIO_RTP_COMPID));
+    sdp_->addIceCandidates(SDP_AUDIO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_AUDIO_RTCP_COMPID));
 #ifdef RING_VIDEO
-    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
-    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, iceTransport_->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
+    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_VIDEO_RTP_COMPID));
+    sdp_->addIceCandidates(SDP_VIDEO_MEDIA_ID, mediaTransport_->getLocalCandidates(ICE_VIDEO_RTCP_COMPID));
 #endif
 }
 
@@ -755,7 +757,7 @@ SIPCall::getAllRemoteCandidates()
                                    std::vector<IceCandidate>& out) {
         IceCandidate cand;
         for (auto& line : sdp_->getIceCandidates(sdpMediaId)) {
-            if (iceTransport_->getCandidateFromSDP(line, cand)) {
+            if (mediaTransport_->getCandidateFromSDP(line, cand)) {
                 RING_DBG("[call:%s] add remote ICE candidate: %s", getCallId().c_str(), line.c_str());
                 out.emplace_back(cand);
             }
@@ -773,9 +775,9 @@ SIPCall::getAllRemoteCandidates()
 bool
 SIPCall::startIce()
 {
-    if (not iceTransport_ or iceTransport_->isFailed() or not iceTransport_->isInitialized())
+    if (not mediaTransport_ or mediaTransport_->isFailed() or not mediaTransport_->isInitialized())
         return false;
-    if (iceTransport_->isStarted()) {
+    if (mediaTransport_->isStarted()) {
         RING_DBG("[call:%s] ICE already started", getCallId().c_str());
         return true;
     }
@@ -784,7 +786,7 @@ SIPCall::startIce()
         RING_ERR("[call:%s] ICE empty attributes", getCallId().c_str());
         return false;
     }
-    return iceTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
+    return mediaTransport_->start(rem_ice_attrs, getAllRemoteCandidates());
 }
 
 bool
@@ -965,23 +967,23 @@ SIPCall::onMediaUpdate()
 void
 SIPCall::waitForIceAndStartMedia()
 {
-    auto ice = iceTransport_;
+    auto ice = mediaTransport_;
     auto iceTimeout = std::chrono::steady_clock::now() + std::chrono::seconds(10);
     auto wthis = std::weak_ptr<SIPCall>(std::static_pointer_cast<SIPCall>(shared_from_this()));
     Manager::instance().addTask([wthis,ice,iceTimeout] {
         if (auto sthis = wthis.lock()) {
             auto& this_ = *sthis;
-            if (ice != this_.iceTransport_) {
+            if (ice != this_.mediaTransport_) {
                 RING_WARN("[call:%s] ICE transport replaced", this_.getCallId().c_str());
                 return false;
             }
             /* First step: wait for an ICE transport for SIP channel */
-            if (this_.iceTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
+            if (this_.mediaTransport_->isFailed() or std::chrono::steady_clock::now() >= iceTimeout) {
                 RING_DBG("[call:%s] ICE init failed (or timeout)", this_.getCallId().c_str());
                 this_.onFailure(ETIMEDOUT);
                 return false;
             }
-            if (not this_.iceTransport_->isRunning())
+            if (not this_.mediaTransport_->isRunning())
                 return true;
             this_.startAllMedia();
         }
@@ -1100,16 +1102,19 @@ SIPCall::InvSessionDeleter::operator ()(pjsip_inv_session* inv) const noexcept
 }
 
 bool
-SIPCall::initIceTransport(bool master, unsigned channel_num)
+SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
 {
-    auto result = Call::initIceTransport(master, channel_num);
-    if (result) {
+    auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
+    mediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
+                                                          channel_num, master,
+                                                          getAccount().getIceOptions());
+    if (mediaTransport_) {
         if (const auto& publicIP = getSIPAccount().getPublishedIpAddress()) {
-            for (unsigned compId = 1; compId <= iceTransport_->getComponentCount(); ++compId)
-                iceTransport_->registerPublicIP(compId, publicIP);
+            for (unsigned compId = 1; compId <= mediaTransport_->getComponentCount(); ++compId)
+                mediaTransport_->registerPublicIP(compId, publicIP);
         }
     }
-    return result;
+    return static_cast<bool>(mediaTransport_);
 }
 
 void
@@ -1130,10 +1135,11 @@ SIPCall::merge(Call& call)
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
     localAudioPort_ = subcall.localAudioPort_;
     localVideoPort_ = subcall.localVideoPort_;
+    mediaTransport_ = std::move(subcall.mediaTransport_);
 
     Call::merge(subcall);
 
-    if (iceTransport_->isStarted())
+    if (mediaTransport_->isStarted())
         waitForIceAndStartMedia();
 }
 
@@ -1145,12 +1151,24 @@ SIPCall::setRemoteSdp(const pjmedia_sdp_session* sdp)
 
     auto ice_attrs = Sdp::getIceAttributes(sdp);
     if (not ice_attrs.ufrag.empty() and not ice_attrs.pwd.empty()) {
-        if (not getIceTransport()) {
+        if (not mediaTransport_) {
             RING_DBG("Initializing ICE transport");
-            initIceTransport(false);
+            initIceMediaTransport(false);
         }
         setupLocalSDPFromIce();
     }
+}
+
+bool
+SIPCall::isIceRunning() const
+{
+    return mediaTransport_ and mediaTransport_->isRunning();
+}
+
+std::unique_ptr<IceSocket>
+SIPCall::newIceSocket(unsigned compId)
+{
+    return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
 }
 
 } // namespace ring
