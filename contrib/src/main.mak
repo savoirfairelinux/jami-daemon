@@ -330,7 +330,7 @@ else
 download_git = \
 	rm -Rf $(@:.tar.xz=) && \
 	$(GIT) clone $(2:%=--branch %) $(1) $(@:.tar.xz=) && \
-	(cd $(@:.tar.xz=) && $(GIT) checkout $(3:%= %)) && \
+	(cd $(@:.tar.xz=) && $(GIT) checkout $(3:%= %) && exec $(4)) && \
 	rm -Rf $(@:%.tar.xz=%)/.git && \
 	(cd $(dir $@) && \
 	tar cvJ $(notdir $(@:.tar.xz=))) > $@ && \
