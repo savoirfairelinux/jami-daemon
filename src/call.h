@@ -31,7 +31,6 @@
 
 #include "recordable.h"
 #include "ip_utils.h"
-#include "ice_transport.h"
 
 #include <mutex>
 #include <map>
@@ -289,16 +288,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         void onTextMessage(std::map<std::string, std::string>&& messages);
 
-        virtual bool initIceTransport(bool master, unsigned channel_num=4);
-
-        bool isIceRunning() const;
-
-        std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
-
-        std::shared_ptr<IceTransport> getIceTransport() const {
-            return iceTransport_;
-        }
-
         virtual bool useVideoCodec(const AccountVideoCodecInfo* /*codec*/) const {
             return false;
         }
@@ -318,8 +307,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         Call(Account& account, const std::string& id, Call::CallType type);
 
         // TODO all these members are not protected against multi-thread access
-
-        std::shared_ptr<IceTransport> iceTransport_ {};
 
         bool isAudioMuted_{false};
         bool isVideoMuted_{false};
