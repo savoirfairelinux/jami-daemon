@@ -29,6 +29,7 @@
 #include "client/ring_signal.h"
 
 #include <ctime>
+#include <algorithm>
 
 namespace ring {
 

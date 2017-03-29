@@ -564,13 +564,13 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 {
     RING_WARN("RingAccount::createOutgoingCall to: %s target: %s",
               to_id.c_str(), target.toString(true).c_str());
-    call->initIceTransport(true);
+    call->initIceMediaTransport(true);
     call->setIPToIP(true);
     call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
     call->initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
-    call->setCallMediaLocal(call->getIceTransport()->getDefaultLocalAddress());
+    call->setCallMediaLocal(call->getIceMediaTransport()->getDefaultLocalAddress());
 
     IpAddr addrSdp;
     if (getUPnPActive()) {
