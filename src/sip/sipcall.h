@@ -43,6 +43,7 @@
 struct pjsip_evsub;
 struct pjsip_inv_session;
 struct pjmedia_sdp_session;
+struct pj_ice_sess_cand;
 
 namespace ring {
 
@@ -50,6 +51,9 @@ class Sdp;
 class SIPAccountBase;
 class SipTransport;
 class AudioRtpSession;
+class IceTransport;
+
+using IceCandidate = pj_ice_sess_cand;
 
 namespace upnp {
 class Controller;
@@ -99,7 +103,6 @@ public: // overridden
     void restartMediaReceiver() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
     std::map<std::string, std::string> getDetails() const override;
-    bool initIceTransport(bool master, unsigned channel_num=4) override;
 
 public: // SIP related
     /**
@@ -207,6 +210,16 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         peerRegistredName_ = name;
     }
 
+    bool initIceMediaTransport(bool master, unsigned channel_num=4);
+
+    bool isIceRunning() const;
+
+    std::unique_ptr<IceSocket> newIceSocket(unsigned compId);
+
+    std::shared_ptr<IceTransport> getIceMediaTransport() const {
+        return mediaTransport_;
+    }
+
 private:
     NON_COPYABLE(SIPCall);
 
@@ -265,6 +278,9 @@ private:
 
     /** Local video port, as seen by me. */
     unsigned int localVideoPort_ {0};
+
+    ///< Transport used for media streams
+    std::shared_ptr<IceTransport> mediaTransport_ {};
 };
 
 // Helpers
