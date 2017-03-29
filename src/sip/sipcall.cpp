@@ -136,9 +136,9 @@ SIPCall::getSIPAccount() const
 void
 SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
 {
-    if (getLocalAudioPort() == 0
+    if (localAudioPort_ == 0
 #ifdef RING_VIDEO
-        || getLocalVideoPort() == 0
+        || localVideoPort_ == 0
 #endif
         )
         generateMediaPorts();
@@ -152,19 +152,19 @@ SIPCall::generateMediaPorts()
     // Reference: http://www.cs.columbia.edu/~hgs/rtp/faq.html#ports
     // We only want to set ports to new values if they haven't been set
     const unsigned callLocalAudioPort = account.generateAudioPort();
-    if (getLocalAudioPort() != 0)
-        account.releasePort(getLocalAudioPort());
-    setLocalAudioPort(callLocalAudioPort);
+    if (localAudioPort_ != 0)
+        account.releasePort(localAudioPort_);
+    localAudioPort_ = callLocalAudioPort;
     sdp_->setLocalPublishedAudioPort(callLocalAudioPort);
 
 #ifdef RING_VIDEO
     // https://projects.savoirfairelinux.com/issues/17498
     const unsigned int callLocalVideoPort = account.generateVideoPort();
-    if (getLocalVideoPort() != 0)
-        account.releasePort(getLocalVideoPort());
+    if (localVideoPort_ != 0)
+        account.releasePort(localVideoPort_);
     // this should already be guaranteed by SIPAccount
-    assert(getLocalAudioPort() != callLocalVideoPort);
-    setLocalVideoPort(callLocalVideoPort);
+    assert(localAudioPort_ != callLocalVideoPort);
+    localVideoPort_ = callLocalVideoPort;
     sdp_->setLocalPublishedVideoPort(callLocalVideoPort);
 #endif
 }
@@ -1128,6 +1128,8 @@ SIPCall::merge(Call& call)
     upnp_ = std::move(subcall.upnp_);
     std::copy_n(subcall.contactBuffer_, PJSIP_MAX_URL_SIZE, contactBuffer_);
     pj_strcpy(&contactHeader_, &subcall.contactHeader_);
+    localAudioPort_ = subcall.localAudioPort_;
+    localVideoPort_ = subcall.localVideoPort_;
 
     Call::merge(subcall);
 
