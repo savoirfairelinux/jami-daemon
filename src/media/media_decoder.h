@@ -120,9 +120,9 @@ class MediaDecoder {
 
         // Jitter buffer options: they are default values set in libav
         // maximum of packet jitter buffer can queue
-        const unsigned jitterBufferMaxSize_ {500};
-        // maximum time a packet can be queued (in ms)
-        const unsigned jitterBufferMaxDelay_ {100000};
+        const unsigned jitterBufferMaxSize_ {1500};
+        // maximum time a packet can be queued (in us)
+        const unsigned jitterBufferMaxDelay_ {1000000};
 
 #ifdef RING_ACCEL
         bool enableAccel_ = true;
