@@ -1890,7 +1890,9 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
+#ifndef RING_UWP
         playRingtone(accountId);
+#endif
     }
 
     pimpl_->addWaitingCall(callID);
