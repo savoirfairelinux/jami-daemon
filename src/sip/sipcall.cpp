@@ -861,7 +861,7 @@ SIPCall::startAllMedia()
                            newIceSocket(ice_comp_id + 1));
                 ice_comp_id += 2;
             } else
-                rtp->start();
+                rtp->start(nullptr, nullptr);
         }
 
         switch (local.type) {
