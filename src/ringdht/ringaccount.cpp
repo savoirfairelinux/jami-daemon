@@ -1427,17 +1427,20 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
         ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
         updated = true;
+        RING_DBG("CA CRT re-generated");
     }
 
     // Update certificate
     if (updated or not cert->isCA() or cert->getExpiration() < clock::now()) {
         cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Ring", dht::crypto::Identity{archive.ca_key, ca}, true));
         updated = true;
+        RING_DBG("ring CRT re-generated");
     }
 
     if (updated and device.first and *device.first) {
         // update device certificate
         device.second = std::make_shared<Certificate>(Certificate::generate(*device.first, "Ring device", archive.id));
+        RING_DBG("device CRT re-generated");
     }
 
     return updated;
