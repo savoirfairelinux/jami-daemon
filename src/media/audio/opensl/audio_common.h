@@ -17,7 +17,7 @@
 
 
 #pragma once
-
+#include <SLES/OpenSLES.h>
 #include <SLES/OpenSLES_Android.h>
 
 #include "buf_manager.h"
