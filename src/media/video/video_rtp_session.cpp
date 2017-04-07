@@ -1,8 +1,10 @@
 /*
  *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
  *
+ *  Author: Anthony Léonard <anthony.leonard@savoirfairelinux.com>
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
+ *  Author: Olivier Soldano <olivier.soldano@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -114,6 +116,8 @@ void VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
             rtcpCheckerThread_.join();
+        else
+            getVideoBitrateInfo();
     }
 }
 
