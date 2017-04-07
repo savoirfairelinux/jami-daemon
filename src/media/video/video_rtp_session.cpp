@@ -114,6 +114,8 @@ void VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
             rtcpCheckerThread_.join();
+        else
+            getVideoBitrateInfo();
     }
 }
 
