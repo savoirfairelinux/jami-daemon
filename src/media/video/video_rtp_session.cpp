@@ -53,16 +53,28 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     RtpSession(callID), localVideoParams_(localVideoParams)
     , lastRTCPCheck_(std::chrono::system_clock::now())
     , lastLongRTCPCheck_(std::chrono::system_clock::now())
-    , rtcpCheckerThread_(std::bind(&VideoRtpSession::setupRtcpChecker, this),
+    , videoBitrateInfo_ {}
+    , rtcpCheckerThread_([] { return true; },
             std::bind(&VideoRtpSession::processRtcpChecker, this),
             std::bind(&VideoRtpSession::cleanupRtcpChecker, this))
     , receiverRestartThread_([]{ return true; },
             [this]{ processReceiverRestart(); },
             []{})
-{}
+{
+    setupVideoBitrateInfo(); // reset bitrate
+}
 
 VideoRtpSession::~VideoRtpSession()
 { stop(); }
+
+/// Setup internal VideoBitrateInfo structure from media descriptors.
+///
+void
+VideoRtpSession::updateMedia(const MediaDescription& send, const MediaDescription& receive)
+{
+    BaseType::updateMedia(send, receive);
+    setupVideoBitrateInfo();
+}
 
 void VideoRtpSession::startSender()
 {
@@ -114,8 +126,6 @@ void VideoRtpSession::startSender()
             rtcpCheckerThread_.start();
         else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
             rtcpCheckerThread_.join();
-        else
-            getVideoBitrateInfo();
     }
 }
 
@@ -500,8 +510,9 @@ VideoRtpSession::adaptQualityAndBitrate()
             });
     }
 }
+
 void
-VideoRtpSession::getVideoBitrateInfo() {
+VideoRtpSession::setupVideoBitrateInfo() {
     auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
     if (codecVideo) {
         videoBitrateInfo_ = {
@@ -516,7 +527,9 @@ VideoRtpSession::getVideoBitrateInfo() {
             videoBitrateInfo_.packetLostThreshold,
         };
     } else {
-        videoBitrateInfo_ = {0,0,0,0,0,0,0,0,0};
+        videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0,
+                             MAX_ADAPTATIVE_BITRATE_ITERATION,
+                             PACKET_LOSS_THRESHOLD};
     }
 }
 
@@ -544,12 +557,6 @@ VideoRtpSession::storeVideoBitrateInfo() {
         histoBitrate_.push_back(videoBitrateInfo_.videoBitrateCurrent);
 
     }
-}
-bool
-VideoRtpSession::setupRtcpChecker()
-{
-    getVideoBitrateInfo();
-    return true;
 }
 
 void

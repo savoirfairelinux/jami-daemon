@@ -55,9 +55,13 @@ struct VideoBitrateInfo {
 
 class VideoRtpSession : public RtpSession {
 public:
+    using BaseType = RtpSession;
+
     VideoRtpSession(const std::string& callID,
                     const DeviceParams& localVideoParams);
     ~VideoRtpSession();
+
+    void updateMedia(const MediaDescription& send, const MediaDescription& receive) override;
 
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock) override;
@@ -100,9 +104,8 @@ private:
     unsigned getLowerBitrate();
     void adaptQualityAndBitrate();
     void storeVideoBitrateInfo();
-    void getVideoBitrateInfo();
+    void setupVideoBitrateInfo();
     void checkReceiver();
-
 
     // interval in seconds between RTCP checkings
     const unsigned RTCP_CHECKING_INTERVAL {4};
@@ -111,7 +114,7 @@ private:
     // no packet loss can be calculated as no data in input
     static constexpr float NO_PACKET_LOSS_CALCULATED {-1.0};
     // bitrate and quality info struct
-    VideoBitrateInfo videoBitrateInfo_ = {0,0,0,0,0,0,0, MAX_ADAPTATIVE_BITRATE_ITERATION, PACKET_LOSS_THRESHOLD};
+    VideoBitrateInfo videoBitrateInfo_;
     // previous quality and bitrate used if quality or bitrate need to be decreased
     std::list<unsigned> histoQuality_ {};
     std::list<unsigned> histoBitrate_ {};
@@ -128,7 +131,6 @@ private:
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 
     InterruptedThreadLoop rtcpCheckerThread_;
-    bool setupRtcpChecker();
     void processRtcpChecker();
     void cleanupRtcpChecker();
 
