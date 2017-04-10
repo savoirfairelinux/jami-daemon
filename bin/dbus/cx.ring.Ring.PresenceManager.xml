@@ -74,6 +74,7 @@
             <arg type="aa{ss}" name="credentialInformation" direction="out" tp:type="String_String_Map">
                 <tp:docstring>
                    List of hashes map with the following key-value pairs:
+                    * Buddy:      URI of the contact
                     * Status:     "Online" or "Offline"
                     * LineStatus: String
                </tp:docstring>
