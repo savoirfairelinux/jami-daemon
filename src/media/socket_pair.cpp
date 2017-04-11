@@ -252,7 +252,6 @@ SocketPair::saveRtcpPacket(uint8_t* buf, size_t len)
     std::lock_guard<std::mutex> lock(rtcpInfo_mutex_);
 
     if (listRtcpHeader_.size() >= MAX_LIST_SIZE) {
-        RING_WARN("Need to drop RTCP packets");
         listRtcpHeader_.pop_front();
     }
 
