@@ -326,8 +326,24 @@ IceTransport::onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
 
     if (op == PJ_ICE_STRANS_OP_INIT and on_initdone_cb_)
         on_initdone_cb_(*this, done);
-    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION and on_negodone_cb_)
-        on_negodone_cb_(*this, done);
+    else if (op == PJ_ICE_STRANS_OP_NEGOTIATION) {
+        if (done) {
+            // Dump of connection pairs
+            std::stringstream out;
+            for (unsigned i=0; i < component_count_; ++i) {
+                auto laddr = getLocalAddress(i);
+                auto raddr = getRemoteAddress(i);
+                out << " [" << i << "] "
+                    << laddr.toString(true, true)
+                    << " <-> "
+                    << raddr.toString(true, true)
+                    << '\n';
+            }
+            RING_DBG("[ice:%p] connection pairs (local <-> remote):\n%s", this, out.str().c_str());
+        }
+        if (on_negodone_cb_)
+            on_negodone_cb_(*this, done);
+    }
 
     // Unlock waitForXXX APIs
     iceCV_.notify_all();
