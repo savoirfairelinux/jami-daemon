@@ -643,8 +643,10 @@ IceTransport::getLocalCandidatesAddr(unsigned comp_id) const
 bool
 IceTransport::registerPublicIP(unsigned compId, const IpAddr& publicIP)
 {
-    if (not isInitialized())
+    if (not isInitialized()) {
+        RING_ERR("IceTransport::registerPublicIP() called on non initialized transport");
         return false;
+    }
 
     // Find the local candidate corresponding to local host,
     // then register a rflx candidate using given public address
