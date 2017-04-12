@@ -739,6 +739,11 @@ SIPCall::setupLocalSDPFromIce()
         return;
     }
 
+    if (const auto& ip = getSIPAccount().getPublishedIpAddress()) {
+        for (unsigned compId = 1; compId <= media_tr->getComponentCount(); ++compId)
+            media_tr->registerPublicIP(compId, ip);
+    }
+
     RING_WARN("[call:%s] fill SDP with ICE transport %p", getCallId().c_str(), media_tr);
     sdp_->addIceAttributes(media_tr->getLocalAttributes());
 
@@ -1143,13 +1148,6 @@ SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
     tmpMediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),
                                                              channel_num, master,
                                                              getAccount().getIceOptions());
-    if (tmpMediaTransport_) {
-        // Add account's public IP as host candidate
-        if (const auto& publicIP = getSIPAccount().getPublishedIpAddress()) {
-            for (unsigned compId = 1; compId <= tmpMediaTransport_->getComponentCount(); ++compId)
-                tmpMediaTransport_->registerPublicIP(compId, publicIP);
-        }
-    }
     return static_cast<bool>(tmpMediaTransport_);
 }
 
