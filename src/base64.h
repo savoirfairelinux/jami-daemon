@@ -21,37 +21,13 @@
 #include <stdint.h>
 #include <stddef.h>
 
-/**
- * Encode a buffer in base64.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a base64-encoded buffer
- *
- * @note callers should free the returned memory
- */
-char *ring_base64_encode(const uint8_t *input, size_t input_length,
-                         char *output, size_t *output_length);
-
-/**
- * Decode a base64 buffer.
- *
- * @param data          the input buffer
- * @param input_length  the input length
- * @param output_length the resulting output length
- * @return              a buffer
- *
- * @note callers should free the returned memory
- */
-uint8_t *ring_base64_decode(const char *input, size_t input_length,
-                            uint8_t *output, size_t *output_length);
-
 #include <string>
 #include <vector>
 
 namespace ring {
 namespace base64 {
+
+class base64_exception : public std::exception { };
 
 std::string encode(const std::vector<uint8_t>::const_iterator begin, const std::vector<uint8_t>::const_iterator end);
 std::string encode(const std::vector<uint8_t>& dat);
