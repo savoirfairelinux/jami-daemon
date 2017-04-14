@@ -53,6 +53,8 @@ uint8_t *ring_base64_decode(const char *input, size_t input_length,
 namespace ring {
 namespace base64 {
 
+class base64_exception : public std::exception { };
+
 std::string encode(const std::vector<uint8_t>::const_iterator begin, const std::vector<uint8_t>::const_iterator end);
 std::string encode(const std::vector<uint8_t>& dat);
 std::vector<uint8_t> decode(const std::string& str);
