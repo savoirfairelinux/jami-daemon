@@ -24,5 +24,5 @@ BOOST_AUTO_TEST_CASE(decoding_test_fail)
     // Currently, the input is not validated, i.e. the function most not throw an
     // exception if decoding fails to make sure calling code not expecting any
     // is no broken. (Some validation should be implemented sometimes later, though.
-    BOOST_WARN_NO_THROW(ring::base64::decode(test_invalid_base64), std::exception);
+    BOOST_WARN_NO_THROW(ring::base64::decode(test_invalid_base64));
 }
