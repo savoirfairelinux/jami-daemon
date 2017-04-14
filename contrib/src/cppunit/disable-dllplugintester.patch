@@ -1,0 +1,8 @@
+Description: Disable DllPlugInTester to enable building with CPPUNIT_NO_TESTPLUGIN
+Author: Florian Wiesweg <florian.wiesweg@campus.tu-berlin.de>
+
+--- a/src/Makefile.am
++++ b/src/Makefile.am
+@@ -1 +1 @@
+-SUBDIRS = cppunit DllPlugInTester
++SUBDIRS = cppunit
