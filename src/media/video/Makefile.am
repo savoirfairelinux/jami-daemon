@@ -1,6 +1,6 @@
 include $(top_srcdir)/globals.mk
 
-SUBDIRS= test
+SUBDIRS=
 
 if HAVE_LINUX
 if HAVE_ANDROID
