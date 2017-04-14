@@ -23,7 +23,7 @@ RING_VIDEO_LIBS+= \
 endif
 endif
 
-SUBDIRS = client media config hooks sip upnp security ringdht im $(RING_VIDEO_SUBDIR)
+SUBDIRS = client media config hooks sip upnp security ringdht im test $(RING_VIDEO_SUBDIR)
 
 # libring
 
