@@ -113,13 +113,29 @@ struct RingAccount::BuddyInfo
     /* the buddy id */
     dht::InfoHash id;
 
-    /* the presence timestamps */
-    std::map<dht::InfoHash, st_time_point> devicesTimestamps;
+    /* Presence timestamps
+     *  hash            : the device id.
+     *  pair<time,time> :
+     *      first: the last time the device was seen online;
+     *      second: the DHT timestamp applying to the last device announcement sent by the buddy;
+     */
+    std::map<dht::InfoHash, std::pair<st_time_point, st_time_point>> devicesTimestamps;
 
     /* The callable object to update buddy info */
     std::function<void()> updateInfo {};
 
     BuddyInfo(dht::InfoHash id) : id(id) {}
+
+    /* TODO: trouver le bon type à utiliser...
+     * ou bien utiliser c++14 :D */
+    auto lastSeenDeviceId() const {
+        return std::max_element(devicesTimestamps.begin(), devicesTimestamps.end(),
+            [](decltype(devicesTimestamps)::value_type ld, decltype(devicesTimestamps)::value_type rd)
+            {
+                return ld.second.first < rd.second.first;
+            }
+        );
+    }
 };
 
 struct RingAccount::PendingCall
@@ -263,8 +279,24 @@ private:
     using BaseClass = dht::SignedValue<DeviceAnnouncement>;
 public:
     static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
-    dht::InfoHash dev;
+    dht::InfoHash dev; /* the device id */
+
     MSGPACK_DEFINE_MAP(dev);
+};
+
+/*
+ * Time stamp information on the dht
+ */
+struct RingAccount::DhtTimeStamp : public dht::SignedValue<DhtTimeStamp>
+{
+private:
+    using BaseClass = dht::SignedValue<DhtTimeStamp>;
+public:
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    time_t time;             /* timestamp */
+    dht::Value::Id value_id; /* dht value for which the timestamp applies */
+
+    MSGPACK_DEFINE_MAP(time, value_id);
 };
 
 struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
@@ -826,6 +858,11 @@ RingAccount::makeReceipt(const dht::crypto::Identity& id)
        << "\",\"announce\":\"" << base64::encode(ann_val.getPacked()) << "\"}";
 
     announce_ = std::make_shared<dht::Value>(std::move(ann_val));
+    {
+        dht::crypto::random_device rdev;
+        std::uniform_int_distribution<dht::Value::Id> rand_id {};
+        announce_->id = rand_id(rdev);
+    }
     return is.str();
 }
 
@@ -905,6 +942,11 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     ringDeviceId_ = identity.first->getPublicKey().getId().toString();
     username_ = RING_URI_PREFIX + id;
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
+    {
+        dht::crypto::random_device rdev;
+        std::uniform_int_distribution<dht::Value::Id> rand_id {};
+        announce_->id = rand_id(rdev);
+    }
     ethAccount_ = root["eth"].asString();
 
     RING_DBG("[Account %s] ring:%s device %s receipt checked successfully", getAccountID().c_str(), id.c_str(), ringDeviceId_.c_str());
@@ -1963,21 +2005,42 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
         auto& buddy_info = buddy_infop.first->second;
         buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
             if (auto shared_this = weak_this.lock()) {
-                /* ::forEachDevice call will update buddy info accordingly. */
-                shared_this->forEachDevice(h, {}, [h, weak_this] (bool /* ok */) {
+                shared_this->forEachDevice(h, {}, [h,weak_this] (bool /* ok */) {
+                    /* ::forEachDevice call will update buddy info accordingly. */
                     if (auto shared_this = weak_this.lock()) {
+                        /* we track this buddy's presence. Let's get the device's presence timestamps. */
+                        /* TODO */
+                        /* shared_this->dht_.get(h, [](std::shared_ptr<dht::Value> v) { */
+                        /*     auto dev = std::find_if(devices_ts->begin(), devices_ts->end(), */
+                        /*                     [&ts](const std::map<dht::InfoHash, time_t>::value_type& dev) { */
+                        /*                         return dev.first == ts.from; */
+                        /*                     }); */
+                        /*     if (dev == devices_ts->end()) */
+                        /*         return true; */
+                        /*     dev->second = std::max(dev->second, ts.time); */
+                        /*     return true; */
+                        // }, [shared_this,h,devices_ts](bool /*ok*/) {
                         std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
                         auto buddy_info_it = shared_this->trackedBuddies_.find(h);
-                        if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
-
-                        auto& buddy_info = buddy_info_it->second;
-                        if (buddy_info.updateInfo) {
-                            auto cb = buddy_info.updateInfo;
-                            Manager::instance().scheduleTask(
-                                std::move(cb),
-                                st_clock::now() + DeviceAnnouncement::TYPE.expiration
-                            );
+                        if (buddy_info_it != shared_this->trackedBuddies_.end()) {
+                            /* for (auto& dev_time_pair : *devices_ts) { */
+                            /*     RING_DBG("found buddy timestamp: %lu", dev_time_pair.second); */
+                            /*     buddy_info_it->second.devicesTimestamps.at(dev_time_pair.first).second = dht::from_time_t(dev_time_pair.second); */
+                            /* } */
+                            auto& buddy_info = buddy_info_it->second;
+                            if (buddy_info.updateInfo) {
+                                auto cb = buddy_info.updateInfo;
+                                auto device_ts = buddy_info.lastSeenDeviceId()->second.second;
+                                RING_DBG("Buddy timestamp is: %lu", dht::to_time_t(device_ts));
+                                RING_DBG("now: %lu", dht::to_time_t(st_clock::now()));
+                                Manager::instance().scheduleTask(
+                                    std::move(cb),
+                                    st_clock::now() + DeviceAnnouncement::TYPE.expiration - ((st_clock::now() - device_ts) % DeviceAnnouncement::TYPE.expiration)
+                                );
+                            }
                         }
+                        /* }); */
+
                     }
                 });
             }
@@ -1993,28 +2056,22 @@ RingAccount::getTrackedBuddyPresence()
     std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
     std::map<std::string, bool> presence_info;
     const auto shared_this = std::static_pointer_cast<const RingAccount>(shared_from_this());
-    for (const auto& buddy_info_p : shared_this->trackedBuddies_) {
-        const auto& devices_ts = buddy_info_p.second.devicesTimestamps;
-        const auto& last_seen_device_id = std::max_element(devices_ts.cbegin(), devices_ts.cend(),
-            [](decltype(buddy_info_p.second.devicesTimestamps)::value_type ld,
-               decltype(buddy_info_p.second.devicesTimestamps)::value_type rd)
-            {
-                return ld.second < rd.second;
-            }
-        );
-        presence_info.emplace(buddy_info_p.first.toString(), last_seen_device_id != devices_ts.cend()
-            ? last_seen_device_id->second > st_clock::now() - DeviceAnnouncement::TYPE.expiration
+    for (auto& buddy_info_p : shared_this->trackedBuddies_) {
+        auto& devices_ts = buddy_info_p.second.devicesTimestamps;
+        auto last_seen_device_id = buddy_info_p.second.lastSeenDeviceId();
+        presence_info.emplace(buddy_info_p.first.toString(), last_seen_device_id != devices_ts.end()
+            ? last_seen_device_id->second.second > st_clock::now() - DeviceAnnouncement::TYPE.expiration
             : false);
     }
     return presence_info;
 }
 
 void
-RingAccount::onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id)
+RingAccount::onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id, st_time_point ts)
 {
     std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
     RING_DBG("Buddy %s online: (device: %s)", buddy_info_it->second.id.toString().c_str(), device_id.toString().c_str());
-    buddy_info_it->second.devicesTimestamps[device_id] = st_clock::now();
+    buddy_info_it->second.devicesTimestamps[device_id] = std::make_pair<st_time_point, st_time_point>(st_clock::now(), std::move(ts));
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), buddy_info_it->second.id.toString(), 1,  "");
 }
 
@@ -2126,7 +2183,16 @@ RingAccount::doRegister_()
         if (announce_) {
             auto h = dht::InfoHash(ringAccountId_);
             RING_DBG("[Account %s] announcing device at %s", getAccountID().c_str(), h.toString().c_str());
+
+            DhtTimeStamp ts;
+            ts.time = dht::to_time_t(st_clock::now());
+            std::cout << "My time stamp: " << ts.time << std::endl;
+            ts.value_id = announce_->id;
+            dht::Value ts_val {ts};
+            ts_val.sign(*identity_.first);
+
             dht_.put(h, announce_, dht::DoneCallback{}, {}, true);
+            dht_.put(h, std::move(ts_val), dht::DoneCallback{}, {}, true);
             for (const auto& crl : identity_.second->issuer->getRevocationLists())
                 dht_.put(h, crl, dht::DoneCallback{}, {}, true);
             dht_.listen<DeviceAnnouncement>(h, [shared](DeviceAnnouncement&& dev) {
@@ -3181,29 +3247,53 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
                            std::function<void(bool)> end)
 {
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
-    auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
+    auto treatedDevices = std::make_shared<std::multimap<dht::InfoHash, DhtTimeStamp>>();
     dht_.get<dht::crypto::RevocationList>(to, [to](dht::crypto::RevocationList&& crl){
         tls::CertificateStore().instance().pinRevocationList(to.toString(), std::move(crl));
         return true;
     });
-    dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
-        if (dev.from != to)
+    dht_.get(to, [shared,to,treatedDevices,op](std::shared_ptr<dht::Value> v) {
+        try {
+            DeviceAnnouncement dev = dht::Value::unpack<DeviceAnnouncement>(*v);
+            if (dev.from != to)
+                return true;
+            /* TODO: peut-être faire un find et faire un insert après le dernier élément sous la même clef si la clef
+             * un élément est trouvé à cette clef */
+            if (treatedDevices->find(dev.dev) == treatedDevices->end() and op)
+                op(shared, dev.dev);
+            DhtTimeStamp ts;
+            ts.time = clock::to_time_t(time_point::min());
+            ts.value_id = v->id;
+            treatedDevices->emplace(dev.dev, ts);
             return true;
-        if (treatedDevices->emplace(dev.dev).second and op)
-            op(shared, dev.dev);
+        } catch(const std::exception& e) {
+            std::cout << e.what() << std::endl; /* TODO: à fin de débug. Retirer */
+        }
         return true;
     }, [=](bool /*ok*/){
-        {
-            std::lock_guard<std::recursive_mutex> lock(shared->buddyInfoMtx);
-            auto buddy_info_it = shared->trackedBuddies_.find(to);
-            if (buddy_info_it != shared->trackedBuddies_.end()) {
-                if (not treatedDevices->empty()) {
-                    for (auto& device_id : *treatedDevices)
-                        shared->onTrackedBuddyOnline(buddy_info_it, device_id);
-                } else
-                    shared->onTrackedBuddyOffline(buddy_info_it);
+        shared->dht_.get<DhtTimeStamp>(to, [to,treatedDevices] (DhtTimeStamp&& ts) {
+            if (ts.from != to)
+                return true;
+            for (auto& dev_ts : *treatedDevices) {
+                if (dev_ts.second.value_id == ts.value_id) {
+                    std::cout << "found corresponding time: " << ts.time << std::endl;
+                    dev_ts.second.time = std::min(clock::to_time_t(clock::now()), std::max(dev_ts.second.time, ts.time));
+                }
             }
-        }
+        },
+        [shared,to,treatedDevices](bool /*ok*/) {
+            {
+                std::lock_guard<std::recursive_mutex> lock(shared->buddyInfoMtx);
+                auto buddy_info_it = shared->trackedBuddies_.find(to);
+                if (buddy_info_it != shared->trackedBuddies_.end()) {
+                    if (not treatedDevices->empty()) {
+                        for (auto& dev_ts : *treatedDevices)
+                            shared->onTrackedBuddyOnline(buddy_info_it, dev_ts.first, dht::from_time_t(dev_ts.second.time));
+                    } else
+                        shared->onTrackedBuddyOffline(buddy_info_it);
+                }
+            }
+        });
         RING_WARN("forEachDevice: found %lu devices", treatedDevices->size());
         if (end) end(not treatedDevices->empty());
     });

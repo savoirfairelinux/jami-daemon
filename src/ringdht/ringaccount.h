@@ -337,6 +337,7 @@ class RingAccount : public SIPAccountBase {
         struct KnownDevice;
         struct ArchiveContent;
         struct DeviceAnnouncement;
+        struct DhtTimeStamp;
         struct DeviceSync;
         struct BuddyInfo;
         struct Contact;
@@ -366,9 +367,10 @@ class RingAccount : public SIPAccountBase {
          * Update tracking info when buddy appears offline.
          *
          * @param buddy_info_it  An iterator over the map trackedBuddies_
-         * @param device_id       The device id
+         * @param device_id      The device id
+         * @param ts             The time when the buddy was first online according to him
          */
-        void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id);
+        void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id, st_time_point ts);
 
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from);
