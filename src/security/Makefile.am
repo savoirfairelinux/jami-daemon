@@ -9,4 +9,6 @@ libsecurity_la_SOURCES = \
 		tlsvalidator.cpp \
 		tlsvalidator.h \
 		certstore.cpp \
-		certstore.h
+		certstore.h \
+		securitymanager.cpp \
+		securitymanager_interface.h

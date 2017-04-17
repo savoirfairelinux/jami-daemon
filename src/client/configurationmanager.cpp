@@ -28,6 +28,7 @@
 #include "configurationmanager_interface.h"
 #include "account_schema.h"
 #include "manager.h"
+#include "security/securitymanager_interface.h"
 #include "security/tlsvalidator.h"
 #include "security/certstore.h"
 #include "logger.h"
@@ -123,122 +124,76 @@ getTlsDefaultSettings()
     };
 }
 
-std::map<std::string, std::string>
-validateCertificate(const std::string&,
-                    const std::string& certificate)
+auto
+validateCertificate(const std::string& accountId, const std::string& certificate) -> decltype(ring::tls::validateCertificate(accountId, certificate))
 {
-    try {
-        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedChecks();
-    } catch(const std::runtime_error& e) {
-        RING_WARN("Certificate loading failed: %s", e.what());
-        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
-    }
+    return ring::tls::validateCertificate(accountId, certificate);
 }
 
-std::map<std::string, std::string>
-validateCertificatePath(const std::string&,
-                    const std::string& certificate,
-                    const std::string& privateKey,
-                    const std::string& privateKeyPass,
-                    const std::string& caList)
+auto
+validateCertificatePath(const std::string& accountId, const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPass, const std::string& caList) -> decltype(ring::tls::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList))
 {
-    try {
-        return TlsValidator{certificate, privateKey, privateKeyPass, caList}.getSerializedChecks();
-    } catch(const std::runtime_error& e) {
-        RING_WARN("Certificate loading failed: %s", e.what());
-        return {{Certificate::ChecksNames::EXIST, Certificate::CheckValuesNames::FAILED}};
-    }
+    return ring::tls::validateCertificatePath(accountId, certificate, privateKey, privateKeyPass, caList);
 }
 
-std::map<std::string, std::string>
-getCertificateDetails(const std::string& certificate)
+auto
+getCertificateDetails(const std::string& certificate) -> decltype(ring::tls::getCertificateDetails(certificate))
 {
-    try {
-        return TlsValidator{CertificateStore::instance().getCertificate(certificate)}.getSerializedDetails();
-    } catch(const std::runtime_error& e) {
-        RING_WARN("Certificate loading failed: %s", e.what());
-    }
-    return {};
+    return ring::tls::getCertificateDetails(certificate);
 }
 
-std::map<std::string, std::string>
-getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword)
+auto
+getCertificateDetailsPath(const std::string& certificate, const std::string& privateKey, const std::string& privateKeyPassword) -> decltype(ring::tls::getCertificateDetailsPath(certificate, privateKey, privateKeyPassword))
 {
-    try {
-        auto crt = std::make_shared<dht::crypto::Certificate>(ring::fileutils::loadFile(certificate));
-        TlsValidator validator {certificate, privateKey, privateKeyPassword};
-        CertificateStore::instance().pinCertificate(validator.getCertificate(), false);
-        return validator.getSerializedDetails();
-    } catch(const std::runtime_error& e) {
-        RING_WARN("Certificate loading failed: %s", e.what());
-    }
-    return {};
+    return ring::tls::getCertificateDetailsPath(certificate, privateKey, privateKeyPassword);
 }
 
-std::vector<std::string>
-getPinnedCertificates()
+auto
+getPinnedCertificates() -> decltype(ring::tls::getPinnedCertificates())
 {
-    return ring::tls::CertificateStore::instance().getPinnedCertificates();
+    return ring::tls::getPinnedCertificates();
 }
 
-std::vector<std::string>
-pinCertificate(const std::vector<uint8_t>& certificate, bool local)
+auto
+pinCertificate(const std::vector<uint8_t>& certificate, bool local) -> decltype(ring::tls::pinCertificate(certificate, local))
 {
-    return ring::tls::CertificateStore::instance().pinCertificate(certificate, local);
+    return ring::tls::pinCertificate(certificate, local);
 }
 
-void
-pinCertificatePath(const std::string& path)
+auto
+pinCertificatePath(const std::string& path) -> decltype(ring::tls::pinCertificatePath(path))
 {
-    ring::tls::CertificateStore::instance().pinCertificatePath(path);
+    return ring::tls::pinCertificatePath(path);
 }
 
-bool
-unpinCertificate(const std::string& certId)
+auto
+unpinCertificate(const std::string& certId) -> decltype(ring::tls::unpinCertificate(certId))
 {
-    return ring::tls::CertificateStore::instance().unpinCertificate(certId);
+    return ring::tls::unpinCertificate(certId);
 }
 
-unsigned
-unpinCertificatePath(const std::string& path)
+auto
+unpinCertificatePath(const std::string& path) -> decltype(ring::tls::unpinCertificatePath(path))
 {
-    return ring::tls::CertificateStore::instance().unpinCertificatePath(path);
+    return ring::tls::unpinCertificatePath(path);
 }
 
-bool
-pinRemoteCertificate(const std::string& accountId, const std::string& certId)
+auto
+pinRemoteCertificate(const std::string& accountId, const std::string& certId) -> decltype(ring::tls::pinRemoteCertificate(accountId, certId))
 {
-    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        return acc->findCertificate(certId);
-    return false;
+    return ring::tls::pinRemoteCertificate(accountId, certId);
 }
 
-bool
-setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr)
+auto
+setCertificateStatus(const std::string& accountId, const std::string& certId, const std::string& ststr) -> decltype(ring::tls::setCertificateStatus(accountId, certId, ststr))
 {
-    try {
-        if (accountId.empty()) {
-            ring::tls::CertificateStore::instance().setTrustedCertificate(certId, ring::tls::trustStatusFromStr(ststr.c_str()));
-        } else if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId)) {
-            try {
-                auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
-                return acc->setCertificateStatus(certId, status);
-            } catch (const std::out_of_range&) {
-                auto status = ring::tls::trustStatusFromStr(ststr.c_str());
-                return acc->setCertificateStatus(certId, status);
-            }
-        }
-    } catch (const std::out_of_range&) {}
-    return false;
+    return ring::tls::setCertificateStatus(accountId, certId, ststr);
 }
 
-std::vector<std::string>
-getCertificatesByStatus(const std::string& accountId, const std::string& ststr)
+auto
+getCertificatesByStatus(const std::string& accountId, const std::string& ststr) -> decltype(ring::tls::getCertificatesByStatus(accountId, ststr))
 {
-     auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
-    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        return acc->getCertificatesByStatus(status);
-    return {};
+    return ring::tls::getCertificatesByStatus(accountId, ststr);
 }
 
 void
