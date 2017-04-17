@@ -62,6 +62,7 @@ namespace ring {
 class Call;
 class SystemCodecContainer;
 class IceTransportOptions;
+class AccountCodec;
 
 class VoipLinkException : public std::runtime_error
 {
@@ -198,7 +199,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /**
          * Set the registration state of the specified link
-         * @param state	The registration state of underlying VoIPLink
+         * @param state The registration state of underlying VoIPLink
          */
         virtual void setRegistrationState(RegistrationState state, unsigned detail_code=0, const std::string& detail_str={});
 
@@ -312,12 +313,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
     private:
         NON_COPYABLE(Account);
-
-        /**
-         * Helper function used to load the default codec order from the codec factory
-         */
-        void loadDefaultCodecs();
-
         /**
          * Set of call's ID attached to the account.
          */
@@ -418,14 +413,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         RegistrationState registrationState_;
 
-        /**
-         * Vector containing all system codecs (with default parameters)
-         */
-        std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
-        /**
-         * Vector containing all account codecs (set of system codecs with custom parameters)
-         */
-        std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
+        AccountCodecs accountCodecs_;
 
         /**
          * Ringtone .au file used for this account
@@ -472,6 +460,52 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::atomic_bool upnpEnabled_ {false};
 
+        /**
+         * private account codec searching functions
+         */
+        std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);
+        std::vector<unsigned> getAccountCodecInfoIdList(MediaType mediaType) const;
+        void setAllCodecsActive(MediaType mediaType, bool active);
+};
+
+class AccountCodecs {
+        
+    public:
+        AccountCodecs();
+        static std::vector<unsigned> getDefaultCodecsId();
+        static std::map<std::string, std::string> getDefaultCodecDetails(const unsigned& codecId);
+    
+         /* Accessor to data structures
+         * @return The list that reflects the user's choice
+         */
+        std::vector<unsigned> getActiveCodecs(MediaType mediaType = MEDIA_ALL) const;
+        bool hasActiveCodec(MediaType mediaType) const;
+    
+        /**
+         * Update both the codec order structure and the codec string used for
+         * SDP offer and configuration respectively
+         */
+        void setActiveCodecs(const std::vector<unsigned>& list);
+        std::shared_ptr<AccountCodecInfo> searchCodecById(unsigned codecId, MediaType mediaType);
+        std::vector<std::shared_ptr<AccountCodecInfo>> getActiveAccountCodecInfoList(MediaType mediaType) const;
+        std::shared_ptr<AccountCodecInfo> searchCodecByPayload(unsigned payload, MediaType mediaType);
+        
+    private:
+        /**
+         * Helper function used to load the default codec order from the codec factory
+         */
+        void loadDefaultCodecs();
+        
+    protected:
+        /**
+         * Vector containing all system codecs (with default parameters)
+         */
+        std::shared_ptr<SystemCodecContainer> systemCodecContainer_;
+        /**
+         * Vector containing all account codecs (set of system codecs with custom parameters)
+         */
+        std::vector<std::shared_ptr<AccountCodecInfo>> accountCodecInfoList_;
+    
         /**
          * private account codec searching functions
          */

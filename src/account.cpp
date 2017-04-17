@@ -92,9 +92,8 @@ Account::Account(const std::string &accountID)
     , alias_()
     , enabled_(true)
     , autoAnswerEnabled_(false)
+    , accountCodecs_()
     , registrationState_(RegistrationState::UNREGISTERED)
-    , systemCodecContainer_(getSystemCodecContainer())
-    , accountCodecInfoList_()
     , ringtonePath_("")
     , ringtoneEnabled_(true)
     , displayName_("")
@@ -107,13 +106,19 @@ Account::Account(const std::string &accountID)
     std::seed_seq seed {rdev(), rdev()};
     rand_.seed(seed);
 
-    // Initialize the codec order, used when creating a new account
-    loadDefaultCodecs();
     #ifdef __ANDROID__
         ringtonePath_ = "/data/data/cx.ring/files/ringtones/default.wav";
     #else
         ringtonePath_ = "/usr/share/ring/ringtones/default.wav";
     #endif
+}
+
+AccountCodecs::AccountCodecs()
+    : systemCodecContainer_(getSystemCodecContainer())
+    , accountCodecInfoList_()
+{
+    // Initialize the codec order, used when creating a new account
+    loadDefaultCodecs();
 }
 
 Account::~Account()
@@ -157,8 +162,9 @@ Account::setRegistrationState(RegistrationState state, unsigned detail_code, con
     }
 }
 
+
 void
-Account::loadDefaultCodecs()
+AccountCodecs::loadDefaultCodecs()
 {
     // default codec are system codecs
     auto systemCodecList = systemCodecContainer_->getSystemCodecInfoList();
@@ -306,6 +312,12 @@ Account::getVolatileAccountDetails() const
 bool
 Account::hasActiveCodec(MediaType mediaType) const
 {
+    return accountCodecs_.hasActiveCodec(mediaType);
+}
+
+bool
+AccountCodecs::hasActiveCodec(MediaType mediaType) const
+{
     for (auto& codecIt: accountCodecInfoList_)
         if ((codecIt->systemCodecInfo.mediaType & mediaType) && codecIt->isActive)
             return true;
@@ -314,6 +326,12 @@ Account::hasActiveCodec(MediaType mediaType) const
 
 void
 Account::setActiveCodecs(const std::vector<unsigned>& list)
+{
+    accountCodecs_.setActiveCodecs(list);
+}
+
+void
+AccountCodecs::setActiveCodecs(const std::vector<unsigned>& list)
 {
     // first clear the previously stored codecs
     // TODO: mutex to protect isActive
@@ -376,11 +394,23 @@ Account::mapStateNumberToString(RegistrationState state)
 std::vector<unsigned>
 Account::getDefaultCodecsId()
 {
+    return accountCodecs_.getDefaultCodecsId();
+}
+
+std::vector<unsigned>
+AccountCodecs::getDefaultCodecsId()
+{
     return getSystemCodecContainer()->getSystemCodecInfoIdList(MEDIA_ALL);
 }
 
 std::map<std::string, std::string>
 Account::getDefaultCodecDetails(const unsigned& codecId)
+{
+    return accountCodecs_.getDefaultCodecDetails(codecId);
+}
+
+std::map<std::string, std::string>
+AccountCodecs::getDefaultCodecDetails(const unsigned& codecId)
 {
     auto codec = ring::getSystemCodecContainer()->searchCodecById(codecId, ring::MEDIA_ALL);
     if (codec) {
@@ -462,6 +492,16 @@ Account::getUPnPActive(std::chrono::seconds timeout) const
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecById(unsigned codecId, MediaType mediaType)
 {
+    return accountCodecs_.searchCodecById(codecId,mediaType);
+}
+
+/*
+ * private account codec searching functions
+ *
+ * */
+std::shared_ptr<AccountCodecInfo>
+AccountCodecs::searchCodecById(unsigned codecId, MediaType mediaType)
+{
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt: accountCodecInfoList_) {
             if ((codecIt->systemCodecInfo.id == codecId) &&
@@ -474,6 +514,12 @@ Account::searchCodecById(unsigned codecId, MediaType mediaType)
 
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecByName(std::string name, MediaType mediaType)
+{
+    return accountCodecs_.searchCodecByName(name, mediaType);
+}
+
+std::shared_ptr<AccountCodecInfo>
+AccountCodecs::searchCodecByName(std::string name, MediaType mediaType)
 {
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt: accountCodecInfoList_) {
@@ -488,6 +534,12 @@ Account::searchCodecByName(std::string name, MediaType mediaType)
 std::shared_ptr<AccountCodecInfo>
 Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 {
+    return accountCodecs_.searchCodecByPayload(payload, mediaType);
+}
+
+std::shared_ptr<AccountCodecInfo>
+AccountCodecs::searchCodecByPayload(unsigned payload, MediaType mediaType)
+{
     if (mediaType != MEDIA_NONE) {
         for (auto& codecIt: accountCodecInfoList_) {
             if ((codecIt->payloadType == payload ) &&
@@ -500,6 +552,12 @@ Account::searchCodecByPayload(unsigned payload, MediaType mediaType)
 
 std::vector<unsigned>
 Account::getActiveCodecs(MediaType mediaType) const
+{
+    return accountCodecs_.getActiveCodecs(mediaType);
+}
+
+std::vector<unsigned>
+AccountCodecs::getActiveCodecs(MediaType mediaType) const
 {
     if (mediaType == MEDIA_NONE)
         return {};
@@ -516,6 +574,12 @@ Account::getActiveCodecs(MediaType mediaType) const
 std::vector<unsigned>
 Account::getAccountCodecInfoIdList(MediaType mediaType) const
 {
+    return accountCodecs_.getAccountCodecInfoIdList(mediaType);
+}
+
+std::vector<unsigned>
+AccountCodecs::getAccountCodecInfoIdList(MediaType mediaType) const
+{
     if (mediaType == MEDIA_NONE)
         return {};
 
@@ -531,6 +595,12 @@ Account::getAccountCodecInfoIdList(MediaType mediaType) const
 void
 Account::setAllCodecsActive(MediaType mediaType, bool active)
 {
+    accountCodecs_.setAllCodecsActive(mediaType, active);
+}
+
+void
+AccountCodecs::setAllCodecsActive(MediaType mediaType, bool active)
+{
     if (mediaType == MEDIA_NONE)
         return;
     for (auto& codecIt: accountCodecInfoList_) {
@@ -541,6 +611,12 @@ Account::setAllCodecsActive(MediaType mediaType, bool active)
 
 std::vector<std::shared_ptr<AccountCodecInfo>>
 Account::getActiveAccountCodecInfoList(MediaType mediaType) const
+{
+    return accountCodecs_.getActiveAccountCodecInfoList(mediaType);
+}
+
+std::vector<std::shared_ptr<AccountCodecInfo>>
+AccountCodecs::getActiveAccountCodecInfoList(MediaType mediaType) const
 {
     if (mediaType == MEDIA_NONE)
         return {};
