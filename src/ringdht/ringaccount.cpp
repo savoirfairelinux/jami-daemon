@@ -3189,7 +3189,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
     dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
         if (dev.from != to)
             return true;
-        if (treatedDevices->emplace(dev.dev).second)
+        if (treatedDevices->emplace(dev.dev).second and op)
             op(shared, dev.dev);
         return true;
     }, [=](bool /*ok*/){
