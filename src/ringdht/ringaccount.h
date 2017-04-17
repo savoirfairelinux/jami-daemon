@@ -325,6 +325,8 @@ class RingAccount : public SIPAccountBase {
 
         using clock = std::chrono::system_clock;
         using time_point = clock::time_point;
+        using st_clock = std::chrono::steady_clock;
+        using st_time_point = st_clock::time_point;
 
         /**
          * Private structures

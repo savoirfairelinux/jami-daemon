@@ -114,7 +114,7 @@ struct RingAccount::BuddyInfo
     dht::InfoHash id;
 
     /* the presence timestamps */
-    std::map<dht::InfoHash, std::chrono::steady_clock::time_point> devicesTimestamps;
+    std::map<dht::InfoHash, st_time_point> devicesTimestamps;
 
     /* The callable object to update buddy info */
     std::function<void()> updateInfo {};
@@ -124,7 +124,7 @@ struct RingAccount::BuddyInfo
 
 struct RingAccount::PendingCall
 {
-    std::chrono::steady_clock::time_point start;
+    st_time_point start;
     std::shared_ptr<IceTransport> ice_sp;
     std::weak_ptr<SIPCall> call;
     std::future<size_t> listen_key;
@@ -136,7 +136,7 @@ struct RingAccount::PendingCall
 struct RingAccount::PendingMessage
 {
     dht::InfoHash to;
-    std::chrono::steady_clock::time_point received;
+    st_time_point received;
 };
 
 struct
@@ -543,7 +543,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             );
 
             sthis->pendingCalls_.emplace_back(PendingCall{
-                std::chrono::steady_clock::now(),
+                st_clock::now(),
                 ice, weak_dev_call,
                 std::move(listenKey),
                 callkey, dev,
@@ -1780,7 +1780,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 
     // Return to pending list if not negotiated yet and not in timeout
     if (not ice->isRunning()) {
-        if ((std::chrono::steady_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
+        if ((st_clock::now() - pc.start) >= ICE_NEGOTIATION_TIMEOUT) {
             RING_WARN("[call:%s] Timeout on ICE negotiation", call->getCallId().c_str());
             call->onFailure();
             return true;
@@ -1975,13 +1975,13 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
                             auto cb = buddy_info.updateInfo;
                             Manager::instance().scheduleTask(
                                 std::move(cb),
-                                std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
+                                st_clock::now() + DeviceAnnouncement::TYPE.expiration
                             );
                         }
                     }
                 });
             }
-        }, std::chrono::steady_clock::now())->cb;
+        }, st_clock::now())->cb;
         RING_DBG("Now tracking buddy %s", h.toString().c_str());
     } else
         RING_WARN("Buddy %s is already being tracked.", h.toString().c_str());
@@ -2003,7 +2003,7 @@ RingAccount::getTrackedBuddyPresence()
             }
         );
         presence_info.emplace(buddy_info_p.first.toString(), last_seen_device_id != devices_ts.cend()
-            ? last_seen_device_id->second > std::chrono::steady_clock::now() - DeviceAnnouncement::TYPE.expiration
+            ? last_seen_device_id->second > st_clock::now() - DeviceAnnouncement::TYPE.expiration
             : false);
     }
     return presence_info;
@@ -2014,7 +2014,7 @@ RingAccount::onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& 
 {
     std::lock_guard<std::recursive_mutex> lock(buddyInfoMtx);
     RING_DBG("Buddy %s online: (device: %s)", buddy_info_it->second.id.toString().c_str(), device_id.toString().c_str());
-    buddy_info_it->second.devicesTimestamps[device_id] = std::chrono::steady_clock::now();
+    buddy_info_it->second.devicesTimestamps[device_id] = st_clock::now();
     emitSignal<DRing::PresenceSignal::NewBuddyNotification>(getAccountID(), buddy_info_it->second.id.toString(), 1,  "");
 }
 
@@ -2105,7 +2105,7 @@ RingAccount::doRegister_()
             static auto log_all = [](char const* m, va_list args) {
                 char tmp[2048];
                 vsprintf(tmp, m, args);
-                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now().time_since_epoch()).count();
+                auto now = std::chrono::duration_cast<std::chrono::milliseconds>(st_clock::now().time_since_epoch()).count();
                 ring::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
             };
             dht_.setLoggers(log_all, log_all, silent);
@@ -2470,7 +2470,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 RING_DBG("Successfully put ICE descriptor reply on DHT");
         });
 
-    auto started_time = std::chrono::steady_clock::now();
+    auto started_time = st_clock::now();
 
     // During the ICE reply we can start the ICE negotiation
     if (!ice->start(peer_ice_msg.ice_data)) {
@@ -3306,7 +3306,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                 this_->messageEngine_.onMessageSent(token, false);
             }
         }
-    }, std::chrono::steady_clock::now() + std::chrono::minutes(1));
+    }, st_clock::now() + std::chrono::minutes(1));
 }
 
 void
