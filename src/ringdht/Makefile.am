@@ -16,12 +16,15 @@ libringacc_la_LIBADD = $(DHT_LIBS) \
     ./eth/libdevcrypto/libdevcrypto.la
 
 libringacc_la_SOURCES = \
+	contact.h \
+	contactsmanager.cpp \
+	contactsmanager.h \
         ringaccount.cpp \
         ringaccount.h \
         sip_transport_ice.cpp \
         sip_transport_ice.h \
         sips_transport_ice.cpp \
-        sips_transport_ice.h
+        sips_transport_ice.h 
 
 if RINGNS
 libringacc_la_SOURCES += \

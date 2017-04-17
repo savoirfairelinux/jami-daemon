@@ -37,6 +37,7 @@
 
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
+#include "contactsmanager.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -79,7 +80,6 @@
 namespace ring {
 
 using sip_utils::CONST_PJ_STR;
-using std::chrono::system_clock;
 
 namespace Migration {
 
@@ -141,65 +141,19 @@ struct RingAccount::PendingMessage
 };
 
 struct
-RingAccount::SavedTrustRequest {
+RingAccount::TrustRequest {
     dht::InfoHash device;
     time_t received;
     std::vector<uint8_t> payload;
     MSGPACK_DEFINE_MAP(device, received, payload)
 };
 
-struct
-RingAccount::TrustRequest {
-    dht::InfoHash from_device;
-    std::chrono::system_clock::time_point received;
-    std::vector<uint8_t> payload;
-    TrustRequest() {}
-    TrustRequest(dht::InfoHash device, std::chrono::system_clock::time_point r, std::vector<uint8_t>&& payload)
-            : from_device(device), received(r), payload(std::move(payload)) {}
-    TrustRequest(SavedTrustRequest&& sr)
-        : from_device(sr.device), received(system_clock::from_time_t(sr.received)), payload(std::move(sr.payload)) {}
-};
-
-struct RingAccount::Contact
-{
-    /** Time of contact addition */
-    time_t added {0};
-
-    /** Time of contact removal */
-    time_t removed {0};
-
-    /** True if we got confirmation that this contact also added us */
-    bool confirmed {false};
-
-    bool isActive() const { return added > removed; }
-
-    Contact() = default;
-    Contact(time_t a, time_t r, bool c=false) : added(a), removed(r), confirmed(c) {}
-    Contact(const Json::Value& json) {
-        added = json["added"].asInt();
-        removed = json["removed"].asInt();
-        confirmed = json["confirmed"].asBool();
-    }
-
-    Json::Value toJson() const {
-        Json::Value json;
-        json["added"] = Json::Int64(added);
-        json["removed"] = Json::Int64(removed);
-        json["confirmed"] = confirmed;
-        return json;
-    }
-
-    MSGPACK_DEFINE_MAP(added, removed, confirmed)
-};
 
 /**
  * Represents a known device attached to this Ring account
  */
 struct RingAccount::KnownDevice
 {
-    using clock = std::chrono::system_clock;
-    using time_point = clock::time_point;
-
     /** Device certificate */
     std::shared_ptr<dht::crypto::Certificate> certificate;
 
@@ -260,7 +214,8 @@ struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::string device_name;
     std::map<dht::InfoHash, std::string> devices_known;
     std::map<dht::InfoHash, Contact> peers;
-    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers)
+    std::map<dht::InfoHash, TrustRequest> trust_requests;
+    MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
 static constexpr int ICE_COMPONENTS {1};
@@ -346,6 +301,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     turnServerPwd_ = DEFAULT_TURN_PWD;
     turnServerRealm_ = DEFAULT_TURN_REALM;
     turnEnabled_ = true;
+    contactsManager_ = new ContactsManager(accountID);
 }
 
 RingAccount::~RingAccount()
@@ -468,7 +424,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             return;
         }
 
-        call->addSubCall(dev_call);
+        call->addSubCall(*dev_call);
 
         manager.addTask([sthis, weak_dev_call, ice, dev] {
             auto call = weak_dev_call.lock();
@@ -549,13 +505,13 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
 {
     RING_WARN("RingAccount::createOutgoingCall to: %s target: %s",
               to_id.c_str(), target.toString(true).c_str());
-    call->initIceTransport(true);
+    call->initIceMediaTransport(true);
     call->setIPToIP(true);
     call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
     call->initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
-    call->setCallMediaLocal(call->getIceTransport()->getDefaultLocalAddress());
+    call->setCallMediaLocal(call->getIceMediaTransport()->getDefaultLocalAddress());
 
     IpAddr addrSdp;
     if (getUPnPActive()) {
@@ -765,6 +721,8 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_, "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
+    accountTrust_ = tls::TrustStore{};
+    accountTrust_.setCertificateStatus(id.second, tls::TrustStore::PermissionStatus::ALLOWED, false);
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
     ringDeviceName_ = ip_utils::getHostname();
     if (ringDeviceName_.empty())
@@ -825,7 +783,15 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 
     auto accountCertificate = identity.second->issuer;
     if (not accountCertificate) {
-        RING_ERR("Device certificate must be issued by the account certificate");
+        RING_ERR("[Account %s] device certificate must be issued by the account certificate", getAccountID().c_str());
+        return false;
+    }
+
+    // match certificate chain
+    tls::TrustStore account_trust;
+    account_trust.setCertificateStatus(accountCertificate, tls::TrustStore::PermissionStatus::ALLOWED, false);
+    if (not account_trust.isAllowed(*identity.second)) {
+        RING_ERR("[Account %s] can't use identity: device certificate chain can't be verified", getAccountID().c_str());
         return false;
     }
 
@@ -875,13 +841,14 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
 
     // success, make use of this identity (certificate chain and private key)
     identity_ = identity;
+    accountTrust_ = std::move(account_trust);
     ringAccountId_ = id;
     ringDeviceId_ = identity.first->getPublicKey().getId().toString();
     username_ = RING_URI_PREFIX + id;
     announce_ = std::make_shared<dht::Value>(std::move(announce_val));
     ethAccount_ = root["eth"].asString();
 
-    RING_DBG("[Account %s] device receipt checked successfully", getAccountID().c_str());
+    RING_DBG("[Account %s] ring:%s device %s receipt checked successfully", getAccountID().c_str(), id.c_str(), ringDeviceId_.c_str());
     return true;
 }
 
@@ -988,8 +955,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
                 } else if (key.compare(Conf::RING_ACCOUNT_CONTACTS) == 0) {
                     for (Json::ValueIterator citr = itr->begin() ; citr != itr->end() ; citr++) {
                         dht::InfoHash h {citr.key().asString()};
-                        if (h != dht::InfoHash{})
-                            c.contacts.emplace(h, Contact{*citr});
+                        //if (h != dht::InfoHash{})
+                          //  c.contacts.emplace(h, Contact{*citr});
                     }
                 } else if (key.compare(Conf::ETH_KEY) == 0) {
                     c.eth_key = base64::decode(itr->asString());
@@ -1044,8 +1011,8 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
 
     if (not contacts_.empty()) {
         Json::Value& contacts = root[Conf::RING_ACCOUNT_CONTACTS];
-        for (const auto& c : contacts_)
-            contacts[c.first.toString()] = c.second.toJson();
+       /* for (const auto& c : contacts_)
+            contacts[c.first.toString()] = c.second.toJson();*/
     }
 
     Json::FastWriter fastWriter;
@@ -1084,7 +1051,7 @@ std::pair<std::vector<uint8_t>, dht::InfoHash>
 RingAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
 {
     // Compute time seed
-    auto now = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch());
+    auto now = std::chrono::duration_cast<std::chrono::seconds>(clock::now().time_since_epoch());
     auto tseed = now.count() / std::chrono::duration_cast<std::chrono::seconds>(EXPORT_KEY_RENEWAL_TIME).count();
     if (previous)
         tseed--;
@@ -1163,13 +1130,19 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
         [this, password] { return readArchive(password); });
     auto sthis = shared();
     findCertificate(dht::InfoHash(device),
-                    [fa,sthis,password](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
+                    [fa,sthis,password,device](const std::shared_ptr<dht::crypto::Certificate>& crt) mutable
     {
-        sthis->foundAccountDevice(crt);
+        auto& this_ = *sthis;
+        if (not crt) {
+            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 2);
+            return;
+        }
+        this_.foundAccountDevice(crt);
         ArchiveContent a;
         try {
             a = fa->get();
         } catch (...) {
+            emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 1);
             return;
         }
         // Add revoked device to the revocation list and resign it
@@ -1179,8 +1152,13 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
         a.revoked->sign(a.id);
         // add to CRL cache
         tls::CertificateStore::instance().pinRevocationList(a.id.second->getId().toString(), a.revoked);
-        tls::CertificateStore::instance().loadRevocations(*sthis->identity_.second->issuer);
-        sthis->saveArchive(a, password);
+        tls::CertificateStore::instance().loadRevocations(*this_.identity_.second->issuer);
+        this_.saveArchive(a, password);
+        this_.knownDevices_.erase(crt->getId());
+        this_.saveKnownDevices();
+        emitSignal<DRing::ConfigurationSignal::DeviceRevocationEnded>(this_.getAccountID(), device, 0);
+        emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(this_.getAccountID(), this_.getKnownDevices());
+        this_.syncDevices();
     });
     return true;
 }
@@ -1295,12 +1273,12 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 }
 
 void
-RingAccount::createAccount(const std::string& archive_password)
+RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
     RING_WARN("Creating new Ring account");
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
-    ThreadPool::instance().run([sthis,archive_password](){
+    ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
         ArchiveContent a;
         auto& this_ = *sthis;
 
@@ -1308,13 +1286,13 @@ RingAccount::createAccount(const std::string& archive_password)
         auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
 
         try {
-            if (this_.identity_.first and this_.identity_.second) {
+            if (migrate.first and migrate.second) {
                 RING_WARN("Converting certificate from old ring account");
-                a.id = std::move(this_.identity_);
+                a.id = std::move(migrate);
                 try {
                     a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.idPath_));
                 } catch (...) {}
-                updateCertificates(a, this_.identity_);
+                updateCertificates(a, migrate);
             } else {
                 auto ca = dht::crypto::generateIdentity("Ring CA");
                 if (!ca.first || !ca.second) {
@@ -1359,7 +1337,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
             RING_WARN("certificate %s is not a CA, needs update.", cert->getId().toString().c_str());
             return true;
         }
-        if (cert->getExpiration() < std::chrono::system_clock::now()) {
+        if (cert->getExpiration() < clock::now()) {
             RING_WARN("certificate %s is expired, needs update.", cert->getId().toString().c_str());
             return true;
         }
@@ -1384,32 +1362,33 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
     // Currently set the CA flag and update expiration dates
     bool updated = false;
 
-    // Update CA if possible and relevant
     auto& cert = archive.id.second;
     auto ca = cert->issuer;
-    if (ca and not ca->issuer) {
-        if (not ca->isCA() or ca->getExpiration() < std::chrono::system_clock::now()) {
-            ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
-            updated = true;
-        }
+    // Update CA if possible and relevant
+    if (not ca or (not ca->issuer and (not ca->isCA() or ca->getExpiration() < clock::now()))) {
+        ca = std::make_shared<Certificate>(Certificate::generate(*archive.ca_key, "Ring CA", {}, true));
+        updated = true;
+        RING_DBG("CA CRT re-generated");
     }
 
     // Update certificate
-    if (updated or not cert->isCA() or cert->getExpiration() < std::chrono::system_clock::now()) {
+    if (updated or not cert->isCA() or cert->getExpiration() < clock::now()) {
         cert = std::make_shared<Certificate>(Certificate::generate(*archive.id.first, "Ring", dht::crypto::Identity{archive.ca_key, ca}, true));
         updated = true;
+        RING_DBG("ring CRT re-generated");
     }
 
     if (updated and device.first and *device.first) {
         // update device certificate
         device.second = std::make_shared<Certificate>(Certificate::generate(*device.first, "Ring device", archive.id));
+        RING_DBG("device CRT re-generated");
     }
 
     return updated;
 }
 
 void
-RingAccount::migrateAccount(const std::string& pwd)
+RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
 {
     ArchiveContent archive;
     try {
@@ -1419,8 +1398,8 @@ RingAccount::migrateAccount(const std::string& pwd)
         return;
     }
 
-    if (updateCertificates(archive, identity_)) {
-        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(identity_, idPath_, "ring_device");
+    if (updateCertificates(archive, device)) {
+        std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(device, idPath_, "ring_device");
         saveArchive(archive, pwd);
         setRegistrationState(RegistrationState::UNREGISTERED);
         Migration::setState(accountID_, Migration::State::SUCCESS);
@@ -1437,50 +1416,49 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
         auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-        bool hasValidId = useIdentity(id);
-        bool needMigration = hasValidId and needsMigration(id);
-        bool hasArchive = not archivePath_.empty()                      \
-            and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
-
-        if (hasValidId) {
+        bool hasArchive = not archivePath_.empty()
+                          and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
+        if (useIdentity(id)) {
+            // normal loading path
             loadKnownDevices();
             loadContacts();
             loadTrustRequests();
-            if (not needMigration) {
-                if (not hasArchive)
-                    RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
-                // normal account loading path
-                return;
-            } else
-                RING_WARN("[Account %s] account certificates need to be updated", getAccountID().c_str());
-        }
-
-        if (hasArchive) {
+            if (not hasArchive)
+                RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
+        } else if (hasArchive) {
             if (archive_password.empty()) {
                 RING_WARN("[Account %s] password needed to read archive", getAccountID().c_str());
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
-                if (needMigration) {
+                if (needsMigration(id)) {
                     RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
-                    migrateAccount(archive_password);
+                    migrateAccount(archive_password, id);
                 } else {
                     RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
-                    initRingDevice(readArchive(archive_password));
+                    try {
+                        initRingDevice(readArchive(archive_password));
+                    } catch (...) {
+                        Migration::setState(accountID_, Migration::State::INVALID);
+                        return;
+                    }
+                    Migration::setState(accountID_, Migration::State::SUCCESS);
+                    setRegistrationState(RegistrationState::UNREGISTERED);
                 }
                 Manager::instance().saveConfig();
+                loadAccount();
             }
         } else {
             // no receipt or archive, creating new account
             if (archive_password.empty()) {
                 RING_WARN("[Account %s] password needed to create archive", getAccountID().c_str());
-                if (identity_.first) {
-                    ringAccountId_ = identity_.first->getPublicKey().getId().toString();
+                if (id.first) {
+                    ringAccountId_ = id.first->getPublicKey().getId().toString();
                     username_ = RING_URI_PREFIX+ringAccountId_;
                 }
                 setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
             } else {
                 if (archive_pin.empty()) {
-                    createAccount(archive_password);
+                    createAccount(archive_password, std::move(id));
                 } else {
                     loadAccountFromDHT(archive_password, archive_pin);
                 }
@@ -2156,37 +2134,7 @@ RingAccount::doRegister_()
                     }
 
                     RING_WARN("Got trust request from: %s / %s", peer_account.toString().c_str(), v.from.toString().c_str());
-
-                    // Check existing contact
-                    auto contact = this_.contacts_.find(peer_account);
-                    if (contact != this_.contacts_.end()) {
-                        // Contact exists, update confirmation status
-                        contact->second.confirmed = true;
-                        emitSignal<DRing::ConfigurationSignal::ContactAdded>(this_.getAccountID(), peer_account.toString(), true);
-                        // Send confirmation
-                        if (not v.confirm)
-                            this_.sendTrustRequestConfirm(peer_account);
-                        this_.syncDevices();
-                    } else {
-                        // Add trust request
-                        auto req = this_.trustRequests_.find(peer_account);
-                        if (req == this_.trustRequests_.end()) {
-                            req = this_.trustRequests_.emplace(peer_account, TrustRequest{
-                                v.from, std::chrono::system_clock::now(), std::move(v.payload)
-                            }).first;
-                        } else {
-                            req->second.from_device = v.from;
-                            req->second.received = std::chrono::system_clock::now();
-                            req->second.payload = std::move(v.payload);
-                        }
-                        this_.saveTrustRequests();
-                        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
-                            this_.getAccountID(),
-                            req->first.toString(),
-                            req->second.payload,
-                            std::chrono::system_clock::to_time_t(req->second.received)
-                        );
-                    }
+                    this_.onTrustRequest(peer_account, v.from, time(nullptr), v.confirm, std::move(v.payload));
                 });
                 return true;
             }
@@ -2224,7 +2172,7 @@ RingAccount::doRegister_()
                 this_.onPeerMessage(v.from, [shared, v, inboxDeviceKey](const std::shared_ptr<dht::crypto::Certificate>&,
                                                                         const dht::InfoHash& peer_account)
                 {
-                    auto now = system_clock::to_time_t(system_clock::now());
+                    auto now = clock::to_time_t(clock::now());
                     std::map<std::string, std::string> payloads = {{"text/plain",
                                                                     utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
@@ -2245,12 +2193,54 @@ RingAccount::doRegister_()
 
 
 void
+RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
+{
+     // Check existing contact
+    auto contact = contacts_.find(peer_account);
+    if (contact != contacts_.end()) {
+        // Send confirmation
+        if (not confirm)
+            sendTrustRequestConfirm(peer_account);
+        // Contact exists, update confirmation status
+        if (not contact->second.confirmed) {
+            contact->second.confirmed = true;
+            emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), peer_account.toString(), true);
+            syncDevices();
+        }
+    } else {
+        auto req = trustRequests_.find(peer_account);
+        if (req == trustRequests_.end()) {
+            // Add trust request
+            req = trustRequests_.emplace(peer_account, TrustRequest{
+                peer_device, received, std::move(payload)
+            }).first;
+        } else {
+            // Update trust request
+            if (received < req->second.received) {
+                req->second.device = peer_device;
+                req->second.received = received;
+                req->second.payload = std::move(payload);
+            } else {
+                RING_DBG("[Account %s] Ignoring outdated trust request from %s", getAccountID().c_str(), peer_account.toString().c_str());
+            }
+        }
+        saveTrustRequests();
+        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
+            getAccountID(),
+            req->first.toString(),
+            req->second.payload,
+            received
+        );
+    }
+}
+
+void
 RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)> cb)
 {
     // quick check in case we already explicilty banned this public key
     auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
     if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-        RING_WARN("Discarding message from banned peer %s", peer_device.toString().c_str());
+        RING_WARN("[Account %s] Discarding message from banned peer %s", getAccountID().c_str(), peer_device.toString().c_str());
         return;
     }
 
@@ -2261,23 +2251,23 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
 
         dht::InfoHash peer_account_id;
         if (not this_.foundPeerDevice(cert, peer_account_id)) {
-            RING_WARN("Discarding message from invalid peer certificate %s.", peer_device.toString().c_str());
+            RING_WARN("[Account %s] Discarding message from invalid peer certificate %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
 
         if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
             if (!cert or cert->getId() != peer_device) {
-                RING_WARN("Can't find certificate of %s for incoming message.", peer_device.toString().c_str());
+                RING_WARN("[Account %s] Can't find certificate of %s for incoming message.", this_.getAccountID().c_str(), peer_device.toString().c_str());
                 return;
             }
 
             auto& this_ = *shared;
             if (!this_.trust_.isAllowed(*cert)) {
-                RING_WARN("Discarding message from untrusted peer %s.", peer_device.toString().c_str());
+                RING_WARN("[Account %s] Discarding message from untrusted peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
                 return;
             }
         } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-            RING_WARN("Discarding message from untrusted or banned peer %s.", peer_device.toString().c_str());
+            RING_WARN("[Account %s] Discarding message from untrusted or banned peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
 
@@ -2319,25 +2309,23 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
 }
 
 bool
-RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name)
+RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name, const time_point& updated)
 {
     if (not crt)
         return false;
 
-    // Trust store with Ring account main certificate as the only CA
-    tls::TrustStore account_trust;
-    account_trust.setCertificateStatus(identity_.second->issuer, tls::TrustStore::PermissionStatus::ALLOWED, false);
-
     // match certificate chain
-    if (not account_trust.isAllowed(*crt)) {
+    if (not accountTrust_.isAllowed(*crt)) {
         RING_WARN("[Account %s] Found invalid account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
         return false;
     }
 
     // insert device
-    auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name});
+    auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
-        RING_WARN("[Account %s] Found known account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        RING_WARN("[Account %s] Found account device: %s %s", getAccountID().c_str(),
+                                                              name.c_str(),
+                                                              crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
         saveKnownDevices();
         emitSignal<DRing::ConfigurationSignal::KnownDevicesChanged>(getAccountID(), getKnownDevices());
@@ -2564,7 +2552,7 @@ template<typename ID=dht::Value::Id>
 void
 saveIdList(const std::string& path, const std::set<ID>& ids)
 {
-    std::ofstream file(path, std::ios::trunc);
+    std::ofstream file(path, std::ios::trunc | std::ios::binary);
     if (!file.is_open()) {
         RING_ERR("Could not save to %s", path.c_str());
         return;
@@ -2600,27 +2588,8 @@ RingAccount::saveTreatedMessages() const
 }
 
 void
-RingAccount::loadKnownDevicesOld()
-{
-    auto knownDevices = loadIdList<dht::InfoHash>(idPath_+DIR_SEPARATOR_STR "knownDevices");
-    for (const auto& d : knownDevices) {
-        RING_DBG("[Account %s]: loaded known account device %s", getAccountID().c_str(), d.toString().c_str());
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d, KnownDevice{crt});
-            else
-                RING_ERR("Known device certificate not matching identity.");
-        else
-            RING_WARN("Can't find known device certificate.");
-    }
-    fileutils::remove(idPath_+DIR_SEPARATOR_STR "knownDevices");
-}
-
-void
 RingAccount::loadKnownDevices()
 {
-    loadKnownDevicesOld();
-
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> knownDevices;
     try {
         // read file
@@ -2637,30 +2606,24 @@ RingAccount::loadKnownDevices()
         RING_DBG("[Account %s] loading known account device %s %s", getAccountID().c_str(),
                                                                     d.second.first.c_str(),
                                                                     d.first.toString().c_str());
-        using clock = std::chrono::system_clock;
-        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString()))
-            if (crt->issuer and crt->issuer->getId() == identity_.second->issuer->getId())
-                knownDevices_.emplace(d.first,
-                    KnownDevice {
-                        crt,
-                        d.second.first,
-                        clock::from_time_t(d.second.second)
-                    });
-            else
-                RING_WARN("[Account %s] known device certificate not matching identity", getAccountID().c_str());
-        else
-            RING_WARN("[Account %s] can't find known device certificate", getAccountID().c_str());
+        if (auto crt = tls::CertificateStore::instance().getCertificate(d.first.toString())) {
+            if (not foundAccountDevice(crt, d.second.first, clock::from_time_t(d.second.second)))
+                RING_WARN("[Account %s] can't add device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
+        else {
+            RING_WARN("[Account %s] can't find certificate for device %s", getAccountID().c_str(), d.first.toString().c_str());
+        }
     }
 }
 
 void
 RingAccount::saveKnownDevices() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc);
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "knownDevicesNames", std::ios::trunc | std::ios::binary);
 
     std::map<dht::InfoHash, std::pair<std::string, uint64_t>> devices;
     for (const auto& id : knownDevices_)
-        devices.emplace(id.first, std::make_pair(id.second.name, system_clock::to_time_t(id.second.last_sync)));
+        devices.emplace(id.first, std::make_pair(id.second.name, clock::to_time_t(id.second.last_sync)));
 
     msgpack::pack(file, devices);
 }
@@ -2685,7 +2648,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
     fileutils::check_dir(cachePath_.c_str());
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
     {
-        std::ofstream file(nodesPath, std::ios::trunc);
+        std::ofstream file(nodesPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             RING_ERR("Could not save nodes to %s", nodesPath.c_str());
             return;
@@ -2756,7 +2719,7 @@ RingAccount::loadDhParams(const std::string path)
 {
     try {
         // writeTime throw exception if file doesn't exist
-        auto duration = system_clock::now() - fileutils::writeTime(path);
+        auto duration = clock::now() - fileutils::writeTime(path);
         if (duration >= std::chrono::hours(24 * 3)) // file is valid only 3 days
             throw std::runtime_error("file too old");
 
@@ -2844,105 +2807,83 @@ RingAccount::getContactHeader(pjsip_transport* t)
 void
 RingAccount::addContact(const std::string& uri, bool confirmed)
 {
-    dht::InfoHash h (uri);
-    auto c = contacts_.find(h);
-    if (c == contacts_.end())
-        c = contacts_.emplace(h, Contact{}).first;
-    c->second.added = std::time(nullptr);
-    c->second.confirmed = confirmed or c->second.confirmed;
-    trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::ALLOWED);
-    saveContacts();
-    emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, c->second.confirmed);
-    syncDevices();
+   
+	Contact c = contactsManager_->addContact(uri,confirmed);
+	trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::ALLOWED);
+    	saveContacts();
+    	emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), uri, c.confirmed);
+    	syncDevices();
 }
 
 void
-RingAccount::removeContact(const std::string& uri)
+RingAccount::removeContact(const std::string& uri, bool ban)
 {
-    dht::InfoHash h (uri);
-    auto c = contacts_.find(h);
-    if (c != contacts_.end()) {
-        c->second.removed = std::time(nullptr);
-        trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::BANNED);
-        saveContacts();
-        emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, c->second.confirmed);
-        syncDevices();
-    }
+    
+	Contact c = contactsManager_->removeContact(uri,ban);
+	if(c.banned){
+		trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::BANNED);
+	}
+	saveContacts();
+    	emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, ban);
+    	syncDevices();
+
+
 }
 
 std::vector<std::map<std::string, std::string>>
 RingAccount::getContacts() const
 {
-    std::vector<std::map<std::string, std::string>> ret;
-    ret.reserve(contacts_.size());
-    for (const auto& c : contacts_) {
-        std::map<std::string, std::string> cm {
-            {"id", c.first.toString()},
-            {"added", std::to_string(c.second.added)}
-        };
-        if (c.second.isActive())
-            cm.emplace("confirmed", c.second.confirmed ? TRUE_STR : FALSE_STR);
-        else
-            cm.emplace("banned", TRUE_STR);
-        ret.emplace_back(std::move(cm));
-    }
-    return ret;
+    
+	return contactsManager_->getContacts();
 }
 
 void
 RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 {
-    auto c = contacts_.find(id);
-    if (c == contacts_.end()) {
-        RING_DBG("[Account %s] new contact: %s", getAccountID().c_str(), id.toString().c_str());
-        c = contacts_.emplace(id, contact).first;
-        emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), c->second.confirmed);
-    } else {
-        RING_DBG("[Account %s] updated contact: %s", getAccountID().c_str(), id.toString().c_str());
-        c->second.added = std::max(contact.added, c->second.added);
-        c->second.removed = std::max(contact.removed, c->second.removed);
-        if (contact.confirmed != c->second.confirmed) {
-            c->second.confirmed = contact.confirmed or c->second.confirmed;
-            emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), c->second.confirmed);
+        Contact returnedContact;
+	bool state = contactsManager_->updateContact(id,contact,returnedContact);
+	if (state) {
+        	if (returnedContact.isActive()) {
+            trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::ALLOWED);
+            emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), id.toString(), returnedContact.confirmed);
+        } 
+	else {
+            	if (returnedContact.banned)
+              trust_.setCertificateStatus(id.toString(), tls::TrustStore::PermissionStatus::BANNED);
+              emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), id.toString(), returnedContact.banned);
         }
+	
     }
-    trust_.setCertificateStatus(id.toString(), c->second.isActive() ? tls::TrustStore::PermissionStatus::ALLOWED : tls::TrustStore::PermissionStatus::BANNED);
 }
 
 void
 RingAccount::loadContacts()
 {
-    decltype(contacts_) contacts;
-    try {
-        // read file
-        auto file = fileutils::loadFile("contacts", idPath_);
-        // load values
-        msgpack::object_handle oh = msgpack::unpack((const char*)file.data(), file.size());
-        oh.get().convert(contacts);
-    } catch (const std::exception& e) {
-        RING_WARN("[Account %s] error loading contacts: %s", getAccountID().c_str(), e.what());
-        return;
-    }
-
-    for (auto& peer : contacts)
-        updateContact(peer.first, peer.second);
+   contactsManager_->loadContacts();
 }
 
 void
 RingAccount::saveContacts() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "contacts", std::ios::trunc);
-    msgpack::pack(file, contacts_);
+   
+contactsManager_->saveContacts();
 }
 
 /* trust requests */
 
-std::map<std::string, std::string>
+std::vector<std::map<std::string, std::string>>
 RingAccount::getTrustRequests() const
 {
-    std::map<std::string, std::string> ret;
-    for (const auto& r : trustRequests_)
-        ret.emplace(r.first.toString(), ring::to_string(std::chrono::system_clock::to_time_t(r.second.received)));
+    using Map = std::map<std::string, std::string>;
+    std::vector<Map> ret;
+    ret.reserve(trustRequests_.size());
+    for (const auto& r : trustRequests_) {
+        ret.emplace_back(Map {
+            {"from", r.first.toString()},
+            {"received", std::to_string(r.second.received)},
+            {"payload", std::string(r.second.payload.begin(), r.second.payload.end())}
+        });
+    }
     return ret;
 }
 
@@ -3007,19 +2948,14 @@ RingAccount::sendTrustRequestConfirm(const dht::InfoHash& to)
 void
 RingAccount::saveTrustRequests() const
 {
-    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc);
-
-    std::map<dht::InfoHash, SavedTrustRequest> requests;
-    for (const auto& req : trustRequests_)
-        requests.emplace(req.first, SavedTrustRequest{req.second.from_device, system_clock::to_time_t(req.second.received), req.second.payload});
-
-    msgpack::pack(file, requests);
+    std::ofstream file(idPath_+DIR_SEPARATOR_STR "incomingTrustRequests", std::ios::trunc | std::ios::binary);
+    msgpack::pack(file, trustRequests_);
 }
 
 void
 RingAccount::loadTrustRequests()
 {
-    std::map<dht::InfoHash, SavedTrustRequest> requests;
+    std::map<dht::InfoHash, TrustRequest> requests;
     try {
         // read file
         auto file = fileutils::loadFile("incomingTrustRequests", idPath_);
@@ -3031,16 +2967,8 @@ RingAccount::loadTrustRequests()
         return;
     }
 
-    for (auto& d : requests)
-        trustRequests_.emplace(d.first, TrustRequest(std::move(d.second)));
-    for (auto& r : trustRequests_) {
-        emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
-            getAccountID(),
-            r.first.toString(),
-            r.second.payload,
-            std::chrono::system_clock::to_time_t(r.second.received)
-        );
-    }
+    for (auto& tr : requests)
+        onTrustRequest(tr.first, tr.second.device, tr.second.received, false, std::move(tr.second.payload));
 }
 
 /* sync */
@@ -3050,9 +2978,24 @@ RingAccount::syncDevices()
 {
     RING_DBG("[Account %s] building device sync from %s %s", getAccountID().c_str(), ringDeviceName_.c_str(), ringDeviceId_.c_str());
     DeviceSync sync_data;
-    sync_data.date = std::chrono::system_clock::now().time_since_epoch().count();
+    sync_data.date = clock::now().time_since_epoch().count();
     sync_data.device_name = ringDeviceName_;
     sync_data.peers = contacts_;
+
+    static const size_t MAX_TRUST_REQUESTS = 20;
+    if (trustRequests_.size() <= MAX_TRUST_REQUESTS)
+        for (const auto& req : trustRequests_)
+            sync_data.trust_requests.emplace(req.first, TrustRequest{req.second.device, req.second.received, {}});
+    else {
+        size_t inserted = 0;
+        auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
+        while (inserted++ < MAX_TRUST_REQUESTS) {
+            sync_data.trust_requests.emplace(req->first, TrustRequest{req->second.device, req->second.received, {}});
+            if (++req == trustRequests_.end())
+                req = trustRequests_.begin();
+        }
+    }
+
     for (const auto& dev : knownDevices_) {
         if (dev.first.toString() == ringDeviceId_)
             sync_data.devices_known.emplace(dev.first, ringDeviceName_);
@@ -3077,7 +3020,6 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
         RING_WARN("[Account %s] dropping sync data from unknown device", getAccountID().c_str());
         return;
     }
-    using clock = std::chrono::system_clock;
     auto sync_date = clock::time_point(clock::duration(sync.date));
     if (it->second.last_sync >= sync_date) {
         RING_DBG("[Account %s] dropping outdated sync data", getAccountID().c_str());
@@ -3100,6 +3042,10 @@ RingAccount::onReceiveDeviceSync(DeviceSync&& sync)
     for (const auto& peer : sync.peers)
         updateContact(peer.first, peer.second);
     saveContacts();
+
+    // Sync trust requests
+    for (const auto& tr : sync.trust_requests)
+        onTrustRequest(tr.first, tr.second.device, tr.second.received, false, {});
 
     it->second.last_sync = sync_date;
 }
@@ -3179,7 +3125,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
     auto toUri = parseRingUri(to);
     auto toH = dht::InfoHash(toUri);
-    auto now = system_clock::to_time_t(system_clock::now());
+    auto now = clock::to_time_t(clock::now());
 
     struct PendingConfirmation {
         bool replied {false};
