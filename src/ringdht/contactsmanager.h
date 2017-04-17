@@ -1,9 +1,9 @@
 /*
 *  Copyright (C) 2014-2017 Savoir-faire Linux Inc.
-*
-*  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
-*  Author: Simon Désaulniers <simon.desaulniers@gmail.com>
-*
+*  Author: Hana Ben Arab <hana.ben-arab@polymtl.ca>
+*  Author: Abderrahmane Laribi <abderrahmane.laribi@polymtl.ca>
+*  Author: Sonia Farrah <sonia.farrah@polymtl.ca>
+*  Author: Ahmed Belhaouane <ahmed.belhaouane@polymtl.ca>
 *  This program is free software; you can redistribute it and/or modify
 *  it under the terms of the GNU General Public License as published by
 *  the Free Software Foundation; either version 3 of the License, or
