@@ -90,13 +90,15 @@ enum class State { // Contains all the Migration states
 std::string
 mapStateNumberToString(const State migrationState)
 {
-#define CASE_STATE(X) case Migration::State::X: \
-                           return #X
+    std::string state;
 
-switch (migrationState) {
-    CASE_STATE(INVALID);
-    CASE_STATE(SUCCESS);
-}
+#define CASE_STATE(X) case Migration::State::X: state=#X
+
+    switch (migrationState) {
+        CASE_STATE(INVALID);
+        CASE_STATE(SUCCESS);
+    }
+    return state;
 }
 
 void
