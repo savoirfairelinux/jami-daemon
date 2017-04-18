@@ -8,6 +8,7 @@ set PATH=%PATH%;%ProgramFiles(x86)%\MSBuild\14.0\Bin\
 set MSBUILD_ARGS=/nologo /p:Configuration=Release /p:Platform=x64 /verbosity:normal /maxcpucount:%NUMBER_OF_PROCESSORS%
 
 set DEPENDENCIES=( ^
+build\argon2\vs2015\Argon2Ref\Argon2Ref.vcxproj, ^
 build\boost\MSVC\random\random.vcxproj, ^
 build\boost\MSVC\system\system.vcxproj, ^
 build\jsoncpp\makefiles\msvc2010\lib_json.vcxproj, ^
