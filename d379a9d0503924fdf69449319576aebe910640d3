@@ -1,0 +1,50 @@
+{
+  "comments": [
+    {
+      "key": {
+        "uuid": "7aade967_b46882f6",
+        "filename": "src/account.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 65,
+      "author": {
+        "id": 23
+      },
+      "writtenOn": "2017-04-18T17:06:27Z",
+      "side": 1,
+      "message": "I think this is missing an s: \"class AccountCodecs\"",
+      "range": {
+        "startLine": 65,
+        "startChar": 0,
+        "endLine": 65,
+        "endChar": 19
+      },
+      "revId": "d379a9d0503924fdf69449319576aebe910640d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    },
+    {
+      "key": {
+        "uuid": "7aade967_546d8e03",
+        "filename": "src/account.h",
+        "patchSetId": 1
+      },
+      "lineNbr": 472,
+      "author": {
+        "id": 23
+      },
+      "writtenOn": "2017-04-18T17:06:27Z",
+      "side": 1,
+      "message": "please remove trailing whitespace, the same for the following instances in this file",
+      "range": {
+        "startLine": 472,
+        "startChar": 0,
+        "endLine": 472,
+        "endChar": 8
+      },
+      "revId": "d379a9d0503924fdf69449319576aebe910640d3",
+      "serverId": "1e26b4c1-6b8c-47ff-9df7-501b633d3b5a",
+      "unresolved": false
+    }
+  ]
+}
