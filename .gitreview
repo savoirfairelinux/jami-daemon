@@ -2,5 +2,5 @@
 host=gerrit-ring.savoirfairelinux.com
 port=29420
 project=ring-daemon.git
-defaultremote=origin
-defaultbranch=master
+defaultremote=gerrit
+defaultbranch=wip/patches_poly_2017/group1/koala

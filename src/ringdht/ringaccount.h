@@ -586,6 +586,9 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
         void registerDhtAddress(IceTransport&);
+
+        tls::TlsParams provide_tlsParams(dht::InfoHash remote_h, std::weak_ptr<SIPCall> call, bool incoming);
+
 };
 
 } // namespace ring
