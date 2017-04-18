@@ -1,0 +1,13 @@
+--- argon2/libargon2.pc.orig
++++ argon2/libargon2.pc
+@@ -1,6 +1,1 @@
+-# libargon2 info for pkg-config
+-## Template for downstream installers:
+-## - replace @HOST_MULTIARCH@ with target arch, eg 'x86_64-linux-gnu'
+-## - replace @UPSTREAM_VER@ with current version, eg '20160406'
+-
+-prefix=/usr
++prefix=@PREFIX@
+@@ -14,1 +9,1 @@
+-Libs: -L${libdir} -largon2 -lrt -ldl
++Libs: -L${libdir} -largon2
