@@ -106,7 +106,7 @@ setState (const std::string& accountID,
     emitSignal<DRing::ConfigurationSignal::MigrationEnded>(accountID,
         mapStateNumberToString(migrationState));
 }
-}
+} // namespace Migration
 
 struct RingAccount::BuddyInfo
 {
