@@ -93,10 +93,11 @@ mapStateNumberToString(const State migrationState)
 #define CASE_STATE(X) case Migration::State::X: \
                            return #X
 
-switch (migrationState) {
-    CASE_STATE(INVALID);
-    CASE_STATE(SUCCESS);
-}
+    switch (migrationState) {
+        CASE_STATE(INVALID);
+        CASE_STATE(SUCCESS);
+    }
+    return {};
 }
 
 void
