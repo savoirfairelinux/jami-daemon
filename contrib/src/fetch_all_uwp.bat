@@ -4,6 +4,7 @@ SETLOCAL EnableDelayedExpansion
 set SRC=%~dp0
 
 set DEPENDENCIES=( ^
+argon2, ^
 boost, ^
 cryptopp, ^
 ffmpeg, ^
