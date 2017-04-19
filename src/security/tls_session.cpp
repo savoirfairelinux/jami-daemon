@@ -760,7 +760,7 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 }
 
 TlsSessionState
-TlsSession::handleStateMtuDiscovery(TlsSessionState state)
+TlsSession::handleStateMtuDiscovery(UNUSED TlsSessionState state)
 {
     // set dtls mtu to be over each and every mtus tested
     gnutls_dtls_set_mtu(session_, mtus.back());
