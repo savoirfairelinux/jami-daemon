@@ -762,8 +762,12 @@ TlsSession::handleStateHandshake(TlsSessionState state)
 TlsSessionState
 TlsSession::handleStateMtuDiscovery(TlsSessionState state)
 {
-    //set dtls mtu to be over each and every mtus tested
+    // set dtls mtu to be over each and every mtus tested
     gnutls_dtls_set_mtu(session_, mtus.back());
+
+    // get transport overhead
+    transportOverhead_ = socket_->getTransportOverhead();
+
     // retrocompatibility check
     if(gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
         if (!isServer()){
@@ -799,7 +803,6 @@ TlsSession::pathMtuHeartbeat()
     int errno_send = 1; // non zero initialisation
     auto tls_overhead = gnutls_record_overhead_size(session_);
     RING_WARN("[TLS] tls session overhead : %lu", tls_overhead);
-    transportOverhead_ = socket_->getTransportOverhead();
     gnutls_heartbeat_set_timeouts(session_, HEARTBEAT_RETRANS_TIMEOUT.count(), HEARTBEAT_TOTAL_TIMEOUT.count());
     RING_DBG("[TLS] Heartbeat PMTUD : retransmission timeout set to: %ld ms", HEARTBEAT_RETRANS_TIMEOUT.count());
 
