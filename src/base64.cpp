@@ -32,7 +32,7 @@ encode(const std::vector<uint8_t>::const_iterator begin,
        const std::vector<uint8_t>::const_iterator end)
 {
     int input_length = std::distance(begin, end);
-    int output_length = 4 * ((input_length + 2) / 3);
+    int output_length = 4 * ((input_length + 3) / 3);
     std::string out;
     out.resize(output_length);
 
@@ -53,7 +53,7 @@ encode(const std::vector<uint8_t>& dat)
 std::vector<uint8_t>
 decode(const std::string& str)
 {
-    int output_length = str.length() / 4 * 3 + 2;
+    int output_length = str.length() / 4 * 3 + 3;
     pj_str_t input;
     pj_strset(&input, (char*) &(*str.begin()), str.length());
 
