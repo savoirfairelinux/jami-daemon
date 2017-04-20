@@ -3093,9 +3093,10 @@ RingAccount::syncDevices()
         size_t inserted = 0;
         auto req = trustRequests_.lower_bound(dht::InfoHash::getRandom());
         while (inserted++ < MAX_TRUST_REQUESTS) {
-            sync_data.trust_requests.emplace(req->first, TrustRequest{req->second.device, req->second.received, {}});
-            if (++req == trustRequests_.end())
+            if (req == trustRequests_.end())
                 req = trustRequests_.begin();
+            sync_data.trust_requests.emplace(req->first, TrustRequest{req->second.device, req->second.received, {}});
+            ++req;
         }
     }
 
