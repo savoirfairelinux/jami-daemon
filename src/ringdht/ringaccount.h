@@ -377,7 +377,9 @@ class RingAccount : public SIPAccountBase {
 
         void forEachDevice(const dht::InfoHash& to, std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)> op, std::function<void(bool)> end = {});
 
-        void createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target);
+        void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
+
+        void onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target);
 
         /**
          * Set the internal state for this account, mainly used to manage account details from the client application.
@@ -385,14 +387,12 @@ class RingAccount : public SIPAccountBase {
          */
         virtual void setAccountDetails(const std::map<std::string, std::string> &details) override;
 
-        void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
-
         /**
          * Start a SIP Call
          * @param call  The current call
          * @return true if all is correct
          */
-        bool SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target);
+        bool SIPStartCall(SIPCall& call, IpAddr target);
 
         /**
          * Inform that a potential account device have been found.

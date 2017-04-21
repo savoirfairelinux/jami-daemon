@@ -562,17 +562,17 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 }
 
 void
-RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string& to_id, IpAddr target)
+RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target)
 {
-    RING_WARN("RingAccount::createOutgoingCall to: %s target: %s",
-              to_id.c_str(), target.toString(true).c_str());
-    call->initIceMediaTransport(true);
-    call->setIPToIP(true);
-    call->setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
-    call->initRecFilename(to_id);
+    RING_DBG("[call:%s] outgoing call connected to %s", call.getCallId().c_str(), to_id.c_str());
+
+    call.initIceMediaTransport(true);
+    call.setIPToIP(true);
+    call.setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
+    call.initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
-    call->setCallMediaLocal(call->getIceMediaTransport()->getDefaultLocalAddress());
+    call.setCallMediaLocal(call.getIceMediaTransport()->getDefaultLocalAddress());
 
     IpAddr addrSdp;
     if (getUPnPActive()) {
@@ -594,7 +594,7 @@ RingAccount::createOutgoingCall(const std::shared_ptr<SIPCall>& call, const std:
         throw VoipLinkException("Could not instantiate codec for early media");
 
     // Building the local SDP offer
-    auto& sdp = call->getSDP();
+    auto& sdp = call.getSDP();
 
     sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(
@@ -614,10 +614,10 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
 }
 
 bool
-RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
+RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
 {
-    call->setupLocalSDPFromIce();
-    std::string toUri(call->getPeerNumber()); // expecting a fully well formed sip uri
+    call.setupLocalSDPFromIce();
+    std::string toUri(call.getPeerNumber()); // expecting a fully well formed sip uri
 
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
@@ -630,7 +630,7 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
     pj_str_t pjContact;
     {
-        auto transport = call->getTransport();
+        auto transport = call.getTransport();
         pjContact = getContactHeader(transport ? transport->get() : nullptr);
     }
 
@@ -639,14 +639,14 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
              (int)pjTarget.slen, pjTarget.ptr);
 
 
-    auto local_sdp = call->getSDP().getLocalSdpSession();
+    auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
     if (!CreateClientDialogAndInvite(&pjFrom, &pjContact, &pjTo, &pjTarget, local_sdp, &dialog, &inv))
         return false;
 
-    inv->mod_data[link_->getModId()] = call.get();
-    call->inv.reset(inv);
+    inv->mod_data[link_->getModId()] = &call;
+    call.inv.reset(inv);
 
 /*
     updateDialogViaSentBy(dialog);
@@ -656,25 +656,25 @@ RingAccount::SIPStartCall(const std::shared_ptr<SIPCall>& call, IpAddr target)
 
     pjsip_tx_data *tdata;
 
-    if (pjsip_inv_invite(call->inv.get(), &tdata) != PJ_SUCCESS) {
+    if (pjsip_inv_invite(call.inv.get(), &tdata) != PJ_SUCCESS) {
         RING_ERR("Could not initialize invite messager for this call");
         return false;
     }
 
     //const pjsip_tpselector tp_sel = getTransportSelector();
-    const pjsip_tpselector tp_sel = {PJSIP_TPSELECTOR_TRANSPORT, {call->getTransport()->get()}};
+    const pjsip_tpselector tp_sel = {PJSIP_TPSELECTOR_TRANSPORT, {call.getTransport()->get()}};
     if (pjsip_dlg_set_transport(dialog, &tp_sel) != PJ_SUCCESS) {
         RING_ERR("Unable to associate transport for invite session dialog");
         return false;
     }
 
-    RING_ERR("Sending SIP invite");
-    if (pjsip_inv_send_msg(call->inv.get(), tdata) != PJ_SUCCESS) {
+    RING_DBG("[call:%s] Sending SIP invite", call.getCallId().c_str());
+    if (pjsip_inv_send_msg(call.inv.get(), tdata) != PJ_SUCCESS) {
         RING_ERR("Unable to send invite message for this call");
         return false;
     }
 
-    call->setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
+    call.setState(Call::CallState::ACTIVE, Call::ConnectionState::PROGRESSING);
 
     return true;
 }
@@ -1796,7 +1796,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     if (not identity_.first or not identity_.second)
         throw std::runtime_error("No identity configured for this account.");
 
-    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    std::weak_ptr<RingAccount> waccount = std::static_pointer_cast<RingAccount>(shared_from_this());
     std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
         /*.ca_list = */"",
@@ -1804,10 +1804,12 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         /*.cert_key = */identity_.first,
         /*.dh_params = */dhParams_,
         /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        /*.cert_check = */[w,wcall,remote_h,incoming](unsigned status, const gnutls_datum_t* cert_list, unsigned cert_num) -> pj_status_t {
+        /*.cert_check = */[waccount,wcall,remote_h,incoming](unsigned status,
+                                                             const gnutls_datum_t* cert_list,
+                                                             unsigned cert_num) -> pj_status_t {
             try {
                 if (auto call = wcall.lock()) {
-                    if (auto sthis = w.lock()) {
+                    if (auto sthis = waccount.lock()) {
                         auto& this_ = *sthis;
                         std::shared_ptr<dht::crypto::Certificate> peer_cert;
                         auto ret = check_peer_certificate(remote_h, status, cert_list, cert_num, peer_cert);
@@ -1835,19 +1837,45 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
             }
         }
     };
-    call->setTransport(link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp, ICE_COMP_SIP_TRANSPORT,
-                                                            tlsParams));
 
-    // Notify of fully available connection between peers
-    RING_DBG("[call:%s] SIP communication established", call->getCallId().c_str());
-    call->setState(Call::ConnectionState::PROGRESSING);
+    // Following can create a transport that need to be negotiated (TLS).
+    // This is a asynchronous task. So we're going to process the SIP after this negotiation.
+    auto transport = link_->sipTransportBroker->getTlsIceTransport(pc.ice_sp,
+                                                                   ICE_COMP_SIP_TRANSPORT,
+                                                                   tlsParams);
+    if (!transport)
+        throw std::runtime_error("transport creation failed");
 
-    // Incoming call?
+    call->setTransport(transport);
+
     if (incoming) {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingSipCalls_.emplace_back(std::move(pc)); // copy of pc
-    } else
-        createOutgoingCall(call, remote_h.toString(), ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT));
+    } else {
+        // Be acknowledged on transport connection/disconnection
+        auto lid = reinterpret_cast<uintptr_t>(this);
+        auto remote_id = remote_h.toString();
+        auto remote_addr = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
+        auto& tr_self = *transport;
+        transport->addStateListener(lid,
+            [&tr_self, lid, wcall, waccount, remote_id, remote_addr](pjsip_transport_state state,
+                                                                     UNUSED const pjsip_transport_state_info* info) {
+                if (state == PJSIP_TP_STATE_CONNECTED) {
+                    if (auto call = wcall.lock()) {
+                        if (auto account = waccount.lock()) {
+                            // Start SIP layer when TLS negotiation is successful
+                            account->onConnectedOutgoingCall(*call, remote_id, remote_addr);
+                            return;
+                        }
+                    }
+                } else if (state == PJSIP_TP_STATE_DISCONNECTED) {
+                    tr_self.removeStateListener(lid);
+                }
+            });
+    }
+
+    // Notify of fully available connection between peers
+    call->setState(Call::ConnectionState::PROGRESSING);
 
     return true;
 }
