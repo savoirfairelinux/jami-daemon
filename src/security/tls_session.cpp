@@ -29,6 +29,7 @@
 #include "logger.h"
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
+#include "certstore.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
@@ -312,6 +313,11 @@ TlsSession::initCredentials()
 
         RING_DBG("[TLS] CA list %s loadev", params_.ca_list.c_str());
     }
+    if (params_.peer_ca) {
+        auto chain = tls::getChain(*params_.peer_ca);
+        auto ret = gnutls_certificate_set_x509_trust(*xcred_, chain.data(), chain.size());
+        RING_DBG("[TLS] Peer CA list %lu: %d", chain.size(), ret);
+    }
 
     // Load user-given identity (key and passwd)
     if (params_.cert) {
@@ -378,6 +384,7 @@ TlsSession::commonSessionInit()
         RING_ERR("[TLS] certificate credential set failed: %s", gnutls_strerror(ret));
         return false;
     }
+    gnutls_certificate_send_x509_rdn_sequence(session_, 0);
 
     // DTLS hanshake timeouts
     auto re_tx_timeout = duration2ms(DTLS_RETRANSMIT_TIMEOUT);
