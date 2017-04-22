@@ -167,7 +167,7 @@ private:
     gnutls_x509_trust_list_st* allowed_;
 };
 
-std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt);
+std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt, bool copy = false);
 std::vector<gnutls_x509_crl_t> getRevocationList(const crypto::Certificate& crt);
 
 }} // namespace ring::tls

@@ -618,12 +618,12 @@ TrustStore::matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_t
 }
 
 std::vector<gnutls_x509_crt_t>
-getChain(const crypto::Certificate& crt)
+getChain(const crypto::Certificate& crt, bool copy)
 {
     std::vector<gnutls_x509_crt_t> crts;
     auto c = &crt;
     do {
-        crts.emplace_back(c->cert);
+        crts.emplace_back(copy ? c->getCopy() : c->cert);
         c = c->issuer.get();
     } while (c);
     return crts;
@@ -661,8 +661,8 @@ TrustStore::setStoreCertStatus(const crypto::Certificate& crt, TrustStore::Permi
         return;
 
     if (status == PermissionStatus::ALLOWED) {
-        auto crt_copy = crt.getCopy();
-        gnutls_x509_trust_list_add_cas(allowed_, &crt_copy, 1, GNUTLS_TL_NO_DUPLICATES);
+        auto crt_copy = getChain(crt, true);
+        gnutls_x509_trust_list_add_cas(allowed_, crt_copy.data(), crt_copy.size(), GNUTLS_TL_NO_DUPLICATES);
         auto crls = getRevocationList(crt);
         if (not crls.empty())
             if (gnutls_x509_trust_list_add_crls(
