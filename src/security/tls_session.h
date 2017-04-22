@@ -110,8 +110,10 @@ private:
 };
 
 struct TlsParams {
-    // User CA list for session credentials
+    // User CA list for session credentials (file path)
     std::string ca_list;
+    // User CA sor session credentials
+    std::shared_ptr<dht::crypto::Certificate> peer_ca;
 
     // User identity for credential
     std::shared_ptr<dht::crypto::Certificate> cert;
