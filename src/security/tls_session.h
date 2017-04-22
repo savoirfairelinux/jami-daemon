@@ -113,6 +113,8 @@ private:
 struct TlsParams {
     // User CA list for session credentials
     std::string ca_list;
+    //std::vector<std::shared_ptr<dht::crypto::Certificate>> cas;
+    std::shared_ptr<dht::crypto::Certificate> peer_ca;
 
     // User identity for credential
     std::shared_ptr<dht::crypto::Certificate> cert;
