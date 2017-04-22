@@ -1800,6 +1800,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     std::weak_ptr<SIPCall> wcall = call;
     tls::TlsParams tlsParams {
         /*.ca_list = */"",
+        /* ca = */pc.from_cert,
         /*.cert = */identity_.second,
         /*.cert_key = */identity_.first,
         /*.dh_params = */dhParams_,
