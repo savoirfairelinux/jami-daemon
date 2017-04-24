@@ -465,7 +465,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::weak_ptr<SIPCall> wCall = call;
 
     // Find listening Ring devices for this account
-    forEachDevice(dht::InfoHash(toUri), [wCall](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
+    forEachDevice(dht::InfoHash(toUri), [wCall, toUri](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
         auto call = wCall.lock();
         if (not call) return;
@@ -487,7 +487,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         call->addSubCall(*dev_call);
 
-        manager.addTask([sthis, weak_dev_call, ice, dev] {
+        manager.addTask([sthis, weak_dev_call, ice, dev, toUri] {
             auto call = weak_dev_call.lock();
 
             // call aborted?
@@ -549,7 +549,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 ice, weak_dev_call,
                 std::move(listenKey),
                 callkey, dev,
-                nullptr
+                tls::CertificateStore::instance().getCertificate(toUri)
             });
             return false;
         });
