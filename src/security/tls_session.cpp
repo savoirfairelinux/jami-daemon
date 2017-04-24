@@ -316,6 +316,11 @@ TlsSession::initCredentials()
     if (params_.peer_ca) {
         auto chain = tls::getChain(*params_.peer_ca);
         auto ret = gnutls_certificate_set_x509_trust(*xcred_, chain.data(), chain.size());
+        for (auto c = params_.peer_ca; c; c = c->issuer) {
+            auto crls = tls::getRevocationList(*c);
+            if (not crls.empty())
+                gnutls_certificate_set_x509_crl(*xcred_, crls.data(), crls.size());
+        }
         RING_DBG("[TLS] Peer CA list %lu: %d", chain.size(), ret);
     }
 
