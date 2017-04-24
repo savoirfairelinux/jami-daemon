@@ -549,7 +549,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 ice, weak_dev_call,
                 std::move(listenKey),
                 callkey, dev,
-                nullptr
+                tls::CertificateStore::instance().getCertificate(dev.toString())
             });
             return false;
         });
