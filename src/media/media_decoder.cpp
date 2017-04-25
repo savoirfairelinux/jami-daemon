@@ -170,11 +170,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 
     // find the first audio stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
-#else
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
-#endif
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
@@ -184,16 +180,6 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
-    inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-
-    decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
-    avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
-#else
     decoderCtx_ = avStream_->codec;
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
@@ -206,7 +192,6 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
         RING_ERR("Unsupported codec");
         return -1;
     }
-#endif
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
     decoderCtx_->channels = format.nb_channels;
@@ -268,11 +253,7 @@ int MediaDecoder::setupFromVideoData()
 
     // find the first video stream from the input
     for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
-#else
         if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-#endif
             streamIndex_ = i;
 
     if (streamIndex_ == -1) {
@@ -282,29 +263,11 @@ int MediaDecoder::setupFromVideoData()
 
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101)
-    inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-
-    decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
-    avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
-#else
     decoderCtx_ = avStream_->codec;
     if (decoderCtx_ == 0) {
         RING_ERR("Decoder context is NULL");
         return -1;
     }
-
-    // find the decoder for the video stream
-    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-#endif
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
@@ -314,6 +277,13 @@ int MediaDecoder::setupFromVideoData()
         decoderCtx_->opaque = accel_.get();
     }
 #endif // RING_ACCEL
+
+    // find the decoder for the video stream
+    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
+    if (!inputDecoder_) {
+        RING_ERR("Unsupported codec");
+        return -1;
+    }
 
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
@@ -361,24 +331,12 @@ MediaDecoder::decode(VideoFrame& result)
 
     auto frame = result.pointer();
     int frameFinished = 0;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
-    ret = avcodec_send_packet(decoderCtx_, &inpacket);
-    if (ret < 0)
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
-    ret = avcodec_receive_frame(decoderCtx_, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
-    if (ret >= 0)
-        frameFinished = 1;
-#else
-    ret = avcodec_decode_video2(decoderCtx_, frame,
+    int len = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-    if (ret <= 0)
-        return Status::DecodeError;
-#endif
-
     av_packet_unref(&inpacket);
+
+    if (len <= 0)
+        return Status::DecodeError;
 
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
@@ -390,13 +348,8 @@ MediaDecoder::decode(VideoFrame& result)
                 return Status::RestartRequired;
         }
 #endif // RING_ACCEL
-#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
-        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
-#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
-#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -437,34 +390,17 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     }
 
     int frameFinished = 0;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
-        ret = avcodec_send_packet(decoderCtx_, &inpacket);
-        if (ret < 0)
-            return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
-    ret = avcodec_receive_frame(decoderCtx_, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
-    if (ret >= 0)
-        frameFinished = 1;
-#else
-    ret = avcodec_decode_audio4(decoderCtx_, frame,
+    int len = avcodec_decode_audio4(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
     av_packet_unref(&inpacket);
 
-    if (ret <= 0)
+    if (len <= 0) {
         return Status::DecodeError;
-#endif
+    }
 
     if (frameFinished) {
-        av_packet_unref(&inpacket);
-#if LIBAVUTIL_VERSION_CHECK(55, 20, 0, 34, 100)
-        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
-#else
         if (emulateRate_ and frame->pkt_pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pkt_pts - avStream_->start_time);
-#endif
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -485,28 +421,15 @@ MediaDecoder::flush(VideoFrame& result)
     av_init_packet(&inpacket);
 
     int frameFinished = 0;
-    int ret = 0;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
-    ret = avcodec_send_packet(decoderCtx_, &inpacket);
-    if (ret < 0)
-        return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
-    ret = avcodec_receive_frame(decoderCtx_, result.pointer());
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
-        return Status::DecodeError;
-    if (ret >= 0)
-        frameFinished = 1;
-#else
-    ret = avcodec_decode_video2(decoderCtx_, result.pointer(),
+    auto len = avcodec_decode_video2(decoderCtx_, result.pointer(),
                                     &frameFinished, &inpacket);
+
     av_packet_unref(&inpacket);
 
-    if (ret <= 0)
+    if (len <= 0)
         return Status::DecodeError;
-#endif
 
     if (frameFinished) {
-        av_packet_unref(&inpacket);
 #ifdef RING_ACCEL
         // flush is called when closing the stream
         // so don't restart the media decoder
