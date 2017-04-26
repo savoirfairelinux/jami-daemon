@@ -57,6 +57,9 @@ extern SignalHandlerMap& getSignalHandlers();
 template <typename Ts, typename ...Args>
 static void emitSignal(Args...args) {
     const auto& handlers = getSignalHandlers();
+    
+    RING_WARN(":C: %s \n\n\n\n\n\n", Ts::name);
+    
     if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
             cb(args...);

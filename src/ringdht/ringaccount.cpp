@@ -2914,8 +2914,10 @@ RingAccount::getContacts() const
         };
         if (c.second.isActive())
             cm.emplace("confirmed", c.second.confirmed ? TRUE_STR : FALSE_STR);
-        else if (c.second.isBanned())
+        else if (c.second.isBanned()) {
+            RING_WARN("I'm bannished %s ", c.first.toString().c_str());
             cm.emplace("banned", TRUE_STR);
+        }
         ret.emplace_back(std::move(cm));
     }
     return ret;
