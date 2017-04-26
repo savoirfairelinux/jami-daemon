@@ -132,9 +132,9 @@ getSubscriptions(const std::string& accountID)
         if (auto pres = sipaccount->getPresence()) {
             for (const auto& s : pres->getClientSubscriptions()) {
                 ret.push_back({
-                    {BUDDY_KEY, s->getURI()},
-                    {STATUS_KEY, s->isPresent() ? ONLINE_KEY : OFFLINE_KEY},
-                    {LINESTATUS_KEY, s->getLineStatus()}
+                    {DRing::Presence::BUDDY_KEY, s->getURI()},
+                    {DRing::Presence::STATUS_KEY, s->isPresent() ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY},
+                    {DRing::Presence::LINESTATUS_KEY, s->getLineStatus()}
                 });
             }
         } else
@@ -142,8 +142,8 @@ getSubscriptions(const std::string& accountID)
     } else if (auto ringaccount = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
         for (const auto& tracked_id : ringaccount->getTrackedBuddyPresence()) {
             ret.push_back({
-                    {BUDDY_KEY, tracked_id.first},
-                    {STATUS_KEY, tracked_id.second ? ONLINE_KEY : OFFLINE_KEY}
+                    {DRing::Presence::BUDDY_KEY, tracked_id.first},
+                    {DRing::Presence::STATUS_KEY, tracked_id.second ? DRing::Presence::ONLINE_KEY : DRing::Presence::OFFLINE_KEY}
                 });
         }
     } else
