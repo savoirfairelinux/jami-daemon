@@ -143,6 +143,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     , trData_ ()
     , pool_  {nullptr, pj_pool_release}
     , rxPool_ (nullptr, pj_pool_release)
+    , lastTx_ {clock::now()}
 {
     RING_DBG("SipIceTransport@%p {tr=%p}", this, &trData_.base);
 
@@ -309,37 +310,46 @@ SipsIceTransport::handleEvents()
     }
 
     // Handle SIP transport -> TLS
-    decltype(txQueue_) tx_queue;
-    {
-        std::lock_guard<std::mutex> l(txMutex_);
-        if (syncTx_) {
-            tx_queue = std::move(txQueue_);
-            txQueue_.clear();
+    // one message per loop + delay to not overflow network with OOO packets
+    std::unique_lock<std::mutex> tx_lk {txMutex_};
+    auto now = clock::now();
+    if ((now - lastTx_) >= std::chrono::milliseconds(33)) {
+        decltype(txQueue_)::value_type tdata = nullptr;
+        if (syncTx_ and not txQueue_.empty()) {
+            tdata = std::move(txQueue_.front());
+            txQueue_.pop_front();
         }
-    }
+        lastTx_ = now;
 
-    bool fatal = false;
-    for (auto tdata : tx_queue) {
-        pj_status_t status;
-        if (!fatal) {
+        if (tdata) {
+            pj_status_t status;
             const std::size_t size = tdata->buf.cur - tdata->buf.start;
+            //RING_ERR("tx:\n>>>>>%s<<<<<", std::string(tdata->buf.start, size).c_str());
+            tx_lk.unlock();
             auto ret = tls_->send(tdata->buf.start, size);
+            tx_lk.lock();
             if (gnutls_error_is_fatal(ret)) {
                 RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ret));
                 tls_->shutdown();
-                fatal = true;
+
+                // txQueue flush: done during dtor
             }
+
             if (ret < 0)
                 status = tls_status_from_err(ret);
             else
                 status = ret;
-        } else
-            status = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
 
-        tdata->op_key.tdata = nullptr;
-        if (tdata->op_key.callback)
-            tdata->op_key.callback(&trData_.base, tdata->op_key.token, status);
+            tdata->op_key.tdata = nullptr;
+            if (tdata->op_key.callback) {
+                tx_lk.unlock();
+                tdata->op_key.callback(&trData_.base, tdata->op_key.token, status);
+                tx_lk.lock();
+            }
+        }
     }
+    tx_lk.unlock();
+
 
     // Handle TLS -> SIP transport
     decltype(rxPending_) rx;
@@ -405,6 +415,7 @@ void
 SipsIceTransport::onRxData(std::vector<uint8_t>&& buf)
 {
     std::lock_guard<std::mutex> l(rxMtx_);
+    //RING_WARN("rx:\n%s<<<<<", std::string(std::begin(buf), std::end(buf)).c_str());
     rxPending_.emplace_back(std::move(buf));
 }
 
@@ -672,9 +683,13 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     // Check in we are able to send it in synchronous way first
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
     std::unique_lock<std::mutex> lk {txMutex_};
-    if (syncTx_ and txQueue_.empty()) {
-        auto ret = tls_->send(tdata->buf.start, size);
+    auto now = clock::now();
+    if (syncTx_ and txQueue_.empty() and ((now - lastTx_) >= std::chrono::milliseconds(33))) {
+        //RING_ERR("tx:\n>>>>>%s<<<<<", std::string(tdata->buf.start, size).c_str());
         lk.unlock();
+        auto ret = tls_->send(tdata->buf.start, size);
+        lastTx_ = now;
+        lk.lock();
 
         // Shutdown on fatal error, else ignore it
         if (gnutls_error_is_fatal(ret)) {
@@ -685,6 +700,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
 
         return PJ_SUCCESS;
     }
+    lk.unlock();
 
     // Asynchronous sending
     tdata->op_key.tdata = tdata;
