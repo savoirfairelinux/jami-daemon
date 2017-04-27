@@ -43,6 +43,7 @@
 #include <iterator>
 #include <array>
 #include <stdexcept>
+#include <bitset>
 
 namespace ring {
 class IceTransport;
@@ -215,11 +216,21 @@ private:
     std::condition_variable rxCv_ {};
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
+    std::mutex reorderBufMutex_;
+    uint64_t baseSeq_ {0}; // sequence number of first application data packet received
+    uint64_t lastRxSeq_ {0}; // last received and valid packet sequence number
+    uint64_t gapOffset_ {1}; // offset of first byte not received yet (start at 1)
+    clock::time_point lastReadTime_;
+    std::map<uint64_t, std::vector<uint8_t>> reorderBuffer_ {};
+
     ssize_t send_(const uint8_t* tx_data, std::size_t tx_size);
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
+
+    void handleDataPacket(std::vector<uint8_t>&&, const uint8_t*);
+    void flushRxQueue();
 
     // Statistics
     std::atomic<std::size_t> stRxRawPacketCnt_ {0};
