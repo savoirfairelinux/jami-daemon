@@ -1,45 +1,20 @@
-From f200037c244cd355310d0bde1d0699abda82b71d Mon Sep 17 00:00:00 2001
-From: Alexandre Lision <alexandre.lision@gmail.com>
-Date: Thu, 22 Sep 2016 20:07:58 +0200
-Subject: [PATCH] disable getentropy
-
----
- configure.ac | 22 +++++++++++++---------
- 1 file changed, 13 insertions(+), 9 deletions(-)
-
-diff --git a/configure.ac b/configure.ac
-index c690adf..808e779 100644
---- a/configure.ac
-+++ b/configure.ac
-@@ -175,15 +175,19 @@ AC_LINK_IFELSE([AC_LANG_PROGRAM([
- 		   enable_getrandom=getrandom],
+--- gnutls-old/configure.ac
++++ gnutls/configure.ac
+@@ -220,6 +220,9 @@
+ 		   rnd_variant=getrandom],
  		  [AC_MSG_RESULT(no)])
  
--AC_MSG_CHECKING([for getentropy])
--AC_LINK_IFELSE([AC_LANG_PROGRAM([
--	   #include <unistd.h>],[
--		   getentropy(0, 0);
--		  ])],
--		  [AC_MSG_RESULT(yes)
--		   AC_DEFINE([HAVE_GETENTROPY], 1, [Enable the OpenBSD getentropy function])
--		   enable_getrandom=getentropy],
--		  [AC_MSG_RESULT(no)])
 +if test "$have_macosx" = yes; then
-+    AC_MSG_CHECKING([entropy disabled for OSX])
++AC_MSG_CHECKING([entropy disabled for OSX])
 +else
-+    AC_MSG_CHECKING([for getentropy])
-+    AC_LINK_IFELSE([AC_LANG_PROGRAM([
-+        #include <unistd.h>],[
-+            getentropy(0, 0);
-+        ])],
-+        [AC_MSG_RESULT(yes)
-+        AC_DEFINE([HAVE_GETENTROPY], 1, [Enable the OpenBSD getentropy function])
-+            enable_getrandom=getentropy],
-+        [AC_MSG_RESULT(no)])
+ AC_MSG_CHECKING([for getentropy])
+ AC_LINK_IFELSE([AC_LANG_PROGRAM([
+ 	   #include <unistd.h>
+@@ -233,6 +236,7 @@
+ 		   AC_DEFINE([HAVE_GETENTROPY], 1, [Enable the OpenBSD getentropy function])
+ 		   rnd_variant=getentropy],
+ 		  [AC_MSG_RESULT(no)])
 +fi
  
- dnl Try the hooks.m4
- LIBGNUTLS_HOOKS
--- 
-2.9.3
-
+ AM_CONDITIONAL(HAVE_GETENTROPY, test "$rnd_variant" = "getentropy")
+ 
