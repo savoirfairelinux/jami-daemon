@@ -2344,18 +2344,18 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
             return;
         }
 
-        if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
+        auto accTrustStatus = this_.trust_.getCertificateStatus(peer_account_id.toString());
+        if (not this_.dhtPublicInCalls_ and accTrustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
             if (!cert or cert->getId() != peer_device) {
                 RING_WARN("[Account %s] Can't find certificate of %s for incoming message.", this_.getAccountID().c_str(), peer_device.toString().c_str());
                 return;
             }
 
-            auto& this_ = *shared;
             if (!this_.trust_.isAllowed(*cert)) {
                 RING_WARN("[Account %s] Discarding message from untrusted peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
                 return;
             }
-        } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
+        } else if (not this_.dhtPublicInCalls_ or accTrustStatus == tls::TrustStore::PermissionStatus::BANNED) {
             RING_WARN("[Account %s] Discarding message from untrusted or banned peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
