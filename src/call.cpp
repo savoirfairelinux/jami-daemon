@@ -432,6 +432,7 @@ Call::subcallStateChanged(Call& subcall,
 
         hangupCalls(safePopSubcalls(), 0);
         Manager::instance().peerHungupCall(*this);
+        removeCall();
         return;
     }
 
