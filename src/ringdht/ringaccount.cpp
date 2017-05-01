@@ -2595,6 +2595,10 @@ RingAccount::findCertificate(const std::string& crt_id)
 bool
 RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status)
 {
+    if (contacts_.find(dht::InfoHash(cert_id)) != contacts_.end()) {
+        RING_ERR("Forbidden to set certificate status for existing contacts %s", cert_id.c_str());
+        return false;
+    }
     findCertificate(cert_id);
     bool done = trust_.setCertificateStatus(cert_id, status);
     if (done)
