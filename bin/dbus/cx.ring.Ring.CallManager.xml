@@ -41,7 +41,7 @@
             <tp:docstring>
               Once enabled using the startSmartInfo method, this signal is emitted every refreshTimeMS
             </tp:docstring>
-             <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="MapStringString"/>
+             <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
              <arg type="a{ss}" name="info" direction="out" />
        </signal>
 
@@ -539,7 +539,7 @@
             </tp:docstring>
             <arg type="s" name="callID" />
             <arg type="s" name="from" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="MapStringString"/>
             <arg type="a{ss}" name="messages" />
         </signal>
 
@@ -768,7 +768,7 @@
                 <p>Signal sent adter a RTCP report has been received and computed.</p>
             </tp:docstring>
             <arg type="s" name="callID" />
-            <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringInt"/>
+            <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringInt"/>
             <arg type="a{si}" name="report" direction="out" tp:type="String_Integer_Map">
               <tp:docstring xmlns="http://www.w3.org/1999/xhtml">
                 <p>A map containing RTCP stats: </p>

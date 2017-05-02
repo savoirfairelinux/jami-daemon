@@ -234,7 +234,7 @@
            </tp:docstring>
            <arg type="s" name="accountID">
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
            <arg type="a{ss}" name="devices" tp:type="String_String_Map">
                <tp:docstring>
                    A map of device IDs with corresponding labels.
@@ -530,7 +530,7 @@
            </tp:docstring>
            <arg type="s" name="accountID"/>
            <arg type="s" name="from"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out2" value="MapStringString"/>
           <arg type="a{ss}" name="payloads"/>
        </signal>
 
@@ -878,7 +878,7 @@
                    The account ID
                </tp:docstring>
            </arg>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="MapStringString"/>
            <arg type="a{ss}" name="details" tp:type="String_String_Map">
                <tp:docstring>
                    Account.registrationCoarseStatus      ( Coarse status like, UNREGISTERED or TRYING )
