@@ -2216,9 +2216,9 @@ RingAccount::doRegister_()
                 RING_WARN("[Account %s] ICE candidate from %s.", this_.getAccountID().c_str(), msg.from.toString().c_str());
 
                 this_.onPeerMessage(msg.from, [shared, msg](const std::shared_ptr<dht::crypto::Certificate>& cert,
-                                                            const dht::InfoHash& /*account*/) mutable
+                                                            const dht::InfoHash& account) mutable
                 {
-                    shared->incomingCall(std::move(msg), cert);
+                    shared->incomingCall(std::move(msg), cert, account);
                 });
                 return true;
             }
@@ -2372,15 +2372,14 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
 }
 
 void
-RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert)
+RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
-    RING_WARN("ICE incoming from DHT peer %s", msg.from.toString().c_str());
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
 
     std::weak_ptr<SIPCall> wcall = call;
     auto account = std::static_pointer_cast<RingAccount>(shared_from_this());
-    Manager::instance().addTask([account, wcall, ice, msg, from_cert] {
+    Manager::instance().addTask([account, wcall, ice, msg, from_cert, from] {
         auto call = wcall.lock();
 
         // call aborted?
@@ -2399,7 +2398,7 @@ RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::c
         if (not ice->isInitialized())
             return true;
 
-        account->replyToIncomingIceMsg(call, ice, msg, from_cert);
+        account->replyToIncomingIceMsg(call, ice, msg, from_cert, from);
         return false;
     });
 }
@@ -2419,7 +2418,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     // insert device
     auto it = knownDevices_.emplace(crt->getId(), KnownDevice{crt, name, updated});
     if (it.second) {
-        RING_WARN("[Account %s] Found account device: %s %s", getAccountID().c_str(),
+        RING_DBG("[Account %s] Found account device: %s %s", getAccountID().c_str(),
                                                               name.c_str(),
                                                               crt->getId().toString().c_str());
         tls::CertificateStore::instance().pinCertificate(crt);
@@ -2428,7 +2427,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
     } else {
         // update device name
         if (not name.empty() and it.first->second.name != name) {
-            RING_WARN("[Account %s] updating device name: %s %s", getAccountID().c_str(),
+            RING_DBG("[Account %s] updating device name: %s %s", getAccountID().c_str(),
                                                                   name.c_str(),
                                                                   crt->getId().toString().c_str());
             it.first->second.name = name;
@@ -2473,14 +2472,10 @@ void
 RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const std::shared_ptr<IceTransport>& ice,
                                    const dht::IceCandidates& peer_ice_msg,
-                                   const std::shared_ptr<dht::crypto::Certificate>& peer_cert)
+                                   const std::shared_ptr<dht::crypto::Certificate>& from_cert,
+                                   const dht::InfoHash& from_id)
 {
-    registerDhtAddress(*ice);
-
-    dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
-
-    auto from = (peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId() : peer_cert->getId()) : peer_ice_msg.from).toString();
-
+    auto from = from_id.toString();
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
     nameDir_.get().lookupAddress(from, [wcall](const std::string& result, const NameDirectory::Response& response){
@@ -2490,12 +2485,13 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     });
 #endif
 
+    registerDhtAddress(*ice);
     // Asynchronous DHT put of our local ICE data
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
     dht_.putEncrypted(
         callKey_,
         peer_ice_msg.from,
-        std::move(val),
+        dht::Value {dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg())},
         [wcall](bool ok) {
             if (!ok) {
                 RING_WARN("Can't put ICE descriptor reply on DHT");
@@ -2526,7 +2522,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 /*.listen_key = */{},
                 /*.call_key = */{},
                 /*.from = */peer_ice_msg.from,
-                /*.from_cert = */peer_cert });
+                /*.from_cert = */from_cert });
     }
 }
 
