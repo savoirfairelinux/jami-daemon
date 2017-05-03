@@ -279,7 +279,6 @@ class RingAccount : public SIPAccountBase {
         }
 
         bool setCertificateStatus(const std::string& cert_id, tls::TrustStore::PermissionStatus status);
-        bool setCertificateStatus(const std::string& cert_id, tls::TrustStatus status);
 
         std::vector<std::string> getCertificatesByStatus(tls::TrustStore::PermissionStatus status);
 
@@ -477,7 +476,7 @@ class RingAccount : public SIPAccountBase {
         void updateContact(const dht::InfoHash&, const Contact&);
 
         // Trust store with Ring account main certificate as the only CA
-        tls::TrustStore accountTrust_;
+        dht::crypto::TrustList accountTrust_;
         // Trust store for to match peer certificates
         tls::TrustStore trust_;
 
