@@ -373,7 +373,7 @@ class RingAccount : public SIPAccountBase {
         void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id);
 
         void doRegister_();
-        void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from);
+        void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from);
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
@@ -526,7 +526,8 @@ class RingAccount : public SIPAccountBase {
         void replyToIncomingIceMsg(const std::shared_ptr<SIPCall>&,
                                    const std::shared_ptr<IceTransport>&,
                                    const dht::IceCandidates&,
-                                   const std::shared_ptr<dht::crypto::Certificate>&);
+                                   const std::shared_ptr<dht::crypto::Certificate>& from_cert,
+                                   const dht::InfoHash& from);
 
         static tls::DhParams loadDhParams(const std::string path);
 
