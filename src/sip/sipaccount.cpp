@@ -733,19 +733,20 @@ void SIPAccount::doRegister1_()
         return;
     }
 
-    auto shared = shared_from_this();
+    std::weak_ptr<SIPAccount> weak_acc = std::static_pointer_cast<SIPAccount>(shared_from_this());
     link_->resolveSrvName(
         hostname_,
         tlsEnable_ ? PJSIP_TRANSPORT_TLS : PJSIP_TRANSPORT_UDP,
-        [shared](std::vector<IpAddr> host_ips) {
-            auto this_ = std::static_pointer_cast<SIPAccount>(shared).get();
-            if (host_ips.empty()) {
-                RING_ERR("Can't resolve hostname for registration.");
-                this_->setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
-                return;
+        [weak_acc](std::vector<IpAddr> host_ips) {
+            if (auto acc = weak_acc.lock()) {
+                if (host_ips.empty()) {
+                    RING_ERR("Can't resolve hostname for registration.");
+                    acc->setRegistrationState(RegistrationState::ERROR_GENERIC, PJSIP_SC_NOT_FOUND);
+                    return;
+                }
+                acc->hostIp_ = host_ips[0];
+                acc->doRegister2_();
             }
-            this_->hostIp_ = host_ips[0];
-            this_->doRegister2_();
         }
     );
 }
