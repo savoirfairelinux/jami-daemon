@@ -53,7 +53,7 @@ encode(const std::vector<uint8_t>& dat)
 std::vector<uint8_t>
 decode(const std::string& str)
 {
-    int output_length = PJ_BASE64_TO_BASE256_LEN(str.length());
+    int output_length = PJ_BASE64_TO_BASE256_LEN(str.length()) + 2; // FIXME: find the reason of this magic +2
     pj_str_t input;
     pj_strset(&input, (char*) &(*str.begin()), str.length());
 
