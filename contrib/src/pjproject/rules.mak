@@ -67,6 +67,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
+	$(APPLY) $(SRC)/pjproject/fix_base64.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
 	$(APPLY) $(SRC)/pjproject/isblank.patch
