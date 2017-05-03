@@ -191,9 +191,9 @@ struct RingAccount::Contact
         if (c.confirmed != confirmed) {
             confirmed = c.confirmed or confirmed;
         }
-        return hasSameState(copy);
+        return hasDifferentState(copy);
     }
-    bool hasSameState(const Contact& other) const {
+    bool hasDifferentState(const Contact& other) const {
         return other.isActive() != isActive()
             or other.isBanned() != isBanned()
             or other.confirmed  != confirmed;
@@ -798,8 +798,8 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     std::tie(tlsPrivateKeyFile_, tlsCertificateFile_) = saveIdentity(dev_id, idPath_, "ring_device");
     tlsPassword_ = {};
     identity_ = dev_id;
-    accountTrust_ = tls::TrustStore{};
-    accountTrust_.setCertificateStatus(id.second, tls::TrustStore::PermissionStatus::ALLOWED, false);
+    accountTrust_ = dht::crypto::TrustList{};
+    accountTrust_.add(*id.second);
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
     ringDeviceName_ = ip_utils::getHostname();
     if (ringDeviceName_.empty())
@@ -865,9 +865,9 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     }
 
     // match certificate chain
-    tls::TrustStore account_trust;
-    account_trust.setCertificateStatus(accountCertificate, tls::TrustStore::PermissionStatus::ALLOWED, false);
-    if (not account_trust.isAllowed(*identity.second)) {
+    dht::crypto::TrustList account_trust;
+    account_trust.add(*accountCertificate);
+    if (not account_trust.verify(*identity.second)) {
         RING_ERR("[Account %s] can't use identity: device certificate chain can't be verified", getAccountID().c_str());
         return false;
     }
@@ -2343,16 +2343,16 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
 void
 RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& peer_account)> cb)
 {
-    // quick check in case we already explicilty banned this public key
+    // quick check in case we already explicilty banned this device
     auto trustStatus = trust_.getCertificateStatus(peer_device.toString());
     if (trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-        RING_WARN("[Account %s] Discarding message from banned peer %s", getAccountID().c_str(), peer_device.toString().c_str());
+        RING_WARN("[Account %s] Discarding message from banned device %s", getAccountID().c_str(), peer_device.toString().c_str());
         return;
     }
 
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     findCertificate(peer_device,
-        [shared, peer_device, trustStatus, cb](const std::shared_ptr<dht::crypto::Certificate>& cert) {
+        [shared, peer_device, cb](const std::shared_ptr<dht::crypto::Certificate>& cert) {
         auto& this_ = *shared;
 
         dht::InfoHash peer_account_id;
@@ -2361,19 +2361,8 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
             return;
         }
 
-        if (not this_.dhtPublicInCalls_ and trustStatus != tls::TrustStore::PermissionStatus::ALLOWED) {
-            if (!cert or cert->getId() != peer_device) {
-                RING_WARN("[Account %s] Can't find certificate of %s for incoming message.", this_.getAccountID().c_str(), peer_device.toString().c_str());
-                return;
-            }
-
-            auto& this_ = *shared;
-            if (!this_.trust_.isAllowed(*cert)) {
-                RING_WARN("[Account %s] Discarding message from untrusted peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
-                return;
-            }
-        } else if (not this_.dhtPublicInCalls_ or trustStatus == tls::TrustStore::PermissionStatus::BANNED) {
-            RING_WARN("[Account %s] Discarding message from untrusted or banned peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
+        if (not this_.trust_.isAllowed(*cert, this_.dhtPublicInCalls_)) {
+            RING_WARN("[Account %s] Discarding message from unauthorized peer %s.", this_.getAccountID().c_str(), peer_device.toString().c_str());
             return;
         }
 
@@ -2421,7 +2410,7 @@ RingAccount::foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>&
         return false;
 
     // match certificate chain
-    if (not accountTrust_.isAllowed(*crt)) {
+    if (not accountTrust_.verify(*crt)) {
         RING_WARN("[Account %s] Found invalid account device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
         return false;
     }
@@ -2465,19 +2454,17 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
         return false;
     }
 
-    RING_WARN("foundPeerDevice dev:%s CA:%s", crt->getId().toString().c_str(), top_issuer->getId().toString().c_str());
-
     // Check peer certificate chain
     // Trust store with top issuer as the only CA
-    tls::TrustStore peer_trust;
-    peer_trust.setCertificateStatus(top_issuer, tls::TrustStore::PermissionStatus::ALLOWED, false);
-
-    if (not peer_trust.isAllowed(*crt)) {
+    dht::crypto::TrustList peer_trust;
+    peer_trust.add(*top_issuer);
+    if (not peer_trust.verify(*crt)) {
         RING_WARN("[Account %s] Found invalid peer device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
         return false;
     }
 
     account_id = crt->issuer->getId();
+    RING_WARN("[Account %s] found peer device: %s account:%s CA:%s", getAccountID().c_str(), crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
     return true;
 }
 
@@ -2619,16 +2606,6 @@ RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStore::P
     bool done = trust_.setCertificateStatus(cert_id, status);
     if (done)
         emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(), cert_id, tls::TrustStore::statusToStr(status));
-    return done;
-}
-
-bool
-RingAccount::setCertificateStatus(const std::string& cert_id, tls::TrustStatus status)
-{
-    findCertificate(cert_id);
-    bool done = trust_.setCertificateStatus(cert_id, status);
-    if (done)
-        emitSignal<DRing::ConfigurationSignal::CertificateStateChanged>(getAccountID(), cert_id, tls::statusToStr(status));
     return done;
 }
 
@@ -2917,6 +2894,7 @@ RingAccount::getContactHeader(pjsip_transport* t)
 void
 RingAccount::addContact(const std::string& uri, bool confirmed)
 {
+    RING_WARN("[Account %s] addContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
@@ -2934,6 +2912,7 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 void
 RingAccount::removeContact(const std::string& uri, bool ban)
 {
+    RING_WARN("[Account %s] removeContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
     auto c = contacts_.find(h);
     if (c == contacts_.end())
