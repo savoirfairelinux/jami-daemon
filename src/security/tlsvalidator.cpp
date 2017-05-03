@@ -447,9 +447,6 @@ unsigned int TlsValidator::compareToCa()
     if (caChecked_)
         return caValidationOutput_;
 
-    // build the certificate chain
-    auto crts = getChain(*x509crt_);
-
     // build the CA trusted list
     gnutls_x509_trust_list_t trust;
     gnutls_x509_trust_list_init(&trust, 0);
@@ -466,6 +463,8 @@ unsigned int TlsValidator::compareToCa()
             gnutls_x509_trust_list_add_trust_file(trust, caListPath_.c_str(), nullptr, GNUTLS_X509_FMT_PEM, 0, 0);
     }
 
+    // build the certificate chain
+    auto crts = x509crt_->getChain();
     err = gnutls_x509_trust_list_verify_crt2(
         trust,
         crts.data(), crts.size(),
