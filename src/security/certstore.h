@@ -32,8 +32,6 @@
 #include <future>
 #include <mutex>
 
-struct gnutls_x509_trust_list_st;
-
 namespace ring { namespace tls {
 
 namespace crypto = dht::crypto;
@@ -108,18 +106,9 @@ private:
  */
 class TrustStore {
 public:
-    TrustStore();
-    virtual ~TrustStore();
-    TrustStore(TrustStore&& o) :
-        unknownCertStatus_(std::move(o.unknownCertStatus_)),
-        certStatus_(std::move(o.certStatus_)),
-        revokedList_(std::move(o.revokedList_)),
-        allowed_(std::move(o.allowed_))
-    {
-        o.allowed_ = nullptr;
-    }
-
-    TrustStore& operator=(TrustStore&& o);
+    TrustStore() = default;
+    TrustStore(TrustStore&& o) = default;
+    TrustStore& operator=(TrustStore&& o) = default;
 
     enum class PermissionStatus {
         UNDEFINED = 0,
@@ -135,39 +124,43 @@ public:
     bool setCertificateStatus(const std::string& cert_id, const PermissionStatus status);
     bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, PermissionStatus status, bool local = true);
 
-    bool setCertificateStatus(const std::string& cert_id, const TrustStatus status);
-    bool setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert, TrustStatus status, bool local = true);
-
     PermissionStatus getCertificateStatus(const std::string& cert_id) const;
-    TrustStatus getCertificateTrustStatus(const std::string& cert_id) const;
 
     std::vector<std::string> getCertificatesByStatus(PermissionStatus status);
 
-    bool isAllowed(const crypto::Certificate& crt);
-
-    std::vector<gnutls_x509_crt_t> getTrustedCertificates() const;
+    /**
+     * Check that the certificate is allowed (valid and permited) for contact.
+     * Valid means the certificate chain matches with our CA list,
+     * has valid signatures, expiration dates etc.
+     * Permited means at least one of the certificate in the chain is
+     * ALLOWED (if allowPublic is false), and none is BANNED.
+     *
+     * @param crt the end certificate of the chain to check
+     * @param allowPublic if false, requires at least one ALLOWED certificate.
+     *                    (not required otherwise). In any case a BANNED
+     *                    certificate means permission refusal.
+     * @return true if the certificate is valid and permitted.
+     */
+    bool isAllowed(const crypto::Certificate& crt, bool allowPublic = false);
 
 private:
     NON_COPYABLE(TrustStore);
 
     void updateKnownCerts();
-    void setStoreCertStatus(const crypto::Certificate& crt, PermissionStatus status);
-
-    static bool matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_trust_list_st* store);
+    bool setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
+                              const std::string& cert_id,
+                              const TrustStore::PermissionStatus status, bool local);
+    void setStoreCertStatus(const crypto::Certificate& crt, bool status);
+    void rebuildTrust();
 
     struct Status {
-        bool allowed : 1;
-        bool trusted : 1;
+        bool allowed;
     };
 
     // unknown certificates with known status
     std::map<std::string, Status> unknownCertStatus_;
     std::map<std::string, std::pair<std::shared_ptr<crypto::Certificate>, Status>> certStatus_;
-    std::vector<dht::crypto::RevocationList> revokedList_;
-    gnutls_x509_trust_list_st* allowed_;
+    dht::crypto::TrustList allowed_;
 };
-
-std::vector<gnutls_x509_crt_t> getChain(const crypto::Certificate& crt, bool copy = false);
-std::vector<gnutls_x509_crl_t> getRevocationList(const crypto::Certificate& crt);
 
 }} // namespace ring::tls
