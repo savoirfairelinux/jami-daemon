@@ -402,101 +402,70 @@ statusToStr(TrustStatus s)
     }
 }
 
-TrustStore::TrustStore()
-{
-    gnutls_x509_trust_list_init(&allowed_, 0);
-}
-
-TrustStore::~TrustStore()
-{
-    gnutls_x509_trust_list_deinit(allowed_, true);
-}
-
-TrustStore&
-TrustStore::operator=(TrustStore&& o)
-{
-    unknownCertStatus_ = std::move(o.unknownCertStatus_);
-    certStatus_ = std::move(o.certStatus_);
-    revokedList_ = std::move(o.revokedList_);
-    if (allowed_)
-        gnutls_x509_trust_list_deinit(allowed_, true);
-    allowed_ = std::move(o.allowed_);
-    o.allowed_ = nullptr;
-    return *this;
-}
-
 bool
 TrustStore::addRevocationList(dht::crypto::RevocationList&& crl)
 {
-    auto packed = crl.getPacked();
-    revokedList_.emplace_back(std::forward<dht::crypto::RevocationList>(crl));
-    auto crlp = crl.get();
-    return gnutls_x509_trust_list_add_crls(allowed_, &crlp, 1, GNUTLS_TL_VERIFY_CRL, 0) > 0;
+    allowed_.add(crl);
+    return true;
 }
 
 bool
 TrustStore::setCertificateStatus(const std::string& cert_id,
                                  const TrustStore::PermissionStatus status)
 {
-    updateKnownCerts();
-    auto s = certStatus_.find(cert_id);
-    if (s == std::end(certStatus_)) {
-        if (auto cert = CertificateStore::instance().getCertificate(cert_id)) {
-            auto& crt_status = certStatus_[cert->getId().toString()];
-            if (not crt_status.first)
-                crt_status.first = cert;
-            crt_status.second.allowed = (status == PermissionStatus::ALLOWED);
-            setStoreCertStatus(*cert, status);
-        } else
-            unknownCertStatus_[cert_id].allowed = (status == PermissionStatus::ALLOWED);
-    } else {
-        s->second.second.allowed = (status == PermissionStatus::ALLOWED);
-        setStoreCertStatus(*s->second.first, status);
-    }
-    return true;
+    return setCertificateStatus(nullptr, cert_id, status, false);
 }
 
 bool
 TrustStore::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
                                  const TrustStore::PermissionStatus status, bool local)
 {
-    CertificateStore::instance().pinCertificate(cert, local);
-    auto& crt_status = certStatus_[cert->getId().toString()];
-    if (not crt_status.first)
-        crt_status.first = cert;
-    crt_status.second.allowed = (status == PermissionStatus::ALLOWED);
-    setStoreCertStatus(*cert, status);
-    return true;
+    return setCertificateStatus(cert, cert->getId().toString(), status, local);
 }
 
 bool
-TrustStore::setCertificateStatus(const std::string& cert_id, const TrustStatus status)
+TrustStore::setCertificateStatus(std::shared_ptr<crypto::Certificate> cert,
+                                 const std::string& cert_id,
+                                 const TrustStore::PermissionStatus status, bool local)
 {
+    if (cert)
+        CertificateStore::instance().pinCertificate(cert, local);
     updateKnownCerts();
-    auto s = certStatus_.find(cert_id);
-    if (s == std::end(certStatus_)) {
-        if (auto cert = CertificateStore::instance().getCertificate(cert_id)) {
-            auto& crt_status = certStatus_[cert->getId().toString()];
-            if (not crt_status.first)
-                crt_status.first = cert;
-            crt_status.second.trusted = (status == TrustStatus::TRUSTED);
-        } else
-            unknownCertStatus_[cert_id].trusted = (status == TrustStatus::TRUSTED);
+    bool dirty {false};
+    if (status == PermissionStatus::UNDEFINED) {
+        unknownCertStatus_.erase(cert_id);
+        dirty = certStatus_.erase(cert_id);
     } else {
-        s->second.second.trusted = (status == TrustStatus::TRUSTED);
+        bool allowed = (status == PermissionStatus::ALLOWED);
+        auto s = certStatus_.find(cert_id);
+        if (s == std::end(certStatus_)) {
+            // Certificate state is currently undefined
+            if (not cert)
+                cert = CertificateStore::instance().getCertificate(cert_id);
+            if (cert) {
+                unknownCertStatus_.erase(cert_id);
+                auto& crt_status = certStatus_[cert_id];
+                if (not crt_status.first)
+                    crt_status.first = cert;
+                crt_status.second.allowed = allowed;
+                setStoreCertStatus(*cert, allowed);
+            } else {
+                // Can't find certificate
+                unknownCertStatus_[cert_id].allowed = allowed;
+            }
+        } else {
+            // Certificate is already allowed or banned
+            if (s->second.second.allowed != allowed) {
+                s->second.second.allowed = allowed;
+                if (allowed) // Certificate is re-added after ban, rebuld needed
+                    dirty = true;
+                else
+                    allowed_.remove(*s->second.first);
+            }
+        }
     }
-    return true;
-}
-
-bool
-TrustStore::setCertificateStatus(const std::shared_ptr<crypto::Certificate>& cert,
-                                 const TrustStatus status, bool local)
-{
-    CertificateStore::instance().pinCertificate(cert, local);
-    auto& crt_status = certStatus_[cert->getId().toString()];
-    if (not crt_status.first)
-        crt_status.first = cert;
-    crt_status.second.trusted = (status == TrustStatus::TRUSTED);
+    if (dirty)
+        rebuildTrust();
     return true;
 }
 
@@ -513,19 +482,6 @@ TrustStore::getCertificateStatus(const std::string& cert_id) const
     return s->second.second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::BANNED;
 }
 
-TrustStatus
-TrustStore::getCertificateTrustStatus(const std::string& cert_id) const
-{
-    auto s = certStatus_.find(cert_id);
-    if (s == std::end(certStatus_)) {
-        auto us = unknownCertStatus_.find(cert_id);
-        if (us == std::end(unknownCertStatus_))
-            return TrustStatus::UNTRUSTED;
-        return us->second.trusted ? TrustStatus::TRUSTED : TrustStatus::UNTRUSTED;
-    }
-    return s->second.second.trusted ? TrustStatus::TRUSTED : TrustStatus::UNTRUSTED;
-}
-
 std::vector<std::string>
 TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status)
 {
@@ -540,104 +496,27 @@ TrustStore::getCertificatesByStatus(TrustStore::PermissionStatus status)
 }
 
 bool
-TrustStore::isAllowed(const crypto::Certificate& crt)
+TrustStore::isAllowed(const crypto::Certificate& crt, bool allowPublic)
 {
-    // Match by certificate pinning (device)
-    auto status = getCertificateStatus(crt.getId().toString());
-    if (status == PermissionStatus::ALLOWED)
-        return true;
-    else if (status == PermissionStatus::BANNED)
-        return false;
+    // Match by certificate pinning
+    bool allowed {allowPublic};
+    for (auto c = &crt; c; c = c->issuer.get()) {
+        auto status = getCertificateStatus(c->getId().toString());
+        if (status == PermissionStatus::ALLOWED)
+            allowed = true;
+        else if (status == PermissionStatus::BANNED)
+            return false;
+    }
 
     // Match by certificate chain
     updateKnownCerts();
-    return matchTrustStore(getChain(crt), allowed_);
-}
-
-
-std::vector<gnutls_x509_crt_t>
-TrustStore::getTrustedCertificates() const
-{
-    auto cas = CertificateStore::instance().getTrustedCertificates();
-    for (const auto& i : certStatus_)
-        if (i.second.second.trusted)
-            cas.emplace_back(i.second.first->cert);
-    return cas;
-}
-
-bool
-TrustStore::matchTrustStore(std::vector<gnutls_x509_crt_t>&& crts, gnutls_x509_trust_list_st* store)
-{
-    unsigned result = 0;
-
-#if GNUTLS_VERSION_NUMBER > 0x030308
-    auto ret = gnutls_x509_trust_list_verify_crt2(
-        store,
-        crts.data(), crts.size(),
-        nullptr, 0,
-        GNUTLS_PROFILE_TO_VFLAGS(GNUTLS_PROFILE_MEDIUM),
-        &result, nullptr);
-#else
-    auto ret = gnutls_x509_trust_list_verify_crt(
-        store,
-        crts.data(), crts.size(),
-        0,
-        &result, nullptr);
-#endif
-
-    if (ret < 0) {
-        RING_ERR("Error verifying certificate: %s", gnutls_strerror(ret));
+    auto ret = allowed_.verify(crt);
+    if (not ret) {
+        RING_WARN("%s", ret.toString().c_str());
         return false;
-    } else if (result & GNUTLS_CERT_INVALID) {
-        RING_WARN("Certificate check failed with code: %d", result);
-        if (result & GNUTLS_CERT_SIGNATURE_FAILURE)
-            RING_WARN("* The signature verification failed.");
-        if (result & GNUTLS_CERT_REVOKED)
-            RING_WARN("* Certificate is revoked");
-        if (result & GNUTLS_CERT_SIGNER_NOT_FOUND)
-            RING_WARN("* Certificate's issuer is not known");
-        if (result & GNUTLS_CERT_SIGNER_NOT_CA)
-            RING_WARN("* Certificate's issuer not a CA");
-        if (result & GNUTLS_CERT_SIGNER_CONSTRAINTS_FAILURE)
-            RING_WARN("* Certificate's signer constraints were violated");
-        if (result & GNUTLS_CERT_INSECURE_ALGORITHM)
-            RING_WARN("* Certificate was signed using an insecure algorithm");
-        if (result & GNUTLS_CERT_NOT_ACTIVATED)
-            RING_WARN("* Certificate is not yet activated");
-        if (result & GNUTLS_CERT_EXPIRED)
-            RING_WARN("* Certificate has expired");
-        if (result & GNUTLS_CERT_UNEXPECTED_OWNER)
-            RING_WARN("* The owner is not the expected one");
-        if (result & GNUTLS_CERT_PURPOSE_MISMATCH)
-            RING_WARN("* Certificate or an intermediate does not match the intended purpose");
-        if (result & GNUTLS_CERT_MISMATCH)
-            RING_WARN("* Certificate presented isn't the expected one");
     }
 
-    return !(result & GNUTLS_CERT_INVALID);
-}
-
-std::vector<gnutls_x509_crt_t>
-getChain(const crypto::Certificate& crt, bool copy)
-{
-    std::vector<gnutls_x509_crt_t> crts;
-    auto c = &crt;
-    do {
-        crts.emplace_back(copy ? c->getCopy() : c->cert);
-        c = c->issuer.get();
-    } while (c);
-    return crts;
-}
-
-std::vector<gnutls_x509_crl_t>
-getRevocationList(const crypto::Certificate& crt)
-{
-    std::vector<gnutls_x509_crl_t> crls_ret;
-    const auto& crls = crt.getRevocationLists();
-    crls_ret.reserve(crls.size());
-    for (const auto& crl : crls)
-        crls_ret.emplace_back(crl->getCopy());
-    return crls_ret;
+    return allowed;
 }
 
 void
@@ -647,7 +526,7 @@ TrustStore::updateKnownCerts()
     while (i != std::end(unknownCertStatus_)) {
         if (auto crt = CertificateStore::instance().getCertificate(i->first)) {
             certStatus_.emplace(i->first, std::make_pair(crt, i->second));
-            setStoreCertStatus(*crt, i->second.allowed ? PermissionStatus::ALLOWED : PermissionStatus::UNDEFINED);
+            setStoreCertStatus(*crt, i->second.allowed);
             i = unknownCertStatus_.erase(i);
         } else
             ++i;
@@ -655,28 +534,20 @@ TrustStore::updateKnownCerts()
 }
 
 void
-TrustStore::setStoreCertStatus(const crypto::Certificate& crt, TrustStore::PermissionStatus status)
+TrustStore::setStoreCertStatus(const crypto::Certificate& crt, bool status)
 {
-    if (not crt.isCA())
-        return;
-
-    if (status == PermissionStatus::ALLOWED) {
-        auto crt_copy = getChain(crt, true);
-        gnutls_x509_trust_list_add_cas(allowed_, crt_copy.data(), crt_copy.size(), GNUTLS_TL_NO_DUPLICATES);
-        auto crls = getRevocationList(crt);
-        if (not crls.empty())
-            if (gnutls_x509_trust_list_add_crls(
-                    allowed_,
-                    crls.data(), crls.size(),
-                    GNUTLS_TL_VERIFY_CRL | GNUTLS_TL_NO_DUPLICATES, 0) == 0)
-                RING_WARN("No CRLs where added");
-    }
+    if (status)
+        allowed_.add(crt);
     else
-        gnutls_x509_trust_list_remove_cas(allowed_, &crt.cert, 1);
+        allowed_.remove(crt);
+}
 
-    RING_DBG("TrustStore: setting %s status to %s.",
-             crt.getId().toString().c_str(),
-             status == PermissionStatus::ALLOWED ? "ALLOWED" : "NOT ALLOWED");
+void
+TrustStore::rebuildTrust()
+{
+    allowed_ = {};
+    for (const auto& c : certStatus_)
+        setStoreCertStatus(*c.second.first, c.second.second.allowed);
 }
 
 }} // namespace ring::tls
