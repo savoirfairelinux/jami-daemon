@@ -453,7 +453,7 @@ AS_IF([test "${SYS}" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
         AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Vaapi via X11 found])
       ])
       AC_CHECK_HEADERS([libavcodec/vaapi.h], [vaapi_available="yes"])
-    ])
+    ], [vaapi_available=no])
   ])
 ])
 
