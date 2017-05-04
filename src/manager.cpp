@@ -2816,7 +2816,12 @@ Manager::getCallDetails(const std::string &callID)
 std::vector<std::string>
 Manager::getCallList() const
 {
-    return callFactory.getCallIDs();
+    std::vector<std::string> results;
+    for (auto call: callFactory.getAllCalls()) {
+        if (!call->isSubcall())
+            results.push_back(call->getCallId());
+    }
+    return results;
 }
 
 std::map<std::string, std::string>

@@ -258,6 +258,13 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          */
         void addSubCall(Call& call);
 
+        ///
+        /// Return true if this call instance is a subcall (internal call for multi-device handling)
+        ///
+        bool isSubcall() const {
+            return parent_.load() != nullptr;
+        }
+
     public: // media management
         virtual bool toggleRecording();
 

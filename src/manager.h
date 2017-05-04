@@ -417,8 +417,8 @@ class Manager {
         std::map<std::string, std::string> getCallDetails(const std::string& callID);
 
         /**
-         * Get call list
-         * @return std::vector<std::string> A list of call IDs
+         * Get list of calls (internal subcalls are filter-out)
+         * @return std::vector<std::string> A list of call IDs (without subcalls)
          */
         std::vector<std::string> getCallList() const;
 
