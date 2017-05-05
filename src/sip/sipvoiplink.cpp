@@ -73,6 +73,7 @@ using sip_utils::CONST_PJ_STR;
 
 static pjsip_endpoint *endpt_;
 static pjsip_module mod_ua_;
+static constexpr pjsip_method pjsip_message_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
 
 static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
 static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
@@ -81,8 +82,18 @@ static void invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event 
 static void outgoing_request_forked_cb(pjsip_inv_session *inv, pjsip_event *e);
 static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transaction *tsx, pjsip_event *e);
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
+static bool handleMediaControl(SIPCall& call, pjsip_msg_body* body);
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
+
+/*************************************************************************************************/
+
+static void
+TRY(pj_status_t ret)
+{
+    if (ret != PJ_SUCCESS)
+        throw VoipLinkException("PJSIP call failure");
+}
 
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
@@ -192,17 +203,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
-    std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
-    std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
+    const std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    const std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
+    const std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
-    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    char tmp[PJSIP_MAX_URL_SIZE];
-    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    sip_utils::stripSipUriPrefix(peerNumber);
-    if (not remote_user.empty() and not remote_hostname.empty())
-        peerNumber = remote_user + "@" + remote_hostname;
+
+    IpAddr remote_hostname {std::string {sip_from_uri->host.ptr,
+                                         static_cast<unsigned>(sip_from_uri->host.slen)}};
+    remote_hostname.setPort(sip_from_uri->port);
+
+    char from_to[PJSIP_MAX_URL_SIZE];
+    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, from_to, PJSIP_MAX_URL_SIZE);
 
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -210,11 +221,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
+    auto account(link->guessAccount(toUsername, viaHostname, from_to));
     if (!account) {
         RING_ERR("NULL account");
         return PJ_FALSE;
     }
+
+    std::string peerNumber;
+    if (not remote_user.empty() and remote_hostname)
+        peerNumber = account->getToUri(remote_user + "@" + remote_hostname.toString(true, true));
+    else
+        peerNumber = std::string {from_to, length};
 
     const auto& account_id = account->getAccountID();
     pjsip_msg_body *body = rdata->msg_info.msg->body;
@@ -236,6 +253,9 @@ transaction_request_cb(pjsip_rx_data *rdata)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
+            RING_WARN("[acc:%s] Message from '%s', %zu part(s)", account->getAccountID().c_str(),
+                      peerNumber.c_str(), payloads.size());
+
             if (payloads.size() > 0)
                 account->onTextMessage(peerNumber, payloads);
             return PJ_FALSE;
@@ -455,6 +475,110 @@ tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
         RING_ERR("no more VoIP link");
 }
 
+/**
+ * Check if we can accept the message.
+ */
+static pj_bool_t
+im_accept_message(pjsip_rx_data* /*rdata*/, pjsip_accept_hdr** /*p_accept_hdr*/)
+{
+    // Nothing to do here yet
+    return PJ_TRUE;
+}
+
+static pj_bool_t
+im_on_rx_request(pjsip_rx_data* rdata)
+{
+    auto msg = rdata->msg_info.msg;
+
+    // Handle only MESSAGE requests
+    if (pjsip_method_cmp(&msg->line.req.method, &pjsip_message_method) != 0)
+        return PJ_FALSE;
+
+    // Should not have any transaction attached to rdata
+    PJ_ASSERT_RETURN(pjsip_rdata_get_tsx(rdata)==nullptr, PJ_FALSE);
+
+    // Should not have any dialog attached to rdata
+    PJ_ASSERT_RETURN(pjsip_rdata_get_dlg(rdata)==nullptr, PJ_FALSE);
+
+    // Check if we can accept the message
+    pjsip_accept_hdr* accept_hdr;
+    if (!im_accept_message(rdata, &accept_hdr)) {
+        pjsip_hdr hdr_list;
+
+        pj_list_init(&hdr_list);
+        pj_list_push_back(&hdr_list, accept_hdr);
+
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE,
+                                      nullptr, &hdr_list, nullptr);
+        return PJ_TRUE;
+    }
+
+    // Respond with OK (200) first, so that remote doesn't retransmit in case
+    // the UI takes too long to process the message
+    pjsip_endpt_respond(endpt_, nullptr, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr, nullptr);
+
+    // For the source URI, we use Contact header if present, since
+    // Contact header contains the port number information. If this is
+    // not available, then use From header
+    pj_str_t from;
+    from.ptr = (char*)pj_pool_alloc(rdata->tp_info.pool, PJSIP_MAX_URL_SIZE);
+    from.slen = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                rdata->msg_info.from->uri,
+                                from.ptr, PJSIP_MAX_URL_SIZE);
+
+    if (from.slen < 1)
+        from = CONST_PJ_STR("<--URI is too long-->");
+
+    // Build the To text
+    pj_str_t to;
+    to.ptr = (char*) pj_pool_alloc(rdata->tp_info.pool, PJSIP_MAX_URL_SIZE);
+    to.slen = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                              rdata->msg_info.to->uri,
+                              to.ptr, PJSIP_MAX_URL_SIZE);
+    if (to.slen < 1)
+        to = CONST_PJ_STR("<--URI is too long-->");
+
+    if (rdata->msg_info.msg->body) {
+        RING_DBG("rx msg: '%s'", std::string((char*)rdata->msg_info.msg->body->data,
+                                             rdata->msg_info.msg->body->len).c_str());
+        if (auto call = std::dynamic_pointer_cast<SIPCall>(Manager::instance().getCurrentCall()))
+            handleMediaControl(*call, rdata->msg_info.msg->body);
+    } else
+        RING_ERR("rx msg: <no body>");
+
+    return PJ_TRUE;
+}
+
+static void
+im_register_module(pjsip_endpoint* endpt_)
+{
+    static pjsip_module mod_im_ = {
+        nullptr, nullptr,               /* prev, next.         */
+        CONST_PJ_STR( "mod-im" ),       /* Name.               */
+        -1,                             /* Id                  */
+        PJSIP_MOD_PRIORITY_APPLICATION, /* Priority            */
+        nullptr,                        /* load()              */
+        nullptr,                        /* start()             */
+        nullptr,                        /* stop()              */
+        nullptr,                        /* unload()            */
+        &im_on_rx_request,              /* on_rx_request()     */
+        nullptr,                        /* on_rx_response()    */
+        nullptr,                        /* on_tx_request.      */
+        nullptr,                        /* on_tx_response()    */
+        nullptr,                        /* on_tsx_state()      */
+    };
+
+    static constexpr pj_str_t STR_MSG_TAG = CONST_PJ_STR("MESSAGE");
+    static constexpr pj_str_t STR_MIME_TEXT_PLAIN = CONST_PJ_STR("text/plain");
+    static constexpr pj_str_t STR_MIME_APP_ISCOMPOSING = CONST_PJ_STR("application/im-iscomposing+xml");
+
+    TRY(pjsip_endpt_register_module(endpt_, &mod_im_));
+
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ALLOW, nullptr, 1, &STR_MSG_TAG));
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ACCEPT, nullptr, 1, &STR_MIME_APP_ISCOMPOSING));
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ACCEPT, nullptr, 1, &STR_MIME_TEXT_PLAIN));
+}
+
 /*************************************************************************************************/
 
 pjsip_endpoint * SIPVoIPLink::getEndpoint()
@@ -481,11 +605,6 @@ SIPVoIPLink::getCachingPool() noexcept
 
 SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 {
-#define TRY(ret) do { \
-    if (ret != PJ_SUCCESS) \
-    throw VoipLinkException(#ret " failed"); \
-} while (0)
-
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 4096, 4096, nullptr));
     if (!pool_)
@@ -572,7 +691,8 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &iscomposing);
 
     TRY(pjsip_replaces_init_module(endpt_));
-#undef TRY
+
+    //im_register_module(endpt_);
 
     // ready to handle events
     // Implementation note: we don't use std::bind(xxx, this) here
@@ -619,8 +739,8 @@ SIPVoIPLink::~SIPVoIPLink()
 
 std::shared_ptr<SIPAccountBase>
 SIPVoIPLink::guessAccount(const std::string& userName,
-                           const std::string& server,
-                           const std::string& fromUri) const
+                          const std::string& server,
+                          const std::string& fromUri) const
 {
     RING_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match

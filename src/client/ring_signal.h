@@ -59,6 +59,7 @@ static void emitSignal(Args...args) {
     const auto& handlers = getSignalHandlers();
     if (auto cb = *DRing::CallbackWrapper<typename Ts::cb_type>(handlers.at(Ts::name))) {
         try {
+            RING_WARN("signal %s", Ts::name);
             cb(args...);
         } catch (std::exception& e) {
             RING_ERR("Exception during emit signal %s:\n%s", Ts::name, e.what());

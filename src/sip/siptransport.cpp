@@ -95,6 +95,16 @@ SipTransport::~SipTransport()
              this, transport_.get(), pj_atomic_get(transport_->ref_cnt));
 }
 
+IpAddr
+SipTransport::getLocalAddress() const
+{
+    auto* tr = transport_.get();
+    auto ip = IpAddr {std::string{tr->local_name.host.ptr,
+                                  static_cast<unsigned>(tr->local_name.host.slen)}};
+    ip.setPort(tr->local_name.port);
+    return ip;
+}
+
 bool
 SipTransport::isAlive(UNUSED const std::shared_ptr<SipTransport>& t,
                       pjsip_transport_state state)

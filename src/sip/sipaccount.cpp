@@ -1301,8 +1301,10 @@ std::string SIPAccount::getLoginName()
 
 
 
-std::string SIPAccount::getFromUri() const
+std::string
+SIPAccount::getFromUri(const IpAddr& prefered_addr) const
 {
+    IpAddr addr;
     std::string scheme;
     std::string transport;
     std::string username(username_);
@@ -1319,16 +1321,17 @@ std::string SIPAccount::getFromUri() const
     if (username_.empty())
         username = getLoginName();
 
-    // Get machine hostname if not provided
-    if (hostname_.empty())
-        hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
+    if (not prefered_addr) {
+        if (not hostname_.empty()) {
+            addr = IpAddr {hostname_};
+        } else {
+            // Get machine hostname as fallback
+            addr = IpAddr {std::string {pj_gethostname()->ptr, static_cast<unsigned>(pj_gethostname()->slen)}};
+        }
+    } else
+        addr = prefered_addr;
 
-#if HAVE_IPV6
-    if (IpAddr::isIpv6(hostname))
-        hostname = IpAddr(hostname).toString(false, true);
-#endif
-
-    const std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
+    const std::string uri = "<" + scheme + username + "@" + addr.toString(true, true) + transport + ">";
     if (not displayName_.empty())
         return "\"" + displayName_ + "\" " + uri;
     return uri;

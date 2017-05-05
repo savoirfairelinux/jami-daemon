@@ -145,7 +145,7 @@ public: // SIP related
 
     void setTransport(const std::shared_ptr<SipTransport>& t);
 
-    SipTransport* getTransport() {
+    SipTransport* getTransport() const {
         return transport_.get();
     }
 
@@ -218,6 +218,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
     IceTransport* getIceMediaTransport() const {
         return tmpMediaTransport_ ? tmpMediaTransport_.get() : mediaTransport_.get();
     }
+
+    std::string getFromUri() const;
 
 private:
     NON_COPYABLE(SIPCall);

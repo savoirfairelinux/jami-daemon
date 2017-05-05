@@ -30,10 +30,13 @@
 
 #include "config.h"
 
-struct pjsip_inv_session;
-struct pjsip_rx_data;
 struct pjsip_msg;
 struct pjsip_tx_data;
+
+// Forward declarations
+namespace ring {
+class SipTransport;
+}
 
 namespace ring { namespace im {
 
@@ -55,13 +58,16 @@ struct InstantMessageException : std::runtime_error
  * containing multiple message parts. Note that all of the message parts must be able to fit into
  * one message... they will not be split into multiple messages.
  *
- * @param session SIP session
+ * @param link SIP VoIP link instance used to send message
+ * @param from SIP url of sender
+ * @param to SIP url of receiver
  * @param payloads a map where the mime type and optional parameters are the key
  *                 and the message payload is the value
  *
  * Exception: throw InstantMessageException if no message sent
  */
-void sendSipMessage(pjsip_inv_session* session, const std::map<std::string, std::string>& payloads);
+void sendSipMessage(SipTransport& transport, const std::string& from, const std::string& to,
+                    const std::map<std::string, std::string>& payloads);
 
 /**
  * Parses given SIP message into a map where the key is the contents of the Content-Type header
