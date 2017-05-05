@@ -118,6 +118,7 @@ AS_IF([test "$SYS" = linux],[
     ],[
       HAVE_ANDROID="1"
       AC_MSG_RESULT([yes])
+      AC_CONFIG_FILES(bin/jni/Makefile)
     ],[
       AC_MSG_RESULT([no])
     ])
