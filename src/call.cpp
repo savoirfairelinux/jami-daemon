@@ -475,8 +475,7 @@ Call::merge(Call& subcall)
         std::lock_guard<std::recursive_mutex> lk1 {callMutex_, std::adopt_lock};
         std::lock_guard<std::recursive_mutex> lk2 {subcall.callMutex_, std::adopt_lock};
         pendingInMessages_ = std::move(subcall.pendingInMessages_);
-        if (peerNumber_.empty())
-            peerNumber_ = std::move(subcall.peerNumber_);
+        peerNumber_ = std::move(subcall.peerNumber_);
         peerDisplayName_ = std::move(subcall.peerDisplayName_);
         setState(subcall.getState(), subcall.getConnectionState());
     }

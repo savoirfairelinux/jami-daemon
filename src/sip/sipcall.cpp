@@ -671,7 +671,8 @@ SIPCall::sendTextMessage(const std::map<std::string, std::string>& messages,
     } else {
         if (inv) {
             try {
-                im::sendSipMessage(inv.get(), messages);
+                auto to_uri = (isSecure() ? "sip:" : "sips:") + getPeerNumber();
+                im::sendSipMessage(*transport_, getFromUri(), to_uri, messages);
             } catch (...) {}
         } else {
             pendingOutMessages_.emplace_back(messages, from);
@@ -1212,6 +1213,12 @@ std::unique_ptr<IceSocket>
 SIPCall::newIceSocket(unsigned compId)
 {
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
+}
+
+std::string
+SIPCall::getFromUri() const
+{
+    return getSIPAccount().getFromUri(getTransport()->getLocalAddress());
 }
 
 } // namespace ring

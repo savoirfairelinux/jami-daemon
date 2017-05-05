@@ -330,7 +330,7 @@ class SIPAccount : public SIPAccountBase {
          * of the host on which the UA is running, since these are not logical
          * names."
          */
-        std::string getFromUri() const;
+        std::string getFromUri(const IpAddr& addr = {}) const override;
 
         /**
          * This method adds the correct scheme, hostname and append
