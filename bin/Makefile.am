@@ -32,6 +32,14 @@ dring_CXXFLAGS= -I$(top_srcdir)/src ${DBUSCPP_CFLAGS} \
 dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring.la
 endif
 
+if HAVE_ANDROID
+SUBDIRS=jni
+
+#ringlib_LIBRARIES = libring
+#libring_LDADD = $(top_builddir)/src/libring.la
+
+endif
+
 if RING_RESTCPP
 SUBDIRS=restcpp
 
