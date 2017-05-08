@@ -40,7 +40,6 @@
 #include <condition_variable>
 #include <set>
 #include <list>
-#include <atomic>
 
 namespace ring {
 
@@ -262,7 +261,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         /// Return true if this call instance is a subcall (internal call for multi-device handling)
         ///
         bool isSubcall() const {
-            return parent_.load() != nullptr;
+            std::lock_guard<std::recursive_mutex> lk {callMutex_};
+            return parent_ != nullptr;
         }
 
     public: // media management
@@ -318,8 +318,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
         bool isAudioMuted_{false};
         bool isVideoMuted_{false};
 
-        ///< MultiDevice: parent call, nullptr otherwise.
-        std::atomic<Call*> parent_ {nullptr};
+        ///< MultiDevice: parent call, nullptr otherwise. Access protected by callMutex_.
+        mutable std::shared_ptr<Call> parent_;
 
         ///< MultiDevice: list of attached subcall
         SubcallSet subcalls_;
