@@ -222,6 +222,17 @@ public:
      */
     virtual pj_str_t getContactHeader(pjsip_transport* = nullptr) = 0;
 
+    /**
+     * @return pj_str_t "From" uri based on account information.
+     * From RFC3261: "The To header field first and foremost specifies the desired
+     * logical" recipient of the request, or the address-of-record of the
+     * user or resource that is the target of this request. [...]  As such, it is
+     * very important that the From URI not contain IP addresses or the FQDN
+     * of the host on which the UA is running, since these are not logical
+     * names."
+     */
+    virtual std::string getFromUri(const IpAddr& addr) const = 0;
+
     virtual std::string getToUri(const std::string& username) const = 0;
 
     /**

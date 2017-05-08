@@ -460,7 +460,6 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     // TODO: for now, we automatically trust all explicitly called peers
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
-    call->setPeerNumber(toUri + "@ring.dht");
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
@@ -622,7 +621,7 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
     pj_str_t pjTo = pj_str((char*) toUri.c_str());
 
     // Create the from header
-    std::string from(getFromUri());
+    std::string from {call.getFromUri()};
     pj_str_t pjFrom = pj_str((char*) from.c_str());
 
     std::string targetStr = getToUri(target.toString(true)/*+";transport=ICE"*/);
@@ -2475,11 +2474,11 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 
     dht::Value val { dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg()) };
 
-    auto from = (peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId() : peer_cert->getId()) : peer_ice_msg.from).toString();
+    auto peer_rid = (peer_cert ? (peer_cert->issuer ? peer_cert->issuer->getId() : peer_cert->getId()) : peer_ice_msg.from).toString();
 
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
-    nameDir_.get().lookupAddress(from, [wcall](const std::string& result, const NameDirectory::Response& response){
+    nameDir_.get().lookupAddress(peer_rid, [wcall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
             if (auto call = wcall.lock())
                 call->setPeerRegistredName(result);
@@ -2508,9 +2507,6 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
         call->onFailure(EIO);
         return;
     }
-
-    call->setPeerNumber(from);
-    call->initRecFilename(from);
 
     // Let the call handled by the PendingCall handler loop
     {
@@ -2855,19 +2851,22 @@ RingAccount::matches(const std::string &userName, const std::string &server) con
 }
 
 std::string
-RingAccount::getFromUri() const
+RingAccount::getFromUri(const IpAddr& addr) const
 {
-    const std::string uri = "<sip:" + ringAccountId_ + "@ring.dht>";
-    if (not displayName_.empty())
-        return "\"" + displayName_ + "\" " + uri;
-    RING_DBG("getFromUri %s", uri.c_str());
+    std::string addr_string;
+    if (addr)
+        addr_string = addr.toString(true, true);
+    else
+        addr_string = "ring.dht";
+    auto uri = "sips:"+ringAccountId_+"@"+addr_string+";transport=dtls";
+    //if (not displayName_.empty())
+    //     return "\"" + displayName_ + "\" <" + uri + ">";
     return uri;
 }
 
 std::string
 RingAccount::getToUri(const std::string& to) const
 {
-    RING_DBG("getToUri %s", to.c_str());
     return "<sips:" + to + ";transport=dtls>";
 }
 

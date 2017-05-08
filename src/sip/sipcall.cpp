@@ -1214,4 +1214,10 @@ SIPCall::newIceSocket(unsigned compId)
     return std::unique_ptr<IceSocket> {new IceSocket(mediaTransport_, compId)};
 }
 
+std::string
+SIPCall::getFromUri() const
+{
+    return getSIPAccount().getFromUri(getTransport()->getLocalAddress());
+}
+
 } // namespace ring

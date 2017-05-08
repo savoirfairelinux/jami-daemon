@@ -122,6 +122,12 @@ class SipTransport
             return transport_.get();
         }
 
+        IpAddr getLocalAddress() const;
+
+        pjsip_endpoint* getEndpoint() const {
+            return transport_->endpt;
+        }
+
         void addStateListener(uintptr_t lid, SipTransportStateCallback cb);
         bool removeStateListener(uintptr_t lid);
 

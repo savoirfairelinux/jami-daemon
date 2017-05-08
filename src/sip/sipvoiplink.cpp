@@ -71,8 +71,9 @@ using sip_utils::CONST_PJ_STR;
 
 /**************** EXTERN VARIABLES AND FUNCTIONS (callbacks) **************************/
 
-static pjsip_endpoint *endpt_;
+static pjsip_endpoint* endpt_;
 static pjsip_module mod_ua_;
+static constexpr pjsip_method pjsip_message_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
 
 static void sdp_media_update_cb(pjsip_inv_session *inv, pj_status_t status);
 static void sdp_request_offer_cb(pjsip_inv_session *inv, const pjmedia_sdp_session *offer);
@@ -83,6 +84,15 @@ static void transaction_state_changed_cb(pjsip_inv_session *inv, pjsip_transacti
 static std::shared_ptr<SIPCall> getCallFromInvite(pjsip_inv_session* inv);
 
 decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink = getGlobalInstance<SIPVoIPLink>;
+
+/*************************************************************************************************/
+
+static void
+TRY(pj_status_t ret)
+{
+    if (ret != PJ_SUCCESS)
+        throw VoipLinkException("PJSIP call failure");
+}
 
 static void
 handleIncomingOptions(pjsip_rx_data *rdata)
@@ -192,17 +202,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
-    std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
-    std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
+    const std::string toUsername(sip_to_uri->user.ptr, sip_to_uri->user.slen);
+    const std::string toHost(sip_to_uri->host.ptr, sip_to_uri->host.slen);
+    const std::string viaHostname(sip_via.host.ptr, sip_via.host.slen);
     const std::string remote_user(sip_from_uri->user.ptr, sip_from_uri->user.slen);
-    const std::string remote_hostname(sip_from_uri->host.ptr, sip_from_uri->host.slen);
-    char tmp[PJSIP_MAX_URL_SIZE];
-    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, tmp, PJSIP_MAX_URL_SIZE);
-    std::string peerNumber(tmp, length);
-    sip_utils::stripSipUriPrefix(peerNumber);
-    if (not remote_user.empty() and not remote_hostname.empty())
-        peerNumber = remote_user + "@" + remote_hostname;
+
+    IpAddr remote_hostname {std::string {sip_from_uri->host.ptr,
+                                         static_cast<unsigned>(sip_from_uri->host.slen)}};
+    remote_hostname.setPort(sip_from_uri->port);
+
+    char from_to[PJSIP_MAX_URL_SIZE];
+    size_t length = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR, sip_from_uri, from_to, PJSIP_MAX_URL_SIZE);
 
     auto link = getSIPVoIPLink();
     if (not link) {
@@ -210,11 +220,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    auto account(link->guessAccount(toUsername, viaHostname, remote_hostname));
+    auto account(link->guessAccount(toUsername, viaHostname, from_to));
     if (!account) {
         RING_ERR("NULL account");
         return PJ_FALSE;
     }
+
+    std::string peerNumber;
+    if (not remote_user.empty() and remote_hostname)
+        peerNumber = account->getToUri(remote_user + "@" + remote_hostname.toString(true, true));
+    else
+        peerNumber = std::string {from_to, length};
 
     const auto& account_id = account->getAccountID();
     pjsip_msg_body *body = rdata->msg_info.msg->body;
@@ -619,8 +635,8 @@ SIPVoIPLink::~SIPVoIPLink()
 
 std::shared_ptr<SIPAccountBase>
 SIPVoIPLink::guessAccount(const std::string& userName,
-                           const std::string& server,
-                           const std::string& fromUri) const
+                          const std::string& server,
+                          const std::string& fromUri) const
 {
     RING_DBG("username = %s, server = %s, from = %s", userName.c_str(), server.c_str(), fromUri.c_str());
     // Try to find the account id from username and server name by full match
