@@ -712,7 +712,7 @@ SIPCall::onAnswered()
     RING_WARN("[call:%s] onAnswered()", getCallId().c_str());
     if (getConnectionState() != ConnectionState::CONNECTED) {
         setState(CallState::ACTIVE, ConnectionState::CONNECTED);
-        if (not parent_.load())
+        if (not isSubcall())
             Manager::instance().peerAnsweredCall(*this);
     }
 }
@@ -882,7 +882,7 @@ SIPCall::startAllMedia()
         }
     }
 
-    if (not parent_.load() and peerHolding_ != peer_holding) {
+    if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
     }
@@ -928,7 +928,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
         DRing::switchInput(getCallId(), videoInput_);
-        if (not parent_.load())
+        if (not isSubcall())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);
 #endif
     } else if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_AUDIO) == 0) {
@@ -936,7 +936,7 @@ SIPCall::muteMedia(const std::string& mediaType, bool mute)
         RING_WARN("[call:%s] audio muting %s", getCallId().c_str(), bool_to_str(mute));
         isAudioMuted_ = mute;
         avformatrtp_->setMuted(isAudioMuted_);
-        if (not parent_.load())
+        if (not isSubcall())
             emitSignal<DRing::CallSignal::AudioMuted>(getCallId(), isAudioMuted_);
     }
 }
@@ -962,7 +962,7 @@ SIPCall::onMediaUpdate()
     }
 
     // If we are a subcall let the parent manage it after merge operation
-    if (not parent_.load())
+    if (isSubcall())
         waitForIceAndStartMedia();
 }
 
