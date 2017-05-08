@@ -5,6 +5,7 @@
  *  Author: Emmanuel Lepage <elv1313@gmail.com>
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Stepan Salenikovich <stepan.salenikovich@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -23,7 +24,10 @@
 #include "instant_messaging.h"
 
 #include "logger.h"
+
 #include "sip/sip_utils.h"
+#include "sip/sipvoiplink.h"
+#include "sip/siptransport.h"
 
 #include <pjsip_ua.h>
 #include <pjsip.h>
@@ -117,9 +121,20 @@ createMessageBody(pj_pool_t* pool, const std::pair<std::string, std::string>& pa
     } while (std::string::npos != sep);
 }
 
+static void
+im_callback(void* token, pjsip_event* e)
+{
+    (void) token; // UNUSED
+
+    if (e->type == PJSIP_EVENT_TSX_STATE) {
+        auto* tsx = e->body.tsx_state.tsx;
+        RING_DBG("[IM] tx status code %u", tsx->status_code);
+    }
+}
+
 void
 im::fillPJSIPMessageBody(pjsip_tx_data& tdata,
-                                       const std::map<std::string, std::string>& payloads)
+                         const std::map<std::string, std::string>& payloads)
 {
     // multi-part body?
     if (payloads.size() == 1) {
@@ -154,36 +169,42 @@ im::fillPJSIPMessageBody(pjsip_tx_data& tdata,
 }
 
 void
-im::sendSipMessage(pjsip_inv_session* session,
-                                 const std::map<std::string, std::string>& payloads)
+im::sendSipMessage(SipTransport& transport, const std::string& from, const std::string& to,
+                   const std::map<std::string, std::string>& payloads)
 {
     if (payloads.empty()) {
-        RING_WARN("the payloads argument is empty; ignoring message");
+        RING_WARN("[IM] sendSipMessage called with empty payload; ignoring");
         return;
     }
 
-    const pjsip_method msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    pj_str_t pj_from; pj_cstr(&pj_from, from.c_str());
+    pj_str_t pj_to; pj_cstr(&pj_to, to.c_str());
 
-    {
-        auto dialog = session->dlg;
-        sip_utils::PJDialogLock dialog_lock {dialog};
+    // Create request message
+    static constexpr pjsip_method pjsip_msg_method = {PJSIP_OTHER_METHOD, CONST_PJ_STR("MESSAGE")};
+    pjsip_tx_data* tdata;
+    auto* endpt = transport.getEndpoint();
+    auto status = pjsip_endpt_create_request(endpt, &pjsip_msg_method,
+                                             &pj_to, &pj_from, &pj_to,
+                                             nullptr, nullptr, -1, nullptr,
+                                             &tdata);
+    if (status != PJ_SUCCESS) {
+        RING_ERR("[IM] Could not create MESSAGE request");
+        throw InstantMessageException("Internal SIP error");
+    }
 
-        pjsip_tx_data* tdata = nullptr;
-        auto status = pjsip_dlg_create_request(dialog, &msg_method, -1, &tdata);
-        if (status != PJ_SUCCESS) {
-            RING_ERR("pjsip_dlg_create_request failed: %s",
-                      sip_utils::sip_strerror(status).c_str());
-            throw InstantMessageException("Internal SIP error");
-        }
+    // Set transport
+    auto tp_sel = SIPVoIPLink::getTransportSelector(transport.get());
+    pjsip_tx_data_set_transport(tdata, &tp_sel);
 
-        fillPJSIPMessageBody(*tdata, payloads);
+    // Fill message body
+    fillPJSIPMessageBody(*tdata, payloads);
 
-        status = pjsip_dlg_send_request(dialog, tdata, -1, nullptr);
-        if (status != PJ_SUCCESS) {
-            RING_ERR("pjsip_dlg_send_request failed: %s",
-                     sip_utils::sip_strerror(status).c_str());
-            throw InstantMessageException("Internal SIP error");
-        }
+    // Send the request
+    status = pjsip_endpt_send_request(endpt, tdata, -1, nullptr, &im_callback);
+    if (status != PJ_SUCCESS) {
+        RING_ERR("[IM] Could not send MESSAGE request");
+        throw InstantMessageException("Internal SIP error");
     }
 }
 

@@ -247,14 +247,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
                 if (ret == 1 and voicemail != 0)
                     Manager::instance().startVoiceMessageNotification(account_id, voicemail);
             }
-        } else if (request.find("MESSAGE") != std::string::npos) {
-            // Reply 200 immediatly (RFC 3428, ch. 7)
-            try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
-            // Process message content in case of multi-part body
-            auto payloads = im::parseSipMessage(rdata->msg_info.msg);
-            if (payloads.size() > 0)
-                account->onTextMessage(peerNumber, payloads);
-            return PJ_FALSE;
         }
 
         try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, NULL, NULL, NULL);
@@ -451,7 +443,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
             replacedCall->hangup(PJSIP_SC_OK);
     }
 
-
     return PJ_FALSE;
 }
 
@@ -469,6 +460,114 @@ tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
             RING_ERR("SIPVoIPLink with invalid SipTransportBroker");
     } else
         RING_ERR("no more VoIP link");
+}
+
+/**
+ * Check if we can accept the message.
+ */
+static pj_bool_t
+im_accept_message(pjsip_rx_data* /*rdata*/, pjsip_accept_hdr** /*p_accept_hdr*/)
+{
+    // Nothing to do here yet
+    return PJ_TRUE;
+}
+
+static pj_bool_t
+im_on_rx_request(pjsip_rx_data* rdata)
+{
+    auto msg = rdata->msg_info.msg;
+
+    // Handle only MESSAGE requests
+    if (pjsip_method_cmp(&msg->line.req.method, &pjsip_message_method) != 0)
+        return PJ_FALSE;
+
+    // Should not have any transaction attached to rdata
+    PJ_ASSERT_RETURN(pjsip_rdata_get_tsx(rdata)==nullptr, PJ_FALSE);
+
+    // Should not have any dialog attached to rdata
+    PJ_ASSERT_RETURN(pjsip_rdata_get_dlg(rdata)==nullptr, PJ_FALSE);
+
+    // Check if we can accept the message
+    pjsip_accept_hdr* accept_hdr;
+    if (!im_accept_message(rdata, &accept_hdr)) {
+        pjsip_hdr hdr_list;
+
+        pj_list_init(&hdr_list);
+        pj_list_push_back(&hdr_list, accept_hdr);
+
+        pjsip_endpt_respond_stateless(endpt_, rdata, PJSIP_SC_NOT_ACCEPTABLE_HERE,
+                                      nullptr, &hdr_list, nullptr);
+        return PJ_TRUE;
+    }
+
+    // Respond with OK (200) first, so that remote doesn't retransmit in case
+    // the UI takes too long to process the message
+    pjsip_endpt_respond(endpt_, nullptr, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr, nullptr);
+
+    // For the source URI, we use Contact header if present, since
+    // Contact header contains the port number information. If this is
+    // not available, then use From header
+    pj_str_t pj_from;
+    pj_from.ptr = (char*)pj_pool_alloc(rdata->tp_info.pool, PJSIP_MAX_URL_SIZE);
+    pj_from.slen = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                   rdata->msg_info.from->uri,
+                                   pj_from.ptr, PJSIP_MAX_URL_SIZE);
+
+    if (pj_from.slen < 1)
+        pj_from = CONST_PJ_STR("<--URI is too long-->");
+
+    // Build the To text
+    pj_str_t pj_to;
+    pj_to.ptr = (char*) pj_pool_alloc(rdata->tp_info.pool, PJSIP_MAX_URL_SIZE);
+    pj_to.slen = pjsip_uri_print(PJSIP_URI_IN_FROMTO_HDR,
+                                 rdata->msg_info.to->uri,
+                                 pj_to.ptr, PJSIP_MAX_URL_SIZE);
+    if (pj_to.slen < 1)
+        pj_to = CONST_PJ_STR("<--URI is too long-->");
+
+    RING_DBG("[SIP] MSG from '%s' to '%s'", sip_utils::to_string(pj_from).c_str(),
+             sip_utils::to_string(pj_to).c_str());
+
+    // Guess account from parsed SIP headers
+
+    if (msg->body) {
+        auto payloads = im::parseSipMessage(msg);
+
+        //call->onTextMessage(payloads);
+    } else
+        RING_ERR("rx msg: <no body>");
+
+    return PJ_TRUE;
+}
+
+static void
+im_register_module(pjsip_endpoint* endpt_)
+{
+    static pjsip_module mod_im_ = {
+        nullptr, nullptr,               /* prev, next.         */
+        CONST_PJ_STR( "mod-im" ),       /* Name.               */
+        -1,                             /* Id                  */
+        PJSIP_MOD_PRIORITY_APPLICATION, /* Priority            */
+        nullptr,                        /* load()              */
+        nullptr,                        /* start()             */
+        nullptr,                        /* stop()              */
+        nullptr,                        /* unload()            */
+        &im_on_rx_request,              /* on_rx_request()     */
+        nullptr,                        /* on_rx_response()    */
+        nullptr,                        /* on_tx_request()     */
+        nullptr,                        /* on_tx_response()    */
+        nullptr,                        /* on_tsx_state()      */
+    };
+
+    static constexpr pj_str_t STR_MSG_TAG = CONST_PJ_STR("MESSAGE");
+    static constexpr pj_str_t STR_MIME_TEXT_PLAIN = CONST_PJ_STR("text/plain");
+    static constexpr pj_str_t STR_MIME_APP_ISCOMPOSING = CONST_PJ_STR("application/im-iscomposing+xml");
+
+    TRY(pjsip_endpt_register_module(endpt_, &mod_im_));
+
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ALLOW, nullptr, 1, &STR_MSG_TAG));
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ACCEPT, nullptr, 1, &STR_MIME_APP_ISCOMPOSING));
+    TRY(pjsip_endpt_add_capability(endpt_, &mod_im_, PJSIP_H_ACCEPT, nullptr, 1, &STR_MIME_TEXT_PLAIN));
 }
 
 /*************************************************************************************************/
@@ -497,11 +596,6 @@ SIPVoIPLink::getCachingPool() noexcept
 
 SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 {
-#define TRY(ret) do { \
-    if (ret != PJ_SUCCESS) \
-    throw VoipLinkException(#ret " failed"); \
-} while (0)
-
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
     pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 4096, 4096, nullptr));
     if (!pool_)
@@ -572,23 +666,17 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     static const pj_str_t allowed[] = {
         CONST_PJ_STR("INFO"),
         CONST_PJ_STR("OPTIONS"),
-        CONST_PJ_STR("MESSAGE"),
         CONST_PJ_STR("PUBLISH"),
     };
 
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ALLOW, nullptr, PJ_ARRAY_SIZE(allowed), allowed);
 
-    static const pj_str_t text_plain = CONST_PJ_STR("text/plain");
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &text_plain);
-
     static const pj_str_t accepted = CONST_PJ_STR("application/sdp");
     pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &accepted);
 
-    static const pj_str_t iscomposing = CONST_PJ_STR("application/im-iscomposing+xml");
-    pjsip_endpt_add_capability(endpt_, &mod_ua_, PJSIP_H_ACCEPT, nullptr, 1, &iscomposing);
-
     TRY(pjsip_replaces_init_module(endpt_));
-#undef TRY
+
+    im_register_module(endpt_);
 
     // ready to handle events
     // Implementation note: we don't use std::bind(xxx, this) here
