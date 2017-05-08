@@ -212,7 +212,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
         l(callState_, connectionState_, code);
 
     if (old_client_state != new_client_state) {
-        if (not parent_.load()) {
+        if (not parent_) {
             RING_DBG("[call:%s] emit client call state change %s, code %d",
                      id_.c_str(), new_client_state.c_str(), code);
             emitSignal<DRing::CallSignal::StateChange>(id_, new_client_state, code);
@@ -342,10 +342,14 @@ Call::getNullDetails()
 void
 Call::onTextMessage(std::map<std::string, std::string>&& messages)
 {
-    if (parent_.load())
-        pendingInMessages_.emplace_back(std::move(messages), "");
-    else
-        Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
+    {
+        std::lock_guard<std::recursive_mutex> lk {callMutex_};
+        if (parent_) {
+            pendingInMessages_.emplace_back(std::move(messages), "");
+            return;
+        }
+    }
+    Manager::instance().incomingMessage(getCallId(), getPeerNumber(), messages);
 }
 
 void
@@ -376,18 +380,15 @@ Call::addSubCall(Call& subcall)
     }
 
     RING_DBG("[call:%s] add subcall %s", getCallId().c_str(), subcall.getCallId().c_str());
-    subcall.parent_ = this;
+    subcall.parent_ = getPtr(*this);
 
     for (const auto& msg : pendingOutMessages_)
         subcall.sendTextMessage(msg.first, msg.second);
 
     subcall.addStateListener(
-        [&subcall](Call::CallState new_state,
-                   Call::ConnectionState new_cstate,
-                   UNUSED int code) {
-            auto ptr = getPtr(subcall); // keep the subcall valid (subcallStateChanged may remove it)
-            auto parent = subcall.parent_.load();
-            assert(parent != nullptr);
+        [&subcall](Call::CallState new_state, Call::ConnectionState new_cstate, UNUSED int code) {
+            auto parent = subcall.parent_;
+            assert(parent != nullptr); // subcall cannot be "un-parented"
             parent->subcallStateChanged(subcall, new_state, new_cstate);
         });
 }
@@ -494,7 +495,7 @@ Call::checkPendingIM()
 
     auto state = getStateStr();
     // Let parent call handles IM after the merge
-    if (not parent_.load()) {
+    if (not parent_) {
         if (state == DRing::Call::StateEvent::CURRENT) {
             for (const auto& msg : pendingInMessages_)
                 Manager::instance().incomingMessage(getCallId(), getPeerNumber(), msg.first);
