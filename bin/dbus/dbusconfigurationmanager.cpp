@@ -524,6 +524,12 @@ DBusConfigurationManager::removeContact(const std::string& accountId, const std:
 }
 
 auto
+DBusConfigurationManager::getContactDetails(const std::string& accountId, const std::string& uri) -> decltype(DRing::getContactDetails(accountId, uri))
+{
+    return DRing::getContactDetails(accountId, uri);
+}
+
+auto
 DBusConfigurationManager::getContacts(const std::string& accountId) -> decltype(DRing::getContacts(accountId))
 {
     return DRing::getContacts(accountId);

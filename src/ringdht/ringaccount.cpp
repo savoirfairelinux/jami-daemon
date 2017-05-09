@@ -208,6 +208,23 @@ struct RingAccount::Contact
         return json;
     }
 
+    std::map<std::string, std::string> toMap() const {
+        if (not (isActive() or isBanned())) {
+            return {};
+        }
+
+        std::map<std::string, std::string> result {
+            {"added", std::to_string(added)}
+        };
+
+        if (isActive())
+            result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);
+        else if (isBanned())
+            result.emplace("banned", TRUE_STR);
+
+        return result;
+    }
+
     MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
 };
 
@@ -2933,23 +2950,36 @@ RingAccount::removeContact(const std::string& uri, bool ban)
     syncDevices();
 }
 
+std::map<std::string, std::string>
+RingAccount::getContactDetails(const std::string& uri) const
+{
+    dht::InfoHash h (uri);
+
+    const auto c = contacts_.find(h);
+    if (c == std::end(contacts_)) {
+        RING_WARN("[dht] contact '%s' not found", uri.c_str());
+        return {};
+    }
+
+    auto info = c->second.toMap();
+    if (not info.empty())
+        info["id"] = c->first.toString();
+
+    return info;
+}
+
 std::vector<std::map<std::string, std::string>>
 RingAccount::getContacts() const
 {
     std::vector<std::map<std::string, std::string>> ret;
     ret.reserve(contacts_.size());
+
     for (const auto& c : contacts_) {
-        if (not (c.second.isActive() or c.second.isBanned()))
-            continue;
-        std::map<std::string, std::string> cm {
-            {"id", c.first.toString()},
-            {"added", std::to_string(c.second.added)}
-        };
-        if (c.second.isActive())
-            cm.emplace("confirmed", c.second.confirmed ? TRUE_STR : FALSE_STR);
-        else if (c.second.isBanned())
-            cm.emplace("banned", TRUE_STR);
-        ret.emplace_back(std::move(cm));
+        auto info = c.second.toMap();
+        if (not info.empty()) {
+            info["id"] = c.first.toString();
+            ret.emplace_back(std::move(info));
+        }
     }
     return ret;
 }
