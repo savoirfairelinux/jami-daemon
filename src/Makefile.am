@@ -54,6 +54,7 @@ libring_la_LDFLAGS = \
 		@PORTAUDIO_LIBS@ \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
+		@ARGON2_LIBS@ \
 		@ZLIB_LIBS@ \
 		$(PCRE_LIBS) \
 		@LIBS@
@@ -76,7 +77,8 @@ libring_la_CFLAGS = \
 		@SPEEXDSP_CFLAGS@ \
 		@PORTAUDIO_CFLAGS@ \
 		@GNUTLS_CFLAGS@ \
-		@OPENDHT_CFLAGS@
+		@OPENDHT_CFLAGS@ \
+		@ARGON2_CFLAGS@
 
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 

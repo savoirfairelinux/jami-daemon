@@ -2,7 +2,7 @@
 ARGON2_VERSION := 1eea0104e7cb2a38c617cf90ffa46ce5db6aceda
 ARGON2_URL := https://github.com/P-H-C/phc-winner-argon2/archive/$(ARGON2_VERSION).tar.gz
 
-ifeq ($(call need_pkg,'libargon2'),)
+ifeq ($(call need_pkg,'libargon2 > 20161029'),)
 PKGS_FOUND += argon2
 endif
 

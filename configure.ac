@@ -573,6 +573,9 @@ AM_CONDITIONAL([BUILD_OPUS], [test "$HAVE_OPUS" -eq 1])
 dnl check for openDHT
 PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT]))
 
+dnl check for argon2
+PKG_CHECK_MODULES([ARGON2], [libargon2],, AC_MSG_FAILURE([Missing Argon2]))
+
 AC_CHECK_HEADER([cryptopp/cryptlib.h], , AC_MSG_FAILURE([Unable to find the cryptopp headers (you may need to install the dev package).]))
 LDFLAGS+=" -lcryptopp"
 AS_IF([test "${SYS}" = "mingw32"],[
