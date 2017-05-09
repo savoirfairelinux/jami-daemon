@@ -318,6 +318,14 @@ void removeContact(const std::string& accountId, const std::string& uri)
         return acc->removeContact(uri);
 }
 
+std::map<std::string, std::string>
+getContactDetails(const std::string& accountId, const std::string& uri)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        return acc->getContactDetails(uri);
+    return {};
+}
+
 std::vector<std::map<std::string, std::string>>
 getContacts(const std::string& accountId)
 {
