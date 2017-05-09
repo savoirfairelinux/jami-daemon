@@ -166,6 +166,7 @@ void sendTrustRequest(const std::string& accountId, const std::string& to, const
 
 void addContact(const std::string& accountId, const std::string& uri);
 void removeContact(const std::string& accountId, const std::string& uri);
+std::map<std::string, std::string> getContactInfo(const std::string& accountId, const std::string& uri);
 std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
 
 /*

@@ -299,6 +299,11 @@ class RingAccount : public SIPAccountBase {
         void removeContact(const std::string& uri, bool banned = true);
         std::vector<std::map<std::string, std::string>> getContacts() const;
 
+        ///
+        /// Obtain information about one account contact in serializable form.
+        ///
+        std::map<std::string, std::string> getContactInfo(const std::string& uri) const;
+
         void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
         void sendTrustRequestConfirm(const dht::InfoHash& to);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;

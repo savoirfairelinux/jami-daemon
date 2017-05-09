@@ -1289,14 +1289,28 @@
            </arg>
        </method>
 
-       <method name="getContacts" tp:name-for-bindings="getContacts">
+       <method name="getContactInfo" tp:name-for-bindings="getContactInfo">
+           <tp:added version="3.0.0"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+		   <arg type="s" name="uri" direction="in">
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="MapStringString"/>
+           <arg type="a{ss}" name="contactInfo" direction="out" >
+             <tp:docstring>
+                 The serialized information on given contact of given account.
+             </tp:docstring>
+           </arg>
+       </method>
+
+	   <method name="getContacts" tp:name-for-bindings="getContacts">
            <tp:added version="3.0.0"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorMapStringString"/>
            <arg type="aa{ss}" name="contacts" direction="out" >
              <tp:docstring>
-                 The list of contact IDs.
+                 The list of contact information of given account.
              </tp:docstring>
            </arg>
        </method>
