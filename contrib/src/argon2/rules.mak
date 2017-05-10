@@ -25,5 +25,5 @@ argon2: argon2-$(ARGON2_VERSION).tar.gz .sum-argon2
 	cd $< && $(HOSTVARS) $(MAKE) PREFIX="$(PREFIX)" OPTTARGET="no-opt"
 	cd $< && $(RANLIB) libargon2.a
 	cd $< && $(HOSTVARS) $(MAKE) install PREFIX="$(PREFIX)" OPTTARGET="no-opt"
-	rm -f $(PREFIX)/lib/libargon2.so*
+	rm -f $(PREFIX)/lib/libargon2.so* $(PREFIX)/lib/libargon2*.dylib
 	touch $@
