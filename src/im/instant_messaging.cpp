@@ -157,6 +157,7 @@ void
 im::sendSipMessage(pjsip_inv_session* session,
                                  const std::map<std::string, std::string>& payloads)
 {
+    return;
     if (payloads.empty()) {
         RING_WARN("the payloads argument is empty; ignoring message");
         return;

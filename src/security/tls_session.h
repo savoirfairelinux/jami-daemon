@@ -231,7 +231,7 @@ private:
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
 
-    void handleDataPacket(std::vector<uint8_t>&&, const uint8_t*);
+    void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
     void flushRxQueue();
 
     // Statistics

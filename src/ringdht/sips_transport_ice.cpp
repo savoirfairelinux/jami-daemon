@@ -356,6 +356,7 @@ SipsIceTransport::handleEvents()
         rdata_.pkt_info.len = std::min(pck.size(), (size_t) PJSIP_MAX_PKT_LEN);
         std::copy_n(pck.data(), rdata_.pkt_info.len, rdata_.pkt_info.packet);
         auto eaten = pjsip_tpmgr_receive_packet(trData_.base.tpmgr, &rdata_);
+        //RING_ERR("[sips] rx (eat=%d)\n%s<<<<<<<<<<", eaten, std::string {std::begin(pck), std::end(pck)}.c_str());
 
         // Uncomplet parsing? (may be a partial sip packet received)
         if (eaten != (pj_ssize_t)pck.size()) {
