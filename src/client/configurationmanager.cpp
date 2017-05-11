@@ -360,7 +360,7 @@ discardTrustRequest(const std::string& accountId, const std::string& from)
 }
 
 void
-sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
+sendTrustRequest(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& payload)
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
         acc->sendTrustRequest(to, payload);
