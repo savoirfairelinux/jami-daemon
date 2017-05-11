@@ -142,7 +142,8 @@ struct RingAccount::PendingMessage
 };
 
 struct
-RingAccount::TrustRequest {
+RingAccount::TrustRequest
+{
     dht::InfoHash device;
     time_t received;
     std::vector<uint8_t> payload;
@@ -2332,10 +2333,16 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
             }
         }
         saveTrustRequests();
+
+        // Decode payload as std::map<std::string, std::string>
+        std::size_t offset = 0;
+        auto pl = req->second.payload;
+        auto result = msgpack::unpack(reinterpret_cast<char*>(pl.data()), pl.size(), offset);
+        auto messages = result.get().as<std::map<std::string, std::string>>();
         emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
             getAccountID(),
             req->first.toString(),
-            req->second.payload,
+            messages,
             received
         );
     }
@@ -3097,6 +3104,23 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
                           dev,
                           dht::TrustRequest(DHT_TYPE_NS, payload));
     });
+}
+
+void
+RingAccount::sendTrustRequest(const std::string& to,
+                              const std::map<std::string, std::string>& payload)
+{
+    std::stringstream ss;
+    msgpack::pack(ss, payload);
+    auto str {ss.str()};
+
+#if !defined(__GNUC__) || (__GNUC__ >= 5)
+    sendTrustRequest(to, std::vector<uint8_t>(str.begin(), str.end()));
+#else
+    // the int8_t below is a hack to be compatible with some old GCC version where std::basic_string<char> cannot be converted to std::vector<uint8_t>
+    // typicaly this happen only on Debian8 platform
+    sendTrustRequest(to, std::vector<char>(str.begin(), str.end()));
+#endif
 }
 
 void

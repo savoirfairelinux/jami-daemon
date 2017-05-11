@@ -160,7 +160,7 @@ std::vector<std::string> getCertificatesByStatus(const std::string& account, con
 std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
 bool acceptTrustRequest(const std::string& accountId, const std::string& from);
 bool discardTrustRequest(const std::string& accountId, const std::string& from);
-void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload = {});
+void sendTrustRequest(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& payload = {});
 
 /* Contacts */
 
@@ -225,7 +225,7 @@ struct ConfigurationSignal {
         };
         struct IncomingTrustRequest {
                 constexpr static const char* name = "IncomingTrustRequest";
-                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::vector<uint8_t>& payload, time_t received);
+                using cb_type = void(const std::string& /*account_id*/, const std::string& /*from*/, const std::map<std::string, std::string>& payload, time_t received);
         };
         struct ContactAdded {
                 constexpr static const char* name = "ContactAdded";
