@@ -872,12 +872,8 @@ TlsSession::pathMtuHeartbeat()
 }
 
 void
-TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, const uint8_t* seq_bytes)
+TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
 {
-    uint64_t pkt_seq;
-    for (int i=0; i < 8; ++i)
-        pkt_seq = (pkt_seq << 8) + seq_bytes[i];
-
     // Init/offset sequence number trackers
     if (baseSeq_) {
         pkt_seq -= baseSeq_;
@@ -886,6 +882,8 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, const uint8_t* seq_byte
         pkt_seq = 1; // start at 1 to have a positive seq_delta on first packet
         gapOffset_ = 1;
     }
+
+    RING_WARN("[dtls] rx (%lx)", pkt_seq);
 
     // Check for a valid seq. num. delta
     int64_t seq_delta = pkt_seq - lastRxSeq_;
@@ -938,6 +936,7 @@ TlsSession::flushRxQueue()
 
         if (callbacks_.onRxData) {
             lk.unlock();
+            RING_WARN("[dtls] push:\n%s<<<<<", std::string {std::begin(pkt), std::end(pkt)}.c_str());
             callbacks_.onRxData(std::move(pkt));
             lk.lock();
         }
@@ -967,9 +966,14 @@ TlsSession::handleStateEstablished(TlsSessionState state)
 
         lk.unlock();
         auto ret = gnutls_record_recv_seq(session_, buf.data(), buf.size(), seq);
+        uint64_t pkt_seq=0;
+        for (int i=0; i < 8; ++i)
+            pkt_seq = (pkt_seq << 8) + seq[i];
+        RING_WARN("[dtls] rx (%lu - %lx)", pkt_seq, pkt_seq);
+
         if (ret > 0 && pmtudOver_) {
             buf.resize(ret);
-            handleDataPacket(std::move(buf), seq);
+            handleDataPacket(std::move(buf), pkt_seq);
             return state;
         } else if (ret == GNUTLS_E_HEARTBEAT_PING_RECEIVED) {
 
@@ -991,12 +995,11 @@ TlsSession::handleStateEstablished(TlsSessionState state)
                 gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
                 maxPayload_ = gnutls_dtls_get_data_mtu(session_);
             }
-            RING_WARN("[TLS] maxPayload for dtls : %d B", getMaxPayload());
             pmtudOver_ = true;
+            baseSeq_ = pkt_seq - 1;
+            RING_WARN("[TLS] maxPayload for dtls : %d B, baseSeq = %lx", getMaxPayload(), baseSeq_);
             buf.resize(ret);
-            // TODO: handle sequence re-order
-            if (callbacks_.onRxData)
-                callbacks_.onRxData(std::move(buf));
+            handleDataPacket(std::move(buf), pkt_seq);
             return state;
         }
 
