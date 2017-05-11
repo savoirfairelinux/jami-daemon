@@ -506,7 +506,7 @@ DBusConfigurationManager::discardTrustRequest(const std::string& accountId, cons
 }
 
 void
-DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload)
+DBusConfigurationManager::sendTrustRequest(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& payload)
 {
     DRing::sendTrustRequest(accountId, to, payload);
 }
