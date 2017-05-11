@@ -968,6 +968,7 @@ TlsSession::handleStateEstablished(TlsSessionState state)
         lk.unlock();
         auto ret = gnutls_record_recv_seq(session_, buf.data(), buf.size(), seq);
         if (ret > 0 && pmtudOver_) {
+            RING_WARN("[dtls] rx\n%s<<<<<<<<<<", std::string {std::begin(buf), std::end(buf)}.c_str());
             buf.resize(ret);
             handleDataPacket(std::move(buf), seq);
             return state;
