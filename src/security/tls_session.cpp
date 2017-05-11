@@ -878,6 +878,8 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, const uint8_t* seq_byte
     for (int i=0; i < 8; ++i)
         pkt_seq = (pkt_seq << 8) + seq_bytes[i];
 
+    RING_WARN("[dtls] rx (%lu)\n%s<<<<<", pkt_seq, std::string {std::begin(buf), std::end(buf)}.c_str());
+
     // Init/offset sequence number trackers
     if (baseSeq_) {
         pkt_seq -= baseSeq_;
@@ -938,6 +940,7 @@ TlsSession::flushRxQueue()
 
         if (callbacks_.onRxData) {
             lk.unlock();
+            RING_WARN("[dtls] push:\n%s<<<<<", std::string {std::begin(pkt), std::end(pkt)}.c_str());
             callbacks_.onRxData(std::move(pkt));
             lk.lock();
         }
