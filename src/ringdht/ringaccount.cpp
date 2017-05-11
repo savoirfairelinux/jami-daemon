@@ -142,7 +142,8 @@ struct RingAccount::PendingMessage
 };
 
 struct
-RingAccount::TrustRequest {
+RingAccount::TrustRequest
+{
     dht::InfoHash device;
     time_t received;
     std::vector<uint8_t> payload;
@@ -2331,10 +2332,23 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
             }
         }
         saveTrustRequests();
+
+        // Decode payload as std::map<std::string, std::string>
+        std::map<std::string, std::string> messages;
+        try {
+            std::size_t offset = 0;
+            auto& pl = req->second.payload;
+            auto result = msgpack::unpack(reinterpret_cast<char*>(pl.data()), pl.size(), offset);
+            auto messages = result.get().as<std::map<std::string, std::string>>();
+        } catch (const std::exception& e) {
+            RING_WARN("Error decoding payload: %s", getAccountID().c_str(), e.what());
+            return;
+        }
+
         emitSignal<DRing::ConfigurationSignal::IncomingTrustRequest>(
             getAccountID(),
             req->first.toString(),
-            req->second.payload,
+            messages,
             received
         );
     }
@@ -3096,6 +3110,17 @@ RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>&
                           dev,
                           dht::TrustRequest(DHT_TYPE_NS, payload));
     });
+}
+
+void
+RingAccount::sendTrustRequest(const std::string& to,
+                              const std::map<std::string, std::string>& payload)
+{
+    std::ostringstream ss;
+    msgpack::pack(ss, payload);
+    auto str = ss.str();
+
+    sendTrustRequest(to, std::vector<uint8_t> {std::begin(str), std::end(str)});
 }
 
 void
