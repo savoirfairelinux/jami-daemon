@@ -142,7 +142,7 @@ class DBusConfigurationManager :
         std::vector<std::map<std::string, std::string>> getTrustRequests(const std::string& accountId);
         bool acceptTrustRequest(const std::string& accountId, const std::string& from);
         bool discardTrustRequest(const std::string& accountId, const std::string& from);
-        void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload);
+        void sendTrustRequest(const std::string& accountId, const std::string& to, const std::map<std::string, std::string>& payload);
         void addContact(const std::string& accountId, const std::string& uri);
         void removeContact(const std::string& accountId, const std::string& uri);
         std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
