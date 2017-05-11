@@ -1253,11 +1253,12 @@
            <tp:docstring>
                Notify clients that a new contact request has been received.
            </tp:docstring>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
            <arg type="s" name="accountID">
            </arg>
            <arg type="s" name="from">
            </arg>
-           <arg type="ay" name="payload">
+           <arg type="a{ss}" name="payload">
            </arg>
            <arg type="t" name="receiveTime">
            </arg>
@@ -1265,11 +1266,12 @@
 
        <method name="sendTrustRequest" tp:name-for-bindings="sendTrustRequest">
            <tp:added version="2.2.0"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In2" value="MapStringString"/>
            <arg type="s" name="accountID" direction="in">
            </arg>
            <arg type="s" name="to" direction="in">
            </arg>
-           <arg type="ay" name="payload" direction="in">
+           <arg type="a{ss}" name="payload" direction="in">
            </arg>
        </method>
 

@@ -303,7 +303,8 @@ class RingAccount : public SIPAccountBase {
         ///
         std::map<std::string, std::string> getContactDetails(const std::string& uri) const;
 
-        void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
+        void sendTrustRequest(const std::string& to, const std::map<std::string, std::string>& payload);
+
         void sendTrustRequestConfirm(const dht::InfoHash& to);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
@@ -420,6 +421,8 @@ class RingAccount : public SIPAccountBase {
         void onPeerMessage(const dht::InfoHash& peer_device, std::function<void(const std::shared_ptr<dht::crypto::Certificate>& crt, const dht::InfoHash& account_id)>);
 
         void onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received , bool confirm, std::vector<uint8_t>&& payload);
+
+        void sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload);
 
         /**
          * Maps require port via UPnP
