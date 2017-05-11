@@ -219,7 +219,7 @@ private:
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
     std::mutex reorderBufMutex_;
-    uint64_t baseSeq_ {0}; // sequence number of first application data packet received
+    uint64_t baseSeq_ {0x2000000000000}; // sequence number of first application data packet received
     uint64_t lastRxSeq_ {0}; // last received and valid packet sequence number
     uint64_t gapOffset_ {1}; // offset of first byte not received yet (start at 1)
     clock::time_point lastReadTime_;
@@ -231,7 +231,7 @@ private:
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
 
-    void handleDataPacket(std::vector<uint8_t>&&, const uint8_t*);
+    void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
     void flushRxQueue();
 
     // Statistics
