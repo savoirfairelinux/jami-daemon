@@ -210,7 +210,7 @@ private:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
-    std::atomic<unsigned int> maxPayload_ {0};
+    std::atomic<unsigned int> maxPayload_;
 
     // IO GnuTLS <-> ICE
     std::mutex txMutex_ {};
@@ -219,9 +219,10 @@ private:
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
     std::mutex reorderBufMutex_;
-    uint64_t baseSeq_ {0}; // sequence number of first application data packet received
-    uint64_t lastRxSeq_ {0}; // last received and valid packet sequence number
-    uint64_t gapOffset_ {1}; // offset of first byte not received yet (start at 1)
+    std::vector<uint8_t> rawPktBuf_; ///< gnutls incoming packet buffer
+    uint64_t baseSeq_ {0}; ///< sequence number of first application data packet received
+    uint64_t lastRxSeq_ {0}; ///< last received and valid packet sequence number
+    uint64_t gapOffset_ {0}; ///< offset of first byte not received yet
     clock::time_point lastReadTime_;
     std::map<uint64_t, std::vector<uint8_t>> reorderBuffer_ {};
 
@@ -231,7 +232,8 @@ private:
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
 
-    void handleDataPacket(std::vector<uint8_t>&&, const uint8_t*);
+    bool initFromRecordState();
+    void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
     void flushRxQueue();
 
     // Statistics
