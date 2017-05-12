@@ -1,6 +1,6 @@
 # opus
 
-OPUS_VERSION := 1.1.2
+OPUS_VERSION := 1.1.4
 
 OPUS_URL := http://downloads.xiph.org/releases/opus/opus-$(OPUS_VERSION).tar.gz
 
@@ -16,7 +16,6 @@ $(TARBALLS)/opus-$(OPUS_VERSION).tar.gz:
 
 opus: opus-$(OPUS_VERSION).tar.gz .sum-opus
 	$(UNPACK)
-	$(APPLY) $(SRC)/opus/export.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
