@@ -3045,9 +3045,9 @@ RingAccount::getTrustRequests() const
     ret.reserve(trustRequests_.size());
     for (const auto& r : trustRequests_) {
         ret.emplace_back(Map {
-            {"from", r.first.toString()},
-            {"received", std::to_string(r.second.received)},
-            {"payload", std::string(r.second.payload.begin(), r.second.payload.end())}
+            {DRing::Account::TrustRequest::FROM, r.first.toString()},
+            {DRing::Account::TrustRequest::RECEIVED, std::to_string(r.second.received)},
+            {DRing::Account::TrustRequest::PAYLOAD, std::string(r.second.payload.begin(), r.second.payload.end())}
         });
     }
     return ret;
