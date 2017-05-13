@@ -250,6 +250,14 @@ constexpr static const char AUTO_QUALITY_ENABLED [] = "CodecInfo.autoQualityEnab
 
 } //namespace DRing::Account::ConfProperties
 
+namespace TrustRequest {
+
+constexpr static const char FROM	 [] = "FROM";
+constexpr static const char RECEIVED [] = "RECEIVED";
+constexpr static const char PAYLOAD  [] = "PAYLOAD";
+
+} //namespace DRing::Account::TrustRequest
+
 } //namespace DRing::Account
 
 } //namespace DRing
