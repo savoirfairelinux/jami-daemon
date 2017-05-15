@@ -589,7 +589,6 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     call.initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
-    call.setCallMediaLocal(call.getIceMediaTransport()->getDefaultLocalAddress());
 
     IpAddr addrSdp;
     if (getUPnPActive()) {

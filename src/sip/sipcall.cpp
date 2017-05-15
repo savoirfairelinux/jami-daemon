@@ -135,7 +135,7 @@ SIPCall::getSIPAccount() const
 }
 
 void
-SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
+SIPCall::setCallMediaLocal()
 {
     if (localAudioPort_ == 0
 #ifdef RING_VIDEO
@@ -1144,6 +1144,8 @@ bool
 SIPCall::initIceMediaTransport(bool master, unsigned channel_num)
 {
     RING_DBG("[call:%s] create media ICE transport", getCallId().c_str());
+
+    setCallMediaLocal();
 
     auto& iceTransportFactory = Manager::instance().getIceTransportFactory();
     tmpMediaTransport_ = iceTransportFactory.createTransport(getCallId().c_str(),

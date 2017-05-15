@@ -326,7 +326,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
     call->setPeerNumber(peerNumber);
     call->setPeerDisplayName(peerDisplayName);
     call->initRecFilename(peerNumber);
-    call->setCallMediaLocal(addrToUse);
     call->getSDP().setPublishedIP(addrSdp);
 
     if (account->isStunEnabled())
@@ -895,8 +894,6 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
 
     /* fallback on local address */
     if (not address) address = ifaceAddr;
-
-    call->setCallMediaLocal(address);
 
     auto& localSDP = call->getSDP();
     localSDP.setPublishedIP(address);
