@@ -922,10 +922,15 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
         RING_WARN("[dtls] OOO pkt: 0x%lx", pkt_seq);
     }
 
-    std::lock_guard<std::mutex> lk {reorderBufMutex_};
-    if (reorderBuffer_.empty())
-        lastReadTime_ = clock::now();
-    reorderBuffer_.emplace(pkt_seq, std::move(buf));
+    {
+        std::lock_guard<std::mutex> lk {reorderBufMutex_};
+        if (reorderBuffer_.empty())
+            lastReadTime_ = clock::now();
+        reorderBuffer_.emplace(pkt_seq, std::move(buf));
+    }
+
+    // Try to flush right now as a new packet is available
+    flushRxQueue();
 }
 
 ///
@@ -972,7 +977,7 @@ TlsSession::flushRxQueue()
     gapOffset_ = std::max(gapOffset_, next_offset);
     lastReadTime_ = clock::now();
 
-    RING_DBG("[dtls] %lu pushed since 0x%lx", gapOffset_ - first_offset, first_offset);
+    RING_DBG("[dtls] push 0x%lx (%lu pkt)", first_offset, gapOffset_ - first_offset);
 }
 
 TlsSessionState
