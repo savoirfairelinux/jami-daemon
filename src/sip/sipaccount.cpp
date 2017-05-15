@@ -206,7 +206,6 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     call->initRecFilename(to);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
-    call->setCallMediaLocal(localAddress);
 
     IpAddr addrSdp;
     if (getUPnPActive()) {

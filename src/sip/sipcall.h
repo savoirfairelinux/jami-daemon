@@ -197,8 +197,6 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         return srtpEnabled_;
     }
 
-    void setCallMediaLocal(const pj_sockaddr& localIP);
-
     void generateMediaPorts();
 
     void startAllMedia();
@@ -221,6 +219,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
 private:
     NON_COPYABLE(SIPCall);
+
+    void setCallMediaLocal();
 
     void waitForIceAndStartMedia();
 
