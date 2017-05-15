@@ -22,8 +22,7 @@ argon2: argon2-$(ARGON2_VERSION).tar.gz .sum-argon2
 .argon2: argon2
 	cd $< && sed -i'.orig' -e 's|@PREFIX@|$(PREFIX)|' -e "s|@HOST_MULTIARCH@||" -e "s|@UPSTREAM_VER@|$(ARGON2_VERSION)|" libargon2.pc
 	cd $< && mkdir -p $(PREFIX)/lib/pkgconfig/ && cp libargon2.pc $(PREFIX)/lib/pkgconfig/
-	cd $< && $(HOSTVARS) $(MAKE) PREFIX="$(PREFIX)" OPTTARGET="no-opt"
+	cd $< && $(HOSTVARS) $(MAKE) PREFIX="$(PREFIX)" OPTTARGET="no-opt" LIB_SH=""
 	cd $< && $(RANLIB) libargon2.a
 	cd $< && $(HOSTVARS) $(MAKE) install PREFIX="$(PREFIX)" OPTTARGET="no-opt"
-	rm -f $(PREFIX)/lib/libargon2.so* $(PREFIX)/lib/libargon2*.dylib
 	touch $@
