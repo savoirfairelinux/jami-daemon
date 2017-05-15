@@ -24,5 +24,5 @@ argon2: argon2-$(ARGON2_VERSION).tar.gz .sum-argon2
 	cd $< && mkdir -p $(PREFIX)/lib/pkgconfig/ && cp libargon2.pc $(PREFIX)/lib/pkgconfig/
 	cd $< && $(HOSTVARS) $(MAKE) PREFIX="$(PREFIX)" OPTTARGET="no-opt" LIB_SH=""
 	cd $< && $(RANLIB) libargon2.a
-	cd $< && $(HOSTVARS) $(MAKE) install PREFIX="$(PREFIX)" OPTTARGET="no-opt"
+	cd $< && $(HOSTVARS) $(MAKE) install PREFIX="$(PREFIX)" OPTTARGET="no-opt" LIB_SH=""
 	touch $@
