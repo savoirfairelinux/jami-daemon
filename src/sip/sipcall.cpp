@@ -120,6 +120,8 @@ SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType 
 {
     if (account.getUPnPActive())
         upnp_.reset(new upnp::Controller());
+
+    setCallMediaLocal();
 }
 
 SIPCall::~SIPCall()
@@ -135,7 +137,7 @@ SIPCall::getSIPAccount() const
 }
 
 void
-SIPCall::setCallMediaLocal(const pj_sockaddr& localIP)
+SIPCall::setCallMediaLocal()
 {
     if (localAudioPort_ == 0
 #ifdef RING_VIDEO
