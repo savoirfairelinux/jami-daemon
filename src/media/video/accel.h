@@ -50,7 +50,7 @@ class HardwareAccel {
         bool extractData(VideoFrame& input);
 
     public: // must be implemented by derived classes
-        virtual bool check() = 0;
+        virtual bool checkAvailability() = 0;
         virtual bool init() = 0;
         virtual int allocateBuffer(AVFrame* frame, int flags) = 0;
         virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
