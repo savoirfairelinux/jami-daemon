@@ -75,7 +75,7 @@ VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
 }
 
 bool
-VaapiAccel::check()
+VaapiAccel::checkAvailability()
 {
     AVBufferRef* hardwareDeviceCtx = nullptr;
 #ifdef HAVE_VAAPI_ACCEL_DRM
