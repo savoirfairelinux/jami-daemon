@@ -206,7 +206,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
             if (info.type == pa) {
                 auto accel = info.create(info.name, info.format);
                 // don't break if the check fails, we want to check every possibility
-                if (accel->check()) {
+                if (accel->checkAvailability()) {
                     codecCtx->get_format = getFormatCb;
                     codecCtx->get_buffer2 = allocateBufferCb;
                     codecCtx->thread_safe_callbacks = 1;
