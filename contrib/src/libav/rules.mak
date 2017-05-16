@@ -138,9 +138,9 @@ ifdef HAVE_NEON
 LIBAVCONF += --as="$(AS)"
 endif
 endif
-#ifdef HAVE_MACOSX
-#LIBAVCONF += --enable-vda
-#endif
+ifdef HAVE_MACOSX
+LIBAVCONF += --enable-vda --enable-hwaccel=h264_vda
+endif
 
 # Linux
 ifdef HAVE_LINUX
