@@ -74,7 +74,7 @@ VdpauAccel::extractData(VideoFrame& input, VideoFrame& output)
 }
 
 bool
-VdpauAccel::check()
+VdpauAccel::checkAvailability()
 {
     AVBufferRef* hardwareDeviceCtx;
     if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VDPAU, nullptr, nullptr, 0) == 0) {

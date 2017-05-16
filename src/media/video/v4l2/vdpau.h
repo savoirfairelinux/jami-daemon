@@ -48,7 +48,7 @@ class VdpauAccel : public HardwareAccel {
         VdpauAccel(const std::string name, const AVPixelFormat format);
         ~VdpauAccel();
 
-        bool check() override;
+        bool checkAvailability() override;
         bool init() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
         void extractData(VideoFrame& input, VideoFrame& output) override;
