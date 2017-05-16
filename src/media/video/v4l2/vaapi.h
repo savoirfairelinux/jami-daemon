@@ -61,7 +61,7 @@ class VaapiAccel : public HardwareAccel {
         VaapiAccel(const std::string name, const AVPixelFormat format);
         ~VaapiAccel();
 
-        bool check() override;
+        bool checkAvailability() override;
         bool init() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
         void extractData(VideoFrame& input, VideoFrame& output) override;
