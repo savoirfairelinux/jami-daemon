@@ -1,0 +1,14 @@
+--- a/SMP/libopus.vcxproj
++++ b/SMP/libopus.vcxproj
+@@ -204,7 +204,7 @@
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+     <TargetName>libopus</TargetName>
+-    <OutDir>$(ProjectDir)..\..\..\msvc\</OutDir>
++    <OutDir>$(ProjectDir)output\$(Configuration)\</OutDir>
+     <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLTO|x64'">
+-- 
+2.10.2.windows.1
+
