@@ -19,6 +19,7 @@ jsoncpp, ^
 msgpack, ^
 nettle, ^
 opendht, ^
+opus, ^
 pcre, ^
 pjproject, ^
 portaudio, ^
