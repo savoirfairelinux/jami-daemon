@@ -1,0 +1,22 @@
+--- a/SMP/libopus.vcxproj
++++ b/SMP/libopus.vcxproj
+@@ -45,6 +45,7 @@
+   <PropertyGroup Label="Globals">
+     <ProjectGuid>{ABBD5F2A-361F-4D4F-A532-01B856C59E9E}</ProjectGuid>
+     <RootNamespace>libopus</RootNamespace>
++    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+   </PropertyGroup>
+   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+@@ -172,7 +173,7 @@
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+     <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\$(ProjectName)\</IntDir>
+     <TargetName>libopusd</TargetName>
+-    <OutDir>$(ProjectDir)..\..\..\msvc\</OutDir>
++    <OutDir>$(ProjectDir)output\$(Configuration)\</OutDir>
+     <CustomBuildAfterTargets>Clean</CustomBuildAfterTargets>
+   </PropertyGroup>
+   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugDLL|Win32'">
+-- 
+2.10.2.windows.1
+

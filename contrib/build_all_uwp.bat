@@ -58,6 +58,8 @@ build\yaml-cpp\MSVC\yaml-cpp.vcxproj, ^
 
 rem * build libx264 *
 call :build build\x264\SMP\libx264.vcxproj
+rem * build libopus *
+call :build build\opus\SMP\libopus.vcxproj
 rem * build ffmpeg *
 cd build\FFmpegInterop
 SET LIB="%VSINSTALLDIR%VC\lib\store\amd64;%VSINSTALLDIR%VC\atlmfc\lib\amd64;%UniversalCRTSdkDir%lib\%UCRTVersion%\ucrt\x64;;%UniversalCRTSdkDir%lib\%UCRTVersion%\um\x64;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\lib\um\x64;;C:\Program Files (x86)\Windows Kits\NETFXSDK\4.6\Lib\um\x64"
