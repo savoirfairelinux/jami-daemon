@@ -9,16 +9,36 @@
          popd
  
      elif [ "$2" == "x64" ]; then
-@@ -43,7 +43,7 @@ if [ "$1" == "Win10" ]; then
-         --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
-         --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
+@@ -33,6 +33,7 @@ if [ "$1" == "Win10" ]; then
+         cd Output/Windows10/x64
+         ../../../configure \
+         --toolchain=msvc \
++        --enable-gpl \
+         --disable-programs \
+         --disable-d3d11va \
+         --disable-dxva2 \
+@@ -40,10 +41,17 @@ if [ "$1" == "Win10" ]; then
+         --enable-shared \
+         --enable-cross-compile \
+         --target-os=win32 \
+-        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
+-        --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
++        --enable-libopus \
++        --enable-encoder=libopus \
++        --enable-decoder=libopus \
++        --enable-encoder=libx264 \
++        --enable-decoder=h264 \
++        --enable-parser=h264 \
++        --enable-libx264 \
++        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../x264/SMP/output/Release/include -I../../../../../opus/SMP/output/Release/include/opus" \
++        --extra-ldflags="-APPCONTAINER WindowsApp.lib libopus.lib -LIBPATH:../../../../../x264/SMP/output/Release/lib/x64 -LIBPATH:../../../../../opus/SMP/output/Release/lib/x64" \
          --prefix=../../../Build/Windows10/x64
 -        make install
 +        make -j install
          popd
  
      elif [ "$2" == "ARM" ]; then
-@@ -67,7 +67,7 @@ if [ "$1" == "Win10" ]; then
+@@ -67,7 +75,7 @@ if [ "$1" == "Win10" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -D__ARM_PCS_VFP" \
          --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
          --prefix=../../../Build/Windows10/ARM
@@ -27,7 +47,7 @@
          popd
  
      fi
-@@ -93,7 +93,7 @@ elif [ "$1" == "Win8.1" ]; then
+@@ -93,7 +101,7 @@ elif [ "$1" == "Win8.1" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603" \
          --extra-ldflags="-APPCONTAINER" \
          --prefix=../../../Build/Windows8.1/x86
@@ -36,7 +56,7 @@
          popd
  
      elif [ "$2" == "x64" ]; then
-@@ -114,7 +114,7 @@ elif [ "$1" == "Win8.1" ]; then
+@@ -114,7 +122,7 @@ elif [ "$1" == "Win8.1" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603" \
          --extra-ldflags="-APPCONTAINER" \
          --prefix=../../../Build/Windows8.1/x64
@@ -45,7 +65,7 @@
          popd
  
      elif [ "$2" == "ARM" ]; then
-@@ -138,7 +138,7 @@ elif [ "$1" == "Win8.1" ]; then
+@@ -138,7 +146,7 @@ elif [ "$1" == "Win8.1" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PC_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP" \
          --extra-ldflags="-APPCONTAINER -MACHINE:ARM" \
          --prefix=../../../Build/Windows8.1/ARM
@@ -54,7 +74,7 @@
          popd
  
      fi
-@@ -167,7 +167,7 @@ elif [ "$1" == "Phone8.1" ]; then
+@@ -167,7 +175,7 @@ elif [ "$1" == "Phone8.1" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603 -D__ARM_PCS_VFP" \
          --extra-ldflags="-APPCONTAINER -MACHINE:ARM -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib" \
          --prefix=../../../Build/WindowsPhone8.1/ARM
@@ -63,7 +83,7 @@
          popd
  
      elif [ "$2" == "x86" ]; then
-@@ -188,7 +188,7 @@ elif [ "$1" == "Phone8.1" ]; then
+@@ -188,7 +196,7 @@ elif [ "$1" == "Phone8.1" ]; then
          --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_PHONE_APP -D_WIN32_WINNT=0x0603" \
          --extra-ldflags="-APPCONTAINER -subsystem:console -opt:ref WindowsPhoneCore.lib RuntimeObject.lib PhoneAppModelHost.lib -NODEFAULTLIB:kernel32.lib -NODEFAULTLIB:ole32.lib" \
          --prefix=../../../Build/WindowsPhone8.1/x86
@@ -83,31 +103,17 @@
                  break;
              if (st->first_dts == AV_NOPTS_VALUE &&
                  !(ic->iformat->flags & AVFMT_NOTIMESTAMPS) &&
+--- a/ffmpeg/configure
++++ b/ffmpeg/configure
+@@ -1217,7 +1217,7 @@ check_pkg_config(){
+     headers="$2"
+     funcs="$3"
+     shift 3
+-    check_cmd $pkg_config --exists --print-errors $pkgandversion || return
++    # check_cmd $pkg_config --exists --print-errors $pkgandversion || return
+     pkg_cflags=$($pkg_config --cflags $pkg_config_flags $pkg)
+     pkg_libs=$($pkg_config --libs $pkg_config_flags $pkg)
+     check_func_headers "$headers" "$funcs" $pkg_cflags $pkg_libs "$@" &&
 -- 
---- a/FFmpegConfig.sh
-+++ b/FFmpegConfig.sh
-@@ -33,6 +33,7 @@ if [ "$1" == "Win10" ]; then
-         cd Output/Windows10/x64
-         ../../../configure \
-         --toolchain=msvc \
-+        --enable-gpl \
-         --disable-programs \
-         --disable-d3d11va \
-         --disable-dxva2 \
-@@ -40,8 +41,12 @@ if [ "$1" == "Win10" ]; then
-         --enable-shared \
-         --enable-cross-compile \
-         --target-os=win32 \
--        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00" \
--        --extra-ldflags="-APPCONTAINER WindowsApp.lib" \
-+        --enable-encoder=libx264 \
-+        --enable-decoder=h264 \
-+        --enable-parser=h264 \
-+        --enable-libx264 \
-+        --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../x264/SMP/output/Release/include" \
-+        --extra-ldflags="-APPCONTAINER WindowsApp.lib -LIBPATH:../../../../../x264/SMP/output/Release/lib/x64" \
-         --prefix=../../../Build/Windows10/x64
-         make -j install
-         popd
-2.8.1.windows.1
+2.10.2.windows.1
 
