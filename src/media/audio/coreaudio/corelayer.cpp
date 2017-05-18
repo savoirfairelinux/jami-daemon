@@ -166,6 +166,10 @@ CoreLayer::initAudioLayerIO()
     // Keep everything else and change only sample rate (or else SPLOSION!!!)
     info.mSampleRate = audioInputFormat_.sample_rate;
 
+    // Keep some values to not ask them every time the read callback is fired up
+    inSampleRate_ = info.mSampleRate;
+    inChannelsPerFrame_ = info.mChannelsPerFrame;
+
     checkErr(AudioUnitSetProperty(ioUnit_,
                 kAudioUnitProperty_StreamFormat,
                 kAudioUnitScope_Output,
@@ -348,23 +352,14 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
             inNumberFrames,
             captureBuff_));
 
-    AudioStreamBasicDescription info;
-    UInt32 size = sizeof(AudioStreamBasicDescription);
-    checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
-                inBusNumber,
-                &info,
-                &size));
-
     // Add them to Ring ringbuffer.
     const AudioFormat mainBufferFormat = Manager::instance().getRingBufferPool().getInternalAudioFormat();
-    bool resample = info.mSampleRate != mainBufferFormat.sample_rate;
+    bool resample = inSampleRate_ != mainBufferFormat.sample_rate;
 
     // FIXME: Performance! There *must* be a better way. This is testing only.
     auto inBuff = AudioBuffer {inNumberFrames, audioInputFormat_};
 
-    for (int i = 0; i < info.mChannelsPerFrame; ++i) {
+    for (int i = 0; i < inChannelsPerFrame_; ++i) {
         auto data = reinterpret_cast<Float32*>(captureBuff_->mBuffers[i].mData);
         for (int j = 0; j < inNumberFrames; ++j) {
             (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] / .000030517578125f);
