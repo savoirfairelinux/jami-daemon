@@ -171,6 +171,9 @@ class CoreLayer : public AudioLayer {
 
         AudioUnit ioUnit_;
 
+        Float64 inSampleRate_;
+        UInt32 inChannelsPerFrame_;
+
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 
         std::vector<AudioDevice> getDeviceList(bool getCapture) const;
