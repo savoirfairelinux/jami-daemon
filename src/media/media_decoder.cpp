@@ -283,6 +283,23 @@ int MediaDecoder::setupFromVideoData()
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
 #if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101) && !defined(_WIN32)
+#ifdef __ANDROID__
+    const char* codec_name = nullptr;
+    switch (avStream_->codecpar->codec_id) {
+    case AV_CODEC_ID_MPEG4:
+        codec_name = "mpeg4_mediacodec"; break;
+    case AV_CODEC_ID_H264:
+        codec_name = "h264_mediacodec"; break;
+    case AV_CODEC_ID_VP8:
+        codec_name = "vp8_mediacodec"; break;
+    case AV_CODEC_ID_VP9:
+        codec_name = "vp9_mediacodec"; break;
+    }
+    if (codec_name) {
+        RING_WARN("Trying to use %s", codec_name);
+        inputDecoder_ = avcodec_find_decoder_by_name(codec_name);
+    } else
+#endif
     inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         RING_ERR("Unsupported codec");
@@ -305,6 +322,7 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 #endif
+    RING_WARN("Decoding video using %s (%s)", inputDecoder_->name, inputDecoder_->long_name);
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
