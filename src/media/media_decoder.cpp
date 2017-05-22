@@ -31,6 +31,9 @@
 #ifdef RING_ACCEL
 #include "video/accel.h"
 #endif
+#ifdef __ANDROID__
+#include "video/androidvideo/accel.h"
+#endif
 
 #include "string_utils.h"
 #include "logger.h"
@@ -40,8 +43,6 @@
 #include <thread> // hardware_concurrency
 
 namespace ring {
-
-using std::string;
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
@@ -283,7 +284,11 @@ int MediaDecoder::setupFromVideoData()
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
 #if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101) && !defined(_WIN32)
+#ifdef __ANDROID__
+    inputDecoder_ = video::findAcceleratedAndroidDecoder(avStream_->codecpar->codec_id);
+#else
     inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
+#endif
     if (!inputDecoder_) {
         RING_ERR("Unsupported codec");
         return -1;
@@ -305,6 +310,7 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 #endif
+    RING_WARN("Decoding video using %s (%s)", inputDecoder_->name, inputDecoder_->long_name);
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
