@@ -1,24 +1,22 @@
 include $(top_srcdir)/globals.mk
 
-SUBDIRS= test
-
 if HAVE_LINUX
 if HAVE_ANDROID
-SUBDIRS+= \
+SUBDIRS= \
 	androidvideo
 else
-SUBDIRS+= \
+SUBDIRS= \
 	v4l2
 endif
 endif
 
 if HAVE_OSX
-SUBDIRS+= \
+SUBDIRS= \
     osxvideo
 endif
 
 if HAVE_WIN32
-SUBDIRS+= \
+SUBDIRS= \
 	winvideo
 endif
 
