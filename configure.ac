@@ -29,7 +29,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_LANG(C++)
+AC_LANG(C++)test_time.o : test_time.h
 
 dnl
 dnl  Check the operating system
@@ -699,6 +699,7 @@ AS_IF([test "x$enable_debug" = "xyes"],
 
 dnl What Makefiles to generate
 
+
 #TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
@@ -725,10 +726,11 @@ AC_CONFIG_FILES([Makefile \
                  src/media/video/androidvideo/Makefile \
                  src/media/video/osxvideo/Makefile \
                  src/media/video/winvideo/Makefile \
-                 src/media/video/test/Makefile \
                  src/security/Makefile \
                  src/upnp/Makefile \
                  ringtones/Makefile \
+                 test/Makefile\
+                 test/sip/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])
