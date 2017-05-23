@@ -962,16 +962,17 @@ TlsSession::flushRxQueue()
     // Loop on offset-ordered received packet until a discontinuity in sequence number
     while (item != std::end(reorderBuffer_) and item->first <= next_offset) {
         auto pkt_offset = item->first;
-        auto& pkt = item->second;
+        auto pkt = std::move(item->second);
+
+        // Remove item before unlocking to not trash the item' relationship
+        next_offset = pkt_offset + 1;
+        item = reorderBuffer_.erase(item);
 
         if (callbacks_.onRxData) {
             lk.unlock();
             callbacks_.onRxData(std::move(pkt));
             lk.lock();
         }
-
-        next_offset = pkt_offset + 1;
-        item = reorderBuffer_.erase(item);
     }
 
     gapOffset_ = std::max(gapOffset_, next_offset);
