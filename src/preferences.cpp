@@ -548,7 +548,7 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
 #ifdef RING_VIDEO
 VideoPreferences::VideoPreferences()
 #ifdef RING_ACCEL
-    : decodingAccelerated_(false)
+    : decodingAccelerated_(true)
 #endif
 {
 }
@@ -570,7 +570,7 @@ void VideoPreferences::unserialize(const YAML::Node &in)
     // value may or may not be present
     try {
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
-    } catch (...) { decodingAccelerated_ = false; } // experimental, so disabled by default
+    } catch (...) { decodingAccelerated_ = true; }
 #endif
     getVideoDeviceMonitor().unserialize(in);
 }
