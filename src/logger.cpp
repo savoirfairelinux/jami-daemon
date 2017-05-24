@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
@@ -24,14 +24,11 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-#include <ciso646> // fix windows compiler bug
 
-#include "client/ring_signal.h"
-
-#ifdef RING_UWP
-#include <sys_time.h>
+#ifdef WIN32_NATIVE
+# include <sys_time.h>
 #else
-#include <sys/time.h>
+# include <sys/time.h>
 #endif
 
 #include <string>
@@ -49,7 +46,7 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef _WIN32
+#if defined _WIN32 || defined WIN32_NATIVE
 #include "winsyslog.h"
 #endif
 
@@ -68,12 +65,7 @@
 #define WHITE "\033[01;37m"
 #define END_COLOR "\033[0m"
 
-#ifndef _WIN32
-#define RED "\033[22;31m"
-#define YELLOW "\033[01;33m"
-#define CYAN "\033[22;36m"
-#else
-#ifdef RING_UWP
+#ifdef _WIN32
 #define FOREGROUND_WHITE 0x000f
 #define RED FOREGROUND_RED + 0x0008
 #define YELLOW FOREGROUND_RED + FOREGROUND_GREEN + 0x0008
@@ -83,7 +75,6 @@
 #define RED FOREGROUND_RED
 #define YELLOW FOREGROUND_RED + FOREGROUND_GREEN
 #define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN
-#endif
 #endif
 
 static int consoleLog;
@@ -118,20 +109,26 @@ getHeader(const char* ctx)
     out.fill(prev_fill);
 
     // Context
-    if (ctx) {
-#ifdef RING_UWP
-        out << "|" << std::setw(32) << ctx;
-#else
+    if (ctx)
         out << "|" << std::setw(24) << ctx;
-#endif
-    }
 
     out << "] ";
 
     return out.str();
 }
 
-#ifdef RING_UWP
+void
+logger(const int level, const char* format, ...)
+{
+    if (!debugMode && level == LOG_DEBUG)
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+    vlogger(level, format, ap);
+    va_end(ap);
+}
+
 void
 wlogger(const int level, const char* file, const char* format, ...)
 {
@@ -147,19 +144,6 @@ wlogger(const int level, const char* file, const char* format, ...)
     vlogger(level, buffer.c_str(), ap);
     va_end(ap);
 }
-#else
-void
-logger(const int level, const char* format, ...)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    va_list ap;
-    va_start(ap, format);
-    vlogger(level, format, ap);
-    va_end(ap);
-}
-#endif
 
 void
 vlogger(const int level, const char *format, va_list ap)
@@ -172,20 +156,15 @@ vlogger(const int level, const char *format, va_list ap)
     std::lock_guard<std::mutex> lk {logMutex};
 
     if (consoleLog) {
-#ifndef _WIN32
-        const char* color_header = CYAN;
-        const char* color_prefix = "";
-#else
-#ifdef RING_UWP
+#ifdef _WIN32
         WORD color_prefix = LIGHT_GREEN;
 #else
         WORD color_prefix = FOREGROUND_GREEN;
+#endif
+        WORD color_header = CYAN;
         HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
         CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
         WORD saved_attributes;
-#endif
-        WORD color_header = CYAN;
-#endif
 
         switch (level) {
             case LOG_ERR:
@@ -196,57 +175,33 @@ vlogger(const int level, const char *format, va_list ap)
                 break;
         }
 
-#ifdef _WIN32
-#if !defined(RING_UWP)
+#ifndef _WIN32
+        fputs(color_header, stderr);
+#else
         GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
         saved_attributes = consoleInfo.wAttributes;
-#endif
+        SetConsoleTextAttribute(hConsole, color_header);
 #endif
 
-        // must exist, check LOG_FORMAT
-        auto sep = strchr(format, '|');
-        if (sep) {
+        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
+        std::string ctx(format, sep - format);
+        format = sep + 2;
+        fputs(getHeader(ctx.c_str()).c_str(), stderr);
+
 #ifndef _WIN32
-            fputs(color_header, stderr);
-#else
-#if !defined(RING_UWP)
-            SetConsoleTextAttribute(hConsole, color_header);
-#endif
-#endif
-            std::string ctx(format, sep - format);
-            format = sep + 2;
-            fputs(getHeader(ctx.c_str()).c_str(), stderr);
-#ifdef RING_UWP
-            char tmp[4096];
-            vsprintf(tmp, format, ap);
-            ring::emitSignal<DRing::DebugSignal::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
-#endif
-#ifndef _WIN32
-            fputs(END_COLOR, stderr);
-#else
-#if !defined(RING_UWP)
-            SetConsoleTextAttribute(hConsole, saved_attributes);
-#endif
-#endif
-        }
-#ifndef _WIN32
+        fputs(END_COLOR, stderr);
         fputs(color_prefix, stderr);
 #else
-#if !defined(RING_UWP)
+        SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
-#endif
 #endif
 
         vfprintf(stderr, format, ap);
-        if (not sep)
-            fputs(ENDL, stderr);
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
 #else
-#if !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, saved_attributes);
-#endif
 #endif
 
     } else {
