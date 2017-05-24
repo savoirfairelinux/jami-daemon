@@ -1287,6 +1287,12 @@
            </arg>
            <arg type="s" name="uri" direction="in">
            </arg>
+           <arg type="b" name="ban" direction="in" tp:type="Boolean">
+               <tp:docstring>
+                   True if the the contact should be banned.
+                   If false, the contact is removed from the contact list (banned or not).
+               </tp:docstring>
+           </arg>
        </method>
 
        <method name="getContactDetails" tp:name-for-bindings="getContactDetails">

@@ -307,10 +307,10 @@ void addContact(const std::string& accountId, const std::string& uri)
         return acc->addContact(uri);
 }
 
-void removeContact(const std::string& accountId, const std::string& uri)
+void removeContact(const std::string& accountId, const std::string& uri, bool ban)
 {
     if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
-        return acc->removeContact(uri);
+        return acc->removeContact(uri, ban);
 }
 
 std::map<std::string, std::string>
