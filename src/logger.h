@@ -34,16 +34,15 @@ extern "C" {
 /**
  * Print something, coloring it depending on the level
  */
-
-#ifdef RING_UWP
-  void wlogger(const int level, const char* file, const char* format, ...);
+#ifdef _WIN32
+    void wlogger(const int level, const char* file, const char* format, ...);
 #else
-  void logger(const int level, const char* format, ...)
+    void logger(const int level, const char* format, ...)
 #endif
 #if defined(_WIN32) && !defined(RING_UWP)
-    __attribute__((format(gnu_printf, 2, 3)))
+        __attribute__((format(gnu_printf, 2, 3)))
 #elif defined(__GNUC__)
-    __attribute__((format(printf, 2, 3)))
+        __attribute__((format(printf, 2, 3)))
 #endif
     ;
 void vlogger(const int level, const char* format, va_list);
@@ -71,6 +70,12 @@ void strErr();
 #define STR(EXP) #EXP
 #define XSTR(X) STR(X)
 
+#ifdef RING_UWP
+#define FILE_NAME_ONLY(X) (strrchr(X, '\\') ? strrchr(X, '\\') + 1 : X)
+#elif defined(_WIN32)
+#define FILE_NAME_ONLY(X) (strrchr(X, '/') ? strrchr(X, '/') + 1 : X)
+#endif
+
 // Line return char in a string
 #ifdef RING_UWP
 #define ENDL " "
@@ -79,10 +84,9 @@ void strErr();
 #endif
 
 // Do not remove the "| " in following without modifying vlogger() code
-#ifndef RING_UWP
+#ifndef _WIN32
 #define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
 #else
-#define FILE_NAME_ONLY(X) (strrchr(X, '\\') ? strrchr(X, '\\') + 1 : X)
 #define LOG_FORMAT(M, ...) ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
 #endif
 
@@ -118,12 +122,7 @@ void strErr();
 #define LOG_DEBUG   EVENTLOG_SUCCESS
 
 #define FILE_NAME __FILE__
-
-#ifndef RING_UWP
-#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
-#else
-#define LOGGER(M, LEVEL, ...) wlogger(LEVEL, FILE_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
-#endif
+#define LOGGER(M, LEVEL, ...) wlogger(LEVEL, FILE_NAME,LOG_FORMAT(M, ##__VA_ARGS__))
 
 #else
 
