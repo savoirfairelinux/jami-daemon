@@ -165,7 +165,7 @@ void sendTrustRequest(const std::string& accountId, const std::string& to, const
 /* Contacts */
 
 void addContact(const std::string& accountId, const std::string& uri);
-void removeContact(const std::string& accountId, const std::string& uri);
+void removeContact(const std::string& accountId, const std::string& uri, bool ban);
 std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
 std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
 
