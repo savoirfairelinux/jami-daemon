@@ -2942,8 +2942,8 @@ RingAccount::removeContact(const std::string& uri, bool ban)
         return;
     c->second.removed = std::time(nullptr);
     c->second.banned = ban;
-    if (ban)
-        trust_.setCertificateStatus(uri, tls::TrustStore::PermissionStatus::BANNED);
+    trust_.setCertificateStatus(uri, ban ? tls::TrustStore::PermissionStatus::BANNED
+                                         : tls::TrustStore::PermissionStatus::UNDEFINED);
     saveContacts();
     emitSignal<DRing::ConfigurationSignal::ContactRemoved>(getAccountID(), uri, ban);
     syncDevices();

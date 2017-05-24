@@ -518,9 +518,9 @@ DBusConfigurationManager::addContact(const std::string& accountId, const std::st
 }
 
 void
-DBusConfigurationManager::removeContact(const std::string& accountId, const std::string& uri)
+DBusConfigurationManager::removeContact(const std::string& accountId, const std::string& uri, const bool& ban)
 {
-    DRing::removeContact(accountId, uri);
+    DRing::removeContact(accountId, uri, ban);
 }
 
 auto

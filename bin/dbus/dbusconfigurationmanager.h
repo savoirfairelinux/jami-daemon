@@ -144,7 +144,7 @@ class DBusConfigurationManager :
         bool discardTrustRequest(const std::string& accountId, const std::string& from);
         void sendTrustRequest(const std::string& accountId, const std::string& to, const std::vector<uint8_t>& payload);
         void addContact(const std::string& accountId, const std::string& uri);
-        void removeContact(const std::string& accountId, const std::string& uri);
+        void removeContact(const std::string& accountId, const std::string& uri, const bool& ban);
         std::map<std::string, std::string> getContactDetails(const std::string& accountId, const std::string& uri);
         std::vector<std::map<std::string, std::string>> getContacts(const std::string& accountId);
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
