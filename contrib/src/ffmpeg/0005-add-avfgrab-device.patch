@@ -18,7 +18,7 @@ diff --git a/configure b/configure
 index 48c7049..d1ae770 100755
 --- a/configure
 +++ b/configure
-@@ -2970,6 +2970,8 @@ avfoundation_indev_extralibs="-framework CoreVideo -framework Foundation -framew
+@@ -2990,6 +2990,8 @@ avfoundation_indev_extralibs="-framework CoreVideo -framework Foundation -framew
  avfoundation_indev_select="avfoundation"
  avfcapture_indev_extralibs="-fobjc-arc -framework Foundation -framework AVFoundation -framework CoreVideo -framework CoreMedia"
  avfcapture_indev_select="avfcapture"
@@ -27,13 +27,13 @@ index 48c7049..d1ae770 100755
  bktr_indev_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
  caca_outdev_deps="libcaca"
  decklink_indev_deps="decklink pthreads"
-@@ -5724,6 +5726,9 @@ enabled avfoundation_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActi
+@@ -5761,6 +5763,9 @@ enabled avfoundation_indev && { check_lib CoreGraphics/CoreGraphics.h CGGetActi
  enabled avfcapture_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfcapture_indev; }
- enabled avfcapture_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
-                                 check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
+ enabled avfcapture_indev && { check_lib CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
+                                 check_lib ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
 +enabled avfgrab_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfgrab_indev; }
-+enabled avfgrab_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
-+                            check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
++enabled avfgrab_indev && { check_lib CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
++                            check_lib ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
  enabled cuda              && check_header cuda.h # this is not a dependency
  enabled cuvid             && { enabled cuda ||
                                 die "ERROR: CUVID requires CUDA"; }
