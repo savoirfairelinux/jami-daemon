@@ -1,15 +1,11 @@
 # libvpx
 
-#Libav doesnt support new vpx version
-ifdef HAVE_ANDROID
+ifndef HAVE_IOS
 VPX_HASH := v1.6.1
-else ifdef HAVE_IOS
-VPX_HASH := v1.5.0
 else
-VPX_HASH := v1.4.0
+VPX_HASH := v1.5.0
 endif
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
-#VPX_GITURL := https://code.google.com/p/webm.libvpx
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
 	$(call download,$(VPX_URL))
