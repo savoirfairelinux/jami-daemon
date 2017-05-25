@@ -1,7 +1,7 @@
 # libvpx
 
 #Libav doesnt support new vpx version
-ifdef HAVE_ANDROID
+ifdef HAVE_LINUX
 VPX_HASH := v1.6.1
 else ifdef HAVE_IOS
 VPX_HASH := v1.5.0
