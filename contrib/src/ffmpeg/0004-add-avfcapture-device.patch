@@ -15,7 +15,7 @@ diff --git a/configure b/configure
 index 7154142..48c7049 100755
 --- a/configure
 +++ b/configure
-@@ -2968,6 +2968,8 @@ alsa_indev_deps="alsa_asoundlib_h snd_pcm_htimestamp"
+@@ -2988,6 +2988,8 @@ alsa_indev_deps="alsa_asoundlib_h snd_pcm_htimestamp"
  alsa_outdev_deps="alsa_asoundlib_h"
  avfoundation_indev_extralibs="-framework CoreVideo -framework Foundation -framework AVFoundation -framework CoreMedia"
  avfoundation_indev_select="avfoundation"
@@ -24,10 +24,10 @@ index 7154142..48c7049 100755
  bktr_indev_deps_any="dev_bktr_ioctl_bt848_h machine_ioctl_bt848_h dev_video_bktr_ioctl_bt848_h dev_ic_bt8xx_h"
  caca_outdev_deps="libcaca"
  decklink_indev_deps="decklink pthreads"
-@@ -5719,6 +5721,9 @@ done
+@@ -5756,6 +5758,9 @@ # these are off by default, so fail if requested and not available
  enabled avfoundation_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfoundation_indev; }
- enabled avfoundation_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
-                                 check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
+ enabled avfoundation_indev && { check_lib CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
+                                 check_lib ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
 +enabled avfcapture_indev && { check_header_objcc AVFoundation/AVFoundation.h || disable avfcapture_indev; }
 +enabled avfcapture_indev && { check_lib2 CoreGraphics/CoreGraphics.h CGGetActiveDisplayList -framework CoreGraphics ||
 +                                check_lib2 ApplicationServices/ApplicationServices.h CGGetActiveDisplayList -framework ApplicationServices; }
