@@ -26,6 +26,7 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
+#include "video/decoder_finder.h"
 #include "manager.h"
 
 #ifdef RING_ACCEL
@@ -40,8 +41,6 @@
 #include <thread> // hardware_concurrency
 
 namespace ring {
-
-using std::string;
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
@@ -283,7 +282,7 @@ int MediaDecoder::setupFromVideoData()
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
 #if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101) && !defined(_WIN32)
-    inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
+    inputDecoder_ = video::findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         RING_ERR("Unsupported codec");
         return -1;
@@ -305,6 +304,7 @@ int MediaDecoder::setupFromVideoData()
         return -1;
     }
 #endif
+    RING_DBG("Decoding video using %s (%s)", inputDecoder_->long_name, inputDecoder_->name);
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
