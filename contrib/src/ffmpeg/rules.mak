@@ -1,4 +1,4 @@
-FFMPEG_HASH := f7e9275f83ec116fc859367d61998eae8af438fc
+FFMPEG_HASH := n3.3.1
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 ifdef HAVE_WIN32
@@ -9,81 +9,84 @@ ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
+ifeq ($(call need_pkg,"libavcodec >= 57.48.101 libavformat >= 57.41.100 libswscale >= 4.1.100 libavdevice >= 57.0.101 libavutil >= 55.28.100"),)
+PKGS_FOUND += ffmpeg
+endif
+
+DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+
 FFMPEGCONF = \
-		--cc="$(CC)" \
-		--pkg-config="$(PKG_CONFIG)"
+	--cc="$(CC)" \
+	--pkg-config="$(PKG_CONFIG)"
 
 #disable everything
 FFMPEGCONF += \
-		--disable-everything \
-		--enable-zlib \
-		--enable-gpl \
-		--enable-swscale \
-		--enable-protocols \
-		--disable-programs \
-		--disable-sdl
+	--disable-everything \
+	--enable-zlib \
+	--enable-gpl \
+	--enable-swscale \
+	--enable-protocols \
+	--disable-programs \
+	--disable-sdl
 
 #enable muxers/demuxers
 FFMPEGCONF += \
-		--enable-demuxers \
-		--enable-muxers
+	--enable-demuxers \
+	--enable-muxers
 
 #enable parsers
 FFMPEGCONF += \
-		--enable-parser=h263 \
-		--enable-parser=h264 \
-		--enable-parser=mpeg4video \
-		--enable-parser=vp8
-
-#librairies
-ifndef HAVE_ANDROID
-FFMPEGCONF += --enable-libx264
-endif
+	--enable-parser=h263 \
+	--enable-parser=h264 \
+	--enable-parser=mpeg4video \
+	--enable-parser=vp8
 
 #encoders/decoders
 FFMPEGCONF += \
-		--enable-encoder=adpcm_g722 \
-		--enable-decoder=adpcm_g722 \
-		--enable-encoder=rawvideo \
-		--enable-decoder=rawvideo \
-		--enable-encoder=libx264 \
-		--enable-decoder=h264 \
-		--enable-encoder=pcm_alaw \
-		--enable-decoder=pcm_alaw \
-		--enable-encoder=pcm_mulaw \
-		--enable-decoder=pcm_mulaw \
-		--enable-encoder=mpeg4 \
-		--enable-decoder=mpeg4 \
-		--enable-encoder=libvpx_vp8 \
-		--enable-decoder=vp8 \
-		--enable-encoder=h263 \
-		--enable-encoder=h263p \
-		--enable-decoder=h263 \
-		--enable-encoder=mjpeg \
-		--enable-decoder=mjpeg \
-		--enable-decoder=mjpegb \
-		--enable-libspeex \
-		--enable-libopus \
-		--enable-libvpx \
-		--enable-encoder=libspeex \
-		--enable-decoder=libspeex \
-		--enable-encoder=libopus \
-		--enable-decoder=libopus
+	--enable-encoder=adpcm_g722 \
+	--enable-decoder=adpcm_g722 \
+	--enable-encoder=rawvideo \
+	--enable-decoder=rawvideo \
+	--enable-encoder=libx264 \
+	--enable-decoder=h264 \
+	--enable-encoder=pcm_alaw \
+	--enable-decoder=pcm_alaw \
+	--enable-encoder=pcm_mulaw \
+	--enable-decoder=pcm_mulaw \
+	--enable-encoder=mpeg4 \
+	--enable-decoder=mpeg4 \
+	--enable-encoder=libvpx_vp8 \
+	--enable-decoder=vp8 \
+	--enable-encoder=h263 \
+	--enable-encoder=h263p \
+	--enable-decoder=h263 \
+	--enable-encoder=mjpeg \
+	--enable-decoder=mjpeg \
+	--enable-decoder=mjpegb \
+	--enable-libspeex \
+	--enable-libopus \
+	--enable-libvpx \
+	--enable-encoder=libspeex \
+	--enable-decoder=libspeex \
+	--enable-encoder=libopus \
+	--enable-decoder=libopus
 
 #encoders/decoders for images
 FFMPEGCONF += \
-		--enable-encoder=gif \
-		--enable-decoder=gif \
-		--enable-encoder=jpegls \
-		--enable-decoder=jpegls \
-		--enable-encoder=ljpeg \
-		--enable-decoder=jpeg2000 \
-		--enable-encoder=png \
-		--enable-decoder=png \
-		--enable-encoder=bmp \
-		--enable-decoder=bmp \
-		--enable-encoder=tiff \
-		--enable-decoder=tiff
+	--enable-encoder=gif \
+	--enable-decoder=gif \
+	--enable-encoder=jpegls \
+	--enable-decoder=jpegls \
+	--enable-encoder=ljpeg \
+	--enable-decoder=jpeg2000 \
+	--enable-encoder=png \
+	--enable-decoder=png \
+	--enable-encoder=bmp \
+	--enable-decoder=bmp \
+	--enable-encoder=tiff \
+	--enable-decoder=tiff
+
+#platform specific options
 
 ifdef HAVE_WIN32
 FFMPEGCONF += \
@@ -93,8 +96,31 @@ FFMPEGCONF += \
 endif
 
 ifdef HAVE_LINUX
-ifndef HAVE_ANDROID
+FFMPEGCONF += --enable-pic
+FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
+ifdef HAVE_ANDROID
+# Android Linux
 FFMPEGCONF += \
+	--target-os=android \
+	--enable-jni \
+	--enable-mediacodec \
+	--enable-hwaccel=vp8_mediacodec \
+	--enable-hwaccel=mpeg4_mediacodec \
+	--enable-decoder=vp8_mediacodec \
+	--enable-decoder=mpeg4_mediacodec
+# ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
+ifeq ($(ARCH),i386)
+FFMPEGCONF += --disable-asm
+endif
+ifeq ($(ARCH),x86_64)
+FFMPEGCONF += --disable-asm
+endif
+else
+# Desktop Linux
+FFMPEGCONF += \
+	--target-os=linux \
+	--enable-indev=v4l2 \
+	--enable-indev=xcbgrab \
 	--enable-vdpau \
 	--enable-hwaccel=h264_vdpau \
 	--enable-hwaccel=mpeg4_vdpau \
@@ -103,6 +129,10 @@ FFMPEGCONF += \
 	--enable-hwaccel=mpeg4_vaapi \
 	--enable-hwaccel=h263_vaapi
 endif
+endif
+
+ifndef HAVE_ANDROID
+FFMPEGCONF += --enable-libx264
 endif
 
 ifdef HAVE_MACOSX
@@ -117,21 +147,7 @@ FFMPEGCONF += \
 	--enable-cross-compile \
 	--arch=$(ARCH) \
 	--enable-pic \
-        --enable-indev=avfoundation
-endif
-
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
-
-# Linux
-ifdef HAVE_LINUX
-FFMPEGCONF += --target-os=linux --enable-pic
-ifndef HAVE_ANDROID
-FFMPEGCONF += --enable-indev=v4l2 --enable-indev=x11grab_xcb --enable-indev=x11grab --enable-x11grab
-else
-# used to avoid Text Relocations
-FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
-FFMPEGCONF += --disable-asm
-endif
+	--enable-indev=avfoundation
 endif
 
 ifndef HAVE_IOS
@@ -173,38 +189,28 @@ endif
 
 # Windows
 ifdef HAVE_WIN32
-FFMPEGCONF += --target-os=mingw32 --enable-memalign-hack
+FFMPEGCONF += --target-os=mingw32
 FFMPEGCONF += --enable-w32threads --disable-decoder=dca
 endif
 
-ifeq ($(call need_pkg,"libavcodec >= 57.89.100 libavformat >= 57.71.100 libswscale >= 4.6.100 libavdevice >= 57.6.100 libavutil >= 55.58.100"),)
-PKGS_FOUND += ffmpeg
-endif
-
-$(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.xz:
+$(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
 	$(call download,$(FFMPEG_URL))
 
-.sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz
+.sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	$(warning $@ is not implemented.)
 	touch $@
 
-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.xz .sum-ffmpeg
+ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-ifdef HAVE_IOS
-	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
-endif
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/ffmpeg/clock_gettime.patch
-endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
 		--extra-cflags="$(CFLAGS)" \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \
-                --prefix="$(PREFIX)" --enable-static --disable-shared
+		--prefix="$(PREFIX)" --enable-static --disable-shared
 	cd $< && $(MAKE) install-libs install-headers
 	touch $@
