@@ -1,6 +1,6 @@
 # x264
 
-X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
+X264_HASH := d32d7bf1c6923a42cbd5ac2fd540ecbb009ba681
 X264_GITURL := git://git.videolan.org/x264.git
 
 ifeq ($(call need_pkg,"x264 >= 0.86"),)
@@ -39,7 +39,6 @@ x264: x264-$(X264_HASH).tar.xz .sum-x264
 	rm -Rf $@-$(X264_HASH)
 	mkdir -p $@-$(X264_HASH)
 	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
-	$(APPLY) $(SRC)/x264/remove-align.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
