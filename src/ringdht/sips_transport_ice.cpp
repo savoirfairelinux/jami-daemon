@@ -151,8 +151,8 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     trData_.self = this; // up-link for PJSIP callbacks
 
-    pool_ = std::move(sip_utils::smart_alloc_pool(endpt, "dtls.pool",
-                                                  POOL_TP_INIT, POOL_TP_INC));
+    pool_ = sip_utils::smart_alloc_pool(endpt, "dtls.pool",
+                                        POOL_TP_INIT, POOL_TP_INC);
 
     auto& base = trData_.base;
     std::memset(&base, 0, sizeof(base));
@@ -215,8 +215,8 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     /* Init rdata_ */
     std::memset(&rdata_, 0, sizeof(pjsip_rx_data));
-    rxPool_ = std::move(sip_utils::smart_alloc_pool(endpt, "dtls.rxPool",
-                                                    PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN));
+    rxPool_ = sip_utils::smart_alloc_pool(endpt, "dtls.rxPool",
+                                          PJSIP_POOL_RDATA_LEN, PJSIP_POOL_RDATA_LEN);
     rdata_.tp_info.pool = rxPool_.get();
     rdata_.tp_info.transport = &base;
     rdata_.tp_info.tp_data = this;
