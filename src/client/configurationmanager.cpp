@@ -220,13 +220,8 @@ setCertificateStatus(const std::string& accountId, const std::string& certId, co
         if (accountId.empty()) {
             ring::tls::CertificateStore::instance().setTrustedCertificate(certId, ring::tls::trustStatusFromStr(ststr.c_str()));
         } else if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId)) {
-            try {
-                auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
-                return acc->setCertificateStatus(certId, status);
-            } catch (const std::out_of_range&) {
-                auto status = ring::tls::trustStatusFromStr(ststr.c_str());
-                return acc->setCertificateStatus(certId, status);
-            }
+            auto status = ring::tls::TrustStore::statusFromStr(ststr.c_str());
+            return acc->setCertificateStatus(certId, status);
         }
     } catch (const std::out_of_range&) {}
     return false;
