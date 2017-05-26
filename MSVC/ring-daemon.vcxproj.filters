@@ -370,9 +370,6 @@
     <ClInclude Include="..\src\ringdht\ringaccount.h">
       <Filter>Header Files\ringdht</Filter>
     </ClInclude>
-    <ClInclude Include="..\src\ringdht\sip_transport_ice.h">
-      <Filter>Header Files\ringdht</Filter>
-    </ClInclude>
     <ClInclude Include="..\src\ringdht\sips_transport_ice.h">
       <Filter>Header Files\ringdht</Filter>
     </ClInclude>
@@ -709,9 +706,6 @@
       <Filter>Source Files\media\video</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ringdht\ringaccount.cpp">
-      <Filter>Source Files\ringdht</Filter>
-    </ClCompile>
-    <ClCompile Include="..\src\ringdht\sip_transport_ice.cpp">
       <Filter>Source Files\ringdht</Filter>
     </ClCompile>
     <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp">
