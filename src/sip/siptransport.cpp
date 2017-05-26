@@ -25,7 +25,6 @@
 #include "ice_transport.h"
 #include "security/tls_session.h"
 
-#include "ringdht/sip_transport_ice.h"
 #include "ringdht/sips_transport_ice.h"
 
 #include "array_size.h"
@@ -426,26 +425,6 @@ SipTransportBroker::getTlsTransport(const std::shared_ptr<TlsListener>& l, const
         transports_[ret->get()] = ret;
     }
     return ret;
-}
-
-std::shared_ptr<SipTransport>
-SipTransportBroker::getIceTransport(const std::shared_ptr<IceTransport>& ice,
-                                    unsigned comp_id)
-{
-    auto sip_ice_tr = std::unique_ptr<SipIceTransport>(
-        new SipIceTransport(endpt_, pool_, ice_pj_transport_type_, ice, comp_id));
-    auto tr = sip_ice_tr->getTransportBase();
-    auto sip_tr = std::make_shared<SipTransport>(tr);
-    sip_tr->setIsIceTransport();
-    sip_ice_tr.release(); // managed by PJSIP now
-
-    {
-        std::lock_guard<std::mutex> lock(transportMapMutex_);
-        // we do not check for key existance as we've just created it
-        // (member of new SipIceTransport instance)
-        transports_.emplace(std::make_pair(tr, sip_tr));
-    }
-    return sip_tr;
 }
 
 std::shared_ptr<SipTransport>
