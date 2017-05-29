@@ -1307,8 +1307,6 @@ bool
 Manager::addParticipant(const std::string& callId,
                         const std::string& conferenceId)
 {
-    RING_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
-
     auto iter = pimpl_->conferenceMap_.find(conferenceId);
     if (iter == pimpl_->conferenceMap_.end() or iter->second == nullptr) {
         RING_ERR("Conference id is not valid");
@@ -1320,6 +1318,14 @@ Manager::addParticipant(const std::string& callId,
         RING_ERR("Call id %s is not valid", callId.c_str());
         return false;
     }
+
+    // No-op if the call is already a conference participant
+    if (call->getConfId() == conferenceId) {
+        RING_WARN("Call %s already participant of conf %s", callId.c_str(), conferenceId.c_str());
+        return true;
+    }
+
+    RING_DBG("Add participant %s to %s", callId.c_str(), conferenceId.c_str());
 
     // store the current call id (it will change in offHoldCall or in answerCall)
     auto current_call_id = getCurrentCallId();
