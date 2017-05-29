@@ -511,7 +511,8 @@ TrustStore::isAllowed(const crypto::Certificate& crt, bool allowPublic)
     // Match by certificate chain
     updateKnownCerts();
     auto ret = allowed_.verify(crt);
-    if (not ret) {
+    // Unknown certificate (only that) are accepted if allowPublic is true
+    if (not ret and !(allowPublic and ret.result == (GNUTLS_CERT_INVALID|GNUTLS_CERT_SIGNER_NOT_FOUND))) {
         RING_WARN("%s", ret.toString().c_str());
         return false;
     }
