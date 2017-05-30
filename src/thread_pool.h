@@ -23,6 +23,7 @@
 #include <vector>
 #include <queue>
 #include <future>
+#include <functional>
 
 namespace ring {
 
