@@ -27,6 +27,7 @@
 #include <memory>
 #include <mutex>
 #include <utility>
+#include <functional>
 
 namespace ring {
 

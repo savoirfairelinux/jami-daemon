@@ -46,6 +46,7 @@
 #include <map>
 #include <mutex>
 #include <memory>
+#include <functional>
 
 namespace ring {
 

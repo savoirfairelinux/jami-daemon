@@ -40,6 +40,7 @@
 #include <condition_variable>
 #include <set>
 #include <list>
+#include <functional>
 
 namespace ring {
 
