@@ -1319,7 +1319,11 @@ std::string SIPAccount::getFromUri() const
         username = getLoginName();
 
     // Get machine hostname if not provided
-    if (hostname_.empty())
+    RING_WARN("hostname_=%s, serviceRoute_=%s", hostname_.c_str(), serviceRoute_.c_str());
+    if (!serviceRoute_.empty()) {
+        hostname = serviceRoute_;
+        RING_WARN("hostname=%s", hostname.c_str());
+    } else if (hostname_.empty())
         hostname = std::string(pj_gethostname()->ptr, pj_gethostname()->slen);
 
 #if HAVE_IPV6
@@ -1328,6 +1332,7 @@ std::string SIPAccount::getFromUri() const
 #endif
 
     const std::string uri = "<" + scheme + username + "@" + hostname + transport + ">";
+    RING_WARN("uri='%s'", uri.c_str());
     if (not displayName_.empty())
         return "\"" + displayName_ + "\" " + uri;
     return uri;
