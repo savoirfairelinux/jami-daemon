@@ -25,6 +25,7 @@
 #include <signal.h>
 #include <getopt.h>
 #include <string>
+#include <chrono>
 
 #include "dring.h"
 #include "callmanager_interface.h"
@@ -161,7 +162,7 @@ osxTests()
 
     while (true) {
         DRing::pollEvents();
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
     }
 
     DRing::fini();
