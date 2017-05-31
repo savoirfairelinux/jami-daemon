@@ -312,7 +312,7 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     if (toPlay.frames() == 0) {
         for (int i = 0; i < audioFormat_.nb_channels; ++i)
             std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
-                        ioData->mBuffers[i].mDataByteSize, 0);
+                        ioData->mBuffers[i].mDataByteSize/sizeof(Float32), 0);
     } else {
         for (int i = 0; i < audioFormat_.nb_channels; ++i)
             toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
