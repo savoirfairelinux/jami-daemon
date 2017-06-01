@@ -125,13 +125,8 @@ VideoFrame::setFromMemory(uint8_t* ptr, int format, int width, int height) noexc
     setGeometry(format, width, height);
     if (not ptr)
         return;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 24, 102)
     av_image_fill_arrays(frame_->data, frame_->linesize, (uint8_t*)ptr,
                          (AVPixelFormat)frame_->format, width, height, 1);
-#else
-    avpicture_fill((AVPicture*)frame_.get(), (uint8_t*)ptr,
-                   (AVPixelFormat)frame_->format, width, height);
-#endif
 }
 
 void
@@ -160,16 +155,10 @@ VideoFrame&
 VideoFrame::operator =(const VideoFrame& src)
 {
     reserve(src.format(), src.width(), src.height());
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 24, 102)
     auto source = src.pointer();
     av_image_copy(frame_->data, frame_->linesize, (const uint8_t **)source->data,
                   source->linesize, (AVPixelFormat)frame_->format,
                   frame_->width, frame_->height);
-#else
-    av_picture_copy((AVPicture *)frame_.get(), (AVPicture *)src.pointer(),
-                    (AVPixelFormat)frame_->format,
-                    frame_->width, frame_->height);
-#endif
     return *this;
 }
 
@@ -178,13 +167,8 @@ VideoFrame::operator =(const VideoFrame& src)
 std::size_t
 videoFrameSize(int format, int width, int height)
 {
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 24, 102)
     return av_image_get_buffer_size((AVPixelFormat)libav_utils::libav_pixel_format(format),
                                     width, height, 1);
-#else
-    return avpicture_get_size((AVPixelFormat)libav_utils::libav_pixel_format(format),
-                              width, height);
-#endif
 }
 
 void
