@@ -51,9 +51,7 @@ extern "C" {
 #include <libavdevice/avdevice.h>
 #include <libswscale/swscale.h>
 #include <libavutil/avutil.h>
-#if LIBAVUTIL_VERSION_CHECK(51, 33, 0, 60, 100)
 #include <libavutil/time.h>
-#endif
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 #include <libavutil/channel_layout.h>
@@ -65,44 +63,6 @@ extern "C" {
 
 #include "libav_utils.h"
 
-#if !LIBAVFORMAT_VERSION_CHECK(54,20,3,59,103)
-#error "Used libavformat doesn't support sdp custom_io"
-#endif
-
-#if !LIBAVUTIL_VERSION_CHECK(51, 42, 0, 74, 100) && !defined(FF_API_PIX_FMT)
-#define AVPixelFormat PixelFormat
-#define PIXEL_FORMAT(FMT) PIX_FMT_ ## FMT
-
-static inline const AVPixFmtDescriptor *av_pix_fmt_desc_get(enum AVPixelFormat pix_fmt)
-{
-    if (pix_fmt < 0 || pix_fmt >= PIX_FMT_NB)
-        return NULL;
-    return &av_pix_fmt_descriptors[pix_fmt];
-}
-
-#else
 #define PIXEL_FORMAT(FMT) AV_PIX_FMT_ ## FMT
-#endif
-
-#if !LIBAVCODEC_VERSION_CHECK(54, 28, 0, 59, 100)
-#define avcodec_free_frame(x) av_freep(x)
-#endif
-
-// Especially for Fedora < 20 and UBUNTU < 14.10
-#define USE_OLD_AVU ! LIBAVUTIL_VERSION_CHECK(52, 8, 0, 19, 100)
-
-#if USE_OLD_AVU
-#define av_frame_alloc avcodec_alloc_frame
-#define av_frame_free avcodec_free_frame
-#define av_frame_unref avcodec_get_frame_defaults
-#define av_frame_get_buffer(x, y) avpicture_alloc((AVPicture *)(x), \
-                                                  (AVPixelFormat)(x)->format, \
-                                                  (x)->width, (x)->height)
-#endif
-
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 24, 102)
-#define av_free_packet av_packet_unref
-#endif
-
 
 #endif // __LIBAV_DEPS_H__

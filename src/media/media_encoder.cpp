@@ -211,24 +211,16 @@ MediaEncoder::openOutput(const char *filename,
     }
 
     int ret;
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 6, 0)
-    ret = avcodec_open(encoderCtx_, outputEncoder_);
-#else
     ret = avcodec_open2(encoderCtx_, outputEncoder_, NULL);
-#endif
     if (ret)
         throw MediaEncoderException("Could not open encoder");
 
     // add video stream to outputformat context
-#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(53, 8, 0)
-    stream_ = av_new_stream(outputCtx_, 0);
-#else
     stream_ = avformat_new_stream(outputCtx_, 0);
-#endif
     if (!stream_)
         throw MediaEncoderException("Could not allocate stream");
 
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101) && !defined(_WIN32)
+#ifndef _WIN32
     auto par = std::unique_ptr<AVCodecParameters>(new AVCodecParameters());
     avcodec_parameters_from_context(par.get(), encoderCtx_);
     stream_->codecpar = par.release();
@@ -244,11 +236,6 @@ MediaEncoder::openOutput(const char *filename,
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
         if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
             throw MediaEncoderException("buffer too small");
-
-#if (LIBAVCODEC_VERSION_MAJOR < 54)
-        encoderBufferSize_ = scaledFrameBufferSize_; // seems to be ok
-        encoderBuffer_.reserve(encoderBufferSize_);
-#endif
 
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
         scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
@@ -307,11 +294,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     frame->pts = frame_number;
 
     if (is_keyframe) {
-#if LIBAVCODEC_VERSION_INT > AV_VERSION_INT(53, 20, 0)
         frame->pict_type = AV_PICTURE_TYPE_I;
-#else
-        frame->pict_type = FF_I_TYPE;
-#endif
     } else {
         /* FIXME: Should be AV_PICTURE_TYPE_NONE for newer libavutil */
         frame->pict_type = (AVPictureType) 0;
@@ -322,7 +305,6 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     av_init_packet(&pkt);
 
     int ret = 0;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
     ret = avcodec_send_frame(encoderCtx_, frame);
     if (ret < 0)
         return -1;
@@ -352,63 +334,6 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
                 break;
         }
     }
-#elif LIBAVCODEC_VERSION_MAJOR >= 54
-
-    int got_packet;
-    ret = avcodec_encode_video2(encoderCtx_, &pkt, frame, &got_packet);
-    if (ret < 0) {
-        print_averror("avcodec_encode_video2", ret);
-        av_free_packet(&pkt);
-        return ret;
-    }
-
-    if (pkt.size and got_packet) {
-        if (pkt.pts != AV_NOPTS_VALUE)
-            pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
-                                   stream_->time_base);
-        if (pkt.dts != AV_NOPTS_VALUE)
-            pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
-                                   stream_->time_base);
-
-        pkt.stream_index = stream_->index;
-
-        // write the compressed frame
-        ret = av_write_frame(outputCtx_, &pkt);
-        if (ret < 0)
-            print_averror("av_write_frame", ret);
-    }
-
-#else
-    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
-                                   encoderBufferSize_, frame);
-    if (ret < 0) {
-        print_averror("avcodec_encode_video", ret);
-        av_free_packet(&pkt);
-        return ret;
-    }
-
-    pkt.data = encoderBuffer_.data();
-    pkt.size = ret;
-
-    // rescale pts from encoded video framerate to rtp clock rate
-    if (encoderCtx_->coded_frame->pts != static_cast<int64_t>(AV_NOPTS_VALUE)) {
-        pkt.pts = av_rescale_q(encoderCtx_->coded_frame->pts,
-                encoderCtx_->time_base, stream_->time_base);
-     } else {
-         pkt.pts = 0;
-     }
-
-     // is it a key frame?
-     if (encoderCtx_->coded_frame->key_frame)
-         pkt.flags |= AV_PKT_FLAG_KEY;
-     pkt.stream_index = stream_->index;
-
-    // write the compressed frame
-    ret = av_write_frame(outputCtx_, &pkt);
-    if (ret < 0)
-        print_averror("av_write_frame", ret);
-
-#endif  // LIBAVCODEC_VERSION_MAJOR >= 54
 
     av_free_packet(&pkt);
 
@@ -486,7 +411,6 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         pkt.size = 0;
         int ret = 0;
 
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
         ret = avcodec_send_frame(encoderCtx_, frame);
         if (ret < 0)
             return -1;
@@ -516,32 +440,6 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                     break;
             }
         }
-#else
-        int got_packet;
-        ret = avcodec_encode_audio2(encoderCtx_, &pkt, frame, &got_packet);
-        if (ret < 0) {
-            print_averror("avcodec_encode_audio2", ret);
-            av_free_packet(&pkt);
-            av_frame_free(&frame);
-            return ret;
-        }
-
-        if (pkt.size and got_packet) {
-            if (pkt.pts != AV_NOPTS_VALUE)
-                pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
-                                       stream_->time_base);
-            if (pkt.dts != AV_NOPTS_VALUE)
-                pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
-                                       stream_->time_base);
-
-            pkt.stream_index = stream_->index;
-
-            // write the compressed frame
-            ret = av_write_frame(outputCtx_, &pkt);
-            if (ret < 0)
-                print_averror("av_write_frame", ret);
-        }
-#endif
 
         av_free_packet(&pkt);
         av_frame_free(&frame);
@@ -557,7 +455,6 @@ int MediaEncoder::flush()
     av_init_packet(&pkt);
 
     int ret = 0;
-#if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
     ret = avcodec_send_frame(encoderCtx_, nullptr);
     if (ret < 0)
         return -1;
@@ -587,40 +484,6 @@ int MediaEncoder::flush()
                 break;
         }
     }
-#elif (LIBAVCODEC_VERSION_MAJOR >= 54)
-
-    int got_packet;
-
-    ret = avcodec_encode_video2(encoderCtx_, &pkt, NULL, &got_packet);
-    if (ret != 0) {
-        RING_ERR("avcodec_encode_video failed");
-        av_free_packet(&pkt);
-        return -1;
-    }
-
-    if (pkt.size and got_packet) {
-        // write the compressed frame
-        ret = av_write_frame(outputCtx_, &pkt);
-        if (ret < 0)
-            RING_ERR("write_frame failed");
-    }
-#else
-    ret = avcodec_encode_video(encoderCtx_, encoderBuffer_.data(),
-                               encoderBufferSize_, NULL);
-    if (ret < 0) {
-        RING_ERR("avcodec_encode_video failed");
-        av_free_packet(&pkt);
-        return ret;
-    }
-
-    pkt.data = encoderBuffer_.data();
-    pkt.size = ret;
-
-    // write the compressed frame
-    ret = av_write_frame(outputCtx_, &pkt);
-    if (ret < 0)
-        RING_ERR("write_frame failed");
-#endif
     av_free_packet(&pkt);
 
     return ret;
@@ -630,7 +493,7 @@ std::string
 MediaEncoder::print_sdp()
 {
     /* theora sdp can be huge */
-#if LIBAVFORMAT_VERSION_CHECK(57, 7, 2, 40, 101) && !defined(_WIN32)
+#ifndef _WIN32
     const auto sdp_size = outputCtx_->streams[0]->codecpar->extradata_size + 2048;
 #else
     const auto sdp_size = outputCtx_->streams[0]->codec->extradata_size + 2048;
@@ -653,13 +516,7 @@ MediaEncoder::print_sdp()
 
 void MediaEncoder::prepareEncoderContext(bool is_video)
 {
-#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(53, 12, 0)
-    encoderCtx_ = avcodec_alloc_context();
-    avcodec_get_context_defaults(encoderCtx_);
-    (void) outputEncoder_;
-#else
     encoderCtx_ = avcodec_alloc_context3(outputEncoder_);
-#endif
 
     auto encoderName = encoderCtx_->av_class->item_name ?
         encoderCtx_->av_class->item_name(encoderCtx_) : nullptr;
