@@ -363,19 +363,33 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
 #if LIBAVCODEC_VERSION_CHECK(57, 25, 0, 48, 101)
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
-    if (ret < 0)
+    if (ret < 0) {
+#ifdef RING_ACCEL
+        if (accel_->hasFailed())
+            return Status::RestartRequired;
+#endif
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
-
+    }
     ret = avcodec_receive_frame(decoderCtx_, frame);
-    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF)
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+#ifdef RING_ACCEL
+        if (accel_->hasFailed())
+            return Status::RestartRequired;
+#endif
         return Status::DecodeError;
+    }
     if (ret >= 0)
         frameFinished = 1;
 #else
     ret = avcodec_decode_video2(decoderCtx_, frame,
                                     &frameFinished, &inpacket);
-    if (ret <= 0)
+    if (ret <= 0) {
+#ifdef RING_ACCEL
+        if (accel_->hasFailed())
+            return Status::RestartRequired;
+#endif
         return Status::DecodeError;
+    }
 #endif
 
     av_packet_unref(&inpacket);
