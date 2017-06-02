@@ -312,6 +312,8 @@ int MediaDecoder::setupFromVideoData()
     if (enableAccel_) {
         accel_ = video::makeHardwareAccel(decoderCtx_);
         decoderCtx_->opaque = accel_.get();
+    } else {
+        RING_WARN("Hardware accelerated decoding is disabled");
     }
 #endif // RING_ACCEL
 
@@ -365,7 +367,7 @@ MediaDecoder::decode(VideoFrame& result)
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0) {
 #ifdef RING_ACCEL
-        if (accel_->hasFailed())
+        if (accel_ && accel_->hasFailed())
             return Status::RestartRequired;
 #endif
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
@@ -373,7 +375,7 @@ MediaDecoder::decode(VideoFrame& result)
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
 #ifdef RING_ACCEL
-        if (accel_->hasFailed())
+        if (accel_ && accel_->hasFailed())
             return Status::RestartRequired;
 #endif
         return Status::DecodeError;
@@ -385,7 +387,7 @@ MediaDecoder::decode(VideoFrame& result)
                                     &frameFinished, &inpacket);
     if (ret <= 0) {
 #ifdef RING_ACCEL
-        if (accel_->hasFailed())
+        if (accel_ && accel_->hasFailed())
             return Status::RestartRequired;
 #endif
         return Status::DecodeError;
