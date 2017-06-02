@@ -13,7 +13,7 @@ ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
 
-ifeq ($(call need_pkg,"libavcodec >= 57.48.101 libavformat >= 57.41.100 libswscale >= 4.1.100 libavdevice >= 57.0.101 libavutil >= 55.28.100"),)
+ifeq ($(call need_pkg,"libavcodec >= 57.89.100 libavformat >= 57.71.100 libswscale >= 4.6.100 libavdevice >= 57.6.100 libavutil >= 55.58.100"),)
 PKGS_FOUND += ffmpeg
 endif
 
