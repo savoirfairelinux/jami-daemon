@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := 28d9b8d6df708024af5227c551673fdb2519f5bf
+ASIO_VERSION := 276846097ab5073b67e772dbdfa12596224a54a5
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 PKGS += asio
