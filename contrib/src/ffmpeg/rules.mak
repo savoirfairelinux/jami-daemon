@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,"libavcodec >= 57.89.100 libavformat >= 57.71.100 libswsca
 PKGS_FOUND += ffmpeg
 endif
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+DEPS_ffmpeg = iconv zlib vpx opus speex $(DEPS_vpx)
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -103,8 +103,10 @@ FFMPEGCONF += \
 	--enable-mediacodec \
 	--enable-hwaccel=vp8_mediacodec \
 	--enable-hwaccel=mpeg4_mediacodec \
+	--enable-hwaccel=h264_mediacodec \
 	--enable-decoder=vp8_mediacodec \
-	--enable-decoder=mpeg4_mediacodec
+	--enable-decoder=mpeg4_mediacodec \
+	--enable-decoder=h264_mediacodec
 endif
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
@@ -129,9 +131,10 @@ FFMPEGCONF += \
 endif
 endif
 
-ifndef HAVE_ANDROID
+#ifndef HAVE_ANDROID
 FFMPEGCONF += --enable-libx264
-endif
+DEPS_ffmpeg += x264
+#endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
