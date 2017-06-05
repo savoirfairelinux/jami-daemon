@@ -296,8 +296,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
     } else {
-        /* FIXME: Should be AV_PICTURE_TYPE_NONE for newer libavutil */
-        frame->pict_type = (AVPictureType) 0;
+        frame->pict_type = AV_PICTURE_TYPE_NONE;
     }
 
     AVPacket pkt;
@@ -335,7 +334,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         }
     }
 
-    av_free_packet(&pkt);
+    av_packet_unref(&pkt);
 
     return ret;
 }
@@ -441,7 +440,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             }
         }
 
-        av_free_packet(&pkt);
+        av_packet_unref(&pkt);
         av_frame_free(&frame);
     }
 
@@ -484,7 +483,7 @@ int MediaEncoder::flush()
                 break;
         }
     }
-    av_free_packet(&pkt);
+    av_packet_unref(&pkt);
 
     return ret;
 }
