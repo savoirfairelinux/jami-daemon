@@ -26,7 +26,7 @@ extern "C" {
 namespace ring { namespace video {
 
 /**
- * Attempt to find standalone accelerated AVCodec decoder using AVCodecID,
+ * Attempt to find standalone AVCodec decoder using AVCodecID,
  * or fallback to the default decoder.
  */
 AVCodec*
@@ -34,7 +34,7 @@ findDecoder(const enum AVCodecID codec_id)
 {
     const char* codec_name;
     switch (codec_id) {
-#ifdef __ANDROID__
+#if defined(__ANDROID__) && defined(RING_ACCEL)
     case AV_CODEC_ID_MPEG4:
         codec_name = "mpeg4_mediacodec"; break;
     case AV_CODEC_ID_H264:
