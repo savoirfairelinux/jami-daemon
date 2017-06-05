@@ -452,80 +452,60 @@ AS_IF([test "x$enable_video" != "xno"],
      AM_CONDITIONAL(RING_VIDEO, false)
      ]);
 
-dnl Ring video acceleration compile-time dependencies
-AS_IF([test "${SYS}" = linux && test -z "${HAVE_ANDROID_FALSE}"], [
-  x11_available="no"
-  vaapi_available="no"
-  vdpau_available="no"
-  dnl ffmpeg's vaapi and vdpau implementations depend on x11
-  PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [])
-  AS_IF([test "${x11_available}" = "yes"], [
-    PKG_CHECK_MODULES([LIBVA], [libva], [
-      PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-        AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Vaapi via DRM found])
-      ])
-      PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
-        AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Vaapi via X11 found])
-      ])
-      AC_CHECK_HEADERS([libavcodec/vaapi.h], [vaapi_available="yes"])
-    ], [vaapi_available=no])
-    PKG_CHECK_MODULES([VDPAU], [vdpau], [
-      AC_CHECK_HEADERS([libavcodec/vdpau.h], [
-        AC_DEFINE([HAVE_VDPAU_ACCEL], [1], [Vdpau found])
-        vdpau_available="yes"
-      ])
-    ], [vdpau_available="no"])
-  ])
-])
-AS_IF([test "${SYS}" = darwin], [
-  vt_available="no"
-  vda_available="no"
-  AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
-    AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
-      AC_DEFINE([HAVE_VIDEOTOOLBOX_ACCEL], [1], [VideoToolbox found])
-      vt_available="yes"
-    ], [])
-  ], [])
-  AC_CHECK_HEADER([VideoDecodeAcceleration/VDADecoder.h], [
-    AC_CHECK_HEADER([libavcodec/vda.h], [
-      AC_DEFINE([HAVE_VDA_ACCEL], [1], [VDA found])
-      vda_available="yes"
-    ], [])
-  ], [])
-])
-
-AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations]))
-AC_ARG_ENABLE([vdpau], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration]))
-AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration]))
-AC_ARG_ENABLE([videotoolbox], AS_HELP_STRING([--disable-videotoolbox], [Disable VideoToolbox hardware acceleration]))
-AC_ARG_ENABLE([vda], AS_HELP_STRING([--disable-vda], [Disable VDA hardware acceleration]))
-
-dnl video acceleration only works if there's video
+AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
+AC_ARG_ENABLE([vdpau], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration (auto)]))
+AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration (auto)]))
+AC_ARG_ENABLE([videotoolbox], AS_HELP_STRING([--disable-videotoolbox], [Disable VideoToolbox hardware acceleration (auto)]))
+AC_ARG_ENABLE([vda], AS_HELP_STRING([--disable-vda], [Disable VDA hardware acceleration (auto)]))
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   ring_accel="yes"
   AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
-  AS_IF([test "x$enable_vaapi" != "xno"], [
-    AS_IF([test "x${vaapi_available}" = "xyes"], [
-      ring_vaapi="yes"
-      AC_DEFINE([RING_VAAPI], [1], [VAAPI is available in Ring])
+  AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
+    dnl ffmpeg's vaapi and vdpau implementations depend on x11
+    PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
+    AS_IF([test "${x11_available}" = "yes"], [
+      dnl vaapi for linux
+      AS_IF([test "x$enable_vaapi" != "xno"], [
+        PKG_CHECK_MODULES([LIBVA], [libva], [
+          PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+            AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
+          ], [])
+          PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
+            AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
+          ], [])
+          AC_CHECK_HEADERS([libavcodec/vaapi.h], [
+            ring_vaapi="yes"
+            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
+          ])
+        ], [])
+      ])
+      dnl vdpau linux
+      AS_IF([test "x$enable_vdpau" != "xno"], [
+        PKG_CHECK_MODULES([VDPAU], [vdpau], [
+          AC_CHECK_HEADERS([libavcodec/vdpau.h], [
+            ring_vdpau="yes"
+            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
+          ])
+        ], [])
+      ])
     ])
   ])
-  AS_IF([test "x$enable_vdpau" != "xno"], [
-    AS_IF([test "x${vdpau_available}" = "xyes"], [
-      ring_vdpau="yes"
-      AC_DEFINE([RING_VDPAU], [1], [VDPAU is available in Ring])
+  AS_IF([test "${SYS}" = "darwin"], [
+    AS_IF([test "x$enable_videotoolbox" != "xno"], [
+      AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
+        AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
+          ring_vt="yes"
+          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
+        ])
+      ])
     ])
-  ])
-  AS_IF([test "x$enable_videotoolbox" != "xno"], [
-    AS_IF([test "x${vt_available}" = "xyes"], [
-      ring_vt="yes"
-      AC_DEFINE([RING_VIDEOTOOLBOX], [1], [VideoToolbox is available in Ring])
-    ])
-  ])
-  AS_IF([test "x$enable_vda" != "xno"], [
-    AS_IF([test "x${vda_available}" = "xyes"], [
-      ring_vda="yes"
-      AC_DEFINE([RING_VDA], [1], [VDA is available in Ring])
+    AS_IF([test "x$enable_vda" != "xno"], [
+      AC_CHECK_HEADER([VideoDecodeAcceleration/VDADecoder.h], [
+        AC_CHECK_HEADER([libavcodec/vda.h], [
+          ring_vda="yes"
+          AC_DEFINE([RING_VDA], [1], [Defined if vda is available in Ring])
+        ])
+      ])
     ])
   ])
 ])
