@@ -716,6 +716,8 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
+    if (not registeredName_.empty())
+        out << YAML::Key << DRing::Account::VolatileProperties::REGISTERED_NAME << YAML::Value << registeredName_;
 
     // tls submap
     out << YAML::Key << Conf::TLS_KEY << YAML::Value << YAML::BeginMap;
@@ -746,6 +748,13 @@ void RingAccount::unserialize(const YAML::Node &node)
         parseValue(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     } catch (const std::exception& e) {
         RING_WARN("can't read device name: %s", e.what());
+    }
+    if (registeredName_.empty()) {
+        try {
+            parseValue(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
+        } catch (const std::exception& e) {
+            RING_WARN("can't read device name: %s", e.what());
+        }
     }
 
     try {
