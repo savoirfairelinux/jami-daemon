@@ -83,7 +83,10 @@ class AudioStream {
         }
 
         inline std::string getDeviceName() const {
-            return pa_stream_get_device_name(audiostream_);
+            auto res = pa_stream_get_device_name(audiostream_);
+            if (res == reinterpret_cast<decltype(res)>(-PA_ERR_NOTSUPPORTED) or !res)
+                return {};
+            return res;
         }
 
         bool isReady();
