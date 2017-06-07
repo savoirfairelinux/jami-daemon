@@ -9,6 +9,10 @@ ifdef HAVE_MACOSX
 PKGS += ffmpeg
 endif
 
+ifdef HAVE_IOS
+PKGS += ffmpeg
+endif
+
 ifdef HAVE_LINUX
 PKGS += ffmpeg
 endif
