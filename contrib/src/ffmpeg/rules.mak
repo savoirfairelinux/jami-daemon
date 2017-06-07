@@ -1,17 +1,7 @@
 FFMPEG_HASH := n3.3.1
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
-ifdef HAVE_WIN32
-PKGS += ffmpeg
-endif
-
-ifdef HAVE_MACOSX
-PKGS += ffmpeg
-endif
-
-ifdef HAVE_LINUX
-PKGS += ffmpeg
-endif
+PKGS+=ffmpeg
 
 ifeq ($(call need_pkg,"libavcodec >= 57.89.100 libavformat >= 57.71.100 libswscale >= 4.6.100 libavdevice >= 57.6.100 libavutil >= 55.58.100"),)
 PKGS_FOUND += ffmpeg
