@@ -4,7 +4,9 @@ LIBAV_URL := https://git.libav.org/?p=libav.git;a=snapshot;h=$(LIBAV_HASH);sf=tg
 ifndef HAVE_LINUX
 ifndef HAVE_WIN32
 ifndef HAVE_MACOSX
+ifndef HAVE_IOS
 PKGS += libav
+endif
 endif
 endif
 endif
