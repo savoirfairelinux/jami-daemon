@@ -172,6 +172,7 @@ std::unique_ptr<HardwareAccel>
 makeHardwareAccel(AVCodecContext* codecCtx)
 {
     enum class AccelID {
+        NoAccel,
         Vdpau,
         Vaapi,
         VideoToolbox,
@@ -211,6 +212,7 @@ makeHardwareAccel(AVCodecContext* codecCtx)
 #ifdef RING_VDA
         { AccelID::Vda, "vda", AV_PIX_FMT_VDA, makeHardwareAccel<VideoToolboxAccel> },
 #endif
+        { AccelID::NoAccel, "none", AV_PIX_FMT_NONE, nullptr },
     };
 
     std::vector<AccelID> possibleAccels = {};
