@@ -84,3 +84,15 @@ DBusVideoManager::hasCameraStarted() -> decltype(DRing::hasCameraStarted())
 {
     return DRing::hasCameraStarted();
 }
+
+bool
+DBusVideoManager::getDecodingAccelerated()
+{
+    return DRing::getDecodingAccelerated();
+}
+
+void
+DBusVideoManager::setDecodingAccelerated(bool state)
+{
+    DRing::setDecodingAccelerated(state);
+}

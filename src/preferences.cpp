@@ -129,9 +129,7 @@ static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 #ifdef RING_VIDEO
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
-#ifdef RING_ACCEL
 static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
-#endif
 #endif
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
@@ -547,9 +545,7 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
 
 #ifdef RING_VIDEO
 VideoPreferences::VideoPreferences()
-#ifdef RING_ACCEL
     : decodingAccelerated_(true)
-#endif
 {
 }
 

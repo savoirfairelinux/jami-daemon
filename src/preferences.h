@@ -447,7 +447,6 @@ class VideoPreferences : public Serializable {
         void serialize(YAML::Emitter &out);
         void unserialize(const YAML::Node &in);
 
-#ifdef RING_ACCEL
         bool getDecodingAccelerated() const {
             return decodingAccelerated_;
         }
@@ -455,7 +454,6 @@ class VideoPreferences : public Serializable {
         void setDecodingAccelerated(bool decodingAccelerated) {
             decodingAccelerated_ = decodingAccelerated;
         }
-#endif // RING_ACCEL
 
     private:
         bool decodingAccelerated_;
