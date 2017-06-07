@@ -77,6 +77,9 @@ void* obtainFrame(int length);
 void releaseFrame(void* frame);
 #endif
 
+bool getDecodingAccelerated();
+void setDecodingAccelerated(bool state);
+
 // Video signal type definitions
 struct VideoSignal {
         struct DeviceEvent {

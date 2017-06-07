@@ -162,6 +162,26 @@ registerSinkTarget(const std::string& sinkId, const SinkTarget& target)
        RING_WARN("No sink found for id '%s'", sinkId.c_str());
 }
 
+bool
+getDecodingAccelerated()
+{
+#ifdef RING_ACCEL
+    return ring::Manager::instance().videoPreferences.getDecodingAccelerated();
+#else
+    return false;
+#endif
+}
+
+void
+setDecodingAccelerated(bool state)
+{
+#ifdef RING_ACCEL
+    RING_DBG("%s hardware acceleration", (state ? "Enabling" : "Disabling"));
+    ring::Manager::instance().videoPreferences.setDecodingAccelerated(state);
+    ring::Manager::instance().saveConfig();
+#endif
+}
+
 #if defined(__ANDROID__) || defined(RING_UWP)
 void
 addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)

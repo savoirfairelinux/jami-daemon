@@ -60,6 +60,8 @@ class DBusVideoManager :
         void stopCamera();
         bool switchInput(const std::string& resource);
         bool hasCameraStarted();
+        bool getDecodingAccelerated();
+        void setDecodingAccelerated(bool state);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
