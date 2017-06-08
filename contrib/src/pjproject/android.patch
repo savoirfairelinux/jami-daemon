@@ -1,9 +1,10 @@
 --- a/pjlib/include/pj/config.h
 +++ b/pjlib/include/pj/config.h
-@@ -293,6 +293,20 @@
+@@ -293,6 +293,21 @@
   */
  #include <pj/config_site.h>
  
++#undef PJ_ANDROID
 +#define PJ_ANDROID            0
 +#define PJ_JNI_HAS_JNI_ONLOAD 0
 +#undef PJ_HAS_FLOATING_POINT
@@ -39,3 +40,10 @@
 -	  	;;
  	  *)
  		if test "$ac_has_uuid_lib" = "1" -a "$ac_has_uuid_h" = "1"; then
+--- a/pjlib/src/pj/os_timestamp_posix.c
++++ b/pjlib/src/pj/os_timestamp_posix.c
+@@ -163,3 +163,3 @@
+ 
+-#elif defined(__ANDROID__)
++#elif defined(PJ_ANDROID) && PJ_ANDROID
+ 
