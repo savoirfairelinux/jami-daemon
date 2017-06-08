@@ -204,6 +204,7 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                  transport, pj_atomic_get(transport->ref_cnt));
         // Nothing to do here, tls session is not shutdown as some messages could be pending
         // and application can continue to do IO (if they already own the transport)
+        this_->tls_->flushRxQueue();
         return PJ_SUCCESS;
     };
     base.destroy = [](pjsip_transport *transport) -> pj_status_t {
