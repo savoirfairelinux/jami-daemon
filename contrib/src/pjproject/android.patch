@@ -1,10 +1,9 @@
 --- a/pjlib/include/pj/config.h
 +++ b/pjlib/include/pj/config.h
-@@ -293,6 +293,20 @@
+@@ -293,6 +293,19 @@
   */
  #include <pj/config_site.h>
  
-+#define PJ_ANDROID            0
 +#define PJ_JNI_HAS_JNI_ONLOAD 0
 +#undef PJ_HAS_FLOATING_POINT
 +#define PJ_HAS_FLOATING_POINT       0

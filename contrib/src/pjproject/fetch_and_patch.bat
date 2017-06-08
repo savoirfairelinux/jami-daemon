@@ -1,20 +1,22 @@
 set BUILD=%SRC%..\build
 
+set PJPROJECT_VERSION=2.6
+set PJPROJECT_URL=http://www.pjsip.org/release/%PJPROJECT_VERSION%/pjproject-%PJPROJECT_VERSION%.zip
+
 mkdir %BUILD%
 
 if %USE_CACHE%==1 (
-    copy %CACHE_DIR%\pjproject-2.5.5.zip %cd%
+    copy %CACHE_DIR%\pjproject-%PJPROJECT_VERSION%.zip %cd%
 ) else (
-    wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
+    wget %PJPROJECT_URL%
 )
 
-unzip -q pjproject-2.5.5.zip -d %BUILD%
-del pjproject-2.5.5.zip
-rename %BUILD%\pjproject-2.5.5 pjproject
+unzip -q pjproject-%PJPROJECT_VERSION%.zip -d %BUILD%
+del pjproject-%PJPROJECT_VERSION%.zip
+rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
 
-git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_endianness.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_gnutls.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\ipv6.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\ice_config.patch
@@ -24,6 +26,5 @@ git apply --reject --whitespace=fix %SRC%\pjproject\add_dtls_transport.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_ice_sess.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_fix_turn_fallback.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp.patch
-git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_xbox_one.patch
 
 cd %SRC%
