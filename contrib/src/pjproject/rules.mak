@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 2.5.5
+PJPROJECT_VERSION := 2.6
 PJPROJECT_URL := http://www.pjsip.org/release/$(PJPROJECT_VERSION)/pjproject-$(PJPROJECT_VERSION).tar.bz2
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -64,7 +64,7 @@ ifdef HAVE_WIN32
 	$(APPLY) $(SRC)/pjproject/intptr_t.patch
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
-	$(APPLY) $(SRC)/pjproject/endianness.patch
+	#$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 	$(APPLY) $(SRC)/pjproject/fix_base64.patch
