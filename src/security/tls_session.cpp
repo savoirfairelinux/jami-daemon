@@ -39,6 +39,7 @@
 
 #include <algorithm>
 #include <cstring> // std::memset
+#include <iterator>
 
 #include <cstdlib>
 #include <unistd.h>
@@ -227,7 +228,7 @@ TlsSession::TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id
             return len;
         });
 
-    Manager::instance().registerEventHandler((uintptr_t)this, [this]{ flushRxQueue(); });
+    Manager::instance().registerEventHandler((uintptr_t)this, [this]{ processRxQueue(); });
 
     // Run FSM into dedicated thread
     thread_.start();
@@ -918,7 +919,7 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
 
         // No duplicate check as DTLS prevents that for us (replay protection)
 
-        // accept Out-Of-Order pkt - will be reordered by queue flush operation
+        // accept Out-Of-Order pkt - will be reordered by queue process operation
         RING_WARN("[dtls] OOO pkt: 0x%lx", pkt_seq);
     }
 
@@ -929,8 +930,8 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
         reorderBuffer_.emplace(pkt_seq, std::move(buf));
     }
 
-    // Try to flush right now as a new packet is available
-    flushRxQueue();
+    // Try to process right now as a new packet is available
+    processRxQueue();
 }
 
 ///
@@ -939,7 +940,7 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
 /// \note This method must be called continously, faster than RX_OOO_TIMEOUT
 ///
 void
-TlsSession::flushRxQueue()
+TlsSession::processRxQueue()
 {
     std::unique_lock<std::mutex> lk {reorderBufMutex_};
     if (reorderBuffer_.empty())
@@ -955,7 +956,7 @@ TlsSession::flushRxQueue()
         if (auto lost = next_offset - gapOffset_)
             RING_WARN("[dtls] %lu lost since 0x%lx", lost, gapOffset_);
         else
-            RING_WARN("[dtls] slow flush");
+            RING_WARN("[dtls] slow");
     } else if (next_offset != gapOffset_)
         return;
 
@@ -979,6 +980,29 @@ TlsSession::flushRxQueue()
     lastReadTime_ = clock::now();
 
     RING_DBG("[dtls] push 0x%lx (%lu pkt)", first_offset, gapOffset_ - first_offset);
+}
+
+///
+/// Push force all rx packet to application (consider gap as lost)
+///
+void
+TlsSession::flushRxQueue()
+{
+    std::lock_guard<std::mutex> lk {reorderBufMutex_};
+    if (!reorderBuffer_.empty()) {
+        auto end = std::end(reorderBuffer_);
+        gapOffset_ = (--end)->first + 1;
+    }
+
+
+    lastReadTime_ = clock::now();
+    if (!callbacks_.onRxData or reorderBuffer_.empty())
+        return;
+
+    RING_DBG("[dtls] flush %lu pkt", gapOffset_ - std::begin(reorderBuffer_)->first);
+    for (auto& item : reorderBuffer_)
+        callbacks_.onRxData(std::move(item.second));
+    reorderBuffer_.clear();
 }
 
 TlsSessionState

@@ -169,6 +169,9 @@ public:
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
 
+    /// \brief Push all waiting rx packets - consider gaps as lost
+    void flushRxQueue();
+
     // Return maximum application payload size in bytes
     // Returned value must be checked and considered valid only if not 0 (session is initialized)
     unsigned int getMaxPayload() const { return maxPayload_; }
@@ -234,7 +237,7 @@ private:
 
     bool initFromRecordState(int offset=0);
     void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
-    void flushRxQueue();
+    void processRxQueue();
 
     // Statistics
     std::atomic<std::size_t> stRxRawPacketCnt_ {0};
