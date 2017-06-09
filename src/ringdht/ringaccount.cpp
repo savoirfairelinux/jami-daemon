@@ -527,13 +527,20 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
             // Next step: sent the ICE data to peer through DHT
             const dht::Value::Id callvid  = udist(sthis->rand_);
-            const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
+            auto peer_id = dev.toString();
+            const auto callkey = dht::InfoHash::get("callto:" + peer_id);
             dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
+
+            RING_DBG("put ICE request %lx to %s", callvid, peer_id.c_str());
+            sthis->iceRemoteCalls_.emplace(std::make_pair(callvid, PendingCall {
+                    std::chrono::steady_clock::now(),
+                    ice, weak_dev_call, {}, callkey, dev,
+                    tls::CertificateStore::instance().getCertificate(toUri)}));
 
             sthis->dht_.putEncrypted(
                 callkey, dev,
                 std::move(val),
-                [=](bool ok) { // Put complete callback
+                [weak_dev_call](bool ok) { // Put complete callback
                     if (!ok) {
                         RING_WARN("Can't put ICE descriptor on DHT");
                         if (auto call = weak_dev_call.lock())
@@ -543,31 +550,6 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             );
 
-            auto listenKey = sthis->dht_.listen<dht::IceCandidates>(
-                callkey,
-                [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
-                    if (msg.id != callvid or msg.from != dev)
-                        return true;
-                    RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
-                              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
-                    if (auto call = weak_dev_call.lock()) {
-                        call->setState(Call::ConnectionState::PROGRESSING);
-                        if (!ice->start(msg.ice_data)) {
-                            call->onFailure();
-                            return true;
-                        }
-                    }
-                    return false;
-                }
-            );
-
-            sthis->pendingCalls_.emplace_back(PendingCall{
-                std::chrono::steady_clock::now(),
-                ice, weak_dev_call,
-                std::move(listenKey),
-                callkey, dev,
-                tls::CertificateStore::instance().getCertificate(toUri)
-            });
             return false;
         });
     }, [=](bool ok){
@@ -1060,7 +1042,6 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
 
     return c;
 }
-
 
 std::vector<uint8_t>
 RingAccount::makeArchive(const ArchiveContent& archive) const
@@ -2207,12 +2188,43 @@ RingAccount::doRegister_()
 
         // Listen for incoming calls
         callKey_ = dht::InfoHash::get("callto:"+ringDeviceId_);
-        RING_DBG("[Account %s] Listening on callto:%s : %s", getAccountID().c_str(), ringDeviceId_.c_str(), callKey_.toString().c_str());
+        RING_DBG("[Account %s] Listening on callto:%s : %s", getAccountID().c_str(),
+                 ringDeviceId_.c_str(), callKey_.toString().c_str());
         dht_.listen<dht::IceCandidates>(
             callKey_,
             [shared] (dht::IceCandidates&& msg) {
-                // callback for incoming call
                 auto& this_ = *shared;
+
+                // Rx outgoing call remote ICE data?
+                auto item = this_.iceRemoteCalls_.find(msg.id);
+                if (item != std::end(this_.iceRemoteCalls_)) {
+                    auto pc = std::move(item->second);
+                    this_.iceRemoteCalls_.erase(item);
+
+                    // Unwaited recipient?
+                    if (msg.from != pc.from) {
+                        RING_WARN("Unwaited ICE remote msg for device %s",
+                                  msg.from.toString().c_str());
+                        return true;
+                    }
+
+                    RING_WARN("ICE request replied from DHT peer %s\n%s",
+                              pc.from.toString().c_str(),
+                              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+
+                    if (auto call = pc.call.lock()) {
+                        call->setState(Call::ConnectionState::PROGRESSING);
+                        auto ice = pc.ice_sp;
+                        this_.pendingCalls_.emplace_back(std::move(pc));
+                        if (!ice->start(msg.ice_data))
+                            call->onFailure();
+                    }
+
+                    return true;
+                }
+
+                // So look like an incoming call?
+
                 if (msg.from == this_.dht_.getId())
                     return true;
 
@@ -2305,7 +2317,6 @@ RingAccount::doRegister_()
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
-
 
 void
 RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
@@ -2499,8 +2510,10 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     registerDhtAddress(*ice);
     // Asynchronous DHT put of our local ICE data
     auto shared_this = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto dht_key = dht::InfoHash::get("callto:"+peer_ice_msg.from.toString());
+    RING_DBG("reply to ICE request %lx to dht key %s", peer_ice_msg.id, dht_key.toString().c_str());
     dht_.putEncrypted(
-        callKey_,
+        dht_key,
         peer_ice_msg.from,
         dht::Value {dht::IceCandidates(peer_ice_msg.id, ice->packIceMsg())},
         [wcall](bool ok) {
