@@ -433,6 +433,11 @@ class RingAccount : public SIPAccountBase {
 
         dht::InfoHash callKey_;
 
+        /**
+         * DHT calls waiting for remote ICE data
+         */
+        std::map<dht::Value::Id, PendingCall> iceRemoteCalls_;
+
         void handlePendingCallList();
         bool handlePendingCall(PendingCall& pc, bool incoming);
 
