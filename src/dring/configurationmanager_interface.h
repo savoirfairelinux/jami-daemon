@@ -294,6 +294,10 @@ struct ConfigurationSignal {
                 constexpr static const char* name = "GetAppDataPath";
                 using cb_type = void(const std::string& name, std::vector<std::string>* /* path_ret */);
         };
+        struct GetDeviceName {
+            constexpr static const char* name = "GetDeviceName";
+            using cb_type = void(std::vector<std::string>* /* path_ret */);
+        };
 #endif
 };
 

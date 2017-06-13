@@ -30,6 +30,10 @@
 #include <unistd.h>
 #include <limits.h>
 
+#if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS) || defined(RING_UWP)
+#include "client/ring_signal.h"
+#endif
+
 #ifdef _WIN32
 #define InetPtonA inet_pton
 WINSOCK_API_LINKAGE INT WSAAPI InetPtonA(INT Family, LPCSTR pStringBuf, PVOID pAddr);
@@ -49,9 +53,14 @@ namespace ring {
 std::string
 ip_utils::getHostname()
 {
+    std::vector<std::string> appHostNames;
+    emitSignal<DRing::ConfigurationSignal::GetDeviceName>(&appHostNames);
+    if (not appHostNames.empty()) {
+        return appHostNames[0];
+    }
     char hostname[HOST_NAME_MAX];
     if (gethostname(hostname, HOST_NAME_MAX))
-        return {};
+        return{};
     return hostname;
 }
 
