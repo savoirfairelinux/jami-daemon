@@ -237,6 +237,8 @@ static const char *const DEFAULT_INTERFACE = "default";
 
 std::string getHostname();
 
+std::string getDeviceName();
+
 /**
  * Return the generic "any host" IP address of the specified family.
  * If family is unspecified, default to pj_AF_INET6() (IPv6).
