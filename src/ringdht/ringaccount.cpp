@@ -753,7 +753,7 @@ void RingAccount::unserialize(const YAML::Node &node)
         try {
             parseValue(node, DRing::Account::VolatileProperties::REGISTERED_NAME, registeredName_);
         } catch (const std::exception& e) {
-            RING_WARN("can't read device name: %s", e.what());
+            RING_WARN("can't read registered name: %s", e.what());
         }
     }
 
@@ -810,7 +810,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     accountTrust_ = dht::crypto::TrustList{};
     accountTrust_.add(*id.second);
     ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
-    ringDeviceName_ = ip_utils::getHostname();
+    ringDeviceName_ = ip_utils::getDeviceName();
     if (ringDeviceName_.empty())
         ringDeviceName_ = ringDeviceId_.substr(8);
 
