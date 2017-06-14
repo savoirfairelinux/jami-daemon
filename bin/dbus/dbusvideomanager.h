@@ -61,7 +61,7 @@ class DBusVideoManager :
         bool switchInput(const std::string& resource);
         bool hasCameraStarted();
         bool getDecodingAccelerated();
-        void setDecodingAccelerated(bool state);
+        void setDecodingAccelerated(const bool& state);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
