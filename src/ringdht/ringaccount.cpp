@@ -792,9 +792,8 @@ void RingAccount::unserialize(const YAML::Node &node)
 void
 RingAccount::createRingDevice(const dht::crypto::Identity& id)
 {
-    RING_WARN("createRingDevice");
     if (not id.second->isCA()) {
-        RING_ERR("Trying to sign a certificate with a non-CA.");
+        RING_ERR("[Account %s] trying to sign a certificate with a non-CA.", getAccountID().c_str());
     }
     auto dev_id = dht::crypto::generateIdentity("Ring device", id);
     if (!dev_id.first || !dev_id.second) {
@@ -817,14 +816,14 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     knownDevices_.emplace(deviceId, KnownDevice{dev_id.second, ringDeviceName_, clock::now()});
 
     receipt_ = makeReceipt(id);
-    RING_WARN("createRingDevice with %s", id.first->getPublicKey().getId().toString().c_str());
     receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
+    RING_WARN("[Account %s] created new Ring device: %s (%s)", getAccountID().c_str(), ringDeviceId_.c_str(), ringDeviceName_.c_str());
 }
 
 void
 RingAccount::initRingDevice(const ArchiveContent& a)
 {
-    RING_WARN("initRingDevice");
+    RING_WARN("[Account %s] creating new Ring device from archive", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(a.config);
     parseInt(a.config, Conf::CONFIG_DHT_PORT, dhtPort_);
     parseBool(a.config, Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_);
@@ -842,7 +841,7 @@ RingAccount::initRingDevice(const ArchiveContent& a)
 std::string
 RingAccount::makeReceipt(const dht::crypto::Identity& id)
 {
-    RING_WARN("making receipt");
+    RING_DBG("[Account %s] signing device receipt", getAccountID().c_str());
     DeviceAnnouncement announcement;
     announcement.dev = identity_.second->getId();
     dht::Value ann_val {announcement};
@@ -1363,19 +1362,17 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
 void
 RingAccount::createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate)
 {
-    RING_WARN("Creating new Ring account");
+    RING_WARN("[Account %s] creating new Ring account", getAccountID().c_str());
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
     ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
         ArchiveContent a;
         auto& this_ = *sthis;
 
-        RING_WARN("Generating ETH key");
         auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
-
         try {
             if (migrate.first and migrate.second) {
-                RING_WARN("Converting certificate from old ring account");
+                RING_WARN("[Account %s] converting certificate from old ring account %s", this_.getAccountID().c_str(), migrate.first->getPublicKey().getId().toString().c_str());
                 a.id = std::move(migrate);
                 try {
                     a.ca_key = std::make_shared<dht::crypto::PrivateKey>(fileutils::loadFile("ca.key", this_.idPath_));
@@ -1390,7 +1387,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                 if (!a.id.first || !a.id.second) {
                     throw VoipLinkException("Can't generate identity for this account.");
                 }
-                RING_WARN("New account: CA: %s, RingID: %s", ca.second->getId().toString().c_str(), a.id.second->getId().toString().c_str());
+                RING_WARN("[Account %s] new account: CA: %s, RingID: %s", this_.getAccountID().c_str(), ca.second->getId().toString().c_str(), a.id.second->getId().toString().c_str());
                 a.ca_key = ca.first;
             }
             this_.ringAccountId_ = a.id.second->getId().toString();
@@ -1407,7 +1404,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
                 Manager::instance().removeAccount(sthis->getAccountID());
             });
         }
-        RING_DBG("Account generation ended, saving...");
+        RING_DBG("[Account %s] Ring account creation ended, saving configuration", this_.getAccountID().c_str());
         this_.setRegistrationState(RegistrationState::UNREGISTERED);
         Manager::instance().saveConfig();
         this_.doRegister();
@@ -1562,6 +1559,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
 void
 RingAccount::setAccountDetails(const std::map<std::string, std::string>& details)
 {
+    RING_DBG("[Account %s] setAccountDetails", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(details);
 
     // TLS
@@ -1609,6 +1607,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
 std::map<std::string, std::string>
 RingAccount::getAccountDetails() const
 {
+    RING_DBG("[Account %s] getAccountDetails", getAccountID().c_str());
     std::map<std::string, std::string> a = SIPAccountBase::getAccountDetails();
     a.emplace(Conf::CONFIG_DHT_PORT, ring::to_string(dhtPort_));
     a.emplace(Conf::CONFIG_DHT_PUBLIC_IN_CALLS, dhtPublicInCalls_ ? TRUE_STR : FALSE_STR);
@@ -2040,9 +2039,8 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
                 });
             }
         }, std::chrono::steady_clock::now())->cb;
-        RING_DBG("Now tracking buddy %s", h.toString().c_str());
-    } else
-        RING_WARN("Buddy %s is already being tracked.", h.toString().c_str());
+        RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+    }
 }
 
 std::map<std::string, bool>
@@ -2095,7 +2093,7 @@ RingAccount::doRegister_()
         loadTreatedCalls();
         loadTreatedMessages();
         if (dht_.isRunning()) {
-            RING_ERR("DHT already running (stopping it first).");
+            RING_ERR("[Account %s] DHT already running (stopping it first).", getAccountID().c_str());
             dht_.join();
         }
 
@@ -2548,7 +2546,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         return;
     }
 
-    RING_WARN("doUnregister");
+    RING_WARN("[Account %s] unregistering account", getAccountID().c_str());
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -3260,7 +3258,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
                     shared->onTrackedBuddyOffline(buddy_info_it);
             }
         }
-        RING_WARN("forEachDevice: found %lu devices", treatedDevices->size());
+        RING_DBG("[Account %s] found %lu devices for %s", getAccountID().c_str(), treatedDevices->size(), to.to_c_str());
         if (end) end(not treatedDevices->empty());
     });
 }
