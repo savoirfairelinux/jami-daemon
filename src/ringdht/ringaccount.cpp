@@ -3380,16 +3380,15 @@ RingAccount::registerDhtAddress(IceTransport& ice)
         // We need a public address in case of NAT'ed network
         // Trying to use one discovered by DHT service
 
-        // IPv4
-        const auto& addr4 = dht_.getPublicAddress(AF_INET);
-        if (addr4.size())
-            setPublishedAddress(reg_addr(ice, addr4[0].first));
-
-        // IPv6 (must be put after IPv4 as SDP support only one address, we priorize IPv6)
+        // IPv6 (sdp support only one IP, put IPv6 before IPv4 as this last has the priority over IPv6 less NAT'able)
         const auto& addr6 = dht_.getPublicAddress(AF_INET6);
         if (addr6.size())
             setPublishedAddress(reg_addr(ice, addr6[0].first));
 
+        // IPv4
+        const auto& addr4 = dht_.getPublicAddress(AF_INET);
+        if (addr4.size())
+            setPublishedAddress(reg_addr(ice, addr4[0].first));
     } else {
         reg_addr(ice, ip);
     }
