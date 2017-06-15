@@ -1687,7 +1687,6 @@ Manager::scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady
 {
     std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
     pimpl_->scheduledTasks_.emplace(when, task);
-    RING_DBG("Task scheduled. Next in %" PRId64, std::chrono::duration_cast<std::chrono::seconds>(pimpl_->scheduledTasks_.begin()->first - std::chrono::steady_clock::now()).count());
 }
 
 // Must be invoked periodically by a timer from the main event loop
