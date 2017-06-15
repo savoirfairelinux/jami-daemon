@@ -469,7 +469,7 @@ new file mode 100644
 index 0000000..37bcaba
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
-@@ -0,0 +1,2887 @@
+@@ -0,0 +1,2877 @@
 +/* $Id$ */
 +/*
 + * Copyright (C) 2014-2016 Savoir-faire Linux. (https://www.savoirfairelinux.com)
@@ -926,13 +926,6 @@ index 0000000..37bcaba
 +}
 +
 +
-+/* GnuTLS way of reporting internal operations. */
-+static void tls_print_logs(int level, const char* msg)
-+{
-+    PJ_LOG(3, (THIS_FILE, "GnuTLS [%d]: %s", level, msg));
-+}
-+
-+
 +/* Initialize GnuTLS. */
 +static pj_status_t tls_init(void)
 +{
@@ -947,9 +940,6 @@ index 0000000..37bcaba
 +    int ret = gnutls_global_init();
 +    if (ret < 0)
 +        return tls_status_from_err(NULL, ret);
-+
-+    gnutls_global_set_log_level(GNUTLS_LOG_LEVEL);
-+    gnutls_global_set_log_function(tls_print_logs);
 +
 +    /* Init available ciphers */
 +    if (!tls_available_ciphers) {
