@@ -24,6 +24,11 @@
 
 #ifdef RING_VDPAU
 
+#include <X11/Xlib.h>
+extern "C" {
+#include <stdlib.h>
+}
+
 #include "video/v4l2/vdpau.h"
 #include "video/accel.h"
 
@@ -77,7 +82,8 @@ bool
 VdpauAccel::checkAvailability()
 {
     AVBufferRef* hardwareDeviceCtx;
-    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VDPAU, nullptr, nullptr, 0) == 0) {
+    if (XOpenDisplay(nullptr)
+        && av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VDPAU, nullptr, nullptr, 0) == 0) {
         deviceBufferRef_.reset(hardwareDeviceCtx);
         return true;
     }
