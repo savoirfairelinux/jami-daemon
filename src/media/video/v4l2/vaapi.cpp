@@ -24,6 +24,13 @@
 
 #ifdef RING_VAAPI
 
+#ifdef HAVE_VAAPI_ACCEL_X11
+#include <X11/Xlib.h>
+extern "C" {
+#include <stdlib.h>
+}
+#endif
+
 #include "video/v4l2/vaapi.h"
 #include "video/accel.h"
 
@@ -77,6 +84,7 @@ VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
 bool
 VaapiAccel::checkAvailability()
 {
+    bool success = false;
     AVBufferRef* hardwareDeviceCtx = nullptr;
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // try all possible devices, use first one that works
@@ -85,20 +93,23 @@ VaapiAccel::checkAvailability()
         std::string deviceName = path + entry;
         if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) >= 0) {
             deviceName_ = deviceName;
+            success = true;
             break;
         }
     }
-    if (hardwareDeviceCtx == nullptr)
-        return false;
-#elif HAVE_VAAPI_ACCEL_X11
-    deviceName_ = ":0";
-    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) < 0) {
-        return false;
+#endif
+#ifdef HAVE_VAAPI_ACCEL_X11
+    auto dpy = getenv("DISPLAY");
+    deviceName_ = dpy ? dpy : "";
+    if (!success
+        && XOpenDisplay(deviceName_.c_str())
+        && av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) >= 0) {
+        success = true;
     }
 #endif
 
     deviceBufferRef_.reset(hardwareDeviceCtx);
-    return true;
+    return success;
 }
 
 bool
