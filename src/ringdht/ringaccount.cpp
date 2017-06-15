@@ -809,10 +809,12 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     identity_ = dev_id;
     accountTrust_ = dht::crypto::TrustList{};
     accountTrust_.add(*id.second);
-    ringDeviceId_ = dev_id.first->getPublicKey().getId().toString();
+    auto deviceId = dev_id.first->getPublicKey().getId();
+    ringDeviceId_ = deviceId.toString();
     ringDeviceName_ = ip_utils::getDeviceName();
     if (ringDeviceName_.empty())
         ringDeviceName_ = ringDeviceId_.substr(8);
+    knownDevices_.emplace(deviceId, KnownDevice{dev_id.second, ringDeviceName_, clock::now()});
 
     receipt_ = makeReceipt(id);
     RING_WARN("createRingDevice with %s", id.first->getPublicKey().getId().toString().c_str());
