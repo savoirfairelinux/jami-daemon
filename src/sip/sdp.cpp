@@ -717,9 +717,9 @@ IceTransport::Attribute
 Sdp::getIceAttributes() const
 {
     IceTransport::Attribute ice_attrs;
-    auto session = activeRemoteSession_ ? activeRemoteSession_ : remoteSession_;
-    assert(session);
-    return getIceAttributes(session);
+    if (auto session = (activeRemoteSession_ ? activeRemoteSession_ : remoteSession_))
+        return getIceAttributes(session);
+    return {};
 }
 
 IceTransport::Attribute
