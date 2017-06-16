@@ -39,8 +39,14 @@
 #include <iostream>
 #include <unistd.h>
 #include <thread> // hardware_concurrency
+#include <chrono>
 
 namespace ring {
+
+// maximum number of packets the jitter buffer can queue
+const unsigned jitterBufferMaxSize_ {5000};
+// maximum time a packet can be queued
+const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(1300);
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
@@ -88,7 +94,8 @@ int MediaDecoder::openInput(const DeviceParams& params)
 
     // Set jitter buffer options
     av_dict_set(&options_, "reorder_queue_size",ring::to_string(jitterBufferMaxSize_).c_str(), 0);
-    av_dict_set(&options_, "max_delay",ring::to_string(jitterBufferMaxDelay_).c_str(), 0);
+    auto us = std::chrono::duration_cast<std::chrono::microseconds>(jitterBufferMaxDelay_).count();
+    av_dict_set(&options_, "max_delay",ring::to_string(us).c_str(), 0);
 
     if(!params.pixel_format.empty()){
         av_dict_set(&options_, "pixel_format", params.pixel_format.c_str(), 0);
