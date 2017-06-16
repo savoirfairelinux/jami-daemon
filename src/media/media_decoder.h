@@ -118,12 +118,6 @@ class MediaDecoder {
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
         int correctPixFmt(int input_pix_fmt);
 
-        // Jitter buffer options: they are default values set in libav
-        // maximum of packet jitter buffer can queue
-        const unsigned jitterBufferMaxSize_ {1500};
-        // maximum time a packet can be queued (in us)
-        const unsigned jitterBufferMaxDelay_ {1000000};
-
 #ifdef RING_ACCEL
         bool enableAccel_ = true;
         std::unique_ptr<video::HardwareAccel> accel_;

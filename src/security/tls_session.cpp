@@ -58,7 +58,7 @@ static constexpr uint8_t HEARTBEAT_RETRIES = 1; // Number of tries at each heart
 static constexpr auto HEARTBEAT_RETRANS_TIMEOUT = std::chrono::milliseconds(700); // gnutls heartbeat retransmission timeout for each ping (in milliseconds)
 static constexpr auto HEARTBEAT_TOTAL_TIMEOUT = HEARTBEAT_RETRANS_TIMEOUT * HEARTBEAT_RETRIES; // gnutls heartbeat time limit for heartbeat procedure (in milliseconds)
 static constexpr int MISS_ORDERING_LIMIT = 32; // maximal accepted distance of out-of-order packet (note: must be a signed type)
-static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(500);
+static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
 
 // mtus array to test, do not add mtu over the interface MTU, this will result in false result due to packet fragmentation.
 // also do not set over 16000 this will result in a gnutls error (unexpected packet size)
