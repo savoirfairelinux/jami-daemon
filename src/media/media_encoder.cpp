@@ -154,25 +154,22 @@ MediaEncoder::openOutput(const char *filename,
 
     prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
+    auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
     auto crf = atoi(av_dict_get(options_, "crf", NULL, 0)->value);
-
 
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
         forcePresetX264();
         // For H264 :
-        // 1- if quality is set use it
-        // 2- otherwise set rc_max_rate and rc_buffer_size
-        if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
-            av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
-            RING_DBG("Using quality factor %d", crf);
-        } else {
-            encoderCtx_->rc_buffer_size = maxBitrate;
-            encoderCtx_->rc_max_rate = maxBitrate;
-            RING_DBG("Using max bitrate %d", maxBitrate );
-        }
+        // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
+        if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
+            crf = 23; // Default value for H264
+        RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
 
+        av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
+        encoderCtx_->rc_buffer_size = bufSize;
+        encoderCtx_->rc_max_rate = maxBitrate;
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
         // 1- if quality is set use it

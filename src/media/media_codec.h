@@ -59,20 +59,20 @@ enum MediaType : unsigned {
  */
 struct SystemCodecInfo
 {
-    static constexpr unsigned DEFAULT_CODEC_QUALITY {30};
+    static constexpr unsigned DEFAULT_CODEC_QUALITY {23};
 #ifdef RING_VIDEO
     static constexpr unsigned DEFAULT_H264_MIN_QUALITY {35};
-    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {25};
+    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {23};
     static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
     static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
-    static constexpr unsigned DEFAULT_VIDEO_BITRATE {250}; // in Kbits/second
+    static constexpr unsigned DEFAULT_VIDEO_BITRATE {800}; // in Kbits/second
 #endif
 
     // indicates that the codec does not use quality factor
     static constexpr unsigned DEFAULT_NO_QUALITY {0};
 
     static constexpr unsigned DEFAULT_MIN_BITRATE {250};
-    static constexpr unsigned DEFAULT_MAX_BITRATE {2000};
+    static constexpr unsigned DEFAULT_MAX_BITRATE {3000};
 
     SystemCodecInfo(unsigned avcodecId, const std::string name,
                     std::string libName, MediaType mediaType,
