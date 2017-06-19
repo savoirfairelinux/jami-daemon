@@ -3,7 +3,7 @@
 @@ -233,3 +233,3 @@
  #ifndef PJ_ICE_MAX_CAND
 -#   define PJ_ICE_MAX_CAND			    16
-+#   define PJ_ICE_MAX_CAND			    32
++#   define PJ_ICE_MAX_CAND			    256
  #endif
 @@ -254,3 +254,3 @@
  #ifndef PJ_ICE_MAX_STUN
