@@ -53,23 +53,6 @@ static constexpr const T& min( const T& a, const T& b ) {
     return (b < a) ? b : a;
 }
 
-static void
-register_thread()
-{
-    // We have to register the external thread so it could access the pjsip frameworks
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined RING_UWP
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
-#endif
-        pj_thread_register(NULL, desc, &this_thread);
-        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
-    }
-}
-
 /**
  * Add stun/turn servers or default host as candidates
  */
@@ -226,7 +209,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
 
     // Must be created after any potential failure
     thread_ = std::thread([this]{
-            register_thread();
+            sip_utils::register_thread();
             while (not threadTerminateFlags_) {
                 handleEvents(500); // limit polling to 500ms
             }
@@ -235,7 +218,7 @@ IceTransport::IceTransport(const char* name, int component_count, bool master,
 
 IceTransport::~IceTransport()
 {
-    register_thread();
+    sip_utils::register_thread();
 
     threadTerminateFlags_ = true;
     if (thread_.joinable())
@@ -891,7 +874,7 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 ssize_t
 IceTransport::recv(int comp_id, unsigned char* buf, size_t len)
 {
-    register_thread();
+    sip_utils::register_thread();
     auto& io = compIO_[comp_id];
     std::lock_guard<std::mutex> lk(io.mutex);
 
@@ -924,7 +907,7 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
-    register_thread();
+    sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {
         RING_ERR("[ice:%p] can't find remote address for component %d", this, comp_id);

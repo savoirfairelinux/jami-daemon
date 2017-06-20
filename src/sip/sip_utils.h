@@ -76,6 +76,12 @@ void addContactHeader(const pj_str_t *contactStr, pjsip_tx_data *tdata);
 
 std::string sip_strerror(pj_status_t code);
 
+/// \brief PJSIP requires to register all threads that access to its API.
+///
+/// This function is safe to be called multiple time by same thread,
+/// it will be registered only one time.
+void register_thread();
+
 // Helper function that return a constant pj_str_t from an array of any types
 // that may be staticaly casted into char pointer.
 // Per convention, the input array is supposed to be null terminated.
