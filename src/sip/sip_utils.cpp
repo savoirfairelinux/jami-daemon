@@ -179,4 +179,20 @@ sip_strerror(pj_status_t code)
     return std::string{err_msg};
 }
 
+void
+register_thread()
+{
+    if (!pj_thread_is_registered()) {
+#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined RING_UWP
+        static thread_local pj_thread_desc desc;
+        static thread_local pj_thread_t *this_thread;
+#else
+        static __thread pj_thread_desc desc;
+        static __thread pj_thread_t *this_thread;
+#endif
+        pj_thread_register(NULL, desc, &this_thread);
+        RING_DBG("Registered thread %p (0x%X)", this_thread, pj_getpid());
+    }
+}
+
 }} // namespace ring::sip_utils

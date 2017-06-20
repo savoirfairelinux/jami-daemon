@@ -668,18 +668,7 @@ SIPVoIPLink::guessAccount(const std::string& userName,
 void
 SIPVoIPLink::handleEvents()
 {
-    // We have to register the external thread so it could access the pjsip frameworks
-    if (!pj_thread_is_registered()) {
-#if __GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 8) || defined RING_UWP
-        static thread_local pj_thread_desc desc;
-        static thread_local pj_thread_t *this_thread;
-#else
-        static __thread pj_thread_desc desc;
-        static __thread pj_thread_t *this_thread;
-#endif
-        RING_DBG("Registering thread");
-        pj_thread_register(NULL, desc, &this_thread);
-    }
+    sip_utils::register_thread();
 
     static const pj_time_val timeout = {0, 0}; // polling
     auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
