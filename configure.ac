@@ -382,7 +382,7 @@ AS_IF([test "x$with_dbus" = "xyes"], [
        AS_IF([test "x$CLANG" = "xyes"], [
              AC_MSG_ERROR([dbus does not compile when clang is used, rerun with --without-dbus])
        ]);
-       AM_CONDITIONAL(RING_DBUS, true)],
+       AM_CONDITIONAL(RING_DBUS, true)],TESTS= $(check_PROGRAMS)
        AM_CONDITIONAL(RING_DBUS, false));
 
 dnl Ring name service is default-enabled
@@ -731,6 +731,9 @@ AC_CONFIG_FILES([Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile \
+                 test/base64/Makefile \
+                 test/media/Makefile \
+                 test/media/video/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])

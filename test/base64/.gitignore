@@ -4,4 +4,7 @@
 *.log
 *.trs
 
-.dirstamp
+#test binaries
+sip
+
+base64
