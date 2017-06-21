@@ -827,23 +827,19 @@ void SIPAccount::doRegister2_()
 void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
 {
     tlsListener_.reset();
-    if (isIP2IP()) {
-        if (released_cb)
-            released_cb(false);
-        return;
-    }
-
-    try {
-        sendUnregister();
-    } catch (const VoipLinkException &e) {
-        RING_ERR("doUnregister %s", e.what());
-    }
-
-    // remove the transport from the account
     if (transport_)
         setTransport();
+
+    if (!isIP2IP()) {
+        try {
+            sendUnregister();
+        } catch (const VoipLinkException& e) {
+            RING_ERR("doUnregister %s", e.what());
+        }
+    }
+
     if (released_cb)
-        released_cb(true);
+        released_cb(not isIP2IP());
 
     if (upnp_) {
         upnp_->setIGDListener();
