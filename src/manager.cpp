@@ -839,6 +839,11 @@ Manager::outgoingCall(const std::string& preferred_account_id,
                           const std::string& to,
                           const std::string& conf_id)
 {
+    if (not conf_id.empty() and not isConference(conf_id)) {
+        RING_ERR("outgoingCall() failed, invalid conference id");
+        return {};
+    }
+
     std::string current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
