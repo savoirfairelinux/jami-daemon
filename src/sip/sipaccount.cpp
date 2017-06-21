@@ -235,14 +235,13 @@ SIPAccount::newOutgoingCall(const std::string& toUrl)
     );
 
     if (created) {
-        auto shared_this = std::static_pointer_cast<SIPAccount>(shared_from_this());
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.addTask([shared_this, weak_call] {
-            auto call = weak_call.lock();
-
-            if (not call or not shared_this->SIPStartCall(call)) {
-                RING_ERR("Could not send outgoing INVITE request for new call");
-                call->onFailure();
+        manager.addTask([this, weak_call] {
+            if (auto call = weak_call.lock()) {
+                if (not SIPStartCall(call)) {
+                    RING_ERR("Could not send outgoing INVITE request for new call");
+                    call->onFailure();
+                }
             }
             return false;
         });
