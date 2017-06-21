@@ -789,6 +789,12 @@ Manager::finish() noexcept
         }
 
         pimpl_->ice_tf_.reset();
+
+        // Flush remaining tasks (free lambda' with capture)
+        pimpl_->pendingTaskList_.clear();
+        pimpl_->scheduledTasks_.clear();
+        pimpl_->eventHandlerMap_.clear();
+
         pj_shutdown();
         ThreadPool::instance().join();
     } catch (const VoipLinkException &err) {
