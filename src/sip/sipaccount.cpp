@@ -698,7 +698,7 @@ void SIPAccount::doRegister()
     RING_DBG("doRegister %s", hostname_.c_str());
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
-    if ( upnpEnabled_ ) {
+    if (upnp_) {
         RING_DBG("UPnP: waiting for IGD to register SIP account");
         setRegistrationState(RegistrationState::TRYING);
         auto shared = shared_from_this();
@@ -842,7 +842,7 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     if (released_cb)
         released_cb(not isIP2IP());
 
-    if (upnpEnabled_) {
+    if (upnp_) {
         upnp_->setIGDListener();
         upnp_->removeMappings();
     }
