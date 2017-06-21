@@ -71,13 +71,6 @@ class VaapiAccel : public HardwareAccel {
         AVBufferRefPtr deviceBufferRef_;
         AVBufferRefPtr framesBufferRef_;
 
-        VAProfile vaProfile_ = VAProfileNone;
-        VAEntrypoint vaEntryPoint_ = VAEntrypointVLD;
-        VAConfigID vaConfig_ = -1;
-        VAContextID vaContext_ = -1;
-
-        struct vaapi_context ffmpegAccelCtx_ = {};
-
         std::string deviceName_;
 };
 

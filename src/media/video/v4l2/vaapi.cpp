@@ -91,7 +91,8 @@ VaapiAccel::checkAvailability()
     if (hardwareDeviceCtx == nullptr)
         return false;
 #elif HAVE_VAAPI_ACCEL_X11
-    deviceName_ = ":0";
+    auto dpy = getenv("DISPLAY");
+    deviceName_ = dpy ? dpy : "";
     if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) < 0) {
         return false;
     }
@@ -104,92 +105,13 @@ VaapiAccel::checkAvailability()
 bool
 VaapiAccel::init()
 {
-    vaProfile_ = VAProfileNone;
-    vaEntryPoint_ = VAEntrypointVLD;
-    using ProfileMap = std::map<int, VAProfile>;
-    ProfileMap h264 = {
-        { FF_PROFILE_H264_CONSTRAINED_BASELINE, VAProfileH264ConstrainedBaseline },
-        { FF_PROFILE_H264_BASELINE, VAProfileH264Baseline },
-        { FF_PROFILE_H264_MAIN, VAProfileH264Main },
-        { FF_PROFILE_H264_HIGH, VAProfileH264High }
-    };
-    ProfileMap mpeg4 = {
-        { FF_PROFILE_MPEG4_SIMPLE, VAProfileMPEG4Simple },
-        { FF_PROFILE_MPEG4_ADVANCED_SIMPLE, VAProfileMPEG4AdvancedSimple },
-        { FF_PROFILE_MPEG4_MAIN, VAProfileMPEG4Main }
-    };
-    ProfileMap h263 = {
-        { FF_PROFILE_UNKNOWN, VAProfileH263Baseline }
-    };
-
-    std::map<int, ProfileMap> profileMap = {
-        { AV_CODEC_ID_H264, h264 },
-        { AV_CODEC_ID_MPEG4, mpeg4 },
-        { AV_CODEC_ID_H263, h263 },
-        { AV_CODEC_ID_H263P, h263 }
-    };
-
-    auto device = reinterpret_cast<AVHWDeviceContext*>(deviceBufferRef_->data);
-    vaConfig_ = VA_INVALID_ID;
-    vaContext_ = VA_INVALID_ID;
-    auto hardwareContext = static_cast<AVVAAPIDeviceContext*>(device->hwctx);
-
-    int numProfiles = vaMaxNumProfiles(hardwareContext->display);
-    auto profiles = std::vector<VAProfile>(numProfiles);
-    auto status = vaQueryConfigProfiles(hardwareContext->display, profiles.data(), &numProfiles);
-    if (status != VA_STATUS_SUCCESS) {
-        RING_ERR("Failed to query profiles: %s", vaErrorStr(status));
-        return false;
-    }
-
-    VAProfile codecProfile = VAProfileNone;
-    auto itOuter = profileMap.find(codecCtx_->codec_id);
-    if (itOuter != profileMap.end()) {
-        auto innerMap = itOuter->second;
-        auto itInner = innerMap.find(codecCtx_->profile);
-        if (itInner != innerMap.end()) {
-            codecProfile = itInner->second;
-        }
-    }
-
-    auto iter = std::find_if(std::begin(profiles),
-                             std::end(profiles),
-                             [codecProfile](const VAProfile& p){ return p == codecProfile; });
-
-    if (iter == std::end(profiles)) {
-        RING_ERR("VAAPI does not support selected codec");
-        return false;
-    }
-
-    vaProfile_ = *iter;
-
-    status = vaCreateConfig(hardwareContext->display, vaProfile_, vaEntryPoint_, 0, 0, &vaConfig_);
-    if (status != VA_STATUS_SUCCESS) {
-        RING_ERR("Failed to create VAAPI configuration: %s", vaErrorStr(status));
-        return false;
-    }
-
-    auto hardwareConfig = static_cast<AVVAAPIHWConfig*>(av_hwdevice_hwconfig_alloc(deviceBufferRef_.get()));
-    hardwareConfig->config_id = vaConfig_;
-
-    auto constraints = av_hwdevice_get_hwframe_constraints(deviceBufferRef_.get(), hardwareConfig);
-    if (width_ < constraints->min_width
-        || width_ > constraints->max_width
-        || height_ < constraints->min_height
-        || height_ > constraints->max_height) {
-        av_hwframe_constraints_free(&constraints);
-        av_freep(&hardwareConfig);
-        RING_ERR("Hardware does not support image size with VAAPI: %dx%d", width_, height_);
-        return false;
-    }
-
     int numSurfaces = 16; // based on codec instead?
     if (codecCtx_->active_thread_type & FF_THREAD_FRAME)
         numSurfaces += codecCtx_->thread_count; // need extra surface per thread
 
     framesBufferRef_.reset(av_hwframe_ctx_alloc(deviceBufferRef_.get()));
     auto frames = reinterpret_cast<AVHWFramesContext*>(framesBufferRef_->data);
-    frames->format = AV_PIX_FMT_VAAPI;
+    frames->format = format_;
     frames->sw_format = AV_PIX_FMT_YUV420P;
     frames->width = width_;
     frames->height = height_;
@@ -200,20 +122,9 @@ VaapiAccel::init()
         return false;
     }
 
-    auto framesContext = static_cast<AVVAAPIFramesContext*>(frames->hwctx);
-    status = vaCreateContext(hardwareContext->display, vaConfig_, width_, height_,
-        VA_PROGRESSIVE, framesContext->surface_ids, framesContext->nb_surfaces, &vaContext_);
-    if (status != VA_STATUS_SUCCESS) {
-        RING_ERR("Failed to create VAAPI context: %s", vaErrorStr(status));
-        return false;
-    }
+    codecCtx_->hw_frames_ctx = av_buffer_ref(framesBufferRef_.get());
 
     RING_DBG("VAAPI decoder initialized via device: %s", deviceName_.c_str());
-
-    ffmpegAccelCtx_.display = hardwareContext->display;
-    ffmpegAccelCtx_.config_id = vaConfig_;
-    ffmpegAccelCtx_.context_id = vaContext_;
-    codecCtx_->hwaccel_context = (void*)&ffmpegAccelCtx_;
     return true;
 }
 
