@@ -142,7 +142,7 @@ test_SIP::testSimpleOutgoingIpCall()
    testcallid = Manager::instance().outgoingCall(testaccount, testcallnumber);
 
    // wait for receiving 180 and 200 message from peer
-   std::this_thread::sleep_for(std::chrono::seconds(2)); // should be enough
+   std::this_thread::sleep_for(std::chrono::seconds(1)); // should be enough
 
    auto call = Manager::instance().getCallFromCallID(testcallid);
    CPPUNIT_ASSERT(call);
@@ -152,6 +152,7 @@ test_SIP::testSimpleOutgoingIpCall()
    std::cout << ">>>> call state is now " << state << '\n';
    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
+   std::cout << ">>>> hangup the call " << '\n';
    Manager::instance().hangupCall(testcallid);
 
    // check call state
@@ -202,34 +203,51 @@ void test_SIP::testSimpleIncomingIpCall()
 #endif
 
 void
-test_SIP::testTwoOutgoingIpCall()
+test_SIP::testMultipleOutgoingIpCall()
 {
-    // This scenario expect to be put on hold before hangup
-    auto firstCallThread = sippThread("sipp -sf tools/sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1");
-    // The second call uses the default user agent scenario
-    auto secondCallThread = sippThread("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1");
+    // this value change the number of call we do
+    int numberOfCall =5;
 
-    sleep(1);
+    std::string prefixCallNumber("sip:test@127.0.0.1:506");
+    std::string testaccount("IP2IP");
+    std::string callID[numberOfCall];
 
-    auto testAccount = "IP2IP";
-    auto firstCallNumber = "sip:test@127.0.0.1:5062";
-    auto secondCallNumber = "sip:test@127.0.0.1:5064";
+    for(int i = 0; i < numberOfCall; i++){
+        // start a user agent server waiting for a call
+        sippThread("sipp -sn uas -i 127.0.0.1 -p 506"+std::to_string(i+1)+" -m 1 -bg");
 
-    CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
+        callID[i] = Manager::instance().outgoingCall(testaccount, prefixCallNumber+std::to_string(i+1));
+        auto newCall = Manager::instance().getCallFromCallID(callID[i]);
+        CPPUNIT_ASSERT(newCall);
 
-    // start a new call sending INVITE message to sipp instance
-    // this call should be put on hold when making the second call
-    auto firstCallId = Manager::instance().outgoingCall(testAccount, firstCallNumber);
+        // wait for receiving 180 and 200 message from peer
+        std::this_thread::sleep_for(std::chrono::seconds(1)); // should be enough
 
-    // must sleep here until receiving 180 and 200 message from peer
-    sleep(1);
 
-    auto secondCallId = Manager::instance().outgoingCall(testAccount, secondCallNumber);
+        auto state = newCall->getStateStr();
+        std::cout << ">>>> current call (call number: "+std::to_string(i)+") state:" << state << '\n';
+        CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
-    sleep(1);
+        // test the changement of calls states after doing a new calls
+        if(i){
+            for(int j = 0; j<i; j++){
+                auto oldCall = Manager::instance().getCallFromCallID(callID[j]);
+                CPPUNIT_ASSERT(oldCall);
+                auto oldState = oldCall->getStateStr();
+                std::cout << ">>>> old call (call number: "+std::to_string(j)+") state:" << oldState << '\n';
+                CPPUNIT_ASSERT(oldState == DRing::Call::StateEvent::HOLD);
+                }
+            }
+        }
 
-    Manager::instance().hangupCall(firstCallId);
-    Manager::instance().hangupCall(secondCallId);
+    //hangup  all calls
+    for(int i = 0; i < numberOfCall; i++){
+        auto call = Manager::instance().getCallFromCallID(callID[i]);
+        Manager::instance().hangupCall(callID[i]);
+        auto state = call->getStateStr();
+        CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
+    }
+
 }
 
 #if 0
@@ -307,31 +325,43 @@ test_SIP::testHoldIpCall()
     auto testAccount = "IP2IP";
     auto testCallNumber = "sip:test@127.0.0.1:5062";
 
-    auto callThread = sippThread("sipp -sf tools/sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1 -bg");
+    auto callThread = sippThread("sipp -sf sippxml/test_3.xml -i 127.0.0.1 -p 5062 -m 1 -bg");
 
     auto testCallId = Manager::instance().outgoingCall(testAccount, testCallNumber);
+    auto call = Manager::instance().getCallFromCallID(testCallId);
 
-    sleep(1);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+
+    auto state = call->getStateStr();
+    std::cout << ">>>> call state is now " << state << '\n';
+    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CONNECTING);
 
     Manager::instance().onHoldCall(testCallId);
 
-    sleep(1);
+    state = call->getStateStr();
+    std::cout << ">>>> call state is now " << state << '\n';
+    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::HOLD);
 
     Manager::instance().offHoldCall(testCallId);
 
-    sleep(1);
+    state = call->getStateStr();
+    std::cout << ">>>> call state is now " << state << '\n';
+    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CONNECTING);
 
     Manager::instance().hangupCall(testCallId);
+    state = call->getStateStr();
+    std::cout << ">>>> call state is now " << state << '\n';
+    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::OVER);
 }
 
-#if 0
+
 void test_SIP::testSIPURI()
 {
     std::string foo("<sip:17771234567@callcentric.com>");
     sip_utils::stripSipUriPrefix(foo);
     CPPUNIT_ASSERT(foo == "17771234567");
 }
-#endif
+
 
 #if 0
 void test_SIP::testParseDisplayName()
