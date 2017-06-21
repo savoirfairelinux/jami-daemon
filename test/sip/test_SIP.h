@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2017 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Olivier Gregoire <olivier.gregoire@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -80,14 +81,17 @@ public:
     void tearDown();
 
 private:
+    // Create a simple IP call and test his state
     void testSimpleOutgoingIpCall(void);
 
     //void testSimpleIncomingIpCall(void);
 
+    // Test the hold state using two calls
     void testTwoOutgoingIpCall(void);
 
     //void testTwoIncomingIpCall(void);
 
+    // Test the hold state
     void testHoldIpCall(void);
 
     //void testIncomingIpCallSdp(void);
@@ -103,9 +107,9 @@ private:
     CPPUNIT_TEST ( testSimpleOutgoingIpCall );
     //CPPUNIT_TEST ( testParseDisplayName );
     //CPPUNIT_TEST ( testSimpleIncomingIpCall );
-    //CPPUNIT_TEST ( testTwoOutgoingIpCall );
+    CPPUNIT_TEST ( testTwoOutgoingIpCall );
     //CPPUNIT_TEST ( testTwoIncomingIpCall );
-    //CPPUNIT_TEST ( testHoldIpCall );
+    CPPUNIT_TEST ( testHoldIpCall );
     //CPPUNIT_TEST ( testIncomingIpCallSdp );
     CPPUNIT_TEST_SUITE_END();
 
