@@ -152,6 +152,7 @@ test_SIP::testSimpleOutgoingIpCall()
    std::cout << ">>>> call state is now " << state << '\n';
    CPPUNIT_ASSERT(state == DRing::Call::StateEvent::CURRENT);
 
+   std::cout << ">>>> hangup the call " << '\n';
    Manager::instance().hangupCall(testcallid);
 
    // check call state
@@ -204,32 +205,56 @@ void test_SIP::testSimpleIncomingIpCall()
 void
 test_SIP::testTwoOutgoingIpCall()
 {
-    // This scenario expect to be put on hold before hangup
-    auto firstCallThread = sippThread("sipp -sf tools/sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1");
-    // The second call uses the default user agent scenario
-    auto secondCallThread = sippThread("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1");
+   // This scenario expect to be put on hold before hangup
+   sippThread("sipp -sf tools/sippxml/test_1.xml -i 127.0.0.1 -p 5062 -m 1 -bg");
 
-    sleep(1);
+   // The second call uses the default user agent scenario
+   sippThread("sipp -sn uas -i 127.0.0.1 -p 5064 -m 1 -bg");
 
-    auto testAccount = "IP2IP";
-    auto firstCallNumber = "sip:test@127.0.0.1:5062";
-    auto secondCallNumber = "sip:test@127.0.0.1:5064";
+   std::string testaccount("IP2IP");
 
-    CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
+   std::string firstCallNumber("sip:test@127.0.0.1:5062");
+   std::string firstCallID; // returned by outgoingCall()
 
-    // start a new call sending INVITE message to sipp instance
-    // this call should be put on hold when making the second call
-    auto firstCallId = Manager::instance().outgoingCall(testAccount, firstCallNumber);
+   std::string secondCallNumber("sip:test@127.0.0.1:5064");
+   std::string secondCallID; // returned by outgoingCall()
 
-    // must sleep here until receiving 180 and 200 message from peer
-    sleep(1);
+   CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
 
-    auto secondCallId = Manager::instance().outgoingCall(testAccount, secondCallNumber);
+   // start a new call sending INVITE message to sipp instance
+   // this call should be put on hold when making the second call
+   firstCallID = Manager::instance().outgoingCall(testaccount, firstCallNumber);
 
-    sleep(1);
+   // wait for receiving 180 and 200 message from peer
+   std::this_thread::sleep_for(std::chrono::seconds(2)); // should be enough
 
-    Manager::instance().hangupCall(firstCallId);
-    Manager::instance().hangupCall(secondCallId);
+   auto firstCall = Manager::instance().getCallFromCallID(firstCallID);
+   CPPUNIT_ASSERT(firstCall);
+
+   // check the first call before the second call
+   auto firstState = firstCall->getStateStr();
+   std::cout << ">>>> call state before the second call is " << firstState << '\n';
+   CPPUNIT_ASSERT(firstState == DRing::Call::StateEvent::CONNECTING);
+
+   // create the second call
+   secondCallID = Manager::instance().outgoingCall(testaccount, secondCallNumber);
+
+   // check the first call is on hold state
+   firstState = firstCall->getStateStr();
+   std::cout << ">>>> call state after creating the second call is  " << firstState << '\n';
+   CPPUNIT_ASSERT(firstState == DRing::Call::StateEvent::HOLD);
+
+   // hangup calls
+   Manager::instance().hangupCall(firstCallID);
+   firstState = firstCall->getStateStr();
+   CPPUNIT_ASSERT(firstState == DRing::Call::StateEvent::OVER);
+   auto secondCall = Manager::instance().getCallFromCallID(secondCallID);
+   Manager::instance().hangupCall(secondCallID);
+   auto secondState = secondCall->getStateStr();
+   CPPUNIT_ASSERT(secondState == DRing::Call::StateEvent::OVER);
+
+   // Call must not not be available (except for thus how already own a pointer like us)
+   CPPUNIT_ASSERT(!Manager::instance().getCallFromCallID(firstCallID));
 }
 
 #if 0

@@ -103,10 +103,10 @@ audio:
 video:
   decodingAccelerated: true
   devices:
-    - framerate: 30
-      channel: Camera 1
-      video_size: 960x540
+    - video_size: 960x540
       name: Integrated Camera
+      framerate: 30
+      channel: Camera 1
 shortcuts:
   hangUp: ""
   pickUp: ""
