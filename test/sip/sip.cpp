@@ -1,6 +1,6 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
- *  Author: Julien Bonjean <julien.bonjean@savoirfairelinux.com>
+ *  Copyright (C) 2017 Savoir-Faire Linux Inc.
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -15,42 +15,46 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
- *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
-#include "test_SIP.h"
 
-#include <cppunit/CompilerOutputter.h>
-#include <cppunit/XmlOutputter.h>
-#include <cppunit/extensions/TestFactoryRegistry.h>
-#include <cppunit/ui/text/TextTestRunner.h>
 #include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/CompilerOutputter.h>
+
+#include "dring.h"
+
+#include <stdexcept>
+
+void init_daemon()
+{
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    DRing::start("dring-sample.yml");
+}
 
 int main(int argc, char* argv[])
 {
+    init_daemon();
 
-  // Get the top level suite from the registry
-  CppUnit::Test *suite = CppUnit::TestFactoryRegistry::getRegistry().makeTest();
+    CppUnit::TextUi::TestRunner runner;
 
-  // Adds the test to the list of test to run
-  CppUnit::TextUi::TestRunner runner;
-  runner.addTest( suite );
+    // Register all tests
+    auto& registry = CppUnit::TestFactoryRegistry::getRegistry();
+    runner.addTest(registry.makeTest());
 
-  // Change the default outputter to a compiler error format outputter
-  runner.setOutputter( new CppUnit::CompilerOutputter( &runner.result(),
-                                                       std::cerr ) );
-  // Run the tests.
-  bool wasSucessful = runner.run();
+    // Use a compiler error format outputter for results and output into stderr
+    runner.setOutputter(new CppUnit::CompilerOutputter(&runner.result(), std::cerr ));
 
-  // Return error code 1 if the one of test failed.
-  return wasSucessful ? 0 : 1;
+    bool ret;
+
+    try {
+        // Run tests
+        ret = !runner.run("", false);
+    } catch (const std::exception& e) {
+        std::cerr << "Exception catched during tests: " << e.what() << '\n';
+        ret = 1;
+    }
+
+    DRing::fini();
+
+    return ret;
 }
