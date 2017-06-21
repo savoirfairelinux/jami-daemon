@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set OPUS_VERSION=b0dd440bbefa628e23ed50e418316c0afb4fe37d
+set OPUS_VERSION=4e59fb88fac0a4bfa616a7b1c2ec752baa610ef6
 set OPUS_URL=https://github.com/ShiftMediaProject/opus/archive/%OPUS_VERSION%.tar.gz
 
 mkdir %BUILD%
