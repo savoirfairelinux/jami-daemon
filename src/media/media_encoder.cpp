@@ -218,9 +218,7 @@ MediaEncoder::openOutput(const char *filename,
         throw MediaEncoderException("Could not allocate stream");
 
 #ifndef _WIN32
-    auto par = std::unique_ptr<AVCodecParameters>(new AVCodecParameters());
-    avcodec_parameters_from_context(par.get(), encoderCtx_);
-    stream_->codecpar = par.release();
+    avcodec_parameters_from_context(stream_->codecpar, encoderCtx_);
 #else
     stream_->codec = encoderCtx_;
 #endif
