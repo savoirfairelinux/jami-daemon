@@ -323,6 +323,8 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::set<std::string> callIDSet_;
 
+        void enableUpnp(bool state);
+
     protected:
         static void parseString(const std::map<std::string, std::string> &details, const char *key, std::string &s);
         static void parseBool(const std::map<std::string, std::string> &details, const char *key, bool &b);
@@ -466,11 +468,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::unique_ptr<ring::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
-
-        /**
-         * flag which determines if this account is set to use UPnP.
-         */
-        std::atomic_bool upnpEnabled_ {false};
 
         /**
          * private account codec searching functions
