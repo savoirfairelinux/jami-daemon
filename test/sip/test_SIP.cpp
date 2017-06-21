@@ -140,13 +140,13 @@ void test_SIP::testSimpleOutgoingIpCall()
        std::cout << "test_SIP: ERROR; return code from pthread_create()" << std::endl;
 
    std::string testaccount("IP2IP");
-   std::string testcallid("callid1234");
    std::string testcallnumber("sip:test@127.0.0.1:5068");
+   std::string testcallid; // returned by outgoingCall()
 
    CPPUNIT_ASSERT(!Manager::instance().hasCurrentCall());
 
    // start a new call sending INVITE message to sipp instance
-   Manager::instance().outgoingCall(testaccount, testcallid, testcallnumber);
+   testcallid = Manager::instance().outgoingCall(testaccount, testcallnumber);
 
    // must sleep here until receiving 180 and 200 message from peer
    sleep(2);
