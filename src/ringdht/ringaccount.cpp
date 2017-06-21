@@ -1962,7 +1962,7 @@ RingAccount::doRegister()
     }
 
     /* if UPnP is enabled, then wait for IGD to complete registration */
-    if ( upnpEnabled_ ) {
+    if (upnp_) {
         auto shared = shared_from_this();
         RING_DBG("UPnP: waiting for IGD to register RING account");
         setRegistrationState(RegistrationState::TRYING);
@@ -3212,7 +3212,7 @@ RingAccount::igdChanged()
 {
     if (not dht_.isRunning())
         return;
-    if ( upnpEnabled_ ) {
+    if (upnp_) {
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         std::thread{[shared] {
             auto& this_ = *shared.get();

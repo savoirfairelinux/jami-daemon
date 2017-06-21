@@ -101,7 +101,6 @@ Account::Account(const std::string &accountID)
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
     , mailBox_()
-    , upnp_(new upnp::Controller())
 {
     random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
@@ -137,6 +136,17 @@ Account::freeAccount()
     for (const auto& id : callIDSet_)
         Manager::instance().hangupCall(id);
     doUnregister();
+}
+
+void
+Account::enableUpnp(bool state)
+{
+    std::lock_guard<std::mutex> lk {upnp_mtx};
+
+    if (state and !upnp_)
+        upnp_.reset(new upnp::Controller());
+    else if (!state and upnp_)
+        upnp_.reset();
 }
 
 void
@@ -216,7 +226,7 @@ Account::serialize(YAML::Emitter& out)
     out << YAML::Key << USER_AGENT_KEY << YAML::Value << userAgent_;
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
-    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << upnpEnabled_;
+    out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << bool(upnp_);
 }
 
 void
@@ -246,7 +256,7 @@ Account::unserialize(const YAML::Node& node)
 
     bool enabled;
     parseValue(node, UPNP_ENABLED_KEY, enabled);
-    upnpEnabled_.store(enabled);
+    enableUpnp(enabled);
 }
 
 void
@@ -270,7 +280,7 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
         userAgent_ = DEFAULT_USER_AGENT;
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
-    upnpEnabled_.store(enabled);
+    enableUpnp(enabled);
 }
 
 std::map<std::string, std::string>
@@ -290,7 +300,7 @@ Account::getAccountDetails() const
         {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   ring::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
-        {Conf::CONFIG_UPNP_ENABLED,         upnpEnabled_ ? TRUE_STR : FALSE_STR},
+        {Conf::CONFIG_UPNP_ENABLED,         upnp_ ? TRUE_STR : FALSE_STR},
     };
 }
 
@@ -437,7 +447,7 @@ IpAddr
 Account::getUPnPIpAddress() const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
-    if (upnpEnabled_)
+    if (upnp_)
         return upnp_->getExternalIP();
     return {};
 }
@@ -450,7 +460,7 @@ bool
 Account::getUPnPActive(std::chrono::seconds timeout) const
 {
     std::lock_guard<std::mutex> lk(upnp_mtx);
-    if (upnpEnabled_)
+    if (upnp_)
         return upnp_->hasValidIGD(timeout);
     return false;
 }
