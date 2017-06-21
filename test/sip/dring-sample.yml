@@ -1,0 +1,115 @@
+accounts:
+  - id: IP2IP
+    alias: IP2IP
+    enable: true
+    type: SIP
+    allCodecs: 1/2/3/4/5/6/7/8/9/10/11/
+    mailbox: ""
+    autoAnswer: false
+    activeCallLimit: -1
+    ringtoneEnabled: true
+    ringtonePath: /usr/share/ring/ringtones/default.wav
+    hasCustomUserAgent: false
+    useragent: Ring/3.0.0
+    displayName: ""
+    hostname: ""
+    upnpEnabled: false
+    audioPortMax: 32766
+    audioPortMin: 16384
+    dtmfType: overrtp
+    interface: default
+    publishAddr: ""
+    publishPort: 5060
+    sameasLocal: true
+    videoEnabled: true
+    videoPortMax: 65534
+    videoPortMin: 49152
+    stunEnabled: false
+    stunServer: ""
+    turnEnabled: false
+    turnServer: ""
+    turnServerUserName: ""
+    turnServerPassword: ""
+    turnServerRealm: ""
+    port: 5060
+    username: ""
+    credential:
+      - Account.password: ""
+        Account.realm: "*"
+        Account.username: ""
+    keepAlive: false
+    presenceModuleEnabled: false
+    presencePublishSupported: false
+    presenceSubscribeSupported: false
+    registrationexpire: 60
+    serviceRoute: ""
+    tls:
+      calist: ""
+      certificate: ""
+      password: ""
+      privateKey: ""
+      enable: false
+      tlsPort: 5061
+      verifyClient: true
+      verifyServer: false
+      requireCertif: true
+      timeout: 2
+      ciphers: ""
+      method: TLSv1
+      server: ""
+    srtp:
+      keyExchange: ""
+      rtpFallback: false
+preferences:
+  historyLimit: 0
+  historyMaxCalls: 20
+  md5Hash: false
+  order: IP2IP/
+  portNum: 5060
+  registrationexpire: 180
+  searchBarDisplay: true
+  zoneToneChoice: North America
+voipPreferences:
+  playDtmf: true
+  playTones: true
+  pulseLength: 250
+  symmetric: true
+  zidFile: ""
+hooks:
+  numberAddPrefix: ""
+  sipEnabled: false
+  urlCommand: x-www-browser
+  urlSipField: X-ring-url
+audio:
+  alsa:
+    cardIn: 0
+    cardOut: 0
+    cardRing: 0
+    plugin: default
+    smplRate: 44100
+  alwaysRecording: false
+  audioApi: pulseaudio
+  automaticGainControl: false
+  captureMuted: false
+  noiseReduce: false
+  playbackMuted: false
+  pulse:
+    devicePlayback: ""
+    deviceRecord: ""
+    deviceRingtone: ""
+  recordPath: ""
+  volumeMic: 1
+  volumeSpkr: 1
+video:
+  decodingAccelerated: true
+  devices:
+    - framerate: 30
+      channel: Camera 1
+      video_size: 960x540
+      name: Integrated Camera
+shortcuts:
+  hangUp: ""
+  pickUp: ""
+  popupWindow: ""
+  toggleHold: ""
+  togglePickupHangup: ""
