@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2013 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2017 Savoir-Faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -16,19 +17,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  *
- *  Additional permission under GNU GPL version 3 section 7:
- *
- *  If you modify this program, or any covered work, by linking or
- *  combining it with the OpenSSL project's OpenSSL library (or a
- *  modified version of that library), containing parts covered by the
- *  terms of the OpenSSL or SSLeay licenses, Savoir-Faire Linux Inc.
- *  grants you additional permission to convey the resulting work.
- *  Corresponding Source for a non-source form of such a combination
- *  shall include the source code for the parts of OpenSSL used as well
- *  as that of the covered work.
  */
 #pragma once
-//#include "../../src/manager.h"
 
 // Cppunit import
 #include <cppunit/extensions/HelperMacros.h>
@@ -38,59 +28,87 @@
 
 // Application import
 #include "manager.h"
-#include "../../src/sip/sipvoiplink.h"
-#include "../../src/sip/sip_utils.h"
+#include "sip/sipvoiplink.h"
+#include "sip/sip_utils.h"
+
+#include <atomic>
+
+#include <thread>
+class RAIIThread
+{
+public:
+    RAIIThread() = default;
+
+    RAIIThread(std::thread&& t) : thread_ {std::move(t)} {};
+
+    ~RAIIThread() {
+        join();
+    }
+
+    void join() {
+        if (thread_.joinable())
+            thread_.join();
+    }
+
+    RAIIThread(RAIIThread&&) = default;
+    RAIIThread& operator=(RAIIThread&&) = default;
+
+private:
+    std::thread thread_;
+};
+
 /*
  * @file Test-sip.h
  * @brief       Regroups unitary tests related to the SIP module
  */
 
-namespace ring {
-class test_SIP : public CppUnit::TestFixture {
+class test_SIP : public CppUnit::TestFixture
+{
+public:
+    //test_SIP() : CppUnit::TestCase("SIP module Tests") {}
 
-        /**
-          * Use cppunit library macros to add unit test the factory
-          */
-        CPPUNIT_TEST_SUITE(test_SIP);
-        CPPUNIT_TEST ( testSimpleOutgoingIpCall );
-        //CPPUNIT_TEST ( testParseDisplayName );
-        //CPPUNIT_TEST ( testSimpleIncomingIpCall );
-        //CPPUNIT_TEST ( testTwoOutgoingIpCall );
-        //CPPUNIT_TEST ( testTwoIncomingIpCall );
-        //CPPUNIT_TEST ( testHoldIpCall );
-        //CPPUNIT_TEST ( testIncomingIpCallSdp );
-        CPPUNIT_TEST_SUITE_END();
+    /*
+     * Code factoring - Common resources can be initialized here.
+     * This method is called by unitcpp before each test
+     */
+    void setUp();
 
-    public:
-        //test_SIP() : CppUnit::TestCase("SIP module Tests") {}
+    /*
+     * Code factoring - Common resources can be released here.
+     * This method is called by unitcpp after each test
+     */
+    void tearDown();
 
-        /*
-         * Code factoring - Common resources can be initialized here.
-         * This method is called by unitcpp before each test
-         */
-        void setUp();
+private:
+    void testSimpleOutgoingIpCall(void);
 
-        /*
-         * Code factoring - Common resources can be released here.
-         * This method is called by unitcpp after each test
-         */
-        void tearDown();
+    //void testSimpleIncomingIpCall(void);
 
+    void testTwoOutgoingIpCall(void);
 
-        void testSimpleOutgoingIpCall(void);
+    //void testTwoIncomingIpCall(void);
 
-        //void testSimpleIncomingIpCall(void);
+    void testHoldIpCall(void);
 
-        void testTwoOutgoingIpCall(void);
+    //void testIncomingIpCallSdp(void);
 
-        //void testTwoIncomingIpCall(void);
+    //void testSIPURI();
 
-        void testHoldIpCall(void);
+    //void testParseDisplayName();
 
-        //void testIncomingIpCallSdp(void);
+    /**
+     * Use cppunit library macros to add unit test the factory
+     */
+    CPPUNIT_TEST_SUITE(test_SIP);
+    CPPUNIT_TEST ( testSimpleOutgoingIpCall );
+    //CPPUNIT_TEST ( testParseDisplayName );
+    //CPPUNIT_TEST ( testSimpleIncomingIpCall );
+    //CPPUNIT_TEST ( testTwoOutgoingIpCall );
+    //CPPUNIT_TEST ( testTwoIncomingIpCall );
+    //CPPUNIT_TEST ( testHoldIpCall );
+    //CPPUNIT_TEST ( testIncomingIpCallSdp );
+    CPPUNIT_TEST_SUITE_END();
 
-        //void testSIPURI();
-
-        //void testParseDisplayName();
+    RAIIThread eventLoop_;
+    std::atomic_bool running_;
 };
-} //end ring namespace
