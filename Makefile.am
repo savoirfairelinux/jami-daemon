@@ -6,7 +6,7 @@ SOURCES=
 
 ACLOCAL_AMFLAGS = -I m4
 
-SUBDIRS = src ringtones man $(TESTS_DIR) doc bin
+SUBDIRS = src ringtones man $(TESTS_DIR) doc bin test
 
 EXTRA_DIST = m4/libtool.m4 \
 			 m4/lt~obsolete.m4 \
