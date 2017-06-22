@@ -842,9 +842,10 @@ void SIPAccount::doUnregister(std::function<void(bool)> released_cb)
     if (released_cb)
         released_cb(not isIP2IP());
 
-    /* RING_DBG("UPnP: removing port mapping for SIP account."); */
-    upnp_->setIGDListener();
-    upnp_->removeMappings();
+    if (upnpEnabled_) {
+        upnp_->setIGDListener();
+        upnp_->removeMappings();
+    }
 }
 
 void
