@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2016 Savoir-faire Linux Inc.
  *
  *  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
+ *  Author: Asad Salman <me@asad.co>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,54 +31,12 @@
 %include "std_vector.i";
 %include "stdint.i";
 
-/* void* shall be handled as byte arrays */
-%typemap(jni) void * "void *"
-%typemap(jtype) void * "byte[]"
-%typemap(jstype) void * "byte[]"
-%typemap(javain) void * "$javainput"
-%typemap(in) void * %{
-    $1 = (void*)$input;
-%}
-%typemap(javadirectorin) void * "$jniinput"
-%typemap(out) void * %{
-    $result = $1;
-%}
-%typemap(javaout) void * {
-    return $jnicall;
-}
 
 /* Avoid uint64_t to be converted to BigInteger */
 %apply int64_t { uint64_t };
 
 namespace std {
 
-%typemap(javacode) map<string, string> %{
-  public static $javaclassname toSwig(java.util.Map<String,String> in) {
-    $javaclassname n = new $javaclassname();
-    for (java.util.Map.Entry<String, String> entry : in.entrySet()) {
-      if (entry.getValue() != null) {
-        n.set(entry.getKey(), entry.getValue());
-      }
-    }
-    return n;
-  }
-  public java.util.HashMap<String,String> toNative() {
-    java.util.HashMap<String,String> out = new java.util.HashMap<>((int)size());
-    StringVect keys = keys();
-    for (String s : keys) {
-        out.put(s, get(s));
-    }
-    return out;
-  }
-  public java.util.HashMap<String,String> toNativeFromUtf8() {
-      java.util.HashMap<String,String> out = new java.util.HashMap<>((int)size());
-      StringVect keys = keys();
-      for (String s : keys) {
-        out.put(s, getRaw(s).toJavaString());
-      }
-      return out;
-  }
-%}
 %extend map<string, string> {
     std::vector<std::string> keys() const {
         std::vector<std::string> k;
@@ -97,8 +56,7 @@ namespace std {
 }
 %template(StringMap) map<string, string>;
 
-%typemap(javabase) vector<string> "java.util.AbstractList<String>"
-%typemap(javainterface) vector<string> "java.util.RandomAccess"
+
 %extend vector<string> {
   value_type set(int i, const value_type& in) throw (std::out_of_range) {
     const std::string old = $self->at(i);
@@ -115,46 +73,13 @@ namespace std {
 }
 %template(StringVect) vector<string>;
 
-%typemap(javacode) vector< map<string,string> > %{
-  public java.util.ArrayList<java.util.Map<String, String>> toNative() {
-    java.util.ArrayList<java.util.Map<String, String>> out = new java.util.ArrayList<>();
-    for (int i = 0; i < size(); ++i) {
-        out.add(get(i).toNative());
-    }
-    return out;
-  }
-%}
+
 %template(VectMap) vector< map<string,string> >;
 %template(IntegerMap) map<string,int>;
 %template(IntVect) vector<int32_t>;
 %template(UintVect) vector<uint32_t>;
 
-%typemap(javacode) vector<uint8_t> %{
-  public static Blob fromString(String in) {
-    byte[] dat;
-    try {
-      dat = in.getBytes("UTF-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-      dat = in.getBytes();
-    }
-    Blob n = new Blob(dat.length);
-    for (int i=0; i<dat.length; i++) {
-      n.set(i, dat[i]);
-    }
-    return n;
-  }
-  public String toJavaString() {
-    byte[] dat = new byte[(int)size()];
-    for (int i=0; i<dat.length; i++) {
-        dat[i] = (byte)get(i);
-    }
-    try {
-        return new String(dat, "utf-8");
-    } catch (java.io.UnsupportedEncodingException e) {
-        return "";
-    }
-  }
-%}
+
 %template(Blob) vector<uint8_t>;
 %template(FloatVect) vector<float>;
 }
@@ -179,7 +104,7 @@ namespace std {
 
 %header %{
 
-#include "callback.hpp"
+#include "callback.h"
 %}
 
 %inline %{
