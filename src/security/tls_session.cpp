@@ -941,7 +941,7 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
 void
 TlsSession::flushRxQueue()
 {
-    std::unique_lock<std::mutex> lk {reorderBufMutex_};
+    std::lock_guard<std::mutex> lk {reorderBufMutex_};
     if (reorderBuffer_.empty())
         return;
 
@@ -969,9 +969,7 @@ TlsSession::flushRxQueue()
         item = reorderBuffer_.erase(item);
 
         if (callbacks_.onRxData) {
-            lk.unlock();
             callbacks_.onRxData(std::move(pkt));
-            lk.lock();
         }
     }
 
