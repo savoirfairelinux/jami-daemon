@@ -211,21 +211,16 @@ CLEAN_PKG += pkgconfig
 DISTCLEAN_PKG += pkg-config-$(PKGCFG_VERSION).tar.gz
 
 # gas-preprocessor
-gas-preprocessor-$(GAS_VERSION).tar.gz:
+gas-preprocessor-$(GAS_VERSION).pl:
 	$(call download,$(GAS_URL))
 
-gas: gas-preprocessor-$(GAS_VERSION).tar.gz
-	$(UNPACK)
-	$(MOVE)
-
-.gas: gas
+.gas: gas-preprocessor-$(GAS_VERSION).pl
 	mkdir -p $(PREFIX)/bin
-	cp gas/gas-preprocessor.pl $(PREFIX)/build/bin/
+	cp gas-preprocessor-$(GAS_VERSION).pl $(PREFIX)/bin/gas-preprocessor
 	touch $@
 
 CLEAN_FILE += .gas
-CLEAN_PKG += gas
-DISTCLEAN_PKG += yuvi-gas-preprocessor-$(GAS_VERSION).tar.gz
+DISTCLEAN_PKG += gas-preprocessor-$(GAS_VERSION).pl
 
 # GNU sed
 
