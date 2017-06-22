@@ -91,7 +91,8 @@ VaapiAccel::checkAvailability()
     if (hardwareDeviceCtx == nullptr)
         return false;
 #elif HAVE_VAAPI_ACCEL_X11
-    deviceName_ = ":0";
+    auto dpy = getenv("DISPLAY");
+    deviceName_ = dpy ? dpy : "";
     if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) < 0) {
         return false;
     }
