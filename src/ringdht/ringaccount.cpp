@@ -2555,9 +2555,10 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         pendingSipCalls_.clear();
     }
 
-    /* RING_DBG("UPnP: removing port mapping for DHT account."); */
-    upnp_->setIGDListener();
-    upnp_->removeMappings();
+    if (upnp_) {
+        upnp_->setIGDListener();
+        upnp_->removeMappings();
+    }
 
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
