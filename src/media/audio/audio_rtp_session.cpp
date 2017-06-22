@@ -250,9 +250,9 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
     : id_(id)
     , format_(format)
     , stream_(sdp)
-    , mtu_(mtu)
     , sdpContext_(new MediaIOHandle(sdp.size(), false, &readFunction,
                                     0, 0, this))
+    , mtu_(mtu)
     , loop_(std::bind(&AudioReceiveThread::setup, this),
             std::bind(&AudioReceiveThread::process, this),
             std::bind(&AudioReceiveThread::cleanup, this))
