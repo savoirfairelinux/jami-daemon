@@ -219,6 +219,7 @@ private:
     std::list<std::vector<uint8_t>> rxQueue_ {};
 
     std::mutex reorderBufMutex_;
+    bool flushProcessing_ {false}; ///< protect against recursive call to flushRxQueue
     std::vector<uint8_t> rawPktBuf_; ///< gnutls incoming packet buffer
     uint64_t baseSeq_ {0}; ///< sequence number of first application data packet received
     uint64_t lastRxSeq_ {0}; ///< last received and valid packet sequence number
