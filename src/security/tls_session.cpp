@@ -941,9 +941,24 @@ TlsSession::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
 void
 TlsSession::flushRxQueue()
 {
+    // RAII bool swap
+    class GuardedBoolSwap {
+    public:
+        explicit GuardedBoolSwap(bool& var) : var_ {var} { var_ = !var_; }
+        ~GuardedBoolSwap() { var_ = !var_; }
+    private:
+        bool& var_;
+    };
+
     std::unique_lock<std::mutex> lk {reorderBufMutex_};
     if (reorderBuffer_.empty())
         return;
+
+    // Prevent re-entrant access as the callbacks_.onRxData() is called in unprotected region
+    if (flushProcessing_)
+        return;
+
+    GuardedBoolSwap swap_flush_processing {flushProcessing_};
 
     auto item = std::begin(reorderBuffer_);
     auto next_offset = item->first;
