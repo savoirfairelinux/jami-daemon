@@ -44,9 +44,9 @@
 namespace ring {
 
 // maximum number of packets the jitter buffer can queue
-const unsigned jitterBufferMaxSize_ {5000};
+const unsigned jitterBufferMaxSize_ {1500};
 // maximum time a packet can be queued
-const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(1500);
+const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
