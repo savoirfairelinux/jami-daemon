@@ -305,11 +305,11 @@ SinkClient::stop() noexcept
 SinkClient::SinkClient(const std::string& id, bool mixer)
     : id_ {id}
     , mixer_(mixer)
+    , scaler_(new VideoScaler())
 #ifdef DEBUG_FPS
     , frameCount_(0u)
     , lastFrameDebug_(std::chrono::system_clock::now())
 #endif
-    , scaler_(new VideoScaler())
 {}
 
 void

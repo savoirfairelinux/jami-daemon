@@ -46,11 +46,11 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , dstHeight_(0)
     , id_(id)
     , stream_(sdp)
-    , mtu_(mtu)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
     , restartDecoder_(false)
     , isReset_(isReset)
+    , mtu_(mtu)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
             std::bind(&VideoReceiveThread::process, this),
