@@ -377,7 +377,6 @@ struct Manager::ManagerPimpl
 
 Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     : base_(base)
-    , pluginManager_(new PluginManager)
     , toneCtrl_(base.preferences)
     , currentCallMutex_()
     , dtmfKey_()
@@ -387,6 +386,7 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , waitingCallsMutex_()
     , path_()
     , ringbufferpool_(new RingBufferPool)
+    , pluginManager_(new PluginManager)
     , conferenceMap_()
     , ice_tf_()
 #ifdef RING_VIDEO
