@@ -55,6 +55,7 @@ VdpauAccel::~VdpauAccel()
 int
 VdpauAccel::allocateBuffer(AVFrame* frame, int flags)
 {
+    (void) flags;
     return av_hwframe_get_buffer(framesBufferRef_.get(), frame, 0);
 }
 
