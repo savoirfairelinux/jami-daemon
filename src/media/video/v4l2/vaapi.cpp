@@ -91,8 +91,7 @@ VaapiAccel::checkAvailability()
     if (hardwareDeviceCtx == nullptr)
         return false;
 #elif HAVE_VAAPI_ACCEL_X11
-    deviceName_ = ":0";
-    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName_.c_str(), nullptr, 0) < 0) {
+    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, nullptr, nullptr, 0) < 0) {
         return false;
     }
 #endif
@@ -123,7 +122,10 @@ VaapiAccel::init()
 
     codecCtx_->hw_frames_ctx = av_buffer_ref(framesBufferRef_.get());
 
-    RING_DBG("VAAPI decoder initialized via device: %s", deviceName_.c_str());
+    if (!deviceName_.empty())
+        RING_DBG("VAAPI decoder initialized via device: %s", deviceName_.c_str());
+    else
+        RING_DBG("VAAPI decoder initialized");
     return true;
 }
 
