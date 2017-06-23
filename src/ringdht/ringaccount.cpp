@@ -2015,7 +2015,18 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
         return;
     }
     std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
-    auto h = dht::InfoHash(parseRingUri(buddy_id));
+
+    std::string buddyUri;
+
+    try {
+        buddyUri = parseRingUri(buddy_id);
+    }
+    catch (...) {
+        RING_ERR("Failed to track a buddy due to an invalid URI %s", buddy_id.c_str());
+        return;
+    }
+
+    auto h = dht::InfoHash(parseRingUri(buddyUri));
     auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
     if (buddy_infop.second) {
         auto& buddy_info = buddy_infop.first->second;
@@ -3280,7 +3291,17 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         return;
     }
 
-    auto toUri = parseRingUri(to);
+    std::string toUri;
+
+    try {
+        toUri = parseRingUri(to);
+    }
+    catch (...) {
+        RING_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
+        messageEngine_.onMessageSent(token, false);
+        return;
+    }
+
     auto toH = dht::InfoHash(toUri);
     auto now = clock::to_time_t(clock::now());
 
