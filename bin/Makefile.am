@@ -18,8 +18,10 @@ ringcli_CXXFLAGS = -I$(top_srcdir)/src \
 ringcli_LDADD = $(top_builddir)/src/libring.la
 endif
 
+SUBDIRS=
+
 if RING_DBUS
-SUBDIRS=dbus
+SUBDIRS+=dbus
 
 ringlib_PROGRAMS = dring
 
@@ -33,11 +35,11 @@ dring_LDADD = dbus/libclient_dbus.la ${DBUSCPP_LIBS} $(top_builddir)/src/libring
 endif
 
 if RING_NODEJS
-SUBDIRS=nodejs
+SUBDIRS+=nodejs
 endif
 
 if RING_RESTCPP
-SUBDIRS=restcpp
+SUBDIRS+=restcpp
 
 sbin_PROGRAMS = restdring
 
