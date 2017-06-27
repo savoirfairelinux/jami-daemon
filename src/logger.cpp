@@ -201,10 +201,16 @@ vlogger(const int level, const char *format, va_list ap)
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
 
-        auto sep = strchr(format, '|'); // must exist, check LOG_FORMAT
-        std::string ctx(format, sep - format);
-        format = sep + 2;
-        fputs(getHeader(ctx.c_str()).c_str(), stderr);
+        std::string ctx;
+
+        // WARNING : the '|' exists only with ring logs, not other logs like thus from OpenDHT
+        // WARNING : PLEASE DO NOT DROP THIS TEST !!!! (or die)
+        auto sep = strchr(format, '|');
+        if (sep) {
+            ctx = std::string(format, sep - format);
+            format = sep + 2;
+            fputs(getHeader(ctx.c_str()).c_str(), stderr);
+        }
 #ifdef RING_UWP
         char tmp[4096];
         vsprintf(tmp, format, ap);
@@ -219,6 +225,10 @@ vlogger(const int level, const char *format, va_list ap)
 #endif
 
         vfprintf(stderr, format, ap);
+
+        // WARING: this one also! see above
+        if (not sep)
+            fputs(ENDL, stderr);
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
