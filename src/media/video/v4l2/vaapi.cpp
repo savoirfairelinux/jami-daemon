@@ -79,9 +79,11 @@ VaapiAccel::checkAvailability()
 {
     AVBufferRef* hardwareDeviceCtx = nullptr;
 #ifdef HAVE_VAAPI_ACCEL_DRM
-    // try all possible devices, use first one that works
     const std::string path = "/dev/dri/";
-    for (auto& entry : ring::fileutils::readDirectory(path)) {
+    auto files = ring::fileutils::readDirectory(path);
+    // renderD* is preferred over card*
+    std::sort(files.rbegin(), files.rend());
+    for (auto& entry : files) {
         std::string deviceName = path + entry;
         if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VAAPI, deviceName.c_str(), nullptr, 0) >= 0) {
             deviceName_ = deviceName;
