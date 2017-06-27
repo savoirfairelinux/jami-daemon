@@ -244,7 +244,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
                     codecCtx->get_format = getFormatCb;
                     codecCtx->get_buffer2 = allocateBufferCb;
                     codecCtx->thread_safe_callbacks = 1;
-                    codecCtx->thread_count = 1;
                     RING_DBG("Attempting to use '%s' hardware acceleration", accel->name().c_str());
                     return accel;
                 }
