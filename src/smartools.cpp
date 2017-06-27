@@ -39,6 +39,11 @@ Smartools::Smartools()
 : loop_([this] { return true; }, [this] { process(); }, [] {})
 {}
 
+Smartools::~Smartools()
+{
+    loop_.join();
+}
+
 void
 Smartools::sendInfo()
 {

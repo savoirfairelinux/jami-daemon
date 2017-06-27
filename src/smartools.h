@@ -40,6 +40,7 @@ class Smartools
 
     private:
         Smartools();
+        ~Smartools();
         void process();
         std::map<std::string, std::string> information_;
         std::mutex mutexInfo_; // Protect information_ from multithreading
