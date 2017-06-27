@@ -502,9 +502,17 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
             pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
         }
         pj_dns_resolver* resv;
-        TRY(pjsip_endpt_create_resolver(endpt_, &resv));
-        TRY(pj_dns_resolver_set_ns(resv, ns.size(), dns_nameservers.data(), nullptr));
-        TRY(pjsip_endpt_set_resolver(endpt_, resv));
+        if (auto ret = pjsip_endpt_create_resolver(endpt_, &resv)) {
+            RING_WARN("Error creating SIP DNS resolver: %s", sip_utils::sip_strerror(ret).c_str());
+        } else {
+            if (auto ret = pj_dns_resolver_set_ns(resv, ns.size(), dns_nameservers.data(), nullptr)) {
+                RING_WARN("Error setting SIP DNS servers: %s", sip_utils::sip_strerror(ret).c_str());
+            } else {
+                if (auto ret = pjsip_endpt_set_resolver(endpt_, resv)) {
+                    RING_WARN("Error setting pjsip DNS resolver: %s", sip_utils::sip_strerror(ret).c_str());
+                }
+            }
+        }
     }
 
     sipTransportBroker.reset(new SipTransportBroker(endpt_, cp_, *pool_));
