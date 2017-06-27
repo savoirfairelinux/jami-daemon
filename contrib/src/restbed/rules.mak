@@ -45,6 +45,7 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz
 	$(APPLY) $(SRC)/restbed/strand.patch
 	$(APPLY) $(SRC)/restbed/uri_cpp.patch
 	$(APPLY) $(SRC)/restbed/dns-resolution-error.patch
+	$(APPLY) $(SRC)/restbed/string.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
