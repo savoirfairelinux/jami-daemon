@@ -75,6 +75,7 @@
 #include <cctype>
 #include <cstdarg>
 #include <string>
+#include <system_error>
 
 namespace ring {
 
@@ -486,7 +487,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     {
         auto call = wCall.lock();
         if (not call) return;
-        RING_WARN("[call %s] Found device %s", call->getCallId().c_str(), dev.toString().c_str());
+        RING_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
 
         auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
@@ -572,8 +573,10 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         });
     }, [=](bool ok){
         if (not ok) {
-            if (auto call = wCall.lock())
-                call->onFailure();
+            if (auto call = wCall.lock()) {
+                RING_WARN("[call:%s] no devices found", call->getCallId().c_str());
+                call->onFailure(static_cast<int>(std::errc::host_unreachable));
+            }
         }
     });
 }
