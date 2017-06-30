@@ -98,7 +98,7 @@ namespace std {
 %include "configurationmanager.i"
 %include "presencemanager.i"
 %include "videomanager.i"
-%include "callback.i"
+
 
 #include "dring/callmanager_interface.h"
 
@@ -112,9 +112,10 @@ namespace std {
  * that are not declared elsewhere in the c++ code
  */
 
-void init(){
-    using namespace std::placeholders;
+void init(const SwigV8Arguments& args){
+    parseCbMap(args[0]);
 
+    using namespace std::placeholders;
     using std::bind;
     using DRing::exportable_callback;
     using DRing::ConfigurationSignal;
@@ -122,7 +123,18 @@ void init(){
 
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::AccountsChanged>(bind(&accountsChanged)),
-        exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&registrationStateChanged, _1, _2, _3, _4))
+        exportable_callback<ConfigurationSignal::RegistrationStateChanged>(bind(&registrationStateChanged, _1, _2, _3, _4)),
+        exportable_callback<ConfigurationSignal::ContactAdded>(bind(&contactAdded, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::ContactRemoved>(bind(&contactRemoved, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::ExportOnRingEnded>(bind(&exportOnRingEnded, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::NameRegistrationEnded>(bind(&nameRegistrationEnded, _1, _2, _3 )),
+        exportable_callback<ConfigurationSignal::RegisteredNameFound>(bind(&registeredNameFound, _1, _2, _3, _4 )),
+        //exportable_callback<ConfigurationSignal::KnownDevicesChanged>(bind(&knownDevicesChanged, _1, _2 )),
+        //exportable_callback<ConfigurationSignal::VolatileDetailsChanged>(bind(&volatileDetailsChanged, _1, _2)),
+        //exportable_callback<ConfigurationSignal::IncomingAccountMessage>(bind(&incomingAccountMessage, _1, _2, _3 )),
+        //exportable_callback<ConfigurationSignal::AccountMessageStatusChanged>(bind(&accountMessageStatusChanged, _1, _2, _3, _4 )),
+        //exportable_callback<ConfigurationSignal::IncomingTrustRequest>(bind(&incomingTrustRequest, _1, _2, _3, _4 )),
+
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
