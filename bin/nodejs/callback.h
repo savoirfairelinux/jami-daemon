@@ -59,13 +59,13 @@ void setCallback(const std::string& signal, Local<Function>& func){
     }
 }
 
-void parseCbMap(const Local<Value>& arg){
-    Local<Object> array  = arg->ToObject();
-    Local<Array> props = array->GetOwnPropertyNames();
+void parseCbMap(const Local<Value>& callbackMap){
+    Local<Object> cbAssocArray  = callbackMap->ToObject();
+    Local<Array> props = cbAssocArray->GetOwnPropertyNames();
     for (uint32_t i = 0; i < props->Length(); ++i) {
         const Local<Value> key_local = props->Get(i);
         std::string key = *String::Utf8Value(key_local);
-        Handle<Object> buffer = array->Get(V8_STRING_NEW(key))->ToObject();
+        Handle<Object> buffer = cbAssocArray->Get(V8_STRING_NEW(key))->ToObject();
         Local<Function> func = Local<Function>::Cast(buffer);
         setCallback(key,func);
     }
