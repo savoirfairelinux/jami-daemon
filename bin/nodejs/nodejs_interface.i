@@ -106,13 +106,25 @@ namespace std {
 #include "callback.h"
 %}
 
+//typemap for passing Callbacks
+%typemap(in) v8::Local<v8::Function> {
+    $1 = v8::Local<v8::Function>::Cast($input);
+}
+
+//typemap for handling map of functions
+//used only for init, cleared after init is processed
+%typemap(in) const v8::Handle<v8::Value>  {
+    $1 = $input;
+}
+
+
 %inline %{
 /* some functions that need to be declared in *_wrap.cpp
  * that are not declared elsewhere in the c++ code
  */
 
-void init(const SwigV8Arguments& args){
-    parseCbMap(args[0]);
+void init(const v8::Handle<v8::Value> &funcMap){
+    parseCbMap(funcMap);
 
     using namespace std::placeholders;
     using std::bind;
@@ -143,8 +155,6 @@ void init(const SwigV8Arguments& args){
 
     DRing::start();
 }
-
-
 %}
 #ifndef SWIG
 /* some bad declarations */
