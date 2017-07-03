@@ -6,6 +6,7 @@ ENV LC_ALL en_US.utf8
 RUN dnf -y upgrade
 
 # General
+RUN dnf -y groupinstall "Minimal Install"
 RUN dnf -y install \
  unzip \
  openssh
@@ -67,5 +68,3 @@ RUN dnf -y install \
 ENV CMAKE_PREFIX_PATH /usr/i686-w64-mingw32/sys-root/mingw/lib/cmake:/usr/x86_64-w64-mingw32/sys-root/mingw/lib/cmake
 ENV QTDIR /usr/i686-w64-mingw32/sys-root/mingw/lib/qt5/:/usr/x86_64-w64-mingw32/sys-root/mingw/lib/qt5/
 ENV PATH /usr/i686-w64-mingw32/bin/qt5/:/usr/x86_64-w64-mingw32/bin/qt5/:$PATH
-ENV CROSS_COMPILE i686-w64-mingw32-
-ENV HOST i686-w64-mingw32
