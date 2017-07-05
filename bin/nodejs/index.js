@@ -17,24 +17,46 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
-"use strict";
-const dring = require("./build/Release/dring");
 
-dring.init({
-    "AccountsChanged": function(){
-        console.log("AccountsChanged JS");
-    },
-    "RegistrationStateChanged": function(account_id, state, code, detail_str){
-        console.log("RegistrationStateChanged JS " + account_id + "|" + state + "|" + code + "|" + detail_str);
+
+ "use strict";
+ class RingDaemon{
+    constructor(callbackMap){
+        this.dring = require("./build/Release/dring");
+        this.dring.init(callbackMap);
+        var that = this;
+        setInterval(function () {
+            that.dring.pollEvents();
+            console.log("Polling...");
+        }, 10);
     }
-});
 
-/*var params = new dring.StringMap();
-params.set("Account.type", "RING");
-params.set("Account.alias", "RingAccount");
-dring.addAccount(params);*/
+    addAccount(Account){
+        var params = new this.dring.StringMap();
+        params.set("Account.type", "RING");
+        params.set("Account.alias", Account.alias);
+        this.dring.addAccount(params);
+    }
 
-setInterval(function () {
-    dring.pollEvents();
-    //console.log("Polling...");
-}, 10);
+    getAudioOutputDeviceList(){
+        var devicesVect = this.dring.getAudioOutputDeviceList();
+        var outputDevices = [];
+        for(var i=0; i<devicesVect.size(); i++)
+            outputDevices.push(devicesVect.get(i));
+
+        return outputDevices;
+    }
+
+    getVolume(device){
+        return this.dring.getVolume(device);
+    }
+
+    setVolume(device, volume){
+        return this.dring.setVolume(device,volume);
+    }
+}
+
+var f = function(){console.log("AccountsChanged JS");};
+var daemon = new RingDaemon({"AccountsChanged": f});
+//daemon.addAccount({alias:"myAlias"});
+//console.log(daemon.getAudioOutputDeviceList());
