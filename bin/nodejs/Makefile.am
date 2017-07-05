@@ -16,4 +16,5 @@ build/Release/obj.target/dring.node: build/Makefile ring_wrapper.cpp callback.h
 	node-gyp build
 
 CLEANFILES= \
-	$(BUILT_SOURCES)
+	$(BUILT_SOURCES) \
+	build/Release/dring.node
