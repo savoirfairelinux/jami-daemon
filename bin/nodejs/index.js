@@ -17,24 +17,98 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
+
+
 "use strict";
-const dring = require("./build/Release/dring");
-
-dring.init({
-    "AccountsChanged": function(){
-        console.log("AccountsChanged JS");
-    },
-    "RegistrationStateChanged": function(account_id, state, code, detail_str){
-        console.log("RegistrationStateChanged JS " + account_id + "|" + state + "|" + code + "|" + detail_str);
+class RingDaemon{
+    constructor(callbackMap) {
+        this.dring = require("./build/Release/dring");
+        this.dring.init(callbackMap);
+        var that = this;
+        this.pollIntervalId = setInterval(function () {
+            that.dring.pollEvents();
+            console.log("Polling...");
+        }, 10);
     }
-});
 
-/*var params = new dring.StringMap();
-params.set("Account.type", "RING");
-params.set("Account.alias", "RingAccount");
-dring.addAccount(params);*/
+    addAccount(account) {
+        var params = new this.dring.StringMap();
+        params.set("Account.type", "RING");
+        if(account.archivePassword){
+            params.set("Account.archivePassword", account.archivePassword);
+        } else {
+            console.log("archivePassword required");
+            return;
+        }
+        if(account.alias)
+            params.set("Account.alias", account.alias);
+        if(account.displayName)
+            params.set("Account.displayName", account.displayName);
+        if(account.enable)
+            params.set("Account.enable", account.enable ? "TRUE":"FALSE");
+        if(account.autoAnswer)
+            params.set("Account.autoAnswer", account.autoAnswer ? "TRUE":"FALSE");
+        if(account.ringtonePath)
+            params.set("Account.ringtonePath", account.ringtonePath);
+        if(account.ringtoneEnabled)
+            params.set("Account.ringtoneEnabled", account.ringtoneEnabled ? "TRUE":"FALSE");
+        if(account.videoEnabled)
+            params.set("Account.videoEnabled", account.videoEnabled ? "TRUE":"FALSE");
+        if(account.useragent){
+            params.set("Account.useragent", account.useragent);
+            params.set("Account.hasCustomUserAgent","TRUE");
+        } else {
+            params.set("Account.hasCustomUserAgent","FALSE");
+        }
+        if(account.audioPortMin)
+            params.set("Account.audioPortMin", account.audioPortMin);
+        if(account.audioPortMax)
+            params.set("Account.audioPortMax", account.audioPortMax);
+        if(account.videoPortMin)
+            params.set("Account.videoPortMin", account.videoPortMin);
+        if(account.videoPortMax)
+            params.set("Account.videoPortMax", account.videoPortMax);
+        if(account.localInterface)
+            params.set("Account.localInterface", account.localInterface);
+        if(account.publishedSameAsLocal)
+            params.set("Account.publishedSameAsLocal", account.publishedSameAsLocal ? "TRUE":"FALSE");
+        if(account.localPort)
+            params.set("Account.localPort", account.localPort);
+        if(account.publishedPort)
+            params.set("Account.publishedPort", account.publishedPort);
+        if(account.publishedAddress)
+            params.set("Account.publishedAddress", account.publishedAddress);
+        if(account.upnpEnabled)
+            params.set("Account.upnpEnabled", account.upnpEnabled ? "TRUE":"FALSE");
 
-setInterval(function () {
-    dring.pollEvents();
-    //console.log("Polling...");
-}, 10);
+        this.dring.addAccount(params);
+    }
+
+    getAudioOutputDeviceList() {
+        var devicesVect = this.dring.getAudioOutputDeviceList();
+        var outputDevices = [];
+        for(var i=0; i<devicesVect.size(); i++)
+            outputDevices.push(devicesVect.get(i));
+
+        return outputDevices;
+    }
+
+    getVolume(deviceName) {
+        return this.dring.getVolume(deviceName);
+    }
+
+    setVolume(deviceName, volume) {
+        return this.dring.setVolume(deviceName,volume);
+    }
+
+    stop() {
+        clearInterval(this.pollIntervalId);
+        this.dring.fini();
+    }
+}
+
+var f = function(){ console.log("AccountsChanged JS"); };
+var daemon = new RingDaemon({"AccountsChanged": f});
+//daemon.addAccount({alias:"myAlias", archivePassword:"pass"});
+//console.log(daemon.getAudioOutputDeviceList());
+daemon.stop();
