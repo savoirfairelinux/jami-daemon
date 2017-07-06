@@ -2414,11 +2414,9 @@ Manager::recordingPlaybackSeek(const double value)
 }
 
 void
-Manager::stopRecordedFilePlayback(const std::string& filepath)
+Manager::stopRecordedFilePlayback()
 {
-    // TODO: argument is uneeded (API change)
-
-    RING_DBG("Stop recorded file playback %s", filepath.c_str());
+    RING_DBG("Stop recorded file playback");
 
     checkAudio();
     pimpl_->toneCtrl_.stopAudioFile();
