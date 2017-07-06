@@ -91,7 +91,7 @@ VPX_CONF := \
 	--disable-install-docs \
 	--enable-realtime-only \
 	--enable-error-concealment \
-	--disable-runtime-cpu-detect \
+	--enable-runtime-cpu-detect \
 	--disable-webm-io
 
 ifdef HAVE_WIN32
