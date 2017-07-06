@@ -91,8 +91,14 @@ VPX_CONF := \
 	--disable-install-docs \
 	--enable-realtime-only \
 	--enable-error-concealment \
-	--disable-runtime-cpu-detect \
 	--disable-webm-io
+
+ifdef HAVE_ANDROID
+	VPX_CONF += --disable-runtime-cpu-detect
+endif
+ifdef HAVE_IOS
+	VPX_CONF += --disable-runtime-cpu-detect
+endif
 
 ifdef HAVE_WIN32
 VPX_CONF +=	--disable-ssse3
