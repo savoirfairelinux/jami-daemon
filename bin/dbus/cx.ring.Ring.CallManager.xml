@@ -706,7 +706,6 @@
         <method name="stopRecordedFilePlayback" tp:name-for-bindings="stopRecordedFilePlayback">
             <tp:added version="0.9.14"/>
             <tp:docstring/>
-            <arg type="s" name="filepath" direction="in"/>
         </method>
 
         <signal name="voiceMailNotify" tp:name-for-bindings="voiceMailNotify">

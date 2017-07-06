@@ -75,7 +75,7 @@ void stopSmartInfo();
 
 /* File Playback methods */
 bool startRecordedFilePlayback(const std::string& filepath);
-void stopRecordedFilePlayback(const std::string& filepath);
+void stopRecordedFilePlayback();
 
 /* General audio methods */
 bool toggleRecording(const std::string& callID);

@@ -208,9 +208,9 @@ DBusCallManager::startRecordedFilePlayback(const std::string& filepath) -> declt
 }
 
 void
-DBusCallManager::stopRecordedFilePlayback(const std::string& filepath)
+DBusCallManager::stopRecordedFilePlayback()
 {
-    DRing::stopRecordedFilePlayback(filepath);
+    DRing::stopRecordedFilePlayback();
 }
 
 auto
