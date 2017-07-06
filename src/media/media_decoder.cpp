@@ -309,6 +309,8 @@ int MediaDecoder::setupFromVideoData()
     if (enableAccel_) {
         accel_ = video::makeHardwareAccel(decoderCtx_);
         decoderCtx_->opaque = accel_.get();
+    } else if (Manager::instance().getDecodingAccelerated()) {
+        RING_WARN("Hardware accelerated decoding disabled because of previous failure");
     } else {
         RING_WARN("Hardware accelerated decoding disabled by user preference");
     }
