@@ -85,7 +85,7 @@ class DBusCallManager :
         std::string getConferenceId(const std::string& callID);
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID);
         bool startRecordedFilePlayback(const std::string& filepath);
-        void stopRecordedFilePlayback(const std::string& filepath);
+        void stopRecordedFilePlayback();
         bool toggleRecording(const std::string& callID);
         void setRecording(const std::string& callID);
         void recordPlaybackSeek(const double& value);

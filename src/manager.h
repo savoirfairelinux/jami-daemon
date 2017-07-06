@@ -593,16 +593,15 @@ class Manager {
         /**
          * Start playback fo a recorded file if and only if audio layer is not already started.
          * @param File path of the file to play
-             */
+         */
         bool startRecordedFilePlayback(const std::string&);
 
         void recordingPlaybackSeek(const double value);
 
         /**
          * Stop playback of recorded file
-         * @param File of the file to stop
          */
-        void stopRecordedFilePlayback(const std::string&);
+        void stopRecordedFilePlayback();
 
         /**
          * Set the maximum number of days to keep in the history
