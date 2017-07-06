@@ -235,9 +235,9 @@ startRecordedFilePlayback(const std::string& filepath)
 }
 
 void
-stopRecordedFilePlayback(const std::string& filepath)
+stopRecordedFilePlayback()
 {
-   ring::Manager::instance().stopRecordedFilePlayback(filepath);
+   ring::Manager::instance().stopRecordedFilePlayback();
 }
 
 bool
