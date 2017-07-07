@@ -524,6 +524,9 @@ TlsSession::sendRaw(const void* buf, size_t size)
         stTxRawBytesCnt_ += size;
         return ret;
     }
+
+    // Must be called to pass errno value to GnuTLS on Windows (cf. GnuTLS doc)
+    gnutls_transport_set_errno(session_, errno);
     return -1;
 }
 
@@ -1113,6 +1116,8 @@ DhParams::generate()
 uint16_t
 TlsSession::getMtu()
 {
+    if (state_ == TlsSessionState::SHUTDOWN)
+        throw std::runtime_error("Getting MTU from dead TLS session.");
     return gnutls_dtls_get_mtu(session_);
 }
 
