@@ -57,7 +57,7 @@ struct PrivateKey;
 
 namespace ring { namespace tls {
 
-static constexpr uint8_t MTUS_TO_TEST = 4; //number of mtus to test in path mtu discovery.
+static constexpr uint8_t MTUS_TO_TEST = 3; //number of mtus to test in path mtu discovery.
 static constexpr int DTLS_MTU {1232}; // (1280 from IPv6 minimum MTU - 40 IPv6 header - 8 UDP header)
 static constexpr uint16_t MIN_MTU {512};
 
