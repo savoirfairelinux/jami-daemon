@@ -48,7 +48,7 @@ namespace ring { namespace tls {
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr uint16_t INPUT_BUFFER_SIZE {16*1024}; // to be coherent with the maximum size advised in path mtu discovery
-static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum packet to store before dropping (pkt size = DTLS_MTU)
+static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum number of packets to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
 static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(1000); // Delay between two handshake request on DTLS
@@ -64,7 +64,7 @@ static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
 // also do not set over 16000 this will result in a gnutls error (unexpected packet size)
 // neither under MIN_MTU because it makes no sense and could result in underflow of certain variables.
 // Put mtus values in ascending order in the array to avoid sorting
-static constexpr std::array<uint16_t, MTUS_TO_TEST> mtus = {MIN_MTU, 800, 1280, 1500};
+static constexpr std::array<uint16_t, MTUS_TO_TEST> MTUS = {MIN_MTU, 800, 1280};
 
 // Helper to cast any duration into an integer number of milliseconds
 template <class Rep, class Period>
@@ -806,7 +806,7 @@ TlsSessionState
 TlsSession::handleStateMtuDiscovery(UNUSED TlsSessionState state)
 {
     // set dtls mtu to be over each and every mtus tested
-    gnutls_dtls_set_mtu(session_, mtus.back());
+    gnutls_dtls_set_mtu(session_, MTUS.back());
 
     // get transport overhead
     transportOverhead_ = socket_->getTransportOverhead();
@@ -857,10 +857,10 @@ TlsSession::pathMtuHeartbeat()
     // server side: managing pong in state established
     // client side: managing ping on heartbeat
     uint16_t bytesToSend;
-    mtuProbe_ = mtus.cbegin();
+    mtuProbe_ = MTUS.cbegin();
     RING_DBG("[TLS] Heartbeat PMTUD : client side");
 
-    while (mtuProbe_ != mtus.cend()){
+    while (mtuProbe_ != MTUS.cend()){
         bytesToSend = (*mtuProbe_) - 3 - tls_overhead - UDP_HEADER_SIZE - transportOverhead_;
         do {
             RING_DBG("[TLS] Heartbeat PMTUD : ping with mtu %d and effective payload %d", *mtuProbe_, bytesToSend);
@@ -872,7 +872,7 @@ TlsSession::pathMtuHeartbeat()
         if (errno_send == GNUTLS_E_SUCCESS) {
             ++mtuProbe_;
         } else if (errno_send == GNUTLS_E_TIMEDOUT){ // timeout is considered as a packet loss, then the good mtu is the precedent.
-            if (mtuProbe_ == mtus.cbegin()) {
+            if (mtuProbe_ == MTUS.cbegin()) {
                 RING_WARN("[TLS] Heartbeat PMTUD : no response on first ping, setting minimal MTU value @%d", MIN_MTU);
                 gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
 
@@ -885,7 +885,7 @@ TlsSession::pathMtuHeartbeat()
         } else {
             RING_WARN("[TLS] Heartbeat PMTUD : client ping failed: error %d: %s", errno_send,
                       gnutls_strerror(errno_send));
-            if (mtuProbe_ != mtus.begin())
+            if (mtuProbe_ != MTUS.begin())
                 --mtuProbe_;
             gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
             return;
@@ -894,7 +894,7 @@ TlsSession::pathMtuHeartbeat()
 
 
     if (errno_send == GNUTLS_E_SUCCESS) {
-        RING_WARN("[TLS] Heartbeat PMTUD completed : reached test value %d", mtus.back());
+        RING_WARN("[TLS] Heartbeat PMTUD completed : reached test value %d", MTUS.back());
         --mtuProbe_; // for loop over, setting mtu to last valid mtu
     }
 
@@ -1017,7 +1017,7 @@ TlsSession::handleStateEstablished(TlsSessionState state)
             // This is the first application packet recieved after PMTUD
             // This packet gives the final MTU.
             if (hbPingRecved_ > 0) {
-                gnutls_dtls_set_mtu(session_, mtus[hbPingRecved_ - 1] - UDP_HEADER_SIZE - transportOverhead_);
+                gnutls_dtls_set_mtu(session_, MTUS[hbPingRecved_ - 1] - UDP_HEADER_SIZE - transportOverhead_);
                 maxPayload_ = gnutls_dtls_get_data_mtu(session_);
             } else {
                 gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
