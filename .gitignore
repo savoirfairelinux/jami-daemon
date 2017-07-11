@@ -92,7 +92,7 @@ nbproject
 .DS_Store
 
 # Android
-/build-android-arm-linux-androideabi/
+/build-android-*/
 /extras/tools/check_sed
 /extras/tools/libtool-*.tar.xz
 
