@@ -30,6 +30,7 @@
 #include <string>
 #include <memory>
 #include <atomic>
+#include <random>
 
 // Forward declarations
 namespace ring {
@@ -77,6 +78,12 @@ private:
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
+
+    // Simulate a lower framerate
+    bool simulateLowerFramerate_ {false};
+    unsigned dropPercent_ {90};
+    mutable std::mt19937_64 rand_;
+    std::uniform_int_distribution<unsigned> distDropFrame;
 };
 }} // namespace ring::video
 

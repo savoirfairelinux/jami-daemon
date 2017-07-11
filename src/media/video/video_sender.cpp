@@ -28,6 +28,9 @@
 #include "manager.h"
 #include "smartools.h"
 
+#include <opendht/rng.h>
+using random_device = dht::crypto::random_device;
+
 #include <map>
 #include <unistd.h>
 
@@ -50,6 +53,11 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
     videoEncoder_->startIO();
 
     videoEncoder_->print_sdp();
+
+    random_device rdev;
+    std::seed_seq seed {rdev(), rdev()};
+    rand_.seed(seed);
+    distDropFrame = std::uniform_int_distribution<unsigned>(0, 100);
 }
 
 VideoSender::~VideoSender()
@@ -61,6 +69,11 @@ VideoSender::~VideoSender()
 void
 VideoSender::encodeAndSendVideo(VideoFrame& input_frame)
 {
+    if (simulateLowerFramerate_) {
+        if (distDropFrame(rand_) < dropPercent_)
+            return;
+    }
+
     bool is_keyframe = forceKeyFrame_ > 0 \
         or (keyFrameFreq_ > 0 and (frameNumber_ % keyFrameFreq_) == 0);
 
