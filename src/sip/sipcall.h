@@ -39,6 +39,7 @@
 #include "pjsip/sip_config.h"
 
 #include <memory>
+#include <deque>
 
 struct pjsip_evsub;
 struct pjsip_inv_session;
@@ -264,6 +265,14 @@ private:
      */
     std::unique_ptr<Sdp> sdp_;
     bool peerHolding_ {false};
+
+    bool isWaitingForIceAndMedia_ {false};
+    enum class Request {
+        HoldingOn,
+        HoldingOff,
+        NoRequest
+    };
+    Request remainingRequest_;
 
     std::string peerRegistredName_ {};
 
