@@ -265,6 +265,15 @@ private:
     std::unique_ptr<Sdp> sdp_;
     bool peerHolding_ {false};
 
+    bool isWaitingForIceAndMedia_ {false};
+    enum class Request {
+        HoldingOn,
+        HoldingOff,
+        SwitchInput,
+        NoRequest
+    };
+    Request remainingRequest_;
+
     std::string peerRegistredName_ {};
 
     char contactBuffer_[PJSIP_MAX_URL_SIZE] {};

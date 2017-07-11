@@ -578,6 +578,11 @@ SIPCall::attendedTransfer(const std::string& to)
 bool
 SIPCall::onhold()
 {
+    // If ICE is currently negotiating, we must wait before hold the call
+    if (isWaitingForIceAndMedia_) {
+        remainingRequest_ = Request::HoldingOn;
+        return false;
+    }
     if (not setState(CallState::HOLD))
         return false;
 
@@ -588,6 +593,8 @@ SIPCall::onhold()
             RING_WARN("[call:%s] Reinvite failed", getCallId().c_str());
     }
 
+    isWaitingForIceAndMedia_ = true;
+
     return true;
 }
 
@@ -595,6 +602,12 @@ bool
 SIPCall::offhold()
 {
     bool success = false;
+    // If ICE is currently negotiating, we must wait before unhold the call
+    if (isWaitingForIceAndMedia_) {
+        remainingRequest_ = Request::HoldingOff;
+        return false;
+    }
+
     auto& account = getSIPAccount();
 
     try {
@@ -607,6 +620,8 @@ SIPCall::offhold()
         RING_ERR("[call:%s] %s", getCallId().c_str(), e.what());
         throw VoipLinkException("SDP issue in offhold");
     }
+
+    if (success) isWaitingForIceAndMedia_ = true;
 
     return success;
 }
@@ -635,7 +650,12 @@ SIPCall::switchInput(const std::string& resource)
 {
 #ifdef RING_VIDEO
     videoInput_ = resource;
-    SIPSessionReinvite();
+    if (isWaitingForIceAndMedia_) {
+        remainingRequest_ = Request::SwitchInput;
+    } else {
+        SIPSessionReinvite();
+        isWaitingForIceAndMedia_ = true;
+    }
 #endif
 }
 
@@ -887,6 +907,25 @@ SIPCall::startAllMedia()
     if (not isSubcall() and peerHolding_ != peer_holding) {
         peerHolding_ = peer_holding;
         emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
+    }
+
+    // Media is restarted, we can process the last holding request.
+    isWaitingForIceAndMedia_ = false;
+    if (remainingRequest_ != Request::NoRequest) {
+        switch (remainingRequest_) {
+        case Request::HoldingOn:
+            onhold();
+            break;
+        case Request::HoldingOff:
+            offhold();
+            break;
+        case Request::SwitchInput:
+            SIPSessionReinvite();
+            break;
+        default:
+            break;
+        }
+        remainingRequest_ = Request::NoRequest;
     }
 }
 
