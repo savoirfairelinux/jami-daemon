@@ -216,7 +216,8 @@ gas-preprocessor-$(GAS_VERSION).pl:
 
 .gas: gas-preprocessor-$(GAS_VERSION).pl
 	mkdir -p $(PREFIX)/bin
-	cp gas-preprocessor-$(GAS_VERSION).pl $(PREFIX)/bin/gas-preprocessor
+	cp gas-preprocessor-$(GAS_VERSION).pl $(PREFIX)/bin/gas-preprocessor.pl
+	chmod a+x $(PREFIX)/bin/gas-preprocessor.pl # needs to be executable
 	touch $@
 
 CLEAN_FILE += .gas

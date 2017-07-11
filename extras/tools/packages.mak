@@ -32,7 +32,7 @@ XZ_VERSION=5.2.2
 XZ_URL=http://tukaani.org/xz/xz-$(XZ_VERSION).tar.bz2
 
 GAS_VERSION=36bacb4cba27003c572e5bf7a9c4dfe3c9a8d40d
-GAS_URL=https://github.com/FFmpeg/gas-preprocessor/blob/$(GAS_VERSION)/gas-preprocessor.pl
+GAS_URL=https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/$(GAS_VERSION)/gas-preprocessor.pl
 
 SED_VERSION=4.2.2
 SED_URL=$(GNU)/sed/sed-$(SED_VERSION).tar.bz2
