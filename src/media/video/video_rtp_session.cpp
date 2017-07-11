@@ -142,6 +142,17 @@ VideoRtpSession::restartSender()
     setupVideoPipeline();
 }
 
+void VideoRtpSession::offHoldCall() {
+    auto callId = callID_;
+    if (isHolding_) {
+       isHolding_ = false;
+       runOnMainThread([callId]{
+           RING_DBG("Hold off call %s", callId.c_str());
+           ring::Manager::instance().offHoldCall(callId);
+       });
+   }
+}
+
 void VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
@@ -430,6 +441,25 @@ VideoRtpSession::adaptQualityAndBitrate()
         // too much packet lost : decrease quality and bitrate
         } else if (packetLostRate >= videoBitrateInfo_.packetLostThreshold) {
 
+            /** /
+            RING_DBG("Need to adapt");
+
+            auto params = ring::Manager::instance().getVideoManager().videoDeviceMonitor.getSettings(camera);
+            auto callId = callID_;
+
+            if (params.video_size != "320x240" && !isHolding_) {
+                params.video_size = "320x240";
+                runOnMainThread([callId, camera, params]{
+                    RING_DBG("Hold on call %s", callId.c_str());
+                    ring::Manager::instance().onHoldCall(callId);
+                    ring::Manager::instance().getVideoManager().videoDeviceMonitor.applySettings(camera, params);
+                });
+                isHolding_ = true;
+            } else {
+                RING_DBG("ALREADY HERE....");
+            }
+
+            /** /
             // calculate new quality by dichotomie
             videoBitrateInfo_.videoQualityCurrent = getLowerQuality();
 
@@ -490,6 +520,7 @@ VideoRtpSession::adaptQualityAndBitrate()
 
         } else {
             // nothing we reach maximal tries
+            /**/
         }
     }
 

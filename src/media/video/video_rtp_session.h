@@ -79,6 +79,7 @@ public:
     }
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
+    void offHoldCall();
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);
@@ -127,6 +128,7 @@ private:
     // 5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
     bool hasReachMaxQuality_ {false};
+    bool isHolding_ {false};
     // packet loss threshold
     static constexpr float PACKET_LOSS_THRESHOLD {1.0};
 

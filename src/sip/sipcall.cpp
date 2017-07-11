@@ -857,6 +857,7 @@ SIPCall::startAllMedia()
             videortp_->switchInput(videoInput_);
 
         videortp_->setMtu(new_mtu);
+        videortp_->offHoldCall();
 #endif
         rtp->updateMedia(remote, local);
 

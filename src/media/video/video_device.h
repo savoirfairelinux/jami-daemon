@@ -65,19 +65,24 @@ public:
      * The result map for the "Integrated Camera" looks like this:
      *
      *   {'Camera 1': {'1280x720': ['10'],
-     *                 '320x240': ['30', '15'],
-     *                 '352x288': ['30', '15'],
-     *                 '424x240': ['30', '15'],
-     *                 '640x360': ['30', '15'],
-     *                 '640x480': ['30', '15'],
+     *                 '960x540': ['10'],
      *                 '800x448': ['15'],
-     *                 '960x540': ['10']}}
+     *                 '640x480': ['30', '15'],
+     *                 '640x360': ['30', '15'],
+     *                 '424x240': ['30', '15'],
+     *                 '352x288': ['30', '15'],
+     *                 '320x240': ['30', '15']}}
      */
     DRing::VideoCapabilities getCapabilities() const {
         DRing::VideoCapabilities cap;
 
-        for (const auto& chan : getChannelList())
-            for (const auto& size : getSizeList(chan)) {
+        for (const auto& chan : getChannelList()) {
+            auto sizes = getSizeList(chan);
+            // Sort resolutions by size
+            std::sort(sizes.begin(), sizes.end(), [](VideoSize a, VideoSize b) {
+                return a.first * a.second > b.first * b.second;
+            });
+            for (const auto& size : sizes) {
                 std::stringstream sz;
                 sz << size.first << "x" << size.second;
                 auto rates = getRateList(chan, size);
@@ -86,6 +91,7 @@ public:
                                [](FrameRate r) { return ring::to_string(r.real()); });
                 cap[chan][sz.str()] = std::move(rates_str);
             }
+        }
 
         return cap;
     }
