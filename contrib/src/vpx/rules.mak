@@ -100,10 +100,6 @@ ifdef HAVE_IOS
 	VPX_CONF += --disable-runtime-cpu-detect
 endif
 
-ifdef HAVE_WIN32
-VPX_CONF +=	--disable-ssse3
-endif
-
 ifndef HAVE_WIN32
 VPX_CONF += --enable-pic
 endif
