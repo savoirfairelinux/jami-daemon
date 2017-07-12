@@ -34,7 +34,7 @@ the shell.
 GNU Ring is currently used by the support team of Savoir-faire Linux Inc.
 
 More information is available on the project homepage:
-  http://www.ring.cx/
+  https://www.ring.cx/
 
 This source tree contains the daemon application only, DRing, that handles
 the business logic of GNU Ring. UIs are located in differents repositories. See
