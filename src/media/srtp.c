@@ -20,6 +20,7 @@
  */
 
 #include <stdlib.h>
+#include <assert.h>
 #include <libavutil/common.h>
 #include <libavutil/base64.h>
 #include <libavutil/aes.h>
@@ -28,14 +29,24 @@
 #include <libavutil/log.h>
 #include "srtp.h"
 
+#include "security/memory.h"
+
 void ff_srtp_free(struct SRTPContext *s)
 {
+    uint8_t zero_buffer[32] = {0}; // WARNING: must be long enough to handle any key length
+    assert(sizeof(zero_buffer) >= sizeof(s->master_key));
+    assert(sizeof(zero_buffer) >= sizeof(s->rtp_key));
+    assert(sizeof(zero_buffer) >= sizeof(s->rtp_auth));
+
     if (!s)
         return;
+    // aes and hmac have an opaque pointer type.
+    // No API to safely erase them, so just re-init with "dummy keys" to sanitize them
+    av_aes_init(s->aes, zero_buffer, 128, 0);
+    av_hmac_init(s->hmac, zero_buffer, sizeof(s->rtp_auth));
     av_freep(&s->aes);
-    if (s->hmac)
-        av_hmac_free(s->hmac);
-    s->hmac = NULL;
+    av_hmac_free(s->hmac);
+    ring_secure_memzero(s, sizeof(*s));
 }
 
 static void encrypt_counter(struct AVAES *aes, uint8_t *iv, uint8_t *outbuf,
@@ -86,6 +97,7 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
     }
     if (av_base64_decode(buf, params, sizeof(buf)) != sizeof(buf)) {
         av_log(NULL, AV_LOG_WARNING, "Incorrect amount of SRTP params\n");
+        ring_secure_memzero(buf, sizeof(buf));
         return AVERROR(EINVAL);
     }
     // MKI and lifetime not handled yet
@@ -95,6 +107,7 @@ int ff_srtp_set_crypto(struct SRTPContext *s, const char *suite,
         return AVERROR(ENOMEM);
     memcpy(s->master_key, buf, 16);
     memcpy(s->master_salt, buf + 16, 14);
+    ring_secure_memzero(buf, sizeof(buf));
 
     // RFC 3711
     av_aes_init(s->aes, s->master_key, 128, 0);
@@ -121,6 +134,7 @@ static void create_iv(uint8_t *iv, const uint8_t *salt, uint64_t index,
         iv[6 + i] ^= indexbuf[i];
     for (i = 0; i < 14; i++)
         iv[i] ^= salt[i];
+    ring_secure_memzero(indexbuf, sizeof(indexbuf));
 }
 
 int ff_srtp_decrypt(struct SRTPContext *s, uint8_t *buf, int *lenptr)
