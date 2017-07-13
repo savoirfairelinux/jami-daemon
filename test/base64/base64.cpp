@@ -2,7 +2,7 @@
 #include <cppunit/TestFixture.h>
 #include <cppunit/extensions/HelperMacros.h>
 
-#include "test_runner.hpp"
+#include "test_runner.h"
 #include "base64.h"
 
 namespace ring_test {
