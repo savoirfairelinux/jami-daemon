@@ -96,12 +96,16 @@ ifdef HAVE_ANDROID
 # Android Linux
 FFMPEGCONF += \
 	--target-os=android \
-	--enable-jni \
+	--enable-jni
+# ARM 32 bits has trouble with mediacodec
+ifneq ($(ARCH),arm)
+FFMPEGCONF += \
 	--enable-mediacodec \
 	--enable-hwaccel=vp8_mediacodec \
 	--enable-hwaccel=mpeg4_mediacodec \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
+endif
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
@@ -164,15 +168,14 @@ endif
 
 # ARM stuff
 ifeq ($(ARCH),arm)
+# neon causes SIGBUS error on ARM 32 bits
+FFMPEGCONF += --disable-neon
 FFMPEGCONF += --arch=arm
-ifdef HAVE_NEON
-FFMPEGCONF += --enable-neon
-endif
 ifdef HAVE_ARMV7A
 FFMPEGCONF += --cpu=cortex-a8
 endif
 ifdef HAVE_ARMV6
-FFMPEGCONF += --cpu=armv6 --disable-neon
+FFMPEGCONF += --cpu=armv6
 endif
 endif
 
