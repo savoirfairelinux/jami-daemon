@@ -1,0 +1,128 @@
+/*
+ *  Copyright (C) 2004-2017 Savoir-Faire Linux Inc.
+ *  Author: Olivier Gregoire <olivier.gregoire@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include "account_factory.h"
+#include "../../test_runner.h"
+
+#include "dring.h"
+
+namespace ring_test {
+    class Account_factoryTest : public CppUnit::TestFixture {
+    public:
+        static std::string name() { return "account_factory"; }
+
+    private:
+        void init_daemon();
+        void addRemoveSIPAccountTest();
+        void addRemoveRINGAccountTest();
+        void clearTest();
+
+        CPPUNIT_TEST_SUITE(Account_factoryTest);
+        CPPUNIT_TEST(init_daemon);
+        CPPUNIT_TEST(addRemoveSIPAccountTest);
+        CPPUNIT_TEST(addRemoveRINGAccountTest);
+        CPPUNIT_TEST(clearTest);
+        CPPUNIT_TEST_SUITE_END();
+
+        const std::string SIP_type="SIP";
+        const std::string SIP_ID="SIP_ID";
+
+        const std::string RING_type="RING";
+        const std::string RING_ID="RING_ID";
+
+        ring::AccountFactory* accountFactory = new ring::AccountFactory();
+    };
+
+    CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(Account_factoryTest,
+                                                Account_factoryTest::name());
+
+
+    void
+    Account_factoryTest::init_daemon()
+    {
+        DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+        DRing::start("dring-sample.yml");
+    }
+
+    void
+    Account_factoryTest::addRemoveSIPAccountTest()
+    {
+        // verify if there is no account at the begining
+        CPPUNIT_ASSERT(accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+
+        accountFactory->createAccount(SIP_type.c_str(), SIP_ID);
+
+        CPPUNIT_ASSERT(accountFactory->hasAccount(SIP_ID));
+        CPPUNIT_ASSERT(!accountFactory->hasAccount(RING_ID));
+        CPPUNIT_ASSERT(!accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==1);
+
+        accountFactory->removeAccount(SIP_ID);
+
+        CPPUNIT_ASSERT(accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    }
+
+    void
+    Account_factoryTest::addRemoveRINGAccountTest()
+    {
+        // verify if there is no account at the begining
+        CPPUNIT_ASSERT(accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+
+        accountFactory->createAccount(RING_type.c_str(), RING_ID);
+
+        CPPUNIT_ASSERT(accountFactory->hasAccount(RING_ID));
+        CPPUNIT_ASSERT(!accountFactory->hasAccount(SIP_ID));
+        CPPUNIT_ASSERT(!accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==1);
+
+        accountFactory->removeAccount(RING_ID);
+
+        CPPUNIT_ASSERT(accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+    }
+
+    void
+    Account_factoryTest::clearTest()
+    {
+        // verify if there is no account at the begining
+        CPPUNIT_ASSERT(accountFactory->empty());
+        CPPUNIT_ASSERT(accountFactory->accountCount()==0);
+
+        int nbrAccount = 5;
+
+        for(int i = 0; i < nbrAccount ; i++){
+            accountFactory->createAccount(RING_type.c_str(), RING_ID+std::to_string(i));
+        }
+
+        CPPUNIT_ASSERT(accountFactory->accountCount()==5);
+
+        accountFactory->clear();
+
+        CPPUNIT_ASSERT(accountFactory->empty());
+    }
+} // namespace tests
+
+RING_TEST_RUNNER(ring_test::Account_factoryTest::name())

@@ -5,3 +5,16 @@
 *.trs
 
 .dirstamp
+
+#binary
+unit_test_smartools
+unit_test_base64
+unit_test_video_input
+unit_test_account_factory
+unit_test_archiver
+test_sip
+unit_test_call_factory
+unit_test_conference
+
+dring-sample.yml.bak
+dring-sample.yml
