@@ -145,4 +145,17 @@ Smartools::setRemoteVideoCodec(const std::string& remoteVideoCodec, const std::s
     }
  }
 
+ std::map<std::string, std::string>
+ Smartools::getInformation()
+ {
+     return information_;
+ }
+
+ void
+ clearInformation()
+ {
+     //information_.clear();
+ }
+
+
  } // end namespace ring
