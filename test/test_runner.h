@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 2011-2017 Savoir-faire Linux Inc.
  *
- *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
+ *  Author: florian Wiesweg <florian.wiesweg@campus.tu-berlin.de>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,16 +18,22 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _VIDEO_INPUT_TEST_
-#define _VIDEO_INPUT_TEST_
+#include <iostream>
 
-namespace ring { namespace video { namespace test {
+#include <cppunit/extensions/TestFactoryRegistry.h>
+#include <cppunit/ui/text/TestRunner.h>
+#include <cppunit/CompilerOutputter.h>
 
-class VideoInputTest {
-public:
-    void testInput();
-};
-
-}}} // namespace ring::video::test
-
-#endif // _VIDEO_INPUT_TEST_
+#define RING_TEST_RUNNER(suite_name) \
+int main() \
+{ \
+    CppUnit::TestFactoryRegistry &registry = CppUnit::TestFactoryRegistry::getRegistry(suite_name); \
+    CppUnit::Test *suite = registry.makeTest(); \
+    if(suite->countTestCases() == 0) { \
+        std::cout << "No test cases specified for suite \"" << suite_name << "\"\n"; \
+        return 1; \
+    } \
+    CppUnit::TextUi::TestRunner runner; \
+    runner.addTest(suite); \
+    return runner.run() ? 0 : 1; \
+}
