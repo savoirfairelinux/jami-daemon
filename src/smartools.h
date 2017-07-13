@@ -38,6 +38,10 @@ class Smartools
         void setLocalAudioCodec(const std::string& remoteAudioCodec);
         void sendInfo();
 
+        //unit test
+        std::map<std::string, std::string> getInformation();
+        void clearInformation();
+
     private:
         Smartools();
         ~Smartools();

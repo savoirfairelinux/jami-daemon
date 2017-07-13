@@ -131,7 +131,7 @@ test_SIP::tearDown()
 void
 test_SIP::testSimpleOutgoingIpCall()
 {
-    std::cout << ">>>> test simple outgoing IP call <<<< " << '\n';
+    std::cout << '\n' << ">>>> test simple outgoing IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
@@ -173,7 +173,7 @@ test_SIP::testSimpleOutgoingIpCall()
 void
 test_SIP::testSimpleIncomingIpCall()
 {
-    std::cout << ">>>> test simple incomming IP call <<<< " << '\n';
+    std::cout << '\n' << ">>>> test simple incomming IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
@@ -186,7 +186,7 @@ test_SIP::testSimpleIncomingIpCall()
 
     // Answer this call
     const auto& calls = Manager::instance().callFactory.getAllCalls();
-    const auto call = *calls.cbegin();
+    const auto call = *calls.cbegin(); //TODO fail here
     CPPUNIT_ASSERT(Manager::instance().answerCall(call->getCallId()));
 
     // hangup this call
@@ -198,7 +198,7 @@ test_SIP::testSimpleIncomingIpCall()
 
 void
 test_SIP::testMultipleIncomingIpCall(){
-    std::cout << ">>>> test multiple incoming IP call <<<< " << '\n';
+    std::cout << '\n' << ">>>> test multiple incoming IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
@@ -238,7 +238,7 @@ test_SIP::testMultipleIncomingIpCall(){
 void
 test_SIP::testMultipleOutgoingIpCall()
 {
-    std::cout << ">>>> test multiple outgoing IP call <<<< " << '\n';
+    std::cout << '\n' << ">>>> test multiple outgoing IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
@@ -289,7 +289,7 @@ test_SIP::testMultipleOutgoingIpCall()
 void
 test_SIP::testHoldIpCall()
 {
-    std::cout << ">>>> test hold IP call <<<< " << '\n';
+    std::cout << '\n' << ">>>> test hold IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 
@@ -328,7 +328,7 @@ test_SIP::testHoldIpCall()
 
 void test_SIP::testSIPURI()
 {
-    std::cout << ">>>> test SIPURI <<<< " << '\n';
+    std::cout << '\n' << ">>>> test SIPURI <<<< " << '\n';
 
     std::string foo("<sip:17771234567@callcentric.com>");
     sip_utils::stripSipUriPrefix(foo);

@@ -106,10 +106,11 @@ private:
      */
     CPPUNIT_TEST_SUITE(test_SIP);
     CPPUNIT_TEST ( testSIPURI );
-    /*CPPUNIT_TEST ( testHoldIpCall );
+    CPPUNIT_TEST ( testHoldIpCall );
     CPPUNIT_TEST ( testSimpleOutgoingIpCall );
     CPPUNIT_TEST ( testMultipleOutgoingIpCall );
-    CPPUNIT_TEST ( testSimpleIncomingIpCall );*/
+    CPPUNIT_TEST ( testSimpleIncomingIpCall );
+
     //CPPUNIT_TEST ( testMultipleIncomingIpCall );
     CPPUNIT_TEST_SUITE_END();
 
