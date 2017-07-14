@@ -22,13 +22,15 @@
 "use strict";
 class RingDaemon{
     constructor(callbackMap) {
-        this.dring = require("./build/Release/dring");
-        this.dring.init(callbackMap);
-        var that = this;
-        this.pollIntervalId = setInterval(function () {
-            that.dring.pollEvents();
-            console.log("Polling...");
-        }, 10);
+        if(callbackMap){
+            this.dring = require("./build/Release/dring");
+            this.dring.init(callbackMap);
+            var that = this;
+            this.pollIntervalId = setInterval(function () {
+                that.dring.pollEvents();
+                //console.log("Polling...");
+            }, 10);
+        }
     }
 
     boolToStr(bool){
@@ -114,8 +116,9 @@ class RingDaemon{
     }
 }
 
-var f = function(){ console.log("AccountsChanged JS"); };
-var daemon = new RingDaemon({"AccountsChanged": f});
-//daemon.addAccount({alias:"myAlias", archivePassword:"pass"});
-//console.log(daemon.getAudioOutputDeviceList());
-daemon.stop();
+var f = function(){
+    console.log("RegistrationStateChanged JS");
+};
+
+var daemon = new RingDaemon({"RegistrationStateChanged": f});
+//daemon.stop();
