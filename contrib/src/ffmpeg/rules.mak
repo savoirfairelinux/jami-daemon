@@ -106,6 +106,9 @@ FFMPEGCONF += \
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
 endif
+ifeq ($(ARCH),x86_64)
+FFMPEGCONF += --disable-asm
+endif
 else
 # Desktop Linux
 FFMPEGCONF += \
