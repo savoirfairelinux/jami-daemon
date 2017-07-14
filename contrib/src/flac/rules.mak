@@ -41,6 +41,11 @@ ifneq ($(findstring $(ARCH),i386 x86_64),)
 FLACCONF += --disable-asm-optimizations
 endif
 endif
+ifdef HAVE_ANDROID
+ifeq ($(ANDROID_ABI), x86)
+FLACCONF += --disable-asm-optimizations
+endif
+endif
 
 DEPS_flac = ogg $(DEPS_ogg)
 
