@@ -115,7 +115,8 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 
         auto ret = restbed::Http::async(req, [this,cb,addr](const std::shared_ptr<restbed::Request>&,
                                                  const std::shared_ptr<restbed::Response>& reply) {
-            if (reply->get_status_code() == 200) {
+            auto code = reply->get_status_code();
+            if (code == 200) {
                 size_t length = getContentLength(*reply);
                 if (length > MAX_RESPONSE_SIZE) {
                     cb("", Response::error);
@@ -142,6 +143,8 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 } else {
                     cb("", Response::notFound);
                 }
+            } else if (code >= 400 && code < 500) {
+                cb("", Response::notFound);
             } else {
                 cb("", Response::error);
             }
