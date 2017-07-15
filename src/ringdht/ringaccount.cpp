@@ -2119,13 +2119,19 @@ RingAccount::doRegister_()
 #if HAVE_RINGNS
         // Look for registered name on the blockchain
         nameDir_.get().lookupAddress(ringAccountId_, [w](const std::string& result, const NameDirectory::Response& response) {
-            if (response == NameDirectory::Response::found)
-                if (auto this_ = w.lock()) {
+            if (auto this_ = w.lock()) {
+                if (response == NameDirectory::Response::found) {
                     if (this_->registeredName_ != result) {
                         this_->registeredName_ = result;
                         emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
                     }
+                } else if (response == NameDirectory::Response::notFound) {
+                    if (not this_->registeredName_.empty()) {
+                        this_->registeredName_.clear();
+                        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(this_->accountID_, this_->getVolatileAccountDetails());
+                    }
                 }
+            }
         });
 #endif
 
