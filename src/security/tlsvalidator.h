@@ -26,13 +26,16 @@
 
 #include "enumclass_utils.h"
 
-#include <opendht/crypto.h>
-
 #include <string>
 #include <vector>
 #include <memory>
 
-namespace ring {namespace tls {
+// OpenDHT
+namespace dht { namespace crypto {
+struct Certificate;
+}} // namespace dht::crypto
+
+namespace ring { namespace tls {
 
 #if !defined (S_IRWXG)
 #define S_IRWXG 00070

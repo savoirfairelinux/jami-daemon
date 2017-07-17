@@ -32,9 +32,9 @@
 #include <future>
 #include <mutex>
 
-namespace ring { namespace tls {
+namespace crypto = ::dht::crypto;
 
-namespace crypto = dht::crypto;
+namespace ring { namespace tls {
 
 enum class TrustStatus {
     UNTRUSTED = 0,

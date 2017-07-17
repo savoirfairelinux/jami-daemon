@@ -32,6 +32,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "security/certstore.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
