@@ -57,7 +57,7 @@ VideoInput::VideoInput()
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
 #if defined(__ANDROID__) || defined(RING_UWP)
-    , mutex_(), frame_cv_(), buffers_(8)
+    , mutex_(), frame_cv_(), buffers_()
 #endif
 {}
 
