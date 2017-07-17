@@ -51,6 +51,8 @@
 
 #include "errno.h"
 
+#include <opendht/crypto.h>
+
 namespace ring {
 
 using sip_utils::CONST_PJ_STR;

@@ -31,8 +31,6 @@
 #include "noncopyable.h"
 #include "logger.h"
 
-#include <opendht/crypto.h>
-
 #include <pjsip.h>
 #include <pjnath/stun_config.h>
 
@@ -44,6 +42,11 @@
 #include <vector>
 #include <list>
 #include <memory>
+
+// OpenDHT
+namespace dht { namespace crypto {
+struct Certificate;
+}} // namespace dht::crypto
 
 namespace ring {
 

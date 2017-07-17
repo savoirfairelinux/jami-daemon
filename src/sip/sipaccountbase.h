@@ -30,11 +30,9 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
-#include "security/certstore.h"
 #include "im/message_engine.h"
 
 #include <pjsip/sip_types.h>
-#include <opendht/value.h>
 
 #include <array>
 #include <vector>
