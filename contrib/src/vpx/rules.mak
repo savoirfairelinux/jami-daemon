@@ -91,7 +91,8 @@ VPX_CONF := \
 	--disable-install-docs \
 	--enable-realtime-only \
 	--enable-error-concealment \
-	--disable-webm-io
+	--disable-webm-io \
+	--disable-vp9
 
 ifdef HAVE_ANDROID
 	VPX_CONF += --disable-runtime-cpu-detect
