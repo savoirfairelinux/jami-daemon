@@ -42,10 +42,14 @@ void ff_srtp_free(struct SRTPContext *s)
         return;
     // aes and hmac have an opaque pointer type.
     // No API to safely erase them, so just re-init with "dummy keys" to sanitize them
-    av_aes_init(s->aes, zero_buffer, 128, 0);
-    av_hmac_init(s->hmac, zero_buffer, sizeof(s->rtp_auth));
-    av_freep(&s->aes);
-    av_hmac_free(s->hmac);
+    if (s->aes) {
+        av_aes_init(s->aes, zero_buffer, 128, 0);
+        av_freep(&s->aes);
+    }
+    if (s->hmac) {
+        av_hmac_init(s->hmac, zero_buffer, sizeof(s->rtp_auth));
+        av_hmac_free(s->hmac);
+    }
     ring_secure_memzero(s, sizeof(*s));
 }
 
