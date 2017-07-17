@@ -904,19 +904,6 @@ sdp_create_offer_cb(pjsip_inv_session *inv, pjmedia_sdp_session **p_offer)
         *p_offer = localSDP.getLocalSdpSession();
 }
 
-static void
-dump_sdp_session(const pjmedia_sdp_session* sdp_session, const char* header)
-{
-    char buffer[4096] {};
-
-    if (pjmedia_sdp_print(sdp_session, buffer, sizeof buffer) == -1) {
-        RING_ERR("%sSDP too big for dump", header);
-        return;
-    }
-
-    RING_DBG("%s%s", header, buffer);
-}
-
 static const pjmedia_sdp_session*
 get_active_remote_sdp(pjsip_inv_session *inv)
 {
@@ -932,7 +919,7 @@ get_active_remote_sdp(pjsip_inv_session *inv)
         return nullptr;
     }
 
-    dump_sdp_session(sdp_session, "Remote active SDP Session:\n");
+    Sdp::printSession(sdp_session, "Remote active SDP Session:\n");
     return sdp_session;
 }
 
@@ -951,7 +938,7 @@ get_active_local_sdp(pjsip_inv_session *inv)
         return nullptr;
     }
 
-    dump_sdp_session(sdp_session, "Local active SDP Session:\n");
+    Sdp::printSession(sdp_session, "Local active SDP Session:\n");
     return sdp_session;
 }
 
