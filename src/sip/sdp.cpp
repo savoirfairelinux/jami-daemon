@@ -159,8 +159,6 @@ Sdp::generateSdesAttribute()
     std::string crypto_attr = tag + " "
                             + ring::CryptoSuites[cryptoSuite].name
                             + " inline:" + base64::encode(keyAndSalt);
-    RING_DBG("%s", crypto_attr.c_str());
-
     pj_str_t val { (char*) crypto_attr.c_str(),
                     static_cast<pj_ssize_t>(crypto_attr.size()) };
     return pjmedia_sdp_attr_create(memPool_.get(), "crypto", &val);
@@ -326,13 +324,34 @@ void Sdp::setLocalMediaAudioCapabilities(const std::vector<std::shared_ptr<Accou
     audio_codec_list_ = selectedCodecs;
 }
 
-static void
-printSession(const pjmedia_sdp_session *session)
+void
+Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
 {
-    char buffer[2048];
-    size_t size = pjmedia_sdp_print(session, buffer, sizeof(buffer));
-    string sessionStr(buffer, std::min(size, sizeof(buffer)));
-    RING_DBG("%s", sessionStr.c_str());
+    static constexpr size_t BUF_SZ = 4096;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> tmpPool_(
+        pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory, "printSdp", BUF_SZ, BUF_SZ, nullptr),
+        pj_pool_release
+    );
+
+    auto cloned_session = pjmedia_sdp_session_clone(tmpPool_.get(), session);
+    if (!cloned_session) {
+        RING_ERR("Could not clone SDP for printing");
+        return;
+    }
+
+    // Filter-out sensible data like SRTP master key.
+    for (unsigned i = 0; i < cloned_session->media_count; ++i) {
+        pjmedia_sdp_media_remove_all_attr(cloned_session->media[i], "crypto");
+    }
+
+    std::array<char, BUF_SZ> buffer;
+    auto size = pjmedia_sdp_print(cloned_session, buffer.data(), buffer.size());
+    if (size < 0) {
+        RING_ERR("%sSDP too big for dump", header);
+        return;
+    }
+
+    RING_DBG("%s%s", header, buffer.data());
 }
 
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
@@ -380,8 +399,7 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
         ++localSession_->media_count;
     }
 
-    RING_DBG("SDP: Local SDP Session:");
-    printSession(localSession_);
+    printSession(localSession_, "SDP: Local SDP Session:\n");
 
     return pjmedia_sdp_validate(localSession_);
 }
@@ -416,8 +434,7 @@ void Sdp::receiveOffer(const pjmedia_sdp_session* remote,
         return;
     }
 
-    RING_DBG("Remote SDP Session:");
-    printSession(remote);
+    printSession(remote, "Remote SDP Session:\n");
 
     if (not localSession_ and createLocalSession(selectedAudioCodecs,
                                                  selectedVideoCodecs, kx, holding) != PJ_SUCCESS) {
@@ -529,11 +546,7 @@ Sdp::getFilteredSdp(const pjmedia_sdp_session* session, unsigned media_keep, uns
         }
 
         // we handle crypto ourselfs, don't tell libav about it
-        while (auto attr = pjmedia_sdp_attr_find2(media->attr_count,
-                                                  media->attr, "crypto",
-                                                  nullptr)) {
-            pjmedia_sdp_attr_remove(&media->attr_count, media->attr, attr);
-        }
+        pjmedia_sdp_media_remove_all_attr(media, "crypto");
     }
 
     char buffer[BUF_SZ];
