@@ -40,6 +40,8 @@
 #include <pjlib.h>
 #include <pjlib-util.h>
 
+#include <opendht/crypto.h>
+
 #include <stdexcept>
 #include <sstream>
 #include <algorithm>

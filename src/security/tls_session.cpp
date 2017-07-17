@@ -19,8 +19,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <ip_utils.h>       // DO NOT CHANGE ORDER OF THIS INCLUDE
-#include <opendht/crypto.h> // OR MINGWIN FAILS TO BUILD
+#include <ip_utils.h>       // DO NOT CHANGE ORDER OF THIS INCLUDE OR MINGWIN FAILS TO BUILD
 
 #include "tls_session.h"
 
