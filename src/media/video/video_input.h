@@ -34,6 +34,7 @@
 #include <string>
 #include <mutex>
 #include <condition_variable>
+#include <array>
 
 namespace ring {
 class MediaDecoder;
@@ -132,7 +133,7 @@ private:
 
     /* Get notified when libav is done with this buffer */
     void releaseBufferCb(uint8_t* ptr);
-    std::vector<struct VideoFrameBuffer> buffers_;
+    std::array<struct VideoFrameBuffer, 8> buffers_;
 #endif
 };
 
