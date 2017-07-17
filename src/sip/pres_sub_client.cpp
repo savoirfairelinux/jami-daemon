@@ -28,6 +28,7 @@
 #include <pjsip/sip_endpoint.h>
 #include <string>
 #include <sstream>
+#include <thread>
 #include <pj/pool.h>
 #include <pjsip/sip_ua_layer.h>
 #include <pjsip-simple/evsub.h>
