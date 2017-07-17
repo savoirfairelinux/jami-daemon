@@ -30,16 +30,20 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
-#include "security/certstore.h"
 #include "im/message_engine.h"
 
 #include <pjsip/sip_types.h>
-#include <opendht/value.h>
 
 #include <array>
 #include <vector>
 #include <map>
 #include <memory>
+
+#ifdef _WIN32
+typedef uint16_t in_port_t;
+#else
+#include <netinet/in.h> // For in_port_t support
+#endif
 
 struct pjsip_dialog;
 struct pjsip_inv_session;
