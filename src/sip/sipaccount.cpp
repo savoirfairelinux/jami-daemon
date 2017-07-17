@@ -62,6 +62,8 @@
 
 #include "im/instant_messaging.h"
 
+#include <opendht/crypto.h>
+
 #include <unistd.h>
 
 #include <algorithm>
