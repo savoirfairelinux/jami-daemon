@@ -25,6 +25,7 @@
 #include "ice_socket.h"
 #include "libav_utils.h"
 #include "logger.h"
+#include "security/memory.h"
 
 #include <iostream>
 #include <string>
@@ -69,6 +70,8 @@ class SRTPProtoContext {
 public:
     SRTPProtoContext(const char* out_suite, const char* out_key,
                      const char* in_suite, const char* in_key) {
+        ring_secure_memzero(&srtp_out, sizeof(srtp_out));
+        ring_secure_memzero(&srtp_in, sizeof(srtp_in));
         if (out_suite && out_key) {
             // XXX: see srtp_open from libavformat/srtpproto.c
             if (ff_srtp_set_crypto(&srtp_out, out_suite, out_key) < 0) {
