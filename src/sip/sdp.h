@@ -217,6 +217,10 @@ class Sdp {
 
         void clearIce();
 
+        /// \brief Log the given session
+        /// \note crypto lines with are removed for security
+        static void printSession(const pjmedia_sdp_session *session, const char* header);
+
     private:
         friend class test::SDPTest;
 
