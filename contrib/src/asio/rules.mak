@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := 28d9b8d6df708024af5227c551673fdb2519f5bf
+ASIO_VERSION := f5c570826d2ebf50eb38c44039181946a473148b
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 PKGS += asio
@@ -29,7 +29,7 @@ $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 asio: asio-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
 	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
-	#$(APPLY) $(SRC)/asio/conditional_sslv3.patch
+	$(APPLY) $(SRC)/asio/revert_pthread_condattr_setclock.patch
 	$(APPLY) $(SRC)/asio/no_tests_examples.patch
 	$(MOVE)
 
