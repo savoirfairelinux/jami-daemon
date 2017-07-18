@@ -1,0 +1,42 @@
+From 96147deb227697c9942ff6c6b47efa63fabd7ca9 Mon Sep 17 00:00:00 2001
+From: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
+Date: Wed, 19 Jul 2017 14:00:20 -0400
+Subject: [PATCH] revert: Android API level 21 or later is required for
+ pthread_condattr_setclock.
+
+partial revert from commit ca6aa0cd38ee801e54935371bd11b503edb926e8
+---
+ asio/include/asio/detail/impl/posix_event.ipp | 5 +----
+ 1 files changed, 2 insertions(+), 13 deletions(-)
+
+diff --git a/include/asio/detail/posix_event.hpp b/include/asio/detail/posix_event.hpp
+index 57acc6da..62d04257 100644
+--- a/include/asio/detail/posix_event.hpp
++++ b/include/asio/detail/posix_event.hpp
+@@ -116,14 +116,12 @@ public:
+     {
+       state_ += 2;
+       timespec ts;
+-#if (defined(__MACH__) && defined(__APPLE__)) \
+-      || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
++#if (defined(__MACH__) && defined(__APPLE__))
+       ts.tv_sec = usec / 1000000;
+       ts.tv_nsec = (usec % 1000000) * 1000;
+       ::pthread_cond_timedwait_relative_np(
+           &cond_, &lock.mutex().mutex_, &ts); // Ignore EINVAL.
+ #else // (defined(__MACH__) && defined(__APPLE__))
+-      // || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
+       if (::clock_gettime(CLOCK_MONOTONIC, &ts) == 0)
+       {
+         ts.tv_sec += usec / 1000000;
+@@ -134,7 +132,6 @@ public:
+             &lock.mutex().mutex_, &ts); // Ignore EINVAL.
+       }
+ #endif // (defined(__MACH__) && defined(__APPLE__))
+-       // || (defined(__ANDROID__) && (__ANDROID_API__ < 21))
+       state_ -= 2;
+     }
+     return (state_ & 1) != 0;
+-- 
+2.11.0
+
