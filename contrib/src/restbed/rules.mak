@@ -19,7 +19,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := 34187502642144ab9f749ab40f5cdbd8cb17a54a
+RESTBED_VERSION := 4.6
 RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 PKGS += restbed
@@ -37,15 +37,16 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
 			-DBUILD_SSL=NO \
 			-DBUILD_SHARED=NO \
-			-DCMAKE_INSTALL_PREFIX=$(PREFIX)
+			-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+			-DCMAKE_INSTALL_LIBDIR=lib
 
-restbed: restbed-$(RESTBED_VERSION).tar.gz
+restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	$(UNPACK)
-	$(APPLY) $(SRC)/restbed/CMakeLists.patch
+	(cd $(UNPACK_DIR)/dependency && \
+	curl -L https://github.com/Corvusoft/kashmir-dependency/archive/master.tar.gz | tar xvz && \
+	rm -r kashmir && mv kashmir-dependency-master kashmir)
+	$(APPLY) $(SRC)/restbed/findkashmir.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
-	$(APPLY) $(SRC)/restbed/uri_cpp.patch
-	$(APPLY) $(SRC)/restbed/dns-resolution-error.patch
-	$(APPLY) $(SRC)/restbed/string.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
