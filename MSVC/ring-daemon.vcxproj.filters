@@ -514,6 +514,9 @@
     <ClInclude Include="..\src\smartools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\security\memory.h">
+      <Filter>Header Files\security</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\preferences.cpp">
@@ -827,6 +830,9 @@
     </ClCompile>
     <ClCompile Include="..\src\smartools.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\security\memory.cpp">
+      <Filter>Source Files\security</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
