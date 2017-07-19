@@ -179,8 +179,15 @@ MediaEncoder::openOutput(const char *filename,
         // http://www.webmproject.org/docs/encoder-parameters/
         av_opt_set(encoderCtx_->priv_data, "quality", "realtime", 0);
         av_opt_set_int(encoderCtx_->priv_data, "error-resilient", 1, 0);
-        av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 3, 0);
+        av_opt_set_int(encoderCtx_->priv_data, "cpu-used", 4, 0);
         av_opt_set_int(encoderCtx_->priv_data, "lag-in-frames", 0, 0);
+#ifdef __ANDROID__
+        // allow android to drop frames if buffers are full and
+        // to undershoot target bitrate to lessen strain on resources
+        // TODO: also set these for iOS?
+        av_opt_set_int(encoderCtx_->priv_data, "drop-frame", 25, 0);
+        av_opt_set_int(encoderCtx_->priv_data, "undershoot-pct", 95, 0);
+#endif
         // don't set encoderCtx_->gop_size: let libvpx decide when to insert a keyframe
         encoderCtx_->slices = 2; // VP8E_SET_TOKEN_PARTITIONS
         encoderCtx_->qmin = 4;
