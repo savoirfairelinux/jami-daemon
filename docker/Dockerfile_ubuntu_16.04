@@ -1,7 +1,7 @@
 FROM ubuntu:16.04
 
 RUN apt-get update && \
-    apt-get install -y -o Acquire::Retires=10 \
+    apt-get install -y -o Acquire::Retries=10 \
         git \
         autoconf \
         automake \
@@ -54,5 +54,10 @@ RUN apt-get update && \
         libcrypto++-dev \
         libva-dev \
         libvdpau-dev
+
+# Tests framework
+RUN apt-get install -y -o Acquire::Retries=10 \
+        libcppunit-dev \
+        sip-tester
 
 RUN apt-get clean
