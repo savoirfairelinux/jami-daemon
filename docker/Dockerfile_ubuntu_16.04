@@ -55,4 +55,8 @@ RUN apt-get update && \
         libva-dev \
         libvdpau-dev
 
+# Tests framework
+RUN apt-get install -y -o Acquire::Retires=10 \
+	libcppunit-dev
+
 RUN apt-get clean
