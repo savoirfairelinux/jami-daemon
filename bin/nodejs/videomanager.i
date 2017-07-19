@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2015-2016 Savoir-faire Linux Inc.
+ *  Copyright (C) 2015-2017 Savoir-faire Linux Inc.
  *
  *  Authors: Damien Riegel <damien.riegel@savoirfairelinux.com>
  *           Adrien Béraud <adrien.beraud@savoirfairelinux.com>

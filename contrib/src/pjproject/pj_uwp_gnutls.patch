@@ -80,7 +80,7 @@ on behalf of Savoir-faire Linux.
 @@ -0,0 +1,2887 @@
 +/* $Id$ */
 +/*
-+ * Copyright (C) 2014-2016 Savoir-faire Linux. (https://www.savoirfairelinux.com)
++ * Copyright (C) 2014-2017 Savoir-faire Linux. (https://www.savoirfairelinux.com)
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by

@@ -378,7 +378,7 @@ index 0000000..37bcaba
 @@ -0,0 +1,2877 @@
 +/* $Id$ */
 +/*
-+ * Copyright (C) 2014-2016 Savoir-faire Linux. (https://www.savoirfairelinux.com)
++ * Copyright (C) 2014-2017 Savoir-faire Linux. (https://www.savoirfairelinux.com)
 + *
 + * This program is free software; you can redistribute it and/or modify
 + * it under the terms of the GNU General Public License as published by
