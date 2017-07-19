@@ -27,8 +27,8 @@ year=`date +%Y`
 # Loop and replace
 for f in $FILES
 do
-  sed -i "/$year/b; s/\-[0-9]\+ Savoir-[fF]aire Linux Inc/-$year Savoir-faire Linux Inc/g" $f
-  sed -i "/$year/b; s/ \([0-9]\+\) Savoir-[fF]aire Linux Inc/ \1-$year Savoir-faire Linux Inc/g" $f
+  sed -i "/$year/b; s/\-[0-9]\+ \(by \)\?Savoir-[fF]aire Linux/-$year Savoir-faire Linux/g" $f
+  sed -i "/$year/b; s/ \([0-9]\+\) \(by \)\?Savoir-[fF]aire Linux/ \1-$year Savoir-faire Linux/g" $f
   sed -i "/$year/b; s/Savoir-[fF]aire Linux \([0-9]\+\)\-[0-9]\+/Savoir-faire Linux \1-$year/g" $f
 done
 
