@@ -989,12 +989,14 @@ RingAccount::readArchive(const std::string& pwd) const
         throw;
     }
 
-    // Decrypt
-    try {
-        data = dht::crypto::aesDecrypt(data, pwd);
-    } catch (const std::exception& e) {
-        RING_ERR("[Account %s] archive decrypt error: %s", getAccountID().c_str(), e.what());
-        throw;
+    if (not pwd.empty()) {
+        // Decrypt
+        try {
+            data = dht::crypto::aesDecrypt(data, pwd);
+        } catch (const std::exception& e) {
+            RING_ERR("[Account %s] archive decrypt error: %s", getAccountID().c_str(), e.what());
+            throw;
+        }
     }
 
     // Unserialize data
@@ -1116,22 +1118,25 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
 void
 RingAccount::saveArchive(const ArchiveContent& archive_content, const std::string& pwd)
 {
-    std::vector<uint8_t> archive;
+    std::vector<uint8_t> data;
     try {
-        archive = makeArchive(archive_content);
+        data = makeArchive(archive_content);
     } catch (const std::runtime_error& ex) {
         RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return;
     }
 
-    // Encrypt using provided password
-    auto encrypted = dht::crypto::aesEncrypt(archive, pwd);
+    if (not pwd.empty()) {
+        // Encrypt using provided password
+        data = dht::crypto::aesEncrypt(data, pwd);
+    } else
+        RING_WARN("[account %s] unsecured archiving (no password)", getAccountID().c_str());
 
     // Write
     try {
         if (archivePath_.empty())
             archivePath_ = "export.gz";
-        fileutils::saveFile(fileutils::getFullPath(idPath_, archivePath_), encrypted);
+        fileutils::saveFile(fileutils::getFullPath(idPath_, archivePath_), data);
     } catch (const std::runtime_error& ex) {
         RING_ERR("Export failed: %s", ex.what());
         return;
@@ -1518,42 +1523,28 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             if (not hasArchive)
                 RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
         } else if (hasArchive) {
-            if (archive_password.empty()) {
-                RING_WARN("[Account %s] password needed to read archive", getAccountID().c_str());
-                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            if (needsMigration(id)) {
+                RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
+                migrateAccount(archive_password, id);
             } else {
-                if (needsMigration(id)) {
-                    RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
-                    migrateAccount(archive_password, id);
-                } else {
-                    RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
-                    try {
-                        initRingDevice(readArchive(archive_password));
-                    } catch (...) {
-                        Migration::setState(accountID_, Migration::State::INVALID);
-                        return;
-                    }
-                    Migration::setState(accountID_, Migration::State::SUCCESS);
-                    setRegistrationState(RegistrationState::UNREGISTERED);
+                RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
+                try {
+                    initRingDevice(readArchive(archive_password));
+                } catch (...) {
+                    Migration::setState(accountID_, Migration::State::INVALID);
+                    return;
                 }
-                Manager::instance().saveConfig();
-                loadAccount();
+                Migration::setState(accountID_, Migration::State::SUCCESS);
+                setRegistrationState(RegistrationState::UNREGISTERED);
             }
+            Manager::instance().saveConfig();
+            loadAccount();
         } else {
             // no receipt or archive, creating new account
-            if (archive_password.empty()) {
-                RING_WARN("[Account %s] password needed to create archive", getAccountID().c_str());
-                if (id.first) {
-                    ringAccountId_ = id.first->getPublicKey().getId().toString();
-                    username_ = RING_URI_PREFIX+ringAccountId_;
-                }
-                setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
+            if (archive_pin.empty()) {
+                createAccount(archive_password, std::move(id));
             } else {
-                if (archive_pin.empty()) {
-                    createAccount(archive_password, std::move(id));
-                } else {
-                    loadAccountFromDHT(archive_password, archive_pin);
-                }
+                loadAccountFromDHT(archive_password, archive_pin);
             }
         }
     } catch (const std::exception& e) {
