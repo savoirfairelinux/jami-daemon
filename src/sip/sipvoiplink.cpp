@@ -495,17 +495,22 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     auto ns = ip_utils::getLocalNameservers();
     if (not ns.empty()) {
         std::vector<pj_str_t> dns_nameservers(ns.size());
+        std::vector<pj_uint16_t> dns_ports(ns.size());
         for (unsigned i=0, n=ns.size(); i<n; i++) {
             char hbuf[NI_MAXHOST];
-            getnameinfo((sockaddr*)&ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST);
-            RING_DBG("Using SIP nameserver: %s", hbuf);
-            pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
+            if (auto ret = getnameinfo((sockaddr*)&ns[i], ns[i].getLength(), hbuf, sizeof(hbuf), nullptr, 0, NI_NUMERICHOST)) {
+                RING_WARN("Error printing SIP nameserver: %s", strerror(ret));
+            } else {
+                RING_DBG("Using SIP nameserver: %s", hbuf);
+                pj_strdup2(pool_.get(), &dns_nameservers[i], hbuf);
+                dns_ports[i] = ns[i].getPort();
+            }
         }
         pj_dns_resolver* resv;
         if (auto ret = pjsip_endpt_create_resolver(endpt_, &resv)) {
             RING_WARN("Error creating SIP DNS resolver: %s", sip_utils::sip_strerror(ret).c_str());
         } else {
-            if (auto ret = pj_dns_resolver_set_ns(resv, ns.size(), dns_nameservers.data(), nullptr)) {
+            if (auto ret = pj_dns_resolver_set_ns(resv, dns_nameservers.size(), dns_nameservers.data(), dns_ports.data())) {
                 RING_WARN("Error setting SIP DNS servers: %s", sip_utils::sip_strerror(ret).c_str());
             } else {
                 if (auto ret = pjsip_endpt_set_resolver(endpt_, resv)) {
