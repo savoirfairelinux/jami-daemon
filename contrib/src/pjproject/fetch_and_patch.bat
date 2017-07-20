@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set PJPROJECT_VERSION=2.6
+set PJPROJECT_VERSION=2.5.5
 set PJPROJECT_URL=http://www.pjsip.org/release/%PJPROJECT_VERSION%/pjproject-%PJPROJECT_VERSION%.zip
 
 mkdir %BUILD%
