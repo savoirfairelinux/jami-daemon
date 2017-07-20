@@ -1,19 +1,16 @@
 set BUILD=%SRC%..\build
 
-set PJPROJECT_VERSION=2.6
-set PJPROJECT_URL=http://www.pjsip.org/release/%PJPROJECT_VERSION%/pjproject-%PJPROJECT_VERSION%.zip
-
 mkdir %BUILD%
 
 if %USE_CACHE%==1 (
-    copy %CACHE_DIR%\pjproject-%PJPROJECT_VERSION%.zip %cd%
+    copy %CACHE_DIR%\pjproject-2.5.5.zip %cd%
 ) else (
-    wget %PJPROJECT_URL%
+    wget http://www.pjsip.org/release/2.5.5/pjproject-2.5.5.zip
 )
 
-unzip -q pjproject-%PJPROJECT_VERSION%.zip -d %BUILD%
-del pjproject-%PJPROJECT_VERSION%.zip
-rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
+unzip -q pjproject-2.5.5.zip -d %BUILD%
+del pjproject-2.5.5.zip
+rename %BUILD%\pjproject-2.5.5 pjproject
 
 cd %BUILD%\pjproject
 
