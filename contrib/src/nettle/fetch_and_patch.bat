@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set NETTLE_VERSION=nettle_3.3_release_20161001
+set NETTLE_VERSION=4e0b2723b76d4163fa37b2b456d41534154ec97c
 set NETTLE_URL=https://github.com/ShiftMediaProject/nettle/archive/%NETTLE_VERSION%.tar.gz
 
 mkdir %BUILD%
