@@ -6,6 +6,6 @@ check_PROGRAMS=
 #
 check_PROGRAMS+= test_video_input
 test_video_input_SOURCES= test_video_input.cpp test_video_input.h
-test_video_input_LDADD= $(top_builddir)/src/libring.la $(top_builddir)/src/media/video/libvideo.la $(YAML_LIBS)
+test_video_input_LDADD= $(top_builddir)/src/libring.la
 
 TESTS= $(check_PROGRAMS)
