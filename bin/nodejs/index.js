@@ -116,9 +116,9 @@ class RingDaemon{
     }
 }
 
-var f = function(){
+/*var f = function(){
     console.log("RegistrationStateChanged JS");
-};
+};*/
 
-var daemon = new RingDaemon({"RegistrationStateChanged": f});
+//var daemon = new RingDaemon({"RegistrationStateChanged": f});
 //daemon.stop();
