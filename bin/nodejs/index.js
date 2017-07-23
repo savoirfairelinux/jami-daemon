@@ -23,7 +23,7 @@
 class RingDaemon{
     constructor(callbackMap) {
         if(callbackMap){
-            this.dring = require("./build/Release/dring");
+            this.dring = require("./build/Release/dring.node");
             this.dring.init(callbackMap);
             var that = this;
             this.pollIntervalId = setInterval(function () {
