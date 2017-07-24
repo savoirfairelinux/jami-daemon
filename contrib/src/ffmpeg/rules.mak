@@ -215,6 +215,14 @@ ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
 	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
 endif
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),arm)
+	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
+endif
+ifeq ($(ARCH),i386)
+	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
+endif
+endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg
