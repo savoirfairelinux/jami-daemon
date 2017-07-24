@@ -31,6 +31,13 @@ X264CONF += --cross-prefix="$(CROSS_COMPILE)"
 endif
 endif
 
+# android x86_64 has reloc errors related to assembly optimizations
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),x86_64)
+X264CONF += --disable-asm
+endif
+endif
+
 $(TARBALLS)/x264-$(X264_HASH).tar.xz:
 	$(call download_git,$(X264_GITURL),master,$(X264_HASH))
 
@@ -44,6 +51,14 @@ x264: x264-$(X264_HASH).tar.xz .sum-x264
 	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/x264/remove-align.patch
+endif
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),arm)
+	$(APPLY) $(SRC)/x264/0001-use-internal-log2f.patch
+endif
+ifeq ($(ARCH),i386)
+	$(APPLY) $(SRC)/x264/0001-use-internal-log2f.patch
+endif
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
