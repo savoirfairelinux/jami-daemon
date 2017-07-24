@@ -23,7 +23,7 @@
 class RingDaemon{
     constructor(callbackMap) {
         if(callbackMap){
-            this.dring = require("./build/Release/dring");
+            this.dring = require("./build/Release/dring.node");
             this.dring.init(callbackMap);
             var that = this;
             this.pollIntervalId = setInterval(function () {
@@ -92,16 +92,18 @@ class RingDaemon{
 
         this.dring.addAccount(params);
     }
-
-    getAudioOutputDeviceList() {
-        var devicesVect = this.dring.getAudioOutputDeviceList();
-        var outputDevices = [];
-        for(var i=0; i<devicesVect.size(); i++)
-            outputDevices.push(devicesVect.get(i));
-
-        return outputDevices;
+    stringVectToArr(stringvect){
+        var outputArr = [];
+        for(var i=0; i<stringvect.size(); i++)
+            outputArr.push(stringvect.get(i));
+        return outputArr;
     }
-
+    getAccountList(){
+        return this.stringVectToArr(this.dring.getAccountList());
+    }
+    getAudioOutputDeviceList() {
+        return this.stringVectToArr(this.dring.getAudioOutputDeviceList());
+    }
     getVolume(deviceName) {
         return this.dring.getVolume(deviceName);
     }
@@ -116,9 +118,4 @@ class RingDaemon{
     }
 }
 
-var f = function(){
-    console.log("RegistrationStateChanged JS");
-};
-
-var daemon = new RingDaemon({"RegistrationStateChanged": f});
-//daemon.stop();
+module.exports = RingDaemon;
