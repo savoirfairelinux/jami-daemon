@@ -1,6 +1,6 @@
 # x264
 ifndef HAVE_IOS
-X264_HASH := df79067c0cf33da712d344b5f8869be7eaf326f3
+X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
@@ -22,6 +22,7 @@ X264CONF = --prefix="$(PREFIX)" \
 
 ifndef HAVE_WIN32
 X264CONF += --enable-pic
+X264CONF += --extra-cflags=-fPIC
 else
 X264CONF += --enable-win32thread
 endif
@@ -44,6 +45,12 @@ x264: x264-$(X264_HASH).tar.xz .sum-x264
 	(cd $@-$(X264_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 ifdef HAVE_IOS
 	$(APPLY) $(SRC)/x264/remove-align.patch
+endif
+ifeq ($(ARCH),arm)
+	$(APPLY) $(SRC)/x264/0001-use-internal-substitute-for-log2f.patch
+endif
+ifeq ($(ARCH),i386)
+	$(APPLY) $(SRC)/x264/0001-use-internal-substitute-for-log2f.patch
 endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)

@@ -1,0 +1,27 @@
+From a919982bb06f073f3c62be8327c9115e3f1db0f6 Mon Sep 17 00:00:00 2001
+From: philippegorley <gorley.philippe@gmail.com>
+Date: Tue, 25 Jul 2017 11:59:34 -0400
+Subject: [PATCH] use internal substitute for log2f
+
+---
+ configure | 4 ----
+ 1 file changed, 4 deletions(-)
+
+diff --git a/configure b/configure
+index ec9389d..4b23645 100755
+--- a/configure
++++ b/configure
+@@ -1033,10 +1033,6 @@ if [ "$thread" = "posix" ]; then
+ fi
+ [ "$thread" != "no" ] && define HAVE_THREAD
+ 
+-if cc_check "math.h" "-Werror" "return log2f(2);" ; then
+-    define HAVE_LOG2F
+-fi
+-
+ if [ "$SYS" != "WINDOWS" ] && cpp_check "sys/mman.h unistd.h" "" "defined(MAP_PRIVATE)"; then
+     define HAVE_MMAP
+ fi
+-- 
+2.7.4
+

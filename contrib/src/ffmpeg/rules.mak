@@ -91,7 +91,7 @@ endif
 
 ifdef HAVE_LINUX
 FFMPEGCONF += --enable-pic
-FFMPEGCONF += --extra-cxxflags=-fPIC --extra-cflags=-fPIC
+FFMPEGCONF += --extra-cxxflags="-fPIC" --extra-cflags="-fPIC"
 ifdef HAVE_ANDROID
 # Android Linux
 FFMPEGCONF += \
@@ -214,6 +214,12 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 ifdef HAVE_MACOSX
 	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
 	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
+endif
+ifeq ($(ARCH),arm)
+	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-substitutes-for-log2-and-log2f.patch
+endif
+ifeq ($(ARCH),i386)
+	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-substitutes-for-log2-and-log2f.patch
 endif
 	$(MOVE)
 
