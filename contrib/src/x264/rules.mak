@@ -1,6 +1,6 @@
 # x264
 ifndef HAVE_IOS
-X264_HASH := df79067c0cf33da712d344b5f8869be7eaf326f3
+X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
@@ -28,6 +28,13 @@ endif
 ifndef HAVE_IOS
 ifdef HAVE_CROSS_COMPILE
 X264CONF += --cross-prefix="$(CROSS_COMPILE)"
+endif
+endif
+
+# android x86_64 has reloc errors related to assembly optimizations
+ifdef HAVE_ANDROID
+ifeq ($(ARCH),x86_64)
+X264CONF += --disable-asm
 endif
 endif
 
