@@ -22,6 +22,7 @@ X264CONF = --prefix="$(PREFIX)" \
 
 ifndef HAVE_WIN32
 X264CONF += --enable-pic
+X264CONF += --extra-cflags=-fPIC
 else
 X264CONF += --enable-win32thread
 endif
