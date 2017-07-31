@@ -1,6 +1,6 @@
 # x264
 ifndef HAVE_IOS
-X264_HASH := d32d7bf1c6923a42cbd5ac2fd540ecbb009ba681
+X264_HASH := 8c2974255b01728d4eda2434cc1997c4a3ca5eff
 else
 X264_HASH := fa3cac516cb71b8ece09cedbfd0ce631ca8a2a4c
 endif
