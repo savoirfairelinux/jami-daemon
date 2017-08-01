@@ -1,10 +1,6 @@
 # libvpx
 
-ifndef HAVE_IOS
 VPX_HASH := v1.6.1
-else
-VPX_HASH := v1.5.0
-endif
 VPX_URL := https://github.com/webmproject/libvpx/archive/$(VPX_HASH).tar.gz
 
 $(TARBALLS)/libvpx-$(VPX_HASH).tar.gz:
