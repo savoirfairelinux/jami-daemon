@@ -47,6 +47,7 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	rm -r kashmir && mv kashmir-dependency-master kashmir)
 	$(APPLY) $(SRC)/restbed/findkashmir.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
+	$(APPLY) $(SRC)/restbed/locale-fix.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake

@@ -1,0 +1,79 @@
+From 4c8762f0cd993613c29f051fde19a3f8caeac401 Mon Sep 17 00:00:00 2001
+From: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
+Date: Mon, 31 Jul 2017 09:47:50 -0400
+Subject: [PATCH] http: check for locale before duplicating string
+
+---
+ source/corvusoft/restbed/detail/http_impl.cpp | 16 +++++++++++-----
+ source/corvusoft/restbed/http.cpp             | 16 +++++++++++-----
+ 2 files changed, 22 insertions(+), 10 deletions(-)
+
+diff --git a/source/corvusoft/restbed/detail/http_impl.cpp b/source/corvusoft/restbed/detail/http_impl.cpp
+index 54b7c15..f25d6eb 100644
+--- a/source/corvusoft/restbed/detail/http_impl.cpp
++++ b/source/corvusoft/restbed/detail/http_impl.cpp
+@@ -96,17 +96,23 @@ namespace restbed
+                 protocol = "HTTP";
+             }
+             
+-            char* locale = strdup( setlocale( LC_NUMERIC, nullptr ) );
+-            setlocale( LC_NUMERIC, "C" );
++            char* locale = nullptr;
++            if (auto current_locale = setlocale( LC_NUMERIC, nullptr ) )
++            {
++                locale = strdup(current_locale);
++                setlocale( LC_NUMERIC, "C" );
++            }
+             
+             auto data = String::format( "%s %s %s/%.1f\r\n",
+                                         request->get_method( ).data( ),
+                                         path.data( ),
+                                         protocol.data( ),
+                                         request->get_version( ) );
+-                                        
+-            setlocale( LC_NUMERIC, locale );
+-            free( locale );
++            
++            if (locale) {
++                setlocale( LC_NUMERIC, locale );
++                free( locale );
++            }
+             
+             auto headers = request->get_headers( );
+             
+diff --git a/source/corvusoft/restbed/http.cpp b/source/corvusoft/restbed/http.cpp
+index 7648501..9722f64 100644
+--- a/source/corvusoft/restbed/http.cpp
++++ b/source/corvusoft/restbed/http.cpp
+@@ -62,17 +62,23 @@ namespace restbed
+     
+     Bytes Http::to_bytes( const shared_ptr< Response >& value )
+     {
+-        char* locale = strdup( setlocale( LC_NUMERIC, nullptr ) );
+-        setlocale( LC_NUMERIC, "C" );
++        char* locale = nullptr;
++        if (auto current_locale = setlocale( LC_NUMERIC, nullptr ) )
++        {
++            locale = strdup(current_locale);
++            setlocale( LC_NUMERIC, "C" );
++        }
+         
+         auto data = String::format( "%s/%.1f %i %s\r\n",
+                                     value->get_protocol( ).data( ),
+                                     value->get_version( ),
+                                     value->get_status_code( ),
+                                     value->get_status_message( ).data( ) );
+-                                    
+-        setlocale( LC_NUMERIC, locale );
+-        free( locale );
++        
++        if (locale) {
++            setlocale( LC_NUMERIC, locale );
++            free( locale );
++        }
+         
+         auto headers = value->get_headers( );
+         
+-- 
+2.11.0
+
