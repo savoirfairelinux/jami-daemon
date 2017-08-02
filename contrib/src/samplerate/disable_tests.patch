@@ -1,0 +1,25 @@
+From 4188b5b9e553911f562e2ae147c8d2ae17bc2500 Mon Sep 17 00:00:00 2001
+From: Adrien Beraud <adrien.beraud@savoirfairelinux.com>
+Date: Wed, 2 Aug 2017 16:42:36 -0400
+Subject: [PATCH] don't build example, doc, tests
+
+---
+ Makefile.am | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/Makefile.am b/Makefile.am
+index 1295c92..47bd97d 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -2,7 +2,7 @@
+ 
+ DISTCHECK_CONFIGURE_FLAGS = --enable-gcc-werror
+ 
+-SUBDIRS = M4 src doc examples tests
++SUBDIRS = M4 src
+ DIST_SUBDIRS = Win32 $(SUBDIRS)
+ 
+ EXTRA_DIST = autogen.sh libsamplerate.spec.in samplerate.pc.in Make.bat
+-- 
+2.11.0
+
