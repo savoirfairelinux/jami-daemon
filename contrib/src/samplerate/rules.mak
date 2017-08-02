@@ -14,6 +14,7 @@ $(TARBALLS)/libsamplerate-$(SAMPLERATE_VERSION).tar.gz:
 
 samplerate: libsamplerate-$(SAMPLERATE_VERSION).tar.gz .sum-samplerate
 	$(UNPACK)
+	$(APPLY) $(SRC)/samplerate/disable_tests.patch
 	$(APPLY) $(SRC)/samplerate/soundcard.patch
 	$(APPLY) $(SRC)/samplerate/carbon.patch
 ifdef HAVE_IOS
