@@ -1,5 +1,5 @@
 # SAMPLERATE
-SAMPLERATE_VERSION := 0.1.8
+SAMPLERATE_VERSION := 0.1.9
 SAMPLERATE_URL := http://www.mega-nerd.com/SRC/libsamplerate-$(SAMPLERATE_VERSION).tar.gz
 
 PKGS += samplerate
@@ -27,6 +27,7 @@ endif
 	$(MOVE)
 
 .samplerate: samplerate
+	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
