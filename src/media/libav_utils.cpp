@@ -92,6 +92,45 @@ setAvLogLevel()
 #endif
 }
 
+#ifdef __ANDROID__
+static void
+androidAvLogCb(void* ptr, int level, const char* fmt, va_list vl)
+{
+    if (level > av_log_get_level())
+        return;
+
+    char line[1024];
+    int print_prefix = 1;
+    int android_level;
+    va_list vl2;
+    va_copy(vl2, vl);
+    av_log_format_line(ptr, level, fmt, vl2, line, sizeof(line), &print_prefix);
+    va_end(vl2);
+
+    // replace unprintable characters with '?'
+    int idx = 0;
+    while (line[idx]) {
+        if (line[idx] < 0x08 || (line[idx] > 0x0D && line[idx] < 0x20))
+            line[idx] = '?';
+        ++idx;
+    }
+
+    switch(level) {
+        case AV_LOG_QUIET:   android_level = ANDROID_LOG_SILENT;  break;
+        case AV_LOG_PANIC:   android_level = ANDROID_LOG_FATAL;   break;
+        case AV_LOG_FATAL:   android_level = ANDROID_LOG_FATAL;   break;
+        case AV_LOG_ERROR:   android_level = ANDROID_LOG_ERROR;   break;
+        case AV_LOG_WARNING: android_level = ANDROID_LOG_WARN;    break;
+        case AV_LOG_INFO:    android_level = ANDROID_LOG_INFO;    break;
+        case AV_LOG_VERBOSE: android_level = ANDROID_LOG_INFO;    break;
+        case AV_LOG_DEBUG:   android_level = ANDROID_LOG_DEBUG;   break;
+        case AV_LOG_TRACE:   android_level = ANDROID_LOG_VERBOSE; break;
+        default:             android_level = ANDROID_LOG_DEFAULT; break;
+    }
+    __android_log_print(android_level, "FFmpeg", line);
+}
+#endif
+
 static void
 init_once()
 {
@@ -103,6 +142,11 @@ init_once()
 
     if (getDebugMode())
         setAvLogLevel();
+
+#ifdef __ANDROID__
+    // android doesn't like stdout and stderr :(
+    av_log_set_callback(androidAvLogCb);
+#endif
 }
 
 static std::once_flag already_called;
