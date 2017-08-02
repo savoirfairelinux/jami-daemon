@@ -1,7 +1,7 @@
 # Boost
-BOOST_VERSION_1 := 1.61.0
-BOOST_VERSION_2 := 1_61_0
-BOOST_URL := $(SF)/boost/files/boost/$(BOOST_VERSION_1)/boost_$(BOOST_VERSION_2).tar.bz2/download
+BOOST_VERSION_1 := 1.64.0
+BOOST_VERSION_2 := 1_64_0
+BOOST_URL := https://dl.bintray.com/boostorg/release/$(BOOST_VERSION_1)/source/boost_$(BOOST_VERSION_2).tar.bz2
 
 PKGS += boost
 
@@ -54,7 +54,6 @@ ifdef HAVE_ANDROID
 	cd $< && echo "<archiver>${HOST}-ar" >> user-config.jam
 	cd $< && echo "<compileflags>-DANDROID" >> user-config.jam
 	cd $< && echo "<compileflags>-D__ANDROID__" >> user-config.jam
-	cd $< && echo "<compileflags>-I$(ANDROID_TOOLCHAIN)/include/c++/4.9" >> user-config.jam
 	cd $< && echo ";" >> user-config.jam
 endif
 ifdef HAVE_IOS
