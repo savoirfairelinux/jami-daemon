@@ -34,7 +34,7 @@ DATE := $(shell date +%Y%m%d)
 VPATH := $(TARBALLS)
 
 # Set following to non-empty to remove uneeded progression reports (i.e. with automatics builds)
-# BATCH_MODE = 1
+BATCH_MODE = 1
 
 # Common download locations
 GNU := http://ftpmirror.gnu.org/
