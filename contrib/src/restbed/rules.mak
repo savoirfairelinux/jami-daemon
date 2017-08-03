@@ -40,11 +40,13 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
 			-DCMAKE_INSTALL_LIBDIR=lib
 
-restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
+$(TARBALLS)/kashmir.tar.gz:
+	$(call download,https://github.com/Corvusoft/kashmir-dependency/archive/master.tar.gz)
+
+restbed: restbed-$(RESTBED_VERSION).tar.gz kashmir.tar.gz .sum-restbed
 	$(UNPACK)
-	(cd $(UNPACK_DIR)/dependency && \
-	curl -L https://github.com/Corvusoft/kashmir-dependency/archive/master.tar.gz | tar xvz && \
-	rm -r kashmir && mv kashmir-dependency-master kashmir)
+	rm -rf $(UNPACK_DIR)/dependency/kashmir
+	mv kashmir-dependency-master $(UNPACK_DIR)/dependency/kashmir
 	$(APPLY) $(SRC)/restbed/findkashmir.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
 	$(APPLY) $(SRC)/restbed/locale-fix.patch
