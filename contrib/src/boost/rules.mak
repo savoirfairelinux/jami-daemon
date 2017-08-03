@@ -7,6 +7,7 @@ PKGS += boost
 
 BOOST_B2_OPTS := variant=release \
 				 link=static \
+				 -d0 \
 				 --prefix="$(PREFIX)" \
 				 --includedir="$(PREFIX)/include" \
 				 --libdir="$(PREFIX)/lib" \
