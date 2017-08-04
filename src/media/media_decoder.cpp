@@ -156,10 +156,6 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     RING_DBG("Finding stream info DONE");
 
     if (ret < 0) {
-        // workaround for this bug:
-        // http://patches.libav.org/patch/22541/
-        if (ret == -1)
-            ret = AVERROR_INVALIDDATA;
         char errBuf[64] = {0};
         // print nothing for unknown errors
         if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
