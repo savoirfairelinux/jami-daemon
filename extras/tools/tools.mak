@@ -24,6 +24,9 @@ include packages.mak
 AUTOCONF=$(PREFIX)/bin/autoconf
 export AUTOCONF
 
+# Set following to non-empty to remove uneeded progression reports (i.e. with automatics builds)
+BATCH_MODE = 1
+
 ifeq ($(shell curl --version >/dev/null 2>&1 || echo FAIL),)
 download = curl $(if ${BATCH_MODE},-sS) -f -L --retry-delay 10 --retry 2 -- "$(1)" > "$@"
 else ifeq ($(shell wget --version >/dev/null 2>&1 || echo FAIL),)
