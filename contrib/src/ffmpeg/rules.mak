@@ -170,14 +170,12 @@ endif
 
 # ARM stuff
 ifeq ($(ARCH),arm)
-# neon causes SIGBUS error on ARM 32 bits
-FFMPEGCONF += --disable-neon
 FFMPEGCONF += --arch=arm
 ifdef HAVE_ARMV7A
 FFMPEGCONF += --cpu=cortex-a8
 endif
 ifdef HAVE_ARMV6
-FFMPEGCONF += --cpu=armv6
+FFMPEGCONF += --cpu=armv6 --disable-neon
 endif
 endif
 
