@@ -59,6 +59,7 @@ extern "C" {
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
+#include <libswresample/swresample.h>
 }
 
 #include "libav_utils.h"
