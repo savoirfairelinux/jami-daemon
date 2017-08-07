@@ -3,7 +3,7 @@ FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).t
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.58.100 libavcodec >= 57.89.100 libavformat >= 57.71.100 libavdevice >= 57.6.100 libswscale >= 4.6.100"),)
+ifeq ($(call need_pkg,"libavutil >= 55.58.100 libavcodec >= 57.89.100 libavformat >= 57.71.100 libavdevice >= 57.6.100 libswscale >= 4.6.100 libswresample 2.7.100"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -21,7 +21,8 @@ FFMPEGCONF += \
 	--enable-swscale \
 	--enable-protocols \
 	--disable-programs \
-	--disable-sdl
+	--disable-sdl \
+	--enable-debug
 
 #enable muxers/demuxers
 FFMPEGCONF += \
@@ -63,7 +64,8 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=libopus \
+	--enable-decoder=pcm_s16le
 
 #encoders/decoders for images
 FFMPEGCONF += \
