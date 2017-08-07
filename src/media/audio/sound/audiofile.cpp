@@ -35,6 +35,7 @@
 #include "audio/resampler.h"
 #include "manager.h"
 #include "client/ring_signal.h"
+#include "libav_deps.h"
 
 #include "logger.h"
 
@@ -63,45 +64,44 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
 #ifndef RING_UWP
-    int format;
-    bool hasHeader = true;
-
-    if (filepath_.find(".wav") != std::string::npos) {
-        format = SF_FORMAT_WAV;
-    } else if (filepath_.find(".ul") != std::string::npos) {
-        format = SF_FORMAT_RAW | SF_FORMAT_ULAW;
-        hasHeader = false;
-    } else if (filepath_.find(".al") != std::string::npos) {
-        format = SF_FORMAT_RAW | SF_FORMAT_ALAW;
-        hasHeader = false;
-    } else if (filepath_.find(".au") != std::string::npos) {
-        format = SF_FORMAT_AU;
-    } else if (filepath_.find(".flac") != std::string::npos) {
-        format = SF_FORMAT_FLAC;
-    } else if (filepath_.find(".ogg") != std::string::npos) {
-        format = SF_FORMAT_OGG;
-    } else {
-        RING_WARN("No file extension, guessing WAV");
-        format = SF_FORMAT_WAV;
-    }
-
     SndfileHandle fileHandle(fileName.c_str(), SFM_READ, format, hasHeader ? 0 : 1,
                              hasHeader ? 0 : 8000);
 
-    if (!fileHandle)
-        throw AudioFileException("File handle " + fileName + " could not be created");
-    if (fileHandle.error()) {
-        RING_ERR("Error fileHandle: %s", fileHandle.strError());
-        throw AudioFileException("File " + fileName + " doesn't exist");
+    std::unique_ptr<AVFormatContext, std::function<void(AVFormatContext*)>> formatCtx(avformat_alloc_context(),
+            [](AVFormatContext* ptr){ avformat_free_context(ptr); });
+
+    int err = 0;
+    if ((err = avformat_open_input(&formatCtx.get(), fileName.c_str(), )) < 0) {
+        RING_ERR("Could not open file %s (%s)", fileName.c_str(), av_strerror(err));
+        throw AudioFileException("Could not open file " + fileName.c_str());
     }
 
-    switch (fileHandle.channels()) {
-        case 1:
-        case 2:
-            break;
-        default:
-            throw AudioFileException("Unsupported number of channels");
+    if (err = avformat_find_stream_info(formatCtx, nullptr)) {
+        RING_ERR("Error reading file %s (%s)", fileName.c_str(), av_strerror(err));
+        throw AudioFileException("Could not read file " + fileName.c_str());
     }
+
+    int idx = av_find_best_stream(formatCtx, AVMEDIA_TYPE_AUDIO, -1, -1, 0, 0);
+    if (idx < 0 || idx >= formatCtx->nb_streams) {
+        RING_ERR("Could not find stream, trying first in list");
+        idx = 0;
+    }
+
+    // codecpar    = avstream->codecpar
+    // nb_channels = codecpar->channels
+    // duration    = avstream->duration (convert to ms)
+    // sample_rate = codecpar->sample_rate
+    // nb_streams  = formatCtx->nb_streams
+    // nb_frames   = ?
+
+//    auto s = formatCtx->streams[idx];
+//    switch (s->codecpar->channels) {
+//        case 1:
+//        case 2:
+//            break;
+//        default:
+//            throw AudioFileException("Unsupported number of channels");
+//    }
 
     // get # of bytes in file
     const size_t fileSize = fileHandle.seek(0, SEEK_END);
