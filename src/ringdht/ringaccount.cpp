@@ -2135,10 +2135,14 @@ RingAccount::doRegister_()
         });
 #endif
 
-        dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
+        auto currentDhtStatus = std::make_shared<dht::NodeStatus>(dht::NodeStatus::Disconnected);
+        dht_.setOnStatusChanged([this, currentDhtStatus](dht::NodeStatus s4, dht::NodeStatus s6) {
             RING_DBG("[Account %s] Dht status : IPv4 %s; IPv6 %s", getAccountID().c_str(), dhtStatusStr(s4), dhtStatusStr(s6));
             RegistrationState state;
-            switch (std::max(s4, s6)) {
+            auto newStatus = std::max(s4, s6);
+            if (newStatus == *currentDhtStatus)
+                return;
+            switch (newStatus) {
                 case dht::NodeStatus::Connecting:
                     RING_WARN("[Account %s] connecting to the DHT network...", getAccountID().c_str());
                     state = RegistrationState::TRYING;
@@ -2155,6 +2159,7 @@ RingAccount::doRegister_()
                     state = RegistrationState::ERROR_GENERIC;
                     break;
             }
+            *currentDhtStatus = newStatus;
             setRegistrationState(state);
         });
 
