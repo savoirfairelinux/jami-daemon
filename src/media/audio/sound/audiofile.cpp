@@ -28,7 +28,8 @@
 #include <climits>
 
 #ifndef RING_UWP
-#include <sndfile.hh>
+//#include <sndfile.hh>
+#include "libav_deps.h"
 #endif
 
 #include "audiofile.h"
@@ -59,78 +60,194 @@ AudioFile::onBufferFinish()
     updatePlaybackScale_++;
 }
 
+#ifndef RING_UWP
+static auto avFormatDeleter = [](AVFormatContext* fmtCtx){ avformat_close_input(&fmtCtx); };
+#endif
+
 AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
 #ifndef RING_UWP
-    int format;
-    bool hasHeader = true;
+    int ret = 0;
+    std::unique_ptr<AVFormatContext, std::function<void(AVFormatContext*)>> fmtCtx =
+        std::unique_ptr<AVFormatContext, std::function<void(AVFormatContext*)>>(nullptr, avFormatDeleter);
 
-    if (filepath_.find(".wav") != std::string::npos) {
-        format = SF_FORMAT_WAV;
-    } else if (filepath_.find(".ul") != std::string::npos) {
-        format = SF_FORMAT_RAW | SF_FORMAT_ULAW;
-        hasHeader = false;
-    } else if (filepath_.find(".al") != std::string::npos) {
-        format = SF_FORMAT_RAW | SF_FORMAT_ALAW;
-        hasHeader = false;
-    } else if (filepath_.find(".au") != std::string::npos) {
-        format = SF_FORMAT_AU;
-    } else if (filepath_.find(".flac") != std::string::npos) {
-        format = SF_FORMAT_FLAC;
-    } else if (filepath_.find(".ogg") != std::string::npos) {
-        format = SF_FORMAT_OGG;
-    } else {
-        RING_WARN("No file extension, guessing WAV");
-        format = SF_FORMAT_WAV;
-    }
+    AVFormatContext* ctx = avformat_alloc_context();
+    if ((ret = avformat_open_input(&ctx, fileName.c_str(), 0, 0)) < 0)
+        throw AudioFileException("Could not open " + fileName);
 
-    SndfileHandle fileHandle(fileName.c_str(), SFM_READ, format, hasHeader ? 0 : 1,
-                             hasHeader ? 0 : 8000);
+    // take ownership so avformat_close_input is always called
+    fmtCtx.reset(ctx);
 
-    if (!fileHandle)
-        throw AudioFileException("File handle " + fileName + " could not be created");
-    if (fileHandle.error()) {
-        RING_ERR("Error fileHandle: %s", fileHandle.strError());
-        throw AudioFileException("File " + fileName + " doesn't exist");
-    }
+    if ((ret = avformat_find_stream_info(fmtCtx.get(), 0)) < 0)
+        throw AudioFileException("Failed to find stream info in " + fileName);
 
-    switch (fileHandle.channels()) {
+    if ((ret = av_find_best_stream(fmtCtx.get(), AVMEDIA_TYPE_AUDIO, -1, -1, 0, 0)) < 0)
+        throw AudioFileException("No audio stream in " + fileName);
+
+    AVStream* stream = fmtCtx->streams[ret];
+    int nbFrames = 0; // we have to decode the file anyway, so count them as we decode
+    int nbSamples = 0;
+    int nbChannels = stream->codecpar->channels;
+    int sRate = stream->codecpar->sample_rate;
+    // sanity checks and defaults
+    nbChannels = nbChannels ? nbChannels : 1;
+    sRate = sRate ? sRate : 8000;
+
+    AVCodec* codec = avcodec_find_decoder(stream->codecpar->codec_id);
+    if (!codec)
+        throw AudioFileException("No decoder found for " + fileName);
+
+    AVCodecContext* codecCtx = avcodec_alloc_context3(codec);
+    avcodec_parameters_to_context(codecCtx, stream->codecpar);
+    codecCtx->request_sample_fmt = av_get_alt_sample_fmt(codecCtx->sample_fmt, 0);
+    if ((ret = avcodec_open2(codecCtx, codec, 0)) < 0)
+        throw AudioFileException("Could not open codec " + std::string(avcodec_get_name(codecCtx->codec_id)));
+
+    const int outRate = static_cast<int32_t>(sRate);
+    const bool isPlanar = av_sample_fmt_is_planar(codecCtx->sample_fmt);
+    const bool needsResampling = (av_get_bytes_per_sample(codecCtx->sample_fmt) == 2); // don't resample if already 16 bits
+
+    SwrContext* swrCtx = swr_alloc();
+    switch (nbChannels) {
         case 1:
+            av_opt_set_channel_layout(swrCtx, "in_channel_layout", AV_CH_LAYOUT_MONO, 0);
+            break;
         case 2:
+            av_opt_set_channel_layout(swrCtx, "in_channel_layout", AV_CH_LAYOUT_STEREO, 0);
             break;
         default:
             throw AudioFileException("Unsupported number of channels");
     }
+    // TODO keep same layout as input
+    av_opt_set_channel_layout(swrCtx, "out_channel_layout", AV_CH_LAYOUT_MONO, 0);
+    av_opt_set_int(swrCtx, "in_sample_rate", sRate, 0);
+    av_opt_set_int(swrCtx, "out_sample_rate", outRate, 0);
+    av_opt_set_sample_fmt(swrCtx, "in_sample_fmt", codecCtx->sample_fmt, 0);
+    av_opt_set_sample_fmt(swrCtx, "out_sample_fmt", AV_SAMPLE_FMT_S16, 0); // match AudioSample
+    if ((ret = swr_init(swrCtx)) < 0)
+        throw AudioFileException("Failed to initialize resampling context");
 
-    // get # of bytes in file
-    const size_t fileSize = fileHandle.seek(0, SEEK_END);
-    fileHandle.seek(0, SEEK_SET);
+    AVFrame* frame = av_frame_alloc();
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    std::vector<int16_t> buf;
+    while ((ret = av_read_frame(fmtCtx.get(), &pkt)) >= 0) {
+        int finished = 0;
+        ret = avcodec_send_packet(codecCtx, &pkt);
+        if (ret == AVERROR_EOF) continue;
+        if (ret < 0) break;
 
-    const sf_count_t nbFrames = hasHeader ? fileHandle.frames() : fileSize / fileHandle.channels();
+        ret = avcodec_receive_frame(codecCtx, frame);
+        if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) break;
+        if (ret >= 0) finished = 1;
 
-    AudioSample * interleaved = new AudioSample[nbFrames * fileHandle.channels()];
+        if (finished) {
+            ++nbFrames;
+            AVFrame* output;
+            // TODO remove || 1, add logic to copy frame into output
+            if (needsResampling || 1) {
+                output = av_frame_alloc();
+                output->format = AV_SAMPLE_FMT_S16; // match AudioSample
+                output->sample_rate = outRate;
+                output->channel_layout = frame->channel_layout;
+                swr_convert_frame(swrCtx, frame, output);
+            }
 
-    // get n "items", aka samples (not frames)
-    fileHandle.read(interleaved, nbFrames * fileHandle.channels());
+            nbSamples += output->nb_samples;
+            // TODO check endianness, sample_fmt is in native
+            // TODO check if planar (shouldn't be as we're forcing to mono)
+            // XXX linesize[0] instead?
+            int sz = output->nb_samples * av_get_bytes_per_sample(AV_SAMPLE_FMT_S16);
+            RING_WARN("nb_samples[%d] * bytes/sample[%d] = sz[%d]", output->nb_samples, av_get_bytes_per_sample(AV_SAMPLE_FMT_S16), sz);
+            for (int i = 0; i < sz; ++i) {
+                RING_WARN("noisy af: %d", output->extended_data[0][i]);
+                buf.push_back(output->extended_data[0][i]);
+            }
 
-    AudioBuffer * buffer = new AudioBuffer(nbFrames, AudioFormat(fileHandle.samplerate(), fileHandle.channels()));
-    buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
-    delete [] interleaved;
-
-    const int rate = static_cast<int32_t>(sampleRate);
-
-    if (fileHandle.samplerate() != rate) {
-        Resampler resampler(std::max(fileHandle.samplerate(), rate), fileHandle.channels(), true);
-        AudioBuffer * resampled = new AudioBuffer(nbFrames, AudioFormat(rate, fileHandle.channels()));
-        resampler.resample(*buffer, *resampled);
-        delete buffer;
-        delete buffer_;
-        buffer_ = resampled;
-    } else {
-        delete buffer_;
-        buffer_ = buffer;
+            av_packet_unref(&pkt);
+            if (output) av_frame_free(&output);
+        }
     }
+
+    av_frame_free(&frame);
+
+    if (ret < 0 && ret != AVERROR_EOF)
+        throw AudioFileException("Error while decoding " + fileName);
+
+    AudioSample* samples = buf.data();
+    AudioBuffer* b = new AudioBuffer(samples, nbSamples, AudioFormat(outRate, 1));
+    delete buffer_;
+    buffer_ = b;
+
+//    int format;
+//    bool hasHeader = true;
+//
+//    if (filepath_.find(".wav") != std::string::npos) {
+//        format = SF_FORMAT_WAV;
+//    } else if (filepath_.find(".ul") != std::string::npos) {
+//        format = SF_FORMAT_RAW | SF_FORMAT_ULAW;
+//        hasHeader = false;
+//    } else if (filepath_.find(".al") != std::string::npos) {
+//        format = SF_FORMAT_RAW | SF_FORMAT_ALAW;
+//        hasHeader = false;
+//    } else if (filepath_.find(".au") != std::string::npos) {
+//        format = SF_FORMAT_AU;
+//    } else if (filepath_.find(".flac") != std::string::npos) {
+//        format = SF_FORMAT_FLAC;
+//    } else if (filepath_.find(".ogg") != std::string::npos) {
+//        format = SF_FORMAT_OGG;
+//    } else {
+//        RING_WARN("No file extension, guessing WAV");
+//        format = SF_FORMAT_WAV;
+//    }
+//
+//    SndfileHandle fileHandle(fileName.c_str(), SFM_READ, format, hasHeader ? 0 : 1,
+//                             hasHeader ? 0 : 8000);
+//
+//    if (!fileHandle)
+//        throw AudioFileException("File handle " + fileName + " could not be created");
+//    if (fileHandle.error()) {
+//        RING_ERR("Error fileHandle: %s", fileHandle.strError());
+//        throw AudioFileException("File " + fileName + " doesn't exist");
+//    }
+//
+//    switch (fileHandle.channels()) {
+//        case 1:
+//        case 2:
+//            break;
+//        default:
+//            throw AudioFileException("Unsupported number of channels");
+//    }
+//
+//    // get # of bytes in file
+//    const size_t fileSize = fileHandle.seek(0, SEEK_END);
+//    fileHandle.seek(0, SEEK_SET);
+//
+//    const sf_count_t nbFrames = hasHeader ? fileHandle.frames() : fileSize / fileHandle.channels();
+//
+//    AudioSample * interleaved = new AudioSample[nbFrames * fileHandle.channels()];
+//
+//    // get n "items", aka samples (not frames)
+//    fileHandle.read(interleaved, nbFrames * fileHandle.channels());
+//
+//    AudioBuffer * buffer = new AudioBuffer(nbFrames, AudioFormat(fileHandle.samplerate(), fileHandle.channels()));
+//    buffer->deinterleave(interleaved, nbFrames, fileHandle.channels());
+//    delete [] interleaved;
+//
+//    const int rate = static_cast<int32_t>(sampleRate);
+//
+//    if (fileHandle.samplerate() != rate) {
+//        Resampler resampler(std::max(fileHandle.samplerate(), rate), fileHandle.channels(), true);
+//        AudioBuffer * resampled = new AudioBuffer(nbFrames, AudioFormat(rate, fileHandle.channels()));
+//        resampler.resample(*buffer, *resampled);
+//        delete buffer;
+//        delete buffer_;
+//        buffer_ = resampled;
+//    } else {
+//        delete buffer_;
+//        buffer_ = buffer;
+//    }
 #endif
 }
 
