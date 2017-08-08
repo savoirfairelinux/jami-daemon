@@ -64,6 +64,16 @@ std::vector<uint8_t> compress(const std::string& str);
  */
 std::vector<uint8_t> decompress(const std::vector<uint8_t>& dat);
 
+/**
+ * Compress string to a Gzip file
+ */
+void compressGzip(const std::string& str, const std::string& path);
+
+/**
+ * Decompress Gzip file to bytes
+ */
+std::vector<uint8_t> decompressGzip(const std::string& path);
+
 }
 
 } // namespace ring
