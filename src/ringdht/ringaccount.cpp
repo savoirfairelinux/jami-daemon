@@ -981,18 +981,19 @@ RingAccount::readArchive(const std::string& pwd) const
 
     std::vector<uint8_t> data;
 
-    // Read file
-    try {
-        data = fileutils::loadFile(archivePath_, idPath_);
-    } catch (const std::exception& e) {
-        RING_ERR("[Account %s] archive loading error: %s", getAccountID().c_str(), e.what());
-        throw;
-    }
-
-    if (not pwd.empty()) {
+    if (pwd.empty()) {
+        data = archiver::decompressGzip(fileutils::getFullPath(idPath_, archivePath_));
+    } else {
+        // Read file
+        try {
+            data = fileutils::loadFile(archivePath_, idPath_);
+        } catch (const std::exception& e) {
+            RING_ERR("[Account %s] archive loading error: %s", getAccountID().c_str(), e.what());
+            throw;
+        }
         // Decrypt
         try {
-            data = dht::crypto::aesDecrypt(data, pwd);
+            data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
         } catch (const std::exception& e) {
             RING_ERR("[Account %s] archive decrypt error: %s", getAccountID().c_str(), e.what());
             throw;
@@ -1009,18 +1010,8 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
     ArchiveContent c;
     RING_DBG("Loading account archive (%lu bytes)", dat.size());
 
-    std::vector<uint8_t> file;
-
-    // Decompress
-    try {
-        file = archiver::decompress(dat);
-    } catch (const std::exception& ex) {
-        RING_ERR("Archive decompression error: %s", ex.what());
-        throw std::runtime_error("failed to read file");
-    }
-
     // Decode string
-    std::string decoded {file.begin(), file.end()};
+    std::string decoded {dat.begin(), dat.end()};
     Json::Value value;
     Json::Reader reader;
     if (!reader.parse(decoded.c_str(),value)) {
@@ -1069,7 +1060,7 @@ RingAccount::loadArchive(const std::vector<uint8_t>& dat)
 }
 
 
-std::vector<uint8_t>
+std::string
 RingAccount::makeArchive(const ArchiveContent& archive) const
 {
     RING_DBG("[Account %s] building account archive", getAccountID().c_str());
@@ -1109,37 +1100,37 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
     }
 
     Json::FastWriter fastWriter;
-    std::string output = fastWriter.write(root);
-
-    // Compress
-    return archiver::compress(output);
+    return fastWriter.write(root);
 }
 
 void
 RingAccount::saveArchive(const ArchiveContent& archive_content, const std::string& pwd)
 {
-    std::vector<uint8_t> data;
+    std::string archive_str;
     try {
-        data = makeArchive(archive_content);
+        archive_str = makeArchive(archive_content);
     } catch (const std::runtime_error& ex) {
         RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return;
     }
 
+    if (archivePath_.empty())
+        archivePath_ = "export.gz";
+    auto fullPath = fileutils::getFullPath(idPath_, archivePath_);
+
     if (not pwd.empty()) {
         // Encrypt using provided password
-        data = dht::crypto::aesEncrypt(data, pwd);
-    } else
+        std::vector<uint8_t> data = dht::crypto::aesEncrypt(archiver::compress(archive_str), pwd);
+        // Write
+        try {
+            fileutils::saveFile(fullPath, data);
+        } catch (const std::runtime_error& ex) {
+            RING_ERR("Export failed: %s", ex.what());
+            return;
+        }
+    } else {
         RING_WARN("[account %s] unsecured archiving (no password)", getAccountID().c_str());
-
-    // Write
-    try {
-        if (archivePath_.empty())
-            archivePath_ = "export.gz";
-        fileutils::saveFile(fileutils::getFullPath(idPath_, archivePath_), data);
-    } catch (const std::runtime_error& ex) {
-        RING_ERR("Export failed: %s", ex.what());
-        return;
+        archiver::compressGzip(archive_str, fullPath);
     }
 }
 
@@ -1199,7 +1190,7 @@ RingAccount::addDevice(const std::string& password)
         }
         try {
             auto archive = this_->makeArchive(a);
-            auto encrypted = dht::crypto::aesEncrypt(archive, key);
+            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(archive), key);
             if (not this_->dht_.isRunning())
                 throw std::runtime_error("DHT is not running..");
             this_->dht_.put(loc, encrypted, [this_,pin_str](bool ok) {
@@ -1331,7 +1322,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                 this_->dht_.get(loc, [w,key,found,archive_password,archiveFound](const std::shared_ptr<dht::Value>& val) {
                     std::vector<uint8_t> decrypted;
                     try {
-                        decrypted = dht::crypto::aesDecrypt(val->data, key);
+                        decrypted = archiver::decompress(dht::crypto::aesDecrypt(val->data, key));
                     } catch (const std::exception& ex) {
                         return true;
                     }

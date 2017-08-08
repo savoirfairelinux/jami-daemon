@@ -504,7 +504,7 @@ class RingAccount : public SIPAccountBase {
         static bool updateCertificates(ArchiveContent& archive, dht::crypto::Identity& device);
 
         void createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate);
-        std::vector<uint8_t> makeArchive(const ArchiveContent& content) const;
+        std::string makeArchive(const ArchiveContent& content) const;
         void saveArchive(const ArchiveContent& content, const std::string& pwd);
         ArchiveContent readArchive(const std::string& pwd) const;
         static ArchiveContent loadArchive(const std::vector<uint8_t>& data);
