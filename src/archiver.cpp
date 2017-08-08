@@ -223,6 +223,33 @@ compress(const std::string& str)
     return outbuffer;
 }
 
+void
+compressGzip(const std::string& str, const std::string& path)
+{
+    auto fi = gzopen(path.c_str(), "wb");
+    gzwrite(fi, str.data(), str.size());
+    gzclose(fi);
+}
+
+std::vector<uint8_t>
+decompressGzip(const std::string& path)
+{
+    std::vector<uint8_t> out;
+    auto fi = gzopen(path.c_str(),"rb");
+    gzrewind(fi);
+    while (not gzeof(fi)) {
+        std::array<uint8_t, 32768> outbuffer;
+        int len = gzread(fi, outbuffer.data(), outbuffer.size());
+        if (len == -1) {
+            gzclose(fi);
+            throw std::runtime_error("Exception during gzip decompression");
+        }
+        out.insert(out.end(), outbuffer.begin(), outbuffer.begin() +  len);
+    }
+    gzclose(fi);
+    return out;
+}
+
 std::vector<uint8_t>
 decompress(const std::vector<uint8_t>& str)
 {
