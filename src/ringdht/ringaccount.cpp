@@ -1502,6 +1502,9 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
 void
 RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
 {
+    if (not isEnabled())
+        return;
+
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
