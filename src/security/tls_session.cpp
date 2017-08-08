@@ -206,6 +206,7 @@ TlsSession::TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id
     , params_(params)
     , callbacks_(cbs)
     , anonymous_(anonymous)
+    , pmtudEnabled_(Manager::instance().isPmtudEnabled())
     , maxPayload_(INPUT_BUFFER_SIZE)
     , cacred_(nullptr)
     , sacred_(nullptr)
@@ -262,7 +263,9 @@ TlsSession::setupClient()
 {
     auto ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
     RING_WARN("[TLS] set heartbeat reception for retrocompatibility check on server");
-    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    if (pmtudEnabled_){
+        gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    }
 
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
@@ -704,7 +707,10 @@ TlsSession::handleStateCookie(TlsSessionState state)
 
     ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
     RING_WARN("[TLS] set heartbeat reception");
-    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+
+    if (pmtudEnabled_){
+        gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    }
 
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
@@ -823,8 +829,8 @@ TlsSession::handleStateMtuDiscovery(UNUSED TlsSessionState state)
             RING_WARN("[TLS] HEARTBEAT PATH MTU DISCOVERY OVER");
         }
     } else {
-        RING_ERR("[TLS] PEER HEARTBEAT DISABLED: setting minimal value to MTU @%d for retrocompatibility", DTLS_MTU);
-        gnutls_dtls_set_mtu(session_, DTLS_MTU);
+        RING_ERR("[TLS] PEER HEARTBEAT DISABLED: setting minimal value to MTU @%d for retrocompatibility", MIN_MTU);
+        gnutls_dtls_set_mtu(session_, MIN_MTU);
         pmtudOver_ = true;
     }
     maxPayload_ = gnutls_dtls_get_data_mtu(session_);

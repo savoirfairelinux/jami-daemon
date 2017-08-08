@@ -294,6 +294,7 @@ struct Manager::ManagerPimpl
     Manager& base_; // pimpl back-pointer
 
     std::atomic_bool autoAnswer_ {false};
+    std::atomic_bool pmtudEnabled_ {false};
 
     /** Application wide tone controler */
     ToneControl toneCtrl_;
@@ -672,6 +673,18 @@ void
 Manager::setAutoAnswer(bool enable)
 {
     pimpl_->autoAnswer_ = enable;
+}
+
+void
+Manager::setMtuDiscovery(bool enable)
+{
+    pimpl_->pmtudEnabled_ = enable;
+}
+
+bool
+Manager::isPmtudEnabled()
+{
+    return pimpl_->pmtudEnabled_.load();
 }
 
 void

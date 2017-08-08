@@ -56,6 +56,7 @@ init(enum InitFlag flags) noexcept
         // current implementation use static variable
         auto& manager = ring::Manager::instance();
         manager.setAutoAnswer(flags & DRING_FLAG_AUTOANSWER);
+        manager.setMtuDiscovery(flags & DRING_FLAG_PMTUD);
         return true;
     } catch (...) {
         return false;
