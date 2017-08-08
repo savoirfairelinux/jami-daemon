@@ -2018,7 +2018,8 @@ void
 RingAccount::trackBuddyPresence(const std::string& buddy_id)
 {
     if (not dht_.isRunning()) {
-        RING_ERR("DHT node not running. Cannot track buddy %s", buddy_id.c_str());
+        RING_ERR("[Account %s] DHT node not running. Cannot track buddy %s",
+                 getAccountID().c_str(), buddy_id.c_str());
         return;
     }
     std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
@@ -2029,7 +2030,7 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
         buddyUri = parseRingUri(buddy_id);
     }
     catch (...) {
-        RING_ERR("Failed to track a buddy due to an invalid URI %s", buddy_id.c_str());
+        RING_ERR("[Account %s] Failed to track a buddy due to an invalid URI %s", getAccountID().c_str(), buddy_id.c_str());
         return;
     }
 
