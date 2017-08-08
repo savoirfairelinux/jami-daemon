@@ -210,7 +210,6 @@ private:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
-    std::atomic<unsigned int> maxPayload_;
 
     // IO GnuTLS <-> ICE
     std::mutex txMutex_ {};
@@ -270,6 +269,7 @@ private:
     void cleanup();
 
     // Path mtu discovery
+    std::atomic<unsigned int> maxPayload_;
     std::array<uint16_t, MTUS_TO_TEST>::const_iterator mtuProbe_;
     unsigned hbPingRecved_ {0};
     bool pmtudOver_ {false};
