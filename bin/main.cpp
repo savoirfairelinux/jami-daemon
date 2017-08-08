@@ -71,6 +71,7 @@ print_usage()
     "-p, --persistent \t- Stay alive after client quits" << std::endl <<
     "--port \t- Port to use for the rest API. Default is 8080" << std::endl <<
     "--auto-answer \t- Force automatic answer to incoming calls" << std::endl <<
+    "-m, --mtu \t- Enable path MTU discovery" << std::endl <<
     "-h, --help \t- Print help" << std::endl;
 }
 
@@ -85,6 +86,7 @@ parse_args(int argc, char *argv[], bool& persistent)
     int helpFlag = false;
     int versionFlag = false;
     int autoAnswer = false;
+    int pmtudFlag = false;
 
     const struct option long_options[] = {
         /* These options set a flag. */
@@ -95,6 +97,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         {"version", no_argument, NULL, 'v'},
         {"auto-answer", no_argument, &autoAnswer, true},
         {"port", optional_argument, NULL, 'x'},
+        {"mtud", no_argument, NULL, 'm'},
         {0, 0, 0, 0} /* Sentinel */
     };
 
@@ -102,7 +105,7 @@ parse_args(int argc, char *argv[], bool& persistent)
         /* getopt_long stores the option index here. */
         int option_index = 0;
 
-        auto c = getopt_long(argc, argv, "dcphvx:", long_options, &option_index);
+        auto c = getopt_long(argc, argv, "dcphvx:m", long_options, &option_index);
 
         // end of the options
         if (c == -1)
@@ -134,6 +137,10 @@ parse_args(int argc, char *argv[], bool& persistent)
                 port = std::atoi(optarg);
                 break;
 
+            case 'm':
+                pmtudFlag = true;
+                break;
+
             default:
                 break;
         }
@@ -157,6 +164,9 @@ parse_args(int argc, char *argv[], bool& persistent)
 
     if (autoAnswer)
         ringFlags |= DRing::DRING_FLAG_AUTOANSWER;
+
+    if (pmtudFlag)
+        ringFlags |= DRing::DRING_FLAG_PMTUD;
 
     return false;
 }

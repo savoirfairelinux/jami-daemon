@@ -59,6 +59,8 @@ class Manager {
         static Manager& instance();
 
         void setAutoAnswer(bool enable);
+        void setMtuDiscovery(bool enable);
+        bool isPmtudEnabled();
 
         /**
          * General preferences configuration
