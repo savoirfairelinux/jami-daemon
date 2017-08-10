@@ -425,16 +425,16 @@ AS_IF([test "x$with_restcpp" = "xyes"], [
 );
 
 dnl Check for libav
-PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.5.0,, AC_MSG_ERROR([Missing libavcodec development files]))
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 55.58.100,, AC_MSG_ERROR([Missing libavutil development files]))
+
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.89.100,, AC_MSG_ERROR([Missing libavcodec development files]))
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 54.20.3,, AC_MSG_ERROR([Missing libavformat development files]))
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 57.71.100,, AC_MSG_ERROR([Missing libavformat development files]))
 
-PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 1.1.0,, AC_MSG_ERROR([Missing libswscale development files]))
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 57.6.100,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 53.0.0,, AC_MSG_ERROR([Missing libavdevice development files]))
-
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 52.5.0,, AC_MSG_ERROR([Missing libavutil development files]))
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 4.6.100,, AC_MSG_ERROR([Missing libswscale development files]))
 
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
