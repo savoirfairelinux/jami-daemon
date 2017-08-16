@@ -3091,6 +3091,42 @@ Manager::setDecodingAccelerated(bool isAccelerated)
     saveConfig();
 #endif
 }
+
+bool
+Manager::getAutoQuality() const
+{
+    return videoPreferences.getAutoQuality();
+}
+
+void
+Manager::setAutoQuality(bool autoQuality)
+{
+    videoPreferences.setAutoQuality(autoQuality);
+}
+
+int
+Manager::getQuality() const
+{
+    return videoPreferences.getQuality();
+}
+
+void
+Manager::setQuality(int quality)
+{
+    videoPreferences.setQuality(quality);
+}
+
+int
+Manager::getBitrate() const
+{
+    return videoPreferences.getBitrate();
+}
+
+void
+Manager::setBitrate(int bitrate)
+{
+    videoPreferences.setBitrate(bitrate);
+}
 #endif // RING_VIDEO
 
 RingBufferPool&

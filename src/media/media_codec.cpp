@@ -21,6 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "account_const.h"
+#include "manager.h"
 
 #include "string_utils.h"
 #include "logger.h"
@@ -207,6 +208,10 @@ AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCode
 std::map<std::string, std::string>
 AccountVideoCodecInfo::getCodecSpecifications()
 {
+    // TODO get settings per codec
+    bitrate = Manager::instance().getBitrate();
+    quality = Manager::instance().getQuality();
+    isAutoQualityEnabled = Manager::instance().getAutoQuality();
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},
@@ -241,6 +246,12 @@ AccountVideoCodecInfo::setCodecSpecifications(const std::map<std::string, std::s
     it = details.find(DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED);
     if (it != details.end())
         copy.isAutoQualityEnabled = (it->second == TRUE_STR) ? true : false;
+
+    // save config if no exceptions
+    // TODO save per codec else it always get overriden by h263 (last codec in list)
+    Manager::instance().setBitrate(copy.bitrate);
+    Manager::instance().setQuality(copy.quality);
+    Manager::instance().setAutoQuality(copy.isAutoQualityEnabled);
 
     // copy back if no exception was raised
     *this = std::move(copy);

@@ -884,6 +884,18 @@ class Manager {
         bool getDecodingAccelerated() const;
 
         void setDecodingAccelerated(bool isAccelerated);
+
+        bool getAutoQuality() const;
+
+        void setAutoQuality(bool autoQuality);
+
+        int getQuality() const;
+
+        void setQuality(int quality);
+
+        int getBitrate() const;
+
+        void setBitrate(int bitrate);
 #endif // RING_VIDEO
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
