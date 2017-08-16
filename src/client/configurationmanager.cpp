@@ -468,6 +468,14 @@ setCodecDetails(const std::string& accountID,
                           foundCodec->systemCodecInfo.name.c_str());
                 if (auto call = ring::Manager::instance().getCurrentCall()) {
                     if (call->useVideoCodec(foundCodec.get())) {
+#ifdef RING_VIDEO
+                        auto chosenQuality = 1.0 * (foundCodec->systemCodecInfo.minQuality - foundCodec->quality) / (foundCodec->systemCodecInfo.minQuality - foundCodec->systemCodecInfo.maxQuality) * 100.0;
+                        ring::Manager::instance().setQuality(chosenQuality);
+                        auto chosenBitrate = 1.0 * (foundCodec->bitrate - foundCodec->systemCodecInfo.minBitrate) / (foundCodec->systemCodecInfo.maxBitrate - foundCodec->systemCodecInfo.minBitrate) * 100.0;
+                        ring::Manager::instance().setBitrate(chosenBitrate);
+                        ring::Manager::instance().setAutoQuality(foundCodec->isAutoQualityEnabled);
+                        ring::Manager::instance().saveConfig();
+#endif
                         RING_WARN("%s running. Need to restart encoding",
                                   foundCodec->systemCodecInfo.name.c_str());
                         call->restartMediaSender();
@@ -913,6 +921,60 @@ bool registerName(const std::string& account, const std::string& password, const
     }
 #endif
     return false;
+}
+
+bool
+getAutoQuality()
+{
+#ifdef RING_VIDEO
+    return ring::Manager::instance().videoPreferences.getAutoQuality();
+#else
+    return false;
+#endif
+}
+
+void
+setAutoQuality(bool state)
+{
+#ifdef RING_VIDEO
+    ring::Manager::instance().videoPreferences.setAutoQuality(state);
+#endif
+}
+
+double
+getQuality()
+{
+#ifdef RING_VIDEO
+    return ring::Manager::instance().videoPreferences.getQuality();
+#else
+    return 0.0;
+#endif
+}
+
+void
+setQuality(double quality)
+{
+#ifdef RING_VIDEO
+    ring::Manager::instance().videoPreferences.setQuality(quality);
+#endif
+}
+
+double
+getBitrate()
+{
+#ifdef RING_VIDEO
+    return ring::Manager::instance().videoPreferences.getBitrate();
+#else
+    return 0.0;
+#endif
+}
+
+void
+setBitrate(double bitrate)
+{
+#ifdef RING_VIDEO
+    ring::Manager::instance().videoPreferences.setBitrate(bitrate);
+#endif
 }
 
 } // namespace DRing

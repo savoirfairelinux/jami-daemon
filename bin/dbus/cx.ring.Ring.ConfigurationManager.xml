@@ -737,6 +737,48 @@
            </arg>
        </method>
 
+       <method name="getAutoQuality" tp:name-for-bindings="getAutoQuality">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Bool"/>
+           <arg type="b" name="state" direction="out">
+           <tp:docstring>Returns true if automatic quality is on during video calls, false otherwise</tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setAutoQuality" tp:name-for-bindings="setAutoQuality">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Bool"/>
+           <arg type="b" name="state" direction="in">
+           <tp:docstring>Toggle automatic quality</tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getQuality" tp:name-for-bindings="getQuality">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Double"/>
+           <arg type="d" name="quality" direction="out">
+           <tp:docstring>Returns the video quality set during a call</tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setQuality" tp:name-for-bindings="setQuality">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Double"/>
+           <arg type="d" name="quality" direction="in">
+           <tp:docstring>Set video quality</tp:docstring>
+           </arg>
+       </method>
+
+       <method name="getBitrate" tp:name-for-bindings="getBitrate">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="Double"/>
+           <arg type="d" name="bitrate" direction="out">
+           <tp:docstring>Returns the video bitrate set during a call</tp:docstring>
+           </arg>
+       </method>
+
+       <method name="setBitrate" tp:name-for-bindings="setBitrate">
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="Double"/>
+           <arg type="d" name="bitrate" direction="in">
+           <tp:docstring>Set video bitrate</tp:docstring>
+           </arg>
+       </method>
+
        <!-- Audio devices methods -->
 
        <method name="getAudioPluginList" tp:name-for-bindings="getAudioPluginList">
