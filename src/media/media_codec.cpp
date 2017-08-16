@@ -21,6 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "account_const.h"
+#include "manager.h"
 
 #include "string_utils.h"
 #include "logger.h"
@@ -207,6 +208,11 @@ AccountVideoCodecInfo::AccountVideoCodecInfo(const SystemVideoCodecInfo& sysCode
 std::map<std::string, std::string>
 AccountVideoCodecInfo::getCodecSpecifications()
 {
+#ifdef RING_VIDEO
+    bitrate = systemCodecInfo.minBitrate + (systemCodecInfo.maxBitrate - systemCodecInfo.minBitrate) * (Manager::instance().getBitrate() / 100);
+    quality = systemCodecInfo.minQuality - (systemCodecInfo.minQuality - systemCodecInfo.maxQuality) * (Manager::instance().getQuality() / 100);
+    isAutoQualityEnabled = Manager::instance().getAutoQuality();
+#endif
     return {
         {DRing::Account::ConfProperties::CodecInfo::NAME, systemCodecInfo.name},
         {DRing::Account::ConfProperties::CodecInfo::TYPE, (systemCodecInfo.mediaType & MEDIA_AUDIO ? "AUDIO" : "VIDEO")},

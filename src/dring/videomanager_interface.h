@@ -79,6 +79,12 @@ void releaseFrame(void* frame);
 
 bool getDecodingAccelerated();
 void setDecodingAccelerated(bool state);
+bool getAutoQuality();
+void setAutoQuality(bool state);
+double getQuality();
+void setQuality(double quality);
+double getBitrate();
+void setBitrate(double bitrate);
 
 // Video signal type definitions
 struct VideoSignal {
