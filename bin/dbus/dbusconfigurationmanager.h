@@ -150,6 +150,12 @@ class DBusConfigurationManager :
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
         int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
+        bool getAutoQuality();
+        void setAutoQuality(const bool& state);
+        double getQuality();
+        void setQuality(const double& quality);
+        double getBitrate();
+        void setBitrate(const double& bitrate);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
