@@ -730,6 +730,7 @@ AC_CONFIG_FILES([Makefile \
                  test/unitTest/media/video/Makefile \
                  test/unitTest/media/video/video_input/Makefile \
                  test/unitTest/Makefile \
+                 test/unitTest/smartools/Makefile \
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])

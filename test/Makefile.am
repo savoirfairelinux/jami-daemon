@@ -22,4 +22,11 @@ check_PROGRAMS+= unit_test_video_input
 unit_test_video_input_SOURCES= unitTest/media/video/video_input/testVideo_input.cpp
 unit_test_video_input_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 
+#
+#smartools
+#
+check_PROGRAMS+= unit_test_smartools
+unit_test_smartools_SOURCES= unitTest/smartools/testSmartools.cpp
+unit_test_smartools_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
 TESTS= $(check_PROGRAMS)
