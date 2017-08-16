@@ -130,6 +130,9 @@ static const char * const TOGGLE_PICKUP_HANGUP_SHORT_KEY = "togglePickupHangup";
 // video preferences
 constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
+static const char * const AUTO_QUALITY_KEY = "autoQuality";
+static const char * const QUALITY_KEY = "quality";
+static const char * const BITRATE_KEY = "bitrate";
 #endif
 
 static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
@@ -546,6 +549,9 @@ void ShortcutPreferences::unserialize(const YAML::Node &in)
 #ifdef RING_VIDEO
 VideoPreferences::VideoPreferences()
     : decodingAccelerated_(true)
+    , autoQuality_(false)
+    , quality_(0.0)
+    , bitrate_(0)
 {
 }
 
@@ -554,6 +560,9 @@ void VideoPreferences::serialize(YAML::Emitter &out)
     out << YAML::Key << CONFIG_LABEL << YAML::Value << YAML::BeginMap;
 #ifdef RING_ACCEL
     out << YAML::Key << DECODING_ACCELERATED_KEY << YAML::Value << decodingAccelerated_;
+    out << YAML::Key << AUTO_QUALITY_KEY << YAML::Value << autoQuality_;
+    out << YAML::Key << QUALITY_KEY << YAML::Value << quality_;
+    out << YAML::Key << BITRATE_KEY << YAML::Value << bitrate_;
 #endif
     getVideoDeviceMonitor().serialize(out);
     out << YAML::EndMap;
@@ -568,6 +577,16 @@ void VideoPreferences::unserialize(const YAML::Node &in)
         parseValue(node, DECODING_ACCELERATED_KEY, decodingAccelerated_);
     } catch (...) { decodingAccelerated_ = true; }
 #endif
+    // values may or may not be present
+    try {
+        parseValue(node, AUTO_QUALITY_KEY, autoQuality_);
+        parseValue(node, QUALITY_KEY, quality_);
+        parseValue(node, BITRATE_KEY, bitrate_);
+    } catch (...) {
+        autoQuality_ = false;
+        quality_ = 0.0;
+        bitrate_ = 0;
+    }
     getVideoDeviceMonitor().unserialize(in);
 }
 #endif // RING_VIDEO
