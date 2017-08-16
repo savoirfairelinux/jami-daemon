@@ -85,4 +85,18 @@ check_PROGRAMS+= unit_test_preferences
 unit_test_preferences_SOURCES= unitTest/preferences/testPreferences.cpp
 unit_test_preferences_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 
+#
+# dring
+#
+check_PROGRAMS+= unit_test_dring
+unit_test_dring_SOURCES= unitTest/dring/testDring.cpp
+unit_test_dring_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
+#
+# threadloop
+#
+check_PROGRAMS+= unit_test_threadloop
+unit_test_threadloop_SOURCES= unitTest/threadloop/testThreadloop.cpp
+unit_test_threadloop_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
 TESTS= $(check_PROGRAMS)

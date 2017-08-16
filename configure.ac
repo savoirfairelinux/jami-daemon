@@ -739,6 +739,8 @@ AC_CONFIG_FILES([Makefile \
                  test/unitTest/archiver/Makefile\
                  test/unitTest/conference/Makefile \
                  test/unitTest/preferences/Makefile \
+                 test/unitTest/dring/Makefile \
+                 test/unitTest/threadloop/Makefile\
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])

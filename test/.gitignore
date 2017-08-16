@@ -18,6 +18,8 @@ unit_test_utf8_utils
 unit_test_archiver
 unit_test_preferences
 unit_test_conference
+unit_test_threadloop
+unit_test_dring
 
 dring-sample.yml.bak
 dring-sample.yml

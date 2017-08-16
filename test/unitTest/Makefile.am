@@ -9,3 +9,5 @@ SUBDIRS+=utf8_utils
 SUBDIRS+=archiver
 SUBDIRS+=conference
 SUBDIRS+=preferences
+SUBDIRS+=dring
+SUBDIRS+=threadloop
