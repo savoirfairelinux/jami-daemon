@@ -29,4 +29,11 @@ check_PROGRAMS+= unit_test_smartools
 unit_test_smartools_SOURCES= unitTest/smartools/testSmartools.cpp
 unit_test_smartools_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 
+#
+# account_factory
+#
+check_PROGRAMS+= unit_test_account_factory
+unit_test_account_factory_SOURCES= unitTest/account_factory/testAccount_factory.cpp
+unit_test_account_factory_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
 TESTS= $(check_PROGRAMS)
