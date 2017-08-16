@@ -96,3 +96,39 @@ DBusVideoManager::setDecodingAccelerated(const bool& state)
 {
     DRing::setDecodingAccelerated(state);
 }
+
+auto
+DBusVideoManager::getAutoQuality() -> decltype(DRing::getAutoQuality())
+{
+    return DRing::getAutoQuality();
+}
+
+void
+DBusVideoManager::setAutoQuality(const bool& state)
+{
+    DRing::setAutoQuality(state);
+}
+
+auto
+DBusVideoManager::getQuality() -> decltype(DRing::getQuality())
+{
+    return DRing::getQuality();
+}
+
+void
+DBusVideoManager::setQuality(const double& quality)
+{
+    DRing::setQuality(quality);
+}
+
+auto
+DBusVideoManager::getBitrate() -> decltype(DRing::getBitrate())
+{
+    return DRing::getBitrate();
+}
+
+void
+DBusVideoManager::setBitrate(const double& bitrate)
+{
+    DRing::setBitrate(bitrate);
+}

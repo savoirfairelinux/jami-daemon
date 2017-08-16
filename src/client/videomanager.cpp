@@ -181,6 +181,42 @@ setDecodingAccelerated(bool state)
 #endif
 }
 
+bool
+getAutoQuality()
+{
+    return ring::Manager::instance().videoPreferences.getAutoQuality();
+}
+
+void
+setAutoQuality(bool state)
+{
+    ring::Manager::instance().videoPreferences.setAutoQuality(state);
+}
+
+double
+getQuality()
+{
+    return ring::Manager::instance().videoPreferences.getQuality();
+}
+
+void
+setQuality(double quality)
+{
+    ring::Manager::instance().videoPreferences.setQuality(quality);
+}
+
+double
+getBitrate()
+{
+    return ring::Manager::instance().videoPreferences.getBitrate();
+}
+
+void
+setBitrate(double bitrate)
+{
+    ring::Manager::instance().videoPreferences.setBitrate(bitrate);
+}
+
 #if defined(__ANDROID__) || defined(RING_UWP)
 void
 addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)

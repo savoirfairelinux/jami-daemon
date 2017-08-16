@@ -62,6 +62,12 @@ class DBusVideoManager :
         bool hasCameraStarted();
         bool getDecodingAccelerated();
         void setDecodingAccelerated(const bool& state);
+        bool getAutoQuality();
+        void setAutoQuality(const bool& state);
+        double getQuality();
+        void setQuality(const double& quality);
+        double getBitrate();
+        void setBitrate(const double& bitrate);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
