@@ -468,6 +468,13 @@ setCodecDetails(const std::string& accountID,
                           foundCodec->systemCodecInfo.name.c_str());
                 if (auto call = ring::Manager::instance().getCurrentCall()) {
                     if (call->useVideoCodec(foundCodec.get())) {
+#ifdef RING_VIDEO
+                        auto chosenQuality = 1.0 * (foundCodec->systemCodecInfo.minQuality - foundCodec->quality) / (foundCodec->systemCodecInfo.minQuality - foundCodec->systemCodecInfo.maxQuality) * 100.0;
+                        ring::Manager::instance().setQuality(chosenQuality);
+                        ring::Manager::instance().setBitrate(foundCodec->bitrate);
+                        ring::Manager::instance().setAutoQuality(foundCodec->isAutoQualityEnabled);
+                        ring::Manager::instance().saveConfig();
+#endif
                         RING_WARN("%s running. Need to restart encoding",
                                   foundCodec->systemCodecInfo.name.c_str());
                         call->restartMediaSender();

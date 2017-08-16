@@ -121,10 +121,10 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
-        auto isAutoQualityEnabledStr = codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED];
-        if ((not rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(TRUE_STR) == 0))
+        auto isAutoQualityEnabled = Manager::instance().getAutoQuality();
+        if ((not rtcpCheckerThread_.isRunning()) && isAutoQualityEnabled)
             rtcpCheckerThread_.start();
-        else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
+        else if ((rtcpCheckerThread_.isRunning()) && !isAutoQualityEnabled)
             rtcpCheckerThread_.join();
     }
 }
@@ -526,6 +526,8 @@ VideoRtpSession::setupVideoBitrateInfo() {
             videoBitrateInfo_.maxBitrateChecking,
             videoBitrateInfo_.packetLostThreshold,
         };
+        videoBitrateInfo_.videoBitrateCurrent = Manager::instance().getBitrate();
+        videoBitrateInfo_.videoQualityCurrent = videoBitrateInfo_.videoQualityMin - (videoBitrateInfo_.videoQualityMin - videoBitrateInfo_.videoQualityMax) * (Manager::instance().getQuality() / 100);
     } else {
         videoBitrateInfo_ = {0, 0, 0, 0, 0, 0, 0,
                              MAX_ADAPTATIVE_BITRATE_ITERATION,

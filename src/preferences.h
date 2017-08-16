@@ -455,8 +455,35 @@ class VideoPreferences : public Serializable {
             decodingAccelerated_ = decodingAccelerated;
         }
 
+        bool getAutoQuality() const {
+            return autoQuality_;
+        }
+
+        void setAutoQuality(bool autoQuality) {
+            autoQuality_ = autoQuality;
+        }
+
+        double getQuality() const {
+            return quality_;
+        }
+
+        void setQuality(double quality) {
+            quality_ = quality;
+        }
+
+        int getBitrate() const {
+            return bitrate_;
+        }
+
+        void setBitrate(int bitrate) {
+            bitrate_ = bitrate;
+        }
+
     private:
         bool decodingAccelerated_;
+        bool autoQuality_;
+        double quality_;
+        int bitrate_;
         constexpr static const char* const CONFIG_LABEL = "video";
 };
 #endif // RING_VIDEO

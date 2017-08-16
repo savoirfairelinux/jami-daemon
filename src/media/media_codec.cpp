@@ -21,6 +21,7 @@
 #include "libav_deps.h" // MUST BE INCLUDED FIRST
 #include "media_codec.h"
 #include "account_const.h"
+#include "manager.h"
 
 #include "string_utils.h"
 #include "logger.h"
