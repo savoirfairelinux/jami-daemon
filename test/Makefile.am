@@ -36,7 +36,6 @@ check_PROGRAMS+= unit_test_account_factory
 unit_test_account_factory_SOURCES= unitTest/account_factory/testAccount_factory.cpp
 unit_test_account_factory_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 
-
 #
 # string_utils
 #
@@ -64,5 +63,26 @@ unit_test_map_utils_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 check_PROGRAMS+= unit_test_utf8_utils
 unit_test_utf8_utils_SOURCES= unitTest/utf8_utils/testUtf8_utils.cpp
 unit_test_utf8_utils_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
+#
+# archiver
+#
+check_PROGRAMS+= unit_test_archiver
+unit_test_archiver_SOURCES= unitTest/archiver/testArchiver.cpp
+unit_test_archiver_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
+#
+# conference
+#
+check_PROGRAMS+= unit_test_conference
+unit_test_conference_SOURCES= unitTest/conference/testConference.cpp
+unit_test_conference_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
+
+#
+# preference
+#
+check_PROGRAMS+= unit_test_preferences
+unit_test_preferences_SOURCES= unitTest/preferences/testPreferences.cpp
+unit_test_preferences_LDADD= $(CPPUNIT_LIBS) $(top_builddir)/src/libring.la
 
 TESTS= $(check_PROGRAMS)

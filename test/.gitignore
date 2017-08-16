@@ -15,6 +15,9 @@ unit_test_string_utils
 unit_test_fileutils
 unit_test_map_utils
 unit_test_utf8_utils
+unit_test_archiver
+unit_test_preferences
+unit_test_conference
 
 dring-sample.yml.bak
 dring-sample.yml
