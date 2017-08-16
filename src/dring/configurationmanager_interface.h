@@ -78,6 +78,13 @@ std::vector<unsigned> getActiveCodecList(const std::string& accountID);
 
 void setActiveCodecList(const std::string& accountID, const std::vector<unsigned>& list);
 
+bool getAutoQuality();
+void setAutoQuality(bool state);
+double getQuality();
+void setQuality(double quality);
+double getBitrate();
+void setBitrate(double bitrate);
+
 std::vector<std::string> getAudioPluginList();
 void setAudioPlugin(const std::string& audioPlugin);
 std::vector<std::string> getAudioOutputDeviceList();
