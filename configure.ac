@@ -2,7 +2,7 @@ dnl Ring - configure.ac for automake 1.9 and autoconf 2.59
 
 dnl Process this file with autoconf to produce a configure script.
 AC_PREREQ([2.65])
-AC_INIT([Ring Daemon],[4.0.0],[ring@lists.savoirfairelinux.net],[ring])
+AC_INIT([Ring Daemon],[4.0.1],[ring@lists.savoirfairelinux.net],[ring])
 
 AC_COPYRIGHT([[Copyright (c) Savoir-faire Linux 2004-2017]])
 AC_REVISION([$Revision$])
