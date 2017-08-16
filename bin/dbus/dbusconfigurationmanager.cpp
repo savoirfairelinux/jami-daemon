@@ -606,3 +606,39 @@ DBusConfigurationManager::connectivityChanged()
 {
     DRing::connectivityChanged();
 }
+
+auto
+DBusConfigurationManager::getAutoQuality() -> decltype(DRing::getAutoQuality())
+{
+    return DRing::getAutoQuality();
+}
+
+void
+DBusConfigurationManager::setAutoQuality(const bool& state)
+{
+    DRing::setAutoQuality(state);
+}
+
+auto
+DBusConfigurationManager::getQuality() -> decltype(DRing::getQuality())
+{
+    return DRing::getQuality();
+}
+
+void
+DBusConfigurationManager::setQuality(const double& quality)
+{
+    DRing::setQuality(quality);
+}
+
+auto
+DBusConfigurationManager::getBitrate() -> decltype(DRing::getBitrate())
+{
+    return DRing::getBitrate();
+}
+
+void
+DBusConfigurationManager::setBitrate(const double& bitrate)
+{
+    DRing::setBitrate(bitrate);
+}
