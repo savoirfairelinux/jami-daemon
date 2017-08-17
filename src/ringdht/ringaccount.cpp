@@ -1498,15 +1498,22 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
 void
 RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
 {
-    if (not isEnabled())
-        return;
-
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
+    // load identity immediately so we can access the ringIds of disabled accounts
+    auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
+
+    if (not isEnabled()) {
+        if (id.first) {
+            ringAccountId_ = id.first->getPublicKey().getId().toString();
+            username_ = RING_URI_PREFIX + ringAccountId_;
+        }
+        return;
+    }
+
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
-        auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasArchive = not archivePath_.empty()
                           and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
         if (useIdentity(id)) {
