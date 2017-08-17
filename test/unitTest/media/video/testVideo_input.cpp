@@ -18,30 +18,53 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "test_video_input.h"
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include "test_runner.h"
+
 #include "media/video/video_input.h"
 #include "media_const.h"
+#include "dring.h"
+
 #include <map>
 #include <string>
 
-namespace ring { namespace video { namespace test {
+namespace ring { namespace test {
 
-void VideoInputTest::testInput()
+class VideoInputTest : public CppUnit::TestFixture {
+public:
+    static std::string name() { return "video_input"; }
+
+private:
+    void testInput();
+    void init_daemon();
+
+    CPPUNIT_TEST_SUITE(VideoInputTest);
+    CPPUNIT_TEST(init_daemon);
+    CPPUNIT_TEST(testInput);
+    CPPUNIT_TEST_SUITE_END();
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(VideoInputTest, VideoInputTest::name());
+
+void
+VideoInputTest::init_daemon()
+{
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    DRing::start("dring-sample.yml");
+}
+
+void
+VideoInputTest::testInput()
 {
     static const std::string sep = DRing::Media::VideoProtocolPrefix::SEPARATOR;
     std::string resource = DRing::Media::VideoProtocolPrefix::DISPLAY + sep + std::string(getenv("DISPLAY") ? : ":0.0");
-    VideoInput video;
+    video::VideoInput video;
     video.switchInput(resource);
-    std::this_thread::sleep_for(std::chrono::milliseconds(10));
 }
 
-}}} // namespace ring::video::test
+}} // namespace ring::test
 
-int main ()
-{
-    for (int i = 0; i < 20; ++i) {
-        ring::video::test::VideoInputTest test;
-        test.testInput();
-    }
-    return 0;
-}
+RING_TEST_RUNNER(ring::test::VideoInputTest::name());

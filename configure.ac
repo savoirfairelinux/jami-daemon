@@ -14,7 +14,7 @@ AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_BUILD
 AC_CANONICAL_HOST
 
-AM_INIT_AUTOMAKE([-Wno-portability])
+AM_INIT_AUTOMAKE([-Wno-portability subdir-objects])
 m4_ifdef([AM_PROG_AR], [AM_PROG_AR]) # required by automake 1.12
 AC_CONFIG_HEADERS([config.h])
 
@@ -725,9 +725,8 @@ AC_CONFIG_FILES([Makefile \
                  ringtones/Makefile \
                  test/Makefile\
                  test/sip/Makefile \
-                 test/base64/Makefile \
-                 test/media/Makefile \
-                 test/media/video/Makefile \
+                 test/unitTest/Makefile \
+
                  man/Makefile \
                  doc/Makefile \
                  doc/doxygen/Makefile])

@@ -1,7 +1,12 @@
 *.o
 
+# test binaries
+ut_*
+test_*
+
 # test result files
 *.log
 *.trs
 
 .dirstamp
+dring-sample.yml.bak
