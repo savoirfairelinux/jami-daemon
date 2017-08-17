@@ -1,3 +1,2 @@
-SUBDIRS=sip
-SUBDIRS+=base64
-SUBDIRS+=media
+SUBDIRS = sip
+SUBDIRS += unitTest
