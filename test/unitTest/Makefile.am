@@ -20,10 +20,34 @@ check_PROGRAMS += ut_base64
 ut_base64_SOURCES = base64/base64.cpp
 
 #
+# fileutils
+#
+check_PROGRAMS += ut_fileutils
+ut_fileutils_SOURCES = fileutils/testFileutils.cpp
+
+#
+# map_utils
+#
+check_PROGRAMS += ut_map_utils
+ut_map_utils_SOURCES = map_utils/testMap_utils.cpp
+
+#
 # smartools
 #
 check_PROGRAMS += ut_smartools
 ut_smartools_SOURCES = smartools/testSmartools.cpp
+
+#
+# string_utils
+#
+check_PROGRAMS += ut_string_utils
+ut_string_utils_SOURCES = string_utils/testString_utils.cpp
+
+#
+# utf8_utils
+#
+check_PROGRAMS += ut_utf8_utils
+ut_utf8_utils_SOURCES = utf8_utils/testUtf8_utils.cpp
 
 #
 # video_input
