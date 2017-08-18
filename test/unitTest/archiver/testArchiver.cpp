@@ -1,0 +1,92 @@
+/*
+ *  Copyright (C) 2017 Savoir-Faire Linux Inc.
+ *  Author: Olivier Gregoire <olivier.gregoire@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include "archiver.h"
+#include "../../test_runner.h"
+#include "../../findPath.h"
+
+// Get the current path
+#include <stdio.h>
+#ifdef WINDOWS
+    #include <direct.h>
+    #define GetCurrentDir _getcwd
+#else
+    #include <unistd.h>
+    #define GetCurrentDir getcwd
+ #endif
+
+namespace ring { namespace test {
+    class ArchiverTest : public CppUnit::TestFixture {
+    public:
+        static std::string name() { return "archiver"; }
+
+    private:
+        void testCompress_decompress();
+        void testExport_Accounts();
+        void testImport_Accounts();
+
+        CPPUNIT_TEST_SUITE(ArchiverTest);
+        CPPUNIT_TEST(testCompress_decompress);
+        CPPUNIT_TEST(testExport_Accounts);
+        CPPUNIT_TEST(testImport_Accounts);
+        CPPUNIT_TEST_SUITE_END();
+
+        const std::string archiverSentenceTest_ = "GHY12#@!()+*_hf&";
+        const std::string archivePath = pathTest()+"/archiver/archive";
+        const std::string badPath = "dfdf/dsfdsf";
+        const std::string archivePassword = "P@ssw0rd";
+        const std::string badPassword = "BadP@sw00rd";
+
+        std::vector<std::string> accountIDs;
+    };
+
+    CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(ArchiverTest,
+                                                ArchiverTest::name());
+
+    void
+    ArchiverTest::testCompress_decompress()
+    {
+        std::vector<uint8_t> file = archiver::decompress(archiver::compress(archiverSentenceTest_));
+        std::string decoded {file.begin(), file.end()};
+        CPPUNIT_ASSERT(decoded.compare(archiverSentenceTest_) == 0);
+    }
+
+    void
+    ArchiverTest::testExport_Accounts()
+    {
+        accountIDs = {"SIP","RING"};
+        CPPUNIT_ASSERT(archiver::exportAccounts(accountIDs, archivePath,archivePassword) == 0);
+        CPPUNIT_ASSERT(archiver::exportAccounts(accountIDs, badPath, archivePassword) != 0);
+
+    }
+
+    void
+    ArchiverTest::testImport_Accounts()
+    {
+        CPPUNIT_ASSERT(archiver::importAccounts(archivePath,archivePassword) == 0);
+        CPPUNIT_ASSERT(archiver::importAccounts(archivePath,badPassword) != 0);
+        CPPUNIT_ASSERT(archiver::importAccounts(badPath, archivePassword) != 0);
+    }
+}} // namespace ring::test
+
+RING_TEST_RUNNER(ring::test::ArchiverTest::name())
