@@ -103,10 +103,14 @@ audio:
 video:
   decodingAccelerated: true
   devices:
-    - framerate: 30
-      channel: Camera 1
+    - channel: Camera 1
+      video_size: 800x600
+      name: Logitech BRIO
+      framerate: 30
+    - name: Integrated Camera
       video_size: 960x540
-      name: Integrated Camera
+      channel: Camera 1
+      framerate: 30
 shortcuts:
   hangUp: ""
   pickUp: ""
