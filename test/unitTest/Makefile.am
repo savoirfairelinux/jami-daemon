@@ -8,6 +8,12 @@ check_PROGRAMS =
 ####### Unit Test ########
 
 #
+# account_factory
+#
+check_PROGRAMS += ut_account_factory
+ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp
+
+#
 # base64
 #
 check_PROGRAMS += ut_base64
