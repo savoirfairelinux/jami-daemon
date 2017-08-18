@@ -50,6 +50,12 @@ check_PROGRAMS += ut_utf8_utils
 ut_utf8_utils_SOURCES = utf8_utils/testUtf8_utils.cpp
 
 #
+# string_utils
+#
+check_PROGRAMS += ut_string_utils
+ut_string_utils_SOURCES = string_utils/testString_utils.cpp
+
+#
 # video_input
 #
 check_PROGRAMS += ut_video_input

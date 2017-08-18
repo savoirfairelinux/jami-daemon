@@ -105,8 +105,16 @@ video:
   devices:
     - framerate: 30
       channel: Camera 1
+      name: "Integrated Camera: Integrated C"
       video_size: 960x540
+    - framerate: 30
+      channel: Camera 1
+      video_size: 800x600
+      name: Logitech BRIO
+    - framerate: 30
       name: Integrated Camera
+      video_size: 960x540
+      channel: Camera 1
 shortcuts:
   hangUp: ""
   pickUp: ""
