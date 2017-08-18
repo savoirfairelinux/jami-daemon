@@ -26,6 +26,11 @@
 namespace ring {
 class Smartools
 {
+    // Use for the unit tests
+    #ifdef TESTING
+        friend class SmartoolsTest;
+    #endif
+
     public:
         static Smartools& getInstance();
         void start(std::chrono::milliseconds refreshTimeMs);
