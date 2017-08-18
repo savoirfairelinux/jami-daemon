@@ -14,10 +14,22 @@ check_PROGRAMS += ut_account_factory
 ut_account_factory_SOURCES = account_factory/testAccount_factory.cpp
 
 #
+# archiver
+#
+check_PROGRAMS += ut_archiver
+ut_archiver_SOURCES = archiver/testArchiver.cpp
+
+#
 # base64
 #
 check_PROGRAMS += ut_base64
 ut_base64_SOURCES = base64/base64.cpp
+
+#
+# conference
+#
+check_PROGRAMS += ut_conference
+ut_conference_SOURCES = conference/testConference.cpp
 
 #
 # fileutils
@@ -30,6 +42,12 @@ ut_fileutils_SOURCES = fileutils/testFileutils.cpp
 #
 check_PROGRAMS += ut_map_utils
 ut_map_utils_SOURCES = map_utils/testMap_utils.cpp
+
+#
+# preferences
+#
+check_PROGRAMS += ut_preferences
+ut_preferences_SOURCES = preferences/testPreferences.cpp
 
 #
 # smartools
