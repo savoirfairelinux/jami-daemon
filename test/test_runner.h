@@ -4,6 +4,10 @@
 #include <cppunit/ui/text/TestRunner.h>
 #include <cppunit/CompilerOutputter.h>
 
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
 #define RING_TEST_RUNNER(suite_name) \
 int main() \
 { \

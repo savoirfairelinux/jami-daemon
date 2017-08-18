@@ -49,4 +49,10 @@ ut_utf8_utils_SOURCES = utf8_utils/testUtf8_utils.cpp
 check_PROGRAMS += ut_video_input
 ut_video_input_SOURCES = media/video/testVideo_input.cpp
 
+#
+# video_input testsuite
+#
+check_PROGRAMS += ut_turn_transport
+ut_turn_transport_SOURCES = test_TurnTransport.cpp $(top_builddir)/src/libring.la
+
 TESTS = $(check_PROGRAMS)
