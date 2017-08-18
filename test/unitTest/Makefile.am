@@ -26,6 +26,12 @@ check_PROGRAMS += ut_smartools
 ut_smartools_SOURCES = smartools/testSmartools.cpp
 
 #
+# string_utils
+#
+check_PROGRAMS += ut_string_utils
+ut_string_utils_SOURCES = string_utils/testString_utils.cpp
+
+#
 # video_input
 #
 check_PROGRAMS += ut_video_input
