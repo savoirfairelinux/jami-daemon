@@ -314,6 +314,7 @@ test_SIP::testHoldIpCall()
     CPPUNIT_ASSERT(state == DRing::Call::StateEvent::HOLD);
 
     Manager::instance().offHoldCall(testCallId);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
     state = call->getStateStr();
     std::cout << ">>>> call state is now " << state << '\n';
