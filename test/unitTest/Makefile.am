@@ -32,6 +32,12 @@ check_PROGRAMS += ut_conference
 ut_conference_SOURCES = conference/testConference.cpp
 
 #
+# dring
+#
+check_PROGRAMS += ut_dring
+ut_dring_SOURCES = dring/testDring.cpp
+
+#
 # fileutils
 #
 check_PROGRAMS += ut_fileutils
@@ -60,6 +66,12 @@ ut_smartools_SOURCES = smartools/testSmartools.cpp
 #
 check_PROGRAMS += ut_string_utils
 ut_string_utils_SOURCES = string_utils/testString_utils.cpp
+
+#
+# threadloop
+#
+check_PROGRAMS += ut_threadloop
+ut_threadloop_SOURCES = threadloop/testThreadloop.cpp
 
 #
 # utf8_utils
