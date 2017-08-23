@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set FFMPEGINTEROP_VERSION=6f8062f68176a23d4cbc953668677edb07fd7984
+set FFMPEGINTEROP_VERSION=10879040235da3a2393ff19a7a6dc3d7f791314a
 set FFMPEGINTEROP_URL=https://github.com/Microsoft/FFmpegInterop/archive/%FFMPEGINTEROP_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -19,7 +19,7 @@ cd %BUILD%\FFmpegInterop
 
 rmdir /s /q ffmpeg
 
-set FFMPEG_VERSION=12320c08221f0eecf6d9af3a6f12f42e656f0674
+set FFMPEG_VERSION=6d7192bcb7bbab17dc194e8dbb56c208bced0a92
 set FFMPEG_URL=https://github.com/FFmpeg/FFmpeg/archive/%FFMPEG_VERSION%.tar.gz
 
 if %USE_CACHE%==1 (
