@@ -144,6 +144,10 @@ public:
         return reinterpret_cast<sockaddr&>(addr);
     }
 
+    inline operator sockaddr* (){
+        return reinterpret_cast<sockaddr*>(&addr);
+    }
+
     inline operator sockaddr_storage (){
         sockaddr_storage ss;
         memcpy(&ss, &addr, getLength());

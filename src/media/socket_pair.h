@@ -25,6 +25,7 @@
 #include <config.h>
 #endif
 
+#include "ip_utils.h"
 #include "media_io_handle.h"
 
 #ifndef _WIN32
@@ -129,12 +130,8 @@ class SocketPair {
 
         int rtpHandle_ {-1};
         int rtcpHandle_ {-1};
-        int rtpFamily_ {0};
-        int rtcpFamily_ {0};
-        sockaddr_storage rtpDestAddr_;
-        socklen_t rtpDestAddrLen_;
-        sockaddr_storage rtcpDestAddr_;
-        socklen_t rtcpDestAddrLen_;
+        IpAddr rtpDestAddr_;
+        IpAddr rtcpDestAddr_;
         std::atomic_bool interrupted_ {false};
         std::atomic_bool noWrite_ {false};
         std::unique_ptr<SRTPProtoContext> srtpContext_;
