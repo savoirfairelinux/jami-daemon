@@ -111,99 +111,48 @@ ff_network_wait_fd(int fd)
     return ret < 0 ? errno : p.revents & (POLLOUT | POLLERR | POLLHUP) ? 0 : -EAGAIN;
 }
 
-static struct addrinfo*
-udp_resolve_host(const char* node, int service)
-{
-    struct addrinfo hints;
-    memset(&hints, 0, sizeof(hints));
-
-    char sport[16];
-    snprintf(sport, sizeof(sport), "%d", service);
-
-    hints.ai_socktype = SOCK_DGRAM;
-    hints.ai_family = AF_UNSPEC;
-    hints.ai_flags = AI_PASSIVE;
-
-    struct addrinfo* res = nullptr;
-    if (auto error = getaddrinfo(node, sport, &hints, &res)) {
-        res = nullptr;
-#ifndef _WIN32
-        RING_ERR("getaddrinfo failed: %s\n", gai_strerror(error));
-#else
-        RING_ERR("getaddrinfo failed: %S\n", gai_strerror(error));
-#endif
-    }
-
-    return res;
-}
-
-static unsigned
-udp_set_url(struct sockaddr_storage* addr, const char* hostname, int port)
-{
-    auto res0 = udp_resolve_host(hostname, port);
-    if (res0 == 0)
-        return 0;
-    memcpy(addr, res0->ai_addr, res0->ai_addrlen);
-    auto addr_len = res0->ai_addrlen;
-    freeaddrinfo(res0);
-
-    return addr_len;
-}
-
 static int
-udp_socket_create(sockaddr_storage* addr, socklen_t* addr_len, int local_port, int& family)
+udp_socket_create(int family, int port)
 {
     int udp_fd = -1;
-    struct addrinfo* res0 = nullptr;
-    struct addrinfo* res = nullptr;
 
-    res0 = udp_resolve_host(0, local_port);
-    if (res0 == 0)
-        return -1;
-    for (res = res0; res; res=res->ai_next) {
 #ifdef __APPLE__
-        udp_fd = socket(res->ai_family, SOCK_DGRAM, 0);
-        if (udp_fd != -1 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) != -1) {
+    udp_fd = socket(family, SOCK_DGRAM, 0);
+    if (udp_fd >= 0 && fcntl(udp_fd, F_SETFL, O_NONBLOCK) < 0) {
+        close(udp_fd);
+        udp_fd = -1;
+    }
+#elif defined _WIN32
+    udp_fd = socket(family, SOCK_DGRAM, 0);
+    u_long block = 1;
+    if (udp_fd >= 0 && ioctlsocket(udp_fd, FIONBIO, &block); < 0) {
+        close(udp_fd);
+        udp_fd = -1;
+    }
 #else
-        udp_fd = socket(res->ai_family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
-        if (udp_fd != -1) {
+    udp_fd = socket(family, SOCK_DGRAM | SOCK_NONBLOCK, 0);
 #endif
-            family = res->ai_family;
-            break;
-        }
-
-        RING_ERR("socket error");
-     }
 
     if (udp_fd < 0) {
-        freeaddrinfo(res0);
+        RING_ERR("socket() failed");
+        strErr();
         return -1;
     }
 
-    memcpy(addr, res->ai_addr, res->ai_addrlen);
-    *addr_len = res->ai_addrlen;
-
-    // bind socket so that we send from and receive
-    // on local port
-    if (bind(udp_fd, reinterpret_cast<sockaddr*>(addr), *addr_len) < 0) {
-        RING_ERR("Bind failed");
+    auto bind_addr = ip_utils::getAnyHostAddr(family);
+    bind_addr.setPort(port);
+    RING_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
+    if (bind(udp_fd, bind_addr, bind_addr.getLength()) < 0) {
+        RING_ERR("bind() failed");
         strErr();
         close(udp_fd);
         udp_fd = -1;
     }
 
-    freeaddrinfo(res0);
-
     return udp_fd;
 }
 
 SocketPair::SocketPair(const char *uri, int localPort)
-    : rtp_sock_()
-    , rtcp_sock_()
-    , rtpDestAddr_()
-    , rtpDestAddrLen_()
-    , rtcpDestAddr_()
-    , rtcpDestAddrLen_()
 {
     openSockets(uri, localPort);
 }
@@ -212,11 +161,6 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock)
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
-    , rtpDestAddr_()
-    , rtpDestAddrLen_()
-    , rtcpDestAddr_()
-    , rtcpDestAddrLen_()
-    , listRtcpHeader_()
 {
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
@@ -310,29 +254,25 @@ SocketPair::openSockets(const char* uri, int local_rtp_port)
 {
     char hostname[256];
     char path[1024];
-    int rtp_port;
+    int dst_rtp_port;
 
-    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &rtp_port, path, sizeof(path));
+    libav_utils::ring_url_split(uri, hostname, sizeof(hostname), &dst_rtp_port, path, sizeof(path));
 
-    const int rtcp_port = rtp_port + 1;
     const int local_rtcp_port = local_rtp_port + 1;
+    const int dst_rtcp_port = dst_rtp_port + 1;
 
-    sockaddr_storage rtp_addr, rtcp_addr;
-    socklen_t rtp_len, rtcp_len;
+    rtpDestAddr_ = IpAddr {hostname}; rtpDestAddr_.setPort(dst_rtp_port);
+    rtcpDestAddr_ = IpAddr {hostname}; rtcpDestAddr_.setPort(dst_rtcp_port);
 
-    // Open sockets and store addresses for sending
-    if ((rtpHandle_ = udp_socket_create(&rtp_addr, &rtp_len, local_rtp_port, rtpFamily_)) == -1 or
-        (rtcpHandle_ = udp_socket_create(&rtcp_addr, &rtcp_len, local_rtcp_port, rtcpFamily_)) == -1 or
-        (rtpDestAddrLen_ = udp_set_url(&rtpDestAddr_, hostname, rtp_port)) == 0 or
-        (rtcpDestAddrLen_ = udp_set_url(&rtcpDestAddr_, hostname, rtcp_port)) == 0) {
-
-        // Handle failed socket creation
+    // Open local sockets (RTP/RTCP)
+    if ((rtpHandle_ = udp_socket_create(rtpDestAddr_.getFamily(), local_rtp_port)) == -1 or
+        (rtcpHandle_ = udp_socket_create(rtcpDestAddr_.getFamily(), local_rtcp_port)) == -1) {
         closeSockets();
-        throw std::runtime_error("Socket creation failed");
+        throw std::runtime_error("Sockets creation failed");
     }
 
     RING_WARN("SocketPair: local{%d,%d} / %s{%d,%d}",
-              local_rtp_port, local_rtcp_port, hostname, rtp_port, rtcp_port);
+              local_rtp_port, local_rtcp_port, hostname, dst_rtp_port, dst_rtcp_port);
 }
 
 MediaIOHandle*
@@ -341,7 +281,7 @@ SocketPair::createIOContext(const uint16_t mtu)
     unsigned ip_header_size;
     if (rtp_sock_)
         ip_header_size = rtp_sock_->getTransportOverhead();
-    else if (rtpFamily_ == AF_INET6)
+    else if (rtpDestAddr_.getFamily() == AF_INET6)
         ip_header_size = 40;
     else
         ip_header_size = 20;
@@ -491,17 +431,14 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
     // System sockets?
     if (rtpHandle_ >= 0) {
         int fd;
-        sockaddr_storage dest_addr;
-        socklen_t dest_addr_len;
+        IpAddr* dest_addr;
 
         if (isRTCP) {
             fd = rtcpHandle_;
-            dest_addr = rtcpDestAddr_;
-            dest_addr_len = rtcpDestAddrLen_;
+            dest_addr = &rtcpDestAddr_;
         } else {
             fd = rtpHandle_;
-            dest_addr = rtpDestAddr_;
-            dest_addr_len = rtpDestAddrLen_;
+            dest_addr = &rtpDestAddr_;
         }
 
         auto ret = ff_network_wait_fd(fd);
@@ -511,7 +448,7 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         if (noWrite_)
             return buf_size;
         return sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
-                      reinterpret_cast<sockaddr*>(&dest_addr), dest_addr_len);
+                      *dest_addr, dest_addr->getLength());
     }
 
     if (noWrite_)
