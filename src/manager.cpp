@@ -2858,9 +2858,7 @@ Manager::getConferenceDetails(
 std::vector<std::string>
 Manager::getConferenceList() const
 {
-    std::vector<std::string> v;
-    map_utils::vectorFromMapKeys(pimpl_->conferenceMap_, v);
-    return v;
+    return map_utils::extractKeys(pimpl_->conferenceMap_);
 }
 
 std::vector<std::string>
