@@ -19,11 +19,11 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <ctime>
 #include <ciso646> // fix windows compiler bug
 
 #include "client/ring_signal.h"
@@ -49,8 +49,10 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef _WIN32
-#include "winsyslog.h"
+#ifdef __ANDROID__
+#ifndef APP_NAME
+#define APP_NAME "libdring"
+#endif /* APP_NAME */
 #endif
 
 #define BLACK "\033[22;30m"
@@ -79,6 +81,8 @@
 #define CYAN FOREGROUND_BLUE + FOREGROUND_GREEN + 0x0008
 #define LIGHT_GREEN FOREGROUND_GREEN + 0x0008
 #endif // _WIN32
+
+#define LOGFILE "dring"
 
 static int consoleLog;
 static int debugMode;
@@ -124,40 +128,6 @@ getHeader(const char* ctx)
 
     return out.str();
 }
-
-#ifndef _WIN32
-
-void
-logger(const int level, const char* format, ...)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    va_list ap;
-    va_start(ap, format);
-    vlogger(level, format, ap);
-    va_end(ap);
-}
-
-#else
-
-void
-wlogger(const int level, const char* file, const char* format, ...)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    const char* file_name_only = FILE_NAME_ONLY(file);
-    std::string buffer(file_name_only);
-    buffer.append(format);
-
-    va_list ap;
-    va_start(ap, format);
-    vlogger(level, buffer.c_str(), ap);
-    va_end(ap);
-}
-
-#endif
 
 void
 vlogger(const int level, const char *format, va_list ap)
@@ -228,7 +198,7 @@ vlogger(const int level, const char *format, va_list ap)
 
         // WARING: this one also! see above
         if (not sep)
-            fputs(ENDL, stderr);
+            fputs(::ring::Logger::ENDL, stderr);
 
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
@@ -293,3 +263,37 @@ strErr(void)
     RING_ERR("%s", errstr);
 #endif
 }
+
+namespace ring {
+
+void
+Logger::log(const char* const format, ...)
+{
+    done_ = true;
+
+    if (!debugMode && level_ == LOG_DEBUG)
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+#ifdef __ANDROID__
+    __android_log_vprint(level_, APP_NAME, format, ap);
+#else
+    auto fmt = head_ + format + endl_;
+    vlogger(level_, fmt.c_str(), ap);
+#endif
+    va_end(ap);
+}
+
+///\brief Handy method to extract the last component of a pathname (ex: to extract a filename)
+const char*
+Logger::lastPathComponent(const char* path)
+{
+#ifdef RING_UWP
+        return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
+#else
+        return strrchr(path, '/') ? strrchr(path, '/') + 1 : path;
+#endif
+}
+
+} // namespace ring;
