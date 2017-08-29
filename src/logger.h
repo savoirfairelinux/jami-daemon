@@ -21,31 +21,15 @@
 
 #pragma once
 
-#ifdef __cplusplus
+//#define __STDC_FORMAT_MACROS 1
+#include <cinttypes> // for PRIx64
+#include <cstdarg>
+
+#include <sstream>
+#include <string>
+#include "string_utils.h" // to_string
+
 extern "C" {
-#endif
-
-#include <stdarg.h>
-#define __STDC_FORMAT_MACROS 1
-#include <inttypes.h>
-
-#define LOGFILE "dring"
-
-/**
- * Print something, coloring it depending on the level
- */
-#ifdef _WIN32
-    void wlogger(const int level, const char* file, const char* format, ...)
-#else
-    void logger(const int level, const char* format, ...)
-#endif
-#if defined(_WIN32) && !defined(RING_UWP)
-    __attribute__((format(gnu_printf, 3, 4)))
-#elif defined(__GNUC__)
-    __attribute__((format(printf, 2, 3)))
-#endif
-    ;
-void vlogger(const int level, const char* format, va_list);
 
 /**
  * Allow writing on the console
@@ -67,83 +51,106 @@ int getDebugMode(void);
  */
 void strErr();
 
-#define STR(EXP) #EXP
-#define XSTR(X) STR(X)
-
-#ifdef RING_UWP
-#define FILE_NAME_ONLY(X) (strrchr(X, '\\') ? strrchr(X, '\\') + 1 : X)
-#elif defined(_WIN32)
-#define FILE_NAME_ONLY(X) (strrchr(X, '/') ? strrchr(X, '/') + 1 : X)
-#endif
-
-// Line return char in a string
-#ifdef RING_UWP
-#define ENDL " "
-#else
-#define ENDL "\n"
-#endif
-
-// Do not remove the "| " in following without modifying vlogger() code
-#ifndef _WIN32
-#define LOG_FORMAT(M, ...) FILE_NAME ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
-#else
-#define LOG_FORMAT(M, ...) ":" XSTR(__LINE__) "| " M, ##__VA_ARGS__
-#endif
+}
 
 #ifdef __ANDROID__
 
 #include <android/log.h>
-
-#ifndef APP_NAME
-#define APP_NAME "libdring"
-#endif /* APP_NAME */
-
-#undef LOG_FORMAT
-#define LOG_FORMAT(M, ...) "%s:%d | " M, FILE_NAME, __LINE__, ##__VA_ARGS__
-
-// Avoid printing whole path on android
-#define FILE_NAME (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-
-// because everyone likes reimplementing the wheel
 #define LOG_ERR     ANDROID_LOG_ERROR
 #define LOG_WARNING ANDROID_LOG_WARN
 #define LOG_INFO    ANDROID_LOG_INFO
 #define LOG_DEBUG   ANDROID_LOG_DEBUG
 
-#define LOGGER(M, LEVEL, ...) __android_log_print(LEVEL, APP_NAME, LOG_FORMAT(M, ##__VA_ARGS__))
-
 #elif defined(_WIN32)
 
 #include "winsyslog.h"
-
 #define LOG_ERR     EVENTLOG_ERROR_TYPE
 #define LOG_WARNING EVENTLOG_WARNING_TYPE
 #define LOG_INFO    EVENTLOG_INFORMATION_TYPE
 #define LOG_DEBUG   EVENTLOG_SUCCESS
 
-#define FILE_NAME __FILE__
-#define LOGGER(M, LEVEL, ...) wlogger(LEVEL, FILE_NAME,LOG_FORMAT(M, ##__VA_ARGS__))
-
 #else
 
-#include <syslog.h>
+#include <syslog.h> // Defines LOG_XXXX
 
-#define FILE_NAME __FILE__
+#endif /* __ANDROID__ / _WIN32 */
 
-#define LOGGER(M, LEVEL, ...) logger(LEVEL, LOG_FORMAT(M, ##__VA_ARGS__))
-
-#endif /* __ANDROID__ _WIN32 */
-
-#define RING_ERR(M, ...)   LOGGER(M ENDL, LOG_ERR, ##__VA_ARGS__)
-#define RING_WARN(M, ...)  LOGGER(M ENDL, LOG_WARNING, ##__VA_ARGS__)
-#define RING_INFO(M, ...)  LOGGER(M ENDL, LOG_INFO, ##__VA_ARGS__)
-#define RING_DBG(M, ...)   LOGGER(M ENDL, LOG_DEBUG, ##__VA_ARGS__)
-
-#define RING_XERR(M, ...)   LOGGER(M, LOG_ERR, ##__VA_ARGS__)
-#define RING_XWARN(M, ...)  LOGGER(M, LOG_WARNING, ##__VA_ARGS__)
-#define RING_XINFO(M, ...)  LOGGER(M, LOG_INFO, ##__VA_ARGS__)
-#define RING_XDBG(M, ...)   LOGGER(M, LOG_DEBUG, ##__VA_ARGS__)
-
-#ifdef __cplusplus
-}
+#if defined(_WIN32) && !defined(RING_UWP)
+#define PRINTF_ATTRIBUTE(a, b) __attribute__((format(gnu_printf, a, b)))
+#else
+#define PRINTF_ATTRIBUTE(a, b) __attribute__((format(printf, a, b)))
 #endif
+
+namespace ring {
+
+///
+/// Level-driven logging class that support printf and C++ stream logging fashions.
+///
+class Logger
+{
+public:
+    Logger(int level, const char* file, int line, bool linefeed)
+        : level_ {level}
+        , file_ {lastPathComponent(file)}
+        , line_ {line}
+        , linefeed_ {linefeed} {}
+
+    Logger() = delete;
+    Logger(const Logger&) = default;
+    Logger(Logger&&) = default;
+
+    ~Logger() {
+        log(level_, file_, line_, linefeed_, os_.str().c_str());
+    }
+
+    template <typename T>
+    inline Logger& operator<<(const T& value) {
+        os_ << value;
+        return *this;
+    }
+
+    ///
+    /// Printf fashion logging.
+    ///
+    /// Example: RING_DBG("%s", "Hello, World!")
+    ///
+    static void log(int level, const char* file, int line, bool linefeed,
+                    const char* const fmt, ...) PRINTF_ATTRIBUTE(5, 6);
+
+    ///
+    /// Printf fashion logging (using va_list parameters)
+    ///
+    static void vlog(const int level, const char* file, int line, bool linefeed,
+                     const char* format, va_list);
+
+    ///
+    /// Stream fashion logging.
+    ///
+    /// Example: RING_DBG() << "Hello, World!"
+    ///
+    static Logger log(int level, const char* file, int line, bool linefeed) {
+        return {level, file, line, linefeed};
+    }
+
+private:
+    const char* lastPathComponent(const char* path);
+
+    int level_;                 ///< LOG_XXXX values
+    const char* const file_;    ///< contextual filename (printed as header)
+    const int line_;            ///< contextual line number (printed as header)
+    bool linefeed_ {true};      ///< true if a '\n' (or any platform equivalent) has to be put at line end in consoleMode
+    std::ostringstream os_;     ///< string stream used with C++ stream style (stream operator<<)
+};
+
+// We need to use macros for contextual information
+#define RING_INFO(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define RING_DBG(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define RING_WARN(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+#define RING_ERR(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, true, ##__VA_ARGS__)
+
+#define RING_XINFO(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define RING_XDBG(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define RING_XWARN(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+#define RING_XERR(...) ::ring::Logger::log(LOG_INFO, __FILE__, __LINE__, false, ##__VA_ARGS__)
+
+} // namespace ring

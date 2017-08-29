@@ -19,11 +19,10 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include <stdio.h>
-#include <stdarg.h>
-#include <string.h>
-#include <errno.h>
-#include <time.h>
+#include <cstdio>
+#include <cstring>
+#include <cerrno>
+#include <ctime>
 #include <ciso646> // fix windows compiler bug
 
 #include "client/ring_signal.h"
@@ -40,6 +39,7 @@
 #include <ios>
 #include <mutex>
 #include <thread>
+#include <array>
 
 #include "logger.h"
 
@@ -49,8 +49,10 @@
 #include <sys/syscall.h>
 #endif // __linux__
 
-#ifdef _WIN32
-#include "winsyslog.h"
+#ifdef __ANDROID__
+#ifndef APP_NAME
+#define APP_NAME "libdring"
+#endif /* APP_NAME */
 #endif
 
 #define BLACK "\033[22;30m"
@@ -80,12 +82,20 @@
 #define LIGHT_GREEN FOREGROUND_GREEN + 0x0008
 #endif // _WIN32
 
+#define LOGFILE "dring"
+
+#ifdef RING_UWP
+static constexpr auto ENDL = "";
+#else
+static constexpr auto ENDL = "\n";
+#endif
+
 static int consoleLog;
 static int debugMode;
 static std::mutex logMutex;
 
 static std::string
-getHeader(const char* ctx)
+contextHeader(const char* const file, int line)
 {
 #ifdef __linux__
     auto tid = syscall(__NR_gettid) & 0xffff;
@@ -112,133 +122,21 @@ getHeader(const char* ctx)
     out.fill(prev_fill);
 
     // Context
-    if (ctx){
+    if (file) {
 #ifdef RING_UWP
-        out << "|" << std::setw(32) << ctx;
+        constexpr auto width = 32;
 #else
-        out << "|" << std::setw(24) << ctx;
+        constexpr auto width = 24;
 #endif
+        out << "|"
+            << std::setw(width) << file
+            << ":"
+            << std::setw(5) << std::setfill(' ') << line;
     }
 
     out << "] ";
 
     return out.str();
-}
-
-#ifndef _WIN32
-
-void
-logger(const int level, const char* format, ...)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    va_list ap;
-    va_start(ap, format);
-    vlogger(level, format, ap);
-    va_end(ap);
-}
-
-#else
-
-void
-wlogger(const int level, const char* file, const char* format, ...)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    const char* file_name_only = FILE_NAME_ONLY(file);
-    std::string buffer(file_name_only);
-    buffer.append(format);
-
-    va_list ap;
-    va_start(ap, format);
-    vlogger(level, buffer.c_str(), ap);
-    va_end(ap);
-}
-
-#endif
-
-void
-vlogger(const int level, const char *format, va_list ap)
-{
-    if (!debugMode && level == LOG_DEBUG)
-        return;
-
-    // syslog is supposed to thread-safe, but not all implementations (Android?)
-    // follow strictly POSIX rules... so we lock our mutex in any cases.
-    std::lock_guard<std::mutex> lk {logMutex};
-
-    if (consoleLog) {
-#ifndef _WIN32
-        const char* color_header = CYAN;
-        const char* color_prefix = "";
-
-#else
-        WORD color_prefix = LIGHT_GREEN;
-        WORD color_header = CYAN;
-#endif
-#if defined(_WIN32) && !defined(RING_UWP)
-        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
-        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
-        WORD saved_attributes;
-#endif
-
-        switch (level) {
-            case LOG_ERR:
-                color_prefix = RED;
-                break;
-            case LOG_WARNING:
-                color_prefix = YELLOW;
-                break;
-        }
-
-#ifndef _WIN32
-        fputs(color_header, stderr);
-#elif !defined(RING_UWP)
-        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
-        saved_attributes = consoleInfo.wAttributes;
-        SetConsoleTextAttribute(hConsole, color_header);
-#endif
-
-        std::string ctx;
-
-        // WARNING : the '|' exists only with ring logs, not other logs like thus from OpenDHT
-        // WARNING : PLEASE DO NOT DROP THIS TEST !!!! (or die)
-        auto sep = strchr(format, '|');
-        if (sep) {
-            ctx = std::string(format, sep - format);
-            format = sep + 2;
-            fputs(getHeader(ctx.c_str()).c_str(), stderr);
-        }
-#ifdef RING_UWP
-        char tmp[4096];
-        vsprintf(tmp, format, ap);
-        ring::emitSignal<DRing::DebugSignal::MessageSend>(getHeader(ctx.c_str()).c_str() + std::string(tmp));
-#endif
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-        fputs(color_prefix, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-        SetConsoleTextAttribute(hConsole, color_prefix);
-#endif
-
-        vfprintf(stderr, format, ap);
-
-        // WARING: this one also! see above
-        if (not sep)
-            fputs(ENDL, stderr);
-
-#ifndef _WIN32
-        fputs(END_COLOR, stderr);
-#elif !defined(RING_UWP)
-        SetConsoleTextAttribute(hConsole, saved_attributes);
-#endif
-
-    } else {
-        vsyslog(level, format, ap);
-    }
 }
 
 void
@@ -293,3 +191,108 @@ strErr(void)
     RING_ERR("%s", errstr);
 #endif
 }
+
+namespace ring {
+
+void
+Logger::log(int level, const char* file, int line, bool linefeed, const char* const format, ...)
+{
+    if (!debugMode && level == LOG_DEBUG)
+        return;
+
+    va_list ap;
+    va_start(ap, format);
+#ifdef __ANDROID__
+    __android_log_vprint(level, APP_NAME, format, ap);
+#else
+    Logger::vlog(level, file, line, linefeed, format, ap);
+#endif
+    va_end(ap);
+}
+
+void
+Logger::vlog(const int level, const char* file, int line, bool linefeed,
+             const char *format, va_list ap)
+{
+    if (!debugMode && level == LOG_DEBUG)
+        return;
+
+    // syslog is supposed to thread-safe, but not all implementations (Android?)
+    // follow strictly POSIX rules... so we lock our mutex in any cases.
+    std::lock_guard<std::mutex> lk {logMutex};
+
+    if (consoleLog) {
+#ifndef _WIN32
+        const char* color_header = CYAN;
+        const char* color_prefix = "";
+
+#else
+        WORD color_prefix = LIGHT_GREEN;
+        WORD color_header = CYAN;
+#endif
+#if defined(_WIN32) && !defined(RING_UWP)
+        HANDLE hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
+        CONSOLE_SCREEN_BUFFER_INFO consoleInfo;
+        WORD saved_attributes;
+#endif
+
+        switch (level) {
+            case LOG_ERR:
+                color_prefix = RED;
+                break;
+            case LOG_WARNING:
+                color_prefix = YELLOW;
+                break;
+        }
+
+#ifndef _WIN32
+        fputs(color_header, stderr);
+#elif !defined(RING_UWP)
+        GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
+        saved_attributes = consoleInfo.wAttributes;
+        SetConsoleTextAttribute(hConsole, color_header);
+#endif
+
+        fputs(contextHeader(file, line).c_str(), stderr);
+
+#ifdef RING_UWP
+        std::array<char, 4096> tmp;
+        vsnprintf(tmp.data(), tmp.size(), format, ap);
+        ring::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader() + tmp);
+#endif
+#ifndef _WIN32
+        fputs(END_COLOR, stderr);
+        fputs(color_prefix, stderr);
+#elif !defined(RING_UWP)
+        SetConsoleTextAttribute(hConsole, saved_attributes);
+        SetConsoleTextAttribute(hConsole, color_prefix);
+#endif
+
+        vfprintf(stderr, format, ap);
+
+        if (linefeed)
+            fputs(ENDL, stderr);
+
+#ifndef _WIN32
+        fputs(END_COLOR, stderr);
+#elif !defined(RING_UWP)
+        SetConsoleTextAttribute(hConsole, saved_attributes);
+#endif
+
+    } else {
+        vsyslog(level, format, ap);
+    }
+}
+
+///\brief Handy method to extract the last component of a pathname (ex: to extract a filename)
+const char*
+Logger::lastPathComponent(const char* path)
+{
+#ifdef RING_UWP
+        return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
+#else
+        return strrchr(path, '/') ? strrchr(path, '/') + 1 : path;
+#endif
+}
+
+} // namespace ring;
