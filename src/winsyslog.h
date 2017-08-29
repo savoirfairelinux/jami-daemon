@@ -64,8 +64,15 @@
 
 #define strerror_r(errno,buf,len) strerror_s(buf,len,errno)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern void closelog(void);
 extern void openlog(const char *, int, int);
 extern void vsyslog(int, const char *, va_list);
 
+#ifdef __cplusplus
+}
+#endif
 #endif
