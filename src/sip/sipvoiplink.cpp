@@ -1240,11 +1240,11 @@ SIPVoIPLink::resolveSrvName(const std::string &name, pjsip_transport_type_e type
     pjsip_endpt_resolve(endpt_, pool_.get(), &host_info, (void*)token, resolver_callback);
 }
 
-#define RETURN_IF_NULL(A, M, ...) \
-    if ((A) == NULL) { RING_WARN(M, ##__VA_ARGS__); return; }
+#define RETURN_IF_NULL(A, ...) \
+    if ((A) == NULL) { RING_WARN(__VA_ARGS__); return; }
 
-#define RETURN_FALSE_IF_NULL(A, M, ...) \
-    if ((A) == NULL) { RING_WARN(M, ##__VA_ARGS__); return false; }
+#define RETURN_FALSE_IF_NULL(A, ...) \
+    if ((A) == NULL) { RING_WARN(__VA_ARGS__); return false; }
 
 void
 SIPVoIPLink::findLocalAddressFromTransport(pjsip_transport* transport,
