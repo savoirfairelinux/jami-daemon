@@ -133,6 +133,7 @@ struct RingAccount::PendingCall
     std::future<size_t> listen_key;
     dht::InfoHash call_key;
     dht::InfoHash from;
+    dht::InfoHash from_account;
     std::shared_ptr<dht::crypto::Certificate> from_cert;
 };
 
@@ -483,7 +484,8 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     std::weak_ptr<SIPCall> wCall = call;
 
     // Find listening Ring devices for this account
-    forEachDevice(dht::InfoHash(toUri), [wCall, toUri](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
+    dht::InfoHash peer_account(toUri);
+    forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
         auto call = wCall.lock();
         if (not call) return;
@@ -505,7 +507,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         call->addSubCall(*dev_call);
 
-        manager.addTask([sthis, weak_dev_call, ice, dev, toUri] {
+        manager.addTask([sthis, weak_dev_call, ice, dev, toUri, peer_account] {
             auto call = weak_dev_call.lock();
 
             // call aborted?
@@ -566,7 +568,9 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 std::chrono::steady_clock::now(),
                 ice, weak_dev_call,
                 std::move(listenKey),
-                callkey, dev,
+                callkey,
+                dev,
+                peer_account,
                 tls::CertificateStore::instance().getCertificate(toUri)
             });
             return false;
@@ -1756,37 +1760,45 @@ RingAccount::handlePendingCallList()
 }
 
 pj_status_t
-check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t* cert_list,
-                       unsigned cert_num, std::shared_ptr<dht::crypto::Certificate>& cert_out)
+RingAccount::checkPeerTlsCertificate(dht::InfoHash from,
+                        dht::InfoHash from_account,
+                        unsigned status,
+                        const gnutls_datum_t* cert_list,
+                        unsigned cert_num,
+                        std::shared_ptr<dht::crypto::Certificate>& cert_out)
 {
     if (cert_num == 0) {
         RING_ERR("[peer:%s] No certificate", from.toString().c_str());
         return PJ_SSL_CERT_EUNKNOWN;
     }
-
     if (status & GNUTLS_CERT_EXPIRED or status & GNUTLS_CERT_NOT_ACTIVATED) {
         RING_ERR("[peer:%s] Expired certificate", from.toString().c_str());
         return PJ_SSL_CERT_EVALIDITY_PERIOD;
     }
 
-    if (status & GNUTLS_CERT_INSECURE_ALGORITHM) {
-        RING_ERR("[peer:%s] Untrusted certificate", from.toString().c_str());
-        return PJ_SSL_CERT_EUNTRUSTED;
-    }
-
-    // Assumes the chain has already been checked by GnuTLS.
+    // Unserialize certificate chain
     std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
     crt_data.reserve(cert_num);
     for (unsigned i=0; i<cert_num; i++)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
-    dht::crypto::Certificate crt(crt_data);
+    auto crt = std::make_shared<dht::crypto::Certificate>(crt_data);
 
-    const auto tls_id = crt.getId();
-    if (crt.getUID() != tls_id.toString()) {
-        RING_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
+    // Check expected peer identity
+    dht::InfoHash tls_account_id;
+    if (not foundPeerDevice(crt, tls_account_id)) {
+        RING_WARN("[peer:%s] Discarding message from invalid peer certificate.", from.toString().c_str());
+        return PJ_SSL_CERT_EUNKNOWN;
+    }
+    if (from_account != tls_account_id) {
+        RING_WARN("[peer:%s] Discarding message from wrong peer account %s.", from.toString().c_str(), tls_account_id.toString().c_str());
         return PJ_SSL_CERT_EUNTRUSTED;
     }
 
+    const auto tls_id = crt->getId();
+    if (crt->getUID() != tls_id.toString()) {
+        RING_ERR("[peer:%s] Certificate UID must be the public key ID", from.toString().c_str());
+        return PJ_SSL_CERT_EUNTRUSTED;
+    }
     if (tls_id != from) {
         RING_ERR("[peer:%s] Certificate public key ID doesn't match (%s)",
                  from.toString().c_str(), tls_id.toString().c_str());
@@ -1794,9 +1806,7 @@ check_peer_certificate(dht::InfoHash from, unsigned status, const gnutls_datum_t
     }
 
     RING_DBG("[peer:%s] Certificate verified", from.toString().c_str());
-
-    cert_out = std::make_shared<dht::crypto::Certificate>(std::move(crt));
-
+    cert_out = std::move(crt);
     return PJ_SUCCESS;
 }
 
@@ -1826,7 +1836,8 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     }
 
     // Securize a SIP transport with TLS (on top of ICE tranport) and assign the call with it
-    auto remote_h = pc.from;
+    auto remote_device = pc.from;
+    auto remote_account = pc.from_account;
     if (not identity_.first or not identity_.second)
         throw std::runtime_error("No identity configured for this account.");
 
@@ -1839,7 +1850,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         /*.cert_key = */identity_.first,
         /*.dh_params = */dhParams_,
         /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        /*.cert_check = */[waccount,wcall,remote_h,incoming](unsigned status,
+        /*.cert_check = */[waccount,wcall,remote_device,remote_account,incoming](unsigned status,
                                                              const gnutls_datum_t* cert_list,
                                                              unsigned cert_num) -> pj_status_t {
             try {
@@ -1847,7 +1858,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
                     if (auto sthis = waccount.lock()) {
                         auto& this_ = *sthis;
                         std::shared_ptr<dht::crypto::Certificate> peer_cert;
-                        auto ret = check_peer_certificate(remote_h, status, cert_list, cert_num, peer_cert);
+                        auto ret = checkPeerTlsCertificate(remote_device, remote_account, status, cert_list, cert_num, peer_cert);
                         if (ret == PJ_SUCCESS and peer_cert) {
                             std::lock_guard<std::mutex> lock(this_.callsMutex_);
                             for (auto& pscall : this_.pendingSipCalls_) {
@@ -1867,7 +1878,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
                 return PJ_SSL_CERT_EUNTRUSTED;
             } catch (const std::exception& e) {
                 RING_ERR("[peer:%s] TLS certificate check exception: %s",
-                         remote_h.toString().c_str(), e.what());
+                         remote_device.toString().c_str(), e.what());
                 return PJ_SSL_CERT_EUNKNOWN;
             }
         }
@@ -1889,7 +1900,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
     } else {
         // Be acknowledged on transport connection/disconnection
         auto lid = reinterpret_cast<uintptr_t>(this);
-        auto remote_id = remote_h.toString();
+        auto remote_id = remote_device.toString();
         auto remote_addr = ice->getRemoteAddress(ICE_COMP_SIP_TRANSPORT);
         auto& tr_self = *transport;
         transport->addStateListener(lid,
@@ -2492,7 +2503,7 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
 
     // Device certificate can't be self-signed
     if (top_issuer == crt) {
-        RING_WARN("[Account %s] Found invalid peer device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        RING_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
         return false;
     }
 
@@ -2501,12 +2512,12 @@ RingAccount::foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& cr
     dht::crypto::TrustList peer_trust;
     peer_trust.add(*top_issuer);
     if (not peer_trust.verify(*crt)) {
-        RING_WARN("[Account %s] Found invalid peer device: %s", getAccountID().c_str(), crt->getId().toString().c_str());
+        RING_WARN("Found invalid peer device: %s", crt->getId().toString().c_str());
         return false;
     }
 
     account_id = crt->issuer->getId();
-    RING_WARN("[Account %s] found peer device: %s account:%s CA:%s", getAccountID().c_str(), crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
+    RING_WARN("Found peer device: %s account:%s CA:%s", crt->getId().toString().c_str(), account_id.toString().c_str(), top_issuer->getId().toString().c_str());
     return true;
 }
 
@@ -2564,6 +2575,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                 /*.listen_key = */{},
                 /*.call_key = */{},
                 /*.from = */peer_ice_msg.from,
+                /*.from_account = */from_id,
                 /*.from_cert = */from_cert });
     }
 }
@@ -3275,6 +3287,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
     dht_.get<DeviceAnnouncement>(to, [shared,to,treatedDevices,op](DeviceAnnouncement&& dev) {
         if (dev.from != to)
             return true;
+        //findCertificate(dev.dev);
         if (treatedDevices->emplace(dev.dev).second)
             op(shared, dev.dev);
         return true;
