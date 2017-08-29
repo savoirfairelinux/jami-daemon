@@ -409,7 +409,17 @@ class RingAccount : public SIPAccountBase {
          * Returns true only if the device certificate is a valid Ring device certificate.
          * In that case (true is returned) the account_id parameter is set to the peer account ID.
          */
-        bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
+        static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
+
+        /**
+         * For a call with (from_device, from_account), check the peer certificate chain (cert_list, cert_num)
+         * with session check status.
+         * Put deserialized certificate to cert_out;
+         */
+        static pj_status_t checkPeerTlsCertificate(dht::InfoHash from_device, dht::InfoHash from_account,
+                                unsigned status,
+                                const gnutls_datum_t* cert_list, unsigned cert_num,
+                                std::shared_ptr<dht::crypto::Certificate>& cert_out);
 
         /**
          * Check that a peer is authorised to talk to us.
