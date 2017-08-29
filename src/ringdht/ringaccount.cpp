@@ -2163,9 +2163,9 @@ RingAccount::doRegister_()
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {};
 #ifndef RING_UWP
-            static auto log_error = [](char const* m, va_list args) { vlogger(LOG_ERR, m, args); };
-            static auto log_warn = [](char const* m, va_list args) { vlogger(LOG_WARNING, m, args); };
-            static auto log_debug = [](char const* m, va_list args) { vlogger(LOG_DEBUG, m, args); };
+            static auto log_error = [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); };
+            static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
+            static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
             dht_.setLoggers(
                 log_error,
                 (dht_log_level > 1) ? log_warn : silent,
