@@ -44,7 +44,7 @@
 #include <sstream>
 #include <algorithm>
 
-#define RETURN_IF_FAIL(A, VAL, M, ...) if (!(A)) { RING_ERR(M, ##__VA_ARGS__); return (VAL); }
+#define RETURN_IF_FAIL(A, VAL, ...) if (!(A)) { RING_ERR(__VA_ARGS__); return (VAL); }
 
 namespace ring {
 
