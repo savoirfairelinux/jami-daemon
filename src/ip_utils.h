@@ -21,6 +21,8 @@
 #ifndef IP_UTILS_H_
 #define IP_UTILS_H_
 
+#include <sstream> // include before pjlib.h to fix macros issues with pjlib.h
+
 extern "C" {
 #include <pjlib.h>
 }
