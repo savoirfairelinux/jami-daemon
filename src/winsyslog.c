@@ -116,3 +116,4 @@ void closelog(void)
     sprintf(tmp, (logopt & WINLOG_PID) ? "%s[%d]" : "%s", ident, getpid());
     loghdr = _strdup(tmp);  /* save header for later */
 }
+
