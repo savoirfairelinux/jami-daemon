@@ -20,6 +20,12 @@ check_PROGRAMS += ut_base64
 ut_base64_SOURCES = base64/base64.cpp
 
 #
+# map_utils
+#
+check_PROGRAMS += ut_map_utils
+ut_map_utils_SOURCES = map_utils/testMap_utils.cpp
+
+#
 # smartools
 #
 check_PROGRAMS += ut_smartools
