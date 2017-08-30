@@ -26,6 +26,12 @@ check_PROGRAMS += ut_map_utils
 ut_map_utils_SOURCES = map_utils/testMap_utils.cpp
 
 #
+# fileutils
+#
+check_PROGRAMS += ut_fileutils
+ut_fileutils_SOURCES = fileutils/testFileutils.cpp
+
+#
 # smartools
 #
 check_PROGRAMS += ut_smartools
