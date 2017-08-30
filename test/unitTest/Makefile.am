@@ -20,6 +20,12 @@ check_PROGRAMS += ut_base64
 ut_base64_SOURCES = base64/base64.cpp
 
 #
+# fileutils
+#
+check_PROGRAMS += ut_fileutils
+ut_fileutils_SOURCES = fileutils/testFileutils.cpp
+
+#
 # smartools
 #
 check_PROGRAMS += ut_smartools
