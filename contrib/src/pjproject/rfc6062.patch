@@ -1,0 +1,467 @@
+--- a/pjnath/include/pjnath/stun_msg.h
++++ b/pjnath/include/pjnath/stun_msg.h
+@@ -92,6 +92,21 @@
+      */
+     PJ_STUN_CHANNEL_BIND_METHOD		    = 9,
+ 
++    /*
++     * STUN/TURN Connect as defined by RFC 6062
++     */
++    PJ_STUN_CONNECT_METHOD                 = 10,
++
++    /*
++     * STUN/TURN ConnectionBind as defined by RFC 6062
++     */
++    PJ_STUN_CONNECTION_BIND_METHOD         = 11,
++
++        /*
++     * STUN/TURN ConnectionAttempt as defined by RFC 6062
++     */
++    PJ_STUN_CONNECTION_ATTEMPT_METHOD      = 12,
++
+     /**
+      * All known methods.
+      */
+@@ -261,6 +276,11 @@
+      */
+     PJ_STUN_DATA_INDICATION		    = 0x0017,
+ 
++    /**
++     * TURN ConnectionAttempt indication
++     */
++    PJ_STUN_CONNECTION_ATTEMPT_INDICATION  = 0x001c,
++
+ 
+     /**
+      * TURN CreatePermission request
+@@ -333,6 +353,7 @@
+     PJ_STUN_ATTR_XOR_REFLECTED_FROM = 0x0023,/**< XOR-REFLECTED-FROM	    */
+     PJ_STUN_ATTR_PRIORITY	    = 0x0024,/**< PRIORITY		    */
+     PJ_STUN_ATTR_USE_CANDIDATE	    = 0x0025,/**< USE-CANDIDATE		    */
++    PJ_STUN_ATTR_CONNECTION_ID = 0x002a,/**< CONNECTION-ID		    */
+     PJ_STUN_ATTR_ICMP		    = 0x0030,/**< ICMP (TURN)		    */
+ 
+     PJ_STUN_ATTR_END_MANDATORY_ATTR,
+
+--- a/pjnath/include/pjnath/turn_session.h
++++ b/pjnath/include/pjnath/turn_session.h
+@@ -184,6 +184,12 @@
+     PJ_TURN_STATE_ALLOCATING,
+ 
+     /**
++     * TURN session has issued CONNECTION-BIND request and is waiting for response
++     * from the TURN server.
++     */
++    PJ_TURN_STATE_CONNECTION_BINDING,
++
++    /**
+      * TURN session has successfully allocated relay resoruce and now is
+      * ready to be used.
+      */
+@@ -298,6 +304,20 @@
+ 		     pj_turn_state_t old_state,
+ 		     pj_turn_state_t new_state);
+ 
++    /**
++     * Notification when TURN session get a ConnectionAttempt indication.
++     *
++     * @param sess			The TURN session.
++     * @param conn_id		The connection-id to use for connection binding.
++     * @param peer_addr	Peer address that tried to connect on the TURN server.
++     * @param addr_len		Length of the peer address.
++
++     */
++    void (*on_peer_connection)(pj_turn_session *sess,
++                               pj_uint32_t conn_id,
++                               const pj_sockaddr_t *peer_addr,
++                               unsigned addr_len);
++
+ } pj_turn_session_cb;
+ 
+ 
+@@ -343,6 +363,13 @@
+ } pj_turn_alloc_param;
+ 
+ 
++typedef struct pj_turn_connection_bind_param
++{
++    pj_uint32_t connection_id;
++
++} pj_turn_connection_bind_param;
++
++
+ /**
+  * This structure describes TURN session info.
+  */
+@@ -638,6 +665,8 @@
+ PJ_DECL(pj_status_t) pj_turn_session_alloc(pj_turn_session *sess,
+ 					   const pj_turn_alloc_param *param);
+ 
++PJ_DECL(pj_status_t) pj_turn_session_connection_bind(pj_turn_session *sess,
++					   const pj_turn_connection_bind_param *param);
+ 
+ /**
+  * Create or renew permission in the TURN server for the specified peer IP
+--- a/pjnath/include/pjnath/turn_sock.h
++++ b/pjnath/include/pjnath/turn_sock.h
+@@ -98,6 +98,20 @@
+ 		     pj_turn_state_t old_state,
+ 		     pj_turn_state_t new_state);
+ 
++    /**
++     * Notification when TURN session get a ConnectionAttempt indication.
++     *
++     * @param turn_sock	The TURN client transport.
++     * @param conn_id		The connection-id to use for connection binding.
++     * @param peer_addr	Peer address that tried to connect on the TURN server.
++     * @param addr_len		Length of the peer address.
++
++     */
++    void (*on_peer_connection)(pj_turn_sock *turn_sock,
++                               pj_uint32_t conn_id,
++                               const pj_sockaddr_t *peer_addr,
++                               unsigned addr_len);
++
+ } pj_turn_sock_cb;
+ 
+ 
+@@ -186,6 +200,8 @@
+      */
+     unsigned so_sndbuf_size;
+ 
++    pj_bool_t peer_connection;
++
+ } pj_turn_sock_cfg;
+ 
+ 
+@@ -447,6 +463,13 @@
+ 					       unsigned addr_len);
+ 
+ 
++PJ_DECL(pj_status_t) pj_turn_sock_bind_connection(pj_turn_sock *turn_sock,
++                                                  const pj_str_t *domain,
++                                                  int default_port,
++                                                  pj_dns_resolver *resolver,
++                                                  const pj_stun_auth_cred *cred,
++                                                  const pj_turn_connection_bind_param *param);
++
+ /**
+  * @}
+  */
+--- a/pjnath/src/pjnath/stun_msg.c
++++ b/pjnath/src/pjnath/stun_msg.c
+@@ -45,6 +45,9 @@
+     "Data",			/* 7 */
+     "CreatePermission",		/* 8 */
+     "ChannelBind",		/* 9 */
++    "Connect",           /* 10 */
++    "ConnectionBind",    /* 11 */
++    "ConnectionAttempt", /* 12 */
+ };
+ 
+ static struct
+@@ -476,11 +479,11 @@
+ 	NULL
+     },
+     {
+-	/* ID 0x002a is not assigned */
+-	NULL,
+-	NULL,
+-	NULL,
+-	NULL
++	/* PJ_STUN_ATTR_CONNECTION_ID, */
++	"CONNECTION-ID",
++	&decode_uint_attr,
++	&encode_uint_attr,
++	&clone_uint_attr
+     },
+     {
+ 	/* ID 0x002b is not assigned */
+--- a/pjnath/src/pjnath/turn_session.c
++++ b/pjnath/src/pjnath/turn_session.c
+@@ -141,6 +141,9 @@
+     pj_bool_t		 pending_alloc;
+     pj_turn_alloc_param	 alloc_param;
+ 
++    pj_bool_t        pending_connection_bind;
++    pj_uint32_t      connection_id;
++
+     pj_sockaddr		 mapped_addr;
+     pj_sockaddr		 relay_addr;
+ 
+@@ -403,6 +406,11 @@
+ 	sess->pending_destroy = PJ_TRUE;
+ 	can_destroy = PJ_FALSE;
+ 	break;
++    case PJ_TURN_STATE_CONNECTION_BINDING:
++	/* We need to wait until connection binding complete */
++	sess->pending_destroy = PJ_TRUE;
++	can_destroy = PJ_FALSE;
++	break;
+     case PJ_TURN_STATE_READY:
+ 	/* Send REFRESH with LIFETIME=0 */
+ 	can_destroy = PJ_FALSE;
+@@ -756,7 +764,7 @@
+     /* MUST include REQUESTED-TRANSPORT attribute */
+     pj_stun_msg_add_uint_attr(tdata->pool, tdata->msg,
+ 			      PJ_STUN_ATTR_REQ_TRANSPORT, 
+-			      PJ_STUN_SET_RT_PROTO(PJ_TURN_TP_UDP));
++			      PJ_STUN_SET_RT_PROTO(PJ_TURN_TP_TCP));
+ 
+     /* Include BANDWIDTH if requested */
+     if (sess->alloc_param.bandwidth > 0) {
+@@ -811,6 +819,70 @@
+     return status;
+ }
+ 
++/**
++ * Create TURN ConnectionBind.
++ */
++PJ_DEF(pj_status_t) pj_turn_session_connection_bind(pj_turn_session *sess,
++                                                    const pj_turn_connection_bind_param *param)
++{
++    pj_stun_tx_data *tdata;
++    pj_status_t status;
++
++    PJ_ASSERT_RETURN(sess, PJ_EINVAL);
++    PJ_ASSERT_RETURN(sess->state>PJ_TURN_STATE_NULL && 
++                     sess->state<=PJ_TURN_STATE_RESOLVED, 
++                     PJ_EINVALIDOP);
++
++    pj_grp_lock_acquire(sess->grp_lock);
++
++    if (param)
++        sess->connection_id = param->connection_id;
++
++    if (sess->state < PJ_TURN_STATE_RESOLVED) {
++        sess->pending_connection_bind = PJ_TRUE;
++
++        PJ_LOG(4,(sess->obj_name, "Pending CONNECTION-BIND in state %s",
++                  state_names[sess->state]));
++
++        pj_grp_lock_release(sess->grp_lock);
++        return PJ_SUCCESS;
++
++    }
++
++    /* Ready to allocate */
++    pj_assert(sess->state == PJ_TURN_STATE_RESOLVED);
++
++    /* Create a bare request */
++    status = pj_stun_session_create_req(sess->stun, PJ_STUN_CONNECTION_BIND_METHOD,
++                                        PJ_STUN_MAGIC, NULL, &tdata);
++    if (status != PJ_SUCCESS) {
++        pj_grp_lock_release(sess->grp_lock);
++        return status;
++    }
++
++    /* MUST include CONNECTION-ID attribute */
++    pj_stun_msg_add_uint_attr(tdata->pool, tdata->msg,
++                              PJ_STUN_ATTR_CONNECTION_ID,
++                              sess->connection_id);
++
++    /* Server address must be set */
++    pj_assert(sess->srv_addr != NULL);
++
++    /* Send request */
++    set_state(sess, PJ_TURN_STATE_CONNECTION_BINDING);
++    status = pj_stun_session_send_msg(sess->stun, NULL, PJ_FALSE, 
++                                      PJ_FALSE, sess->srv_addr,
++                                      pj_sockaddr_get_len(sess->srv_addr), 
++                                      tdata);
++    if (status != PJ_SUCCESS) {
++        PJ_LOG(4,(sess->obj_name, "Sending ConnectionBind request failed"));
++        set_state(sess, PJ_TURN_STATE_DESTROYING);
++	    sess_shutdown(sess, status);
++    }
++
++    pj_grp_lock_release(sess->grp_lock);
++    return status;
++}
+ 
+ /*
+  * Install or renew permissions
+@@ -1670,6 +1742,32 @@
+ 
+     sess = (pj_turn_session*)pj_stun_session_get_user_data(stun);
+ 
++    if (msg->hdr.type == PJ_STUN_CONNECTION_ATTEMPT_INDICATION) {
++        pj_stun_uint_attr *connection_id_attr;
++        /* Get CONNECTION-ID attribute */
++        connection_id_attr = (pj_stun_uint_attr*)
++            pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_CONNECTION_ID, 0);
++
++        /* Get XOR-PEER-ADDRESS attribute */
++        peer_attr = (pj_stun_xor_peer_addr_attr*)
++            pj_stun_msg_find_attr(msg, PJ_STUN_ATTR_XOR_PEER_ADDR, 0);
++
++        /* Must have both XOR-PEER-ADDRESS and CONNECTION-ID attributes */
++        if (!peer_attr || !connection_id_attr) {
++            PJ_LOG(4,(sess->obj_name, 
++                      "Received ConnectionAttempd indication with missing attributes"));
++            return PJ_EINVALIDOP;
++        }
++
++        /* Notify application */
++        if (sess->cb.on_peer_connection) {
++            (*sess->cb.on_peer_connection)(sess, connection_id_attr->value,
++                                           &peer_attr->sockaddr,
++                                           pj_sockaddr_get_len(&peer_attr->sockaddr));
++        }
++        return PJ_SUCCESS;
++    }
++
+     /* Expecting Data Indication only */
+     if (msg->hdr.type != PJ_STUN_DATA_INDICATION) {
+ 	PJ_LOG(4,(sess->obj_name, "Unexpected STUN %s indication",
+@@ -1777,6 +1875,11 @@
+ 	status = pj_turn_session_alloc(sess, NULL);
+ 	if (status != PJ_SUCCESS)
+ 	    on_session_fail(sess, PJ_STUN_ALLOCATE_METHOD, status, NULL);
++    } else if (sess->pending_connection_bind) {
++        pj_status_t status;
++        status = pj_turn_session_connection_bind(sess, NULL);
++        if (status != PJ_SUCCESS)
++            on_session_fail(sess, PJ_STUN_CONNECTION_BIND_METHOD, status, NULL);
+     }
+ }
+ 
+--- a/pjnath/src/pjnath/turn_sock.c
++++ b/pjnath/src/pjnath/turn_sock.c
+@@ -50,6 +50,7 @@
+     pj_grp_lock_t	*grp_lock;
+ 
+     pj_turn_alloc_param	 alloc_param;
++    pj_turn_connection_bind_param connection_bind_param;
+     pj_stun_config	 cfg;
+     pj_turn_sock_cfg	 setting;
+ 
+@@ -81,7 +82,12 @@
+ 			    unsigned addr_len);
+ static void turn_on_state(pj_turn_session *sess, 
+ 			  pj_turn_state_t old_state,
+-			  pj_turn_state_t new_state);
++                          pj_turn_state_t new_state);
++static void turn_on_peer_connection(pj_turn_session *sess,
++                                    pj_uint32_t conn_id,
++                                    const pj_sockaddr_t *peer_addr,
++                                    unsigned addr_len);
++
+ 
+ static pj_bool_t on_data_read(pj_activesock_t *asock,
+ 			      void *data,
+@@ -193,6 +199,7 @@
+     sess_cb.on_channel_bound = &turn_on_channel_bound;
+     sess_cb.on_rx_data = &turn_on_rx_data;
+     sess_cb.on_state = &turn_on_state;
++    sess_cb.on_peer_connection = &turn_on_peer_connection;
+     status = pj_turn_session_create(cfg, pool->obj_name, af, conn_type,
+                                     turn_sock->grp_lock, &sess_cb, 0,
+                                     turn_sock, &turn_sock->sess);
+@@ -443,6 +450,57 @@
+     return PJ_SUCCESS;
+ }
+ 
++PJ_DECL(pj_status_t) pj_turn_sock_bind_connection(pj_turn_sock *turn_sock,
++                                                  const pj_str_t *domain,
++                                                  int default_port,
++                                                  pj_dns_resolver *resolver,
++                                                  const pj_stun_auth_cred *cred,
++                                                  const pj_turn_connection_bind_param *param)
++{
++    pj_status_t status;
++
++    PJ_ASSERT_RETURN(turn_sock, PJ_EINVAL);
++    PJ_ASSERT_RETURN(turn_sock->sess, PJ_EINVALIDOP);
++    PJ_ASSERT_RETURN(param, PJ_EINVALIDOP);
++
++    pj_grp_lock_acquire(turn_sock->grp_lock);
++
++    pj_memcpy(&turn_sock->connection_bind_param, param, sizeof(turn_sock->connection_bind_param));
++
++    /* Set credental */
++    if (cred) {
++        status = pj_turn_session_set_credential(turn_sock->sess, cred);
++        if (status != PJ_SUCCESS) {
++            sess_fail(turn_sock, "Error setting credential", status);
++            pj_grp_lock_release(turn_sock->grp_lock);
++            return status;
++        }
++    }
++
++    /* Resolve server */
++    status = pj_turn_session_set_server(turn_sock->sess, domain, default_port,
++                                        resolver);
++    if (status != PJ_SUCCESS) {
++        sess_fail(turn_sock, "Error setting TURN server", status);
++        pj_grp_lock_release(turn_sock->grp_lock);
++        return status;
++    } else if (!turn_sock->sess) {
++        /* TURN session may have been destroyed here, i.e: when DNS resolution
++         * completed synchronously and TURN allocation failed.
++         */
++        PJ_LOG(4,(turn_sock->obj_name, "TURN session destroyed in setting "
++                  "TURN server"));
++        pj_grp_lock_release(turn_sock->grp_lock);
++        return PJ_EGONE;
++    }
++
++    /* Done for now. The next work will be done when session state moved
++     * to RESOLVED state.
++     */
++    pj_grp_lock_release(turn_sock->grp_lock);
++    return PJ_SUCCESS;
++}
++
+ /*
+  * Install permission
+  */
+@@ -529,12 +587,22 @@
+     /* Init send_key */
+     pj_ioqueue_op_key_init(&turn_sock->send_key, sizeof(turn_sock->send_key));
+ 
+-    /* Send Allocate request */
+-    status = pj_turn_session_alloc(turn_sock->sess, &turn_sock->alloc_param);
+-    if (status != PJ_SUCCESS) {
+-	sess_fail(turn_sock, "Error sending ALLOCATE", status);
+-	pj_grp_lock_release(turn_sock->grp_lock);
+-	return PJ_FALSE;
++    if (turn_sock->setting.peer_connection) {
++        /* Send ConnectionBind request */
++        status = pj_turn_session_connection_bind(turn_sock->sess, &turn_sock->connection_bind_param);
++        if (status != PJ_SUCCESS) {
++            sess_fail(turn_sock, "Error sending CONNECTION-BIND", status);
++            pj_grp_lock_release(turn_sock->grp_lock);
++            return PJ_FALSE;
++        }
++    } else {
++        /* Send Allocate request */
++        status = pj_turn_session_alloc(turn_sock->sess, &turn_sock->alloc_param);
++        if (status != PJ_SUCCESS) {
++            sess_fail(turn_sock, "Error sending ALLOCATE", status);
++            pj_grp_lock_release(turn_sock->grp_lock);
++            return PJ_FALSE;
++        }
+     }
+ 
+     pj_grp_lock_release(turn_sock->grp_lock);
+@@ -927,4 +995,19 @@
+     }
+ }
+ 
++static void turn_on_peer_connection(pj_turn_session *sess,
++                                    pj_uint32_t conn_id,
++                                    const pj_sockaddr_t *peer_addr,
++                                    unsigned addr_len)
++{
++    pj_turn_sock *turn_sock = (pj_turn_sock*) pj_turn_session_get_user_data(sess);
++    if (turn_sock == NULL || turn_sock->is_destroying) {
++        /* We've been destroyed */
++        return;
++    }
+ 
++    if (turn_sock->cb.on_peer_connection) {
++        (*turn_sock->cb.on_peer_connection)(turn_sock, conn_id,
++                                            peer_addr, addr_len);
++    }
++}
