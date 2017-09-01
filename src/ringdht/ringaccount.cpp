@@ -1501,19 +1501,9 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
 
-    // load identity immediately so we can access the ringIds of disabled accounts
-    auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
-
-    if (not isEnabled()) {
-        if (id.first) {
-            ringAccountId_ = id.first->getPublicKey().getId().toString();
-            username_ = RING_URI_PREFIX + ringAccountId_;
-        }
-        return;
-    }
-
     RING_DBG("[Account %s] loading Ring account", getAccountID().c_str());
     try {
+        auto id = loadIdentity(tlsCertificateFile_, tlsPrivateKeyFile_, tlsPassword_);
         bool hasArchive = not archivePath_.empty()
                           and fileutils::isFile(fileutils::getFullPath(idPath_, archivePath_));
         if (useIdentity(id)) {
@@ -1523,29 +1513,34 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
             loadTrustRequests();
             if (not hasArchive)
                 RING_WARN("[Account %s] account archive not found, won't be able to add new devices", getAccountID().c_str());
-        } else if (hasArchive) {
-            if (needsMigration(id)) {
-                RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
-                migrateAccount(archive_password, id);
-            } else {
-                RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
-                try {
-                    initRingDevice(readArchive(archive_password));
-                } catch (...) {
-                    Migration::setState(accountID_, Migration::State::INVALID);
-                    return;
-                }
-                Migration::setState(accountID_, Migration::State::SUCCESS);
-                setRegistrationState(RegistrationState::UNREGISTERED);
+            if (not isEnabled()) {
+                setRegistrationState(RegistrationState::ERROR_GENERIC);
             }
-            Manager::instance().saveConfig();
-            loadAccount();
-        } else {
-            // no receipt or archive, creating new account
-            if (archive_pin.empty()) {
-                createAccount(archive_password, std::move(id));
+        } else if (isEnabled()) {
+            if (hasArchive) {
+                if (needsMigration(id)) {
+                    RING_WARN("[Account %s] account certificate needs update", getAccountID().c_str());
+                    migrateAccount(archive_password, id);
+                } else {
+                    RING_WARN("[Account %s] archive present but no valid receipt: creating new device", getAccountID().c_str());
+                    try {
+                        initRingDevice(readArchive(archive_password));
+                    } catch (...) {
+                        Migration::setState(accountID_, Migration::State::INVALID);
+                        return;
+                    }
+                    Migration::setState(accountID_, Migration::State::SUCCESS);
+                    setRegistrationState(RegistrationState::UNREGISTERED);
+                }
+                Manager::instance().saveConfig();
+                loadAccount();
             } else {
-                loadAccountFromDHT(archive_password, archive_pin);
+                // no receipt or archive, creating new account
+                if (archive_pin.empty()) {
+                    createAccount(archive_password, std::move(id));
+                } else {
+                    loadAccountFromDHT(archive_password, archive_pin);
+                }
             }
         }
     } catch (const std::exception& e) {
