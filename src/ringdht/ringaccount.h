@@ -68,6 +68,7 @@ namespace dev
 namespace ring {
 
 class IceTransport;
+struct Contact;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -320,7 +321,6 @@ class RingAccount : public SIPAccountBase {
         struct DeviceAnnouncement;
         struct DeviceSync;
         struct BuddyInfo;
-        struct Contact;
 
         void syncDevices();
         void onReceiveDeviceSync(DeviceSync&& sync);
