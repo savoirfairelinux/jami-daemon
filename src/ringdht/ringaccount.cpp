@@ -27,6 +27,8 @@
 #include "config.h"
 #endif
 
+#include "configkeys.h"
+
 #include "thread_pool.h"
 
 #include "sip/sdp.h"
