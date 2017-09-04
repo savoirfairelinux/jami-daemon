@@ -27,6 +27,7 @@
 #include "config.h"
 #endif
 
+#include "ringcontact.h"
 #include "configkeys.h"
 
 #include "thread_pool.h"
@@ -151,85 +152,6 @@ RingAccount::TrustRequest {
     time_t received;
     std::vector<uint8_t> payload;
     MSGPACK_DEFINE_MAP(device, received, payload)
-};
-
-struct RingAccount::Contact
-{
-    /** Time of contact addition */
-    time_t added {0};
-
-    /** Time of contact removal */
-    time_t removed {0};
-
-    /** True if we got confirmation that this contact also added us */
-    bool confirmed {false};
-
-    /** True if the contact is banned (if not active) */
-    bool banned {false};
-
-    /** True if the contact is an active contact (not banned nor removed) */
-    bool isActive() const { return added > removed; }
-    bool isBanned() const { return not isActive() and banned; }
-
-    Contact() = default;
-    Contact(const Json::Value& json) {
-        added = json["added"].asInt();
-        removed = json["removed"].asInt();
-        confirmed = json["confirmed"].asBool();
-        banned = json["banned"].asBool();
-    }
-
-    /**
-     * Update this contact using other known contact information,
-     * return true if contact state was changed.
-     */
-    bool update(const Contact& c) {
-        const auto copy = *this;
-        if (c.added > added) {
-            added = c.added;
-        }
-        if (c.removed > removed) {
-            removed = c.removed;
-            banned = c.banned;
-        }
-        if (c.confirmed != confirmed) {
-            confirmed = c.confirmed or confirmed;
-        }
-        return hasDifferentState(copy);
-    }
-    bool hasDifferentState(const Contact& other) const {
-        return other.isActive() != isActive()
-            or other.isBanned() != isBanned()
-            or other.confirmed  != confirmed;
-    }
-
-    Json::Value toJson() const {
-        Json::Value json;
-        json["added"] = Json::Int64(added);
-        json["removed"] = Json::Int64(removed);
-        json["confirmed"] = confirmed;
-        json["banned"] = banned;
-        return json;
-    }
-
-    std::map<std::string, std::string> toMap() const {
-        if (not (isActive() or isBanned())) {
-            return {};
-        }
-
-        std::map<std::string, std::string> result {
-            {"added", std::to_string(added)}
-        };
-
-        if (isActive())
-            result.emplace("confirmed", confirmed ? TRUE_STR : FALSE_STR);
-        else if (isBanned())
-            result.emplace("banned", TRUE_STR);
-
-        return result;
-    }
-
-    MSGPACK_DEFINE_MAP(added, removed, confirmed, banned)
 };
 
 /**
