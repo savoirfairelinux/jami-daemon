@@ -314,7 +314,7 @@ static constexpr const char * DEFAULT_TURN_REALM = "ring";
 constexpr const char* const RingAccount::ACCOUNT_TYPE;
 /* constexpr */ const std::pair<uint16_t, uint16_t> RingAccount::DHT_PORT_RANGE {4000, 8888};
 
-static std::uniform_int_distribution<dht::Value::Id> udist;
+using ValueIdDist = std::uniform_int_distribution<dht::Value::Id>;
 
 static const std::string
 stripPrefix(const std::string& toUrl)
@@ -529,7 +529,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             sthis->registerDhtAddress(*ice);
 
             // Next step: sent the ICE data to peer through DHT
-            const dht::Value::Id callvid  = udist(sthis->rand_);
+            const dht::Value::Id callvid  = ValueIdDist()(sthis->rand_);
             const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
             dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
 
