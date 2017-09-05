@@ -478,8 +478,10 @@ class RingAccount : public SIPAccountBase {
         std::recursive_mutex buddyInfoMtx;
         std::map<dht::InfoHash, BuddyInfo> trackedBuddies_;
 
-        void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {});
+        void loadAccount(const std::string& archive_password = {}, const std::string& archive_pin = {}, const std::string& archive_path = {});
+        void loadAccountFromFile(const std::string& archive_path, const std::string& archive_password);
         void loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin);
+        void loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password);
 
         bool hasCertificate() const;
         bool hasPrivateKey() const;
