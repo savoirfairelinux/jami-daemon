@@ -27,6 +27,7 @@
 #include "config.h"
 #endif
 
+#include "accountarchive.h"
 #include "ringcontact.h"
 #include "configkeys.h"
 
@@ -174,30 +175,6 @@ struct RingAccount::KnownDevice
         : certificate(cert), name(n), last_sync(sync) {}
 };
 
-/**
- * Crypto material contained in the archive,
- * not persisted in the account configuration
- */
-struct RingAccount::ArchiveContent
-{
-    /** Account main private key and certificate chain */
-    dht::crypto::Identity id;
-
-    /** Generated CA key (for self-signed certificates) */
-    std::shared_ptr<dht::crypto::PrivateKey> ca_key;
-
-    /** Revoked devices */
-    std::shared_ptr<dht::crypto::RevocationList> revoked;
-
-    /** Ethereum private key */
-    std::vector<uint8_t> eth_key;
-
-    /** Contacts */
-    std::map<dht::InfoHash, Contact> contacts;
-
-    /** Account configuration */
-    std::map<std::string, std::string> config;
-};
 
 /**
  * Device announcement stored on DHT.
@@ -753,7 +730,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
 }
 
 void
-RingAccount::initRingDevice(const ArchiveContent& a)
+RingAccount::initRingDevice(const AccountArchive& a)
 {
     RING_WARN("[Account %s] creating new Ring device from archive", getAccountID().c_str());
     SIPAccountBase::setAccountDetails(a.config);
@@ -902,98 +879,18 @@ RingAccount::loadIdentity(const std::string& crt_path, const std::string& key_pa
     return id;
 }
 
-RingAccount::ArchiveContent
+AccountArchive
 RingAccount::readArchive(const std::string& pwd) const
 {
     RING_DBG("[Account %s] reading account archive", getAccountID().c_str());
-
-    std::vector<uint8_t> data;
-
-    if (pwd.empty()) {
-        data = archiver::decompressGzip(fileutils::getFullPath(idPath_, archivePath_));
-    } else {
-        // Read file
-        try {
-            data = fileutils::loadFile(archivePath_, idPath_);
-        } catch (const std::exception& e) {
-            RING_ERR("[Account %s] archive loading error: %s", getAccountID().c_str(), e.what());
-            throw;
-        }
-        // Decrypt
-        try {
-            data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
-        } catch (const std::exception& e) {
-            RING_ERR("[Account %s] archive decrypt error: %s", getAccountID().c_str(), e.what());
-            throw;
-        }
-    }
-
-    // Unserialize data
-    return loadArchive(data);
-}
-
-RingAccount::ArchiveContent
-RingAccount::loadArchive(const std::vector<uint8_t>& dat)
-{
-    ArchiveContent c;
-    RING_DBG("Loading account archive (%lu bytes)", dat.size());
-
-    // Decode string
-    std::string decoded {dat.begin(), dat.end()};
-    Json::Value value;
-    Json::Reader reader;
-    if (!reader.parse(decoded.c_str(),value)) {
-        RING_ERR("Archive JSON parsing error: %s", reader.getFormattedErrorMessages().c_str());
-        throw std::runtime_error("failed to parse JSON");
-    }
-
-    // Import content
-    try {
-        c.config = DRing::getAccountTemplate(ACCOUNT_TYPE);
-        for (Json::ValueIterator itr = value.begin() ; itr != value.end() ; itr++) {
-            try {
-                const auto key = itr.key().asString();
-                if (key.empty())
-                    continue;
-                if (key.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
-                } else if (key.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0) {
-                } else if (key.compare(Conf::RING_CA_KEY) == 0) {
-                    c.ca_key = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_KEY) == 0) {
-                    c.id.first = std::make_shared<dht::crypto::PrivateKey>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_CERT) == 0) {
-                    c.id.second = std::make_shared<dht::crypto::Certificate>(base64::decode(itr->asString()));
-                } else if (key.compare(Conf::RING_ACCOUNT_CONTACTS) == 0) {
-                    for (Json::ValueIterator citr = itr->begin() ; citr != itr->end() ; citr++) {
-                        dht::InfoHash h {citr.key().asString()};
-                        if (h != dht::InfoHash{})
-                            c.contacts.emplace(h, Contact{*citr});
-                    }
-                } else if (key.compare(Conf::ETH_KEY) == 0) {
-                    c.eth_key = base64::decode(itr->asString());
-                } else if (key.compare(Conf::RING_ACCOUNT_CRL) == 0) {
-                    c.revoked = std::make_shared<dht::crypto::RevocationList>(base64::decode(itr->asString()));
-                } else
-                    c.config[key] = itr->asString();
-            } catch (const std::exception& ex) {
-                RING_ERR("Can't parse JSON entry with value of type %d: %s", (unsigned)itr->type(), ex.what());
-            }
-        }
-    } catch (const std::exception& ex) {
-        RING_ERR("Can't parse JSON: %s", ex.what());
-    }
-
-    return c;
+    return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
 }
 
 
-std::string
-RingAccount::makeArchive(const ArchiveContent& archive) const
+void
+RingAccount::updateArchive(AccountArchive& archive) const
 {
     RING_DBG("[Account %s] building account archive", getAccountID().c_str());
-
-    Json::Value root;
 
     auto details = getAccountDetails();
     for (auto it : details) {
@@ -1005,60 +902,26 @@ RingAccount::makeArchive(const ArchiveContent& archive) const
             // replace paths by the files content
             if (not it.second.empty()) {
                 try {
-                    root[it.first] = base64::encode(fileutils::loadFile(it.second));
+                    archive.config[it.first] = base64::encode(fileutils::loadFile(it.second));
                 } catch (...) {}
             }
         } else
-            root[it.first] = it.second;
+            archive.config[it.first] = it.second;
     }
-
-    if (archive.ca_key and *archive.ca_key)
-        root[Conf::RING_CA_KEY] = base64::encode(archive.ca_key->serialize());
-    root[Conf::RING_ACCOUNT_KEY] = base64::encode(archive.id.first->serialize());
-    root[Conf::RING_ACCOUNT_CERT] = base64::encode(archive.id.second->getPacked());
-    root[Conf::ETH_KEY] = base64::encode(archive.eth_key);
-
-    if (archive.revoked)
-        root[Conf::RING_ACCOUNT_CRL] = base64::encode(archive.revoked->getPacked());
-
-    if (not contacts_.empty()) {
-        Json::Value& contacts = root[Conf::RING_ACCOUNT_CONTACTS];
-        for (const auto& c : contacts_)
-            contacts[c.first.toString()] = c.second.toJson();
-    }
-
-    Json::FastWriter fastWriter;
-    return fastWriter.write(root);
+    archive.contacts = contacts_;
 }
 
 void
-RingAccount::saveArchive(const ArchiveContent& archive_content, const std::string& pwd)
+RingAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
 {
-    std::string archive_str;
     try {
-        archive_str = makeArchive(archive_content);
+        updateArchive(archive);
+        if (archivePath_.empty())
+            archivePath_ = "export.gz";
+        archive.save(fileutils::getFullPath(idPath_, archivePath_), pwd);
     } catch (const std::runtime_error& ex) {
         RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return;
-    }
-
-    if (archivePath_.empty())
-        archivePath_ = "export.gz";
-    auto fullPath = fileutils::getFullPath(idPath_, archivePath_);
-
-    if (not pwd.empty()) {
-        // Encrypt using provided password
-        std::vector<uint8_t> data = dht::crypto::aesEncrypt(archiver::compress(archive_str), pwd);
-        // Write
-        try {
-            fileutils::saveFile(fullPath, data);
-        } catch (const std::runtime_error& ex) {
-            RING_ERR("Export failed: %s", ex.what());
-            return;
-        }
-    } else {
-        RING_WARN("[account %s] unsecured archiving (no password)", getAccountID().c_str());
-        archiver::compressGzip(archive_str, fullPath);
     }
 }
 
@@ -1095,7 +958,7 @@ RingAccount::addDevice(const std::string& password)
         std::vector<uint8_t> key;
         dht::InfoHash loc;
         std::string pin_str;
-        ArchiveContent a;
+        AccountArchive a;
         try {
             RING_DBG("[Account %s] exporting Ring account", this_->getAccountID().c_str());
 
@@ -1117,8 +980,8 @@ RingAccount::addDevice(const std::string& password)
             return;
         }
         try {
-            auto archive = this_->makeArchive(a);
-            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(archive), key);
+            this_->updateArchive(a);
+            auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
             if (not this_->dht_.isRunning())
                 throw std::runtime_error("DHT is not running..");
             this_->dht_.put(loc, encrypted, [this_,pin_str](bool ok) {
@@ -1141,7 +1004,7 @@ bool
 RingAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     // shared_ptr of future
-    auto fa = ThreadPool::instance().getShared<ArchiveContent>(
+    auto fa = ThreadPool::instance().getShared<AccountArchive>(
         [this, password] { return readArchive(password); });
     auto sthis = shared();
     findCertificate(dht::InfoHash(device),
@@ -1153,7 +1016,7 @@ RingAccount::revokeDevice(const std::string& password, const std::string& device
             return;
         }
         this_.foundAccountDevice(crt);
-        ArchiveContent a;
+        AccountArchive a;
         try {
             a = fa->get();
         } catch (...) {
@@ -1213,7 +1076,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
     auto state_new = std::make_shared<std::pair<bool, bool>>(false, true);
     auto found = std::make_shared<bool>(false);
 
-    auto archiveFound = [w,found,archive_password](const ArchiveContent& a) {
+    auto archiveFound = [w,found,archive_password](AccountArchive&& a) {
         *found =  true;
         if (auto this_ = w.lock()) {
             this_->initRingDevice(a);
@@ -1257,7 +1120,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                     RING_DBG("Found archive on the DHT");
                     runOnMainThread([=]() {
                         try {
-                            archiveFound(loadArchive(decrypted));
+                            archiveFound(AccountArchive(decrypted));
                         } catch (const std::exception& e) {
                             if (auto this_ = w.lock()) {
                                 RING_WARN("[Account %s] error reading archive: %s", this_->getAccountID().c_str(), e.what());
@@ -1294,7 +1157,7 @@ RingAccount::createAccount(const std::string& archive_password, dht::crypto::Ide
     setRegistrationState(RegistrationState::INITIALIZING);
     auto sthis = std::static_pointer_cast<RingAccount>(shared_from_this());
     ThreadPool::instance().run([sthis,archive_password,migrate]() mutable {
-        ArchiveContent a;
+        AccountArchive a;
         auto& this_ = *sthis;
 
         auto future_keypair = ThreadPool::instance().get<dev::KeyPair>(std::bind(&dev::KeyPair::create));
@@ -1363,7 +1226,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
 }
 
 bool
-RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& device)
+RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
 {
     using Certificate = dht::crypto::Certificate;
 
@@ -1406,7 +1269,7 @@ RingAccount::updateCertificates(ArchiveContent& archive, dht::crypto::Identity& 
 void
 RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& device)
 {
-    ArchiveContent archive;
+    AccountArchive archive;
     try {
         archive = readArchive(pwd);
     } catch (...) {

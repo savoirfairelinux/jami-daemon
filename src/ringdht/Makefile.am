@@ -19,7 +19,9 @@ libringacc_la_SOURCES = \
         ringaccount.cpp \
         ringaccount.h \
         sips_transport_ice.cpp \
-        sips_transport_ice.h
+        sips_transport_ice.h \
+        accountarchive.cpp \
+        accountarchive.h
 
 if RINGNS
 libringacc_la_SOURCES += \
