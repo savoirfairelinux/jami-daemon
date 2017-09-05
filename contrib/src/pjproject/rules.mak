@@ -80,6 +80,7 @@ endif
 	$(APPLY) $(SRC)/pjproject/fix_turn_fallback.patch
 	$(APPLY) $(SRC)/pjproject/fix_ioqueue_ipv6_sendto.patch
 	$(APPLY) $(SRC)/pjproject/add_dtls_transport.patch
+	$(APPLY) $(SRC)/pjproject/rfc6062.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
