@@ -287,11 +287,12 @@ class RingAccount : public SIPAccountBase {
         void sendTrustRequestConfirm(const dht::InfoHash& to);
         virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) override;
 
+        /* Devices */
         void addDevice(const std::string& password);
-
         bool revokeDevice(const std::string& password, const std::string& device);
-
         std::map<std::string, std::string> getKnownDevices() const;
+
+        bool changeArchivePassword(const std::string& password_old, const std::string& password_new);
 
         void connectivityChanged() override;
 

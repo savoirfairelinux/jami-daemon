@@ -1062,6 +1062,19 @@ RingAccount::saveArchive(const ArchiveContent& archive_content, const std::strin
     }
 }
 
+bool
+RingAccount::changeArchivePassword(const std::string& password_old, const std::string& password_new)
+{
+    auto path = fileutils::getFullPath(idPath_, archivePath_);
+    try {
+        AccountArchive(path, password_old).save(path, password_new);
+    } catch (const std::exception& ex) {
+        RING_ERR("[Account %s] Can't change archive password: %s", getAccountID().c_str(), ex.what());
+        return false;
+    }
+    return true;
+}
+
 std::pair<std::vector<uint8_t>, dht::InfoHash>
 RingAccount::computeKeys(const std::string& password, const std::string& pin, bool previous)
 {

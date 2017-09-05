@@ -299,6 +299,14 @@ getKnownRingDevices(const std::string& accountId)
     return {};
 }
 
+bool
+changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountID))
+        return acc->changeArchivePassword(password_old, password_new);
+    return false;
+}
+
 /* contacts */
 
 void addContact(const std::string& accountId, const std::string& uri)

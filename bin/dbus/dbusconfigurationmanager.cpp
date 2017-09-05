@@ -93,6 +93,12 @@ DBusConfigurationManager::getKnownRingDevices(const std::string& accountID) -> d
 }
 
 auto
+DBusConfigurationManager::changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new) -> decltype(DRing::changeAccountPassword(accountID, password_old, password_new))
+{
+    return DRing::changeAccountPassword(accountID, password_old, password_new);
+}
+
+auto
 DBusConfigurationManager::lookupName(const std::string& account, const std::string& nameserver, const std::string& name) -> decltype(DRing::lookupName(account, nameserver, name))
 {
     return DRing::lookupName(account, nameserver, name);
