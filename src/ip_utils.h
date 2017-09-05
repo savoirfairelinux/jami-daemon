@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef IP_UTILS_H_
-#define IP_UTILS_H_
+#pragma once
 
 #include <sstream> // include before pjlib.h to fix macros issues with pjlib.h
 
@@ -146,7 +145,7 @@ public:
         return reinterpret_cast<sockaddr&>(addr);
     }
 
-    inline operator sockaddr* (){
+    inline explicit operator sockaddr* (){
         return reinterpret_cast<sockaddr*>(&addr);
     }
 
@@ -297,5 +296,3 @@ std::vector<IpAddr> getLocalNameservers();
 
 } // namespace ip_utils
 } // namespace ring
-
-#endif // IP_UTILS_H_
