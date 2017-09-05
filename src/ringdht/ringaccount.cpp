@@ -894,8 +894,9 @@ RingAccount::updateArchive(AccountArchive& archive) const
 
     auto details = getAccountDetails();
     for (auto it : details) {
-        if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0) {
-            // Ringtone path is not exportable
+        if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0 ||
+            it.first.compare(DRing::Account::ConfProperties::ARCHIVE_PATH) == 0) {
+            // Keys to not be exported to archive
         } else if (it.first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
                 it.first.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0 ||
                 it.first.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
@@ -1053,6 +1054,42 @@ RingAccount::saveIdentity(const dht::crypto::Identity id, const std::string& pat
 }
 
 void
+RingAccount::loadAccountFromArchive(AccountArchive&& archive, const std::string& archive_password)
+{
+    initRingDevice(archive);
+    saveArchive(archive, archive_password);
+    registrationState_ = RegistrationState::UNREGISTERED;
+    Manager::instance().saveConfig();
+    doRegister();
+}
+
+void
+RingAccount::loadAccountFromFile(const std::string& archive_path, const std::string& archive_password)
+{
+    setRegistrationState(RegistrationState::INITIALIZING);
+    std::weak_ptr<RingAccount> w = std::static_pointer_cast<RingAccount>(shared_from_this());
+    auto accountId = getAccountID();
+    ThreadPool::instance().run([w, archive_password, archive_path, accountId]{
+        AccountArchive archive;
+        try {
+            archive = AccountArchive(archive_path, archive_password);
+        } catch (const std::exception& ex) {
+            RING_WARN("[Account %s] can't read file: %s", accountId.c_str(), ex.what());
+            runOnMainThread([w, accountId]() {
+                if (auto this_ = w.lock())
+                    this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
+                Manager::instance().removeAccount(accountId);
+            });
+            return;
+        }
+        runOnMainThread([w, archive, archive_password]() mutable {
+            if (auto this_ = w.lock())
+                this_->loadAccountFromArchive(std::move(archive), archive_password);
+        });
+    });
+}
+
+void
 RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::string& archive_pin)
 {
     setRegistrationState(RegistrationState::INITIALIZING);
@@ -1076,16 +1113,6 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
     auto state_new = std::make_shared<std::pair<bool, bool>>(false, true);
     auto found = std::make_shared<bool>(false);
 
-    auto archiveFound = [w,found,archive_password](AccountArchive&& a) {
-        *found =  true;
-        if (auto this_ = w.lock()) {
-            this_->initRingDevice(a);
-            this_->saveArchive(a, archive_password);
-            this_->registrationState_ = RegistrationState::UNREGISTERED;
-            Manager::instance().saveConfig();
-            this_->doRegister();
-        }
-    };
     auto searchEnded = [w,found,state_old,state_new](){
         if (*found)
             return;
@@ -1101,7 +1128,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         }
     };
 
-    auto search = [w,found,archive_password,archive_pin,archiveFound,searchEnded](bool previous, std::shared_ptr<std::pair<bool, bool>>& state) {
+    auto search = [w,found,archive_password,archive_pin,searchEnded](bool previous, std::shared_ptr<std::pair<bool, bool>>& state) {
         std::vector<uint8_t> key;
         dht::InfoHash loc;
 
@@ -1110,7 +1137,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
             std::tie(key, loc) = computeKeys(archive_password, archive_pin, previous);
             if (auto this_ = w.lock()) {
                 RING_DBG("[Account %s] trying to load account from DHT with %s at %s", this_->getAccountID().c_str(), archive_pin.c_str(), loc.toString().c_str());
-                this_->dht_.get(loc, [w,key,found,archive_password,archiveFound](const std::shared_ptr<dht::Value>& val) {
+                this_->dht_.get(loc, [w,key,found,archive_password](const std::shared_ptr<dht::Value>& val) {
                     std::vector<uint8_t> decrypted;
                     try {
                         decrypted = archiver::decompress(dht::crypto::aesDecrypt(val->data, key));
@@ -1119,10 +1146,11 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
                     }
                     RING_DBG("Found archive on the DHT");
                     runOnMainThread([=]() {
-                        try {
-                            archiveFound(AccountArchive(decrypted));
-                        } catch (const std::exception& e) {
-                            if (auto this_ = w.lock()) {
+                        if (auto this_ = w.lock()) {
+                            try {
+                                *found =  true;
+                                this_->loadAccountFromArchive(AccountArchive(decrypted), archive_password);
+                            } catch (const std::exception& e) {
                                 RING_WARN("[Account %s] error reading archive: %s", this_->getAccountID().c_str(), e.what());
                                 this_->setRegistrationState(RegistrationState::ERROR_GENERIC);
                                 Manager::instance().removeAccount(this_->getAccountID());
@@ -1209,7 +1237,7 @@ bool
 RingAccount::needsMigration(const dht::crypto::Identity& id)
 {
     if (not id.second)
-        return true;
+        return false;
     auto cert = id.second->issuer;
     while (cert) {
         if (not cert->isCA()){
@@ -1228,6 +1256,7 @@ RingAccount::needsMigration(const dht::crypto::Identity& id)
 bool
 RingAccount::updateCertificates(AccountArchive& archive, dht::crypto::Identity& device)
 {
+    RING_WARN("Updating certificates");
     using Certificate = dht::crypto::Certificate;
 
     // We need the CA key to resign certificates
@@ -1273,6 +1302,7 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
     try {
         archive = readArchive(pwd);
     } catch (...) {
+        RING_DBG("[Account %s] Can't load archive", getAccountID().c_str());
         Migration::setState(accountID_, Migration::State::INVALID);
         return;
     }
@@ -1287,7 +1317,7 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
 }
 
 void
-RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin)
+RingAccount::loadAccount(const std::string& archive_password, const std::string& archive_pin, const std::string& archive_path)
 {
     if (registrationState_ == RegistrationState::INITIALIZING)
         return;
@@ -1330,13 +1360,18 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                 setRegistrationState(RegistrationState::UNREGISTERED);
             }
             Manager::instance().saveConfig();
-            loadAccount();
+            loadAccount(archive_password);
         } else {
             // no receipt or archive, creating new account
-            if (archive_pin.empty()) {
-                createAccount(archive_password, std::move(id));
-            } else {
+            if (not archive_path.empty()) {
+                // import account from file
+                loadAccountFromFile(archive_path, archive_password);
+            } else if (not archive_pin.empty()) {
+                // import account from DHT
                 loadAccountFromDHT(archive_password, archive_pin);
+            } else {
+                // create new account
+                createAccount(archive_password, std::move(id));
             }
         }
     } catch (const std::exception& e) {
@@ -1370,10 +1405,11 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
 
     std::string archive_password;
     std::string archive_pin;
+    std::string archive_path;
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PASSWORD, archive_password);
     parseString(details, DRing::Account::ConfProperties::ARCHIVE_PIN,      archive_pin);
     std::transform(archive_pin.begin(), archive_pin.end(), archive_pin.begin(), ::toupper);
-    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archivePath_, idPath_);
+    parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archive_path, idPath_);
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
 #if HAVE_RINGNS
@@ -1381,7 +1417,7 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
     nameDir_ = NameDirectory::instance(nameServer_);
 #endif
 
-    loadAccount(archive_password, archive_pin);
+    loadAccount(archive_password, archive_pin, archive_path);
 
     // update device name if necessary
     auto dev = knownDevices_.find(dht::InfoHash(ringDeviceId_));
