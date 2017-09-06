@@ -99,10 +99,8 @@ void
 FileutilsTest::testCheckDir()
 {
     // check existed directory
-    CPPUNIT_ASSERT(check_dir(get_home_dir().c_str()));
-    CPPUNIT_ASSERT(check_dir(get_config_dir().c_str()));
-    CPPUNIT_ASSERT(check_dir(get_data_dir().c_str()));
-    CPPUNIT_ASSERT(check_dir(get_cache_dir().c_str()));
+    CPPUNIT_ASSERT(check_dir(TEST_PATH.c_str()));
+    CPPUNIT_ASSERT(isDirectory(TEST_PATH.c_str()));
     // check non-existent directory
     CPPUNIT_ASSERT(!isDirectory(NON_EXISTANT_PATH));
     CPPUNIT_ASSERT(check_dir(NON_EXISTANT_PATH.c_str()));
@@ -116,9 +114,7 @@ FileutilsTest::testCheckDir()
 void
 FileutilsTest::testPath()
 {
-    CPPUNIT_ASSERT(!isPathRelative(get_home_dir()));
     CPPUNIT_ASSERT(isPathRelative("relativePath"));
-    CPPUNIT_ASSERT(!isFile(get_home_dir()));
     CPPUNIT_ASSERT(isFile(EXISTANT_FILE));
     CPPUNIT_ASSERT(!isDirectory(EXISTANT_FILE));
     CPPUNIT_ASSERT(isDirectory(TEST_PATH));
