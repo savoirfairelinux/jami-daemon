@@ -69,6 +69,7 @@ namespace ring {
 
 class IceTransport;
 struct Contact;
+class AccountArchive;
 
 class RingAccount : public SIPAccountBase {
     public:
@@ -317,7 +318,6 @@ class RingAccount : public SIPAccountBase {
         struct PendingMessage;
         struct TrustRequest;
         struct KnownDevice;
-        struct ArchiveContent;
         struct DeviceAnnouncement;
         struct DeviceSync;
         struct BuddyInfo;
@@ -488,15 +488,14 @@ class RingAccount : public SIPAccountBase {
 
         std::string makeReceipt(const dht::crypto::Identity& id);
         void createRingDevice(const dht::crypto::Identity& id);
-        void initRingDevice(const ArchiveContent& a);
+        void initRingDevice(const AccountArchive& a);
         void migrateAccount(const std::string& pwd, dht::crypto::Identity& device);
-        static bool updateCertificates(ArchiveContent& archive, dht::crypto::Identity& device);
+        static bool updateCertificates(AccountArchive& archive, dht::crypto::Identity& device);
 
         void createAccount(const std::string& archive_password, dht::crypto::Identity&& migrate);
-        std::string makeArchive(const ArchiveContent& content) const;
-        void saveArchive(const ArchiveContent& content, const std::string& pwd);
-        ArchiveContent readArchive(const std::string& pwd) const;
-        static ArchiveContent loadArchive(const std::vector<uint8_t>& data);
+        void updateArchive(AccountArchive& content) const;
+        void saveArchive(AccountArchive& content, const std::string& pwd);
+        AccountArchive readArchive(const std::string& pwd) const;
         std::vector<std::pair<sockaddr_storage, socklen_t>> loadBootstrap() const;
 
         static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
