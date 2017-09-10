@@ -51,12 +51,13 @@ class HardwareAccel {
 
         // wrapper to take care of boilerplate before calling the derived class's implementation
         bool extractData(VideoFrame& input);
+        std::unique_ptr<ring::VideoFrame> sendData(VideoFrame& input);
 
     public: // must be implemented by derived classes
         virtual bool checkAvailability() = 0;
         virtual bool init() = 0;
         virtual int allocateBuffer(AVFrame* frame, int flags) = 0;
-        virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
+        virtual void extractData(AVFrame* input, AVFrame* output) = 0;
 
     protected:
         AVCodecContext* codecCtx_ = nullptr;

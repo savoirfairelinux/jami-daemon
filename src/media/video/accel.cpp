@@ -56,8 +56,8 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; i++) {
         if (formats[i] == accel->format()) {
-            accel->setWidth(codecCtx->coded_width);
-            accel->setHeight(codecCtx->coded_height);
+            accel->setWidth(codecCtx->coded_width ? codecCtx->coded_width : codecCtx->width);
+            accel->setHeight(codecCtx->coded_height ? codecCtx->coded_height : codecCtx->height);
             accel->setProfile(codecCtx->profile);
             accel->setCodecCtx(codecCtx);
             if (accel->init())
@@ -146,7 +146,7 @@ HardwareAccel::extractData(VideoFrame& input)
         auto outFrame = output->pointer();
         outFrame->format = AV_PIX_FMT_YUV420P;
 
-        extractData(input, *output);
+        extractData(input.pointer(), output->pointer());
 
         // move outFrame into inFrame so the caller receives extracted image data
         // but we have to delete inFrame first
@@ -160,6 +160,43 @@ HardwareAccel::extractData(VideoFrame& input)
 
     succeedExtraction();
     return true;
+}
+
+
+std::unique_ptr<VideoFrame>
+HardwareAccel::sendData(VideoFrame& input)
+{
+    try {
+        auto inFrame = input.pointer();
+
+        /*if (inFrame->format != AV_PIX_FMT_YUV420P) {
+            std::stringstream buf;
+            buf << "Frame format mismatch: expected " << av_get_pix_fmt_name(AV_PIX_FMT_YUV420P);
+            buf << ", got " << av_get_pix_fmt_name((AVPixelFormat)inFrame->format);
+            throw std::runtime_error(buf.str());
+        }*/
+        RING_WARN("sendData input format: %s", av_get_pix_fmt_name((AVPixelFormat)inFrame->format));
+
+        // FFmpeg requires a second frame in which to transfer the data
+        // from the main memory to the GPU buffer
+        auto output = std::unique_ptr<VideoFrame>(new VideoFrame());
+        auto outFrame = output->pointer();
+        outFrame->format = format_;
+        allocateBuffer(outFrame, 0);
+
+        extractData(input.pointer(), output->pointer());
+
+        // move outFrame into inFrame so the caller receives extracted image data
+        // but we have to delete inFrame first
+        //av_frame_unref(inFrame);
+        //av_frame_move_ref(inFrame, outFrame);
+        succeedExtraction();
+        return output;
+    } catch (const std::runtime_error& e) {
+        failExtraction();
+        RING_ERR("%s", e.what());
+        return {};
+    }
 }
 
 template <class T>

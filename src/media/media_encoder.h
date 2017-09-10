@@ -45,6 +45,12 @@ class AVCodec;
 
 namespace ring {
 
+#ifdef RING_ACCEL
+namespace video {
+class HardwareAccel;
+}
+#endif
+
 class AudioBuffer;
 class MediaIOHandle;
 struct MediaDescription;
@@ -53,6 +59,7 @@ struct AccountCodecInfo;
 class MediaEncoderException : public std::runtime_error {
     public:
         MediaEncoderException(const char *msg) : std::runtime_error(msg) {}
+        MediaEncoderException(const std::string& msg) : std::runtime_error(msg) {}
 };
 
 class MediaEncoder {
@@ -105,6 +112,10 @@ private:
 #ifdef RING_VIDEO
     video::VideoScaler scaler_;
     VideoFrame scaledFrame_;
+#ifdef RING_ACCEL
+    bool enableAccel_ = true;
+    std::unique_ptr<video::HardwareAccel> accel_;
+#endif
 #endif // RING_VIDEO
 
     std::vector<uint8_t> scaledFrameBuffer_;

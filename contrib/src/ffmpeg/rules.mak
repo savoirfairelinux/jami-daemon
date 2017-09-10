@@ -125,7 +125,8 @@ FFMPEGCONF += \
 	--enable-vaapi \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
-	--enable-hwaccel=h263_vaapi
+	--enable-hwaccel=h263_vaapi \
+	--enable-encoder=h264_vaapi
 endif
 endif
 

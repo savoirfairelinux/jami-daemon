@@ -29,6 +29,10 @@
 #include "string_utils.h"
 #include "logger.h"
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
 #include <iostream>
 #include <sstream>
 #include <algorithm>
@@ -56,6 +60,14 @@ MediaEncoder::~MediaEncoder()
     }
 
     av_dict_free(&options_);
+}
+
+static void
+print_averror(const char *funcname, int err)
+{
+    char errbuf[64];
+    av_strerror(err, errbuf, sizeof(errbuf));
+    RING_ERR("%s failed: %s", funcname, errbuf);
 }
 
 void MediaEncoder::setDeviceOptions(const DeviceParams& args)
@@ -145,7 +157,9 @@ MediaEncoder::openOutput(const char *filename,
         // H263-1998 can manage all frame sizes while H263 don't
         // AV_CODEC_ID_H263 decoder will be used for decoding
         outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
-    else
+    else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        outputEncoder_ = avcodec_find_encoder_by_name("h264_vaapi");
+    } else
         outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
     if (!outputEncoder_) {
         RING_ERR("Encoder \"%s\" not found!", args.codec->systemCodecInfo.name.c_str());
@@ -160,7 +174,7 @@ MediaEncoder::openOutput(const char *filename,
     /* let x264 preset override our encoder settings */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
         extractProfileLevelID(args.parameters, encoderCtx_);
-        forcePresetX264();
+        //forcePresetX264();
         // For H264 :
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
         if (crf == SystemCodecInfo::DEFAULT_NO_QUALITY)
@@ -169,6 +183,7 @@ MediaEncoder::openOutput(const char *filename,
 
         av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
         encoderCtx_->rc_buffer_size = bufSize;
+        encoderCtx_->bit_rate = maxBitrate/2;
         encoderCtx_->rc_max_rate = maxBitrate;
     } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
@@ -210,10 +225,27 @@ MediaEncoder::openOutput(const char *filename,
         RING_DBG("Using Max bitrate %d", maxBitrate);
     }
 
+#ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::makeHardwareAccel(encoderCtx_);
+        encoderCtx_->opaque = accel_.get();
+        AVPixelFormat px_formats[2] = {AV_PIX_FMT_VAAPI, AV_PIX_FMT_NONE};
+        encoderCtx_->get_format(encoderCtx_, px_formats);
+    } else/* if (Manager::instance().getDecodingAccelerated())*/ {
+        RING_WARN("Hardware accelerated encoding disabled because of previous failure");
+    }/* else {
+        RING_WARN("Hardware accelerated encoding disabled by user preference");
+    }*/
+#endif // RING_ACCEL
+
     int ret;
     ret = avcodec_open2(encoderCtx_, outputEncoder_, NULL);
-    if (ret)
+    if (ret) {
+        print_averror("avcodec_open2", ret);
         throw MediaEncoderException("Could not open encoder");
+    }
+
+    RING_WARN("Encoding video using %s (%s)", outputEncoder_->long_name, outputEncoder_->name);
 
     // add video stream to outputformat context
     stream_ = avformat_new_stream(outputCtx_, 0);
@@ -230,10 +262,11 @@ MediaEncoder::openOutput(const char *filename,
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx_->width;
         const int height = encoderCtx_->height;
-        const int format = libav_utils::ring_pixel_format((int)encoderCtx_->pix_fmt);
-        scaledFrameBufferSize_ = videoFrameSize(format, width, height);
+        const int format = PIXEL_FORMAT(NV12);//libav_utils::ring_pixel_format((int)encoderCtx_->pix_fmt);
+        RING_DBG("videoFrameSize w:%d h:%d fmt:%d", width, height,format);
+        scaledFrameBufferSize_ = av_image_get_buffer_size((AVPixelFormat)format, width, height, 1);
         if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
-            throw MediaEncoderException("buffer too small");
+            throw MediaEncoderException("buffer too small: " + std::to_string(scaledFrameBufferSize_));
 
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
         scaledFrame_.setFromMemory(scaledFrameBuffer_.data(), format, width, height);
@@ -268,14 +301,6 @@ MediaEncoder::startIO()
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
 }
 
-static void
-print_averror(const char *funcname, int err)
-{
-    char errbuf[64];
-    av_strerror(err, errbuf, sizeof(errbuf));
-    RING_ERR("%s failed: %s", funcname, errbuf);
-}
-
 #ifdef RING_VIDEO
 int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
@@ -297,15 +322,26 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->pict_type = AV_PICTURE_TYPE_NONE;
     }
 
+    std::unique_ptr<VideoFrame> gpuFrame;
+#ifdef RING_ACCEL
+    if (accel_) {
+        if (!accel_->hasFailed())
+            gpuFrame = accel_->sendData(scaledFrame_);
+        else
+            return -1;
+    }
+#endif // RING_ACCEL
+
+    int ret = 0;
+    ret = avcodec_send_frame(encoderCtx_, gpuFrame ? gpuFrame->pointer() : frame);
+    if (ret < 0) {
+        print_averror("avcodec_send_frame", ret);
+        return -1;
+    }
+
     AVPacket pkt;
     memset(&pkt, 0, sizeof(pkt));
     av_init_packet(&pkt);
-
-    int ret = 0;
-    ret = avcodec_send_frame(encoderCtx_, frame);
-    if (ret < 0)
-        return -1;
-
     while (1) {
         ret = avcodec_receive_packet(encoderCtx_, &pkt);
         if (ret == AVERROR(EAGAIN))
@@ -538,7 +574,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
 
         // emit one intra frame every gop_size frames
         encoderCtx_->max_b_frames = 0;
-        encoderCtx_->pix_fmt = PIXEL_FORMAT(YUV420P); // TODO: option me !
+        encoderCtx_->pix_fmt = AV_PIX_FMT_VAAPI;//PIXEL_FORMAT(YUV420P); // TODO: option me !
 
         // Fri Jul 22 11:37:59 EDT 2011:tmatth:XXX: DON'T set this, we want our
         // pps and sps to be sent in-band for RTP
@@ -598,10 +634,10 @@ void MediaEncoder::extractProfileLevelID(const std::string &parameters,
     // From RFC3984:
     // If no profile-level-id is present, the Baseline Profile without
     // additional constraints at Level 1 MUST be implied.
-    ctx->profile = FF_PROFILE_H264_BASELINE;
-    ctx->level = 0x0d;
+    ctx->profile = FF_PROFILE_H264_CONSTRAINED_BASELINE;
+    ctx->level = 41;
     // ctx->level = 0x0d; // => 13 aka 1.3
-    if (parameters.empty())
+    //if (parameters.empty())
         return;
 
     const std::string target("profile-level-id=");

@@ -60,13 +60,10 @@ VaapiAccel::allocateBuffer(AVFrame* frame, int flags)
 }
 
 void
-VaapiAccel::extractData(VideoFrame& input, VideoFrame& output)
+VaapiAccel::extractData(AVFrame* inFrame, AVFrame* outFrame)
 {
-    auto inFrame = input.pointer();
-    auto outFrame = output.pointer();
-
-    if (av_hwframe_transfer_data(outFrame, inFrame, 0) < 0) {
-        throw std::runtime_error("Unable to extract data from VAAPI frame");
+    if (auto ret = av_hwframe_transfer_data(outFrame, inFrame, 0)) {
+        throw std::runtime_error("Unable to extract data from VAAPI frame: " + std::to_string(ret));
     }
 
     if (av_frame_copy_props(outFrame, inFrame) < 0 ) {
@@ -112,7 +109,7 @@ VaapiAccel::init()
     framesBufferRef_.reset(av_hwframe_ctx_alloc(deviceBufferRef_.get()));
     auto frames = reinterpret_cast<AVHWFramesContext*>(framesBufferRef_->data);
     frames->format = format_;
-    frames->sw_format = AV_PIX_FMT_YUV420P;
+    frames->sw_format = AV_PIX_FMT_NV12;
     frames->width = width_;
     frames->height = height_;
     frames->initial_pool_size = numSurfaces;

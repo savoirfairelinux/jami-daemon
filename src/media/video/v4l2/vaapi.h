@@ -64,7 +64,7 @@ class VaapiAccel : public HardwareAccel {
         bool checkAvailability() override;
         bool init() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
-        void extractData(VideoFrame& input, VideoFrame& output) override;
+        void extractData(AVFrame* input, AVFrame* output) override;
 
     private:
         using AVBufferRefPtr = std::unique_ptr<AVBufferRef, std::function<void(AVBufferRef*)>>;
