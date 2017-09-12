@@ -26,7 +26,9 @@
 
 #include "logger.h"
 #include "fileutils.h"
+#include "archiver.h"
 #include "compiler_intrinsics.h"
+#include <opendht/crypto.h>
 
 #ifdef RING_UWP
 #include <io.h> // for access and close
@@ -403,6 +405,55 @@ readDirectory(const std::string& dir)
     closedir(dp);
     return files;
 }
+
+std::vector<uint8_t>
+readArchive(const std::string& path, const std::string& pwd)
+{
+    RING_DBG("Reading archive from %s", path.c_str());
+
+    std::vector<uint8_t> data;
+    if (pwd.empty()) {
+        data = archiver::decompressGzip(path);
+    } else {
+        // Read file
+        try {
+            data = loadFile(path);
+        } catch (const std::exception& e) {
+            RING_ERR("Error loading archive: %s", e.what());
+            throw;
+        }
+        // Decrypt
+        try {
+            data = archiver::decompress(dht::crypto::aesDecrypt(data, pwd));
+        } catch (const std::exception& e) {
+            RING_ERR("Error decrypting archive: %s", e.what());
+            throw;
+        }
+    }
+    return data;
+}
+
+void
+writeArchive(const std::string& archive_str, const std::string& path, const std::string& password)
+{
+    RING_DBG("Writing archive to %s", path.c_str());
+
+    if (not password.empty()) {
+        // Encrypt using provided password
+        std::vector<uint8_t> data = dht::crypto::aesEncrypt(archiver::compress(archive_str), password);
+        // Write
+        try {
+            saveFile(path, data);
+        } catch (const std::runtime_error& ex) {
+            RING_ERR("Export failed: %s", ex.what());
+            return;
+        }
+    } else {
+        RING_WARN("Unsecured archiving (no password)");
+        archiver::compressGzip(archive_str, path);
+    }
+}
+
 
 FileHandle::FileHandle(const std::string &n) : fd(-1), name(n)
 {}
