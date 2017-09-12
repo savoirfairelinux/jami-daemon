@@ -103,6 +103,9 @@ namespace ring { namespace fileutils {
     std::vector<uint8_t> loadFile(const std::string& path, const std::string& default_dir = {});
     void saveFile(const std::string& path, const std::vector<uint8_t>& data, mode_t mode=0644);
 
+    std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
+    void writeArchive(const std::string& data, const std::string& path, const std::string& password = {});
+
     struct FileHandle {
         int fd;
         const std::string name;
