@@ -130,6 +130,7 @@ constexpr static const char ALLOW_CERT_FROM_HISTORY [] = "Account.allowCertFromH
 constexpr static const char ALLOW_CERT_FROM_CONTACT [] = "Account.allowCertFromContact";
 constexpr static const char ALLOW_CERT_FROM_TRUSTED [] = "Account.allowCertFromTrusted";
 constexpr static const char ARCHIVE_PASSWORD        [] = "Account.archivePassword";
+constexpr static const char ARCHIVE_HAS_PASSWORD    [] = "Account.archiveHasPassword";
 constexpr static const char ARCHIVE_PATH            [] = "Account.archivePath";
 constexpr static const char ARCHIVE_PIN             [] = "Account.archivePIN";
 constexpr static const char RING_DEVICE_ID          [] = "Account.deviceID";
