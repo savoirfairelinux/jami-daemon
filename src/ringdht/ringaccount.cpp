@@ -621,6 +621,7 @@ void RingAccount::serialize(YAML::Emitter &out)
 #endif
 
     out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_PATH << YAML::Value << archivePath_;
+    out << YAML::Key << DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD << YAML::Value << archiveHasPassword_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT << YAML::Value << receipt_;
     out << YAML::Key << Conf::RING_ACCOUNT_RECEIPT_SIG << YAML::Value << YAML::Binary(receiptSignature_.data(), receiptSignature_.size());
     out << YAML::Key << DRing::Account::ConfProperties::RING_DEVICE_NAME << YAML::Value << ringDeviceName_;
@@ -667,8 +668,10 @@ void RingAccount::unserialize(const YAML::Node &node)
 
     try {
         parsePath(node, DRing::Account::ConfProperties::ARCHIVE_PATH, archivePath_, idPath_);
+        parseValue(node, DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_);
     } catch (const std::exception& e) {
         RING_WARN("can't read archive path: %s", e.what());
+        archiveHasPassword_ = true;
     }
 
     try {
@@ -920,6 +923,7 @@ RingAccount::saveArchive(AccountArchive& archive, const std::string& pwd)
         if (archivePath_.empty())
             archivePath_ = "export.gz";
         archive.save(fileutils::getFullPath(idPath_, archivePath_), pwd);
+        archiveHasPassword_ = not pwd.empty();
     } catch (const std::runtime_error& ex) {
         RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
         return;
@@ -932,6 +936,7 @@ RingAccount::changeArchivePassword(const std::string& password_old, const std::s
     auto path = fileutils::getFullPath(idPath_, archivePath_);
     try {
         AccountArchive(path, password_old).save(path, password_new);
+        archiveHasPassword_ = not password_new.empty();
     } catch (const std::exception& ex) {
         RING_ERR("[Account %s] Can't change archive password: %s", getAccountID().c_str(), ex.what());
         return false;
@@ -1451,6 +1456,8 @@ RingAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_ID, ringDeviceId_);
     a.emplace(DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     a.emplace(DRing::Account::ConfProperties::Presence::SUPPORT_SUBSCRIBE, TRUE_STR);
+    if (not archivePath_.empty())
+        a.emplace(DRing::Account::ConfProperties::ARCHIVE_HAS_PASSWORD, archiveHasPassword_ ? TRUE_STR : FALSE_STR);
 
     /* these settings cannot be changed (read only), but clients should still be
      * able to read what they are */

@@ -451,6 +451,7 @@ class RingAccount : public SIPAccountBase {
         std::string ethAccount_ {};
 
         std::string archivePath_ {};
+        bool archiveHasPassword_ {true};
 
         std::string receipt_ {};
         std::vector<uint8_t> receiptSignature_ {};
