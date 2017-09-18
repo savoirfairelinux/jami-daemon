@@ -25,6 +25,7 @@
 #include <map>
 #include <string>
 #include <ctime>
+#include <ciso646>
 
 namespace ring {
 

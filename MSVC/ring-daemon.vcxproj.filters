@@ -517,6 +517,15 @@
     <ClInclude Include="..\src\security\memory.h">
       <Filter>Header Files\security</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\ringdht\accountarchive.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\configkeys.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\ringdht\ringcontact.h">
+      <Filter>Header Files\ringdht</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\preferences.cpp">
@@ -833,6 +842,9 @@
     </ClCompile>
     <ClCompile Include="..\src\security\memory.cpp">
       <Filter>Source Files\security</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\ringdht\accountarchive.cpp">
+      <Filter>Source Files\ringdht</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>

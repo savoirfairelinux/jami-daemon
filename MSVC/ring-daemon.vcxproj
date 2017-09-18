@@ -542,6 +542,8 @@
     <ClInclude Include="..\src\preferences.h" />
     <ClInclude Include="..\src\rational.h" />
     <ClInclude Include="..\src\registration_states.h" />
+    <ClInclude Include="..\src\ringdht\accountarchive.h" />
+    <ClInclude Include="..\src\ringdht\configkeys.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\boost_multiprecision_number_compare_bug_workaround.hpp" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\Common.h" />
     <ClInclude Include="..\src\ringdht\eth\libdevcore\CommonData.h" />
@@ -560,6 +562,7 @@
     <ClInclude Include="..\src\ringdht\eth\libdevcrypto\Exceptions.h" />
     <ClInclude Include="..\src\ringdht\namedirectory.h" />
     <ClInclude Include="..\src\ringdht\ringaccount.h" />
+    <ClInclude Include="..\src\ringdht\ringcontact.h" />
     <ClInclude Include="..\src\ringdht\sips_transport_ice.h" />
     <ClInclude Include="..\src\ring_plugin.h" />
     <ClInclude Include="..\src\ring_types.h" />
@@ -665,6 +668,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\preferences.cpp" />
+    <ClCompile Include="..\src\ringdht\accountarchive.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\Common.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\CommonData.cpp" />
     <ClCompile Include="..\src\ringdht\eth\libdevcore\FixedHash.cpp" />
