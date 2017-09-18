@@ -1,9 +1,9 @@
-FFMPEG_HASH := n3.3.3
+FFMPEG_HASH := a149fa97d9501d3a1749232cc60b6f122d9d2de8
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.58.100 libavcodec >= 57.89.100 libavformat >= 57.71.100 libavdevice >= 57.6.100 libswscale >= 4.6.100"),)
+ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libswscale >= 4.7.103"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -20,8 +20,7 @@ FFMPEGCONF += \
 	--enable-gpl \
 	--enable-swscale \
 	--enable-protocols \
-	--disable-programs \
-	--disable-sdl
+	--disable-programs
 
 #enable muxers/demuxers
 FFMPEGCONF += \
