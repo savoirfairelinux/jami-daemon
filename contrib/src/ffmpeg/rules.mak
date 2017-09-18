@@ -1,9 +1,9 @@
-FFMPEG_HASH := n3.3.3
+FFMPEG_HASH := a149fa97d9501d3a1749232cc60b6f122d9d2de8
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.58.100 libavcodec >= 57.89.100 libavformat >= 57.71.100 libavdevice >= 57.6.100 libswscale >= 4.6.100"),)
+ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libswscale >= 4.7.103"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -20,8 +20,7 @@ FFMPEGCONF += \
 	--enable-gpl \
 	--enable-swscale \
 	--enable-protocols \
-	--disable-programs \
-	--disable-sdl
+	--disable-programs
 
 #enable muxers/demuxers
 FFMPEGCONF += \
@@ -135,14 +134,10 @@ endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
-	--enable-indev=avfcapture \
-	--enable-indev=avfgrab \
 	--enable-videotoolbox \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
-	--enable-hwaccel=mpeg4_videotoolbox \
-	--enable-vda \
-	--enable-hwaccel=h264_vda
+	--enable-hwaccel=mpeg4_videotoolbox
 endif
 
 ifdef HAVE_IOS
@@ -150,8 +145,7 @@ FFMPEGCONF += \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--arch=$(ARCH) \
-	--enable-pic \
-	--enable-indev=avfoundation
+	--enable-pic
 endif
 
 ifndef HAVE_IOS
@@ -208,10 +202,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
-	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
-endif
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),arm)
 	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
