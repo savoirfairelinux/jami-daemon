@@ -2197,6 +2197,7 @@ RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHa
         if (not contact->second.confirmed) {
             contact->second.confirmed = true;
             emitSignal<DRing::ConfigurationSignal::ContactAdded>(getAccountID(), peer_account.toString(), true);
+            saveContacts();
             syncDevices();
         }
     } else {
