@@ -150,7 +150,7 @@ udp_socket_create(int family, int port)
 
     bind_addr.setPort(port);
     RING_DBG("use local address: %s", bind_addr.toString(true, true).c_str());
-    if (bind(udp_fd, (sockaddr*)bind_addr, bind_addr.getLength()) < 0) {
+    if (::bind(udp_fd, bind_addr, bind_addr.getLength()) < 0) {
         RING_ERR("bind() failed");
         strErr();
         close(udp_fd);
@@ -350,8 +350,8 @@ SocketPair::readRtpData(void* buf, int buf_size)
     if (rtpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtpHandle_, static_cast<char*>(buf), buf_size, 0,
-                        reinterpret_cast<struct sockaddr*>(&from), &from_len);
+        return ::recvfrom(rtpHandle_, static_cast<char*>(buf), buf_size, 0,
+                          reinterpret_cast<struct sockaddr*>(&from), &from_len);
     }
 
     // handle ICE
@@ -376,8 +376,8 @@ SocketPair::readRtcpData(void* buf, int buf_size)
     if (rtcpHandle_ >= 0) {
         struct sockaddr_storage from;
         socklen_t from_len = sizeof(from);
-        return recvfrom(rtcpHandle_, static_cast<char*>(buf), buf_size, 0,
-                        reinterpret_cast<struct sockaddr*>(&from), &from_len);
+        return ::recvfrom(rtcpHandle_, static_cast<char*>(buf), buf_size, 0,
+                          reinterpret_cast<struct sockaddr*>(&from), &from_len);
     }
 
     // handle ICE
@@ -455,8 +455,8 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
 
         if (noWrite_)
             return buf_size;
-        return sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
-                      (sockaddr*)*dest_addr, dest_addr->getLength());
+        return ::sendto(fd, reinterpret_cast<const char*>(buf), buf_size, 0,
+                        *dest_addr, dest_addr->getLength());
     }
 
     if (noWrite_)
