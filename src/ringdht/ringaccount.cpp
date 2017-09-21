@@ -41,6 +41,9 @@
 
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
+#include "turn_transport.h"
+
+#include "peer_connection.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -199,6 +202,34 @@ struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
+
+/**
+ * DHT message to convey a end2end connection request to a peer
+ */
+class RingAccount::PeerConnectionMsg : public dht::EncryptedValue<PeerConnectionMsg>
+{
+public:
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    static constexpr uint32_t PEER_CNX_PROTOCOL = 0x01000002; ///< Current protocol
+    static constexpr auto BASEKEY = "peer:"; ///< base to compute the DHT listen key
+
+    using NonceType = std::array<uint8_t, 32>;
+
+    dht::Value::Id id = dht::Value::INVALID_ID;
+    uint32_t protocol {PEER_CNX_PROTOCOL}; ///< Protocol identification. First bit reserved to indicate a request (0) or a response (1)
+    std::vector<std::string> addresses; ///< Request: public addresses for TURN permission. Response: TURN relay addresses (only 1 in current implementation)
+    NonceType nonce; ///< Nonce used inside socket protocol to authenticate the origin
+    MSGPACK_DEFINE_MAP(id, protocol, addresses, nonce)
+
+    PeerConnectionMsg() = default;
+    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::string& arelay, const NonceType& anonce)
+        : id {id}, protocol {aprotocol}, addresses {{arelay}}, nonce {anonce} {}
+
+    bool isRequest() const noexcept { return (protocol & 1) == 0; }
+
+    PeerConnectionMsg respond(const std::string& relay) const { return {id, protocol|1, relay, nonce}; }
+};
+
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
@@ -1548,6 +1579,12 @@ RingAccount::handleEvents()
 
     // Call msg in "callto:"
     handlePendingCallList();
+
+    while (!jobQueue.empty()) {
+        std::function<void()> job;
+        jobQueue >> job;
+        job();
+    }
 }
 
 void
@@ -2174,13 +2211,26 @@ RingAccount::doRegister_()
                 return true;
             }
         );
+
+        // Peer connection request port
+        const auto peerDeviceKey = dht::InfoHash::get(PeerConnectionMsg::BASEKEY + ringDeviceId_);
+        dht_.listen<PeerConnectionMsg>(
+            peerDeviceKey,
+            [shared](PeerConnectionMsg&& msg) {
+                // TODO: filter-out non trusted msg
+                if (msg.isRequest())
+                    shared->onPeerConnectionRequest(std::move(msg));
+                else
+                    shared->onPeerConnectionResponse(std::move(msg));
+                return true;
+            }
+        );
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
-
 
 void
 RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
@@ -3279,6 +3329,241 @@ RingAccount::registerDhtAddress(IceTransport& ice)
     } else {
         reg_addr(ice, ip);
     }
+}
+
+class RingAccount::Connector {
+public:
+    Connector(RingAccount& account, const dht::InfoHash& peer_h)
+        : account {account}, peer_h {peer_h} {}
+    virtual ~Connector() = default;
+    virtual void ready() = 0;
+    virtual bool isClient() const noexcept = 0;
+
+    void cancel() {
+        account.jobQueue << [&](){ account.peerConnectors_.erase(peer_h); };
+    }
+
+protected:
+    RingAccount& account;
+    const dht::InfoHash peer_h;
+    std::unique_ptr<PeerConnection> connection;
+};
+
+static constexpr auto DHT_MSG_TIMEOUT = std::chrono::seconds(15);
+
+class RingAccount::ClientConnector final : public Connector {
+public:
+    bool isClient() const noexcept override { return true; }
+
+    ClientConnector(RingAccount& account,
+                    const dht::InfoHash& peer_h,
+                    const std::vector<std::string>& public_addresses)
+        : Connector {account, peer_h}, publicAddresses_ {public_addresses} {
+        std::uniform_int_distribution<uint8_t> dis;
+        std::generate(std::begin(nonce_), std::end(nonce_),
+                      [&]{ return dis(account.rand_); });
+        process();
+    }
+
+    void process() {
+        RING_DBG() << account << "sending peer cnx request to " << peer_h;
+
+        PeerConnectionMsg msg;
+        msg.addresses = std::move(publicAddresses_);
+        msg.nonce = nonce_;
+        msg.id = ValueIdDist()(account.rand_);
+
+        account.dht_.putEncrypted(
+            dht::InfoHash::get(PeerConnectionMsg::BASEKEY + peer_h.toString()), peer_h, msg);
+
+        responseTimer_ = std::async(
+            std::launch::async,
+            [&, this] {
+                std::this_thread::sleep_for(DHT_MSG_TIMEOUT);
+                if (!relay_)
+                    cancel();
+            });
+    }
+
+    void onResponse(PeerConnectionMsg&& response) {
+        if (response.from == peer_h and response.nonce == nonce_ and !response.addresses.empty()) {
+            relay_ = IpAddr(response.addresses[0]);
+            if (relay_ and relay_.getPort() != 0) {
+                RING_DBG() << account << "get valid E2E reply from " << response.from;
+                return;
+            }
+        }
+        cancel();
+    }
+
+    void ready() override {
+        // TODO
+        //connection = std::make_unique<PeerConnection>(account, peer_h.toString(), relay);
+        //connection.ready();
+    }
+
+private:
+    std::future<void> responseTimer_;
+    PeerConnectionMsg::NonceType nonce_;
+    std::vector<std::string> publicAddresses_;
+    IpAddr relay_;
+};
+
+static constexpr auto TURN_CONNECTION_TIMEOUT = std::chrono::seconds(10);
+
+class TurnEndpoint final : public ConnectionEndpoint {
+public:
+    TurnEndpoint(TurnTransport& turn, const IpAddr& peer) : turn_ {turn}, peer_ {peer} {}
+
+    void close() override {
+        // TODO
+    }
+
+    std::vector<uint8_t> read() override {
+        std::map<IpAddr, std::vector<uint8_t>> map;
+        while (true) {
+            turn_.recvfrom(map);
+            if (map.find(peer_) != std::end(map))
+                return map.at(peer_);
+        }
+    }
+
+    void write(const std::vector<uint8_t>& buffer) override {
+        turn_.sendto(peer_, buffer);
+    }
+
+private:
+    TurnTransport& turn_;
+    const IpAddr peer_;
+};
+
+class RingAccount::ServerConnector final : public Connector {
+public:
+    bool isClient() const noexcept override { return false; }
+
+    ServerConnector(RingAccount& account, PeerConnectionMsg&& request)
+        : Connector {account, request.from}
+        , request_ {std::move(request)} {
+            auto param = TurnTransportParams {};
+            param.server = IpAddr {"turn.ring.cx"};
+            param.realm = "ring";
+            param.username = "ring";
+            param.password = "ring";
+            param.isPeerConnection = true; // the most important one
+            param.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr) {
+                onPeerConnection(conn_id, peer_addr);
+            };
+            turn_ = std::make_unique<TurnTransport>(param);
+
+            auto start = clock::now();
+            account.jobQueue << [this, start] { waitTurnServer(start); };
+        }
+
+    template <typename T>
+    void waitTurnServer(const T& start) {
+        if ((clock::now() - start) >= TURN_CONNECTION_TIMEOUT) {
+            RING_ERR("TURN ready timeout");
+            cancel();
+        } else if (turn_->isReady()) {
+            RING_DBG("TURN ready!");
+            reply();
+        } else {
+            account.jobQueue << [this, start] { waitTurnServer(start); };
+        }
+    }
+
+    void onPeerConnection(uint32_t conn_id, const IpAddr& peer_addr) {
+        (void)conn_id;
+        peer_ = peer_addr;
+        ready();
+    }
+
+    void reply() {
+        for (auto& addr : request_.addresses)
+            turn_->permitPeer(addr);
+
+        RING_DBG("E2E send response");
+        account.dht_.putEncrypted(
+            dht::InfoHash::get(PeerConnectionMsg::BASEKEY + peer_h.toString()),
+            peer_h, request_.respond(turn_->peerRelayAddr()));
+    }
+
+    void ready() override {
+        connection = std::make_unique<PeerConnection>(account, peer_h.toString(),
+                                                      std::make_unique<TurnEndpoint>(*turn_, peer_));
+    }
+
+private:
+    std::future<void> futureTurnReady_;
+    std::unique_ptr<TurnTransport> turn_;
+    PeerConnectionMsg request_;
+    IpAddr peer_;
+};
+
+void
+RingAccount::requestPeerConnection(const std::string& peer_id)
+{
+    const auto peer_h = dht::InfoHash(peer_id);
+
+    // Notes for reader:
+    // 1) getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
+    //    If you call it in forEachDevice callbacks, it'll never not return...
+    //    Seems that getPublicAddress() and forEachDevice() need to process into the same thread
+    //    (here the one where dht_ loop runs).
+    // 2) anyway its good to keep this processing here in case of multiple device
+    //    as the result is the same for each device.
+    std::vector<std::string> addresses;
+    for (auto& addr : dht_.getPublicAddress(AF_INET))
+        addresses.emplace_back(addr.toString());
+    for (auto& addr : dht_.getPublicAddress(AF_INET6))
+        addresses.emplace_back(addr.toString());
+
+    forEachDevice(peer_h,
+                  [addresses](const std::shared_ptr<RingAccount>& account,
+                              const dht::InfoHash& dev_h) {
+                      const auto& iter = account->peerConnectors_.find(dev_h);
+                      if (iter == std::end(account->peerConnectors_))
+                          account->peerConnectors_.emplace(
+                              dev_h,
+                              std::make_unique<ClientConnector>(*account, dev_h, addresses));
+                  },
+
+                  [peer_h](bool found) {
+                      if (!found)
+                          RING_WARN() << "PeerConnection aborted, no devices for " << peer_h;
+                  }
+        );
+}
+
+void
+RingAccount::onPeerConnectionRequest(PeerConnectionMsg&& request)
+{
+    auto res = treatedMessages_.insert(request.id);
+    if (!res.second)
+        return;
+    saveTreatedMessages();
+
+    const auto& iter = peerConnectors_.find(request.from);
+    if (iter != std::end(peerConnectors_)) {
+        RING_WARN() << *this << "Already existing E2E connection with " << request.from;
+        return; // connecton already exist
+    }
+
+    RING_DBG() << *this << "E2E connection requested from " << request.from;
+    peerConnectors_.emplace(
+        request.from,
+        std::make_unique<ServerConnector>(*this, std::move(request)));
+}
+
+void
+RingAccount::onPeerConnectionResponse(PeerConnectionMsg&& response)
+{
+    RING_DBG() << "E2E response from " << response.from;
+    const auto& iter = peerConnectors_.find(response.from);
+    if (iter == std::end(peerConnectors_))
+        return; // no coresponding request
+    if (iter->second->isClient())
+        static_cast<ClientConnector&>(*iter->second).onResponse(std::move(response));
 }
 
 } // namespace ring

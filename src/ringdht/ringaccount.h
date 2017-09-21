@@ -31,6 +31,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "channel.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -70,8 +71,12 @@ namespace ring {
 class IceTransport;
 struct Contact;
 struct AccountArchive;
+struct PeerConnection;
 
 class RingAccount : public SIPAccountBase {
+    private:
+        struct PeerConnectionMsg;
+
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
@@ -305,6 +310,13 @@ class RingAccount : public SIPAccountBase {
         void lookupAddress(const std::string& address);
         void registerName(const std::string& password, const std::string& name);
 #endif
+
+        ///
+        /// Send a E2E connection request to a given peer
+        ///
+        /// /// \param[in] peer_id RingID on request's recipiant
+        ///
+        void requestPeerConnection(const std::string&);
 
     private:
         NON_COPYABLE(RingAccount);
@@ -583,6 +595,26 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
         void registerDhtAddress(IceTransport&);
+
+        Channel<std::function<void()>> jobQueue;
+
+        // E2E related members
+        class Connector;
+        class ServerConnector;
+        class ClientConnector;
+        std::map<dht::InfoHash, std::unique_ptr<Connector>> peerConnectors_;
+        void onPeerConnectionRequest(PeerConnectionMsg&&);
+        void onPeerConnectionResponse(PeerConnectionMsg&&);
+
+        friend class Connector;
+        friend class ServerConnector;
+        friend class ClientConnector;
 };
+
+static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
+{
+    os << "[Account " << acc.getAccountID() << "] ";
+    return os;
+}
 
 } // namespace ring
