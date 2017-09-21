@@ -69,6 +69,8 @@ public:
     ///
     void waitServerReady();
 
+    bool isReady() const;
+
     const IpAddr& peerRelayAddr() const;
     const IpAddr& mappedAddr() const;
 
@@ -89,12 +91,12 @@ public:
     ///
     /// Collect pending data.
     ///
-    void recvfrom(std::map<IpAddr, std::vector<uint8_t>>& streams);
+    void recvfrom(std::map<IpAddr, std::vector<char>>& streams);
 
     ///
     /// Send data to a given peer through the TURN tunnel.
     ///
-    bool sendto(const IpAddr& peer, const std::vector<uint8_t>& data);
+    bool sendto(const IpAddr& peer, const std::vector<char>& data);
 
 public:
     // Move semantic
