@@ -175,6 +175,7 @@ std::vector<std::map<std::string, std::string>> getContacts(const std::string& a
  */
 int exportAccounts(std::vector<std::string> accountIDs, std::string filepath, std::string password);
 int importAccounts(std::string archivePath, std::string password);
+std::string getDataDir();
 
 /*
  * Network connectivity

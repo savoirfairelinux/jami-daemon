@@ -607,6 +607,11 @@ DBusConfigurationManager::importAccounts(const std::string& archivePath, const s
     return DRing::importAccounts(archivePath, password);
 }
 
+auto
+DBusConfigurationManager::getDataDir()-> decltype(DRing::getDataDir()) {
+    return DRing::getDataDir();
+}
+
 void
 DBusConfigurationManager::connectivityChanged()
 {

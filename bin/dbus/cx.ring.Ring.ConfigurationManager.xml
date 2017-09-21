@@ -460,6 +460,17 @@
            </arg>
         </method>
 
+        <method name="getDataDir" tp:name-for-bindings="getDataDir">
+            <tp:docstring>
+              Return the directory which contains ring files
+            </tp:docstring>
+            <arg type="s" direction="out">
+                <tp:docstring>
+                     <p>directory which contains ring files.</p>
+                </tp:docstring>
+            </arg>
+        </method>
+
         <method name="exportAccounts" tp:name-for-bindings="exportAccounts">
             <tp:docstring>
               Export account configuration to an encrypted file.

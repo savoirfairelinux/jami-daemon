@@ -384,6 +384,12 @@ importAccounts(std::string archivePath, std::string password)
     return ring::archiver::importAccounts(archivePath, password);
 }
 
+std::string
+getDataDir()
+{
+    return ring::fileutils::get_data_dir();
+}
+
 ///This function is used as a base for new accounts for clients that support it
 std::map<std::string, std::string>
 getAccountTemplate(const std::string& accountType)
