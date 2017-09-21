@@ -200,6 +200,21 @@ struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
 
+/**
+ * DHT message to convey a end2end connection request to a peer
+ */
+struct RingAccount::PeerConnectionMsg : public dht::EncryptedValue<PeerConnectionMsg>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    static constexpr uint32_t PEER_CNX_PROTOCOL = 0x01000002; ///< Current protocol
+    static constexpr auto BASEKEY = "peer:"; ///< base to compute the DHT listen key
+
+    uint32_t protocol {PEER_CNX_PROTOCOL}; ///< Protocol identification. First bit reserved to indicate a request (0) or a response (1)
+    std::vector<std::string> addresses; ///< Request: public addresses for TURN permission. Response: TURN relay addresses (only 1 in current implementation)
+    std::array<uint8_t, 32> nonce; ///< Nonce used inside socket protocol to authenticate the origin
+    MSGPACK_DEFINE_MAP(protocol, addresses, nonce)
+};
+
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
 static constexpr auto ICE_NEGOTIATION_TIMEOUT = std::chrono::seconds(60);
@@ -2173,6 +2188,13 @@ RingAccount::doRegister_()
                 return true;
             }
         );
+
+        // Peer connection request port
+        const auto peerDeviceKey = dht::InfoHash::get(PeerConnectionMsg::BASEKEY + ringDeviceId_);
+        dht_.listen<PeerConnectionMsg>(
+            peerDeviceKey,
+            [shared](PeerConnectionMsg&& msg){ shared->onPeerConnectionRequest(msg); return true; }
+        );
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
@@ -3278,6 +3300,49 @@ RingAccount::registerDhtAddress(IceTransport& ice)
     } else {
         reg_addr(ice, ip);
     }
+}
+
+void
+RingAccount::sendPeerConnectionRequest(const std::string& peer_id)
+{
+    const auto peer_h = dht::InfoHash(peer_id);
+    forEachDevice(peer_h, [peer_h](const std::shared_ptr<RingAccount>& account,
+                                   const dht::InfoHash& dev_h)
+    {
+        PeerConnectionMsg msg;
+
+        for (auto& addr : account->dht_.getPublicAddress(AF_INET))
+            msg.addresses.emplace_back(addr.toString());
+        for (auto& addr : account->dht_.getPublicAddress(AF_INET6))
+            msg.addresses.emplace_back(addr.toString());
+
+        std::uniform_int_distribution<uint8_t> dis;
+        std::generate(std::begin(msg.nonce), std::end(msg.nonce), [&]{ return dis(account->rand_); });
+
+        RING_DBG() << *account << "sending peer cnx request to: " << peer_h << " / " << dev_h;
+        account->dht_.putEncrypted(dht::InfoHash::get(PeerConnectionMsg::BASEKEY + dev_h.toString()),
+                                   dev_h, msg);
+    });
+}
+
+void
+RingAccount::confirmPeerConnection(const PeerConnectionMsg& request,
+                                   const std::string& relay)
+{
+    PeerConnectionMsg response;
+    response.protocol = request.protocol;
+    response.addresses.push_back(relay);
+    response.nonce = request.nonce;
+    RING_DBG() << *this << "sending peer cnx response to: " << request.from;
+    dht_.putEncrypted(dht::InfoHash::get(PeerConnectionMsg::BASEKEY + request.from.toString()),
+                      request.from, response);
+}
+
+void
+RingAccount::onPeerConnectionRequest(const PeerConnectionMsg& request)
+{
+    RING_WARN() << *this << "rx PeerCnx from " << request.from;
+    // TODO
 }
 
 } // namespace ring

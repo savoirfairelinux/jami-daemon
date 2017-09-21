@@ -181,6 +181,9 @@ int importAccounts(std::string archivePath, std::string password);
  */
 void connectivityChanged();
 
+/* Peer connection */
+void sendPeerConnectionRequest(const std::string& accountId, const std::string& peer);
+
 struct AudioSignal {
         struct DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
