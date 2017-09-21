@@ -122,9 +122,9 @@ TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
         std::lock_guard<std::mutex> lk {streamsMutex};
         streams[peer_addr].clear();
     }
-    //if (settings.onPeerConnection)
-    //    settings.onPeerConnection(conn_id, peer_addr);
     pj_turn_connect_peer(relay, conn_id, addr, addr_len);
+    if (settings.onPeerConnection)
+        settings.onPeerConnection(conn_id, peer_addr);
 }
 
 void
@@ -264,6 +264,12 @@ TurnTransport::permitPeer(const IpAddr& addr)
         throw std::invalid_argument("invalid peer address");
 
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
+}
+
+bool
+TurnTransport::isReady() const
+{
+    return pimpl_->state.load() == RelayState::READY;
 }
 
 void
