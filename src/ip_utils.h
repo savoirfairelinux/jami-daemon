@@ -115,6 +115,10 @@ public:
         return isIpv4() or isIpv6();
     }
 
+    inline explicit operator bool() {
+        return isIpv4() or isIpv6();
+    }
+
     inline operator pj_sockaddr& () {
         return addr;
     }
@@ -141,12 +145,12 @@ public:
         return addr.ipv6;
     }
 
-    inline operator sockaddr& (){
-        return reinterpret_cast<sockaddr&>(addr);
+    inline operator const sockaddr& () const {
+        return reinterpret_cast<const sockaddr&>(addr);
     }
 
-    inline explicit operator sockaddr* (){
-        return reinterpret_cast<sockaddr*>(&addr);
+    inline operator const sockaddr* () const {
+        return reinterpret_cast<const sockaddr*>(&addr);
     }
 
     inline operator sockaddr_storage (){
@@ -235,6 +239,10 @@ private:
 // IpAddr helpers
 inline bool operator==(const IpAddr& lhs, const IpAddr& rhs) { return !pj_sockaddr_cmp(&lhs, &rhs); }
 inline bool operator!=(const IpAddr& lhs, const IpAddr& rhs) { return !(lhs == rhs); }
+inline bool operator<(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) < 0; }
+inline bool operator>(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) > 0; }
+inline bool operator<=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) <= 0; }
+inline bool operator>=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) >= 0; }
 
 namespace ip_utils {
 
