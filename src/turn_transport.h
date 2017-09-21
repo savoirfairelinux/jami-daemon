@@ -69,6 +69,8 @@ public:
     ///
     void waitServerReady();
 
+    bool isReady() const;
+
     const IpAddr& peerRelayAddr() const;
     const IpAddr& mappedAddr() const;
 

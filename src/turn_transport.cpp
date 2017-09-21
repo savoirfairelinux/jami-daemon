@@ -122,9 +122,9 @@ TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
         std::lock_guard<std::mutex> lk {streamsMutex};
         streams[peer_addr].clear();
     }
-    //if (settings.onPeerConnection)
-    //    settings.onPeerConnection(conn_id, peer_addr);
     pj_turn_connect_peer(relay, conn_id, addr, addr_len);
+    if (settings.onPeerConnection)
+        settings.onPeerConnection(conn_id, peer_addr);
 }
 
 void
@@ -177,8 +177,12 @@ inline auto PjsipCallReturn(const Callable& func, Args... args) -> decltype(func
 TurnTransport::TurnTransport(const TurnTransportParams& params)
     : pimpl_ {new TurnTransportPimpl}
 {
-    if (params.server.isUnspecified())
-        throw std::invalid_argument("bad turn server");
+    auto server = params.server;
+    if (!server.getPort())
+        server.setPort(PJ_STUN_PORT);
+
+    if (server.isUnspecified())
+        throw std::invalid_argument("invalid turn server address");
 
     pimpl_->settings = params;
 
@@ -225,7 +229,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
 
     // TURN socket creation
     PjsipCall(pj_turn_sock_create,
-              &pimpl_->stunConfig, params.server.getFamily(), PJ_TURN_TP_TCP,
+              &pimpl_->stunConfig, server.getFamily(), PJ_TURN_TP_TCP,
               &relay_cb, &turn_sock_cfg, this, &pimpl_->relay);
 
     // TURN allocation setup
@@ -243,15 +247,13 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
     pj_cstr(&cred.data.static_cred.data, params.password.c_str());
 
-    pimpl_->relayAddr = pj_strdup3(pimpl_->pool, params.server.toString().c_str());
-    auto port = params.server.getPort();
-    if (!port)
-        port = PJ_STUN_PORT;
+    pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 
     // TURN connection/allocation
-    RING_WARN("TURN %s", params.server.toString(true, true).c_str());
+    RING_DBG() << "Connecting to TURN " << server.toString(true, true);
     PjsipCall(pj_turn_sock_alloc,
-              pimpl_->relay, &pimpl_->relayAddr, port, nullptr, &cred, &turn_alloc_param);
+              pimpl_->relay, &pimpl_->relayAddr, server.getPort(),
+              nullptr, &cred, &turn_alloc_param);
 }
 
 TurnTransport::~TurnTransport()
@@ -264,6 +266,12 @@ TurnTransport::permitPeer(const IpAddr& addr)
         throw std::invalid_argument("invalid peer address");
 
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
+}
+
+bool
+TurnTransport::isReady() const
+{
+    return pimpl_->state.load() == RelayState::READY;
 }
 
 void
