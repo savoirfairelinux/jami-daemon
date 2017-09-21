@@ -2,7 +2,6 @@
 
 # test binaries
 ut_*
-test_*
 
 # test result files
 *.log
