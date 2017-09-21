@@ -41,6 +41,7 @@
 
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
+#include "turn_transport.h"
 
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
@@ -199,6 +200,25 @@ struct RingAccount::DeviceSync : public dht::EncryptedValue<DeviceSync>
     std::map<dht::InfoHash, TrustRequest> trust_requests;
     MSGPACK_DEFINE_MAP(date, device_name, devices_known, peers, trust_requests)
 };
+
+/**
+ * DHT message to convey a end2end connection request to a peer
+ */
+struct RingAccount::PeerConnectionMsg : public dht::EncryptedValue<PeerConnectionMsg>
+{
+    static const constexpr dht::ValueType& TYPE = dht::ValueType::USER_DATA;
+    static constexpr uint32_t PEER_CNX_PROTOCOL = 0x01000002; ///< Current protocol
+    static constexpr auto BASEKEY = "peer:"; ///< base to compute the DHT listen key
+
+    uint32_t protocol {PEER_CNX_PROTOCOL}; ///< Protocol identification. First bit reserved to indicate a request (0) or a response (1)
+    std::vector<std::string> addresses; ///< Request: public addresses for TURN permission. Response: TURN relay addresses (only 1 in current implementation)
+    std::array<uint8_t, 32> nonce; ///< Nonce used inside socket protocol to authenticate the origin
+    MSGPACK_DEFINE_MAP(protocol, addresses, nonce)
+
+    constexpr bool isRequest() const { return (protocol & 1) == 0 };
+    PeerConnectionMsg respond(const std::string& relay) const { return {protocol | 1, {relay}, nonce}; }
+};
+
 
 static constexpr int ICE_COMPONENTS {1};
 static constexpr int ICE_COMP_SIP_TRANSPORT {0};
@@ -2174,13 +2194,25 @@ RingAccount::doRegister_()
                 return true;
             }
         );
+
+        // Peer connection request port
+        const auto peerDeviceKey = dht::InfoHash::get(PeerConnectionMsg::BASEKEY + ringDeviceId_);
+        dht_.listen<PeerConnectionMsg>(
+            peerDeviceKey,
+            [shared](PeerConnectionMsg&& msg) {
+                if (msg.isRequest())
+                    shared->onPeerConnectionRequest(std::move(msg));
+                else
+                    shared->onPeerConnectionResponse(std::move(msg));
+                return true;
+            }
+        );
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
-
 
 void
 RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
@@ -3279,6 +3311,140 @@ RingAccount::registerDhtAddress(IceTransport& ice)
     } else {
         reg_addr(ice, ip);
     }
+}
+
+struct RingAccount::PeerConnection {
+    std::weak_ptr<RingAccount> weak_account;
+    std::unique_ptr<TurnTransport> turn; ///< nullptr for requester
+    PeerConnectionMsg request; ///< the successful request
+    std::string relayAddr; ///< TURN relayed address for the peer
+};
+
+void
+RingAccount::sendPeerConnectionRequest(const std::string& peer_id)
+{
+    const auto peer_h = dht::InfoHash(peer_id);
+
+    decltype(peerConnections_)::value_type entry;
+    bool sucess;
+    std::tie(entry, sucess) = peerConnections_.emplace(peer_h, nullptr);
+    if (!success) {
+        // connnection already exist
+        return;
+    }
+
+    // Notes for reader:
+    // 1) getPublicAddress() suffers of a non-usability into forEachDevice() callbacks.
+    // If you call it in these callback, it'll not return...
+    // This is the effect that getPublicAddress() and forEachDevice() need
+    // some processing into the same thread (here the one where dht_ loop runs).
+    // 2) anyway its good to keep this processing here in case of multiple device
+    // as the result is the same for each device.
+    std::vector<std::string> addresses;
+    for (auto& addr : dht_.getPublicAddress(AF_INET))
+        addresses.emplace_back(addr.toString());
+    for (auto& addr : dht_.getPublicAddress(AF_INET))
+        addresses.emplace_back(addr.toString());
+
+    forEachDevice(peer_h,
+                  [addresses, peer_h](const std::shared_ptr<RingAccount>& account,
+                                      const dht::InfoHash& dev_h)
+                  {
+                      RING_DBG() << *account
+                                 << "sending peer cnx request to: " << peer_h
+                                 << " / " << dev_h;
+
+                      PeerConnectionMsg msg;
+
+                      // My public addresses
+                      msg.addresses = std::move(addresses);
+
+                      // Random nonce
+                      std::uniform_int_distribution<uint8_t> dis;
+                      std::generate(std::begin(msg.nonce),
+                                    std::end(msg.nonce),
+                                    [&]{ return dis(account->rand_); });
+
+                      account->dht_.putEncrypted(
+                          dht::InfoHash::get(PeerConnectionMsg::BASEKEY + dev_h.toString()),
+                          dev_h, msg);
+                  },
+
+                  [peer_h](bool found)
+                  {
+                      if (!found) {
+                          RING_WARN() << "Peer connection aborted, no devices for " << peer_h;
+                          peerConnections_.remove(peer_h);
+                      }
+                  }
+        );
+}
+
+void
+RingAccount::confirmPeerConnection(const PeerConnectionMsg& request, const std::string& relay)
+{
+    RING_DBG() << *this << "sending peer cnx response to: " << request.from;
+    dht_.putEncrypted(dht::InfoHash::get(PeerConnectionMsg::BASEKEY + request.from.toString()),
+                      request.from, request.reponse(relay));
+}
+
+/// connect ourself on a TURN server and respond to request with the relayed address
+void
+RingAccount::onPeerConnectionRequest(PeerConnectionMsg&& request)
+{
+
+    // TODO: reject known or untrusted peers
+    if (peerConnections_.find(msg.from) != peerConnections_.end())
+        return;
+
+    RING_DBG() << *this << "rx PeerCnx from " << msg.from;
+
+    auto params = TurnTransportParams {};
+    params.server = IpAddr {"turn.ring.cx"};
+    params.realm = "ring";
+    params.username = "ring";
+    params.password = "ring";
+    params.isPeerConnection = true; // the most important one
+
+    auto turn = std::unique_ptr<TurnTransport>(
+        new TurnTransport {params});
+    auto cnx = std::unique_ptr<PeerConnection>(
+        new PeerConnection {shared(), std::move(turn), std::move(request)});
+
+    auto item = peerConnections_.emplace(request.from, std::move(cnx)).first;
+
+    std::async(std::launch::async,
+               [item]()
+               {
+                   auto& cnx = item->second;
+                   try { cnx->turn->waitServerReady(); }
+                   catch (...) { return; }
+
+                   if (auto account = cnx->weak_account.lock()) {
+                       account->confirmPeerConnection(cnx->request, cnx->turn->peerRelayAddr());
+                   }
+               });
+}
+
+/// Connect to the relayed address and signal the usability
+void
+RingAccount::onPeerConnectionResponse(PeerConnectionMsg&& response)
+{
+    const auto& iter = peerConnections_.find(response.from);
+    if (iter == peerConnections_.end()) {
+        // unwaited reponse
+        return;
+    }
+
+    auto& connection = *iter;
+
+    if (response.addresses.empty() || response.nonce != connection.request.nonce) {
+        // invalid response
+        return;
+    }
+
+    connection.relayAddr = response.addresses[0];
+
 }
 
 } // namespace ring

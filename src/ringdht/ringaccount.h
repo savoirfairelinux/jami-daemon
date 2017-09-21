@@ -72,6 +72,9 @@ struct Contact;
 struct AccountArchive;
 
 class RingAccount : public SIPAccountBase {
+    private:
+        struct PeerConnectionMsg;
+
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
@@ -305,6 +308,29 @@ class RingAccount : public SIPAccountBase {
         void lookupAddress(const std::string& address);
         void registerName(const std::string& password, const std::string& name);
 #endif
+
+        ///
+        /// Send a E2E connection request to a given peer
+        ///
+        /// /// \param[in] peer_id RingID on request's recipiant
+        ///
+        void sendPeerConnectionRequest(const std::string& peer_id);
+
+        ///
+        /// Confirm a E2E connection request from given peer
+        ///
+        /// \param[in] req received request
+        /// \param[in] relay IP (with port) of TURN relay
+        /// \note asynchronous method
+        ///
+        void confirmPeerConnection(const PeerConnectionMsg& request,
+                                   const std::string& relay);
+
+        void confirmPeerConnection(const PeerConnectionMsg& request,
+                                   const IpAddr& relay) {
+            confirmPeerConnection(request, relay.toString(true, true));
+        }
+
 
     private:
         NON_COPYABLE(RingAccount);
@@ -583,6 +609,17 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
         void registerDhtAddress(IceTransport&);
+
+        struct PeerConnection;
+        std::map<dht::InfoHash, std::unique_ptr<PeerConnection>> peerConnections_;
+        void onPeerConnectionRequest(PeerConnectionMsg&& request);
+        void onPeerConnectionResponse(PeerConnectionMsg&& response);
 };
+
+static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
+{
+    os << "[Account " << acc.getAccountID() << "] ";
+    return os;
+}
 
 } // namespace ring
