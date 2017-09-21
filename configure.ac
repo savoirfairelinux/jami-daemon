@@ -724,7 +724,8 @@ AC_CONFIG_FILES([Makefile \
                  src/upnp/Makefile \
                  ringtones/Makefile \
                  test/Makefile\
-                 test/sip/Makefile \
+                 test/sip/Makefile
+                 test/turn/Makefile \
                  test/unitTest/Makefile \
 
                  man/Makefile \
