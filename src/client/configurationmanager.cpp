@@ -923,4 +923,13 @@ bool registerName(const std::string& account, const std::string& password, const
     return false;
 }
 
+void
+sendPeerConnectionRequest(const std::string& accountId, const std::string& peer)
+{
+    if (auto acc = ring::Manager::instance().getAccount<ring::RingAccount>(accountId))
+        acc->requestPeerConnection(peer);
+    else
+        RING_ERR() << "not existing account: " << accountId;
+}
+
 } // namespace DRing

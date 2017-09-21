@@ -181,6 +181,9 @@ int importAccounts(std::string archivePath, std::string password);
  */
 void connectivityChanged();
 
+/* Peer connection */
+void sendPeerConnectionRequest(const std::string& accountId, const std::string& peer);
+
 struct AudioSignal {
         struct DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
@@ -301,6 +304,24 @@ struct ConfigurationSignal {
         };
 #endif
 };
+
+namespace PeerConnectionSignal {
+
+struct ConnectionStateChange {
+    constexpr static const char* name = "PeerConnectionStateChange";
+    using cb_type = void(const std::string& /*accountId*/, const std::string& /*peer_uri*/, int /*old_state*/, int /*new_state*/);
+};
+
+} // namespace PeerConnectionSignal
+
+namespace TransferSignal {
+
+struct StateChange {
+    constexpr static const char* name = "TransferStateChange";
+    using cb_type = void(const std::string& /*streamId*/, int /*old_state*/, int /*new_state*/);
+};
+
+}// namespace TransferSignal
 
 // Can be used when a client's stdout is not available
 struct DebugSignal {

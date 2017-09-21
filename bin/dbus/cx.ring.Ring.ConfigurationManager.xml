@@ -1338,6 +1338,19 @@
            </arg>
        </method>
 
+	   <method name="sendPeerConnectionRequest" tp:name-for-bindings="sendPeerConnectionRequest">
+           <tp:added version="4.2.0"/>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="peer" direction="in">
+			   <tp:docstring>
+                 RingID of request's recipient.
+             </tp:docstring>
+           </arg>
+       </method>
+
+	   
+
        <signal name="contactAdded" tp:name-for-bindings="contactAdded">
            <tp:added version="2.2.0"/>
            <tp:docstring>
