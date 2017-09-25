@@ -137,8 +137,7 @@ endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
-	--enable-indev=avfcapture \
-	--enable-indev=avfgrab \
+	--enable-indev=avfoundation \
 	--enable-videotoolbox \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
@@ -210,10 +209,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-ifdef HAVE_MACOSX
-	$(APPLY) $(SRC)/ffmpeg/0004-add-avfcapture-device.patch
-	$(APPLY) $(SRC)/ffmpeg/0005-add-avfgrab-device.patch
-endif
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),arm)
 	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
