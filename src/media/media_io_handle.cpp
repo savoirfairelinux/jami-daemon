@@ -31,12 +31,20 @@ MediaIOHandle::MediaIOHandle(std::size_t buffer_size,
                              void *opaque) : ctx_(0)
 
 {
-    buf_.reserve(buffer_size);
-    ctx_ = avio_alloc_context(buf_.data(), buffer_size, writeable, opaque, read_cb,
+    /* FFmpeg doesn't alloc the buffer for the first time, but it does free and
+     * alloc it afterwards.
+     * Don't directly use malloc because av_malloc is optimized for memory alignment.
+     */
+    auto buf = static_cast<uint8_t*>(av_malloc(buffer_size));
+    ctx_ = avio_alloc_context(buf, buffer_size, writeable, opaque, read_cb,
                               write_cb, seek_cb);
     ctx_->max_packet_size = buffer_size;
 }
 
-MediaIOHandle::~MediaIOHandle() { av_free(ctx_); }
+MediaIOHandle::~MediaIOHandle()
+{
+    if (ctx_->buffer) av_free(ctx_->buffer);
+    if (ctx_) av_free(ctx_);
+}
 
 } // namespace ring
