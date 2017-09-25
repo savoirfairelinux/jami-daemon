@@ -97,7 +97,7 @@ VideoDeviceImpl::getDeviceParams() const
     DeviceParams params;
     params.name = [[avDevice_ localizedName] UTF8String];
     params.input = device;
-    params.format = "avfcapture";
+    params.format = "avfoundation";
 
     params.width = current_size_.first;
     params.height = current_size_.second;
