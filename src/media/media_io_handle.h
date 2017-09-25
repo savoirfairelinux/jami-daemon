@@ -52,7 +52,6 @@ public:
 private:
     NON_COPYABLE(MediaIOHandle);
     AVIOContext *ctx_;
-    std::vector<uint8_t> buf_ {};
 };
 
 } // namespace ring
