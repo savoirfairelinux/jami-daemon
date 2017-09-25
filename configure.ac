@@ -456,7 +456,6 @@ AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware a
 AC_ARG_ENABLE([vdpau], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration (auto)]))
 AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration (auto)]))
 AC_ARG_ENABLE([videotoolbox], AS_HELP_STRING([--disable-videotoolbox], [Disable VideoToolbox hardware acceleration (auto)]))
-AC_ARG_ENABLE([vda], AS_HELP_STRING([--disable-vda], [Disable VDA hardware acceleration (auto)]))
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   ring_accel="yes"
   AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
@@ -499,21 +498,12 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
         ])
       ])
     ])
-    AS_IF([test "x$enable_vda" != "xno"], [
-      AC_CHECK_HEADER([VideoDecodeAcceleration/VDADecoder.h], [
-        AC_CHECK_HEADER([libavcodec/vda.h], [
-          ring_vda="yes"
-          AC_DEFINE([RING_VDA], [1], [Defined if vda is available in Ring])
-        ])
-      ])
-    ])
   ])
 ])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
 AM_CONDITIONAL([RING_VDPAU], [test "x${ring_vdpau}" = "xyes"])
 AM_CONDITIONAL([RING_VIDEOTOOLBOX], [test "x${ring_vt}" = "xyes"])
-AM_CONDITIONAL([RING_VDA], [test "x${ring_vda}" = "xyes"])
 
 dnl check for GnuTLS
 PKG_CHECK_MODULES([GNUTLS], [gnutls >= 3.4.14], [HAVE_GNUTLS=1], [HAVE_GNUTLS=0])

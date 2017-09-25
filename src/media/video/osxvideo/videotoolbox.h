@@ -24,16 +24,11 @@
 
 #include "config.h"
 
-#if defined(RING_VIDEOTOOLBOX) || defined(RING_VDA)
+#ifdef RING_VIDEOTOOLBOX
 
 extern "C" {
 #include <libavcodec/avcodec.h>
-#ifdef RING_VIDEOTOOLBOX
 #include <libavcodec/videotoolbox.h>
-#endif
-#ifdef RING_VDA
-#include <libavcodec/vda.h>
-#endif
 #include <libavutil/imgutils.h>
 }
 
@@ -53,12 +48,8 @@ class VideoToolboxAccel : public HardwareAccel {
         bool init() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
         void extractData(VideoFrame& input, VideoFrame& output) override;
-
-    private:
-        bool usingVT_ = false;
-        std::string decoderName_;
 };
 
 }} // namespace ring::video
 
-#endif // defined(RING_VIDEOTOOLBOX) || defined(RING_VDA)
+#endif // RING_VIDEOTOOLBOX

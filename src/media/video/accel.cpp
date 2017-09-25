@@ -31,7 +31,7 @@
 #include "v4l2/vdpau.h"
 #endif
 
-#if defined(RING_VIDEOTOOLBOX) || defined(RING_VDA)
+#ifdef RING_VIDEOTOOLBOX
 #include "osxvideo/videotoolbox.h"
 #endif
 
@@ -176,7 +176,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
         Vdpau,
         Vaapi,
         VideoToolbox,
-        Vda,
     };
 
     struct AccelInfo {
@@ -209,9 +208,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
 #ifdef RING_VIDEOTOOLBOX
         { AccelID::VideoToolbox, "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, makeHardwareAccel<VideoToolboxAccel> },
 #endif
-#ifdef RING_VDA
-        { AccelID::Vda, "vda", AV_PIX_FMT_VDA, makeHardwareAccel<VideoToolboxAccel> },
-#endif
         { AccelID::NoAccel, "none", AV_PIX_FMT_NONE, nullptr },
     };
 
@@ -221,7 +217,6 @@ makeHardwareAccel(AVCodecContext* codecCtx)
             possibleAccels.push_back(AccelID::Vdpau);
             possibleAccels.push_back(AccelID::Vaapi);
             possibleAccels.push_back(AccelID::VideoToolbox);
-            possibleAccels.push_back(AccelID::Vda);
             break;
         case AV_CODEC_ID_MPEG4:
         case AV_CODEC_ID_H263P:
