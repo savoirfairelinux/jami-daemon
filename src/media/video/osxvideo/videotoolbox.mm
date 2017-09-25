@@ -22,7 +22,7 @@
 
 #include "config.h"
 
-#if defined(RING_VIDEOTOOLBOX) || defined(RING_VDA)
+#ifdef RING_VIDEOTOOLBOX
 
 #include <string>
 #include <sstream>
@@ -42,23 +42,14 @@ VideoToolboxAccel::VideoToolboxAccel(const std::string name, const AVPixelFormat
 
 VideoToolboxAccel::~VideoToolboxAccel()
 {
-    if (codecCtx_) {
-        if (usingVT_) {
-#ifdef RING_VIDEOTOOLBOX
-            av_videotoolbox_default_free(codecCtx_);
-#endif
-        } else {
-#ifdef RING_VDA
-            av_vda_default_free(codecCtx_);
-#endif
-        }
-    }
+    if (codecCtx_)
+        av_videotoolbox_default_free(codecCtx_);
 }
 
 int
 VideoToolboxAccel::allocateBuffer(AVFrame* frame, int flags)
 {
-    // do nothing, as this is done during extractData for VideoT and VDA
+    // do nothing, as this is done during extractData
     (void) frame; // unused
     (void) flags; // unused
     return 0;
@@ -89,7 +80,7 @@ VideoToolboxAccel::extractData(VideoFrame& input, VideoFrame& output)
             char codecTag[32];
             av_get_codec_tag_string(codecTag, sizeof(codecTag), codecCtx_->codec_tag);
             std::stringstream buf;
-            buf << decoderName_ << " (" << codecTag << "): unsupported pixel format (";
+            buf << "VideoToolbox (" << codecTag << "): unsupported pixel format (";
             buf << av_get_pix_fmt_name(format_) << ")";
             throw std::runtime_error(buf.str());
     }
@@ -99,7 +90,7 @@ VideoToolboxAccel::extractData(VideoFrame& input, VideoFrame& output)
     // align on 32 bytes
     if (av_frame_get_buffer(outFrame, 32) < 0) {
         std::stringstream buf;
-        buf << "Could not allocate a buffer for " << decoderName_;
+        buf << "Could not allocate a buffer for VideoToolbox";
         throw std::runtime_error(buf.str());
     }
 
@@ -144,33 +135,14 @@ VideoToolboxAccel::checkAvailability()
 bool
 VideoToolboxAccel::init()
 {
-    decoderName_ = "";
-    bool success = false;
-#ifdef RING_VIDEOTOOLBOX
-    if (int ret = av_videotoolbox_default_init(codecCtx_) == 0) {
-        success = true;
-        usingVT_ = true;
-        decoderName_ = "VideoToolbox";
-    }
-#endif
-#ifdef RING_VDA
-    if (!success) {
-        if (int ret = av_vda_default_init(codecCtx_) == 0) {
-            success = true;
-            usingVT_ = false;
-            decoderName_ = "VDA";
-        }
-    }
-#endif
-
-    if (success)
-        RING_DBG("%s decoder initialized", decoderName_.c_str());
+    if (int ret = av_videotoolbox_default_init(codecCtx_) >= 0)
+        RING_DBG("VideoToolbox decoder initialized");
     else
-        RING_ERR("Failed to initialize Mac hardware accelerator");
+        RING_ERR("Failed to initialize VideoToolbox decoder");
 
-    return success;
+    return ret >= 0;
 }
 
 }}
 
-#endif // defined(RING_VIDEOTOOLBOX) || defined(RING_VDA)
+#endif // RING_VIDEOTOOLBOX
