@@ -68,7 +68,7 @@
 #define LIGHT_MAGENTA "\033[01;35m"
 #define LIGHT_CYAN "\033[01;36m"
 #define WHITE "\033[01;37m"
-#define END_COLOR "\033[0m"
+#define END_COLOR ""//"\033[0m"
 
 #ifndef _WIN32
 #define RED "\033[22;31m"
@@ -129,7 +129,7 @@ contextHeader(const char* const file, int line)
     const auto prev_fill = out.fill();
     out << '[' << secs
         << '.' << std::right << std::setw(3) << std::setfill('0') << milli << std::left
-        << '|' << std::right << std::setw(5) << std::setfill(' ') << tid << std::left;
+    << '|' << std::right << std::setw(14) << std::setfill(' ') << tid << std::left;
     out.fill(prev_fill);
 
     // Context
@@ -137,7 +137,7 @@ contextHeader(const char* const file, int line)
 #ifdef RING_UWP
         constexpr auto width = 26;
 #else
-        constexpr auto width = 18;
+        constexpr auto width = 26;
 #endif
         out << "|"
             << std::setw(width) << stripDirName(file)
@@ -237,7 +237,7 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 #ifndef _WIN32
         const char* color_header = CYAN;
         const char* color_prefix = "";
-#else
+#elif
         WORD color_prefix = LIGHT_GREEN;
         WORD color_header = CYAN;
 #endif
@@ -258,7 +258,7 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
         }
 
 #ifndef _WIN32
-        fputs(color_header, stderr);
+        //fputs(color_header, stderr);
 #elif !defined(RING_UWP)
         GetConsoleScreenBufferInfo(hConsole, &consoleInfo);
         saved_attributes = consoleInfo.wAttributes;
@@ -272,7 +272,7 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
 #endif
 #ifndef _WIN32
         fputs(END_COLOR, stderr);
-        fputs(color_prefix, stderr);
+        //fputs(color_prefix, stderr);
 #elif !defined(RING_UWP)
         SetConsoleTextAttribute(hConsole, saved_attributes);
         SetConsoleTextAttribute(hConsole, color_prefix);
