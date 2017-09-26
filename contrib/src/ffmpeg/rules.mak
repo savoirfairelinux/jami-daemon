@@ -1,9 +1,9 @@
-FFMPEG_HASH := n3.3.3
+FFMPEG_HASH := 18516d3e695980525bd9758dc7b8a8e36cd3f09e
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
 
-ifeq ($(call need_pkg,"libavutil >= 55.58.100 libavcodec >= 57.89.100 libavformat >= 57.71.100 libavdevice >= 57.6.100 libswscale >= 4.6.100"),)
+ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavformat >= 57.82.100 libavdevice >= 57.8.101 libswscale >= 4.7.103"),)
 PKGS_FOUND += ffmpeg
 endif
 
@@ -20,8 +20,7 @@ FFMPEGCONF += \
 	--enable-gpl \
 	--enable-swscale \
 	--enable-protocols \
-	--disable-programs \
-	--disable-sdl
+	--disable-programs
 
 #enable muxers/demuxers
 FFMPEGCONF += \
@@ -137,6 +136,7 @@ endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
+	--enable-avfoundation \
 	--enable-indev=avfoundation \
 	--enable-videotoolbox \
 	--enable-hwaccel=h263_videotoolbox \
@@ -149,8 +149,7 @@ FFMPEGCONF += \
 	--target-os=darwin \
 	--enable-cross-compile \
 	--arch=$(ARCH) \
-	--enable-pic \
-	--enable-indev=avfoundation
+	--enable-pic
 endif
 
 ifndef HAVE_IOS
