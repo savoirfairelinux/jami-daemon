@@ -453,9 +453,6 @@ AS_IF([test "x$enable_video" != "xno"],
      ]);
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
-AC_ARG_ENABLE([vdpau], AS_HELP_STRING([--disable-vdpau], [Disable VDPAU hardware acceleration (auto)]))
-AC_ARG_ENABLE([vaapi], AS_HELP_STRING([--disable-vaapi], [Disable VAAPI hardware acceleration (auto)]))
-AC_ARG_ENABLE([videotoolbox], AS_HELP_STRING([--disable-videotoolbox], [Disable VideoToolbox hardware acceleration (auto)]))
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
   ring_accel="yes"
   AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
@@ -463,39 +460,31 @@ AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
     dnl ffmpeg's vaapi and vdpau implementations depend on x11
     PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
     AS_IF([test "${x11_available}" = "yes"], [
-      dnl vaapi for linux
-      AS_IF([test "x$enable_vaapi" != "xno"], [
-        PKG_CHECK_MODULES([LIBVA], [libva], [
-          PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-            AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
-          ], [])
-          PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
-            AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
-          ], [])
-          AC_CHECK_HEADERS([libavcodec/vaapi.h], [
-            ring_vaapi="yes"
-            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
-          ])
+      PKG_CHECK_MODULES([LIBVA], [libva], [
+        PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+          AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
         ], [])
-      ])
-      dnl vdpau linux
-      AS_IF([test "x$enable_vdpau" != "xno"], [
-        PKG_CHECK_MODULES([VDPAU], [vdpau], [
-          AC_CHECK_HEADERS([libavcodec/vdpau.h], [
-            ring_vdpau="yes"
-            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
-          ])
+        PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
+          AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
         ], [])
-      ])
+        AC_CHECK_HEADERS([libavcodec/vaapi.h], [
+          ring_vaapi="yes"
+          AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
+        ])
+      ], [])
+      PKG_CHECK_MODULES([VDPAU], [vdpau], [
+        AC_CHECK_HEADERS([libavcodec/vdpau.h], [
+          ring_vdpau="yes"
+          AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
+        ])
+      ], [])
     ])
   ])
   AS_IF([test "${SYS}" = "darwin"], [
-    AS_IF([test "x$enable_videotoolbox" != "xno"], [
-      AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
-        AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
-          ring_vt="yes"
-          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
-        ])
+    AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
+      AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
+        ring_vt="yes"
+        AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
       ])
     ])
   ])
