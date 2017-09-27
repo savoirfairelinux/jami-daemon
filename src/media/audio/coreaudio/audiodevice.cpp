@@ -48,7 +48,7 @@ void AudioDevice::init(AudioDeviceID devid, bool isInput)
         theScope,
         0 }; // channel
 
-    verify_noerr(AudioObjectGetPropertyData(id_,
+    __Verify_noErr(AudioObjectGetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
@@ -59,7 +59,7 @@ void AudioDevice::init(AudioDeviceID devid, bool isInput)
     propsize = sizeof(UInt32);
     theAddress.mSelector = kAudioDevicePropertyBufferFrameSize;
 
-    verify_noerr(AudioObjectGetPropertyData(id_,
+    __Verify_noErr(AudioObjectGetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
@@ -69,7 +69,7 @@ void AudioDevice::init(AudioDeviceID devid, bool isInput)
     propsize = sizeof(AudioStreamBasicDescription);
     theAddress.mSelector = kAudioDevicePropertyStreamFormat;
 
-    verify_noerr(AudioObjectGetPropertyData(id_,
+    __Verify_noErr(AudioObjectGetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
@@ -95,14 +95,14 @@ void AudioDevice::setBufferSize(UInt32 size)
         theScope,
         0 }; // channel
 
-    verify_noerr(AudioObjectSetPropertyData(id_,
+    __Verify_noErr(AudioObjectSetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
                         propsize,
                         &size));
 
-    verify_noerr(AudioObjectGetPropertyData(id_,
+    __Verify_noErr(AudioObjectGetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
@@ -160,7 +160,7 @@ std::string AudioDevice::getName() const
         theScope,
         0 }; // channel
 
-    verify_noerr(AudioObjectGetPropertyData(id_,
+    __Verify_noErr(AudioObjectGetPropertyData(id_,
                         &theAddress,
                         0,
                         NULL,
