@@ -415,7 +415,7 @@ CoreLayer::getDeviceList(bool getCapture) const
         kAudioObjectPropertyElementMaster
     };
 
-    verify_noerr(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
+    __Verify_noErr(AudioObjectGetPropertyDataSize(kAudioObjectSystemObject,
                                                 &theAddress,
                                                 0,
                                                 nullptr,
@@ -424,7 +424,7 @@ CoreLayer::getDeviceList(bool getCapture) const
     std::size_t nDevices = propsize / sizeof(AudioDeviceID);
     auto devids = std::vector<AudioDeviceID>(nDevices);
 
-    verify_noerr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
+    __Verify_noErr(AudioObjectGetPropertyData(kAudioObjectSystemObject,
                                             &theAddress,
                                             0,
                                             nullptr,
