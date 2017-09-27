@@ -899,6 +899,8 @@ RingAccount::updateArchive(AccountArchive& archive) const
     for (auto it : details) {
         if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0 ||
             it.first.compare(DRing::Account::ConfProperties::ARCHIVE_PATH) == 0 ||
+            it.first.compare(DRing::Account::ConfProperties::RING_DEVICE_ID) == 0 ||
+            it.first.compare(DRing::Account::ConfProperties::RING_DEVICE_NAME) == 0 ||
             it.first.compare(Conf::CONFIG_DHT_PORT) == 0) {
             // Keys to not be exported to archive
         } else if (it.first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
