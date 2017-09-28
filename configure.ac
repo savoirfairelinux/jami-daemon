@@ -607,17 +607,7 @@ PKG_CHECK_MODULES([OPENDHT], [opendht >= 0.6.1],, AC_MSG_WARN([Missing OpenDHT])
 dnl check for argon2
 PKG_CHECK_MODULES([ARGON2], [libargon2],, AC_MSG_FAILURE([Missing Argon2]))
 
-AC_CHECK_HEADER([cryptopp/cryptlib.h], , AC_MSG_FAILURE([Unable to find the cryptopp headers (you may need to install the dev package).]))
-LDFLAGS+=" -lcryptopp"
-AS_IF([test "${SYS}" = "mingw32"],[
-    LDFLAGS+=" -lboost_random -lboost_system"
-    CPPFLAGS+=" -DBOOST_SYSTEM_NO_DEPRECATED"
-], [
-  AX_BOOST_BASE([1.48],,[AC_MSG_ERROR([Ring needs Boost but it was not found in your system])])
-  AC_CHECK_LIB([boost_system], exit, , [AC_MSG_FAILURE(['Can't find boost system'])])
-  AC_CHECK_LIB([boost_random], exit, , [AC_MSG_FAILURE(['Can't find boost random'])])
-  CPPFLAGS+=" -DBOOST_SYSTEM_NO_DEPRECATED"
-])
+PKG_CHECK_MODULES([SECP256K1], [libsecp256k1 >= 0.1],, AC_MSG_FAILURE([Missing secp256k1]))
 
 dnl IPv6 mode is default-disabled
 AC_ARG_ENABLE([ipv6], AS_HELP_STRING([--enable-ipv6], [Enable IPv6 support]))
