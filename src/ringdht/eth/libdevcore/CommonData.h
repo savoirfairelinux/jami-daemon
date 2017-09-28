@@ -42,27 +42,37 @@ enum class WhenError
 	Throw = 1,
 };
 
-enum class HexPrefix
+template <class Iterator>
+std::string toHex(Iterator _it, Iterator _end, std::string _prefix)
 {
-	DontAdd = 0,
-	Add = 1,
-};
-/// Convert a series of bytes to the corresponding string of hex duplets.
-/// @param _w specifies the width of the first of the elements. Defaults to two - enough to represent a byte.
-/// @example toHex("A\x69") == "4169"
-template <class T>
-std::string toHex(T const& _data, int _w = 2, HexPrefix _prefix = HexPrefix::DontAdd)
-{
-	std::ostringstream ret;
-	unsigned ii = 0;
-	for (auto i: _data)
-		ret << std::hex << std::setfill('0') << std::setw(ii++ ? 2 : _w) << (int)(typename std::make_unsigned<decltype(i)>::type)i;
-	return (_prefix == HexPrefix::Add) ? "0x" + ret.str() : ret.str();
+	typedef std::iterator_traits<Iterator> traits;
+	static_assert(sizeof(typename traits::value_type) == 1, "toHex needs byte-sized element type");
+
+	static char const* hexdigits = "0123456789abcdef";
+	size_t off = _prefix.size();
+	std::string hex(std::distance(_it, _end)*2 + off, '0');
+	hex.replace(0, off, _prefix);
+	for (; _it != _end; _it++)
+	{
+		hex[off++] = hexdigits[(*_it >> 4) & 0x0f];
+		hex[off++] = hexdigits[*_it & 0x0f];
+	}
+	return hex;
 }
 
-/// Converts a (printable) ASCII hex character into the correspnding integer value.
-/// @example fromHex('A') == 10 && fromHex('f') == 15 && fromHex('5') == 5
-int fromHex(char _i, WhenError _throw);
+/// Convert a series of bytes to the corresponding hex string.
+/// @example toHex("A\x69") == "4169"
+template <class T> std::string toHex(T const& _data)
+{
+	return toHex(_data.begin(), _data.end(), "");
+}
+
+/// Convert a series of bytes to the corresponding hex string with 0x prefix.
+/// @example toHexPrefixed("A\x69") == "0x4169"
+template <class T> std::string toHexPrefixed(T const& _data)
+{
+	return toHex(_data.begin(), _data.end(), "0x");
+}
 
 /// Converts a (printable) ASCII hex string into the corresponding byte stream.
 /// @example fromHex("41626261") == asBytes("Abba")
@@ -70,7 +80,7 @@ int fromHex(char _i, WhenError _throw);
 bytes fromHex(std::string const& _s, WhenError _throw = WhenError::DontThrow);
 
 /// @returns true if @a _s is a hex string.
-bool isHex(std::string const& _s);
+bool isHex(std::string const& _s) noexcept;
 
 /// @returns true if @a _hash is a hash conforming to FixedHash type @a T.
 template <class T> static bool isHash(std::string const& _hash)
@@ -105,22 +115,6 @@ bytes asNibbles(bytesConstRef const& _s);
 
 // Big-endian to/from host endian conversion functions.
 
-/// Converts a templated integer value to the big-endian byte-stream represented on a templated collection.
-/// The size of the collection object will be unchanged. If it is too small, it will not represent the
-/// value properly, if too big then the additional elements will be zeroed out.
-/// @a Out will typically be either std::string or bytes.
-/// @a T will typically by unsigned, u160, u256 or bigint.
-template <class T, class Out>
-inline void toBigEndian(T _val, Out& o_out)
-{
-	static_assert(std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "only unsigned types or bigint supported"); //bigint does not carry sign bit on shift
-	for (auto i = o_out.size(); i != 0; _val >>= 8, i--)
-	{
-		T v = _val & (T)0xff;
-		o_out[i - 1] = (typename Out::value_type)(uint8_t)v;
-	}
-}
-
 /// Converts a big-endian byte-stream represented on a templated collection to a templated integer value.
 /// @a _In will typically be either std::string or bytes.
 /// @a T will typically by unsigned, u160, u256 or bigint.
@@ -129,57 +123,13 @@ inline T fromBigEndian(_In const& _bytes)
 {
 	T ret = (T)0;
 	for (auto i: _bytes)
-		ret = (T)((ret << 8) | (byte)(typename std::make_unsigned<typename _In::value_type>::type)i);
+		ret = (T)((ret << 8) | (byte)(typename std::make_unsigned<decltype(i)>::type)i);
 	return ret;
 }
 
-/// Convenience functions for toBigEndian
-inline std::string toBigEndianString(u256 _val) { std::string ret(32, '\0'); toBigEndian(_val, ret); return ret; }
-inline std::string toBigEndianString(u160 _val) { std::string ret(20, '\0'); toBigEndian(_val, ret); return ret; }
-inline bytes toBigEndian(u256 _val) { bytes ret(32); toBigEndian(_val, ret); return ret; }
-inline bytes toBigEndian(u160 _val) { bytes ret(20); toBigEndian(_val, ret); return ret; }
-
-/// Convenience function for toBigEndian.
-/// @returns a byte array just big enough to represent @a _val.
-template <class T>
-inline bytes toCompactBigEndian(T _val, unsigned _min = 0)
-{
-	static_assert(std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "only unsigned types or bigint supported"); //bigint does not carry sign bit on shift
-	int i = 0;
-	for (T v = _val; v; ++i, v >>= 8) {}
-	bytes ret(std::max<unsigned>(_min, i), 0);
-	toBigEndian(_val, ret);
-	return ret;
-}
 inline bytes toCompactBigEndian(byte _val, unsigned _min = 0)
 {
 	return (_min || _val) ? bytes{ _val } : bytes{};
-}
-
-/// Convenience function for toBigEndian.
-/// @returns a string just big enough to represent @a _val.
-template <class T>
-inline std::string toCompactBigEndianString(T _val, unsigned _min = 0)
-{
-	static_assert(std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "only unsigned types or bigint supported"); //bigint does not carry sign bit on shift
-	int i = 0;
-	for (T v = _val; v; ++i, v >>= 8) {}
-	std::string ret(std::max<unsigned>(_min, i), '\0');
-	toBigEndian(_val, ret);
-	return ret;
-}
-
-/// Convenience function for conversion of a u256 to hex
-inline std::string toHex(u256 val, HexPrefix prefix = HexPrefix::DontAdd)
-{
-	std::string str = toHex(toBigEndian(val));
-	return (prefix == HexPrefix::Add) ? "0x" + str : str;
-}
-
-inline std::string toCompactHex(u256 val, HexPrefix prefix = HexPrefix::DontAdd, unsigned _min = 0)
-{
-	std::string str = toHex(toCompactBigEndian(val, _min));
-	return (prefix == HexPrefix::Add) ? "0x" + str : str;
 }
 
 // Algorithms for string and string-like collections.
@@ -191,27 +141,14 @@ std::string escaped(std::string const& _s, bool _all = true);
 /// Determines the length of the common prefix of the two collections given.
 /// @returns the number of elements both @a _t and @a _u share, in order, at the beginning.
 /// @example commonPrefix("Hello world!", "Hello, world!") == 5
-template <class T, class U>
-unsigned commonPrefix(T const& _t, U const& _u)
+template <class T, class _U>
+unsigned commonPrefix(T const& _t, _U const& _u)
 {
 	unsigned s = std::min<unsigned>(_t.size(), _u.size());
 	for (unsigned i = 0;; ++i)
 		if (i == s || _t[i] != _u[i])
 			return i;
 	return s;
-}
-
-/// Creates a random, printable, word.
-std::string randomWord();
-
-/// Determine bytes required to encode the given integer value. @returns 0 if @a _i is zero.
-template <class T>
-inline unsigned bytesRequired(T _i)
-{
-	static_assert(std::is_same<bigint, T>::value || !std::numeric_limits<T>::is_signed, "only unsigned types or bigint supported"); //bigint does not carry sign bit on shift
-	unsigned i = 0;
-	for (; _i != 0; ++i, _i >>= 8) {}
-	return i;
 }
 
 /// Trims a given number of elements from the front of a collection.
@@ -226,8 +163,8 @@ void trimFront(T& _t, unsigned _elements)
 
 /// Pushes an element on to the front of a collection.
 /// Only works for POD element types.
-template <class T, class U>
-void pushFront(T& _t, U _e)
+template <class T, class _U>
+void pushFront(T& _t, _U _e)
 {
 	static_assert(std::is_pod<typename T::value_type>::value, "");
 	_t.push_back(_e);
@@ -305,41 +242,6 @@ inline std::vector<T> operator+(std::vector<T> const& _a, std::vector<T> const& 
 	std::vector<T> ret(_a);
 	return ret += _b;
 }
-
-/// Merge two sets of elements.
-template <class T>
-inline std::set<T>& operator+=(std::set<T>& _a, std::set<T> const& _b)
-{
-	for (auto& i: _b)
-		_a.insert(i);
-	return _a;
-}
-
-/// Merge two sets of elements.
-template <class T>
-inline std::set<T> operator+(std::set<T> const& _a, std::set<T> const& _b)
-{
-	std::set<T> ret(_a);
-	return ret += _b;
-}
-
-template <class A, class B>
-std::unordered_map<A, B>& operator+=(std::unordered_map<A, B>& _x, std::unordered_map<A, B> const& _y)
-{
-	for (auto const& i: _y)
-		_x.insert(i);
-	return _x;
-}
-
-template <class A, class B>
-std::unordered_map<A, B> operator+(std::unordered_map<A, B> const& _x, std::unordered_map<A, B> const& _y)
-{
-	std::unordered_map<A, B> ret(_x);
-	return ret += _y;
-}
-
-/// Make normal string from fixed-length string.
-std::string toString(string32 const& _s);
 
 template<class T, class U>
 std::vector<T> keysOf(std::map<T, U> const& _m)
