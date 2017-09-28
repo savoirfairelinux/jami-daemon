@@ -474,10 +474,11 @@ endif
 ifdef HAVE_CROSS_COMPILE
 	echo "set(_CMAKE_TOOLCHAIN_PREFIX $(CROSS_COMPILE))" >> $@
 ifdef HAVE_ANDROID
-# cmake will overwrite our --sysroot with a native (host) one on Darwin
-# Set it to "" right away to short-circuit this behaviour
-	echo "set(CMAKE_CXX_SYSROOT_FLAG \"\")" >> $@
-	echo "set(CMAKE_C_SYSROOT_FLAG \"\")" >> $@
+	echo "set(CMAKE_SYSTEM_NAME Android)" >> $@
+	echo "set(CMAKE_ANDROID_STANDALONE_TOOLCHAIN \"$(ANDROID_TOOLCHAIN)\")" >> $@
+	echo "set(CMAKE_ANDROID_ARCH_ABI $(ANDROID_ABI))" >> $@
+	echo "set(CMAKE_SYSTEM_VERSION $(subst android-,,$(ANDROID_API)))" >> $@
+	echo "set(CMAKE_ANDROID_STL_TYPE c++_static)" >> $@
 endif
 endif
 	echo "set(CMAKE_C_COMPILER $(CC))" >> $@
