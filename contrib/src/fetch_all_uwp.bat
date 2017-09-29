@@ -26,6 +26,7 @@ portaudio, ^
 pthreads, ^
 restbed, ^
 samplerate, ^
+secp256k1, ^
 upnp, ^
 x264, ^
 yaml-cpp, ^
