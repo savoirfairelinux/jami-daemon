@@ -54,6 +54,7 @@ build\pjproject\pjnath\build\pjnath.vcxproj, ^
 build\pjproject\pjsip-apps\build\libpjproject.vcxproj, ^
 build\portaudio\MSVC\portaudio-UWP\portaudio-UWP.vcxproj, ^
 build\yaml-cpp\MSVC\yaml-cpp.vcxproj, ^
+build\secp256k1\MSVC\secp256k1.vcxproj, ^
 )
 
 rem * build libx264 *
