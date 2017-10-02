@@ -139,7 +139,9 @@ libring_la_SOURCES = \
 		smartools.cpp \
 		smartools.h \
         base64.h \
-        base64.cpp
+        base64.cpp \
+        turn_transport.h \
+        turn_transport.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
