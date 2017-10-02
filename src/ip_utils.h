@@ -67,37 +67,52 @@ namespace ring {
  */
 class IpAddr {
 public:
-    IpAddr(uint16_t family = AF_UNSPEC) : addr() {
+    IpAddr() : IpAddr(AF_UNSPEC) {}
+    IpAddr(const IpAddr&) = default;
+    IpAddr(IpAddr&&) = default;
+    IpAddr& operator=(const IpAddr&) = default;
+    IpAddr& operator=(IpAddr&&) = default;
+
+    explicit IpAddr(uint16_t family) : addr() {
         addr.addr.sa_family = family;
     }
 
-    // From a sockaddr-type structure
-    IpAddr(const IpAddr& other) : addr(other.addr) {}
     IpAddr(const pj_sockaddr& ip) : addr(ip) {}
-    IpAddr(const sockaddr* ip, socklen_t len) : addr() {
-        memcpy(&addr, ip, len);
+
+    IpAddr(const pj_sockaddr& ip, socklen_t len) : addr() {
+        if (len > sizeof(addr))
+            throw std::invalid_argument("IpAddr(): length overflows internal storage type");
+        memcpy(&addr, &ip, len);
     }
 
-    IpAddr(const sockaddr_in& ip) : addr() {
-        memcpy(&addr, &ip, sizeof(sockaddr_in));
-    }
-    IpAddr(const sockaddr_in6& ip) : addr() {
-        memcpy(&addr, &ip, sizeof(sockaddr_in6));
-    }
     IpAddr(const sockaddr& ip) : addr() {
         memcpy(&addr, &ip, ip.sa_family == AF_INET6 ? sizeof addr.ipv6 : sizeof addr.ipv4);
     }
-    IpAddr(const sockaddr_storage& ip) : IpAddr(*reinterpret_cast<const sockaddr*>(&ip)) {}
-    IpAddr(const in6_addr& ip) : addr() {
-        addr.addr.sa_family = AF_INET6;
-        memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
+
+    IpAddr(const sockaddr_in& ip) : addr() {
+        static_assert(sizeof(ip) <= sizeof(addr), "sizeof(sockaddr_in) too large");
+        memcpy(&addr, &ip, sizeof(sockaddr_in));
     }
+
+    IpAddr(const sockaddr_in6& ip) : addr() {
+        static_assert(sizeof(ip) <= sizeof(addr), "sizeof(sockaddr_in6) too large");
+        memcpy(&addr, &ip, sizeof(sockaddr_in6));
+    }
+
+    IpAddr(const sockaddr_storage& ip) : IpAddr(*reinterpret_cast<const sockaddr*>(&ip)) {}
+
     IpAddr(const in_addr& ip) : addr() {
+        static_assert(sizeof(ip) <= sizeof(addr), "sizeof(in_addr) too large");
         addr.addr.sa_family = AF_INET;
         memcpy(&addr.ipv4.sin_addr, &ip, sizeof(in_addr));
     }
 
-    // From a string
+    IpAddr(const in6_addr& ip) : addr() {
+        static_assert(sizeof(ip) <= sizeof(addr), "sizeof(in6_addr) too large");
+        addr.addr.sa_family = AF_INET6;
+        memcpy(&addr.ipv6.sin6_addr, &ip, sizeof(in6_addr));
+    }
+
     IpAddr(const std::string& str, pj_uint16_t family = AF_UNSPEC) : addr() {
         if (str.empty()) {
             addr.addr.sa_family = AF_UNSPEC;
@@ -112,6 +127,10 @@ public:
 
     // Is defined
     inline explicit operator bool() const {
+        return isIpv4() or isIpv6();
+    }
+
+    inline explicit operator bool() {
         return isIpv4() or isIpv6();
     }
 
@@ -141,12 +160,12 @@ public:
         return addr.ipv6;
     }
 
-    inline operator sockaddr& (){
-        return reinterpret_cast<sockaddr&>(addr);
+    inline operator const sockaddr& () const {
+        return reinterpret_cast<const sockaddr&>(addr);
     }
 
-    inline explicit operator sockaddr* (){
-        return reinterpret_cast<sockaddr*>(&addr);
+    inline operator const sockaddr* () const {
+        return reinterpret_cast<const sockaddr*>(&addr);
     }
 
     inline operator sockaddr_storage (){
@@ -229,12 +248,16 @@ public:
     static bool isValid(const std::string& address, pj_uint16_t family = pj_AF_UNSPEC());
 
 private:
-    pj_sockaddr addr;
+    pj_sockaddr addr {};
 };
 
 // IpAddr helpers
 inline bool operator==(const IpAddr& lhs, const IpAddr& rhs) { return !pj_sockaddr_cmp(&lhs, &rhs); }
 inline bool operator!=(const IpAddr& lhs, const IpAddr& rhs) { return !(lhs == rhs); }
+inline bool operator<(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) < 0; }
+inline bool operator>(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) > 0; }
+inline bool operator<=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) <= 0; }
+inline bool operator>=(const IpAddr& lhs, const IpAddr& rhs) { return pj_sockaddr_cmp(&lhs, &rhs) >= 0; }
 
 namespace ip_utils {
 
