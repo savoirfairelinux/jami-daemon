@@ -206,11 +206,8 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
 ifdef HAVE_ANDROID
-ifeq ($(ARCH),arm)
-	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
-endif
-ifeq ($(ARCH),i386)
-	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
+ifneq ($(HAVE_64),1)
+	$(APPLY) $(SRC)/ffmpeg/android_file_offset.patch
 endif
 endif
 	$(MOVE)
