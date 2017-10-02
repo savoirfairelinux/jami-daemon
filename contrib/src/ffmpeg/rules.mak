@@ -205,12 +205,12 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+# r15 changed the way _FILE_OFFSET_BITS is handled, fixed in r16
 ifdef HAVE_ANDROID
-ifeq ($(ARCH),arm)
-	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
+ifneq ($(HAVE_64),1)
+ifneq (,$(findstring r15,$(NDK_VERSION)))
+	$(APPLY) $(SRC)/ffmpeg/no-mmap.patch
 endif
-ifeq ($(ARCH),i386)
-	$(APPLY) $(SRC)/ffmpeg/0001-use-internal-log2-log2f.patch
 endif
 endif
 	$(MOVE)
