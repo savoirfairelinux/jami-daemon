@@ -8,6 +8,7 @@ noinst_LTLIBRARIES = libringacc.la
 libringacc_la_CXXFLAGS = @CXXFLAGS@ @JSONCPP_CFLAGS@
 
 libringacc_la_LIBADD = $(DHT_LIBS) \
+	@SECP256K1_LIBS@ \
     ./eth/libdevcore/libdevcore.la \
     ./eth/libdevcrypto/libdevcrypto.la
 
