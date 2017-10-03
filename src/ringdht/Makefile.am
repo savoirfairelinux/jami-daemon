@@ -7,9 +7,10 @@ noinst_LTLIBRARIES = libringacc.la
 
 libringacc_la_CXXFLAGS = @CXXFLAGS@ @JSONCPP_CFLAGS@
 
-libringacc_la_LIBADD = $(DHT_LIBS) \
+libringacc_la_LIBADD = $(DHT_LIBS)
     ./eth/libdevcore/libdevcore.la \
-    ./eth/libdevcrypto/libdevcrypto.la
+    ./eth/libdevcrypto/libdevcrypto.la \
+    @SECP256K1_LIBS@
 
 libringacc_la_SOURCES = \
         ringaccount.cpp \
