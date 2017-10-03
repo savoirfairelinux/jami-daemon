@@ -139,8 +139,8 @@ DOLT
 
 lt_cv_deplibs_check_method=pass_all
 
-dnl Check for C++11 support
-AX_CXX_COMPILE_STDCXX_11([ext],[mandatory])
+dnl Check for C++14 support
+AX_CXX_COMPILE_STDCXX(14,[ext],[mandatory])
 
 dnl Check for header files
 AC_FUNC_ALLOCA

@@ -133,7 +133,7 @@ LD=xcrun ld
 STRIP=xcrun strip
 RANLIB=xcrun ranlib
 EXTRA_COMMON := -isysroot $(MACOSX_SDK) -mmacosx-version-min=$(MIN_OSX_VERSION) -DMACOSX_DEPLOYMENT_TARGET=$(MIN_OSX_VERSION)
-EXTRA_CXXFLAGS += -std=c++11 -stdlib=libc++
+EXTRA_CXXFLAGS += -stdlib=libc++
 EXTRA_LDFLAGS += -Wl,-syslibroot,$(MACOSX_SDK)
 ifeq ($(ARCH),x86_64)
 EXTRA_COMMON += -m64
@@ -174,7 +174,7 @@ else
 EXTRA_CFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
 endif
 
-EXTRA_CXXFLAGS=$(EXTRA_CFLAGS) -std=c++11 -stdlib=libc++
+EXTRA_CXXFLAGS=$(EXTRA_CFLAGS) -stdlib=libc++
 EXTRA_LDFLAGS=$(EXTRA_CFLAGS)
 
 endif
@@ -183,7 +183,6 @@ ifdef HAVE_WIN32
 ifneq ($(shell $(CC) $(CFLAGS) -E -dM -include _mingw.h - < /dev/null | grep -E __MINGW64_VERSION_MAJOR),)
 HAVE_MINGW_W64 := 1
 endif
-EXTRA_CXXFLAGS += -std=c++11
 endif
 
 ifdef HAVE_SOLARIS
@@ -193,6 +192,8 @@ else
 EXTRA_COMMON += -m32
 endif
 endif
+
+EXTRA_CXXFLAGS += -std=c++14
 
 cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
 
