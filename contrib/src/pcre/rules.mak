@@ -1,6 +1,6 @@
 # Perl Compatible Regular Expression
 
-PCRE_VERSION := 8.40
+PCRE_VERSION := 8.41
 PCRE_URL := ftp://ftp.csx.cam.ac.uk/pub/software/programming/pcre/pcre-$(PCRE_VERSION).tar.bz2
 
 PKGS += pcre
@@ -19,9 +19,11 @@ $(TARBALLS)/pcre-$(PCRE_VERSION).tar.bz2:
 
 pcre: pcre-$(PCRE_VERSION).tar.bz2 .sum-pcre
 	$(UNPACK)
+	$(APPLY) $(SRC)/pcre/0001-build-don-t-build-executables.patch
 	$(MOVE)
 
 .pcre: pcre
+	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure --disable-cpp $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
