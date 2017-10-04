@@ -1969,7 +1969,7 @@
 +      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
 +      <WholeProgramOptimization>false</WholeProgramOptimization>
-+      <AdditionalIncludeDirectories>..\inc;..\msvc;..\..\upnp\inc;..\..\upnp\src\inc;..\..\ixml\inc;..\..\ixml\src\inc;..\..\threadutil\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>..\inc;..\msvc;..\..\upnp\inc;..\..\upnp\src\inc;..\..\ixml\inc;..\..\ixml\src\inc;..\..\threadutil\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\pthreads;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_TIMESPEC_DEFINED;WIN32;NDEBUG;RELEASE;_WINDOWS;PTW32_STATIC_LIB;UPNP_STATIC_LIB;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <StringPooling>true</StringPooling>
 +      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -2770,7 +2770,7 @@
 +      <Optimization>MaxSpeed</Optimization>
 +      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <AdditionalIncludeDirectories>..\..\threadutil\inc;..\..\upnp\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>..\..\threadutil\inc;..\..\upnp\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\pthreads;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\pthreads;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_TIMESPEC_DEFINED;WIN32;NDEBUG;RELEASE;_WINDOWS;PTW32_STATIC_LIB;UPNP_STATIC_LIB;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <StringPooling>true</StringPooling>
 +      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -2794,7 +2794,7 @@
 +      <Optimization>MaxSpeed</Optimization>
 +      <InlineFunctionExpansion>Default</InlineFunctionExpansion>
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
-+      <AdditionalIncludeDirectories>..\..\threadutil\inc;..\..\upnp\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
++      <AdditionalIncludeDirectories>..\..\threadutil\inc;..\..\upnp\inc;..\..\pthreads;..\..\pthreads\include;$(ProjectDir)..\..\..\include;$(ProjectDir)..\..\..\pthreads;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
 +      <PreprocessorDefinitions>_TIMESPEC_DEFINED;WIN32;NDEBUG;RELEASE;_WINDOWS;PTW32_STATIC_LIB;UPNP_STATIC_LIB;UPNP_USE_MSVCPP;_CRT_NONSTDC_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;_CRT_SECURE_NO_WARNINGS;_CRT_SECURE_NO_DEPRECATE;_SECURE_SCL;_SCL_SECURE_NO_WARNINGS;_SCL_SECURE_NO_DEPRECATE;_AFX_SECURE_NO_WARNINGS;_AFX_SECURE_NO_DEPRECATE;_SECURE_ATL;_ATL_NO_COM_SUPPORT;_ATL_SECURE_NO_WARNINGS;_ATL_SECURE_NO_DEPRECATE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <StringPooling>true</StringPooling>
 +      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
