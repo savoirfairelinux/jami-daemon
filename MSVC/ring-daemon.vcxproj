@@ -33,6 +33,14 @@
       <Configuration>Release</Configuration>
       <Platform>x64</Platform>
     </ProjectConfiguration>
+    <ProjectConfiguration Include="w32lib|Win32">
+      <Configuration>w32lib</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="w32lib|x64">
+      <Configuration>w32lib</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{79F8DE42-595D-49D9-A66F-55244FD9DCC3}</ProjectGuid>
@@ -66,6 +74,13 @@
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
@@ -93,6 +108,13 @@
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>false</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
   </ImportGroup>
@@ -110,6 +132,9 @@
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
   <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
@@ -120,6 +145,9 @@
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <ImportGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'" Label="PropertySheets">
     <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
@@ -143,6 +171,11 @@
     <OutDir>$(SolutionDir)$(Configuration)\bin\</OutDir>
     <TargetName>dring</TargetName>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'">
+    <TargetExt>.lib</TargetExt>
+    <OutDir>$(SolutionDir)$(Configuration)\bin\</OutDir>
+    <TargetName>dring</TargetName>
+  </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <TargetName>dringd</TargetName>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\bin\</OutDir>
@@ -153,6 +186,11 @@
     <LinkIncremental>true</LinkIncremental>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">
+    <TargetExt>.lib</TargetExt>
+    <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\bin\</OutDir>
+    <TargetName>dring</TargetName>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">
     <TargetExt>.lib</TargetExt>
     <OutDir>$(ProjectDir)$(Platform)\$(Configuration)\bin\</OutDir>
     <TargetName>dring</TargetName>
@@ -376,6 +414,48 @@
       <AdditionalOptions>/ignore:4006 /ignore:4221 /VERBOSE:LIB /NODEFAULTLIB:libcmt /LTCG:OFF %(AdditionalOptions)</AdditionalOptions>
     </Lib>
   </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>false</SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <CompileAsManaged>
+      </CompileAsManaged>
+      <BufferSecurityCheck>
+      </BufferSecurityCheck>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MinimalRebuild>true</MinimalRebuild>
+      <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>Strmiids.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\..\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>/VERBOSE:LIB /NODEFAULTLIB:libcmtd /NODEFAULTLIB:libcmt /OPT:NOLBR /OPT:NOICF %(AdditionalOptions)</AdditionalOptions>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;Strmiids.lib;libavcodec.lib;libavdevice.lib;libavfilter.lib;libavformat.lib;libavutil.lib;libswresample.lib;libswscale.lib;libsamplerate.lib;libsndfile.lib;libgnutls.lib;lib_json.lib;opendht.lib;argon.lib;blake.lib;pcre.lib;pjlib.lib;pjlib_util.lib;pjmedia.lib;pjmedia_codec.lib;pjnath.lib;pjsip_core.lib;pjsip_simple.lib;pjsip_ua.lib;pjsua2_lib.lib;pjsua_lib.lib;yaml-cpp.lib;libupnp.lib;pthreadVC2.lib;portaudio.lib;libspeex-pj.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\contrib\lib\x86;</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 /VERBOSE:LIB /NODEFAULTLIB:libcmt /LTCG:OFF %(AdditionalOptions)</AdditionalOptions>
+    </Lib>
+  </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
@@ -447,7 +527,48 @@
       </Command>
     </PreBuildEvent>
     <Lib>
-      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pcre.lib;yaml-cpp.lib;portaudio-UWP.lib;libupnp.lib;boost_system.lib;boost_random.lib;pjsip-core-x86_64-x64-vc14-Release.lib;pjsip-simple-x86_64-x64-vc14-Release.lib;pjsua2-lib-x86_64-x64-vc14-Release.lib;pjsua-lib-x86_64-x64-vc14-Release.lib;pjsip-ua-x86_64-x64-vc14-Release.lib;pjmedia-codec-x86_64-x64-vc14-Release.lib;pjmedia-x86_64-x64-vc14-Release.lib;pjlib-util-x86_64-x64-vc14-Release.lib;libspeex-x86_64-x64-vc14-Release.lib;pjlib-x86_64-x64-vc14-Release.lib;pjnath-x86_64-x64-vc14-Release.lib;restbed.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pcre.lib;yaml-cpp.lib;portaudio-UWP.lib;libupnp.lib;pjsip-core-x86_64-x64-vc14-Release.lib;pjsip-simple-x86_64-x64-vc14-Release.lib;pjsua2-lib-x86_64-x64-vc14-Release.lib;pjsua-lib-x86_64-x64-vc14-Release.lib;pjsip-ua-x86_64-x64-vc14-Release.lib;pjmedia-codec-x86_64-x64-vc14-Release.lib;pjmedia-x86_64-x64-vc14-Release.lib;pjlib-util-x86_64-x64-vc14-Release.lib;libspeex-x86_64-x64-vc14-Release.lib;pjlib-x86_64-x64-vc14-Release.lib;pjnath-x86_64-x64-vc14-Release.lib;restbed.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\bin;$(ProjectDir)..\contrib\build\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\libnatpmp\msvc\x64\Release;$(ProjectDir)..\contrib\build\restbed\build\Release;$(ProjectDir)..\contrib\build\restbed\dependency\openssl\out32dll</AdditionalLibraryDirectories>
+      <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
+      <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">
+    <ClCompile>
+      <WarningLevel>TurnOffAllWarnings</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>
+      </SDLCheck>
+      <AdditionalIncludeDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\include;$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\build;$(ProjectDir)..\contrib\build\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party\speex\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\boost;$(ProjectDir)..\contrib\build\cryptopp;$(ProjectDir)..\contrib\build\restbed\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>BOOST_SYSTEM_NO_DEPRECATED;PJ_OS_HAS_CHECK_STACK=1;STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;RING_UWP;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
+      <SuppressStartupBanner>true</SuppressStartupBanner>
+      <BasicRuntimeChecks>Default</BasicRuntimeChecks>
+      <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <ObjectFileName>$(IntDir)/%(RelativeDir)/</ObjectFileName>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+    </ClCompile>
+    <Link>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>..\..\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>Strmiids.lib;ws2_32.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalOptions>/VERBOSE:LIB /NODEFAULTLIB:libcmtd /NODEFAULTLIB:libcmt /OPT:NOLBR /OPT:NOICF %(AdditionalOptions)</AdditionalOptions>
+      <TargetMachine>MachineX86</TargetMachine>
+      <LinkTimeCodeGeneration>UseFastLinkTimeCodeGeneration</LinkTimeCodeGeneration>
+    </Link>
+    <ProjectReference>
+      <UseLibraryDependencyInputs>false</UseLibraryDependencyInputs>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+    <PreBuildEvent>
+      <Command>
+      </Command>
+    </PreBuildEvent>
+    <Lib>
+      <AdditionalDependencies>ws2_32.lib;iphlpapi.lib;advapi32.lib;avcodec.lib;avdevice.lib;avfilter.lib;avformat.lib;avutil.lib;swresample.lib;swscale.lib;libsamplerate.lib;libgnutls.lib;lib_json.lib;opendht.lib;Argon2Ref.lib;pcre.lib;yaml-cpp.lib;portaudio-UWP.lib;libupnp.lib;pjsip-core-x86_64-x64-vc14-Release.lib;pjsip-simple-x86_64-x64-vc14-Release.lib;pjsua2-lib-x86_64-x64-vc14-Release.lib;pjsua-lib-x86_64-x64-vc14-Release.lib;pjsip-ua-x86_64-x64-vc14-Release.lib;pjmedia-codec-x86_64-x64-vc14-Release.lib;pjmedia-x86_64-x64-vc14-Release.lib;pjlib-util-x86_64-x64-vc14-Release.lib;libspeex-x86_64-x64-vc14-Release.lib;pjlib-x86_64-x64-vc14-Release.lib;pjnath-x86_64-x64-vc14-Release.lib;restbed.lib;libeay32.lib;ssleay32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\bin;$(ProjectDir)..\contrib\build\lib\x64;$(ProjectDir)..\contrib\build\boost\stage\lib;$(ProjectDir)..\contrib\build\pjproject\pjsip\lib;$(ProjectDir)..\contrib\build\pjproject\pjmedia\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\lib;$(ProjectDir)..\contrib\build\pjproject\third_party\lib;$(ProjectDir)..\contrib\build\pjproject\pjlib\lib;$(ProjectDir)..\contrib\build\pjproject\pjnath\lib;$(ProjectDir)..\contrib\build\libnatpmp\msvc\x64\Release;$(ProjectDir)..\contrib\build\restbed\build\Release;$(ProjectDir)..\contrib\build\restbed\dependency\openssl\out32dll</AdditionalLibraryDirectories>
       <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
@@ -471,6 +592,7 @@
     <ClInclude Include="..\src\dirent.h" />
     <ClInclude Include="..\src\dlfcn.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\src\dring\account_const.h" />
     <ClInclude Include="..\src\dring\callmanager_interface.h" />
@@ -537,9 +659,11 @@
     <ClInclude Include="..\src\noncopyable.h" />
     <ClInclude Include="..\src\plugin_loader.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\src\plugin_manager.h">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClInclude>
     <ClInclude Include="..\src\preferences.h" />
     <ClInclude Include="..\src\rational.h" />
@@ -606,6 +730,7 @@
     <ClCompile Include="..\src\config\yamlparser.cpp" />
     <ClCompile Include="..\src\dlfcn.c">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\fileutils.cpp" />
     <ClCompile Include="..\src\hooks\urlhook.cpp" />
@@ -656,9 +781,11 @@
     <ClCompile Include="..\src\media\video\video_sender.cpp" />
     <ClCompile Include="..\src\plugin_loader_dl.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\plugin_manager.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">false</ExcludedFromBuild>
     </ClCompile>
     <ClCompile Include="..\src\preferences.cpp" />
     <ClCompile Include="..\src\ringdht\accountarchive.cpp" />
