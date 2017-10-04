@@ -612,3 +612,9 @@ DBusConfigurationManager::connectivityChanged()
 {
     DRing::connectivityChanged();
 }
+
+void
+DBusConfigurationManager::sendPeerConnectionRequest(const std::string& accountId, const std::string& peer)
+{
+    DRing::sendPeerConnectionRequest(accountId, peer);
+}

@@ -1679,7 +1679,7 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
 }
 
 void
-Manager::addTask(const std::function<bool()>&& task)
+Manager::addTask(std::function<bool()>&& task)
 {
     std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
     pimpl_->pendingTaskList_.emplace_back(std::move(task));

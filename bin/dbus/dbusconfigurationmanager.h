@@ -151,6 +151,7 @@ class DBusConfigurationManager :
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
         int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
+        void sendPeerConnectionRequest(const std::string& accountId, const std::string& peer);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
