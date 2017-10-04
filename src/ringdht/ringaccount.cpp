@@ -42,6 +42,8 @@
 #include "sips_transport_ice.h"
 #include "ice_transport.h"
 
+#include "p2p.h"
+
 #include "client/ring_signal.h"
 #include "dring/call_const.h"
 #include "dring/account_const.h"
@@ -175,7 +177,6 @@ struct RingAccount::KnownDevice
         : certificate(cert), name(n), last_sync(sync) {}
 };
 
-
 /**
  * Device announcement stored on DHT.
  */
@@ -276,6 +277,7 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     , idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
+    , dhtPeerConnector_ {new DhtPeerConnector {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -1550,6 +1552,13 @@ RingAccount::handleEvents()
 
     // Call msg in "callto:"
     handlePendingCallList();
+
+    auto queue = jobQueue_.flush();
+    while (!queue.empty()) {
+        auto& job = queue.front();
+        job();
+        queue.pop();
+    }
 }
 
 void
@@ -2176,13 +2185,14 @@ RingAccount::doRegister_()
                 return true;
             }
         );
+
+        dhtPeerConnector_->onDhtConnected(ringDeviceId_);
     }
     catch (const std::exception& e) {
         RING_ERR("Error registering DHT account: %s", e.what());
         setRegistrationState(RegistrationState::ERROR_GENERIC);
     }
 }
-
 
 void
 RingAccount::onTrustRequest(const dht::InfoHash& peer_account, const dht::InfoHash& peer_device, time_t received, bool confirm, std::vector<uint8_t>&& payload)
@@ -3281,6 +3291,26 @@ RingAccount::registerDhtAddress(IceTransport& ice)
     } else {
         reg_addr(ice, ip);
     }
+}
+
+void
+RingAccount::requestPeerConnection(const std::string& peer_id,
+                                   std::function<void(PeerConnection&& connection)>&& connected_cb,
+                                   std::function<void()>&& failure_cb)
+{
+    dhtPeerConnector_->sendRequest(peer_id, std::move(connected_cb), std::move(failure_cb));
+}
+
+std::vector<std::string>
+RingAccount::publicAddresses()
+{
+    std::vector<std::string> addresses;
+    for (auto& addr : dht_.getPublicAddress(AF_INET))
+        addresses.emplace_back(addr.toString());
+    for (auto& addr : dht_.getPublicAddress(AF_INET6))
+        addresses.emplace_back(addr.toString());
+
+    return addresses;
 }
 
 } // namespace ring

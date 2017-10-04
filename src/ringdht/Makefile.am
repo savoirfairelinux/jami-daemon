@@ -17,7 +17,9 @@ libringacc_la_SOURCES = \
         sips_transport_ice.cpp \
         sips_transport_ice.h \
         accountarchive.cpp \
-        accountarchive.h
+        accountarchive.h \
+        p2p.cpp \
+        p2p.h
 
 if RINGNS
 libringacc_la_SOURCES += \
