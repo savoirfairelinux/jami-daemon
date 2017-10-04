@@ -142,7 +142,11 @@ libring_la_SOURCES = \
         base64.h \
         base64.cpp \
         turn_transport.h \
-        turn_transport.cpp
+        turn_transport.cpp \
+        peer_connection.cpp \
+        peer_connection.h \
+        data_transfer.cpp \
+        data_transfer.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
@@ -155,6 +159,7 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/callmanager_interface.h \
 		dring/configurationmanager_interface.h \
 		dring/presencemanager_interface.h \
+		dring/datatransfer_interface.h \
 		dring/account_const.h \
 		dring/call_const.h \
 		dring/presence_const.h \
