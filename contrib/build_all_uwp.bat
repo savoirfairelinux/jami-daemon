@@ -25,7 +25,7 @@ build\gnutls\SMP\libgnutls.vcxproj, ^
 build\msgpack-c\msgpack_vc8.vcxproj, ^
 build\opendht\MSVC\opendht.vcxproj, ^
 build\libsamplerate\MSVC\libsamplerate.vcxproj, ^
-build\pthreads\MSVC\pthreads-UWP-S\pthreads-UWP-S.vcxproj, ^
+build\pthreads\MSVC\pthreads.vcxproj, ^
 build\libupnp\build\VS2015\ixml.vcxproj, ^
 build\libupnp\build\VS2015\threadutil.vcxproj, ^
 build\libupnp\build\VS2015\libupnp.vcxproj, ^
