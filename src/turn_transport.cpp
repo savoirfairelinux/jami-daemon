@@ -265,6 +265,7 @@ TurnTransport::permitPeer(const IpAddr& addr)
         throw std::invalid_argument("invalid peer address");
 
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
+    RING_DBG() << "TURN: permited peer " << addr.toString(true, true);
 }
 
 bool
