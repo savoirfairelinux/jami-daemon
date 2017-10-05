@@ -89,9 +89,9 @@ public:
     void permitPeer(const IpAddr& addr);
 
     ///
-    /// Collect pending data.
+    /// Collect pending data from a given peer
     ///
-    void recvfrom(std::map<IpAddr, std::vector<char>>& streams);
+    void recvfrom(const IpAddr& peer, std::vector<char>& data);
 
     ///
     /// Send data to a given peer through the TURN tunnel.
