@@ -35,24 +35,77 @@
 #include <vector>
 #include <iterator>
 #include <mutex>
+#include <sstream>
+#include <limits>
+#include <map>
 
 namespace ring {
 
-enum class RelayState {
+using MutexGuard = std::lock_guard<std::mutex>;
+
+enum class RelayState
+{
     NONE,
     READY,
     DOWN,
 };
 
-class TurnTransportPimpl {
+class PeerChannel
+{
+public:
+    PeerChannel() {}
+    PeerChannel(PeerChannel&&o) {
+        MutexGuard lk {o.mutex_};
+        stream_ = std::move(o.stream_);
+    }
+    PeerChannel& operator =(PeerChannel&& o) {
+        MutexGuard lk {o.mutex_};
+        stream_  = std::move(o.stream_);
+        return *this;
+    }
+
+    void operator <<(const std::string& data) {
+        MutexGuard lk {mutex_};
+        stream_ << data;
+    }
+
+    std::vector<char> read() {
+        MutexGuard lk {mutex_};
+        std::string str;
+        stream_ >> str;
+        return std::vector<char>(std::cbegin(str), std::cend(str));
+    }
+
+    std::vector<char> readline() {
+        MutexGuard lk {mutex_};
+        std::string str;
+        std::getline(stream_, str);
+        return std::vector<char>(std::cbegin(str), std::cend(str));
+    }
+
+private:
+    PeerChannel(const PeerChannel&o) = delete;
+    PeerChannel& operator =(const PeerChannel& o) = delete;
+    std::mutex mutex_ {};
+    std::stringstream stream_ {};
+
+    friend void operator <<(std::vector<char>&, PeerChannel&);
+};
+
+class TurnTransportPimpl
+{
 public:
     TurnTransportPimpl() = default;
     ~TurnTransportPimpl();
 
     void onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_state);
-    void onRxData(uint8_t* pkt, unsigned pkt_len, const pj_sockaddr_t* peer_addr, unsigned addr_len);
+    void onRxData(const uint8_t* pkt, unsigned pkt_len, const pj_sockaddr_t* peer_addr, unsigned addr_len);
     void onPeerConnection(pj_uint32_t conn_id, const pj_sockaddr_t* peer_addr, unsigned addr_len);
     void ioJob();
+
+    std::mutex apiMutex_;
+
+    std::map<IpAddr, PeerChannel> peerChannels_;
 
     TurnTransportParams settings;
     pj_caching_pool poolCache {};
@@ -62,9 +115,6 @@ public:
     pj_str_t relayAddr {};
     IpAddr peerRelayAddr; // address where peers should connect to
     IpAddr mappedAddr;
-
-    std::map<IpAddr, std::vector<char>> streams;
-    std::mutex streamsMutex;
 
     std::atomic<RelayState> state {RelayState::NONE};
     std::atomic_bool ioJobQuit {false};
@@ -100,27 +150,29 @@ TurnTransportPimpl::onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_s
 }
 
 void
-TurnTransportPimpl::onRxData(uint8_t* pkt, unsigned pkt_len,
+TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
                              const pj_sockaddr_t* addr, unsigned addr_len)
 {
-    IpAddr peer_addr ( *static_cast<const pj_sockaddr*>(addr), addr_len );
+    IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
 
-    std::lock_guard<std::mutex> lk {streamsMutex};
-    auto& vec = streams[peer_addr];
-    vec.insert(vec.cend(), pkt, pkt + pkt_len);
+    decltype(peerChannels_)::iterator channel_it;
+    {
+        MutexGuard lk {apiMutex_};
+        channel_it = peerChannels_.find(peer_addr);
+        if (channel_it == std::end(peerChannels_))
+            return;
+    }
+
+    (channel_it->second) << std::string(reinterpret_cast<const char*>(pkt), pkt_len);
 }
 
 void
 TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
                                      const pj_sockaddr_t* addr, unsigned addr_len)
 {
-    IpAddr peer_addr ( *static_cast<const pj_sockaddr*>(addr), addr_len );
-    RING_DBG("Received connection attempt from %s, id=%x",
-             peer_addr.toString(true, true).c_str(), conn_id);
-    {
-        std::lock_guard<std::mutex> lk {streamsMutex};
-        streams[peer_addr].clear();
-    }
+    IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
+    RING_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
+               << ", id=" << std::hex << conn_id;
     pj_turn_connect_peer(relay, conn_id, addr, addr_len);
     if (settings.onPeerConnection)
         settings.onPeerConnection(conn_id, peer_addr);
@@ -176,6 +228,8 @@ inline auto PjsipCallReturn(const Callable& func, Args... args) -> decltype(func
 TurnTransport::TurnTransport(const TurnTransportParams& params)
     : pimpl_ {new TurnTransportPimpl}
 {
+    sip_utils::register_thread();
+
     auto server = params.server;
     if (!server.getPort())
         server.setPort(PJ_STUN_PORT);
@@ -241,10 +295,10 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_stun_auth_cred cred;
     pj_bzero(&cred, sizeof(cred));
     cred.type = PJ_STUN_AUTH_CRED_STATIC;
-    pj_cstr(&cred.data.static_cred.realm, params.realm.c_str());
-    pj_cstr(&cred.data.static_cred.username, params.username.c_str());
+    pj_cstr(&cred.data.static_cred.realm, pimpl_->settings.realm.c_str());
+    pj_cstr(&cred.data.static_cred.username, pimpl_->settings.username.c_str());
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-    pj_cstr(&cred.data.static_cred.data, params.password.c_str());
+    pj_cstr(&cred.data.static_cred.data, pimpl_->settings.password.c_str());
 
     pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 
@@ -264,6 +318,12 @@ TurnTransport::permitPeer(const IpAddr& addr)
     if (addr.isUnspecified())
         throw std::invalid_argument("invalid peer address");
 
+    if (addr.getFamily() != pimpl_->peerRelayAddr.getFamily())
+        throw std::invalid_argument("mismatching peer family");
+
+    RING_DBG() << "TURN: permit peer " << addr.toString(true, true);
+    MutexGuard lk {pimpl_->apiMutex_};
+    pimpl_->peerChannels_.emplace(addr, PeerChannel {});
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
 }
 
@@ -294,8 +354,22 @@ TurnTransport::mappedAddr() const
 }
 
 bool
+TurnTransport::sendto(const IpAddr& peer, const char* const buffer, std::size_t length)
+{
+    sip_utils::register_thread();
+    auto status = pj_turn_sock_sendto(pimpl_->relay,
+                                      reinterpret_cast<const pj_uint8_t*>(buffer), length,
+                                      peer.pjPtr(), peer.getLength());
+    if (status != PJ_SUCCESS && status != PJ_EPENDING)
+        throw PjsipError(status);
+
+    return status == PJ_SUCCESS;
+}
+
+bool
 TurnTransport::sendto(const IpAddr& peer, const std::vector<char>& buffer)
 {
+    sip_utils::register_thread();
     auto status = pj_turn_sock_sendto(pimpl_->relay,
                                       reinterpret_cast<const pj_uint8_t*>(buffer.data()), buffer.size(),
                                       peer.pjPtr(), peer.getLength());
@@ -305,12 +379,30 @@ TurnTransport::sendto(const IpAddr& peer, const std::vector<char>& buffer)
     return status == PJ_SUCCESS;
 }
 
-void
-TurnTransport::recvfrom(std::map<IpAddr, std::vector<char>>& streams)
+bool
+TurnTransport::writelineto(const IpAddr& peer, const char* const buffer, std::size_t length)
 {
-    std::lock_guard<std::mutex> lk {pimpl_->streamsMutex};
-    streams = std::move(pimpl_->streams);
-    pimpl_->streams.clear();
+    if (sendto(peer, buffer, length))
+        return sendto(peer, "\n", 1);
+    return false;
+}
+
+void
+TurnTransport::recvfrom(const IpAddr& peer, std::vector<char>& result)
+{
+    MutexGuard lk {pimpl_->apiMutex_};
+    auto& channel = pimpl_->peerChannels_.at(peer);
+
+    result = channel.read();
+}
+
+void
+TurnTransport::readlinefrom(const IpAddr& peer, std::vector<char>& result)
+{
+    MutexGuard lk {pimpl_->apiMutex_};
+    auto& channel = pimpl_->peerChannels_.at(peer);
+
+    result = channel.readline();
 }
 
 } // namespace ring
