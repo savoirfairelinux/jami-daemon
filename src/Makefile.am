@@ -155,6 +155,7 @@ nobase_include_HEADERS= dring/dring.h \
 		dring/callmanager_interface.h \
 		dring/configurationmanager_interface.h \
 		dring/presencemanager_interface.h \
+		dring/datatransfer_interface.h \
 		dring/account_const.h \
 		dring/call_const.h \
 		dring/presence_const.h \
