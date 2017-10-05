@@ -241,10 +241,10 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_stun_auth_cred cred;
     pj_bzero(&cred, sizeof(cred));
     cred.type = PJ_STUN_AUTH_CRED_STATIC;
-    pj_cstr(&cred.data.static_cred.realm, params.realm.c_str());
-    pj_cstr(&cred.data.static_cred.username, params.username.c_str());
+    pj_cstr(&cred.data.static_cred.realm, pimpl_->settings.realm.c_str());
+    pj_cstr(&cred.data.static_cred.username, pimpl_->settings.username.c_str());
     cred.data.static_cred.data_type = PJ_STUN_PASSWD_PLAIN;
-    pj_cstr(&cred.data.static_cred.data, params.password.c_str());
+    pj_cstr(&cred.data.static_cred.data, pimpl_->settings.password.c_str());
 
     pimpl_->relayAddr = pj_strdup3(pimpl_->pool, server.toString().c_str());
 
@@ -264,7 +264,13 @@ TurnTransport::permitPeer(const IpAddr& addr)
     if (addr.isUnspecified())
         throw std::invalid_argument("invalid peer address");
 
+    if (addr.getFamily() != pimpl_->peerRelayAddr.getFamily()) {
+        RING_WARN() << "Peer " << addr << " not permited: mismatching family";
+        return;
+    }
+
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
+    RING_DBG() << "TURN: permited peer " << addr.toString(true, true);
 }
 
 bool
