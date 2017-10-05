@@ -264,7 +264,13 @@ TurnTransport::permitPeer(const IpAddr& addr)
     if (addr.isUnspecified())
         throw std::invalid_argument("invalid peer address");
 
+    if (addr.getFamily() != pimpl_->peerRelayAddr.getFamily()) {
+        RING_WARN() << "Peer " << addr << " not permited: mismatching family";
+        return;
+    }
+
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
+    RING_DBG() << "TURN: permited peer " << addr.toString(true, true);
 }
 
 bool
