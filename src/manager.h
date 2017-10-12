@@ -166,6 +166,13 @@ class Manager {
 
         /**
          * Functions which occur with a user's action
+         * Toggle the call hold state (if its state is compatible).
+         * @param id  The call identifier
+         */
+        bool toggleHolding(const std::string& id);
+
+        /**
+         * Functions which occur with a user's action
          * Put the media of a call on mute or unmute
          * @param callID  The call identifier
          * @param mediaType The media type; eg : AUDIO or VIDEO

@@ -106,6 +106,18 @@
             <arg type="b" name="unHoldSucceeded" direction="out"/>
         </method>
 
+        <method name="toggleHolding" tp:name-for-bindings="toggleHolding">
+            <tp:docstring>
+              Toggle the holding state like hold/unhold do.
+            </tp:docstring>
+            <arg type="s" name="callID" direction="in">
+              <tp:docstring>
+                The callID.
+              </tp:docstring>
+            </arg>
+            <arg type="b" name="success" direction="out"/>
+        </method>
+
         <method name="muteLocalMedia" tp:name-for-bindings="muteLocalMedia">
            <arg type="s" name="callid" direction="in">
              <tp:docstring>

@@ -1105,6 +1105,33 @@ Manager::offHoldCall(const std::string& callId)
 }
 
 bool
+Manager::toggleHolding(const std::string& callId)
+{
+    if (!isConference(callId)) {
+        auto call = getCallFromCallID(callId);
+        if (!call)
+            return false;
+
+        auto state = call->getState();
+        if (state == Call::CallState::HOLD)
+            return offHoldCall(callId);
+        else
+            return onHoldCall(callId);
+    } else {
+        auto iter = pimpl_->conferenceMap_.find(callId);
+        if (iter == pimpl_->conferenceMap_.end())
+            return false;
+        auto conf = iter->second;
+        auto state = conf->getState();
+        if (state == Conference::ConferenceState::HOLD or
+            state == Conference::ConferenceState::HOLD_REC)
+            return unHoldConference(callId);
+        else
+            return holdConference(callId);
+    }
+}
+
+bool
 Manager::muteMediaCall(const std::string& callId, const std::string& mediaType, bool is_muted)
 {
     if (auto call = getCallFromCallID(callId)) {
