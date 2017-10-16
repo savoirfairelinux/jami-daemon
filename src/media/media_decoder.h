@@ -26,6 +26,10 @@
 #include "video/video_scaler.h"
 #endif // RING_VIDEO
 
+#ifdef RING_ACCEL
+#include "video/accel.h"
+#endif
+
 #include "audio/audiobuffer.h"
 
 #include "rational.h"
@@ -43,12 +47,6 @@ class AVFormatContext;
 class AVCodec;
 
 namespace ring {
-
-#ifdef RING_ACCEL
-namespace video {
-class HardwareAccel;
-}
-#endif
 
 struct AudioFrame;
 class AudioFormat;
@@ -120,7 +118,8 @@ class MediaDecoder {
 
 #ifdef RING_ACCEL
         bool enableAccel_ = true;
-        std::unique_ptr<video::HardwareAccel> accel_;
+        video::HardwareAccel accel_;
+        unsigned accelFailures_ = 0;
 #endif
 
     protected:
