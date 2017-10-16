@@ -80,6 +80,7 @@
 #include <cstdarg>
 #include <string>
 #include <system_error>
+#include <initializer_list>
 
 namespace ring {
 
@@ -893,27 +894,35 @@ RingAccount::readArchive(const std::string& pwd) const
 void
 RingAccount::updateArchive(AccountArchive& archive) const
 {
-    RING_DBG("[Account %s] building account archive", getAccountID().c_str());
+    using namespace DRing::Account::ConfProperties;
 
-    auto details = getAccountDetails();
-    for (auto it : details) {
-        if (it.first.compare(DRing::Account::ConfProperties::Ringtone::PATH) == 0 ||
-            it.first.compare(DRing::Account::ConfProperties::ARCHIVE_PATH) == 0 ||
-            it.first.compare(DRing::Account::ConfProperties::RING_DEVICE_ID) == 0 ||
-            it.first.compare(DRing::Account::ConfProperties::RING_DEVICE_NAME) == 0 ||
-            it.first.compare(Conf::CONFIG_DHT_PORT) == 0) {
-            // Keys to not be exported to archive
-        } else if (it.first.compare(DRing::Account::ConfProperties::TLS::CA_LIST_FILE) == 0 ||
-                it.first.compare(DRing::Account::ConfProperties::TLS::CERTIFICATE_FILE) == 0 ||
-                it.first.compare(DRing::Account::ConfProperties::TLS::PRIVATE_KEY_FILE) == 0) {
-            // replace paths by the files content
-            if (not it.second.empty()) {
-                try {
-                    archive.config[it.first] = base64::encode(fileutils::loadFile(it.second));
-                } catch (...) {}
-            }
+    // Keys not exported to archive
+    static const auto filtered_keys = { Ringtone::PATH,
+                                        ARCHIVE_PATH,
+                                        RING_DEVICE_ID,
+                                        RING_DEVICE_NAME,
+                                        Conf::CONFIG_DHT_PORT };
+
+    // Keys with meaning of file path where the contents has to be exported in base64
+    static const auto encoded_keys = { TLS::CA_LIST_FILE,
+                                       TLS::CERTIFICATE_FILE,
+                                       TLS::PRIVATE_KEY_FILE };
+
+    RING_DBG("[Account %s] building account archive", getAccountID().c_str());
+    for (const auto& it : getAccountDetails()) {
+        // filter-out?
+        if (std::any_of(std::begin(filtered_keys), std::end(filtered_keys),
+                        [&](const auto& key){ return key == it.first; }))
+            continue;
+
+        // file contents?
+        if (std::any_of(std::begin(encoded_keys), std::end(encoded_keys),
+                        [&](const auto& key){ return key == it.first; })) {
+            try {
+                archive.config.emplace(it.first, base64::encode(fileutils::loadFile(it.second)));
+            } catch (...) {}
         } else
-            archive.config[it.first] = it.second;
+            archive.config.insert(it);
     }
     archive.contacts = contacts_;
 }
