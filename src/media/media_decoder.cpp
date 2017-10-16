@@ -47,6 +47,8 @@ namespace ring {
 const unsigned jitterBufferMaxSize_ {1500};
 // maximum time a packet can be queued
 const constexpr auto jitterBufferMaxDelay_ = std::chrono::milliseconds(50);
+// maximum number of times accelerated decoding can fail in a row before falling back to software
+const constexpr unsigned MAX_ACCEL_FAILURES { 5 };
 
 MediaDecoder::MediaDecoder() :
     inputCtx_(avformat_alloc_context()),
@@ -56,6 +58,8 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
+    if (decoderCtx_->hw_device_ctx)
+        av_buffer_unref(&decoderCtx_->hw_device_ctx);
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
     if (inputCtx_)
@@ -301,23 +305,23 @@ int MediaDecoder::setupFromVideoData()
 
     decoderCtx_->thread_count = std::thread::hardware_concurrency();
 
-#ifdef RING_ACCEL
-    if (enableAccel_) {
-        accel_ = video::makeHardwareAccel(decoderCtx_);
-        decoderCtx_->opaque = accel_.get();
-    } else if (Manager::instance().getDecodingAccelerated()) {
-        RING_WARN("Hardware accelerated decoding disabled because of previous failure");
-    } else {
-        RING_WARN("Hardware accelerated decoding disabled by user preference");
-    }
-#endif // RING_ACCEL
-
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
         startTime_ = av_gettime();
     }
 
-    decoderCtx_->refcounted_frames = 1;
+#ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::setupHardwareDecoding(decoderCtx_);
+        decoderCtx_->opaque = &accel_;
+    } else if (Manager::instance().getDecodingAccelerated()) {
+        RING_WARN("Hardware accelerated decoding disabled because of previous failure");
+    } else {
+        RING_WARN("Hardware accelerated decoding disabled by user preference");
+    }
+#endif
+
+    //decoderCtx_->refcounted_frames = 1;
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
     if (ret) {
         RING_ERR("Could not open codec");
@@ -354,18 +358,10 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0) {
-#ifdef RING_ACCEL
-        if (accel_ && accel_->hasFailed())
-            return Status::RestartRequired;
-#endif
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-#ifdef RING_ACCEL
-        if (accel_ && accel_->hasFailed())
-            return Status::RestartRequired;
-#endif
         return Status::DecodeError;
     }
     if (ret >= 0)
@@ -376,11 +372,16 @@ MediaDecoder::decode(VideoFrame& result)
     if (frameFinished) {
         frame->format = (AVPixelFormat) correctPixFmt(frame->format);
 #ifdef RING_ACCEL
-        if (accel_) {
-            if (!accel_->hasFailed())
-                accel_->extractData(result);
-            else
-                return Status::RestartRequired;
+        if (!accel_.name.empty()) {
+            ret = video::transferFrameData(accel_, decoderCtx_, result);
+            if (ret < 0) {
+                ++accelFailures_;
+                if (accelFailures_ >= MAX_ACCEL_FAILURES) {
+                    RING_ERR("Hardware decoding failure");
+                    accelFailures_ = 0; // reset error count for next time
+                    return Status::RestartRequired;
+                }
+            }
         }
 #endif // RING_ACCEL
         if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
@@ -475,8 +476,8 @@ MediaDecoder::flush(VideoFrame& result)
 #ifdef RING_ACCEL
         // flush is called when closing the stream
         // so don't restart the media decoder
-        if (accel_ && !accel_->hasFailed())
-            accel_->extractData(result);
+        if (!accel_.name.empty() && accelFailures_ < MAX_ACCEL_FAILURES)
+            video::transferFrameData(accel_, decoderCtx_, result);
 #endif // RING_ACCEL
         return Status::FrameFinished;
     }

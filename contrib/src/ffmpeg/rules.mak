@@ -1,8 +1,4 @@
-ifndef HAVE_MACOSX
 FFMPEG_HASH := 18516d3e695980525bd9758dc7b8a8e36cd3f09e
-else
-FFMPEG_HASH := n3.3.3
-endif
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -136,7 +132,7 @@ endif
 
 ifdef HAVE_MACOSX
 FFMPEGCONF += \
-	--disable-sdl \
+	--enable-avfoundation \
 	--enable-indev=avfoundation \
 	--enable-videotoolbox \
 	--enable-hwaccel=h263_videotoolbox \
