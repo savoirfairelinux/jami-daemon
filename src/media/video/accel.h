@@ -25,53 +25,17 @@
 #include "config.h"
 
 #include <string>
-#include <memory>
+#include <vector>
 
 namespace ring { namespace video {
 
-class HardwareAccel {
-    public:
-        HardwareAccel(const std::string& name, const AVPixelFormat format);
-        virtual ~HardwareAccel() {};
-
-        AVPixelFormat format() const { return format_; }
-        std::string name() const { return name_; }
-        bool hasFailed() const { return fallback_; }
-
-        void setCodecCtx(AVCodecContext* codecCtx) { codecCtx_ = codecCtx; }
-        void setWidth(int width) { width_ = width; }
-        void setHeight(int height) { height_ = height; }
-        void setProfile(int profile) { profile_ = profile; }
-
-        void failAllocation();
-        void failExtraction();
-        void fail(bool forceFallback);
-        void succeedAllocation() { allocationFails_ = 0; }
-        void succeedExtraction() { extractionFails_ = 0; }
-
-        // wrapper to take care of boilerplate before calling the derived class's implementation
-        bool extractData(VideoFrame& input);
-
-    public: // must be implemented by derived classes
-        virtual bool checkAvailability() = 0;
-        virtual bool init() = 0;
-        virtual int allocateBuffer(AVFrame* frame, int flags) = 0;
-        virtual void extractData(VideoFrame& input, VideoFrame& output) = 0;
-
-    protected:
-        AVCodecContext* codecCtx_ = nullptr;
-        std::string name_;
-        AVPixelFormat format_;
-        unsigned allocationFails_ = 0; // how many times in a row allocateBuffer has failed
-        unsigned extractionFails_ = 0; // how many times in a row extractData has failed
-        bool fallback_ = false; // set to true when successive failures exceeds MAX_ACCEL_FAILURES
-        int width_ = -1;
-        int height_ = -1;
-        int profile_ = -1;
+struct HardwareAccel {
+        std::string name;
+        AVPixelFormat format;
+        std::vector<AVCodecID> supportedCodecs;
 };
 
-// HardwareAccel factory
-// Checks if codec acceleration is possible
-std::unique_ptr<HardwareAccel> makeHardwareAccel(AVCodecContext* codecCtx);
+const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
+bool transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame);
 
 }} // namespace ring::video
