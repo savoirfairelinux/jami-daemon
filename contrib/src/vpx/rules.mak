@@ -112,7 +112,7 @@ VPX_CONF += --disable-tools --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures
 LOCAL_HOSTVARS=$(HOSTVARS)
 endif
 ifdef HAVE_WIN32
-ifneq ($(ARCH),i386)
+ifeq ($(ARCH),i386)
 VPX_CONF += --extra-cflags="-mstackrealign"
 endif
 endif
