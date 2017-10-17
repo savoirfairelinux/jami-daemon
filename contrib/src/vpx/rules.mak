@@ -111,7 +111,11 @@ ifdef HAVE_ANDROID
 VPX_CONF += --disable-tools --extra-cflags="-I$(ANDROID_NDK)/sources/cpufeatures/ -fvisibility=hidden"
 LOCAL_HOSTVARS=$(HOSTVARS)
 endif
-
+ifdef HAVE_WIN32
+ifneq ($(ARCH),i386)
+VPX_CONF += --extra-cflags="-mstackrealign"
+endif
+endif
 .vpx: libvpx
 	cd $< && CROSS=$(VPX_CROSS) $(LOCAL_HOSTVARS) ./configure --target=$(VPX_TARGET) \
 		$(VPX_CONF) --prefix=$(PREFIX)
