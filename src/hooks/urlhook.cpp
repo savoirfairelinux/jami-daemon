@@ -28,10 +28,11 @@ int UrlHook::runAction(const std::string &command, const std::string &args)
     //FIXME : use fork and execve, so no need to escape shell arguments
     const std::string cmd = command + (args.empty() ? "" : " ") +
                             "\"" + args + "\" &";
-#ifndef RING_UWP
-    return system(cmd.c_str());
-#else
+
+#if defined(RING_UWP) || defined(TARGET_OS_IOS)
     return 0;
+#else
+    return system(cmd.c_str());
 #endif
 }
 
