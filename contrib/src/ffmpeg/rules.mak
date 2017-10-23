@@ -99,10 +99,7 @@ ifdef HAVE_ANDROID
 # Android Linux
 FFMPEGCONF += \
 	--target-os=android \
-	--enable-jni
-# ARM 32 bits has trouble with mediacodec
-ifneq ($(ARCH),arm)
-FFMPEGCONF += \
+	--enable-jni \
 	--enable-mediacodec \
 	--enable-hwaccel=vp8_mediacodec \
 	--enable-hwaccel=h264_mediacodec \
@@ -110,7 +107,6 @@ FFMPEGCONF += \
 	--enable-decoder=vp8_mediacodec \
 	--enable-decoder=h264_mediacodec \
 	--enable-decoder=mpeg4_mediacodec
-endif
 # ASM not working on Android x86 https://trac.ffmpeg.org/ticket/4928
 ifeq ($(ARCH),i386)
 FFMPEGCONF += --disable-asm
