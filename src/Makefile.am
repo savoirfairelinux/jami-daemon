@@ -81,6 +81,10 @@ libring_la_CFLAGS = \
 		@OPENDHT_CFLAGS@ \
 		@ARGON2_CFLAGS@
 
+if HAVE_IOS
+libring_la_CFLAGS += -DTARGET_OS_IPHONE
+endif
+
 libring_la_CXXFLAGS = @JSONCPP_CFLAGS@
 
 if HAVE_LINUX
