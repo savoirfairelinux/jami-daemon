@@ -20,6 +20,6 @@
 namespace dev
 {
 
-std::random_device s_fixedHashEngine;
+dht::crypto::random_device s_fixedHashEngine;
 
 }

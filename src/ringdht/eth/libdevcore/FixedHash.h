@@ -28,6 +28,8 @@
 #include <algorithm>
 #include <random>
 #include <sstream>
+#include <opendht/rng.h>
+
 #include "CommonData.h"
 
 namespace dev
@@ -37,7 +39,7 @@ namespace dev
 template <unsigned N> struct StaticLog2 { enum { result = 1 + StaticLog2<N/2>::result }; };
 template <> struct StaticLog2<1> { enum { result = 0 }; };
 
-extern std::random_device s_fixedHashEngine;
+extern dht::crypto::random_device s_fixedHashEngine;
 
 /// Fixed-size raw-byte array container type, with an API optimised for storing hashes.
 /// Transparently converts to/from the corresponding arithmetic type; this will
