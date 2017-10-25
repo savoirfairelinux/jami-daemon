@@ -29,7 +29,12 @@ int UrlHook::runAction(const std::string &command, const std::string &args)
     const std::string cmd = command + (args.empty() ? "" : " ") +
                             "\"" + args + "\" &";
 
-#if defined(RING_UWP) || defined(TARGET_OS_IOS)
+#if __APPLE__
+  #include "TargetConditionals.h"
+  #if defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE)
+    return 0;
+  #endif
+#elif defined(RING_UWP)
     return 0;
 #else
     return system(cmd.c_str());
