@@ -2063,8 +2063,6 @@ RingAccount::doRegister_()
 #endif
         }
 
-        dht_.importValues(loadValues());
-
         Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
 
@@ -2457,7 +2455,6 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
 
     Manager::instance().unregisterEventHandler((uintptr_t)this);
     saveNodes(dht_.exportNodes());
-    saveValues(dht_.exportValues());
     dht_.join();
     setRegistrationState(RegistrationState::UNREGISTERED);
     if (released_cb)
@@ -2651,17 +2648,6 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
     }
 }
 
-void
-RingAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
-{
-    fileutils::check_dir(dataPath_.c_str());
-    for (const auto& v : values) {
-        const std::string fname = dataPath_ + DIR_SEPARATOR_STR + v.first.toString();
-        std::ofstream file(fname, std::ios::trunc | std::ios::out | std::ios::binary);
-        file.write((const char*)v.second.data(), v.second.size());
-    }
-}
-
 std::vector<dht::NodeExport>
 RingAccount::loadNodes() const
 {
@@ -2685,26 +2671,6 @@ RingAccount::loadNodes() const
         }
     }
     return nodes;
-}
-
-std::vector<dht::ValuesExport>
-RingAccount::loadValues() const
-{
-    std::vector<dht::ValuesExport> values;
-    const auto dircontent(fileutils::readDirectory(dataPath_));
-    for (const auto& fname : dircontent) {
-        const auto file = dataPath_+DIR_SEPARATOR_STR+fname;
-        try {
-            std::ifstream ifs(file, std::ifstream::in | std::ifstream::binary);
-            std::istreambuf_iterator<char> begin(ifs), end;
-            values.emplace_back(dht::ValuesExport{dht::InfoHash(fname), std::vector<uint8_t>{begin, end}});
-        } catch (const std::exception& e) {
-            RING_ERR("[Account %s] error reading value from cache : %s", getAccountID().c_str(), e.what());
-        }
-        fileutils::remove(file);
-    }
-    RING_DBG("[Account %s] loaded %zu values", getAccountID().c_str(), values.size());
-    return values;
 }
 
 tls::DhParams
