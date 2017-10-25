@@ -504,7 +504,6 @@ class RingAccount : public SIPAccountBase {
 
         static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
         void saveNodes(const std::vector<dht::NodeExport>&) const;
-        void saveValues(const std::vector<dht::ValuesExport>&) const;
 
         void loadTreatedCalls();
         void saveTreatedCalls() const;
@@ -530,7 +529,6 @@ class RingAccount : public SIPAccountBase {
          */
         dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
         std::vector<dht::NodeExport> loadNodes() const;
-        std::vector<dht::ValuesExport> loadValues() const;
 
         bool dhtPublicInCalls_ {true};
 
