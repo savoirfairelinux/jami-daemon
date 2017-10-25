@@ -981,6 +981,19 @@ RingAccount::computeKeys(const std::string& password, const std::string& pin, bo
     return {key, loc};
 }
 
+std::string
+generatePIN(size_t length = 8)
+{
+    static constexpr const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    dht::crypto::random_device rd;
+    std::uniform_int_distribution<size_t> dis(0, sizeof(alphabet)-2);
+    std::string ret;
+    ret.reserve(length);
+    for (size_t i=0; i<length; i++)
+        ret.push_back(alphabet[dis(rd)]);
+    return ret;
+}
+
 void
 RingAccount::addDevice(const std::string& password)
 {
@@ -995,14 +1008,8 @@ RingAccount::addDevice(const std::string& password)
 
             a = this_->readArchive(password);
 
-            // Generate random 32bits PIN
-            std::uniform_int_distribution<uint32_t> dis;
-            auto pin = dis(this_->rand_);
-            // Manipulate PIN as hex
-            std::stringstream ss;
-            ss << std::hex << pin;
-            pin_str = ss.str();
-            std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::toupper);
+            // Generate random PIN
+            pin_str = generatePIN();
 
             std::tie(key, loc) = computeKeys(password, pin_str);
         } catch (const std::exception& e) {
@@ -3295,4 +3302,3 @@ RingAccount::registerDhtAddress(IceTransport& ice)
 }
 
 } // namespace ring
-
