@@ -21,29 +21,8 @@
 #ifndef __LIBAV_DEPS_H__
 #define __LIBAV_DEPS_H__
 
-/* LIBAVFORMAT_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVFORMAT_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVFORMAT_VERSION_MICRO <  100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVFORMAT_VERSION_MICRO >= 100 && LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
-
-/* LIBAVCODEC_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVCODEC_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVCODEC_VERSION_MICRO <  100 && LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVCODEC_VERSION_MICRO >= 100 && LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
-
-/* LIBAVUTIL_VERSION_CHECK checks for the right version of libav and FFmpeg
- * a is the major version
- * b and c the minor and micro versions of libav
- * d and e the minor and micro versions of FFmpeg */
-#define LIBAVUTIL_VERSION_CHECK( a, b, c, d, e ) \
-    ( (LIBAVUTIL_VERSION_MICRO <  100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, b, c ) ) || \
-      (LIBAVUTIL_VERSION_MICRO >= 100 && LIBAVUTIL_VERSION_INT >= AV_VERSION_INT( a, d, e ) ) )
+// NOTE versions of FFmpeg's librairies can be checked using something like this:
+// #if LIBAVCODEC_VERSION_INT >= AV_VERSION_INT( major, minor, micro )
 
 extern "C" {
 #include <libavcodec/avcodec.h>
@@ -55,14 +34,11 @@ extern "C" {
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 #include <libavutil/channel_layout.h>
-#include <libavutil/mathematics.h> // for av_rescale_q (old libav support)
 #include <libavutil/imgutils.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/log.h>
 }
 
 #include "libav_utils.h"
-
-#define PIXEL_FORMAT(FMT) AV_PIX_FMT_ ## FMT
 
 #endif // __LIBAV_DEPS_H__

@@ -160,11 +160,11 @@ void ring_avcodec_init()
 int libav_pixel_format(int fmt)
 {
     switch (fmt) {
-        case video::VIDEO_PIXFMT_BGRA: return PIXEL_FORMAT(BGRA);
-        case video::VIDEO_PIXFMT_RGBA: return PIXEL_FORMAT(RGBA);
-        case video::VIDEO_PIXFMT_YUYV422: return PIXEL_FORMAT(YUYV422);
-        case video::VIDEO_PIXFMT_YUV420P: return PIXEL_FORMAT(YUV420P);
-        case video::VIDEO_PIXFMT_NV21: return PIXEL_FORMAT(NV21);
+        case video::VIDEO_PIXFMT_BGRA: return AV_PIX_FMT_BGRA;
+        case video::VIDEO_PIXFMT_RGBA: return AV_PIX_FMT_RGBA;
+        case video::VIDEO_PIXFMT_YUYV422: return AV_PIX_FMT_YUYV422;
+        case video::VIDEO_PIXFMT_YUV420P: return AV_PIX_FMT_YUV420P;
+        case video::VIDEO_PIXFMT_NV21: return AV_PIX_FMT_NV21;
     }
     return fmt;
 }
@@ -172,7 +172,7 @@ int libav_pixel_format(int fmt)
 int ring_pixel_format(int fmt)
 {
     switch (fmt) {
-        case PIXEL_FORMAT(YUYV422): return video::VIDEO_PIXFMT_YUYV422;
+        case AV_PIX_FMT_YUYV422: return video::VIDEO_PIXFMT_YUYV422;
     }
     return fmt;
 }
