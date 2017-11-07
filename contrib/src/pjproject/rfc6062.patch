@@ -460,7 +460,38 @@ on behalf of Savoir-faire Linux.
      pj_grp_lock_dec_ref(turn_sock->grp_lock);
      pj_grp_lock_release(turn_sock->grp_lock);
  }
-@@ -411,6 +465,9 @@
+@@ -302,6 +356,30 @@
+     }
+ }
+ 
++static void peer_cnx_fail(pj_turn_tcp_data_connection *tcp_cnx,
++                          const char *title, pj_status_t status)
++{
++    pj_turn_sock *turn_sock = tcp_cnx->turn_sock;
++
++    show_err(turn_sock, title, status);
++    if (tcp_cnx->stun_sess) {
++        pj_stun_session_destroy(tcp_cnx->stun_sess);
++        tcp_cnx->stun_sess = NULL;
++    }
++    if (tcp_cnx->active_tcp_sock) {
++        for (int i=0; i < turn_sock->tcp_cnx_count; ++i) {
++            if (&turn_sock->tcp_cnx[i] == tcp_cnx) {
++                pj_activesock_close(tcp_cnx->active_tcp_sock);
++                tcp_cnx->active_tcp_sock = NULL;
++                tcp_cnx->flags = 0;
++                if (i == turn_sock->tcp_cnx_count-1)
++                    --turn_sock->tcp_cnx_count;
++                break;
++            }
++        }
++    }
++}
++
+ /*
+  * Set user data.
+  */
+@@ -411,6 +489,9 @@
  
      /* Set credental */
      if (cred) {
@@ -470,7 +501,7 @@ on behalf of Savoir-faire Linux.
  	status = pj_turn_session_set_credential(turn_sock->sess, cred);
  	if (status != PJ_SUCCESS) {
  	    sess_fail(turn_sock, "Error setting credential", status);
-@@ -676,11 +733,35 @@
+@@ -676,11 +757,35 @@
  	return PJ_EINVALIDOP;
      }
  
@@ -509,7 +540,7 @@ on behalf of Savoir-faire Linux.
      if (status != PJ_SUCCESS && status != PJ_EPENDING) {
  	show_err(turn_sock, "socket send()", status);
      }
-@@ -927,4 +1008,365 @@
+@@ -927,4 +1032,363 @@
      }
  }
  
@@ -556,7 +587,7 @@ on behalf of Savoir-faire Linux.
 +		}
 +		new_tcp_cnx = &turn_sock->tcp_cnx[turn_sock->tcp_cnx_count++];
 +	}
-+
+ 
 +	/* Initialize this TCP connection slot */
 +	pj_bzero(new_tcp_cnx, sizeof(*new_tcp_cnx));
 +	new_tcp_cnx->id = conn_id;
@@ -707,17 +738,13 @@ on behalf of Savoir-faire Linux.
 +	pj_assert(tcp_cnx && tcp_cnx->turn_sock);
 +	turn_sock = tcp_cnx->turn_sock;
 +
++    pj_grp_lock_acquire(turn_sock->grp_lock);
++
 +	if (status != PJ_SUCCESS) {
-+		// TODO: error handling
-+		char addrtxt[PJ_INET6_ADDRSTRLEN + 8];
-+		pj_perror(3, turn_sock->pool->obj_name, status,
-+				  "Failed to read data from %s",
-+				  pj_sockaddr_print(&tcp_cnx->peer_addr, addrtxt,
-+									sizeof(addrtxt), 3));
++        peer_cnx_fail(tcp_cnx, "Peer connection closed", status);
++        pj_grp_lock_release(turn_sock->grp_lock);
 +		return PJ_FALSE;
 +	}
- 
-+	pj_grp_lock_acquire(turn_sock->grp_lock);
 +
 +	*remainder = size;
 +	pj_uint8_t* pkt = data;
@@ -741,7 +768,7 @@ on behalf of Savoir-faire Linux.
 +										   tcp_cnx->peer_addr_len);
 +
 +		if (status != PJ_SUCCESS) {
-+			// TODO: error handling
++            peer_cnx_fail(tcp_cnx, "Peer connection closed", status);
 +			pj_grp_lock_release(turn_sock->grp_lock);
 +			return PJ_FALSE;
 +		}
@@ -764,6 +791,8 @@ on behalf of Savoir-faire Linux.
 +{
 +	pj_turn_tcp_data_connection *tcp_cnx;
 +	pj_turn_sock *turn_sock;
++
++    PJ_LOG(1, ("rfc6062", "peer data connection %s", status == PJ_SUCCESS ? "ready" : "failed"));
 +
 +	tcp_cnx = (pj_turn_tcp_data_connection*) pj_activesock_get_user_data(asock);
 +	if (!tcp_cnx)
