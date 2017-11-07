@@ -43,7 +43,7 @@ struct TurnTransportParams {
     uint32_t connectionId {0};
     std::function<void(uint32_t conn_id, const IpAddr& peer_addr)> onPeerConnection;
 
-    std::size_t maxPacketSize {3000}; ///< size of one "logical" packet
+    std::size_t maxPacketSize {4096}; ///< size of one "logical" packet
 };
 
 class TurnTransport {
@@ -73,6 +73,7 @@ public:
 
     const IpAddr& peerRelayAddr() const;
     const IpAddr& mappedAddr() const;
+    std::vector<IpAddr> peerAddresses() const;
 
     ///
     /// Gives server access permission to given peer by its address.
@@ -89,14 +90,20 @@ public:
     void permitPeer(const IpAddr& addr);
 
     ///
-    /// Collect pending data.
+    /// Collect pending data from a given peer
     ///
-    void recvfrom(std::map<IpAddr, std::vector<char>>& streams);
+    void recvfrom(const IpAddr& peer, std::vector<char>& data);
+
+    void readlinefrom(const IpAddr& peer, std::vector<char>& data);
 
     ///
     /// Send data to a given peer through the TURN tunnel.
     ///
     bool sendto(const IpAddr& peer, const std::vector<char>& data);
+
+    bool sendto(const IpAddr& peer, const char* const buffer, std::size_t length);
+
+    bool writelineto(const IpAddr& peer, const char* const buffer, std::size_t length);
 
 public:
     // Move semantic
