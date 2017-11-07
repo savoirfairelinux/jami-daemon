@@ -116,8 +116,10 @@ HardwareAccel::fail(bool forceFallback)
         fallback_ = true;
         allocationFails_ = 0;
         extractionFails_ = 0;
-        codecCtx_->get_format = avcodec_default_get_format;
-        codecCtx_->get_buffer2 = avcodec_default_get_buffer2;
+        if (codecCtx_) {
+            codecCtx_->get_format = avcodec_default_get_format;
+            codecCtx_->get_buffer2 = avcodec_default_get_buffer2;
+        }
     }
 }
 
