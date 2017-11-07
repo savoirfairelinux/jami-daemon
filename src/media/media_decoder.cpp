@@ -179,19 +179,14 @@ MediaDecoder::setupStream(AVMediaType mediaType)
         }
     }
 
-    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i) {
-        if (inputCtx_->streams[i]->codecpar->codec_type == mediaType) {
-            streamIndex_ = i;
-        }
-    }
-
+    // find the first video stream from the input
+    streamIndex_ = av_find_best_stream(inputCtx_, AVMEDIA_TYPE_VIDEO, -1, -1, &inputDecoder_, 0);
     if (streamIndex_ < 0) {
         RING_ERR() << "No " << streamType << " stream found";
         return -1;
     }
 
     avStream_ = inputCtx_->streams[streamIndex_];
-
     inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
         RING_ERR() << "Unsupported codec";
