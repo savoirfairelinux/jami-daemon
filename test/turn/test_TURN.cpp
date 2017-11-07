@@ -71,6 +71,14 @@ public:
         return pkt;
     }
 
+    IpAddr address() const {
+        struct sockaddr addr;
+        socklen_t addrlen;
+        if (::getsockname(sock_, &addr, &addrlen) < 0)
+            throw std::system_error(errno, std::system_category());
+        return IpAddr {addr};
+    }
+
 private:
     int sock_ {-1};
 };
@@ -91,27 +99,28 @@ test_TURN::testSimpleConnection()
     TCPSocket sock = {param.server.getFamily()};
 
     // Permit myself
-    turn.permitPeer(turn.mappedAddr());
-    sock.connect(turn.peerRelayAddr());
+    auto peer = turn.mappedAddr();
+    turn.permitPeer(peer);
+    std::this_thread::sleep_for(std::chrono::seconds(1));
 
+    // Peer connection
+    sock.connect(turn.peerRelayAddr());
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
+    auto peers = turn.peerAddresses();
+    CPPUNIT_ASSERT(peers.size() == 1);
+    auto remotePeer = peers[0];
+
+    // Peer send data
     std::string test_data = "Hello, World!";
     sock.send(test_data);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Client read
+    std::vector<char> data(1000);
+    turn.recvfrom(remotePeer, data);
+    CPPUNIT_ASSERT(std::string(std::begin(data), std::end(data)) == test_data);
 
-    std::map<IpAddr, std::vector<char>> streams;
-    turn.recvfrom(streams);
-    CPPUNIT_ASSERT(streams.size() == 1);
-
-    auto peer_addr = std::begin(streams)->first;
-    const auto& vec = std::begin(streams)->second;
-    CPPUNIT_ASSERT(std::string(std::begin(vec), std::end(vec)) == test_data);
-
-    turn.recvfrom(streams);
-    CPPUNIT_ASSERT(streams.size() == 0);
-
-    turn.sendto(peer_addr, std::vector<char>{1, 2, 3, 4});
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    turn.sendto(remotePeer, std::vector<char>{1, 2, 3, 4});
 
     auto res = sock.recv(1000);
     CPPUNIT_ASSERT(res.size() == 4);
