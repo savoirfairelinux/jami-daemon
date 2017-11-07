@@ -78,15 +78,12 @@ static int
 allocateBufferCb(AVCodecContext* codecCtx, AVFrame* frame, int flags)
 {
     if (auto accel = static_cast<HardwareAccel*>(codecCtx->opaque)) {
-        if (!accel->hasFailed() && accel->allocateBuffer(frame, flags) == 0) {
-            accel->succeedAllocation();
-            return 0;
+        if (!accel->hasFailed()) {
+            return accel->allocateBuffer(frame, flags);
         }
-
-        accel->failAllocation();
     }
 
-    return avcodec_default_get_buffer2(codecCtx, frame, flags);
+    return -1;
 }
 
 HardwareAccel::HardwareAccel(const std::string& name, const AVPixelFormat format)
@@ -95,27 +92,13 @@ HardwareAccel::HardwareAccel(const std::string& name, const AVPixelFormat format
 {}
 
 void
-HardwareAccel::failAllocation()
-{
-    ++allocationFails_;
-    fail(false);
-}
-
-void
-HardwareAccel::failExtraction()
-{
-    ++extractionFails_;
-    fail(false);
-}
-
-void
 HardwareAccel::fail(bool forceFallback)
 {
-    if (allocationFails_ >= MAX_ACCEL_FAILURES || extractionFails_ >= MAX_ACCEL_FAILURES || forceFallback) {
+    ++accelFails_;
+    if (accelFails_ >= MAX_ACCEL_FAILURES || forceFallback) {
         RING_ERR("Hardware acceleration failure");
         fallback_ = true;
-        allocationFails_ = 0;
-        extractionFails_ = 0;
+        accelFails_ = 0;
         if (codecCtx_) {
             codecCtx_->get_format = avcodec_default_get_format;
             codecCtx_->get_buffer2 = avcodec_default_get_buffer2;
@@ -149,12 +132,12 @@ HardwareAccel::extractData(VideoFrame& input)
         av_frame_unref(inFrame);
         av_frame_move_ref(inFrame, outFrame);
     } catch (const std::runtime_error& e) {
-        failExtraction();
+        fail(false);
         RING_ERR("%s", e.what());
         return false;
     }
 
-    succeedExtraction();
+    accelFails_ = 0; // reset failure count on success
     return true;
 }
 
