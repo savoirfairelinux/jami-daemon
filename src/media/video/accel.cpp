@@ -54,7 +54,9 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
         return avcodec_default_get_format(codecCtx, formats);
     }
 
-    for (int i = 0; formats[i] != AV_PIX_FMT_NONE; i++) {
+    AVPixelFormat fallback = AV_PIX_FMT_NONE;
+    for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
+        fallback = formats[i];
         if (formats[i] == accel->format()) {
             accel->setWidth(codecCtx->coded_width);
             accel->setHeight(codecCtx->coded_height);
@@ -62,7 +64,6 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
             accel->setCodecCtx(codecCtx);
             if (accel->init())
                 return accel->format();
-            break;
         }
     }
 
@@ -70,14 +71,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     RING_WARN("Falling back to software decoding");
     codecCtx->get_format = avcodec_default_get_format;
     codecCtx->get_buffer2 = avcodec_default_get_buffer2;
-    for (int i = 0; formats[i] != AV_PIX_FMT_NONE; i++) {
-        auto desc = av_pix_fmt_desc_get(formats[i]);
-        if (desc && !(desc->flags & AV_PIX_FMT_FLAG_HWACCEL)) {
-            return formats[i];
-        }
-    }
-
-    return AV_PIX_FMT_NONE;
+    return fallback;
 }
 
 static int
