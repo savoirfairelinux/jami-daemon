@@ -93,6 +93,9 @@ getSignalHandlers()
         /* Audio */
         exported_callback<DRing::AudioSignal::DeviceEvent>(),
 
+        /* DataTransfer */
+        exported_callback<DRing::DataTransferSignal::DataTransferEvent>(),
+
 #ifdef RING_VIDEO
         /* Video */
         exported_callback<DRing::VideoSignal::DeviceEvent>(),
