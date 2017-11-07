@@ -218,7 +218,6 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
         startTime_ = av_gettime();
     }
 
-    decoderCtx_->refcounted_frames = 1;
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
     if (ret) {
         RING_ERR("Could not open codec");
@@ -317,7 +316,6 @@ int MediaDecoder::setupFromVideoData()
         startTime_ = av_gettime();
     }
 
-    decoderCtx_->refcounted_frames = 1;
     ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
     if (ret) {
         RING_ERR("Could not open codec");
