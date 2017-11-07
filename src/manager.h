@@ -52,6 +52,7 @@ class VideoManager;
 class Conference;
 class AudioLoop;
 class IceTransportFactory;
+class DataTransferFacade;
 
 /** Manager (controller) of Ring daemon */
 class Manager {
@@ -851,7 +852,7 @@ class Manager {
 
         IceTransportFactory& getIceTransportFactory();
 
-        void addTask(const std::function<bool()>&& task);
+        void addTask(std::function<bool()>&& task);
 
         struct Runnable {
             std::function<void()> cb;
@@ -889,6 +890,8 @@ class Manager {
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
         AccountFactory accountFactory;
 
+        std::unique_ptr<DataTransferFacade> dataTransfers;
+
 private:
         Manager();
         ~Manager();
@@ -900,10 +903,7 @@ private:
 // Helper to install a callback to be called once by the main event loop
 template<typename Callback>
 static void runOnMainThread(Callback&& cb) {
-    Manager::instance().addTask([=]() mutable {
-        cb();
-        return false;
-    });
+    Manager::instance().addTask([cb]() mutable { cb(); return false; });
 }
 
 } // namespace ring
