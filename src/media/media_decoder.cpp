@@ -311,7 +311,7 @@ int MediaDecoder::setupFromVideoData()
     } else {
         RING_WARN("Hardware accelerated decoding disabled by user preference");
     }
-#endif // RING_ACCEL
+#endif
 
     if (emulateRate_) {
         RING_DBG("Using framerate emulation");
@@ -355,18 +355,10 @@ MediaDecoder::decode(VideoFrame& result)
     int frameFinished = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
     if (ret < 0) {
-#ifdef RING_ACCEL
-        if (accel_ && accel_->hasFailed())
-            return Status::RestartRequired;
-#endif
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
     ret = avcodec_receive_frame(decoderCtx_, frame);
     if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
-#ifdef RING_ACCEL
-        if (accel_ && accel_->hasFailed())
-            return Status::RestartRequired;
-#endif
         return Status::DecodeError;
     }
     if (ret >= 0)
@@ -383,7 +375,7 @@ MediaDecoder::decode(VideoFrame& result)
             else
                 return Status::RestartRequired;
         }
-#endif // RING_ACCEL
+#endif
         if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
@@ -491,7 +483,7 @@ MediaDecoder::flush(VideoFrame& result)
         // so don't restart the media decoder
         if (accel_ && !accel_->hasFailed())
             accel_->extractData(result);
-#endif // RING_ACCEL
+#endif
         return Status::FrameFinished;
     }
 
