@@ -325,9 +325,11 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
-            if (ret < 0)
-                print_averror("av_write_frame", ret);
-            else
+            if (ret < 0) {
+                char errbuf[64];
+                av_strerror(ret, errbuf, sizeof(errbuf));
+                RING_ERR("av_write_frame failed: %s", errbuf);
+            } else
                 break;
         }
     }
@@ -431,9 +433,11 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 
                 // write the compressed frame
                 ret = av_write_frame(outputCtx_, &pkt);
-                if (ret < 0)
-                    print_averror("av_write_frame", ret);
-                else
+                if (ret < 0) {
+                    char errbuf[64];
+                    av_strerror(ret, errbuf, sizeof(errbuf));
+                    RING_ERR("av_write_frame failed: %s", errbuf);
+                } else
                     break;
             }
         }
@@ -475,9 +479,11 @@ int MediaEncoder::flush()
 
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
-            if (ret < 0)
-                print_averror("av_write_frame", ret);
-            else
+            if (ret < 0) {
+                char errbuf[64];
+                av_strerror(ret, errbuf, sizeof(errbuf));
+                RING_ERR("av_write_frame failed: %s", errbuf);
+            } else
                 break;
         }
     }
