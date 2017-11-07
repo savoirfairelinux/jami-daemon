@@ -168,15 +168,9 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     }
 
     // find the first audio stream from the input
-    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#ifndef _WIN32
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
-#else
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
-#endif
-            streamIndex_ = i;
+    streamIndex_ = av_find_best_stream(inputCtx_, AVMEDIA_TYPE_AUDIO, -1, -1, &inputDecoder_, 0);
 
-    if (streamIndex_ == -1) {
+    if (streamIndex_ < 0) {
         RING_ERR("Could not find audio stream");
         return -1;
     }
@@ -184,12 +178,6 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
 #ifndef _WIN32
-    inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-
     decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
 #else
@@ -259,15 +247,9 @@ int MediaDecoder::setupFromVideoData()
     }
 
     // find the first video stream from the input
-    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#ifndef _WIN32
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
-#else
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-#endif
-            streamIndex_ = i;
+    streamIndex_ = av_find_best_stream(inputCtx_, AVMEDIA_TYPE_VIDEO, -1, -1, &inputDecoder_, 0);
 
-    if (streamIndex_ == -1) {
+    if (streamIndex_ < 0) {
         RING_ERR("Could not find video stream");
         return -1;
     }
@@ -275,12 +257,6 @@ int MediaDecoder::setupFromVideoData()
     // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
 #ifndef _WIN32
-    inputDecoder_ = video::findDecoder(avStream_->codecpar->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-
     decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
 #else
