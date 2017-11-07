@@ -78,9 +78,8 @@ class DRingCtrl(Thread):
         self.register()
 
     def __del__(self):
-        if self.registered:
-            self.unregister()
-        self.loop.quit()
+        self.unregister()
+        #self.loop.quit() # causes exception
 
     def stopThread(self):
         self.isStop = True
@@ -136,6 +135,7 @@ class DRingCtrl(Thread):
             proxy_callmgr.connect_to_signal('callStateChanged', self.onCallStateChanged)
             proxy_callmgr.connect_to_signal('conferenceCreated', self.onConferenceCreated)
             proxy_confmgr.connect_to_signal('accountsChanged', self.onAccountsChanged)
+            proxy_confmgr.connect_to_signal('dataTransferEvent', self.onDataTransferEvent)
 
         except dbus.DBusException as e:
             raise DRingCtrlDBusError("Unable to connect to dring DBus signals")
@@ -272,6 +272,9 @@ class DRingCtrl(Thread):
     def onConferenceCreated(self, confId):
         self.currentConfId = confId
         self.onConferenceCreated_cb()
+
+    def onDataTransferEvent(self, transferId, code):
+        pass
 
     #
     # Account management
@@ -632,6 +635,9 @@ class DRingCtrl(Thread):
         for k in sorted(details.keys()):
             print("  %s: %s" % (k, details[k]))
         print()
+
+    def sendFile(self, *args, **kwds):
+        return self.configurationmanager.sendFile(*args, **kwds)
 
     def run(self):
         """Processing method for this thread"""
