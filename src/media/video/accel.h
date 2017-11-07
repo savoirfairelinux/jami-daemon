@@ -43,11 +43,7 @@ class HardwareAccel {
         void setHeight(int height) { height_ = height; }
         void setProfile(int profile) { profile_ = profile; }
 
-        void failAllocation();
-        void failExtraction();
         void fail(bool forceFallback);
-        void succeedAllocation() { allocationFails_ = 0; }
-        void succeedExtraction() { extractionFails_ = 0; }
 
         // wrapper to take care of boilerplate before calling the derived class's implementation
         bool extractData(VideoFrame& input);
@@ -62,8 +58,7 @@ class HardwareAccel {
         AVCodecContext* codecCtx_ = nullptr;
         std::string name_;
         AVPixelFormat format_;
-        unsigned allocationFails_ = 0; // how many times in a row allocateBuffer has failed
-        unsigned extractionFails_ = 0; // how many times in a row extractData has failed
+        unsigned accelFails_ = 0;
         bool fallback_ = false; // set to true when successive failures exceeds MAX_ACCEL_FAILURES
         int width_ = -1;
         int height_ = -1;
