@@ -1,7 +1,7 @@
 # speex
 
 SPEEX_HASH := 9172c7ef85fbf058027528d48ededbc7ca847908
-SPEEX_GITURL := http://git.xiph.org/?p=speex.git;a=snapshot;h=$(SPEEX_HASH);sf=tgz
+SPEEX_GITURL := https://git.xiph.org/?p=speex.git;a=snapshot;h=$(SPEEX_HASH);sf=tgz
 
 PKGS += speex
 ifeq ($(call need_pkg,"speex >= 1.0.5"),)
