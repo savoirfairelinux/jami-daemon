@@ -1,13 +1,13 @@
-GNU=http://ftp.gnu.org/gnu
+GNU=https://ftp.gnu.org/gnu
 APACHE=http://mir2.ovh.net/ftp.apache.org/dist
-SF= http://downloads.sourceforge.net/project
+SF= https://downloads.sourceforge.net/project
 
 YASM_VERSION=1.2.0
 #YASM_URL=$(CONTRIB_VIDEOLAN)/yasm-$(YASM_VERSION).tar.gz
-YASM_URL=http://www.tortall.net/projects/yasm/releases/yasm-$(YASM_VERSION).tar.gz
+YASM_URL=https://www.tortall.net/projects/yasm/releases/yasm-$(YASM_VERSION).tar.gz
 
 CMAKE_VERSION=3.2.2
-CMAKE_URL=http://www.cmake.org/files/v3.2/cmake-$(CMAKE_VERSION).tar.gz
+CMAKE_URL=https://www.cmake.org/files/v3.2/cmake-$(CMAKE_VERSION).tar.gz
 
 LIBTOOL_VERSION=2.4.6
 LIBTOOL_URL=$(GNU)/libtool/libtool-$(LIBTOOL_VERSION).tar.xz
@@ -29,7 +29,7 @@ TAR_VERSION=1.28
 TAR_URL=$(GNU)/tar/tar-$(TAR_VERSION).tar.bz2
 
 XZ_VERSION=5.2.2
-XZ_URL=http://tukaani.org/xz/xz-$(XZ_VERSION).tar.bz2
+XZ_URL=https://tukaani.org/xz/xz-$(XZ_VERSION).tar.bz2
 
 GAS_VERSION=36bacb4cba27003c572e5bf7a9c4dfe3c9a8d40d
 GAS_URL=https://raw.githubusercontent.com/FFmpeg/gas-preprocessor/$(GAS_VERSION)/gas-preprocessor.pl

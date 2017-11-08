@@ -2,7 +2,7 @@
 
 OGG_VERSION := 1.3.1
 
-OGG_URL := http://downloads.xiph.org/releases/ogg/libogg-$(OGG_VERSION).tar.xz
+OGG_URL := https://downloads.xiph.org/releases/ogg/libogg-$(OGG_VERSION).tar.xz
 #OGG_URL := $(CONTRIB_VIDEOLAN)/libogg-$(OGG_VERSION).tar.xz
 
 PKGS += ogg

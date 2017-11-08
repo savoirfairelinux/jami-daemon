@@ -1,7 +1,7 @@
 # FLAC
 
 FLAC_VERSION := 1.3.0
-FLAC_URL := http://downloads.xiph.org/releases/flac/flac-$(FLAC_VERSION).tar.xz
+FLAC_URL := https://downloads.xiph.org/releases/flac/flac-$(FLAC_VERSION).tar.xz
 
 PKGS += flac
 ifeq ($(call need_pkg,"flac"),)
