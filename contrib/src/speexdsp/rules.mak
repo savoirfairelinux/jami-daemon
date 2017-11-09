@@ -12,10 +12,8 @@ $(TARBALLS)/speexdsp-$(SPEEXDSP_HASH).tar.gz:
 	$(call download,$(SPEEXDSP_GITURL))
 
 .sum-speexdsp: speexdsp-$(SPEEXDSP_HASH).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
-speexdsp: speexdsp-$(SPEEXDSP_HASH).tar.gz .sum-speexdsp
+speexdsp: speexdsp-$(SPEEXDSP_HASH).tar.gz
 	rm -Rf $@ $@-$(SPEEXDSP_HASH)
 	mkdir -p $@-$(SPEEXDSP_HASH)
 	$(ZCAT) "$<" | (cd $@-$(SPEEXDSP_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
@@ -40,7 +38,7 @@ SPEEXDSP_CONF += --enable-arm5e-asm
 endif
 endif
 
-.speexdsp: speexdsp
+.speexdsp: speexdsp .sum-speexdsp
 	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(SPEEXDSP_CONF)
 	cd $< && $(MAKE) install
