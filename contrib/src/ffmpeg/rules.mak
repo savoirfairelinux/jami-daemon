@@ -196,10 +196,8 @@ $(TARBALLS)/ffmpeg-$(FFMPEG_HASH).tar.gz:
 	$(call download,$(FFMPEG_URL))
 
 .sum-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
-	$(warning $@ is not implemented.)
-	touch $@
 
-ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz .sum-ffmpeg
+ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
@@ -214,7 +212,7 @@ endif
 endif
 	$(MOVE)
 
-.ffmpeg: ffmpeg
+.ffmpeg: ffmpeg .sum-ffmpeg
 	cd $< && $(HOSTVARS) ./configure \
 		--extra-cflags="$(CFLAGS)" \
 		--extra-ldflags="$(LDFLAGS)" $(FFMPEGCONF) \

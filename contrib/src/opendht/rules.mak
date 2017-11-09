@@ -22,15 +22,13 @@ $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
 	$(call download,$(OPENDHT_URL))
 
 .sum-opendht: opendht-$(OPENDHT_VERSION).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
-opendht: opendht-$(OPENDHT_VERSION).tar.gz .sum-opendht
+opendht: opendht-$(OPENDHT_VERSION).tar.gz
 	$(UNPACK)
 	$(UPDATE_AUTOCONFIG) && cd $(UNPACK_DIR)
 	$(MOVE)
 
-.opendht: opendht
+.opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc $(HOSTCONF)
 	cd $< && $(MAKE) install

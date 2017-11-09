@@ -10,16 +10,14 @@ $(TARBALLS)/argon2-$(ARGON2_VERSION).tar.gz:
 	$(call download,$(ARGON2_URL))
 
 .sum-argon2: argon2-$(ARGON2_VERSION).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
-argon2: argon2-$(ARGON2_VERSION).tar.gz .sum-argon2
+argon2: argon2-$(ARGON2_VERSION).tar.gz
 	$(UNPACK)
 	mv phc-winner-argon2-$(ARGON2_VERSION) argon2-$(ARGON2_VERSION)
 	$(APPLY) $(SRC)/argon2/pkgconfig.patch
 	$(MOVE)
 
-.argon2: argon2
+.argon2: argon2 .sum-argon2
 	cd $< && sed -i'.orig' -e 's|@PREFIX@|$(PREFIX)|' -e "s|@HOST_MULTIARCH@||" -e "s|@UPSTREAM_VER@|$(ARGON2_VERSION)|" libargon2.pc
 	cd $< && mkdir -p $(PREFIX)/lib/pkgconfig/ && cp libargon2.pc $(PREFIX)/lib/pkgconfig/
 	cd $< && $(HOSTVARS) $(MAKE) libs PREFIX="$(PREFIX)" OPTTARGET="no-opt" LIB_SH=""
