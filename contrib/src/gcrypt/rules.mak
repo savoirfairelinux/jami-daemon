@@ -1,6 +1,6 @@
 # GCRYPT
 GCRYPT_VERSION := 1.6.2
-GCRYPT_URL := ftp://ftp.gnupg.org/gcrypt/libgcrypt/libgcrypt-$(GCRYPT_VERSION).tar.bz2
+GCRYPT_URL := https://gnupg.org/ftp/gcrypt/libgcrypt/libgcrypt-$(GCRYPT_VERSION).tar.bz2
 
 $(TARBALLS)/libgcrypt-$(GCRYPT_VERSION).tar.bz2:
 	$(call download,$(GCRYPT_URL))

@@ -1,6 +1,6 @@
 # GPGERROR
 GPGERROR_VERSION := 1.15
-GPGERROR_URL := ftp://ftp.gnupg.org/gcrypt/libgpg-error/libgpg-error-$(GPGERROR_VERSION).tar.bz2
+GPGERROR_URL := https://www.gnupg.org/ftp/gcrypt/libgpg-error/libgpg-error-$(GPGERROR_VERSION).tar.bz2
 
 $(TARBALLS)/libgpg-error-$(GPGERROR_VERSION).tar.bz2:
 	$(call download,$(GPGERROR_URL))
