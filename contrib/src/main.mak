@@ -37,7 +37,7 @@ VPATH := $(TARBALLS)
 BATCH_MODE = 1
 
 # Common download locations
-GNU := https://ftpmirror.gnu.org/
+GNU := https://ftpmirror.gnu.org
 SF := https://sourceforge.net/projects
 CONTRIB_VIDEOLAN ?= https://downloads.videolan.org/pub/contrib
 
