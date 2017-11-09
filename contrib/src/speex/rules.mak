@@ -12,10 +12,8 @@ $(TARBALLS)/speex-$(SPEEX_HASH).tar.gz:
 	$(call download,$(SPEEX_GITURL))
 
 .sum-speex: speex-$(SPEEX_HASH).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
-speex: speex-$(SPEEX_HASH).tar.gz .sum-speex
+speex: speex-$(SPEEX_HASH).tar.gz
 	rm -Rf $@ $@-$(SPEEX_HASH)
 	mkdir -p $@-$(SPEEX_HASH)
 	$(ZCAT) "$<" | (cd $@-$(SPEEX_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1)
@@ -32,7 +30,7 @@ ifeq ($(ARCH),aarch64)
 SPEEX_CONF += --disable-neon
 endif
 
-.speex: speex
+.speex: speex .sum-speex
 	mkdir -p $</m4 && $(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) $(SPEEX_CONF)
 	cd $< && $(MAKE) install

@@ -13,14 +13,12 @@ $(TARBALLS)/secp256k1-$(SECP256K1_VERSION).tar.gz:
 	$(call download,$(SECP256K1_URL))
 
 .sum-secp256k1: secp256k1-$(SECP256K1_VERSION).tar.gz
-	$(warning $@ not implemented)
-	touch $@
 
-secp256k1: secp256k1-$(SECP256K1_VERSION).tar.gz .sum-secp256k1
+secp256k1: secp256k1-$(SECP256K1_VERSION).tar.gz
 	$(UNPACK)
 	$(MOVE)
 
-.secp256k1: secp256k1
+.secp256k1: secp256k1 .sum-secp256k1
 	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) --disable-tests --disable-exhaustive-tests
 	cd $< && $(MAKE) CFLAGS+="-USECP256K1_BUILD" install
