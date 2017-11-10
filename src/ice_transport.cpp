@@ -487,6 +487,9 @@ IceTransport::start(const std::vector<uint8_t>& rem_data)
         return false;
     }
 
+    if (onlyIPv4Private_)
+        RING_WARN("[ice:%p] no public IPv4 found, your connection may fail!", this);
+
     return start({rem_ufrag, rem_pwd}, rem_candidates);
 }
 
@@ -854,8 +857,10 @@ IceTransport::getCandidateFromSDP(const std::string& line, IceCandidate& cand)
 
     if (strchr(ipaddr, ':'))
         af = pj_AF_INET6();
-    else
+    else {
         af = pj_AF_INET();
+        onlyIPv4Private_ &= IpAddr(ipaddr).isPrivate();
+    }
 
     tmpaddr = pj_str(ipaddr);
     pj_sockaddr_init(af, &cand.addr, NULL, 0);

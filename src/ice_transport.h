@@ -297,6 +297,8 @@ class IceTransport {
 
         std::unique_ptr<upnp::Controller> upnp_;
 
+        bool onlyIPv4Private_ {true};
+
         // IO/Timer events are handled by following thread
         std::thread thread_;
         std::atomic_bool threadTerminateFlags_ {false};
