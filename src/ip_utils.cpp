@@ -332,14 +332,18 @@ bool
 IpAddr::isLoopback() const
 {
     switch (addr.addr.sa_family) {
-    case AF_INET: {
-        uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
-        return b1 == 127;
-    }
-    case AF_INET6:
-        return IN6_IS_ADDR_LOOPBACK(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
-    default:
-        return false;
+        case AF_INET: {
+#ifdef WORDS_BIGENDIAN
+            uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+#else
+            uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr);
+#endif
+            return b1 == 127;
+        }
+        case AF_INET6:
+            return IN6_IS_ADDR_LOOPBACK(reinterpret_cast<const in6_addr*>(&addr.ipv6.sin6_addr));
+        default:
+            return false;
     }
 }
 
@@ -350,28 +354,34 @@ IpAddr::isPrivate() const
         return true;
     }
     switch (addr.addr.sa_family) {
-    case AF_INET:
-        uint8_t b1, b2;
-        b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
-        b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0x0ff);
-        // 10.x.y.z
-        if (b1 == 10)
-            return true;
-        // 172.16.0.0 - 172.31.255.255
-        if ((b1 == 172) && (b2 >= 16) && (b2 <= 31))
-            return true;
-        // 192.168.0.0 - 192.168.255.255
-        if ((b1 == 192) && (b2 == 168))
-            return true;
-        return false;
-    case AF_INET6: {
-        const pj_uint8_t* addr6 = reinterpret_cast<const pj_uint8_t*>(&addr.ipv6.sin6_addr);
-        if (addr6[0] == 0xfc)
-            return true;
-        return false;
-    }
-    default:
-        return false;
+        case AF_INET: {
+            uint8_t b1, b2;
+#ifdef WORDS_BIGENDIAN
+            b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+            b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0xff);
+#else
+            b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr);
+            b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 8) & 0xff);
+#endif
+            // 10.x.y.z
+            if (b1 == 10)
+                return true;
+            // 172.16.0.0 - 172.31.255.255
+            if ((b1 == 172) && (b2 >= 16) && (b2 <= 31))
+                return true;
+            // 192.168.0.0 - 192.168.255.255
+            if ((b1 == 192) && (b2 == 168))
+                return true;
+            return false;
+        }
+        case AF_INET6: {
+            const pj_uint8_t* addr6 = reinterpret_cast<const pj_uint8_t*>(&addr.ipv6.sin6_addr);
+            if (addr6[0] == 0xfc)
+                return true;
+            return false;
+        }
+        default:
+            return false;
     }
 }
 
