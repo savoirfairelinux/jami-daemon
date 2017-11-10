@@ -333,7 +333,8 @@ IpAddr::isLoopback() const
 {
     switch (addr.addr.sa_family) {
     case AF_INET: {
-        uint8_t b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
+        auto addr_host = ntohl(addr.ipv4.sin_addr.s_addr);
+        uint8_t b1 = (uint8_t)(addr_host >> 24);
         return b1 == 127;
     }
     case AF_INET6:
@@ -350,10 +351,11 @@ IpAddr::isPrivate() const
         return true;
     }
     switch (addr.addr.sa_family) {
-    case AF_INET:
+    case AF_INET: {
+        auto addr_host = ntohl(addr.ipv4.sin_addr.s_addr);
         uint8_t b1, b2;
-        b1 = (uint8_t)(addr.ipv4.sin_addr.s_addr >> 24);
-        b2 = (uint8_t)((addr.ipv4.sin_addr.s_addr >> 16) & 0x0ff);
+        b1 = (uint8_t)(addr_host >> 24);
+        b2 = (uint8_t)((addr_host >> 16) & 0x0ff);
         // 10.x.y.z
         if (b1 == 10)
             return true;
@@ -364,6 +366,7 @@ IpAddr::isPrivate() const
         if ((b1 == 192) && (b2 == 168))
             return true;
         return false;
+    }
     case AF_INET6: {
         const pj_uint8_t* addr6 = reinterpret_cast<const pj_uint8_t*>(&addr.ipv6.sin6_addr);
         if (addr6[0] == 0xfc)
