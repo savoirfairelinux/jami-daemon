@@ -3,6 +3,7 @@
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,8 +20,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef STRING_UTILS_H
-#define STRING_UTILS_H
+#pragma once
 
 #include <string>
 #include <vector>
@@ -72,5 +72,3 @@ std::vector<unsigned>
 split_string_to_unsigned(const std::string& s, char sep);
 
 } // namespace ring
-
-#endif

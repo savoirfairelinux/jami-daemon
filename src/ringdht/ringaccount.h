@@ -31,6 +31,7 @@
 #include "noncopyable.h"
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
+#include "channel.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -70,8 +71,13 @@ namespace ring {
 class IceTransport;
 struct Contact;
 struct AccountArchive;
+class DhtPeerConnector;
+class PeerConnection;
 
 class RingAccount : public SIPAccountBase {
+    private:
+        struct PeerConnectionMsg;
+
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
@@ -306,6 +312,30 @@ class RingAccount : public SIPAccountBase {
         void registerName(const std::string& password, const std::string& name);
 #endif
 
+        ///
+        /// Send a E2E connection request to a given peer
+        ///
+        /// /// \param[in] peer_id RingID on request's recipiant
+        ///
+        void requestPeerConnection(const std::string& peer,
+                                   std::function<void(PeerConnection*)> connect_cb);
+
+        dht::DhtRunner& dht() { return dht_; }
+
+        using JobQueueType = Channel<std::function<void()>>;
+        JobQueueType& jobQueue() const { return jobQueue_; }
+
+        std::vector<std::string> publicAddresses();
+
+        void forEachDevice(const dht::InfoHash& to,
+                           std::function<void(const std::shared_ptr<RingAccount>&,
+                                              const dht::InfoHash&)> op,
+                           std::function<void(bool)> end = {});
+
+        /// \return true if the given DHT message identifier has been treated
+        /// \note if message has not been treated yet this method store this id and returns true at further calls
+        bool isMessageTreated(unsigned int id) ;
+
     private:
         NON_COPYABLE(RingAccount);
 
@@ -358,8 +388,6 @@ class RingAccount : public SIPAccountBase {
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
         void handleEvents();
-
-        void forEachDevice(const dht::InfoHash& to, std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)> op, std::function<void(bool)> end = {});
 
         void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
 
@@ -418,7 +446,6 @@ class RingAccount : public SIPAccountBase {
 
         void igdChanged();
 
-        dht::DhtRunner dht_ {};
         dht::crypto::Identity identity_ {};
 
         dht::InfoHash callKey_;
@@ -583,6 +610,18 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
         void registerDhtAddress(IceTransport&);
+
+        std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+
+        mutable JobQueueType jobQueue_;
+
+        dht::DhtRunner dht_ {}; // placed at end for dependencies
 };
+
+static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
+{
+    os << "[Account " << acc.getAccountID() << "] ";
+    return os;
+}
 
 } // namespace ring
