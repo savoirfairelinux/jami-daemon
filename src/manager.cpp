@@ -1620,7 +1620,7 @@ Manager::joinConference(const std::string& conf_id1,
 }
 
 void
-Manager::addAudio(Call& call)
+Manager::addAudio(Call& call) // [jn]
 {
     const auto call_id = call.getCallId();
 
@@ -1651,7 +1651,7 @@ Manager::addAudio(Call& call)
 }
 
 void
-Manager::removeAudio(Call& call)
+Manager::removeAudio(Call& call) // [jn]
 {
     const auto call_id = call.getCallId();
     RING_DBG("[call:%s] Remove local audio", call_id.c_str());

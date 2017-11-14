@@ -108,6 +108,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
+// [jn] : CallType --> rien à voir avec l'audio/vidéo
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
     , avformatrtp_(new AudioRtpSession(id))
@@ -880,6 +881,12 @@ SIPCall::startAllMedia()
             videortp_->switchInput(videoInput_);
 
         videortp_->setMtu(new_mtu);
+        
+        // [jn] following lines will cut local video (Q&D)
+        if (not noMoreLocalVideo_) {
+            DRing::switchInput(getCallId(), videoInput_);
+            noMoreLocalVideo_ = true;
+        }
 #endif
         rtp->updateMedia(remote, local);
 
@@ -930,6 +937,92 @@ SIPCall::startAllMedia()
         }
         remainingRequest_ = Request::NoRequest;
     }
+}
+
+void
+SIPCall::startAudioMediaOnly()
+{
+    RING_WARN("[call:%s] startAudioMediaOnly()", getCallId().c_str());
+
+    // [jn] on devrait mettre ça dans une fonction dédiée...
+    if (isSecure() && not transport_->isSecure()) {
+        RING_ERR("[call:%s] Can't perform secure call over insecure SIP transport",
+                 getCallId().c_str());
+        onFailure(EPROTONOSUPPORT);
+        return;
+    }
+    
+    auto slots = sdp_->getMediaSlots();
+    unsigned ice_comp_id = 0;
+    bool peer_holding {true};
+    int slotN = -1;
+
+    for (const auto& slot : slots) {
+        const auto& local = slot.first;
+        const auto& remote = slot.second;
+
+        if (local.type != remote.type or local.type != MediaType::MEDIA_AUDIO)
+            continue;
+        
+        std::cout << " [jn] local : " << local.type << std::endl;
+        std::cout << " [jn] remote : " << remote.type << std::endl;
+
+        RtpSession* rtp = static_cast<RtpSession*>(avformatrtp_.get());
+
+        if (not rtp) {
+            RING_WARN("[call:%s] has no RTP session.");
+            continue;
+        }
+
+        if (not local.codec) {
+            RING_WARN("[call:%s] [SDP:slot#%u] Missing local codec", getCallId().c_str(), slotN);
+            continue;
+        }
+        if (not remote.codec) {
+            RING_WARN("[call:%s] [SDP:slot#%u] Missing remote codec", getCallId().c_str(), slotN);
+            continue;
+        }
+
+        peer_holding &= remote.holding; // [jn] je ne sais pas à quoi correspond holding
+
+        if (isSecure() && (not local.crypto || not remote.crypto)) {
+            RING_ERR("[call:%s] [SDP:slot#%u] Can't perform secure call over insecure RTP transport",
+                     getCallId().c_str(), slotN);
+            continue;
+        }
+
+        auto new_mtu = transport_->getTlsMtu();
+        avformatrtp_->setMtu(new_mtu);
+
+        rtp->updateMedia(remote, local);
+
+        // Not restarting media loop on hold as it's a huge waste of CPU ressources
+        // because of the audio loop
+        if (getState() != CallState::HOLD) {
+            if (isIceRunning()) {
+                rtp->start(newIceSocket(ice_comp_id + 0),
+                           newIceSocket(ice_comp_id + 1));
+                ice_comp_id += 2;
+            } else
+                rtp->start(nullptr, nullptr);
+        }
+
+        isAudioMuted_ = not rtp->isSending();
+
+    }
+
+    if (not isSubcall() and peerHolding_ != peer_holding) {
+        peerHolding_ = peer_holding;
+        emitSignal<DRing::CallSignal::PeerHold>(getCallId(), peerHolding_);
+    }
+
+    std::cout << " end of the function" << std::endl;
+}
+
+void
+SIPCall::startVideoMediaOnly()
+{
+    RING_WARN("[call:%s] startVideoMediaOnly()", getCallId().c_str());
 }
 
 void
@@ -1001,7 +1094,7 @@ SIPCall::onMediaUpdate()
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         RING_WARN("[call:%s] no remote ICE for medias", getCallId().c_str());
         stopAllMedia();
-        startAllMedia();
+        startAudioMediaOnly();
         return;
     }
 
@@ -1061,7 +1154,7 @@ SIPCall::waitForIceAndStartMedia()
                     call->stopAllMedia();
                     if (call->tmpMediaTransport_)
                         call->mediaTransport_ = std::move(call->tmpMediaTransport_);
-                    call->startAllMedia();
+                    call->startAudioMediaOnly();
                     return false;
                 }
                 return false;
