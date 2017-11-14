@@ -108,6 +108,7 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
+// [jn] : CallType --> rien à voir avec l'audio/vidéo
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
     : Call(account, id, type)
     , avformatrtp_(new AudioRtpSession(id))
@@ -880,6 +881,12 @@ SIPCall::startAllMedia()
             videortp_->switchInput(videoInput_);
 
         videortp_->setMtu(new_mtu);
+        
+        // [jn] following lines will cut local video (Q&D)
+        if (not noMoreLocalVideo_) {
+            DRing::switchInput(getCallId(), videoInput_);
+            noMoreLocalVideo_ = true;
+        }
 #endif
         rtp->updateMedia(remote, local);
 
@@ -930,6 +937,18 @@ SIPCall::startAllMedia()
         }
         remainingRequest_ = Request::NoRequest;
     }
+}
+
+void
+SIPCall::startAudioMediaOnly()
+{
+    RING_WARN("[call:%s] startAudioMediaOnly()", getCallId().c_str());
+}
+
+void
+SIPCall::startVideoMediaOnly()
+{
+    RING_WARN("[call:%s] startVideoMediaOnly()", getCallId().c_str());
 }
 
 void
@@ -1001,7 +1020,7 @@ SIPCall::onMediaUpdate()
     if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
         RING_WARN("[call:%s] no remote ICE for medias", getCallId().c_str());
         stopAllMedia();
-        startAllMedia();
+        startAudioMediaOnly();
         return;
     }
 
@@ -1061,7 +1080,7 @@ SIPCall::waitForIceAndStartMedia()
                     call->stopAllMedia();
                     if (call->tmpMediaTransport_)
                         call->mediaTransport_ = std::move(call->tmpMediaTransport_);
-                    call->startAllMedia();
+                    call->startAudioMediaOnly();
                     return false;
                 }
                 return false;

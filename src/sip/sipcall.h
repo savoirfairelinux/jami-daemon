@@ -199,7 +199,14 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
     void generateMediaPorts();
 
+    // [jn] voir si cette méthode ne pourrait pas utiliser les deux suivantes.
     void startAllMedia();
+
+    // [jn] à utiliser pour faire les appels audio.
+    void startAudioMediaOnly();
+
+    // [jn] à utiliser pour démarrer la vidéo.
+    void startVideoMediaOnly();
 
     void openPortsUPnP();
 
@@ -219,6 +226,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
 
 private:
     NON_COPYABLE(SIPCall);
+    
+    bool noMoreLocalVideo_ = false;
 
     void setCallMediaLocal();
 
