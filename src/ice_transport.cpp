@@ -143,6 +143,10 @@ IceTransport::cb_on_rx_data(pj_ice_strans* ice_st,
                             const pj_sockaddr_t* /*src_addr*/,
                             unsigned /*src_addr_len*/)
 {
+    //~ std::cout << "[jn] cb_on_rx_data #1" << std::endl;
+    //~ std::cout << "size = " << size << std::endl;
+    //~ std::cout << "pkt = " << ((uint8_t*)pkt) << std::endl;
+
     if (auto tr = static_cast<IceTransport*>(pj_ice_strans_get_user_data(ice_st)))
         tr->onReceiveData(comp_id, pkt, size);
     else
@@ -897,9 +901,14 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
     io.cb = cb;
 
     if (cb) {
+        //~ std::cout << "[jn] setOnRecv #1" << std::endl;
+        // [jn]  b ice_transport.cpp:904
+
         // Flush existing queue using the callback
-        for (const auto& packet : io.queue)
+        for (const auto& packet : io.queue) {
+            //~ std::cout << "[jn] datalen : " << packet.datalen ;
             io.cb((uint8_t*)packet.data.get(), packet.datalen);
+        }
         io.queue.clear();
     }
 }
@@ -907,6 +916,13 @@ IceTransport::setOnRecv(unsigned comp_id, IceRecvCb cb)
 ssize_t
 IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
 {
+    //~ std::cout <<std::endl<< std::endl<< std::endl<< std::endl<< std::endl;
+    //~ std::cout << "[jn] send #1" << std::endl;
+    
+    //~ std::cout << "len = " << len << std::endl;
+    //~ std::cout << "buf = " << *buf << std::endl;
+    //~ std::cout <<std::endl<< std::endl<< std::endl<< std::endl<< std::endl;
+
     sip_utils::register_thread();
     auto remote = getRemoteAddress(comp_id);
     if (!remote) {

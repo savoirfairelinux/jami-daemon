@@ -162,6 +162,9 @@ udp_socket_create(int family, int port)
 
 SocketPair::SocketPair(const char *uri, int localPort)
 {
+    // [jn] we never get in there ???
+    std::cout << "[jn] : uri = " << *uri << std::endl;
+    std::cout << "[jn] : localPort = " << localPort << std::endl;
     openSockets(uri, localPort);
 }
 
@@ -170,6 +173,8 @@ SocketPair::SocketPair(std::unique_ptr<IceSocket> rtp_sock,
     : rtp_sock_(std::move(rtp_sock))
     , rtcp_sock_(std::move(rtcp_sock))
 {
+    // [jn] invoqué une fois que l'appel a été accepté.
+
     auto queueRtpPacket = [this](uint8_t* buf, size_t len) {
         std::lock_guard<std::mutex> l(dataBuffMutex_);
         rtpDataBuff_.emplace_back(buf, buf+len);
@@ -463,9 +468,17 @@ SocketPair::writeData(uint8_t* buf, int buf_size)
         return buf_size;
 
     // IceSocket
-    if (isRTCP)
-        return rtcp_sock_->send(buf, buf_size);
-    else
+    //~ std::cout << "isRTCP ? " << (isRTCP ? "true":"false") << std::endl;
+
+    //~ if (isRTCP)
+        //~ std::cout << "X\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\nX\n";
+
+    // [jn] c'est quoi la différence entre rtcp et rtp ? quand les rtcp sont-ils utilisés ?
+
+    //~ if (isRTCP)
+        //~ return rtcp_sock_->send(buf, buf_size); // [jn] que se passe t-il si on ne les envoie pas ?
+    //~ else
+    if (!isRTCP) // [jn] à commenter/enlever avant de décommenter plus haut.
         return rtp_sock_->send(buf, buf_size);
 }
 

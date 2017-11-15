@@ -196,9 +196,9 @@ class IceTransport {
 
         void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
-        ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+        ssize_t recv(int comp_id, unsigned char* buf, size_t len); // [jn] méthode pour la réception des pqts.
 
-        ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+        ssize_t send(int comp_id, const unsigned char* buf, size_t len); // [jn] méthode pour l'envoi des pqts.
 
         ssize_t getNextPacketSize(int comp_id);
 
