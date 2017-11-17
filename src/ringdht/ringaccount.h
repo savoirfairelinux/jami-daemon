@@ -505,7 +505,7 @@ class RingAccount : public SIPAccountBase {
         void updateArchive(AccountArchive& content) const;
         void saveArchive(AccountArchive& content, const std::string& pwd);
         AccountArchive readArchive(const std::string& pwd) const;
-        std::vector<std::pair<sockaddr_storage, socklen_t>> loadBootstrap() const;
+        std::vector<dht::SockAddr> loadBootstrap() const;
 
         static std::pair<std::string, std::string> saveIdentity(const dht::crypto::Identity id, const std::string& path, const std::string& name);
         void saveNodes(const std::vector<dht::NodeExport>&) const;
