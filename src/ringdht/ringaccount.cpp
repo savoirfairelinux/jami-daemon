@@ -1848,32 +1848,33 @@ RingAccount::doRegister()
 }
 
 
-std::vector<std::pair<sockaddr_storage, socklen_t>>
+std::vector<dht::SockAddr>
 RingAccount::loadBootstrap() const
 {
-    std::vector<std::pair<sockaddr_storage, socklen_t>> bootstrap;
+    std::vector<dht::SockAddr> bootstrap;
     if (!hostname_.empty()) {
         std::stringstream ss(hostname_);
         std::string node_addr;
         while (std::getline(ss, node_addr, ';')) {
-            auto ips = ip_utils::getAddrList(node_addr);
+            auto ips = dht::SockAddr::resolve(node_addr);
             if (ips.empty()) {
                 IpAddr resolved(node_addr);
                 if (resolved) {
                     if (resolved.getPort() == 0)
                         resolved.setPort(DHT_DEFAULT_PORT);
-                    bootstrap.emplace_back(resolved, resolved.getLength());
+                    bootstrap.emplace_back(static_cast<const sockaddr*>(resolved), resolved.getLength());
                 }
             } else {
+                bootstrap.reserve(bootstrap.size() + ips.size());
                 for (auto& ip : ips) {
                     if (ip.getPort() == 0)
                         ip.setPort(DHT_DEFAULT_PORT);
-                    bootstrap.emplace_back(ip, ip.getLength());
+                    bootstrap.emplace_back(std::move(ip));
                 }
             }
         }
-        for (auto ip : bootstrap)
-            RING_DBG("Bootstrap node: %s", IpAddr(ip.first).toString(true).c_str());
+        for (const auto& ip : bootstrap)
+            RING_DBG("Bootstrap node: %s", ip.toString().c_str());
     }
     return bootstrap;
 }
