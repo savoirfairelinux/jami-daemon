@@ -26,6 +26,7 @@
 #endif
 
 #include "security/tls_session.h"
+#include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
 
 #include "noncopyable.h"

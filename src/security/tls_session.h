@@ -57,6 +57,8 @@ struct PrivateKey;
 
 namespace ring { namespace tls {
 
+class DhParams;
+
 static constexpr uint8_t MTUS_TO_TEST = 3; //number of mtus to test in path mtu discovery.
 static constexpr int DTLS_MTU {1232}; // (1280 from IPv6 minimum MTU - 40 IPv6 header - 8 UDP header)
 static constexpr uint16_t MIN_MTU {512};
@@ -68,46 +70,6 @@ enum class TlsSessionState {
     MTU_DISCOVERY,
     ESTABLISHED,
     SHUTDOWN
-};
-
-class DhParams {
-public:
-    DhParams() = default;
-    DhParams(DhParams&&) = default;
-    DhParams(const DhParams& other) {
-        *this = other;
-    }
-
-    DhParams& operator=(DhParams&& other) = default;
-    DhParams& operator=(const DhParams& other);
-
-    /// \brief Construct by taking ownership of given gnutls DH params
-    ///
-    /// User should not call gnutls_dh_params_deinit on given \a raw_params.
-    /// The object is stolen and its live is manager by our object.
-    explicit DhParams(gnutls_dh_params_t p) : params_ {p, gnutls_dh_params_deinit} {}
-
-    /** Deserialize DER or PEM encoded DH-params */
-    DhParams(const std::vector<uint8_t>& data);
-
-    gnutls_dh_params_t get() {
-        return params_.get();
-    }
-    gnutls_dh_params_t get() const {
-        return params_.get();
-    }
-
-    explicit inline operator bool() const {
-        return bool(params_);
-    }
-
-    /** Serialize data in PEM format */
-    std::vector<uint8_t> serialize() const;
-
-    static DhParams generate();
-
-private:
-    std::unique_ptr<gnutls_dh_params_int, decltype(gnutls_dh_params_deinit)*> params_ {nullptr, gnutls_dh_params_deinit};
 };
 
 struct TlsParams {
