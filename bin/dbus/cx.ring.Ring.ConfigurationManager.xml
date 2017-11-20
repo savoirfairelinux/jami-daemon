@@ -1395,6 +1395,21 @@
            </arg>
        </method>
 
+       <method name="sendFile" tp:name-for-bindings="sendFile">
+           <tp:added version="4.2.0"/>
+           <arg type="t" name="DataTransferId" direction="out">
+           </arg>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="peer_uri" direction="in">
+               <tp:docstring>
+                   RingID of request's recipient.
+               </tp:docstring>
+           </arg>
+           <arg type="s" name="file_path" direction="in"></arg>
+           <arg type="s" name="display_name" direction="in"></arg>
+       </method>
+
        <signal name="mediaParametersChanged" tp:name-for-bindings="mediaParametersChanged">
            <tp:added version="2.3.0"/>
            <tp:docstring>
@@ -1436,6 +1451,21 @@
            </arg>
        </signal>
 
-
+       <signal name="dataTransferEvent" tp:name-for-bindings="dataTransferEvent">
+           <tp:added version="4.2.0"/>
+           <tp:docstring>
+               Notify clients when a data transfer state change.
+           </tp:docstring>
+           <arg type="t" name="id">
+               <tp:docstring>
+                   Data transfer unique id.
+               </tp:docstring>
+           </arg>
+           <arg type="i" name="code">
+               <tp:docstring>
+                   A DRing::DataTransferEventCode code
+               </tp:docstring>
+           </arg>
+       </signal>
    </interface>
 </node>
