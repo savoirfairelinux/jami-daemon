@@ -41,7 +41,7 @@ struct TurnTransportParams {
 
     bool isPeerConnection {false};
     uint32_t connectionId {0};
-    std::function<void(uint32_t conn_id, const IpAddr& peer_addr)> onPeerConnection;
+    std::function<void(uint32_t conn_id, const IpAddr& peer_addr, bool success)> onPeerConnection;
 
     std::size_t maxPacketSize {3000}; ///< size of one "logical" packet
 };
