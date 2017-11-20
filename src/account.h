@@ -296,7 +296,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * Random generator engine
          * Logical account state shall never rely on the state of the random generator.
          */
-        mutable std::mt19937_64 rand_;
+        mutable std::mt19937_64 rand;
 
         /**
          * Inform the account that the network status has changed.

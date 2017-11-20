@@ -24,6 +24,7 @@
 
 #include "dbusconfigurationmanager.h"
 #include "configurationmanager_interface.h"
+#include "datatransfer_interface.h"
 
 #include "media/audio/audiolayer.h"
 
@@ -611,4 +612,25 @@ void
 DBusConfigurationManager::connectivityChanged()
 {
     DRing::connectivityChanged();
+}
+
+auto
+DBusConfigurationManager::sendFile(const std::string& account_id, const std::string& peer_uri,
+                                   const std::string& file_path, const std::string& display_name) -> decltype(DRing::sendFile(account_id, peer_uri, file_path, display_name))
+{
+    return DRing::sendFile(account_id, peer_uri, file_path, display_name);
+}
+
+DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string>
+DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
+{
+    DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string> out;
+    auto info = DRing::dataTransferInfo(id);
+    out._1 = info.isOutgoing;
+    out._2 = uint32_t(info.lastEvent);
+    out._3 = info.totalSize;
+    out._4 = info.bytesProgress;
+    out._5 = info.displayName;
+    out._6 = info.path;
+    return out;
 }

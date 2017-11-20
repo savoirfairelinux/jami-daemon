@@ -46,7 +46,7 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
     {
         std::lock_guard<std::mutex> lock(messagesMutex_);
         do {
-            token = udist(account_.rand_);
+            token = udist(account_.rand);
         } while (messages_.find(token) != messages_.end());
         auto m = messages_.emplace(token, Message{});
         m.first->second.to = to;

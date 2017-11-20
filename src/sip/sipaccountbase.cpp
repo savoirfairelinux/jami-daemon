@@ -317,7 +317,7 @@ SIPAccountBase::getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) co
     std::uniform_int_distribution<uint16_t> dist(range.first/2, range.second/2);
     uint16_t result;
     do {
-        result = 2 * dist(rand_);
+        result = 2 * dist(rand);
     } while (getPortsReservation()[result / 2]);
     return result;
 }
@@ -329,7 +329,7 @@ SIPAccountBase::acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range
     uint16_t result;
 
     do {
-        result = 2 * dist(rand_);
+        result = 2 * dist(rand);
     } while (getPortsReservation()[result / 2]);
 
     getPortsReservation()[result / 2] = true;
