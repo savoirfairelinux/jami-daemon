@@ -144,6 +144,12 @@ libring_la_SOURCES = \
         turn_transport.h \
         turn_transport.cpp \
         channel.h \
+        peer_connection.cpp \
+        peer_connection.h \
+        data_transfer.cpp \
+        data_transfer.h \
+        ftp_server.cpp \
+        ftp_server.h \
         transport.h
 
 if HAVE_WIN32
