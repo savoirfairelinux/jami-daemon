@@ -33,25 +33,27 @@ namespace DRing {
 
 using DataTransferId = uint64_t;
 
-enum class DataTransferEventCode : uint32_t {
-    CREATED,
-    UNSUPPORTED,
-    WAIT_PEER_ACCEPTANCE,
-    WAIT_HOST_ACCEPTANCE,
-    ONGOING,
-    FINISHED,
-    CLOSED_BY_HOST,
-    CLOSED_BY_PEER,
-    INVALID_PATHNAME,
-    UNJOINABLE_PEER,
+enum class DataTransferEventCode : uint32_t
+{
+    created,
+    unsupported,
+    wait_peer_acceptance,
+    wait_host_acceptance,
+    ongoing,
+    finished,
+    closed_by_host,
+    closed_by_peer,
+    invalid_pathname,
+    unjoinable_peer,
 };
 
-struct DataTransferInfo {
+struct DataTransferInfo
+{
     bool isOutgoing; ///< Outgoing or Incoming?
-    DataTransferEventCode lastEvent {DataTransferEventCode::CREATED}; ///< Latest event code sent to the user
-    std::string displayName; ///< Human oriented transfer name
+    DataTransferEventCode lastEvent { DataTransferEventCode::created }; ///< Latest event code sent to the user
     std::size_t totalSize {0} ; ///< Total number of bytes to sent/receive, 0 if not known
     std::streamsize bytesProgress {0}; ///< Number of bytes sent/received
+    std::string displayName; ///< Human oriented transfer name
     std::string path; ///< associated local file path if supported (empty, if not)
 };
 
@@ -125,8 +127,10 @@ std::streamsize dataTransferBytesSent(const DataTransferId& id);
 void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 // Signals
-struct DataTransferSignal {
-    struct DataTransferEvent {
+struct DataTransferSignal
+{
+    struct DataTransferEvent
+    {
         constexpr static const char* name = "DataTransferEvent";
         using cb_type = void(const DataTransferId& transferId, int eventCode);
     };
