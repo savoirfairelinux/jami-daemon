@@ -52,6 +52,7 @@ class VideoManager;
 class Conference;
 class AudioLoop;
 class IceTransportFactory;
+class DataTransferFacade;
 
 /** Manager (controller) of Ring daemon */
 class Manager {
@@ -888,6 +889,8 @@ class Manager {
 
         std::atomic<unsigned> dhtLogLevel {0}; // default = disable
         AccountFactory accountFactory;
+
+        std::unique_ptr<DataTransferFacade> dataTransfers;
 
 private:
         Manager();
