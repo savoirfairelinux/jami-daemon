@@ -43,12 +43,11 @@ struct TurnTransportParams {
     uint32_t connectionId {0};
     std::function<void(uint32_t conn_id, const IpAddr& peer_addr, bool success)> onPeerConnection;
 
-    std::size_t maxPacketSize {3000}; ///< size of one "logical" packet
+    std::size_t maxPacketSize {4096}; ///< size of one "logical" packet
 };
 
 class TurnTransport {
 public:
-    ///
     /// Constructs a TurnTransport connected by TCP to given server.
     ///
     /// Throw std::invalid_argument of peer address is invalid.
@@ -61,7 +60,6 @@ public:
 
     ~TurnTransport();
 
-    ///
     /// Wait for successful connection on the TURN server.
     ///
     /// TurnTransport constructor connects asynchronously on the TURN server.
@@ -69,12 +67,18 @@ public:
     ///
     void waitServerReady();
 
+    /// \return true if the TURN server is connected and ready to accept peers.
     bool isReady() const;
 
+    /// \return socket address (IP/port) where peers should connect to before doing IO with this client.
     const IpAddr& peerRelayAddr() const;
+
+    /// \return public address of this client as seen by the TURN server.
     const IpAddr& mappedAddr() const;
 
-    ///
+    /// \return a vector of connected peer addresses
+    std::vector<IpAddr> peerAddresses() const;
+
     /// Gives server access permission to given peer by its address.
     ///
     /// Throw std::invalid_argument of peer address is invalid.
@@ -88,18 +92,46 @@ public:
     ///
     void permitPeer(const IpAddr& addr);
 
+    /// Collect pending data from a given peer.
     ///
-    /// Collect pending data.
+    /// Data are read from given /a peer incoming buffer until EOF or /a data size() is reached.
+    /// /a data is resized with exact number of characters read.
+    /// If /a peer is not connected this function raise an exception.
+    /// If /a peer exists but no data are available this method blocks until TURN deconnection
+    /// or at first incoming character.
     ///
-    void recvfrom(std::map<IpAddr, std::vector<char>>& streams);
+    /// \param [in] peer target peer address where data are read
+    /// \param [in,out] pre-dimensionned character vector to write incoming data
+    /// \exception std::out_of_range /a peer is not connected yet
+    ///
+    void recvfrom(const IpAddr& peer, std::vector<char>& data);
 
+    /// Work as recvfrom but stop on first '\n' character found.
+    /// If such character isn't found, stop at /a data vector size.
     ///
-    /// Send data to a given peer through the TURN tunnel.
+    void readlinefrom(const IpAddr& peer, std::vector<char>& data);
+
+    /// Send data to given peer through the TURN tunnel.
+    ///
+    /// This method blocks until all given characters in /a data are sent to the given /a peer.
+    /// If /a peer is not connected this function raise an exception.
+    ///
+    /// \param [in] peer target peer address where data are read
+    /// \param [in,out] pre-dimensionned character vector to write incoming data
+    /// \exception std::out_of_range /a peer is not connected yet
     ///
     bool sendto(const IpAddr& peer, const std::vector<char>& data);
 
+    /// Works as sendto() vector version but accept a simple char array.
+    ///
+    bool sendto(const IpAddr& peer, const char* const buffer, std::size_t length);
+
+    /// Works as sendto() char array but happend a '\n' character at the end of sent data.
+    ///
+    bool writelineto(const IpAddr& peer, const char* const buffer, std::size_t length);
+
 public:
-    // Move semantic
+    // Move semantic only, not copiable
     TurnTransport(TurnTransport&&) = default;
     TurnTransport& operator=(TurnTransport&&) = default;
 
