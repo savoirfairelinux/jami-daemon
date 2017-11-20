@@ -79,6 +79,8 @@ using random_device = dht::crypto::random_device;
 #include "video/sinkclient.h"
 #include "audio/tonecontrol.h"
 
+#include "data_transfer.h"
+
 #include <cerrno>
 #include <ctime>
 #include <cstdlib>
@@ -662,6 +664,7 @@ Manager::Manager()
 #endif
     , callFactory()
     , accountFactory()
+    , dataTransfers(std::make_unique<DataTransferFacade>())
     , pimpl_ (new ManagerPimpl(*this))
 {}
 
