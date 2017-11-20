@@ -851,7 +851,7 @@ class Manager {
 
         IceTransportFactory& getIceTransportFactory();
 
-        void addTask(const std::function<bool()>&& task);
+        void addTask(std::function<bool()>&& task);
 
         struct Runnable {
             std::function<void()> cb;
