@@ -104,7 +104,7 @@ Account::Account(const std::string &accountID)
 {
     random_device rdev;
     std::seed_seq seed {rdev(), rdev()};
-    rand_.seed(seed);
+    rand.seed(seed);
 
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
