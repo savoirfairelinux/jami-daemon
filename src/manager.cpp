@@ -30,8 +30,9 @@
 #include "config.h"
 #endif
 
-#include "logger.h"
 #include "manager.h"
+
+#include "logger.h"
 #include "account_schema.h"
 #include "plugin_manager.h"
 #include "thread_pool.h"
@@ -61,7 +62,6 @@ using random_device = dht::crypto::random_device;
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
-#include "manager.h"
 
 #ifdef RING_VIDEO
 #include "client/videomanager.h"
@@ -1679,7 +1679,7 @@ Manager::unregisterEventHandler(uintptr_t handlerId)
 }
 
 void
-Manager::addTask(const std::function<bool()>&& task)
+Manager::addTask(std::function<bool()>&& task)
 {
     std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
     pimpl_->pendingTaskList_.emplace_back(std::move(task));
