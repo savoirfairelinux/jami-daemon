@@ -51,7 +51,7 @@ public:
 
     void onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_state);
     void onRxData(uint8_t* pkt, unsigned pkt_len, const pj_sockaddr_t* peer_addr, unsigned addr_len);
-    void onPeerConnection(pj_uint32_t conn_id, const pj_sockaddr_t* peer_addr, unsigned addr_len);
+    void onPeerConnection(pj_uint32_t conn_id, const pj_sockaddr_t* peer_addr, unsigned addr_len, pj_status_t status);
     void ioJob();
 
     TurnTransportParams settings;
@@ -112,18 +112,20 @@ TurnTransportPimpl::onRxData(uint8_t* pkt, unsigned pkt_len,
 
 void
 TurnTransportPimpl::onPeerConnection(pj_uint32_t conn_id,
-                                     const pj_sockaddr_t* addr, unsigned addr_len)
+                                     const pj_sockaddr_t* addr, unsigned addr_len,
+                                     pj_status_t status)
 {
-    IpAddr peer_addr ( *static_cast<const pj_sockaddr*>(addr), addr_len );
-    RING_DBG("Received connection attempt from %s, id=%x",
-             peer_addr.toString(true, true).c_str(), conn_id);
-    {
+    IpAddr peer_addr (*static_cast<const pj_sockaddr*>(addr), addr_len);
+    if (status == PJ_SUCCESS) {
+        RING_DBG() << "Received connection attempt from " << peer_addr.toString(true, true)
+                   << ", id=" << std::hex << conn_id;
+        pj_turn_connect_peer(relay, conn_id, addr, addr_len);
         std::lock_guard<std::mutex> lk {streamsMutex};
         streams[peer_addr].clear();
     }
-    pj_turn_connect_peer(relay, conn_id, addr, addr_len);
+
     if (settings.onPeerConnection)
-        settings.onPeerConnection(conn_id, peer_addr);
+        settings.onPeerConnection(conn_id, peer_addr, status == PJ_SUCCESS);
 }
 
 void
@@ -216,9 +218,10 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
         tr->pimpl_->onTurnState(old_state, new_state);
     };
     relay_cb.on_peer_connection = [](pj_turn_sock* relay, pj_uint32_t conn_id,
-                                     const pj_sockaddr_t* peer_addr, unsigned addr_len){
+                                     const pj_sockaddr_t* peer_addr, unsigned addr_len,
+                                     pj_status_t status) {
         auto tr = static_cast<TurnTransport*>(pj_turn_sock_get_user_data(relay));
-        tr->pimpl_->onPeerConnection(conn_id, peer_addr, addr_len);
+        tr->pimpl_->onPeerConnection(conn_id, peer_addr, addr_len, status);
     };
 
     // TURN socket config
