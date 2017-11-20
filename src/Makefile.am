@@ -139,12 +139,18 @@ libring_la_SOURCES = \
 		rational.h \
 		smartools.cpp \
 		smartools.h \
-        base64.h \
-        base64.cpp \
-        turn_transport.h \
-        turn_transport.cpp \
-        channel.h \
-        generic_io.h
+		base64.h \
+		base64.cpp \
+		turn_transport.h \
+		turn_transport.cpp \
+		channel.h \
+		peer_connection.cpp \
+		peer_connection.h \
+		data_transfer.cpp \
+		data_transfer.h \
+		ftp_server.cpp \
+		ftp_server.h \
+		generic_io.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \

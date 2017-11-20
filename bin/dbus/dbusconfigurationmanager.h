@@ -31,6 +31,8 @@
 
 #include "dbus_cpp.h"
 
+#include "dring/datatransfer_interface.h"
+
 #if __GNUC__ >= 5 || (__GNUC__ >=4 && __GNUC_MINOR__ >= 6)
 /* This warning option only exists for gcc 4.6.0 and greater. */
 #pragma GCC diagnostic ignored "-Wunused-but-set-variable"
@@ -151,6 +153,9 @@ class DBusConfigurationManager :
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
         int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
+        DRing::DataTransferId sendFile(const std::string& account_id, const std::string& peer_uri,
+                                       const std::string& file_path, const std::string& display_name);
+        DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string> dataTransferInfo(const DRing::DataTransferId& id);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
