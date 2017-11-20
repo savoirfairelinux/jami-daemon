@@ -11,4 +11,6 @@ libsecurity_la_SOURCES = \
 		certstore.cpp \
 		certstore.h \
 		memory.cpp \
-		memory.h
+		memory.h \
+		diffie-hellman.cpp \
+		diffie-hellman.h
