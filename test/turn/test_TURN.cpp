@@ -71,6 +71,14 @@ public:
         return pkt;
     }
 
+    IpAddr address() const {
+        struct sockaddr addr;
+        socklen_t addrlen;
+        if (::getsockname(sock_, &addr, &addrlen) < 0)
+            throw std::system_error(errno, std::system_category());
+        return IpAddr {addr};
+    }
+
 private:
     int sock_ {-1};
 };
@@ -92,26 +100,25 @@ test_TURN::testSimpleConnection()
 
     // Permit myself
     turn.permitPeer(turn.mappedAddr());
+    std::this_thread::sleep_for(std::chrono::seconds(2));
+
     sock.connect(turn.peerRelayAddr());
 
+    std::this_thread::sleep_for(std::chrono::seconds(1));
+    auto peers = turn.peerAddresses();
+    CPPUNIT_ASSERT(peers.size() == 1);
+    auto remotePeer = peers[0];
+
+    // Peer send data
     std::string test_data = "Hello, World!";
     sock.send(test_data);
 
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    // Client read
+    std::vector<char> data(1000);
+    turn.recvfrom(remotePeer, data);
+    CPPUNIT_ASSERT(std::string(std::begin(data), std::end(data)) == test_data);
 
-    std::map<IpAddr, std::vector<char>> streams;
-    turn.recvfrom(streams);
-    CPPUNIT_ASSERT(streams.size() == 1);
-
-    auto peer_addr = std::begin(streams)->first;
-    const auto& vec = std::begin(streams)->second;
-    CPPUNIT_ASSERT(std::string(std::begin(vec), std::end(vec)) == test_data);
-
-    turn.recvfrom(streams);
-    CPPUNIT_ASSERT(streams.size() == 0);
-
-    turn.sendto(peer_addr, std::vector<char>{1, 2, 3, 4});
-    std::this_thread::sleep_for(std::chrono::seconds(1));
+    turn.sendto(remotePeer, std::vector<char>{1, 2, 3, 4});
 
     auto res = sock.recv(1000);
     CPPUNIT_ASSERT(res.size() == 4);
@@ -121,16 +128,19 @@ test_TURN::testSimpleConnection()
     // This code higly load the network and can be long to execute.
     // Only kept for manual testing purpose.
     std::vector<char> big(100000);
+    std::size_t count = 1000;
     using clock = std::chrono::high_resolution_clock;
 
     auto t1 = clock::now();
-    sock.send(big);
+    auto i = count;
+    while (i--)
+        sock.send(big);
     auto t2 = clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(t2-t1).count();
     std::cout << "T= " << duration << "ns"
-              << ", V= " << (8000. * big.size() / duration) << "Mb/s"
-              << " / " << (1000. * big.size() / duration) << "MB/s"
+              << ", V= " << (8000. * count * big.size() / duration) << "Mb/s"
+              << " / " << (1000. * count * big.size() / duration) << "MB/s"
               << '\n';
     std::this_thread::sleep_for(std::chrono::seconds(5));
 #endif
