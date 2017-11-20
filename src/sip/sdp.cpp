@@ -327,7 +327,7 @@ void Sdp::setLocalMediaAudioCapabilities(const std::vector<std::shared_ptr<Accou
 void
 Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
 {
-    static constexpr size_t BUF_SZ = 4096;
+    static constexpr size_t BUF_SZ = 4095;
     std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> tmpPool_(
         pj_pool_create(&getSIPVoIPLink()->getCachingPool()->factory, "printSdp", BUF_SZ, BUF_SZ, nullptr),
         pj_pool_release
@@ -344,14 +344,14 @@ Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
         pjmedia_sdp_media_remove_all_attr(cloned_session->media[i], "crypto");
     }
 
-    std::array<char, BUF_SZ> buffer;
-    auto size = pjmedia_sdp_print(cloned_session, buffer.data(), buffer.size());
+    std::array<char, BUF_SZ+1> buffer;
+    auto size = pjmedia_sdp_print(cloned_session, buffer.data(), BUF_SZ);
     if (size < 0) {
         RING_ERR("%sSDP too big for dump", header);
         return;
     }
-
-    RING_DBG("%s%s", header, buffer.data());
+    buffer[size] = '\0';
+    RING_DBG("%s%s", header, &buffer[0]);
 }
 
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
