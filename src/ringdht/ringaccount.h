@@ -3,6 +3,7 @@
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
  *  Author: Simon Désaulniers <simon.desaulniers@gmail.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -72,8 +73,13 @@ namespace ring {
 class IceTransport;
 struct Contact;
 struct AccountArchive;
+class DhtPeerConnector;
+class PeerConnection;
 
 class RingAccount : public SIPAccountBase {
+    private:
+        struct PeerConnectionMsg;
+
     public:
         constexpr static const char* const ACCOUNT_TYPE = "RING";
         constexpr static const in_port_t DHT_DEFAULT_PORT = 4222;
@@ -309,6 +315,21 @@ class RingAccount : public SIPAccountBase {
         void lookupAddress(const std::string& address);
         void registerName(const std::string& password, const std::string& name);
 #endif
+
+        ///
+        /// Send a E2E connection request to a given peer
+        ///
+        /// /// \param[in] peer_id RingID on request's recipiant
+        ///
+        void requestPeerConnection(const std::string& peer,
+                                   std::function<void(PeerConnection*)> connect_cb);
+
+        std::vector<std::string> publicAddresses();
+
+
+        /// \return true if the given DHT message identifier has been treated
+        /// \note if message has not been treated yet this method store this id and returns true at further calls
+        bool isMessageTreated(unsigned int id) ;
 
         dht::DhtRunner& dht() { return dht_; }
 
@@ -591,6 +612,14 @@ class RingAccount : public SIPAccountBase {
         std::shared_ptr<IceTransport> createIceTransport(const Args&... args);
 
         void registerDhtAddress(IceTransport&);
+
+        std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
 };
+
+static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
+{
+    os << "[Account " << acc.getAccountID() << "] ";
+    return os;
+}
 
 } // namespace ring
