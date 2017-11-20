@@ -307,6 +307,12 @@ class RingAccount : public SIPAccountBase {
         void registerName(const std::string& password, const std::string& name);
 #endif
 
+        dht::DhtRunner& dht() { return dht_; }
+
+        void forEachDevice(const dht::InfoHash& to,
+                           std::function<void(const std::shared_ptr<RingAccount>&,
+                                              const dht::InfoHash&)> op,
+                           std::function<void(bool)> end = {});
     private:
         NON_COPYABLE(RingAccount);
 
@@ -359,8 +365,6 @@ class RingAccount : public SIPAccountBase {
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
         void handleEvents();
-
-        void forEachDevice(const dht::InfoHash& to, std::function<void(const std::shared_ptr<RingAccount>&, const dht::InfoHash&)> op, std::function<void(bool)> end = {});
 
         void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
 
