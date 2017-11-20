@@ -143,7 +143,13 @@ libring_la_SOURCES = \
         base64.cpp \
         turn_transport.h \
         turn_transport.cpp \
-        channel.h
+        channel.h \
+        peer_connection.cpp \
+        peer_connection.h \
+        data_transfer.cpp \
+        data_transfer.h \
+        ftp_server.cpp \
+        ftp_server.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
