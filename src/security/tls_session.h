@@ -21,29 +21,18 @@
 
 #pragma once
 
-#include "threadloop.h"
 #include "noncopyable.h"
 
 #include <gnutls/gnutls.h>
-#include <gnutls/dtls.h>
-#include <gnutls/abstract.h>
 
 #include <string>
-#include <list>
 #include <functional>
 #include <memory>
-#include <mutex>
-#include <condition_variable>
-#include <chrono>
 #include <future>
-#include <utility>
+#include <chrono>
 #include <vector>
-#include <map>
-#include <atomic>
-#include <iterator>
 #include <array>
-#include <stdexcept>
-#include <bitset>
+#include <cstdint>
 
 namespace ring {
 class IceTransport;
@@ -126,14 +115,14 @@ public:
     // Returns the TLS session type ('server' or 'client')
     const char* typeName() const;
 
-    bool isServer() const { return isServer_; }
+    bool isServer() const;
 
     // Request TLS thread to stop and quit. IO are not possible after that.
     void shutdown();
 
     // Return maximum application payload size in bytes
     // Returned value must be checked and considered valid only if not 0 (session is initialized)
-    unsigned int getMaxPayload() const { return maxPayload_; }
+    unsigned int getMaxPayload() const;
 
     // Can be called by onStateChange callback when state == ESTABLISHED
     // to obtain the used cypher suite id.
@@ -153,90 +142,8 @@ public:
     uint16_t getMtu();
 
 private:
-    using clock = std::chrono::steady_clock;
-    using StateHandler = std::function<TlsSessionState(TlsSessionState state)>;
-
-    // Constants (ctor init.)
-    const std::unique_ptr<IceSocket> socket_;
-    const bool isServer_;
-    const TlsParams params_;
-    const TlsSessionCallbacks callbacks_;
-    const bool anonymous_;
-
-    // State machine
-    TlsSessionState handleStateSetup(TlsSessionState state);
-    TlsSessionState handleStateCookie(TlsSessionState state);
-    TlsSessionState handleStateHandshake(TlsSessionState state);
-    TlsSessionState handleStateMtuDiscovery(TlsSessionState state);
-    TlsSessionState handleStateEstablished(TlsSessionState state);
-    TlsSessionState handleStateShutdown(TlsSessionState state);
-    std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
-    std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
-    std::atomic<unsigned int> maxPayload_;
-
-    // IO GnuTLS <-> ICE
-    std::mutex txMutex_ {};
-    std::mutex rxMutex_ {};
-    std::condition_variable rxCv_ {};
-    std::list<std::vector<uint8_t>> rxQueue_ {};
-
-    std::mutex reorderBufMutex_;
-    bool flushProcessing_ {false}; ///< protect against recursive call to flushRxQueue
-    std::vector<uint8_t> rawPktBuf_; ///< gnutls incoming packet buffer
-    uint64_t baseSeq_ {0}; ///< sequence number of first application data packet received
-    uint64_t lastRxSeq_ {0}; ///< last received and valid packet sequence number
-    uint64_t gapOffset_ {0}; ///< offset of first byte not received yet
-    clock::time_point lastReadTime_;
-    std::map<uint64_t, std::vector<uint8_t>> reorderBuffer_ {};
-
-    ssize_t send_(const uint8_t* tx_data, std::size_t tx_size);
-    ssize_t sendRaw(const void*, size_t);
-    ssize_t sendRawVec(const giovec_t*, int);
-    ssize_t recvRaw(void*, size_t);
-    int waitForRawData(unsigned);
-
-    bool initFromRecordState(int offset=0);
-    void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
-    void flushRxQueue();
-
-    // Statistics
-    std::atomic<std::size_t> stRxRawPacketCnt_ {0};
-    std::atomic<std::size_t> stRxRawBytesCnt_ {0};
-    std::atomic<std::size_t> stRxRawPacketDropCnt_ {0};
-    std::atomic<std::size_t> stTxRawPacketCnt_ {0};
-    std::atomic<std::size_t> stTxRawBytesCnt_ {0};
-    void dump_io_stats() const;
-
-    // GnuTLS backend and connection state
-    class TlsCertificateCredendials;
-    class TlsAnonymousClientCredendials;
-    class TlsAnonymousServerCredendials;
-    std::unique_ptr<TlsAnonymousClientCredendials> cacred_; // ctor init.
-    std::unique_ptr<TlsAnonymousServerCredendials> sacred_; // ctor init.
-    std::unique_ptr<TlsCertificateCredendials> xcred_; // ctor init.
-    gnutls_session_t session_ {nullptr};
-    gnutls_datum_t cookie_key_ {nullptr, 0};
-    gnutls_dtls_prestate_st prestate_ {};
-    ssize_t cookie_count_ {0};
-
-    TlsSessionState setupClient();
-    TlsSessionState setupServer();
-    void initAnonymous();
-    void initCredentials();
-    bool commonSessionInit();
-
-    // FSM thread (TLS states)
-    ThreadLoop thread_; // ctor init.
-    bool setup();
-    void process();
-    void cleanup();
-
-    // Path mtu discovery
-    std::array<uint16_t, MTUS_TO_TEST>::const_iterator mtuProbe_;
-    unsigned hbPingRecved_ {0};
-    bool pmtudOver_ {false};
-    uint8_t transportOverhead_;
-    void pathMtuHeartbeat();
+    class TlsSessionImpl;
+    std::unique_ptr<TlsSessionImpl> pimpl_;
 };
 
 }} // namespace ring::tls
