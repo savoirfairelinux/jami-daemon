@@ -292,6 +292,10 @@ private:
 
     ///< Temporary transport for media. Replace mediaTransport_ when connected with success
     std::shared_ptr<IceTransport> tmpMediaTransport_;
+
+public: // [jn] for test only, has to be private
+    /** use to define an audio-call **/
+    bool isAudioCall_ {true}; // [jn] c'est quoi la différence ici dans le cas d'un bool entre = et {}
 };
 
 // Helpers

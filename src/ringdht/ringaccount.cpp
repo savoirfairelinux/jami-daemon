@@ -525,7 +525,9 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
                             getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
-                            getSrtpKeyExchange()
+                            getSrtpKeyExchange(),
+                            false,
+                            call.isAudioCall_
                          );
 
     if (not created or not SIPStartCall(call, target))
@@ -3295,4 +3297,3 @@ RingAccount::registerDhtAddress(IceTransport& ice)
 }
 
 } // namespace ring
-

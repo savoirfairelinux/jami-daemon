@@ -188,6 +188,7 @@ Call::validStateTransition(CallState newState)
 bool
 Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 {
+    //~ [jn] b call.cpp:192
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
     RING_DBG("[call:%s] state change %u/%u, cnx %u/%u, code %d", id_.c_str(),
              (unsigned)callState_, (unsigned)call_state, (unsigned)connectionState_,
@@ -225,6 +226,7 @@ Call::setState(CallState call_state, ConnectionState cnx_state, signed code)
 bool
 Call::setState(CallState call_state, signed code)
 {
+    //~ [jn] b call.cpp:230
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return setState(call_state, connectionState_, code);
 }
@@ -232,6 +234,7 @@ Call::setState(CallState call_state, signed code)
 bool
 Call::setState(ConnectionState cnx_state, signed code)
 {
+    //~ [jn] b call.cpp:238
     std::lock_guard<std::recursive_mutex> lock(callMutex_);
     return setState(callState_, cnx_state, code);
 }

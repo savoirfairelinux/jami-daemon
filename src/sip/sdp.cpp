@@ -246,8 +246,11 @@ Sdp::setMediaDescriptorLines(bool audio, bool holding, sip_utils::KeyExchangePro
         setTelephoneEventRtpmap(med);
         addRTCPAttribute(med); // video has its own RTCP
     }
+    holding = true;
+    //~ audio = false;
 
     med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), holding ? (audio ? "sendonly" : "inactive") : "sendrecv", NULL);
+    //~ med->attr[med->attr_count++] = pjmedia_sdp_attr_create(memPool_.get(), "sendrecv", NULL);
 
     if (kx == sip_utils::KeyExchangeProtocol::SDES) {
         if (pjmedia_sdp_media_add_attr(med, generateSdesAttribute()) != PJ_SUCCESS)
@@ -357,10 +360,17 @@ Sdp::printSession(const pjmedia_sdp_session *session, const char* header)
 int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                             const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
                             sip_utils::KeyExchangeProtocol security,
-                            bool holding)
+                            bool holding,
+                            bool isAudioCall)
 {
     setLocalMediaAudioCapabilities(selectedAudioCodecs);
     setLocalMediaVideoCapabilities(selectedVideoCodecs);
+
+    //~ [jn] b sdp.cpp:370
+    if (isAudioCall) {
+        std::cout << "                               isAudioCall" << std::endl;
+    }
+
 
     localSession_ = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_session);
     localSession_->conn = PJ_POOL_ZALLOC_T(memPool_.get(), pjmedia_sdp_conn);
@@ -394,7 +404,7 @@ int Sdp::createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>
     constexpr bool audio = true;
     localSession_->media_count = 1;
     localSession_->media[0] = setMediaDescriptorLines(audio, holding, security);
-    if (not selectedVideoCodecs.empty()) {
+    if (not selectedVideoCodecs.empty()) { // [jn] ici! on pourrait peut être faire quelque chose du genre "or isAudioOnly"
         localSession_->media[1] = setMediaDescriptorLines(!audio, holding, security);
         ++localSession_->media_count;
     }
@@ -408,9 +418,11 @@ bool
 Sdp::createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                  const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
                  sip_utils::KeyExchangeProtocol security,
-                 bool holding)
+                 bool holding,
+                 bool isAudioOnly)
 {
-    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding) != PJ_SUCCESS) {
+    //~ [jn] b sdp.cpp:416
+    if (createLocalSession(selectedAudioCodecs, selectedVideoCodecs, security, holding, isAudioOnly) != PJ_SUCCESS) {
         RING_ERR("Failed to create initial offer");
         return false;
     }
