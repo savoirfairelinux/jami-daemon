@@ -119,7 +119,8 @@ class Sdp {
         bool createOffer(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                          const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
                          sip_utils::KeyExchangeProtocol,
-                         bool holding=false);
+                         bool holding=false,
+                         bool isAudioOnly = false);
 
         /*
         * On receiving an invite outside a dialog, build the local offer and create the
@@ -309,7 +310,8 @@ class Sdp {
         int createLocalSession(const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedAudioCodecs,
                                const std::vector<std::shared_ptr<AccountCodecInfo>>& selectedVideoCodecs,
                                sip_utils::KeyExchangeProtocol,
-                               bool holding);
+                               bool holding,
+                               bool isAudioCall = false);
 
         /*
          * Adds a sdes attribute to the given media section.
