@@ -396,9 +396,17 @@ PKGS := $(sort $(PKGS_MANUAL) $(PKGS_DEPS))
 
 convert-static:
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
+
 fetch: $(PKGS:%=.sum-%)
+
 fetch-all: $(PKGS_ALL:%=.sum-%)
-install: $(PKGS:%=.%) convert-static
+
+install:
+	for pkg in $(PKGS:%=.%); do \
+		echo === BUILDING contrib $$pkg; \
+		env time -- $(MAKE) $$pkg && echo === FINISHED contrib $$pkg || exit 1; \
+	done;
+	$(MAKE) convert-static
 
 mostlyclean:
 	-$(RM) $(foreach p,$(PKGS_ALL),.$(p) .sum-$(p) .dep-$(p))
