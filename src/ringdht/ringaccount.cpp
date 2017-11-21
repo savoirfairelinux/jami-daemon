@@ -130,7 +130,7 @@ struct RingAccount::BuddyInfo
     BuddyInfo(dht::InfoHash id) : id(id) {}
 };
 
-struct RingAccount::PendingCall
+struct RingAccount::PendingCall // [jn] structure d'objet placé dans la pending list
 {
     std::chrono::steady_clock::time_point start;
     std::shared_ptr<IceTransport> ice_sp;
@@ -466,7 +466,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             );
 
-            sthis->pendingCalls_.emplace_back(PendingCall{
+            sthis->pendingCalls_.emplace_back(PendingCall{ // [jn] ajout un call à pendingCalls_
                 std::chrono::steady_clock::now(),
                 ice, weak_dev_call,
                 std::move(listenKey),
@@ -522,9 +522,10 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     auto& sdp = call.getSDP();
 
     sdp.setPublishedIP(addrSdp);
+    bool audioOnly = true; // [jn] à déplacer
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                            getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
+                            getActiveAccountCodecInfoList((videoEnabled_ and not audioOnly) ? MEDIA_VIDEO : MEDIA_NONE),
                             getSrtpKeyExchange()
                          );
 
@@ -1571,7 +1572,7 @@ RingAccount::handleEvents()
 }
 
 void
-RingAccount::handlePendingCallList()
+RingAccount::handlePendingCallList() // [jn] handle the pendingCalls_ list
 {
     // Process pending call into a local list to not block threads depending on this list,
     // as incoming call handlers.
