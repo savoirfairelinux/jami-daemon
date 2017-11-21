@@ -522,9 +522,10 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     auto& sdp = call.getSDP();
 
     sdp.setPublishedIP(addrSdp);
+    bool audioOnly = true; // [jn] à déplacer
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                            getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
+                            getActiveAccountCodecInfoList((videoEnabled_ and not audioOnly) ? MEDIA_VIDEO : MEDIA_NONE),
                             getSrtpKeyExchange()
                          );
 
