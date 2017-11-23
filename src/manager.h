@@ -861,6 +861,19 @@ class Manager {
         std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
         void scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when);
 
+        /**
+         * Start to use the proxy for account
+         * @param accountID
+         * @param address of the proxy
+         * @param deviceKey the device key for push notifications (empty to not use it)
+         */
+        void startProxyClient(const std::string& accountID, const std::string& address, const std::string& deviceKey = "");
+        /**
+         * Stop to use the proxy for account
+         * @param accountID
+         */
+        void stopProxyClient(const std::string& accountID);
+
 #ifdef RING_VIDEO
         /**
          * Create a new SinkClient instance, store it in an internal cache as a weak_ptr

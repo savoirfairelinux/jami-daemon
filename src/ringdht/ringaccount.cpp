@@ -1833,6 +1833,12 @@ RingAccount::doRegister()
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
         return;
 
+    // switch to the wanted DhtClient before launching operations on the dht.
+    if (proxyEnabled_) {
+        startProxyClient(proxyServer_, deviceKey_);
+    } else
+        stopProxyClient();
+
     if (not dhParams_.valid()) {
         generateDhParams();
     }
@@ -1850,7 +1856,6 @@ RingAccount::doRegister()
         }}.detach();
     } else
         doRegister_();
-
 }
 
 
@@ -3307,5 +3312,19 @@ RingAccount::registerDhtAddress(IceTransport& ice)
         reg_addr(ice, ip);
     }
 }
+
+void
+RingAccount::startProxyClient(const std::string& address, const std::string& deviceKey)
+{
+    dht_.setProxyServer(address);
+    dht_.enableProxy(true, deviceKey);
+}
+
+void
+RingAccount::stopProxyClient()
+{
+    dht_.enableProxy(false);
+}
+
 
 } // namespace ring
