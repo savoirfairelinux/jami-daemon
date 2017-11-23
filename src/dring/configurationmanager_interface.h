@@ -181,6 +181,14 @@ int importAccounts(std::string archivePath, std::string password);
  */
 void connectivityChanged();
 
+/**
+ * ProxyDht
+ */
+void startProxyClient(const std::string& accountID, const std::string& address,
+    const std::string& deviceKey = "");
+void stopProxyClient(const std::string& accountID);
+
+
 struct AudioSignal {
         struct DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
