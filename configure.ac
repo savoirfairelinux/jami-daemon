@@ -219,10 +219,37 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   ])
 ])
 
+# Rest C++ with restbed
+AC_ARG_WITH([restcpp],
+    AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
+AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
+AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
+  AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
+])
+
+AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
+  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+
+  AS_IF([test "x$with_restcpp" = "xyes"], [
+      AS_AC_EXPAND(SBINDIR, $sbindir)
+      AC_SUBST(SBINDIR)
+      AC_CONFIG_FILES([bin/restcpp/Makefile])
+      AM_CONDITIONAL(RING_RESTCPP, true)
+    ],
+    AM_CONDITIONAL(RING_RESTCPP, false)
+  );
+
+
 AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+
+  PKG_CHECK_MODULES([Jsoncpp], [jsoncpp >= 1.7.2])
+  CPPFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
+  CPPFLAGS="${CPPFLAGS} ${Jsoncpp_CFLAGS}"
+  LDFLAGS="${LDFLAGS} ${Jsoncpp_LIBS}"
+
   CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
   CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
   AS_IF([test "${HAVE_WIN64}" = "1"],[
@@ -402,26 +429,6 @@ AS_IF([test "x$with_nodejs" = "xyes"], [
     AM_CONDITIONAL(RING_NODEJS, true)
   ],
   AM_CONDITIONAL(RING_NODEJS, false)
-);
-
-# Rest C++ with restbed
-AC_ARG_WITH([restcpp],
-    AS_HELP_STRING([--with-restcpp], [enable rest support with C++]))
-AC_ARG_ENABLE([restbed_old_api], AS_HELP_STRING([--enable-restbed-old-api], [Use the old restbed API]))
-AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
-  AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
-])
-
-AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
-
-AS_IF([test "x$with_restcpp" = "xyes"], [
-    AS_AC_EXPAND(SBINDIR, $sbindir)
-    AC_SUBST(SBINDIR)
-    AC_CONFIG_FILES([bin/restcpp/Makefile])
-    AM_CONDITIONAL(RING_RESTCPP, true)
-  ],
-  AM_CONDITIONAL(RING_RESTCPP, false)
 );
 
 dnl Check for libav
