@@ -223,6 +223,10 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+  CPPFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
+  CPPFLAGS="${CPPFLAGS} ${Jsoncpp_CFLAGS}"
+  LDFLAGS="${LDFLAGS} ${Jsoncpp_LIBS}"
+
   CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
   CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
   AS_IF([test "${HAVE_WIN64}" = "1"],[
@@ -413,7 +417,7 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
 ])
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
 
 AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
