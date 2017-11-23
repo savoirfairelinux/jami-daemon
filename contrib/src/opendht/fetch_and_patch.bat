@@ -1,7 +1,7 @@
 set BUILD=%SRC%..\build
 
-set OPENDHT_VERSION=1.5.0
-set OPENDHT_URL=https://github.com/savoirfairelinux/opendht/archive/%OPENDHT_VERSION%.tar.gz
+set OPENDHT_VERSION=0f6ac0e07ad9476dc7f46d5a2e9657e92aebc53d
+set OPENDHT_URL=https://github.com/AmarOk1412/opendht/archive/%OPENDHT_VERSION%.tar.gz
 
 mkdir %BUILD%
 
@@ -18,5 +18,6 @@ rename %BUILD%\opendht-%OPENDHT_VERSION% opendht
 cd %BUILD%\opendht
 
 git apply --reject --whitespace=fix %SRC%\opendht\opendht-uwp.patch
+git apply --reject --whitespace=fix %SRC%\opendht\opendht-proxy-uwp.patch
 
 cd %SRC%
