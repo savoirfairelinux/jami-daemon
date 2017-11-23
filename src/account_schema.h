@@ -67,6 +67,11 @@ static const char *const CONFIG_PUBLISHED_PORT                  = "Account.publi
 static const char *const CONFIG_PUBLISHED_ADDRESS               = "Account.publishedAddress";
 static const char *const CONFIG_UPNP_ENABLED                    = "Account.upnpEnabled";
 
+// Proxy
+static const char *const CONFIG_PROXY_ENABLED                   = "Account.proxyEnabled";
+static const char *const CONFIG_PROXY_SERVER                    = "Account.proxyServer";
+static const char *const CONFIG_PROXY_DEVICE_KEY                = "Account.deviceKey";
+
 // SIP specific parameters
 static const char *const CONFIG_STUN_SERVER                     = "STUN.server";
 static const char *const CONFIG_STUN_ENABLE                     = "STUN.enable";
