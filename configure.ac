@@ -223,6 +223,8 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+  CPPFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
+
   CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
   CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
   AS_IF([test "${HAVE_WIN64}" = "1"],[
@@ -230,8 +232,12 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
       CXXFLAGS+=" -DPJ_WIN64=1"
   ])
   CFLAGS+=" -I${CONTRIB_DIR}/include"
+  CFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
   CXXFLAGS+=" -I${CONTRIB_DIR}/include"
+  CXXFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
+
   OBJCFLAGS="${OBJCFLAGS} -I${CONTRIB_DIR}/include"
+  OBJCFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_SERVER=true"
   AS_IF([test "${SYS}" = "mingw32"],[
         PKG_CONFIG_PATH_CUSTOM="${CONTRIB_DIR}/lib/pkgconfig:${CONTRIB_DIR}/lib64/pkgconfig"
         AC_SUBST(PKG_CONFIG_PATH_CUSTOM)
@@ -243,6 +249,10 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   AS_IF([test "${SYS}" = "darwin"], [
     export LD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$LD_LIBRARY_PATH"
     export DYLD_LIBRARY_PATH="${CONTRIB_DIR}/lib:$DYLD_LIBRARY_PATH"
+  ], [
+      PKG_CHECK_MODULES([Jsoncpp], [jsoncpp >= 1.6.5])
+      CPPFLAGS="${CPPFLAGS} ${Jsoncpp_CFLAGS}"
+      LDFLAGS="${LDFLAGS} ${Jsoncpp_LIBS}"
   ])
 ], [
   AS_IF([test -n "${with_contrib}" && test "${with_contrib}" != "no"], [
@@ -413,7 +423,7 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
 ])
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
 
 AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)

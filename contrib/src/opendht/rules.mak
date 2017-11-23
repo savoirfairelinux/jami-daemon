@@ -1,5 +1,6 @@
 # OPENDHT
-OPENDHT_VERSION := 1.5.0
+# TODO BUMP OPENDHT FOR PROXY ABILITIES
+OPENDHT_VERSION := ca693a6ac11fa88987537197fee52522489a40ef
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
@@ -13,6 +14,12 @@ DEPS_opendht += msgpack
 endif
 ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
+endif
+ifneq ($(call need_pkg,"restbed"),)
+DEPS_opendht += restbed
+endif
+ifneq ($(call need_pkg,"jsoncpp"),)
+DEPS_opendht += jsoncpp
 endif
 ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
 DEPS_opendht += gnutls
@@ -30,6 +37,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
