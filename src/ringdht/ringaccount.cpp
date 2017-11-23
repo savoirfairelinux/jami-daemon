@@ -1837,6 +1837,11 @@ RingAccount::doRegister()
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION)
         return;
 
+    // switch to the wanted DhtClient before launching operations on the dht.
+    if (proxyEnabled_ and not proxyServer_.empty())
+        dht_.setProxyServer(proxyServer_, getAccountID());
+    enableProxyClient(proxyEnabled_);
+
     if (not dhParams_.valid()) {
         generateDhParams();
     }
@@ -1854,7 +1859,6 @@ RingAccount::doRegister()
         }}.detach();
     } else
         doRegister_();
-
 }
 
 
@@ -2042,7 +2046,15 @@ RingAccount::doRegister_()
             setRegistrationState(state);
         });
 
-        dht_.run((in_port_t)dhtPortUsed_, identity_, false);
+        dht::DhtRunner::Config config;
+        config.dht_config.id = identity_;
+        config.proxy_server = proxyServer_;
+        config.push_node_id = getAccountID();
+        config.threaded = false;
+        //if (not params.proxyclient.empty())
+        //    dht->setPushNotificationToken(params.devicekey);
+
+        dht_.run((in_port_t)dhtPortUsed_, config);
 
         dht_.setLocalCertificateStore([](const dht::InfoHash& pk_id) {
             std::vector<std::shared_ptr<dht::crypto::Certificate>> ret;
@@ -2455,7 +2467,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         return;
     }
 
-    RING_WARN("[Account %s] unregistering account", getAccountID().c_str());
+    RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
         pendingCalls_.clear();
@@ -3343,5 +3355,27 @@ RingAccount::requestPeerConnection(const std::string& peer_id,
 {
     dhtPeerConnector_->requestConnection(peer_id, connect_cb);
 }
+
+void
+RingAccount::enableProxyClient(bool enable)
+{
+    dht_.enableProxy(enable);
+}
+
+void RingAccount::setPushNotificationToken(const std::string& token)
+{
+    RING_WARN("[Account %s] setPushNotificationToken: %s", getAccountID().c_str(), token.c_str());
+    dht_.setPushNotificationToken(token);
+}
+
+/**
+ * To be called by clients with relevent data when a push notification is received.
+ */
+void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+{
+    RING_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    dht_.pushNotificationReceived(data);
+}
+
 
 } // namespace ring

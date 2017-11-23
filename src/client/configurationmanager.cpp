@@ -923,4 +923,26 @@ bool registerName(const std::string& account, const std::string& password, const
     return false;
 }
 
+void enableProxyClient(const std::string& accountID, bool enable)
+{
+    if (auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID))
+        account->enableProxyClient(enable);
+}
+
+void setPushNotificationToken(const std::string& token)
+{
+    for (const auto &account : ring::Manager::instance().getAllAccounts<RingAccount>())
+        account->setPushNotificationToken(token);
+}
+
+void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+{
+    try {
+        if (auto account = ring::Manager::instance().getAccount<ring::RingAccount>(data.at("to")))
+            account->pushNotificationReceived(from, data);
+    } catch (const std::exception& e) {
+        RING_ERR("Error processing push notification: %s", e.what());
+    }
+}
+
 } // namespace DRing
