@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set RESTBED_VERSION=34187502642144ab9f749ab40f5cdbd8cb17a54a
+set RESTBED_VERSION=df867a858dddc4cf6ca8642da02720bd65ba239a
 set RESTBED_URL=https://github.com/Corvusoft/restbed/archive/%RESTBED_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -14,6 +14,11 @@ if %USE_CACHE%==1 (
 7z -y x %RESTBED_VERSION%.tar.gz && 7z -y x %RESTBED_VERSION%.tar -o%BUILD%
 del %RESTBED_VERSION%.tar && del %RESTBED_VERSION%.tar.gz && del %BUILD%\pax_global_header
 rename %BUILD%\restbed-%RESTBED_VERSION% restbed
+
+cd %BUILD%\restbed
+git apply --reject --whitespace=fix %SRC%\restbed\async_read_until-uwp.patch
+
+cd ..
 
 rmdir /s /q %BUILD%\restbed\dependency
 mkdir %BUILD%\restbed\dependency
