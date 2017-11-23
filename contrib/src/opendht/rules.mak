@@ -1,6 +1,7 @@
 # OPENDHT
-OPENDHT_VERSION := 1.5.0
-OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
+# TODO BUMP OPENDHT FOR PROXY ABILITIES
+OPENDHT_VERSION := 65360ff4c1f863b65b589366d2eb3b304a42bb4a
+OPENDHT_URL := https://github.com/AmarOk1412/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
 PKGS += opendht
 ifeq ($(call need_pkg,'opendht'),)
@@ -30,6 +31,6 @@ opendht: opendht-$(OPENDHT_VERSION).tar.gz
 
 .opendht: opendht .sum-opendht
 	mkdir -p $</m4 && $(RECONF)
-	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --disable-tools --disable-python --disable-doc --enable-proxy-server --enable-proxy-client --enable-push-notifications $(HOSTCONF)
 	cd $< && $(MAKE) install
 	touch $@
