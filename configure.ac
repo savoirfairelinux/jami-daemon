@@ -219,6 +219,13 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   ])
 ])
 
+dnl
+dnl Add options for for proxy for opendht
+dnl
+CPPFLAGS+=" ${Jsoncpp_CFLAGS} -DOPENDHT_PROXY_SERVER=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_CLIENT=true"
+LDFLAGS+=" ${Jsoncpp_LIBS} -lrestbed"
+
+
 AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
