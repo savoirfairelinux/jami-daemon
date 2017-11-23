@@ -23,6 +23,8 @@
 
 #include "ringaccount.h"
 
+#include <iostream>
+
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -389,10 +391,19 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     dht::InfoHash peer_account(toUri);
     forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
     {
+        /**/
+        OutgoingCall outgoing;
+        outgoing.dev = dev;
+        outgoing.peer_account = peer_account;
+        outgoing.toUri = toUri;
+        outgoing.wCall = wCall;
+        sthis->outgoingCalls_.emplace_back(std::move(outgoing));
+        /** /
         auto call = wCall.lock();
         if (not call) return;
         RING_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
 
+        std::cout << ".....................................................1" << std::endl;
         auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
                                                                           Call::CallType::OUTGOING);
@@ -408,6 +419,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         }
 
         call->addSubCall(*dev_call);
+        std::cout << ".....................................................2" << std::endl;
 
         manager.addTask([sthis, weak_dev_call, ice, dev, toUri, peer_account] {
             auto call = weak_dev_call.lock();
@@ -477,6 +489,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             });
             return false;
         });
+        /**/
     }, [=](bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
@@ -485,6 +498,126 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             }
         }
     });
+}
+
+void
+RingAccount::startAllOutgoingCalls()
+{
+    if (!outgoingCalls_.empty()) {
+        for (auto& outgoing: outgoingCalls_) {
+            auto& dev = outgoing.dev;
+            auto& peer_account = outgoing.peer_account;
+            auto& toUri = outgoing.toUri;
+            auto& wCall = outgoing.wCall;
+
+            auto call = wCall.lock();
+            if (not call) return;
+            RING_DBG("[call %s] calling device %s", call->getCallId().c_str(), dev.toString().c_str());
+
+            auto& manager = Manager::instance();
+            auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
+                                                                              Call::CallType::OUTGOING);
+            std::weak_ptr<SIPCall> weak_dev_call = dev_call;
+            dev_call->setIPToIP(true);
+            dev_call->setSecure(this->isTlsEnabled());
+            auto ice = this->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
+                                                 ICE_COMPONENTS, true, this->getIceOptions());
+            if (not ice) {
+                RING_WARN("Can't create ICE");
+                dev_call->removeCall();
+                return;
+            }
+
+            call->addSubCall(*dev_call);
+
+            manager.addTask([this, weak_dev_call, ice, dev, toUri, peer_account] {
+                auto call = weak_dev_call.lock();
+
+                // call aborted?
+                if (not call)
+                    return false;
+
+                if (ice->isFailed()) {
+                    RING_ERR("[call:%s] ice init failed", call->getCallId().c_str());
+                    call->onFailure(EIO);
+                    return false;
+                }
+
+                // Loop until ICE transport is initialized.
+                // Note: we suppose that ICE init routine has a an internal timeout (bounded in time)
+                // and we let upper layers decide when the call shall be aborded (our first check upper).
+                if (not ice->isInitialized())
+                    return true;
+
+                this->registerDhtAddress(*ice);
+
+                // Next step: sent the ICE data to peer through DHT
+                const dht::Value::Id callvid  = ValueIdDist()(this->rand_);
+                const auto callkey = dht::InfoHash::get("callto:" + dev.toString());
+                dht::Value val { dht::IceCandidates(callvid, ice->packIceMsg()) };
+
+                this->dht_.putEncrypted(
+                    callkey, dev,
+                    std::move(val),
+                    [=](bool ok) { // Put complete callback
+                        if (!ok) {
+                            RING_WARN("Can't put ICE descriptor on DHT");
+                            if (auto call = weak_dev_call.lock())
+                                call->onFailure();
+                        } else
+                            RING_DBG("Successfully put ICE descriptor on DHT");
+                    }
+                );
+
+                auto listenKey = this->dht_.listen<dht::IceCandidates>(
+                    callkey,
+                    [this, weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
+                        if (msg.id != callvid or msg.from != dev)
+                            return true;
+                        RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
+                                  std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+                        IceReply reply;
+                        reply.weak_dev_call = std::move(weak_dev_call);
+                        reply.ice = std::move(ice);
+                        reply.msg = std::move(msg);
+                        this->iceReplies_.emplace_back(std::move(reply));
+                        return true;
+                    }
+                );
+
+                this->pendingCalls_.emplace_back(PendingCall{
+                    std::chrono::steady_clock::now(),
+                    ice, weak_dev_call,
+                    std::move(listenKey),
+                    callkey,
+                    dev,
+                    peer_account,
+                    tls::CertificateStore::instance().getCertificate(toUri)
+                });
+                return false;
+            });
+        }
+        outgoingCalls_.clear();
+    }
+}
+
+void
+RingAccount::handleIceReplies()
+{
+    if (!iceReplies_.empty()) {
+        for (auto& reply: iceReplies_) {
+            auto& weak_dev_call = reply.weak_dev_call;
+            auto& ice = reply.ice;
+            auto& msg = reply.msg;
+            if (auto call = weak_dev_call.lock()) {
+                call->setState(Call::ConnectionState::PROGRESSING);
+                if (!ice->start(msg.ice_data)) {
+                    call->onFailure();
+                }
+            }
+        }
+        iceReplies_.clear();
+    }
 }
 
 void
@@ -1561,6 +1694,23 @@ RingAccount::handleEvents()
 
     // Call msg in "callto:"
     handlePendingCallList();
+    // Calls from the proxy
+    handleProxyCall();
+    // Start outgoing calls
+    startAllOutgoingCalls();
+    handleIceReplies();
+}
+
+void
+RingAccount::handleProxyCall()
+{
+    // TODO lock
+    if (!proxyCalls_.empty()) {
+        for (auto& call: proxyCalls_) {
+            incomingCall(std::move(call.msg), call.cert, call.account);
+        }
+        proxyCalls_.clear();
+    }
 }
 
 void
@@ -1838,6 +1988,12 @@ RingAccount::doRegister()
     } else
         doRegister_();
 
+
+    std::cout << "##############################SET PROXY SERVER" << std::endl;
+    dht_.setProxyServer();
+    std::cout << "##############################enableProxy" << std::endl;
+    dht_.enableProxy(true);
+    std::cout << "##############################finish" << std::endl;
 }
 
 
@@ -2115,7 +2271,12 @@ RingAccount::doRegister_()
                 this_.onPeerMessage(msg.from, [shared, msg](const std::shared_ptr<dht::crypto::Certificate>& cert,
                                                             const dht::InfoHash& account) mutable
                 {
-                    shared->incomingCall(std::move(msg), cert, account);
+                    ProxyCall proxyCall;
+                    proxyCall.msg = msg;
+                    proxyCall.cert = cert;
+                    proxyCall.account = account;
+                    // TODO lock
+                    shared->proxyCalls_.emplace_back(std::move(proxyCall));
                 });
                 return true;
             }
@@ -3296,4 +3457,3 @@ RingAccount::registerDhtAddress(IceTransport& ice)
 }
 
 } // namespace ring
-

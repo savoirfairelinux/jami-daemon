@@ -426,6 +426,35 @@ class RingAccount : public SIPAccountBase {
         void handlePendingCallList();
         bool handlePendingCall(PendingCall& pc, bool incoming);
 
+        // TODO this is dirty, just to try to launch pjsip in the main thread.
+        // TODO cf https://gerrit-ring.savoirfairelinux.com/#/c/2439/
+        // NOTE: for now and because it's just a test don't handle call fails, so if the call fails, dring crash
+        void handleProxyCall();
+        struct ProxyCall
+        {
+            dht::IceCandidates msg;
+            std::shared_ptr<dht::crypto::Certificate> cert;
+            dht::InfoHash account;
+        };
+        std::vector<ProxyCall> proxyCalls_;
+        void startAllOutgoingCalls();
+        struct OutgoingCall {
+            dht::InfoHash dev;
+            dht::InfoHash peer_account;
+            std::string toUri;
+            std::weak_ptr<SIPCall> wCall;
+        };
+        std::vector<OutgoingCall> outgoingCalls_;
+        void handleIceReplies();
+        struct IceReply {
+            std::weak_ptr<SIPCall> weak_dev_call;
+            std::shared_ptr<IceTransport> ice;
+            dht::IceCandidates msg;
+        };
+        std::vector<IceReply> iceReplies_;
+        void handleCallsToRemove();
+        std::vector<std::weak_ptr<SIPCall>> callsToRemove_;
+
         /**
          * DHT calls waiting for ICE negotiation
          */
