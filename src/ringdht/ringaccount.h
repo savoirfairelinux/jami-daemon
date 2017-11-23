@@ -315,6 +315,17 @@ class RingAccount : public SIPAccountBase {
                            std::function<void(const std::shared_ptr<RingAccount>&,
                                               const dht::InfoHash&)> op,
                            std::function<void(bool)> end = {});
+        /**
+         * Start to use the proxy for account
+         * @param address of the proxy
+         * @param deviceKey the device key for push notifications (empty to not use it)
+         */
+        void startProxyClient(const std::string& address, const std::string& deviceKey = "");
+        /**
+         * Stop to use the proxy for account
+         */
+        void stopProxyClient();
+
     private:
         NON_COPYABLE(RingAccount);
 
