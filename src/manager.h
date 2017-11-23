@@ -860,6 +860,18 @@ class Manager {
         std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
         void scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when);
 
+        /**
+         * Start to use the proxy for account
+         * @param accountID
+         * @param address of the proxy
+         */
+        void startProxy(const std::string& accountID, const std::string& address);
+        /**
+         * Stop to use the proxy for account
+         * @param accountID
+         */
+        void stopProxy(const std::string& accountID);
+
 #ifdef RING_VIDEO
         /**
          * Create a new SinkClient instance, store it in an internal cache as a weak_ptr
