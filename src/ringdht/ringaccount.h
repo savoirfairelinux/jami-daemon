@@ -314,6 +314,16 @@ class RingAccount : public SIPAccountBase {
                            std::function<void(const std::shared_ptr<RingAccount>&,
                                               const dht::InfoHash&)> op,
                            std::function<void(bool)> end = {});
+        /**
+         * Start to use the proxy for account
+         * @param address of the proxy
+         */
+        void startProxy(const std::string& address);
+        /**
+         * Stop to use the proxy for account
+         */
+        void stopProxy();
+
     private:
         NON_COPYABLE(RingAccount);
 

@@ -2609,6 +2609,25 @@ Manager::getAccountDetails(const std::string& accountID) const
     }
 }
 
+
+void
+Manager::startProxy(const std::string& accountID, const std::string& address)
+{
+    for (const auto &account : getAllAccounts<RingAccount>()) {
+        if (account->getAccountID() == accountID)
+            account->startProxy(address);
+    }
+}
+
+void
+Manager::stopProxy(const std::string& accountID)
+{
+    for (const auto &account : getAllAccounts<RingAccount>()) {
+        if (account->getAccountID() == accountID)
+            account->stopProxy();
+    }
+}
+
 std::map<std::string, std::string>
 Manager::getVolatileAccountDetails(const std::string& accountID) const
 {
