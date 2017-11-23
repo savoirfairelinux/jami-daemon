@@ -1,4 +1,5 @@
 # OPENDHT
+# TODO BUMP OPENDHT FOR PROXY ABILITIES
 OPENDHT_VERSION := 1.5.0
 OPENDHT_URL := https://github.com/savoirfairelinux/opendht/archive/$(OPENDHT_VERSION).tar.gz
 
