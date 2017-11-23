@@ -1848,6 +1848,11 @@ RingAccount::doRegister()
     } else
         doRegister_();
 
+    if (proxyEnabled_) {
+        startProxyClient(proxyServer_/*, deviceKey_*/);
+    } else {
+        stopProxyClient();
+    }
 }
 
 
@@ -3304,5 +3309,19 @@ RingAccount::registerDhtAddress(IceTransport& ice)
         reg_addr(ice, ip);
     }
 }
+
+void
+RingAccount::startProxyClient(const std::string& address, const std::string& /*deviceKey*/)
+{
+    dht_.setProxyServer(address/*, deviceKey */); // NOTE deviceKey will be enabled for push notifications
+    dht_.enableProxy(true);
+}
+
+void
+RingAccount::stopProxyClient()
+{
+    dht_.enableProxy(false);
+}
+
 
 } // namespace ring
