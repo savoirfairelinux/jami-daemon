@@ -306,6 +306,16 @@ class RingAccount : public SIPAccountBase {
         void registerName(const std::string& password, const std::string& name);
 #endif
 
+        /**
+         * Start to use the proxy for account
+         * @param address of the proxy
+         */
+        void startProxy(const std::string& address);
+        /**
+         * Stop to use the proxy for account
+         */
+        void stopProxy();
+
     private:
         NON_COPYABLE(RingAccount);
 

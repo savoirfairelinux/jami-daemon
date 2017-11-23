@@ -1838,6 +1838,7 @@ RingAccount::doRegister()
     } else
         doRegister_();
 
+    startProxy("127.0.0.1:8000");
 }
 
 
@@ -3295,5 +3296,18 @@ RingAccount::registerDhtAddress(IceTransport& ice)
     }
 }
 
-} // namespace ring
+void
+RingAccount::startProxy(const std::string& address)
+{
+    dht_.setProxyServer(address);
+    dht_.enableProxy(true);
+}
 
+void
+RingAccount::stopProxy()
+{
+    dht_.enableProxy(false);
+}
+
+
+} // namespace ring
