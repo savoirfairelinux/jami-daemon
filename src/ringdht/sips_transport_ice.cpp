@@ -22,6 +22,7 @@
 #include "sips_transport_ice.h"
 
 #include "ice_transport.h"
+#include "ice_socket.h"
 #include "manager.h"
 #include "sip/sip_utils.h"
 #include "logger.h"
@@ -38,6 +39,7 @@
 #include <pj/lock.h>
 
 #include <algorithm>
+#include <system_error>
 #include <cstring> // std::memset
 
 namespace ring { namespace tls {
@@ -131,6 +133,55 @@ tls_status_from_err(int err)
 
     return status;
 }
+
+/// ICE transport as GenericTransport
+///
+/// \warning Simplified version where we assume that ICE protocol
+/// always use UDP over IP over ETHERNET, and doesn't add more header to the UDP payload.
+///
+struct IceSocketTransport final : public GenericTransport
+{
+	static constexpr uint16_t STANDARD_MTU_SIZE = 1280; // Size in bytes of MTU for IPv6 capable networks
+    static constexpr uint16_t IPV6_HEADER_SIZE = 40; // Size in bytes of IPv6 packet header
+    static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPv4 packet header
+	static constexpr uint16_t UDP_HEADER_SIZE = 8; // Size in bytes of UDP header
+
+    IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id)
+        : compId_ {comp_id}
+        , ice_ {ice} {}
+
+    bool isReliable() const override {
+        return false;
+    }
+
+    bool isInitiator() const override {
+        return ice_->isInitiator();
+    }
+
+    int maxPayload() const override {
+		auto ip_header_size = (ice_->getRemoteAddress(compId_).getFamily() == AF_INET) ?
+							IPV4_HEADER_SIZE : IPV6_HEADER_SIZE;
+        return STANDARD_MTU_SIZE - ip_header_size - UDP_HEADER_SIZE;
+    }
+
+    void setOnRecv(RecvCb&& cb) override {
+        ice_->setOnRecv(compId_, std::move(cb));
+    }
+
+    std::size_t send(const void* buf, std::size_t len, std::error_code& ec) override {
+        auto res = ice_->send(compId_, static_cast<const unsigned char*>(buf), len);
+        if (res < 0) {
+            ec.assign(errno, std::generic_category());
+            return 0;
+        }
+        ec.clear();
+        return res;
+    }
+
+private:
+    const int compId_;
+    std::shared_ptr<IceTransport> ice_;
+};
 
 SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
                                    int tp_type,
@@ -233,14 +284,16 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     std::memset(&localCertInfo_, 0, sizeof(pj_ssl_cert_info));
     std::memset(&remoteCertInfo_, 0, sizeof(pj_ssl_cert_info));
 
+    tlsSocket_ = std::make_unique<IceSocketTransport>(ice_, comp_id);
+
     TlsSession::TlsSessionCallbacks cbs = {
         /*.onStateChange = */[this](TlsSessionState state){ onTlsStateChange(state); },
         /*.onRxData = */[this](std::vector<uint8_t>&& buf){ onRxData(std::move(buf)); },
         /*.onCertificatesUpdate = */[this](const gnutls_datum_t* l, const gnutls_datum_t* r,
-                                       unsigned int n){ onCertificatesUpdate(l, r, n); },
+                                           unsigned int n){ onCertificatesUpdate(l, r, n); },
         /*.verifyCertificate = */[this](gnutls_session_t session){ return verifyCertificate(session); }
     };
-    tls_.reset(new TlsSession(ice, comp_id, param, cbs));
+    tls_ = std::make_unique<TlsSession>(*tlsSocket_, param, cbs);
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
@@ -323,18 +376,19 @@ SipsIceTransport::handleEvents()
         pj_status_t status;
         if (!fatal) {
             const std::size_t size = tdata->buf.cur - tdata->buf.start;
-            auto ret = tls_->send(tdata->buf.start, size);
-            if (gnutls_error_is_fatal(ret)) {
-                RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ret));
-                tls_->shutdown();
-                fatal = true;
+            std::error_code ec;
+            status = tls_->send(tdata->buf.start, size, ec);
+            if (ec) {
+                status = tls_status_from_err(ec.value());
+                if (gnutls_error_is_fatal(ec.value())) {
+                    RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
+                    tls_->shutdown();
+                    fatal = true;
+                }
             }
-            if (ret < 0)
-                status = tls_status_from_err(ret);
-            else
-                status = ret;
-        } else
+        } else {
             status = -PJ_RETURN_OS_ERROR(OSERR_ENOTCONN);
+        }
 
         tdata->op_key.tdata = nullptr;
         if (tdata->op_key.callback)
@@ -501,7 +555,7 @@ SipsIceTransport::getInfo(pj_ssl_sock_info* info, bool established)
     if (established) {
         // Cipher Suite Id
         std::array<uint8_t, 2> cs_id;
-        if (auto cipher_name = tls_->getCurrentCipherSuiteId(cs_id)) {
+        if (auto cipher_name = tls_->currentCipherSuiteId(cs_id)) {
             info->cipher = static_cast<pj_ssl_cipher>((cs_id[0] << 8) | cs_id[1]);
             RING_DBG("[TLS] using cipher %s (0x%02X%02X)", cipher_name, cs_id[0], cs_id[1]);
         } else
@@ -673,14 +727,15 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     const std::size_t size = tdata->buf.cur - tdata->buf.start;
     std::unique_lock<std::mutex> lk {txMutex_};
     if (syncTx_ and txQueue_.empty()) {
-        auto ret = tls_->send(tdata->buf.start, size);
+        std::error_code ec;
+        tls_->send(tdata->buf.start, size, ec);
         lk.unlock();
 
         // Shutdown on fatal error, else ignore it
-        if (gnutls_error_is_fatal(ret)) {
-            RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ret));
+        if (ec and gnutls_error_is_fatal(ec.value())) {
+            RING_ERR("[TLS] fatal error during sending: %s", gnutls_strerror(ec.value()));
             tls_->shutdown();
-            return tls_status_from_err(ret);
+            return tls_status_from_err(ec.value());
         }
 
         return PJ_SUCCESS;
@@ -697,7 +752,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
 uint16_t
 SipsIceTransport::getTlsSessionMtu()
 {
-    return tls_->getMtu();
+    return tls_->maxPayload();
 }
 
 }} // namespace ring::tls
