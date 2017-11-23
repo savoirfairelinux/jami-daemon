@@ -8,6 +8,7 @@ dnl To use dolt, invoke the DOLT macro immediately after the libtool macros.
 dnl Optionally, copy this file into acinclude.m4, to avoid the need to have it
 dnl installed when running autoconf on your project.
 
+
 AC_DEFUN([DOLT], [
 AC_REQUIRE([AC_CANONICAL_HOST])
 # dolt, a replacement for libtool
@@ -164,10 +165,11 @@ for arg in "$[]@"; do
         *) args@<:@${#args[@]}@:>@="$arg" ;;
     esac
 done
+
 if $modeok && $tagok ; then
-    . ${top_builddir_slash}doltcompile "${args@<:@@@:>@}"
+    . ${top_builddir_slash}doltcompile "${args@<:@@@:>@}" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PROXY_SERVER=true -DOPENDHT_PUSH_NOTIFICATIONS=true
 else
-    exec ${top_builddir_slash}libtool "$[]@"
+    exec ${top_builddir_slash}libtool "$[]@" $(proxydht_variables)
 fi
 __DOLTLIBTOOL__EOF__
 
