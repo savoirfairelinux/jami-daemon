@@ -1838,6 +1838,11 @@ RingAccount::doRegister()
     } else
         doRegister_();
 
+    std::cout << "##############################SET PROXY SERVER" << std::endl;
+    dht_.setProxyServer();
+    std::cout << "##############################enableProxy" << std::endl;
+    dht_.enableProxy(true);
+    std::cout << "##############################finish" << std::endl;
 }
 
 
@@ -3296,4 +3301,3 @@ RingAccount::registerDhtAddress(IceTransport& ice)
 }
 
 } // namespace ring
-

@@ -19,8 +19,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := 4.6
-RESTBED_URL := https://github.com/Corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
+RESTBED_VERSION := af254578da913c5b94b2ecf3664c570b2a9a31fc
+RESTBED_URL := https://github.com/AmarOk1412/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 PKGS += restbed
 
@@ -48,8 +48,8 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz kashmir.tar.gz .sum-restbed
 	rm -rf $(UNPACK_DIR)/dependency/kashmir
 	mv kashmir-dependency-master $(UNPACK_DIR)/dependency/kashmir
 	$(APPLY) $(SRC)/restbed/findkashmir.patch
-	$(APPLY) $(SRC)/restbed/strand.patch
-	$(APPLY) $(SRC)/restbed/locale-fix.patch
+	#$(APPLY) $(SRC)/restbed/strand.patch
+	#$(APPLY) $(SRC)/restbed/locale-fix.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
