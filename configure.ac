@@ -219,10 +219,24 @@ AS_IF([test -n "${CONTRIB_DIR}"], [
   ])
 ])
 
+#dnl
+#dnl Add options for for proxy for opendht
+#dnl
+#CPPFLAGS+=" -DOPENDHT_PROXY_SERVER=true -DOPENDHT_PUSH_NOTIFICATIONS=true -DOPENDHT_PROXY_CLIENT=true"
+#LDFLAGS+=" -ljsoncpp -lrestbed"
+
+
 AS_IF([test -n "${CONTRIB_DIR}"], [
   AC_MSG_RESULT([${CONTRIB_DIR}])
   export PATH=${CONTRIB_DIR}/bin:$PATH
   CPPFLAGS="${CPPFLAGS} -I${CONTRIB_DIR}/include"
+
+  CPPFLAGS+=" -DOPENDHT_PROXY_SERVER=true -ljsoncpp -lrestbed"
+  CPPFLAGS+=" -DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PUSH_NOTIFICATIONS=true"
+  PKG_CHECK_MODULES([Jsoncpp], [jsoncpp >= 1.7.4])
+  CPPFLAGS="${CPPFLAGS} ${Jsoncpp_CFLAGS}"
+  LDFLAGS="${LDFLAGS} ${Jsoncpp_LIBS} -lrestbed"
+
   CFLAGS="${CFLAGS} -DPJ_AUTOCONF=1 "
   CXXFLAGS="${CXXFLAGS} -DPJ_AUTOCONF=1 "
   AS_IF([test "${HAVE_WIN64}" = "1"],[
