@@ -923,4 +923,14 @@ bool registerName(const std::string& account, const std::string& password, const
     return false;
 }
 
+void startProxyClient(const std::string& accountID, const std::string& address, const std::string& deviceKey)
+{
+    ring::Manager::instance().startProxyClient(accountID, address, deviceKey);
+}
+
+void stopProxyClient(const std::string& accountID)
+{
+    ring::Manager::instance().stopProxyClient(accountID);
+}
+
 } // namespace DRing
