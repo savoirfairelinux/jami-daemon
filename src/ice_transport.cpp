@@ -1177,6 +1177,58 @@ IceTransportFactory::createTransport(const char* name, int component_count,
 //==============================================================================
 
 void
+IceSocketTransport::setOnRecv(RecvCb&& cb)
+{
+    return ice_->setOnRecv(compId_, cb);
+}
+
+bool
+IceSocketTransport::isInitiator() const
+{
+    return ice_->isInitiator();
+}
+
+int
+IceSocketTransport::maxPayload() const
+{
+    auto ip_header_size = (ice_->getRemoteAddress(compId_).getFamily() == AF_INET) ?
+        IPV4_HEADER_SIZE : IPV6_HEADER_SIZE;
+    return STANDARD_MTU_SIZE - ip_header_size - UDP_HEADER_SIZE;
+}
+
+bool
+IceSocketTransport::waitForData(unsigned ms_timeout) const
+{
+    return ice_->waitForData(compId_, ms_timeout) > 0;
+}
+
+std::size_t
+IceSocketTransport::write(const ValueType* buf, std::size_t len, std::error_code& ec)
+{
+    auto res = ice_->send(compId_, buf, len);
+    if (res < 0) {
+        ec.assign(errno, std::generic_category());
+        return 0;
+    }
+    ec.clear();
+    return res;
+}
+
+std::size_t
+IceSocketTransport::read(ValueType* buf, std::size_t len, std::error_code& ec)
+{
+    auto res = ice_->recv(compId_, buf, len);
+    if (res < 0) {
+        ec.assign(errno, std::generic_category());
+        return 0;
+    }
+    ec.clear();
+    return res;
+}
+
+//==============================================================================
+
+void
 IceSocket::close()
 {
     ice_transport_.reset();
