@@ -24,8 +24,6 @@
 #include "tls_session.h"
 
 #include "threadloop.h"
-#include "ice_socket.h"
-#include "ice_transport.h"
 #include "logger.h"
 #include "noncopyable.h"
 #include "compiler_intrinsics.h"
@@ -54,26 +52,22 @@
 
 namespace ring { namespace tls {
 
-static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* DTLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* DTLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
+static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr uint16_t INPUT_BUFFER_SIZE {16*1024}; // to be coherent with the maximum size advised in path mtu discovery
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum number of packets to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
 static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(1000); // Delay between two handshake request on DTLS
 static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
-static constexpr uint8_t UDP_HEADER_SIZE = 8;   // Size in bytes of UDP packet header
+static constexpr int MIN_MTU {512 - 20 - 8}; // minimal payload size of a DTLS packet carried by an IPv4 packet
 static constexpr uint8_t HEARTBEAT_TRIES = 1; // Number of tries at each heartbeat ping send
 static constexpr auto HEARTBEAT_RETRANS_TIMEOUT = std::chrono::milliseconds(700); // gnutls heartbeat retransmission timeout for each ping (in milliseconds)
 static constexpr auto HEARTBEAT_TOTAL_TIMEOUT = HEARTBEAT_RETRANS_TIMEOUT * HEARTBEAT_TRIES; // gnutls heartbeat time limit for heartbeat procedure (in milliseconds)
 static constexpr int MISS_ORDERING_LIMIT = 32; // maximal accepted distance of out-of-order packet (note: must be a signed type)
 static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
-
-// mtus array to test, do not add mtu over the interface MTU, this will result in false result due to packet fragmentation.
-// also do not set over 16000 this will result in a gnutls error (unexpected packet size)
-// neither under MIN_MTU because it makes no sense and could result in underflow of certain variables.
-// Put mtus values in ascending order in the array to avoid sorting
-static constexpr std::array<uint16_t, MTUS_TO_TEST> MTUS = {MIN_MTU, 800, 1280};
 
 // Helper to cast any duration into an integer number of milliseconds
 template <class Rep, class Period>
@@ -176,21 +170,19 @@ public:
     using StateHandler = std::function<TlsSessionState(TlsSessionState state)>;
 
     // Constants (ctor init.)
-    const std::unique_ptr<IceSocket> socket_;
     const bool isServer_;
     const TlsParams params_;
     const TlsSessionCallbacks callbacks_;
     const bool anonymous_;
 
-    TlsSessionImpl(const std::shared_ptr<IceTransport>& ice,
-                   int ice_comp_id,
-                   const TlsParams& params,
-                   const TlsSessionCallbacks& cbs,
-                   bool anonymous);
+    TlsSessionImpl(SocketType& transport, const TlsParams& params,
+                   const TlsSessionCallbacks& cbs, bool anonymous);
 
     ~TlsSessionImpl();
 
     const char* typeName() const;
+
+    SocketType& transport_;
 
     // State machine
     TlsSessionState handleStateSetup(TlsSessionState state);
@@ -201,31 +193,30 @@ public:
     TlsSessionState handleStateShutdown(TlsSessionState state);
     std::map<TlsSessionState, StateHandler> fsmHandlers_ {};
     std::atomic<TlsSessionState> state_ {TlsSessionState::SETUP};
-    std::atomic<unsigned int> maxPayload_;
+    std::atomic<int> maxPayload_ {-1};
 
     // IO GnuTLS <-> ICE
-    std::mutex txMutex_ {};
     std::mutex rxMutex_ {};
     std::condition_variable rxCv_ {};
-    std::list<std::vector<uint8_t>> rxQueue_ {};
+    std::list<std::vector<ValueType>> rxQueue_ {};
 
     std::mutex reorderBufMutex_;
     bool flushProcessing_ {false}; ///< protect against recursive call to flushRxQueue
-    std::vector<uint8_t> rawPktBuf_; ///< gnutls incoming packet buffer
+    std::vector<ValueType> rawPktBuf_; ///< gnutls incoming packet buffer
     uint64_t baseSeq_ {0}; ///< sequence number of first application data packet received
     uint64_t lastRxSeq_ {0}; ///< last received and valid packet sequence number
     uint64_t gapOffset_ {0}; ///< offset of first byte not received yet
     clock::time_point lastReadTime_;
-    std::map<uint64_t, std::vector<uint8_t>> reorderBuffer_ {};
+    std::map<uint64_t, std::vector<ValueType>> reorderBuffer_ {};
 
-    ssize_t send_(const uint8_t* tx_data, std::size_t tx_size);
+    std::size_t send(const ValueType*, std::size_t, std::error_code&);
     ssize_t sendRaw(const void*, size_t);
     ssize_t sendRawVec(const giovec_t*, int);
     ssize_t recvRaw(void*, size_t);
     int waitForRawData(unsigned);
 
     bool initFromRecordState(int offset=0);
-    void handleDataPacket(std::vector<uint8_t>&&, uint64_t);
+    void handleDataPacket(std::vector<ValueType>&&, uint64_t);
     void flushRxQueue();
 
     // Statistics
@@ -257,24 +248,22 @@ public:
     void cleanup();
 
     // Path mtu discovery
-    std::array<uint16_t, MTUS_TO_TEST>::const_iterator mtuProbe_;
-    unsigned hbPingRecved_ {0};
+    std::array<int, 3> MTUS_;
+    int mtuProbe_;
+    int hbPingRecved_ {0};
     bool pmtudOver_ {false};
-    uint8_t transportOverhead_;
     void pathMtuHeartbeat();
 };
 
-TlsSession::TlsSessionImpl::TlsSessionImpl(const std::shared_ptr<IceTransport>& ice,
-                                           int ice_comp_id,
+TlsSession::TlsSessionImpl::TlsSessionImpl(SocketType& transport,
                                            const TlsParams& params,
                                            const TlsSessionCallbacks& cbs,
                                            bool anonymous)
-    : socket_(new IceSocket(ice, ice_comp_id))
-    , isServer_(not ice->isInitiator())
+    : isServer_(not transport.isInitiator())
     , params_(params)
     , callbacks_(cbs)
     , anonymous_(anonymous)
-    , maxPayload_(INPUT_BUFFER_SIZE)
+    , transport_ { transport }
     , cacred_(nullptr)
     , sacred_(nullptr)
     , xcred_(nullptr)
@@ -282,18 +271,20 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(const std::shared_ptr<IceTransport>& 
               [this] { process(); },
               [this] { cleanup(); })
 {
-    socket_->setOnRecv([this](uint8_t* buf, size_t len) {
-            std::lock_guard<std::mutex> lk {rxMutex_};
-            if (rxQueue_.size() == INPUT_MAX_SIZE) {
-                rxQueue_.pop_front(); // drop oldest packet if input buffer is full
-                ++stRxRawPacketDropCnt_;
-            }
-            rxQueue_.emplace_back(buf, buf+len);
-            ++stRxRawPacketCnt_;
-            stRxRawBytesCnt_ += len;
-            rxCv_.notify_one();
-            return len;
-        });
+    if (not transport_.isReliable()) {
+        transport_.setOnRecv([this](const ValueType* buf, size_t len) {
+                std::lock_guard<std::mutex> lk {rxMutex_};
+                if (rxQueue_.size() == INPUT_MAX_SIZE) {
+                    rxQueue_.pop_front(); // drop oldest packet if input buffer is full
+                    ++stRxRawPacketDropCnt_;
+                }
+                rxQueue_.emplace_back(buf, buf+len);
+                ++stRxRawPacketCnt_;
+                stRxRawBytesCnt_ += len;
+                rxCv_.notify_one();
+                return len;
+            });
+    }
 
     Manager::instance().registerEventHandler((uintptr_t)this, [this]{ flushRxQueue(); });
 
@@ -304,9 +295,8 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(const std::shared_ptr<IceTransport>& 
 TlsSession::TlsSessionImpl::~TlsSessionImpl()
 {
     thread_.join();
-
-    socket_->setOnRecv(nullptr);
-
+    if (not transport_.isReliable())
+        transport_.setOnRecv(nullptr);
     Manager::instance().unregisterEventHandler((uintptr_t)this);
 }
 
@@ -327,9 +317,15 @@ TlsSession::TlsSessionImpl::dump_io_stats() const
 TlsSessionState
 TlsSession::TlsSessionImpl::setupClient()
 {
-    auto ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
-    RING_WARN("[TLS] set heartbeat reception for retrocompatibility check on server");
-    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    int ret;
+
+    if (not transport_.isReliable()) {
+        ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
+        RING_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
+        gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+    } else {
+        ret = gnutls_init(&session_, GNUTLS_CLIENT);
+    }
 
     if (ret != GNUTLS_E_SUCCESS) {
         RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
@@ -346,8 +342,30 @@ TlsSession::TlsSessionImpl::setupClient()
 TlsSessionState
 TlsSession::TlsSessionImpl::setupServer()
 {
-    gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
-    return TlsSessionState::COOKIE;
+    int ret;
+
+    if (not transport_.isReliable()) {
+        ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
+
+        RING_DBG("[TLS] set heartbeat reception");
+        gnutls_heartbeat_enable(session_, GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+
+        gnutls_dtls_prestate_set(session_, &prestate_);
+    } else {
+        ret = gnutls_init(&session_, GNUTLS_SERVER);
+    }
+
+    if (ret != GNUTLS_E_SUCCESS) {
+        RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
+        return TlsSessionState::SHUTDOWN;
+    }
+
+    gnutls_certificate_server_set_request(session_, GNUTLS_CERT_REQUIRE);
+
+    if (not commonSessionInit())
+        return TlsSessionState::SHUTDOWN;
+
+    return TlsSessionState::HANDSHAKE;
 }
 
 void
@@ -440,7 +458,9 @@ TlsSession::TlsSessionImpl::commonSessionInit()
 
     if (anonymous_) {
         // Force anonymous connection, see handleStateHandshake how we handle failures
-        ret = gnutls_priority_set_direct(session_, TLS_FULL_PRIORITY_STRING, nullptr);
+        ret = gnutls_priority_set_direct(session_,
+                                         transport_.isReliable() ? TLS_FULL_PRIORITY_STRING : DTLS_FULL_PRIORITY_STRING,
+                                         nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
             return false;
@@ -458,7 +478,9 @@ TlsSession::TlsSessionImpl::commonSessionInit()
         }
     } else {
         // Use a classic non-encrypted CERTIFICATE exchange method (less anonymous)
-        ret = gnutls_priority_set_direct(session_, TLS_CERT_PRIORITY_STRING, nullptr);
+        ret = gnutls_priority_set_direct(session_,
+                                         transport_.isReliable() ? TLS_CERT_PRIORITY_STRING : DTLS_CERT_PRIORITY_STRING,
+                                         nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             RING_ERR("[TLS] TLS priority set failed: %s", gnutls_strerror(ret));
             return false;
@@ -473,13 +495,15 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     }
     gnutls_certificate_send_x509_rdn_sequence(session_, 0);
 
-    // DTLS hanshake timeouts
-    auto re_tx_timeout = duration2ms(DTLS_RETRANSMIT_TIMEOUT);
-    gnutls_dtls_set_timeouts(session_, re_tx_timeout,
-                             std::max(duration2ms(params_.timeout), re_tx_timeout));
+    if (not transport_.isReliable()) {
+        // DTLS hanshake timeouts
+        auto re_tx_timeout = duration2ms(DTLS_RETRANSMIT_TIMEOUT);
+        gnutls_dtls_set_timeouts(session_, re_tx_timeout,
+                                 std::max(duration2ms(params_.timeout), re_tx_timeout));
 
-    // DTLS maximum payload size (raw packet relative)
-    gnutls_dtls_set_mtu(session_, DTLS_MTU);
+        // gnutls DTLS mtu = maximum payload size given by transport
+        gnutls_dtls_set_mtu(session_, transport_.maxPayload());
+    }
 
     // Stuff for transport callbacks
     gnutls_session_set_ptr(session_, this);
@@ -504,17 +528,27 @@ TlsSession::TlsSessionImpl::commonSessionInit()
     return true;
 }
 
-ssize_t
-TlsSession::TlsSessionImpl::send_(const uint8_t* tx_data, std::size_t tx_size)
+std::size_t
+TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, std::error_code& ec)
 {
-    std::size_t max_tx_sz = gnutls_dtls_get_data_mtu(session_);
+    if (state_ != TlsSessionState::ESTABLISHED) {
+        ec = std::error_code(GNUTLS_E_INVALID_SESSION, std::system_category());
+        return 0;
+    }
 
-    // Split user data into MTU-suitable chunck
-    size_t total_written = 0;
+    std::size_t total_written = 0;
+    std::size_t max_tx_sz;
+
+    if (transport_.isReliable())
+        max_tx_sz = tx_size;
+    else
+        max_tx_sz = gnutls_dtls_get_data_mtu(session_);
+
+    // Split incoming data into chunck suitable for the underlying transport
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
-        ssize_t nwritten;
         auto data_seq = tx_data + total_written;
+        ssize_t nwritten;
         do {
             nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
         } while (nwritten == GNUTLS_E_INTERRUPTED or nwritten == GNUTLS_E_AGAIN);
@@ -523,13 +557,16 @@ TlsSession::TlsSessionImpl::send_(const uint8_t* tx_data, std::size_t tx_size)
              * state has not changed, so we have to ask for more data first.
              * We will just try again later, although this should never happen.
              */
-            RING_WARN("[TLS] send failed (only %zu bytes sent): %s", total_written,
-                      gnutls_strerror(nwritten));
-            return nwritten;
+            RING_ERR() << "[TLS] send failed (only " << total_written << " bytes sent): "
+                       << gnutls_strerror(nwritten);
+            ec = std::error_code(nwritten, std::system_category());
+            return 0;
         }
 
         total_written += nwritten;
     }
+
+    ec.clear();
     return total_written;
 }
 
@@ -538,16 +575,18 @@ TlsSession::TlsSessionImpl::send_(const uint8_t* tx_data, std::size_t tx_size)
 ssize_t
 TlsSession::TlsSessionImpl::sendRaw(const void* buf, size_t size)
 {
-    auto ret = socket_->send(reinterpret_cast<const unsigned char*>(buf), size);
-    if (ret > 0) {
+    std::error_code ec;
+    auto n = transport_.write(reinterpret_cast<const ValueType*>(buf), size, ec);
+    if (!ec) {
         // log only on success
         ++stTxRawPacketCnt_;
-        stTxRawBytesCnt_ += size;
-        return ret;
+        stTxRawBytesCnt_ += n;
+        return n;
     }
 
     // Must be called to pass errno value to GnuTLS on Windows (cf. GnuTLS doc)
-    gnutls_transport_set_errno(session_, errno);
+    gnutls_transport_set_errno(session_, ec.value());
+    RING_ERR() << "[TLS] transport failure on tx: errno = " << ec.value();
     return -1;
 }
 
@@ -574,39 +613,64 @@ TlsSession::TlsSessionImpl::sendRawVec(const giovec_t* iov, int iovcnt)
 ssize_t
 TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
 {
-    std::lock_guard<std::mutex> lk {rxMutex_};
-    if (rxQueue_.empty()) {
-        gnutls_transport_set_errno(session_, EAGAIN);
+    if (transport_.isReliable()) {
+        std::error_code ec;
+        auto count = transport_.read(reinterpret_cast<ValueType*>(buf), size, ec);
+        if (!ec)
+            return count;
+        gnutls_transport_set_errno(session_, ec.value());
         return -1;
     }
 
     const auto& pkt = rxQueue_.front();
     const std::size_t count = std::min(pkt.size(), size);
-    std::copy_n(pkt.begin(), count, reinterpret_cast<uint8_t*>(buf));
+    std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
     rxQueue_.pop_front();
     return count;
 }
 
 // Called by GNUTLS to wait for encrypted packet from low-level transport.
 // 'timeout' is in milliseconds.
-// Should return 0 on connection termination,
-// a positive number indicating the number of bytes received,
-// and -1 on error.
+// Should return 0 on timeout, a positive number if data are available for read, or -1 on error.
 int
 TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
 {
-    std::unique_lock<std::mutex> lk {rxMutex_};
-    if (not rxCv_.wait_for(lk, std::chrono::milliseconds(timeout),
-                           [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; }))
-        return 0;
+    if (transport_.isReliable()) {
+        if (not transport_.waitForData(timeout)) {
+            // shutdown?
+            if (state_ == TlsSessionState::SHUTDOWN) {
+                gnutls_transport_set_errno(session_, EINTR);
+                return -1;
+            }
+            return 0;
+        }
+        return 1;
+    }
 
-    // shutdown?
+    // non-reliable uses callback installed with setOnRecv()
+    std::unique_lock<std::mutex> lk {rxMutex_};
+    rxCv_.wait(lk, [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
     if (state_ == TlsSessionState::SHUTDOWN) {
         gnutls_transport_set_errno(session_, EINTR);
         return -1;
     }
+    return 1;
+}
 
-    return rxQueue_.front().size();
+bool
+TlsSession::TlsSessionImpl::initFromRecordState(int offset)
+{
+    std::array<uint8_t, 8> seq;
+    if (gnutls_record_get_state(session_, 1, nullptr, nullptr, nullptr, &seq[0]) != GNUTLS_E_SUCCESS) {
+        RING_ERR("[TLS] Fatal-error Unable to read initial state");
+        return false;
+    }
+
+    baseSeq_ = array2uint(seq) + offset;
+    gapOffset_ = baseSeq_;
+    lastRxSeq_ = baseSeq_ - 1;
+    RING_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
+    return true;
 }
 
 bool
@@ -629,8 +693,10 @@ TlsSession::TlsSessionImpl::cleanup()
     state_ = TlsSessionState::SHUTDOWN; // be sure to block any user operations
 
     if (session_) {
-        // DTLS: not use GNUTLS_SHUT_RDWR to not wait for a peer answer
-        gnutls_bye(session_, GNUTLS_SHUT_WR);
+        if (transport_.isReliable())
+            gnutls_bye(session_, GNUTLS_SHUT_RDWR);
+        else
+            gnutls_bye(session_, GNUTLS_SHUT_WR); // not wait for a peer answer
         gnutls_deinit(session_);
         session_ = nullptr;
     }
@@ -642,7 +708,7 @@ TlsSession::TlsSessionImpl::cleanup()
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateSetup(UNUSED TlsSessionState state)
 {
-    RING_DBG("[TLS] Start %s DTLS session", typeName());
+    RING_DBG("[TLS] Start %s session", typeName());
 
     try {
         if (anonymous_)
@@ -653,10 +719,15 @@ TlsSession::TlsSessionImpl::handleStateSetup(UNUSED TlsSessionState state)
         return TlsSessionState::SHUTDOWN;
     }
 
-    if (isServer_)
-        return setupServer();
-    else
+    if (not isServer_)
         return setupClient();
+
+    // Extra step for DTLS-like transports
+    if (not transport_.isReliable()) {
+        gnutls_key_generate(&cookie_key_, GNUTLS_COOKIE_KEY_SIZE);
+        return TlsSessionState::COOKIE;
+    }
+    return setupServer();
 }
 
 TlsSessionState
@@ -723,22 +794,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
 
     RING_DBG("[TLS] cookie ok");
 
-    ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
-    RING_WARN("[TLS] set heartbeat reception");
-    gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
-
-    if (ret != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] session init failed: %s", gnutls_strerror(ret));
-        return TlsSessionState::SHUTDOWN;
-    }
-
-    gnutls_certificate_server_set_request(session_, GNUTLS_CERT_REQUIRE);
-    gnutls_dtls_prestate_set(session_, &prestate_);
-
-    if (not commonSessionInit())
-        return TlsSessionState::SHUTDOWN;
-
-    return TlsSessionState::HANDSHAKE;
+    return setupServer();
 }
 
 TlsSessionState
@@ -769,7 +825,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     }
 
     auto desc = gnutls_session_get_desc(session_);
-    RING_WARN("[TLS] session established: %s", desc);
+    RING_DBG("[TLS] session established: %s", desc);
     gnutls_free(desc);
 
     // Anonymous connection? rehandshake immediatly with certificate authentification forced
@@ -778,7 +834,9 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         RING_DBG("[TLS] renogotiate with certificate authentification");
 
         // Re-setup TLS algorithms priority list with only certificate based cipher suites
-        ret = gnutls_priority_set_direct(session_, TLS_CERT_PRIORITY_STRING, nullptr);
+        ret = gnutls_priority_set_direct(session_,
+                                         transport_.isReliable() ? TLS_CERT_PRIORITY_STRING : DTLS_CERT_PRIORITY_STRING,
+                                         nullptr);
         if (ret != GNUTLS_E_SUCCESS) {
             RING_ERR("[TLS] session TLS cert-only priority set failed: %s", gnutls_strerror(ret));
             return TlsSessionState::SHUTDOWN;
@@ -807,52 +865,32 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
         callbacks_.onCertificatesUpdate(local, remote, remote_count);
     }
 
-    return TlsSessionState::MTU_DISCOVERY;
-}
-
-bool
-TlsSession::TlsSessionImpl::initFromRecordState(int offset)
-{
-    std::array<uint8_t, 8> seq;
-    if (gnutls_record_get_state(session_, 1, nullptr, nullptr, nullptr, &seq[0]) != GNUTLS_E_SUCCESS) {
-        RING_ERR("[TLS] Fatal-error Unable to read initial state");
-        return false;
-    }
-
-    baseSeq_ = array2uint(seq) + offset;
-    gapOffset_ = baseSeq_;
-    lastRxSeq_ = baseSeq_ - 1;
-    RING_DBG("[TLS] Initial sequence number: %lx", baseSeq_);
-    return true;
+    return transport_.isReliable() ? TlsSessionState::ESTABLISHED : TlsSessionState::MTU_DISCOVERY;
 }
 
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state)
 {
-    // set dtls mtu to be over each and every mtus tested
-    gnutls_dtls_set_mtu(session_, MTUS.back());
-
-    // get transport overhead
-    transportOverhead_ = socket_->getTransportOverhead();
+    mtuProbe_ = transport_.maxPayload();
+    assert(mtuProbe_ >= MIN_MTU);
+    MTUS_ = {MIN_MTU, std::max((mtuProbe_ + MIN_MTU)/2, MIN_MTU), mtuProbe_};
 
     // retrocompatibility check
-    if(gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
-        if (!isServer_){
-            RING_WARN("[TLS] HEARTBEAT PATH MTU DISCOVERY");
+    if (gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
+        if (!isServer_) {
             pathMtuHeartbeat();
             pmtudOver_ = true;
-            RING_WARN("[TLS] HEARTBEAT PATH MTU DISCOVERY OVER");
         }
     } else {
-        RING_ERR("[TLS] PEER HEARTBEAT DISABLED: setting minimal value to MTU @%d for retrocompatibility", DTLS_MTU);
-        gnutls_dtls_set_mtu(session_, DTLS_MTU);
+        RING_ERR() << "[TLS] PEER HEARTBEAT DISABLED: using transport MTU value " << mtuProbe_;
         pmtudOver_ = true;
     }
+
+    gnutls_dtls_set_mtu(session_, mtuProbe_);
     maxPayload_ = gnutls_dtls_get_data_mtu(session_);
-    if (pmtudOver_)
-        RING_WARN("[TLS] maxPayload for dtls : %d B", maxPayload_.load());
 
     if (pmtudOver_) {
+        RING_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
         if (!initFromRecordState())
             return TlsSessionState::SHUTDOWN;
     }
@@ -872,62 +910,52 @@ TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state
 void
 TlsSession::TlsSessionImpl::pathMtuHeartbeat()
 {
-    int errno_send = 1; // non zero initialisation
-    auto tls_overhead = gnutls_record_overhead_size(session_);
-    RING_WARN("[TLS] tls session overhead : %lu", tls_overhead);
-    gnutls_heartbeat_set_timeouts(session_, HEARTBEAT_RETRANS_TIMEOUT.count(), HEARTBEAT_TOTAL_TIMEOUT.count());
-    RING_DBG("[TLS] Heartbeat PMTUD : retransmission timeout set to: %ld ms", HEARTBEAT_RETRANS_TIMEOUT.count());
+    RING_DBG() << "[TLS] PMTUD: starting probing with " << HEARTBEAT_RETRANS_TIMEOUT.count()
+               << "ms of retransmission timeout";
 
-    // server side: managing pong in state established
-    // client side: managing ping on heartbeat
-    uint16_t bytesToSend;
-    mtuProbe_ = MTUS.cbegin();
-    RING_DBG("[TLS] Heartbeat PMTUD : client side");
+    gnutls_heartbeat_set_timeouts(session_,
+                                  HEARTBEAT_RETRANS_TIMEOUT.count(),
+                                  HEARTBEAT_TOTAL_TIMEOUT.count());
 
-    while (mtuProbe_ != MTUS.cend()){
-        bytesToSend = (*mtuProbe_) - 3 - tls_overhead - UDP_HEADER_SIZE - transportOverhead_;
+    int errno_send = GNUTLS_E_SUCCESS;
+    mtuProbe_ = MTUS_[0];
+    for (auto mtu: MTUS_) {
+        gnutls_dtls_set_mtu(session_, mtu);
+        auto data_mtu = gnutls_dtls_get_data_mtu(session_);
+        RING_DBG() << "[TLS] PMTUD: mtu " << mtu
+                   << ", payload " << data_mtu;
+        auto bytesToSend = data_mtu - 3; // want to know why -3? ask gnutls!
         do {
-            RING_DBG("[TLS] Heartbeat PMTUD : ping with mtu %d and effective payload %d", *mtuProbe_, bytesToSend);
             errno_send = gnutls_heartbeat_ping(session_, bytesToSend, HEARTBEAT_TRIES, GNUTLS_HEARTBEAT_WAIT);
-            RING_DBG("[TLS] Heartbeat PMTUD : ping sequence over with errno %d: %s", errno_send,
-                     gnutls_strerror(errno_send));
         } while (errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED);
 
-        if (errno_send == GNUTLS_E_SUCCESS) {
-            ++mtuProbe_;
-        } else if (errno_send == GNUTLS_E_TIMEDOUT){ // timeout is considered as a packet loss, then the good mtu is the precedent.
-            if (mtuProbe_ == MTUS.cbegin()) {
-                RING_WARN("[TLS] Heartbeat PMTUD : no response on first ping, setting minimal MTU value @%d", MIN_MTU);
-                gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
-
-            } else {
-                --mtuProbe_;
-                RING_DBG("[TLS] Heartbeat PMTUD : timed out: Path MTU found @ %d", *mtuProbe_);
-                gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
-            }
-            return;
-        } else {
-            RING_WARN("[TLS] Heartbeat PMTUD : client ping failed: error %d: %s", errno_send,
-                      gnutls_strerror(errno_send));
-            if (mtuProbe_ != MTUS.begin())
-                --mtuProbe_;
-            gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
-            return;
+        if (errno_send != GNUTLS_E_SUCCESS) {
+            RING_DBG() << "[TLS] PMTUD: mtu " << mtu << " [FAILED]";
+            break;
         }
+
+        mtuProbe_ = mtu;
+        RING_DBG() << "[TLS] PMTUD: mtu " << mtu << " [OK]";
     }
 
-
-    if (errno_send == GNUTLS_E_SUCCESS) {
-        RING_WARN("[TLS] Heartbeat PMTUD completed : reached test value %d", MTUS.back());
-        --mtuProbe_; // for loop over, setting mtu to last valid mtu
+    if (errno_send == GNUTLS_E_TIMEDOUT) { // timeout is considered as a packet loss, then the good mtu is the precedent
+        if (mtuProbe_ == MTUS_[0]) {
+            RING_WARN() << "[TLS] PMTUD: no response on first ping, using minimal MTU value "
+                        << mtuProbe_;
+        } else {
+            RING_WARN() << "[TLS] PMTUD: timed out, using last working mtu "
+                        << mtuProbe_;
+        }
+    } else if (errno_send != GNUTLS_E_SUCCESS) {
+        RING_ERR() << "[TLS] PMTUD: failed with gnutls error '"
+                   << gnutls_strerror(errno_send) << '\'';
+    } else {
+        RING_DBG() << "[TLS] PMTUD: reached maximal value";
     }
-
-    gnutls_dtls_set_mtu(session_, *mtuProbe_ - UDP_HEADER_SIZE - transportOverhead_);
-    RING_WARN("[TLS] Heartbeat PMTUD : new mtu set to %d", *mtuProbe_);
 }
 
 void
-TlsSession::TlsSessionImpl::handleDataPacket(std::vector<uint8_t>&& buf, uint64_t pkt_seq)
+TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint64_t pkt_seq)
 {
     // Check for a valid seq. num. delta
     int64_t seq_delta = pkt_seq - lastRxSeq_;
@@ -936,14 +964,14 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<uint8_t>&& buf, uint64_
     } else {
         // too old?
         if (seq_delta <= -MISS_ORDERING_LIMIT) {
-            RING_WARN("[dtls] drop old pkt: 0x%lx", pkt_seq);
+            RING_WARN("[TLS] drop old pkt: 0x%lx", pkt_seq);
             return;
         }
 
         // No duplicate check as DTLS prevents that for us (replay protection)
 
         // accept Out-Of-Order pkt - will be reordered by queue flush operation
-        RING_WARN("[dtls] OOO pkt: 0x%lx", pkt_seq);
+        RING_WARN("[TLS] OOO pkt: 0x%lx", pkt_seq);
     }
 
     {
@@ -986,15 +1014,14 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 
     auto item = std::begin(reorderBuffer_);
     auto next_offset = item->first;
-    auto first_offset = next_offset;
 
     // Wait for next continous packet until timeout
     if ((clock::now() - lastReadTime_) >= RX_OOO_TIMEOUT) {
         // OOO packet timeout - consider waited packets as lost
         if (auto lost = next_offset - gapOffset_)
-            RING_WARN("[dtls] %lu lost since 0x%lx", lost, gapOffset_);
+            RING_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
         else
-            RING_WARN("[dtls] slow flush");
+            RING_WARN("[TLS] slow flush");
     } else if (next_offset != gapOffset_)
         return;
 
@@ -1021,6 +1048,13 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
+    // Nothing to do in reliable mode, so just wait for state change
+    if (transport_.isReliable()) {
+        std::unique_lock<std::mutex> lk {rxMutex_};
+        rxCv_.wait(lk, [this]{ return state_ != TlsSessionState::ESTABLISHED; });
+        return state;
+    }
+
     // block until rx packet or state change
     {
         std::unique_lock<std::mutex> lk {rxMutex_};
@@ -1035,18 +1069,13 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
     auto ret = gnutls_record_recv_seq(session_, rawPktBuf_.data(), rawPktBuf_.size(), &seq[0]);
 
     if (ret > 0) {
+        // Are we in PMTUD phase?
         if (!pmtudOver_) {
-            // This is the first application packet recieved after PMTUD
-            // This packet gives the final MTU.
-            if (hbPingRecved_ > 0) {
-                gnutls_dtls_set_mtu(session_, MTUS[hbPingRecved_ - 1] - UDP_HEADER_SIZE - transportOverhead_);
-                maxPayload_ = gnutls_dtls_get_data_mtu(session_);
-            } else {
-                gnutls_dtls_set_mtu(session_, MIN_MTU - UDP_HEADER_SIZE - transportOverhead_);
-                maxPayload_ = gnutls_dtls_get_data_mtu(session_);
-            }
+            mtuProbe_ = MTUS_[std::max(0, hbPingRecved_ - 1)];
+            gnutls_dtls_set_mtu(session_, mtuProbe_);
+            maxPayload_ = gnutls_dtls_get_data_mtu(session_);
             pmtudOver_ = true;
-            RING_WARN("[TLS] maxPayload for dtls : %d B", maxPayload_.load());
+            RING_DBG() << "[TLS] maxPayload: " << maxPayload_.load();
 
             if (!initFromRecordState(-1))
                 return TlsSessionState::SHUTDOWN;
@@ -1056,11 +1085,11 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
         handleDataPacket(std::move(rawPktBuf_), array2uint(seq));
         // no state change
     } else if (ret == GNUTLS_E_HEARTBEAT_PING_RECEIVED) {
-        RING_DBG("[TLS] Heartbeat PMTUD : ping received sending pong");
+        RING_DBG("[TLS] PMTUD: ping received sending pong");
         auto errno_send = gnutls_heartbeat_pong(session_, 0);
 
         if (errno_send != GNUTLS_E_SUCCESS){
-            RING_WARN("[TLS] Heartbeat PMTUD : failed on pong with error %d: %s", errno_send,
+            RING_ERR("[TLS] PMTUD: failed on pong with error %d: %s", errno_send,
                       gnutls_strerror(errno_send));
         } else {
             ++hbPingRecved_;
@@ -1106,10 +1135,10 @@ TlsSession::TlsSessionImpl::process()
 
 //==============================================================================
 
-TlsSession::TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id,
-                       const TlsParams& params, const TlsSessionCallbacks& cbs, bool anonymous)
+TlsSession::TlsSession(SocketType& transport, const TlsParams& params,
+                       const TlsSessionCallbacks& cbs, bool anonymous)
 
-    : pimpl_ { std::make_unique<TlsSessionImpl>(ice, ice_comp_id, params, cbs, anonymous) }
+    : pimpl_ { std::make_unique<TlsSessionImpl>(transport, params, cbs, anonymous) }
 {}
 
 TlsSession::~TlsSession()
@@ -1117,34 +1146,28 @@ TlsSession::~TlsSession()
     shutdown();
 }
 
-const char*
-TlsSession::typeName() const
+bool
+TlsSession::isInitiator() const
 {
-    return pimpl_->typeName();
+    return !pimpl_->isServer_;
 }
 
 bool
-TlsSession::isServer() const
+TlsSession::isReliable() const
 {
-    return pimpl_->isServer_;
+    return pimpl_->transport_.isReliable();
 }
 
-unsigned int
-TlsSession::getMaxPayload() const
+int
+TlsSession::maxPayload() const
 {
-    return pimpl_->maxPayload_;
-}
-
-// Called by anyone to stop the connection and the FSM thread
-void
-TlsSession::shutdown()
-{
-    pimpl_->state_ = TlsSessionState::SHUTDOWN;
-    pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+    if (pimpl_->state_ == TlsSessionState::SHUTDOWN)
+        throw std::runtime_error("Getting MTU from non-valid TLS session");
+    return gnutls_dtls_get_data_mtu(pimpl_->session_);
 }
 
 const char*
-TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
+TlsSession::currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
 {
     // get current session cipher suite info
     gnutls_cipher_algorithm_t cipher, s_cipher = gnutls_cipher_get(pimpl_->session_);
@@ -1166,27 +1189,71 @@ TlsSession::getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const
     return {};
 }
 
-ssize_t
-TlsSession::send(const void* data, std::size_t size)
+// Called by anyone to stop the connection and the FSM thread
+void
+TlsSession::shutdown()
 {
-    std::lock_guard<std::mutex> lk {pimpl_->txMutex_};
-    if (pimpl_->state_ != TlsSessionState::ESTABLISHED)
-        return GNUTLS_E_INVALID_SESSION;
-    return pimpl_->send_(static_cast<const uint8_t*>(data), size);
+    pimpl_->state_ = TlsSessionState::SHUTDOWN;
+    pimpl_->rxCv_.notify_one(); // unblock waiting FSM
 }
 
-ssize_t
-TlsSession::send(const std::vector<uint8_t>& vec)
+std::size_t
+TlsSession::write(const ValueType* data, std::size_t size, std::error_code& ec)
 {
-    return send(vec.data(), vec.size());
+    if (pimpl_->state_ != TlsSessionState::ESTABLISHED) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return 0;
+    }
+
+    return pimpl_->send(data, size, ec);
 }
 
-uint16_t
-TlsSession::getMtu()
+std::size_t
+TlsSession::read(ValueType* data, std::size_t size, std::error_code& ec)
 {
-    if (pimpl_->state_ == TlsSessionState::SHUTDOWN)
-        throw std::runtime_error("Getting MTU from dead TLS session");
-    return gnutls_dtls_get_mtu(pimpl_->session_);
+    std::errc error;
+
+    if (pimpl_->state_ != TlsSessionState::ESTABLISHED) {
+        ec = std::make_error_code(std::errc::broken_pipe);
+        return 0;
+    }
+
+    while (true) {
+        auto ret = gnutls_record_recv(pimpl_->session_, data, size);
+        if (ret > 0) {
+            ec.clear();
+            return ret;
+        }
+
+        if (ret == 0) {
+            RING_DBG("[TLS] eof");
+            shutdown();
+            error = std::errc::broken_pipe;
+            break;
+        } else if (ret == GNUTLS_E_REHANDSHAKE) {
+            RING_DBG("[TLS] re-handshake");
+            pimpl_->state_ = TlsSessionState::HANDSHAKE;
+            pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+        } else if (gnutls_error_is_fatal(ret)) {
+            RING_ERR("[TLS] fatal error in recv: %s", gnutls_strerror(ret));
+            shutdown();
+            error = std::errc::io_error;
+            break;
+        }
+    }
+
+    ec = std::make_error_code(error);
+    return 0;
+}
+
+void
+TlsSession::connect()
+{
+    TlsSessionState state;
+    do {
+        state = pimpl_->state_.load();
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    } while (state != TlsSessionState::ESTABLISHED and state != TlsSessionState::SHUTDOWN);
 }
 
 }} // namespace ring::tls
