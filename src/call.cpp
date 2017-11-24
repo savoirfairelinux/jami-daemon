@@ -78,11 +78,14 @@ hangupCalls(Call::SubcallSet callptr_list, int errcode)
 
 //==============================================================================
 
-Call::Call(Account& account, const std::string& id, Call::CallType type)
+Call::Call(Account& account, const std::string& id, Call::CallType type,
+           const std::map<std::string, std::string>& details)
     : id_(id)
     , type_(type)
     , account_(account)
 {
+    setDetails(details);
+
     addStateListener([this](UNUSED Call::CallState call_state,
                             UNUSED Call::ConnectionState cnx_state,
                             UNUSED int code) {
@@ -306,6 +309,11 @@ Call::toggleRecording()
     }
 
     return startRecording;
+}
+
+void
+Call::setDetails(const std::map<std::string, std::string>& details)
+{
 }
 
 std::map<std::string, std::string>
