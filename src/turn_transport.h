@@ -21,17 +21,20 @@
 #pragma once
 
 #include "ip_utils.h"
+#include "generic_io.h"
 
 #include <string>
 #include <memory>
 #include <functional>
 #include <map>
+#include <stdexcept>
 
 namespace ring {
 
 class TurnTransportPimpl;
 
-struct TurnTransportParams {
+struct TurnTransportParams
+{
     IpAddr server;
 
     // Plain Credentials
@@ -46,7 +49,8 @@ struct TurnTransportParams {
     std::size_t maxPacketSize {4096}; ///< size of one "logical" packet
 };
 
-class TurnTransport {
+class TurnTransport
+{
 public:
     /// Constructs a TurnTransport connected by TCP to given server.
     ///
@@ -106,6 +110,10 @@ public:
     ///
     void recvfrom(const IpAddr& peer, std::vector<char>& data);
 
+    /// Works as recvfrom() vector version but accept a simple char array.
+    ///
+    std::size_t recvfrom(const IpAddr& peer, char* buffer, std::size_t size);
+
     /// Work as recvfrom but stop on first '\n' character found.
     /// If such character isn't found, stop at /a data vector size.
     ///
@@ -124,11 +132,13 @@ public:
 
     /// Works as sendto() vector version but accept a simple char array.
     ///
-    bool sendto(const IpAddr& peer, const char* const buffer, std::size_t length);
+    bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
 
     /// Works as sendto() char array but happend a '\n' character at the end of sent data.
     ///
     bool writelineto(const IpAddr& peer, const char* const buffer, std::size_t length);
+
+    bool waitForData(const IpAddr& peer, unsigned ms_timeout) const;
 
 public:
     // Move semantic only, not copiable
@@ -138,6 +148,27 @@ public:
 private:
     TurnTransport() = delete;
     std::unique_ptr<TurnTransportPimpl> pimpl_;
+};
+
+class ConnectedTurnTransport final : public GenericTransport<>
+{
+public:
+    ConnectedTurnTransport(TurnTransport& turn, const IpAddr& peer);
+
+    bool isReliable() const override { return true; }
+    bool isInitiator() const override { return true; }
+    int maxPayload() const override { return 3000; }
+
+    bool waitForData(unsigned ms_timeout) const override;
+    std::size_t read(ValueType* buf, std::size_t length, std::error_code& ec) override;
+    std::size_t write(const ValueType* buf, std::size_t length, std::error_code& ec) override;
+
+    void setOnRecv(RecvCb&&) { throw std::logic_error("ConnectedTurnTransport bad call"); }
+
+private:
+    TurnTransport& turn_;
+    const IpAddr peer_;
+    RecvCb onRxDataCb_;
 };
 
 } // namespace ring

@@ -29,7 +29,6 @@
 #include <pjlib-util.h>
 #include <pjlib.h>
 
-#include <stdexcept>
 #include <future>
 #include <atomic>
 #include <thread>
@@ -45,6 +44,9 @@ namespace ring {
 
 using MutexGuard = std::lock_guard<std::mutex>;
 using MutexLock = std::unique_lock<std::mutex>;
+
+inline
+namespace {
 
 enum class RelayState
 {
@@ -82,13 +84,19 @@ public:
         cv_.notify_one();
     }
 
-    void read(std::vector<char>& output) {
+    template <typename Duration>
+    bool wait(Duration timeout) {
+        MutexLock lk {mutex_};
+        return cv_.wait_for(lk, timeout, [this]{ return !stream_.eof(); });
+    }
+
+    std::size_t read(char* output, std::size_t size) {
         MutexLock lk {mutex_};
         cv_.wait(lk, [&, this]{
-                stream_.read(&output[0], output.size());
+                stream_.read(&output[0], size);
                 return stream_.gcount() > 0 or stop_;
             });
-        output.resize(stop_ ? 0 : stream_.gcount());
+        return stop_ ? 0 : stream_.gcount();
     }
 
     std::vector<char> readline() {
@@ -120,6 +128,31 @@ private:
     friend void operator <<(std::vector<char>&, PeerChannel&);
 };
 
+}
+
+//==============================================================================
+
+template <class Callable, class... Args>
+inline void
+PjsipCall(Callable& func, Args... args)
+{
+    auto status = func(args...);
+    if (status != PJ_SUCCESS)
+        throw sip_utils::PjsipFailure(status);
+}
+
+template <class Callable, class... Args>
+inline auto
+PjsipCallReturn(const Callable& func, Args... args) -> decltype(func(args...))
+{
+    auto res = func(args...);
+    if (!res)
+        throw sip_utils::PjsipFailure();
+    return res;
+}
+
+//==============================================================================
+
 class TurnTransportPimpl
 {
 public:
@@ -135,6 +168,7 @@ public:
 
     std::map<IpAddr, PeerChannel> peerChannels_;
 
+    GenericTransport<>::RecvCb onRxDataCb;
     TurnTransportParams settings;
     pj_caching_pool poolCache {};
     pj_pool_t* pool {nullptr};
@@ -193,7 +227,10 @@ TurnTransportPimpl::onRxData(const uint8_t* pkt, unsigned pkt_len,
             return;
     }
 
-    (channel_it->second) << std::string(reinterpret_cast<const char*>(pkt), pkt_len);
+    if (onRxDataCb)
+        onRxDataCb(pkt, pkt_len);
+    else
+        (channel_it->second) << std::string(reinterpret_cast<const char*>(pkt), pkt_len);
 }
 
 void
@@ -229,42 +266,7 @@ TurnTransportPimpl::ioJob()
   }
 }
 
-class PjsipError final : public std::exception {
-public:
-    PjsipError() = default;
-    explicit PjsipError(pj_status_t st) : std::exception() {
-        char err_msg[PJ_ERR_MSG_SIZE];
-        pj_strerror(st, err_msg, sizeof(err_msg));
-        what_msg_ += ": ";
-        what_msg_ += err_msg;
-    }
-    const char* what() const noexcept override {
-        return what_msg_.c_str();
-    };
-private:
-    std::string what_msg_ {"PJSIP api error"};
-};
-
-template <class Callable, class... Args>
-inline void
-PjsipCall(Callable& func, Args... args)
-{
-    auto status = func(args...);
-    if (status != PJ_SUCCESS)
-        throw PjsipError(status);
-}
-
-template <class Callable, class... Args>
-inline auto
-PjsipCallReturn(const Callable& func, Args... args) -> decltype(func(args...))
-{
-    auto res = func(args...);
-    if (!res)
-        throw PjsipError();
-    return res;
-}
-
-//==================================================================================================
+//==============================================================================
 
 TurnTransport::TurnTransport(const TurnTransportParams& params)
     : pimpl_ {new TurnTransportPimpl}
@@ -363,6 +365,7 @@ TurnTransport::permitPeer(const IpAddr& addr)
     if (addr.getFamily() != pimpl_->peerRelayAddr.getFamily())
         throw std::invalid_argument("mismatching peer address family");
 
+    sip_utils::register_thread();
     PjsipCall(pj_turn_sock_set_perm, pimpl_->relay, 1, addr.pjPtr(), 1);
 }
 
@@ -400,7 +403,7 @@ TurnTransport::sendto(const IpAddr& peer, const char* const buffer, std::size_t 
                                       reinterpret_cast<const pj_uint8_t*>(buffer), length,
                                       peer.pjPtr(), peer.getLength());
     if (status != PJ_SUCCESS && status != PJ_EPENDING)
-        throw PjsipError(status);
+        throw sip_utils::PjsipFailure(status);
 
     return status == PJ_SUCCESS;
 }
@@ -419,16 +422,20 @@ TurnTransport::writelineto(const IpAddr& peer, const char* const buffer, std::si
     return false;
 }
 
-void
-TurnTransport::recvfrom(const IpAddr& peer, std::vector<char>& result)
+std::size_t
+TurnTransport::recvfrom(const IpAddr& peer, char* buffer, std::size_t size)
 {
-    if (result.empty())
-        throw std::runtime_error("TurnTransport::recvfrom() called with an empty output buffer");
-
     MutexLock lk {pimpl_->apiMutex_};
     auto& channel = pimpl_->peerChannels_.at(peer);
     lk.unlock();
-    channel.read(result);
+    return channel.read(buffer, size);
+}
+
+void
+TurnTransport::recvfrom(const IpAddr& peer, std::vector<char>& result)
+{
+    auto res = recvfrom(peer, result.data(), result.size());
+    result.resize(res);
 }
 
 void
@@ -445,6 +452,63 @@ TurnTransport::peerAddresses() const
 {
     MutexLock lk {pimpl_->apiMutex_};
     return map_utils::extractKeys(pimpl_->peerChannels_);
+}
+
+bool
+TurnTransport::waitForData(const IpAddr& peer, unsigned ms_timeout) const
+{
+    MutexLock lk {pimpl_->apiMutex_};
+    auto& channel = pimpl_->peerChannels_.at(peer);
+    lk.unlock();
+    return channel.wait(std::chrono::milliseconds(ms_timeout));
+}
+
+//==============================================================================
+
+ConnectedTurnTransport::ConnectedTurnTransport(TurnTransport& turn, const IpAddr& peer)
+    : turn_ {turn}
+    , peer_ {peer}
+{}
+
+bool
+ConnectedTurnTransport::waitForData(unsigned ms_timeout) const
+{
+    return turn_.waitForData(peer_, ms_timeout);
+}
+
+std::size_t
+ConnectedTurnTransport::write(const ValueType* buf, std::size_t size, std::error_code& ec)
+{
+    try {
+        turn_.sendto(peer_, reinterpret_cast<const char*>(buf), size);
+    } catch (const sip_utils::PjsipFailure& ex) {
+        ec = ex.code();
+        return 0;
+    }
+
+    ec.clear();
+    return size;
+}
+
+std::size_t
+ConnectedTurnTransport::read(ValueType* buf, std::size_t size, std::error_code& ec)
+{
+    if (size > 0) {
+        try {
+            size = turn_.recvfrom(peer_, reinterpret_cast<char*>(buf), size);
+        } catch (const sip_utils::PjsipFailure& ex) {
+            ec = ex.code();
+            return 0;
+        }
+
+        if (size == 0) {
+            ec = std::make_error_code(std::errc::broken_pipe);
+            return 0;
+        }
+    }
+
+    ec.clear();
+    return size;
 }
 
 } // namespace ring
