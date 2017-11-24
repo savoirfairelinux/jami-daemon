@@ -22,6 +22,7 @@
 #pragma once
 
 #include "noncopyable.h"
+#include "generic_io.h"
 
 #include <gnutls/gnutls.h>
 
@@ -32,12 +33,6 @@
 #include <chrono>
 #include <vector>
 #include <array>
-#include <cstdint>
-
-namespace ring {
-class IceTransport;
-class IceSocket;
-} // namespace ring
 
 namespace dht { namespace crypto {
 struct Certificate;
@@ -48,20 +43,18 @@ namespace ring { namespace tls {
 
 class DhParams;
 
-static constexpr uint8_t MTUS_TO_TEST = 3; //number of mtus to test in path mtu discovery.
-static constexpr int DTLS_MTU {1232}; // (1280 from IPv6 minimum MTU - 40 IPv6 header - 8 UDP header)
-static constexpr uint16_t MIN_MTU {512};
-
-enum class TlsSessionState {
+enum class TlsSessionState
+{
     SETUP,
-    COOKIE, // server only
+    COOKIE, // only used with non-initiator and non-reliable transport
     HANDSHAKE,
-    MTU_DISCOVERY,
+    MTU_DISCOVERY, // only used with non-reliable transport
     ESTABLISHED,
     SHUTDOWN
 };
 
-struct TlsParams {
+struct TlsParams
+{
     // User CA list for session credentials
     std::string ca_list;
 
@@ -83,20 +76,22 @@ struct TlsParams {
                       unsigned cert_list_size)> cert_check;
 };
 
-/**
- * TlsSession
- *
- * Manages a DTLS connection over an ICE transport.
- * This implementation uses a Threadloop to manage IO from ICE and TLS states,
- * so IO are asynchronous.
- */
-class TlsSession {
+/// TlsSession
+///
+/// Manages a TLS/DTLS data transport overlayed on a given generic socket.
+///
+/// /note API is not thread-safe.
+///
+class TlsSession : public GenericSocket<uint8_t>
+{
 public:
+    using SocketType = GenericSocket<uint8_t>;
     using OnStateChangeFunc = std::function<void(TlsSessionState)>;
     using OnRxDataFunc = std::function<void(std::vector<uint8_t>&&)>;
-    using OnCertificatesUpdate = std::function<void(const gnutls_datum_t*, const gnutls_datum_t*, unsigned int)>;
+    using OnCertificatesUpdate = std::function<void(const gnutls_datum_t*,
+                                                    const gnutls_datum_t*,
+                                                    unsigned int)>;
     using VerifyCertificate = std::function<int(gnutls_session_t)>;
-    using TxDataCompleteFunc = std::function<void(std::size_t bytes_sent)>;
 
     // ===> WARNINGS <===
     // Following callbacks are called into the FSM thread context
@@ -108,38 +103,44 @@ public:
         VerifyCertificate verifyCertificate;
     };
 
-    TlsSession(const std::shared_ptr<IceTransport>& ice, int ice_comp_id, const TlsParams& params,
-               const TlsSessionCallbacks& cbs, bool anonymous=true);
+    TlsSession(SocketType& transport, const TlsParams& params, const TlsSessionCallbacks& cbs,
+               bool anonymous=true);
     ~TlsSession();
 
-    // Returns the TLS session type ('server' or 'client')
-    const char* typeName() const;
+    /// Return the name of current cipher.
+    /// Can be called by onStateChange callback when state == ESTABLISHED
+    /// to obtain the used cypher suite id.
+    const char* currentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const;
 
-    bool isServer() const;
-
-    // Request TLS thread to stop and quit. IO are not possible after that.
+    /// Request TLS thread to stop and quit.
+    /// /note IO operations return error after this call.
     void shutdown();
 
-    // Return maximum application payload size in bytes
-    // Returned value must be checked and considered valid only if not 0 (session is initialized)
-    unsigned int getMaxPayload() const;
+    void setOnRecv(RecvCb&& cb) override {
+        (void)cb;
+        throw std::logic_error("TlsSession::setOnRecv not implemented");
+    }
 
-    // Can be called by onStateChange callback when state == ESTABLISHED
-    // to obtain the used cypher suite id.
-    // Return the name of current cipher.
-    const char* getCurrentCipherSuiteId(std::array<uint8_t, 2>& cs_id) const;
+    /// Return true if the TLS session type is a server.
+    bool isInitiator() const override;
 
-    // Asynchronous sending operation. on_send_complete will be called with a positive number
-    // for number of bytes sent, or negative for errors, or 0 in case of shutdown (end of session).
-    int async_send(const void* data, std::size_t size, TxDataCompleteFunc on_send_complete);
-    int async_send(std::vector<uint8_t>&& data, TxDataCompleteFunc on_send_complete);
+    bool isReliable() const override;
 
-    // Synchronous sending operation. Return negative number (gnutls error) or a positive number
-    // for bytes sent.
-    ssize_t send(const void* data, std::size_t size);
-    ssize_t send(const std::vector<uint8_t>& data);
+    int maxPayload() const override;
 
-    uint16_t getMtu();
+    void connect();
+
+    /// Synchronous writing.
+    /// Return a positive number for number of bytes write, or 0 and \a ec set in case of error.
+    std::size_t write(const ValueType* data, std::size_t size, std::error_code& ec) override;
+
+    /// Synchronous reading.
+    /// Return a positive number for number of bytes read, or 0 and \a ec set in case of error.
+    std::size_t read(ValueType* data, std::size_t size, std::error_code& ec) override;
+
+    bool waitForData(unsigned) const override {
+        throw std::logic_error("TlsSession::waitForData not implemented");
+    }
 
 private:
     class TlsSessionImpl;

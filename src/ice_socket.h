@@ -17,8 +17,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
-#ifndef ICE_SOCKET_H
-#define ICE_SOCKET_H
+#pragma once
+
+#include "generic_io.h"
 
 #include <memory>
 #include <functional>
@@ -33,6 +34,7 @@ namespace ring {
 class IceTransport;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 
+/// DEPRECATED CLASS, DO NOT USE IN NEW CODE
 class IceSocket
 {
     private:
@@ -51,6 +53,44 @@ class IceSocket
         uint16_t getTransportOverhead();
 };
 
+/// ICE transport as a GenericSocket.
+///
+/// /warning Simplified version where we assume that ICE protocol
+/// always use UDP over IP over ETHERNET, and doesn't add more header to the UDP payload.
+///
+class IceSocketTransport final : public GenericSocket<uint8_t>
+{
+public:
+    using SocketType = GenericSocket<uint8_t>;
+
+    static constexpr uint16_t STANDARD_MTU_SIZE = 1280; // Size in bytes of MTU for IPv6 capable networks
+    static constexpr uint16_t IPV6_HEADER_SIZE = 40; // Size in bytes of IPv6 packet header
+    static constexpr uint16_t IPV4_HEADER_SIZE = 20; // Size in bytes of IPv4 packet header
+    static constexpr uint16_t UDP_HEADER_SIZE = 8; // Size in bytes of UDP header
+
+    IceSocketTransport(std::shared_ptr<IceTransport>& ice, int comp_id)
+        : compId_ {comp_id}
+        , ice_ {ice} {}
+
+    bool isReliable() const override {
+        return false; // we consider that a ICE transport is never reliable (UDP support only)
+    }
+
+    bool isInitiator() const override;
+
+    int maxPayload() const override;
+
+    bool waitForData(unsigned ms_timeout) const override;
+
+    std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
+
+    std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
+
+    void setOnRecv(RecvCb&& cb) override;
+
+private:
+    const int compId_;
+    std::shared_ptr<IceTransport> ice_;
 };
 
-#endif /* ICE_SOCKET_H */
+};
