@@ -160,12 +160,9 @@ public:
         throw ChannelFull();
     }
 
-    void operator <<(const T& value) {
-        push(value);
-    }
-
-    void operator <<(T&& value) {
-        push(std::move(value));
+    template <typename U>
+    void operator <<(U&& value) {
+        send(std::forward<U>(value));
     }
 };
 
@@ -202,6 +199,11 @@ public:
             --len;
         }
         cv_.notify_one();
+    }
+
+    template <typename U>
+    void operator <<(U&& value) {
+        send(std::forward<U>(value));
     }
 };
 
