@@ -143,7 +143,8 @@ libring_la_SOURCES = \
         base64.cpp \
         turn_transport.h \
         turn_transport.cpp \
-        channel.h
+        channel.h \
+        transport.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
