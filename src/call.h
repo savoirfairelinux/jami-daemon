@@ -194,6 +194,9 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
             isIPToIP_ = IPToIP;
         }
 
+        void setAudioOnly(const std::map<std::string, std::string>& volatileCallDetails);
+        bool isAudioOnly() const;
+
         virtual std::map<std::string, std::string> getDetails() const;
         static std::map<std::string, std::string> getNullDetails();
 
@@ -318,6 +321,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         bool isAudioMuted_{false};
         bool isVideoMuted_{false};
+
+        bool isAudioOnly_{false};
 
         ///< MultiDevice: parent call, nullptr otherwise. Access protected by callMutex_.
         mutable std::shared_ptr<Call> parent_;
