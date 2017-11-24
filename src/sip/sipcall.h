@@ -292,6 +292,7 @@ private:
 
     ///< Temporary transport for media. Replace mediaTransport_ when connected with success
     std::shared_ptr<IceTransport> tmpMediaTransport_;
+
 };
 
 // Helpers

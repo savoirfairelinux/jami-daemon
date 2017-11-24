@@ -965,12 +965,14 @@ SIPCall::stopAllMedia()
 void
 SIPCall::muteMedia(const std::string& mediaType, bool mute)
 {
+    std::cout << "XXX" << std::endl;
     if (mediaType.compare(DRing::Media::Details::MEDIA_TYPE_VIDEO) == 0) {
 #ifdef RING_VIDEO
         if (mute == isVideoMuted_) return;
         RING_WARN("[call:%s] video muting %s", getCallId().c_str(), bool_to_str(mute));
         isVideoMuted_ = mute;
         videoInput_ = isVideoMuted_ ? "" : Manager::instance().getVideoManager().videoDeviceMonitor.getMRLForDefaultDevice();
+        std::cout << "isVideoMuted_ ? " << (isVideoMuted_ ? "yes" : "no") << std::endl;
         DRing::switchInput(getCallId(), videoInput_);
         if (not isSubcall())
             emitSignal<DRing::CallSignal::VideoMuted>(getCallId(), isVideoMuted_);

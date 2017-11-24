@@ -455,7 +455,7 @@ class SIPAccount : public SIPAccountBase {
          * Implementation of Account::newOutgoingCall()
          * Note: keep declaration before newOutgoingCall template.
          */
-        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) override;
+        std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {}) override;
 
         /**
          * Create outgoing SIPCall.
@@ -467,11 +467,11 @@ class SIPAccount : public SIPAccountBase {
 #ifndef RING_UWP
         template <class T=SIPCall>
         std::shared_ptr<enable_if_base_of<T, SIPCall> >
-        newOutgoingCall(const std::string& toUrl);
+        newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #else
         template <class T>
         std::shared_ptr<T>
-        newOutgoingCall(const std::string& toUrl);
+        newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {});
 #endif
 
         /**

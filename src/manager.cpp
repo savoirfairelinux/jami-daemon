@@ -843,8 +843,10 @@ Manager::unregisterAccounts()
 std::string
 Manager::outgoingCall(const std::string& preferred_account_id,
                           const std::string& to,
-                          const std::string& conf_id)
+                          const std::string& conf_id,
+                          const std::map<std::string, std::string>& volatileCallDetails)
 {
+
     if (not conf_id.empty() and not isConference(conf_id)) {
         RING_ERR("outgoingCall() failed, invalid conference id");
         return {};
@@ -854,12 +856,16 @@ Manager::outgoingCall(const std::string& preferred_account_id,
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
+    auto toto = volatileCallDetails.find("AUDIO_ONLY");
+    std::cout << "1) AUDIO_ONLY : " << ((toto != volatileCallDetails.end()) ? toto->second : "<not_found>"  )<< std::endl;
+
     try {
         /* RING_WARN: after this call the account_id is obsolete
          * as the factory may decide to use another account (like IP2IP).
          */
         RING_DBG("New outgoing call to %s", to_cleaned.c_str());
-        call = newOutgoingCall(to_cleaned, preferred_account_id);
+        call = newOutgoingCall(to_cleaned, preferred_account_id, volatileCallDetails);
+
     } catch (const std::exception &e) {
         RING_ERR("%s", e.what());
         return {};
@@ -3009,7 +3015,7 @@ Manager::getAudioDriver()
 }
 
 std::shared_ptr<Call>
-Manager::newOutgoingCall(const std::string& toUrl, const std::string& preferredAccountId)
+Manager::newOutgoingCall(const std::string& toUrl, const std::string& preferredAccountId, const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto account = getAccount(preferredAccountId);
     if (account and !account->isUsable()) {
@@ -3042,7 +3048,7 @@ Manager::newOutgoingCall(const std::string& toUrl, const std::string& preferredA
         return nullptr;
     }
 
-    return account->newOutgoingCall(toUrl);
+    return account->newOutgoingCall(toUrl, volatileCallDetails);
 }
 
 #ifdef RING_VIDEO

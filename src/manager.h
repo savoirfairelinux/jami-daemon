@@ -119,14 +119,15 @@ class Manager {
         /**
          * Functions which occur with a user's action
          * Place a new call
-         * @param accountId	The account to make the call with
+         * @param accountId The account to make the call with
          * @param to  The recipient of the call
          * @param conf_id The conference identifier if any
          * @return id The call ID on success, empty string otherwise
          */
         std::string outgoingCall(const std::string& accountId,
                                  const std::string& to,
-                                 const std::string& conf_id = "");
+                                 const std::string& conf_id = "",
+                                 const std::map<std::string, std::string>& volatileCallDetails = std::map<std::string, std::string>());
 
         /**
          * Functions which occur with a user's action
@@ -365,7 +366,7 @@ class Manager {
 
         /**
          * Notify the client he has voice mails
-         * @param accountId	  The account identifier
+         * @param accountId   The account identifier
          * @param nb_msg The number of messages
          */
         void startVoiceMessageNotification(const std::string& accountId, int nb_msg);
@@ -397,7 +398,7 @@ class Manager {
 
         /**
          * Retrieve details about a given account
-         * @param accountID	  The account identifier
+         * @param accountID   The account identifier
          * @return std::map< std::string, std::string > The account details
          */
         std::map<std::string, std::string> getAccountDetails(const std::string& accountID) const;
@@ -411,7 +412,7 @@ class Manager {
 
         /**
          * Retrieve details about a given call
-         * @param callID	  The account identifier
+         * @param callID      The account identifier
          * @return std::map< std::string, std::string > The call details
          */
         std::map<std::string, std::string> getCallDetails(const std::string& callID);
@@ -424,7 +425,7 @@ class Manager {
 
         /**
          * Retrieve details about a given call
-         * @param callID	  The account identifier
+         * @param callID      The account identifier
          * @return std::map< std::string, std::string > The call details
          */
         std::map<std::string, std::string> getConferenceDetails(const std::string& callID) const;
@@ -454,8 +455,8 @@ class Manager {
          * Save the details of an existing account, given the account ID
          * This will load the configuration map with the given data.
          * It will also register/unregister links where the 'Enabled' switched.
-         * @param accountID	  The account identifier
-         * @param details	  The account parameters
+         * @param accountID   The account identifier
+         * @param details     The account parameters
          */
         void setAccountDetails(const std::string& accountID,
                                const std::map<std::string, ::std::string > &details);
@@ -483,7 +484,7 @@ class Manager {
          * Delete an existing account, unregister VoIPLink associated, and
          * purge from configuration.
          * If 'flush' argument is true, filesystem entries are also removed.
-         * @param accountID	The account unique ID
+         * @param accountID The account unique ID
          */
         void removeAccount(const std::string& accountID, bool flush=false);
 
@@ -554,8 +555,8 @@ class Manager {
         /**
          * Ringtone option.
          * If ringtone is enabled, ringtone on incoming call use custom choice. If not, only standart tone.
-         * @return int	1 if enabled
-         *	        0 otherwise
+         * @return int  1 if enabled
+         *          0 otherwise
          */
         int isRingtoneEnabled(const std::string& id);
 
@@ -618,8 +619,8 @@ class Manager {
         /**
          * Get the audio manager
          * @return int The audio manager
-         *		    "alsa"
-         *		    "pulseaudio"
+         *          "alsa"
+         *          "pulseaudio"
          */
         std::string getAudioManager() const;
 
@@ -707,7 +708,7 @@ class Manager {
 
         /**
          * Get the current call id
-         * @return std::string	The call id or ""
+         * @return std::string  The call id or ""
          */
         const std::string getCurrentCallId() const;
 
@@ -830,7 +831,8 @@ class Manager {
          * @note This function raises VoipLinkException() on errors.
          */
         std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl,
-                                              const std::string& preferredAccountId);
+                                              const std::string& preferredAccountId,
+                                              const std::map<std::string, std::string>& volatileCallDetails = {});
 
         CallFactory callFactory;
 

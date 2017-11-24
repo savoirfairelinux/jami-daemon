@@ -56,12 +56,26 @@ registerCallHandlers(const std::map<std::string,
 std::string
 placeCall(const std::string& accountID, const std::string& to)
 {
+    return placeCall2(accountID, to, {{"AUDIO_ONLY", "true"}}); // [jn] shortcircuit, test purpose... 
+
     // Check if a destination number is available
     if (to.empty()) {
         RING_DBG("No number entered - Call stopped");
         return {};
     } else {
         return ring::Manager::instance().outgoingCall(accountID, to);
+    }
+}
+
+std::string
+placeCall2(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& volatileCallDetails)
+{
+    // Check if a destination number is available
+    if (to.empty()) {
+        RING_DBG("No number entered - Call stopped");
+        return {};
+    } else {
+        return ring::Manager::instance().outgoingCall(accountID, to, "", volatileCallDetails);
     }
 }
 
