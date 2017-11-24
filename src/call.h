@@ -311,8 +311,10 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Constructor of a call
          * @param id Unique identifier of the call
          * @param type set definitely this call as incoming/outgoing
+         * @param details volatile details to customize the call creation
          */
-        Call(Account& account, const std::string& id, Call::CallType type);
+        Call(Account& account, const std::string& id, Call::CallType type,
+             const std::map<std::string, std::string>& details = {});
 
         // TODO all these members are not protected against multi-thread access
 
@@ -332,6 +334,8 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
     private:
         friend void hangupCallsIf(Call::SubcallSet, int, const std::function<bool(Call*)>&);
+
+        void setEarlyDetails(const std::map<std::string, std::string>& details);
 
         bool validStateTransition(CallState newState);
 

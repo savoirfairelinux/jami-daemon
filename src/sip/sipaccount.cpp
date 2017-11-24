@@ -164,13 +164,15 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED)
 
 template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     std::string to;
     int family;
 
     auto& manager = Manager::instance();
-    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::OUTGOING);
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(),
+                                                                 Call::CallType::OUTGOING,
+                                                                 volatileCallDetails);
     call->setSecure(isTlsEnabled());
 
     if (isIP2IP()) {
@@ -308,9 +310,9 @@ SIPAccount::getTransportSelector() {
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+    return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool

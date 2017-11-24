@@ -80,7 +80,8 @@ protected:
      * @param id    The call identifier
      * @param type  The type of the call. Could be Incoming or Outgoing
      */
-    SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type);
+    SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
+            const std::map<std::string, std::string>& details={});
 
 public: // overridden
     const char* getLinkType() const override {

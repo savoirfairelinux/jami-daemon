@@ -329,13 +329,14 @@ RingAccount::newIncomingCall(const std::string& from)
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto sufix = stripPrefix(toUrl);
     RING_DBG("Calling DHT peer %s", sufix.c_str());
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
-                                                                  Call::CallType::OUTGOING);
+                                                                  Call::CallType::OUTGOING,
+                                                                  volatileCallDetails);
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
@@ -395,7 +396,8 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
 
         auto& manager = Manager::instance();
         auto dev_call = manager.callFactory.newCall<SIPCall, RingAccount>(*sthis, manager.getNewCallID(),
-                                                                          Call::CallType::OUTGOING);
+                                                                          Call::CallType::OUTGOING,
+                                                                          call->getDetails());
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
         dev_call->setIPToIP(true);
         dev_call->setSecure(sthis->isTlsEnabled());
@@ -533,9 +535,9 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
 }
 
 std::shared_ptr<Call>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+    return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool
