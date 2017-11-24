@@ -329,7 +329,7 @@ RingAccount::newIncomingCall(const std::string& from)
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto sufix = stripPrefix(toUrl);
     RING_DBG("Calling DHT peer %s", sufix.c_str());
@@ -340,6 +340,7 @@ RingAccount::newOutgoingCall(const std::string& toUrl)
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
     call->initRecFilename(toUrl);
+    call->setAudioOnly(volatileCallDetails);
 
     try {
         const std::string toUri = parseRingUri(sufix);
@@ -399,6 +400,8 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
         std::weak_ptr<SIPCall> weak_dev_call = dev_call;
         dev_call->setIPToIP(true);
         dev_call->setSecure(sthis->isTlsEnabled());
+        auto details = call->getDetails();
+        dev_call->setAudioOnly(details);
         auto ice = sthis->createIceTransport(("sip:" + dev_call->getCallId()).c_str(),
                                              ICE_COMPONENTS, true, sthis->getIceOptions());
         if (not ice) {
@@ -524,7 +527,7 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                            getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
+                            getActiveAccountCodecInfoList(videoEnabled_ and call.isAudioOnly() ? MEDIA_NONE : MEDIA_VIDEO),
                             getSrtpKeyExchange()
                          );
 
@@ -533,9 +536,9 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
 }
 
 std::shared_ptr<Call>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+    return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool
@@ -1667,6 +1670,7 @@ bool
 RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 {
     auto call = pc.call.lock();
+
     if (not call)
         return true;
 
