@@ -108,8 +108,9 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
-SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type)
-    : Call(account, id, type)
+SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
+                 const std::map<std::string, std::string>& details)
+    : Call(account, id, type, details)
     , avformatrtp_(new AudioRtpSession(id))
 #ifdef RING_VIDEO
     // The ID is used to associate video streams to calls

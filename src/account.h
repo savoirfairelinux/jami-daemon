@@ -142,7 +142,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          * @param toUrl The address to call
          * @return std::shared_ptr<Call> A pointer on the created call
          */
-        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl) = 0;
+        virtual std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails = {}) = 0;
 
         /* Note: we forbid incoming call creation from an instance of Account.
          * This is why no newIncomingCall() method exist here.
@@ -198,7 +198,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
 
         /**
          * Set the registration state of the specified link
-         * @param state	The registration state of underlying VoIPLink
+         * @param state The registration state of underlying VoIPLink
          */
         virtual void setRegistrationState(RegistrationState state, unsigned detail_code=0, const std::string& detail_str={});
 

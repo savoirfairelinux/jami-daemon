@@ -71,7 +71,8 @@ class CallFactory {
          * @param account account useed to create this call
          */
         template <class T, class A>
-        std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type) {
+        std::shared_ptr<T> newCall(A& account, const std::string& id, Call::CallType type,
+                                   const std::map<std::string, std::string>& details={}) {
             if (!allowNewCall_) {
                 RING_WARN("newCall aborted : CallFactory in forbid state");
                 return nullptr;
@@ -81,8 +82,9 @@ class CallFactory {
             // and not accessible from std::make_shared.
             // We use a concrete class to bypass this restriction.
             struct ConcreteCall : T {
-                    ConcreteCall(A& account, const std::string& id, Call::CallType type)
-                        : T(account, id, type) {}
+                    ConcreteCall(A& account, const std::string& id, Call::CallType type,
+                                 const std::map<std::string, std::string>& details)
+                        : T(account, id, type, details) {}
             };
 
             if (hasCall(id)) {
@@ -90,7 +92,7 @@ class CallFactory {
                 return nullptr;
             }
 
-            auto call = std::make_shared<ConcreteCall>(account, id, type);
+            auto call = std::make_shared<ConcreteCall>(account, id, type, details);
             if (call) {
                 std::lock_guard<std::recursive_mutex> lk(callMapsMutex_);
                 callMaps_[call->getLinkType()].insert(std::make_pair(id, call));
