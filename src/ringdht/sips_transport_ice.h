@@ -47,6 +47,8 @@ class IceTransport;
 
 namespace ring { namespace tls {
 
+class IceSocketTransport;
+
 /**
  * SipsIceTransport
  *
@@ -80,7 +82,7 @@ struct SipsIceTransport
 private:
     NON_COPYABLE(SipsIceTransport);
 
-    const std::shared_ptr<IceTransport> ice_;
+    std::shared_ptr<IceTransport> ice_;
     const int comp_id_;
     const std::function<int(unsigned, const gnutls_datum_t*, unsigned)> certCheck_;
     IpAddr local_ {};
@@ -109,6 +111,7 @@ private:
         decltype(PJSIP_TP_STATE_DISCONNECTED) state;
     };
 
+    std::unique_ptr<IceSocketTransport> tlsSocket_;
     std::unique_ptr<TlsSession> tls_;
 
     std::mutex txMutex_ {};

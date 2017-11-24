@@ -180,7 +180,12 @@ SipTransport::getTlsMtu()
         auto tls_tr = reinterpret_cast<tls::SipsIceTransport::TransportData*>(transport_.get())->self;
         return tls_tr->getTlsSessionMtu();
     }
-    return ring::tls::DTLS_MTU;
+    return 1232; /* Hardcoded yes (it's the IPv6 value).
+                  * This method is broken by definition.
+                  * A MTU should not be defined at this layer.
+                  * And a correct value should come from the underlying transport itself,
+                  * not from a constant...
+                  */
 }
 
 SipTransportBroker::SipTransportBroker(pjsip_endpoint *endpt,
