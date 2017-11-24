@@ -329,7 +329,7 @@ RingAccount::newIncomingCall(const std::string& from)
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     auto sufix = stripPrefix(toUrl);
     RING_DBG("Calling DHT peer %s", sufix.c_str());
@@ -533,9 +533,9 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
 }
 
 std::shared_ptr<Call>
-RingAccount::newOutgoingCall(const std::string& toUrl)
+RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
-    return newOutgoingCall<SIPCall>(toUrl);
+    return newOutgoingCall<SIPCall>(toUrl, volatileCallDetails);
 }
 
 bool
@@ -1667,6 +1667,7 @@ bool
 RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
 {
     auto call = pc.call.lock();
+
     if (not call)
         return true;
 

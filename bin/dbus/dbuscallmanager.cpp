@@ -32,6 +32,13 @@ DBusCallManager::placeCall(const std::string& accountID, const std::string& to) 
 }
 
 auto
+DBusCallManager::placeCallWithDetails(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& VolatileCallDetails)
+    -> decltype (DRing::placeCall(accountID, to, VolatileCallDetails))
+{
+    return DRing::placeCall(accountID, to, VolatileCallDetails);
+}
+
+auto
 DBusCallManager::refuse(const std::string& callID) -> decltype(DRing::refuse(callID))
 {
     return DRing::refuse(callID);

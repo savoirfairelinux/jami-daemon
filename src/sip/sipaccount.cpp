@@ -164,7 +164,7 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED)
 
 template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     std::string to;
     int family;
@@ -308,7 +308,7 @@ SIPAccount::getTransportSelector() {
 }
 
 std::shared_ptr<Call>
-SIPAccount::newOutgoingCall(const std::string& toUrl)
+SIPAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
 {
     return newOutgoingCall<SIPCall>(toUrl);
 }
