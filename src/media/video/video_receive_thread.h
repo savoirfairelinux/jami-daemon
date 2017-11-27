@@ -51,7 +51,7 @@ public:
     ~VideoReceiveThread();
     void startLoop();
 
-    void addIOContext(SocketPair &socketPair);
+    void addIOContext(std::shared_ptr<SocketPair> socketPair);
     void setRequestKeyFrameCallback(void (*)(const std::string &));
     void enterConference();
     void exitConference();
@@ -81,6 +81,7 @@ private:
     std::atomic_bool restartDecoder_;
     bool isReset_;
     uint16_t mtu_;
+    std::shared_ptr<SocketPair> socketPair_;
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();
