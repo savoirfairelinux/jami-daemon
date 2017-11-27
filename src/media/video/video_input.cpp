@@ -207,7 +207,6 @@ bool VideoInput::captureFrame()
         return false;
 
     const auto ret = decoder_->decode(getNewFrame());
-
     switch (ret) {
         case MediaDecoder::Status::ReadError:
             return false;
@@ -215,6 +214,14 @@ bool VideoInput::captureFrame()
         // try to keep decoding
         case MediaDecoder::Status::DecodeError:
             return true;
+
+        case MediaDecoder::Status::RestartRequired:
+            createDecoder();
+#ifdef RING_ACCEL
+            RING_WARN("Disabling hardware decoding due to previous failure");
+            decoder_->enableAccel(false);
+#endif
+            return static_cast<bool>(decoder_);
 
         // End of streamed file
         case MediaDecoder::Status::EOFError:

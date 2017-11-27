@@ -95,7 +95,7 @@ class MediaDecoder {
 
         void setOptions(const std::map<std::string, std::string>& options);
 #ifdef RING_ACCEL
-        void enableAccel(const bool enableAccel) { enableAccel_ = enableAccel; }
+        void enableAccel(bool enableAccel);
 #endif
 
     private:
