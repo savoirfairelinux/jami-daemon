@@ -207,7 +207,6 @@ bool VideoInput::captureFrame()
         return false;
 
     const auto ret = decoder_->decode(getNewFrame());
-
     switch (ret) {
         case MediaDecoder::Status::ReadError:
             return false;
@@ -218,6 +217,7 @@ bool VideoInput::captureFrame()
 
         // End of streamed file
         case MediaDecoder::Status::EOFError:
+        case MediaDecoder::Status::RestartRequired:
             createDecoder();
             return static_cast<bool>(decoder_);
 
