@@ -285,8 +285,10 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
+        frame->key_frame = 1;
     } else {
         frame->pict_type = AV_PICTURE_TYPE_NONE;
+        frame->key_frame = 0;
     }
 
     AVPacket pkt;

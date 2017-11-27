@@ -64,7 +64,7 @@ public:
 
 private:
     static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup
-    static constexpr unsigned KEY_FRAME_PERIOD {5}; // seconds before forcing a keyframe
+    static constexpr unsigned KEY_FRAME_PERIOD {0}; // seconds before forcing a keyframe
 
     NON_COPYABLE(VideoSender);
 
@@ -74,6 +74,7 @@ private:
     std::unique_ptr<MediaIOHandle> muxContext_ = nullptr;
     std::unique_ptr<MediaEncoder> videoEncoder_ = nullptr;
 
+    // XXX forceKeyFrame_ is always at -1, incremented to 0 when a keyframe is requested (still works though)
     std::atomic<int> forceKeyFrame_ {KEYFRAMES_AT_START};
     int keyFrameFreq_ {0}; // Set keyframe rate, 0 to disable auto-keyframe. Computed in constructor
     int64_t frameNumber_ = 0;
