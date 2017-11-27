@@ -162,14 +162,22 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
     return is.gcount();
 }
 
-void VideoReceiveThread::addIOContext(SocketPair &socketPair)
+void VideoReceiveThread::addIOContext(std::shared_ptr<SocketPair> socketPair)
 {
-    demuxContext_.reset(socketPair.createIOContext(mtu_));
+    socketPair_ = socketPair;
+    demuxContext_.reset(socketPair_->createIOContext(mtu_));
 }
 
 bool VideoReceiveThread::decodeFrame()
 {
     const auto ret = videoDecoder_->decode(getNewFrame());
+
+    if (requestKeyFrameCallback_) {
+        // packet loss detected, ask for keyframe
+        if (socketPair_->getRtcpInfo().size() != 0) {
+            requestKeyFrameCallback_(id_);
+        }
+    }
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:

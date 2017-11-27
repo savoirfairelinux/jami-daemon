@@ -154,12 +154,10 @@ void VideoRtpSession::startReceiver()
                              new VideoReceiveThread(callID_, receive_.receiving_sdp, isReset, mtu_)
         );
 
-        /* ebail: keyframe requests can lead to timeout if they are not answered.
-         * we decided so to disable them for the moment
+        // NOTE keyframe requests can timeout if unanswered
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
-        */
         receiverRestartThread_.start();
-        receiveThread_->addIOContext(*socketPair_);
+        receiveThread_->addIOContext(socketPair_);
         receiveThread_->startLoop();
     } else {
         RING_DBG("Video receiving disabled");
