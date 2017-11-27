@@ -453,6 +453,19 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 }
 
 #ifdef RING_VIDEO
+#ifdef RING_ACCEL
+void
+MediaDecoder::enableAccel(const bool enableAccel)
+{
+    enableAccel_ = enableAccel;
+    if (!enableAccel) {
+        accel_.reset();
+        if (decoderCtx_)
+            decoderCtx_->opaque = nullptr;
+    }
+}
+#endif
+
 MediaDecoder::Status
 MediaDecoder::flush(VideoFrame& result)
 {
