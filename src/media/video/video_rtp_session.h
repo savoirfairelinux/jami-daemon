@@ -136,6 +136,9 @@ private:
 
     InterruptedThreadLoop receiverRestartThread_;
     void processReceiverRestart();
+
+    InterruptedThreadLoop packetLossThread_;
+    void processPacketLoss();
 };
 
 }} // namespace ring::video

@@ -84,7 +84,7 @@ VideoSender::update(Observable<std::shared_ptr<VideoFrame>>* /*obs*/,
 void
 VideoSender::forceKeyFrame()
 {
-    RING_DBG("Peer has requested a key frame");
+    RING_DBG("Key frame requested");
     ++forceKeyFrame_;
 }
 
