@@ -36,8 +36,6 @@ namespace ring { namespace video {
 
 using std::string;
 
-static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
-
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
                                        const bool isReset,
@@ -174,16 +172,9 @@ bool VideoReceiveThread::decodeFrame()
 {
     const auto ret = videoDecoder_->decode(getNewFrame());
 
-    if (requestKeyFrameCallback_) {
-        auto rtcpPackets = socketPair_->getRtcpInfo();
-        if (rtcpPackets.size() != 0) {
-            // recent packet loss detected, ask for keyframe
-            if (ntohl(rtcpPackets.back().fraction_lost) & RTCP_RR_FRACTION_MASK) {
-                RING_DBG("Sending keyframe request");
-                requestKeyFrameCallback_(id_);
-            }
-        }
-    }
+    // if socketPair_->packetLoss > 0: requestKeyFrameCallback_(id_)
+    if (requestKeyFrameCallback_ && socketPair_->rtcpPacketLossDetected())
+        requestKeyFrameCallback_(id_);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
