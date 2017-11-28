@@ -232,7 +232,7 @@ MediaEncoder::openOutput(const char *filename,
         const int height = encoderCtx_->height;
         const int format = libav_utils::ring_pixel_format((int)encoderCtx_->pix_fmt);
         scaledFrameBufferSize_ = videoFrameSize(format, width, height);
-        if (scaledFrameBufferSize_ <= FF_MIN_BUFFER_SIZE)
+        if (scaledFrameBufferSize_ <= AV_INPUT_BUFFER_MIN_SIZE)
             throw MediaEncoderException("buffer too small");
 
         scaledFrameBuffer_.reserve(scaledFrameBufferSize_);
