@@ -57,7 +57,7 @@ public:
 
 protected:
     std::recursive_mutex mutex_;
-    std::shared_ptr<SocketPair> socketPair_;
+    std::unique_ptr<SocketPair> socketPair_;
     const std::string callID_;
 
     MediaDescription send_;
