@@ -97,6 +97,17 @@ public:
         cv_.wait_for(lk, rel_time, [this](){return isStopping();});
     }
 
+    template <typename Rep, typename Period, typename Pred>
+    bool
+    wait_for(const std::chrono::duration<Rep, Period>& rel_time, Pred&& pred)
+    {
+        if (std::this_thread::get_id() != get_id())
+            throw std::runtime_error("can not call wait_for outside thread context");
+
+        std::unique_lock<std::mutex> lk(mutex_);
+        return cv_.wait_for(lk, rel_time, pred);
+    }
+
 private:
     std::mutex mutex_;
     std::condition_variable cv_;

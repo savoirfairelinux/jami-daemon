@@ -36,8 +36,6 @@ namespace ring { namespace video {
 
 using std::string;
 
-static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
-
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
                                        const bool isReset,
@@ -164,26 +162,14 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
     return is.gcount();
 }
 
-void VideoReceiveThread::addIOContext(std::shared_ptr<SocketPair> socketPair)
+void VideoReceiveThread::addIOContext(SocketPair& socketPair)
 {
-    demuxContext_.reset(socketPair->createIOContext(mtu_));
-    socketPair_ = socketPair;
+    demuxContext_.reset(socketPair.createIOContext(mtu_));
 }
 
 bool VideoReceiveThread::decodeFrame()
 {
     const auto ret = videoDecoder_->decode(getNewFrame());
-
-    if (requestKeyFrameCallback_) {
-        auto rtcpPackets = socketPair_->getRtcpInfo();
-        if (rtcpPackets.size() != 0) {
-            // recent packet loss detected, ask for keyframe
-            if (ntohl(rtcpPackets.back().fraction_lost) & RTCP_RR_FRACTION_MASK) {
-                RING_DBG("Sending keyframe request");
-                requestKeyFrameCallback_(id_);
-            }
-        }
-    }
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
@@ -248,5 +234,14 @@ int VideoReceiveThread::getPixelFormat() const
 bool
 VideoReceiveThread::restartDecoder() const
 { return restartDecoder_.load(); }
+
+void
+VideoReceiveThread::triggerKeyFrameRequest()
+{
+    if (requestKeyFrameCallback_) {
+        RING_DBG("Packet loss detected: requesting key frame");
+        requestKeyFrameCallback_(id_);
+    }
+}
 
 }} // namespace ring::video
