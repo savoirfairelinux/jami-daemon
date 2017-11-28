@@ -40,6 +40,7 @@
 #include <unistd.h>
 #include <thread> // hardware_concurrency
 #include <chrono>
+#include <algorithm>
 
 namespace ring {
 
@@ -206,7 +207,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
     }
 #endif
 
-    decoderCtx_->thread_count = std::thread::hardware_concurrency();
+    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
     decoderCtx_->channels = format.nb_channels;
     decoderCtx_->sample_rate = format.sample_rate;
 
@@ -299,7 +300,7 @@ int MediaDecoder::setupFromVideoData()
 #endif
     RING_DBG("Decoding video using %s (%s)", inputDecoder_->long_name, inputDecoder_->name);
 
-    decoderCtx_->thread_count = std::thread::hardware_concurrency();
+    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
 
 #ifdef RING_ACCEL
     if (enableAccel_) {
