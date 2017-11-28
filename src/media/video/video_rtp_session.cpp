@@ -60,6 +60,9 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , receiverRestartThread_([]{ return true; },
             [this]{ processReceiverRestart(); },
             []{})
+    , packetLossThread_([] { return true; },
+            [this]{ processPacketLoss(); },
+            [](){})
 {
     setupVideoBitrateInfo(); // reset bitrate
 }
@@ -157,7 +160,7 @@ void VideoRtpSession::startReceiver()
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
         receiverRestartThread_.start();
-        receiveThread_->addIOContext(socketPair_);
+        receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
     } else {
         RING_DBG("Video receiving disabled");
@@ -586,6 +589,14 @@ VideoRtpSession::processReceiverRestart()
 {
     checkReceiver();
     receiverRestartThread_.wait_for(std::chrono::seconds(RECEIVER_RESTART_INTERVAL));
+}
+
+void
+VideoRtpSession::processPacketLoss()
+{
+    if (packetLossThread_.wait_for(std::chrono::seconds(RTCP_PACKET_LOSS_INTERVAL), [this](){return socketPair_->rtcpPacketLossDetected();})) {
+        receiveThread_->triggerKeyFrameRequest();
+    }
 }
 
 }} // namespace ring::video

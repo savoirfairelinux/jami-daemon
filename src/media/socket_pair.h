@@ -107,6 +107,7 @@ class SocketPair {
 
         void stopSendOp(bool state = true);
         std::vector<rtcpRRHeader> getRtcpInfo();
+        bool rtcpPacketLossDetected() const { return rtcpPacketLoss_.load(); }
 
     private:
         NON_COPYABLE(SocketPair);
@@ -139,6 +140,8 @@ class SocketPair {
         std::list<rtcpRRHeader> listRtcpHeader_;
         std::mutex rtcpInfo_mutex_;
         static constexpr unsigned MAX_LIST_SIZE {20};
+
+        mutable std::atomic_bool rtcpPacketLoss_ {false};
 };
 
 
