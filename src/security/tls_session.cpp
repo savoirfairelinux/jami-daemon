@@ -1017,8 +1017,6 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 
     gapOffset_ = std::max(gapOffset_, next_offset);
     lastReadTime_ = clock::now();
-
-    RING_DBG("[dtls] push 0x%lx (%lu pkt)", first_offset, gapOffset_ - first_offset);
 }
 
 TlsSessionState
