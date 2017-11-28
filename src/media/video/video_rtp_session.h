@@ -123,6 +123,8 @@ private:
     static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
     // how long (in seconds) to wait before rechecking if the receiver needs to restart
     const unsigned RECEIVER_RESTART_INTERVAL {4};
+    // how long (in seconds) to wait before rechecking for packet loss
+    static constexpr auto RTCP_PACKET_LOSS_INTERVAL = std::chrono::milliseconds(1000);
 
     // 5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
@@ -136,6 +138,9 @@ private:
 
     InterruptedThreadLoop receiverRestartThread_;
     void processReceiverRestart();
+
+    InterruptedThreadLoop packetLossThread_;
+    void processPacketLoss();
 };
 
 }} // namespace ring::video
