@@ -65,6 +65,7 @@ static constexpr int NET_POLL_TIMEOUT = 100; /* poll() timeout in ms */
 static constexpr int RTP_MAX_PACKET_LENGTH = 2048;
 static constexpr auto UDP_HEADER_SIZE = 8;
 static constexpr auto SRTP_OVERHEAD = 10;
+static constexpr uint32_t RTCP_RR_FRACTION_MASK = 0xFF000000;
 
 enum class DataType : unsigned { RTP=1<<0, RTCP=1<<1 };
 
@@ -488,6 +489,13 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
         buf = srtpContext_->encryptbuf;
     }
 
+    // check if we're sending an RR, if so, detect packet loss
+    // buf_size gives length of buffer, not just header
+    if (isRTCP && static_cast<unsigned>(buf_size) >= sizeof(rtcpRRHeader)) {
+        auto header = reinterpret_cast<rtcpRRHeader*>(buf);
+        rtcpPacketLoss_ = (header->pt == 201 && ntohl(header->fraction_lost) & RTCP_RR_FRACTION_MASK);
+    }
+
     do {
         if (interrupted_)
             return -EINTR;
@@ -495,6 +503,14 @@ SocketPair::writeCallback(uint8_t* buf, int buf_size)
     } while (ret < 0 and errno == EAGAIN);
 
     return ret < 0 ? -errno : ret;
+}
+
+bool
+SocketPair::rtcpPacketLossDetected() const
+{
+    // set to false on checking packet loss to avoid burst of keyframe requests
+    bool tautology = true;
+    return rtcpPacketLoss_.compare_exchange_strong(tautology, false);
 }
 
 } // namespace ring
