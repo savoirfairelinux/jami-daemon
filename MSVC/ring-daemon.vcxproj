@@ -644,6 +644,7 @@
     <ClInclude Include="..\src\ring_types.h" />
     <ClInclude Include="..\src\rw_mutex.h" />
     <ClInclude Include="..\src\security\certstore.h" />
+    <ClInclude Include="..\src\security\diffie-hellman.h" />
     <ClInclude Include="..\src\security\memory.h" />
     <ClInclude Include="..\src\security\tlsvalidator.h" />
     <ClInclude Include="..\src\security\tls_session.h" />
@@ -758,6 +759,7 @@
     <ClCompile Include="..\src\ringdht\sips_transport_ice.cpp" />
     <ClCompile Include="..\src\ring_api.cpp" />
     <ClCompile Include="..\src\security\certstore.cpp" />
+    <ClCompile Include="..\src\security\diffie-hellman.cpp" />
     <ClCompile Include="..\src\security\memory.cpp" />
     <ClCompile Include="..\src\security\tlsvalidator.cpp" />
     <ClCompile Include="..\src\security\tls_session.cpp" />
