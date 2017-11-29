@@ -74,11 +74,6 @@ bool VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder());
 
-#ifdef RING_ACCEL
-    // disable accel if there was a fallback to software decoding
-    videoDecoder_->enableAccel(!isReset_);
-#endif
-
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
 
@@ -188,9 +183,10 @@ bool VideoReceiveThread::decodeFrame()
             break;
 
         case MediaDecoder::Status::RestartRequired:
-            restartDecoder_ = true;
+            // disable accel, reset decoder's AVCodecContext
+            videoDecoder_->enableAccel(false);
+            videoDecoder_->setupFromVideoData();
             break;
-
         case MediaDecoder::Status::Success:
         case MediaDecoder::Status::EOFError:
             break;
