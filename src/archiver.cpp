@@ -122,8 +122,10 @@ exportAccounts(std::vector<std::string> accountIDs,
         array.append(jsonAccount);
     }
     root["accounts"] = array;
-    Json::FastWriter fastWriter;
-    std::string output = fastWriter.write(root);
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    auto output = Json::writeString(wbuilder, root);
 
     // Compress
     std::vector<uint8_t> compressed;
@@ -181,14 +183,16 @@ importAccounts(std::string archivePath, std::string password)
     }
 
     try {
-        // Decode string
-        std::string decoded {file.begin(), file.end()};
+        const auto* char_file_begin = reinterpret_cast<const char*>(&file[0]);
+        const auto* char_file_end = reinterpret_cast<const char*>(&file[file.size()]);
 
         // Add
+        std::string err;
         Json::Value root;
-        Json::Reader reader;
-        if (!reader.parse(decoded.c_str(),root)) {
-            RING_ERR("Failed to parse %s", reader.getFormattedErrorMessages().c_str());
+        Json::CharReaderBuilder rbuilder;
+        auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+        if (!reader->parse(char_file_begin, char_file_end, &root, &err)) {
+            RING_ERR() << "Failed to parse " << err;
             return ERANGE;
         }
 
