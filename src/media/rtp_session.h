@@ -41,7 +41,6 @@ public:
     virtual void start(std::unique_ptr<IceSocket> rtp_sock,
                        std::unique_ptr<IceSocket> rtcp_sock) = 0;
     virtual void restartSender() = 0;
-    virtual void restartReceiver() = 0;
     virtual void stop() = 0;
 
     virtual void updateMedia(const MediaDescription& send,

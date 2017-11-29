@@ -66,7 +66,6 @@ public:
     void start(std::unique_ptr<IceSocket> rtp_sock,
                std::unique_ptr<IceSocket> rtcp_sock) override;
     void restartSender() override;
-    void restartReceiver() override;
     void stop() override;
 
     void forceKeyFrame();
@@ -121,8 +120,6 @@ private:
     // max size of quality and bitrate historic
     static constexpr unsigned MAX_SIZE_HISTO_QUALITY_ {30};
     static constexpr unsigned MAX_SIZE_HISTO_BITRATE_ {100};
-    // how long (in seconds) to wait before rechecking if the receiver needs to restart
-    const unsigned RECEIVER_RESTART_INTERVAL {4};
 
     // 5 tries in a row
     static constexpr unsigned  MAX_ADAPTATIVE_BITRATE_ITERATION {5};
@@ -133,9 +130,6 @@ private:
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
     void cleanupRtcpChecker();
-
-    InterruptedThreadLoop receiverRestartThread_;
-    void processReceiverRestart();
 
     InterruptedThreadLoop packetLossThread_;
     void processPacketLoss();
