@@ -439,17 +439,6 @@ AudioRtpSession::startReceiver()
 }
 
 void
-AudioRtpSession::restartReceiver()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    // ensure that start has been called before restart
-    if (not socketPair_)
-        return;
-
-    startReceiver();
-}
-
-void
 AudioRtpSession::start(std::unique_ptr<IceSocket> rtp_sock, std::unique_ptr<IceSocket> rtcp_sock)
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);

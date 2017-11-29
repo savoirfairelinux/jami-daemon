@@ -244,9 +244,11 @@ int MediaDecoder::setupFromVideoData()
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
-
-    RING_DBG("Finding stream info");
-    ret = avformat_find_stream_info(inputCtx_, NULL);
+    // if fallback from accel, don't check for stream info, it's already done
+    if (!fallback_) {
+        RING_DBG("Finding stream info");
+        ret = avformat_find_stream_info(inputCtx_, NULL);
+    }
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/
@@ -378,6 +380,7 @@ MediaDecoder::decode(VideoFrame& result)
                 if (accelFailures_ >= MAX_ACCEL_FAILURES) {
                     RING_ERR("Hardware decoding failure");
                     accelFailures_ = 0; // reset error count for next time
+                    fallback_ = true;
                     return Status::RestartRequired;
                 }
             }
