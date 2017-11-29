@@ -499,6 +499,9 @@
     <ClInclude Include="..\src\ringdht\eth\libdevcore\Address.h">
       <Filter>Header Files\ringdht\eth\libdevcore</Filter>
     </ClInclude>
+    <ClInclude Include="..\src\security\diffie-hellman.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\preferences.cpp">
@@ -800,6 +803,9 @@
     </ClCompile>
     <ClCompile Include="..\src\ringdht\eth\libdevcore\SHA3.cpp">
       <Filter>Source Files\ringdht\eth\libdevcore</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\security\diffie-hellman.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
