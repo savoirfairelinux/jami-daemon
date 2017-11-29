@@ -120,6 +120,7 @@ class MediaDecoder {
         bool enableAccel_ = true;
         video::HardwareAccel accel_;
         unsigned short accelFailures_ = 0;
+        bool fallback_ = false;
 #endif
 
     protected:
