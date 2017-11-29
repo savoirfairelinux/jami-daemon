@@ -62,7 +62,7 @@ struct SystemCodecInfo
     static constexpr unsigned DEFAULT_CODEC_QUALITY {30};
 #ifdef RING_VIDEO
     static constexpr unsigned DEFAULT_H264_MIN_QUALITY {35};
-    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {25};
+    static constexpr unsigned DEFAULT_H264_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VP8_MIN_QUALITY {50};
     static constexpr unsigned DEFAULT_VP8_MAX_QUALITY {20};
     static constexpr unsigned DEFAULT_VIDEO_BITRATE {1000}; // in Kbits/second
