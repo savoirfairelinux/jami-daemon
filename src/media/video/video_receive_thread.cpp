@@ -38,7 +38,6 @@ using std::string;
 
 VideoReceiveThread::VideoReceiveThread(const std::string& id,
                                        const std::string &sdp,
-                                       const bool isReset,
                                        uint16_t mtu) :
     VideoGenerator::VideoGenerator()
     , args_()
@@ -48,8 +47,6 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
     , stream_(sdp)
     , sdpContext_(stream_.str().size(), false, &readFunction, 0, 0, this)
     , sink_ {Manager::instance().createSinkClient(id)}
-    , restartDecoder_(false)
-    , isReset_(isReset)
     , mtu_(mtu)
     , requestKeyFrameCallback_(0)
     , loop_(std::bind(&VideoReceiveThread::setup, this),
@@ -73,11 +70,6 @@ VideoReceiveThread::startLoop()
 bool VideoReceiveThread::setup()
 {
     videoDecoder_.reset(new MediaDecoder());
-
-#ifdef RING_ACCEL
-    // disable accel if there was a fallback to software decoding
-    videoDecoder_->enableAccel(!isReset_);
-#endif
 
     dstWidth_ = args_.width;
     dstHeight_ = args_.height;
@@ -188,9 +180,10 @@ bool VideoReceiveThread::decodeFrame()
             break;
 
         case MediaDecoder::Status::RestartRequired:
-            restartDecoder_ = true;
+            // disable accel, reset decoder's AVCodecContext
+            videoDecoder_->enableAccel(false);
+            videoDecoder_->setupFromVideoData();
             break;
-
         case MediaDecoder::Status::Success:
         case MediaDecoder::Status::EOFError:
             break;
@@ -230,10 +223,6 @@ int VideoReceiveThread::getHeight() const
 
 int VideoReceiveThread::getPixelFormat() const
 { return videoDecoder_->getPixelFormat(); }
-
-bool
-VideoReceiveThread::restartDecoder() const
-{ return restartDecoder_.load(); }
 
 void
 VideoReceiveThread::triggerKeyFrameRequest()
