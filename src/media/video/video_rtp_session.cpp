@@ -60,9 +60,6 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , rtcpCheckerThread_([] { return true; },
             [this]{ processRtcpChecker(); },
             []{})
-    , receiverRestartThread_([]{ return true; },
-            [this]{ processReceiverRestart(); },
-            []{})
     , packetLossThread_([] { return true; },
             [this]{ processPacketLoss(); },
             []{})
@@ -151,41 +148,24 @@ VideoRtpSession::restartSender()
 void VideoRtpSession::startReceiver()
 {
     if (receive_.enabled and not receive_.holding) {
-        bool isReset = false;
-        if (receiveThread_) {
+        if (receiveThread_)
             RING_WARN("Restarting video receiver");
-            isReset = true;
-        }
         receiveThread_.reset(
-                             new VideoReceiveThread(callID_, receive_.receiving_sdp, isReset, mtu_)
+            new VideoReceiveThread(callID_, receive_.receiving_sdp, mtu_)
         );
 
         // XXX keyframe requests can timeout if unanswered
         receiveThread_->setRequestKeyFrameCallback(&SIPVoIPLink::enqueueKeyframeRequest);
-        receiverRestartThread_.start();
         receiveThread_->addIOContext(*socketPair_);
         receiveThread_->startLoop();
         packetLossThread_.start();
     } else {
         RING_DBG("Video receiving disabled");
-        receiverRestartThread_.join();
         if (receiveThread_)
             receiveThread_->detach(videoMixer_.get());
         receiveThread_.reset();
         packetLossThread_.join();
     }
-}
-
-void
-VideoRtpSession::restartReceiver()
-{
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-
-    // ensure that start has been called before restart
-    if (not socketPair_)
-        return;
-
-    startReceiver();
 }
 
 void VideoRtpSession::start(std::unique_ptr<IceSocket> rtp_sock,
@@ -225,7 +205,6 @@ void VideoRtpSession::stop()
 {
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     rtcpCheckerThread_.join();
-    receiverRestartThread_.join();
     packetLossThread_.join();
     if (videoLocal_)
         videoLocal_->detach(sender_.get());
@@ -566,30 +545,10 @@ VideoRtpSession::storeVideoBitrateInfo() {
 }
 
 void
-VideoRtpSession::checkReceiver()
-{
-    if (receiveThread_ && receiveThread_->restartDecoder()) {
-        const auto& cid = callID_;
-        runOnMainThread([cid]{
-            if (auto call = Manager::instance().callFactory.getCall(cid)) {
-                call->restartMediaReceiver();
-            }
-        });
-    }
-}
-
-void
 VideoRtpSession::processRtcpChecker()
 {
     adaptQualityAndBitrate();
     rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
-}
-
-void
-VideoRtpSession::processReceiverRestart()
-{
-    checkReceiver();
-    receiverRestartThread_.wait_for(std::chrono::seconds(RECEIVER_RESTART_INTERVAL));
 }
 
 void
