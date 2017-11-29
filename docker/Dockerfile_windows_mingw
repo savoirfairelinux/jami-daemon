@@ -9,7 +9,8 @@ RUN dnf -y upgrade
 RUN dnf -y groupinstall "Minimal Install"
 RUN dnf -y install \
  unzip \
- openssh
+ openssh \
+ rsync
 
 # Mingw 32/64
 RUN dnf -y install \
