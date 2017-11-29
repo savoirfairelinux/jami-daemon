@@ -178,9 +178,7 @@ MessageEngine::load()
         file.open(savePath_);
 
         Json::Value root;
-        Json::Reader reader;
-        if (!reader.parse(file, root))
-            throw std::runtime_error("can't parse JSON.");
+        file >> root;
 
         long unsigned loaded {0};
         for (auto i = root.begin(); i != root.end(); ++i) {
@@ -232,11 +230,13 @@ MessageEngine::save() const
             root[msgsId.str()] = std::move(msg);
         }
         lock.unlock();
-        Json::FastWriter fastWriter;
         std::ofstream file;
         file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         file.open(savePath_, std::ios::trunc);
-        file << fastWriter.write(root);
+        Json::StreamWriterBuilder wbuilder;
+        wbuilder["commentStyle"] = "None";
+        wbuilder["indentation"] = "";
+        file << Json::writeString(wbuilder, root);
         RING_DBG("[Account %s] saved %lu messages to %s", account_.getAccountID().c_str(), messages_.size(), savePath_.c_str());
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());

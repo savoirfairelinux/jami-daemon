@@ -31,11 +31,13 @@ AccountArchive::deserialize(const std::vector<uint8_t>& dat)
     RING_DBG("Loading account archive (%lu bytes)", dat.size());
 
     // Decode string
-    std::string decoded {dat.begin(), dat.end()};
+    auto* char_data = reinterpret_cast<const char*>(&dat[0]);
+    std::string err;
     Json::Value value;
-    Json::Reader reader;
-    if (!reader.parse(decoded.c_str(),value)) {
-        RING_ERR("Archive JSON parsing error: %s", reader.getFormattedErrorMessages().c_str());
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(char_data, char_data + dat.size(), &value, &err)) {
+        RING_ERR() << "Archive JSON parsing error: " << err;
         throw std::runtime_error("failed to parse JSON");
     }
 
@@ -100,8 +102,10 @@ AccountArchive::serialize() const
             jsonContacts[c.first.toString()] = c.second.toJson();
     }
 
-    Json::FastWriter fastWriter;
-    return fastWriter.write(root);
+    Json::StreamWriterBuilder wbuilder;
+    wbuilder["commentStyle"] = "None";
+    wbuilder["indentation"] = "";
+    return Json::writeString(wbuilder, root);
 }
 
 
