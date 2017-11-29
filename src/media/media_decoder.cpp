@@ -241,9 +241,11 @@ int MediaDecoder::setupFromVideoData()
     static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
 
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
-
-    RING_DBG("Finding stream info");
-    ret = avformat_find_stream_info(inputCtx_, NULL);
+    // workaround for info being null on a reset
+    if (inputCtx_->streams[0]->info) {
+        RING_DBG("Finding stream info");
+        ret = avformat_find_stream_info(inputCtx_, NULL);
+    }
     if (ret < 0) {
         // workaround for this bug:
         // http://patches.libav.org/patch/22541/

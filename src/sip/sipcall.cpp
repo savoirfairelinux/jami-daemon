@@ -943,16 +943,6 @@ SIPCall::restartMediaSender()
 }
 
 void
-SIPCall::restartMediaReceiver()
-{
-    RING_DBG("[call:%s] restarting RX media streams", getCallId().c_str());
-    avformatrtp_->restartReceiver();
-#ifdef RING_VIDEO
-    videortp_->restartReceiver();
-#endif
-}
-
-void
 SIPCall::stopAllMedia()
 {
     RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
