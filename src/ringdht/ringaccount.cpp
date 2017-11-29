@@ -803,9 +803,12 @@ RingAccount::useIdentity(const dht::crypto::Identity& identity)
     }
 
     Json::Value root;
-    Json::Reader reader;
-    if (!reader.parse(receipt_, root))
+    Json::CharReaderBuilder rbuilder;
+    auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+    if (!reader->parse(&receipt_[0], &receipt_[receipt_.size()], &root, nullptr)) {
+        RING_ERR() << this << " device receipt parsing error";
         return false;
+    }
 
     auto dev_id = root["dev"].asString();
     if (dev_id != identity.second->getId().toString()) {

@@ -127,8 +127,9 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 reply->get_body(body);
 
                 Json::Value json;
-                Json::Reader reader;
-                if (!reader.parse(body, json)) {
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
                     RING_ERR("Address lookup for %s: can't parse server response: %s", addr.c_str(), body.c_str());
                     cb("", Response::error);
                     return;
@@ -199,8 +200,9 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                 reply->get_body(body);
 
                 Json::Value json;
-                Json::Reader reader;
-                if (!reader.parse(body, json)) {
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
                     RING_ERR("Name lookup for %s: can't parse server response: %s", name.c_str(), body.c_str());
                     cb("", Response::error);
                     return;
@@ -291,8 +293,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                 reply->get_body(body);
 
                 Json::Value json;
-                Json::Reader reader;
-                if (!reader.parse(body, json)) {
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
                     cb(RegistrationResponse::error);
                     return;
                 }
