@@ -200,8 +200,6 @@ class IceTransport {
 
         ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
-        ssize_t getNextPacketSize(int comp_id);
-
         int waitForInitialization(unsigned timeout);
 
         int waitForNegotiation(unsigned timeout);

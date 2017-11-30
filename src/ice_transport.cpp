@@ -934,17 +934,6 @@ IceTransport::send(int comp_id, const unsigned char* buf, size_t len)
     return len;
 }
 
-ssize_t
-IceTransport::getNextPacketSize(int comp_id)
-{
-    auto& io = compIO_[comp_id];
-    std::lock_guard<std::mutex> lk(io.mutex);
-    if (io.queue.empty()) {
-        return 0;
-    }
-    return io.queue.front().datalen;
-}
-
 int
 IceTransport::waitForInitialization(unsigned timeout)
 {
@@ -1051,14 +1040,6 @@ IceSocket::send(const unsigned char* buf, size_t len)
     if (!ice_transport_.get())
         return -1;
     return ice_transport_->send(compId_, buf, len);
-}
-
-ssize_t
-IceSocket::getNextPacketSize() const
-{
-    if (!ice_transport_.get())
-        return -1;
-    return ice_transport_->getNextPacketSize(compId_);
 }
 
 ssize_t

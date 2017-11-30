@@ -46,7 +46,6 @@ class IceSocket
         void close();
         ssize_t recv(unsigned char* buf, size_t len);
         ssize_t send(const unsigned char* buf, size_t len);
-        ssize_t getNextPacketSize() const;
         ssize_t waitForData(unsigned int timeout);
         void setOnRecv(IceRecvCb cb);
         uint16_t getTransportOverhead();
