@@ -526,7 +526,7 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     sdp.setPublishedIP(addrSdp);
     const bool created = sdp.createOffer(
                             getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                            getActiveAccountCodecInfoList(videoEnabled_ ? MEDIA_VIDEO : MEDIA_NONE),
+                            getActiveAccountCodecInfoList(videoEnabled_ and call.isAudioOnly() ? MEDIA_NONE : MEDIA_VIDEO),
                             getSrtpKeyExchange()
                          );
 
