@@ -100,7 +100,7 @@ libtool: libtool-$(LIBTOOL_VERSION).tar.xz
 	$(UNPACK)
 	$(MOVE)
 
-.libtool: libtool .automake
+.libtool: libtool
 	(cd $<; ./configure --prefix=$(PREFIX) && $(MAKE) && $(MAKE) install)
 	ln -sf libtool $(PREFIX)/bin/glibtool
 	ln -sf libtoolize $(PREFIX)/bin/glibtoolize
