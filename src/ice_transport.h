@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef ICE_TRANSPORT_H
-#define ICE_TRANSPORT_H
+#pragma once
 
 #include "ice_socket.h"
 #include "ip_utils.h"
@@ -28,15 +27,9 @@
 #include <pjlib.h>
 #include <pjlib-util.h>
 
-#include <map>
 #include <functional>
 #include <memory>
-#include <atomic>
 #include <vector>
-#include <queue>
-#include <mutex>
-#include <condition_variable>
-#include <thread>
 
 namespace ring {
 
@@ -46,7 +39,7 @@ class Controller;
 
 class IceTransport;
 
-using IceTransportCompleteCb = std::function<void(IceTransport&, bool)>;
+using IceTransportCompleteCb = std::function<void(bool)>;
 using IceRecvCb = std::function<ssize_t(unsigned char* buf, size_t len)>;
 using IceCandidate = pj_ice_sess_cand;
 
@@ -77,254 +70,133 @@ struct IceTransportOptions {
 };
 
 class IceTransport {
-    public:
-        using Attribute = struct {
-                std::string ufrag;
-                std::string pwd;
-        };
+public:
+    using Attribute = struct {
+        std::string ufrag;
+        std::string pwd;
+    };
 
-        /**
-         * Constructor
-         */
-        IceTransport(const char* name, int component_count, bool master,
-                     const IceTransportOptions& options = {});
+    /**
+     * Constructor
+     */
+    IceTransport(const char* name, int component_count, bool master,
+                 const IceTransportOptions& options = {});
 
-        /**
-         * Destructor
-         */
-        ~IceTransport();
+    /**
+     * Get current state
+     */
+    bool isInitiator() const;
 
-        /**
-         * Set/change transport role as initiator.
-         * Should be called before start method.
-         */
-        bool setInitiatorSession();
+    /**
+     * Start tranport negociation between local candidates and given remote
+     * to find the right candidate pair.
+     * This function doesn't block, the callback on_negodone_cb will be called
+     * with the negotiation result when operation is really done.
+     * Return false if negotiation cannot be started else true.
+     */
+    bool start(const Attribute& rem_attrs,
+               const std::vector<IceCandidate>& rem_candidates);
+    bool start(const std::vector<uint8_t>& attrs_candidates);
 
-        /**
-         * Set/change transport role as slave.
-         * Should be called before start method.
-         */
-        bool setSlaveSession();
+    /**
+     * Stop a started or completed transport.
+     */
+    bool stop();
 
-        /**
-         * Get current state
-         */
-        bool isInitiator() const;
+    /**
+     * Returns true if ICE transport has been initialized
+     * [mutex protected]
+     */
+    bool isInitialized() const;
 
-        /**
-         * Start tranport negociation between local candidates and given remote
-         * to find the right candidate pair.
-         * This function doesn't block, the callback on_negodone_cb will be called
-         * with the negotiation result when operation is really done.
-         * Return false if negotiation cannot be started else true.
-         */
-        bool start(const Attribute& rem_attrs,
-                   const std::vector<IceCandidate>& rem_candidates);
-        bool start(const std::vector<uint8_t>& attrs_candidates);
+    /**
+     * Returns true if ICE negotiation has been started
+     * [mutex protected]
+     */
+    bool isStarted() const;
 
-        /**
-         * Stop a started or completed transport.
-         */
-        bool stop();
+    /**
+     * Returns true if ICE negotiation has completed with success
+     * [mutex protected]
+     */
+    bool isRunning() const;
 
-        /**
-         * Returns true if ICE transport has been initialized
-         * [mutex protected]
-         */
-        bool isInitialized() const {
-            std::lock_guard<std::mutex> lk(iceMutex_);
-            return _isInitialized();
-        }
+    /**
+     * Returns true if ICE transport is in failure state
+     * [mutex protected]
+     */
+    bool isFailed() const;
 
-        /**
-         * Returns true if ICE negotiation has been started
-         * [mutex protected]
-         */
-        bool isStarted() const {
-            std::lock_guard<std::mutex> lk(iceMutex_);
-            return _isStarted();
-        }
+    IpAddr getLocalAddress(unsigned comp_id) const;
 
-        /**
-         * Returns true if ICE negotiation has completed with success
-         * [mutex protected]
-         */
-        bool isRunning() const {
-            std::lock_guard<std::mutex> lk(iceMutex_);
-            return _isRunning();
-        }
+    IpAddr getRemoteAddress(unsigned comp_id) const;
 
-        /**
-         * Returns true if ICE transport is in failure state
-         * [mutex protected]
-         */
-        bool isFailed() const {
-            std::lock_guard<std::mutex> lk(iceMutex_);
-            return _isFailed();
-        }
+    std::string getLastErrMsg() const;
 
-        IpAddr getLocalAddress(unsigned comp_id) const;
+    IpAddr getDefaultLocalAddress() const {
+        return getLocalAddress(0);
+    }
 
-        IpAddr getRemoteAddress(unsigned comp_id) const;
+    bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
 
-        std::string getLastErrMsg() const;
+    /**
+     * Return ICE session attributes
+     */
+    const Attribute getLocalAttributes() const;
 
-        IpAddr getDefaultLocalAddress() const {
-            return getLocalAddress(0);
-        }
+    /**
+     * Return ICE session attributes
+     */
+    std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
 
-        bool registerPublicIP(unsigned compId, const IpAddr& publicIP);
+    /**
+     * Returns serialized ICE attributes and candidates.
+     */
+    std::vector<uint8_t> packIceMsg() const;
 
-        /**
-         * Return ICE session attributes
-         */
-        const Attribute getLocalAttributes() const;
+    bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
 
-        /**
-         * Return ICE session attributes
-         */
-        std::vector<std::string> getLocalCandidates(unsigned comp_id) const;
+    // I/O methods
 
-        /**
-         * Returns serialized ICE attributes and candidates.
-         */
-        std::vector<uint8_t> packIceMsg() const;
+    void setOnRecv(unsigned comp_id, IceRecvCb cb);
 
-        bool getCandidateFromSDP(const std::string& line, IceCandidate& cand);
+    ssize_t recv(int comp_id, unsigned char* buf, size_t len);
 
-        // I/O methods
+    ssize_t send(int comp_id, const unsigned char* buf, size_t len);
 
-        void setOnRecv(unsigned comp_id, IceRecvCb cb);
+    int waitForInitialization(unsigned timeout);
 
-        ssize_t recv(int comp_id, unsigned char* buf, size_t len);
+    int waitForNegotiation(unsigned timeout);
 
-        ssize_t send(int comp_id, const unsigned char* buf, size_t len);
+    ssize_t waitForData(int comp_id, unsigned int timeout);
 
-        int waitForInitialization(unsigned timeout);
+    unsigned getComponentCount() const;
 
-        int waitForNegotiation(unsigned timeout);
-
-        ssize_t waitForData(int comp_id, unsigned int timeout);
-
-        unsigned getComponentCount() const {return component_count_;}
-
-    private:
-        static constexpr int MAX_CANDIDATES {32};
-
-        // New line character used for (de)serialisation
-        static constexpr char NEW_LINE = '\n';
-
-        static void cb_on_rx_data(pj_ice_strans *ice_st,
-                                  unsigned comp_id,
-                                  void *pkt, pj_size_t size,
-                                  const pj_sockaddr_t *src_addr,
-                                  unsigned src_addr_len);
-
-        static void cb_on_ice_complete(pj_ice_strans *ice_st,
-                                       pj_ice_strans_op op,
-                                       pj_status_t status);
-
-        struct IceSTransDeleter {
-                void operator ()(pj_ice_strans* ptr) {
-                    pj_ice_strans_stop_ice(ptr);
-                    pj_ice_strans_destroy(ptr);
-                }
-        };
-
-        void onComplete(pj_ice_strans* ice_st, pj_ice_strans_op op,
-                        pj_status_t status);
-
-        void onReceiveData(unsigned comp_id, void *pkt, pj_size_t size);
-
-        bool createIceSession(pj_ice_sess_role role);
-
-        void getUFragPwd();
-
-        void getDefaultCanditates();
-
-        // Non-mutex protected of public versions
-        bool _isInitialized() const;
-        bool _isStarted() const;
-        bool _isRunning() const;
-        bool _isFailed() const;
-
-        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        IceTransportCompleteCb on_initdone_cb_;
-        IceTransportCompleteCb on_negodone_cb_;
-        std::unique_ptr<pj_ice_strans, IceSTransDeleter> icest_;
-        unsigned component_count_;
-        pj_ice_sess_cand cand_[MAX_CANDIDATES] {};
-        std::string local_ufrag_;
-        std::string local_pwd_;
-        pj_sockaddr remoteAddr_;
-        std::condition_variable iceCV_ {};
-        mutable std::mutex iceMutex_ {};
-        pj_ice_strans_cfg config_;
-        std::string last_errmsg_;
-
-        struct Packet {
-                Packet(void *pkt, pj_size_t size);
-                std::unique_ptr<char[]> data;
-                size_t datalen;
-        };
-        struct ComponentIO {
-                std::mutex mutex;
-                std::condition_variable cv;
-                std::deque<Packet> queue;
-                IceRecvCb cb;
-        };
-        std::vector<ComponentIO> compIO_;
-
-        std::atomic_bool initiatorSession_ {true};
-
-        /**
-         * Returns the IP of each candidate for a given component in the ICE session
-         */
-        std::vector<IpAddr> getLocalCandidatesAddr(unsigned comp_id) const;
-
-        /**
-         * Adds a reflective candidate to ICE session
-         * Must be called before negotiation
-         */
-        void addReflectiveCandidate(int comp_id, const IpAddr& base, const IpAddr& addr);
-
-        /**
-         * Creates UPnP port mappings and adds ICE candidates based on those mappings
-         */
-        void selectUPnPIceCandidates();
-
-        std::unique_ptr<upnp::Controller> upnp_;
-
-        bool onlyIPv4Private_ {true};
-
-        // IO/Timer events are handled by following thread
-        std::thread thread_;
-        std::atomic_bool threadTerminateFlags_ {false};
-        void handleEvents(unsigned max_msec);
+private:
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 class IceTransportFactory {
-    public:
-        IceTransportFactory();
-        ~IceTransportFactory();
+public:
+    IceTransportFactory();
+    ~IceTransportFactory();
 
-        std::shared_ptr<IceTransport> createTransport(const char* name,
-                                                      int component_count,
-                                                      bool master,
-                                                      const IceTransportOptions& options = {});
+    std::shared_ptr<IceTransport> createTransport(const char* name,
+                                                  int component_count,
+                                                  bool master,
+                                                  const IceTransportOptions& options = {});
 
-        /**
-         * PJSIP specifics
-         */
-        pj_ice_strans_cfg getIceCfg() const { return ice_cfg_; }
-        pj_pool_factory* getPoolFactory() { return &cp_.factory; }
+    /**
+     * PJSIP specifics
+     */
+    pj_ice_strans_cfg getIceCfg() const { return ice_cfg_; }
+    pj_pool_factory* getPoolFactory() { return &cp_.factory; }
 
-    private:
-        pj_caching_pool cp_;
-        std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
-        pj_ice_strans_cfg ice_cfg_;
+private:
+    pj_caching_pool cp_;
+    std::unique_ptr<pj_pool_t, decltype(pj_pool_release)&> pool_;
+    pj_ice_strans_cfg ice_cfg_;
 };
 
 };
-
-#endif /* ICE_TRANSPORT_H */
