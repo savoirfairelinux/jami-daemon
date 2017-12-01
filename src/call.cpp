@@ -314,7 +314,9 @@ Call::toggleRecording()
 void
 Call::setEarlyDetails(const std::map<std::string, std::string>& details)
 {
-    (void)details;
+    auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    if (iter != std::end(details))
+        isAudioOnly_ = iter->second == TRUE_STR;
 }
 
 std::map<std::string, std::string>
@@ -330,6 +332,7 @@ Call::getDetails() const
         {DRing::Call::Details::ACCOUNTID,        getAccountId()},
         {DRing::Call::Details::AUDIO_MUTED,      std::string(bool_to_str(isAudioMuted_))},
         {DRing::Call::Details::VIDEO_MUTED,      std::string(bool_to_str(isVideoMuted_))},
+        {DRing::Call::Details::AUDIO_ONLY,       std::string(bool_to_str(isAudioOnly_))},
     };
 }
 
@@ -345,6 +348,7 @@ Call::getNullDetails()
         {DRing::Call::Details::TIMESTAMP_START,  ""},
         {DRing::Call::Details::ACCOUNTID,        ""},
         {DRing::Call::Details::VIDEO_SOURCE,     "UNKNOWN"},
+        {DRing::Call::Details::AUDIO_ONLY,       ""},
     };
 }
 
@@ -541,6 +545,12 @@ Call::safePopSubcalls()
     auto old_value = std::move(subcalls_);
     subcalls_.clear();
     return old_value;
+}
+
+bool
+Call::isAudioOnly() const
+{
+    return isAudioOnly_;
 }
 
 } // namespace ring
