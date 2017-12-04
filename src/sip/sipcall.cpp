@@ -231,7 +231,8 @@ SIPCall::SIPSessionReinvite()
     sdp_->clearIce();
     auto& acc = getSIPAccount();
     if (not sdp_->createOffer(acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
-                              acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+                              acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() and isAudioOnly() ? MEDIA_VIDEO
+                                                                                                       : MEDIA_NONE),
                               acc.getSrtpKeyExchange(),
                               getState() == CallState::HOLD))
         return !PJ_SUCCESS;
