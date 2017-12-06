@@ -21,5 +21,5 @@ secp256k1: secp256k1-$(SECP256K1_VERSION).tar.gz
 .secp256k1: secp256k1 .sum-secp256k1
 	$(RECONF)
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF) --disable-tests --disable-exhaustive-tests
-	cd $< && $(MAKE) CFLAGS+="-USECP256K1_BUILD" install
+	cd $< && $(MAKE) CFLAGS+="-USECP256K1_BUILD -isysroot ${SDKROOT}" install
 	touch $@
