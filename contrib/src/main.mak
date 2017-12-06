@@ -169,6 +169,7 @@ RANLIB=xcrun ranlib
 
 EXTRA_CFLAGS=-arch $(ARCH) -isysroot $(IOS_SDK)
 ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
+MAKE_CFLAGS := $(EXTRA_CFLAGS)
 EXTRA_CFLAGS += -miphoneos-version-min=$(MIN_IOS_VERSION) -fembed-bitcode
 else
 EXTRA_CFLAGS += -mios-simulator-version-min=$(MIN_IOS_VERSION)
