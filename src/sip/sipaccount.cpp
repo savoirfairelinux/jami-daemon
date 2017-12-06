@@ -71,6 +71,7 @@
 #include <memory>
 #include <sstream>
 #include <cstdlib>
+#include <thread>
 
 #ifdef _WIN32
 #include <lmcons.h>
