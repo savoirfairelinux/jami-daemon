@@ -589,8 +589,19 @@ IceTransport::Impl::getLocalCandidatesAddr(unsigned comp_id) const
         return cand_addrs;
     }
 
-    for (unsigned i=0; i<cand_cnt; ++i)
-        cand_addrs.push_back(cand[i].addr);
+    // Get list of deprecated ipv6 addresses
+    auto deprecatedList = ip_utils::getInvalidAddresses();
+
+    for (unsigned i=0; i < cand_cnt; ++i) {
+        IpAddr candIp = cand[i].addr;
+        // Discard if address is deprecated or tentative
+        if (std::find(deprecatedList.begin(), deprecatedList.end(), candIp.toString()) != deprecatedList.end()) {
+            RING_WARN("[ice:%p] Ignoring deprecated local address: %s", this, candIp.toString().c_str());
+            continue;
+        }
+
+        cand_addrs.emplace_back(candIp);
+    }
 
     return cand_addrs;
 }
@@ -908,13 +919,24 @@ IceTransport::getLocalCandidates(unsigned comp_id) const
         return res;
     }
 
+    // Get list of deprecated ipv6 addresses
+    auto deprecatedList = ip_utils::getInvalidAddresses();
+
     for (unsigned i=0; i<cand_cnt; ++i) {
         std::ostringstream val;
         char ipaddr[PJ_INET6_ADDRSTRLEN];
 
+        auto addrStr = std::string(pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0));
+
+        // Discard if address is deprecated or tentative
+        if (std::find(deprecatedList.begin(), deprecatedList.end(), addrStr) != deprecatedList.end()) {
+            RING_WARN("[ice:%p] Ignoring deprecated local address: %s", this, addrStr.c_str());
+            continue;
+        }
+
         val << std::string(cand[i].foundation.ptr, cand[i].foundation.slen);
         val << " " << (unsigned)cand[i].comp_id << " UDP " << cand[i].prio;
-        val << " " << pj_sockaddr_print(&cand[i].addr, ipaddr, sizeof(ipaddr), 0);
+        val << " " << addrStr;
         val << " " << (unsigned)pj_sockaddr_get_port(&cand[i].addr);
         val << " typ " << pj_ice_get_cand_type_name(cand[i].type);
 
