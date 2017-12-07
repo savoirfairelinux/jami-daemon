@@ -362,7 +362,7 @@ UNPACK = $(RM) -R $@ \
 	$(foreach f,$(filter %.tar.xz,$^), && tar xJf $(f) $(if ${BATCH_MODE},,-v)) \
 	$(foreach f,$(filter %.zip,$^), && unzip $(if ${BATCH_MODE},-q) $(f))
 UNPACK_DIR = $(basename $(basename $(notdir $<)))
-APPLY = (cd $(UNPACK_DIR) && patch -fp1) <
+APPLY = (cd $(UNPACK_DIR) && patch -flp1) <
 APPLY_BIN = (cd $(UNPACK_DIR) && patch --binary -flp1) <
 pkg_static = (cd $(UNPACK_DIR) && ../../../contrib/src/pkg-static.sh $(1))
 MOVE = mv $(UNPACK_DIR) $@ && touch $@
