@@ -317,5 +317,11 @@ bool haveCommonAddr(const std::vector<IpAddr>& a, const std::vector<IpAddr>& b);
 
 std::vector<IpAddr> getLocalNameservers();
 
+/**
+ * Get all the deprecated or tentative IPv6 address strings of all
+ * the network interfaces
+ */
+std::vector<std::string> getInvalidAddresses();
+
 } // namespace ip_utils
 } // namespace ring

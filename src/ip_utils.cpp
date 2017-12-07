@@ -30,6 +30,8 @@
 #include <unistd.h>
 #include <limits.h>
 
+#include <linux/rtnetlink.h>
+
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 #include "client/ring_signal.h"
 #endif
@@ -294,6 +296,109 @@ ip_utils::getLocalNameservers()
     res.insert(res.end(), _res.nsaddr_list, _res.nsaddr_list + _res.nscount);
 #endif
     return res;
+}
+
+std::vector<std::string>
+ip_utils::getInvalidAddresses()
+{
+    std::vector<std::string> deprecatedAddrs;
+
+#ifndef _WIN32
+
+    struct {
+        struct nlmsghdr        nlmsg_info;
+        struct ifaddrmsg    ifaddrmsg_info;
+    } netlink_req;
+
+    int fd;
+
+    int pagesize = sysconf(_SC_PAGESIZE);
+
+    if (!pagesize)
+        pagesize = 4096; /* Assume pagesize is 4096 if sysconf() failed */
+
+    fd = socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+    if(fd < 0) {
+        perror ("socket(): ");
+        return deprecatedAddrs;
+    }
+
+    int rtn;
+
+    bzero(&netlink_req, sizeof(netlink_req));
+
+    netlink_req.nlmsg_info.nlmsg_len = NLMSG_LENGTH(sizeof(struct ifaddrmsg));
+    netlink_req.nlmsg_info.nlmsg_flags = NLM_F_REQUEST | NLM_F_DUMP;
+    netlink_req.nlmsg_info.nlmsg_type = RTM_GETADDR;
+    netlink_req.nlmsg_info.nlmsg_pid = getpid();
+
+    netlink_req.ifaddrmsg_info.ifa_family = AF_INET6;
+
+    rtn = send (fd, &netlink_req, netlink_req.nlmsg_info.nlmsg_len, 0);
+    if(rtn < 0) {
+        perror ("send(): ");
+        return deprecatedAddrs;
+    }
+
+    char read_buffer[pagesize];
+    struct nlmsghdr *nlmsg_ptr;
+    int nlmsg_len;
+
+    while(1) {
+        int rtn;
+
+        bzero(read_buffer, pagesize);
+        rtn = recv(fd, read_buffer, pagesize, 0);
+        if(rtn < 0) {
+            perror ("recv(): ");
+            return {};
+        }
+
+        nlmsg_ptr = (struct nlmsghdr *) read_buffer;
+        nlmsg_len = rtn;
+
+        if (nlmsg_len < sizeof (struct nlmsghdr)) {
+            RING_WARN("Received an uncomplete netlink packet");
+            return {};
+        }
+
+        if (nlmsg_ptr->nlmsg_type == NLMSG_DONE)
+            break;
+
+        for(; NLMSG_OK(nlmsg_ptr, nlmsg_len); nlmsg_ptr = NLMSG_NEXT(nlmsg_ptr, nlmsg_len)) {
+            struct ifaddrmsg *ifaddrmsg_ptr;
+            struct rtattr *rtattr_ptr;
+            int ifaddrmsg_len;
+
+            ifaddrmsg_ptr = (struct ifaddrmsg *) NLMSG_DATA(nlmsg_ptr);
+
+            if (ifaddrmsg_ptr->ifa_flags & IFA_F_DEPRECATED || ifaddrmsg_ptr->ifa_flags & IFA_F_TENTATIVE) {
+                char ipaddr_str[INET6_ADDRSTRLEN];
+                ipaddr_str[0] = 0;
+
+                rtattr_ptr = (struct rtattr *) IFA_RTA(ifaddrmsg_ptr);
+                ifaddrmsg_len = IFA_PAYLOAD(nlmsg_ptr);
+
+                for(;RTA_OK(rtattr_ptr, ifaddrmsg_len); rtattr_ptr = RTA_NEXT(rtattr_ptr, ifaddrmsg_len)) {
+                    switch(rtattr_ptr->rta_type) {
+                    case IFA_ADDRESS:
+                        inet_ntop(ifaddrmsg_ptr->ifa_family, RTA_DATA(rtattr_ptr), ipaddr_str, sizeof(ipaddr_str));
+                        deprecatedAddrs.push_back(std::string(ipaddr_str));
+                        break;
+                    default:
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    close(fd);
+
+#else
+        RING_ERR("Not implemented on windows");
+#endif
+    return deprecatedAddrs;;
 }
 
 bool
