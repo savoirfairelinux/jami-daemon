@@ -319,6 +319,14 @@ Call::setEarlyDetails(const std::map<std::string, std::string>& details)
         isAudioOnly_ = iter->second == TRUE_STR;
 }
 
+void
+Call::update(const std::map<std::string, std::string>& details)
+{
+    auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    if (iter != std::end(details))
+        isAudioOnly_ = iter->second == TRUE_STR;
+}
+
 std::map<std::string, std::string>
 Call::getDetails() const
 {
