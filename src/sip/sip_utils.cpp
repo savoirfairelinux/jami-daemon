@@ -40,9 +40,19 @@
 #endif
 
 #include <vector>
+#include <array>
 #include <algorithm>
 
 namespace ring { namespace sip_utils {
+
+std::string
+PjsipErrorCategory::message( int condition ) const
+{
+    std::string err_msg;
+    err_msg.reserve(PJ_ERR_MSG_SIZE);
+    err_msg.resize(pj_strerror(condition, &err_msg[0], err_msg.size()).slen);
+    return err_msg;
+}
 
 std::string
 fetchHeaderValue(pjsip_msg *msg, const std::string &field)

@@ -47,6 +47,29 @@ static constexpr int DEFAULT_SIP_TLS_PORT {5061};
 
 enum class KeyExchangeProtocol { NONE, SDES };
 
+/// PjsipErrorCategory - a PJSIP error category for std::error_code
+class PjsipErrorCategory final : public std::error_category
+{
+public:
+    const char* name() const noexcept override { return "pjsip"; }
+    std::string message( int condition ) const override;
+};
+
+/// PJSIP related exception
+/// Based on std::system_error with code() returning std::error_code with PjsipErrorCategory category
+class PjsipFailure : public std::system_error
+{
+private:
+    static constexpr const char* what_ = "PJSIP call failed";
+
+public:
+    PjsipFailure()
+        : std::system_error(std::error_code(PJ_EUNKNOWN, PjsipErrorCategory()), what_) {}
+
+    explicit PjsipFailure(pj_status_t status)
+        : std::system_error(std::error_code(status, PjsipErrorCategory()), what_) {}
+};
+
 static constexpr const char* getKeyExchangeName(KeyExchangeProtocol kx) {
     return kx == KeyExchangeProtocol::SDES ? "sdes" : "";
 }
