@@ -306,6 +306,12 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaReceiver() = 0;
 
+        /**
+         * update details shared between peers
+         * @param details to update
+         */
+        void update(const std::map<std::string, std::string>& details);
+
     protected:
         virtual void merge(Call& scall);
 

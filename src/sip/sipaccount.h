@@ -478,12 +478,13 @@ class SIPAccount : public SIPAccountBase {
         /**
          * Create incoming SIPCall.
          * @param[in] from The origin uri of the call
+         * @param details use to set some specific details
          * @return std::shared_ptr<T> A shared pointer on the created call.
          *      The type of this instance is given in template argument.
          *      This type can be any base class of SIPCall class (included).
          */
         std::shared_ptr<SIPCall>
-        newIncomingCall(const std::string& from) override;
+        newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details = {}) override;
 
         void onRegister(pjsip_regc_cbparam *param);
 
