@@ -84,6 +84,15 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
     , type_(type)
     , account_(account)
 {
+    std::cout << "TOTO : " <<  details.size() << std::endl;
+
+
+for (auto iter : details)
+{
+    std::cout << "Key: " << iter.first << " Values:" << iter.second << std::endl;
+}
+
+    
     setEarlyDetails(details);
 
     addStateListener([this](UNUSED Call::CallState call_state,
@@ -315,8 +324,10 @@ void
 Call::setEarlyDetails(const std::map<std::string, std::string>& details)
 {
     auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
-    if (iter != std::end(details))
+    if (iter != std::end(details)) {
         isAudioOnly_ = iter->second == TRUE_STR;
+        std::cout << "WHAT USP" << std::endl;
+    }
 }
 
 std::map<std::string, std::string>

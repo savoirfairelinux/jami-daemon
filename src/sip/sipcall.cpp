@@ -1074,12 +1074,22 @@ SIPCall::waitForIceAndStartMedia()
         return false;
     });
 }
-
+#include <pj/string.h>
 void
 SIPCall::onReceiveOffer(const pjmedia_sdp_session* offer)
 {
     sdp_->clearIce();
     auto& acc = getSIPAccount();
+
+    std::cout << "YO!" << std::endl;
+
+    // [jn] avant de passer l'offre déterminer si les codecs video sont a utiliser ou pas.
+    for (int i=0 ; i < offer->media_count; i++) {
+        std::cout << "test : " << pj_strbuf(&offer->media[i]->desc.media) << std::endl;
+    }
+    bool isAudioOnly = false;
+    
+    
     sdp_->receiveOffer(offer,
         acc.getActiveAccountCodecInfoList(MEDIA_AUDIO),
         acc.getActiveAccountCodecInfoList(acc.isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),

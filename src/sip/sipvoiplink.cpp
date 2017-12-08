@@ -273,7 +273,19 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = account->newIncomingCall(remote_user);
+    // [jn] ici on créé l'offre pour un appel entrant
+    std::cout << "YO!" << std::endl;
+
+    // [jn] avant de passer l'offre déterminer si les codecs video sont a utiliser ou pas.
+    bool hasVideo = false;
+    auto pj_str_video = pj_str((char*) "video");
+    for (int i=0 ; i < r_sdp->media_count; i++)
+        //~ std::cout << "test : DDD" << pj_strbuf(&remote->media[i]->desc.media) << "XXXX" << std::endl;
+        if (  pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0 )
+            hasVideo = true;
+
+
+    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", "true"}});
     if (!call) {
         return PJ_FALSE;
     }
@@ -333,7 +345,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getSDP().receiveOffer(r_sdp,
         account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account->getActiveAccountCodecInfoList(account->isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+        account->getActiveAccountCodecInfoList(account->isVideoEnabled() and hasVideo ? MEDIA_VIDEO : MEDIA_NONE),
         account->getSrtpKeyExchange());
     call->setRemoteSdp(r_sdp);
 

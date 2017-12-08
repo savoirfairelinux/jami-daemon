@@ -304,7 +304,7 @@ RingAccount::flush()
 }
 
 std::shared_ptr<SIPCall>
-RingAccount::newIncomingCall(const std::string& from)
+RingAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
