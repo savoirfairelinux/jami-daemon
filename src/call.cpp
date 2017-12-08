@@ -84,7 +84,7 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
     , type_(type)
     , account_(account)
 {
-    setEarlyDetails(details);
+    updateDetails(details);
 
     addStateListener([this](UNUSED Call::CallState call_state,
                             UNUSED Call::ConnectionState cnx_state,
@@ -312,9 +312,9 @@ Call::toggleRecording()
 }
 
 void
-Call::setEarlyDetails(const std::map<std::string, std::string>& details)
+Call::updateDetails(const std::map<std::string, std::string>& details)
 {
-    auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    const auto& iter = details.find(DRing::Call::Details::AUDIO_ONLY);
     if (iter != std::end(details))
         isAudioOnly_ = iter->second == TRUE_STR;
 }

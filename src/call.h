@@ -306,6 +306,15 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
         virtual void restartMediaReceiver() = 0;
 
+        /**
+         * Update call details after creation.
+         * @param details to update
+         *
+         * /note No warranty to update any details, only some details can be modified.
+         *       See the implementation for more ... details :-).
+         */
+        void updateDetails(const std::map<std::string, std::string>& details);
+
     protected:
         virtual void merge(Call& scall);
 
@@ -338,8 +347,6 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
 
     private:
         friend void hangupCallsIf(Call::SubcallSet, int, const std::function<bool(Call*)>&);
-
-        void setEarlyDetails(const std::map<std::string, std::string>& details);
 
         bool validStateTransition(CallState newState);
 

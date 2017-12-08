@@ -304,12 +304,13 @@ RingAccount::flush()
 }
 
 std::shared_ptr<SIPCall>
-RingAccount::newIncomingCall(const std::string& from)
+RingAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
         auto call = call_it->call.lock();
+        call->updateDetails(details);
         if (not call) {
             RING_WARN("newIncomingCall: discarding deleted call");
             call_it = pendingSipCalls_.erase(call_it);
