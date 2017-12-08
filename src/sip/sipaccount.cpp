@@ -159,10 +159,13 @@ SIPAccount::~SIPAccount()
 }
 
 std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string& from UNUSED)
+SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::string, std::string>& details)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(), Call::CallType::INCOMING);
+    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
+                                                            manager.getNewCallID(),
+                                                            Call::CallType::INCOMING,
+                                                            details);
 }
 
 template <>

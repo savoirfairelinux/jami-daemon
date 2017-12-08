@@ -273,7 +273,17 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
-    auto call = account->newIncomingCall(remote_user);
+    bool hasVideo = false;
+    bool hasAudio = false;
+    auto pj_str_video = pj_str((char*) "video");
+    auto pj_str_audio = pj_str((char*) "audio");
+    for (int i=0 ; i < r_sdp->media_count; i++)
+        if (  pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0 )
+            hasVideo = true;
+        else if (  pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_audio) == 0 )
+            hasAudio = true;
+
+    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", ((not hasVideo and hasAudio) ? "true" : "false") }});
     if (!call) {
         return PJ_FALSE;
     }
@@ -333,7 +343,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->getSDP().receiveOffer(r_sdp,
         account->getActiveAccountCodecInfoList(MEDIA_AUDIO),
-        account->getActiveAccountCodecInfoList(account->isVideoEnabled() ? MEDIA_VIDEO : MEDIA_NONE),
+        account->getActiveAccountCodecInfoList(account->isVideoEnabled() and hasVideo ? MEDIA_VIDEO : MEDIA_NONE),
         account->getSrtpKeyExchange());
     call->setRemoteSdp(r_sdp);
 
@@ -433,7 +443,6 @@ transaction_request_cb(pjsip_rx_data *rdata)
         if (auto replacedCall = getCallFromInvite(replaced_inv))
             replacedCall->hangup(PJSIP_SC_OK);
     }
-
 
     return PJ_FALSE;
 }
