@@ -140,6 +140,7 @@ struct RingAccount::PendingCall
     dht::InfoHash from;
     dht::InfoHash from_account;
     std::shared_ptr<dht::crypto::Certificate> from_cert;
+    //~ const std::map<std::string, std::string>& details;
 };
 
 struct RingAccount::PendingMessage
@@ -304,12 +305,24 @@ RingAccount::flush()
 }
 
 std::shared_ptr<SIPCall>
-RingAccount::newIncomingCall(const std::string& from)
+RingAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
+    std::cout << " X X X X X X newIncomingCall" << std::endl;
+
+    for (auto iter : details)
+{
+    std::cout << "1 ) Key: " << iter.first << " Values:" << iter.second << std::endl;
+}
+
+    std::cout << "size of pendingSipCalls_ " << pendingSipCalls_.size() << std::endl;
+
     std::lock_guard<std::mutex> lock(callsMutex_);
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
         auto call = call_it->call.lock();
+        call->TOTO();
+        call->update(details);
+        call->TOTO();
         if (not call) {
             RING_WARN("newIncomingCall: discarding deleted call");
             call_it = pendingSipCalls_.erase(call_it);
@@ -468,7 +481,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 }
             );
 
-            sthis->pendingCalls_.emplace_back(PendingCall{
+            sthis->pendingCalls_.emplace_back(PendingCall{ // [jn] semble important
                 std::chrono::steady_clock::now(),
                 ice, weak_dev_call,
                 std::move(listenKey),
@@ -2285,6 +2298,7 @@ RingAccount::onPeerMessage(const dht::InfoHash& peer_device, std::function<void(
 void
 RingAccount::incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from)
 {
+    std::cout << " X X X X X X incomingCall" << std::endl;
     auto call = Manager::instance().callFactory.newCall<SIPCall, RingAccount>(*this, Manager::instance().getNewCallID(), Call::CallType::INCOMING);
     auto ice = createIceTransport(("sip:"+call->getCallId()).c_str(), ICE_COMPONENTS, false, getIceOptions());
 
@@ -2426,7 +2440,7 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     // Let the call handled by the PendingCall handler loop
     {
         std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.emplace_back(PendingCall {
+        pendingCalls_.emplace_back(PendingCall { // [JN] VERY IMPORTANT
                 /*.start = */started_time,
                 /*.ice_sp = */ice,
                 /*.call = */wcall,

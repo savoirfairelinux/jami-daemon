@@ -105,6 +105,11 @@ public: // overridden
     void restartMediaReceiver() override;
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
     std::map<std::string, std::string> getDetails() const override;
+    /**
+     * update details shared between peers
+     * @param details to update
+     */
+    //~ void update(const std::map<std::string, std::string>& details) override;
 
 public: // SIP related
     /**

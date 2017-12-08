@@ -84,6 +84,15 @@ Call::Call(Account& account, const std::string& id, Call::CallType type,
     , type_(type)
     , account_(account)
 {
+    std::cout << "TOTO : " <<  details.size() << std::endl;
+
+
+for (auto iter : details)
+{
+    std::cout << "Key: " << iter.first << " Values:" << iter.second << std::endl;
+}
+
+    
     setEarlyDetails(details);
 
     addStateListener([this](UNUSED Call::CallState call_state,
@@ -314,6 +323,17 @@ Call::toggleRecording()
 void
 Call::setEarlyDetails(const std::map<std::string, std::string>& details)
 {
+    auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
+    if (iter != std::end(details)) {
+        isAudioOnly_ = iter->second == TRUE_STR;
+        std::cout << "WHAT USP" << std::endl;
+    }
+}
+
+void
+Call::update(const std::map<std::string, std::string>& details)
+{
+           std::cout << "WHAT USP 2" << std::endl;
     auto iter = details.find(DRing::Call::Details::AUDIO_ONLY);
     if (iter != std::end(details))
         isAudioOnly_ = iter->second == TRUE_STR;
@@ -551,6 +571,12 @@ bool
 Call::isAudioOnly() const
 {
     return isAudioOnly_;
+}
+
+void
+Call::TOTO()
+{
+    std::cout << ((isAudioOnly_ ) ? " oui oui" : "non non") << std::endl;
 }
 
 } // namespace ring
