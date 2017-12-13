@@ -60,7 +60,7 @@ ifdef HAVE_IOS
 	GNUTLS_CONF += --disable-hardware-acceleration
 endif
 
-DEPS_gnutls = nettle $(DEPS_nettle) iconv $(DEPS_iconv)
+DEPS_gnutls = nettle iconv
 
 
 #Workaround for localtime_r function
