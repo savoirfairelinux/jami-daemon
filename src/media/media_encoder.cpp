@@ -521,7 +521,7 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         encoderName = "encoder?";
 
 
-    encoderCtx_->thread_count = std::thread::hardware_concurrency();
+    encoderCtx_->thread_count = std::min(std::thread::hardware_concurrency(), is_video ? 16 : 4);
     RING_DBG("[%s] Using %d threads", encoderName, encoderCtx_->thread_count);
 
 
