@@ -15,7 +15,7 @@ ifneq ($(call need_pkg,"libargon2"),)
 DEPS_opendht += argon2
 endif
 ifneq ($(call need_pkg,"gnutls >= 3.3.0"),)
-DEPS_opendht += gnutls $(DEPS_gnutls)
+DEPS_opendht += gnutls
 endif
 
 $(TARBALLS)/opendht-$(OPENDHT_VERSION).tar.gz:
