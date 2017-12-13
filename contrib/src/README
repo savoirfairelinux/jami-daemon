@@ -92,18 +92,12 @@ Dependencies
 If package bar depends on package foo, the special DEPS_bar variable
 should be defined as follow:
 
-	DEPS_bar = foo $(DEPS_foo)
+	DEPS_bar = foo
 
-Note that dependency resolution is unfortunately _not_ recursive.
-Therefore $(DEPS_foo) really should be specified explicitly as shown
-above. (In practice, this will not make any difference insofar as there
-are no pure second-level nested dependencies. For instance, libass
-depends on FontConfig, which depends on FreeType, but libass depends
-directly on FreeType anyway.)
-
-Also note that DEPS_bar is set "recursively" with =, rather than
-"immediately" with :=. This is so that $(DEPS_foo) is expanded
-correctly, even if DEPS_foo it is defined after DEPS_bar.
+Dependency resolution is recursive (unlike in previous versions); the
+above will cause bar to also depend on the dependencies of foo.  It is
+illegal to have a dependency cycle, and an error will be emitted if
+one is created.
 
 Implementation note:
 

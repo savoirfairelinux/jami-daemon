@@ -391,7 +391,10 @@ PKGS_AUTOMATIC := $(filter-out $(PKGS_FOUND),$(PKGS))
 # Apply manual selection (from bootstrap):
 PKGS_MANUAL := $(sort $(PKGS_ENABLE) $(filter-out $(PKGS_DISABLE),$(PKGS_AUTOMATIC)))
 # Resolve dependencies:
-PKGS_DEPS := $(filter-out $(PKGS_FOUND) $(PKGS_MANUAL),$(sort $(foreach p,$(PKGS_MANUAL),$(DEPS_$(p)))))
+dep_on = $(if $(filter $1,$2),\
+  $(error Dependency cycle detected: $(patsubst %,% ->,$2) $(filter $1,$2)),\
+  $(sort $(foreach p,$(filter-out $(PKGS_FOUND),$(1)),$(p) $(call dep_on,$(DEPS_$(p)),$2 $(p)))))
+PKGS_DEPS := $(call dep_on,$(PKGS_MANUAL))
 PKGS := $(sort $(PKGS_MANUAL) $(PKGS_DEPS))
 
 convert-static:

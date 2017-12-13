@@ -11,7 +11,7 @@ ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavform
 PKGS_FOUND += ffmpeg
 endif
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex $(DEPS_vpx)
+DEPS_ffmpeg = iconv zlib x264 vpx opus speex
 
 FFMPEGCONF = \
 	--cc="$(CC)" \

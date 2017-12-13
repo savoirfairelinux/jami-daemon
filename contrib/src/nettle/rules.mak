@@ -19,7 +19,7 @@ nettle: nettle-$(NETTLE_VERSION).tar.gz .sum-nettle
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-DEPS_nettle = gmp $(DEPS_gmp)
+DEPS_nettle = gmp
 
 .nettle: nettle
 ifdef HAVE_IOS

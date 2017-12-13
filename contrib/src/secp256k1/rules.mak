@@ -7,7 +7,7 @@ PKGS += secp256k1
 ifeq ($(call need_pkg,"libsecp256k1"),)
 PKGS_FOUND += secp256k1
 endif
-DEPS_secp256k1 = gmp $(DEPS_gmp)
+DEPS_secp256k1 = gmp
 
 $(TARBALLS)/secp256k1-$(SECP256K1_VERSION).tar.gz:
 	$(call download,$(SECP256K1_URL))

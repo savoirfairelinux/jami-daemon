@@ -36,7 +36,7 @@ endif
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
-DEPS_vorbis = ogg $(DEPS_ogg)
+DEPS_vorbis = ogg
 
 .vorbis: vorbis
 	$(RECONF) -Im4
@@ -47,7 +47,7 @@ DEPS_vorbis = ogg $(DEPS_ogg)
 .sum-vorbisenc: .sum-vorbis
 	touch $@
 
-DEPS_vorbisenc = vorbis $(DEPS_vorbis)
+DEPS_vorbisenc = vorbis
 
 .vorbisenc:
 	touch $@

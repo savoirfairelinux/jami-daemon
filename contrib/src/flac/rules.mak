@@ -47,7 +47,7 @@ FLACCONF += --disable-asm-optimizations
 endif
 endif
 
-DEPS_flac = ogg $(DEPS_ogg)
+DEPS_flac = ogg
 
 .flac: flac
 	cd $< && $(HOSTVARS) ./configure $(FLACCONF)
