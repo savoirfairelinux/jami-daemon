@@ -58,14 +58,14 @@ VideoRtpSession::VideoRtpSession(const string &callID,
     , lastLongRTCPCheck_(std::chrono::system_clock::now())
     , videoBitrateInfo_ {}
     , rtcpCheckerThread_([] { return true; },
-            std::bind(&VideoRtpSession::processRtcpChecker, this),
-            std::bind(&VideoRtpSession::cleanupRtcpChecker, this))
+            [this]{ processRtcpChecker(); },
+            []{})
     , receiverRestartThread_([]{ return true; },
             [this]{ processReceiverRestart(); },
             []{})
     , packetLossThread_([] { return true; },
             [this]{ processPacketLoss(); },
-            [](){})
+            []{})
 {
     setupVideoBitrateInfo(); // reset bitrate
 }
@@ -584,10 +584,6 @@ VideoRtpSession::processRtcpChecker()
     adaptQualityAndBitrate();
     rtcpCheckerThread_.wait_for(std::chrono::seconds(RTCP_CHECKING_INTERVAL));
 }
-
-void
-VideoRtpSession::cleanupRtcpChecker()
-{}
 
 void
 VideoRtpSession::processReceiverRestart()
