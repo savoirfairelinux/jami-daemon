@@ -28,6 +28,7 @@
 
 extern "C" {
 #include <libavcodec/avcodec.h>
+#include <libavutil/hwcontext.h>
 #include <libavcodec/videotoolbox.h>
 #include <libavutil/imgutils.h>
 }
@@ -48,6 +49,10 @@ class VideoToolboxAccel : public HardwareAccel {
         bool init() override;
         int allocateBuffer(AVFrame* frame, int flags) override;
         void extractData(VideoFrame& input, VideoFrame& output) override;
+
+    private:
+        using AVBufferRefPtr = std::unique_ptr<AVBufferRef, std::function<void(AVBufferRef*)>>;
+        AVBufferRefPtr deviceBufferRef_;
 };
 
 }} // namespace ring::video
