@@ -132,7 +132,6 @@ private:
 
     InterruptedThreadLoop rtcpCheckerThread_;
     void processRtcpChecker();
-    void cleanupRtcpChecker();
 
     InterruptedThreadLoop receiverRestartThread_;
     void processReceiverRestart();
