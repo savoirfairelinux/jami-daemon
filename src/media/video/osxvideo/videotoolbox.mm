@@ -35,8 +35,11 @@
 
 namespace ring { namespace video {
 
+static auto avBufferRefDeleter = [](AVBufferRef* buf){ av_buffer_unref(&buf); };
+
 VideoToolboxAccel::VideoToolboxAccel(const std::string name, const AVPixelFormat format)
     : HardwareAccel(name, format)
+    , deviceBufferRef_(nullptr, avBufferRefDeleter)
 {
 }
 
@@ -127,9 +130,14 @@ VideoToolboxAccel::extractData(VideoFrame& input, VideoFrame& output)
 bool
 VideoToolboxAccel::checkAvailability()
 {
-    // VideoToolbox is always present on Mac 10.8+ and iOS 8+
-    // VDA is always present on Mac 10.6.3+
-    return true;
+    AVBufferRef* hardwareDeviceCtx;
+    if (av_hwdevice_ctx_create(&hardwareDeviceCtx, AV_HWDEVICE_TYPE_VIDEOTOOLBOX, nullptr, nullptr, 0) == 0) {
+        deviceBufferRef_.reset(hardwareDeviceCtx);
+        return true;
+    }
+
+    av_buffer_unref(&hardwareDeviceCtx);
+    return false;
 }
 
 bool
@@ -137,6 +145,7 @@ VideoToolboxAccel::init()
 {
     if (av_videotoolbox_default_init(codecCtx_) >= 0) {
         RING_DBG("VideoToolbox decoder initialized");
+	codecCtx_->hw_device_ctx = av_buffer_ref(deviceBufferRef_.get());
         return true;
     } else {
         RING_ERR("Failed to initialize VideoToolbox decoder");
