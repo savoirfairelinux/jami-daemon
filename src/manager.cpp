@@ -851,6 +851,9 @@ Manager::outgoingCall(const std::string& preferred_account_id,
         return {};
     }
 
+    RING_DBG() << "try outgoing call to '" << to << "'"
+               << " with preferred account '" << preferred_account_id << "'";
+
     std::string current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
@@ -859,7 +862,6 @@ Manager::outgoingCall(const std::string& preferred_account_id,
         /* RING_WARN: after this call the account_id is obsolete
          * as the factory may decide to use another account (like IP2IP).
          */
-        RING_DBG("New outgoing call to %s", to_cleaned.c_str());
         call = newOutgoingCall(to_cleaned, preferred_account_id, volatileCallDetails);
     } catch (const std::exception &e) {
         RING_ERR("%s", e.what());

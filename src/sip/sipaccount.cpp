@@ -170,10 +170,13 @@ SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::
 
 template <>
 std::shared_ptr<SIPCall>
-SIPAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
+SIPAccount::newOutgoingCall(const std::string& toUrl,
+                            const std::map<std::string, std::string>& volatileCallDetails)
 {
     std::string to;
     int family;
+
+    RING_DBG() << *this << "Calling SIP peer " << toUrl;
 
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this, manager.getNewCallID(),
