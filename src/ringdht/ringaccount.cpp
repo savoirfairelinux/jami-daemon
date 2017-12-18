@@ -330,10 +330,11 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
 
 template <>
 std::shared_ptr<SIPCall>
-RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::string, std::string>& volatileCallDetails)
+RingAccount::newOutgoingCall(const std::string& toUrl,
+                             const std::map<std::string, std::string>& volatileCallDetails)
 {
-    auto sufix = stripPrefix(toUrl);
-    RING_DBG("Calling DHT peer %s", sufix.c_str());
+    auto suffix = stripPrefix(toUrl);
+    RING_DBG() << *this << "Calling DHT peer " << suffix;
     auto& manager = Manager::instance();
     auto call = manager.callFactory.newCall<SIPCall, RingAccount>(*this, manager.getNewCallID(),
                                                                   Call::CallType::OUTGOING,
@@ -344,12 +345,12 @@ RingAccount::newOutgoingCall(const std::string& toUrl, const std::map<std::strin
     call->initRecFilename(toUrl);
 
     try {
-        const std::string toUri = parseRingUri(sufix);
+        const std::string toUri = parseRingUri(suffix);
         startOutgoingCall(call, toUri);
     } catch (...) {
 #if HAVE_RINGNS
         std::weak_ptr<RingAccount> wthis_ = std::static_pointer_cast<RingAccount>(shared_from_this());
-        NameDirectory::lookupUri(sufix, nameServer_, [wthis_,call](const std::string& result,
+        NameDirectory::lookupUri(suffix, nameServer_, [wthis_,call](const std::string& result,
                                                                    NameDirectory::Response response) {
             // we may run inside an unknown thread, but following code must be called in main thread
             runOnMainThread([=, &result]() {

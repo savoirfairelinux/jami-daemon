@@ -477,6 +477,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         void setAllCodecsActive(MediaType mediaType, bool active);
 };
 
+static inline std::ostream&
+operator<< (std::ostream& os, const Account& acc)
+{
+    os << "[Account " << acc.getAccountID() << "] ";
+    return os;
+}
+
 } // namespace ring
 
 #endif
