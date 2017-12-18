@@ -76,12 +76,12 @@ AccountFactory::isSupportedType(const char* const name) const
 void
 AccountFactory::removeAccount(Account& account)
 {
-    const auto account_type = account.getAccountType();
+    const auto* account_type = account.getAccountType();
 
     std::lock_guard<std::recursive_mutex> lock(mutex_);
     const auto& id = account.getAccountID();
     RING_DBG("Removing account %s", id.c_str());
-    auto& map = accountMaps_.at(account.getAccountType());
+    auto& map = accountMaps_.at(account_type);
     map.erase(id);
     RING_DBG("Remaining %zu %s account(s)", map.size(), account_type);
 }
