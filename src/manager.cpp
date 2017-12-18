@@ -3023,12 +3023,12 @@ Manager::newOutgoingCall(const std::string& toUrl,
     // If no prefered or not suitable account given,
     // find first usable account depending on url scheme.
     if (toUrl.find("ring:") != std::string::npos) {
-        if (!account or account->getAccountType() != RingAccount::ACCOUNT_TYPE) {
-            account = findAccount<RingAccount>([](const std::shared_ptr<RingAccount>& acc){
-                                                   return acc->isUsable();
-                                               });
+        if (!account or ::strcmp(account->getAccountType(), RingAccount::ACCOUNT_TYPE)) {
+            account = findAccount<RingAccount>([] (const std::shared_ptr<RingAccount>& acc) {
+                    return acc->isUsable();
+                });
         }
-    } else if (!account or account->getAccountType() != SIPAccount::ACCOUNT_TYPE) {
+    } else if (!account or ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
         // For IP url restricts results on IP2IP accounts
         auto strippedToUrl = toUrl;
         sip_utils::stripSipUriPrefix(strippedToUrl);
