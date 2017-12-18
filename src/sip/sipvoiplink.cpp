@@ -294,7 +294,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
     // Append PJSIP transport to the broker's SipTransport list
     auto transport = link->sipTransportBroker->addTransport(rdata->tp_info.transport);
     if (!transport) {
-        if (::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
+        if (not ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
             RING_WARN("Using transport from account.");
             transport = std::static_pointer_cast<SIPAccount>(account)->getTransport();
         }
