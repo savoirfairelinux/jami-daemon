@@ -806,6 +806,7 @@ void SIPAccount::doRegister2_()
             setTransport(link_->sipTransportBroker->getUdpTransport(
                 SipTransportDescr { getTransportType(), getLocalPort(), getLocalInterface() }
             ));
+        setRegistrationState(RegistrationState::REGISTERED);
         return;
     }
 
