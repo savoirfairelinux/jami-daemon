@@ -30,13 +30,8 @@
 #endif
 
 #define checkErr( err) \
-    if(err) {\
-            OSStatus error = static_cast<OSStatus>(err);\
-                fprintf(stdout, "CoreAudio Error: %ld ->  %s:  %d\n",  (long)error,\
-                                       __FILE__, \
-                                       __LINE__\
-                                       );\
-                           fflush(stdout);\
+    if(err) { \
+        RING_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
     }
 
 /**
@@ -92,6 +87,11 @@ class CoreLayer : public AudioLayer {
          * Configure the AudioUnit
          */
         void initAudioLayerIO();
+        void setupOutputBus();
+        void setupInputBus();
+        void bindCallbacks();
+
+        int initAudioStreams(AudioUnit *audioUnit);
 
         /**
          * Start the capture stream and prepare the playback stream.
