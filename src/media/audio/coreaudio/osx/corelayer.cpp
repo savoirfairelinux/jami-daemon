@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Groarke <philippe.groarke@savoirfairelinux.com>
  *
@@ -49,10 +49,8 @@ CoreLayer::getCaptureDeviceList() const
 {
     std::vector<std::string> ret;
 
-#if !TARGET_OS_IPHONE
     for (const auto& x : getDeviceList(true))
         ret.push_back(x.name_);
-#endif
 
     return ret;
 }
@@ -62,10 +60,8 @@ CoreLayer::getPlaybackDeviceList() const
 {
     std::vector<std::string> ret;
 
-#if !TARGET_OS_IPHONE
     for (const auto& x : getDeviceList(false))
         ret.push_back(x.name_);
-#endif
 
     return ret;
 }
@@ -179,7 +175,6 @@ CoreLayer::initAudioLayerIO()
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
-#if !TARGET_OS_IPHONE
     UInt32 bufferSizeFrames = 0;
     size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
@@ -188,14 +183,6 @@ CoreLayer::initAudioLayerIO()
                 outputBus,
                 &bufferSizeFrames,
                 &size));
-#else
-    Float32 bufferDuration;
-    UInt32 propSize = sizeof(Float32);
-    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareIOBufferDuration,
-                            &propSize,
-                            &bufferDuration);
-    UInt32 bufferSizeFrames = audioInputFormat_.sample_rate * bufferDuration;
-#endif
 
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
     size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
@@ -406,7 +393,6 @@ std::vector<AudioDevice>
 CoreLayer::getDeviceList(bool getCapture) const
 {
     std::vector<AudioDevice> ret;
-#if !TARGET_OS_IPHONE
     UInt32 propsize;
 
     AudioObjectPropertyAddress theAddress = {
@@ -437,7 +423,6 @@ CoreLayer::getDeviceList(bool getCapture) const
             ret.push_back(std::move(dev));
         }
     }
-#endif
     return ret;
 }
 

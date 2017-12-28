@@ -38,8 +38,12 @@
 #include "audio/pulseaudio/pulselayer.h"
 #endif
 #if HAVE_COREAUDIO
-#include "audio/coreaudio/corelayer.h"
-#endif
+#if TARGET_OS_IOS
+#include "audio/coreaudio/ios/corelayer.h"
+#else
+#include "audio/coreaudio/osx/corelayer.h"
+#endif /* TARGET_OS_IOS */
+#endif /* HAVE_COREAUDIO */
 #if HAVE_PORTAUDIO
 #include "audio/portaudio/portaudiolayer.h"
 #endif
