@@ -85,7 +85,7 @@ CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 void
 CoreLayer::initAudioLayerIO()
 {
-    // OS X uses Audio Units for output. Steps:
+    // CoreAudio uses Audio Units for output. Steps:
     // 1) Create a description.
     // 2) Find the audio unit that fits that.
     // 3) Set the audio unit callback.
@@ -93,17 +93,14 @@ CoreLayer::initAudioLayerIO()
     // 5) Profit...
     RING_DBG("INIT AUDIO IO");
 
-    AudioUnitScope outputBus = 0;
-    AudioUnitScope inputBus = 1;
-    UInt32 size = sizeof(UInt32);
-    AudioComponentDescription desc = {0};
-    desc.componentType = kAudioUnitType_Output;
-    // kAudioOutputUnitProperty_EnableIO is ON and read-only
-    // for input and output SCOPE on this subtype
-    desc.componentSubType = kAudioUnitSubType_VoiceProcessingIO;
-    desc.componentManufacturer = kAudioUnitManufacturer_Apple;
+    AudioComponentDescription outputUnitDescription;
+    outputUnitDescription.componentType             = kAudioUnitType_Output;
+    outputUnitDescription.componentSubType          = kAudioUnitSubType_VoiceProcessingIO;
+    outputUnitDescription.componentManufacturer     = kAudioUnitManufacturer_Apple;
+    outputUnitDescription.componentFlags            = 0;
+    outputUnitDescription.componentFlagsMask        = 0;
 
-    auto comp = AudioComponentFindNext(nullptr, &desc);
+    auto comp = AudioComponentFindNext(nullptr, &outputUnitDescription);
     if (comp == nullptr) {
         RING_ERR("Can't find default output audio component.");
         return;
@@ -111,71 +108,157 @@ CoreLayer::initAudioLayerIO()
 
     checkErr(AudioComponentInstanceNew(comp, &ioUnit_));
 
-    // Set stream format
-    AudioStreamBasicDescription info;
-    size = sizeof(info);
+#if TARGET_OS_IPHONE
+    UInt32 audioCategory = kAudioSessionCategory_PlayAndRecord;
+    AudioSessionSetProperty(kAudioSessionProperty_AudioCategory,
+                            sizeof(audioCategory),
+                            &audioCategory);
+#endif
+
+    setupOutputBus();
+    setupInputBus();
+    bindCallbacks();
+}
+
+void
+CoreLayer::setupOutputBus() {
+    RING_DBG("Initializing output bus");
+
+    AudioUnitScope outputBus = 0;
+    UInt32 size;
+
+    AudioStreamBasicDescription outputASBD;
+    size = sizeof(outputASBD);
+
+#if TARGET_OS_IPHONE
+    Float64 outSampleRate;
+    size = sizeof(outSampleRate);
+    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate,
+                            &size,
+                            &outSampleRate);
+
+    outputASBD.mSampleRate = outSampleRate;
+    outputASBD.mFormatID = kAudioFormatLinearPCM;
+    outputASBD.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+    outputASBD.mBitsPerChannel = 16;
+    outputASBD.mBytesPerFrame = 2;
+    outputASBD.mChannelsPerFrame = 1;
+    outputASBD.mBytesPerPacket = 2;
+    outputASBD.mFramesPerPacket = 1;
+#else
     checkErr(AudioUnitGetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Output,
-            outputBus,
-            &info,
-            &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  outputBus,
+                                  &outputASBD,
+                                  &size));
+#endif
 
-    audioFormat_ = {static_cast<unsigned int>(info.mSampleRate),
-                    static_cast<unsigned int>(info.mChannelsPerFrame)};
+    audioFormat_ = {static_cast<unsigned int>(outputASBD.mSampleRate),
+                    static_cast<unsigned int>(outputASBD.mChannelsPerFrame)};
 
+    size = sizeof(outputASBD);
     checkErr(AudioUnitGetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Input,
-            outputBus,
-            &info,
-            &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  outputBus,
+                                  &outputASBD,
+                                  &size));
 
-    info.mSampleRate = audioFormat_.sample_rate; // Only change sample rate.
+    // Only change sample rate.
+    outputASBD.mSampleRate = audioFormat_.sample_rate;
 
+    // Set output steam format
     checkErr(AudioUnitSetProperty(ioUnit_,
-            kAudioUnitProperty_StreamFormat,
-            kAudioUnitScope_Input,
-            outputBus,
-            &info,
-            size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  outputBus,
+                                  &outputASBD,
+                                  size));
 
     hardwareFormatAvailable(audioFormat_);
+}
+
+void
+CoreLayer::setupInputBus() {
+    RING_DBG("Initializing input bus");
+
+    AudioUnitScope inputBus = 1;
+    UInt32 size;
+ 
+    AudioStreamBasicDescription inputASBD;
+    size = sizeof(inputASBD);
 
     // Setup audio formats
-    size = sizeof(AudioStreamBasicDescription);
     checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Input,
-                inputBus,
-                &info,
-                &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Input,
+                                  inputBus,
+                                  &inputASBD,
+                                  &size));
 
-    audioInputFormat_ = {static_cast<unsigned int>(info.mSampleRate),
-                         static_cast<unsigned int>(info.mChannelsPerFrame)};
+#if TARGET_OS_IPHONE
+    Float64 inSampleRate;
+    size = sizeof(Float64);
+    AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate,
+                            &size,
+                            &inSampleRate);
+
+    inputASBD.mSampleRate = inSampleRate;
+    inputASBD.mFormatID = kAudioFormatLinearPCM;
+    inputASBD.mFormatFlags = kAudioFormatFlagIsSignedInteger | kAudioFormatFlagsNativeEndian | kAudioFormatFlagIsPacked;
+    inputASBD.mBytesPerPacket = 2;
+    inputASBD.mBytesPerFrame = 2;
+    inputASBD.mFramesPerPacket = 1;
+    inputASBD.mChannelsPerFrame = 1;
+    inputASBD.mBitsPerChannel = 16;
+
+    // Enable input
+    UInt32 flag = 1;
+    checkErr(AudioUnitSetProperty (ioUnit_,
+                                   kAudioOutputUnitProperty_EnableIO,
+                                   kAudioUnitScope_Input,
+                                   inputBus,
+                                   &flag,
+                                   sizeof(flag)));
+#endif
+
+    audioInputFormat_ = {static_cast<unsigned int>(inputASBD.mSampleRate),
+        static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
 
+    // Keep some values to not ask them every time the read callback is fired up
+    inSampleRate_ = inputASBD.mSampleRate;
+    inChannelsPerFrame_ = inputASBD.mChannelsPerFrame;
+
+#if TARGET_OS_IPHONE
     // Set format on output *SCOPE* in input *BUS*.
     checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
-                inputBus,
-                &info,
-                &size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &inputASBD,
+                                  &size));
 
     // Keep everything else and change only sample rate (or else SPLOSION!!!)
-    info.mSampleRate = audioInputFormat_.sample_rate;
-
-    // Keep some values to not ask them every time the read callback is fired up
-    inSampleRate_ = info.mSampleRate;
-    inChannelsPerFrame_ = info.mChannelsPerFrame;
+    inputASBD.mSampleRate = audioInputFormat_.sample_rate;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-                kAudioUnitProperty_StreamFormat,
-                kAudioUnitScope_Output,
-                inputBus,
-                &info,
-                size));
+                                  kAudioUnitProperty_StreamFormat,
+                                  kAudioUnitScope_Output,
+                                  inputBus,
+                                  &inputASBD,
+                                  size));
+#endif
+#if TARGET_OS_IPHONE
+    flag = 0;
+    AudioUnitSetProperty(ioUnit_,
+                         kAudioUnitProperty_ShouldAllocateBuffer,
+                         kAudioUnitScope_Output,
+                         inputBus,
+                         &flag,
+                         sizeof(flag));
+#endif
 
     // Input buffer setup. Note that ioData is empty and we have to store data
     // in another buffer.
@@ -183,56 +266,60 @@ CoreLayer::initAudioLayerIO()
     UInt32 bufferSizeFrames = 0;
     size = sizeof(UInt32);
     checkErr(AudioUnitGetProperty(ioUnit_,
-                kAudioDevicePropertyBufferFrameSize,
-                kAudioUnitScope_Global,
-                outputBus,
-                &bufferSizeFrames,
-                &size));
+                                  kAudioDevicePropertyBufferFrameSize,
+                                  kAudioUnitScope_Global,
+                                  outputBus,
+                                  &bufferSizeFrames,
+                                  &size));
 #else
     Float32 bufferDuration;
-    UInt32 propSize = sizeof(Float32);
+    size = sizeof(UInt32);
     AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareIOBufferDuration,
-                            &propSize,
+                            &size,
                             &bufferDuration);
     UInt32 bufferSizeFrames = audioInputFormat_.sample_rate * bufferDuration;
 #endif
-
     UInt32 bufferSizeBytes = bufferSizeFrames * sizeof(Float32);
-    size = offsetof(AudioBufferList, mBuffers) + (sizeof(AudioBuffer) * info.mChannelsPerFrame);
-    rawBuff_.reset(new Byte[size + bufferSizeBytes * info.mChannelsPerFrame]);
+    size = offsetof(AudioBufferList, mBuffers[0]) + (sizeof(AudioBuffer) * inputASBD.mChannelsPerFrame);
+    rawBuff_.reset(new Byte[size + bufferSizeBytes * inputASBD.mChannelsPerFrame]);
     captureBuff_ = reinterpret_cast<::AudioBufferList*>(rawBuff_.get());
-    captureBuff_->mNumberBuffers = info.mChannelsPerFrame;
+    captureBuff_->mNumberBuffers = inputASBD.mChannelsPerFrame;
 
     auto bufferBasePtr = rawBuff_.get() + size;
     for (UInt32 i = 0; i < captureBuff_->mNumberBuffers; ++i) {
         captureBuff_->mBuffers[i].mNumberChannels = 1;
         captureBuff_->mBuffers[i].mDataByteSize = bufferSizeBytes;
-        captureBuff_->mBuffers[i].mData = bufferBasePtr + bufferSizeBytes * i;
+        captureBuff_->mBuffers[i].mData =  bufferBasePtr + bufferSizeBytes * i;
     }
+}
 
-    // Input callback setup.
-    AURenderCallbackStruct inputCall;
-    inputCall.inputProc = inputCallback;
-    inputCall.inputProcRefCon = this;
-
-    checkErr(AudioUnitSetProperty(ioUnit_,
-                kAudioOutputUnitProperty_SetInputCallback,
-                kAudioUnitScope_Global,
-                inputBus,
-                &inputCall,
-                sizeof(AURenderCallbackStruct)));
+void
+CoreLayer::bindCallbacks() {
+    AURenderCallbackStruct callback;
+    AudioUnitScope outputBus = 0;
+    AudioUnitScope inputBus = 1;
 
     // Output callback setup.
-    AURenderCallbackStruct callback;
     callback.inputProc = outputCallback;
     callback.inputProcRefCon = this;
 
     checkErr(AudioUnitSetProperty(ioUnit_,
-               kAudioUnitProperty_SetRenderCallback,
-               kAudioUnitScope_Global,
-               outputBus,
-               &callback,
-               sizeof(AURenderCallbackStruct)));
+                                  kAudioUnitProperty_SetRenderCallback,
+                                  kAudioUnitScope_Global,
+                                  outputBus,
+                                  &callback,
+                                  sizeof(AURenderCallbackStruct)));
+
+    // Input callback setup.
+    callback.inputProc = inputCallback;
+    callback.inputProcRefCon = this;
+
+    checkErr(AudioUnitSetProperty(ioUnit_,
+                                  kAudioOutputUnitProperty_SetInputCallback,
+                                  kAudioUnitScope_Global,
+                                  inputBus,
+                                  &callback,
+                                  sizeof(AURenderCallbackStruct)));
 }
 
 void
@@ -310,12 +397,14 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
 
     if (toPlay.frames() == 0) {
-        for (int i = 0; i < audioFormat_.nb_channels; ++i)
+        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
             std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
-                        ioData->mBuffers[i].mDataByteSize/sizeof(Float32), 0);
+                        ioData->mBuffers[i].mDataByteSize / sizeof(Float32), 0);
+        }
     } else {
-        for (int i = 0; i < audioFormat_.nb_channels; ++i)
+        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
             toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+        }
     }
 }
 
@@ -327,8 +416,7 @@ CoreLayer::inputCallback(void* inRefCon,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber,
-                                            inNumberFrames, ioData);
+    static_cast<CoreLayer*>(inRefCon)->read(ioActionFlags, inTimeStamp, inBusNumber, inNumberFrames, ioData);
     return kAudioServicesNoError;
 }
 
@@ -359,19 +447,16 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     // FIXME: Performance! There *must* be a better way. This is testing only.
     auto inBuff = AudioBuffer {inNumberFrames, audioInputFormat_};
 
-    for (int i = 0; i < inChannelsPerFrame_; ++i) {
+    for (unsigned i = 0; i < inChannelsPerFrame_; ++i) {
         auto data = reinterpret_cast<Float32*>(captureBuff_->mBuffers[i].mData);
-        for (int j = 0; j < inNumberFrames; ++j) {
-            (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] / .000030517578125f);
+        for (unsigned j = 0; j < inNumberFrames; ++j) {
+            (*inBuff.getChannel(i))[j] = static_cast<AudioSample>(data[j] * 32768);
         }
     }
 
     if (resample) {
-        //RING_WARN("Resampling Input.");
-
         //FIXME: May be a multiplication, check alsa vs pulse implementation.
-
-        UInt32 outSamples = inNumberFrames / (static_cast<double>(audioInputFormat_.sample_rate) / mainBufferFormat.sample_rate);
+        UInt32 outSamples = inNumberFrames * (mainBufferFormat.sample_rate / static_cast<double>(audioInputFormat_.sample_rate));
         auto out = AudioBuffer {outSamples, mainBufferFormat};
         inputResampler_->resample(inBuff, out);
         dcblocker_.process(out);
