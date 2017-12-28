@@ -1,6 +1,7 @@
 /*
- *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
  *
+ *  Author: Andreas Traczyk <andreas.traczyk@savoirfairelinux.com>
  *  Author: Philippe Groarke <philippe.groarke@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -25,29 +26,20 @@
 #include "noncopyable.h"
 #include <CoreFoundation/CoreFoundation.h>
 #include <AudioToolbox/AudioToolbox.h>
-#if !TARGET_OS_IPHONE
-#include <CoreAudio/AudioHardware.h>
-#endif
 
 #define checkErr( err) \
-    if(err) {\
-            OSStatus error = static_cast<OSStatus>(err);\
-                fprintf(stdout, "CoreAudio Error: %ld ->  %s:  %d\n",  (long)error,\
-                                       __FILE__, \
-                                       __LINE__\
-                                       );\
-                           fflush(stdout);\
+    if(err) { \
+        RING_ERR("CoreAudio Error: %ld", static_cast<long>(err)); \
     }
 
 /**
  * @file  CoreLayer.h
- * @brief Main OSX sound class. Manages the data transfers between the application and the hardware.
+ * @brief Main iOS sound class. Manages the data transfers between the application and the hardware.
  */
 
 namespace ring {
 
 class RingBuffer;
-class AudioDevice;
 
 class CoreLayer : public AudioLayer {
     public:
@@ -92,6 +84,11 @@ class CoreLayer : public AudioLayer {
          * Configure the AudioUnit
          */
         void initAudioLayerIO();
+        void setupOutputBus();
+        void setupInputBus();
+        void bindCallbacks();
+
+        int initAudioStreams(AudioUnit *audioUnit);
 
         /**
          * Start the capture stream and prepare the playback stream.
@@ -110,38 +107,36 @@ class CoreLayer : public AudioLayer {
          */
         virtual void stopStream();
 
-
-
     private:
         NON_COPYABLE(CoreLayer);
 
         void initAudioFormat();
 
         static OSStatus outputCallback(void* inRefCon,
-            AudioUnitRenderActionFlags* ioActionFlags,
-            const AudioTimeStamp* inTimeStamp,
-            UInt32 inBusNumber,
-            UInt32 inNumberFrames,
-            AudioBufferList* ioData);
+                                       AudioUnitRenderActionFlags* ioActionFlags,
+                                       const AudioTimeStamp* inTimeStamp,
+                                       UInt32 inBusNumber,
+                                       UInt32 inNumberFrames,
+                                       AudioBufferList* ioData);
 
         void write(AudioUnitRenderActionFlags* ioActionFlags,
-            const AudioTimeStamp* inTimeStamp,
-            UInt32 inBusNumber,
-            UInt32 inNumberFrames,
-            AudioBufferList* ioData);
+                   const AudioTimeStamp* inTimeStamp,
+                   UInt32 inBusNumber,
+                   UInt32 inNumberFrames,
+                   AudioBufferList* ioData);
 
         static OSStatus inputCallback(void* inRefCon,
-            AudioUnitRenderActionFlags* ioActionFlags,
-            const AudioTimeStamp* inTimeStamp,
-            UInt32 inBusNumber,
-            UInt32 inNumberFrames,
-            AudioBufferList* ioData);
+                                      AudioUnitRenderActionFlags* ioActionFlags,
+                                      const AudioTimeStamp* inTimeStamp,
+                                      UInt32 inBusNumber,
+                                      UInt32 inNumberFrames,
+                                      AudioBufferList* ioData);
 
         void read(AudioUnitRenderActionFlags* ioActionFlags,
-            const AudioTimeStamp* inTimeStamp,
-            UInt32 inBusNumber,
-            UInt32 inNumberFrames,
-            AudioBufferList* ioData);
+                  const AudioTimeStamp* inTimeStamp,
+                  UInt32 inBusNumber,
+                  UInt32 inNumberFrames,
+                  AudioBufferList* ioData);
 
         virtual void updatePreference(AudioPreference &pref, int index, DeviceType type);
 
@@ -175,8 +170,6 @@ class CoreLayer : public AudioLayer {
         UInt32 inChannelsPerFrame_;
 
         std::shared_ptr<RingBuffer> mainRingBuffer_;
-
-        std::vector<AudioDevice> getDeviceList(bool getCapture) const;
 };
 
 } // namespace ring
