@@ -62,6 +62,7 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
+    RING_DBG("Hardware input audio format available : %s", capture.toString().c_str());
     inputResampler_->setFormat(capture);
 }
 
