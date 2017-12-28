@@ -310,7 +310,6 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
     auto call_it = pendingSipCalls_.begin();
     while (call_it != pendingSipCalls_.end()) {
         auto call = call_it->call.lock();
-        call->updateDetails(details);
         if (not call) {
             RING_WARN("newIncomingCall: discarding deleted call");
             call_it = pendingSipCalls_.erase(call_it);
@@ -319,6 +318,7 @@ RingAccount::newIncomingCall(const std::string& from, const std::map<std::string
                                                      call_it->from_cert->issuer->getId().toString() == from)) {
             RING_DBG("newIncomingCall: found matching call for %s", from.c_str());
             pendingSipCalls_.erase(call_it);
+            call->updateDetails(details);
             return call;
         } else {
             ++call_it;
