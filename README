@@ -23,7 +23,7 @@ GNU Ring is a Voice-over-IP software phone. We want it to be:
 - user friendly (fast, sleek, easy to learn interface)
 - professional grade (transfers, holds, optimal audio quality)
 - compatible with Asterisk (using SIP account)
-- de-centralized call (P2P-DHT)
+- decentralized call (P2P-DHT)
 - customizable
 
 As the SIP/audio daemon and the user interface are separate processes,
@@ -46,7 +46,7 @@ Short description of content of source tree
 
 - src/ is the core of DRing.
 - bin/ contains applications main code.
-- bin/dbus, the D-Bus xml interfaces, and c++ bindings
+- bin/dbus, the D-Bus XML interfaces, and C++ bindings
 - bin/restcpp, the C++ REST API implemented with Restbed
 
 About Savoir-faire Linux
@@ -54,7 +54,7 @@ About Savoir-faire Linux
 
 Savoir-faire Linux is a consulting company based in Montreal, Quebec.
 For more information, please check out our website:
-http://www.savoirfairelinux.com/
+https://www.savoirfairelinux.com/
 
 
 How to compile on Linux
@@ -130,7 +130,7 @@ to 'clang' and 'clang++' respectively when calling ./configure.
 
 Currently it is not possible to use the DBus interface mechanism, and the
 interaction between daemon and client will not work; for each platform where
-dbus is not available the client should implement all the methods in the
+D-Bus is not available the client should implement all the methods in the
 *_stub.cpp files.
 
 How to compile with the REST API
