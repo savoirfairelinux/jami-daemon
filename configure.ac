@@ -425,16 +425,16 @@ AS_IF([test "x$with_restcpp" = "xyes"], [
 );
 
 dnl Check for libav
-PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 55.75.100,, AC_MSG_ERROR([Missing libavutil development files]))
+PKG_CHECK_MODULES(LIBAVUTIL, libavutil >= 54.31.100,, AC_MSG_ERROR([Missing libavutil development files]))
 
-PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 53.106.101,, AC_MSG_ERROR([Missing libavcodec development files]))
+PKG_CHECK_MODULES(LIBAVCODEC, libavcodec >= 56.60.100,, AC_MSG_ERROR([Missing libavcodec development files]))
 LIBAVCODEC_CFLAGS="${LIBAVCODEC_CFLAGS} -D__STDC_CONSTANT_MACROS"
 
-PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 57.81.100,, AC_MSG_ERROR([Missing libavformat development files]))
+PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101,, AC_MSG_ERROR([Missing libavformat development files]))
 
-PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 57.8.101,, AC_MSG_ERROR([Missing libavdevice development files]))
+PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100,, AC_MSG_ERROR([Missing libavdevice development files]))
 
-PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 4.7.103,, AC_MSG_ERROR([Missing libswscale development files]))
+PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libswscale development files]))
 
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
@@ -454,40 +454,44 @@ AS_IF([test "x$enable_video" != "xno"],
 
 AC_ARG_ENABLE([accel], AS_HELP_STRING([--disable-accel], [Disable all hardware accelerations (enabled by default)]))
 AS_IF([test "x$enable_video" != "xno" -a "x$enable_accel" != "xno"], [
-  ring_accel="yes"
-  AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
-  AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
-    dnl ffmpeg's vaapi and vdpau implementations depend on x11
-    PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
-    AS_IF([test "${x11_available}" = "yes"], [
-      PKG_CHECK_MODULES([LIBVA], [libva], [
-        PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
-          AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
+  dnl if new hwaccel api is found, activate Ring's hardware accel
+  dnl prefix needs to be different from the one above
+  PKG_CHECK_MODULES(AVUTIL, libavutil >= 55.75.100, [
+    ring_accel="yes"
+    AC_DEFINE([RING_ACCEL], [1], [Hardware acceleration is enabled in Ring])
+    AS_IF([test "${SYS}" = "linux" && test -z "${HAVE_ANDROID_FALSE}"], [
+      dnl ffmpeg's vaapi and vdpau implementations depend on x11
+      PKG_CHECK_MODULES([X11], [x11], [x11_available="yes"], [x11_available="no"])
+      AS_IF([test "${x11_available}" = "yes"], [
+        PKG_CHECK_MODULES([LIBVA], [libva], [
+          PKG_CHECK_MODULES([LIBVA_DRM], [libva-drm], [
+            AC_DEFINE([HAVE_VAAPI_ACCEL_DRM], [1], [Defined if vaapi via DRM is available])
+          ], [])
+          PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
+            AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
+          ], [])
+          AC_CHECK_HEADERS([libavcodec/vaapi.h], [
+            ring_vaapi="yes"
+            AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
+          ])
         ], [])
-        PKG_CHECK_MODULES([LIBVA_X11], [libva-x11], [
-          AC_DEFINE([HAVE_VAAPI_ACCEL_X11], [1], [Defined if vaapi via X11 is available])
+        PKG_CHECK_MODULES([VDPAU], [vdpau], [
+          AC_CHECK_HEADERS([libavcodec/vdpau.h], [
+            ring_vdpau="yes"
+            AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
+          ])
         ], [])
-        AC_CHECK_HEADERS([libavcodec/vaapi.h], [
-          ring_vaapi="yes"
-          AC_DEFINE([RING_VAAPI], [1], [Defined if vaapi is available in Ring])
-        ])
-      ], [])
-      PKG_CHECK_MODULES([VDPAU], [vdpau], [
-        AC_CHECK_HEADERS([libavcodec/vdpau.h], [
-          ring_vdpau="yes"
-          AC_DEFINE([RING_VDPAU], [1], [Defined if vdpau is available in Ring])
-        ])
-      ], [])
-    ])
-  ])
-  AS_IF([test "${SYS}" = "darwin"], [
-    AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
-      AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
-        ring_vt="yes"
-        AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
       ])
     ])
-  ])
+    AS_IF([test "${SYS}" = "darwin"], [
+      AC_CHECK_HEADER([VideoToolbox/VideoToolbox.h], [
+        AC_CHECK_HEADER([libavcodec/videotoolbox.h], [
+          ring_vt="yes"
+          AC_DEFINE([RING_VIDEOTOOLBOX], [1], [Defined if videotoolbox is available in Ring])
+        ])
+      ])
+    ])
+  ],[AC_MSG_NOTICE([HWAccel API not found])])
 ])
 AM_CONDITIONAL([RING_ACCEL], [test "x${ring_accel}" = "xyes"])
 AM_CONDITIONAL([RING_VAAPI], [test "x${ring_vaapi}" = "xyes"])
