@@ -28,7 +28,7 @@
 class AVFrame;
 
 namespace DRing {
-class FrameBuffer; //  from dring/videomanager_interface.h
+struct FrameBuffer; //  from dring/videomanager_interface.h
 }
 
 namespace ring {

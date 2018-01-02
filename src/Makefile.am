@@ -17,6 +17,10 @@ if HAVE_OSX
 RING_VIDEO_LIBS+= \
                 ./media/video/osxvideo/libosxvideo.la
 endif
+if HAVE_IOS
+RING_VIDEO_LIBS+= \
+                ./media/video/iosvideo/libiosvideo.la
+endif
 if HAVE_WIN32
 RING_VIDEO_LIBS+= \
                 ./media/video/winvideo/libwinvideo.la

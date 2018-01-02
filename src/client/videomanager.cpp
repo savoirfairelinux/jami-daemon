@@ -181,7 +181,7 @@ setDecodingAccelerated(bool state)
 #endif
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void
 addVideoDevice(const std::string &node, std::vector<std::map<std::string, std::string>> const * devInfo)
 {
