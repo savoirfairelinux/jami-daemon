@@ -124,6 +124,8 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
         { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
         { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
+        { "d3d11va", AV_PIX_FMT_D3D11, { AV_CODEC_ID_H264 } },
+        { "dxva2", AV_PIX_FMT_DXVA2_VLD, { AV_CODEC_ID_H264 } },
     };
 
     AVBufferRef* hardwareDeviceCtx = nullptr;
