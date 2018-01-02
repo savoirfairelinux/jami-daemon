@@ -56,14 +56,14 @@ VideoInput::VideoInput()
     , loop_(std::bind(&VideoInput::setup, this),
             std::bind(&VideoInput::process, this),
             std::bind(&VideoInput::cleanup, this))
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     , mutex_(), frame_cv_(), buffers_()
 #endif
 {}
 
 VideoInput::~VideoInput()
 {
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /* we need to stop the loop and notify the condition variable
      * to unblock the process loop */
     loop_.stop();
@@ -72,7 +72,7 @@ VideoInput::~VideoInput()
     loop_.join();
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 bool VideoInput::waitForBufferFull()
 {
     for(auto& buffer : buffers_) {
@@ -238,7 +238,7 @@ bool VideoInput::captureFrame()
     }
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 int VideoInput::allocateOneBuffer(struct VideoFrameBuffer& b, int length)
 {
     b.data = std::malloc(length);
@@ -550,7 +550,7 @@ VideoInput::switchInput(const std::string& resource)
     return futureDecOpts_;
 }
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 int VideoInput::getWidth() const
 { return decOpts_.width; }
 
