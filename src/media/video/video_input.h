@@ -36,6 +36,10 @@
 #include <condition_variable>
 #include <array>
 
+#if __APPLE__
+#import "TargetConditionals.h"
+#endif
+
 namespace ring {
 class MediaDecoder;
 }
@@ -75,7 +79,7 @@ public:
     DeviceParams getParams() const;
 
     std::shared_future<DeviceParams> switchInput(const std::string& resource);
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /*
      * these functions are used to pass buffer from/to the daemon
      * on the Android and UWP builds
@@ -121,7 +125,7 @@ private:
     bool captureFrame();
     bool isCapturing() const noexcept;
 
-#if defined(__ANDROID__) || defined(RING_UWP)
+#if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
     void freeOneBuffer(struct VideoFrameBuffer& b);
     bool waitForBufferFull();
