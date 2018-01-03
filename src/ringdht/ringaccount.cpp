@@ -738,6 +738,7 @@ RingAccount::createRingDevice(const dht::crypto::Identity& id)
     receiptSignature_ = id.first->sign({receipt_.begin(), receipt_.end()});
     RING_WARN("[Account %s] created new Ring device: %s (%s)",
               getAccountID().c_str(), ringDeviceId_.c_str(), ringDeviceName_.c_str());
+    saveKnownDevices();
 }
 
 void
