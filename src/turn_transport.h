@@ -100,15 +100,15 @@ public:
 
     /// Collect pending data from a given peer.
     ///
-    /// Data are read from given /a peer incoming buffer until EOF or /a data size() is reached.
-    /// /a data is resized with exact number of characters read.
-    /// If /a peer is not connected this function raise an exception.
-    /// If /a peer exists but no data are available this method blocks until TURN deconnection
+    /// Data are read from given \a peer incoming buffer until EOF or \a data size() is reached.
+    /// \a data is resized with exact number of characters read.
+    /// If \a peer is not connected this function raise an exception.
+    /// If \a peer exists but no data are available this method blocks until TURN deconnection
     /// or at first incoming character.
     ///
     /// \param [in] peer target peer address where data are read
     /// \param [in,out] pre-dimensionned character vector to write incoming data
-    /// \exception std::out_of_range /a peer is not connected yet
+    /// \exception std::out_of_range \a peer is not connected yet
     ///
     void recvfrom(const IpAddr& peer, std::vector<char>& data);
 
@@ -118,12 +118,12 @@ public:
 
     /// Send data to given peer through the TURN tunnel.
     ///
-    /// This method blocks until all given characters in /a data are sent to the given /a peer.
-    /// If /a peer is not connected this function raise an exception.
+    /// This method blocks until all given characters in \a data are sent to the given \a peer.
+    /// If \a peer is not connected this function raise an exception.
     ///
     /// \param [in] peer target peer address where data are read
     /// \param [in,out] pre-dimensionned character vector to write incoming data
-    /// \exception std::out_of_range /a peer is not connected yet
+    /// \exception std::out_of_range \a peer is not connected yet
     ///
     bool sendto(const IpAddr& peer, const std::vector<char>& data);
 
