@@ -191,7 +191,7 @@ public:
         cv_.notify_one();
     }
 
-    /// /note This method exists only for unlimited channel
+    /// \note This method exists only for unlimited channel
     void send(const T* data, std::size_t len) {
         std::lock_guard<std::mutex> lk {mutex_};
         while (len > 0) {
