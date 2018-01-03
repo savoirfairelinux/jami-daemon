@@ -310,7 +310,7 @@ class Call : public Recordable, public std::enable_shared_from_this<Call> {
          * Update call details after creation.
          * @param details to update
          *
-         * /note No warranty to update any details, only some details can be modified.
+         * \note No warranty to update any details, only some details can be modified.
          *       See the implementation for more ... details :-).
          */
         void updateDetails(const std::map<std::string, std::string>& details);
