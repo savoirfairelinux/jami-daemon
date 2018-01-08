@@ -319,9 +319,9 @@ std::shared_ptr<DataTransfer>
 DataTransferFacade::Impl::createFileTransfer(const std::string& file_path,
                                              const std::string& display_name)
 {
-    std::lock_guard<std::mutex> lk {mapMutex_};
     auto id = generateUID();
     auto transfer = std::make_shared<FileTransfer>(id, file_path, display_name);
+    std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(id, transfer);
     return transfer;
 }
@@ -330,9 +330,9 @@ std::shared_ptr<IncomingFileTransfer>
 DataTransferFacade::Impl::createIncomingFileTransfer(const std::string& display_name,
                                                      std::size_t offset)
 {
-    std::lock_guard<std::mutex> lk {mapMutex_};
     auto id = generateUID();
     auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, offset);
+    std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(id, transfer);
     return transfer;
 }
