@@ -77,6 +77,9 @@ public:
     std::promise<bool> connected;
 };
 
+// Declaration at namespace scope is necessary (until C++17)
+constexpr std::chrono::seconds TlsTurnEndpoint::Impl::TLS_TIMEOUT;
+
 TlsTurnEndpoint::Impl::~Impl()
 {
     if (peerCertificate)
@@ -284,6 +287,9 @@ public:
     TcpSocketEndpoint& tr;
     const dht::crypto::Certificate& peerCertificate;
 };
+
+// Declaration at namespace scope is necessary (until C++17)
+constexpr std::chrono::seconds TlsSocketEndpoint::Impl::TLS_TIMEOUT;
 
 int
 TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
