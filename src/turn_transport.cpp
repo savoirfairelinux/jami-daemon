@@ -60,15 +60,14 @@ class PeerChannel
 public:
     PeerChannel() {}
     ~PeerChannel() {
-        MutexGuard lk {mutex_};
-        stop_ = true;
-        cv_.notify_all();
+        stop();
     }
 
     PeerChannel(PeerChannel&&o) {
         MutexGuard lk {o.mutex_};
         stream_ = std::move(o.stream_);
     }
+
     PeerChannel& operator =(PeerChannel&& o) {
         std::lock(mutex_, o.mutex_);
         MutexGuard lk1 {mutex_, std::adopt_lock};
@@ -86,22 +85,42 @@ public:
 
     template <typename Duration>
     bool wait(Duration timeout) {
-        MutexLock lk {mutex_};
-        return cv_.wait_for(lk, timeout, [this]{ return !stream_.eof(); });
+        std::lock(apiMutex_, mutex_);
+        MutexGuard lk_api {apiMutex_, std::adopt_lock};
+        MutexLock lk {mutex_, std::adopt_lock};
+        return cv_.wait_for(lk, timeout, [this]{ return stop_ or !stream_.eof(); });
     }
 
     std::size_t read(char* output, std::size_t size) {
-        MutexLock lk {mutex_};
+        std::lock(apiMutex_, mutex_);
+        MutexGuard lk_api {apiMutex_, std::adopt_lock};
+        MutexLock lk {mutex_, std::adopt_lock};
         cv_.wait(lk, [&, this]{
+                if (stop_)
+                    return true;
                 stream_.read(&output[0], size);
-                return stream_.gcount() > 0 or stop_;
+                return stream_.gcount() > 0;
             });
         return stop_ ? 0 : stream_.gcount();
+    }
+
+    void stop() noexcept {
+        {
+            MutexGuard lk {mutex_};
+            if (stop_)
+                return;
+            stop_ = true;
+        }
+        cv_.notify_all();
+
+        // Make sure that no thread is blocked into read() or wait() methods
+        MutexGuard lk_api {apiMutex_};
     }
 
 private:
     PeerChannel(const PeerChannel&o) = delete;
     PeerChannel& operator =(const PeerChannel& o) = delete;
+    std::mutex apiMutex_ {};
     std::mutex mutex_ {};
     std::condition_variable cv_ {};
     std::stringstream stream_ {};
@@ -167,14 +186,18 @@ public:
 
 TurnTransportPimpl::~TurnTransportPimpl()
 {
-    if (relay)
-        pj_turn_sock_destroy(relay);
+    if (relay) {
+        try {
+            pj_turn_sock_destroy(relay);
+        } catch (...) {
+            RING_ERR() << "exception during pj_turn_sock_destroy() call (ignored)";
+        }
+    }
     ioJobQuit = true;
     if (ioWorker.joinable())
         ioWorker.join();
-    if (pool)
-        pj_pool_release(pool);
     pj_caching_pool_destroy(&poolCache);
+
 }
 
 void
@@ -335,8 +358,16 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
               nullptr, &cred, &turn_alloc_param);
 }
 
-TurnTransport::~TurnTransport()
-{}
+TurnTransport::~TurnTransport() = default;
+
+void
+TurnTransport::shutdown(const IpAddr& addr)
+{
+    MutexLock lk {pimpl_->apiMutex_};
+    auto& channel = pimpl_->peerChannels_.at(addr);
+    lk.unlock();
+    channel.stop();
+}
 
 bool
 TurnTransport::isInitiator() const
@@ -440,6 +471,12 @@ ConnectedTurnTransport::ConnectedTurnTransport(TurnTransport& turn, const IpAddr
     : turn_ {turn}
     , peer_ {peer}
 {}
+
+void
+ConnectedTurnTransport::shutdown()
+{
+    turn_.shutdown(peer_);
+}
 
 bool
 ConnectedTurnTransport::waitForData(unsigned ms_timeout) const

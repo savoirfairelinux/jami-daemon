@@ -174,6 +174,12 @@ TlsTurnEndpoint::TlsTurnEndpoint(ConnectedTurnTransport& turn_ep,
 
 TlsTurnEndpoint::~TlsTurnEndpoint() = default;
 
+void
+TlsTurnEndpoint::shutdown()
+{
+    pimpl_->tls->shutdown();
+}
+
 bool
 TlsTurnEndpoint::isInitiator() const
 {
@@ -444,6 +450,8 @@ public:
 
     ~PeerConnectionImpl() {
         ctrlChannel << std::make_unique<StopCtrlMsg>();
+        endpoint_->shutdown();
+
     }
 
     const Account& account;
@@ -514,9 +522,6 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 break;
 
                 case CtrlMsgType::STOP:
-                    endpoint_.reset();
-                    inputs_.clear();
-                    outputs_.clear();
                     return;
 
                 default: RING_ERR("BUG: got unhandled control msg!");  break;
@@ -526,7 +531,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         // Then handles IO streams
         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
         std::error_code ec;
-        handle_stream_list(inputs_, [&](auto& stream){
+        handle_stream_list(inputs_, [&](auto& stream) {
                 if (!stream->read(buf))
                     return false;
                 auto size = endpoint_->write(buf, ec);
@@ -536,9 +541,11 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     return false;
                 throw std::system_error(ec);
             });
-        handle_stream_list(outputs_, [&](auto& stream){
-                endpoint_->read(buf, ec);
-                return buf.size() != 0 and stream->write(buf);
+        handle_stream_list(outputs_, [&](auto& stream) {
+                auto size = endpoint_->read(buf, ec);
+                if (!ec)
+                    return size > 0 and stream->write(buf);
+                throw std::system_error(ec);
             });
     }
 }
