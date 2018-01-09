@@ -156,6 +156,7 @@ class DBusConfigurationManager :
         DRing::DataTransferId sendFile(const std::string& account_id, const std::string& peer_uri,
                                        const std::string& file_path, const std::string& display_name);
         DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string> dataTransferInfo(const DRing::DataTransferId& id);
+        uint64_t dataTransferBytesSent(const uint64_t& id);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
