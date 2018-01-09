@@ -25,6 +25,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <memory>
 #include <cstdlib> // std::size_t
 #include <ios> // std::streamsize
@@ -56,6 +57,8 @@ struct DataTransferInfo
     std::string displayName; ///< Human oriented transfer name
     std::string path; ///< associated local file path if supported (empty, if not)
 };
+
+std::vector<DataTransferId> dataTransferList();
 
 /// Asynchronously send a file to a peer using given account connection.
 ///
