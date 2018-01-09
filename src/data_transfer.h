@@ -34,6 +34,9 @@ public:
     DataTransferFacade();
     ~DataTransferFacade();
 
+    /// Return all known transfer id
+    std::vector<DRing::DataTransferId> list() const;
+
     /// Send a file to a peer.
     /// Open a file and send its contents over a reliable connection
     /// to given peer using the protocol from given account.
