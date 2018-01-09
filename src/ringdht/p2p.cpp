@@ -208,8 +208,7 @@ private:
     void onTurnPeerConnection(const IpAddr&);
     void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
-    void onTrustedRequestMsg(PeerConnectionMsg&&,
-                             const std::shared_ptr<dht::crypto::Certificate>&);
+    void onTrustedRequestMsg(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&);
     void onResponseMsg(PeerConnectionMsg&&);
     void onAddDevice(const dht::InfoHash&,
                      const std::shared_ptr<dht::crypto::Certificate>&,
@@ -490,6 +489,8 @@ DhtPeerConnector::Impl::eventLoop()
         ctrl >> msg;
         switch (msg->type()) {
             case CtrlMsgType::STOP:
+                clients_.clear();
+                servers_.clear();
                 turn_.reset();
                 return;
 
