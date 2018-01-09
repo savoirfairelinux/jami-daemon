@@ -157,6 +157,7 @@ class DBusConfigurationManager :
                                        const std::string& file_path, const std::string& display_name);
         DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string> dataTransferInfo(const DRing::DataTransferId& id);
         uint64_t dataTransferBytesSent(const uint64_t& id);
+        std::vector<uint64_t> dataTransferList();
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__

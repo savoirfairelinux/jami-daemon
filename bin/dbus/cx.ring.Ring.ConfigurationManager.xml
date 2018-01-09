@@ -1410,6 +1410,12 @@
            <arg type="s" name="display_name" direction="in"></arg>
        </method>
 
+	   <method name="dataTransferList" tp:name-for-bindings="dataTransferList">
+           <tp:added version="4.2.0"/>
+           <arg type="at" name="DataTransferList" direction="out">
+           </arg>
+       </method>
+
 	   <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
            <tp:added version="4.2.0"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="DataTransferInfo"/>
