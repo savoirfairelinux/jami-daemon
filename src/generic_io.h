@@ -42,6 +42,8 @@ public:
 
     using RecvCb = std::function<ssize_t(const ValueType* buf, std::size_t len)>;
 
+    virtual void stop() noexcept {}
+
     /// Set Rx callback
     /// \warning This method is here for backward compatibility
     /// and because async IO are not implemented yet.

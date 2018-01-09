@@ -190,7 +190,12 @@ public:
         : account {account}
         , loopFut_ {std::async(std::launch::async, [this]{ eventLoop(); })} {}
 
-    ~Impl() { ctrl << makeMsg<CtrlMsgType::STOP>(); }
+    ~Impl() {
+        servers_.clear();
+        clients_.clear();
+        turn_.reset();
+        ctrl << makeMsg<CtrlMsgType::STOP>();
+    }
 
     RingAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
@@ -208,8 +213,7 @@ private:
     void onTurnPeerConnection(const IpAddr&);
     void onTurnPeerDisconnection(const IpAddr&);
     void onRequestMsg(PeerConnectionMsg&&);
-    void onTrustedRequestMsg(PeerConnectionMsg&&,
-                             const std::shared_ptr<dht::crypto::Certificate>&);
+    void onTrustedRequestMsg(PeerConnectionMsg&&, const std::shared_ptr<dht::crypto::Certificate>&);
     void onResponseMsg(PeerConnectionMsg&&);
     void onAddDevice(const dht::InfoHash&,
                      const std::shared_ptr<dht::crypto::Certificate>&,
@@ -490,7 +494,6 @@ DhtPeerConnector::Impl::eventLoop()
         ctrl >> msg;
         switch (msg->type()) {
             case CtrlMsgType::STOP:
-                turn_.reset();
                 return;
 
             case CtrlMsgType::TURN_PEER_CONNECT:
