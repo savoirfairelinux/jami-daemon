@@ -79,6 +79,7 @@ public:
                     dht::crypto::TrustList& trust_list);
     ~TlsTurnEndpoint();
 
+    void shutdown() override;
     bool isReliable() const override { return true; }
     bool isInitiator() const override;
     int maxPayload() const override;
