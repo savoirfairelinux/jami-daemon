@@ -634,3 +634,9 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
     out._6 = info.path;
     return out;
 }
+
+uint64_t
+DBusConfigurationManager::dataTransferBytesSent(const uint64_t& id)
+{
+    return DRing::dataTransferBytesSent(id);;
+}

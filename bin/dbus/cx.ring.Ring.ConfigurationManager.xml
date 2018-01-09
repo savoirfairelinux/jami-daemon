@@ -1419,6 +1419,14 @@
            </arg>
        </method>
 
+	   <method name="dataTransferBytesSent" tp:name-for-bindings="dataTransferBytesSent">
+           <tp:added version="4.2.0"/>
+           <arg type="t" name="BytesProgress" direction="out">
+           </arg>
+           <arg type="t" name="DataTransferId" direction="in">
+           </arg>
+       </method>
+
        <signal name="mediaParametersChanged" tp:name-for-bindings="mediaParametersChanged">
            <tp:added version="2.3.0"/>
            <tp:docstring>
