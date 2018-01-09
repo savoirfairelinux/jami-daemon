@@ -1195,6 +1195,7 @@ TlsSession::shutdown()
 {
     pimpl_->state_ = TlsSessionState::SHUTDOWN;
     pimpl_->rxCv_.notify_one(); // unblock waiting FSM
+    pimpl_->transport_.shutdown();
 }
 
 std::size_t

@@ -60,15 +60,14 @@ class PeerChannel
 public:
     PeerChannel() {}
     ~PeerChannel() {
-        MutexGuard lk {mutex_};
-        stop_ = true;
-        cv_.notify_all();
+        stop();
     }
 
     PeerChannel(PeerChannel&&o) {
         MutexGuard lk {o.mutex_};
         stream_ = std::move(o.stream_);
     }
+
     PeerChannel& operator =(PeerChannel&& o) {
         std::lock(mutex_, o.mutex_);
         MutexGuard lk1 {mutex_, std::adopt_lock};
@@ -86,22 +85,42 @@ public:
 
     template <typename Duration>
     bool wait(Duration timeout) {
-        MutexLock lk {mutex_};
-        return cv_.wait_for(lk, timeout, [this]{ return !stream_.eof(); });
+        std::lock(apiMutex_, mutex_);
+        MutexGuard lk_api {apiMutex_, std::adopt_lock};
+        MutexLock lk {mutex_, std::adopt_lock};
+        return cv_.wait_for(lk, timeout, [this]{ return stop_ or !stream_.eof(); });
     }
 
     std::size_t read(char* output, std::size_t size) {
-        MutexLock lk {mutex_};
+        std::lock(apiMutex_, mutex_);
+        MutexGuard lk_api {apiMutex_, std::adopt_lock};
+        MutexLock lk {mutex_, std::adopt_lock};
         cv_.wait(lk, [&, this]{
+                if (stop_)
+                    return true;
                 stream_.read(&output[0], size);
-                return stream_.gcount() > 0 or stop_;
+                return stream_.gcount() > 0;
             });
         return stop_ ? 0 : stream_.gcount();
+    }
+
+    void stop() noexcept {
+        {
+            MutexGuard lk {mutex_};
+            if (stop_)
+                return;
+            stop_ = true;
+        }
+        cv_.notify_all();
+
+        // Make sure that no thread is blocked into read() or wait() methods
+        MutexGuard lk_api {apiMutex_};
     }
 
 private:
     PeerChannel(const PeerChannel&o) = delete;
     PeerChannel& operator =(const PeerChannel& o) = delete;
+    std::mutex apiMutex_ {};
     std::mutex mutex_ {};
     std::condition_variable cv_ {};
     std::stringstream stream_ {};
@@ -167,14 +186,18 @@ public:
 
 TurnTransportPimpl::~TurnTransportPimpl()
 {
-    if (relay)
-        pj_turn_sock_destroy(relay);
+    if (relay) {
+        try {
+            pj_turn_sock_destroy(relay);
+        } catch (...) {
+            RING_ERR() << "exception during pj_turn_sock_destroy() call (ignored)";
+        }
+    }
     ioJobQuit = true;
     if (ioWorker.joinable())
         ioWorker.join();
-    if (pool)
-        pj_pool_release(pool);
     pj_caching_pool_destroy(&poolCache);
+
 }
 
 void
@@ -286,19 +309,19 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     pj_bzero(&relay_cb, sizeof(relay_cb));
     relay_cb.on_rx_data = [](pj_turn_sock* relay, void* pkt, unsigned pkt_len,
                              const pj_sockaddr_t* peer_addr, unsigned addr_len) {
-        auto tr = static_cast<TurnTransport*>(pj_turn_sock_get_user_data(relay));
-        tr->pimpl_->onRxData(reinterpret_cast<uint8_t*>(pkt), pkt_len, peer_addr, addr_len);
+        auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
+        pimpl->onRxData(reinterpret_cast<uint8_t*>(pkt), pkt_len, peer_addr, addr_len);
     };
     relay_cb.on_state = [](pj_turn_sock* relay, pj_turn_state_t old_state,
                            pj_turn_state_t new_state) {
-        auto tr = static_cast<TurnTransport*>(pj_turn_sock_get_user_data(relay));
-        tr->pimpl_->onTurnState(old_state, new_state);
+        auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
+        pimpl->onTurnState(old_state, new_state);
     };
     relay_cb.on_peer_connection = [](pj_turn_sock* relay, pj_uint32_t conn_id,
                                      const pj_sockaddr_t* peer_addr, unsigned addr_len,
                                      pj_status_t status) {
-        auto tr = static_cast<TurnTransport*>(pj_turn_sock_get_user_data(relay));
-        tr->pimpl_->onPeerConnection(conn_id, peer_addr, addr_len, status);
+        auto pimpl = static_cast<TurnTransportPimpl*>(pj_turn_sock_get_user_data(relay));
+        pimpl->onPeerConnection(conn_id, peer_addr, addr_len, status);
     };
 
     // TURN socket config
@@ -309,7 +332,7 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     // TURN socket creation
     PjsipCall(pj_turn_sock_create,
               &pimpl_->stunConfig, server.getFamily(), PJ_TURN_TP_TCP,
-              &relay_cb, &turn_sock_cfg, this, &pimpl_->relay);
+              &relay_cb, &turn_sock_cfg, &*this->pimpl_, &pimpl_->relay);
 
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
@@ -335,8 +358,16 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
               nullptr, &cred, &turn_alloc_param);
 }
 
-TurnTransport::~TurnTransport()
-{}
+TurnTransport::~TurnTransport() = default;
+
+void
+TurnTransport::shutdown(const IpAddr& addr)
+{
+    MutexLock lk {pimpl_->apiMutex_};
+    auto& channel = pimpl_->peerChannels_.at(addr);
+    lk.unlock();
+    channel.stop();
+}
 
 bool
 TurnTransport::isInitiator() const
@@ -440,6 +471,12 @@ ConnectedTurnTransport::ConnectedTurnTransport(TurnTransport& turn, const IpAddr
     : turn_ {turn}
     , peer_ {peer}
 {}
+
+void
+ConnectedTurnTransport::shutdown()
+{
+    turn_.shutdown(peer_);
+}
 
 bool
 ConnectedTurnTransport::waitForData(unsigned ms_timeout) const

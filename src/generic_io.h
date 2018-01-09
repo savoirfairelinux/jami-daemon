@@ -38,9 +38,13 @@ class GenericSocket
 public:
     using ValueType = T;
 
-    virtual ~GenericSocket() = default;
+    virtual ~GenericSocket() { shutdown(); }
 
     using RecvCb = std::function<ssize_t(const ValueType* buf, std::size_t len)>;
+
+    /// Close established connection
+    /// \note Terminate oustanding blocking read operations with an empty error code, but a 0 read size.
+    virtual void shutdown() {}
 
     /// Set Rx callback
     /// \warning This method is here for backward compatibility

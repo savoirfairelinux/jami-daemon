@@ -64,6 +64,8 @@ public:
 
     ~TurnTransport();
 
+    void shutdown(const IpAddr& addr);
+
     bool isInitiator() const;
 
     /// Wait for successful connection on the TURN server.
@@ -150,6 +152,7 @@ public:
 
     ConnectedTurnTransport(TurnTransport& turn, const IpAddr& peer);
 
+    void shutdown() override;
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return turn_.isInitiator(); }
     int maxPayload() const override { return 3000; }
