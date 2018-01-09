@@ -141,6 +141,7 @@ public:
     TurnTransportPimpl() = default;
     ~TurnTransportPimpl();
 
+    void disconnect() noexcept;
     void onTurnState(pj_turn_state_t old_state, pj_turn_state_t new_state);
     void onRxData(const uint8_t* pkt, unsigned pkt_len, const pj_sockaddr_t* peer_addr, unsigned addr_len);
     void onPeerConnection(pj_uint32_t conn_id, const pj_sockaddr_t* peer_addr, unsigned addr_len, pj_status_t status);
@@ -167,14 +168,24 @@ public:
 
 TurnTransportPimpl::~TurnTransportPimpl()
 {
+    disconnect();
+    pj_caching_pool_destroy(&poolCache);
+    if (pool)
+        pj_pool_release(pool);
+}
+
+void
+TurnTransportPimpl::disconnect() noexcept
+{
     if (relay)
-        pj_turn_sock_destroy(relay);
+        try {
+            pj_turn_sock_destroy(relay);
+        } catch (...) {
+            RING_ERR() << "exception during pj_turn_sock_destroy() call (ignored)";
+        }
     ioJobQuit = true;
     if (ioWorker.joinable())
         ioWorker.join();
-    if (pool)
-        pj_pool_release(pool);
-    pj_caching_pool_destroy(&poolCache);
 }
 
 void
@@ -336,7 +347,9 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
 }
 
 TurnTransport::~TurnTransport()
-{}
+{
+    pimpl_->disconnect();
+}
 
 bool
 TurnTransport::isInitiator() const
