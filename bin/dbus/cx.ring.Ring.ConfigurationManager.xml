@@ -1410,7 +1410,14 @@
            <arg type="s" name="display_name" direction="in"></arg>
        </method>
 
-	   <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
+       <method name="dataTransferList" tp:name-for-bindings="dataTransferList">
+           <tp:added version="4.2.0"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorULongLong"/>
+           <arg type="at" name="DataTransferList" direction="out">
+           </arg>
+       </method>
+
+       <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
            <tp:added version="4.2.0"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="DataTransferInfo"/>
            <arg type="(buttss)" name="DataTransferInfo" direction="out">
@@ -1419,7 +1426,7 @@
            </arg>
        </method>
 
-	   <method name="dataTransferBytesSent" tp:name-for-bindings="dataTransferBytesSent">
+       <method name="dataTransferBytesSent" tp:name-for-bindings="dataTransferBytesSent">
            <tp:added version="4.2.0"/>
            <arg type="t" name="BytesProgress" direction="out">
            </arg>

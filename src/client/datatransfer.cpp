@@ -41,6 +41,12 @@ registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWra
     }
 }
 
+std::vector<DataTransferId>
+dataTransferList()
+{
+    return ring::Manager::instance().dataTransfers->list();
+}
+
 DataTransferId
 sendFile(const std::string& account_id,
          const std::string& peer_uri,

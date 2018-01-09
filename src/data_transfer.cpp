@@ -25,6 +25,7 @@
 #include "peer_connection.h"
 #include "fileutils.h"
 #include "string_utils.h"
+#include "map_utils.h"
 #include "client/ring_signal.h"
 
 #include <stdexcept>
@@ -364,6 +365,13 @@ DataTransferFacade::~DataTransferFacade()
 {
     RING_WARN("facade destroy, pimpl @%p", pimpl_.get());
 };
+
+std::vector<DRing::DataTransferId>
+DataTransferFacade::list() const
+{
+    std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
+    return map_utils::extractKeys(pimpl_->map_);
+}
 
 DRing::DataTransferId
 DataTransferFacade::sendFile(const std::string& account_id, const std::string& peer_uri,

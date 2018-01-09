@@ -640,3 +640,9 @@ DBusConfigurationManager::dataTransferBytesSent(const uint64_t& id)
 {
     return DRing::dataTransferBytesSent(id);;
 }
+
+auto
+DBusConfigurationManager::dataTransferList() -> decltype(DRing::dataTransferList())
+{
+    return DRing::dataTransferList();;
+}
