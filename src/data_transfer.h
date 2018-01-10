@@ -70,7 +70,7 @@ public:
     /// Create an IncomingFileTransfer object.
     /// \return a filename to open where incoming data will be written or an empty string
     ///         in case of refusal.
-    std::string onIncomingFileRequest(const std::string& display_name, std::size_t offset);
+    std::string onIncomingFileRequest(const std::string& display_name, std::size_t total_size, std::size_t offset);
 
 private:
     class Impl;

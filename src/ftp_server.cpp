@@ -56,7 +56,7 @@ bool
 FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
-    auto filename = Manager::instance().dataTransfers->onIncomingFileRequest(displayName_, 0 /* TODO: offset */);
+    auto filename = Manager::instance().dataTransfers->onIncomingFileRequest(displayName_, fileSize_, 0 /* TODO: offset */);
     if (filename.empty())
         return false;
 

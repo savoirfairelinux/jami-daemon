@@ -204,7 +204,7 @@ FileTransfer::read(std::vector<uint8_t>& buf) const
 class IncomingFileTransfer final : public DataTransfer
 {
 public:
-    IncomingFileTransfer(DRing::DataTransferId id, const std::string&, std::size_t);
+    IncomingFileTransfer(DRing::DataTransferId id, const std::string&, std::size_t, std::size_t);
 
     bool start() override;
 
@@ -222,14 +222,16 @@ private:
 
 IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId id,
                                            const std::string& display_name,
+                                           std::size_t total_size,
                                            std::size_t offset)
     : DataTransfer(id)
 {
-    RING_WARN() << "[FTP] incoming transfert: " << display_name;
+    RING_WARN() << "[FTP] incoming transfert of " << total_size << " byte(s): " << display_name;
     (void)offset;
 
     info_.isOutgoing = false;
     info_.displayName = display_name;
+    info_.totalSize = total_size;
     // TODO: use offset?
 
     emit(DRing::DataTransferEventCode::created);
@@ -291,6 +293,7 @@ public:
     std::shared_ptr<DataTransfer> createFileTransfer(const std::string& file_path,
                                                      const std::string& display_name);
     std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const std::string& display_name,
+                                                                     std::size_t total_size,
                                                                      std::size_t offset);
 
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId& id);
@@ -329,10 +332,11 @@ DataTransferFacade::Impl::createFileTransfer(const std::string& file_path,
 
 std::shared_ptr<IncomingFileTransfer>
 DataTransferFacade::Impl::createIncomingFileTransfer(const std::string& display_name,
+                                                     std::size_t total_size,
                                                      std::size_t offset)
 {
     auto id = generateUID();
-    auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, offset);
+    auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, total_size, offset);
     std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(id, transfer);
     return transfer;
@@ -437,9 +441,9 @@ DataTransferFacade::info(const DRing::DataTransferId& id) const
 }
 
 std::string
-DataTransferFacade::onIncomingFileRequest(const std::string& display_name, std::size_t offset)
+DataTransferFacade::onIncomingFileRequest(const std::string& display_name, std::size_t total_size, std::size_t offset)
 {
-    auto transfer = pimpl_->createIncomingFileTransfer(display_name, offset);
+    auto transfer = pimpl_->createIncomingFileTransfer(display_name, total_size, offset);
     auto filename = transfer->requestFilename();
     if (!filename.empty())
         transfer->start(); // TODO: bad place, call only if file can be open
