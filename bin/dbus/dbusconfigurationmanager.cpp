@@ -638,11 +638,23 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
 uint64_t
 DBusConfigurationManager::dataTransferBytesSent(const uint64_t& id)
 {
-    return DRing::dataTransferBytesSent(id);;
+    return DRing::dataTransferBytesSent(id);
 }
 
 auto
 DBusConfigurationManager::dataTransferList() -> decltype(DRing::dataTransferList())
 {
-    return DRing::dataTransferList();;
+    return DRing::dataTransferList();
+}
+
+void
+DBusConfigurationManager::acceptFileTransfer(const uint64_t& id, const std::string& file_path, const uint64_t& offset)
+{
+    DRing::acceptFileTransfer(id, file_path, offset);
+}
+
+void
+DBusConfigurationManager::cancelDataTransfer(const uint64_t& id)
+{
+    DRing::cancelDataTransfer(id);
 }
