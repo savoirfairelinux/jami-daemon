@@ -114,7 +114,7 @@ public:
 
     /// Request TLS thread to stop and quit.
     /// \note IO operations return error after this call.
-    void shutdown();
+    void shutdown() override;
 
     void setOnRecv(RecvCb&& cb) override {
         (void)cb;
