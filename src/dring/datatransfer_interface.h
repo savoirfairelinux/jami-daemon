@@ -118,13 +118,13 @@ void cancelDataTransfer(const DataTransferId& id);
 ///
 DataTransferInfo dataTransferInfo(const DataTransferId& id);
 
-/// Return the amount of sent bytes of an existing data transfer.
+/// Return the amount of sent/received bytes of an existing data transfer.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
 ///
 /// \return number of successfuly transfered bytes.
 ///
-std::streamsize dataTransferBytesSent(const DataTransferId& id);
+std::streamsize dataTransferBytesProgress(const DataTransferId& id);
 
 // Signal handlers registration
 void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);

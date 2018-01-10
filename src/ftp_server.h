@@ -26,6 +26,7 @@
 #include <array>
 #include <fstream>
 #include <sstream>
+#include <atomic>
 
 namespace ring {
 
@@ -52,7 +53,7 @@ private:
 
     std::ofstream out_;
     std::size_t fileSize_ {0};
-    std::size_t rx_ {0};
+    std::atomic<std::size_t> rx_ {0};
     std::stringstream headerStream_;
     std::string displayName_;
     std::array<char, 1000> line_;

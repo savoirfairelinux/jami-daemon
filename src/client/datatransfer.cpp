@@ -72,9 +72,9 @@ cancelDataTransfer(const DataTransferId& id)
 }
 
 std::streamsize
-dataTransferBytesSent(const DataTransferId& id)
+dataTransferBytesProgress(const DataTransferId& id)
 {
-    return ring::Manager::instance().dataTransfers->bytesSent(id);
+    return ring::Manager::instance().dataTransfers->bytesProgress(id);
 }
 
 DataTransferInfo
