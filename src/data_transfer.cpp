@@ -256,13 +256,13 @@ std::string
 IncomingFileTransfer::requestFilename()
 {
     emit(DRing::DataTransferEventCode::wait_host_acceptance);
-    // Now wait for DataTransferFacade::acceptFileTransfer() call
 
-#if 0
+#if 1
+    // Now wait for DataTransferFacade::acceptFileTransfer() call
     filenamePromise_.get_future().wait();
     return info_.path;
 #else
-    // DEBUG
+    // For DEBUG only
     char filename[] = "/tmp/ring_XXXXXX";
     if (::mkstemp(filename) < 0)
         throw std::system_error(errno, std::generic_category());
