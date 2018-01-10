@@ -636,9 +636,9 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
 }
 
 uint64_t
-DBusConfigurationManager::dataTransferBytesSent(const uint64_t& id)
+DBusConfigurationManager::dataTransferBytesProgress(const uint64_t& id)
 {
-    return DRing::dataTransferBytesSent(id);
+    return DRing::dataTransferBytesProgress(id);
 }
 
 auto
