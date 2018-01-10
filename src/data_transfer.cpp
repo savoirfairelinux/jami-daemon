@@ -68,12 +68,13 @@ public:
         return started_.compare_exchange_strong(expected, true);
     }
 
-    virtual std::streamsize bytesSent() const {
+    virtual std::streamsize bytesProgress() const {
         std::lock_guard<std::mutex> lk {infoMutex_};
         return info_.bytesProgress;
     }
 
     DRing::DataTransferInfo info() const {
+        bytesProgress();
         std::lock_guard<std::mutex> lk {infoMutex_};
         return info_;
     }
@@ -204,11 +205,14 @@ FileTransfer::read(std::vector<uint8_t>& buf) const
 class IncomingFileTransfer final : public DataTransfer
 {
 public:
-    IncomingFileTransfer(DRing::DataTransferId id, const std::string&, std::size_t, std::size_t);
+    IncomingFileTransfer(DRing::DataTransferId, const std::string&, std::size_t, std::size_t,
+                         std::atomic<std::size_t>&);
 
     bool start() override;
 
     void close() noexcept override;
+
+    std::streamsize bytesProgress() const override;
 
     std::string requestFilename();
 
@@ -217,14 +221,17 @@ public:
 private:
     IncomingFileTransfer() = delete;
 
+    std::atomic<std::size_t>& progressStorage_;
     std::promise<void> filenamePromise_;
 };
 
 IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId id,
                                            const std::string& display_name,
                                            std::size_t total_size,
-                                           std::size_t offset)
+                                           std::size_t offset,
+                                           std::atomic<std::size_t>& progress_storage)
     : DataTransfer(id)
+    , progressStorage_ {progress_storage}
 {
     RING_WARN() << "[FTP] incoming transfert of " << total_size << " byte(s): " << display_name;
     (void)offset;
@@ -235,6 +242,14 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId id,
     // TODO: use offset?
 
     emit(DRing::DataTransferEventCode::created);
+}
+
+std::streamsize
+IncomingFileTransfer::bytesProgress() const
+{
+    std::lock_guard<std::mutex> lk {infoMutex_};
+    info_.bytesProgress = progressStorage_.load();
+    return info_.bytesProgress;
 }
 
 std::string
@@ -294,7 +309,8 @@ public:
                                                      const std::string& display_name);
     std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const std::string& display_name,
                                                                      std::size_t total_size,
-                                                                     std::size_t offset);
+                                                                     std::size_t offset,
+                                                                     std::atomic<std::size_t>& progress_storage);
 
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId& id);
 
@@ -333,10 +349,12 @@ DataTransferFacade::Impl::createFileTransfer(const std::string& file_path,
 std::shared_ptr<IncomingFileTransfer>
 DataTransferFacade::Impl::createIncomingFileTransfer(const std::string& display_name,
                                                      std::size_t total_size,
-                                                     std::size_t offset)
+                                                     std::size_t offset,
+                                                     std::atomic<std::size_t>& progress_storage)
 {
     auto id = generateUID();
-    auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, total_size, offset);
+    auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, total_size, offset,
+                                                           progress_storage);
     std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(id, transfer);
     return transfer;
@@ -425,10 +443,10 @@ DataTransferFacade::cancel(const DRing::DataTransferId& id)
 }
 
 std::streamsize
-DataTransferFacade::bytesSent(const DRing::DataTransferId& id) const
+DataTransferFacade::bytesProgress(const DRing::DataTransferId& id) const
 {
     if (auto transfer = pimpl_->getTransfer(id))
-        return transfer->bytesSent();
+        return transfer->bytesProgress();
     throw std::invalid_argument("not existing DataTransferId");
 }
 
@@ -441,9 +459,12 @@ DataTransferFacade::info(const DRing::DataTransferId& id) const
 }
 
 std::string
-DataTransferFacade::onIncomingFileRequest(const std::string& display_name, std::size_t total_size, std::size_t offset)
+DataTransferFacade::onIncomingFileRequest(const std::string& display_name,
+                                          std::size_t total_size,
+                                          std::size_t offset,
+                                          std::atomic<std::size_t>& progress_storage)
 {
-    auto transfer = pimpl_->createIncomingFileTransfer(display_name, total_size, offset);
+    auto transfer = pimpl_->createIncomingFileTransfer(display_name, total_size, offset, progress_storage);
     auto filename = transfer->requestFilename();
     if (!filename.empty())
         transfer->start(); // TODO: bad place, call only if file can be open
