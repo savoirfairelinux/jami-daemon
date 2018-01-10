@@ -63,14 +63,16 @@ public:
     /// \return a copy of all information about a data transfer
     DRing::DataTransferInfo info(const DRing::DataTransferId& id) const;
 
-    /// \return number of bytes sent by a data transfer
+    /// \return number of bytes sent/received by a data transfer
     /// \note this method is fatest than info()
-    std::streamsize bytesSent(const DRing::DataTransferId& id) const;
+    std::streamsize bytesProgress(const DRing::DataTransferId& id) const;
 
     /// Create an IncomingFileTransfer object.
     /// \return a filename to open where incoming data will be written or an empty string
     ///         in case of refusal.
-    std::string onIncomingFileRequest(const std::string& display_name, std::size_t total_size, std::size_t offset);
+    std::string onIncomingFileRequest(const std::string& display_name, std::size_t total_size,
+                                      std::size_t offset,
+                                      std::atomic<std::size_t>& progress_storage);
 
 private:
     class Impl;
