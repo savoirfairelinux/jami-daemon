@@ -8,6 +8,7 @@ RUN apt-get update && \
         autopoint \
         cmake \
         libtool \
+	libcanberra-gtk3-dev \
         libdbus-1-dev \
         libdbus-c++-dev \
         libupnp-dev \
