@@ -52,7 +52,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 }
 
 int
-transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame)
+transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame& frame)
 {
     if (accel.name.empty())
         return -1;
