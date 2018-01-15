@@ -54,6 +54,8 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 int
 transferFrameData(HardwareAccel accel, AVCodecContext* codecCtx, VideoFrame& frame)
 {
+    (void)codecCtx;
+
     if (accel.name.empty())
         return -1;
 
