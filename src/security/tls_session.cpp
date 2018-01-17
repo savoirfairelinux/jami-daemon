@@ -622,6 +622,11 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
         return -1;
     }
 
+    if (rxQueue_.empty()) {
+        gnutls_transport_set_errno(session_, EAGAIN);
+        return -1;
+    }
+
     const auto& pkt = rxQueue_.front();
     const std::size_t count = std::min(pkt.size(), size);
     std::copy_n(pkt.begin(), count, reinterpret_cast<ValueType*>(buf));
