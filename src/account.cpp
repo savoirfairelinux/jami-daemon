@@ -309,7 +309,7 @@ Account::getVolatileAccountDetails() const
 {
     return {
         {Conf::CONFIG_ACCOUNT_REGISTRATION_STATUS, mapStateNumberToString(registrationState_)},
-        {DRing::Account::VolatileProperties::ACTIVE, enabled_ ? TRUE_STR : FALSE_STR}
+        {DRing::Account::VolatileProperties::ACTIVE, active_ ? TRUE_STR : FALSE_STR}
     };
 }
 
