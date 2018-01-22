@@ -53,7 +53,7 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         m.first->second.payloads = payloads;
     }
     save();
-    runOnMainThread([this,token]() {
+    runOnMainThread([this]() {
         retrySend();
     });
     return token;
