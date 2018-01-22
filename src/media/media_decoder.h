@@ -45,6 +45,7 @@ class AVStream;
 class AVDictionary;
 class AVFormatContext;
 class AVCodec;
+enum AVMediaType;
 
 namespace ring {
 
@@ -115,6 +116,7 @@ class MediaDecoder {
 
         void extract(const std::map<std::string, std::string>& map, const std::string& key);
         int correctPixFmt(int input_pix_fmt);
+        int setupStream(AVMediaType mediaType);
 
         bool fallback_ = false;
 
