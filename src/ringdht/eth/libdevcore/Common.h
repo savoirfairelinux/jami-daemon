@@ -153,6 +153,7 @@ class HasInvariants
 public:
 	/// Reimplement to specify the invariants.
 	virtual bool invariants() const = 0;
+	virtual ~HasInvariants() = 0;
 };
 
 /// Scope guard for invariant check in a class derived from HasInvariants.
