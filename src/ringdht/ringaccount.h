@@ -349,6 +349,20 @@ class RingAccount : public SIPAccountBase {
          */
         static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
 
+        /**
+         * Start or stop to use the proxy client
+         * @param address of the proxy
+         * @param deviceKey the device key for push notifications (empty to not use it)
+         */
+        void enableProxyClient(bool enable);
+
+        void setPushNotificationToken(const std::string& pushDeviceToken = "");
+
+        /**
+         * To be called by clients with relevent data when a push notification is received.
+         */
+        void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
+
     private:
         NON_COPYABLE(RingAccount);
 
