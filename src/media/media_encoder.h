@@ -37,11 +37,11 @@
 #include <string>
 #include <vector>
 
-class AVCodecContext;
-class AVStream;
-class AVFormatContext;
-class AVDictionary;
-class AVCodec;
+struct AVCodecContext;
+struct AVStream;
+struct AVFormatContext;
+struct AVDictionary;
+struct AVCodec;
 
 namespace ring {
 

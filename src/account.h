@@ -61,7 +61,7 @@ namespace ring {
 
 class Call;
 class SystemCodecContainer;
-class IceTransportOptions;
+struct IceTransportOptions;
 
 class VoipLinkException : public std::runtime_error
 {
