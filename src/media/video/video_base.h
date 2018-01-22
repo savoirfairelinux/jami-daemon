@@ -36,8 +36,8 @@
 #include <mutex>
 #include <ciso646> // fix windows compiler bug
 
-class AVPacket;
-class AVDictionary;
+struct AVPacket;
+struct AVDictionary;
 
 #ifndef AVFORMAT_AVIO_H
 class AVIOContext;
