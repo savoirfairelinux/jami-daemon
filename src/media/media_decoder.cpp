@@ -26,7 +26,7 @@
 #include "audio/audiobuffer.h"
 #include "audio/ringbuffer.h"
 #include "audio/resampler.h"
-#include "video/decoder_finder.h"
+#include "decoder_finder.h"
 #include "manager.h"
 
 #ifdef RING_ACCEL
@@ -148,86 +148,93 @@ void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 
 int MediaDecoder::setupFromAudioData(const AudioFormat format)
 {
-    int ret;
+    // Use AVDictionary to send extra arguments to setupStream, since video setup doesn't need them
+    av_dict_set_int(&options_, "nb_channels", format.nb_channels, 0);
+    av_dict_set_int(&options_, "sample_rate", format.sample_rate, 0);
+    return setupStream(AVMEDIA_TYPE_AUDIO);
+}
 
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
+int
+MediaDecoder::setupStream(AVMediaType mediaType)
+{
+    int ret = 0;
+    std::string streamType = av_get_media_type_string(mediaType);
+
+    avcodec_free_context(&decoderCtx_);
 
     // Increase analyze time to solve synchronization issues between callers.
-    static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
-
+    static const unsigned MAX_ANALYZE_DURATION = 30;
     inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
 
-    RING_DBG("Finding stream info");
-    ret = avformat_find_stream_info(inputCtx_, NULL);
-    RING_DBG("Finding stream info DONE");
-
+    // If fallback from accel, don't check for stream info, it's already done
+    if (!fallback_) {
+        RING_DBG() << "Finding " << streamType << " stream info";
+        ret = avformat_find_stream_info(inputCtx_, nullptr);
+    }
     if (ret < 0) {
-        char errBuf[64] = {0};
-        // print nothing for unknown errors
-        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
-            errBuf[0] = '\0';
+        char errBuf[64];
+        av_strerror(ret, errBuf, sizeof(errBuf));
 
-        // always fail here
-        RING_ERR("Could not find stream info: %s", errBuf);
+        // Always fail here
+        RING_ERR() << "Could not find " << streamType << " stream info: " << errBuf;
         return -1;
     }
 
-    // find the first audio stream from the input
-    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#ifndef _WIN32
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO)
-#else
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_AUDIO)
-#endif
+    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i) {
+        if (inputCtx_->streams[i]->codecpar->codec_type == mediaType) {
             streamIndex_ = i;
+        }
+    }
 
-    if (streamIndex_ == -1) {
-        RING_ERR("Could not find audio stream");
+    if (streamIndex_ < 0) {
+        RING_ERR() << "No " << streamType << " stream found";
         return -1;
     }
 
-    // Get a pointer to the codec context for the video stream
     avStream_ = inputCtx_->streams[streamIndex_];
-#ifndef _WIN32
-    inputDecoder_ = avcodec_find_decoder(avStream_->codecpar->codec_id);
+
+    inputDecoder_ = findDecoder(avStream_->codecpar->codec_id);
     if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
+        RING_ERR() << "Unsupported codec";
         return -1;
     }
 
     decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
+    if (!decoderCtx_) {
+        RING_ERR() << "Failed to create decoder context";
+        return -1;
+    }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
-#else
-    decoderCtx_ = avStream_->codec;
-    if (decoderCtx_ == 0) {
-        RING_ERR("Decoder context is NULL");
-        return -1;
-    }
-
-    // find the decoder for the audio stream
-    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-#endif
 
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
-    decoderCtx_->channels = format.nb_channels;
-    decoderCtx_->sample_rate = format.sample_rate;
-
-    RING_DBG("Audio decoding using %s with %s",
-             inputDecoder_->name, format.toString().c_str());
+    if (mediaType == AVMEDIA_TYPE_AUDIO) {
+        decoderCtx_->channels = std::stoi(av_dict_get(options_, "nb_channels", nullptr, 0)->value);
+        decoderCtx_->sample_rate = std::stoi(av_dict_get(options_, "sample_rate", nullptr, 0)->value);
+    }
 
     if (emulateRate_) {
-        RING_DBG("Using framerate emulation");
+        RING_DBG() << "Using framerate emulation";
         startTime_ = av_gettime();
     }
 
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
-    if (ret) {
-        RING_ERR("Could not open codec");
+#ifdef RING_ACCEL
+    if (enableAccel_) {
+        accel_ = video::setupHardwareDecoding(decoderCtx_);
+        decoderCtx_->opaque = &accel_;
+    } else if (Manager::instance().getDecodingAccelerated()) {
+        RING_WARN() << "Hardware accelerated decoding disabled because of previous failure";
+    } else {
+        RING_WARN() << "Hardware accelerated decoding disabled by user preference";
+    }
+#endif
+
+    RING_DBG() << "Decoding " << streamType << " using " << inputDecoder_->long_name << " (" << inputDecoder_->name << ")";
+
+    ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
+    if (ret < 0) {
+        char errBuf[64];
+        av_strerror(ret, errBuf, sizeof(errBuf));
+        RING_ERR() << "Could not open codec: " << errBuf;
         return -1;
     }
 
@@ -237,101 +244,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 #ifdef RING_VIDEO
 int MediaDecoder::setupFromVideoData()
 {
-    int ret = 0;
-
-    if (decoderCtx_)
-        avcodec_close(decoderCtx_);
-
-    // Increase analyze time to solve synchronization issues between callers.
-    static const unsigned MAX_ANALYZE_DURATION = 30; // time in seconds
-
-    inputCtx_->max_analyze_duration = MAX_ANALYZE_DURATION * AV_TIME_BASE;
-    // if fallback from accel, don't check for stream info, it's already done
-    if (!fallback_) {
-        RING_DBG("Finding stream info");
-        ret = avformat_find_stream_info(inputCtx_, NULL);
-    }
-    if (ret < 0) {
-        // workaround for this bug:
-        // http://patches.libav.org/patch/22541/
-        if (ret == -1)
-            ret = AVERROR_INVALIDDATA;
-        char errBuf[64] = {0};
-        // print nothing for unknown errors
-        if (av_strerror(ret, errBuf, sizeof errBuf) < 0)
-            errBuf[0] = '\0';
-
-        // always fail here
-        RING_ERR("Could not find stream info: %s", errBuf);
-        return -1;
-    }
-
-    // find the first video stream from the input
-    for (size_t i = 0; streamIndex_ == -1 && i < inputCtx_->nb_streams; ++i)
-#ifndef _WIN32
-        if (inputCtx_->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO)
-#else
-        if (inputCtx_->streams[i]->codec->codec_type == AVMEDIA_TYPE_VIDEO)
-#endif
-            streamIndex_ = i;
-
-    if (streamIndex_ == -1) {
-        RING_ERR("Could not find video stream");
-        return -1;
-    }
-
-    // Get a pointer to the codec context for the video stream
-    avStream_ = inputCtx_->streams[streamIndex_];
-#ifndef _WIN32
-    inputDecoder_ = video::findDecoder(avStream_->codecpar->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-
-    decoderCtx_ = avcodec_alloc_context3(inputDecoder_);
-    avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
-#else
-    decoderCtx_ = avStream_->codec;
-    if (decoderCtx_ == 0) {
-        RING_ERR("Decoder context is NULL");
-        return -1;
-    }
-
-    // find the decoder for the video stream
-    inputDecoder_ = avcodec_find_decoder(decoderCtx_->codec_id);
-    if (!inputDecoder_) {
-        RING_ERR("Unsupported codec");
-        return -1;
-    }
-#endif
-    RING_DBG("Decoding video using %s (%s)", inputDecoder_->long_name, inputDecoder_->name);
-
-    decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
-
-    if (emulateRate_) {
-        RING_DBG("Using framerate emulation");
-        startTime_ = av_gettime();
-    }
-
-#ifdef RING_ACCEL
-    if (enableAccel_) {
-        accel_ = video::setupHardwareDecoding(decoderCtx_);
-        decoderCtx_->opaque = &accel_;
-    } else if (Manager::instance().getDecodingAccelerated()) {
-        RING_WARN("Hardware accelerated decoding disabled because of previous failure");
-    } else {
-        RING_WARN("Hardware accelerated decoding disabled by user preference");
-    }
-#endif
-
-    ret = avcodec_open2(decoderCtx_, inputDecoder_, NULL);
-    if (ret) {
-        RING_ERR("Could not open codec");
-        return -1;
-    }
-
-    return 0;
+    return setupStream(AVMEDIA_TYPE_VIDEO);
 }
 
 MediaDecoder::Status
