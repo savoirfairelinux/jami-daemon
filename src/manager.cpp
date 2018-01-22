@@ -2657,10 +2657,6 @@ Manager::setAccountDetails(const std::string& accountID,
             account->doRegister();
         else
             account->doUnregister();
-
-        // Update account details to the client side
-        emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(accountID,
-                                                                       details);
     });
 }
 
@@ -3004,6 +3000,9 @@ Manager::setAccountActive(const std::string& accountID, bool active)
         else
             acc->doUnregister();
     }
+    emitSignal<DRing::ConfigurationSignal::VolatileDetailsChanged>(
+        accountID,
+        acc->getVolatileAccountDetails());
 }
 
 std::shared_ptr<AudioLayer>
