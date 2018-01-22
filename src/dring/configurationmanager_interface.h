@@ -181,6 +181,25 @@ int importAccounts(std::string archivePath, std::string password);
  */
 void connectivityChanged();
 
+/* Dht proxy */
+
+/**
+ * Start or stop to use the proxy for account
+ */
+void enableProxyClient(const std::string& accountID, bool enable);
+
+/**
+ * Set the device push notification token (for all accounts).
+ * If set, proxy clients will use push notifications.
+ * Set to empty to disable push notifications.
+ */
+void setPushNotificationToken(const std::string& pushDeviceToken);
+
+/**
+ * To be called by clients with relevent data when a push notification is received.
+ */
+void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
+
 struct AudioSignal {
         struct DeviceEvent {
                 constexpr static const char* name = "audioDeviceEvent";
