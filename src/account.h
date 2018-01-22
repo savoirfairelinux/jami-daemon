@@ -365,6 +365,9 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         static const char * const DEFAULT_USER_AGENT;
         static const char * const PRESENCE_MODULE_ENABLED_KEY;
         static const char * const UPNP_ENABLED_KEY;
+        static const char * const PROXY_ENABLED_KEY;
+        static const char * const PROXY_SERVER_KEY;
+        static const char * const PROXY_DEVICE_KEY;
 
         static std::string mapStateNumberToString(RegistrationState state);
 
@@ -468,6 +471,13 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         std::unique_ptr<ring::upnp::Controller> upnp_;
         mutable std::mutex upnp_mtx {};
+
+        /**
+         * Proxy
+         */
+        bool proxyEnabled_;
+        std::string proxyServer_;
+        std::string deviceKey_;
 
         /**
          * private account codec searching functions

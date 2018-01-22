@@ -2612,6 +2612,7 @@ Manager::getAccountDetails(const std::string& accountID) const
     }
 }
 
+
 std::map<std::string, std::string>
 Manager::getVolatileAccountDetails(const std::string& accountID) const
 {
