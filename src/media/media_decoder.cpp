@@ -235,7 +235,7 @@ int MediaDecoder::setupFromAudioData(const AudioFormat format)
 #ifdef RING_VIDEO
 int MediaDecoder::setupFromVideoData()
 {
-    int ret;
+    int ret = 0;
 
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
