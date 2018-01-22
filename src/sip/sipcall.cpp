@@ -94,19 +94,15 @@ dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 
     int duration = Manager::instance().voipPreferences.getPulseLength();
     char dtmf_body[1000];
-    const char *normal_str= "Signal=%c\r\nDuration=%d\r\n";
-    const char *flash_str = "Signal=%d\r\nDuration=%d\r\n";
-    const char *str;
 
     // handle flash code
     if (code == '!') {
-        str = flash_str;
         code = 16;
+        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%d\r\nDuration=%d\r\n", code, duration);
     } else {
-        str = normal_str;
+        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
     }
 
-    snprintf(dtmf_body, sizeof dtmf_body - 1, str, code, duration);
     call.sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
