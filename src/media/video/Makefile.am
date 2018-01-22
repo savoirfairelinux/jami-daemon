@@ -36,8 +36,7 @@ libvideo_la_SOURCES = \
 	video_receive_thread.cpp video_receive_thread.h \
 	video_sender.cpp video_sender.h \
 	video_rtp_session.cpp video_rtp_session.h \
-	sinkclient.cpp sinkclient.h \
-	decoder_finder.h
+	sinkclient.cpp sinkclient.h
 
 if RING_ACCEL
 libvideo_la_SOURCES += accel.cpp accel.h

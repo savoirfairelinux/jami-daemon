@@ -33,7 +33,8 @@ noinst_HEADERS = \
 	media_codec.h \
 	system_codec_container.h \
 	srtp.h \
-	recordable.h
+	recordable.h \
+	decoder_finder.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
