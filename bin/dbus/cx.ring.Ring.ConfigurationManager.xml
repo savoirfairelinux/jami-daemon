@@ -1420,7 +1420,7 @@
        <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
            <tp:added version="4.2.0"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="DataTransferInfo"/>
-           <arg type="(buttss)" name="DataTransferInfo" direction="out">
+           <arg type="(buttssss)" name="DataTransferInfo" direction="out">
            </arg>
            <arg type="t" name="DataTransferId" direction="in">
            </arg>

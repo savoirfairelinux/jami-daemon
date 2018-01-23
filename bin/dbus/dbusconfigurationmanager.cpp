@@ -621,10 +621,10 @@ DBusConfigurationManager::sendFile(const std::string& account_id, const std::str
     return DRing::sendFile(account_id, peer_uri, file_path, display_name);
 }
 
-DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string>
+DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string, std::string, std::string>
 DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
 {
-    DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string> out;
+    DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string, std::string, std::string> out;
     auto info = DRing::dataTransferInfo(id);
     out._1 = info.isOutgoing;
     out._2 = uint32_t(info.lastEvent);
@@ -632,6 +632,8 @@ DBusConfigurationManager::dataTransferInfo(const DRing::DataTransferId& id)
     out._4 = info.bytesProgress;
     out._5 = info.displayName;
     out._6 = info.path;
+    out._7 = info.accountId;
+    out._8 = info.peer;
     return out;
 }
 
