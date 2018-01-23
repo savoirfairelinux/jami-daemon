@@ -95,6 +95,8 @@ public:
 
     void connect();
 
+    dht::crypto::Certificate& peerCertificate() const;
+
 private:
     class Impl;
     std::unique_ptr<Impl> pimpl_;

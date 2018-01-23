@@ -210,6 +210,12 @@ TlsTurnEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& e
     return pimpl_->tls->write(buf, len, ec);
 }
 
+dht::crypto::Certificate&
+TlsTurnEndpoint::peerCertificate() const
+{
+    return pimpl_->peerCertificate;
+}
+
 //==============================================================================
 
 TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
