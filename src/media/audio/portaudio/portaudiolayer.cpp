@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *
  *  Author: Edric Ladent-Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>

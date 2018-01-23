@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-Faire Linux Inc.
+ *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *  Author: Emmanuel Milou <emmanuel.milou@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *  Author: Olivier Gregoire <olivier.gregoire@savoirfairelinux.com>

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: latin-1 -*-
 #
-#  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+#  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
 #
 #  Author: Emeric Vigier <emeric.vigier@savoirfairelinux.com>
 #          Alexandre Lision <alexandre.lision@savoirfairelinux.com>

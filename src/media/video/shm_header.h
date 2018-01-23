@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2012-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2012-2018 Savoir-faire Linux Inc.
  *
  *  Author: Tristan Matthews <tristan.matthews@savoirfairelinux.com>
  *

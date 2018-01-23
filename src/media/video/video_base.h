@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2013-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2013-2018 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>

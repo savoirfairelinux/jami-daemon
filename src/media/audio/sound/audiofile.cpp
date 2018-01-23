@@ -1,4 +1,4 @@
-/*  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+/*  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *
  *  Author: Yan Morin <yan.morin@savoirfairelinux.com>
  *

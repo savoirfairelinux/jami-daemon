@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2016-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2016-2018 Savoir-faire Linux Inc.
  *
  *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *

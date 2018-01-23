@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2004-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *
  *  Author: Edric Milaret <edric.ladent-milaret@savoirfairelinux.com>
  *
@@ -47,7 +47,7 @@ print_title()
 {
     std::cout
         << "Ring Daemon " << DRing::version()
-        << ", by Savoir-faire Linux 2004-2017" << std::endl
+        << ", by Savoir-faire Linux 2004-2018" << std::endl
         << "https://www.ring.cx/" << std::endl
 #ifdef RING_VIDEO
         << "[Video support enabled]" << std::endl
