@@ -2653,6 +2653,9 @@ Manager::setAccountDetails(const std::string& accountID,
             account->doRegister();
         else
             account->doUnregister();
+
+        // Update account details to the client side
+        emitSignal<DRing::ConfigurationSignal::AccountDetailsChanged>(accountID, details);
     });
 }
 
