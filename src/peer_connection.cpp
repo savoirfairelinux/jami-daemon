@@ -324,7 +324,7 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
     for (unsigned i=0; i<cert_list_size; i++)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
     auto crt = dht::crypto::Certificate {crt_data};
-    if (crt.getId() != peerCertificate.getId()) {
+    if (crt.getPacked() != peerCertificate.getPacked()) {
         RING_ERR() << "[TLS-SOCKET] Unexpected peer certificate";
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
