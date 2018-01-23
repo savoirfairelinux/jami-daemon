@@ -56,6 +56,8 @@ struct DataTransferInfo
     std::streamsize bytesProgress {0}; ///< Number of bytes sent/received
     std::string displayName; ///< Human oriented transfer name
     std::string path; ///< associated local file path if supported (empty, if not)
+    std::string accountId; ///< Identifier of the emiter/receiver account
+    std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
 };
 
 std::vector<DataTransferId> dataTransferList();
