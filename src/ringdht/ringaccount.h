@@ -341,6 +341,14 @@ class RingAccount : public SIPAccountBase {
                            std::function<void(const std::shared_ptr<RingAccount>&,
                                               const dht::InfoHash&)> op,
                            std::function<void(bool)> end = {});
+
+        /**
+         * Inform that a potential peer device have been found.
+         * Returns true only if the device certificate is a valid Ring device certificate.
+         * In that case (true is returned) the account_id parameter is set to the peer account ID.
+         */
+        static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
+
     private:
         NON_COPYABLE(RingAccount);
 
@@ -416,13 +424,6 @@ class RingAccount : public SIPAccountBase {
          * Returns true if the device have been validated to be part of this account
          */
         bool foundAccountDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, const std::string& name = {}, const time_point& last_sync = time_point::min());
-
-        /**
-         * Inform that a potential peer device have been found.
-         * Returns true only if the device certificate is a valid Ring device certificate.
-         * In that case (true is returned) the account_id parameter is set to the peer account ID.
-         */
-        static bool foundPeerDevice(const std::shared_ptr<dht::crypto::Certificate>& crt, dht::InfoHash& account_id);
 
         /**
          * For a call with (from_device, from_account), check the peer certificate chain (cert_list, cert_num)
