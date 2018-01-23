@@ -53,6 +53,7 @@ getSignalHandlers()
         /* Configuration */
         exported_callback<DRing::ConfigurationSignal::VolumeChanged>(),
         exported_callback<DRing::ConfigurationSignal::AccountsChanged>(),
+        exported_callback<DRing::ConfigurationSignal::AccountDetailsChanged>(),
         exported_callback<DRing::ConfigurationSignal::StunStatusFailed>(),
         exported_callback<DRing::ConfigurationSignal::RegistrationStateChanged>(),
         exported_callback<DRing::ConfigurationSignal::VolatileDetailsChanged>(),

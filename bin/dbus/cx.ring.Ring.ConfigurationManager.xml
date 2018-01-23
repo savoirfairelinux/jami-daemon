@@ -874,6 +874,20 @@
        <signal name="accountsChanged" tp:name-for-bindings="accountsChanged">
        </signal>
 
+       <signal name="accountDetailsChanged" tp:name-for-bindings="accountDetailsChanged">
+           <arg type="s" name="accountID">
+               <tp:docstring>
+                   The account ID
+               </tp:docstring>
+           </arg>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
+           <arg type="a{ss}" name="details" tp:type="String_String_Map">
+               <tp:docstring>
+                   New persistent account details
+               </tp:docstring>
+           </arg>
+       </signal>
+
        <signal name="registrationStateChanged" tp:name-for-bindings="registrationStateChanged">
            <arg type="s" name="accountID"/>
            <arg type="s" name="registrationState"/>
