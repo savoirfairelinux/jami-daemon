@@ -35,8 +35,11 @@ namespace ring {
 
 //==============================================================================
 
-FtpServer::FtpServer()
+FtpServer::FtpServer(const std::string& account_id,
+                     const std::string& peer_uri)
     : Stream()
+    , accountId_ {account_id}
+    , peerUri_ {peer_uri}
 {}
 
 DRing::DataTransferId
@@ -56,7 +59,9 @@ bool
 FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
-    auto filename = Manager::instance().dataTransfers->onIncomingFileRequest(displayName_,
+    auto filename = Manager::instance().dataTransfers->onIncomingFileRequest(accountId_,
+                                                                             peerUri_,
+                                                                             displayName_,
                                                                              fileSize_,
                                                                              0 /* TODO: offset */,
                                                                              rx_);
