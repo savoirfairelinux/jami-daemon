@@ -223,6 +223,10 @@ struct ConfigurationSignal {
         };
 
         // TODO: move those to AccountSignal in next API breakage
+        struct AccountDetailsChanged {
+                constexpr static const char* name = "AccountDetailsChanged";
+                using cb_type = void(const std::string& /*account_id*/, const std::map<std::string, std::string>& /* details */);
+        };
         struct StunStatusFailed {
                 constexpr static const char* name = "StunStatusFailed";
                 using cb_type = void(const std::string& /*account_id*/);
