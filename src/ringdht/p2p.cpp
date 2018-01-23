@@ -203,6 +203,7 @@ public:
 private:
     std::unique_ptr<ConnectedTurnTransport> turn_ep_;
     std::unique_ptr<TurnTransport> turn_;
+    std::map<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash> certMap_;
     dht::crypto::TrustList trustedPeers_;
 
 protected:
@@ -401,8 +402,25 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     auto tls_ep = std::make_unique<TlsTurnEndpoint>(*turn_ep, account.identity(),
                                                     account.dhParams(), trustedPeers_);
     tls_ep->connect(); // block until TLS negotiated (throw in case of error)
+
+    // Find who is connected by using connection certificate
+    dht::InfoHash peer_h;
+    auto& connected_cert = tls_ep->peerCertificate();
+    for (const auto& item : certMap_) {
+        if (item.first->getPacked() == connected_cert.getPacked()) {
+            peer_h = item.second;
+            break;
+        }
+    }
+
+    // Not found? Considering this case as an attack!
+    if (!peer_h) {
+        RING_WARN() << "[CNX] unknown certificate from ip " << peer_addr.toString(true, true);
+        return;
+    }
+
     auto connection = std::make_unique<PeerConnection>(account, peer_addr.toString(), std::move(tls_ep));
-    connection->attachOutputStream(std::make_shared<FtpServer>());
+    connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
     servers_.emplace(peer_addr, std::move(connection));
 
     // note: operating this way let endpoint to be deleted safely in case of exceptions
@@ -440,6 +458,7 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     turnConnect(); // start a TURN client connection on first pass, next ones just add new peer cnx handlers
 
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
+    certMap_.insert(std::make_pair(cert, request.from));
     trustedPeers_.add(*cert);
 
     for (auto& ip: request.addresses) {

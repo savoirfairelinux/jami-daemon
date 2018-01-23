@@ -70,7 +70,9 @@ public:
     /// Create an IncomingFileTransfer object.
     /// \return a filename to open where incoming data will be written or an empty string
     ///         in case of refusal.
-    std::string onIncomingFileRequest(const std::string& display_name, std::size_t total_size,
+    std::string onIncomingFileRequest(const std::string& account_id,
+                                      const std::string& peer_uri,
+                                      const std::string& display_name, std::size_t total_size,
                                       std::size_t offset,
                                       std::atomic<std::size_t>& progress_storage);
 

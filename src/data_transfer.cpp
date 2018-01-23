@@ -104,7 +104,7 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
 class FileTransfer final : public DataTransfer
 {
 public:
-    FileTransfer(DRing::DataTransferId id, const std::string&, const std::string&);
+    FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
 
     bool start() override;
 
@@ -121,18 +121,15 @@ private:
     const std::string peerUri_;
 };
 
-FileTransfer::FileTransfer(DRing::DataTransferId id,
-                           const std::string& file_path,
-                           const std::string& display_name)
-    : DataTransfer(id)
+FileTransfer::FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info)
+    : DataTransfer(tid)
 {
-    input_.open(file_path, std::ios::binary);
+    input_.open(info.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
 
+    info_ = info;
     info_.isOutgoing = true;
-    info_.displayName = display_name;
-    info_.path = file_path;
 
     // File size?
     input_.seekg(0, std::ios_base::end);
@@ -205,7 +202,7 @@ FileTransfer::read(std::vector<uint8_t>& buf) const
 class IncomingFileTransfer final : public DataTransfer
 {
 public:
-    IncomingFileTransfer(DRing::DataTransferId, const std::string&, std::size_t, std::size_t,
+    IncomingFileTransfer(DRing::DataTransferId, const DRing::DataTransferInfo&,
                          std::atomic<std::size_t>&);
 
     bool start() override;
@@ -225,21 +222,16 @@ private:
     std::promise<void> filenamePromise_;
 };
 
-IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId id,
-                                           const std::string& display_name,
-                                           std::size_t total_size,
-                                           std::size_t offset,
+IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
+                                           const DRing::DataTransferInfo& info,
                                            std::atomic<std::size_t>& progress_storage)
-    : DataTransfer(id)
+    : DataTransfer(tid)
     , progressStorage_ {progress_storage}
 {
-    RING_WARN() << "[FTP] incoming transfert of " << total_size << " byte(s): " << display_name;
-    (void)offset;
+    RING_WARN() << "[FTP] incoming transfert of " << info.totalSize << " byte(s): " << info.displayName;
 
+    info_ = info;
     info_.isOutgoing = false;
-    info_.displayName = display_name;
-    info_.totalSize = total_size;
-    // TODO: use offset?
 
     emit(DRing::DataTransferEventCode::created);
 }
@@ -305,11 +297,8 @@ public:
     mutable std::mutex mapMutex_;
     std::unordered_map<DRing::DataTransferId, std::shared_ptr<DataTransfer>> map_;
 
-    std::shared_ptr<DataTransfer> createFileTransfer(const std::string& file_path,
-                                                     const std::string& display_name);
-    std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const std::string& display_name,
-                                                                     std::size_t total_size,
-                                                                     std::size_t offset,
+    std::shared_ptr<DataTransfer> createFileTransfer(const DRing::DataTransferInfo& info);
+    std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const DRing::DataTransferInfo& info,
                                                                      std::atomic<std::size_t>& progress_storage);
 
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId& id);
@@ -336,27 +325,23 @@ DataTransferFacade::Impl::getTransfer(const DRing::DataTransferId& id)
 }
 
 std::shared_ptr<DataTransfer>
-DataTransferFacade::Impl::createFileTransfer(const std::string& file_path,
-                                             const std::string& display_name)
+DataTransferFacade::Impl::createFileTransfer(const DRing::DataTransferInfo& info)
 {
-    auto id = generateUID();
-    auto transfer = std::make_shared<FileTransfer>(id, file_path, display_name);
+    auto tid = generateUID();
+    auto transfer = std::make_shared<FileTransfer>(tid, info);
     std::lock_guard<std::mutex> lk {mapMutex_};
-    map_.emplace(id, transfer);
+    map_.emplace(tid, transfer);
     return transfer;
 }
 
 std::shared_ptr<IncomingFileTransfer>
-DataTransferFacade::Impl::createIncomingFileTransfer(const std::string& display_name,
-                                                     std::size_t total_size,
-                                                     std::size_t offset,
+DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferInfo& info,
                                                      std::atomic<std::size_t>& progress_storage)
 {
-    auto id = generateUID();
-    auto transfer = std::make_shared<IncomingFileTransfer>(id, display_name, total_size, offset,
-                                                           progress_storage);
+    auto tid = generateUID();
+    auto transfer = std::make_shared<IncomingFileTransfer>(tid, info, progress_storage);
     std::lock_guard<std::mutex> lk {mapMutex_};
-    map_.emplace(id, transfer);
+    map_.emplace(tid, transfer);
     return transfer;
 }
 
@@ -406,18 +391,25 @@ DataTransferFacade::sendFile(const std::string& account_id, const std::string& p
     if (!fileutils::isFile(file_path))
         throw std::invalid_argument("invalid input file");
 
-    auto transfer = pimpl_->createFileTransfer(file_path, display_name);
-    auto id = transfer->getId();
+    DRing::DataTransferInfo info;
+    info.accountId = account_id;
+    info.peer = peer_uri;
+    info.displayName = display_name;
+    info.path = file_path;
+    // remaining fields are overwritten
+
+    auto transfer = pimpl_->createFileTransfer(info);
+    auto tid = transfer->getId();
     // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
     // This happen when multiple agents handle communications of the given peer for the given account.
     // Example: Ring account supports multi-devices, each can answer to the request.
     account->requestPeerConnection(
         peer_uri,
-        [this, id] (PeerConnection* connection) {
-            pimpl_->onConnectionRequestReply(id, connection);
+        [this, tid] (PeerConnection* connection) {
+            pimpl_->onConnectionRequestReply(tid, connection);
         });
 
-    return id;
+    return tid;
 }
 
 void
@@ -459,12 +451,22 @@ DataTransferFacade::info(const DRing::DataTransferId& id) const
 }
 
 std::string
-DataTransferFacade::onIncomingFileRequest(const std::string& display_name,
+DataTransferFacade::onIncomingFileRequest(const std::string& account_id,
+                                          const std::string& peer_uri,
+                                          const std::string& display_name,
                                           std::size_t total_size,
                                           std::size_t offset,
                                           std::atomic<std::size_t>& progress_storage)
 {
-    auto transfer = pimpl_->createIncomingFileTransfer(display_name, total_size, offset, progress_storage);
+    DRing::DataTransferInfo info;
+    info.accountId = account_id;
+    info.peer = peer_uri;
+    info.displayName = display_name;
+    info.totalSize = total_size;
+    info.bytesProgress = offset;
+    // remaining fields are overwritten
+
+    auto transfer = pimpl_->createIncomingFileTransfer(info, progress_storage);
     auto filename = transfer->requestFilename();
     if (!filename.empty())
         transfer->start(); // TODO: bad place, call only if file can be open
