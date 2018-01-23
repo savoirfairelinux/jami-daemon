@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2011-2017 Savoir-faire Linux Inc.
+ *  Copyright (C) 2011-2018 Savoir-faire Linux Inc.
  *
  *  Author: Guillaume Roguez <Guillaume.Roguez@savoirfairelinux.com>
  *
