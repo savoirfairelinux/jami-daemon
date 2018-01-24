@@ -78,6 +78,13 @@ struct SipsIceTransport
     // uses the tls_ uniquepointer internal gnutls_session_t, to call its method to get its MTU
     uint16_t getTlsSessionMtu();
 
+    /**
+       \brief when the remote (server) has a IPV6 interface selected by ICE, and local (client) has a IPV4 selected,
+       the path MTU discovery triggers errors for packets too big on server side because of different IP headers overhead.
+       Hence we have to signal to the TLS session to reduce the MTU on client size accordingly.
+     */
+    void badAsymTransport();
+
 private:
     NON_COPYABLE(SipsIceTransport);
 

@@ -247,6 +247,9 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
     };
     tls_ = std::make_unique<TlsSession>(*iceSocket_, param, cbs);
 
+    if (local_.isIpv4() and remote_.isIpv6())
+        badAsymTransport();
+
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
 
@@ -705,6 +708,12 @@ uint16_t
 SipsIceTransport::getTlsSessionMtu()
 {
     return tls_->maxPayload();
+}
+
+void
+SipsIceTransport::badAsymTransport()
+{
+    tls_->setBadAsymTransport();
 }
 
 }} // namespace ring::tls
