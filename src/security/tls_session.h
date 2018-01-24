@@ -128,6 +128,8 @@ public:
 
     int maxPayload() const override;
 
+    void setBadAsymTransport();
+
     void connect();
 
     /// Synchronous writing.
