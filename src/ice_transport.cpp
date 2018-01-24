@@ -1226,6 +1226,18 @@ IceSocketTransport::read(ValueType* buf, std::size_t len, std::error_code& ec)
     return res;
 }
 
+IpAddr
+IceSocketTransport::localAddr() const
+{
+    return ice_->getLocalAddress(compId_);
+}
+
+IpAddr
+IceSocketTransport::remoteAddr() const
+{
+    return ice_->getRemoteAddress(compId_);
+}
+
 //==============================================================================
 
 void

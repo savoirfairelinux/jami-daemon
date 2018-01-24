@@ -68,6 +68,7 @@ static constexpr auto HEARTBEAT_RETRANS_TIMEOUT = std::chrono::milliseconds(700)
 static constexpr auto HEARTBEAT_TOTAL_TIMEOUT = HEARTBEAT_RETRANS_TIMEOUT * HEARTBEAT_TRIES; // gnutls heartbeat time limit for heartbeat procedure (in milliseconds)
 static constexpr int MISS_ORDERING_LIMIT = 32; // maximal accepted distance of out-of-order packet (note: must be a signed type)
 static constexpr auto RX_OOO_TIMEOUT = std::chrono::milliseconds(1500);
+static constexpr int ASYMETRIC_TRANSPORT_MTU_OFFSET = 20; // when client, if your local IP is IPV4 and server is IPV6; you must reduce your MTU to avoid packet too big error on server side. the offset is the difference in size of IP headers
 
 // Helper to cast any duration into an integer number of milliseconds
 template <class Rep, class Period>
@@ -923,13 +924,26 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
                                   HEARTBEAT_TOTAL_TIMEOUT.count());
 
     int errno_send = GNUTLS_E_SUCCESS;
+    int mtuOffset = 0;
+
+    // when the remote (server) has a IPV6 interface selected by ICE, and local (client) has a IPV4 selected,
+    // the path MTU discovery triggers errors for packets too big on server side because of different IP headers overhead.
+    // Hence we have to signal to the TLS session to reduce the MTU on client size accordingly.
+    if (transport_.localAddr().isIpv4() and transport_.remoteAddr().isIpv6()) {
+        mtuOffset = ASYMETRIC_TRANSPORT_MTU_OFFSET;
+        RING_WARN() << "[TLS] local/remote IP protocol version not alike, use an MTU offset of "
+                    << ASYMETRIC_TRANSPORT_MTU_OFFSET << " bytes to compensate";
+    }
+
     mtuProbe_ = MTUS_[0];
+
     for (auto mtu: MTUS_) {
         gnutls_dtls_set_mtu(session_, mtu);
         auto data_mtu = gnutls_dtls_get_data_mtu(session_);
         RING_DBG() << "[TLS] PMTUD: mtu " << mtu
                    << ", payload " << data_mtu;
-        auto bytesToSend = data_mtu - 3; // want to know why -3? ask gnutls!
+        auto bytesToSend = data_mtu - mtuOffset - 3; // want to know why -3? ask gnutls!
+
         do {
             errno_send = gnutls_heartbeat_ping(session_, bytesToSend, HEARTBEAT_TRIES, GNUTLS_HEARTBEAT_WAIT);
         } while (errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED);
