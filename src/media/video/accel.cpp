@@ -82,9 +82,10 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
 }
 
 static int
-openDevice(HardwareAccel accel, AVBufferRef** hardwareDeviceCtx)
+initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
 {
-    int ret;
+    int ret = 0;
+    AVBufferRef* hardwareDeviceCtx = nullptr;
     auto hwType = av_hwdevice_find_type_by_name(accel.name.c_str());
 #ifdef HAVE_VAAPI_ACCEL_DRM
     // default DRM device may not work on multi GPU computers, so check all possible values
@@ -95,7 +96,8 @@ openDevice(HardwareAccel accel, AVBufferRef** hardwareDeviceCtx)
         std::sort(files.rbegin(), files.rend());
         for (auto& entry : files) {
             std::string deviceName = path + entry;
-            if ((ret = av_hwdevice_ctx_create(hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
+            if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
+                codecCtx->hw_device_ctx = hardwareDeviceCtx;
                 RING_DBG("Using '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
                 return ret;
             }
@@ -103,8 +105,10 @@ openDevice(HardwareAccel accel, AVBufferRef** hardwareDeviceCtx)
     }
 #endif
     // default device (nullptr) works for most cases
-    if ((ret = av_hwdevice_ctx_create(hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0)
+    if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
+        codecCtx->hw_device_ctx = hardwareDeviceCtx;
         RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
+    }
 
     return ret;
 }
@@ -126,12 +130,10 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
     };
 
-    AVBufferRef* hardwareDeviceCtx = nullptr;
     for (auto accel : accels) {
         if (std::find(accel.supportedCodecs.begin(), accel.supportedCodecs.end(),
                 static_cast<AVCodecID>(codecCtx->codec_id)) != accel.supportedCodecs.end()) {
-            if (openDevice(accel, &hardwareDeviceCtx) >= 0) {
-                codecCtx->hw_device_ctx = av_buffer_ref(hardwareDeviceCtx);
+            if (initDevice(accel, codecCtx) >= 0) {
                 codecCtx->get_format = getFormatCb;
                 codecCtx->thread_safe_callbacks = 1;
                 return accel;
