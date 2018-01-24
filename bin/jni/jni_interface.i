@@ -52,8 +52,24 @@
     return $jnicall;
 }
 
+/* Maps exceptions */
+%typemap(throws, throws="java.lang.IllegalArgumentException") std::invalid_argument {
+  jclass excep = jenv->FindClass("java/lang/IllegalArgumentException");
+  if (excep)
+    jenv->ThrowNew(excep, $1.what().c_str());
+  return $null;
+}
+%typemap(throws, throws="java.lang.IllegalStateException") std::runtime_error {
+  jclass excep = jenv->FindClass("java/lang/IllegalStateException");
+  if (excep)
+    jenv->ThrowNew(excep, $1.what().c_str());
+  return $null;
+}
+
 /* Avoid uint64_t to be converted to BigInteger */
 %apply int64_t { uint64_t };
+%apply int64_t { const uint64_t };
+%apply int64_t { std::streamsize };
 %apply uint64_t { time_t };
 
 namespace std {
@@ -180,6 +196,7 @@ namespace std {
 %include "managerimpl.i"
 %include "callmanager.i"
 %include "configurationmanager.i"
+%include "datatransfer.i"
 %include "presencemanager.i"
 %include "videomanager.i"
 
@@ -197,6 +214,8 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     using DRing::exportable_callback;
     using DRing::CallSignal;
     using DRing::ConfigurationSignal;
+    using DRing::DataTransferInfo;
+    using DRing::DataTransferSignal;
     using DRing::PresenceSignal;
     using DRing::VideoSignal;
 
@@ -258,6 +277,9 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
         exportable_callback<PresenceSignal::SubscriptionStateChanged>(bind(&PresenceCallback::subscriptionStateChanged, presM, _1, _2, _3 ))
     };
 
+    const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
+    };
+
     const std::map<std::string, SharedCallback> videoEvHandlers = {
         exportable_callback<VideoSignal::GetCameraInfo>(bind(&VideoCallback::getCameraInfo, videoM, _1, _2, _3, _4)),
         exportable_callback<VideoSignal::SetParameters>(bind(&VideoCallback::setParameters, videoM, _1, _2, _3, _4, _5)),
@@ -273,6 +295,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     registerCallHandlers(callEvHandlers);
     registerConfHandlers(configEvHandlers);
     registerPresHandlers(presenceEvHandlers);
+    registerDataXferHandlers(dataTransferEvHandlers);
     registerVideoHandlers(videoEvHandlers);
 
     DRing::start();
