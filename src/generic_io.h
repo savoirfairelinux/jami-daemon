@@ -20,6 +20,8 @@
 
 #pragma once
 
+#include "ip_utils.h"
+
 #include <functional>
 #include <vector>
 #include <system_error>
@@ -99,6 +101,16 @@ public:
             storage.resize(res);
         return res;
     }
+
+    /// Return the local IP address if known.
+    /// \note The address is not valid (addr.isUnspecified() returns true) if it's not known
+    /// or not available.
+    virtual IpAddr localAddr() const { return {}; }
+
+    /// Return the remote IP address if known.
+    /// \note The address is not valid (addr.isUnspecified() returns true) if it's not known
+    /// or not available.
+    virtual IpAddr remoteAddr() const { return {}; }
 
 protected:
     GenericSocket() = default;

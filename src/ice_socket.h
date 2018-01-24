@@ -87,6 +87,10 @@ public:
 
     void setOnRecv(RecvCb&& cb) override;
 
+    IpAddr localAddr() const override;
+
+    IpAddr remoteAddr() const override;
+
 private:
     const int compId_;
     std::shared_ptr<IceTransport> ice_;
