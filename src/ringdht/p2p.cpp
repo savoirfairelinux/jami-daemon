@@ -203,8 +203,11 @@ public:
 private:
     std::unique_ptr<ConnectedTurnTransport> turn_ep_;
     std::unique_ptr<TurnTransport> turn_;
-    std::map<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash> certMap_;
-    dht::crypto::TrustList trustedPeers_;
+
+    // key: Stored certificate PublicKey id (normaly it's the DeviceId)
+    // value: pair of shared_ptr<Certificate> and associated RingId
+    std::map<dht::InfoHash, std::pair<std::shared_ptr<dht::crypto::Certificate>, dht::InfoHash>> certMap_;
+    std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
 protected:
     std::map<IpAddr, std::unique_ptr<PeerConnection>> servers_;
@@ -223,6 +226,7 @@ private:
                      const std::function<void(PeerConnection*)>&);
     void turnConnect();
     void eventLoop();
+    bool validatePeerCertificate(const dht::crypto::Certificate&, dht::InfoHash&);
 
     std::future<void> loopFut_; // keep it last member
 };
@@ -390,6 +394,21 @@ DhtPeerConnector::Impl::turnConnect()
     }
 }
 
+/// Find who is connected by using connection certificate
+bool
+DhtPeerConnector::Impl::validatePeerCertificate(const dht::crypto::Certificate& cert,
+                                                dht::InfoHash& peer_h)
+{
+    const auto& iter = certMap_.find(cert.getId());
+    if (iter != std::cend(certMap_)) {
+        if (iter->second.first->getPacked() == cert.getPacked()) {
+            peer_h = iter->second.second;
+            return true;
+        }
+    }
+    return false;
+}
+
 /// Negotiate a TLS session over a TURN socket this method does [yoda].
 /// At this stage both endpoints has a dedicated TCP connection on each other.
 void
@@ -399,28 +418,23 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
                << peer_addr.toString(true, true);
 
     auto turn_ep = std::make_unique<ConnectedTurnTransport>(*turn_, peer_addr);
+
     RING_DBG() << account << "[CNX] start TLS session over TURN socket";
-    auto tls_ep = std::make_unique<TlsTurnEndpoint>(*turn_ep, account.identity(),
-                                                    account.dhParams(), trustedPeers_);
-    tls_ep->connect(); // block until TLS negotiated (throw in case of error)
-
-    // Find who is connected by using connection certificate
     dht::InfoHash peer_h;
-    auto& connected_cert = tls_ep->peerCertificate();
-    for (const auto& item : certMap_) {
-        if (item.first->getPacked() == connected_cert.getPacked()) {
-            peer_h = item.second;
-            break;
-        }
-    }
+    auto tls_ep = std::make_unique<TlsTurnEndpoint>(
+        *turn_ep, account.identity(), account.dhParams(),
+        [&, this] (const dht::crypto::Certificate& cert) { return validatePeerCertificate(cert, peer_h); });
 
-    // Not found? Considering this case as an attack!
-    if (!peer_h) {
-        RING_WARN() << "[CNX] unknown certificate from ip " << peer_addr.toString(true, true);
+    // block until TLS is negotiated (must throw in case of error)
+    try {
+        tls_ep->connect();
+    } catch (...) {
+        RING_WARN() << "[CNX] TLS connection failure from peer " << peer_addr.toString(true, true);
         return;
     }
 
     RING_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
+    connectedPeers_.emplace(peer_addr, tls_ep->peerCertificate().getId());
     auto connection = std::make_unique<PeerConnection>(account, peer_addr.toString(), std::move(tls_ep));
     connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
     servers_.emplace(peer_addr, std::move(connection));
@@ -437,6 +451,7 @@ DhtPeerConnector::Impl::onTurnPeerDisconnection(const IpAddr& peer_addr)
         return;
     RING_WARN() << account << "[CNX] disconnection from peer " << peer_addr.toString(true, true);
     servers_.erase(iter);
+    connectedPeers_.erase(peer_addr);
 }
 
 void
@@ -465,8 +480,7 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     turnConnect(); // start a TURN client connection on first pass, next ones just add new peer cnx handlers
 
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
-    certMap_.insert(std::make_pair(cert, peer_h));
-    trustedPeers_.add(*cert);
+    certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
     for (auto& ip: request.addresses) {
         try {
