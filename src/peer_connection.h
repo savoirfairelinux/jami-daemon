@@ -81,7 +81,7 @@ public:
     TlsTurnEndpoint(ConnectedTurnTransport& turn,
                     const Identity& local_identity,
                     const std::shared_future<tls::DhParams>& dh_params,
-                    dht::crypto::TrustList& trust_list);
+                    std::function<bool(const dht::crypto::Certificate&)>&& cert_check);
     ~TlsTurnEndpoint();
 
     void shutdown() override;
@@ -100,7 +100,7 @@ public:
 
     void connect();
 
-    dht::crypto::Certificate& peerCertificate() const;
+    const dht::crypto::Certificate& peerCertificate() const;
 
 private:
     class Impl;
