@@ -56,13 +56,13 @@
 %typemap(throws, throws="java.lang.IllegalArgumentException") std::invalid_argument {
   jclass excep = jenv->FindClass("java/lang/IllegalArgumentException");
   if (excep)
-    jenv->ThrowNew(excep, $1.what().c_str());
+    jenv->ThrowNew(excep, $1.what());
   return $null;
 }
 %typemap(throws, throws="java.lang.IllegalStateException") std::runtime_error {
   jclass excep = jenv->FindClass("java/lang/IllegalStateException");
   if (excep)
-    jenv->ThrowNew(excep, $1.what().c_str());
+    jenv->ThrowNew(excep, $1.what());
   return $null;
 }
 
@@ -207,7 +207,7 @@ namespace std {
  * that are not declared elsewhere in the c++ code
  */
 
-void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, VideoCallback* videoM) {
+void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, DataTransferCallback* dataM, VideoCallback* videoM) {
     using namespace std::placeholders;
 
     using std::bind;
@@ -278,6 +278,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     };
 
     const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
+        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DataTransferCallback::dataTransferEvent, dataM, _1, _2))
     };
 
     const std::map<std::string, SharedCallback> videoEvHandlers = {
