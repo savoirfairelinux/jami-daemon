@@ -207,7 +207,7 @@ namespace std {
  * that are not declared elsewhere in the c++ code
  */
 
-void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, VideoCallback* videoM) {
+void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM, DataTransferCallback* dataM, VideoCallback* videoM) {
     using namespace std::placeholders;
 
     using std::bind;
@@ -278,6 +278,7 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     };
 
     const std::map<std::string, SharedCallback> dataTransferEvHandlers = {
+        exportable_callback<DataTransferSignal::DataTransferEvent>(bind(&DataTransferCallback::dataTransferEvent, dataM, _1, _2))
     };
 
     const std::map<std::string, SharedCallback> videoEvHandlers = {
