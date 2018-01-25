@@ -60,7 +60,8 @@ public:
     static constexpr auto TLS_TIMEOUT = std::chrono::seconds(20);
 
     Impl(ConnectedTurnTransport& tr,
-         dht::crypto::TrustList& trust_list) : turn {tr}, trustList {trust_list} {}
+         std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
+        : turn {tr}, peerCertificateCheckFunc {std::move(cert_check)} {}
 
     ~Impl();
 
@@ -72,7 +73,7 @@ public:
 
     std::unique_ptr<tls::TlsSession> tls;
     ConnectedTurnTransport& turn;
-    dht::crypto::TrustList& trustList;
+    std::function<bool(const dht::crypto::Certificate&)> peerCertificateCheckFunc;
     dht::crypto::Certificate peerCertificate;
     std::promise<bool> connected;
 };
@@ -81,10 +82,7 @@ public:
 constexpr std::chrono::seconds TlsTurnEndpoint::Impl::TLS_TIMEOUT;
 
 TlsTurnEndpoint::Impl::~Impl()
-{
-    if (peerCertificate)
-        trustList.remove(peerCertificate);
-}
+{}
 
 int
 TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
@@ -107,22 +105,18 @@ TlsTurnEndpoint::Impl::verifyCertificate(gnutls_session_t session)
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
 
-    // Check if peer certificate is inside our list of permited certificate
+    // Check if received peer certificate is awaited
     std::vector<std::pair<uint8_t*, uint8_t*>> crt_data;
     crt_data.reserve(cert_list_size);
     for (unsigned i=0; i<cert_list_size; i++)
         crt_data.emplace_back(cert_list[i].data, cert_list[i].data + cert_list[i].size);
     auto crt = dht::crypto::Certificate {crt_data};
-    auto verify_result = trustList.verify(crt);
-    if (!verify_result) {
-        RING_ERR() << "[TLS-TURN] Peer certificate verification failed: " << verify_result;
-        return verify_result.result;
-    }
 
-    // Store valid peer certificate for trust list removal during dtor
+    if (!peerCertificateCheckFunc(crt))
+        return GNUTLS_E_CERTIFICATE_ERROR;
+
     peerCertificate = std::move(crt);
 
-    // notify GnuTLS to continue handshake normally
     return GNUTLS_E_SUCCESS;
 }
 
@@ -149,8 +143,8 @@ TlsTurnEndpoint::Impl::onTlsCertificatesUpdate(UNUSED const gnutls_datum_t* loca
 TlsTurnEndpoint::TlsTurnEndpoint(ConnectedTurnTransport& turn_ep,
                                  const Identity& local_identity,
                                  const std::shared_future<tls::DhParams>& dh_params,
-                                 dht::crypto::TrustList& trust_list)
-    : pimpl_ { std::make_unique<Impl>(turn_ep, trust_list) }
+                                 std::function<bool(const dht::crypto::Certificate&)>&& cert_check)
+    : pimpl_ { std::make_unique<Impl>(turn_ep, std::move(cert_check)) }
 {
     // Add TLS over TURN
     tls::TlsSession::TlsSessionCallbacks tls_cbs = {
@@ -210,7 +204,7 @@ TlsTurnEndpoint::write(const ValueType* buf, std::size_t len, std::error_code& e
     return pimpl_->tls->write(buf, len, ec);
 }
 
-dht::crypto::Certificate&
+const dht::crypto::Certificate&
 TlsTurnEndpoint::peerCertificate() const
 {
     return pimpl_->peerCertificate;
@@ -335,7 +329,6 @@ TlsSocketEndpoint::Impl::verifyCertificate(gnutls_session_t session)
         return GNUTLS_E_CERTIFICATE_ERROR;
     }
 
-    // notify GnuTLS to continue handshake normally
     return GNUTLS_E_SUCCESS;
 }
 
