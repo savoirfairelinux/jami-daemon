@@ -135,6 +135,9 @@ constexpr static const char ARCHIVE_PATH            [] = "Account.archivePath";
 constexpr static const char ARCHIVE_PIN             [] = "Account.archivePIN";
 constexpr static const char RING_DEVICE_ID          [] = "Account.deviceID";
 constexpr static const char RING_DEVICE_NAME        [] = "Account.deviceName";
+constexpr static const char PROXY_ENABLED           [] = "Account.proxyEnabled";
+constexpr static const char PROXY_SERVER            [] = "Account.proxyServer";
+constexpr static const char PROXY_PUSH_TOKEN        [] = "Account.deviceKey";
 
 namespace Audio {
 
