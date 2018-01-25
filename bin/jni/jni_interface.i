@@ -56,13 +56,13 @@
 %typemap(throws, throws="java.lang.IllegalArgumentException") std::invalid_argument {
   jclass excep = jenv->FindClass("java/lang/IllegalArgumentException");
   if (excep)
-    jenv->ThrowNew(excep, $1.what().c_str());
+    jenv->ThrowNew(excep, $1.what());
   return $null;
 }
 %typemap(throws, throws="java.lang.IllegalStateException") std::runtime_error {
   jclass excep = jenv->FindClass("java/lang/IllegalStateException");
   if (excep)
-    jenv->ThrowNew(excep, $1.what().c_str());
+    jenv->ThrowNew(excep, $1.what());
   return $null;
 }
 
