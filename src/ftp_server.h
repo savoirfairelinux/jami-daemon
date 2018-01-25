@@ -24,9 +24,8 @@
 
 #include <vector>
 #include <array>
-#include <fstream>
 #include <sstream>
-#include <atomic>
+#include <memory>
 
 namespace ring {
 
@@ -53,9 +52,9 @@ private:
 
     const std::string accountId_;
     const std::string peerUri_;
-    std::ofstream out_;
+    std::shared_ptr<Stream> out_;
     std::size_t fileSize_ {0};
-    std::atomic<std::size_t> rx_ {0};
+    std::size_t rx_ {0};
     std::stringstream headerStream_;
     std::string displayName_;
     std::array<char, 1000> line_;

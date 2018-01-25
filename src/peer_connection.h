@@ -61,6 +61,11 @@ public:
         (void)buffer;
         return false;
     };
+    virtual bool write(const uint8_t* buffer, std::size_t length) {
+        (void)buffer;
+        (void)length;
+        return false;
+    };
 };
 
 //==============================================================================
