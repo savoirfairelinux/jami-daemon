@@ -59,8 +59,10 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
+#ifdef RING_ACCEL
     if (decoderCtx_->hw_device_ctx)
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
+#endif
     if (decoderCtx_)
         avcodec_close(decoderCtx_);
     if (inputCtx_)
