@@ -70,8 +70,7 @@ public:
     std::streamsize bytesProgress(const DRing::DataTransferId& id) const;
 
     /// Create an IncomingFileTransfer object.
-    /// \return a filename to open where incoming data will be written or an empty string
-    ///         in case of refusal.
+    /// \return a shared pointer on created Stream object, or nullptr in case of error
     std::shared_ptr<Stream> onIncomingFileRequest(const std::string& account_id,
                                                   const std::string& peer_uri,
                                                   const std::string& display_name,

@@ -66,8 +66,13 @@ public:
     /// this value gives the maximal size used to send one packet.
     virtual int maxPayload() const = 0;
 
-    // TODO: make a std::chrono version
-    virtual bool waitForData(unsigned ms_timeout) const = 0;
+    /// Wait until data to read available, timeout or io error
+    /// \param ec error code set in case of error (if return value is < 0)
+    /// \return positive number if data ready for read, 0 in case of timeout or error.
+    /// \note error code is not set in case of timeout, but set only in case of io error
+    /// (i.e. socket deconnection).
+    /// \todo make a std::chrono version for the timeout
+    virtual int waitForData(unsigned ms_timeout, std::error_code& ec) const = 0;
 
     /// Write a given amount of data.
     /// \param buf data to write.

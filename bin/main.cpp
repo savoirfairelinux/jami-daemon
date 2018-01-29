@@ -171,6 +171,7 @@ signal_handler(int code)
     signal(SIGHUP, SIG_DFL);
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
+    signal(SIGPIPE, SIG_IGN);
 
     // Interrupt the process
 #if REST_API

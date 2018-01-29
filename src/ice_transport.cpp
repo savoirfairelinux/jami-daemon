@@ -1113,8 +1113,9 @@ IceTransport::waitForNegotiation(unsigned timeout)
 }
 
 ssize_t
-IceTransport::waitForData(int comp_id, unsigned int timeout)
+IceTransport::waitForData(int comp_id, unsigned int timeout, std::error_code& ec)
 {
+    (void)ec; ///< \todo handle errors
     auto& io = pimpl_->compIO_[comp_id];
     std::unique_lock<std::mutex> lk(io.mutex);
     if (!io.cv.wait_for(lk, std::chrono::milliseconds(timeout),
@@ -1196,10 +1197,10 @@ IceSocketTransport::maxPayload() const
     return STANDARD_MTU_SIZE - ip_header_size - UDP_HEADER_SIZE;
 }
 
-bool
-IceSocketTransport::waitForData(unsigned ms_timeout) const
+int
+IceSocketTransport::waitForData(unsigned ms_timeout, std::error_code& ec) const
 {
-    return ice_->waitForData(compId_, ms_timeout) > 0;
+    return ice_->waitForData(compId_, ms_timeout, ec);
 }
 
 std::size_t
@@ -1268,7 +1269,8 @@ IceSocket::waitForData(unsigned int timeout)
     if (!ice_transport_.get())
         return -1;
 
-    return ice_transport_->waitForData(compId_, timeout);
+    std::error_code ec;
+    return ice_transport_->waitForData(compId_, timeout, ec);
 }
 
 void
