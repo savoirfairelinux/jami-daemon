@@ -530,11 +530,9 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         encoderCtx_->width = device_.width;
         encoderCtx_->height = device_.height;
 
+        // satisfy ffmpeg: denominator must be 16bit or less value
         // time base = 1/FPS
-        encoderCtx_->time_base = AVRational {
-            (int) device_.framerate.denominator(),
-            (int) device_.framerate.numerator()
-        };
+        av_reduce(&encoderCtx_->time_base.den, &encoderCtx_->time_base.num, device_.framerate.numerator(), device_.framerate.denominator(), (1U << 16) - 1);
 
         // emit one intra frame every gop_size frames
         encoderCtx_->max_b_frames = 0;
