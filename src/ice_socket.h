@@ -79,7 +79,7 @@ public:
 
     int maxPayload() const override;
 
-    bool waitForData(unsigned ms_timeout) const override;
+    int waitForData(unsigned ms_timeout, std::error_code& ec) const override;
 
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
