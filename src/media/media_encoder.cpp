@@ -530,10 +530,21 @@ void MediaEncoder::prepareEncoderContext(bool is_video)
         encoderCtx_->width = device_.width;
         encoderCtx_->height = device_.height;
 
-        // time base = 1/FPS
+
+        // satisfy ffmpeg mpegvideo_enc.c:775 - aka denominator must be 16bit or less value - or no video out
+        uint32_t frameRateNum, frameRateDen;
+        if (static_cast<uint32_t>(device_.framerate.denominator()) > ((1U << 16) - 1)) {
+            frameRateDen = (1U << 16) - 1;
+            frameRateNum = static_cast<uint32_t>(device_.framerate.numerator()) / static_cast<uint32_t>(device_.framerate.denominator()) * ((1U << 16) - 1);
+        } else {
+            frameRateDen = static_cast<uint16_t>(device_.framerate.denominator());
+            frameRateNum = static_cast<uint16_t>(device_.framerate.numerator());
+        }
+
+        // time base = 1/FrameRate(FPS)
         encoderCtx_->time_base = AVRational {
-            (int) device_.framerate.denominator(),
-            (int) device_.framerate.numerator()
+            frameRateDen,
+            frameRateNum
         };
 
         // emit one intra frame every gop_size frames
