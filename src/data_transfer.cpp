@@ -139,8 +139,6 @@ FileTransfer::FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferI
     input_.seekg(0, std::ios_base::end);
     info_.totalSize = input_.tellg();
     input_.seekg(0, std::ios_base::beg);
-
-    emit(DRing::DataTransferEventCode::created);
 }
 
 bool
@@ -236,8 +234,6 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
 
     info_ = info;
     info_.isOutgoing = false;
-
-    emit(DRing::DataTransferEventCode::created);
 }
 
 std::streamsize
@@ -358,6 +354,7 @@ DataTransferFacade::Impl::createFileTransfer(const DRing::DataTransferInfo& info
     auto transfer = std::make_shared<FileTransfer>(tid, info);
     std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(tid, transfer);
+    transfer->emit(DRing::DataTransferEventCode::created);
     return transfer;
 }
 
@@ -368,6 +365,7 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info);
     std::lock_guard<std::mutex> lk {mapMutex_};
     map_.emplace(tid, transfer);
+    transfer->emit(DRing::DataTransferEventCode::created);
     return transfer;
 }
 
