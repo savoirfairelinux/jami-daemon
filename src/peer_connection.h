@@ -94,9 +94,7 @@ public:
     void setOnRecv(RecvCb&&) override {
         throw std::logic_error("TlsTurnEndpoint::setOnRecv not implemented");
     }
-    bool waitForData(unsigned) const override {
-        throw std::logic_error("TlsTurnEndpoint::waitForData not implemented");
-    }
+    bool waitForData(unsigned, std::error_code&) const override;
 
     void connect();
 
@@ -120,7 +118,7 @@ public:
     bool isReliable() const override { return true; }
     bool isInitiator() const override { return true; }
     int maxPayload() const override { return 1280; }
-    bool waitForData(unsigned ms_timeout) const override;
+    bool waitForData(unsigned ms_timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t len, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t len, std::error_code& ec) override;
 
@@ -160,9 +158,7 @@ public:
     void setOnRecv(RecvCb&&) override {
         throw std::logic_error("TlsSocketEndpoint::setOnRecv not implemented");
     }
-    bool waitForData(unsigned) const override {
-        throw std::logic_error("TlsSocketEndpoint::waitForData not implemented");
-    }
+    bool waitForData(unsigned, std::error_code&) const override;
 
     void connect();
 
@@ -178,7 +174,7 @@ class PeerConnection
 public:
     using SocketType = GenericSocket<uint8_t>;
 
-    PeerConnection(Account& account, const std::string& peer_uri,
+    PeerConnection(std::function<void()>&& done, Account& account, const std::string& peer_uri,
                    std::unique_ptr<SocketType> endpoint);
 
     ~PeerConnection();

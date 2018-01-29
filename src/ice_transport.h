@@ -168,7 +168,7 @@ public:
 
     int waitForNegotiation(unsigned timeout);
 
-    ssize_t waitForData(int comp_id, unsigned int timeout);
+    ssize_t waitForData(int comp_id, unsigned int timeout, std::error_code& ec);
 
     unsigned getComponentCount() const;
 

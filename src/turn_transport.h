@@ -133,7 +133,7 @@ public:
     ///
     bool sendto(const IpAddr& peer, const char* const buffer, std::size_t size);
 
-    bool waitForData(const IpAddr& peer, unsigned ms_timeout) const;
+    bool waitForData(const IpAddr& peer, unsigned ms_timeout, std::error_code& ec) const;
 
 public:
     // Move semantic only, not copiable
@@ -157,7 +157,7 @@ public:
     bool isInitiator() const override { return turn_.isInitiator(); }
     int maxPayload() const override { return 3000; }
 
-    bool waitForData(unsigned ms_timeout) const override;
+    bool waitForData(unsigned ms_timeout, std::error_code& ec) const override;
     std::size_t read(ValueType* buf, std::size_t length, std::error_code& ec) override;
     std::size_t write(const ValueType* buf, std::size_t length, std::error_code& ec) override;
 

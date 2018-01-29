@@ -210,6 +210,12 @@ TlsTurnEndpoint::peerCertificate() const
     return pimpl_->peerCertificate;
 }
 
+bool
+TlsTurnEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+{
+    return pimpl_->tls->waitForData(ms_timeout, ec);
+}
+
 //==============================================================================
 
 TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
@@ -237,21 +243,31 @@ TcpSocketEndpoint::connect()
 }
 
 bool
-TcpSocketEndpoint::waitForData(unsigned ms_timeout) const
+TcpSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 {
-    struct timeval tv;
-    tv.tv_sec = ms_timeout / 1000;
-    tv.tv_usec = (ms_timeout % 1000) * 1000;
+    for (;;) {
+        struct timeval tv;
+        tv.tv_sec = ms_timeout / 1000;
+        tv.tv_usec = (ms_timeout % 1000) * 1000;
 
-    fd_set read_fds;
-    FD_ZERO(&read_fds);
-    FD_SET(sock_, &read_fds);
+        fd_set read_fds, error_fds;
+        FD_ZERO(&read_fds);
+        FD_ZERO(&error_fds);
+        FD_SET(sock_, &read_fds);
+        FD_SET(sock_, &error_fds);
 
-    while (::select(sock_ + 1, &read_fds, nullptr, nullptr, &tv) >= 0) {
+        auto res = ::select(sock_ + 1, &read_fds, nullptr, &error_fds, &tv);
+        if (res <= 0)
+            break;
         if (FD_ISSET(sock_, &read_fds))
             return true;
+        if (FD_ISSET(sock_, &error_fds)) {
+            RING_WARN() << "select() error_fds set, errno=" << errno;
+            break;
+        }
     }
 
+    ec.assign(errno, std::generic_category());
     return false;
 }
 
@@ -392,6 +408,12 @@ TlsSocketEndpoint::connect()
     pimpl_->tls->connect();
 }
 
+bool
+TlsSocketEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
+{
+    return pimpl_->tls->waitForData(ms_timeout, ec);
+}
+
 //==============================================================================
 
 // following namespace prevents an ODR violation with definitions in p2p.cpp
@@ -440,12 +462,20 @@ struct AttachOutputCtrlMsg final : CtrlMsg
 class PeerConnection::PeerConnectionImpl
 {
 public:
-    PeerConnectionImpl(Account& account, const std::string& peer_uri,
+    PeerConnectionImpl(std::function<void()>&& done,
+                       Account& account, const std::string& peer_uri,
                        std::unique_ptr<SocketType> endpoint)
         : account {account}
         , peer_uri {peer_uri}
         , endpoint_ {std::move(endpoint)}
-        , eventLoopFut_ {std::async(std::launch::async, [this]{ eventLoop();})} {}
+        , eventLoopFut_ {std::async(std::launch::async, [this, done=std::move(done)] {
+                try {
+                    eventLoop();
+                } catch (const std::exception& e) {
+                    RING_ERR() << "[CNX] peer connection event loop failure: " << e.what();
+                    done();
+                }
+            })} {}
 
     ~PeerConnectionImpl() {
         ctrlChannel << std::make_unique<StopCtrlMsg>();
@@ -497,7 +527,18 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         while (true) {
             std::unique_ptr<CtrlMsg> msg;
             if (outputs_.empty() and inputs_.empty()) {
-                ctrlChannel >> msg;
+                if (!ctrlChannel.empty()) {
+                    msg = ctrlChannel.receive();
+                } else {
+                    std::error_code ec;
+                    if (endpoint_->waitForData(100, ec)) {
+                        std::vector<uint8_t> buf(IO_BUFFER_SIZE);
+                        endpoint_->read(buf, ec); ///< \todo what to do with data from a good read?
+                        if (ec)
+                            throw std::system_error(ec);
+                    }
+                    break;
+                }
             } else if (!ctrlChannel.empty()) {
                 msg = ctrlChannel.receive();
             } else
@@ -551,9 +592,10 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
 //==============================================================================
 
-PeerConnection::PeerConnection(Account& account, const std::string& peer_uri,
+PeerConnection::PeerConnection(std::function<void()>&& done, Account& account,
+                               const std::string& peer_uri,
                                std::unique_ptr<GenericSocket<uint8_t>> endpoint)
-    : pimpl_(std::make_unique<PeerConnectionImpl>(account, peer_uri, std::move(endpoint)))
+    : pimpl_(std::make_unique<PeerConnectionImpl>(std::move(done), account, peer_uri, std::move(endpoint)))
 {}
 
 PeerConnection::~PeerConnection()

@@ -332,8 +332,8 @@ private:
         tls_ep->connect();
 
         // Connected!
-        connection_ = std::make_unique<PeerConnection>(parent_.account, peer_.toString(),
-                                                       std::move(tls_ep));
+        connection_ = std::make_unique<PeerConnection>([this] { cancel(); }, parent_.account,
+                                                       peer_.toString(), std::move(tls_ep));
         peer_ep_ = std::move(peer_ep);
 
         connected_ = true;
@@ -435,7 +435,8 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
 
     RING_DBG() << account << "[CNX] Accepted TLS-TURN connection from RingID " << peer_h;
     connectedPeers_.emplace(peer_addr, tls_ep->peerCertificate().getId());
-    auto connection = std::make_unique<PeerConnection>(account, peer_addr.toString(), std::move(tls_ep));
+    auto connection = std::make_unique<PeerConnection>([this] { }, account, peer_addr.toString(),
+                                                       std::move(tls_ep));
     connection->attachOutputStream(std::make_shared<FtpServer>(account.getAccountID(), peer_h.toString()));
     servers_.emplace(peer_addr, std::move(connection));
 

@@ -641,7 +641,8 @@ int
 TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
 {
     if (transport_.isReliable()) {
-        if (not transport_.waitForData(timeout)) {
+        std::error_code ec;
+        if (not transport_.waitForData(timeout, ec)) {
             // shutdown?
             if (state_ == TlsSessionState::SHUTDOWN) {
                 gnutls_transport_set_errno(session_, EINTR);
@@ -1055,9 +1056,14 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
     // Nothing to do in reliable mode, so just wait for state change
     if (transport_.isReliable()) {
-        std::unique_lock<std::mutex> lk {rxMutex_};
-        rxCv_.wait(lk, [this]{ return state_ != TlsSessionState::ESTABLISHED; });
-        return state;
+        std::error_code ec;
+        do {
+            transport_.waitForData(100, ec);
+            state = state_.load();
+            if (state != TlsSessionState::ESTABLISHED)
+                return state;
+        } while (!ec);
+        return TlsSessionState::SHUTDOWN;
     }
 
     // block until rx packet or state change
@@ -1260,6 +1266,14 @@ TlsSession::connect()
         state = pimpl_->state_.load();
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
     } while (state != TlsSessionState::ESTABLISHED and state != TlsSessionState::SHUTDOWN);
+}
+
+bool
+TlsSession::waitForData(unsigned ms_timeout, std::error_code& ec) const
+{
+    if (!pimpl_->transport_.waitForData(ms_timeout, ec))
+        return false;
+    return true;
 }
 
 }} // namespace ring::tls
