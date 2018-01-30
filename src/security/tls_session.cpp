@@ -1070,13 +1070,12 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
 {
     // Nothing to do in reliable mode, so just wait for state change
     if (transport_.isReliable()) {
-        std::error_code ec;
-        do {
-            transport_.waitForData(100, ec);
+        while (true) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
             state = state_.load();
             if (state != TlsSessionState::ESTABLISHED)
                 return state;
-        } while (!ec);
+        }
         return TlsSessionState::SHUTDOWN;
     }
 
