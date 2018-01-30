@@ -304,7 +304,6 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
 
     info_.path = filename;
     filenamePromise_.set_value();
-    start();
 }
 
 bool
