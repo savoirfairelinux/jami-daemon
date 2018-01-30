@@ -21,6 +21,8 @@
  */
 
 %apply int32_t { DRing::DataTransferEventCode };
+%apply uint64_t { DRing::DataTransferId };
+%apply uint64_t { const DRing::DataTransferId };
 
 %header %{
 #include "dring/dring.h"
@@ -30,7 +32,7 @@
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const uint64_t transferId, int eventCode){}
+    virtual void dataTransferEvent(const DRing::DataTransferId transferId, int eventCode){}
 };
 %}
 
@@ -50,17 +52,17 @@ namespace DRing {
       std::string peer;
   };
 
-  void acceptFileTransfer(const uint64_t id, const std::string &file_path, std::size_t offset);
-  void cancelDataTransfer(const uint64_t id);
-  std::streamsize dataTransferBytesProgress(const uint64_t id);
-  DRing::DataTransferInfo dataTransferInfo(const uint64_t id);
+  void acceptFileTransfer(const DRing::DataTransferId id, const std::string &file_path, std::size_t offset);
+  void cancelDataTransfer(const DRing::DataTransferId id);
+  std::streamsize dataTransferBytesProgress(const DRing::DataTransferId id);
+  DRing::DataTransferInfo dataTransferInfo(const DRing::DataTransferId id) throw(std::invalid_argument);
   /* std::vector<uint64_t> dataTransferList(); */
-  uint64_t sendFile(const std::string &account_id, const std::string &peer_uri, const std::string &file_path, const std::string &display_name) throw(std::invalid_argument, std::runtime_error);
+  DRing::DataTransferId sendFile(const std::string &account_id, const std::string &peer_uri, const std::string &file_path, const std::string &display_name) throw(std::invalid_argument, std::runtime_error);
 
 }
 
 class DataTransferCallback {
 public:
     virtual ~DataTransferCallback(){}
-    virtual void dataTransferEvent(const uint64_t transferId, int eventCode){}
+    virtual void dataTransferEvent(const DRing::DataTransferId transferId, int eventCode){}
 };
