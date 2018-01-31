@@ -2,6 +2,7 @@
  *  Copyright (C) 2016-2018 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,227 +21,197 @@
 #include "message_engine.h"
 #include "sip/sipaccountbase.h"
 #include "manager.h"
-
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
 
-#include <json/json.h>
-
-#include <fstream>
+#include <chrono>
+#include <mutex>
+#include <sstream>
 
 namespace ring {
 namespace im {
 
-static std::uniform_int_distribution<MessageToken> udist {1};
-const std::chrono::minutes MessageEngine::RETRY_PERIOD = std::chrono::minutes(1);
+static constexpr auto schedule_period = std::chrono::minutes(1);
+static constexpr unsigned max_retries = 3;
 
-MessageEngine::MessageEngine(SIPAccountBase& acc, const std::string& path) : account_(acc), savePath_(path)
-{}
+namespace
+{
+
+class Message {
+public:
+    Message(MessageToken token, const std::string& recipient, const std::map<std::string, std::string>& contents)
+        : token {token}, recipient {recipient}, contents {contents} {}
+
+    const MessageToken token;
+    const std::string recipient;
+    const std::map<std::string, std::string> contents;
+    MessageStatus status {MessageStatus::CREATED};
+    unsigned retries {0};
+};
+
+static inline std::ostream& operator<< (std::ostream& os, const Message& msg)
+{
+    os << "[message " << std::hex << msg.token << std::dec << "] ";
+    return os;
+}
+
+}
+
+class MessageEngine::Impl
+{
+public:
+
+    using clock = std::chrono::steady_clock;
+
+    explicit Impl(SIPAccountBase& acc) : account {acc} {}
+
+    MessageToken sendNewMessage(const std::string&, const std::map<std::string, std::string>&);
+    void emitMessageChange(const Message&, DRing::Account::MessageStates);
+    void onMessageSent(MessageToken, bool);
+
+    SIPAccountBase& account;
+    mutable std::mutex messageMapMutex;
+    std::map<MessageToken, Message> messageMap;
+    std::uniform_int_distribution<MessageToken> udist {1};
+
+private:
+    NON_COPYABLE(Impl);
+    MessageToken generateToken();
+    void tryToSendMsg(Message&);
+    void reschedule(MessageToken);
+};
+
+inline MessageToken
+MessageEngine::Impl::generateToken()
+{
+    MessageToken token;
+    do {
+        token = udist(account.rand);
+    } while (messageMap.find(token) != std::cend(messageMap));
+    return token;
+}
+
+inline void
+MessageEngine::Impl::emitMessageChange(const Message& msg, DRing::Account::MessageStates status)
+{
+    emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
+        account.getAccountID(), msg.token, msg.recipient, int(status));
+}
+
+inline void
+MessageEngine::Impl::tryToSendMsg(Message& msg)
+{
+    if (msg.status > MessageStatus::SENDING)
+        return;
+
+    if (msg.retries++ >= max_retries) {
+        RING_ERR() << msg << "max retries reached";
+        msg.status = MessageStatus::FAILURE;
+        emitMessageChange(msg, DRing::Account::MessageStates::FAILURE);
+        return;
+    }
+
+    RING_DBG() << msg << "sending, try #" << msg.retries;
+    msg.status = MessageStatus::SENDING;
+    emitMessageChange(msg, DRing::Account::MessageStates::SENDING);
+    account.sendTextMessage(msg.recipient, msg.contents, msg.token);
+    reschedule(msg.token);
+}
+
+void
+MessageEngine::Impl::reschedule(MessageToken token)
+{
+    auto when = clock::now() + schedule_period;
+    std::weak_ptr<SIPAccountBase> account_locker = std::static_pointer_cast<SIPAccountBase>(account.shared_from_this());
+    Manager::instance().scheduleTask(
+        [this, token, account_locker] {
+            if (auto account = account_locker.lock()) {
+                std::unique_lock<std::mutex> lk {messageMapMutex};
+                const auto& iter = messageMap.find(token);
+                if (iter == std::cend(messageMap))
+                    return;
+                lk.unlock();
+                tryToSendMsg(iter->second);
+            }
+        }, when);
+}
 
 MessageToken
-MessageEngine::sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads)
+MessageEngine::Impl::sendNewMessage(const std::string& recipient,
+                                    const std::map<std::string, std::string>& contents)
 {
-    if (payloads.empty() or to.empty())
-        return 0;
-    MessageToken token;
-    {
-        std::lock_guard<std::mutex> lock(messagesMutex_);
-        do {
-            token = udist(account_.rand);
-        } while (messages_.find(token) != messages_.end());
-        auto m = messages_.emplace(token, Message{});
-        m.first->second.to = to;
-        m.first->second.payloads = payloads;
-    }
-    save();
-    runOnMainThread([this]() {
-        retrySend();
-    });
+    std::unique_lock<std::mutex> lk {messageMapMutex};
+    auto token = generateToken();
+    auto result = messageMap.emplace(token, Message(token, recipient, contents));
+    lk.unlock();
+    tryToSendMsg(result.first->second);
     return token;
 }
 
 void
-MessageEngine::reschedule()
+MessageEngine::Impl::onMessageSent(MessageToken token, bool ok)
 {
-    if (messages_.empty())
-        return;
-    std::weak_ptr<Account> w = std::static_pointer_cast<Account>(account_.shared_from_this());
-    auto next = nextEvent();
-    if (next != clock::time_point::max())
-        Manager::instance().scheduleTask([w,this](){
-            if (auto s = w.lock())
-                retrySend();
-        }, next);
-}
-
-MessageEngine::clock::time_point
-MessageEngine::nextEvent() const
-{
-    auto next = clock::time_point::max();
-    for (const auto& m : messages_) {
-        if (m.second.status == MessageStatus::UNKNOWN || m.second.status == MessageStatus::IDLE) {
-            auto next_op = m.second.last_op + RETRY_PERIOD;
-            if (next_op < next)
-                next = next_op;
-        }
-    }
-    return next;
-}
-
-void
-MessageEngine::retrySend()
-{
-    struct PendingMsg {
-        MessageToken token;
-        std::string to;
-        std::map<std::string, std::string> payloads;
-    };
-    std::vector<PendingMsg> pending {};
-    {
-        std::lock_guard<std::mutex> lock(messagesMutex_);
-        auto now = clock::now();
-        for (auto m = messages_.begin(); m != messages_.end(); ++m) {
-            if (m->second.status == MessageStatus::UNKNOWN || m->second.status == MessageStatus::IDLE) {
-                auto next_op = m->second.last_op + RETRY_PERIOD;
-                if (next_op <= now) {
-                    m->second.status = MessageStatus::SENDING;
-                    m->second.retried++;
-                    m->second.last_op = clock::now();
-                    pending.emplace_back(PendingMsg {m->first, m->second.to, m->second.payloads});
-                }
-            }
-        }
-    }
-    // avoid locking while calling callback
-    for (auto& p : pending) {
-        RING_DBG("[message %" PRIx64 "] retrying sending", p.token);
+    std::unique_lock<std::mutex> lk {messageMapMutex};
+    const auto& iter = messageMap.find(token);
+    if (iter == std::cend(messageMap)) {
+        auto status = ok ? DRing::Account::MessageStates::SENT : DRing::Account::MessageStates::FAILURE;
+        RING_WARN() << "status " << (ok ? "success" : "failure")
+                    << " from unknown message " << std::hex << token << std::dec;
+        lk.unlock();
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
-            account_.getAccountID(),
-            p.token,
-            p.to,
-            (int)DRing::Account::MessageStates::SENDING);
-        account_.sendTextMessage(p.to, p.payloads, p.token);
+            account.getAccountID(), token, "", int(status));
+        return;
     }
+
+    auto& msg = iter->second;
+    if (msg.status == MessageStatus::SENDING) {
+        if (ok) {
+            msg.status = MessageStatus::SENT;
+            lk.unlock();
+            RING_DBG() << msg << "sending done";
+            emitMessageChange(msg, DRing::Account::MessageStates::SENT);
+        } else {
+            msg.status = MessageStatus::FAILURE;
+            lk.unlock();
+            RING_DBG() << msg << "sending error";
+            emitMessageChange(msg, DRing::Account::MessageStates::FAILURE);
+        }
+    } else {
+        RING_ERR() << msg << "received before being sent";
+    }
+}
+
+//==============================================================================
+
+MessageEngine::MessageEngine(SIPAccountBase& account)
+    : pimpl_ { std::make_unique<Impl>(account) }
+{}
+
+MessageEngine::~MessageEngine() = default;
+
+MessageToken
+MessageEngine::sendMessage(const std::string& recipient,
+                            const std::map<std::string, std::string>& contents)
+{
+    if (recipient.empty() or contents.empty())
+        return 0;
+    return pimpl_->sendNewMessage(recipient, contents);
 }
 
 MessageStatus
-MessageEngine::getStatus(MessageToken t) const
+MessageEngine::getStatus(MessageToken token) const
 {
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    const auto m = messages_.find(t);
-    return (m == messages_.end()) ? MessageStatus::UNKNOWN : m->second.status;
+    std::lock_guard<std::mutex> lk {pimpl_->messageMapMutex};
+    const auto& iter = pimpl_->messageMap.find(token);
+    if (iter == std::cend(pimpl_->messageMap))
+        return MessageStatus::UNKNOWN;
+    return iter->second.status;
 }
 
 void
 MessageEngine::onMessageSent(MessageToken token, bool ok)
 {
-    RING_DBG("[message %" PRIx64 "] message sent: %s", token, ok ? "success" : "failure");
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    auto f = messages_.find(token);
-    if (f != messages_.end()) {
-        if (f->second.status == MessageStatus::SENDING) {
-            if (ok) {
-                f->second.status = MessageStatus::SENT;
-                RING_DBG("[message %" PRIx64 "] status changed to SENT", token);
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                             token,
-                                                                             f->second.to,
-                                                                             static_cast<int>(DRing::Account::MessageStates::SENT));
-            } else if (f->second.retried >= MAX_RETRIES) {
-                f->second.status = MessageStatus::FAILURE;
-                RING_WARN("[message %" PRIx64 "] status changed to FAILURE", token);
-                emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
-                                                                             token,
-                                                                             f->second.to,
-                                                                             static_cast<int>(DRing::Account::MessageStates::FAILURE));
-            } else {
-                f->second.status = MessageStatus::IDLE;
-                RING_DBG("[message %" PRIx64 "] status changed to IDLE", token);
-                reschedule();
-            }
-        }
-        else {
-           RING_DBG("[message %" PRIx64 "] state is not SENDING", token);
-        }
-    }
-    else {
-        RING_DBG("[message %" PRIx64 "] can't find message", token);
-    }
+    pimpl_->onMessageSent(token, ok);
 }
 
-void
-MessageEngine::load()
-{
-    std::lock_guard<std::mutex> lock(messagesMutex_);
-    try {
-        std::ifstream file;
-        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        file.open(savePath_);
-
-        Json::Value root;
-        file >> root;
-
-        long unsigned loaded {0};
-        for (auto i = root.begin(); i != root.end(); ++i) {
-            const auto& jmsg = *i;
-            MessageToken token;
-            std::istringstream iss(i.key().asString());
-            iss >> std::hex >> token;
-            Message msg;
-            msg.status = (MessageStatus)jmsg["status"].asInt();
-            msg.to = jmsg["to"].asString();
-            auto wall_time = std::chrono::system_clock::from_time_t(jmsg["last_op"].asInt64());
-            msg.last_op = clock::now() + (wall_time - std::chrono::system_clock::now());
-            msg.retried = jmsg.get("retried", 0).asUInt();
-            const auto& pl = jmsg["payload"];
-            for (auto p = pl.begin(); p != pl.end(); ++p)
-                msg.payloads[p.key().asString()] = p->asString();
-           messages_.emplace(token, std::move(msg));
-           loaded++;
-        }
-        RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
-
-        // everything whent fine, removing the file
-        std::remove(savePath_.c_str());
-    } catch (const std::exception& e) {
-        RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
-    }
-    reschedule();
-}
-
-void
-MessageEngine::save() const
-{
-    try {
-        Json::Value root(Json::objectValue);
-        std::unique_lock<std::mutex> lock(messagesMutex_);
-        for (auto& c : messages_) {
-            auto& v = c.second;
-            Json::Value msg;
-            std::ostringstream msgsId;
-            msgsId << std::hex << c.first;
-            msg["status"] = (int)(v.status == MessageStatus::SENDING ? MessageStatus::IDLE : v.status);
-            msg["to"] = v.to;
-            auto wall_time = std::chrono::system_clock::now() + std::chrono::duration_cast<std::chrono::system_clock::duration>(v.last_op - clock::now());
-            msg["last_op"] = (Json::Value::Int64) std::chrono::system_clock::to_time_t(wall_time);
-            msg["retried"] = v.retried;
-            auto& payloads = msg["payload"];
-            for (const auto& p : v.payloads)
-                payloads[p.first] = p.second;
-            root[msgsId.str()] = std::move(msg);
-        }
-        lock.unlock();
-        std::ofstream file;
-        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        file.open(savePath_, std::ios::trunc);
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        file << Json::writeString(wbuilder, root);
-        RING_DBG("[Account %s] saved %lu messages to %s", account_.getAccountID().c_str(), messages_.size(), savePath_.c_str());
-    } catch (const std::exception& e) {
-        RING_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
-    }
-}
-
-}}
+}} // namespace ring::im

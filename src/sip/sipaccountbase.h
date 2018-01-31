@@ -30,7 +30,6 @@
 #include "sip_utils.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
-#include "im/message_engine.h"
 
 #include <pjsip/sip_types.h>
 
@@ -50,6 +49,11 @@ struct pjsip_inv_session;
 struct pjmedia_sdp_session;
 
 namespace ring {
+
+namespace im
+{
+class MessageSPooler;
+}
 
 namespace Conf {
     // SIP specific configuration keys
@@ -259,13 +263,9 @@ public:
     virtual void sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t id) = 0;
 
     virtual uint64_t sendTextMessage(const std::string& to,
-                                     const std::map<std::string, std::string>& payloads) override {
-        return messageEngine_.sendMessage(to, payloads);
-    }
+                                     const std::map<std::string, std::string>& payloads) override;
 
-    virtual im::MessageStatus getMessageStatus(uint64_t id) const override {
-        return messageEngine_.getStatus(id);
-    }
+    virtual im::MessageStatus getMessageStatus(uint64_t id) const override;
 
     void onTextMessage(const std::string& from, const std::map<std::string, std::string>& payloads);
 
@@ -294,7 +294,7 @@ protected:
 
     virtual void setRegistrationState(RegistrationState state, unsigned code=0, const std::string& detail_str={}) override;
 
-    im::MessageEngine messageEngine_;
+    std::unique_ptr<im::MessageEngine> messageEngine_;
 
     /**
      * Voice over IP Link contains a listener thread and calls

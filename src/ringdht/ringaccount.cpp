@@ -3200,14 +3200,14 @@ void
 RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, std::string>& payloads, uint64_t token)
 {
     if (to.empty() or payloads.empty()) {
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_->onMessageSent(token, false);
         return;
     }
     if (payloads.size() != 1) {
         // Multi-part message
         // TODO: not supported yet
         RING_ERR("Multi-part im is not supported yet by RingAccount");
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_->onMessageSent(token, false);
         return;
     }
 
@@ -3218,7 +3218,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     }
     catch (...) {
         RING_ERR("Failed to send a text message due to an invalid URI %s", to.c_str());
-        messageEngine_.onMessageSent(token, false);
+        messageEngine_->onMessageSent(token, false);
         return;
     }
 
@@ -3265,7 +3265,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     this_.dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
                 confirm->replied = true;
-                this_.messageEngine_.onMessageSent(token, true);
+                this_.messageEngine_->onMessageSent(token, true);
             }
             return false;
         });
@@ -3282,7 +3282,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                             confirm->listenTokens.erase(lt);
                         }
                         if (confirm->listenTokens.empty() and not confirm->replied)
-                            this_->messageEngine_.onMessageSent(token, false);
+                            this_->messageEngine_->onMessageSent(token, false);
                     }
                 }
             });
@@ -3300,7 +3300,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
                     this_->dht_.cancelListen(t.first, t.second.get());
                 confirm->listenTokens.clear();
                 confirm->replied = true;
-                this_->messageEngine_.onMessageSent(token, false);
+                this_->messageEngine_->onMessageSent(token, false);
             }
         }
     }, std::chrono::steady_clock::now() + std::chrono::minutes(1));
