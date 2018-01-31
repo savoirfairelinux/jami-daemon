@@ -171,7 +171,7 @@ dhtproxy_variables="-DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PROXY_SERVER=true -DOP
 if $modeok && $tagok ; then
     . ${top_builddir_slash}doltcompile "${args@<:@@@:>@}" ${dhtproxy_variables}
 else
-    exec ${top_builddir_slash}libtool "$[]@" $(proxydht_variables) ${dhtproxy_variables}
+    exec ${top_builddir_slash}libtool "$[]@" ${dhtproxy_variables}
 fi
 __DOLTLIBTOOL__EOF__
 
