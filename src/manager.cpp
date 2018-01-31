@@ -2970,7 +2970,6 @@ Manager::getMessageStatus(uint64_t id)
         auto status = acc->getMessageStatus(id);
         if (status != im::MessageStatus::UNKNOWN) {
             switch (status) {
-            case im::MessageStatus::IDLE:
             case im::MessageStatus::SENDING:
                 return static_cast<int>(DRing::Account::MessageStates::SENDING);
             case im::MessageStatus::SENT:

@@ -41,15 +41,16 @@
 #include "string_utils.h"
 #include "fileutils.h"
 #include "sip_utils.h"
+#include "im/message_engine.h"
 
 #include <type_traits>
 
 namespace ring {
 
 SIPAccountBase::SIPAccountBase(const std::string& accountID)
-    : Account(accountID),
-    messageEngine_(*this, fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID()+DIR_SEPARATOR_STR "messages"),
-    link_(getSIPVoIPLink())
+    : Account(accountID)
+    , messageEngine_ { std::make_unique<im::MessageEngine>(*this) }
+    , link_(getSIPVoIPLink())
 {}
 
 SIPAccountBase::~SIPAccountBase() {}
@@ -296,10 +297,6 @@ SIPAccountBase::getVolatileAccountDetails() const
 void
 SIPAccountBase::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
 {
-    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED)
-        messageEngine_.load();
-    else if (state != RegistrationState::REGISTERED && registrationState_ == RegistrationState::REGISTERED)
-        messageEngine_.save();
     Account::setRegistrationState(state, details_code, details_str);
 }
 
@@ -395,6 +392,19 @@ SIPAccountBase::setPublishedAddress(const IpAddr& ip_addr)
     publishedIpAddress_ = ip_addr.toString();
     RING_DBG("[Account %s] Using public address %s", getAccountID().c_str(),
              publishedIpAddress_.c_str());
+}
+
+uint64_t
+SIPAccountBase::sendTextMessage(const std::string& to,
+                                const std::map<std::string, std::string>& payloads)
+{
+    return messageEngine_->sendMessage(to, payloads);
+}
+
+im::MessageStatus
+SIPAccountBase::getMessageStatus(uint64_t id) const
+{
+    return messageEngine_->getStatus(id);
 }
 
 } // namespace ring

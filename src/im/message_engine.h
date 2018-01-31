@@ -1,7 +1,8 @@
 /*
- *  Copyright (C) 2016-2018 Savoir-faire Linux Inc.
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
  *
  *  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+ *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -19,10 +20,11 @@
 
 #pragma once
 
+#include "noncopyable.h"
+
+#include <memory>
 #include <string>
 #include <map>
-#include <chrono>
-#include <mutex>
 #include <cstdint>
 
 namespace ring {
@@ -35,7 +37,7 @@ using MessageToken = uint64_t;
 
 enum class MessageStatus {
     UNKNOWN = 0,
-    IDLE,
+    CREATED,
     SENDING,
     SENT,
     READ,
@@ -45,52 +47,25 @@ enum class MessageStatus {
 class MessageEngine
 {
 public:
-
-    MessageEngine(SIPAccountBase&, const std::string& path);
+    MessageEngine(SIPAccountBase& account);
+    ~MessageEngine();
 
     MessageToken sendMessage(const std::string& to, const std::map<std::string, std::string>& payloads);
 
-    MessageStatus getStatus(MessageToken t) const;
+    MessageStatus getStatus(MessageToken token) const;
 
-    bool isSent(MessageToken t) const {
-        return getStatus(t) == MessageStatus::SENT;
+    inline bool isSent(MessageToken token) const {
+        return getStatus(token) == MessageStatus::SENT;
     }
 
-    void onMessageSent(MessageToken t, bool success);
-
-    /**
-     * Load persisted messages
-     */
-    void load();
-
-    /**
-     * Persist messages
-     */
-    void save() const;
+    /// Account im sending code must call this method when a message is known to be carried to its recipient.
+    void onMessageSent(MessageToken token, bool success);
 
 private:
+    NON_COPYABLE(MessageEngine);
 
-    static const constexpr unsigned MAX_RETRIES = 3;
-    static const std::chrono::minutes RETRY_PERIOD;
-    using clock = std::chrono::steady_clock;
-
-    clock::time_point nextEvent() const;
-    void retrySend();
-    void reschedule();
-
-    struct Message {
-        std::string to;
-        std::map<std::string, std::string> payloads;
-        MessageStatus status {MessageStatus::UNKNOWN};
-        unsigned retried {0};
-        clock::time_point last_op;
-    };
-
-    SIPAccountBase& account_;
-    const std::string savePath_;
-
-    std::map<MessageToken, Message> messages_;
-    mutable std::mutex messagesMutex_ {};
+    class Impl;
+    std::unique_ptr<Impl> pimpl_;
 };
 
 }} // namespace ring::im
