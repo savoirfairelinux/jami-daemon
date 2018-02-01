@@ -284,10 +284,10 @@ IncomingFileTransfer::close() noexcept
 
     try {
         filenamePromise_.set_value();
-        fout_.close();
-        RING_DBG() << "[FTP] file closed with size " << info_.bytesProgress;
     } catch (...) {}
 
+    fout_.close();
+    RING_DBG() << "[FTP] file closed with size " << info_.bytesProgress;
 
     emit(DRing::DataTransferEventCode::finished);
 }
