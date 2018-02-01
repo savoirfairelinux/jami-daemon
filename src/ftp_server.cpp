@@ -93,7 +93,8 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
                     auto count = headerStream_.gcount();
                     if (!count)
                         continue;
-                    out_->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
+                    if (out_)
+                        out_->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
                     rx_ += count;
                     if (rx_ >= fileSize_) {
                         closeCurrentFile();
@@ -107,7 +108,8 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
             break;
 
         case FtpState::READ_DATA:
-            out_->write(&buffer[0], buffer.size());
+            if (out_)
+                out_->write(&buffer[0], buffer.size());
             rx_ += buffer.size();
             if (rx_ >= fileSize_) {
                 closeCurrentFile();
