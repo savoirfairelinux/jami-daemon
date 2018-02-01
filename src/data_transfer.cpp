@@ -287,9 +287,13 @@ IncomingFileTransfer::close() noexcept
     } catch (...) {}
 
     fout_.close();
-    RING_DBG() << "[FTP] file closed with size " << info_.bytesProgress;
 
-    emit(DRing::DataTransferEventCode::finished);
+    RING_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
+               << " on " << info_.totalSize;
+    if (std::size_t(info_.bytesProgress) == info_.totalSize)
+        emit(DRing::DataTransferEventCode::finished);
+    else
+        emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
 void
