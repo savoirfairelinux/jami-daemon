@@ -165,13 +165,10 @@ for arg in "$[]@"; do
     esac
 done
 
-dnl enable opendht proxy
-dhtproxy_variables="-DOPENDHT_PROXY_CLIENT=true -DOPENDHT_PROXY_SERVER=true -DOPENDHT_PUSH_NOTIFICATIONS=true"
-
 if $modeok && $tagok ; then
-    . ${top_builddir_slash}doltcompile "${args@<:@@@:>@}" ${dhtproxy_variables}
+    . ${top_builddir_slash}doltcompile "${args@<:@@@:>@}"
 else
-    exec ${top_builddir_slash}libtool "$[]@" ${dhtproxy_variables}
+    exec ${top_builddir_slash}libtool "$[]@"
 fi
 __DOLTLIBTOOL__EOF__
 
