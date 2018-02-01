@@ -578,9 +578,12 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 throw std::system_error(ec);
             });
         handle_stream_list(outputs_, [&](auto& stream) {
-                auto size = endpoint_->read(buf, ec);
-                if (!ec)
-                    return size > 0 and stream->write(buf);
+                if (endpoint_->waitForData(10, ec) > 0) {
+                    auto size = endpoint_->read(buf, ec);
+                    if (!ec)
+                        return size > 0 and stream->write(buf);
+                } else if (!ec)
+                    return true; // continue on msg handling
                 throw std::system_error(ec);
             });
     }
