@@ -27,6 +27,10 @@
 
 #include <sstream>
 
+#ifdef APPLE
+#include <TargetConditionals.h>
+#endif
+
 namespace ring {
 
 decltype(getGlobalInstance<SystemCodecContainer>)& getSystemCodecContainer = getGlobalInstance<SystemCodecContainer>;
@@ -61,12 +65,14 @@ SystemCodecContainer::initCodecConfig()
                                                minH264,
                                                maxH264),
 
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_VP8,
                                                "VP8", "libvpx",
                                                CODEC_ENCODER_DECODER,
                                                defaultBitrate,
                                                minVP8,
                                                maxVP8),
+#endif
 
         std::make_shared<SystemVideoCodecInfo>(AV_CODEC_ID_MPEG4,
                                                "MP4V-ES", "mpeg4",
