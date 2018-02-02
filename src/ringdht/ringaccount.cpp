@@ -2047,7 +2047,8 @@ RingAccount::doRegister_()
         config.proxy_server = proxyEnabled_ ? proxyServer_ : std::string();
         config.push_node_id = getAccountID();
         config.threaded = false;
-        RING_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
+        if (not config.proxy_server.empty())
+            RING_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
         if (not deviceKey_.empty())
             dht_.setPushNotificationToken(deviceKey_);
