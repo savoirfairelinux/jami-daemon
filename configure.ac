@@ -668,7 +668,8 @@ dnl debug mode is default-disabled
 AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
 
 AS_IF([test "x$enable_debug" = "xyes"],
-      [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"])
+      [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"],
+	  [CXXFLAGS="${CXXFLAGS} -DNDEGUG=1"])
 
 dnl What Makefiles to generate
 

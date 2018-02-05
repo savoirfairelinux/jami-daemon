@@ -26,6 +26,7 @@ usage()
 	echo "  --prefix=PREFIX     install files in PREFIX"
 	echo "  --no-checksums      don't verify checksums (allows to replace tarballs)"
 	echo "  --disable-downloads don't download packages from the internet"
+	echo "  --enable-debug      build with debug symbol and extra checks (disabled by default)"
 	echo "  --disable-FOO       configure to not build package FOO"
 	echo "  --enable-FOO        configure to build package FOO"
 }
@@ -57,6 +58,9 @@ do
 			;;
 		--disable-downloads)
 			DISABLE_CONTRIB_DOWNLOADS="TRUE"
+			;;
+		--enable-debug)
+			ENABLE_DEBUG=1
 			;;
 		--host=*)
 			HOST="${1#--host=}"
@@ -118,6 +122,7 @@ PKGS_DISABLE := $PKGS_DISABLE
 PKGS_ENABLE := $PKGS_ENABLE
 DISABLE_CONTRIB_DOWNLOADS := $DISABLE_CONTRIB_DOWNLOADS
 DISABLE_CONTRIB_CHECKSUMS := $DISABLE_CONTRIB_CHECKSUMS
+ENABLE_DEBUG := $ENABLE_DEBUG
 EOF
 
 add_make()
