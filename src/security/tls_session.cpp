@@ -623,6 +623,7 @@ TlsSession::TlsSessionImpl::recvRaw(void* buf, size_t size)
         return -1;
     }
 
+    std::lock_guard<std::mutex> lk {rxMutex_};
     if (rxQueue_.empty()) {
         gnutls_transport_set_errno(session_, EAGAIN);
         return -1;
