@@ -1980,6 +1980,7 @@ RingAccount::onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator&
 void
 RingAccount::doRegister_()
 {
+    std::lock_guard<std::mutex> lock(registerMtx_);
     try {
         if (not identity_.first or not identity_.second)
             throw std::runtime_error("No identity configured for this account.");
@@ -2460,6 +2461,8 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
+    std::lock_guard<std::mutex> lock(registerMtx_);
+
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
         if (released_cb) released_cb(false);
