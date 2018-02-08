@@ -72,15 +72,15 @@ public:
         started_ = false;
     }
 
-    virtual std::streamsize bytesProgress() const {
+    void bytesProgress(int64_t& total, int64_t& progress) const {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        return info_.bytesProgress;
+        total = info_.totalSize;
+        progress = info_.bytesProgress;
     }
 
-    DRing::DataTransferInfo info() const {
-        bytesProgress();
+    void info(DRing::DataTransferInfo& info) const {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        return info_;
+        info = info_;
     }
 
     void emit(DRing::DataTransferEventCode code) const;
@@ -133,7 +133,7 @@ FileTransfer::FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferI
         throw std::runtime_error("input file open failed");
 
     info_ = info;
-    info_.isOutgoing = true;
+    info_.flags.set(int(DRing::DataTransferFlags::direction), 0); // outgoing
 
     // File size?
     input_.seekg(0, std::ios_base::end);
@@ -211,8 +211,6 @@ public:
 
     void close() noexcept override;
 
-    std::streamsize bytesProgress() const override;
-
     std::string requestFilename();
 
     void accept(const std::string&, std::size_t offset) override;
@@ -233,14 +231,7 @@ IncomingFileTransfer::IncomingFileTransfer(DRing::DataTransferId tid,
     RING_WARN() << "[FTP] incoming transfert of " << info.totalSize << " byte(s): " << info.displayName;
 
     info_ = info;
-    info_.isOutgoing = false;
-}
-
-std::streamsize
-IncomingFileTransfer::bytesProgress() const
-{
-    std::lock_guard<std::mutex> lk {infoMutex_};
-    return info_.bytesProgress;
+    info_.flags.set(int(DRing::DataTransferFlags::direction), 1); // incoming
 }
 
 std::string
@@ -290,7 +281,7 @@ IncomingFileTransfer::close() noexcept
 
     RING_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
-    if (std::size_t(info_.bytesProgress) == info_.totalSize)
+    if (info_.bytesProgress >= info_.totalSize)
         emit(DRing::DataTransferEventCode::finished);
     else
         emit(DRing::DataTransferEventCode::closed_by_host);
@@ -327,7 +318,8 @@ public:
     mutable std::mutex mapMutex_;
     std::unordered_map<DRing::DataTransferId, std::shared_ptr<DataTransfer>> map_;
 
-    std::shared_ptr<DataTransfer> createFileTransfer(const DRing::DataTransferInfo&);
+    std::shared_ptr<DataTransfer> createFileTransfer(const DRing::DataTransferInfo& info,
+                                                     DRing::DataTransferId& tid);
     std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const DRing::DataTransferInfo&);
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId&);
     void cancel(DataTransfer&);
@@ -351,9 +343,10 @@ DataTransferFacade::Impl::getTransfer(const DRing::DataTransferId& id)
 }
 
 std::shared_ptr<DataTransfer>
-DataTransferFacade::Impl::createFileTransfer(const DRing::DataTransferInfo& info)
+DataTransferFacade::Impl::createFileTransfer(const DRing::DataTransferInfo& info,
+                                             DRing::DataTransferId& tid)
 {
-    auto tid = generateUID();
+    tid = generateUID();
     auto transfer = std::make_shared<FileTransfer>(tid, info);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
@@ -396,106 +389,117 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 
 DataTransferFacade::DataTransferFacade() : pimpl_ {std::make_unique<Impl>()}
 {
-    RING_WARN("facade created, pimpl @%p", pimpl_.get());
+    RING_WARN("[XFER] facade created, pimpl @%p", pimpl_.get());
 }
 
 DataTransferFacade::~DataTransferFacade()
 {
-    RING_WARN("facade destroy, pimpl @%p", pimpl_.get());
+    RING_WARN("[XFER] facade destroy, pimpl @%p", pimpl_.get());
 };
 
 std::vector<DRing::DataTransferId>
-DataTransferFacade::list() const
+DataTransferFacade::list() const noexcept
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     return map_utils::extractKeys(pimpl_->map_);
 }
 
-DRing::DataTransferId
-DataTransferFacade::sendFile(const std::string& account_id, const std::string& peer_uri,
-                             const std::string& file_path, const std::string& display_name)
+DRing::DataTransferError
+DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
+                             DRing::DataTransferId& tid) noexcept
 {
-    auto account = Manager::instance().getAccount<RingAccount>(account_id);
-    if (!account)
-        throw std::invalid_argument("unknown account id");
+    auto account = Manager::instance().getAccount<RingAccount>(info.accountId);
+    if (!account) {
+        RING_ERR() << "[XFER] unknown id " << tid;
+        return DRing::DataTransferError::invalid_argument;
+    }
 
-    if (!fileutils::isFile(file_path))
-        throw std::invalid_argument("invalid input file");
+    if (!fileutils::isFile(info.path)) {
+        RING_ERR() << "[XFER] invalid filename '" << info.path << "'";
+        return DRing::DataTransferError::invalid_argument;
+    }
 
-    DRing::DataTransferInfo info;
-    info.accountId = account_id;
-    info.peer = peer_uri;
-    info.displayName = display_name;
-    info.path = file_path;
-    // remaining fields are overwritten
+    try {
+        pimpl_->createFileTransfer(info, tid);
+    } catch (const std::exception& ex) {
+        RING_ERR() << "[XFER] exception during createFileTransfer(): " << ex.what();
+        return DRing::DataTransferError::io;
+    }
 
-    auto transfer = pimpl_->createFileTransfer(info);
-    auto tid = transfer->getId();
-    // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
-    // This happen when multiple agents handle communications of the given peer for the given account.
-    // Example: Ring account supports multi-devices, each can answer to the request.
-    account->requestPeerConnection(
-        peer_uri,
-        [this, tid] (PeerConnection* connection) {
-            pimpl_->onConnectionRequestReply(tid, connection);
-        });
-
-    return tid;
+    try {
+        // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
+        // This happen when multiple agents handle communications of the given peer for the given account.
+        // Example: Ring account supports multi-devices, each can answer to the request.
+        account->requestPeerConnection(
+            info.peer,
+            [this, tid] (PeerConnection* connection) {
+                pimpl_->onConnectionRequestReply(tid, connection);
+            });
+        return DRing::DataTransferError::success;
+    } catch (const std::exception& ex) {
+        RING_ERR() << "[XFER] exception during sendFile(): " << ex.what();
+        return DRing::DataTransferError::unknown;
+    }
 }
 
-void
+DRing::DataTransferError
 DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
                                  const std::string& file_path,
-                                 std::size_t offset)
+                                 int64_t offset) noexcept
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
-        throw std::invalid_argument("not existing DataTransferId");
-
+        return DRing::DataTransferError::invalid_argument;;
     iter->second->accept(file_path, offset);
+    return DRing::DataTransferError::success;
 }
 
-void
-DataTransferFacade::cancel(const DRing::DataTransferId& id)
+DRing::DataTransferError
+DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 {
-    if (auto transfer = pimpl_->getTransfer(id))
+    if (auto transfer = pimpl_->getTransfer(id)) {
         pimpl_->cancel(*transfer);
-    else
-        throw std::invalid_argument("not existing DataTransferId");
+        return DRing::DataTransferError::success;
+    }
+    return DRing::DataTransferError::invalid_argument;
 }
 
-std::streamsize
-DataTransferFacade::bytesProgress(const DRing::DataTransferId& id) const
+DRing::DataTransferError
+DataTransferFacade::bytesProgress(const DRing::DataTransferId& id,
+                                  int64_t& total, int64_t& progress) const noexcept
 {
-    if (auto transfer = pimpl_->getTransfer(id))
-        return transfer->bytesProgress();
-    throw std::invalid_argument("not existing DataTransferId");
+    try {
+        if (auto transfer = pimpl_->getTransfer(id)) {
+            transfer->bytesProgress(total, progress);
+            return DRing::DataTransferError::success;
+        }
+        return DRing::DataTransferError::invalid_argument;
+    } catch (const std::exception& ex) {
+        RING_ERR() << "[XFER] exception during bytesProgress(): " << ex.what();
+    }
+    return DRing::DataTransferError::unknown;
 }
 
-DRing::DataTransferInfo
-DataTransferFacade::info(const DRing::DataTransferId& id) const
+DRing::DataTransferError
+DataTransferFacade::info(const DRing::DataTransferId& id,
+                         DRing::DataTransferInfo& info) const noexcept
 {
-    if (auto transfer = pimpl_->getTransfer(id))
-        return transfer->info();
-    throw std::invalid_argument("not existing DataTransferId");
+    try {
+        if (auto transfer = pimpl_->getTransfer(id)) {
+            transfer->info(info);
+            return DRing::DataTransferError::success;
+        }
+        return DRing::DataTransferError::invalid_argument;
+    } catch (const std::exception& ex) {
+        RING_ERR() << "[XFER] exception during info(): " << ex.what();
+    }
+    return DRing::DataTransferError::unknown;
 }
 
 std::shared_ptr<Stream>
-DataTransferFacade::onIncomingFileRequest(const std::string& account_id,
-                                          const std::string& peer_uri,
-                                          const std::string& display_name,
-                                          std::size_t total_size,
-                                          std::size_t offset)
+DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferInfo& info)
 {
-    DRing::DataTransferInfo info;
-    info.accountId = account_id;
-    info.peer = peer_uri;
-    info.displayName = display_name;
-    info.totalSize = total_size;
-    info.bytesProgress = offset;
-    // remaining fields are overwritten
-
     auto transfer = pimpl_->createIncomingFileTransfer(info);
     auto filename = transfer->requestFilename();
     if (!filename.empty())

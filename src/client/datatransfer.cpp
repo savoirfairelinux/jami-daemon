@@ -42,45 +42,41 @@ registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWra
 }
 
 std::vector<DataTransferId>
-dataTransferList()
+dataTransferList() noexcept
 {
     return ring::Manager::instance().dataTransfers->list();
 }
 
-DataTransferId
-sendFile(const std::string& account_id,
-         const std::string& peer_uri,
-         const std::string& file_path,
-         const std::string& display_name)
+DataTransferError
+sendFile(const DataTransferInfo& info, DataTransferId& id) noexcept
 {
-    return ring::Manager::instance().dataTransfers->sendFile(
-        account_id, peer_uri, file_path, display_name.empty() ? file_path : display_name);
+    return ring::Manager::instance().dataTransfers->sendFile(info, id);
 }
 
-void
+DataTransferError
 acceptFileTransfer(const DataTransferId& id,
                    const std::string& file_path,
-                   std::size_t offset)
+                   int64_t offset) noexcept
 {
-    ring::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
+    return ring::Manager::instance().dataTransfers->acceptAsFile(id, file_path, offset);
 }
 
-void
-cancelDataTransfer(const DataTransferId& id)
+DataTransferError
+cancelDataTransfer(const DataTransferId& id) noexcept
 {
-    ring::Manager::instance().dataTransfers->cancel(id);
+    return ring::Manager::instance().dataTransfers->cancel(id);
 }
 
-std::streamsize
-dataTransferBytesProgress(const DataTransferId& id)
+DataTransferError
+dataTransferBytesProgress(const DataTransferId& id, int64_t& total, int64_t& progress) noexcept
 {
-    return ring::Manager::instance().dataTransfers->bytesProgress(id);
+    return ring::Manager::instance().dataTransfers->bytesProgress(id, total, progress);
 }
 
-DataTransferInfo
-dataTransferInfo(const DataTransferId& id)
+DataTransferError
+dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept
 {
-    return ring::Manager::instance().dataTransfers->info(id);
+    return ring::Manager::instance().dataTransfers->info(id, info);
 }
 
 } // namespace DRing
