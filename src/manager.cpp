@@ -34,7 +34,6 @@
 
 #include "logger.h"
 #include "account_schema.h"
-#include "plugin_manager.h"
 #include "thread_pool.h"
 
 #include "fileutils.h"
@@ -349,8 +348,6 @@ struct Manager::ManagerPimpl
      */
     std::unique_ptr<RingBufferPool> ringbufferpool_;
 
-    std::unique_ptr<PluginManager> pluginManager_;
-
     std::map<uintptr_t, Manager::EventHandler> eventHandlerMap_;
 
     decltype(eventHandlerMap_)::iterator nextEventHandler_;
@@ -388,7 +385,6 @@ Manager::ManagerPimpl::ManagerPimpl(Manager& base)
     , waitingCallsMutex_()
     , path_()
     , ringbufferpool_(new RingBufferPool)
-    , pluginManager_(new PluginManager)
     , conferenceMap_()
     , ice_tf_()
 #ifdef RING_VIDEO
