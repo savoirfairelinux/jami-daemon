@@ -36,46 +36,32 @@ public:
     DataTransferFacade();
     ~DataTransferFacade();
 
-    /// Return all known transfer id
-    std::vector<DRing::DataTransferId> list() const;
+    /// \see DRing::dataTransferList
+    std::vector<DRing::DataTransferId> list() const noexcept;
 
-    /// Send a file to a peer.
-    /// Open a file and send its contents over a reliable connection
-    /// to given peer using the protocol from given account.
-    /// This method fails immediately if the file cannot be open in binary read mode,
-    /// if the account doesn't exist or if it doesn't support data transfer.
-    /// Remaining actions are operated asynchronously, so events are given by signals.
-    /// \return a unique data transfer identifier.
-    /// \except std::invalid_argument account doesn't exist or don't support data transfer.
-    /// \except std::ios_base::failure in case of open file errors.
-    DRing::DataTransferId sendFile(const std::string& account_id,
-                                   const std::string& peer_uri,
-                                   const std::string& file_path,
-                                   const std::string& display_name);
+    /// \see DRing::sendFile
+    DRing::DataTransferError sendFile(const DRing::DataTransferInfo& info,
+                                      DRing::DataTransferId& id) noexcept;
 
-    /// Accept an incoming transfer and send data into given file.
-    void acceptAsFile(const DRing::DataTransferId& id,
-                      const std::string& file_path,
-                      std::size_t offset);
+    /// \see DRing::acceptFileTransfer
+    DRing::DataTransferError acceptAsFile(const DRing::DataTransferId& id,
+                                          const std::string& file_path,
+                                          int64_t offset) noexcept;
 
-    /// Abort a transfer.
-    /// The transfer id is abort and removed. The id is not longer valid after the call.
-    void cancel(const DRing::DataTransferId& id);
+    /// \see DRing::cancelDataTransfer
+    DRing::DataTransferError cancel(const DRing::DataTransferId& id) noexcept;
 
-    /// \return a copy of all information about a data transfer
-    DRing::DataTransferInfo info(const DRing::DataTransferId& id) const;
+    /// \see DRing::dataTransferInfo
+    DRing::DataTransferError info(const DRing::DataTransferId& id,
+                                  DRing::DataTransferInfo& info) const noexcept;
 
-    /// \return number of bytes sent/received by a data transfer
-    /// \note this method is fatest than info()
-    std::streamsize bytesProgress(const DRing::DataTransferId& id) const;
+    /// \see DRing::dataTransferBytesProgress
+    DRing::DataTransferError bytesProgress(const DRing::DataTransferId& id, int64_t& total,
+                                           int64_t& progress) const noexcept;
 
     /// Create an IncomingFileTransfer object.
     /// \return a shared pointer on created Stream object, or nullptr in case of error
-    std::shared_ptr<Stream> onIncomingFileRequest(const std::string& account_id,
-                                                  const std::string& peer_uri,
-                                                  const std::string& display_name,
-                                                  std::size_t total_size,
-                                                  std::size_t offset);
+    std::shared_ptr<Stream> onIncomingFileRequest(const DRing::DataTransferInfo& info);
 
 private:
     class Impl;
