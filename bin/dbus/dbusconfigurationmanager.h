@@ -55,6 +55,8 @@ class DBusConfigurationManager :
     public DBus::ObjectAdaptor
 {
     public:
+        using RingDBusDataTransferInfo = DBus::Struct<std::string, uint32_t, uint32_t, int64_t, int64_t, std::string, std::string, std::string, std::string>;
+
         DBusConfigurationManager(DBus::Connection& connection);
 
         // Methods
@@ -153,13 +155,12 @@ class DBusConfigurationManager :
         int exportAccounts(const std::vector<std::string>& accountIDs, const std::string& filepath, const std::string& password);
         int importAccounts(const std::string& archivePath, const std::string& password);
         void connectivityChanged();
-        DRing::DataTransferId sendFile(const std::string& account_id, const std::string& peer_uri,
-                                       const std::string& file_path, const std::string& display_name);
-        DBus::Struct<bool, uint32_t, uint64_t, uint64_t, std::string, std::string, std::string, std::string> dataTransferInfo(const DRing::DataTransferId& id);
-        uint64_t dataTransferBytesProgress(const uint64_t& id);
         std::vector<uint64_t> dataTransferList();
-        void acceptFileTransfer(const uint64_t& id, const std::string& file_path, const uint64_t& offset);
-        void cancelDataTransfer(const uint64_t& id);
+        void sendFile(const RingDBusDataTransferInfo& info, uint32_t& error, DRing::DataTransferId& id);
+        void dataTransferInfo(const DRing::DataTransferId& id, uint32_t& error, RingDBusDataTransferInfo& info);
+        void dataTransferBytesProgress(const uint64_t& id, uint32_t& error, int64_t& total, int64_t& progress);
+        uint32_t acceptFileTransfer(const uint64_t& id, const std::string& file_path, const int64_t& offset);
+        uint32_t cancelDataTransfer(const uint64_t& id);
 };
 
 #endif // __RING_DBUSCONFIGURATIONMANAGER_H__
