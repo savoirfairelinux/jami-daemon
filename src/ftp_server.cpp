@@ -59,11 +59,12 @@ bool
 FtpServer::startNewFile()
 {
     // Request filename from client (WARNING: synchrone call!)
-    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(accountId_,
-                                                                    peerUri_,
-                                                                    displayName_,
-                                                                    fileSize_,
-                                                                    0 /* TODO: offset */);
+    DRing::DataTransferInfo info;
+    info.accountId = accountId_;
+    info.peer = peerUri_;
+    info.displayName = displayName_;
+    info.totalSize = fileSize_;
+    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info);
     return true;
 }
 
