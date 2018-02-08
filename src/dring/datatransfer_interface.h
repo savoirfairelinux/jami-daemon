@@ -27,8 +27,7 @@
 #include <map>
 #include <vector>
 #include <memory>
-#include <cstdlib> // std::size_t
-#include <ios> // std::streamsize
+#include <bitset>
 
 namespace DRing {
 
@@ -36,6 +35,7 @@ using DataTransferId = uint64_t;
 
 enum class DataTransferEventCode : uint32_t
 {
+    invalid=0,
     created,
     unsupported,
     wait_peer_acceptance,
@@ -48,19 +48,34 @@ enum class DataTransferEventCode : uint32_t
     unjoinable_peer,
 };
 
-struct DataTransferInfo
+enum class DataTransferError : uint32_t
 {
-    bool isOutgoing; ///< Outgoing or Incoming?
-    DataTransferEventCode lastEvent { DataTransferEventCode::created }; ///< Latest event code sent to the user
-    std::size_t totalSize {0} ; ///< Total number of bytes to sent/receive, 0 if not known
-    std::streamsize bytesProgress {0}; ///< Number of bytes sent/received
-    std::string displayName; ///< Human oriented transfer name
-    std::string path; ///< associated local file path if supported (empty, if not)
-    std::string accountId; ///< Identifier of the emiter/receiver account
-    std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
+    success=0,
+    unknown,
+    io,
+    invalid_argument,
 };
 
-std::vector<DataTransferId> dataTransferList();
+/// Bit definition for DataTransferInfo.flags field
+enum class DataTransferFlags
+{
+    direction=0, ///< 0: outgoing, 1: incoming
+};
+
+struct DataTransferInfo
+{
+    std::string accountId; ///< Identifier of the emiter/receiver account
+    DataTransferEventCode lastEvent { DataTransferEventCode::invalid }; ///< Latest event code sent to the user
+    std::bitset<32> flags; ///< Transfer global information. 0 reserved for invalid structure. ABI is equivalent to an uint32_t.
+    int64_t totalSize {0} ; ///< Total number of bytes to sent/receive, 0 if not known
+    int64_t bytesProgress {0}; ///< Number of bytes sent/received
+    std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
+    std::string displayName; ///< Human oriented transfer name
+    std::string path; ///< associated local file path if supported (empty, if not)
+    std::string mimetype; ///< MimeType of transfered data (https://www.iana.org/assignments/media-types/media-types.xhtml)
+};
+
+std::vector<DataTransferId> dataTransferList() noexcept;
 
 /// Asynchronously send a file to a peer using given account connection.
 ///
@@ -68,24 +83,26 @@ std::vector<DataTransferId> dataTransferList();
 /// an internal data transfer and return its identification.
 /// This identity code is used by signals and APIs to follow the transfer progress.
 ///
-/// \param account_id existing account ID with file transfer support
-/// \param peer_uri peer address suitable for the given account
-/// \param file_path pathname of file to transfer
-/// \param display_name optional textual representation given to the peer when the file is proposed.
-/// When empty (or not given), \a file_path is used.
+/// Following the \a info structure fields usage:
+///     - accountId [mandatory] existing account ID with file transfer support
+///     - peer [mandatory] peer address suitable for the given account
+///     - path [mandatory] pathname of file to transfer
+///     - mimetype [optional] file type
+///     - displayName [optional] textual representation given to the peer when the file is proposed
 ///
-/// \return DataTransferId value representing the internal transfer.
+/// Other fields are not used, but you must keep the default assigned value for compatibility.
 ///
-/// \exception std::invalid_argument not existing account
-/// \exception std::ios_base::failure file opening failures
+/// \param info a DataTransferInfo structure filled with information usefull for a file transfer.
+/// \param[out] id data transfer identifiant if function succeed, usable with other APIs. Undefined value in case of error.
+///
+/// \return DataTransferError::success if file is accepted for transfer, any other value in case of errors
 ///
 /// \note If the account is valid but doesn't support file transfer, or if the peer is unjoignable,
-/// or at events during the transfer, the function returns a valid DataTransferId and the user
-/// will be signaled throught DataTransferEvent signal for such event.
-/// There is no reserved or special values on DataTransferId type.
+/// or at any further events during the transfer, the function returns a valid DataTransferId as
+/// the processing is asynchronous. Application will be signaled throught DataTransferEvent signal
+/// for such event. There is no reserved or special values on DataTransferId type.
 ///
-DataTransferId sendFile(const std::string& account_id, const std::string& peer_uri,
-                        const std::string& file_path, const std::string& display_name={});
+DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& error) noexcept;
 
 /// Accept an incoming file transfer.
 ///
@@ -99,7 +116,11 @@ DataTransferId sendFile(const std::string& account_id, const std::string& peer_u
 /// \param offset used to indicate the remote side about the number of bytes already received in
 /// a previous transfer session, usefull in transfer continuation mode.
 ///
-void acceptFileTransfer(const DataTransferId& id, const std::string& file_path, std::size_t offset);
+/// \return DataTransferError::invalid_argument if id is unknown.
+/// \note unknown \a id results to a no-op call.
+///
+DataTransferError acceptFileTransfer(const DataTransferId& id, const std::string& file_path,
+                                     int64_t offset) noexcept;
 
 /// Refuse or abort an outgoing or an incoming file transfer.
 ///
@@ -109,24 +130,32 @@ void acceptFileTransfer(const DataTransferId& id, const std::string& file_path, 
 /// This function can be used only once per data transfer identifiant, when used more it's ignored.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
+/// \return DataTransferError::invalid_argument if id is unknown.
+/// \note unknown \a id results to a no-op call.
 ///
-void cancelDataTransfer(const DataTransferId& id);
+DataTransferError cancelDataTransfer(const DataTransferId& id) noexcept;
 
 /// Return some information on given data transfer.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
+/// \param[out] info data transfer information.
 ///
-/// \return transfer information.
+/// \return DataTransferError::invalid_argument if id is unknown.
+/// \note \a info structure is in undefined state in case of error.
 ///
-DataTransferInfo dataTransferInfo(const DataTransferId& id);
+DataTransferError dataTransferInfo(const DataTransferId& id, DataTransferInfo& info) noexcept;
 
 /// Return the amount of sent/received bytes of an existing data transfer.
 ///
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
+/// \param[out] total positive number of bytes to sent/received, or -1 if unknown.
+/// \param[out] progress positive number of bytes already sent/received.
 ///
-/// \return number of successfuly transfered bytes.
+/// \return DataTransferError::success if \a total and \a progress is set with valid values.
+/// DataTransferError::invalid_argument if the id is unknown.
 ///
-std::streamsize dataTransferBytesProgress(const DataTransferId& id);
+DataTransferError dataTransferBytesProgress(const DataTransferId& id, int64_t& total,
+                                            int64_t& progress) noexcept;
 
 // Signal handlers registration
 void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
