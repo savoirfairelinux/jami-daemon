@@ -1409,59 +1409,48 @@
            </arg>
        </method>
 
-       <method name="sendFile" tp:name-for-bindings="sendFile">
-           <tp:added version="4.2.0"/>
-           <arg type="t" name="DataTransferId" direction="out">
-           </arg>
-           <arg type="s" name="accountID" direction="in">
-           </arg>
-           <arg type="s" name="peer_uri" direction="in">
-               <tp:docstring>
-                   RingID of request's recipient.
-               </tp:docstring>
-           </arg>
-           <arg type="s" name="file_path" direction="in"></arg>
-           <arg type="s" name="display_name" direction="in"></arg>
-       </method>
-
        <method name="dataTransferList" tp:name-for-bindings="dataTransferList">
            <tp:added version="4.2.0"/>
+           <arg type="at" name="dataTransferList" direction="out"/>
            <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="VectorULongLong"/>
-           <arg type="at" name="DataTransferList" direction="out">
-           </arg>
+       </method>
+
+       <method name="sendFile" tp:name-for-bindings="sendFile">
+           <tp:added version="4.2.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="(suuxxssss)" name="DataTransferInfo" direction="in"/>
+           <arg type="t" name="dataTransferId" direction="out"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.In0" value="DataTransferInfo"/>
        </method>
 
        <method name="dataTransferInfo" tp:name-for-bindings="dataTransferInfo">
-           <tp:added version="4.2.0"/>
-           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="DataTransferInfo"/>
-           <arg type="(buttssss)" name="DataTransferInfo" direction="out">
-           </arg>
-           <arg type="t" name="DataTransferId" direction="in">
-           </arg>
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="(suuxxssss)" name="dataTransferInfo" direction="out"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out1" value="DataTransferInfo"/>
        </method>
 
        <method name="dataTransferBytesProgress" tp:name-for-bindings="dataTransferBytesProgress">
-           <tp:added version="4.2.0"/>
-           <arg type="t" name="BytesProgress" direction="out">
-           </arg>
-           <arg type="t" name="DataTransferId" direction="in">
-           </arg>
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="x" name="totalSize" direction="out"/>
+           <arg type="x" name="bytesProgress" direction="out"/>
        </method>
 
        <method name="acceptFileTransfer" tp:name-for-bindings="acceptFileTransfer">
-           <tp:added version="4.2.0"/>
-           <arg type="t" name="DataTransferId" direction="in">
-           </arg>
-           <arg type="s" name="file_path" direction="in">
-           </arg>
-           <arg type="t" name="offset" direction="in">
-           </arg>
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
+           <arg type="s" name="filePath" direction="in"/>
+           <arg type="x" name="offset" direction="in"/>
        </method>
 
        <method name="cancelDataTransfer" tp:name-for-bindings="cancelDataTransfer">
-           <tp:added version="4.2.0"/>
-           <arg type="t" name="DataTransferId" direction="in">
-           </arg>
+           <tp:added version="5.0.0"/>
+           <arg type="u" name="dataTransferError" direction="out"/>
+           <arg type="t" name="dataTransferId" direction="in"/>
        </method>
 
        <signal name="mediaParametersChanged" tp:name-for-bindings="mediaParametersChanged">
