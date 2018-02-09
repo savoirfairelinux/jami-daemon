@@ -26,5 +26,6 @@ git apply --reject --whitespace=fix %SRC%\pjproject\add_dtls_transport.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_ice_sess.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_fix_turn_fallback.patch
 git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp.patch
+git apply --reject --whitespace=fix %SRC%\pjproject\pj_uwp_rfc6062.patch
 
 cd %SRC%
