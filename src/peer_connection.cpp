@@ -44,7 +44,9 @@
 #include <sys/select.h>
 #endif
 
+#ifndef RING_UWP
 #include <sys/time.h>
+#endif
 
 namespace ring {
 
@@ -220,7 +222,7 @@ TlsTurnEndpoint::waitForData(unsigned ms_timeout, std::error_code& ec) const
 
 TcpSocketEndpoint::TcpSocketEndpoint(const IpAddr& addr)
     : addr_ {addr}
-    , sock_ {::socket(addr.getFamily(), SOCK_STREAM, 0)}
+    , sock_{ static_cast<int>(::socket(addr.getFamily(), SOCK_STREAM, 0)) }
 {
     if (sock_ < 0)
         std::system_error(errno, std::generic_category());

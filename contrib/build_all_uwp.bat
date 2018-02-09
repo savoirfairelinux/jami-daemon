@@ -30,15 +30,6 @@ build\libupnp\build\VS2015\ixml.vcxproj, ^
 build\libupnp\build\VS2015\threadutil.vcxproj, ^
 build\libupnp\build\VS2015\libupnp.vcxproj, ^
 build\pcre\MSVC\pcre.vcxproj, ^
-build\pjproject\third_party\build\baseclasses\libbaseclasses.vcxproj, ^
-build\pjproject\third_party\build\g7221\libg7221codec.vcxproj, ^
-build\pjproject\third_party\build\gsm\libgsmcodec.vcxproj, ^
-build\pjproject\third_party\build\ilbc\libilbccodec.vcxproj, ^
-build\pjproject\third_party\build\milenage\libmilenage.vcxproj, ^
-build\pjproject\third_party\build\resample\libresample.vcxproj, ^
-build\pjproject\third_party\build\speex\libspeex.vcxproj, ^
-build\pjproject\third_party\build\srtp\libsrtp.vcxproj, ^
-build\pjproject\third_party\build\yuv\libyuv.vcxproj, ^
 build\pjproject\pjlib-util\build\pjlib-util.vcxproj, ^
 build\pjproject\pjmedia\build\pjmedia.vcxproj, ^
 build\pjproject\pjmedia\build\pjmedia_audiodev.vcxproj, ^
