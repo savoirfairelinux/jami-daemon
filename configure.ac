@@ -46,8 +46,6 @@ case "${host_os}" in
     SYS=linux
     # Necessary for linking .a to a .so
     LDFLAGS+=" -Wl,-Bsymbolic"
-    # Needed for plugin system
-    LDFLAGS+=" -ldl"
     ;;
   darwin*)
     SYS=darwin
