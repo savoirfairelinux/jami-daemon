@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set RESTBED_VERSION=df867a858dddc4cf6ca8642da02720bd65ba239a
+set RESTBED_VERSION=d7c56a60481447579c6c45313ac4ee786ba3d450
 set RESTBED_URL=https://github.com/Corvusoft/restbed/archive/%RESTBED_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -16,7 +16,6 @@ del %RESTBED_VERSION%.tar && del %RESTBED_VERSION%.tar.gz && del %BUILD%\pax_glo
 rename %BUILD%\restbed-%RESTBED_VERSION% restbed
 
 cd %BUILD%\restbed
-git apply --reject --whitespace=fix %SRC%\restbed\async_read_until-uwp.patch
 git apply --reject --whitespace=fix %SRC%\restbed\cmake-uwp.patch
 
 cd ..

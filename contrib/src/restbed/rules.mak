@@ -19,8 +19,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := df867a858dddc4cf6ca8642da02720bd65ba239a
-RESTBED_URL := https://github.com/corvusoft//restbed/archive/$(RESTBED_VERSION).tar.gz
+RESTBED_VERSION := d7c56a60481447579c6c45313ac4ee786ba3d450
+RESTBED_URL := https://github.com/corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 # Pure dependency of OpenDHT: do not add to PKGS.
 
@@ -44,7 +44,6 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	$(UNPACK)
 	$(APPLY) $(SRC)/restbed/strand.patch
-	$(APPLY) $(SRC)/restbed/async_read_until.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
