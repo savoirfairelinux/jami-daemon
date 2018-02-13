@@ -31,23 +31,17 @@ endif
 $(TARBALLS)/restbed-$(RESTBED_VERSION).tar.gz:
 	$(call download,$(RESTBED_URL))
 
-DEPS_restbed = asio
+DEPS_restbed = asio kashmir-dependency
 
 RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
 			-DBUILD_SSL=NO \
 			-DBUILD_SHARED=NO \
-			-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
+			-DCMAKE_INCLUDE_PATH=$(PREFIX)/include \
 			-DCMAKE_INSTALL_LIBDIR=lib
 
-$(TARBALLS)/kashmir.tar.gz:
-	$(call download,https://github.com/Corvusoft/kashmir-dependency/archive/master.tar.gz)
-
-restbed: restbed-$(RESTBED_VERSION).tar.gz kashmir.tar.gz .sum-restbed
+restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	$(UNPACK)
-	rm -rf $(UNPACK_DIR)/dependency/kashmir
-	mv kashmir-dependency-master $(UNPACK_DIR)/dependency/kashmir
-	$(APPLY) $(SRC)/restbed/findkashmir.patch
 	$(APPLY) $(SRC)/restbed/strand.patch
 	$(APPLY) $(SRC)/restbed/async_read_until.patch
 	$(MOVE)
