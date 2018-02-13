@@ -2839,6 +2839,10 @@ RingAccount::addContact(const std::string& uri, bool confirmed)
 {
     RING_WARN("[Account %s] addContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
+    if (not h) {
+        RING_ERR("[Account %s] addContact: invalid contact URI", getAccountID().c_str());
+        return;
+    }
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact{}).first;
@@ -2910,6 +2914,10 @@ RingAccount::getContacts() const
 void
 RingAccount::updateContact(const dht::InfoHash& id, const Contact& contact)
 {
+    if (not id) {
+        RING_ERR("[Account %s] updateContact: invalid contact ID", getAccountID().c_str());
+        return;
+    }
     bool stateChanged {false};
     auto c = contacts_.find(id);
     if (c == contacts_.end()) {
