@@ -459,8 +459,10 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
                 [weak_dev_call, ice, callvid, dev] (dht::IceCandidates&& msg) {
                     if (msg.id != callvid or msg.from != dev)
                         return true;
-                    RING_WARN("ICE request replied from DHT peer %s\n%s", dev.toString().c_str(),
-                              std::string(msg.ice_data.cbegin(), msg.ice_data.cend()).c_str());
+                    // remove unprintable characters
+                    auto iceData = std::string(msg.ice_data.cbegin(), msg.ice_data.cend());
+                    iceData.erase(std::remove_if(iceData.begin(), iceData.end(), [](unsigned char c){ return !std::isprint(c) && !std::isspace(c); }), iceData.end());
+                    RING_WARN("ICE request replied from DHT peer %s\nData: %s", dev.toString().c_str(), iceData.c_str());
                     if (auto call = weak_dev_call.lock()) {
                         call->setState(Call::ConnectionState::PROGRESSING);
                         if (!ice->start(msg.ice_data)) {
