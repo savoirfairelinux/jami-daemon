@@ -48,7 +48,7 @@ fi
 mkdir -p $PACKAGEDIR
 
 echo "Generating ring_wrapper.cpp..."
-swig -v -c++ -java \
+swig -v -c++ -java -l \
 -package $PACKAGE \
 -outdir $PACKAGEDIR \
 -o $JNIDIR/ring_wrapper.cpp $JNIDIR/jni_interface.i
