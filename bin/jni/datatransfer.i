@@ -20,14 +20,14 @@
  *   Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-%apply int32_t { DRing::DataTransferEventCode };
+%apply uint32_t { DRing::DataTransferEventCode };
+%apply uint32_t { DRing::DataTransferError };
 %apply uint64_t { DRing::DataTransferId };
 %apply uint64_t { const DRing::DataTransferId };
 
 %header %{
 #include "dring/dring.h"
 #include "dring/datatransfer_interface.h"
-
 
 class DataTransferCallback {
 public:
@@ -42,22 +42,22 @@ namespace DRing {
 
   struct DataTransferInfo
   {
-      bool isOutgoing;
-      DRing::DataTransferEventCode lastEvent;
-      std::size_t totalSize {0};
-      std::streamsize bytesProgress {0};
-      std::string displayName;
-      std::string path;
-      std::string accountId;
-      std::string peer;
+    std::string accountId;
+    DRing::DataTransferEventCode lastEvent;
+    uint32_t flags;
+    int64_t totalSize;
+    int64_t bytesProgress;
+    std::string peer;
+    std::string displayName;
+    std::string path;
+    std::string mimetype;
   };
 
-  void acceptFileTransfer(const DRing::DataTransferId id, const std::string &file_path, std::size_t offset);
-  void cancelDataTransfer(const DRing::DataTransferId id);
-  std::streamsize dataTransferBytesProgress(const DRing::DataTransferId id);
-  DRing::DataTransferInfo dataTransferInfo(const DRing::DataTransferId id) throw(std::invalid_argument);
-  /* std::vector<uint64_t> dataTransferList(); */
-  DRing::DataTransferId sendFile(const std::string &account_id, const std::string &peer_uri, const std::string &file_path, const std::string &display_name) throw(std::invalid_argument, std::runtime_error);
+  DRing::DataTransferError sendFile(const DRing::DataTransferInfo info, DRing::DataTransferId id);
+  DRing::DataTransferError acceptFileTransfer(const DRing::DataTransferId id, const std::string file_path, int64_t offset);
+  DRing::DataTransferError cancelDataTransfer(const DRing::DataTransferId id);
+  DRing::DataTransferError dataTransferInfo(const DRing::DataTransferId id, DRing::DataTransferInfo &info);
+  DRing::DataTransferError dataTransferBytesProgress(const DRing::DataTransferId id, int64_t &total, int64_t &progress);
 
 }
 
