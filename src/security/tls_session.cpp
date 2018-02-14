@@ -552,7 +552,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
         ssize_t nwritten;
         do {
             nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
-        } while (nwritten == GNUTLS_E_INTERRUPTED or nwritten == GNUTLS_E_AGAIN);
+        } while ((nwritten == GNUTLS_E_INTERRUPTED and state_ != TlsSessionState::SHUTDOWN) or nwritten == GNUTLS_E_AGAIN);
         if (nwritten <= 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
@@ -887,6 +887,10 @@ TlsSession::TlsSessionImpl::handleStateMtuDiscovery(UNUSED TlsSessionState state
     if (gnutls_heartbeat_allowed(session_, GNUTLS_HB_LOCAL_ALLOWED_TO_SEND) == 1) {
         if (!isServer_) {
             pathMtuHeartbeat();
+            if (state_ == TlsSessionState::SHUTDOWN) {
+                RING_ERR("[TLS] session destroyed while performing PMTUD, shuting down");
+                return TlsSessionState::SHUTDOWN;
+            }
             pmtudOver_ = true;
         }
     } else {
@@ -948,7 +952,7 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
 
         do {
             errno_send = gnutls_heartbeat_ping(session_, bytesToSend, HEARTBEAT_TRIES, GNUTLS_HEARTBEAT_WAIT);
-        } while (errno_send == GNUTLS_E_AGAIN || errno_send == GNUTLS_E_INTERRUPTED);
+        } while (errno_send == GNUTLS_E_AGAIN || (errno_send == GNUTLS_E_INTERRUPTED && state_ != TlsSessionState::SHUTDOWN));
 
         if (errno_send != GNUTLS_E_SUCCESS) {
             RING_DBG() << "[TLS] PMTUD: mtu " << mtu << " [FAILED]";
