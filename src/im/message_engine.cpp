@@ -20,6 +20,7 @@
 #include "message_engine.h"
 #include "sip/sipaccountbase.h"
 #include "manager.h"
+#include "thread_pool.h"
 
 #include "client/ring_signal.h"
 #include "dring/account_const.h"
@@ -51,8 +52,8 @@ MessageEngine::sendMessage(const std::string& to, const std::map<std::string, st
         auto m = messages_.emplace(token, Message{});
         m.first->second.to = to;
         m.first->second.payloads = payloads;
+        save_();
     }
-    save();
     runOnMainThread([this]() {
         retrySend();
     });
@@ -146,6 +147,7 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
+                save_();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 RING_WARN("[message %" PRIx64 "] status changed to FAILURE", token);
@@ -153,6 +155,7 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
+                save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
                 RING_DBG("[message %" PRIx64 "] status changed to IDLE", token);
@@ -199,9 +202,6 @@ MessageEngine::load()
            loaded++;
         }
         RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
-
-        // everything whent fine, removing the file
-        std::remove(savePath_.c_str());
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
@@ -211,11 +211,19 @@ MessageEngine::load()
 void
 MessageEngine::save() const
 {
+    std::lock_guard<std::mutex> lock(messagesMutex_);
+    save_();
+}
+
+void
+MessageEngine::save_() const
+{
     try {
         Json::Value root(Json::objectValue);
-        std::unique_lock<std::mutex> lock(messagesMutex_);
         for (auto& c : messages_) {
             auto& v = c.second;
+            if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT)
+                continue;
             Json::Value msg;
             std::ostringstream msgsId;
             msgsId << std::hex << c.first;
@@ -229,15 +237,25 @@ MessageEngine::save() const
                 payloads[p.first] = p.second;
             root[msgsId.str()] = std::move(msg);
         }
-        lock.unlock();
-        std::ofstream file;
-        file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        file.open(savePath_, std::ios::trunc);
-        Json::StreamWriterBuilder wbuilder;
-        wbuilder["commentStyle"] = "None";
-        wbuilder["indentation"] = "";
-        file << Json::writeString(wbuilder, root);
-        RING_DBG("[Account %s] saved %lu messages to %s", account_.getAccountID().c_str(), messages_.size(), savePath_.c_str());
+        // Save asynchronously
+        ThreadPool::instance().run([path = savePath_,
+                                    root = std::move(root),
+                                    accountID = account_.getAccountID(),
+                                    messageNum = messages_.size()]
+        {
+            try {
+                std::ofstream file;
+                file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+                file.open(path, std::ios::trunc);
+                Json::StreamWriterBuilder wbuilder;
+                wbuilder["commentStyle"] = "None";
+                wbuilder["indentation"] = "";
+                file << Json::writeString(wbuilder, root);
+            } catch (const std::exception& e) {
+                RING_ERR("[Account %s] Couldn't save messages to %s: %s", accountID.c_str(), path.c_str(), e.what());
+            }
+            RING_DBG("[Account %s] saved %zu messages to %s", accountID.c_str(), messageNum, path.c_str());
+        });
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] couldn't save messages to %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
