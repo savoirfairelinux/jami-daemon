@@ -77,6 +77,7 @@ private:
     clock::time_point nextEvent() const;
     void retrySend();
     void reschedule();
+    void save_() const;
 
     struct Message {
         std::string to;
