@@ -322,8 +322,9 @@ TlsSession::TlsSessionImpl::setupClient()
 
     if (not transport_.isReliable()) {
         ret = gnutls_init(&session_, GNUTLS_CLIENT | GNUTLS_DATAGRAM);
-        RING_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
-        gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+        // uncoment to reactivate PMTUD
+        // RING_DBG("[TLS] set heartbeat reception for retrocompatibility check on server");
+        // gnutls_heartbeat_enable(session_,GNUTLS_HB_PEER_ALLOWED_TO_SEND);
     } else {
         ret = gnutls_init(&session_, GNUTLS_CLIENT);
     }
@@ -348,8 +349,9 @@ TlsSession::TlsSessionImpl::setupServer()
     if (not transport_.isReliable()) {
         ret = gnutls_init(&session_, GNUTLS_SERVER | GNUTLS_DATAGRAM);
 
-        RING_DBG("[TLS] set heartbeat reception");
-        gnutls_heartbeat_enable(session_, GNUTLS_HB_PEER_ALLOWED_TO_SEND);
+        // uncoment to reactivate PMTUD
+        // RING_DBG("[TLS] set heartbeat reception");
+        // gnutls_heartbeat_enable(session_, GNUTLS_HB_PEER_ALLOWED_TO_SEND);
 
         gnutls_dtls_prestate_set(session_, &prestate_);
     } else {
