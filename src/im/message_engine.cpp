@@ -111,6 +111,7 @@ MessageEngine::retrySend()
             }
         }
     }
+    save();
     // avoid locking while calling callback
     for (auto& p : pending) {
         RING_DBG("[message %" PRIx64 "] retrying sending", p.token);
@@ -146,6 +147,7 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::SENT));
+                save();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
                 RING_WARN("[message %" PRIx64 "] status changed to FAILURE", token);
@@ -153,6 +155,7 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                                                                              token,
                                                                              f->second.to,
                                                                              static_cast<int>(DRing::Account::MessageStates::FAILURE));
+                save();
             } else {
                 f->second.status = MessageStatus::IDLE;
                 RING_DBG("[message %" PRIx64 "] status changed to IDLE", token);
@@ -199,9 +202,6 @@ MessageEngine::load()
            loaded++;
         }
         RING_DBG("[Account %s] loaded %lu messages from %s", account_.getAccountID().c_str(), loaded, savePath_.c_str());
-
-        // everything whent fine, removing the file
-        std::remove(savePath_.c_str());
     } catch (const std::exception& e) {
         RING_ERR("[Account %s] couldn't load messages from %s: %s", account_.getAccountID().c_str(), savePath_.c_str(), e.what());
     }
@@ -215,6 +215,8 @@ MessageEngine::save() const
         Json::Value root(Json::objectValue);
         std::unique_lock<std::mutex> lock(messagesMutex_);
         for (auto& c : messages_) {
+            if (v.status == MessageStatus::FAILURE || v.status == MessageStatus::SENT)
+                continue;
             auto& v = c.second;
             Json::Value msg;
             std::ostringstream msgsId;
