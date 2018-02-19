@@ -192,6 +192,6 @@ struct CallSignal {
         };
 };
 
-}; // namespace DRing
+} // namespace DRing
 
 #endif // DRING_CALLMANAGERI_H
