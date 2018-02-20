@@ -409,7 +409,6 @@ class RingAccount : public SIPAccountBase {
          */
         void onTrackedBuddyOnline(std::map<dht::InfoHash, BuddyInfo>::iterator& buddy_info_it, const dht::InfoHash& device_id);
 
-        std::mutex registerMtx_;
         void doRegister_();
         void incomingCall(dht::IceCandidates&& msg, const std::shared_ptr<dht::crypto::Certificate>& from_cert, const dht::InfoHash& from);
 
@@ -580,6 +579,7 @@ class RingAccount : public SIPAccountBase {
         dht::crypto::Identity loadIdentity(const std::string& crt_path, const std::string& key_path, const std::string& key_pwd) const;
         std::vector<dht::NodeExport> loadNodes() const;
         std::vector<dht::ValuesExport> loadValues() const;
+        mutable std::mutex dhtValuesMtx_;
 
         bool dhtPublicInCalls_ {true};
 

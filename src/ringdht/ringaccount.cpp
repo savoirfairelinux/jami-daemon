@@ -1984,7 +1984,6 @@ RingAccount::onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator&
 void
 RingAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(registerMtx_);
     try {
         if (not identity_.first or not identity_.second)
             throw std::runtime_error("No identity configured for this account.");
@@ -2465,8 +2464,6 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    std::lock_guard<std::mutex> lock(registerMtx_);
-
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
         if (released_cb) released_cb(false);
@@ -2490,6 +2487,7 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
     saveValues(dht_.exportValues());
     dht_.join();
     setRegistrationState(RegistrationState::UNREGISTERED);
+
     if (released_cb)
         released_cb(false);
 }
@@ -2682,6 +2680,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
     fileutils::check_dir(cachePath_.c_str());
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
     {
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
         std::ofstream file(nodesPath, std::ios::trunc | std::ios::binary);
         if (!file.is_open()) {
             RING_ERR("Could not save nodes to %s", nodesPath.c_str());
@@ -2695,6 +2694,7 @@ RingAccount::saveNodes(const std::vector<dht::NodeExport>& nodes) const
 void
 RingAccount::saveValues(const std::vector<dht::ValuesExport>& values) const
 {
+    std::lock_guard<std::mutex> lock(dhtValuesMtx_);
     fileutils::check_dir(dataPath_.c_str());
     for (const auto& v : values) {
         const std::string fname = dataPath_ + DIR_SEPARATOR_STR + v.first.toString();
@@ -2709,6 +2709,7 @@ RingAccount::loadNodes() const
     std::vector<dht::NodeExport> nodes;
     std::string nodesPath = cachePath_+DIR_SEPARATOR_STR "nodes";
     {
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(nodesPath));
         std::ifstream file(nodesPath);
         if (!file.is_open()) {
             RING_DBG("Could not load nodes from %s", nodesPath.c_str());
@@ -2731,6 +2732,7 @@ RingAccount::loadNodes() const
 std::vector<dht::ValuesExport>
 RingAccount::loadValues() const
 {
+    std::lock_guard<std::mutex> lock(dhtValuesMtx_);
     std::vector<dht::ValuesExport> values;
     const auto dircontent(fileutils::readDirectory(dataPath_));
     for (const auto& fname : dircontent) {
