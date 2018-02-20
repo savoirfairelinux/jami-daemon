@@ -2461,31 +2461,33 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    std::lock_guard<std::mutex> lock(registerMtx_);
-
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
         if (released_cb) released_cb(false);
         return;
     }
 
-    RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.clear();
-        pendingSipCalls_.clear();
-    }
+        std::lock_guard<std::mutex> lock(registerMtx_);
 
-    if (upnp_) {
-        upnp_->setIGDListener();
-        upnp_->removeMappings();
-    }
+        RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+        {
+            std::lock_guard<std::mutex> lock(callsMutex_);
+            pendingCalls_.clear();
+            pendingSipCalls_.clear();
+        }
 
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
-    saveNodes(dht_.exportNodes());
-    saveValues(dht_.exportValues());
-    dht_.join();
-    setRegistrationState(RegistrationState::UNREGISTERED);
+        if (upnp_) {
+            upnp_->setIGDListener();
+            upnp_->removeMappings();
+        }
+
+        Manager::instance().unregisterEventHandler((uintptr_t)this);
+        saveNodes(dht_.exportNodes());
+        saveValues(dht_.exportValues());
+        dht_.join();
+        setRegistrationState(RegistrationState::UNREGISTERED);
+    }
     if (released_cb)
         released_cb(false);
 }
