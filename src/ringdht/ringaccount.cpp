@@ -1980,7 +1980,7 @@ RingAccount::onTrackedBuddyOffline(std::map<dht::InfoHash, BuddyInfo>::iterator&
 void
 RingAccount::doRegister_()
 {
-    std::lock_guard<std::mutex> lock(registerMtx_);
+    //std::lock_guard<std::mutex> lock(registerMtx_);
     try {
         if (not identity_.first or not identity_.second)
             throw std::runtime_error("No identity configured for this account.");
@@ -2461,31 +2461,33 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
 void
 RingAccount::doUnregister(std::function<void(bool)> released_cb)
 {
-    std::lock_guard<std::mutex> lock(registerMtx_);
-
     if (registrationState_ == RegistrationState::INITIALIZING
      || registrationState_ == RegistrationState::ERROR_NEED_MIGRATION) {
         if (released_cb) released_cb(false);
         return;
     }
 
-    RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
     {
-        std::lock_guard<std::mutex> lock(callsMutex_);
-        pendingCalls_.clear();
-        pendingSipCalls_.clear();
-    }
+        //std::lock_guard<std::mutex> lock(registerMtx_);
 
-    if (upnp_) {
-        upnp_->setIGDListener();
-        upnp_->removeMappings();
-    }
+        RING_WARN("[Account %s] unregistering account %p", getAccountID().c_str(), this);
+        {
+            std::lock_guard<std::mutex> lock(callsMutex_);
+            pendingCalls_.clear();
+            pendingSipCalls_.clear();
+        }
 
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
-    saveNodes(dht_.exportNodes());
-    saveValues(dht_.exportValues());
-    dht_.join();
-    setRegistrationState(RegistrationState::UNREGISTERED);
+        if (upnp_) {
+            upnp_->setIGDListener();
+            upnp_->removeMappings();
+        }
+
+        Manager::instance().unregisterEventHandler((uintptr_t)this);
+        saveNodes(dht_.exportNodes());
+        saveValues(dht_.exportValues());
+        dht_.join();
+        setRegistrationState(RegistrationState::UNREGISTERED);
+    }
     if (released_cb)
         released_cb(false);
 }
@@ -2727,6 +2729,7 @@ RingAccount::loadNodes() const
 std::vector<dht::ValuesExport>
 RingAccount::loadValues() const
 {
+    //std::lock_guard<std::mutex> lock(registerMtx_);
     std::vector<dht::ValuesExport> values;
     const auto dircontent(fileutils::readDirectory(dataPath_));
     for (const auto& fname : dircontent) {
