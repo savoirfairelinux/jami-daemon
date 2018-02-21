@@ -189,8 +189,6 @@ VideoMixer::setDimensions(int width, int height)
 
     // cleanup the previous frame to have a nice copy in rendering method
     std::shared_ptr<VideoFrame> previous_p(obtainLastFrame());
-    if (previous_p)
-        yuv422_clear_to_black(*previous_p);
 
     start_sink();
 }
