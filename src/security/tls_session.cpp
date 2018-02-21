@@ -1230,11 +1230,6 @@ TlsSession::shutdown()
 std::size_t
 TlsSession::write(const ValueType* data, std::size_t size, std::error_code& ec)
 {
-    if (pimpl_->state_ != TlsSessionState::ESTABLISHED) {
-        ec = std::make_error_code(std::errc::broken_pipe);
-        return 0;
-    }
-
     return pimpl_->send(data, size, ec);
 }
 
