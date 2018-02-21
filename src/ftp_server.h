@@ -34,6 +34,7 @@ class FtpServer final : public Stream
 public:
     FtpServer(const std::string& account_id, const std::string& peer_uri);
 
+    bool read(std::vector<uint8_t>& buffer) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
