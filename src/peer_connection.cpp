@@ -567,27 +567,55 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         }
 
         // Then handles IO streams
-        std::vector<uint8_t> buf(IO_BUFFER_SIZE);
+        std::vector<uint8_t> buf;
         std::error_code ec;
-        handle_stream_list(inputs_, [&](auto& stream) {
-                if (!stream->read(buf))
-                    return false;
-                auto size = endpoint_->write(buf, ec);
-                if (!ec)
-                    return true;
-                if (!size)
-                    return false;
-                throw std::system_error(ec);
+
+        bool sleep = true;
+
+        handle_stream_list(inputs_, [&] (auto& stream) {
+                buf.resize(IO_BUFFER_SIZE);
+                if (stream->read(buf)) {
+                    endpoint_->write(buf, ec);
+                    if (ec)
+                        throw std::system_error(ec);
+                    sleep = false;
+                }
+
+                if (endpoint_->waitForData(0, ec) > 0) {
+                    buf.resize(IO_BUFFER_SIZE);
+                    endpoint_->read(buf, ec);
+                    if (ec)
+                        throw std::system_error(ec);
+                    return stream->write(buf);
+                } else if (ec)
+                    throw std::system_error(ec);
+
+                return true;
             });
-        handle_stream_list(outputs_, [&](auto& stream) {
-                if (endpoint_->waitForData(10, ec) > 0) {
-                    auto size = endpoint_->read(buf, ec);
-                    if (!ec)
-                        return size > 0 and stream->write(buf);
-                } else if (!ec)
-                    return true; // continue on msg handling
-                throw std::system_error(ec);
+
+        handle_stream_list(outputs_, [&] (auto& stream) {
+                buf.resize(IO_BUFFER_SIZE);
+                if (stream->read(buf)) {
+                    endpoint_->write(buf, ec);
+                    if (ec)
+                        throw std::system_error(ec);
+                }
+
+                if (endpoint_->waitForData(0, ec) > 0) {
+                    buf.resize(IO_BUFFER_SIZE);
+                    endpoint_->read(buf, ec);
+                    if (ec)
+                        throw std::system_error(ec);
+                    sleep = false;
+                    return stream->write(buf);
+                } else if (ec)
+                    throw std::system_error(ec);
+
+                return true;
             });
+
+        if (sleep)
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
 }
 
