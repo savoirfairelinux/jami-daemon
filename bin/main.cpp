@@ -171,7 +171,6 @@ signal_handler(int code)
     signal(SIGHUP, SIG_DFL);
     signal(SIGINT, SIG_DFL);
     signal(SIGTERM, SIG_DFL);
-    signal(SIGPIPE, SIG_IGN);
 
     // Interrupt the process
 #if REST_API
@@ -210,6 +209,7 @@ main(int argc, char *argv [])
     signal(SIGINT, signal_handler);
     signal(SIGHUP, signal_handler);
     signal(SIGTERM, signal_handler);
+    signal(SIGPIPE, SIG_IGN);
 
 #if REST_API
     try {
