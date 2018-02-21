@@ -105,27 +105,27 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
 
 //==============================================================================
 
-class FileTransfer final : public DataTransfer
+class OutgoingFileTransfer final : public DataTransfer
 {
 public:
-    FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
-
-    bool start() override;
+    OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
 
     void close() noexcept override;
-
     bool read(std::vector<uint8_t>&) const override;
+    bool write(const std::vector<uint8_t>& buffer) override;
 
 private:
-    FileTransfer() = delete;
+    OutgoingFileTransfer() = delete;
 
     mutable std::ifstream input_;
-    mutable std::size_t tx_ {0};
+    std::size_t tx_ {0};
     mutable bool headerSent_ {false};
+    bool peerReady_ {false};
     const std::string peerUri_;
 };
 
-FileTransfer::FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info)
+OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
+                                           const DRing::DataTransferInfo& info)
     : DataTransfer(tid)
 {
     input_.open(info.path, std::ios::binary);
@@ -141,18 +141,8 @@ FileTransfer::FileTransfer(DRing::DataTransferId tid, const DRing::DataTransferI
     input_.seekg(0, std::ios_base::beg);
 }
 
-bool
-FileTransfer::start()
-{
-    if (DataTransfer::start()) {
-        emit(DRing::DataTransferEventCode::ongoing);
-        return true;
-    }
-    return false;
-}
-
 void
-FileTransfer::close() noexcept
+OutgoingFileTransfer::close() noexcept
 {
     DataTransfer::close();
     input_.close();
@@ -161,8 +151,9 @@ FileTransfer::close() noexcept
 }
 
 bool
-FileTransfer::read(std::vector<uint8_t>& buf) const
+OutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 {
+    // Need to send headers?
     if (!headerSent_) {
         std::stringstream ss;
         ss << "Content-Length: " << info_.totalSize << '\n'
@@ -175,28 +166,42 @@ FileTransfer::read(std::vector<uint8_t>& buf) const
         std::copy(std::begin(header), std::end(header), std::begin(buf));
 
         headerSent_ = true;
+        emit(DRing::DataTransferEventCode::wait_peer_acceptance);
         return true;
     }
 
+    // Wait for peer ready reply?
+    if (!peerReady_) {
+        buf.resize(0);
+        return true;
+    }
+
+    // Sending file data...
     input_.read(reinterpret_cast<char*>(&buf[0]), buf.size());
-    auto n = input_.gcount();
-    buf.resize(n);
-    {
+    buf.resize(input_.gcount());
+    if (buf.size()) {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        info_.bytesProgress += n;
+        info_.bytesProgress += buf.size();
+        return true;
     }
 
-    if (n)
-        return true;
-
+    // File end reached?
     if (input_.eof()) {
         RING_DBG() << "FTP#" << getId() << ": sent " << info_.bytesProgress << " bytes";
         emit(DRing::DataTransferEventCode::finished);
         return false;
-    } else {
-        throw std::runtime_error("FileTransfer IO read failed"); // TODO: better exception?
     }
 
+    throw std::runtime_error("FileTransfer IO read failed"); // TODO: better exception?
+}
+
+bool
+OutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
+{
+    if (not peerReady_ and not buffer.empty() and headerSent_) {
+        peerReady_ = true;
+        emit(DRing::DataTransferEventCode::ongoing);
+    }
     return true;
 }
 
@@ -318,7 +323,7 @@ public:
     mutable std::mutex mapMutex_;
     std::unordered_map<DRing::DataTransferId, std::shared_ptr<DataTransfer>> map_;
 
-    std::shared_ptr<DataTransfer> createFileTransfer(const DRing::DataTransferInfo& info,
+    std::shared_ptr<DataTransfer> createOutgoingFileTransfer(const DRing::DataTransferInfo& info,
                                                      DRing::DataTransferId& tid);
     std::shared_ptr<IncomingFileTransfer> createIncomingFileTransfer(const DRing::DataTransferInfo&);
     std::shared_ptr<DataTransfer> getTransfer(const DRing::DataTransferId&);
@@ -343,11 +348,11 @@ DataTransferFacade::Impl::getTransfer(const DRing::DataTransferId& id)
 }
 
 std::shared_ptr<DataTransfer>
-DataTransferFacade::Impl::createFileTransfer(const DRing::DataTransferInfo& info,
-                                             DRing::DataTransferId& tid)
+DataTransferFacade::Impl::createOutgoingFileTransfer(const DRing::DataTransferInfo& info,
+                                                     DRing::DataTransferId& tid)
 {
     tid = generateUID();
-    auto transfer = std::make_shared<FileTransfer>(tid, info);
+    auto transfer = std::make_shared<OutgoingFileTransfer>(tid, info);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
         map_.emplace(tid, transfer);
@@ -420,7 +425,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
     }
 
     try {
-        pimpl_->createFileTransfer(info, tid);
+        pimpl_->createOutgoingFileTransfer(info, tid);
     } catch (const std::exception& ex) {
         RING_ERR() << "[XFER] exception during createFileTransfer(): " << ex.what();
         return DRing::DataTransferError::io;

@@ -65,7 +65,7 @@ FtpServer::startNewFile()
     info.displayName = displayName_;
     info.totalSize = fileSize_;
     info.bytesProgress = 0;
-    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info);
+    out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info); // we block here until answer from client
     return true;
 }
 
@@ -76,6 +76,18 @@ FtpServer::closeCurrentFile()
         out_->close();
         out_.reset();
     }
+}
+
+bool
+FtpServer::read(std::vector<uint8_t>& buffer) const
+{
+    if (!out_) {
+        buffer.resize(0);
+        return false;
+    }
+    buffer.resize(3);
+    buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
+    return true;
 }
 
 bool
