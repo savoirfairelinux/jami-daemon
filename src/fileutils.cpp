@@ -217,6 +217,14 @@ expand_path(const std::string &path)
 #endif
 }
 
+std::map<std::string, std::mutex> fileLocks {};
+
+std::mutex&
+getFileLock(const std::string& path)
+{
+    return fileLocks[path];
+}
+
 bool isFile (const std::string& path) {
   struct stat s;
   return (stat (path.c_str(), &s) == 0) and not (s.st_mode & S_IFDIR);

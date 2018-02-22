@@ -24,6 +24,7 @@
 #include <string>
 #include <vector>
 #include <chrono>
+#include <mutex>
 #include <cstdio>
 
 #ifndef RING_UWP
@@ -105,6 +106,8 @@ namespace ring { namespace fileutils {
 
     std::vector<uint8_t> readArchive(const std::string& path, const std::string& password = {});
     void writeArchive(const std::string& data, const std::string& path, const std::string& password = {});
+
+    std::mutex& getFileLock(const std::string& path);
 
     struct FileHandle {
         int fd;
