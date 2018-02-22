@@ -1,3 +1,5 @@
+# -*- mode: makefile; -*-
+#
 # Main makefile for VLC 3rd party libraries ("contrib")
 # Copyright (C) 2003-2011 the VideoLAN team
 #
@@ -399,9 +401,9 @@ PKGS_MANUAL := $(sort $(PKGS_ENABLE) $(filter-out $(PKGS_DISABLE),$(PKGS_AUTOMAT
 # Resolve dependencies:
 dep_on = $(if $(filter $1,$2),\
   $(error Dependency cycle detected: $(patsubst %,% ->,$2) $(filter $1,$2)),\
-  $(sort $(foreach p,$(filter-out $(PKGS_FOUND),$(1)),$(p) $(call dep_on,$(DEPS_$(p)),$2 $(p)))))
-PKGS_DEPS := $(call dep_on,$(PKGS_MANUAL))
-PKGS := $(sort $(PKGS_MANUAL) $(PKGS_DEPS))
+  $(foreach p,$(filter-out $(PKGS_FOUND),$(1)),$(p) $(call dep_on,$(DEPS_$(p)),$2 $(p))))
+PKGS_DEPS := $(filter-out $(PKGS_MANUAL),$(call dep_on,$(PKGS_MANUAL)))
+PKGS := $(PKGS_MANUAL) $(PKGS_DEPS)
 
 convert-static:
 	for p in $(PREFIX)/lib/pkgconfig/*.pc; do $(SRC)/pkg-static.sh $$p; done
@@ -444,21 +446,23 @@ package: install
 	cd tmp/$(notdir $(PREFIX)) && $(abspath $(SRC))/change_prefix.sh $(PREFIX) @@CONTRIB_PREFIX@@
 	(cd tmp && tar c $(notdir $(PREFIX))/) | bzip2 -c > ../ring-contrib-$(HOST)-$(DATE).tar.bz2
 
+pprint = @echo '  $(or $(sort $1), None)' | fmt
+
 list:
 	@echo All packages:
-	@echo '  $(PKGS_ALL)' | fmt
+	$(call pprint,$(PKGS_ALL))
 	@echo Distribution-provided packages:
-	@echo '  $(PKGS_FOUND)' | fmt
+	$(call pprint,$(PKGS_FOUND))
 	@echo Automatically selected packages:
-	@echo '  $(PKGS_AUTOMATIC)' | fmt
+	$(call pprint,$(PKGS_AUTOMATIC))
 	@echo Manually deselected packages:
-	@echo '  $(PKGS_DISABLE)' | fmt
+	$(call pprint,$(PKGS_DISABLE))
 	@echo Manually selected packages:
-	@echo '  $(PKGS_ENABLE)' | fmt
+	$(call pprint,$(PKGS_ENABLE))
 	@echo Depended-on packages:
-	@echo '  $(PKGS_DEPS)' | fmt
+	$(call pprint,$(PKGS_DEPS))
 	@echo To-be-built packages:
-	@echo '  $(PKGS)' | fmt
+	$(call pprint,$(PKGS))
 
 .PHONY: all fetch fetch-all install mostlyclean clean distclean package list prebuilt
 

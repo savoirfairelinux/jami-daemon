@@ -1,3 +1,4 @@
+# -*- mode: makefile; -*-
 #
 #  Copyright (C) 2018 Savoir-faire Linux Inc.
 #
@@ -21,7 +22,7 @@
 KASHMIR_VERSION := 2f3913f49c4ac7f9bff9224db5178f6f8f0ff3ee
 KASHMIR_URL := https://github.com/Corvusoft/kashmir-dependency/archive/$(KASHMIR_VERSION).tar.gz
 
-PKGS += kashmir-dependency
+# Pure dependency of restbed: do not add to PKGS.
 
 $(TARBALLS)/kashmir-dependency-$(KASHMIR_VERSION).tar.gz:
 	$(call download,$(KASHMIR_URL))
@@ -31,7 +32,8 @@ kashmir-dependency: kashmir-dependency-$(KASHMIR_VERSION).tar.gz
 	$(MOVE)
 
 .kashmir-dependency: kashmir-dependency .sum-kashmir-dependency
-	cd $< && cp -r kashmir $(PREFIX)/include
+	mkdir "$(PREFIX)/include"
+	cd $< && cp -r kashmir "$(PREFIX)/include"
 	touch $@
 
 .sum-kashmir-dependency: kashmir-dependency-$(KASHMIR_VERSION).tar.gz

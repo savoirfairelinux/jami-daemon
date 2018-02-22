@@ -22,7 +22,7 @@
 RESTBED_VERSION := df867a858dddc4cf6ca8642da02720bd65ba239a
 RESTBED_URL := https://github.com/corvusoft//restbed/archive/$(RESTBED_VERSION).tar.gz
 
-PKGS += restbed
+# Pure dependency of OpenDHT: do not add to PKGS.
 
 ifeq ($(call need_pkg,"restbed >= 4.0"),)
 PKGS_FOUND += restbed
