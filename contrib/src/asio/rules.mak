@@ -21,7 +21,7 @@
 ASIO_VERSION := f5c570826d2ebf50eb38c44039181946a473148b
 ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
-PKGS += asio
+# Pure dependency of restbed: do not add to PKGS.
 
 $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 	$(call download,$(ASIO_URL))
