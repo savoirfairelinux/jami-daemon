@@ -42,6 +42,10 @@
 #include "client/ring_signal.h"
 #include "upnp/upnp_context.h"
 
+#ifdef __APPLE__
+#include <TargetConditionals.h>
+#endif
+
 #ifdef RING_UWP
 #include "windirent.h"
 #else
@@ -865,11 +869,13 @@ connectivityChanged()
     RING_WARN("received connectivity changed - trying to re-connect enabled accounts");
 
     // reset the UPnP context
+#if !(defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     try {
         ring::upnp::getUPnPContext()->connectivityChanged();
     } catch (std::runtime_error& e) {
         RING_ERR("UPnP context error: %s", e.what());
     }
+#endif
 
     for (const auto &account : ring::Manager::instance().getAllAccounts()) {
         account->connectivityChanged();
