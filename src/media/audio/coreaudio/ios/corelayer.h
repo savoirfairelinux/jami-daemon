@@ -160,14 +160,12 @@ class CoreLayer : public AudioLayer {
         ::AudioBufferList* captureBuff_ {nullptr}; // CoreAudio buffer (pointer is casted rawBuff_)
         std::unique_ptr<Byte[]> rawBuff_; // raw allocation of captureBuff_
 
-        /** Interleaved buffer */
-        std::vector<AudioSample> playbackIBuff_;
-        std::vector<AudioSample> captureIBuff_;
-
         AudioUnit ioUnit_;
 
         Float64 inSampleRate_;
         UInt32 inChannelsPerFrame_;
+        Float64 outSampleRate_;
+        UInt32 outChannelsPerFrame_;
 
         std::shared_ptr<RingBuffer> mainRingBuffer_;
 };

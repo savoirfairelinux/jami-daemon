@@ -29,6 +29,9 @@
 #include <cmath>
 #include <vector>
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 namespace ring {
 
 // AudioLayer implementation.
@@ -61,7 +64,7 @@ CoreLayer::getPlaybackDeviceList() const
     // The notion of input devices can be ignored, and output devices can describe
     // input/output pairs.
     // Unavailable options like the receiver on iPad can be ignored by the client.
-    ret.assign({"built_in_spk", "bluetooth", "headphones", "receiver", "dummy"});
+    ret.assign({"built_in_spk", "bluetooth", "headphones", "receiver"});
 
     return ret;
 }
@@ -69,12 +72,17 @@ CoreLayer::getPlaybackDeviceList() const
 int
 CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
+    (void) name;
+    (void) index;
+    (void) type;
     return 0;
 }
 
 std::string
 CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 {
+    (void) index;
+    (void) type;
     return "";
 }
 
@@ -122,7 +130,8 @@ CoreLayer::initAudioLayerIO()
             checkErr(AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute,
                                              sizeof(audioRouteOverrideNone),
                                              &audioRouteOverrideNone));
-        case 4:
+            break;
+        default:
             break;
     }
 
@@ -147,11 +156,12 @@ CoreLayer::setupOutputBus() {
                             &size,
                             &outSampleRate);
     outputASBD.mSampleRate = outSampleRate;
-    outputASBD.mFormatID = kAudioFormatLinearPCM;
-    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     audioFormat_ = {static_cast<unsigned int>(outputASBD.mSampleRate),
                     static_cast<unsigned int>(outputASBD.mChannelsPerFrame)};
+
+    outSampleRate_ = outputASBD.mSampleRate;
+    outChannelsPerFrame_ = outputASBD.mChannelsPerFrame;
 
     size = sizeof(outputASBD);
     checkErr(AudioUnitGetProperty(ioUnit_,
@@ -163,6 +173,8 @@ CoreLayer::setupOutputBus() {
 
     // Only change sample rate.
     outputASBD.mSampleRate = audioFormat_.sample_rate;
+    outputASBD.mFormatID = kAudioFormatLinearPCM;
+    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     // Set output steam format
     checkErr(AudioUnitSetProperty(ioUnit_,
@@ -181,7 +193,7 @@ CoreLayer::setupInputBus() {
 
     AudioUnitScope inputBus = 1;
     UInt32 size;
- 
+
     AudioStreamBasicDescription inputASBD;
     size = sizeof(inputASBD);
 
@@ -212,7 +224,7 @@ CoreLayer::setupInputBus() {
     inputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     audioInputFormat_ = {static_cast<unsigned int>(inputASBD.mSampleRate),
-        static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
+                         static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
 
     // Keep some values to not ask them every time the read callback is fired up
@@ -364,17 +376,80 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    auto& ringBuff = getToRing(audioFormat_, inNumberFrames);
-    auto& playBuff = getToPlay(audioFormat_, inNumberFrames);
+    (void) ioActionFlags;
+    (void) inTimeStamp;
+    (void) inBusNumber;
+
+    auto& manager = Manager::instance();
+    auto& bufferPool = manager.getRingBufferPool();
+
+    auto mainBufferFormat = bufferPool.getInternalAudioFormat();
+    const AudioFormat currentOutFormat = {  static_cast<unsigned int>(outSampleRate_),
+                                            static_cast<unsigned int>(outChannelsPerFrame_)};
+
+    auto resample = currentOutFormat.sample_rate != mainBufferFormat.sample_rate;
+
+    auto normalFramesToGet = bufferPool.availableForGet(RingBufferPool::DEFAULT_ID);
+    auto urgentFramesToGet = urgentRingBuffer_.availableForGet(RingBufferPool::DEFAULT_ID);
+
+    double resampleFactor;
+    decltype(normalFramesToGet) readableSamples;
+    decltype(urgentFramesToGet) readableUrgentSamples;
+
+    if (resample) {
+        resampleFactor = mainBufferFormat.sample_rate / static_cast<double>(currentOutFormat.sample_rate);
+        readableSamples = std::ceil(inNumberFrames * resampleFactor);
+    } else {
+        readableSamples = inNumberFrames;
+    }
+
+    // incoming call during call
+    if (urgentFramesToGet > 0) {
+        readableUrgentSamples = std::min(readableSamples, urgentFramesToGet);
+
+        playbackBuff_.setFormat(currentOutFormat);
+        playbackBuff_.resize(readableUrgentSamples);
+        urgentRingBuffer_.get(playbackBuff_, RingBufferPool::DEFAULT_ID);
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+
+        for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
+            playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+        }
+        manager.getRingBufferPool().discard(readableUrgentSamples, RingBufferPool::DEFAULT_ID);
+    }
+
+    if (normalFramesToGet > 0) {
+        readableSamples = std::min(readableSamples, normalFramesToGet);
+    }
+
+    auto& ringBuff = getToRing(audioFormat_, readableSamples);
+    auto& playBuff = getToPlay(audioFormat_, readableSamples);
 
     auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
 
     if (toPlay.frames() == 0) {
-        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
+        // clear buffer
+        RING_DBG("clear buffer");
+        for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
             std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
                         ioData->mBuffers[i].mDataByteSize / sizeof(Float32), 0);
         }
+    } else if (resample) {
+        // resample
+        RING_DBG("resampling: f - %dHz -> %dHz , s - %d -> %lu",
+                  mainBufferFormat.sample_rate, currentOutFormat.sample_rate,
+                  inNumberFrames, readableSamples);
+        playbackBuff_.setFormat(currentOutFormat);
+        playbackBuff_.resize(readableSamples);
+        resampler_->resample(toPlay, playbackBuff_);
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
+            playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+        }
     } else {
+        // normal play
+        RING_DBG("normal play");
+        const_cast<AudioBuffer&>(toPlay).applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
             toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
         }
@@ -400,6 +475,8 @@ CoreLayer::read(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
+    (void) ioData;
+
     if (inNumberFrames <= 0) {
         RING_WARN("No frames for input.");
         return;
@@ -461,3 +538,5 @@ void CoreLayer::updatePreference(AudioPreference &preference, int index, DeviceT
 }
 
 } // namespace ring
+
+#pragma GCC diagnostic pop
