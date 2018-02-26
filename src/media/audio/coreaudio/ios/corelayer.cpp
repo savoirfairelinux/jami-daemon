@@ -146,9 +146,12 @@ CoreLayer::setupOutputBus() {
     AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate,
                             &size,
                             &outSampleRate);
+//    if (indexOut_ == 1 || indexOut_ == 4) {
+//        RING_DBG("iOS CoreLayer - BT");
+//        outSampleRate = 22050;
+//    }
+    RING_DBG("iOS CoreLayer - outSampleRate: %0.2f, indexOut_: %d", outSampleRate, indexOut_);
     outputASBD.mSampleRate = outSampleRate;
-    outputASBD.mFormatID = kAudioFormatLinearPCM;
-    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     audioFormat_ = {static_cast<unsigned int>(outputASBD.mSampleRate),
                     static_cast<unsigned int>(outputASBD.mChannelsPerFrame)};
@@ -163,6 +166,8 @@ CoreLayer::setupOutputBus() {
 
     // Only change sample rate.
     outputASBD.mSampleRate = audioFormat_.sample_rate;
+    outputASBD.mFormatID = kAudioFormatLinearPCM;
+    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     // Set output steam format
     checkErr(AudioUnitSetProperty(ioUnit_,
