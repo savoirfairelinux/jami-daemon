@@ -69,12 +69,16 @@ CoreLayer::getPlaybackDeviceList() const
 int
 CoreLayer::getAudioDeviceIndex(const std::string& name, DeviceType type) const
 {
+    (void) index;
+    (void) type;
     return 0;
 }
 
 std::string
 CoreLayer::getAudioDeviceName(int index, DeviceType type) const
 {
+    (void) index;
+    (void) type;
     return "";
 }
 
@@ -146,9 +150,7 @@ CoreLayer::setupOutputBus() {
     AudioSessionGetProperty(kAudioSessionProperty_CurrentHardwareSampleRate,
                             &size,
                             &outSampleRate);
-    outputASBD.mSampleRate = outSampleRate;
-    outputASBD.mFormatID = kAudioFormatLinearPCM;
-    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
+    outSampleRate_ = outputASBD.mSampleRate = outSampleRate;
 
     audioFormat_ = {static_cast<unsigned int>(outputASBD.mSampleRate),
                     static_cast<unsigned int>(outputASBD.mChannelsPerFrame)};
@@ -163,6 +165,8 @@ CoreLayer::setupOutputBus() {
 
     // Only change sample rate.
     outputASBD.mSampleRate = audioFormat_.sample_rate;
+    outputASBD.mFormatID = kAudioFormatLinearPCM;
+    outputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     // Set output steam format
     checkErr(AudioUnitSetProperty(ioUnit_,
@@ -212,7 +216,7 @@ CoreLayer::setupInputBus() {
     inputASBD.mFormatFlags = kAudioFormatFlagIsFloat | kAudioFormatFlagIsPacked;
 
     audioInputFormat_ = {static_cast<unsigned int>(inputASBD.mSampleRate),
-        static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
+                         static_cast<unsigned int>(inputASBD.mChannelsPerFrame)};
     hardwareInputFormatAvailable(audioInputFormat_);
 
     // Keep some values to not ask them every time the read callback is fired up
@@ -364,19 +368,109 @@ CoreLayer::write(AudioUnitRenderActionFlags* ioActionFlags,
     UInt32 inNumberFrames,
     AudioBufferList* ioData)
 {
-    auto& ringBuff = getToRing(audioFormat_, inNumberFrames);
-    auto& playBuff = getToPlay(audioFormat_, inNumberFrames);
+    // unused arguments
+    (void) ioActionFlags;
+    (void) inTimeStamp;
+    (void) inBusNumber;
 
-    auto& toPlay = ringBuff.frames() > 0 ? ringBuff : playBuff;
+//    auto& manager = Manager::instance();
+//    auto& bufferPool = manager.getRingBufferPool();
+//
+//    auto mainBufferFormat = bufferPool.getInternalAudioFormat();
+//    const AudioFormat currentOutFormat = {  static_cast<unsigned int>(outSampleRate_),
+//                                            static_cast<unsigned int>(1)};
+//
+//    auto resample = currentOutFormat.sample_rate != mainBufferFormat.sample_rate;
+//
+//    auto normalFramesToGet = bufferPool.availableForGet(RingBufferPool::DEFAULT_ID);
+//    if (normalFramesToGet > 0) {
+//        double resampleFactor;
+//        decltype(normalFramesToGet) readableSamples;
+//
+//        if (resample) {
+//            resampleFactor = static_cast<double>(currentOutFormat.sample_rate) / mainBufferFormat.sample_rate;
+//            readableSamples = std::ceil(inNumberFrames / resampleFactor);
+//            RING_WARN("readableSamples: %d", readableSamples);
+//        } else {
+//            resampleFactor = 1.0;
+//            readableSamples = inNumberFrames;
+//        }
+//        readableSamples = std::min(readableSamples, normalFramesToGet);
+//
+//        playbackBuff_.setFormat(currentOutFormat);
+//        playbackBuff_.resize(readableSamples);
+//
+//        bufferPool.getData(playbackBuff_, RingBufferPool::DEFAULT_ID);
+//        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
+//
+//        if (resample) {
+//            RING_WARN("resampling: %d -> %d", mainBufferFormat.sample_rate, currentOutFormat.sample_rate);
+//            AudioBuffer resampledOutput(readableSamples, currentOutFormat);
+//            resampler_->resample(playbackBuff_, resampledOutput);
+//            for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
+//                resampledOutput.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+//            }
+//        } else {
+//            for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
+//                playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+//            }
+//        }
+//    }
 
-    if (toPlay.frames() == 0) {
+    auto& manager = Manager::instance();
+    auto& bufferPool = manager.getRingBufferPool();
+
+    auto mainBufferFormat = bufferPool.getInternalAudioFormat();
+    const AudioFormat currentOutFormat = {  static_cast<unsigned int>(outSampleRate_), static_cast<unsigned int>(1)};
+
+    auto resample = currentOutFormat.sample_rate != mainBufferFormat.sample_rate;
+
+    auto normalFramesToGet = bufferPool.availableForGet(RingBufferPool::DEFAULT_ID);
+    RING_WARN("normalFramesToGet: %lu", normalFramesToGet);
+
+    double resampleFactor;
+    decltype(normalFramesToGet) readableSamples;
+
+    if (resample) {
+        resampleFactor = static_cast<double>(currentOutFormat.sample_rate) / mainBufferFormat.sample_rate;
+        readableSamples = std::ceil(inNumberFrames / resampleFactor);
+    } else {
+        resampleFactor = 1.0;
+        readableSamples = inNumberFrames;
+    }
+    //readableSamples = std::min(readableSamples, normalFramesToGet);
+    RING_WARN("readableSamples: %lu", readableSamples);
+
+    auto& ringBuff = getToRing(audioFormat_, readableSamples);
+    auto& playBuff = getToPlay(audioFormat_, readableSamples);
+
+    auto ringBuffFrames = ringBuff.frames();
+    RING_WARN("ringBuffFrames: %lu", ringBuffFrames);
+
+    auto ringtoneBuffFrames = ringtoneBuffer_.frames();;
+    RING_WARN("ringtoneBuffFrames: %lu", ringtoneBuffFrames);
+
+    auto& toPlay = ringBuffFrames > 0 ? ringBuff : playBuff;
+
+    if (resample) {
+        RING_WARN("resampling: %d -> %d , samples: %lu", mainBufferFormat.sample_rate, currentOutFormat.sample_rate, readableSamples);
+        playbackBuff_.setFormat(currentOutFormat);
+        playbackBuff_.resize(readableSamples);
+        resampler_->resample(toPlay, playbackBuff_);
+        playbackBuff_.applyGain(isPlaybackMuted_ ? 0.0 : playbackGain_);
         for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
-            std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
-                        ioData->mBuffers[i].mDataByteSize / sizeof(Float32), 0);
+            playbackBuff_.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
         }
     } else {
-        for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
-            toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+        if (toPlay.frames() == 0) {
+            for (unsigned i = 0; i < currentOutFormat.nb_channels; ++i) {
+                std::fill_n(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData),
+                            ioData->mBuffers[i].mDataByteSize / sizeof(Float32), 0);
+            }
+        } else {
+            for (unsigned i = 0; i < audioFormat_.nb_channels; ++i) {
+                toPlay.channelToFloat(reinterpret_cast<Float32*>(ioData->mBuffers[i].mData), i);
+            }
         }
     }
 }
