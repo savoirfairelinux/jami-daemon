@@ -88,7 +88,8 @@ std::vector<std::string> getSupportedCiphers(const std::string& accountID);
 std::map<std::string, std::string> getCodecDetails(const std::string& accountID, const unsigned& codecId);
 bool setCodecDetails(const std::string& accountID, const unsigned& codecId, const std::map<std::string, std::string>& details);
 std::vector<unsigned> getActiveCodecList(const std::string& accountID);
-std::string exportOnRing(const std::string& accountID, const std::string& password);
+bool exportOnRing(const std::string& accountID, const std::string& password);
+bool exportToFile(const std::string& accountID, const std::string& destinationPath);
 
 std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
 bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID);
