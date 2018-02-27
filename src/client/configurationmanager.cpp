@@ -287,6 +287,16 @@ exportOnRing(const std::string& accountID, const std::string& password)
 }
 
 bool
+exportToFile(const std::string& accountID, const std::string& destinationPath)
+{
+    if (const auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
+        account->exportArchive(destinationPath);
+        return true;
+    }
+    return false;
+}
+
+bool
 revokeDevice(const std::string& accountID, const std::string& password, const std::string& deviceID)
 {
     if (const auto account = ring::Manager::instance().getAccount<ring::RingAccount>(accountID)) {
