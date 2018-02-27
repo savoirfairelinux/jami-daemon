@@ -1053,6 +1053,22 @@ RingAccount::addDevice(const std::string& password)
 }
 
 bool
+RingAccount::exportArchive(const std::string& destinationPath)
+{
+    try {
+        auto sourcePath = fileutils::getFullPath(idPath_, archivePath_);
+        std::ifstream src(sourcePath, std::ios::in | std::ios::binary);
+        if (!src) return false;
+        std::ofstream dst(destinationPath, std::ios::out | std::ios::binary);
+        dst << src.rdbuf();
+    } catch (const std::runtime_error& ex) {
+        RING_ERR("[Account %s] Can't export archive: %s", getAccountID().c_str(), ex.what());
+        return false;
+    }
+    return true;
+}
+
+bool
 RingAccount::revokeDevice(const std::string& password, const std::string& device)
 {
     // shared_ptr of future
