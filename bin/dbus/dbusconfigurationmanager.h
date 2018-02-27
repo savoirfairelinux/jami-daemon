@@ -68,6 +68,7 @@ class DBusConfigurationManager :
         std::map<std::string, std::string> getAccountTemplate(const std::string& accountType);
         std::string addAccount(const std::map<std::string, std::string>& details);
         bool exportOnRing(const std::string& accountID, const std::string& password);
+        bool exportToFile(const std::string& accountID, const std::string& destinationPath);
         bool revokeDevice(const std::string& accountID, const std::string& password, const std::string& device);
         std::map<std::string, std::string> getKnownRingDevices(const std::string& accountID);
         bool changeAccountPassword(const std::string& accountID, const std::string& password_old, const std::string& password_new);

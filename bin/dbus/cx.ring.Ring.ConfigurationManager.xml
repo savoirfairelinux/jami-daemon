@@ -169,6 +169,22 @@
            </arg>
        </method>
 
+       <method name="exportToFile" tp:name-for-bindings="exportToFile">
+         <tp:added version="5.1.0"/>
+           <tp:docstring>
+               Copy the account archive to the path provided in argument.
+           </tp:docstring>
+           <arg type="s" name="accountID" direction="in">
+           </arg>
+           <arg type="s" name="destinationPath" direction="in">
+           </arg>
+           <arg type="b" name="success" direction="out">
+               <tp:docstring>
+                   True if the operation was initialized successfully.
+               </tp:docstring>
+           </arg>
+       </method>
+
        <signal name="exportOnRingEnded" tp:name-for-bindings="exportOnRingEnded">
            <tp:docstring>
                Notify clients when the exportOnRing operation ended.

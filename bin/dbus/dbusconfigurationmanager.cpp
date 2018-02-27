@@ -82,6 +82,12 @@ DBusConfigurationManager::exportOnRing(const std::string& accountID, const std::
 }
 
 auto
+DBusConfigurationManager::exportToFile(const std::string& accountID, const std::string& destinationPath) -> decltype(DRing::exportToFile(accountID, destinationPath))
+{
+    return DRing::exportToFile(accountID, destinationPath);
+}
+
+auto
 DBusConfigurationManager::revokeDevice(const std::string& accountID, const std::string& password, const std::string& device) -> decltype(DRing::revokeDevice(accountID, password, device))
 {
     return DRing::revokeDevice(accountID, password, device);

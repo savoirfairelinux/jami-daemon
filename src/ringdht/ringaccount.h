@@ -300,6 +300,7 @@ class RingAccount : public SIPAccountBase {
 
         /* Devices */
         void addDevice(const std::string& password);
+        bool exportArchive(const std::string& destinationPath);
         bool revokeDevice(const std::string& password, const std::string& device);
         std::map<std::string, std::string> getKnownDevices() const;
 
