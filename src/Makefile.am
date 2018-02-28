@@ -58,7 +58,6 @@ libring_la_LDFLAGS = \
 		@PORTAUDIO_LIBS@ \
 		@GNUTLS_LIBS@ \
 		@OPENDHT_LIBS@ \
-		@ARGON2_LIBS@ \
         @SECP256K1_LIBS@ \
 		@ZLIB_LIBS@ \
 		$(PCRE_LIBS) \
