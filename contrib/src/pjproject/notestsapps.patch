@@ -79,15 +79,6 @@ diff --git a/pjsip/build/Makefile b/pjsip/build/Makefile
 index d2a5c2a..7e2ec60 100644
 --- a/pjsip/build/Makefile
 +++ b/pjsip/build/Makefile
-@@ -140,7 +140,7 @@ export PJSUA2_LIB_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
- 			   account.o endpoint.o json.o persistent.o types.o \
- 			   siptypes.o call.o presence.o media.o
- export PJSUA2_LIB_CFLAGS += $(_CFLAGS) $(PJ_VIDEO_CFLAGS)
--export PJSUA2_LIB_CXXFLAGS = $(PJSUA2_LIB_CFLAGS) 
-+export PJSUA2_LIB_CXXFLAGS = $(_CXXFLAGS) $(PJ_VIDEO_CFLAGS) 
- export PJSUA2_LIB_LDFLAGS += $(PJSUA_LIB_LDLIB) \
- 			     $(PJSIP_UA_LDLIB) \
- 			     $(PJSIP_SIMPLE_LDLIB) \
 @@ -165,7 +165,6 @@ export PJSUA2_TEST_OBJS += $(OS_OBJS) $(M_OBJS) $(CC_OBJS) $(HOST_OBJS) \
  export PJSUA2_TEST_CFLAGS += $(_CFLAGS) $(PJ_VIDEO_CFLAGS)
  export PJSUA2_TEST_CXXFLAGS = $(PJSUA2_LIB_CFLAGS) 
