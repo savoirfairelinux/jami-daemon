@@ -511,12 +511,7 @@ on behalf of Savoir-faire Linux.
  	status = pj_turn_session_set_credential(turn_sock->sess, cred);
  	if (status != PJ_SUCCESS) {
  	    sess_fail(turn_sock, "Error setting credential", status);
-@@ -676,11 +757,35 @@
- 	return PJ_EINVALIDOP;
-     }
- 
--    PJ_UNUSED_ARG(dst_addr);
--    PJ_UNUSED_ARG(dst_addr_len);
+@@ -684,2 +770,27 @@
 +	/* With TCP peer connection filter by address
 +	 * if packet is for the server or the peer
 +	 */
@@ -542,14 +537,9 @@ on behalf of Savoir-faire Linux.
 +	} else {
 +		asock = turn_sock->active_sock;
 +	}
- 
--    status = pj_activesock_send(turn_sock->active_sock, &turn_sock->send_key,
-+    status = pj_activesock_send(asock, &turn_sock->send_key,
- 				pkt, &len, 0);
-+
-     if (status != PJ_SUCCESS && status != PJ_EPENDING) {
- 	show_err(turn_sock, "socket send()", status);
-     }
+-	status = pj_activesock_send(turn_sock->active_sock,
++	status = pj_activesock_send(asock,
+ 				    &turn_sock->send_key, pkt, &len, 0);
 @@ -927,4 +1032,365 @@
      }
  }

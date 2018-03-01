@@ -1,5 +1,5 @@
 # PJPROJECT
-PJPROJECT_VERSION := 2.6
+PJPROJECT_VERSION := 2.7.2
 PJPROJECT_URL := http://www.pjsip.org/release/$(PJPROJECT_VERSION)/pjproject-$(PJPROJECT_VERSION).tar.bz2
 
 PJPROJECT_OPTIONS := --disable-oss          \
@@ -62,16 +62,12 @@ $(TARBALLS)/pjproject-$(PJPROJECT_VERSION).tar.bz2:
 pjproject: pjproject-$(PJPROJECT_VERSION).tar.bz2 .sum-pjproject
 	$(UNPACK)
 ifdef HAVE_WIN32
-	#$(APPLY) $(SRC)/pjproject/intptr_t.patch
 	$(APPLY) $(SRC)/pjproject/pj_win.patch
 endif
-	#$(APPLY) $(SRC)/pjproject/endianness.patch
 	$(APPLY) $(SRC)/pjproject/gnutls.patch
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
-	$(APPLY) $(SRC)/pjproject/fix_base64.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
-	$(APPLY) $(SRC)/pjproject/isblank.patch
 endif
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
