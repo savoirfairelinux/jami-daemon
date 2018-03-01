@@ -65,8 +65,13 @@ FtpServer::startNewFile()
     info.displayName = displayName_;
     info.totalSize = fileSize_;
     info.bytesProgress = 0;
+    rx_ = 0;
     out_ = Manager::instance().dataTransfers->onIncomingFileRequest(info); // we block here until answer from client
-    return true;
+    if (!out_) {
+        RING_DBG() << "[FTP] transfer aborted by client";
+        closed_ = true; // send NOK msg at next read()
+    }
+    return bool(out_);
 }
 
 void
@@ -75,16 +80,27 @@ FtpServer::closeCurrentFile()
     if (out_) {
         out_->close();
         out_.reset();
+        closed_ = true;
     }
 }
 
 bool
 FtpServer::read(std::vector<uint8_t>& buffer) const
 {
-    if (!out_)
-        return false;
+    if (!out_) {
+        if (closed_) {
+            closed_ = false;
+            buffer.resize(4);
+            buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
+            RING_DBG() << "[FTP] sending NGO (cancel) order";
+        } else {
+            buffer.resize(0);
+        }
+        return true;
+    }
     buffer.resize(3);
     buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
+    RING_DBG() << "[FTP] sending GO order";
     return true;
 }
 
@@ -102,16 +118,18 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
                 state_ = FtpState::READ_DATA;
                 while (headerStream_) {
                     headerStream_.read(&line_[0], line_.size());
-                    auto count = headerStream_.gcount();
+                    std::size_t count = headerStream_.gcount();
                     if (!count)
-                        continue;
+                        break;
+                    auto size_needed = fileSize_ - rx_;
+                    count = std::min(count, size_needed);
                     if (out_)
                         out_->write(reinterpret_cast<const uint8_t*>(&line_[0]), count);
                     rx_ += count;
-                    if (rx_ >= fileSize_) {
+                    if (rx_ == fileSize_) {
                         closeCurrentFile();
                         state_ = FtpState::PARSE_HEADERS;
-                        break;
+                        return true;
                     }
                 }
                 headerStream_.clear();
@@ -120,14 +138,21 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
             break;
 
         case FtpState::READ_DATA:
+        {
             if (out_)
                 out_->write(&buffer[0], buffer.size());
-            rx_ += buffer.size();
-            if (rx_ >= fileSize_) {
+            auto size_needed = fileSize_ - rx_;
+            auto read_size = std::min(buffer.size(), size_needed);
+            rx_ += read_size;
+            if (rx_ == fileSize_) {
                 closeCurrentFile();
+                // data may remains into the buffer: copy into the header stream for next header parsing
+                if (read_size < buffer.size())
+                    headerStream_ << std::string(std::begin(buffer) + read_size, std::end(buffer));
                 state_ = FtpState::PARSE_HEADERS;
             }
-            break;
+        }
+        break;
 
         default: break;
     }
