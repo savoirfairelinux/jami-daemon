@@ -75,14 +75,21 @@ FtpServer::closeCurrentFile()
     if (out_) {
         out_->close();
         out_.reset();
+        closed_ = true;
     }
 }
 
 bool
 FtpServer::read(std::vector<uint8_t>& buffer) const
 {
-    if (!out_)
-        return false;
+    if (!out_) {
+        if (closed_) {
+            closed_ = false;
+            buffer.resize(4);
+            buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
+        }
+        return true;
+    }
     buffer.resize(3);
     buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
     return true;
