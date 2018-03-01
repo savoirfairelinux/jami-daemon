@@ -567,6 +567,7 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
         outgoing_request_forked_cb,
         transaction_state_changed_cb,
         sdp_request_offer_cb,
+        nullptr /* on_rx_offer2 */,
 #if PJ_VERSION_NUM > (2 << 24 | 1 << 16)
         nullptr /* on_rx_reinvite */,
 #endif
@@ -1334,7 +1335,7 @@ SIPVoIPLink::findLocalAddressFromSTUN(pjsip_transport* transport,
 
     pj_sockaddr_in mapped_addr;
     pj_sock_t sipSocket = pjsip_udp_transport_get_socket(transport);
-    const pjstun_setting stunOpt = {PJ_TRUE, *stunServerName, stunPort,
+    const pjstun_setting stunOpt = {PJ_TRUE, localIp.getFamily(), *stunServerName, stunPort,
                                     *stunServerName, stunPort};
     const pj_status_t stunStatus = pjstun_get_mapped_addr2(&cp_.factory,
                                                            &stunOpt, 1,
