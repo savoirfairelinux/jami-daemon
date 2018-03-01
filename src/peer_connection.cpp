@@ -274,7 +274,10 @@ TcpSocketEndpoint::read(ValueType* buf, std::size_t len, std::error_code& ec)
 {
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::recv(sock_, reinterpret_cast<char*>(buf), len, 0);
-    ec.assign(errno, std::generic_category());
+    if (res < 0)
+        ec.assign(errno, std::generic_category());
+    else
+        ec.clear();
     return (res >= 0) ? res : 0;
 }
 
@@ -283,7 +286,10 @@ TcpSocketEndpoint::write(const ValueType* buf, std::size_t len, std::error_code&
 {
     // NOTE: recv buf args is a void* on POSIX compliant system, but it's a char* on mingw
     auto res = ::send(sock_, reinterpret_cast<const char*>(buf), len, 0);
-    ec.assign(errno, std::generic_category());
+    if (res < 0)
+        ec.assign(errno, std::generic_category());
+    else
+        ec.clear();
     return (res >= 0) ? res : 0;
 }
 
@@ -572,14 +578,20 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         bool sleep = true;
 
+        // sending loop
         handle_stream_list(inputs_, [&] (auto& stream) {
                 buf.resize(IO_BUFFER_SIZE);
                 if (stream->read(buf)) {
-                    endpoint_->write(buf, ec);
-                    if (ec)
-                        throw std::system_error(ec);
-                    sleep &= buf.size() == 0;
+                    if (not buf.empty()) {
+                        RING_WARN() << "tx: " << buf.size();
+                        endpoint_->write(buf, ec);
+                        RING_WARN() << "ec: " << ec.value();
+                        if (ec)
+                            throw std::system_error(ec);
+                        sleep = false;
+                    }
                 } else {
+                    RING_WARN() << "sender stream in EOF";
                     // EOF on outgoing stream => finished
                     return false;
                 }
@@ -596,13 +608,18 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 return true;
             });
 
+        // receiving loop
         handle_stream_list(outputs_, [&] (auto& stream) {
                 buf.resize(IO_BUFFER_SIZE);
-                if (stream->read(buf)) {
+                auto eof = stream->read(buf);
+                // if eof we let a chance to send a reply before leaving
+                if (not buf.empty()) {
                     endpoint_->write(buf, ec);
                     if (ec)
                         throw std::system_error(ec);
                 }
+                if (not eof)
+                    return false;
 
                 if (endpoint_->waitForData(0, ec) > 0) {
                     buf.resize(IO_BUFFER_SIZE);
