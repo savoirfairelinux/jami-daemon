@@ -575,10 +575,12 @@ PeerConnection::PeerConnectionImpl::eventLoop()
         handle_stream_list(inputs_, [&] (auto& stream) {
                 buf.resize(IO_BUFFER_SIZE);
                 if (stream->read(buf)) {
-                    endpoint_->write(buf, ec);
-                    if (ec)
-                        throw std::system_error(ec);
-                    sleep &= buf.size() == 0;
+                    if (not buf.empty()) {
+                        endpoint_->write(buf, ec);
+                        if (ec)
+                            throw std::system_error(ec);
+                        sleep = false;
+                    }
                 } else {
                     // EOF on outgoing stream => finished
                     return false;
@@ -598,11 +600,15 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         handle_stream_list(outputs_, [&] (auto& stream) {
                 buf.resize(IO_BUFFER_SIZE);
-                if (stream->read(buf)) {
+                auto eof = stream->read(buf);
+                // if eof we let a chance to send a reply before leaving
+                if (not buf.empty()) {
                     endpoint_->write(buf, ec);
                     if (ec)
                         throw std::system_error(ec);
                 }
+                if (eof)
+                    return false;
 
                 if (endpoint_->waitForData(0, ec) > 0) {
                     buf.resize(IO_BUFFER_SIZE);

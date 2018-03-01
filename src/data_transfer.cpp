@@ -198,9 +198,17 @@ OutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 bool
 OutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
 {
-    if (not peerReady_ and not buffer.empty() and headerSent_) {
-        peerReady_ = true;
-        emit(DRing::DataTransferEventCode::ongoing);
+    if (not peerReady_ and headerSent_) {
+        // detect GO or NGO msg
+        if (buffer.size() == 3 and buffer[0] == 'G' and buffer[1] == 'O' and buffer[2] == '\n') {
+            peerReady_ = true;
+            emit(DRing::DataTransferEventCode::ongoing);
+        } else {
+            // consider any other response as a cancel msg
+            RING_WARN() << "FTP#" << getId() << ": refused by host";
+            emit(DRing::DataTransferEventCode::closed_by_peer);
+            return false;
+        }
     }
     return true;
 }
