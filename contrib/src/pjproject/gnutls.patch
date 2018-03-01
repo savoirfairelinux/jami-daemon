@@ -3272,7 +3272,7 @@ diff -ru a/pjlib/src/pj/ssl_sock_ossl.c b/pjlib/src/pj/ssl_sock_ossl.c
 diff -ru a/pjmedia/src/pjmedia/transport_srtp.c b/pjmedia/src/pjmedia/transport_srtp.c
 --- a/pjmedia/src/pjmedia/transport_srtp.c	2017-01-10 23:38:29.000000000 -0500
 +++ b/pjmedia/src/pjmedia/transport_srtp.c	2017-06-08 13:43:29.727001721 -0400
-@@ -30,7 +30,8 @@
+@@ -31,7 +31,8 @@
  
  #if defined(PJMEDIA_HAS_SRTP) && (PJMEDIA_HAS_SRTP != 0)
  
@@ -3282,14 +3282,31 @@ diff -ru a/pjmedia/src/pjmedia/transport_srtp.c b/pjmedia/src/pjmedia/transport_
  #  include <openssl/rand.h>
  
  /* Suppress compile warning of OpenSSL deprecation (OpenSSL is deprecated
-@@ -1147,7 +1148,8 @@
- 	    key_ok = PJ_TRUE;
+--- a/pjmedia/src/pjmedia/transport_srtp_sdes.c	2018-04-06 12:44:30.355264189 -0400
++++ b/pjmedia/src/pjmedia/transport_srtp_sdes.c	2018-04-06 12:49:23.269309135 -0400
+@@ -31,5 +31,9 @@
  
+ #endif
  
--#if defined(PJ_HAS_SSL_SOCK) && (PJ_HAS_SSL_SOCK != 0)
-+#if defined(PJ_HAS_SSL_SOCK) && PJ_HAS_SSL_SOCK != 0 && \
-+    defined(PJ_HAS_TLS_SOCK) && PJ_HAS_TLS_SOCK == 0
++#if defined(PJ_HAS_TLS_SOCK) && (PJ_HAS_TLS_SOCK != 0)
++#  include <gnutls/gnutls.h>
++#  include <gnutls/crypto.h>
++#endif
  
- /* Include OpenSSL libraries for MSVC */
- #  ifdef _MSC_VER
+ #include <pj/rand.h> 
 
+@@ -122,5 +122,12 @@
+ 			 PJ_ETOOSMALL);
+ 
+ 	do {
+-#if defined(PJ_HAS_SSL_SOCK) && (PJ_HAS_SSL_SOCK != 0)
++#if defined(PJ_HAS_TLS_SOCK) && (PJ_HAS_TLS_SOCK != 0)
++        int err = gnutls_rnd(GNUTLS_RND_KEY, (unsigned char*)key,
++				 crypto_suites[cs_idx].cipher_key_len);
++	    if (err != 1) {
++		PJ_LOG(5,(THIS_FILE, "Failed generating random key"));
++		return PJMEDIA_ERRNO_FROM_LIBSRTP(1);
++	    }
++#elif defined(PJ_HAS_SSL_SOCK) && (PJ_HAS_SSL_SOCK != 0)
+ 	    int err = RAND_bytes((unsigned char*)key,
+ 				 crypto_suites[cs_idx].cipher_key_len);
