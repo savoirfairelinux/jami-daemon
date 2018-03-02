@@ -577,13 +577,25 @@ ssize_t
 TlsSession::TlsSessionImpl::sendRaw(const void* buf, size_t size)
 {
     std::error_code ec;
-    auto n = transport_.write(reinterpret_cast<const ValueType*>(buf), size, ec);
-    if (!ec) {
-        // log only on success
-        ++stTxRawPacketCnt_;
-        stTxRawBytesCnt_ += n;
-        return n;
-    }
+    unsigned retry_count = 0;
+    do {
+        auto n = transport_.write(reinterpret_cast<const ValueType*>(buf), size, ec);
+        if (!ec) {
+            // log only on success
+            ++stTxRawPacketCnt_;
+            stTxRawBytesCnt_ += n;
+            return n;
+        }
+
+        if (ec.value() == EAGAIN) {
+            RING_WARN() << "[TLS] EAGAIN from transport, retry#" << ++retry_count;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            if (retry_count == 100) {
+                RING_ERR() << "[TLS] excessive retry detected, aborting";
+                ec.assign(EIO, std::system_category());
+            }
+        }
+    } while (ec.value() == EAGAIN);
 
     // Must be called to pass errno value to GnuTLS on Windows (cf. GnuTLS doc)
     gnutls_transport_set_errno(session_, ec.value());

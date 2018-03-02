@@ -422,7 +422,7 @@ TurnTransport::sendto(const IpAddr& peer, const char* const buffer, std::size_t 
                                       reinterpret_cast<const pj_uint8_t*>(buffer), length,
                                       peer.pjPtr(), peer.getLength());
     if (status != PJ_SUCCESS && status != PJ_EPENDING)
-        throw sip_utils::PjsipFailure(status);
+        throw sip_utils::PjsipFailure(PJ_STATUS_TO_OS(status));
 
     return status == PJ_SUCCESS;
 }
