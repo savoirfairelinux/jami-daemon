@@ -64,8 +64,13 @@ public:
     virtual void accept(const std::string&, std::size_t) {};
 
     virtual bool start() {
+        wasStarted_ = true;
         bool expected = false;
         return started_.compare_exchange_strong(expected, true);
+    }
+
+    bool hasBeenStarted() const {
+        return wasStarted_;
     }
 
     void close() noexcept override {
@@ -91,6 +96,7 @@ protected:
     mutable std::mutex infoMutex_;
     mutable DRing::DataTransferInfo info_;
     std::atomic_bool started_ {false};
+    std::atomic_bool wasStarted_ {false};
 };
 
 void
@@ -394,7 +400,7 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
             if (transfer->start()) {
                 connection->attachInputStream(transfer);
             }
-        } else {
+        } else if (not transfer->hasBeenStarted()) {
             transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
             cancel(*transfer);
         }
