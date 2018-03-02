@@ -70,6 +70,8 @@ FtpServer::startNewFile()
     if (!out_) {
         RING_DBG() << "[FTP] transfer aborted by client";
         closed_ = true; // send NOK msg at next read()
+    } else {
+        go_ = true;
     }
     return bool(out_);
 }
@@ -96,11 +98,12 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
         } else {
             buffer.resize(0);
         }
-        return true;
+    } else if (go_) {
+        go_ = false;
+        buffer.resize(3);
+        buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
+        RING_DBG() << "[FTP] sending GO order";
     }
-    buffer.resize(3);
-    buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
-    RING_DBG() << "[FTP] sending GO order";
     return true;
 }
 
