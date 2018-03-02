@@ -92,12 +92,14 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
     if (!out_) {
         if (closed_) {
             closed_ = false;
-            buffer.resize(4);
-            buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
-            RING_DBG() << "[FTP] sending NGO (cancel) order";
-        } else {
-            buffer.resize(0);
+            if (rx_ < fileSize_) {
+                buffer.resize(4);
+                buffer[0] = 'N'; buffer[1] = 'G'; buffer[2] = 'O'; buffer[3] = '\n';
+                RING_DBG() << "[FTP] sending NGO (cancel) order";
+                return true;
+            }
         }
+        buffer.resize(0);
     } else if (go_) {
         go_ = false;
         buffer.resize(3);
