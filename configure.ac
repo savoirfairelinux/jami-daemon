@@ -418,8 +418,18 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
   AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
 ])
 
-AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+dnl Order matters!
+AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
+  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
+  if test "${HAVE_WIN32}" = "0"; then
+     AC_CHECK_LIB(crypto, CRYPTO_new_ex_data, [], [AC_MSG_ERROR([library 'crypto' is required for OpenSSL])])
+     AC_CHECK_LIB(ssl, SSL_library_init, [], [AC_MSG_ERROR([library 'ssl' is required])])
+  else
+     AC_SEARCH_LIBS(CRYPTO_new_ex_data, eay32 crypto, [], [AC_MSG_ERROR([library 'eay32' or 'crypto' is required for OpenSSL])])
+     AC_SEARCH_LIBS(SSL_library_init, ssleay32 ssl, [], [AC_MSG_ERROR([library 'ssl' is required])])
+  fi
+  ], []
+);
 
 AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
