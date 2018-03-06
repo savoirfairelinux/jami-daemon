@@ -1,7 +1,8 @@
+# -*- mode: makefile; -*-
 #
-#  Copyright (C) 2016 Savoir-faire Linux Inc.
+#  Copyright (C) 2018 Savoir-faire Linux Inc.
 #
-#  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+#  Author: Sebastien Blin <sebastien.blin@savoirfairelinux.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,26 +19,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := f5c570826d2ebf50eb38c44039181946a473148b
-ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
+BORINGSSL_VERSION := 40cdb3b5dad0a1028e40fbc73fa62a3e6d31fed7
+BORINGSSL_URL := https://github.com/google/boringssl/archive/$(BORINGSSL_VERSION).tar.gz
 
 # Pure dependency of restbed: do not add to PKGS.
 
-$(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
-	$(call download,$(ASIO_URL))
+$(TARBALLS)/boringssl-$(BORINGSSL_VERSION).tar.gz:
+	$(call download,$(BORINGSSL_URL))
 
-asio: asio-$(ASIO_VERSION).tar.gz
+boringssl: boringssl-$(BORINGSSL_VERSION).tar.gz
 	$(UNPACK)
-	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
-	$(APPLY) $(SRC)/asio/boring.patch
-	$(APPLY) $(SRC)/asio/revert_pthread_condattr_setclock.patch
-	$(APPLY) $(SRC)/asio/no_tests_examples.patch
 	$(MOVE)
 
-.asio: asio .sum-asio
-	cd $< && ./autogen.sh
-	cd $< && $(HOSTVARS) ./configure --without-boost $(HOSTCONF)
-	cd $< && $(MAKE) install
+.boringssl: boringssl .sum-boringssl
+	mkdir -p "$(PREFIX)/include"
+	mkdir -p "$(PREFIX)/lib"
+	cd $< && mkdir build && cd build && $(CMAKE) -DCMAKE_BUILD_TYPE=Release .. && make -j 8
+	cd $< && cp -r include/openssl $(PREFIX)/include && cd build && cp ssl/libssl.a $(PREFIX)/lib/  && cp crypto/libcrypto.a $(PREFIX)/lib/
 	touch $@
 
-.sum-asio: asio-$(ASIO_VERSION).tar.gz
+.sum-boringssl: boringssl-$(BORINGSSL_VERSION).tar.gz
