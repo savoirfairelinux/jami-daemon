@@ -1,7 +1,8 @@
+# -*- mode: makefile; -*-
 #
-#  Copyright (C) 2016 Savoir-faire Linux Inc.
+#  Copyright (C) 2018 Savoir-faire Linux Inc.
 #
-#  Author: Adrien Béraud <adrien.beraud@savoirfairelinux.com>
+#  Author: Sebastien Blin <sebastien.blin@savoirfairelinux.com>
 #
 #  This program is free software; you can redistribute it and/or modify
 #  it under the terms of the GNU General Public License as published by
@@ -18,25 +19,23 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := 631c4f89dafc771fcaf9ee7aa565ab33168459a6
-ASIO_URL := https://github.com/hlysunnaram/asio/archive/$(ASIO_VERSION).tar.gz
+LIBRESSL_VERSION := 190bd346e75575b9436a2e9e14b28618f0234e1b
+LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
+
 
 # Pure dependency of restbed: do not add to PKGS.
 
-$(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
-	$(call download,$(ASIO_URL))
+$(TARBALLS)/portable-$(LIBRESSL_VERSION).tar.gz:
+	$(call download,$(LIBRESSL_URL))
 
-asio: asio-$(ASIO_VERSION).tar.gz
+libressl: portable-$(LIBRESSL_VERSION).tar.gz
 	$(UNPACK)
-	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
-	$(APPLY) $(SRC)/asio/revert_pthread_condattr_setclock.patch
-	$(APPLY) $(SRC)/asio/no_tests_examples.patch
 	$(MOVE)
 
-.asio: asio .sum-asio
-	cd $< && ./autogen.sh
-	cd $< && $(HOSTVARS) ./configure --without-boost $(HOSTCONF)
-	cd $< && $(MAKE) install
+.libressl: libressl .sum-libressl
+	mkdir -p "$(PREFIX)/include"
+	cd $< && ./autogen.sh && mkdir build && cd build && $(CMAKE) -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
+	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.44
 	touch $@
 
-.sum-asio: asio-$(ASIO_VERSION).tar.gz
+.sum-libressl: portable-$(LIBRESSL_VERSION).tar.gz
