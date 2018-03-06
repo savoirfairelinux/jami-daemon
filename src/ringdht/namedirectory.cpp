@@ -36,7 +36,7 @@ namespace ring {
 
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
-constexpr const char* const HTTP_PROTO {"http://"};
+constexpr const char* const HTTPS_PROTO {"https://"};
 
 /** Parser for Ring URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
@@ -106,7 +106,7 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
             return;
         }
 
-        restbed::Uri uri(HTTP_PROTO + serverHost_ + QUERY_ADDR + addr);
+        restbed::Uri uri(HTTPS_PROTO + serverHost_ + QUERY_ADDR + addr);
         auto req = std::make_shared<restbed::Request>(uri);
         req->set_header("Accept", "*/*");
         req->set_header("Host", serverHost_);
@@ -177,7 +177,7 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
             return;
         }
 
-        restbed::Uri uri(HTTP_PROTO + serverHost_ + QUERY_NAME + name);
+        restbed::Uri uri(HTTPS_PROTO + serverHost_ + QUERY_NAME + name);
         auto request = std::make_shared<restbed::Request>(std::move(uri));
         request->set_header("Accept", "*/*");
         request->set_header("Host", serverHost_);
@@ -258,7 +258,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
             return;
         }
 
-        auto request = std::make_shared<restbed::Request>(restbed::Uri(HTTP_PROTO + serverHost_ + QUERY_NAME + name));
+        auto request = std::make_shared<restbed::Request>(restbed::Uri(HTTPS_PROTO + serverHost_ + QUERY_NAME + name));
         request->set_header("Accept", "*/*");
         request->set_header("Host", serverHost_);
         request->set_header("Content-Type", "application/json");

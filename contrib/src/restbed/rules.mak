@@ -20,7 +20,7 @@
 #
 
 RESTBED_VERSION := df867a858dddc4cf6ca8642da02720bd65ba239a
-RESTBED_URL := https://github.com/corvusoft//restbed/archive/$(RESTBED_VERSION).tar.gz
+RESTBED_URL := https://github.com/corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 # Pure dependency of OpenDHT: do not add to PKGS.
 
@@ -31,11 +31,11 @@ endif
 $(TARBALLS)/restbed-$(RESTBED_VERSION).tar.gz:
 	$(call download,$(RESTBED_URL))
 
-DEPS_restbed = asio kashmir-dependency
+DEPS_restbed = asio kashmir-dependency openssl
 
 RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
-			-DBUILD_SSL=NO \
+			-DBUILD_SSL=YES \
 			-DBUILD_SHARED=NO \
 			-DCMAKE_INCLUDE_PATH=$(PREFIX)/include \
 			-DCMAKE_INSTALL_PREFIX=$(PREFIX) \
