@@ -418,8 +418,15 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
   AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
 ])
 
-AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
+  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
+  PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
+  PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
+
+  CPPFLAGS="${CPPFLAGS} ${LIBCRYPTO_CFLAGS} ${LIBSSL_CFLAGS}"
+  LDFLAGS="${LDFLAGS} ${LIBCRYPTO_LIBS} ${LIBSSL_LIBS}"
+], []
+);
 
 AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
