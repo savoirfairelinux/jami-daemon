@@ -418,8 +418,12 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
   AC_DEFINE([RESTBED_OLD_API], [], [Defined if you use the old restbed API])
 ])
 
-AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"],
-AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files])));
+dnl Order matters!
+AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
+  AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
+  LIBS="${LIBS} -lssl -lcrypto"
+  ], []
+);
 
 AS_IF([test "x$with_restcpp" = "xyes"], [
     AS_AC_EXPAND(SBINDIR, $sbindir)
