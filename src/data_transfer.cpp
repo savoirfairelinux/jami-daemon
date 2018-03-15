@@ -44,8 +44,10 @@ namespace ring {
 static DRing::DataTransferId
 generateUID()
 {
-    static DRing::DataTransferId lastId = 0;
-    return lastId++;
+    static std::random_device rd;
+    static std::mt19937 gen(rd());
+    static std::uniform_int_distribution<DRing::DataTransferId> dist;
+    return dist(gen);
 }
 
 //==============================================================================
