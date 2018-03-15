@@ -39,13 +39,16 @@
 #include <atomic>
 #include <cstdlib> // mkstemp
 
+#include <opendht/rng.h>
+
 namespace ring {
 
 static DRing::DataTransferId
 generateUID()
 {
-    static DRing::DataTransferId lastId = 0;
-    return lastId++;
+    thread_local dht::crypto::random_device rd;
+    std::uniform_int_distribution<DRing::DataTransferId> dist;
+    return dist(rd);
 }
 
 //==============================================================================
