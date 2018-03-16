@@ -421,10 +421,10 @@ TurnTransport::sendto(const IpAddr& peer, const char* const buffer, std::size_t 
     auto status = pj_turn_sock_sendto(pimpl_->relay,
                                       reinterpret_cast<const pj_uint8_t*>(buffer), length,
                                       peer.pjPtr(), peer.getLength());
-    if (status != PJ_SUCCESS && status != PJ_EPENDING)
+    if (status != PJ_SUCCESS && status != PJ_EPENDING && status != PJ_EBUSY)
         throw sip_utils::PjsipFailure(PJ_STATUS_TO_OS(status));
 
-    return status == PJ_SUCCESS;
+    return status != PJ_EBUSY;
 }
 
 bool
@@ -489,7 +489,13 @@ std::size_t
 ConnectedTurnTransport::write(const ValueType* buf, std::size_t size, std::error_code& ec)
 {
     try {
-        turn_.sendto(peer_, reinterpret_cast<const char*>(buf), size);
+        auto success = turn_.sendto(peer_, reinterpret_cast<const char*>(buf), size);
+        if (!success) {
+            // if !success, pj_turn_sock_sendto returned EBUSY
+            // So, we should retry to send this later
+            ec.assign(EAGAIN, std::generic_category());
+            return 0;
+        }
     } catch (const sip_utils::PjsipFailure& ex) {
         ec = ex.code();
         return 0;
