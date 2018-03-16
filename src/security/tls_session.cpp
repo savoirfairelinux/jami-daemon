@@ -545,6 +545,7 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
     else
         max_tx_sz = gnutls_dtls_get_data_mtu(session_);
 
+
     // Split incoming data into chunck suitable for the underlying transport
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
