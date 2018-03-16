@@ -545,6 +545,26 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
     else
         max_tx_sz = gnutls_dtls_get_data_mtu(session_);
 
+    /**/
+    std::cout << "[SEND]:" << std::endl;
+    for (int i = 0; i < tx_size; ++i) {
+        std::cout << static_cast<int>(tx_data[i]) << ";";
+    }
+    std::cout << std::endl;
+    /** /
+    bool send = false;
+    for (int i = 0; i < tx_size; ++i) {
+        std::cout << (int)tx_data[i] << ";";
+        if ((int)tx_data[i] != 0) {
+            send = true;
+        }
+    }
+    if (!send) {
+        ec.clear();
+        return total_written;
+    }
+    /**/
+
     // Split incoming data into chunck suitable for the underlying transport
     while (total_written < tx_size) {
         auto chunck_sz = std::min(max_tx_sz, tx_size - total_written);
@@ -553,6 +573,9 @@ TlsSession::TlsSessionImpl::send(const ValueType* tx_data, std::size_t tx_size, 
         do {
             nwritten = gnutls_record_send(session_, data_seq, chunck_sz);
         } while ((nwritten == GNUTLS_E_INTERRUPTED and state_ != TlsSessionState::SHUTDOWN) or nwritten == GNUTLS_E_AGAIN);
+
+        std::cout << "TlsSession::gnutls_record_send after status: " << nwritten << std::endl;
+
         if (nwritten <= 0) {
             /* Normally we would have to retry record_send but our internal
              * state has not changed, so we have to ask for more data first.
