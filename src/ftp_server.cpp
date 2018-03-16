@@ -105,6 +105,9 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
         buffer.resize(3);
         buffer[0] = 'G'; buffer[1] = 'O'; buffer[2] = '\n';
         RING_DBG() << "[FTP] sending GO order";
+    } else {
+        // Nothing to send. Avoid to have an useless buffer filled with 0.
+        buffer.resize(0);
     }
     return true;
 }
