@@ -279,6 +279,9 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
     , dhtPeerConnector_ {new DhtPeerConnector {*this}}
+    , proxyEnabled_(false)
+    , proxyServer_("")
+    , deviceKey_("")
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -628,6 +631,10 @@ void RingAccount::serialize(YAML::Emitter &out)
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_CONTACT << YAML::Value << allowPeersFromContact_;
     out << YAML::Key << Conf::DHT_ALLOW_PEERS_FROM_TRUSTED << YAML::Value << allowPeersFromTrusted_;
 
+    out << YAML::Key << Conf::PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
+    out << YAML::Key << Conf::PROXY_SERVER_KEY << YAML::Value << proxyServer_;
+    out << YAML::Key << Conf::PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
+
 #if HAVE_RINGNS
     out << YAML::Key << DRing::Account::ConfProperties::RingNS::URI << YAML::Value <<  nameServer_;
 #endif
@@ -665,6 +672,11 @@ void RingAccount::unserialize(const YAML::Node &node)
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_HISTORY, allowPeersFromHistory_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_CONTACT, allowPeersFromContact_);
     parseValue(node, Conf::DHT_ALLOW_PEERS_FROM_TRUSTED, allowPeersFromTrusted_);
+
+    parseValue(node, Conf::PROXY_ENABLED_KEY, proxyEnabled_);
+    parseValue(node, Conf::PROXY_SERVER_KEY, proxyServer_);
+    parseValue(node, Conf::PROXY_PUSH_TOKEN_KEY, deviceKey_);
+
     try {
         parseValue(node, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
     } catch (const std::exception& e) {
@@ -1481,6 +1493,12 @@ RingAccount::setAccountDetails(const std::map<std::string, std::string>& details
     parsePath(details, DRing::Account::ConfProperties::ARCHIVE_PATH,     archive_path, idPath_);
     parseString(details, DRing::Account::ConfProperties::RING_DEVICE_NAME, ringDeviceName_);
 
+    parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
+    parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
+    parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
+    if (proxyServer_.empty())
+        proxyServer_ = DHT_DEFAULT_PROXY;
+
 #if HAVE_RINGNS
     parseString(details, DRing::Account::ConfProperties::RingNS::URI,     nameServer_);
     nameDir_ = NameDirectory::instance(nameServer_);
@@ -1531,6 +1549,9 @@ RingAccount::getAccountDetails() const
     a.emplace(DRing::Account::ConfProperties::ALLOW_CERT_FROM_TRUSTED, allowPeersFromTrusted_?TRUE_STR:FALSE_STR);
     /* GNUTLS_DEFAULT_HANDSHAKE_TIMEOUT is defined as -1 */
     a.emplace(Conf::CONFIG_TLS_NEGOTIATION_TIMEOUT_SEC,    "-1");
+    a.emplace(DRing::Account::ConfProperties::PROXY_ENABLED,    proxyEnabled_ ? TRUE_STR : FALSE_STR);
+    a.emplace(DRing::Account::ConfProperties::PROXY_SERVER,     proxyServer_);
+    a.emplace(DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
 
     //a.emplace(DRing::Account::ConfProperties::ETH::KEY_FILE,               ethPath_);
     a.emplace(DRing::Account::ConfProperties::RingNS::ACCOUNT,               ethAccount_);

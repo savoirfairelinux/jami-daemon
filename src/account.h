@@ -473,13 +473,6 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         mutable std::mutex upnp_mtx {};
 
         /**
-         * Proxy
-         */
-        bool proxyEnabled_;
-        std::string proxyServer_;
-        std::string deviceKey_;
-
-        /**
          * private account codec searching functions
          */
         std::shared_ptr<AccountCodecInfo> searchCodecByName(std::string name, MediaType mediaType);

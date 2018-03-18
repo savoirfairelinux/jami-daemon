@@ -85,9 +85,6 @@ const char * const Account::USER_AGENT_KEY                = "useragent";
 const char * const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent";
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
-const char * const Account::PROXY_ENABLED_KEY             = "proxyEnabled";
-const char * const Account::PROXY_SERVER_KEY              = "proxyServer";
-const char * const Account::PROXY_PUSH_TOKEN_KEY          = "proxyPushToken";
 
 Account::Account(const std::string &accountID)
     : accountID_(accountID)
@@ -104,9 +101,6 @@ Account::Account(const std::string &accountID)
     , displayName_("")
     , userAgent_(DEFAULT_USER_AGENT)
     , hasCustomUserAgent_(false)
-    , proxyEnabled_(false)
-    , proxyServer_("")
-    , deviceKey_("")
     , mailBox_()
 {
     random_device rdev;
@@ -234,9 +228,6 @@ Account::serialize(YAML::Emitter& out)
     out << YAML::Key << DISPLAY_NAME_KEY << YAML::Value << displayName_;
     out << YAML::Key << HOSTNAME_KEY << YAML::Value << hostname_;
     out << YAML::Key << UPNP_ENABLED_KEY << YAML::Value << bool(upnp_);
-    out << YAML::Key << PROXY_ENABLED_KEY << YAML::Value << proxyEnabled_;
-    out << YAML::Key << PROXY_SERVER_KEY << YAML::Value << proxyServer_;
-    out << YAML::Key << PROXY_PUSH_TOKEN_KEY << YAML::Value << deviceKey_;
 }
 
 void
@@ -267,10 +258,6 @@ Account::unserialize(const YAML::Node& node)
     bool enabled;
     parseValue(node, UPNP_ENABLED_KEY, enabled);
     enableUpnp(enabled);
-
-    parseValue(node, PROXY_ENABLED_KEY, proxyEnabled_);
-    parseValue(node, PROXY_SERVER_KEY, proxyServer_);
-    parseValue(node, PROXY_PUSH_TOKEN_KEY, deviceKey_);
 }
 
 void
@@ -295,9 +282,6 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     bool enabled;
     parseBool(details, Conf::CONFIG_UPNP_ENABLED, enabled);
     enableUpnp(enabled);
-    parseBool(details, DRing::Account::ConfProperties::PROXY_ENABLED, proxyEnabled_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_SERVER, proxyServer_);
-    parseString(details, DRing::Account::ConfProperties::PROXY_PUSH_TOKEN, deviceKey_);
 }
 
 std::map<std::string, std::string>
@@ -317,10 +301,7 @@ Account::getAccountDetails() const
         {DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT,   ring::to_string(activeCallLimit_)},
         {Conf::CONFIG_RINGTONE_ENABLED,     ringtoneEnabled_ ? TRUE_STR : FALSE_STR},
         {Conf::CONFIG_RINGTONE_PATH,        ringtonePath_},
-        {Conf::CONFIG_UPNP_ENABLED,         upnp_ ? TRUE_STR : FALSE_STR},
-        {DRing::Account::ConfProperties::PROXY_ENABLED,        proxyEnabled_ ? TRUE_STR : FALSE_STR},
-        {DRing::Account::ConfProperties::PROXY_SERVER,         proxyServer_},
-        {DRing::Account::ConfProperties::PROXY_PUSH_TOKEN,     deviceKey_},
+        {Conf::CONFIG_UPNP_ENABLED,         upnp_ ? TRUE_STR : FALSE_STR}
     };
 }
 
