@@ -151,7 +151,16 @@ int VideoReceiveThread::readFunction(void *opaque, uint8_t *buf, int buf_size)
 {
     std::istream &is = static_cast<VideoReceiveThread*>(opaque)->stream_;
     is.read(reinterpret_cast<char*>(buf), buf_size);
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(57, 84, 101)
+    // FFmpeg no longer considers 0 to be EOF
+    auto count = is.gcount();
+    if (count != 0)
+        return count;
+    else
+        return AVERROR_EOF;
+#else
     return is.gcount();
+#endif
 }
 
 void VideoReceiveThread::addIOContext(SocketPair& socketPair)

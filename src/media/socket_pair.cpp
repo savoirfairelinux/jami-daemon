@@ -429,7 +429,15 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             RING_WARN("decrypt error %d", err);
     }
 
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(57, 84, 101)
+    // FFmpeg no longer considers 0 to be EOF
+    if (len != 0)
+        return len;
+    else
+        return AVERROR_EOF;
+#else
     return len;
+#endif
 }
 
 int
