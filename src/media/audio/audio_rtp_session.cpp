@@ -340,7 +340,12 @@ AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
 {
     std::istream& is = static_cast<AudioReceiveThread*>(opaque)->stream_;
     is.read(reinterpret_cast<char*>(buf), buf_size);
-    return is.gcount();
+
+    auto count = is.gcount();
+    if (count != 0)
+        return count;
+    else
+        return AVERROR_EOF;
 }
 
 // This callback is used by libav internally to break out of blocking calls

@@ -429,7 +429,10 @@ SocketPair::readCallback(uint8_t* buf, int buf_size)
             RING_WARN("decrypt error %d", err);
     }
 
-    return len;
+    if (len != 0)
+        return len;
+    else
+        return AVERROR_EOF;
 }
 
 int
