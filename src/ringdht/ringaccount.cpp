@@ -2880,12 +2880,18 @@ RingAccount::getContactHeader(pjsip_transport* t)
 void
 RingAccount::addContact(const std::string& uri, bool confirmed)
 {
-    RING_WARN("[Account %s] addContact: %s", getAccountID().c_str(), uri.c_str());
     dht::InfoHash h (uri);
     if (not h) {
         RING_ERR("[Account %s] addContact: invalid contact URI", getAccountID().c_str());
         return;
     }
+    addContact(h, confirmed);
+}
+
+void
+RingAccount::addContact(const InfoHash& h, bool confirmed)
+{
+    RING_WARN("[Account %s] addContact: %s", getAccountID().c_str(), h.to_c_str());
     auto c = contacts_.find(h);
     if (c == contacts_.end())
         c = contacts_.emplace(h, Contact{}).first;
@@ -3031,12 +3037,15 @@ bool
 RingAccount::acceptTrustRequest(const std::string& from)
 {
     dht::InfoHash f(from);
-    auto i = trustRequests_.find(f);
-    if (i == trustRequests_.end())
+    if (not f)
         return false;
 
     // The contact sent us a TR so we are in its contact list
-    addContact(from, true);
+    addContact(f, true);
+
+    auto i = trustRequests_.find(f);
+    if (i == trustRequests_.end())
+        return false;
 
     // Clear trust request
     auto treq = std::move(i->second);
@@ -3062,8 +3071,12 @@ RingAccount::discardTrustRequest(const std::string& from)
 void
 RingAccount::sendTrustRequest(const std::string& to, const std::vector<uint8_t>& payload)
 {
-    addContact(to);
     auto toH = dht::InfoHash(to);
+    if (not toH) {
+        RING_ERR("[Account %s] can't send trust request to invalid hash: %s", getAccountID().c_str(), to.c_str());
+        return;
+    }
+    addContact(toH);
     forEachDevice(toH, [toH,payload](const std::shared_ptr<RingAccount>& shared, const dht::InfoHash& dev)
     {
         RING_WARN("[Account %s] sending trust request to: %s / %s", shared->getAccountID().c_str(), toH.toString().c_str(), dev.toString().c_str());
