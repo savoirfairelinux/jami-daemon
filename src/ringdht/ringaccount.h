@@ -515,6 +515,7 @@ class RingAccount : public SIPAccountBase {
         void loadContacts();
         void saveContacts() const;
         void updateContact(const dht::InfoHash&, const Contact&);
+        void addContact(const dht::InfoHash&, bool confirmed = false);
 
         // Trust store with Ring account main certificate as the only CA
         dht::crypto::TrustList accountTrust_;
