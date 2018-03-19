@@ -1,4 +1,4 @@
-FFMPEG_HASH := 18516d3e695980525bd9758dc7b8a8e36cd3f09e
+FFMPEG_HASH := 2ddc6b439226a7dffb740d6e50bdd835a27d10ea
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -123,7 +123,9 @@ FFMPEGCONF += \
 	--enable-vaapi \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
-	--enable-hwaccel=h263_vaapi
+	--enable-hwaccel=h263_vaapi \
+	--enable-hwaccel=vp8_vaapi \
+	--enable-hwaccel=mjpeg_vaapi
 endif
 endif
 
