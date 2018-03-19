@@ -17,6 +17,9 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
+
+#include "libav_deps.h" // MUST BE INCLUDED FIRST
+
 #include "audio_rtp_session.h"
 
 #include "logger.h"
@@ -340,7 +343,12 @@ AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
 {
     std::istream& is = static_cast<AudioReceiveThread*>(opaque)->stream_;
     is.read(reinterpret_cast<char*>(buf), buf_size);
-    return is.gcount();
+
+    auto count = is.gcount();
+    if (count != 0)
+        return count;
+    else
+        return AVERROR_EOF;
 }
 
 // This callback is used by libav internally to break out of blocking calls
