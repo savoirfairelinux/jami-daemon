@@ -566,6 +566,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 break;
 
                 case CtrlMsgType::STOP:
+                    std::cout << "CtrlMsgType::STOP" << std::endl;
                     return;
 
                 default: RING_ERR("BUG: got unhandled control msg!");  break;
@@ -589,6 +590,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                         sleep = false;
                     }
                 } else {
+                    std::cout << "handle_stream_list return false" << std::endl;
                     // EOF on outgoing stream => finished
                     return false;
                 }
