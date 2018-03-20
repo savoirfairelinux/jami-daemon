@@ -78,6 +78,13 @@ public:
 
     void close() noexcept override {
         started_ = false;
+        // We doesn't need the connection anymore. Can close it.
+        std::cout << "############ CLOSE" << std::endl;
+        DRing::DataTransferInfo data;
+        info(data);
+        // This will kill the connection with the peer and finish the transfer
+        auto account = Manager::instance().getAccount<RingAccount>(data.accountId);
+        account->closePeerConnection(data.peer, id);
     }
 
     void bytesProgress(int64_t& total, int64_t& progress) const {
@@ -455,8 +462,9 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
         // This happen when multiple agents handle communications of the given peer for the given account.
         // Example: Ring account supports multi-devices, each can answer to the request.
+        // NOTE: this will create a PeerConnection for each files. This connection need to be shut when finished
         account->requestPeerConnection(
-            info.peer,
+            info.peer, tid,
             [this, tid] (PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
             });
@@ -475,7 +483,7 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
-        return DRing::DataTransferError::invalid_argument;;
+        return DRing::DataTransferError::invalid_argument;
     iter->second->accept(file_path, offset);
     return DRing::DataTransferError::success;
 }
