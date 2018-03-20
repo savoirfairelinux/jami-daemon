@@ -553,6 +553,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 {
                     auto& input_msg = static_cast<AttachInputCtrlMsg&>(*msg);
                     auto id = input_msg.stream->getId();
+                    std::cout << "ATTACH_INPUT" << id << std::endl;
                     inputs_.emplace(id, std::move(input_msg.stream));
                 }
                 break;
@@ -561,11 +562,13 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 {
                     auto& output_msg = static_cast<AttachOutputCtrlMsg&>(*msg);
                     auto id = output_msg.stream->getId();
+                    std::cout << "ATTACH_OUTPUT" << id <<  "...." << output_msg.stream->getId() << std::endl;
                     outputs_.emplace(id, std::move(output_msg.stream));
                 }
                 break;
 
                 case CtrlMsgType::STOP:
+                    std::cout << "CtrlMsgType::STOP" << std::endl;
                     return;
 
                 default: RING_ERR("BUG: got unhandled control msg!");  break;
@@ -589,6 +592,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                         sleep = false;
                     }
                 } else {
+                    std::cout << "handle_stream_list return false" << std::endl;
                     // EOF on outgoing stream => finished
                     return false;
                 }
@@ -607,18 +611,25 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         // receiving loop
         handle_stream_list(outputs_, [&] (auto& stream) {
+                std::cout << "----------------------------" << stream->getId() << std::endl;
                 buf.resize(IO_BUFFER_SIZE);
                 auto eof = stream->read(buf);
+                std::cout << "----------------------------2" << stream->getId() << std::endl;
+
                 // if eof we let a chance to send a reply before leaving
                 if (not buf.empty()) {
+                    std::cout << "----------------------------3" << stream->getId() << std::endl;
                     endpoint_->write(buf, ec);
+                    std::cout << "----------------------------4" << stream->getId() << std::endl;
                     if (ec)
                         throw std::system_error(ec);
                 }
                 if (not eof)
                     return false;
 
+                std::cout << "----------------------------5" << stream->getId() << std::endl;
                 if (endpoint_->waitForData(0, ec) > 0) {
+                    std::cout << "----------------------------6" << stream->getId() << std::endl;
                     buf.resize(IO_BUFFER_SIZE);
                     endpoint_->read(buf, ec);
                     if (ec)

@@ -51,6 +51,7 @@ private:
         READ_DATA,
     };
 
+    const DRing::DataTransferId id;
     const std::string accountId_;
     const std::string peerUri_;
     std::shared_ptr<Stream> out_;

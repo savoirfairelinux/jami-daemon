@@ -488,6 +488,7 @@ ConnectedTurnTransport::waitForData(unsigned ms_timeout, std::error_code& ec) co
 std::size_t
 ConnectedTurnTransport::write(const ValueType* buf, std::size_t size, std::error_code& ec)
 {
+    std::cout << "ConnectedTurnTransport" << std::endl;
     try {
         auto success = turn_.sendto(peer_, reinterpret_cast<const char*>(buf), size);
         if (!success) {
