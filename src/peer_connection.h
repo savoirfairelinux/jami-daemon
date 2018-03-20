@@ -183,9 +183,7 @@ public:
 
     void attachInputStream(const std::shared_ptr<Stream>& stream);
 
-    void refuseStream(const DRing::DataTransferId& id);
-
-    void abortStream(const DRing::DataTransferId& id);
+    bool hasStreamWithId(const DRing::DataTransferId& id);
 
 private:
     class PeerConnectionImpl;

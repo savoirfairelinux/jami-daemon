@@ -491,10 +491,10 @@ public:
     const std::string peer_uri;
     Channel<std::unique_ptr<CtrlMsg>> ctrlChannel;
 
-private:
-    std::unique_ptr<SocketType> endpoint_;
     std::map<DRing::DataTransferId, std::shared_ptr<Stream>> inputs_;
     std::map<DRing::DataTransferId, std::shared_ptr<Stream>> outputs_;
+private:
+    std::unique_ptr<SocketType> endpoint_;
     std::future<void> eventLoopFut_;
 
     void eventLoop();
@@ -560,8 +560,9 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 case CtrlMsgType::ATTACH_OUTPUT:
                 {
                     auto& output_msg = static_cast<AttachOutputCtrlMsg&>(*msg);
-                    auto id = output_msg.stream->getId();
-                    outputs_.emplace(id, std::move(output_msg.stream));
+                    // NOTE: Do not use getId here, because by default, all FtpServer
+                    // use the same id
+                    outputs_.emplace(outputs_.size(), std::move(output_msg.stream));
                 }
                 break;
 
@@ -580,6 +581,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         // sending loop
         handle_stream_list(inputs_, [&] (auto& stream) {
+                if (!stream) return false;
                 buf.resize(IO_BUFFER_SIZE);
                 if (stream->read(buf)) {
                     if (not buf.empty()) {
@@ -607,6 +609,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         // receiving loop
         handle_stream_list(outputs_, [&] (auto& stream) {
+                if (!stream) return false;
                 buf.resize(IO_BUFFER_SIZE);
                 auto eof = stream->read(buf);
                 // if eof we let a chance to send a reply before leaving
@@ -657,6 +660,26 @@ void
 PeerConnection::attachOutputStream(const std::shared_ptr<Stream>& stream)
 {
     pimpl_->ctrlChannel << std::make_unique<AttachOutputCtrlMsg>(stream);
+}
+
+bool
+PeerConnection::hasStreamWithId(const DRing::DataTransferId& id)
+{
+    // TODO move imto pimpl
+    auto iterIn = pimpl_->inputs_.begin();
+    while (iterIn != pimpl_->inputs_.end()) {
+        if (iterIn->second->getId() == id)
+            return true;
+        iterIn++;
+    }
+
+    auto iterOut = pimpl_->outputs_.begin();
+    while (iterOut != pimpl_->outputs_.end()) {
+        if (iterOut->second->getId() == id)
+            return true;
+        iterOut++;
+    }
+    return false;
 }
 
 } // namespace ring

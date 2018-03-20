@@ -45,7 +45,8 @@ FtpServer::FtpServer(const std::string& account_id,
 DRing::DataTransferId
 FtpServer::getId() const
 {
-    return 0;
+    // The out stream can be uninitialized. So return 0 when awaiting.
+    return out_? out_->getId() : 0;
 }
 
 void
