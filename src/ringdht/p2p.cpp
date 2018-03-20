@@ -201,7 +201,7 @@ public:
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
 
 private:
-    std::unique_ptr<ConnectedTurnTransport> turn_ep_;
+    std::list<std::unique_ptr<ConnectedTurnTransport>> turn_ep_;
     std::unique_ptr<TurnTransport> turn_;
 
     // key: Stored certificate PublicKey id (normaly it's the DeviceId)
@@ -441,7 +441,8 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     servers_.emplace(peer_addr, std::move(connection));
 
     // note: operating this way let endpoint to be deleted safely in case of exceptions
-    turn_ep_ = std::move(turn_ep);
+    std::remove(turn_ep_.begin(), turn_ep_.end(), nullptr);
+    turn_ep_.emplace_back(std::move(turn_ep));
 }
 
 void
