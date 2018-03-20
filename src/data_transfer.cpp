@@ -155,6 +155,11 @@ OutgoingFileTransfer::close() noexcept
 {
     DataTransfer::close();
     input_.close();
+
+    // We don't need the connection anymore. Can close it.
+    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    account->closePeerConnection(info_.peer, id);
+
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(DRing::DataTransferEventCode::closed_by_host);
 }
@@ -302,6 +307,10 @@ IncomingFileTransfer::close() noexcept
     } catch (...) {}
 
     fout_.close();
+
+    // We don't need the connection anymore. Can close it.
+    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    account->closePeerConnection(info_.peer, id);
 
     RING_DBG() << "[FTP] file closed, rx " << info_.bytesProgress
                << " on " << info_.totalSize;
@@ -455,8 +464,9 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
         // This happen when multiple agents handle communications of the given peer for the given account.
         // Example: Ring account supports multi-devices, each can answer to the request.
+        // NOTE: this will create a PeerConnection for each files. This connection need to be shut when finished
         account->requestPeerConnection(
-            info.peer,
+            info.peer, tid,
             [this, tid] (PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
             });
@@ -475,7 +485,7 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
-        return DRing::DataTransferError::invalid_argument;;
+        return DRing::DataTransferError::invalid_argument;
     iter->second->accept(file_path, offset);
     return DRing::DataTransferError::success;
 }
