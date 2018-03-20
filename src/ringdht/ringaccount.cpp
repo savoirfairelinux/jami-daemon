@@ -3403,11 +3403,18 @@ RingAccount::publicAddresses()
 }
 
 void
-RingAccount::requestPeerConnection(const std::string& peer_id,
+RingAccount::requestPeerConnection(const std::string& peer_id, const DRing::DataTransferId& tid,
                                    std::function<void(PeerConnection*)> connect_cb)
 {
-    dhtPeerConnector_->requestConnection(peer_id, connect_cb);
+    dhtPeerConnector_->requestConnection(peer_id, tid, connect_cb);
 }
+
+void
+RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
+{
+    dhtPeerConnector_->closeConnection(peer, tid);
+}
+
 
 void
 RingAccount::enableProxyClient(bool enable)
