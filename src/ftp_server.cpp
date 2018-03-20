@@ -45,7 +45,10 @@ FtpServer::FtpServer(const std::string& account_id,
 DRing::DataTransferId
 FtpServer::getId() const
 {
-    return 0;
+    // Because FtpServer is just the protocol on the top of a stream so the id
+    // of the stream is the id of out_. Because the output stream can be
+    // uninitialized, a FtpServer without a stream can have an id equal to 0.
+    return out_? out_->getId() : 0;
 }
 
 void
