@@ -183,9 +183,13 @@ public:
 
     void attachInputStream(const std::shared_ptr<Stream>& stream);
 
-    void refuseStream(const DRing::DataTransferId& id);
-
-    void abortStream(const DRing::DataTransferId& id);
+    /**
+     * Check if an input or output stream got the given id.
+     * NOTE: used by p2p to know which PeerConnection to close
+     * @param id to check
+     * @return if id is found
+     */
+    bool hasStreamWithId(const DRing::DataTransferId& id);
 
 private:
     class PeerConnectionImpl;
