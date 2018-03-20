@@ -155,10 +155,11 @@ auto msgData(const T& msg)
 
 //==============================================================================
 
-using DhtInfoHashMsgData = DataTypeSet<dht::InfoHash>;
+using DhtInfoHashMsgData = DataTypeSet<dht::InfoHash, DRing::DataTransferId>;
 using TurnConnectMsgData = DataTypeSet<IpAddr>;
 using PeerCnxMsgData = DataTypeSet<PeerConnectionMsg>;
 using AddDeviceMsgData = DataTypeSet<dht::InfoHash,
+                                     DRing::DataTransferId,
                                      std::shared_ptr<dht::crypto::Certificate>,
                                      std::vector<std::string>,
                                      std::function<void(PeerConnection*)>>;
@@ -211,7 +212,7 @@ private:
 
 protected:
     std::map<IpAddr, std::unique_ptr<PeerConnection>> servers_;
-    std::map<dht::InfoHash, std::unique_ptr<ClientConnector>> clients_;
+    std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
 
 private:
     void onTurnPeerConnection(const IpAddr&);
@@ -221,6 +222,7 @@ private:
                              const dht::InfoHash&);
     void onResponseMsg(PeerConnectionMsg&&);
     void onAddDevice(const dht::InfoHash&,
+                     const DRing::DataTransferId&,
                      const std::shared_ptr<dht::crypto::Certificate>&,
                      const std::vector<std::string>&,
                      const std::function<void(PeerConnection*)>&);
@@ -267,7 +269,11 @@ public:
         for (auto& cb: listeners_)
             cb(nullptr);
         connection_.reset();
-    };
+    }
+
+    bool isConnected() {
+        return connected_;
+    }
 
     void addListener(const ListenerFunction& cb) {
         if (!connected_) {
@@ -504,23 +510,28 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
 void
 DhtPeerConnector::Impl::onResponseMsg(PeerConnectionMsg&& response)
 {
+    // TODO handle file id. here we are not sure that this is the wanted answer for the wanted file.
     RING_DBG() << account << "[CNX] rx DHT reply from " << response.from;
-    const auto& iter = clients_.find(response.from);
-    if (iter == std::end(clients_))
-        return; // no corresponding request
-    iter->second->onDhtResponse(std::move(response));
+    for (auto& client: clients_) {
+        if (client.first.first == response.from && client.second && !client.second->isConnected()) {
+            client.second->onDhtResponse(std::move(response));
+            break;
+        }
+    }
 }
 
 void
 DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
+                                    const DRing::DataTransferId& tid,
                                     const std::shared_ptr<dht::crypto::Certificate>& peer_cert,
                                     const std::vector<std::string>& public_addresses,
                                     const std::function<void(PeerConnection*)>& connect_cb)
 {
-    const auto& iter = clients_.find(dev_h);
+    auto client = std::make_pair(dev_h, tid);
+    const auto& iter = clients_.find(client);
     if (iter == std::end(clients_)) {
         clients_.emplace(
-            dev_h,
+            client,
             std::make_unique<Impl::ClientConnector>(*this, dev_h, peer_cert, public_addresses, connect_cb));
     } else {
         iter->second->addListener(connect_cb);
@@ -547,7 +558,9 @@ DhtPeerConnector::Impl::eventLoop()
                 break;
 
             case CtrlMsgType::CANCEL:
-                clients_.erase(ctrlMsgData<CtrlMsgType::CANCEL>(*msg));
+                clients_.erase(std::make_pair(
+                    ctrlMsgData<CtrlMsgType::CANCEL, 0>(*msg),
+                    ctrlMsgData<CtrlMsgType::CANCEL, 1>(*msg)));
                 break;
 
             case CtrlMsgType::DHT_REQUEST:
@@ -562,7 +575,8 @@ DhtPeerConnector::Impl::eventLoop()
                 onAddDevice(ctrlMsgData<CtrlMsgType::ADD_DEVICE, 0>(*msg),
                             ctrlMsgData<CtrlMsgType::ADD_DEVICE, 1>(*msg),
                             ctrlMsgData<CtrlMsgType::ADD_DEVICE, 2>(*msg),
-                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg));
+                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 3>(*msg),
+                            ctrlMsgData<CtrlMsgType::ADD_DEVICE, 4>(*msg));
                 break;
 
             default: RING_ERR("BUG: got unhandled control msg!"); break;
@@ -602,6 +616,7 @@ DhtPeerConnector::onDhtConnected(const std::string& device_id)
 
 void
 DhtPeerConnector::requestConnection(const std::string& peer_id,
+                                    const DRing::DataTransferId& tid,
                                     const std::function<void(PeerConnection*)>& connect_cb)
 {
     const auto peer_h = dht::InfoHash(peer_id);
@@ -624,7 +639,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, addresses, connect_cb](const std::shared_ptr<RingAccount>& account,
+        [this, addresses, connect_cb, tid](const std::shared_ptr<RingAccount>& account,
                                       const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
                 RING_ERR() << account << "[CNX] no connection to yourself, bad boy!";
@@ -633,8 +648,8 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 
             account->findCertificate(
                 dev_h,
-                [this, dev_h, addresses, connect_cb] (const std::shared_ptr<dht::crypto::Certificate>& cert) {
-                    pimpl_->ctrl << makeMsg<CtrlMsgType::ADD_DEVICE>(dev_h, cert, addresses, connect_cb);
+                [this, dev_h, addresses, connect_cb, tid] (const std::shared_ptr<dht::crypto::Certificate>& cert) {
+                    pimpl_->ctrl << makeMsg<CtrlMsgType::ADD_DEVICE>(dev_h, tid, cert, addresses, connect_cb);
                 });
         },
 
@@ -642,6 +657,36 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
             if (!found) {
                 RING_WARN() << pimpl_->account << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
+            }
+        });
+}
+
+void
+DhtPeerConnector::cancelConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
+    const auto peer_h = dht::InfoHash(peer_id);
+    auto addresses = pimpl_->account.publicAddresses();
+
+    // Add local addresses
+    // XXX: is it really needed? use-case? a local TURN server?
+    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET));
+    //addresses.emplace_back(ip_utils::getLocalAddr(AF_INET6));
+
+    // TODO: bypass DHT devices lookup if connection already exist
+
+    pimpl_->account.forEachDevice(
+        peer_h,
+        [this, addresses, tid](const std::shared_ptr<RingAccount>& account,
+                          const dht::InfoHash& dev_h) {
+            if (dev_h == account->dht().getId()) {
+                RING_ERR() << account << "[CNX] no connection to yourself, bad boy!";
+                return;
+            }
+            pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
+        },
+
+        [this, peer_h](bool found) {
+            if (!found) {
+                RING_WARN() << pimpl_->account << "[CNX] aborted, no devices for " << peer_h;
             }
         });
 }

@@ -29,6 +29,7 @@
 #include "security/tls_session.h"
 #include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
+#include "dring/datatransfer_interface.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -323,8 +324,10 @@ class RingAccount : public SIPAccountBase {
         ///
         /// /// \param[in] peer_id RingID on request's recipiant
         ///
-        void requestPeerConnection(const std::string& peer,
+        void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
                                    std::function<void(PeerConnection*)> connect_cb);
+
+        void cancelPeerConnection(const std::string& peer, const DRing::DataTransferId& tid);
 
         std::vector<std::string> publicAddresses();
 
