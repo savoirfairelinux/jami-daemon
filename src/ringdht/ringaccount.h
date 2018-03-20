@@ -29,6 +29,7 @@
 #include "security/tls_session.h"
 #include "security/diffie-hellman.h"
 #include "sip/sipaccountbase.h"
+#include "dring/datatransfer_interface.h"
 
 #include "noncopyable.h"
 #include "ip_utils.h"
@@ -319,12 +320,21 @@ class RingAccount : public SIPAccountBase {
 #endif
 
         ///
-        /// Send a E2E connection request to a given peer
+        /// Send a E2E connection request to a given peer for the given transfer id
         ///
-        /// /// \param[in] peer_id RingID on request's recipiant
+        /// /// \param[in] peer RingID on request's recipient
+        /// /// \param[in] tid linked outgoing data transfer
         ///
-        void requestPeerConnection(const std::string& peer,
+        void requestPeerConnection(const std::string& peer, const DRing::DataTransferId& tid,
                                    std::function<void(PeerConnection*)> connect_cb);
+
+        ///
+        /// Close a E2E connection between a given peer and a given transfer id.
+        ///
+        /// /// \param[in] peer RingID on request's recipient
+        /// /// \param[in] tid linked outgoing data transfer
+        ///
+        void closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid);
 
         std::vector<std::string> publicAddresses();
 
