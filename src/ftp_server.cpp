@@ -31,13 +31,23 @@
 #include <iterator>
 #include <cstdlib> // strtoull
 
+#include <opendht/rng.h>
+
 namespace ring {
+
+static DRing::DataTransferId
+generateUID()
+{
+    static DRing::DataTransferId lastId = 0;
+    return lastId++; // TODO link to incoming already created
+}
 
 //==============================================================================
 
 FtpServer::FtpServer(const std::string& account_id,
                      const std::string& peer_uri)
     : Stream()
+    , id(generateUID())
     , accountId_ {account_id}
     , peerUri_ {peer_uri}
 {}
@@ -45,7 +55,7 @@ FtpServer::FtpServer(const std::string& account_id,
 DRing::DataTransferId
 FtpServer::getId() const
 {
-    return 0;
+    return id;
 }
 
 void
@@ -58,6 +68,7 @@ FtpServer::close() noexcept
 bool
 FtpServer::startNewFile()
 {
+    std::cout << "STARTNEWFILE" << id << std::endl;
     // Request filename from client (WARNING: synchrone call!)
     DRing::DataTransferInfo info {};
     info.accountId = accountId_;
@@ -79,6 +90,7 @@ FtpServer::startNewFile()
 void
 FtpServer::closeCurrentFile()
 {
+    std::cout << "CLOSEFILE" << id << std::endl;
     if (out_) {
         out_->close();
         out_.reset();
@@ -89,6 +101,7 @@ FtpServer::closeCurrentFile()
 bool
 FtpServer::read(std::vector<uint8_t>& buffer) const
 {
+    std::cout << "READ" << id << std::endl;
     if (!out_) {
         if (closed_) {
             closed_ = false;
@@ -115,6 +128,7 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
 bool
 FtpServer::write(const std::vector<uint8_t>& buffer)
 {
+    std::cout << "FtpServer::write" << id << std::endl;
     switch (state_) {
         case FtpState::PARSE_HEADERS:
             if (parseStream(buffer)) {
@@ -171,6 +185,7 @@ FtpServer::write(const std::vector<uint8_t>& buffer)
 bool
 FtpServer::parseStream(const std::vector<uint8_t>& buffer)
 {
+    std::cout << "PARSE" << id << std::endl;
     headerStream_ << std::string(std::begin(buffer), std::end(buffer));
 
     // Simple line stream parser

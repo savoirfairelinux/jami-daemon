@@ -23,6 +23,7 @@
 #include <string>
 #include <memory>
 #include <functional>
+#include "../dring/datatransfer_interface.h"
 
 namespace ring {
 
@@ -35,7 +36,8 @@ public:
     ~DhtPeerConnector();
 
     void onDhtConnected(const std::string& device_id);
-    void requestConnection(const std::string& peer_id, const std::function<void(PeerConnection*)>& connect_cb);
+    void requestConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::function<void(PeerConnection*)>& connect_cb);
+    void cancelConnection(const std::string& peer_id, const DRing::DataTransferId& tid);
 
 private:
     DhtPeerConnector() = delete;

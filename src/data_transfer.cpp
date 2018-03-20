@@ -74,6 +74,7 @@ public:
     }
 
     void close() noexcept override {
+        std::cout << "DataTransfer::close" << std::endl;
         started_ = false;
     }
 
@@ -150,6 +151,7 @@ OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
 void
 OutgoingFileTransfer::close() noexcept
 {
+    std::cout << "OutgoingFileTransfer::close()" << std::endl;
     DataTransfer::close();
     input_.close();
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
@@ -207,6 +209,7 @@ OutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
     if (buffer.empty())
         return true;
     if (not peerReady_ and headerSent_) {
+        std::cout << "TEST NGO" << std::endl;
         // detect GO or NGO msg
         if (buffer.size() == 3 and buffer[0] == 'G' and buffer[1] == 'O' and buffer[2] == '\n') {
             peerReady_ = true;
@@ -292,6 +295,7 @@ IncomingFileTransfer::start()
 void
 IncomingFileTransfer::close() noexcept
 {
+    std::cout << "CLOSE" << std::endl;
     DataTransfer::close();
 
     try {
@@ -350,6 +354,7 @@ public:
 void
 DataTransferFacade::Impl::cancel(DataTransfer& transfer)
 {
+    std::cout << "DataTransferFacade::Impl::cancel" << std::endl;
     transfer.close();
     map_.erase(transfer.getId());
 }
@@ -385,6 +390,7 @@ DataTransferFacade::Impl::createIncomingFileTransfer(const DRing::DataTransferIn
     auto transfer = std::make_shared<IncomingFileTransfer>(tid, info);
     {
         std::lock_guard<std::mutex> lk {mapMutex_};
+        std::cout << "createIncomingFileTransfer " << tid << std::endl;
         map_.emplace(tid, transfer);
     }
     transfer->emit(DRing::DataTransferEventCode::created);
@@ -453,7 +459,7 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         // This happen when multiple agents handle communications of the given peer for the given account.
         // Example: Ring account supports multi-devices, each can answer to the request.
         account->requestPeerConnection(
-            info.peer,
+            info.peer, tid,
             [this, tid] (PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
             });
@@ -471,8 +477,9 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
 {
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(id);
+    std::cout << "FIND " << id << ": " << (iter == std::end(pimpl_->map_)) << std::endl;
     if (iter == std::end(pimpl_->map_))
-        return DRing::DataTransferError::invalid_argument;;
+        return DRing::DataTransferError::invalid_argument;
     iter->second->accept(file_path, offset);
     return DRing::DataTransferError::success;
 }
@@ -480,8 +487,13 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
 DRing::DataTransferError
 DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 {
+    std::cout << "DataTransferFacade::cancel" << std::endl;
+    DRing::DataTransferInfo data;
+    info(id, data);
     if (auto transfer = pimpl_->getTransfer(id)) {
         pimpl_->cancel(*transfer);
+        auto account = Manager::instance().getAccount<RingAccount>(data.accountId);
+        account->cancelPeerConnection(data.peer, id);
         return DRing::DataTransferError::success;
     }
     return DRing::DataTransferError::invalid_argument;
