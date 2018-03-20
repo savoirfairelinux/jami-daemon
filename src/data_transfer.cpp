@@ -155,6 +155,10 @@ OutgoingFileTransfer::close() noexcept
 {
     DataTransfer::close();
     input_.close();
+
+    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    account->cancelPeerConnection(info_.peer, id);
+
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(DRing::DataTransferEventCode::closed_by_host);
 }
@@ -309,6 +313,9 @@ IncomingFileTransfer::close() noexcept
         emit(DRing::DataTransferEventCode::finished);
     else
         emit(DRing::DataTransferEventCode::closed_by_host);
+
+    auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+    account->cancelPeerConnection(info_.peer, id);
 }
 
 void
@@ -455,8 +462,9 @@ DataTransferFacade::sendFile(const DRing::DataTransferInfo& info,
         // IMPLEMENTATION NOTE: requestPeerConnection() may call the given callback a multiple time.
         // This happen when multiple agents handle communications of the given peer for the given account.
         // Example: Ring account supports multi-devices, each can answer to the request.
+        // NOTE: this will create a PeerConnection for each files. This connection need to be shut when finished
         account->requestPeerConnection(
-            info.peer,
+            info.peer, tid,
             [this, tid] (PeerConnection* connection) {
                 pimpl_->onConnectionRequestReply(tid, connection);
             });
@@ -475,7 +483,7 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
     std::lock_guard<std::mutex> lk {pimpl_->mapMutex_};
     const auto& iter = pimpl_->map_.find(id);
     if (iter == std::end(pimpl_->map_))
-        return DRing::DataTransferError::invalid_argument;;
+        return DRing::DataTransferError::invalid_argument;
     iter->second->accept(file_path, offset);
     return DRing::DataTransferError::success;
 }
@@ -483,8 +491,13 @@ DataTransferFacade::acceptAsFile(const DRing::DataTransferId& id,
 DRing::DataTransferError
 DataTransferFacade::cancel(const DRing::DataTransferId& id) noexcept
 {
+    DRing::DataTransferInfo data;
+    info(id, data);
     if (auto transfer = pimpl_->getTransfer(id)) {
         pimpl_->cancel(*transfer);
+        // This will kill the connection with the peer and finish the transfer
+        auto account = Manager::instance().getAccount<RingAccount>(data.accountId);
+        account->cancelPeerConnection(data.peer, id);
         return DRing::DataTransferError::success;
     }
     return DRing::DataTransferError::invalid_argument;
