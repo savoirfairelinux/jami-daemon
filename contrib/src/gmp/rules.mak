@@ -1,6 +1,6 @@
 # GNU Multiple Precision Arithmetic
 
-GMP_VERSION := 6.1.0
+GMP_VERSION := 6.1.2
 GMP_URL := $(GNU)/gmp/gmp-$(GMP_VERSION).tar.bz2
 
 $(TARBALLS)/gmp-$(GMP_VERSION).tar.bz2:
@@ -25,7 +25,7 @@ ifdef HAVE_IOS
 else
 ifdef HAVE_MACOSX
 	$(RECONF)
-	cd $< && $(HOSTVARS) ./configure --without-clock-gettime $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --without-clock-gettime --enable-static --disable-shared $(HOSTCONF)
 else
 	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
 endif
