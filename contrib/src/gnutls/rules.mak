@@ -1,11 +1,11 @@
 # GnuTLS
 
-GNUTLS_VERSION := 3.5.10
-GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.5/gnutls-$(GNUTLS_VERSION).tar.xz
+GNUTLS_VERSION := 3.6.2
+GNUTLS_URL := https://www.gnupg.org/ftp/gcrypt/gnutls/v3.6/gnutls-$(GNUTLS_VERSION).tar.xz
 
 PKGS += gnutls
 
-ifeq ($(call need_pkg,"gnutls == 3.5.10"),)
+ifeq ($(call need_pkg,"gnutls >= 3.5.17"),)
 PKGS_FOUND += gnutls
 endif
 
@@ -49,7 +49,7 @@ GNUTLS_CONF := \
 	--disable-nls \
 	--disable-dtls-srtp-support \
 	--without-libintl-prefix \
-	--disable-non-suiteb-curves \
+	--without-idn \
 	$(HOSTCONF)
 
 ifdef HAVE_ANDROID
