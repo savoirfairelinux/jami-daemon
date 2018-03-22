@@ -318,7 +318,11 @@ IncomingFileTransfer::accept(const std::string& filename, std::size_t offset)
     (void)offset;
 
     info_.path = filename;
-    filenamePromise_.set_value();
+    try {
+        filenamePromise_.set_value();
+    } catch (const std::future_error& e) {
+        RING_WARN() << "transfer already accepted";
+    }
 }
 
 bool
