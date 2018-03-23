@@ -60,6 +60,7 @@ static constexpr uint16_t INPUT_BUFFER_SIZE {16*1024}; // to be coherent with th
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum number of packets to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
+static constexpr size_t HANDSHAKE_MAX_RETRY {64};
 static constexpr auto DTLS_RETRANSMIT_TIMEOUT = std::chrono::milliseconds(1000); // Delay between two handshake request on DTLS
 static constexpr auto COOKIE_TIMEOUT = std::chrono::seconds(10); // Time to wait for a cookie packet from client
 static constexpr int MIN_MTU {512 - 20 - 8}; // minimal payload size of a DTLS packet carried by an IPv4 packet
@@ -671,10 +672,14 @@ TlsSession::TlsSessionImpl::waitForRawData(unsigned timeout)
 
     // non-reliable uses callback installed with setOnRecv()
     std::unique_lock<std::mutex> lk {rxMutex_};
-    rxCv_.wait(lk, [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
+    rxCv_.wait_for(lk, std::chrono::milliseconds(timeout), [this]{ return !rxQueue_.empty() or state_ == TlsSessionState::SHUTDOWN; });
     if (state_ == TlsSessionState::SHUTDOWN) {
         gnutls_transport_set_errno(session_, EINTR);
         return -1;
+    }
+    if (rxQueue_.empty()) {
+        RING_ERR("[TLS] waitForRawData: timeout after %u ms", timeout);
+        return 0;
     }
     return 1;
 }
@@ -822,9 +827,14 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 {
-    RING_DBG("[TLS] handshake");
-
-    auto ret = gnutls_handshake(session_);
+    int ret;
+    size_t retry_count = 0;
+    do {
+        RING_DBG("[TLS] handshake");
+        ret = gnutls_handshake(session_);
+    } while ((ret == GNUTLS_E_INTERRUPTED   or
+              ret == GNUTLS_E_AGAIN       ) and
+              ++retry_count < HANDSHAKE_MAX_RETRY);
 
     // Stop on fatal error
     if (gnutls_error_is_fatal(ret)) {
