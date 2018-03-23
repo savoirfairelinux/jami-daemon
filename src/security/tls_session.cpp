@@ -822,7 +822,7 @@ TlsSession::TlsSessionImpl::handleStateCookie(TlsSessionState state)
 TlsSessionState
 TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
 {
-    RING_DBG("[TLS] handshake");
+    //RING_DBG("[TLS] handshake");
 
     auto ret = gnutls_handshake(session_);
 
@@ -835,8 +835,9 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     // Continue handshaking on non-fatal error
     if (ret != GNUTLS_E_SUCCESS) {
         // TODO: handle GNUTLS_E_LARGE_PACKET (MTU must be lowered)
-        if (ret != GNUTLS_E_AGAIN)
-            RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+        //if (ret != GNUTLS_E_AGAIN)
+        //    RING_DBG("[TLS] non-fatal handshake error: %s", gnutls_strerror(ret));
+        RING_DBG("[TLS] handshake %d %s", ret, gnutls_strerror(ret));
         return state;
     }
 
@@ -996,6 +997,7 @@ TlsSession::TlsSessionImpl::pathMtuHeartbeat()
 void
 TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint64_t pkt_seq)
 {
+    RING_WARN("[TLS] handleDataPacket: 0x%lx (last 0x%lx)", pkt_seq, lastRxSeq_);
     // Check for a valid seq. num. delta
     int64_t seq_delta = pkt_seq - lastRxSeq_;
     if (seq_delta > 0) {
@@ -1068,6 +1070,8 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     while (item != std::end(reorderBuffer_) and item->first <= next_offset) {
         auto pkt_offset = item->first;
         auto pkt = std::move(item->second);
+
+        RING_WARN("[TLS] treating packet 0x%lx", pkt_offset);
 
         // Remove item before unlocking to not trash the item' relationship
         next_offset = pkt_offset + 1;
