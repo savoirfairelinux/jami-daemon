@@ -275,15 +275,18 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     bool hasVideo = false;
     bool hasAudio = false;
-    auto pj_str_video = pj_str((char*) "video");
-    auto pj_str_audio = pj_str((char*) "audio");
-    for (decltype(r_sdp->media_count) i=0 ; i < r_sdp->media_count; i++)
-        if (  pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0 )
-            hasVideo = true;
-        else if (  pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_audio) == 0 )
-            hasAudio = true;
+    if (r_sdp) {
+        auto pj_str_video = pj_str((char*) "video");
+        auto pj_str_audio = pj_str((char*) "audio");
+        for (decltype(r_sdp->media_count) i=0 ; i < r_sdp->media_count; i++) {
+            if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0)
+                hasVideo = true;
+            else if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_audio) == 0)
+                hasAudio = true;
+        }
+    }
 
-    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", ((not hasVideo and hasAudio) ? "true" : "false") }});
+    auto call = account->newIncomingCall(remote_user, {{"AUDIO_ONLY", (hasVideo ? "false" : "true") }});
     if (!call) {
         return PJ_FALSE;
     }
