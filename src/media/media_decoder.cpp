@@ -272,7 +272,7 @@ MediaDecoder::decode(VideoFrame& result)
     auto frame = result.pointer();
     int frameFinished = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
-    if (ret < 0) {
+    if (ret < 0 && ret != AVERROR(EAGAIN)) {
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
     }
     ret = avcodec_receive_frame(decoderCtx_, frame);
@@ -343,7 +343,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 
     int frameFinished = 0;
         ret = avcodec_send_packet(decoderCtx_, &inpacket);
-        if (ret < 0)
+        if (ret < 0 && ret != AVERROR(EAGAIN))
             return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
 
     ret = avcodec_receive_frame(decoderCtx_, frame);
@@ -393,7 +393,7 @@ MediaDecoder::flush(VideoFrame& result)
     int frameFinished = 0;
     int ret = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
-    if (ret < 0)
+    if (ret < 0 && ret != AVERROR(EAGAIN))
         return ret == AVERROR_EOF ? Status::Success : Status::DecodeError;
 
     ret = avcodec_receive_frame(decoderCtx_, result.pointer());
