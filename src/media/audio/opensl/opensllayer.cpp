@@ -281,7 +281,7 @@ OpenSLLayer::startAudioPlayback()
     playThread = std::thread([&]() {
         std::unique_lock<std::mutex> lck(playMtx);
         while (player_ || ringtone_) {
-            playCv.wait(lck);
+            playCv.wait_for(lck, std::chrono::seconds(1));
             if (player_ && player_->waiting_) {
                 std::lock_guard<std::mutex> lk(player_->m_);
                 engineServicePlay(false);
