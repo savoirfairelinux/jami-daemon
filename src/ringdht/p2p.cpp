@@ -20,6 +20,7 @@
 
 #include "p2p.h"
 
+#include "account_schema.h"
 #include "ringaccount.h"
 #include "peer_connection.h"
 #include "turn_transport.h"
@@ -377,11 +378,17 @@ DhtPeerConnector::Impl::turnConnect()
     if (turn_)
         return;
 
+    auto details = account.getAccountDetails();
+    auto server = details[Conf::CONFIG_TURN_SERVER];
+    auto realm = details[Conf::CONFIG_TURN_SERVER_REALM];
+    auto username = details[Conf::CONFIG_TURN_SERVER_UNAME];
+    auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
+
     auto turn_param = TurnTransportParams {};
-    turn_param.server = IpAddr {"turn.ring.cx"};
-    turn_param.realm = "ring";
-    turn_param.username = "ring";
-    turn_param.password = "ring";
+    turn_param.server = IpAddr {server.empty() ? "turn.ring.cx" : server};
+    turn_param.realm = realm.empty() ? "ring" : realm;
+    turn_param.username = username.empty() ? "ring" : username;
+    turn_param.password = password.empty() ? "ring" : password;
     turn_param.isPeerConnection = true; // Request for TCP peer connections, not UDP
     turn_param.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
         (void)conn_id;
