@@ -303,6 +303,11 @@ HOSTCONF += --disable-dependency-tracking
 
 ifdef HAVE_LINUX
 HOSTCONF += --enable-static --disable-shared
+ifeq ($(ARCH),x86_64)
+EXTRA_COMMON += -m64
+else
+EXTRA_COMMON += -m32
+endif
 endif
 
 ifdef HAVE_IOS
