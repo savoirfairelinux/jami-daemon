@@ -22,6 +22,10 @@
 LIBRESSL_VERSION := 190bd346e75575b9436a2e9e14b28618f0234e1b
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
 
+# Check if openssl or libressl is already present on the system
+ifeq ($(call need_pkg,"openssl >= 1.0.0" || call need_pkg,"libressl >= 1.0.0"),)
+PKGS_FOUND += libressl
+endif
 
 # Pure dependency of restbed: do not add to PKGS.
 
