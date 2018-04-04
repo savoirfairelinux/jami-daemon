@@ -45,6 +45,11 @@ restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	$(UNPACK)
 	$(APPLY) $(SRC)/restbed/strand.patch
 	$(APPLY) $(SRC)/restbed/async_read_until.patch
+ifndef HAVE_WIN32
+ifndef HAVE_WIN64
+	$(APPLY) $(SRC)/restbed/findopenssl.patch
+endif
+endif
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
