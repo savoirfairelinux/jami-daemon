@@ -507,6 +507,7 @@ private:
     std::vector<std::shared_ptr<Stream>> inputs_;
     std::vector<std::shared_ptr<Stream>> outputs_;
     std::future<void> eventLoopFut_;
+    std::vector<uint8_t> bufferPool_; // will store non rattached buffers
 
     void eventLoop();
 
@@ -548,9 +549,14 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     std::error_code ec;
                     if (endpoint_->waitForData(100, ec) > 0) {
                         std::vector<uint8_t> buf(IO_BUFFER_SIZE);
-                        endpoint_->read(buf, ec); ///< \todo what to do with data from a good read?
+                        RING_DBG("A good buffer arrived before any input or output attachment");
+                        auto size = endpoint_->read(buf, ec);
                         if (ec)
                             throw std::system_error(ec);
+                        // If it's a good read, we should store the buffer somewhere
+                        // and give it to the next input or output.
+                        if (size < IO_BUFFER_SIZE)
+                            bufferPool_.insert(bufferPool_.end(), buf.begin(), buf.begin() + size);
                     }
                     break;
                 }
@@ -603,7 +609,10 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     return false;
                 }
 
-                if (endpoint_->waitForData(0, ec) > 0) {
+                if (!bufferPool_.empty()) {
+                    stream->write(bufferPool_);
+                    bufferPool_.clear();
+                } else if (endpoint_->waitForData(0, ec) > 0) {
                     buf.resize(IO_BUFFER_SIZE);
                     endpoint_->read(buf, ec);
                     if (ec)
@@ -629,7 +638,10 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                 if (not eof)
                     return false;
 
-                if (endpoint_->waitForData(0, ec) > 0) {
+                if (!bufferPool_.empty()) {
+                    stream->write(bufferPool_);
+                    bufferPool_.clear();
+                } else if (endpoint_->waitForData(0, ec) > 0) {
                     buf.resize(IO_BUFFER_SIZE);
                     endpoint_->read(buf, ec);
                     if (ec)
