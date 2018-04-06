@@ -56,7 +56,15 @@ else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
 else ifeq ($(IOS_TARGET_PLATFORM),iPhoneSimulator)
 	cd $< && mkdir build && cd build && $(CMAKE) -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-miphoneos-version-min=9.3 -fembed-bitcode -arch x86_64' .. && $(MAKE) && $(MAKE) install
 else
+ifeq ($(ARCH),x86_64)
 	cd $< && mkdir build && cd build && $(CMAKE) -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
+else
+ifeq ($(ARCH),arm64)
+	cd $< && mkdir build && cd build && $(CMAKE) -DDESTDIR=$(PREFIX) .. && $(MAKE) && $(MAKE) install
+else
+	cd $< && mkdir build && cd build && linux32 $(CMAKE) -DDESTDIR=$(PREFIX) -DCMAKE_C_FLAGS='-m32 ' .. && $(MAKE) && $(MAKE) install # force 32 bits in case of cross compilation on a 64 bits host.
+endif
+endif
 endif
 	rm -rf $(PREFIX)/lib/*.so $(PREFIX)/lib/*.so.*
 	touch $@
