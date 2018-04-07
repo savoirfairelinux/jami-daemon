@@ -48,7 +48,7 @@ libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
 	mkdir -p "$(PREFIX)/include"
 	cd $< && ./autogen.sh
 ifdef HAVE_WIN32
-	cd $< && CC=i686-w64-mingw32-gcc CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure --host=i686-w64-mingw32 && $(MAKE) && DESTDIR=$(PREFIX) $(MAKE) install
+	cd $< && $(HOSTVARS) CC=i686-w64-mingw32-gcc CPPFLAGS=-D__MINGW_USE_VC2005_COMPAT ./configure $(HOSTCONF) && $(MAKE) && DESTDIR=$(PREFIX) $(MAKE) install
 else ifdef HAVE_WIN64
 	cd $< && CC=x86_64-w64-mingw32-gcc ./configure --host=x86_64-w64-mingw32 && $(MAKE) && DESTDIR=$(PREFIX) $(MAKE) install
 else ifeq ($(IOS_TARGET_PLATFORM),iPhoneOS)
