@@ -18,8 +18,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := 631c4f89dafc771fcaf9ee7aa565ab33168459a6
-ASIO_URL := https://github.com/hlysunnaram/asio/archive/$(ASIO_VERSION).tar.gz
+ASIO_VERSION := f5c570826d2ebf50eb38c44039181946a473148b
+ASIO_URL := https://github.com/chriskohlhoff/asio/archive/$(ASIO_VERSION).tar.gz
 
 # Pure dependency of restbed: do not add to PKGS.
 

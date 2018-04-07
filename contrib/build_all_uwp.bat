@@ -61,20 +61,11 @@ set MSYS2_BIN="C:\msys64\usr\bin\bash.exe"
 call BuildFFmpeg.bat win10 x64
 cd ..\..
 
-rem * build openssl UWP *
-cd build\restbed\dependency\openssl
-call perl Configure no-asm no-hw no-dso VC-WINUNIVERSAL
-call ms\do_winuniversal
-call ms\setVSvars universal10.0x64
-call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat" x64
-call nmake -f ms\ntdll.mak
-set PATH=restbed\dependency\openssl\out32dll;%PATH%
-
 rem * build restbed w/asio *
-cd ..\..
+cd build\restbed
 mkdir build
 cd build
-cmake -DBUILD_SSL=ON -G "Visual Studio 14 2015 Win64" ..
+cmake -DBUILD_SSL=OFF -G "Visual Studio 14 2015 Win64" ..
 cmake --build . --target ALL_BUILD --config Release
 cd ..\..
 
