@@ -420,13 +420,14 @@ AS_IF([test "x$enable_restbed_old_api" = "xyes"], [
 
 AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
   AC_CHECK_LIB(restbed, exit,, AC_MSG_ERROR([Missing restbed files]))
+  AS_IF([test "${HAVE_WIN32}" = "1"],[
+    RESTBED_LIBS="-lrestbed"
+  ], [
+    RESTBED_LIBS="-lrestbedeay32 -lssleay32 -leay32"
+  ])
+  AC_DEFINE([RESTBED_LIBS], [$(RESTBED_LIBS)], [Defined if you use the old restbed API])
   PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
   PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
-
-  LIBS="${LIBS} -lssl -lcrypto"
-  AS_IF([test "${HAVE_WIN32}" = "1"],[
-      LIBS="${LIBS} -lssleay32 -leay32"
-  ])
   ], []
 );
 

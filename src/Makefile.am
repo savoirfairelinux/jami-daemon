@@ -60,6 +60,9 @@ libring_la_LDFLAGS = \
 		@OPENDHT_LIBS@ \
 		@SECP256K1_LIBS@ \
 		@ZLIB_LIBS@ \
+		$(RESTBED_LIBS) \
+		@LIBSSL_LIBS@ \
+		@LIBCRYPTO_LIBS@ \
 		$(PCRE_LIBS) \
 		@LIBS@
 
