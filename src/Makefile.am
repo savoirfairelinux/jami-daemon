@@ -61,7 +61,9 @@ libring_la_LDFLAGS = \
 		@SECP256K1_LIBS@ \
 		@ZLIB_LIBS@ \
 		$(PCRE_LIBS) \
-		@LIBS@
+		@LIBS@ \
+		@LIBSSL_LIBS@ \
+		@LIBCRYPTO_LIBS@
 
 if HAVE_WIN32
 libring_la_LDFLAGS += -no-undefined -avoid-version

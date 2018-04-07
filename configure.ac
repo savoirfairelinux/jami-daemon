@@ -423,9 +423,9 @@ AS_IF([test "x$enable_ringns" != "xno" || test "x$with_restcpp" = "xyes"], [
   PKG_CHECK_MODULES(LIBCRYPTO, libcrypto,, AC_MSG_ERROR([Missing libcrypto development files]))
   PKG_CHECK_MODULES(LIBSSL, libssl,, AC_MSG_ERROR([Missing libssl development files]))
 
-  LIBS="${LIBS} -lssl -lcrypto"
+  LIBS="${LIBS} -lrestbed -lssl -lcrypto"
   AS_IF([test "${HAVE_WIN32}" = "1"],[
-      LIBS="${LIBS} -lssleay32 -leay32"
+      LIBS="${LIBS} -lrestbedeay32 -lssleay32 -leay32 -lws2_32"
   ])
   ], []
 );
