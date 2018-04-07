@@ -20,7 +20,9 @@
 #
 
 LIBRESSL_VERSION := 190bd346e75575b9436a2e9e14b28618f0234e1b
+OPENBSD_VERSION := OPENBSD_6_2
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
+OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
 
 # Check if openssl or libressl is already present on the system
 ifeq ($(call need_pkg,"openssl >= 1.0.0" || call need_pkg,"libressl >= 1.0.0"),)
@@ -32,9 +34,14 @@ endif
 $(TARBALLS)/portable-$(LIBRESSL_VERSION).tar.gz:
 	$(call download,$(LIBRESSL_URL))
 
-libressl: portable-$(LIBRESSL_VERSION).tar.gz
+$(TARBALLS)/openbsd-$(OPENBSD_VERSION).tar.gz:
+	$(call download,$(OPENBSD_URL))
+
+libressl: portable-$(LIBRESSL_VERSION).tar.gz openbsd-$(OPENBSD_VERSION).tar.gz
 	$(UNPACK)
 	$(APPLY) $(SRC)/libressl/getpagesize.patch
+	$(APPLY) $(SRC)/libressl/0001-build-don-t-fetch-git-tag-if-openbsd-directory-exist.patch
+	mv openbsd-$(OPENBSD_VERSION) $(UNPACK_DIR)/openbsd
 	$(MOVE)
 
 .libressl: libressl .sum-libressl
