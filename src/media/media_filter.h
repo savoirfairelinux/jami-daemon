@@ -30,6 +30,7 @@
 
 class AVFilterContext;
 class AVFilterGraph;
+class AVFilterInOut;
 
 namespace ring {
 
