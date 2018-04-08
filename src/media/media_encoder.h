@@ -49,6 +49,7 @@ class AudioBuffer;
 class MediaIOHandle;
 struct MediaDescription;
 struct AccountCodecInfo;
+class MediaRecorder;
 
 class MediaEncoderException : public std::runtime_error {
     public:
@@ -88,6 +89,8 @@ public:
 
     bool useCodec(const AccountCodecInfo* codec) const noexcept;
 
+    void startRecorder(std::shared_ptr<MediaRecorder> rec);
+
 private:
     NON_COPYABLE(MediaEncoder);
     void setOptions(const MediaDescription& args);
@@ -111,6 +114,9 @@ private:
     int scaledFrameBufferSize_ = 0;
     int streamIndex_ = -1;
     bool is_muted = false;
+
+    std::weak_ptr<MediaRecorder> recorder_;
+    bool recordingStarted_ = false;
 
 protected:
     AVDictionary *options_ = nullptr;

@@ -24,6 +24,7 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
+#include "media_recorder.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -45,6 +46,8 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
@@ -326,6 +329,17 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
             pkt.stream_index = stream_->index;
 
+            if (auto rec = recorder_.lock()) {
+                if (is_keyframe && !recordingStarted_) {
+                    if (rec->copyStream(stream_, &pkt, false, true) >= 0)
+                        recordingStarted_ = true;
+                    else
+                        recorder_ = std::weak_ptr<MediaRecorder>();
+                }
+                if (recordingStarted_)
+                    rec->recordData(&pkt, false, true);
+            }
+
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
@@ -429,6 +443,17 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                                            stream_->time_base);
 
                 pkt.stream_index = stream_->index;
+
+                if (auto rec = recorder_.lock()) {
+                    if (!recordingStarted_) {
+                        if (rec->copyStream(stream_, &pkt, false, false) >= 0)
+                            recordingStarted_ = true;
+                        else
+                            recorder_ = std::weak_ptr<MediaRecorder>();
+                    }
+                    if (recordingStarted_)
+                        rec->recordData(frame, false, false);
+                }
 
                 // write the compressed frame
                 ret = av_write_frame(outputCtx_, &pkt);
@@ -651,6 +676,17 @@ bool
 MediaEncoder::useCodec(const ring::AccountCodecInfo* codec) const noexcept
 {
     return codec_.get() == codec;
+}
+
+void
+MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    // recording will start once we can send an AVPacket to the recorder
+    recordingStarted_ = false;
+    recorder_ = rec;
+    if (auto r = recorder_.lock()) {
+        r->incrementStreams(1);
+    }
 }
 
 } // namespace ring
