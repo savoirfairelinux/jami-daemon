@@ -28,6 +28,7 @@
 #include "audio/resampler.h"
 #include "decoder_finder.h"
 #include "manager.h"
+#include "media_recorder.h"
 
 #ifdef RING_ACCEL
 #include "video/accel.h"
@@ -269,6 +270,9 @@ MediaDecoder::decode(VideoFrame& result)
         return Status::Success;
     }
 
+    if (auto rec = recorder_.lock())
+        rec->recordData(&inpacket, true, true);
+
     auto frame = result.pointer();
     int frameFinished = 0;
     ret = avcodec_send_packet(decoderCtx_, &inpacket);
@@ -340,6 +344,9 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
         av_packet_unref(&inpacket);
         return Status::Success;
     }
+
+    if (auto rec = recorder_.lock())
+        rec->recordData(&inpacket, true, false);
 
     int frameFinished = 0;
         ret = avcodec_send_packet(decoderCtx_, &inpacket);
@@ -499,6 +506,12 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
         break;
     }
     return pix_fmt;
+}
+
+void
+MediaDecoder::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    recorder_ = rec;
 }
 
 } // namespace ring

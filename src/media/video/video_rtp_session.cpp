@@ -32,6 +32,7 @@
 #include "string_utils.h"
 #include "call.h"
 #include "conference.h"
+#include "media_recorder.h"
 
 #include "account_const.h"
 
@@ -558,6 +559,13 @@ VideoRtpSession::processPacketLoss()
                                    [this]{return socketPair_->rtcpPacketLossDetected();})) {
         receiveThread_->triggerKeyFrameRequest();
     }
+}
+
+void
+VideoRtpSession::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    receiveThread_->startRecorder(rec);
+    sender_->startRecorder(rec);
 }
 
 }} // namespace ring::video

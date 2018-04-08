@@ -28,6 +28,7 @@
 #include "media_device.h"
 #include "threadloop.h"
 #include "noncopyable.h"
+#include "media_recorder.h"
 
 #include <map>
 #include <string>
@@ -60,6 +61,8 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
     void triggerKeyFrameRequest();
+
+    void startRecorder(std::shared_ptr<ring::MediaRecorder> rec);
 
 private:
     NON_COPYABLE(VideoReceiveThread);

@@ -945,6 +945,7 @@ void
 SIPCall::stopAllMedia()
 {
     RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
+    Recordable::stopRecording(); // if call stops, finish recording
     avformatrtp_->stop();
 #ifdef RING_VIDEO
     videortp_->stop();
@@ -1152,6 +1153,19 @@ SIPCall::getDetails() const
         }
     }
     return details;
+}
+
+bool
+SIPCall::toggleRecording()
+{
+    const bool startRecording = Call::toggleRecording();
+    if (startRecording) {
+        avformatrtp_->startRecorder(recorder_);
+#ifdef RING_VIDEO
+        videortp_->startRecorder(recorder_);
+#endif
+    }
+    return startRecording;
 }
 
 void
