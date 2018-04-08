@@ -55,6 +55,7 @@ class RingBuffer;
 class Resampler;
 class MediaIOHandle;
 struct DeviceParams;
+class MediaRecorder;
 
 class MediaDecoder {
     public:
@@ -125,6 +126,8 @@ class MediaDecoder {
         video::HardwareAccel accel_;
         unsigned short accelFailures_ = 0;
 #endif
+
+        std::weak_ptr<MediaRecorder> recorder_;
 
     protected:
         AVDictionary *options_ = nullptr;

@@ -24,6 +24,7 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
+#include "media_recorder.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -317,6 +318,9 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
             pkt.stream_index = stream_->index;
 
+            if (auto rec = recorder_.lock())
+                rec->recordData(&pkt, false, true);
+
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
@@ -424,6 +428,9 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                                            stream_->time_base);
 
                 pkt.stream_index = stream_->index;
+
+                if (auto rec = recorder_.lock())
+                    rec->recordData(&pkt, false, false);
 
                 // write the compressed frame
                 ret = av_write_frame(outputCtx_, &pkt);
