@@ -25,6 +25,7 @@
 #include "noncopyable.h"
 #include "media_encoder.h"
 #include "media_io_handle.h"
+#include "media_recorder.h"
 
 #include <map>
 #include <string>
@@ -61,6 +62,8 @@ public:
     uint16_t getLastSeqValue();
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
+
+    void startRecorder(std::shared_ptr<MediaRecorder> rec);
 
 private:
     static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup

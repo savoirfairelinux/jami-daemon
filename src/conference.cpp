@@ -148,22 +148,6 @@ Conference::getDisplayNames() const
 bool Conference::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    std::string process_id(Recordable::recAudio_->getRecorderID());
-    auto& rbPool = Manager::instance().getRingBufferPool();
-
-    // start recording
-    if (startRecording) {
-        for (const auto &item : participants_)
-            rbPool.bindHalfDuplexOut(process_id, item);
-
-        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
-    } else {
-        for (const auto &item : participants_)
-            rbPool.unBindHalfDuplexOut(process_id, item);
-
-        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
-    }
-
     return startRecording;
 }
 
