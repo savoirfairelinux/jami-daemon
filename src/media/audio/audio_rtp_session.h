@@ -47,6 +47,9 @@ class AudioRtpSession : public RtpSession {
         void stop() override;
         void setMuted(bool isMuted);
 
+
+        void startRecorder(std::shared_ptr<MediaRecorder> rec) override;
+
     private:
         void startSender();
         void startReceiver();
