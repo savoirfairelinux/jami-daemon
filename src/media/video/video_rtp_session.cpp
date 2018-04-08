@@ -32,6 +32,7 @@
 #include "string_utils.h"
 #include "call.h"
 #include "conference.h"
+#include "media_recorder.h"
 
 #include "account_const.h"
 
@@ -557,6 +558,19 @@ VideoRtpSession::processPacketLoss()
     if (packetLossThread_.wait_for(RTCP_PACKET_LOSS_INTERVAL,
                                    [this]{return socketPair_->rtcpPacketLossDetected();})) {
         receiveThread_->triggerKeyFrameRequest();
+    }
+}
+
+void
+VideoRtpSession::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    // video recording needs to start with keyframes
+    const constexpr int keyframes = 3;
+    receiveThread_->startRecorder(rec);
+    sender_->startRecorder(rec);
+    for (int i = 0; i < keyframes; ++i) {
+        receiveThread_->triggerKeyFrameRequest();
+        sender_->forceKeyFrame();
     }
 }
 

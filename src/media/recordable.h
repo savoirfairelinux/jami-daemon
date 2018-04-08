@@ -3,6 +3,7 @@
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
  *  Author: Guillaume Roguez <guillaume.roguez@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,15 +22,13 @@
 
 #pragma once
 
-#include "audio/audiobuffer.h"
+#include "media_recorder.h"
 
 #include <string>
 #include <memory>
 #include <mutex>
 
 namespace ring {
-
-class AudioRecord;
 
 class Recordable {
 public:
@@ -62,19 +61,14 @@ public:
     void initRecFilename(const std::string& filename);
 
     /**
-     * Return the audio file path for this recording
+     * Return the file path for this recording
      */
-    virtual std::string getAudioFilename() const;
-
-    /**
-     * Set audio recording sampling rate.
-     */
-    void setRecordingAudioFormat(AudioFormat format);
+    virtual std::string getFilename() const;
 
 protected:
     mutable std::mutex apiMutex_;
     bool recording_ {false};
-    std::unique_ptr<AudioRecord> recAudio_;
+    std::shared_ptr<MediaRecorder> recorder_;
 };
 
 } // namespace ring

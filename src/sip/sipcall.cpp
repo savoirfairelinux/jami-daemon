@@ -528,7 +528,8 @@ SIPCall::transfer(const std::string& to)
 {
     auto& account = getSIPAccount();
 
-    stopRecording();
+    if (Recordable::isRecording())
+        stopRecording();
 
     std::string toUri;
     pj_str_t dst = { 0, 0 };
@@ -945,6 +946,8 @@ void
 SIPCall::stopAllMedia()
 {
     RING_DBG("[call:%s] stopping all medias", getCallId().c_str());
+    if (Recordable::isRecording())
+        Recordable::stopRecording(); // if call stops, finish recording
     avformatrtp_->stop();
 #ifdef RING_VIDEO
     videortp_->stop();
@@ -1152,6 +1155,19 @@ SIPCall::getDetails() const
         }
     }
     return details;
+}
+
+bool
+SIPCall::toggleRecording()
+{
+    const bool startRecording = Call::toggleRecording();
+    if (startRecording) {
+        avformatrtp_->startRecorder(recorder_);
+#ifdef RING_VIDEO
+        videortp_->startRecorder(recorder_);
+#endif
+    }
+    return startRecording;
 }
 
 void

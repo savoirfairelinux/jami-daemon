@@ -1458,9 +1458,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     pimpl_->switchCall(conf->getConfID());
     conf->setState(Conference::ACTIVE_ATTACHED);
 
-    // set recording sampling rate
-    conf->setRecordingAudioFormat(pimpl_->ringbufferpool_->getInternalAudioFormat());
-
     pimpl_->conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
@@ -1502,7 +1499,6 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
     if (successCounter >= 2) {
         pimpl_->conferenceMap_[conf->getConfID()] = conf;
         emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
-        conf->setRecordingAudioFormat(pimpl_->ringbufferpool_->getInternalAudioFormat());
     }
 }
 
@@ -2405,7 +2401,7 @@ Manager::toggleRecordingCall(const std::string& id)
     }
 
     const bool result = rec->toggleRecording();
-    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getAudioFilename());
+    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getFilename());
     emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
     return result;
 }
