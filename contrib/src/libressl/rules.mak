@@ -19,8 +19,8 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-LIBRESSL_VERSION := 190bd346e75575b9436a2e9e14b28618f0234e1b
-OPENBSD_VERSION := OPENBSD_6_2
+LIBRESSL_VERSION := v2.7.2
+OPENBSD_VERSION := libressl-v2.7.2
 LIBRESSL_URL := https://github.com/libressl-portable/portable/archive/$(LIBRESSL_VERSION).tar.gz
 OPENBSD_URL := https://github.com/libressl-portable/openbsd/archive/$(OPENBSD_VERSION).tar.gz
 
