@@ -42,6 +42,9 @@ struct MediaFilterParameters {
     int format {-1}; // Default is an invalid FFmpeg format (both audio and video)
     rational<int> timeBase;
 
+    MediaFilterParameters()
+    {}
+
     /* Video */
     int width {0};
     int height {0};
