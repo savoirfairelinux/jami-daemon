@@ -21,6 +21,7 @@
 #pragma once
 
 #include "config.h"
+#include "libav_deps.h"
 #include "rational.h"
 
 #include <string>
@@ -62,6 +63,29 @@ struct MediaStream {
         , sampleRate(sr)
         , nbChannels(channels)
     {}
+
+    MediaStream(std::string name, AVStream* st)
+        : name(name)
+    {
+        format = st->codecpar->format;
+        timeBase = st->time_base;
+        switch (st->codecpar->codec_type) {
+        case AVMEDIA_TYPE_VIDEO:
+            isVideo = true;
+            width = st->codecpar->width;
+            height = st->codecpar->height;
+            aspectRatio = st->codecpar->sample_aspect_ratio;
+            frameRate = st->avg_frame_rate;
+            break;
+        case AVMEDIA_TYPE_AUDIO:
+            isVideo = false;
+            sampleRate = st->codecpar->sample_rate;
+            nbChannels = st->codecpar->channels;
+            break;
+        default:
+            break;
+        }
+    }
 };
 
 }; // namespace ring
