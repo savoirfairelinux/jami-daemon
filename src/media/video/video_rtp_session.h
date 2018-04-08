@@ -33,6 +33,7 @@
 
 namespace ring {
 class Conference;
+class MediaRecorder;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -78,6 +79,8 @@ public:
     }
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
+
+    void startRecorder(std::shared_ptr<MediaRecorder> rec) override;
 
 private:
     void setupConferenceVideoPipeline(Conference& conference);
