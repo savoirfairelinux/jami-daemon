@@ -72,4 +72,10 @@ ut_media_encoder_SOURCES = media/test_media_encoder.cpp
 check_PROGRAMS += ut_media_filter
 ut_media_filter_SOURCES = media/test_media_filter.cpp
 
+#
+# media_recorder
+#
+check_PROGRAMS += ut_media_recorder
+ut_media_recorder_SOURCES = media/test_media_recorder.cpp
+
 TESTS = $(check_PROGRAMS)

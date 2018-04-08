@@ -27,6 +27,7 @@
 #include <set>
 #include <string>
 #include <memory>
+#include <vector>
 
 #include "recordable.h"
 
