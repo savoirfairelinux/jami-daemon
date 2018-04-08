@@ -18,7 +18,8 @@ libmedia_la_SOURCES = \
 	media_codec.cpp \
 	system_codec_container.cpp \
 	srtp.c \
-	recordable.cpp
+	recordable.cpp \
+	media_recorder.cpp
 
 noinst_HEADERS = \
 	rtp_session.h \
@@ -34,7 +35,8 @@ noinst_HEADERS = \
 	system_codec_container.h \
 	srtp.h \
 	recordable.h \
-	decoder_finder.h
+	decoder_finder.h \
+	media_recorder.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la

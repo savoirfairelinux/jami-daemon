@@ -1,0 +1,322 @@
+/*
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include "libav_deps.h"
+#include "fileutils.h"
+#include "logger.h"
+#include "media_recorder.h"
+
+#include <algorithm>
+#include <libavformat/avformat.h>
+#include <libavutil/avutil.h>
+#include <sstream>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <time.h>
+#include <unistd.h>
+
+namespace ring {
+
+static std::string
+createTimestamp()
+{
+    time_t rawtime = time(NULL);
+    struct tm * timeinfo = localtime(&rawtime);
+    std::stringstream out;
+
+    // DATE
+    out << timeinfo->tm_year + 1900;
+    if (timeinfo->tm_mon < 9) // prefix jan-sep with 0
+        out << 0;
+    out << timeinfo->tm_mon + 1; // tm_mon is 0 based
+    if (timeinfo->tm_mday < 10) // make sure there's 2 digits
+        out << 0;
+    out << timeinfo->tm_mday;
+
+    out << '-';
+
+    // HOUR
+    if (timeinfo->tm_hour < 10) // make sure there's 2 digits
+        out << 0;
+    out << timeinfo->tm_hour;
+    if (timeinfo->tm_min < 10) // make sure there's 2 digits
+        out << 0;
+    out << timeinfo->tm_min;
+    if (timeinfo->tm_sec < 10) // make sure there's 2 digits
+        out << 0;
+    out << timeinfo->tm_sec;
+
+    return out.str();
+}
+
+static std::string
+sanitize(std::string s)
+{
+    // replace unprintable characters with '_'
+    std::replace_if(s.begin(), s.end(),
+                    [](char c){ return !(std::isalnum(c) || c == '_' || c == '.'); },
+                    '_');
+    return s;
+}
+
+static int
+getStreamMapIndex(bool fromPeer, bool isVideo)
+{
+    /**
+     * Map two booleans to index for outputCtx_->streams
+     * 0: local audio
+     * 1: remote audio
+     * 2: local video
+     * 3: remote video
+     */
+    int idx = 0;
+    if (fromPeer)
+        ++idx;
+    if (isVideo)
+        idx += 2;
+    return idx;
+}
+
+MediaRecorder::MediaRecorder()
+{
+    setRecordingPath(fileutils::get_home_dir());
+    initFilename("");
+}
+
+MediaRecorder::~MediaRecorder()
+{
+    if (isRecording_)
+        flush();
+    if (outputCtx_ && !(outputCtx_->oformat->flags & AVFMT_NOFILE))
+        avio_closep(&outputCtx_->pb);
+    avformat_free_context(outputCtx_);
+}
+
+void
+MediaRecorder::initFilename(const std::string &peerNumber)
+{
+    filename_ = createTimestamp();
+    if (!peerNumber.empty()) {
+        RING_DBG() << "Initialize recording for peer: " << peerNumber;
+        filename_.append("-" + sanitize(peerNumber));
+    }
+    filename_.append(".mkv");
+}
+
+std::string
+MediaRecorder::getFilename() const
+{
+    return dir_ + filename_;
+}
+
+bool
+MediaRecorder::fileExists() const
+{
+    return fileutils::isFile(getFilename());
+}
+
+void
+MediaRecorder::setRecordingPath(const std::string& dir)
+{
+    if (!dir.empty() || fileutils::isDirectory(dir)) {
+        dir_ = dir;
+        RING_DBG() << "Recording will be saved in '" << dir_ << "'";
+    } else {
+        dir_ = fileutils::get_home_dir();
+        RING_WARN() << "Invalid directory '" << dir << "': defaulting to home folder '" << dir_ << "'";
+    }
+    if (dir_.back() != DIR_SEPARATOR_CH)
+        dir_ = dir_ + DIR_SEPARATOR_CH;
+}
+
+bool
+MediaRecorder::isRecording() const
+{
+    return isRecording_;
+}
+
+int
+MediaRecorder::copyStream(AVStream* input, AVPacket* packet, bool fromPeer, bool isVideo)
+{
+    // TODO move init to startRecording(); make sure copyStream is not called before
+    if (!outputCtx_)
+        avformat_alloc_output_context2(&outputCtx_, NULL, NULL, getFilename().c_str());
+    if (!outputCtx_) {
+        RING_ERR() << "Failed to allocate output context for recording";
+        return -1;
+    }
+
+    AVStream* outStream = avformat_new_stream(outputCtx_, nullptr);
+    if (!outStream) {
+        RING_ERR() << "Failed to allocate output stream for recording";
+        return -1;
+    }
+    if (avcodec_parameters_copy(outStream->codecpar, input->codecpar) < 0) {
+        RING_ERR() << "Failed to copy codec parameters to recorder";
+        return -1;
+    }
+
+    outStream->codecpar->codec_tag = 0; // avformat_write_header fails if codec_tag is invalid, set to 0
+    outStream->time_base = input->time_base;
+
+    if (packet && outStream->codecpar->extradata_size == 0) {
+        // needs to be malloc'd to avoid mismatched free (FFmpeg frees it)
+        // av_mallocz is optimized for alignment; could be replaced by calloc (padding bytes need to be 0)
+        const int sideDataSize = packet->side_data->size + AV_INPUT_BUFFER_PADDING_SIZE;
+        outStream->codecpar->extradata = static_cast<uint8_t*>(av_mallocz(sideDataSize));
+        if (!outStream->codecpar->extradata) {
+            RING_ERR() << "Could not copy side data to recorder";
+            return -1;
+        }
+        std::copy(&packet->side_data->data[0],
+                  &packet->side_data->data[0] + packet->side_data->size,
+                  outStream->codecpar->extradata);
+        outStream->codecpar->extradata_size = packet->side_data->size;
+    }
+
+    if (!(outputCtx_->oformat->flags & AVFMT_NOFILE)) {
+        if (avio_open(&outputCtx_->pb, getFilename().c_str(), AVIO_FLAG_WRITE) < 0) {
+            RING_ERR() << "Could not open output file: " << getFilename();
+            return -1;
+        }
+    }
+
+    // map stream index using two booleans
+    int i = getStreamMapIndex(fromPeer, isVideo);
+    streamMapping_[i] = outStream->index;
+//    streamTimebase_[i] = input->time_base;
+//    streamTimestamps_[i] = 0;
+
+    return 0;
+}
+
+bool
+MediaRecorder::toggleRecording()
+{
+    if (isRecording_)
+        stopRecording();
+    else
+        startRecording();
+    return isRecording_;
+}
+
+int
+MediaRecorder::startRecording()
+{
+    if (!outputCtx_ || outputCtx_->nb_streams <= 0) {
+        RING_ERR() << "No streams found in recorder";
+        return -1;
+    }
+
+    RING_DBG() << "Start recording '" << filename_ << "'";
+
+    isRecording_ = true;
+    return 0;
+}
+
+void
+MediaRecorder::stopRecording()
+{
+    RING_DBG() << "Stop recording '" << filename_ << "'";
+    isRecording_ = false;
+    flush();
+}
+
+int
+MediaRecorder::recordData(AVPacket* packet, bool fromPeer, bool isVideo)
+{
+    if (!isRecording_)
+        return -1;
+
+    int idx = getStreamMapIndex(fromPeer, isVideo);
+    int streamIdx = streamMapping_[idx];
+    return recordData(packet, streamIdx);
+}
+
+int
+MediaRecorder::recordData(AVPacket* packet, int streamIdx)
+{
+    if (!outputCtx_) {
+        RING_ERR() << "Cannot record data (no output format)";
+        return -1;
+    }
+
+    if (outputCtx_->nb_streams == 4 && !wroteHeader_) {
+        int ret = 0;
+        // TODO move mutex and write_header to its own method
+        std::lock_guard<std::mutex> lk(mutex_);
+        av_dump_format(outputCtx_, 0, filename_.c_str(), 1);
+        if ((ret = avformat_write_header(outputCtx_, nullptr)) < 0) {
+            char errbuf[64];
+            av_strerror(ret, errbuf, sizeof(errbuf));
+            RING_ERR() << "Failed to write header for recording: " << errbuf;
+            return -1;
+        }
+        wroteHeader_ = true;
+    }
+
+    // TODO write to buffer if header not written yet
+    if (!wroteHeader_)
+        return -1;
+
+    AVPacket* copyPacket = av_packet_clone(packet);
+    copyPacket->stream_index = streamIdx;
+    copyPacket->pts = av_rescale_q_rnd(packet->pts,
+                                       streamTimebase_[streamIdx],
+                                       outputCtx_->streams[streamIdx]->time_base,
+                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+    copyPacket->dts = av_rescale_q_rnd(packet->dts,
+                                       streamTimebase_[streamIdx],
+                                       outputCtx_->streams[streamIdx]->time_base,
+                                       static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
+    copyPacket->duration = av_rescale_q(packet->duration,
+                                        streamTimebase_[streamIdx],
+                                        outputCtx_->streams[streamIdx]->time_base);
+    copyPacket->pos = -1;
+    RING_WARN("pkt st:%d pts:%lu dts:%lu dur:%lu", copyPacket->stream_index, copyPacket->pts, copyPacket->dts, copyPacket->duration);
+
+    int ret = 0;
+    if ((ret = av_interleaved_write_frame(outputCtx_, copyPacket)) < 0)
+        RING_ERR() << "Could not write data to record file";
+
+    av_packet_unref(copyPacket);
+    return ret;
+}
+
+int
+MediaRecorder::flush()
+{
+    if (!outputCtx_ || outputCtx_->nb_streams <= 0) // no streams to flush
+        return -1;
+
+    // all streams need to be flushed, video and audio, local and remote
+    for (unsigned i = 0; i < outputCtx_->nb_streams; ++i) {
+        AVPacket pkt;
+        av_init_packet(&pkt);
+        pkt.data = nullptr;
+        pkt.size = 0;
+        recordData(&pkt, i);
+    }
+    av_write_trailer(outputCtx_);
+
+    return 0;
+}
+
+} // namespace ring

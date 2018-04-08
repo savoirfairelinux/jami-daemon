@@ -2,6 +2,7 @@
  *  Copyright (C) 2004-2018 Savoir-faire Linux Inc.
  *
  *  Author: Alexandre Savard <alexandre.savard@savoirfairelinux.com>
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,12 +28,7 @@
 namespace ring {
 
 Recordable::Recordable()
-    : recAudio_(new AudioRecord)
-{
-    auto record_path = Manager::instance().audioPreference.getRecordPath();
-    RING_DBG("Set recording options: %s", record_path.c_str());
-    recAudio_->setRecordingOptions(AudioFormat::MONO(), record_path);
-}
+{}
 
 Recordable::~Recordable()
 {}
@@ -40,32 +36,27 @@ Recordable::~Recordable()
 void
 Recordable::initRecFilename(const std::string& filename)
 {
-    recAudio_->initFilename(filename);
+    if (!recorder_)
+        setupRecorder();
+    recorder_->initFilename(filename);
 }
 
 std::string
-Recordable::getAudioFilename() const
+Recordable::getFilename() const
 {
-    return recAudio_->getFilename();
-}
-
-void
-Recordable::setRecordingAudioFormat(AudioFormat format)
-{
-    recAudio_->setSndFormat(format);
+    if (recorder_)
+        return recorder_->getFilename();
+    else
+        return "";
 }
 
 bool
 Recordable::toggleRecording()
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
-    if (not recording_) {
-        recAudio_->setSndFormat(Manager::instance().getRingBufferPool().getInternalAudioFormat());
-        recAudio_->toggleRecording();
-    } else {
-        recAudio_->stopRecording();
-    }
-    recording_ = not recording_;
+    if (!recorder_)
+        setupRecorder();
+    recording_ = recorder_->toggleRecording();
     return recording_;
 }
 
@@ -75,7 +66,15 @@ Recordable::stopRecording()
     std::lock_guard<std::mutex> lk {apiMutex_};
     if (not recording_)
         return;
-    recAudio_->stopRecording();
+    recorder_->stopRecording();
+}
+
+void
+Recordable::setupRecorder()
+{
+    auto record_path = Manager::instance().audioPreference.getRecordPath();
+    recorder_ = std::make_shared<MediaRecorder>();
+    recorder_->setRecordingPath(record_path);
 }
 
 } // namespace ring
