@@ -35,6 +35,7 @@ class RingBuffer;
 class AudioSender;
 class AudioReceiveThread;
 class IceSocket;
+class MediaRecorder;
 
 class AudioRtpSession : public RtpSession {
     public:
@@ -46,6 +47,9 @@ class AudioRtpSession : public RtpSession {
         void restartSender() override;
         void stop() override;
         void setMuted(bool isMuted);
+
+
+        void startRecorder(std::shared_ptr<MediaRecorder>& rec) override;
 
     private:
         void startSender();

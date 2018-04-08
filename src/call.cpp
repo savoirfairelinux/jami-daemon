@@ -112,7 +112,8 @@ Call::removeCall()
     auto this_ = shared_from_this();
     Manager::instance().callFactory.removeCall(*this);
     setState(CallState::OVER);
-    recAudio_->closeFile();
+    if (Recordable::isRecording())
+        Recordable::stopRecording();
 }
 
 const std::string&
@@ -297,17 +298,6 @@ bool
 Call::toggleRecording()
 {
     const bool startRecording = Recordable::toggleRecording();
-    std::string process_id = Recordable::recAudio_->getRecorderID();
-    RingBufferPool &rbPool = Manager::instance().getRingBufferPool();
-
-    if (startRecording) {
-        rbPool.bindHalfDuplexOut(process_id, id_);
-        rbPool.bindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
-    } else {
-        rbPool.unBindHalfDuplexOut(process_id, id_);
-        rbPool.unBindHalfDuplexOut(process_id, RingBufferPool::DEFAULT_ID);
-    }
-
     return startRecording;
 }
 
@@ -545,12 +535,6 @@ Call::safePopSubcalls()
     auto old_value = std::move(subcalls_);
     subcalls_.clear();
     return old_value;
-}
-
-bool
-Call::isAudioOnly() const
-{
-    return isAudioOnly_;
 }
 
 } // namespace ring

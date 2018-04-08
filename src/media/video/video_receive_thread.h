@@ -38,6 +38,7 @@
 namespace ring {
 class SocketPair;
 class MediaDecoder;
+class MediaRecorder;
 } // namespace ring
 
 namespace ring { namespace video {
@@ -60,6 +61,8 @@ public:
     int getHeight() const;
     int getPixelFormat() const;
     void triggerKeyFrameRequest();
+
+    void startRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
