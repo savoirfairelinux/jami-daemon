@@ -560,4 +560,17 @@ VideoRtpSession::processPacketLoss()
     }
 }
 
+void
+VideoRtpSession::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    // video recording needs to start with keyframes
+    const constexpr int keyframes = 3;
+    receiveThread_->startRecorder(rec);
+    sender_->startRecorder(rec);
+    for (int i = 0; i < keyframes; ++i) {
+        receiveThread_->triggerKeyFrameRequest();
+        sender_->forceKeyFrame();
+    }
+}
+
 }} // namespace ring::video
