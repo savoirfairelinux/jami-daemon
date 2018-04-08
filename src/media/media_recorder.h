@@ -1,0 +1,93 @@
+/*
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#pragma once
+
+#include "config.h"
+#include "media_encoder.h"
+#include "media_filter.h"
+#include "noncopyable.h"
+
+#include <map>
+#include <memory>
+#include <mutex>
+#include <stdexcept>
+#include <string>
+#include <utility>
+
+struct AVFrame;
+
+namespace ring {
+
+class MediaRecorder {
+    public:
+        MediaRecorder();
+        ~MediaRecorder();
+
+        std::string getFilename() const;
+
+        void audioOnly(bool audioOnly);
+
+        void setRecordingPath(const std::string& dir);
+
+        // adjust nb of streams before recording
+        // used to know when all streams are set up
+        void incrementStreams(int n);
+
+        bool isRecording() const;
+
+        bool toggleRecording();
+
+        int startRecording();
+
+        void stopRecording();
+
+        int addStream(bool fromPeer, bool isVideo, AVStream* stream);
+
+        int recordData(AVFrame* frame, bool fromPeer, bool isVideo);
+
+    private:
+        NON_COPYABLE(MediaRecorder);
+
+        int flush();
+
+        std::unique_ptr<MediaEncoder> encoder_;
+        std::unique_ptr<MediaFilter> audioFilter_;
+        std::unique_ptr<MediaFilter> videoFilter_;
+
+        std::mutex mutex_; // protect against concurrent file writes
+        std::map<std::pair<bool, bool>, int> streamMap_; // map fromPeer and isVideo to a stream index
+        std::map<int, int64_t> nextTimestamp_;
+        std::map<std::pair<bool, bool>, MediaFilterParameters> filterParams_;
+
+        std::string dir_;
+        std::string filename_;
+
+        unsigned nbStreams_ = 0;
+        unsigned nbAudioStreams_ = 0;
+        unsigned nbVideoStreams_ = 0;
+        int videoIdx_ = -1;
+        int audioIdx_ = -1;
+        bool isRecording_ = false;
+        bool isReady_ = false;
+        bool audioOnly_ = false;
+};
+
+}; // namespace ring
