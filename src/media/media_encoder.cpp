@@ -24,6 +24,7 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
+#include "media_recorder.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -49,6 +50,8 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
@@ -251,15 +254,15 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         RING_DBG("Using Max bitrate %d", maxBitrate);
     }
 
-    if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
-        throw MediaEncoderException("Could not open encoder");
-
     // add video stream to outputformat context
     AVStream* stream = avformat_new_stream(outputCtx_, outputCodec);
     if (!stream)
         throw MediaEncoderException("Could not allocate stream");
 
     currentStreamIdx_ = stream->index;
+
+    if (avcodec_open2(encoderCtx, outputCodec, nullptr) < 0)
+        throw MediaEncoderException("Could not open encoder");
 
 #ifndef _WIN32
     avcodec_parameters_from_context(stream->codecpar, encoderCtx);
@@ -438,6 +441,19 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     av_init_packet(&pkt);
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
+
+    if (auto rec = recorder_.lock()) {
+        bool isVideo = encoderCtx->codec_type == AVMEDIA_TYPE_VIDEO;
+        if (!recordingStarted_) {
+            auto ms = MediaStream("", outputCtx_->streams[streamIdx]);
+            if (rec->addStream(isVideo, false, ms) >= 0)
+                recordingStarted_ = true;
+            else
+                recorder_ = std::weak_ptr<MediaRecorder>();
+        }
+        if (recordingStarted_)
+            rec->recordData(frame, isVideo, false);
+    }
 
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)
@@ -678,6 +694,19 @@ MediaEncoder::getStreamCount() const
         return outputCtx_->nb_streams;
     else
         return 0;
+}
+
+void
+MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    // recording will start once we can send an AVPacket to the recorder
+    if (encoders_[0]->codec_type != AVMEDIA_TYPE_AUDIO)
+        return;
+    recordingStarted_ = false;
+    recorder_ = rec;
+    if (auto r = recorder_.lock()) {
+        r->incrementStreams(1);
+    }
 }
 
 } // namespace ring
