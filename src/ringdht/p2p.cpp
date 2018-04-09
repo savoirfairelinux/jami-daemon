@@ -699,12 +699,11 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     // will be determined via the pair (dev_h, tid).
     // That's why we need to call CANCEL for the peer_h and each dev_h.
     const auto peer_h = dht::InfoHash(peer_id);
-    auto addresses = pimpl_->account.publicAddresses();
 
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
     pimpl_->account.forEachDevice(
         peer_h,
-        [this, addresses, tid](const std::shared_ptr<RingAccount>& account,
+        [this, tid](const std::shared_ptr<RingAccount>& account,
                           const dht::InfoHash& dev_h) {
             if (dev_h == account->dht().getId()) {
                 RING_ERR() << account << "[CNX] no connection to yourself, bad person!";
