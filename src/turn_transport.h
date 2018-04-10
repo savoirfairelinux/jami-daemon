@@ -42,6 +42,8 @@ struct TurnTransportParams
     std::string username;
     std::string password;
 
+    pj_uint16_t authorized_family {0};
+
     bool isPeerConnection {false};
     uint32_t connectionId {0};
     std::function<void(uint32_t conn_id, const IpAddr& peer_addr, bool success)> onPeerConnection;
