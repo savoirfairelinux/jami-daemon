@@ -380,6 +380,7 @@ private:
 
     std::atomic_bool connected_ {false};
     std::mutex listenersMutex_;
+    std::mutex turnMutex_;
     std::vector<ListenerFunction> listeners_;
 
     std::future<void> processTask_;
@@ -392,7 +393,10 @@ private:
 void
 DhtPeerConnector::Impl::turnConnect()
 {
-    if (turnAuthv4_ || turnAuthv6_)
+    std::lock_guard<std::mutex> lock(clientsMutex_);
+    // Don't retry to reconnect to the TURN server if already connected
+    if (turnAuthv4_ && turnAuthv4_->isReady()
+        && turnAuthv6_ && turnAuthv6_->isReady())
         return;
 
     auto details = account.getAccountDetails();
@@ -414,6 +418,13 @@ DhtPeerConnector::Impl::turnConnect()
         else
             ctrl << makeMsg<CtrlMsgType::TURN_PEER_DISCONNECT>(peer_addr);
     };
+
+    // If a previous turn server exists, but is not ready, we should try to reconnect
+    if (turnAuthv4_ && !turnAuthv4_->isReady())
+        turnAuthv4_.release();
+    if (turnAuthv6_ && !turnAuthv6_->isReady())
+        turnAuthv6_.release();
+
     turn_param_v4.authorized_family = PJ_AF_INET;
     turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
     auto turn_param_v6 = turn_param_v4;
