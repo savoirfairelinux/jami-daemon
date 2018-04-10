@@ -337,6 +337,8 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
 	pj_turn_alloc_param_default(&turn_alloc_param);
+    if (params.authorized_family != 0)
+        turn_alloc_param.af = params.authorized_family; // RFC 6156!!!
 
     if (params.isPeerConnection)
         turn_alloc_param.peer_conn_type = PJ_TURN_TP_TCP; // RFC 6062!!!
