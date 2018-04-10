@@ -98,11 +98,17 @@ public:
     PeerConnectionMsg() = default;
     PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::string& arelay)
         : id {id}, protocol {aprotocol}, addresses {{arelay}} {}
+    PeerConnectionMsg(dht::Value::Id id, uint32_t aprotocol, const std::vector<std::string>& asrelay)
+        : id {id}, protocol {aprotocol}, addresses {asrelay} {}
 
     bool isRequest() const noexcept { return (protocol & 1) == 0; }
 
     PeerConnectionMsg respond(const IpAddr& relay) const {
         return {id, protocol|1, relay.toString(true, true)};
+    }
+
+    PeerConnectionMsg respond(const std::vector<std::string>& addresses) const {
+        return {id, protocol|1, addresses};
     }
 };
 
@@ -195,7 +201,8 @@ public:
     ~Impl() {
         servers_.clear();
         clients_.clear();
-        turn_.reset();
+        turnAuthv4_.reset();
+        turnAuthv6_.reset();
         ctrl << makeMsg<CtrlMsgType::STOP>();
     }
 
@@ -204,7 +211,8 @@ public:
 
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
-    std::unique_ptr<TurnTransport> turn_;
+    std::unique_ptr<TurnTransport> turnAuthv4_;
+    std::unique_ptr<TurnTransport> turnAuthv6_;
 
     // key: Stored certificate PublicKey id (normaly it's the DeviceId)
     // value: pair of shared_ptr<Certificate> and associated RingId
@@ -318,19 +326,28 @@ private:
         }
 
         // Check response validity
-        IpAddr relay_addr;
+        std::unique_ptr<TcpSocketEndpoint> peer_ep;
         if (response_.from != peer_ or
             response_.id != request.id or
-            response_.addresses.empty() or
-            !(relay_addr = response_.addresses[0])) {
+            response_.addresses.empty())
             throw std::runtime_error("invalid connection reply");
-        }
 
-        // Connect to TURN peer using a raw socket
-        RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
-                   << relay_addr.toString(true, true);
-        auto peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
-        peer_ep->connect(); // IMPROVE_ME: socket timeout?
+        IpAddr relay_addr;
+        for (const auto& address: response_.addresses) {
+            if (!(relay_addr = address))
+                throw std::runtime_error("invalid connection reply");
+            try {
+                // Connect to TURN peer using a raw socket
+                RING_DBG() << parent_.account << "[CNX] connecting to TURN relay "
+                           << relay_addr.toString(true, true);
+                peer_ep = std::make_unique<TcpSocketEndpoint>(relay_addr);
+                peer_ep->connect(); // IMPROVE_ME: socket timeout?
+                break;
+            } catch (std::system_error&) {
+                RING_DBG() << parent_.account << "[CNX] Failed to connect to TURN relay "
+                           << relay_addr.toString(true, true);
+            }
+        }
 
         // Negotiate a TLS session
         RING_DBG() << parent_.account << "[CNX] start TLS session";
@@ -375,7 +392,7 @@ private:
 void
 DhtPeerConnector::Impl::turnConnect()
 {
-    if (turn_)
+    if (turnAuthv4_ || turnAuthv6_)
         return;
 
     auto details = account.getAccountDetails();
@@ -384,25 +401,29 @@ DhtPeerConnector::Impl::turnConnect()
     auto username = details[Conf::CONFIG_TURN_SERVER_UNAME];
     auto password = details[Conf::CONFIG_TURN_SERVER_PWD];
 
-    auto turn_param = TurnTransportParams {};
-    turn_param.server = IpAddr {server.empty() ? "turn.ring.cx" : server};
-    turn_param.realm = realm.empty() ? "ring" : realm;
-    turn_param.username = username.empty() ? "ring" : username;
-    turn_param.password = password.empty() ? "ring" : password;
-    turn_param.isPeerConnection = true; // Request for TCP peer connections, not UDP
-    turn_param.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
+    auto turn_param_v4 = TurnTransportParams {};
+    turn_param_v4.server = IpAddr {server.empty() ? "turn.ring.cx" : server};
+    turn_param_v4.realm = realm.empty() ? "ring" : realm;
+    turn_param_v4.username = username.empty() ? "ring" : username;
+    turn_param_v4.password = password.empty() ? "ring" : password;
+    turn_param_v4.isPeerConnection = true; // Request for TCP peer connections, not UDP
+    turn_param_v4.onPeerConnection = [this](uint32_t conn_id, const IpAddr& peer_addr, bool connected) {
         (void)conn_id;
         if (connected)
             ctrl << makeMsg<CtrlMsgType::TURN_PEER_CONNECT>(peer_addr);
         else
             ctrl << makeMsg<CtrlMsgType::TURN_PEER_DISCONNECT>(peer_addr);
     };
-    turn_ = std::make_unique<TurnTransport>(turn_param);
+    turn_param_v4.authorized_family = PJ_AF_INET;
+    turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
+    auto turn_param_v6 = turn_param_v4;
+    turn_param_v6.authorized_family = PJ_AF_INET6;
+    turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
 
     // Wait until TURN server READY state (or timeout)
     Timeout<Clock> timeout {NET_CONNECTION_TIMEOUT};
     timeout.start();
-    while (!turn_->isReady()) {
+    while (!turnAuthv4_->isReady() && !turnAuthv6_->isReady()) {
         if (timeout)
             throw std::runtime_error("no response from TURN");
         std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -432,7 +453,11 @@ DhtPeerConnector::Impl::onTurnPeerConnection(const IpAddr& peer_addr)
     RING_DBG() << account << "[CNX] TURN connection attempt from "
                << peer_addr.toString(true, true);
 
-    auto turn_ep = std::make_unique<ConnectedTurnTransport>(*turn_, peer_addr);
+    auto turn_ep = std::unique_ptr<ConnectedTurnTransport>(nullptr);
+    if (peer_addr.isIpv4())
+        turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv4_, peer_addr);
+    else
+        turn_ep = std::make_unique<ConnectedTurnTransport>(*turnAuthv6_, peer_addr);
 
     RING_DBG() << account << "[CNX] start TLS session over TURN socket";
     dht::InfoHash peer_h;
@@ -500,19 +525,39 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     // Save peer certificate for later TLS session (MUST BE DONE BEFORE TURN PEER AUTHORIZATION)
     certMap_.emplace(cert->getId(), std::make_pair(cert, peer_h));
 
+    auto sendRelayV4 = false, sendRelayV6 = false;
+
     for (auto& ip: request.addresses) {
         try {
-            turn_->permitPeer(ip);
-            RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
+            if (IpAddr(ip).isIpv4()) {
+                sendRelayV4 = true;
+                turnAuthv4_->permitPeer(ip);
+                RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
+            } else if (IpAddr(ip).isIpv6()) {
+                sendRelayV6 = true;
+                turnAuthv6_->permitPeer(ip);
+                RING_DBG() << account << "[CNX] authorized peer connection from " << ip;
+            } else {
+                RING_DBG() << account << "Unknown family type: " << ip;
+            }
         } catch (const std::exception& e) {
             RING_WARN() << account << "[CNX] ignored peer connection '" << ip << "', " << e.what();
         }
     }
 
+    std::vector<std::string> addresses;
+    if (sendRelayV4)
+        addresses.emplace_back(turnAuthv4_->peerRelayAddr().toString(true, true));
+    if (sendRelayV6)
+        addresses.emplace_back(turnAuthv6_->peerRelayAddr().toString(true, true));
+    if (addresses.empty()) {
+        RING_DBG() << account << "[CNX] connection aborted, no family address found";
+        return;
+    }
     RING_DBG() << account << "[CNX] connection accepted, DHT reply to " << request.from;
     account.dht().putEncrypted(
         dht::InfoHash::get(PeerConnectionMsg::key_prefix + request.from.toString()),
-        request.from, request.respond(turn_->peerRelayAddr()));
+        request.from, request.respond(addresses));
 
     // Now wait for a TURN connection from peer (see onTurnPeerConnection)
 }
@@ -655,7 +700,13 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
     //    (here the one where dht_ loop runs).
     // 2) anyway its good to keep this processing here in case of multiple device
     //    as the result is the same for each device.
-    auto addresses = pimpl_->account.publicAddresses();
+    auto all_addresses = pimpl_->account.publicAddresses();
+    auto addresses = std::vector<IpAddr>();
+    for (auto& add: all_addresses) {
+        if (add.isIpv6()) {
+            addresses.emplace_back(add);
+        }
+    }
 
     // Add local addresses
     // XXX: is it really needed? use-case? a local TURN server?
