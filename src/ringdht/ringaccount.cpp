@@ -2084,6 +2084,7 @@ RingAccount::doRegister_()
 
         dht::DhtRunner::Config config {};
         config.dht_config.node_config.network = 0;
+        config.dht_config.node_config.maintain_storage = false;
         config.dht_config.id = identity_;
         config.proxy_server = proxyEnabled_ ? proxyServer_ : std::string();
         config.push_node_id = getAccountID();
