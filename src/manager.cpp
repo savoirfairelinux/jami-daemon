@@ -1921,8 +1921,37 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     emitSignal<DRing::CallSignal::IncomingCall>(accountId, callID, call.getPeerDisplayName() + " " + from);
 
-    if (pimpl_->autoAnswer_)
+    auto currentCall = getCurrentCall();
+    if (pimpl_->autoAnswer_) {
         runOnMainThread([this, callID]{ answerCall(callID); });
+    } else if (currentCall) {
+        // Test if already calling this person
+        if (currentCall->getAccountId() == accountId
+        && currentCall->getPeerNumber() == call.getPeerNumber()) {
+            auto device_uid = currentCall->getAccount().getUsername();
+            if (device_uid.find("ring:") == 0) {
+                // NOTE: in case of a SIP call it's already ready to compare
+                device_uid = device_uid.substr(5); // after ring:
+            }
+            auto answerToCall = false;
+            auto downgradeToAudioOnly = currentCall->isAudioOnly() != call.isAudioOnly();
+            if (downgradeToAudioOnly) {
+                // Accept the incoming audio only
+                answerToCall = call.isAudioOnly();
+            } else {
+                // Accept the incoming call from the higher id number
+                auto peer_uid = call.getPeerNumber();
+                answerToCall = (device_uid.compare(peer_uid) < 0);
+            }
+            if (answerToCall) {
+                auto currentCallID = currentCall->getCallId();
+                runOnMainThread([this, currentCallID, callID] {
+                    answerCall(callID);
+                    hangupCall(currentCallID);
+                });
+            }
+        }
+    }
 }
 
 void
