@@ -199,4 +199,12 @@ is_yuv_planar(const AVPixFmtDescriptor& desc)
     return not used_bit_mask;
 }
 
+std::string
+getError(int err)
+{
+    std::string ret(AV_ERROR_MAX_STRING_SIZE, '\0');
+    av_strerror(err, (char*)ret.data(), ret.size());
+    return ret;
+}
+
 }} // namespace ring::libav_utils
