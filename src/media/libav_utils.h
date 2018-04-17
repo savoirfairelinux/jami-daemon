@@ -40,6 +40,8 @@ namespace ring { namespace libav_utils {
                       char *hostname, size_t hostname_size, int *port,
                       char *path, size_t path_size);
 
-bool is_yuv_planar(const AVPixFmtDescriptor& desc);
+    bool is_yuv_planar(const AVPixFmtDescriptor& desc);
+
+    std::string getError(int err);
 
 }} // namespace ring::libav_utils
