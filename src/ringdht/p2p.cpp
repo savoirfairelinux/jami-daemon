@@ -425,11 +425,16 @@ DhtPeerConnector::Impl::turnConnect()
     if (turnAuthv6_ && !turnAuthv6_->isReady())
         turnAuthv6_.release();
 
-    turn_param_v4.authorized_family = PJ_AF_INET;
-    turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
-    auto turn_param_v6 = turn_param_v4;
-    turn_param_v6.authorized_family = PJ_AF_INET6;
-    turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
+    if (!turnAuthv4_ || !turnAuthv4_->isReady()) {
+        turn_param_v4.authorized_family = PJ_AF_INET;
+        turnAuthv4_ = std::make_unique<TurnTransport>(turn_param_v4);
+    }
+
+    if (!turnAuthv6_ || !turnAuthv6_->isReady()) {
+        auto turn_param_v6 = turn_param_v4;
+        turn_param_v6.authorized_family = PJ_AF_INET6;
+        turnAuthv6_ = std::make_unique<TurnTransport>(turn_param_v6);
+    }
 
     // Wait until TURN server READY state (or timeout)
     Timeout<Clock> timeout {NET_CONNECTION_TIMEOUT};
