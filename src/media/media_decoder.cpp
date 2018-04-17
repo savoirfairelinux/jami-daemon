@@ -123,9 +123,7 @@ int MediaDecoder::openInput(const DeviceParams& params)
         options_ ? &options_ : NULL);
 
     if (ret) {
-        char errbuf[64];
-        av_strerror(ret, errbuf, sizeof(errbuf));
-        RING_ERR("avformat_open_input failed: %s", errbuf);
+        RING_ERR("avformat_open_input failed: %s", libav_utils::getError(ret).c_str());
     } else {
         RING_DBG("Using format %s", params.format.c_str());
     }
@@ -170,11 +168,8 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     if (!fallback_) {
         RING_DBG() << "Finding " << streamType << " stream info";
         if ((ret = avformat_find_stream_info(inputCtx_, nullptr)) < 0) {
-            char errBuf[64];
-            av_strerror(ret, errBuf, sizeof(errBuf));
-
             // Always fail here
-            RING_ERR() << "Could not find " << streamType << " stream info: " << errBuf;
+            RING_ERR() << "Could not find " << streamType << " stream info: " << libav_utils::getError(ret);
             return -1;
         }
     }
@@ -231,9 +226,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
 
     ret = avcodec_open2(decoderCtx_, inputDecoder_, nullptr);
     if (ret < 0) {
-        char errBuf[64];
-        av_strerror(ret, errBuf, sizeof(errBuf));
-        RING_ERR() << "Could not open codec: " << errBuf;
+        RING_ERR() << "Could not open codec: " << libav_utils::getError(ret);
         return -1;
     }
 
@@ -257,9 +250,7 @@ MediaDecoder::decode(VideoFrame& result)
     } else if (ret == AVERROR_EOF) {
         return Status::EOFError;
     } else if (ret < 0) {
-        char errbuf[64];
-        av_strerror(ret, errbuf, sizeof(errbuf));
-        RING_ERR("Couldn't read frame: %s\n", errbuf);
+        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
 
@@ -329,9 +320,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     } else if (ret == AVERROR_EOF) {
         return Status::EOFError;
     } else if (ret < 0) {
-        char errbuf[64];
-        av_strerror(ret, errbuf, sizeof(errbuf));
-        RING_ERR("Couldn't read frame: %s\n", errbuf);
+        RING_ERR("Couldn't read frame: %s\n", libav_utils::getError(ret).c_str());
         return Status::ReadError;
     }
 

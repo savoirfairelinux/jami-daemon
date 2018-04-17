@@ -320,9 +320,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
-                char errbuf[64];
-                av_strerror(ret, errbuf, sizeof(errbuf));
-                RING_ERR("av_write_frame failed: %s", errbuf);
+                RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
             } else
                 break;
         }
@@ -387,9 +385,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                                            reinterpret_cast<const uint8_t *>(offset_ptr),
                                            buffer_size, 0);
         if (err < 0) {
-            char errbuf[128];
-            av_strerror(err, errbuf, sizeof(errbuf));
-            RING_ERR("Couldn't fill audio frame: %s: %d %d", errbuf,
+            RING_ERR("Couldn't fill audio frame: %s: %d %d", libav_utils::getError(err).c_str(),
                      frame->nb_samples, buffer_size);
             av_frame_free(&frame);
             return -1;
@@ -428,9 +424,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                 // write the compressed frame
                 ret = av_write_frame(outputCtx_, &pkt);
                 if (ret < 0) {
-                    char errbuf[64];
-                    av_strerror(ret, errbuf, sizeof(errbuf));
-                    RING_ERR("av_write_frame failed: %s", errbuf);
+                    RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
                 } else
                     break;
             }
@@ -474,9 +468,7 @@ int MediaEncoder::flush()
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
-                char errbuf[64];
-                av_strerror(ret, errbuf, sizeof(errbuf));
-                RING_ERR("av_write_frame failed: %s", errbuf);
+                RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
             } else
                 break;
         }
