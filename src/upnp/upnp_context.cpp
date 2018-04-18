@@ -709,7 +709,7 @@ UPnPContext::searchForIGD()
  * relevant lists
  */
 void
-UPnPContext::parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event)
+UPnPContext::parseDevice(IXML_Document* doc, const UpnpDiscovery* d_event)
 {
     if (not doc or not d_event)
         return;
@@ -729,7 +729,7 @@ UPnPContext::parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event)
 }
 
 void
-UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
+UPnPContext::parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event)
 {
     if (not doc or not d_event)
         return;
@@ -766,7 +766,7 @@ UPnPContext::parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event)
     std::string baseURL = get_first_doc_item(doc, "URLBase");
     if (baseURL.empty()) {
         /* get it from the discovery event location */
-        baseURL = std::string(d_event->Location);
+        baseURL = std::string(UpnpDiscovery_get_Location_cstr(d_event));
     }
 
     /* check if its a valid IGD:
@@ -925,7 +925,7 @@ get_first_element_item(IXML_Element* element, const char* item)
 }
 
 int
-UPnPContext::cp_callback(Upnp_EventType event_type, void* event, void* user_data)
+UPnPContext::cp_callback(Upnp_EventType event_type, const void* event, void* user_data)
 {
     if (auto upnpContext = static_cast<UPnPContext*>(user_data))
         return upnpContext->handleUPnPEvents(event_type, event);
@@ -935,7 +935,7 @@ UPnPContext::cp_callback(Upnp_EventType event_type, void* event, void* user_data
 }
 
 int
-UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
+UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
 {
     switch( event_type )
     {
@@ -943,7 +943,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
         /* RING_DBG("UPnP: CP received a discovery advertisement"); */
     case UPNP_DISCOVERY_SEARCH_RESULT:
     {
-        struct Upnp_Discovery* d_event = ( struct Upnp_Discovery* )event;
+        const UpnpDiscovery* d_event = ( const UpnpDiscovery* )event;
         std::unique_ptr<IXML_Document, decltype(ixmlDocument_free)&> desc_doc(nullptr, ixmlDocument_free);
         int upnp_err;
 
@@ -952,18 +952,18 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
         /* check if we are already in the process of checking this device */
         std::unique_lock<std::mutex> lock(cpDeviceMutex_);
-        auto it = cpDevices_.find(std::string(d_event->Location));
+        auto it = cpDevices_.find(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
 
         if (it == cpDevices_.end()) {
-            cpDevices_.emplace(std::string(d_event->Location));
+            cpDevices_.emplace(std::string(UpnpDiscovery_get_Location_cstr(d_event)));
             lock.unlock();
 
-            if (d_event->ErrCode != UPNP_E_SUCCESS)
+            if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
                 RING_WARN("UPnP: Error in discovery event received by the CP: %s",
-                          UpnpGetErrorMessage(d_event->ErrCode));
+                          UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
             /* RING_DBG("UPnP: Control Point received discovery event from device:\n\tid: %s\n\ttype: %s\n\tservice: %s\n\tversion: %s\n\tlocation: %s\n\tOS: %s",
-                     d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, d_event->Location, d_event->Os);
+                     d_event->DeviceId, d_event->DeviceType, d_event->ServiceType, d_event->ServiceVer, UpnpDiscovery_get_Location_cstr(d_event), d_event->Os);
             */
 
             /* note: this thing will block until success for the system socket timeout
@@ -971,7 +971,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
              *       in which case it will block for the libupnp specified timeout
              */
             IXML_Document* desc_doc_ptr = nullptr;
-            upnp_err = UpnpDownloadXmlDoc( d_event->Location, &desc_doc_ptr);
+            upnp_err = UpnpDownloadXmlDoc( UpnpDiscovery_get_Location_cstr(d_event), &desc_doc_ptr);
             desc_doc.reset(desc_doc_ptr);
             if ( upnp_err != UPNP_E_SUCCESS ) {
                 /* the download of the xml doc has failed; this probably happened
@@ -990,7 +990,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
              * eg: if we switch routers or if a new device with the same IP appears
              */
             lock.lock();
-            cpDevices_.erase(d_event->Location);
+            cpDevices_.erase(UpnpDiscovery_get_Location_cstr(d_event));
             lock.unlock();
         } else {
             lock.unlock();
@@ -1001,13 +1001,14 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_DISCOVERY_ADVERTISEMENT_BYEBYE:
     {
-        struct Upnp_Discovery *d_event = (struct Upnp_Discovery *)event;
+        const UpnpDiscovery *d_event = (const UpnpDiscovery *)event;
 
-        RING_DBG("UPnP: Control Point received ByeBye for device: %s", d_event->DeviceId);
+        RING_DBG("UPnP: Control Point received ByeBye for device: %s",
+		 UpnpDiscovery_get_DeviceID_cstr(d_event));
 
-        if (d_event->ErrCode != UPNP_E_SUCCESS)
+        if (UpnpDiscovery_get_ErrCode(d_event) != UPNP_E_SUCCESS)
             RING_WARN("UPnP: Error in ByeBye received by the CP: %s",
-                      UpnpGetErrorMessage(d_event->ErrCode));
+                      UpnpGetErrorMessage(UpnpDiscovery_get_ErrCode(d_event)));
 
         /* TODO: check if its a device we care about and remove it from the relevant lists */
     }
@@ -1053,13 +1054,13 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_CONTROL_ACTION_COMPLETE:
     {
-        struct Upnp_Action_Complete *a_event = (struct Upnp_Action_Complete *)event;
+        const UpnpActionComplete *a_event = (const UpnpActionComplete *)event;
 
         /* RING_DBG("UPnP: Control Point async action complete"); */
 
-        if (a_event->ErrCode != UPNP_E_SUCCESS)
+        if (UpnpActionComplete_get_ErrCode(a_event) != UPNP_E_SUCCESS)
             RING_WARN("UPnP: Error in action complete event: %s",
-                      UpnpGetErrorMessage(a_event->ErrCode));
+                      UpnpGetErrorMessage(UpnpActionComplete_get_ErrCode(a_event)));
 
         /* TODO: no need for any processing here, just print out results.
          * Service state table updates are handled by events. */
@@ -1068,13 +1069,13 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, void* event)
 
     case UPNP_CONTROL_GET_VAR_COMPLETE:
     {
-        struct Upnp_State_Var_Complete *sv_event = (struct Upnp_State_Var_Complete *)event;
+        const UpnpStateVarComplete *sv_event = (const UpnpStateVarComplete *)event;
 
         /* RING_DBG("UPnP: Control Point async get variable complete"); */
 
-        if (sv_event->ErrCode != UPNP_E_SUCCESS)
+        if (UpnpStateVarComplete_get_ErrCode(sv_event) != UPNP_E_SUCCESS)
             RING_WARN("UPnP: Error in get variable complete event: %s",
-                      UpnpGetErrorMessage(sv_event->ErrCode));
+                      UpnpGetErrorMessage(UpnpStateVarComplete_get_ErrCode(sv_event)));
 
         /* TODO: update state variables */
     }
