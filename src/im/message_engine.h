@@ -70,7 +70,7 @@ public:
 
 private:
 
-    static const constexpr unsigned MAX_RETRIES = 3;
+    static const constexpr unsigned MAX_RETRIES = 1;
     static const std::chrono::minutes RETRY_PERIOD;
     using clock = std::chrono::steady_clock;
 

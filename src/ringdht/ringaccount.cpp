@@ -3362,7 +3362,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
     // Timeout cleanup
     std::weak_ptr<RingAccount> wshared = shared();
     Manager::instance().scheduleTask([wshared, confirm, token]() {
-        if (not confirm->replied and not confirm->listenTokens.empty()) {
+        if (not confirm->replied) {
             if (auto this_ = wshared.lock()) {
                 RING_DBG("[Account %s] [message %" PRIx64 "] timeout", this_->getAccountID().c_str(), token);
                 for (auto& t : confirm->listenTokens)
