@@ -1,11 +1,13 @@
 # UPNP
-UPNP_VERSION := 1.6.19
+UPNP_VERSION := 1.6.24
 UPNP_URL := https://github.com/mrjimenez/pupnp/archive/release-$(UPNP_VERSION).tar.gz
 
 PKGS += upnp
-ifeq ($(call need_pkg,'libupnp'),)
-PKGS_FOUND += upnp
-endif
+
+# Forced until libupnp 1.6.24 is available everywhere by default
+#ifeq ($(call need_pkg,'libupnp'),)
+#PKGS_FOUND += upnp
+#endif
 
 $(TARBALLS)/pupnp-release-$(UPNP_VERSION).tar.gz:
 	$(call download,$(UPNP_URL))

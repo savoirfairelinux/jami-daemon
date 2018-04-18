@@ -206,13 +206,19 @@ private:
      */
     bool deviceRegistered_ {false};
 
-    static int cp_callback(Upnp_EventType event_type, void* event, void* user_data);
+    static int cp_callback(Upnp_EventType event_type, const void* event, void* user_data);
+
+#if UPNP_VERSION < 10800
+    static inline int cp_callback(Upnp_EventType event_type, void* event, void* user_data) {
+	    return cp_callback(event_type, (const void*)event, user_data);
+    };
+#endif
 
     /**
      * callback function for the UPnP client (control point)
      * all UPnP events received by the client are processed here
      */
-    int handleUPnPEvents(Upnp_EventType event_type, void* event);
+    int handleUPnPEvents(Upnp_EventType event_type, const void* event);
 
 
     /* sends out async search for IGD */
@@ -222,9 +228,9 @@ private:
      * Parses the device description and adds desired devices to
      * relevant lists
      */
-    void parseDevice(IXML_Document* doc, const Upnp_Discovery* d_event);
+    void parseDevice(IXML_Document* doc, const UpnpDiscovery* d_event);
 
-    void parseIGD(IXML_Document* doc, const Upnp_Discovery* d_event);
+    void parseIGD(IXML_Document* doc, const UpnpDiscovery* d_event);
 
 
     /* these functions directly create UPnP actions
