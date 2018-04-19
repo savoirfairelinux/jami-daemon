@@ -1937,6 +1937,7 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
                  getAccountID().c_str(), buddy_id.c_str());
         return;
     }
+
     std::weak_ptr<RingAccount> weak_this = std::static_pointer_cast<RingAccount>(shared_from_this());
 
     std::string buddyUri;
@@ -1950,6 +1951,10 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
     }
 
     auto h = dht::InfoHash(buddyUri);
+    if (trackedBuddies_.find(h) != trackedBuddies_.end()) {
+        RING_ERR("[Account %s] Already tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+        return;
+    }
     auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
     if (buddy_infop.second) {
         auto& buddy_info = buddy_infop.first->second;
