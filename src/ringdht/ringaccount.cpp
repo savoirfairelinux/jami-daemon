@@ -595,7 +595,6 @@ RingAccount::SIPStartCall(SIPCall& call, IpAddr target)
              (int)pjContact.slen, pjContact.ptr, from.c_str(), toUri.c_str(),
              (int)pjTarget.slen, pjTarget.ptr);
 
-
     auto local_sdp = call.getSDP().getLocalSdpSession();
     pjsip_dialog* dialog {nullptr};
     pjsip_inv_session* inv {nullptr};
@@ -938,7 +937,6 @@ RingAccount::readArchive(const std::string& pwd) const
     JAMI_DBG("[Account %s] reading account archive", getAccountID().c_str());
     return AccountArchive(fileutils::getFullPath(idPath_, archivePath_), pwd);
 }
-
 
 void
 RingAccount::updateArchive(AccountArchive& archive) const
@@ -1941,7 +1939,6 @@ RingAccount::doRegister()
     }
 }
 
-
 std::vector<dht::SockAddr>
 RingAccount::loadBootstrap() const
 {
@@ -1988,6 +1985,10 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     auto h = dht::InfoHash(buddyUri);
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     if (track) {
+        if (trackedBuddies_.find(h) != trackedBuddies_.end()) {
+            JAMI_WARN("[Account %s] Already tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+            return;
+        }
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
         if (buddy.second) {
             trackPresence(buddy.first->first, buddy.first->second);
@@ -3569,7 +3570,6 @@ void RingAccount::pushNotificationReceived(const std::string& from, const std::m
     dht_.pushNotificationReceived(data);
 }
 
-
 std::string
 RingAccount::getUserUri() const
 {
@@ -3579,7 +3579,6 @@ RingAccount::getUserUri() const
 #endif
     return username_;
 }
-
 
 std::vector<DRing::Message>
 RingAccount::getLastMessages(const uint64_t& base_timestamp)
