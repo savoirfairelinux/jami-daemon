@@ -48,7 +48,7 @@ RUN apt-get update && \
         libgsm1-dev \
         libjsoncpp-dev \
         libnatpmp-dev \
-        libappindicator3-dev \
+        libayatana-appindicator3-dev \
         libqrencode-dev \
         libnm-glib-dev \
         libwebkit2gtk-4.0-dev \
