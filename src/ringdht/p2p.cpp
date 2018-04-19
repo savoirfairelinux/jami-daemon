@@ -129,6 +129,7 @@ struct CtrlMsgBase
 {
     CtrlMsgBase() = delete;
     explicit CtrlMsgBase(CtrlMsgType id) : id_ {id} {}
+    virtual ~CtrlMsgBase() = default;
     CtrlMsgType type() const noexcept { return id_; }
 private:
     const CtrlMsgType id_;
