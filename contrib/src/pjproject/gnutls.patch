@@ -375,7 +375,7 @@ new file mode 100644
 index 0000000..37bcaba
 --- /dev/null
 +++ b/pjlib/src/pj/ssl_sock_gtls.c
-@@ -0,0 +1,2877 @@
+@@ -0,0 +1,2882 @@
 +/* $Id$ */
 +/*
 + * Copyright (C) 2014-2018 Savoir-faire Linux. (https://www.savoirfairelinux.com)
@@ -855,11 +855,16 @@ index 0000000..37bcaba
 +            unsigned char id[2];
 +            const char *suite = gnutls_cipher_suite_info(i, (unsigned char *)id,
 +                                                         NULL, NULL, NULL, NULL);
-+            tls_ciphers[i].id = 0;
++
++            if (i < PJ_ARRAY_SIZE(tls_ciphers))
++                tls_ciphers[i].id = 0;
++            else
++                break;
++
 +            /* usually the array size is bigger than the number of available
 +             * ciphers anyway, so by checking here we can exit the loop as soon
 +             * as either all ciphers have been added or the array is full */
-+            if (suite && i < PJ_ARRAY_SIZE(tls_ciphers)) {
++            if (suite) {
 +                tls_ciphers[i].id = (pj_ssl_cipher)
 +                    (pj_uint32_t) ((id[0] << 8) | id[1]);
 +                tls_ciphers[i].name = suite;
