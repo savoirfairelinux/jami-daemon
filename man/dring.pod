@@ -10,7 +10,7 @@ B<dring> [OPTION]...
 
 Ring is meant to be a robust enterprise-class desktop phone. It provides functions like call transfer, call hold, multiple lines, multiple accounts support.
 Ring audio layer is build upon a native ALSA interface and and a native PulseAudio interface.
-B<dring> is the core of Ring; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<ring-client-gnome>.
+B<dring> is the core of Ring; it communicates with the client side through DBus. You need to install a client to use the daemon, for instance GTK+ client, B<gnome-ring>.
 
 =head1 OPTIONS
 
