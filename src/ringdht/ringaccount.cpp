@@ -1988,6 +1988,10 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id, bool track)
     auto h = dht::InfoHash(buddyUri);
     std::lock_guard<std::mutex> lock(buddyInfoMtx);
     if (track) {
+	if (trackedBuddies_.find(h) != trackedBuddies_.end()) {
+	    JAMI_WARN("[Account %s] Already tracking buddy %s", getAccountID().c_str(), h.to_c_str());
+            return;
+        }
         auto buddy = trackedBuddies_.emplace(h, BuddyInfo {h});
         if (buddy.second) {
             trackPresence(buddy.first->first, buddy.first->second);
