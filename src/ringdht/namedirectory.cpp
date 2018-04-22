@@ -37,6 +37,7 @@ namespace ring {
 constexpr const char* const QUERY_NAME {"/name/"};
 constexpr const char* const QUERY_ADDR {"/addr/"};
 constexpr const char* const HTTPS_PROTO {"https://"};
+constexpr const char* const CACHE_DIRECTORY {"namecache"};
 
 /** Parser for Ring URIs.         ( protocol        )    ( username         ) ( hostname                            ) */
 const std::regex URI_VALIDATOR {"^([a-zA-Z]+:(?://)?)?(?:([a-z0-9-_]{1,64})@)?([a-zA-Z0-9\\-._~%!$&'()*+,;=:\\[\\]]+)"};
@@ -68,7 +69,7 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
 
 NameDirectory::NameDirectory(const std::string& s)
    : serverHost_(s),
-     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache"+DIR_SEPARATOR_STR+serverHost_)
+     cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+CACHE_DIRECTORY+DIR_SEPARATOR_STR+serverHost_)
 {}
 
 void
@@ -81,7 +82,9 @@ NameDirectory& NameDirectory::instance(const std::string& server)
 {
     const std::string& s = server.empty() ? DEFAULT_SERVER_HOST : server;
     static std::map<std::string, NameDirectory> instances {};
-    auto r = instances.emplace(s, NameDirectory{s});
+    auto r = instances.emplace(std::piecewise_construct,
+                      std::forward_as_tuple(s),
+                      std::forward_as_tuple(s));
     if (r.second)
         r.first->second.load();
     return r.first->second;
@@ -137,8 +140,11 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
                 auto name = json["name"].asString();
                 if (not name.empty()) {
                     RING_DBG("Found name for %s: %s", addr.c_str(), name.c_str());
-                    addrCache_.emplace(name, addr);
-                    nameCache_.emplace(addr, name);
+                    {
+                        std::lock_guard<std::mutex> l(lock_);
+                        addrCache_.emplace(name, addr);
+                        nameCache_.emplace(addr, name);
+                    }
                     cb(name, Response::found);
                     saveCache();
                 } else {
@@ -212,8 +218,11 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     addr = addr.substr(HEX_PREFIX.size());
                 if (not addr.empty()) {
                     RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
-                    addrCache_.emplace(name, addr);
-                    nameCache_.emplace(addr, name);
+                    {
+                        std::lock_guard<std::mutex> l(lock_);
+                        addrCache_.emplace(name, addr);
+                        nameCache_.emplace(addr, name);
+                    }
                     cb(addr, Response::found);
                     saveCache();
                 } else {
@@ -302,6 +311,7 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                 auto success = json["success"].asBool();
                 RING_DBG("Got reply for registration of %s -> %s: %s", name.c_str(), addr.c_str(), success ? "success" : "failure");
                 if (success) {
+                    std::lock_guard<std::mutex> l(lock_);
                     addrCache_.emplace(name, addr);
                     nameCache_.emplace(addr, name);
                 }
@@ -324,9 +334,13 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
 void
 NameDirectory::saveCache()
 {
-    fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+"namecache");
+    fileutils::recursive_mkdir(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+CACHE_DIRECTORY);
+    std::lock_guard<std::mutex> lock(fileutils::getFileLock(cachePath_));
     std::ofstream file(cachePath_, std::ios::trunc | std::ios::binary);
-    msgpack::pack(file, nameCache_);
+    {
+        std::lock_guard<std::mutex> l(lock_);
+        msgpack::pack(file, nameCache_);
+    }
     RING_DBG("Saved %lu name-address mappings", (long unsigned)nameCache_.size());
 }
 
@@ -337,6 +351,7 @@ NameDirectory::loadCache()
 
     // read file
     {
+        std::lock_guard<std::mutex> lock(fileutils::getFileLock(cachePath_));
         std::ifstream file(cachePath_);
         if (!file.is_open()) {
             RING_DBG("Could not load %s", cachePath_.c_str());
@@ -351,6 +366,7 @@ NameDirectory::loadCache()
     }
 
     // load values
+    std::lock_guard<std::mutex> l(lock_);
     msgpack::object_handle oh;
     if (pac.next(oh))
         oh.get().convert(nameCache_);

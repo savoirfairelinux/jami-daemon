@@ -17,9 +17,12 @@
  */
 #pragma once
 
+#include "noncopyable.h"
+
 #include <functional>
 #include <map>
 #include <string>
+#include <mutex>
 
 namespace ring {
 
@@ -51,14 +54,16 @@ public:
     }
 
 private:
+    NON_COPYABLE(NameDirectory);
+    NameDirectory(NameDirectory&&) = delete;
     constexpr static const char* const DEFAULT_SERVER_HOST = "ns.ring.cx";
 
     const std::string serverHost_ {DEFAULT_SERVER_HOST};
     const std::string cachePath_;
 
-    std::map<std::string, std::string> nameCache_;
-    std::map<std::string, std::string> addrCache_;
-
+    std::map<std::string, std::string> nameCache_ {};
+    std::map<std::string, std::string> addrCache_ {};
+    std::mutex lock_ {};
 
     bool validateName(const std::string& name) const;
 
