@@ -218,10 +218,12 @@ expand_path(const std::string &path)
 }
 
 std::map<std::string, std::mutex> fileLocks {};
+std::mutex fileLockLock {};
 
 std::mutex&
 getFileLock(const std::string& path)
 {
+    std::lock_guard<std::mutex> l(fileLockLock);
     return fileLocks[path];
 }
 
