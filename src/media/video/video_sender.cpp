@@ -44,7 +44,7 @@ VideoSender::VideoSender(const std::string& dest, const DeviceParams& dev,
 {
     videoEncoder_->setDeviceOptions(dev);
     keyFrameFreq_ = dev.framerate.numerator() * KEY_FRAME_PERIOD;
-    videoEncoder_->openOutput(dest.c_str(), args);
+    videoEncoder_->openOutput(dest, args);
     videoEncoder_->setInitSeqVal(seqVal);
     videoEncoder_->setIOContext(muxContext_);
     videoEncoder_->startIO();

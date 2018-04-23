@@ -37,6 +37,7 @@
 
 namespace ring { namespace libav_utils {
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
 // protect libav/ffmpeg access
 static int
 avcodecManageMutex(void **data, enum AVLockOp op)
@@ -70,6 +71,7 @@ avcodecManageMutex(void **data, enum AVLockOp op)
     }
     return AVERROR(ret);
 }
+#endif
 
 static constexpr const char* AVLOGLEVEL = "AVLOGLEVEL";
 
@@ -134,11 +136,15 @@ androidAvLogCb(void* ptr, int level, const char* fmt, va_list vl)
 static void
 init_once()
 {
+#if LIBAVFORMAT_VERSION_INT < AV_VERSION_INT(58, 9, 100)
     av_register_all();
+#endif
     avdevice_register_all();
     avformat_network_init();
 
+#if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
     av_lockmgr_register(avcodecManageMutex);
+#endif
 
     if (getDebugMode())
         setAvLogLevel();

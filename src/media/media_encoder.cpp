@@ -123,21 +123,25 @@ MediaEncoder::getEncoderName() const
 }
 
 void
-MediaEncoder::openOutput(const char *filename,
+MediaEncoder::openOutput(const std::string& filename,
                          const ring::MediaDescription& args)
 {
     setOptions(args);
-    AVOutputFormat *oformat = av_guess_format("rtp", filename, nullptr);
+    AVOutputFormat *oformat = av_guess_format("rtp", filename.c_str(), nullptr);
 
     if (!oformat) {
-        RING_ERR("Unable to find a suitable output format for %s", filename);
+        RING_ERR("Unable to find a suitable output format for %s", filename.c_str());
         throw MediaEncoderException("No output format");
     }
 
     outputCtx_->oformat = oformat;
-    strncpy(outputCtx_->filename, filename, sizeof(outputCtx_->filename));
-    // guarantee that buffer is NULL terminated
-    outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(58, 7, 100)
+    // c_str guarantees NULL termination
+    outputCtx_->url = av_strdup(filename.c_str()); // must be compatible with av_free
+#else
+    // c_str guarantees NULL termination
+    outputCtx_->filename = av_strdup(filename.c_str()); // must be compatible with av_free
+#endif
 
     /* find the video encoder */
     if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
@@ -265,7 +269,11 @@ MediaEncoder::startIO()
         throw MediaEncoderException("Failed to write output file header");
     }
 
+#if LIBAVFORMAT_VERSION_INT >= AV_VERSION_INT(58, 7, 100)
+    av_dump_format(outputCtx_, 0, outputCtx_->url, 1);
+#else
     av_dump_format(outputCtx_, 0, outputCtx_->filename, 1);
+#endif
 }
 
 #ifdef RING_VIDEO
