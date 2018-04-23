@@ -120,7 +120,7 @@ AudioSender::setup(SocketPair& socketPair)
         /* Encoder setup */
         RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
         audioEncoder_->setMuted(muteState_);
-        audioEncoder_->openOutput(dest_.c_str(), args_);
+        audioEncoder_->openOutput(dest_, args_);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_);
         audioEncoder_->startIO();

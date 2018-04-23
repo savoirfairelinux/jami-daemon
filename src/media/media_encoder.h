@@ -63,7 +63,7 @@ public:
     void setInterruptCallback(int (*cb)(void*), void *opaque);
 
     void setDeviceOptions(const DeviceParams& args);
-    void openOutput(const char *filename, const MediaDescription& args);
+    void openOutput(std::string filename, const MediaDescription& args);
     void startIO();
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 
