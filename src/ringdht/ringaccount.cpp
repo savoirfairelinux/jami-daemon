@@ -2247,8 +2247,12 @@ RingAccount::doRegister_()
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
-                    std::map<std::string, std::string> payloads = {{"text/plain",
-                                                                    utf8_make_valid(v.msg)}};
+                    std::string datatype = utf8_make_valid(v.datatype);
+                    if (datatype.empty()) {
+                        datatype = "text/plain";
+                    }
+                    std::map<std::string, std::string> payloads = {{datatype,
+                                                                   utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
                     RING_DBG("Sending message confirmation %" PRIx64, v.id);
                     shared->dht_.putEncrypted(inboxDeviceKey,
@@ -3340,7 +3344,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
         shared->dht_.putEncrypted(h, dev,
-            dht::ImMessage(token, std::string(payloads.begin()->second), now),
+            dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
             [wshared,token,confirm,h](bool ok) {
                 if (auto this_ = wshared.lock()) {
                     RING_DBG("[Account %s] [message %" PRIx64 "] put encrypted %s", this_->getAccountID().c_str(), token, ok ? "ok" : "failed");
