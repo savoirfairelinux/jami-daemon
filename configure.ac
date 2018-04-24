@@ -449,6 +449,8 @@ PKG_CHECK_MODULES(LIBAVFORMAT, libavformat >= 56.40.101,, AC_MSG_ERROR([Missing 
 
 PKG_CHECK_MODULES(LIBAVDEVICE, libavdevice >= 56.4.100,, AC_MSG_ERROR([Missing libavdevice development files]))
 
+PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101,, AC_MSG_ERROR([Missing libavfilter development files]))
+
 PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libswscale development files]))
 
 dnl Video is default-enabled
