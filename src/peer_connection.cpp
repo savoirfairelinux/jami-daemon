@@ -688,4 +688,10 @@ PeerConnection::hasStreamWithId(const DRing::DataTransferId& id)
     return pimpl_->hasStreamWithId(id);
 }
 
+std::string
+PeerConnection::getPeerUri() const
+{
+    return pimpl_->peer_uri;
+}
+
 } // namespace ring
