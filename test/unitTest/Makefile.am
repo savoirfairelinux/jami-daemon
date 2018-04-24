@@ -61,4 +61,10 @@ ut_string_utils_SOURCES = string_utils/testString_utils.cpp
 check_PROGRAMS += ut_video_input
 ut_video_input_SOURCES = media/video/testVideo_input.cpp
 
+#
+# media_filter
+#
+check_PROGRAMS += ut_media_filter
+ut_video_input_SOURCES = media/test_media_filter.cpp
+
 TESTS = $(check_PROGRAMS)
