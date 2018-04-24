@@ -191,6 +191,8 @@ public:
      */
     bool hasStreamWithId(const DRing::DataTransferId& id);
 
+    std::string getPeerUri() const;
+
 private:
     class PeerConnectionImpl;
     std::unique_ptr<PeerConnectionImpl> pimpl_;
