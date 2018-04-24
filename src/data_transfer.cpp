@@ -114,17 +114,17 @@ DataTransfer::emit(DRing::DataTransferEventCode code) const
 
 //==============================================================================
 
-class OutgoingFileTransfer final : public DataTransfer
+class SubOutgoingFileTransfer final : public DataTransfer
 {
 public:
-    OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
+    SubOutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info, const std::string& peerUri);
 
     void close() noexcept override;
     bool read(std::vector<uint8_t>&) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
 
 private:
-    OutgoingFileTransfer() = delete;
+    SubOutgoingFileTransfer() = delete;
 
     mutable std::ifstream input_;
     std::size_t tx_ {0};
@@ -133,39 +133,34 @@ private:
     const std::string peerUri_;
 };
 
-OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid,
-                                           const DRing::DataTransferInfo& info)
-    : DataTransfer(tid)
+SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
+                                           const DRing::DataTransferInfo& info,
+                                           const std::string& peerUri)
+    : DataTransfer(tid), peerUri_ {peerUri}
 {
     input_.open(info.path, std::ios::binary);
     if (!input_)
         throw std::runtime_error("input file open failed");
 
     info_ = info;
-    info_.flags &= ~((uint32_t)1 << int(DRing::DataTransferFlags::direction)); // outgoing
-
-    // File size?
-    input_.seekg(0, std::ios_base::end);
-    info_.totalSize = input_.tellg();
-    input_.seekg(0, std::ios_base::beg);
 }
 
 void
-OutgoingFileTransfer::close() noexcept
+SubOutgoingFileTransfer::close() noexcept
 {
     DataTransfer::close();
     input_.close();
 
     // We don't need the connection anymore. Can close it.
     auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
-    account->closePeerConnection(info_.peer, id);
+    account->closePeerConnection(peerUri_, id, false);
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
         emit(DRing::DataTransferEventCode::closed_by_host);
 }
 
 bool
-OutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
+SubOutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 {
     // Need to send headers?
     if (!headerSent_) {
@@ -210,7 +205,7 @@ OutgoingFileTransfer::read(std::vector<uint8_t>& buf) const
 }
 
 bool
-OutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
+SubOutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
 {
     if (buffer.empty())
         return true;
@@ -227,6 +222,42 @@ OutgoingFileTransfer::write(const std::vector<uint8_t>& buffer)
         }
     }
     return true;
+}
+
+
+class OutgoingFileTransfer final : public DataTransfer
+{
+public:
+    OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info);
+
+    std::shared_ptr<DataTransfer> startNewOutgoing(const std::string& peer_uri) {
+        auto newTransfer = std::make_shared<SubOutgoingFileTransfer>(id, info_, peer_uri);
+        subtransfer_.emplace_back(newTransfer);
+        newTransfer->start();
+        return newTransfer;
+    }
+
+private:
+    OutgoingFileTransfer() = delete;
+
+    mutable std::ifstream input_;
+    mutable std::vector<std::shared_ptr<SubOutgoingFileTransfer>> subtransfer_;
+};
+
+OutgoingFileTransfer::OutgoingFileTransfer(DRing::DataTransferId tid, const DRing::DataTransferInfo& info)
+: DataTransfer(tid)
+{
+    input_.open(info.path, std::ios::binary);
+    if (!input_)
+        throw std::runtime_error("input file open failed");
+
+    info_ = info;
+    info_.flags &= ~((uint32_t)1 << int(DRing::DataTransferFlags::direction)); // outgoing
+
+    // File size?
+    input_.seekg(0, std::ios_base::end);
+    info_.totalSize = input_.tellg();
+    input_.close();
 }
 
 //==============================================================================
@@ -413,9 +444,11 @@ DataTransferFacade::Impl::onConnectionRequestReply(const DRing::DataTransferId& 
 {
     if (auto transfer = getTransfer(id)) {
         if (connection) {
-            if (transfer->start()) {
-                connection->attachInputStream(transfer);
-            }
+            connection->attachInputStream(
+                std::dynamic_pointer_cast<OutgoingFileTransfer>(transfer)->startNewOutgoing(
+                    connection->getPeerUri()
+                )
+            );
         } else if (not transfer->hasBeenStarted()) {
             transfer->emit(DRing::DataTransferEventCode::unjoinable_peer);
             cancel(*transfer);
