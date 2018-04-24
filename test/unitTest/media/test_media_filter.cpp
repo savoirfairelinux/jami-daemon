@@ -1,0 +1,194 @@
+/*
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *
+ *  Author: Philippe Gorley <philippe.gorley@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include <cppunit/TestAssert.h>
+#include <cppunit/TestFixture.h>
+#include <cppunit/extensions/HelperMacros.h>
+
+#include "dring.h"
+#include "libav_deps.h"
+#include "media_filter.h"
+
+#include "../../test_runner.h"
+
+namespace ring { namespace test {
+
+class MediaFilterTest : public CppUnit::TestFixture {
+public:
+    static std::string name() { return "media_filter"; }
+
+    void setUp();
+    void tearDown();
+
+private:
+    void testSimpleVideoFilter();
+    void testSimpleAudioFilter();
+
+    CPPUNIT_TEST_SUITE(MediaFilterTest);
+    CPPUNIT_TEST(testSimpleVideoFilter);
+    CPPUNIT_TEST(testSimpleAudioFilter);
+    CPPUNIT_TEST_SUITE_END();
+
+    std::unique_ptr<MediaFilter> filter_;
+    AVCodecContext* codecCtx_;
+    AVFrame* frame_;
+};
+
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaFilterTest, MediaFilterTest::name());
+
+void
+MediaFilterTest::setUp()
+{
+    DRing::init(DRing::InitFlag(DRing::DRING_FLAG_DEBUG | DRing::DRING_FLAG_CONSOLE_LOG));
+    libav_utils::ring_avcodec_init();
+    filter_.reset(new MediaFilter);
+}
+
+void
+MediaFilterTest::tearDown()
+{
+    av_frame_free(&frame_);
+    avcodec_free_context(&codecCtx_);
+    DRing::fini();
+}
+
+static void
+fill_yuv_image(uint8_t *data[4], int linesize[4], int width, int height, int frame_index)
+{
+    int x, y;
+
+    /* Y */
+    for (y = 0; y < height; y++)
+        for (x = 0; x < width; x++)
+            data[0][y * linesize[0] + x] = x + y + frame_index * 3;
+
+    /* Cb and Cr */
+    for (y = 0; y < height / 2; y++) {
+        for (x = 0; x < width / 2; x++) {
+            data[1][y * linesize[1] + x] = 128 + y + frame_index * 2;
+            data[2][y * linesize[2] + x] = 64 + x + frame_index * 5;
+        }
+    }
+}
+
+void
+MediaFilterTest::testSimpleVideoFilter()
+{
+    std::string filterSpec = "scale=200x100";
+
+    // constants
+    const constexpr int width = 320;
+    const constexpr int height = 240;
+    const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
+
+    // prepare AVCodecContext, avcodec_alloc_context3 fills it with default values
+    AVCodec* codec = avcodec_find_decoder(AV_CODEC_ID_RAWVIDEO);
+    codecCtx_ = avcodec_alloc_context3(codec);
+    codecCtx_->width = width;
+    codecCtx_->height = height;
+    codecCtx_->pix_fmt = format;
+    codecCtx_->time_base.num = 1;
+    codecCtx_->time_base.den = 1;
+    codecCtx_->sample_aspect_ratio.num = 1;
+    codecCtx_->sample_aspect_ratio.den = 1;
+
+    // prepare video frame
+    frame_ = av_frame_alloc();
+    frame_->format = format;
+    frame_->width = width;
+    frame_->height = height;
+
+    // allocate and fill frame buffers
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 32) >= 0);
+    fill_yuv_image(frame_->data, frame_->linesize, frame_->width, frame_->height, 0);
+
+    // prepare filter
+    CPPUNIT_ASSERT(filter_->initializeFilters(codecCtx_, filterSpec.c_str()) >= 0);
+
+    // apply filter
+    CPPUNIT_ASSERT(filter_->applyFilters(frame_) >= 0);
+
+    // check if the filter worked
+    CPPUNIT_ASSERT(frame_->width == 200 && frame_->height == 100);
+}
+
+static void
+fill_samples(uint16_t* samples, int sampleRate, int nbSamples, int nbChannels, float tone)
+{
+    const constexpr float pi = 3.14159265358979323846264338327950288; // M_PI
+    const float tincr = 2 * pi * tone / sampleRate;
+    float t = 0;
+
+    for (int i = 0; i < 200; ++i) {
+        for (int j = 0; j < nbSamples; ++j) {
+            samples[2 * j] = static_cast<int>(sin(t) * 10000);
+            for (int k = 1; k < nbChannels; ++k) {
+                samples[2 * j + k] = samples[2 * j];
+            }
+            t += tincr;
+        }
+    }
+}
+
+void
+MediaFilterTest::testSimpleAudioFilter()
+{
+    std::string filterSpec = "aformat=sample_fmts=u8";
+
+    // constants
+    const constexpr int nbSamples = 100;
+    const constexpr int64_t channelLayout = AV_CH_LAYOUT_STEREO;
+    const constexpr int sampleRate = 44100;
+    const constexpr enum AVSampleFormat format = AV_SAMPLE_FMT_S16;
+
+    // prepare AVCodecContext, avcodec_alloc_context3 fills it with default values
+    AVCodec* codec = avcodec_find_decoder(AV_CODEC_ID_PCM_S16LE);
+    codecCtx_ = avcodec_alloc_context3(codec);
+    codecCtx_->time_base.num = 1;
+    codecCtx_->time_base.den = 1;
+    codecCtx_->sample_rate = sampleRate;
+    codecCtx_->sample_fmt = format;
+    codecCtx_->channel_layout = channelLayout;
+
+    // prepare audio frame
+    frame_ = av_frame_alloc();
+    frame_->format = format;
+    frame_->channel_layout = channelLayout;
+    frame_->nb_samples = nbSamples;
+    frame_->sample_rate = sampleRate;
+    frame_->channels = av_get_channel_layout_nb_channels(channelLayout);
+
+    // allocate and fill frame buffers
+    CPPUNIT_ASSERT(av_frame_get_buffer(frame_, 0) >= 0);
+    fill_samples(reinterpret_cast<uint16_t*>(frame_->data[0]), sampleRate, nbSamples, frame_->channels, 440.0);
+
+    // prepare filter
+    CPPUNIT_ASSERT(filter_->initializeFilters(codecCtx_, filterSpec.c_str()) >= 0);
+
+    // apply filter
+    CPPUNIT_ASSERT(filter_->applyFilters(frame_) >= 0);
+
+    // check if the filter worked
+    CPPUNIT_ASSERT(frame_->format == AV_SAMPLE_FMT_U8);
+}
+
+}} // namespace ring::test
+
+RING_TEST_RUNNER(ring::test::MediaFilterTest::name());
