@@ -61,4 +61,11 @@ ut_string_utils_SOURCES = string_utils/testString_utils.cpp
 check_PROGRAMS += ut_video_input
 ut_video_input_SOURCES = media/video/testVideo_input.cpp
 
+#
+# media_filter
+#
+check_PROGRAMS += ut_media_filter
+ut_media_filter_SOURCES = media/test_media_filter.cpp
+ut_media_filter_LDADD = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBAVFILTER_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
+
 TESTS = $(check_PROGRAMS)
