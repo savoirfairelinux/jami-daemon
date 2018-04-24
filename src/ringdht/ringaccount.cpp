@@ -3429,11 +3429,10 @@ RingAccount::requestPeerConnection(const std::string& peer_id, const DRing::Data
 }
 
 void
-RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid)
+RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid, bool closeAll)
 {
-    dhtPeerConnector_->closeConnection(peer, tid);
+    dhtPeerConnector_->closeConnection(peer, tid, closeAll);
 }
-
 
 void
 RingAccount::enableProxyClient(bool enable)

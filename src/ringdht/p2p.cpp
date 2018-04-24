@@ -751,7 +751,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
 }
 
 void
-DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid) {
+DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid, bool closeAll) {
     // NOTE: see TODO in previous function.
 
     // NOTE: There is two ways to store current PeerConnection. Indeed, if it is
@@ -763,6 +763,7 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
     const auto peer_h = dht::InfoHash(peer_id);
 
     pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_h, tid);
+    if (!closeAll) return;
     pimpl_->account.forEachDevice(
         peer_h,
         [this, tid](const std::shared_ptr<RingAccount>& account,
