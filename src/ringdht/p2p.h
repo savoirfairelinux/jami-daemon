@@ -37,7 +37,7 @@ public:
 
     void onDhtConnected(const std::string& device_id);
     void requestConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::function<void(PeerConnection*)>& connect_cb);
-    void closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid);
+    void closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid, bool closeAll = true);
 
 private:
     DhtPeerConnector() = delete;

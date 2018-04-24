@@ -334,7 +334,7 @@ class RingAccount : public SIPAccountBase {
         /// /// \param[in] peer RingID on request's recipient
         /// /// \param[in] tid linked outgoing data transfer
         ///
-        void closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid);
+        void closePeerConnection(const std::string& peer, const DRing::DataTransferId& tid, bool closeAll = true);
 
         std::vector<std::string> publicAddresses();
 
