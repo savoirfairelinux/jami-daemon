@@ -3430,7 +3430,6 @@ RingAccount::closePeerConnection(const std::string& peer, const DRing::DataTrans
     dhtPeerConnector_->closeConnection(peer, tid);
 }
 
-
 void
 RingAccount::enableProxyClient(bool enable)
 {
