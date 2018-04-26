@@ -646,9 +646,9 @@ DhtPeerConnector::Impl::eventLoop()
                                             && element.second
                                             && element.second->hasStreamWithId(id));});
                     if (it == servers_.end()) break;
+                    servers_.erase(it);
                     connectedPeers_.erase(it->first.second);
                     turnEndpoints_.erase(it->first.second);
-                    servers_.erase(it);
                 }
                 break;
 
