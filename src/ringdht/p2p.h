@@ -24,6 +24,8 @@
 #include <memory>
 #include <functional>
 #include "dring/datatransfer_interface.h"
+#include <opendht/default_types.h>
+
 
 namespace ring {
 
@@ -38,6 +40,7 @@ public:
     void onDhtConnected(const std::string& device_id);
     void requestConnection(const std::string& peer_id, const DRing::DataTransferId& tid, const std::function<void(PeerConnection*)>& connect_cb);
     void closeConnection(const std::string& peer_id, const DRing::DataTransferId& tid);
+    PeerConnection* getConnection(dht::InfoHash peer) const;
 
 private:
     DhtPeerConnector() = delete;

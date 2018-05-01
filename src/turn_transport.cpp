@@ -513,17 +513,22 @@ std::size_t
 ConnectedTurnTransport::read(ValueType* buf, std::size_t size, std::error_code& ec)
 {
     if (size > 0) {
+        std::cout << "/////////0" << std::endl;
         try {
             size = turn_.recvfrom(peer_, reinterpret_cast<char*>(buf), size);
         } catch (const sip_utils::PjsipFailure& ex) {
+            std::cout << "/////////" << std::endl;
             ec = ex.code();
             return 0;
         }
 
         if (size == 0) {
+            std::cout << "/////////2" << std::endl;
             ec = std::make_error_code(std::errc::broken_pipe);
             return 0;
         }
+        std::cout << "READ" << size << std::endl;
+
     }
 
     ec.clear();

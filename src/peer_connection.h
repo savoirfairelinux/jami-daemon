@@ -191,6 +191,8 @@ public:
      */
     bool hasStreamWithId(const DRing::DataTransferId& id);
 
+    GenericSocket<uint8_t>* getSocket();
+
 private:
     class PeerConnectionImpl;
     std::unique_ptr<PeerConnectionImpl> pimpl_;

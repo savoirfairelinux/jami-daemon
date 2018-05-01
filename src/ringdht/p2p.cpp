@@ -209,6 +209,7 @@ public:
 
     RingAccount& account;
     Channel<std::unique_ptr<CtrlMsgBase>> ctrl;
+    std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
 
 private:
     std::map<IpAddr, std::unique_ptr<ConnectedTurnTransport>> turnEndpoints_;
@@ -221,7 +222,6 @@ private:
     std::map<IpAddr, dht::InfoHash> connectedPeers_;
 
 protected:
-    std::map<std::pair<dht::InfoHash, IpAddr>, std::unique_ptr<PeerConnection>> servers_;
     std::map<std::pair<dht::InfoHash, DRing::DataTransferId>, std::unique_ptr<ClientConnector>> clients_;
     std::mutex clientsMutex_;
 
@@ -780,6 +780,17 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
                 RING_WARN() << pimpl_->account << "[CNX] aborted, no devices for " << peer_h;
             }
         });
+}
+
+PeerConnection*
+DhtPeerConnector::getConnection(dht::InfoHash peer) const
+{
+    for (const auto& server: pimpl_->servers_) {
+        if (server.first.first == peer) {
+            return server.second.get();
+        }
+    }
+    return nullptr;
 }
 
 } // namespace ring

@@ -118,6 +118,7 @@ FtpServer::read(std::vector<uint8_t>& buffer) const
 bool
 FtpServer::write(const std::vector<uint8_t>& buffer)
 {
+    std::cout << "isOutReliable" << isOutReliable() << std::endl;
     switch (state_) {
         case FtpState::PARSE_HEADERS:
             if (parseStream(buffer)) {

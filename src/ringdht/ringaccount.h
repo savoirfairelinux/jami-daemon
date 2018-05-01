@@ -375,6 +375,8 @@ class RingAccount : public SIPAccountBase {
          */
         void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+        std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+
     private:
         NON_COPYABLE(RingAccount);
 
@@ -653,7 +655,6 @@ class RingAccount : public SIPAccountBase {
 
         void registerDhtAddress(IceTransport&);
 
-        std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)

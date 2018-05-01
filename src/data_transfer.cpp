@@ -41,6 +41,9 @@
 
 #include <opendht/rng.h>
 
+#include "ringdht/p2p.h"
+#include <memory>
+
 namespace ring {
 
 static DRing::DataTransferId
@@ -270,7 +273,15 @@ IncomingFileTransfer::requestFilename()
 
 #if 1
     // Now wait for DataTransferFacade::acceptFileTransfer() call
-    filenamePromise_.get_future().wait();
+    std::future_status status;
+    auto future = filenamePromise_.get_future();
+    bool connectionDown = false;
+    do {
+        status = future.wait_for(std::chrono::milliseconds(500));
+        auto account = Manager::instance().getAccount<RingAccount>(info_.accountId);
+        auto* c = account->dhtPeerConnector_->getConnection(dht::InfoHash(info_.peer));
+        connectionDown = c == nullptr;
+    } while (status != std::future_status::ready && !connectionDown);
 #else
     // For DEBUG only
     char filename[] = "/tmp/ring_XXXXXX";
@@ -540,7 +551,9 @@ std::shared_ptr<Stream>
 DataTransferFacade::onIncomingFileRequest(const DRing::DataTransferInfo& info)
 {
     auto transfer = pimpl_->createIncomingFileTransfer(info);
+    std::cout << "WAIT 1" << std::endl;
     auto filename = transfer->requestFilename();
+    std::cout << "WAIT 2" << std::endl;
     if (!filename.empty())
         if (transfer->start())
             return std::static_pointer_cast<Stream>(transfer);

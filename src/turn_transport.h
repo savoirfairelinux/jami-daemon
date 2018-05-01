@@ -29,6 +29,8 @@
 #include <map>
 #include <stdexcept>
 
+#include <iostream>
+
 namespace ring {
 
 class TurnTransportPimpl;

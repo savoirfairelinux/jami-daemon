@@ -39,6 +39,10 @@ public:
     DRing::DataTransferId getId() const override;
     void close() noexcept override;
 
+    bool isOutReliable() {
+        return out_ != nullptr;
+    }
+
 private:
     bool parseStream(const std::vector<uint8_t>&);
     bool parseLine(const std::string&);

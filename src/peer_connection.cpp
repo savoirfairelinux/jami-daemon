@@ -48,6 +48,8 @@
 #include <sys/time.h>
 #endif
 
+#include <iostream>
+
 namespace ring {
 
 using lock = std::lock_guard<std::mutex>;
@@ -501,9 +503,9 @@ public:
     const Account& account;
     const std::string peer_uri;
     Channel<std::unique_ptr<CtrlMsg>> ctrlChannel;
+    std::unique_ptr<SocketType> endpoint_;
 
 private:
-    std::unique_ptr<SocketType> endpoint_;
     std::vector<std::shared_ptr<Stream>> inputs_;
     std::vector<std::shared_ptr<Stream>> outputs_;
     std::future<void> eventLoopFut_;
@@ -587,6 +589,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
             }
         }
 
+
         // Then handles IO streams
         std::vector<uint8_t> buf;
         std::error_code ec;
@@ -595,6 +598,7 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         // sending loop
         handle_stream_list(inputs_, [&] (auto& stream) {
+            std::cout << "input" << std::endl;
                 if (!stream) return false;
                 buf.resize(IO_BUFFER_SIZE);
                 if (stream->read(buf)) {
@@ -626,14 +630,21 @@ PeerConnection::PeerConnectionImpl::eventLoop()
 
         // receiving loop
         handle_stream_list(outputs_, [&] (auto& stream) {
+            std::cout << "output" << std::endl;
                 if (!stream) return false;
                 buf.resize(IO_BUFFER_SIZE);
+                std::cout << "output2" << std::endl;
                 auto eof = stream->read(buf);
                 // if eof we let a chance to send a reply before leaving
+                std::cout << "output3" << std::endl;
                 if (not buf.empty()) {
+                    std::cout << "output4" << endpoint_->isReliable() << std::endl;
                     endpoint_->write(buf, ec);
-                    if (ec)
+                    std::cout << "output5" << std::endl;
+                    if (ec) {
                         throw std::system_error(ec);
+                        std::cout << "output6" << std::endl;
+                    }
                 }
                 if (not eof)
                     return false;
@@ -647,7 +658,10 @@ PeerConnection::PeerConnectionImpl::eventLoop()
                     if (ec)
                         throw std::system_error(ec);
                     sleep = false;
-                    return stream->write(buf);
+                    std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
+                    auto res = stream->write(buf);
+                    std::cout << "@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@" << std::endl;
+                    return res;
                 } else if (ec)
                     throw std::system_error(ec);
 
@@ -686,6 +700,12 @@ bool
 PeerConnection::hasStreamWithId(const DRing::DataTransferId& id)
 {
     return pimpl_->hasStreamWithId(id);
+}
+
+GenericSocket<uint8_t>*
+PeerConnection::getSocket()
+{
+    return pimpl_->endpoint_.get();
 }
 
 } // namespace ring
