@@ -28,6 +28,7 @@
 #include "map_utils.h"
 #include "client/ring_signal.h"
 
+#include <thread>
 #include <stdexcept>
 #include <fstream>
 #include <sstream>
@@ -107,7 +108,7 @@ public:
 protected:
     mutable std::mutex infoMutex_;
     mutable DRing::DataTransferInfo info_;
-    std::atomic_bool started_ {false};
+    mutable std::atomic_bool started_ {false};
     std::atomic_bool wasStarted_ {false};
 };
 
@@ -168,7 +169,7 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
     DRing::DataTransferEventCode lastEvent { DRing::DataTransferEventCode::invalid };
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
-        if (info_.lastEvent > DRing::DataTransferEventCode::unjoinable_peer) {
+        if (info_.lastEvent > DRing::DataTransferEventCode::timeout_expired) {
             info_.lastEvent = DRing::DataTransferEventCode::invalid;
         }
         if (info.lastEvent >= DRing::DataTransferEventCode::created
@@ -180,7 +181,7 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
         }
 
         if (info.lastEvent >= DRing::DataTransferEventCode::closed_by_host
-            && info.lastEvent <= DRing::DataTransferEventCode::unjoinable_peer
+            && info.lastEvent <= DRing::DataTransferEventCode::timeout_expired
             && info_.lastEvent < DRing::DataTransferEventCode::finished) {
             // if not finished show error if all failed
             // if the transfer was ongoing and canceled, we should go to the best status
@@ -248,8 +249,10 @@ class SubOutgoingFileTransfer final : public DataTransfer
 {
 public:
     SubOutgoingFileTransfer(DRing::DataTransferId tid, const std::string& peerUri, std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo);
+    ~SubOutgoingFileTransfer();
 
     void close() noexcept override;
+    void closeAndEmit(DRing::DataTransferEventCode code) const noexcept;
     bool read(std::vector<uint8_t>&) const override;
     bool write(const std::vector<uint8_t>& buffer) override;
     void emit(DRing::DataTransferEventCode code) const override;
@@ -263,6 +266,8 @@ private:
     mutable bool headerSent_ {false};
     bool peerReady_ {false};
     const std::string peerUri_;
+    mutable std::unique_ptr<std::thread> timeoutThread_;
+    mutable std::atomic_bool stopTimeout_ {false};
 };
 
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
@@ -278,10 +283,23 @@ SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
     metaInfo_->addLinkedTransfer(this);
 }
 
+SubOutgoingFileTransfer::~SubOutgoingFileTransfer() {
+    if (timeoutThread_ && timeoutThread_->joinable()) {
+        stopTimeout_ = true;
+        timeoutThread_->join();
+    }
+}
+
 void
 SubOutgoingFileTransfer::close() noexcept
 {
-    DataTransfer::close();
+    closeAndEmit(DRing::DataTransferEventCode::closed_by_host);
+}
+
+void
+SubOutgoingFileTransfer::closeAndEmit(DRing::DataTransferEventCode code) const noexcept
+{
+    started_ = false; // NOTE: replace DataTransfer::close(); which is non const
     input_.close();
 
     // We don't need the connection anymore. Can close it.
@@ -289,7 +307,7 @@ SubOutgoingFileTransfer::close() noexcept
     account->closePeerConnection(peerUri_, id);
 
     if (info_.lastEvent < DRing::DataTransferEventCode::finished)
-        emit(DRing::DataTransferEventCode::closed_by_host);
+        emit(code);
 }
 
 bool
@@ -366,6 +384,22 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
         info_.lastEvent = code;
     }
     metaInfo_->updateInfo(info_);
+    if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
+        timeoutThread_ = std::move(std::unique_ptr<std::thread>(new std::thread([this]() {
+            const auto TEN_MIN = 1000 * 60 * 10;
+            const auto SLEEP_DURATION = 100;
+            for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
+                // 10 min before timeout
+                std::this_thread::sleep_for(std::chrono::milliseconds(SLEEP_DURATION));
+                if (stopTimeout_.load())
+                    return;  // not waiting anymore
+            }
+            RING_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
+            this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
+        })));
+    } else if (timeoutThread_) {
+        stopTimeout_ = true;
+    }
 }
 
 /**
