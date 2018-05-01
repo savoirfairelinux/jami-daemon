@@ -46,6 +46,7 @@ enum class DataTransferEventCode : uint32_t
     closed_by_peer,
     invalid_pathname,
     unjoinable_peer,
+    timeout_expired,
 };
 
 enum class DataTransferError : uint32_t
