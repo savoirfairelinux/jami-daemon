@@ -1,2 +1,1 @@
-SUBDIRS = sip turn
-SUBDIRS += unitTest
+SUBDIRS = unitTest sip turn
