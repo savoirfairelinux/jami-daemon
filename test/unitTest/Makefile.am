@@ -32,6 +32,12 @@ check_PROGRAMS += ut_map_utils
 ut_map_utils_SOURCES = map_utils/testMap_utils.cpp
 
 #
+# file_transfer
+#
+check_PROGRAMS += ut_filetransfer
+ut_filetransfer_SOURCES = file_transfer/testFileTransfer.cpp
+
+#
 # fileutils
 #
 check_PROGRAMS += ut_fileutils
