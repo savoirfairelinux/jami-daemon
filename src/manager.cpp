@@ -189,6 +189,11 @@ setSipLogLevel()
     }
 
     pj_log_set_level(level);
+    pj_log_set_log_func([](int level, const char *data, int len) {
+        if      (level < 2) RING_ERR(data);
+        else if (level < 4) RING_WARN(data);
+        else                RING_DBG(data);
+    });
 #else
     pj_log_set_level(0);
 #endif
