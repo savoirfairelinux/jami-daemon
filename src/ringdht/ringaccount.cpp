@@ -1008,9 +1008,9 @@ RingAccount::computeKeys(const std::string& password, const std::string& pin, bo
 }
 
 std::string
-generatePIN(size_t length = 8)
+generatePIN(size_t length = 10)
 {
-    static constexpr const char alphabet[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    static constexpr const char alphabet[] = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ";
     dht::crypto::random_device rd;
     std::uniform_int_distribution<size_t> dis(0, sizeof(alphabet)-2);
     std::string ret;
