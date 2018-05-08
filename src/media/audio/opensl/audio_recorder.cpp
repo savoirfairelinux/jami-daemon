@@ -31,25 +31,29 @@ void bqRecorderCallback(SLAndroidSimpleBufferQueueItf bq, void *rec) {
 }
 
 void AudioRecorder::processSLCallback(SLAndroidSimpleBufferQueueItf bq) {
-    assert(bq == recBufQueueItf_);
-    sample_buf *dataBuf {nullptr};
-    devShadowQueue_.front(&dataBuf);
-    devShadowQueue_.pop();
-    dataBuf->size_ = dataBuf->cap_;           //device only calls us when it is really full
-    recQueue_->push(dataBuf);
+    try {
+        assert(bq == recBufQueueItf_);
+        sample_buf *dataBuf {nullptr};
+        devShadowQueue_.front(&dataBuf);
+        devShadowQueue_.pop();
+        dataBuf->size_ = dataBuf->cap_;           //device only calls us when it is really full
+        recQueue_->push(dataBuf);
 
-    sample_buf* freeBuf;
-    while (freeQueue_->front(&freeBuf) && devShadowQueue_.push(freeBuf)) {
-        freeQueue_->pop();
-        SLresult result = (*bq)->Enqueue(bq, freeBuf->buf_, freeBuf->cap_);
-        SLASSERT(result);
-    }
+        sample_buf* freeBuf;
+        while (freeQueue_->front(&freeBuf) && devShadowQueue_.push(freeBuf)) {
+            freeQueue_->pop();
+            SLresult result = (*bq)->Enqueue(bq, freeBuf->buf_, freeBuf->cap_);
+            SLASSERT(result);
+        }
 
-    // should leave the device to sleep to save power if no buffers
-    if (devShadowQueue_.size() == 0) {
-        (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
+        // should leave the device to sleep to save power if no buffers
+        if (devShadowQueue_.size() == 0) {
+            (*recItf_)->SetRecordState(recItf_, SL_RECORDSTATE_STOPPED);
+        }
+        callback_(false);
+    } catch (const std::exception& e) {
+        RING_ERR("processSLCallback exception: %s", e.what());
     }
-    callback_(false);
 }
 
 AudioRecorder::AudioRecorder(ring::AudioFormat sampleFormat, SLEngineItf slEngine) :
