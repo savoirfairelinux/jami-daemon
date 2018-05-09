@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavform
 PKGS_FOUND += ffmpeg
 endif
 
-DEPS_ffmpeg = iconv zlib x264 vpx opus speex
+DEPS_ffmpeg = iconv zlib vpx opus speex
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -129,6 +129,7 @@ endif
 
 ifndef HAVE_ANDROID
 FFMPEGCONF += --enable-libx264
+DEPS_ffmpeg += x264
 endif
 
 ifdef HAVE_MACOSX
