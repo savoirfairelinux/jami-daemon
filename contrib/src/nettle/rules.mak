@@ -27,7 +27,7 @@ ifdef HAVE_IOS
 	cd $< && autoreconf
 	cd $< && $(HOSTVARS) CFLAGS="$(CFLAGS) -O3" ./configure $(HOSTCONF)
 else
-	cd $< && $(HOSTVARS) ./configure $(HOSTCONF)
+	cd $< && $(HOSTVARS) ./configure --disable-documentation $(HOSTCONF)
 endif
 	cd $< && $(MAKE) install
 	touch $@
