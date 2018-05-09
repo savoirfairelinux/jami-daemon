@@ -300,42 +300,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
         frame->key_frame = 0;
     }
 
-    AVPacket pkt;
-    memset(&pkt, 0, sizeof(pkt));
-    av_init_packet(&pkt);
-
-    int ret = 0;
-    ret = avcodec_send_frame(encoderCtx_, frame);
-    if (ret < 0)
-        return -1;
-
-    while (1) {
-        ret = avcodec_receive_packet(encoderCtx_, &pkt);
-        if (ret == AVERROR(EAGAIN))
-            break;
-        if (ret < 0)
-            return -1;
-
-        if (pkt.size) {
-            if (pkt.pts != AV_NOPTS_VALUE)
-                pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
-                                       stream_->time_base);
-            if (pkt.dts != AV_NOPTS_VALUE)
-                pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
-                                       stream_->time_base);
-
-            pkt.stream_index = stream_->index;
-
-            // write the compressed frame
-            ret = av_write_frame(outputCtx_, &pkt);
-            if (ret < 0) {
-                RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
-            } else
-                break;
-        }
-    }
-
-    av_packet_unref(&pkt);
+    int ret = encode(frame, stream_->index);
 
     return ret;
 }
@@ -368,7 +333,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
     const auto sample_rate = buffer.getSampleRate();
 
     while (nb_frames > 0) {
-        AVFrame *frame = av_frame_alloc();
+        AVFrame* frame = av_frame_alloc();
         if (!frame)
             return -1;
 
@@ -394,8 +359,8 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
                                            reinterpret_cast<const uint8_t *>(offset_ptr),
                                            buffer_size, 0);
         if (err < 0) {
-            RING_ERR("Couldn't fill audio frame: %s: %d %d", libav_utils::getError(err).c_str(),
-                     frame->nb_samples, buffer_size);
+            RING_ERR() << "Failed to fill audio frame of size" << buffer_size << " with "
+                << frame->nb_samples << " samples: " << libav_utils::getError(err);
             av_frame_free(&frame);
             return -1;
         }
@@ -403,66 +368,35 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         nb_frames -= frame->nb_samples;
         offset_ptr += frame->nb_samples * buffer.channels();
 
-        AVPacket pkt;
-        av_init_packet(&pkt);
-        pkt.data = NULL; // packet data will be allocated by the encoder
-        pkt.size = 0;
-        int ret = 0;
-
-        ret = avcodec_send_frame(encoderCtx_, frame);
-        if (ret < 0)
-            return -1;
-
-        while (1) {
-            ret = avcodec_receive_packet(encoderCtx_, &pkt);
-            if (ret == AVERROR(EAGAIN))
-                break;
-            if (ret < 0)
-                return -1;
-
-            if (pkt.size) {
-                if (pkt.pts != AV_NOPTS_VALUE)
-                    pkt.pts = av_rescale_q(pkt.pts, encoderCtx_->time_base,
-                                           stream_->time_base);
-                if (pkt.dts != AV_NOPTS_VALUE)
-                    pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
-                                           stream_->time_base);
-
-                pkt.stream_index = stream_->index;
-
-                // write the compressed frame
-                ret = av_write_frame(outputCtx_, &pkt);
-                if (ret < 0) {
-                    RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
-                } else
-                    break;
-            }
-        }
-
-        av_packet_unref(&pkt);
+        encode(frame, stream_->index);
         av_frame_free(&frame);
     }
 
     return 0;
 }
 
-int MediaEncoder::flush()
+int
+MediaEncoder::encode(AVFrame* frame, int streamIdx)
 {
-    AVPacket pkt;
-    memset(&pkt, 0, sizeof(pkt));
-    av_init_packet(&pkt);
-
     int ret = 0;
-    ret = avcodec_send_frame(encoderCtx_, nullptr);
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.data = NULL; // packet data will be allocated by the encoder
+    pkt.size = 0;
+    pkt.stream_index = streamIdx;
+
+    ret = avcodec_send_frame(encoderCtx_, frame);
     if (ret < 0)
         return -1;
 
-    while (1) {
+    while (ret >= 0) {
         ret = avcodec_receive_packet(encoderCtx_, &pkt);
         if (ret == AVERROR(EAGAIN))
             break;
-        if (ret < 0)
-            return -1;
+        if (ret < 0) {
+            RING_ERR() << "Failed to encode frame: " << libav_utils::getError(ret);
+            return ret;
+        }
 
         if (pkt.size) {
             if (pkt.pts != AV_NOPTS_VALUE)
@@ -472,19 +406,24 @@ int MediaEncoder::flush()
                 pkt.dts = av_rescale_q(pkt.dts, encoderCtx_->time_base,
                                        stream_->time_base);
 
-            pkt.stream_index = stream_->index;
 
             // write the compressed frame
             ret = av_write_frame(outputCtx_, &pkt);
             if (ret < 0) {
-                RING_ERR("av_write_frame failed: %s", libav_utils::getError(ret).c_str());
+                RING_ERR() << "av_write_frame failed: " << libav_utils::getError(ret);
             } else
                 break;
         }
     }
-    av_packet_unref(&pkt);
 
-    return ret;
+    av_packet_unref(&pkt);
+    return 0;
+}
+
+int
+MediaEncoder::flush()
+{
+    return encode(nullptr, stream_->index);
 }
 
 std::string

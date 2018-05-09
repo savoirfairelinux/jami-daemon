@@ -72,6 +72,10 @@ public:
 #endif // RING_VIDEO
 
     int encode_audio(const AudioBuffer &input);
+
+    // frame should be ready to be sent to the encoder at this point
+    int encode(AVFrame* frame, int streamIdx);
+
     int flush();
     std::string print_sdp();
 
