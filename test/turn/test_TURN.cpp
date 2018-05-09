@@ -19,6 +19,7 @@
 
 #include "test_TURN.h"
 #include "turn_transport.h"
+#include "opendht/sockaddr.h"
 
 #include <sys/socket.h>
 #include <sys/unistd.h>
@@ -99,7 +100,8 @@ test_TURN::testSimpleConnection()
     TCPSocket sock = {param.server.getFamily()};
 
     // Permit myself
-    turn.permitPeer(turn.mappedAddr());
+    auto mapped = static_cast<dht::SockAddr>(turn.mappedAddr());
+    turn.permitPeer(IpAddr { mapped.getMappedIPv4().toString() });
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     sock.connect(turn.peerRelayAddr());
