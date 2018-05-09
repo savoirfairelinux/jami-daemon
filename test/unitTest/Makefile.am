@@ -61,4 +61,10 @@ ut_string_utils_SOURCES = string_utils/testString_utils.cpp
 check_PROGRAMS += ut_video_input
 ut_video_input_SOURCES = media/video/testVideo_input.cpp
 
+#
+# media_encoder
+#
+check_PROGRAMS += ut_media_encoder
+ut_media_encoder_SOURCES = media/test_media_encoder.cpp
+
 TESTS = $(check_PROGRAMS)
