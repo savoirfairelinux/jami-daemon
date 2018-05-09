@@ -30,6 +30,7 @@
 
 #include "noncopyable.h"
 #include "media_buffer.h"
+#include "media_codec.h"
 #include "media_device.h"
 
 #include <map>
@@ -63,7 +64,9 @@ public:
     void setInterruptCallback(int (*cb)(void*), void *opaque);
 
     void setDeviceOptions(const DeviceParams& args);
-    void openOutput(const std::string& filename, const MediaDescription& args);
+    void openLiveOutput(const std::string& filename, const MediaDescription& args);
+    void openFileOutput(const std::string& filename);
+    void addStream(const SystemCodecInfo& codec);
     void startIO();
     void setIOContext(const std::unique_ptr<MediaIOHandle> &ioctx);
 

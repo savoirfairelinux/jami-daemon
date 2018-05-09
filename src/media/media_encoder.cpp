@@ -123,8 +123,8 @@ MediaEncoder::getEncoderName() const
 }
 
 void
-MediaEncoder::openOutput(const std::string& filename,
-                         const ring::MediaDescription& args)
+MediaEncoder::openLiveOutput(const std::string& filename,
+                             const ring::MediaDescription& args)
 {
     setOptions(args);
     AVOutputFormat *oformat = av_guess_format("rtp", filename.c_str(), nullptr);
@@ -144,27 +144,43 @@ MediaEncoder::openOutput(const std::string& filename,
     outputCtx_->filename[sizeof(outputCtx_->filename) - 1] = '\0';
 #endif
 
+    addStream(args.codec->systemCodecInfo);
+}
+
+void
+MediaEncoder::openFileOutput(const std::string& filename)
+{
+    avformat_free_context(outputCtx_);
+    avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
+    // set payload_rate, crf, max_rate
+    // for audio: sample_rate, channels, frame_size
+}
+
+void
+MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo)
+{
     /* find the video encoder */
-    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
+    if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263)
         // For H263 encoding, we force the use of AV_CODEC_ID_H263P (H263-1998)
         // H263-1998 can manage all frame sizes while H263 don't
         // AV_CODEC_ID_H263 decoder will be used for decoding
         outputEncoder_ = avcodec_find_encoder(AV_CODEC_ID_H263P);
     else
-        outputEncoder_ = avcodec_find_encoder((AVCodecID)args.codec->systemCodecInfo.avcodecId);
+        outputEncoder_ = avcodec_find_encoder(static_cast<AVCodecID>(systemCodecInfo.avcodecId));
     if (!outputEncoder_) {
-        RING_ERR("Encoder \"%s\" not found!", args.codec->systemCodecInfo.name.c_str());
+        RING_ERR("Encoder \"%s\" not found!", systemCodecInfo.name.c_str());
         throw MediaEncoderException("No output encoder");
     }
 
-    prepareEncoderContext(args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO);
+    prepareEncoderContext(systemCodecInfo.mediaType == MEDIA_VIDEO);
     auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", NULL, 0)->value);
     auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
     auto crf = atoi(av_dict_get(options_, "crf", NULL, 0)->value);
 
     /* let x264 preset override our encoder settings */
-    if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
-        extractProfileLevelID(args.parameters, encoderCtx_);
+    if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
+        // TODO don't do this
+        extractProfileLevelID(libav_utils::DEFAULT_H264_PROFILE_LEVEL_ID, encoderCtx_);
         forcePresetX264();
         // For H264 :
         // Streaming => VBV (constrained encoding) + CRF (Constant Rate Factor)
@@ -175,7 +191,7 @@ MediaEncoder::openOutput(const std::string& filename,
         av_opt_set(encoderCtx_->priv_data, "crf", av_dict_get(options_, "crf", NULL, 0)->value, 0);
         encoderCtx_->rc_buffer_size = bufSize;
         encoderCtx_->rc_max_rate = maxBitrate;
-    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
         // For VP8 :
         // 1- if quality is set use it
         // bitrate need to be set. The target bitrate becomes the maximum allowed bitrate
@@ -202,14 +218,14 @@ MediaEncoder::openOutput(const std::string& filename,
         } else {
             RING_DBG("Using Max bitrate %d", maxBitrate);
         }
-    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_MPEG4) {
         // For MPEG4 :
         // No CRF avaiable.
         // Use CBR (set bitrate)
         encoderCtx_->rc_buffer_size = maxBitrate;
         encoderCtx_->bit_rate = encoderCtx_->rc_min_rate = encoderCtx_->rc_max_rate =  maxBitrate;
         RING_DBG("Using Max bitrate %d", maxBitrate);
-    } else if (args.codec->systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_H263) {
         encoderCtx_->bit_rate = encoderCtx_->rc_max_rate =  maxBitrate;
         encoderCtx_->rc_buffer_size = maxBitrate;
         RING_DBG("Using Max bitrate %d", maxBitrate);
@@ -231,7 +247,7 @@ MediaEncoder::openOutput(const std::string& filename,
     stream_->codec = encoderCtx_;
 #endif
 #ifdef RING_VIDEO
-    if (args.codec->systemCodecInfo.mediaType == MEDIA_VIDEO) {
+    if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
         const int width = encoderCtx_->width;
         const int height = encoderCtx_->height;
