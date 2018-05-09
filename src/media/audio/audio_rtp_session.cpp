@@ -118,9 +118,9 @@ AudioSender::setup(SocketPair& socketPair)
 
     try {
         /* Encoder setup */
-        RING_DBG("audioEncoder_->openOutput %s", dest_.c_str());
+        RING_DBG("audioEncoder_->openLiveOutput %s", dest_.c_str());
         audioEncoder_->setMuted(muteState_);
-        audioEncoder_->openOutput(dest_, args_);
+        audioEncoder_->openLiveOutput(dest_, args_);
         audioEncoder_->setInitSeqVal(seqVal_);
         audioEncoder_->setIOContext(muxContext_);
         audioEncoder_->startIO();
