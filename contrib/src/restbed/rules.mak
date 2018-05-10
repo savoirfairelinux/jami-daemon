@@ -19,7 +19,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-RESTBED_VERSION := df867a858dddc4cf6ca8642da02720bd65ba239a
+RESTBED_VERSION := 9649e96322a663ccda9c60b5ef12c5626be23547
 RESTBED_URL := https://github.com/corvusoft/restbed/archive/$(RESTBED_VERSION).tar.gz
 
 # Pure dependency of OpenDHT: do not add to PKGS.
@@ -31,7 +31,7 @@ endif
 $(TARBALLS)/restbed-$(RESTBED_VERSION).tar.gz:
 	$(call download,$(RESTBED_URL))
 
-DEPS_restbed = asio kashmir-dependency libressl
+DEPS_restbed = asio libressl
 
 RESTBED_CONF = -DBUILD_TESTS=NO \
 			-DBUILD_EXAMPLES=NO \
@@ -44,8 +44,6 @@ RESTBED_CONF = -DBUILD_TESTS=NO \
 restbed: restbed-$(RESTBED_VERSION).tar.gz .sum-restbed
 	$(UNPACK)
 	$(APPLY) $(SRC)/restbed/strand.patch
-	$(APPLY) $(SRC)/restbed/async_read_until.patch
-	$(APPLY) $(SRC)/restbed/findopenssl.patch
 	$(MOVE)
 
 .restbed: restbed toolchain.cmake
