@@ -18,7 +18,8 @@ libmedia_la_SOURCES = \
 	media_codec.cpp \
 	system_codec_container.cpp \
 	srtp.c \
-	recordable.cpp
+	recordable.cpp \
+	media_filter.cpp
 
 noinst_HEADERS = \
 	rtp_session.h \
@@ -34,7 +35,8 @@ noinst_HEADERS = \
 	system_codec_container.h \
 	srtp.h \
 	recordable.h \
-	decoder_finder.h
+	decoder_finder.h \
+	media_filter.h
 
 libmedia_la_LIBADD = \
 	./audio/libaudio.la
@@ -44,12 +46,12 @@ libmedia_la_libADD = \
 	./video/libvideo.la
 endif
 
-libmedia_la_LDFLAGS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
+libmedia_la_LDFLAGS = @LIBAVCODEC_LIBS@ @LIBAVFORMAT_LIBS@ @LIBAVDEVICE_LIBS@ @LIBAVFILTER_LIBS@ @LIBSWSCALE_LIBS@ @LIBAVUTIL_LIBS@
 
 if HAVE_WIN32
 libmedia_la_LDFLAGS += -lws2_32 -lwsock32 -lshlwapi
 endif
 
-AM_CFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@
+AM_CFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBAVFILTER_CFLAGS@ @LIBSWSCALE_CFLAGS@
 
-AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBSWSCALE_CFLAGS@
+AM_CXXFLAGS=@LIBAVCODEC_CFLAGS@ @LIBAVFORMAT_CFLAGS@ @LIBAVDEVICE_CFLAGS@ @LIBAVFILTER_CFLAGS@ @LIBSWSCALE_CFLAGS@
