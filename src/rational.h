@@ -24,6 +24,10 @@
 #include <cstdlib> // std::abs
 #include <iostream>
 
+extern "C" {
+#include <libavutil/rational.h> // specify conversions for AVRational
+}
+
 namespace ring {
 
 /**
@@ -38,6 +42,10 @@ public:
     rational() {};          // Zero
     rational(I n) : num_(n) {};       // Equal to n/1
     rational(I n, I d) : num_(n), den_(d) {};  // General case (n/d)
+
+    // Define conversions to and from AVRational (equivalent)
+    rational(AVRational r) : num_(r.num), den_(r.den) {};
+    operator AVRational() { return AVRational{num_, den_}; }
 
     // Normal copy constructors and assignment operators
 
