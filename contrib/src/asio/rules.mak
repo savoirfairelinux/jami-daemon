@@ -18,7 +18,7 @@
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-ASIO_VERSION := 631c4f89dafc771fcaf9ee7aa565ab33168459a6
+ASIO_VERSION := b0926b61b057ce563241d609cae5768ed3a4e1b1
 ASIO_URL := https://github.com/hlysunnaram/asio/archive/$(ASIO_VERSION).tar.gz
 
 # Pure dependency of restbed: do not add to PKGS.
@@ -29,7 +29,6 @@ $(TARBALLS)/asio-$(ASIO_VERSION).tar.gz:
 asio: asio-$(ASIO_VERSION).tar.gz
 	$(UNPACK)
 	mv asio-$(ASIO_VERSION)/asio/* asio-$(ASIO_VERSION)/ && rm -rf asio-$(ASIO_VERSION)/asio
-	$(APPLY) $(SRC)/asio/revert_pthread_condattr_setclock.patch
 	$(APPLY) $(SRC)/asio/no_tests_examples.patch
 	$(MOVE)
 
