@@ -67,4 +67,9 @@ ut_video_input_SOURCES = media/video/testVideo_input.cpp
 check_PROGRAMS += ut_media_encoder
 ut_media_encoder_SOURCES = media/test_media_encoder.cpp
 
+# media_filter
+#
+check_PROGRAMS += ut_media_filter
+ut_media_filter_SOURCES = media/test_media_filter.cpp
+
 TESTS = $(check_PROGRAMS)
