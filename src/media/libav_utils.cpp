@@ -141,6 +141,9 @@ init_once()
 #endif
     avdevice_register_all();
     avformat_network_init();
+#if LIBAVFILTER_VERSION_INT < AV_VERSION_INT(7, 13, 100)
+    avfilter_register_all();
+#endif
 
 #if LIBAVCODEC_VERSION_INT < AV_VERSION_INT(58, 9, 100)
     av_lockmgr_register(avcodecManageMutex);
