@@ -398,6 +398,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 
         frame->format = AV_SAMPLE_FMT_S16;
         frame->channel_layout = layout;
+        frame->channels = buffer.channels();
         frame->sample_rate = sample_rate;
 
         frame->pts = sent_samples;
