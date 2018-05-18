@@ -743,9 +743,9 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
                 });
         },
 
-        [this, peer_h, connect_cb](bool found) {
+        [this, peer_h, connect_cb](const std::shared_ptr<RingAccount>& account, bool found) {
             if (!found) {
-                RING_WARN() << pimpl_->account << "[CNX] aborted, no devices for " << peer_h;
+                RING_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);
             }
         });
@@ -775,9 +775,9 @@ DhtPeerConnector::closeConnection(const std::string& peer_id, const DRing::DataT
             pimpl_->ctrl << makeMsg<CtrlMsgType::CANCEL>(dev_h, tid);
         },
 
-        [this, peer_h](bool found) {
+        [peer_h](const std::shared_ptr<RingAccount>& account, bool found) {
             if (!found) {
-                RING_WARN() << pimpl_->account << "[CNX] aborted, no devices for " << peer_h;
+                RING_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
             }
         });
 }

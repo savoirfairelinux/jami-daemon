@@ -352,7 +352,8 @@ class RingAccount : public SIPAccountBase {
         void forEachDevice(const dht::InfoHash& to,
                            std::function<void(const std::shared_ptr<RingAccount>&,
                                               const dht::InfoHash&)> op,
-                           std::function<void(bool)> end = {});
+                           std::function<void(const std::shared_ptr<RingAccount>&,
+                                              bool)> end = {});
 
         /**
          * Inform that a potential peer device have been found.
