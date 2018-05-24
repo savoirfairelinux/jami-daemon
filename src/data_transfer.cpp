@@ -166,7 +166,6 @@ OptimisticMetaOutgoingInfo::updateInfo(const DRing::DataTransferInfo& info) cons
 {
     bool emitCodeChanged = false;
     bool checkOngoing = false;
-    DRing::DataTransferEventCode lastEvent { DRing::DataTransferEventCode::invalid };
     {
         std::lock_guard<std::mutex> lk {infoMutex_};
         if (info_.lastEvent > DRing::DataTransferEventCode::timeout_expired) {
@@ -273,7 +272,7 @@ private:
 SubOutgoingFileTransfer::SubOutgoingFileTransfer(DRing::DataTransferId tid,
                                            const std::string& peerUri,
                                            std::shared_ptr<OptimisticMetaOutgoingInfo> metaInfo)
-    : DataTransfer(tid), peerUri_ {peerUri}, metaInfo_(metaInfo)
+    : DataTransfer(tid), metaInfo_(metaInfo), peerUri_(peerUri)
 {
 
     info_ = metaInfo_->info();
@@ -385,7 +384,7 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
     }
     metaInfo_->updateInfo(info_);
     if (code == DRing::DataTransferEventCode::wait_peer_acceptance) {
-        timeoutThread_ = std::move(std::unique_ptr<std::thread>(new std::thread([this]() {
+        timeoutThread_ = std::unique_ptr<std::thread>(new std::thread([this]() {
             const auto TEN_MIN = 1000 * 60 * 10;
             const auto SLEEP_DURATION = 100;
             for (auto i = 0; i < TEN_MIN / SLEEP_DURATION; ++i) {
@@ -396,7 +395,7 @@ SubOutgoingFileTransfer::emit(DRing::DataTransferEventCode code) const
             }
             RING_WARN() << "FTP#" << this->getId() << ": timeout. Cancel";
             this->closeAndEmit(DRing::DataTransferEventCode::timeout_expired);
-        })));
+        }));
     } else if (timeoutThread_) {
         stopTimeout_ = true;
     }
