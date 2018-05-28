@@ -3150,4 +3150,12 @@ Manager::getVideoManager() const
 }
 #endif
 
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+Manager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
+{
+    if (const auto acc = getAccount(accountID))
+        return acc->getLastMessages(base_timestamp);
+    return {};
+}
+
 } // namespace ring

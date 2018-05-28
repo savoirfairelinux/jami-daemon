@@ -3466,6 +3466,12 @@ RingAccount::pushNotificationReceived(const std::string& from, const std::map<st
     dht_.pushNotificationReceived(data);
 }
 
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+RingAccount::getLastMessages(const uint64_t& base_timestamp)
+{
+    return SIPAccountBase::getLastMessages(base_timestamp);
+}
+
 void
 RingAccount::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
 {
