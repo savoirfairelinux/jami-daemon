@@ -270,6 +270,13 @@ sendAccountTextMessage(const std::string& accountID, const std::string& to, cons
     return ring::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
 
+std::vector<Message>
+getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
+{
+    auto messages = ring::Manager::instance().getLastMessages(accountID, base_timestamp);
+    return {messages.begin(), messages.end()};
+}
+
 int
 getMessageStatus(uint64_t id)
 {
