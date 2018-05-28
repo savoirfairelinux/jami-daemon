@@ -35,6 +35,7 @@
 #include <pjsip/sip_types.h>
 
 #include <array>
+#include <deque>
 #include <vector>
 #include <map>
 #include <memory>
@@ -274,6 +275,10 @@ public:
 
     void connectivityChanged() override {};
 
+    std::deque<std::pair<std::string, std::map<std::string, std::string>>> getLastMessages() const {
+        return lastMessages_;
+    }
+
 public: // overloaded methods
     virtual void flush() override;
 
@@ -413,6 +418,16 @@ protected:
     static uint16_t acquirePort(uint16_t port);
     uint16_t getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
+
+    /**
+     * The deamon can be launched without any client (or with a non ready client)
+     * Like call and file transfer, a client should be able to retrieve current messages.
+     * To avoid to explode the size in memory, this container should be limited.
+     * We don't want to see monsters in memory.
+     */
+    std::mutex mutexlastMessages_;
+    const uint32_t MAX_WAITING_MESSAGES_SIZE = 1000;
+    std::deque<std::pair<std::string, std::map<std::string, std::string>>> lastMessages_;
 
 private:
     NON_COPYABLE(SIPAccountBase);

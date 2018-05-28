@@ -490,7 +490,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             });
             return false;
         });
-    }, [wCall](const std::shared_ptr<RingAccount>& sthis, bool ok){
+    }, [=](bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
                 RING_WARN("[call:%s] no devices found", call->getCallId().c_str());
@@ -1956,18 +1956,20 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
         buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
             if (auto shared_this = weak_this.lock()) {
                 /* ::forEachDevice call will update buddy info accordingly. */
-                shared_this->forEachDevice(h, {}, [h] (const std::shared_ptr<RingAccount>& shared_this, bool /* ok */) {
-                    std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
-                    auto buddy_info_it = shared_this->trackedBuddies_.find(h);
-                    if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
+                shared_this->forEachDevice(h, {}, [h, weak_this] (bool /* ok */) {
+                    if (auto shared_this = weak_this.lock()) {
+                        std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
+                        auto buddy_info_it = shared_this->trackedBuddies_.find(h);
+                        if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
 
-                    auto& buddy_info = buddy_info_it->second;
-                    if (buddy_info.updateInfo) {
-                        auto cb = buddy_info.updateInfo;
-                        Manager::instance().scheduleTask(
-                            std::move(cb),
-                            std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
-                        );
+                        auto& buddy_info = buddy_info_it->second;
+                        if (buddy_info.updateInfo) {
+                            auto cb = buddy_info.updateInfo;
+                            Manager::instance().scheduleTask(
+                                std::move(cb),
+                                std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
+                            );
+                        }
                     }
                 });
             }
@@ -2090,10 +2092,8 @@ RingAccount::doRegister_()
         if (not config.proxy_server.empty())
             RING_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
-        if (not deviceKey_.empty()) {
-            RING_WARN("[Account %s] using push notifications", getAccountID().c_str());
+        if (not deviceKey_.empty())
             dht_.setPushNotificationToken(deviceKey_);
-        }
 
         dht_.run((in_port_t)dhtPortUsed_, config);
 
@@ -2247,8 +2247,12 @@ RingAccount::doRegister_()
                                                                         const dht::InfoHash& peer_account)
                 {
                     auto now = clock::to_time_t(clock::now());
-                    std::map<std::string, std::string> payloads = {{"text/plain",
-                                                                    utf8_make_valid(v.msg)}};
+                    std::string datatype = utf8_make_valid(v.datatype);
+                    if (datatype.empty()) {
+                        datatype = "text/plain";
+                    }
+                    std::map<std::string, std::string> payloads = {{datatype,
+                                                                   utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
                     RING_DBG("Sending message confirmation %" PRIx64, v.id);
                     shared->dht_.putEncrypted(inboxDeviceKey,
@@ -3233,7 +3237,7 @@ void
 RingAccount::forEachDevice(const dht::InfoHash& to,
                            std::function<void(const std::shared_ptr<RingAccount>&,
                                               const dht::InfoHash&)> op,
-                           std::function<void(const std::shared_ptr<RingAccount>&, bool)> end)
+                           std::function<void(bool)> end)
 {
     auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
     auto treatedDevices = std::make_shared<std::set<dht::InfoHash>>();
@@ -3261,7 +3265,7 @@ RingAccount::forEachDevice(const dht::InfoHash& to,
         }
         RING_DBG("[Account %s] found %lu devices for %s",
                  getAccountID().c_str(), treatedDevices->size(), to.to_c_str());
-        if (end) end(shared, not treatedDevices->empty());
+        if (end) end(not treatedDevices->empty());
     });
 }
 
@@ -3340,7 +3344,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
         });
         confirm->listenTokens.emplace(h, std::move(list_token));
         shared->dht_.putEncrypted(h, dev,
-            dht::ImMessage(token, std::string(payloads.begin()->second), now),
+            dht::ImMessage(token, std::string(payloads.begin()->first), std::string(payloads.begin()->second), now),
             [wshared,token,confirm,h](bool ok) {
                 if (auto this_ = wshared.lock()) {
                     RING_DBG("[Account %s] [message %" PRIx64 "] put encrypted %s", this_->getAccountID().c_str(), token, ok ? "ok" : "failed");
@@ -3357,10 +3361,6 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
             });
 
         RING_DBG("[Account %s] [message %" PRIx64 "] sending message for device %s", shared->getAccountID().c_str(), token, dev.toString().c_str());
-    }, [token](const std::shared_ptr<RingAccount>& shared, bool ok) {
-        if (not ok) {
-            shared->messageEngine_.onMessageSent(token, false);
-        }
     });
 
     // Timeout cleanup
@@ -3464,6 +3464,12 @@ RingAccount::pushNotificationReceived(const std::string& from, const std::map<st
         }
     }
     dht_.pushNotificationReceived(data);
+}
+
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+RingAccount::getLastMessages()
+{
+    return shared->getLastMessages();
 }
 
 void
