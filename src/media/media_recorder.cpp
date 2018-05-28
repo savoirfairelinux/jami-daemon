@@ -80,7 +80,16 @@ MediaRecorder::~MediaRecorder()
 std::string
 MediaRecorder::getFilename() const
 {
-    return dir_ + filename_ + ".ogg";
+    if (audioOnly_)
+        return dir_ + filename_ + ".ogg";
+    else
+        return dir_ + filename_ + ".mkv";
+}
+
+void
+MediaRecorder::audioOnly(bool audioOnly)
+{
+    audioOnly_ = audioOnly;
 }
 
 void
@@ -142,18 +151,24 @@ MediaRecorder::stopRecording()
 int
 MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
 {
-    // video not yet implemented
-    if (isVideo)
-        return 0;
+    if (audioOnly_ && isVideo) {
+        RING_ERR() << "Trying to add video stream to audio only recording";
+        return -1;
+    }
 
     // overwrite stream name for simplicity's sake
     std::string streamName;
-    ms.name = (fromPeer ? "a:peer" : "a:local");
-    ++nbReceivedAudioStreams_;
+    if (isVideo) {
+        ms.name = (fromPeer ? "v:peer" : "v:local");
+        ++nbReceivedVideoStreams_;
+    } else {
+        ms.name = (fromPeer ? "a:peer" : "a:local");
+        ++nbReceivedAudioStreams_;
+    }
     streamParams_[isVideo][fromPeer] = ms;
 
     // wait until all streams are ready before writing to the file
-    if (nbExpectedStreams_ != nbReceivedAudioStreams_)
+    if (nbExpectedStreams_ != nbReceivedAudioStreams_ + nbReceivedVideoStreams_)
         return 0;
     else
         return initRecord();
@@ -165,16 +180,61 @@ MediaRecorder::initRecord()
     std::lock_guard<std::mutex> lk(mutex_);
 
     // use peer parameters if possible, else fall back on local parameters
+    int width = streamParams_[true][true].width;
+    if (width == 0) width = streamParams_[true][false].width;
+    int height = streamParams_[true][true].height;
+    if (height == 0) height = streamParams_[true][false].height;
     int sampleRate = streamParams_[false][true].sampleRate;
     if (sampleRate == 0) sampleRate = streamParams_[false][false].sampleRate;
     int nbChannels = streamParams_[false][true].nbChannels;
     if (nbChannels == 0) nbChannels = streamParams_[false][false].nbChannels;
 
     std::map<std::string, std::string> options;
+    options["width"] = std::to_string(width);
+    options["height"] = std::to_string(height);
     options["sample_rate"] = std::to_string(sampleRate);
     options["channels"] = std::to_string(nbChannels);
 
     encoder_->openFileOutput(getFilename(), options);
+
+    if (nbReceivedVideoStreams_ > 0) {
+        std::vector<MediaStream> params;
+        std::string vFilter;
+        std::stringstream ss;
+        switch (nbReceivedVideoStreams_) {
+        case 1:
+            if (streamParams_[true].count(true) > 0)
+                params.emplace_back(streamParams_[true][true]);
+            else
+                params.emplace_back(streamParams_[true][false]);
+            videoFilter_.reset(); // no filter needed
+            break;
+        case 2:
+            params.emplace_back(streamParams_[true][true]);
+            params.emplace_back(streamParams_[true][false]);
+            ss << "[v:local] scale=" << width / 4 << ":" << height / 4 << " [v:scaled]; "
+                << "[v:peer] [v:scaled] overlay=main_w-overlay_w-10:main_h-overlay_h-10";
+            vFilter = ss.str();
+            videoFilter_.reset(new MediaFilter);
+            if (videoFilter_->initialize(vFilter, params) < 0) {
+                RING_ERR() << "Failed to initialize video filter";
+                return -1;
+            }
+            break;
+        default:
+            RING_ERR() << "Recording more than 2 video streams is not supported";
+            return AVERROR(ENOTSUP);
+        }
+
+        auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
+            getSystemCodecContainer()->searchCodecByName("VP8", ring::MEDIA_VIDEO));
+        videoIdx_ = encoder_->addStream(*videoCodec.get());
+        if (videoIdx_ < 0) {
+            RING_ERR() << "Failed to add video stream to encoder";
+            return -1;
+        }
+    } else
+        videoFilter_.reset();
 
     if (nbReceivedAudioStreams_ > 0) {
         std::vector<MediaStream> params;
@@ -212,7 +272,8 @@ MediaRecorder::initRecord()
     } else
         audioFilter_.reset();
 
-    isReady_ = (nbReceivedAudioStreams_ > 0 && audioIdx_ >= 0); // has audio and valid stream index
+    isReady_ = (nbReceivedAudioStreams_ > 0 && audioIdx_ >= 0) // has audio and valid stream index
+        && (audioOnly_ || (nbReceivedVideoStreams_ > 0 && videoIdx_ >= 0)); // has video and valid stream index
     if (isReady_) {
         std::unique_ptr<MediaIOHandle> ioHandle;
         try {
@@ -241,8 +302,8 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     if (!isRecording_ || !isReady_)
         return 0;
 
-    int streamIdx = audioIdx_;
-    auto filter = audioFilter_.get();
+    int streamIdx = (isVideo ? videoIdx_ : audioIdx_);
+    auto filter = (isVideo ? videoFilter_.get() : audioFilter_.get());
     if (streamIdx < 0 || !filter) {
         RING_ERR() << "Specified stream is invalid: "
             << (fromPeer ? "remote " : "local ") << (isVideo ? "video" : "audio");
@@ -250,6 +311,8 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     }
 
     std::string inputName;
+    if (isVideo && nbReceivedVideoStreams_ == 2)
+        inputName = (fromPeer ? "v:peer" : "v:local");
     if (!isVideo && nbReceivedAudioStreams_ == 2)
         inputName = (fromPeer ? "a:peer" : "a:local");
 
@@ -274,6 +337,9 @@ void
 MediaRecorder::emptyFilterGraph()
 {
     AVFrame* output;
+    if (videoIdx_ >= 0)
+        while ((output = videoFilter_->readOutput()))
+            sendToEncoder(output, videoIdx_);
     if (audioIdx_ >= 0)
         while ((output = audioFilter_->readOutput()))
             sendToEncoder(output, audioIdx_);

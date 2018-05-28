@@ -700,8 +700,6 @@ void
 MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder> rec)
 {
     // recording will start once we can send an AVPacket to the recorder
-    if (encoders_[0]->codec_type != AVMEDIA_TYPE_AUDIO)
-        return;
     recordingStarted_ = false;
     recorder_ = rec;
     if (auto r = recorder_.lock()) {
