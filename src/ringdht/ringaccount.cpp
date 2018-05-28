@@ -2137,6 +2137,12 @@ RingAccount::doRegister_()
         if (not bootstrap.empty())
             dht_.bootstrap(bootstrap);
 
+        while (waitingPushNotifications_.size() > 0) {
+            RING_DBG("[Account %s] inject stored push notification", getAccountID().c_str());
+            dht_.pushNotificationReceived(waitingPushNotifications_.front());
+            waitingPushNotifications_.pop();
+        }
+
         // Put device annoucement
         if (announce_) {
             auto h = dht::InfoHash(ringAccountId_);
@@ -3451,11 +3457,19 @@ void RingAccount::setPushNotificationToken(const std::string& token)
 /**
  * To be called by clients with relevent data when a push notification is received.
  */
-void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+void
+RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
-    RING_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    RING_DBG("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    {
+        std::lock_guard<std::mutex> lck(pushNotificationMutex_);
+        if (registrationState_ != RegistrationState::REGISTERED) {
+            RING_DBG("[Account %s] account not ready, save push notification", getAccountID().c_str());
+            waitingPushNotifications_.emplace(data);
+            return;
+        }
+    }
     dht_.pushNotificationReceived(data);
 }
-
 
 } // namespace ring

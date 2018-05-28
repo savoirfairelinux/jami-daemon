@@ -46,6 +46,7 @@
 #include <chrono>
 #include <list>
 #include <future>
+#include <string>
 
 #if HAVE_RINGNS
 #include "namedirectory.h"
@@ -655,6 +656,12 @@ class RingAccount : public SIPAccountBase {
         void registerDhtAddress(IceTransport&);
 
         std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+
+        /**
+         * Store notifications during initialization of the daemon to avoid race conditions
+         */
+        std::mutex pushNotificationMutex_;
+        std::queue<std::map<std::string, std::string>> waitingPushNotifications_;
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
