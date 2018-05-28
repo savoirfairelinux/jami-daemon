@@ -540,6 +540,11 @@
           </arg>
        </method>
 
+       <method name="getLastMessages" tp:name-for-bindings="getLastMessages">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="{sa{ss}}" name="messages" direction="out"/>
+        </method>
+
        <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
           <arg type="t" name="id" direction="in"/>
           <arg type="i" name="status" direction="out">

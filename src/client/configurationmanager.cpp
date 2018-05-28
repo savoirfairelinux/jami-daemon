@@ -270,6 +270,12 @@ sendAccountTextMessage(const std::string& accountID, const std::string& to, cons
     return ring::Manager::instance().sendTextMessage(accountID, to, payloads);
 }
 
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+getLastMessages(const std::string& accountID)
+{
+    return ring::Manager::instance().getLastMessages(accountID);
+}
+
 int
 getMessageStatus(uint64_t id)
 {

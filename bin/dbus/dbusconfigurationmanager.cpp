@@ -154,6 +154,12 @@ DBusConfigurationManager::sendTextMessage(const std::string& accountID, const st
 }
 
 auto
+DBusConfigurationManager::getLastMessages(const std::string& accountID) -> decltype(DRing::getLastMessages(accountID))
+{
+    return DRing::getLastMessages(accountID);
+}
+
+auto
 DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing::getMessageStatus(id))
 {
     return DRing::getMessageStatus(id);

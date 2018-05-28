@@ -25,6 +25,7 @@
 #ifndef __RING_DBUSCONFIGURATIONMANAGER_H__
 #define __RING_DBUSCONFIGURATIONMANAGER_H__
 
+#include <deque>
 #include <vector>
 #include <map>
 #include <string>
@@ -80,6 +81,7 @@ class DBusConfigurationManager :
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
         uint64_t sendTextMessage(const std::string& accoundID, const std::string& to, const std::map<std::string, std::string>& payloads);
+        std::deque<std::pair<std::string, std::map<std::string, std::string>>> getLastMessages(const std::string& accountID);
         int getMessageStatus(const uint64_t& id);
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
