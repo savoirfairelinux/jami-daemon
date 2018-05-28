@@ -385,7 +385,16 @@ SIPAccountBase::onTextMessage(const std::string& from,
                               const std::map<std::string, std::string>& payloads)
 {
     RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
+    std::lock_guard<std::mutex> lck(mutexLastMessages_);
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+    auto newPayloads = payloads;
+    newPayloads["timestamp"] = std::to_string(std::time(nullptr));
+    lastMessages_.emplace_back(std::make_pair(from, newPayloads));
+    if (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
+        while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
+            lastMessages_.pop_front();
+        }
+    }
 }
 
 void
