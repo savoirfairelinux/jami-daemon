@@ -33,6 +33,7 @@ struct MediaStream {
     int format {-1};
     bool isVideo {false};
     rational<int> timeBase;
+    int64_t firstTimestamp {0};
     int width {0};
     int height {0};
     rational<int> aspectRatio;
@@ -65,10 +66,16 @@ struct MediaStream {
     {}
 
     MediaStream(std::string name, AVStream* st)
+        : MediaStream(name, st, 0)
+    {
+    }
+
+    MediaStream(std::string name, AVStream* st, int64_t firstTimestamp)
         : name(name)
     {
         format = st->codecpar->format;
         timeBase = st->time_base;
+        this->firstTimestamp = firstTimestamp;
         switch (st->codecpar->codec_type) {
         case AVMEDIA_TYPE_VIDEO:
             isVideo = true;
