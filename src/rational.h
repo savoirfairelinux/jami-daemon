@@ -70,7 +70,7 @@ public:
     rational operator- (const rational& r) {
         return {num_*r.den_ - r.num_*den_, den_*r.den_};
     }
-    rational operator* (const rational& r) {
+    rational operator* (const rational& r) const {
         return {num_*r.num_, den_*r.den_};
     }
     rational operator/ (const rational& r) {
@@ -117,7 +117,12 @@ public:
         bool inv = (den_ > 0) != (r.den_ > 0);
         return inv != (num_ * r.den_ < den_ * r.num_);
     }
+    bool operator> (const rational& r) const {
+        bool inv = (den_ > 0) != (r.den_ > 0);
+        return inv != (num_ * r.den_ > den_ * r.num_);
+    }
     bool operator== (const rational& r) const { return num_ * r.den_ == den_ * r.num_; }
+    bool operator!= (const rational& r) const { return num_ * r.den_ != den_ * r.num_; }
 
     // Comparison with integers
     bool operator< (I i) const { return num_ < i * den_; }
