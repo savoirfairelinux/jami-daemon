@@ -35,6 +35,7 @@
 #include "preferences.h"
 #include "audio/audiolayer.h"
 
+#include <deque>
 #include <string>
 #include <vector>
 #include <map>
@@ -892,6 +893,8 @@ class Manager {
         AccountFactory accountFactory;
 
         std::unique_ptr<DataTransferFacade> dataTransfers;
+
+        std::deque<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
 
 private:
         Manager();

@@ -153,6 +153,21 @@ DBusConfigurationManager::sendTextMessage(const std::string& accountID, const st
     return DRing::sendAccountTextMessage(accountID, to, payloads);
 }
 
+std::vector<RingDBusMessage>
+DBusConfigurationManager::getLastMessages(const std::string& accountID, const uint64_t& base_timestamp)
+{
+    auto messages = DRing::getLastMessages(accountID, base_timestamp);
+    std::vector<RingDBusMessage> result;
+    for (const auto& message : messages) {
+        RingDBusMessage m;
+        m._1 = message.from;
+        m._2 = message.payloads;
+        m._3 = message.received;
+        result.emplace_back(m);
+    }
+    return result;
+}
+
 auto
 DBusConfigurationManager::getMessageStatus(const uint64_t& id) -> decltype(DRing::getMessageStatus(id))
 {
