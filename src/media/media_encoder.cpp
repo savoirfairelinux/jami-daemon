@@ -447,7 +447,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     if (auto rec = recorder_.lock()) {
         bool isVideo = encoderCtx->codec_type == AVMEDIA_TYPE_VIDEO;
         if (!recordingStarted_) {
-            auto ms = MediaStream("", outputCtx_->streams[streamIdx]);
+            auto ms = MediaStream("", outputCtx_->streams[streamIdx], frame->pts);
             if (rec->addStream(isVideo, false, ms) >= 0)
                 recordingStarted_ = true;
             else
@@ -704,8 +704,6 @@ void
 MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     // recording will start once we can send an AVPacket to the recorder
-    if (encoders_[0]->codec_type != AVMEDIA_TYPE_AUDIO)
-        return;
     recordingStarted_ = false;
     recorder_ = rec;
     if (auto r = recorder_.lock()) {
