@@ -53,6 +53,7 @@ Recordable::toggleRecording()
     if (!recording_ || !recorder_) {
         recorder_.reset();
         recorder_ = std::make_shared<MediaRecorder>();
+        recorder_->audioOnly(isAudioOnly_);
         recorder_->setRecordingPath(Manager::instance().audioPreference.getRecordPath());
     }
     recording_ = recorder_->toggleRecording();
