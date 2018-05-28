@@ -205,7 +205,8 @@ AudioSender::getLastSeqValue()
 void
 AudioSender::startRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    audioEncoder_->startRecorder(rec);
+    if (audioEncoder_)
+        audioEncoder_->startRecorder(rec);
 }
 
 class AudioReceiveThread
@@ -383,7 +384,8 @@ AudioReceiveThread::startLoop()
 void
 AudioReceiveThread::startRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    audioDecoder_->startRecorder(rec);
+    if (audioDecoder_)
+        audioDecoder_->startRecorder(rec);
 }
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
