@@ -3457,5 +3457,9 @@ void RingAccount::pushNotificationReceived(const std::string& from, const std::m
     dht_.pushNotificationReceived(data);
 }
 
-
+std::vector<DRing::Message>
+RingAccount::getLastMessages(const uint64_t& base_timestamp)
+{
+    return SIPAccountBase::getLastMessages(base_timestamp);
+}
 } // namespace ring

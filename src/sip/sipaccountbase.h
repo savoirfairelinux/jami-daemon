@@ -18,8 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef SIPACCOUNTBASE_H
-#define SIPACCOUNTBASE_H
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -35,9 +34,11 @@
 #include <pjsip/sip_types.h>
 
 #include <array>
-#include <vector>
+#include <deque>
 #include <map>
 #include <memory>
+#include <mutex>
+#include <vector>
 
 #ifdef _WIN32
 typedef uint16_t in_port_t;
@@ -274,6 +275,19 @@ public:
 
     void connectivityChanged() override {};
 
+    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) {
+        std::lock_guard<std::mutex> lck(mutexLastMessages_);
+        auto it = lastMessages_.begin();
+        size_t num = lastMessages_.size();
+        while (it != lastMessages_.end() and it->received <= base_timestamp) {
+            num--;
+            ++it;
+        }
+        if (num == 0)
+            return {};
+        return {it, lastMessages_.end()};
+    }
+
 public: // overloaded methods
     virtual void flush() override;
 
@@ -414,11 +428,19 @@ protected:
     uint16_t getRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
     uint16_t acquireRandomEvenPort(const std::pair<uint16_t, uint16_t>& range) const;
 
+    /**
+     * The deamon can be launched without any client (or with a non ready client)
+     * Like call and file transfer, a client should be able to retrieve current messages.
+     * To avoid to explode the size in memory, this container should be limited.
+     * We don't want to see monsters in memory.
+     */
+    std::mutex mutexLastMessages_;
+    static constexpr size_t MAX_WAITING_MESSAGES_SIZE = 1000;
+    std::deque<DRing::Message> lastMessages_;
+
 private:
     NON_COPYABLE(SIPAccountBase);
 
 };
 
 } // namespace ring
-
-#endif
