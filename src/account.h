@@ -27,6 +27,7 @@
 #include "config.h"
 #endif
 
+#include "configurationmanager_interface.h"
 #include "noncopyable.h"
 #include "config/serializable.h"
 #include "registration_states.h"
@@ -34,7 +35,7 @@
 #include "ip_utils.h"
 #include "media_codec.h"
 #include "logger.h"
-#include "compiler_intrinsics.h" // UNUSED
+#include "compiler_intrinsics.h" // include the "UNUSED" macro
 
 #include <functional>
 #include <string>
@@ -154,6 +155,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual uint64_t sendTextMessage(const std::string& to UNUSED,
                                      const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
+
+        virtual std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) {
+            return {};
+        }
 
         /**
          * Return the status corresponding to the token.

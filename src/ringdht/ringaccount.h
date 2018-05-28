@@ -378,6 +378,12 @@ class RingAccount : public SIPAccountBase {
 
         std::string getUserUri() const override;
 
+        /**
+         * Get last messages (should be used to retrieve messages when launching the client)
+         * @param base_timestamp
+         */
+        std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp);
+
     private:
         NON_COPYABLE(RingAccount);
 

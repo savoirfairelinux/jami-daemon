@@ -42,6 +42,7 @@
 #include "fileutils.h"
 #include "sip_utils.h"
 
+#include <ctime>
 #include <type_traits>
 
 namespace ring {
@@ -386,6 +387,15 @@ SIPAccountBase::onTextMessage(const std::string& from,
 {
     RING_DBG("Text message received from %s, %zu part(s)",  from.c_str(), payloads.size());
     emitSignal<DRing::ConfigurationSignal::IncomingAccountMessage>(accountID_, from, payloads);
+    DRing::Message message;
+    message.from = from;
+    message.payloads = payloads;
+    message.received = std::time(nullptr);
+    std::lock_guard<std::mutex> lck(mutexLastMessages_);
+    lastMessages_.emplace_back(message);
+    while (lastMessages_.size() > MAX_WAITING_MESSAGES_SIZE) {
+        lastMessages_.pop_front();
+    }
 }
 
 void
