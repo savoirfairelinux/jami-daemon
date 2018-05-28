@@ -893,6 +893,8 @@ class Manager {
 
         std::unique_ptr<DataTransferFacade> dataTransfers;
 
+        std::vector<DRing::Message> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+
 private:
         Manager();
         ~Manager();
