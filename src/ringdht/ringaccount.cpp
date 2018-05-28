@@ -3451,11 +3451,34 @@ void RingAccount::setPushNotificationToken(const std::string& token)
 /**
  * To be called by clients with relevent data when a push notification is received.
  */
-void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
+void
+RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {
-    RING_WARN("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    RING_DBG("[Account %s] pushNotificationReceived: %s", getAccountID().c_str(), from.c_str());
+    {
+        std::lock_guard<std::mutex> lck(pushNotificationMutex_);
+        if (registrationState_ != RegistrationState::REGISTERED) {
+            RING_DBG("[Account %s] account not ready, save push notification", getAccountID().c_str());
+            waitingPushNotifications_.emplace_back(data);
+            return;
+        }
+    }
     dht_.pushNotificationReceived(data);
 }
 
+void
+RingAccount::setRegistrationState(RegistrationState state, unsigned details_code, const std::string& details_str)
+{
+    // NOTE: the lock guard exists until registrationState_ is changed
+    std::lock_guard<std::mutex> lck(pushNotificationMutex_);
+    if (state == RegistrationState::REGISTERED && registrationState_ != RegistrationState::REGISTERED) {
+        for (const auto& notification : waitingPushNotifications_) {
+            RING_DBG("[Account %s] inject stored push notification", getAccountID().c_str());
+            dht_.pushNotificationReceived(notification);
+        }
+        waitingPushNotifications_.clear();
+    }
+    SIPAccountBase::setRegistrationState(state, details_code, details_str);
+}
 
 } // namespace ring
