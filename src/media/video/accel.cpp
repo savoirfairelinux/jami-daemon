@@ -69,9 +69,11 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
     auto container = std::unique_ptr<VideoFrame>(new VideoFrame());
     auto output = container->pointer();
 
+    auto pts = input->pts;
     // most hardware accelerations output NV12, so skip extra conversions
     output->format = AV_PIX_FMT_NV12;
     int ret = av_hwframe_transfer_data(output, input, 0);
+    output->pts = pts;
 
     // move output into input so the caller receives extracted image data
     // but we have to delete input's data first

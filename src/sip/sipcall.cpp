@@ -1154,9 +1154,14 @@ SIPCall::toggleRecording()
 {
     const bool startRecording = Call::toggleRecording();
     if (startRecording) {
-        avformatrtp_->startRecorder(recorder_);
+        std::stringstream ss;
+        ss << "Ring call between " << getSIPAccount().getUserUri() << " and "
+            << (!peerRegistredName_.empty() ? peerRegistredName_ : getPeerNumber());
+        recorder_->setMetadata(ss.str(), ""); // use default description
+        if (avformatrtp_)
+            avformatrtp_->startRecorder(recorder_);
 #ifdef RING_VIDEO
-        if (!isAudioOnly_)
+        if (!isAudioOnly_ && videortp_)
             videortp_->startRecorder(recorder_);
 #endif
     }
