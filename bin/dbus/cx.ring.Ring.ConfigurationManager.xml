@@ -540,6 +540,13 @@
           </arg>
        </method>
 
+       <method name="getLastMessages" tp:name-for-bindings="getLastMessages">
+           <arg type="s" name="accountID" direction="in"/>
+           <arg type="t" name="base_timestamp" direction="in"/>
+           <arg type="a(sa{ss})" name="messages" direction="out"/>
+           <annotation name="org.qtproject.QtDBus.QtTypeName.Out0" value="messages"/>
+        </method>
+
        <method name="getMessageStatus" tp:name-for-bindings="getMessageStatus">
           <arg type="t" name="id" direction="in"/>
           <arg type="i" name="status" direction="out">
