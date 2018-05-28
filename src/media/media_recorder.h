@@ -44,6 +44,8 @@ class MediaRecorder {
 
         std::string getFilename() const;
 
+        void audioOnly(bool audioOnly);
+
         void setRecordingPath(const std::string& dir);
 
         // adjust nb of streams before recording
@@ -66,11 +68,15 @@ class MediaRecorder {
         NON_COPYABLE(MediaRecorder);
 
         int initRecord();
+        // sets up filter and returns parameters that should be sent to encoder's openFileOutput
+        MediaStream setupVideoOutput();
+        MediaStream setupAudioOutput();
         void emptyFilterGraph();
         int sendToEncoder(AVFrame* frame, int streamIdx);
         int flush();
 
         std::unique_ptr<MediaEncoder> encoder_;
+        std::unique_ptr<MediaFilter> videoFilter_;
         std::unique_ptr<MediaFilter> audioFilter_;
 
         std::mutex mutex_; // protect against concurrent file writes
@@ -83,10 +89,13 @@ class MediaRecorder {
         std::string filename_;
 
         unsigned nbExpectedStreams_ = 0;
+        unsigned nbReceivedVideoStreams_ = 0;
         unsigned nbReceivedAudioStreams_ = 0;
+        int videoIdx_ = -1;
         int audioIdx_ = -1;
         bool isRecording_ = false;
         bool isReady_ = false;
+        bool audioOnly_ = false;
 };
 
 }; // namespace ring
