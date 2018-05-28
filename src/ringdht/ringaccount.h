@@ -41,6 +41,7 @@
 
 #include <pjsip/sip_types.h>
 
+#include <deque>
 #include <vector>
 #include <map>
 #include <chrono>
@@ -376,6 +377,11 @@ class RingAccount : public SIPAccountBase {
          * To be called by clients with relevent data when a push notification is received.
          */
         void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
+
+        /**
+         * Get last messages (should be used to retrieve messages when launching the client)
+         */
+        std::deque<std::pair<std::string, std::map<std::string, std::string>>> getLastMessages();
 
     private:
         NON_COPYABLE(RingAccount);

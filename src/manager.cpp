@@ -1463,9 +1463,6 @@ Manager::joinParticipant(const std::string& callId1, const std::string& callId2)
     pimpl_->switchCall(conf->getConfID());
     conf->setState(Conference::ACTIVE_ATTACHED);
 
-    // set recording sampling rate
-    conf->setRecordingAudioFormat(pimpl_->ringbufferpool_->getInternalAudioFormat());
-
     pimpl_->conferenceMap_.insert(std::make_pair(conf->getConfID(), conf));
     emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
     return true;
@@ -1507,7 +1504,6 @@ Manager::createConfFromParticipantList(const std::vector< std::string > &partici
     if (successCounter >= 2) {
         pimpl_->conferenceMap_[conf->getConfID()] = conf;
         emitSignal<DRing::CallSignal::ConferenceCreated>(conf->getConfID());
-        conf->setRecordingAudioFormat(pimpl_->ringbufferpool_->getInternalAudioFormat());
     }
 }
 
@@ -3153,5 +3149,13 @@ Manager::getVideoManager() const
     return *pimpl_->videoManager_;
 }
 #endif
+
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+Manager::getLastMessages(const std::string& accountID)
+{
+    if (const auto acc = getAccount(accountID))
+        return acc->getLastMessages();
+    return {};
+}
 
 } // namespace ring

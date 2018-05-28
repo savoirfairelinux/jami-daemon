@@ -74,6 +74,7 @@ std::vector<std::string> getAccountList();
 void sendRegister(const std::string& accountID, bool enable);
 void registerAllAccounts(void);
 uint64_t sendAccountTextMessage(const std::string& accountID, const std::string& to, const std::map<std::string, std::string>& message);
+std::deque<std::pair<std::string, std::map<std::string, std::string>>> getLastMessages(const std::string& accountID);
 int getMessageStatus(uint64_t id);
 
 bool lookupName(const std::string& account, const std::string& nameserver, const std::string& name);

@@ -36,6 +36,7 @@
 #include "logger.h"
 #include "compiler_intrinsics.h" // UNUSED
 
+#include <deque>
 #include <functional>
 #include <string>
 #include <vector>
@@ -154,6 +155,10 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
          */
         virtual uint64_t sendTextMessage(const std::string& to UNUSED,
                                      const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
+
+        virtual std::deque<std::pair<std::string, std::map<std::string, std::string>>> getLastMessages() {
+            return {};
+        }
 
         /**
          * Return the status corresponding to the token.

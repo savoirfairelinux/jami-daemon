@@ -2248,7 +2248,7 @@ RingAccount::doRegister_()
                 {
                     auto now = clock::to_time_t(clock::now());
                     std::map<std::string, std::string> payloads = {{"text/plain",
-                                                                    utf8_make_valid(v.msg)}};
+                                                utf8_make_valid(v.msg)}};
                     shared->onTextMessage(peer_account.toString(), payloads);
                     RING_DBG("Sending message confirmation %" PRIx64, v.id);
                     shared->dht_.putEncrypted(inboxDeviceKey,
@@ -3464,6 +3464,12 @@ RingAccount::pushNotificationReceived(const std::string& from, const std::map<st
         }
     }
     dht_.pushNotificationReceived(data);
+}
+
+std::deque<std::pair<std::string, std::map<std::string, std::string>>>
+RingAccount::getLastMessages()
+{
+    return SIPAccountBase::getLastMessages();
 }
 
 void
