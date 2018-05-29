@@ -121,6 +121,41 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
     return 0;
 }
 
+MediaStream
+MediaFilter::getOutputParams()
+{
+    MediaStream output;
+    if (!output_ || !initialized_) {
+        fail("Filter not initialized", -1);
+        return output;
+    }
+
+    switch (av_buffersink_get_type(output_)) {
+    case AVMEDIA_TYPE_VIDEO:
+        output.name = "videoOutput";
+        output.format = av_buffersink_get_format(output_);
+        output.isVideo = true;
+        output.timeBase = av_buffersink_get_time_base(output_);
+        output.width = av_buffersink_get_w(output_);
+        output.height = av_buffersink_get_h(output_);
+        output.aspectRatio = av_buffersink_get_sample_aspect_ratio(output_);
+        output.frameRate = av_buffersink_get_frame_rate(output_);
+        break;
+    case AVMEDIA_TYPE_AUDIO:
+        output.name = "audioOutput";
+        output.format = av_buffersink_get_format(output_);
+        output.isVideo = false;
+        output.timeBase = av_buffersink_get_time_base(output_);
+        output.sampleRate = av_buffersink_get_sample_rate(output_);
+        output.nbChannels = av_buffersink_get_channels(output_);
+        break;
+    default:
+        output.format = -1;
+        break;
+    }
+    return output;
+}
+
 int
 MediaFilter::feedInput(AVFrame* frame)
 {
