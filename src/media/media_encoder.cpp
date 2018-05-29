@@ -171,7 +171,7 @@ MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, 
     options.insert({"frame_size", ring::to_string(static_cast<unsigned>(0.02*sampleRate))});
     options.insert({"width", "320"});
     options.insert({"height", "240"});
-    options.insert({"framerate", "30"});
+    options.insert({"framerate", "30.00"});
     for (const auto& it : options)
         av_dict_set(&options_, it.first.c_str(), it.second.c_str(), 0);
     // for a file output, addStream is done by the caller, as there may be multiple streams
@@ -269,6 +269,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 #else
     stream->codec = encoderCtx;
 #endif
+    // framerate is not copied from encoderCtx to stream
+    stream->avg_frame_rate = encoderCtx->framerate;
 #ifdef RING_VIDEO
     if (systemCodecInfo.mediaType == MEDIA_VIDEO) {
         // allocate buffers for both scaled (pre-encoder) and encoded frames
@@ -554,9 +556,10 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
         // time base = 1/FPS
         if (device_.framerate) {
             av_dict_set(&options_, "width", ring::to_string(device_.width).c_str(), 0);
-            av_reduce(&encoderCtx->time_base.den, &encoderCtx->time_base.num,
+            av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
                       device_.framerate.numerator(), device_.framerate.denominator(),
                       (1U << 16) - 1);
+            encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
         } else {
             // get from options_, else default to 30 fps
             auto v = av_dict_get(options_, "framerate", nullptr, 0);
@@ -565,9 +568,10 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
                 av_parse_ratio_quiet(&framerate, v->value, 120);
             if (framerate.den == 0)
                 framerate.den = 1;
-            av_reduce(&encoderCtx->time_base.den, &encoderCtx->time_base.num,
+            av_reduce(&encoderCtx->framerate.num, &encoderCtx->framerate.den,
                       framerate.num, framerate.den,
                       (1U << 16) - 1);
+            encoderCtx->time_base = av_inv_q(encoderCtx->framerate);
         }
 
         // emit one intra frame every gop_size frames
