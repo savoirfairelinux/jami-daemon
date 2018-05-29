@@ -124,7 +124,7 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
-        auto isAutoQualityEnabledStr = codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED];
+        auto isAutoQualityEnabledStr = (std::string)TRUE_STR;//codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED];
         if ((not rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(TRUE_STR) == 0))
             rtcpCheckerThread_.start();
         else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
