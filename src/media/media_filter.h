@@ -79,6 +79,13 @@ class MediaFilter {
         int initialize(const std::string& filterDesc, std::vector<MediaStream> msps);
 
         /**
+         * Returns a MediaStream struct describing the frames that will be output.
+         *
+         * When called in an invalid state, the returned format will be invalid (less than 0).
+         */
+        MediaStream getOutputParams();
+
+        /**
          * Give the filter graph an input frame. Caller is responsible for freeing the frame.
          *
          * NOTE This is a wrapper for feedInput(AVFrame*, std::string)
@@ -97,8 +104,10 @@ class MediaFilter {
          * Pull a frame from the filter graph. Caller owns the frame reference.
          *
          * Returns AVERROR(EAGAIN) if filter graph requires more input.
+         *
+         * NOTE Frame reference belongs to the caller
          */
-        AVFrame* readOutput(); // frame reference belongs to caller
+        AVFrame* readOutput();
 
     private:
         NON_COPYABLE(MediaFilter);

@@ -41,11 +41,15 @@ private:
     void testSimpleVideoFilter();
     void testSimpleAudioFilter();
     void testComplexVideoFilter();
+    void testSimpleFilterParams();
+    void testComplexFilterParams();
 
     CPPUNIT_TEST_SUITE(MediaFilterTest);
     CPPUNIT_TEST(testSimpleVideoFilter);
     CPPUNIT_TEST(testSimpleAudioFilter);
     CPPUNIT_TEST(testComplexVideoFilter);
+    CPPUNIT_TEST(testSimpleFilterParams);
+    CPPUNIT_TEST(testComplexFilterParams);
     CPPUNIT_TEST_SUITE_END();
 
     std::unique_ptr<MediaFilter> filter_;
@@ -233,6 +237,64 @@ MediaFilterTest::testComplexVideoFilter()
 
     // check if the filter worked
     CPPUNIT_ASSERT(frame_->width == width1 && frame_->height == height1);
+}
+
+void
+MediaFilterTest::testSimpleFilterParams()
+{
+    std::string filterSpec = "scale=200x100";
+
+    // constants
+    const constexpr int width = 320;
+    const constexpr int height = 240;
+    const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
+
+    // construct the filter parameters
+    rational<int> one = rational<int>(1);
+    auto params = MediaStream("vf", format, one, width, height, one, one);
+
+    // returned params should be invalid
+    CPPUNIT_ASSERT(filter_->getOutputParams().format < 0);
+
+    // prepare filter
+    CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
+
+    // output params should now be valid
+    auto ms = filter_->getOutputParams();
+    CPPUNIT_ASSERT(ms.format >= 0 && ms.width > 0 && ms.height > 0);
+}
+
+void
+MediaFilterTest::testComplexFilterParams()
+{
+    std::string filterSpec = "[main] [top] overlay=main_w-overlay_w-10:main_h-overlay_h-10";
+    std::string main = "main";
+    std::string top = "top";
+
+    // constants
+    const constexpr int width1 = 320;
+    const constexpr int height1 = 240;
+    const constexpr int width2 = 30;
+    const constexpr int height2 = 30;
+    const constexpr AVPixelFormat format = AV_PIX_FMT_YUV420P;
+
+    // construct the filter parameters
+    rational<int> one = rational<int>(1);
+    auto params1 = MediaStream("main", format, one, width1, height1, one, one);
+    auto params2 = MediaStream("top", format, one, width2, height2, one, one);
+
+    // returned params should be invalid
+    CPPUNIT_ASSERT(filter_->getOutputParams().format < 0);
+
+    // prepare filter
+    auto vec = std::vector<MediaStream>();
+    vec.push_back(params2); // order does not matter, as long as names match
+    vec.push_back(params1);
+    CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
+
+    // output params should now be valid
+    auto ms = filter_->getOutputParams();
+    CPPUNIT_ASSERT(ms.format >= 0 && ms.width == width1 && ms.height == height1);
 }
 
 }} // namespace ring::test
