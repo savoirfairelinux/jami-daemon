@@ -140,7 +140,8 @@ FFMPEGCONF += \
 	--enable-videotoolbox \
 	--enable-hwaccel=h263_videotoolbox \
 	--enable-hwaccel=h264_videotoolbox \
-	--enable-hwaccel=mpeg4_videotoolbox
+	--enable-hwaccel=mpeg4_videotoolbox \
+	--disable-securetransport
 endif
 
 ifdef HAVE_IOS
