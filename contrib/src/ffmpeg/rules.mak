@@ -22,7 +22,8 @@ FFMPEGCONF += \
 	--enable-protocols \
 	--enable-bsfs \
 	--enable-filters \
-	--disable-programs
+	--disable-programs \
+	--disable-postproc
 
 #enable muxers/demuxers
 FFMPEGCONF += \
