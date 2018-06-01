@@ -1,0 +1,31 @@
+From 8dbb701398cf26a6a2f4686f871c5032dcbf1158 Mon Sep 17 00:00:00 2001
+From: Rahul Chaudhry <rahulchaudhry@chromium.org>
+Date: Thu, 12 Apr 2018 16:27:31 -0700
+Subject: [PATCH] swresample/arm: avoid conditional branch to PLT in THUMB-2.
+
+When compiling for THUMB-2, the conditional branch to PLT results in a
+R_ARM_THM_JUMP19 relocation. Some linkers don't support this relocation
+in THUMB-2 (ld.gold), while others can end up truncating the relocation
+to fit (ld.bfd).
+
+Adding an "it eq" before the branch converts it into an unconditional
+branch, which uses R_ARM_THM_JUMP24 relocation that has a range of 16MB.
+---
+ libswresample/arm/audio_convert_neon.S | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git libswresample/arm/audio_convert_neon.S libswresample/arm/audio_convert_neon.S
+index 1f88316ddec838dfe791b08cbe72533207994741..bc933fb4bd00071702f553cc0f3e74797c33ab12 100644
+--- libswresample/arm/audio_convert_neon.S
++++ libswresample/arm/audio_convert_neon.S
+@@ -134,6 +134,7 @@ function swri_oldapi_conv_fltp_to_s16_nch_neon, export=1
+         itt             lt
+         ldrlt           r1,  [r1]
+         blt             X(swri_oldapi_conv_flt_to_s16_neon)
++        it              eq
+         beq             X(swri_oldapi_conv_fltp_to_s16_2ch_neon)
+ 
+         push            {r4-r8, lr}
+-- 
+2.13.5
+

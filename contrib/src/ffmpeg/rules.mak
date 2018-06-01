@@ -202,6 +202,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
+	$(APPLY) $(SRC)/ffmpeg/0001-swresample-arm-avoid-conditional-branch-to-PLT-in-TH.patch
 ifdef HAVE_ANDROID
 ifeq ($(ARCH),arm)
 	$(APPLY) $(SRC)/ffmpeg/android_file_offset.patch
