@@ -1,4 +1,4 @@
-FFMPEG_HASH := 18516d3e695980525bd9758dc7b8a8e36cd3f09e
+FFMPEG_HASH := 5ee203076fa1b1b5da32f525f2b6df3bd5e93b09
 FFMPEG_URL := https://git.ffmpeg.org/gitweb/ffmpeg.git/snapshot/$(FFMPEG_HASH).tar.gz
 
 PKGS+=ffmpeg
@@ -202,14 +202,6 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
 	$(UPDATE_AUTOCONFIG)
-ifdef HAVE_ANDROID
-ifeq ($(ARCH),arm)
-	$(APPLY) $(SRC)/ffmpeg/android_file_offset.patch
-endif
-ifeq ($(ARCH),i386)
-	$(APPLY) $(SRC)/ffmpeg/android_file_offset.patch
-endif
-endif
 	$(MOVE)
 
 .ffmpeg: ffmpeg .sum-ffmpeg
