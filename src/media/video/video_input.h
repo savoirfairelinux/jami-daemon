@@ -88,6 +88,8 @@ public:
     void releaseFrame(void *frame);
 #endif
 
+    void startRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
+
 private:
     NON_COPYABLE(VideoInput);
 
