@@ -50,7 +50,7 @@ Recordable::toggleRecording()
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
     if (!recorder_) {
-        RING_WARN("couldn't toggle recording, non existent recorder");
+        RING_ERR("couldn't toggle recording, non existent recorder");
         return false;
     }
 
@@ -68,13 +68,13 @@ Recordable::startRecording(const std::string& path)
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
     if (!recorder_) {
-        RING_WARN("couldn't start recording, non existent recorder");
+        RING_ERR("couldn't start recording, non existent recorder");
         return false;
     }
 
     if (!recording_) {
         if (path.empty()) {
-            RING_WARN("couldn't start recording, path is empty");
+            RING_ERR("couldn't start recording, path is empty");
             return false;
         }
 
