@@ -98,14 +98,18 @@ void VideoRtpSession::startSender()
                     if (newParams.valid() &&
                         newParams.wait_for(NEWPARAMS_TIMEOUT) == std::future_status::ready)
                         localVideoParams_ = newParams.get();
-                    else
+                    else {
                         RING_ERR("No valid new video parameters.");
+                        return;
+                    }
                 } catch (const std::exception& e) {
                     RING_ERR("Exception during retrieving video parameters: %s",
                              e.what());
+                    return;
                 }
             } else {
                 RING_WARN("Can't lock video input");
+                return;
             }
         }
 
@@ -124,10 +128,10 @@ void VideoRtpSession::startSender()
             send_.enabled = false;
         }
         auto codecVideo = std::static_pointer_cast<ring::AccountVideoCodecInfo>(send_.codec);
-        auto isAutoQualityEnabledStr = codecVideo->getCodecSpecifications()[DRing::Account::ConfProperties::CodecInfo::AUTO_QUALITY_ENABLED];
-        if ((not rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(TRUE_STR) == 0))
+        auto autoQuality = codecVideo->isAutoQualityEnabled;
+        if (autoQuality and not rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.start();
-        else if ((rtcpCheckerThread_.isRunning()) && (isAutoQualityEnabledStr.compare(FALSE_STR) == 0))
+        else if (not autoQuality and rtcpCheckerThread_.isRunning())
             rtcpCheckerThread_.join();
     }
 }
