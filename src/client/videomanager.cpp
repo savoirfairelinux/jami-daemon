@@ -22,6 +22,8 @@
 
 #include "videomanager_interface.h"
 #include "videomanager.h"
+#include "localrecorder.h"
+#include "localrecordermanager.h"
 #include "libav_utils.h"
 #include "video/video_input.h"
 #include "video/video_device_monitor.h"
@@ -124,6 +126,43 @@ stopCamera()
     if (switchInput(""))
         ring::Manager::instance().getVideoManager().started = false;
     ring::Manager::instance().getVideoManager().videoPreview.reset();
+}
+
+uint64_t
+startLocalRecorder(bool audioOnly, std::string filename)
+{
+    if (!audioOnly && !ring::Manager::instance().getVideoManager().started) {
+        RING_WARN("Attempt to start non-audio-only local recorder but camera is not active");
+        return 0;
+    }
+
+    std::unique_ptr<ring::LocalRecorder> rec;
+    if (audioOnly) {
+        // TODO audio only recording not implemented yet
+        RING_WARN("Audio only local recorder is not implemented yet.");
+        return 0;
+    } else {
+        std::shared_ptr<ring::video::VideoInput> input =
+            std::static_pointer_cast<ring::video::VideoInput>(ring::getVideoCamera());
+        rec.reset(new ring::LocalRecorder(input));
+    }
+
+    auto id = ring::LocalRecorderManager::instance().insertRecorder(std::move(rec));
+    rec->startRecording(filename);
+    return id;
+}
+
+void
+stopLocalRecorder(uint64_t id)
+{
+    ring::LocalRecorder *rec = ring::LocalRecorderManager::instance().getRecorderById(id);
+    if (!rec) {
+        RING_WARN("Attempt to stop non existing local recorder.");
+        return;
+    }
+
+    rec->stopRecording();
+    ring::LocalRecorderManager::instance().removeRecorderById(id);
 }
 
 bool
