@@ -75,6 +75,9 @@ bool switchInput(const std::string& resource);
 bool switchToCamera();
 void registerSinkTarget(const std::string& sinkId, const SinkTarget& target);
 
+std::string startLocalRecorder(const bool& audioOnly, const std::string& filepath);
+void stopLocalRecorder(const std::string& filepath);
+
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
 void addVideoDevice(const std::string &node, const std::vector<std::map<std::string, std::string>>* devInfo=nullptr);
 void removeVideoDevice(const std::string &node);
