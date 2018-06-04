@@ -47,6 +47,24 @@
             </arg>
         </method>
 
+        <method name="startLocalRecorder" tp:name-for-bindings="startLocalRecorder">
+            <tp:docstring> Starts a local recorder. Video and/or audio are recorded from preferred devices.</tp:docstring>
+            <arg type="b" name="audioOnly" direction="in">
+            </arg>
+            <arg type="s" name="filepath" direction="in">
+            <tp:docstring> Base file path for local recording. This is not the final path as the file extension will be added (final path can be obtained as return value of this method).</tp:docstring>
+            </arg>
+            <arg type="s" name="finalPath" direction="out">
+            <tp:docstring> Output path of newly started local recording. This file path also serves as recording identifier for stopLocalRecorder.</tp:docstring>
+            </arg>
+        </method>
+
+        <method name="stopLocalRecorder" tp:name-for-bindings="stopLocalRecorder">
+            <arg type="s" name="filepath" direction="in">
+            <tp:docstring> Identifier for local recorder to be stopped (obtained as return value of startLocalRecorder).</tp:docstring>
+            </arg>
+        </method>
+
         <method name="startCamera" tp:name-for-bindings="startCamera">
             <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
         </method>
