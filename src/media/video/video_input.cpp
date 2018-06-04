@@ -587,4 +587,11 @@ VideoInput::foundDecOpts(const DeviceParams& params)
     }
 }
 
+void
+VideoInput::initRecorder(const std::shared_ptr<ring::MediaRecorder>& rec)
+{
+    if (decoder_)
+        decoder_->startRecorder(rec);
+}
+
 }} // namespace ring::video
