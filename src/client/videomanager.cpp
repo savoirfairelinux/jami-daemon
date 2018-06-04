@@ -126,6 +126,68 @@ stopCamera()
     ring::Manager::instance().getVideoManager().videoPreview.reset();
 }
 
+int
+startLocalRecorder(bool audioOnly)
+{
+    if (!audioOnly && !ring::Manager::instance().getVideoManager().started) {
+        RING_WARN("Attempt to start non-audio-only local recorder but camera is not active");
+        return;
+    }
+
+    LocalRecorder *rec;
+    if (audioOnly) {
+        // TODO audio only recording not implemented yet
+        RING_WARN("Audio only local recorder is not implemented yet.");
+        return;
+    } else {
+        // TODO create new local recorder and insert it to the manager in an atomic
+        // way to avoid memory leaks in case of failure
+        rec = new LocalRecorder(ring::getVideoCamera());
+    }
+
+    int id = ring::LocalRecorderManager::instance().insertLocalRecorder(rec);
+    rec->startRecording();
+    return id;
+}
+
+void
+stopLocalRecorder(int id)
+{
+    LocalRecorder *rec = ring::LocalRecorderManager::instance().getRecorderWithId(id);
+    if (!rec) {
+        RING_WARN("Attempt to stop non existing local recorder.");
+        return;
+    }
+
+    rec->stopRecording();
+    ring::LocalRecorderManager::instance().removeRecorderWithId(id);
+}
+
+void
+setLocalRecorderFilename(int id, const std::string& filename)
+{
+    LocalRecorder *rec = ring::LocalRecorderManager::instance().getRecorderWithId(id);
+    if (!rec) {
+        RING_WARN("Attempt to set filename for non existing local recorder.");
+        return;
+    }
+
+    // FIXME initRecFilename is NOP at the moment, so this method doesn't do anything.
+    rec->initRecFilename(filename);
+}
+
+std::string
+getLocalRecorderFilename(int id)
+{
+    LocalRecorder *rec = ring::LocalRecorderManager::instance().getRecorderWithId(id);
+    if (!rec) {
+        RING_WARN("Attempt to get filename for non existing local recorder.");
+        return;
+    }
+
+    return rec->getFilename();
+}
+
 bool
 switchInput(const std::string& resource)
 {
