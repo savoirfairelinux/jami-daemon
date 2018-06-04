@@ -149,7 +149,11 @@ libring_la_SOURCES = \
 		data_transfer.h \
 		ftp_server.cpp \
 		ftp_server.h \
-		generic_io.h
+		generic_io.h \
+		localrecorder.h \
+		localrecorder.cpp \
+		localrecordermanager.h \
+		localrecordermanager.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
