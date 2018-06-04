@@ -605,7 +605,7 @@ VideoInput::foundDecOpts(const DeviceParams& params)
 }
 
 void
-VideoInput::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+VideoInput::initRecorder(const std::shared_ptr<MediaRecorder>& rec)
 {
     rec->incrementStreams(1);
     recorder_ = rec;
