@@ -47,6 +47,30 @@
             </arg>
         </method>
 
+        <method name="startLocalRecorder" tp:name-for-bindings="startLocalRecorder">
+            <arg type="b" name="audioOnly" direction="out">
+            </arg>
+        </method>
+
+        <method name="stopLocalRecorder" tp:name-for-bindings="stopLocalRecorder">
+            <arg type="l" name="id" direction="in">
+            </arg>
+        </method>
+
+        <method name="setLocalRecorderFilename" tp:name-for-bindings="setLocalRecorderFilename">
+            <arg type="l" name="id" direction="in">
+            </arg>
+            <arg type="s" name="filename" direction="in">
+            </arg>
+        </method>
+
+        <method name="getLocalRecorderFilename" tp:name-for-bindings="getLocalRecorderFilename">
+            <arg type="l" name="id" direction="in">
+            </arg>
+            <arg type="s" name="filename" direction="out">
+            </arg>
+        </method>
+
         <method name="startCamera" tp:name-for-bindings="startCamera">
             <tp:docstring> Starts the video camera, which renders the active v4l2 device's video to shared memory. Useful for testing/debugging camera settings</tp:docstring>
         </method>

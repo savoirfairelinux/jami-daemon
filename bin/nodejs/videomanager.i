@@ -36,6 +36,10 @@ public:
     virtual void stopCapture() {}
     virtual void decodingStarted(const std::string& id, const std::string& shm_path, int w, int h, bool is_mixer) {}
     virtual void decodingStopped(const std::string& id, const std::string& shm_path, bool is_mixer) {}
+    virtual size_t startLocalRecorder(bool audioOnly) {}
+    virtual void stopLocalRecorder(size_t id) {}
+    virtual void setLocalRecorderFilename(size_t id, const std::string filename) {}
+    virtual std::string getLocalRecorderFilename(size_t id) {}
 };
 %}
 

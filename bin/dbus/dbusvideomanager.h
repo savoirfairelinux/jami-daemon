@@ -62,6 +62,10 @@ class DBusVideoManager :
         bool hasCameraStarted();
         bool getDecodingAccelerated();
         void setDecodingAccelerated(const bool& state);
+        size_t startLocalRecorder(bool audioOnly);
+        void stopLocalRecorder(size_t id);
+        void setLocalRecorderFilename(size_t id, const std::string& filename);
+        std::string getLocalRecorderFilename(size_t id);
 };
 
 #endif // __RING_DBUSVIDEOMANAGER_H__
