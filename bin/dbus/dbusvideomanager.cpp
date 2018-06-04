@@ -96,3 +96,15 @@ DBusVideoManager::setDecodingAccelerated(const bool& state)
 {
     DRing::setDecodingAccelerated(state);
 }
+
+uint64_t
+DBusVideoManager::startLocalRecorder(bool audioOnly, std::string filename)
+{
+    return DRing::startLocalRecorder(audioOnly);
+}
+
+void
+DBusVideoManager::stopLocalRecorder(uint64_t id)
+{
+    DRing::stopLocalRecorder(id);
+}
