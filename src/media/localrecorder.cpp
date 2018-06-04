@@ -1,0 +1,80 @@
+/*
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *
+ *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include "localrecorder.h"
+#include "audio/ringbufferpool.h"
+#include "audio/ringbuffer.h"
+#include "media_stream.h"
+#include "manager.h"
+#include "logger.h"
+
+namespace ring {
+
+LocalRecorder::LocalRecorder(std::shared_ptr<ring::video::VideoInput> input) {
+    if (!input) {
+        throw std::invalid_argument("can't create local recorder, passed VideoInput pointer is NULL");
+    }
+
+    videoInput_ = input;
+}
+
+void
+LocalRecorder::setPath(const std::string& path)
+{
+    // TODO race condition + check isRecording_
+    if (!path.empty())
+        path_ = path;
+}
+
+bool
+LocalRecorder::startRecording()
+{
+    if (path_.empty()) {
+        RING_WARN("could not start recording: path not set");
+        return false;
+    }
+
+    const bool startRecording = Recordable::startRecording(path_);
+    if (startRecording && recorder_) {
+        // audio recording
+        auto audioBuffer = Manager::instance().getRingBufferPool().getRingBuffer(RingBufferPool::DEFAULT_ID);
+        recorder_->addStream(false, false, new MediaStream(std::string("main-audio"), audioBuffer->getFormat())); // TODO leak
+
+#ifdef RING_VIDEO
+        // video recording
+        if (!isAudioOnly_) {
+            auto videoInputShpnt = videoInput_.lock();
+            videoInputShpnt->initRecorder(recorder_);
+        }
+#endif
+    } else {
+        RING_WARN("could not start recording");
+    }
+
+    return startRecording;
+}
+
+void
+LocalRecorder::stopRecording()
+{
+    Recordable::stopRecording();
+}
+
+} // namespace ring
