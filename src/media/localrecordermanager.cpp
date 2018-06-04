@@ -1,0 +1,64 @@
+/*
+ *  Copyright (C) 2018 Savoir-faire Linux Inc.
+ *
+ *  Author: Hugo Lefeuvre <hugo.lefeuvre@savoirfairelinux.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 3 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
+ */
+
+#include "localrecordermanager.h"
+
+namespace ring {
+
+LocalRecorderManager&
+LocalRecorderManager::instance()
+{
+    static LocalRecorderManager instance;
+    return instance;
+}
+
+void
+LocalRecorderManager::removeRecorderByPath(std::string path)
+{
+    std::lock_guard<std::mutex> lock(recorderMapMutex_);
+    recorderMap_.erase(path);
+}
+
+void
+LocalRecorderManager::insertRecorder(std::string path, std::unique_ptr<LocalRecorder> rec)
+{
+    if (!rec) {
+        throw std::invalid_argument("can't insert NULL recorder pointer into local recorder manager");
+    }
+
+    std::lock_guard<std::mutex> lock(recorderMapMutex_);
+    auto ret = recorderMap_.insert(std::make_pair(path, std::move(rec)));
+
+    if (!ret.second) {
+        throw std::invalid_argument("can't insert: passed path is already associated with a recorder");
+    }
+}
+
+LocalRecorder*
+LocalRecorderManager::getRecorderByPath(std::string path)
+{
+    auto rec = recorderMap_.find(path);
+    if (rec == recorderMap_.end())
+        return nullptr;
+    else
+        return rec->second.get();
+}
+
+} // namespace ring
