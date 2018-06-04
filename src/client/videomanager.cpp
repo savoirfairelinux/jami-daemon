@@ -22,6 +22,8 @@
 
 #include "videomanager_interface.h"
 #include "videomanager.h"
+#include "localrecorder.h"
+#include "localrecordermanager.h"
 #include "libav_utils.h"
 #include "video/video_input.h"
 #include "video/video_device_monitor.h"
@@ -114,6 +116,44 @@ stopCamera()
     if (switchInput(""))
         ring::Manager::instance().getVideoManager().started = false;
     ring::Manager::instance().getVideoManager().videoPreview.reset();
+}
+
+std::string
+startLocalRecorder(const bool& audioOnly, const std::string& filepath)
+{
+    if (!audioOnly && !ring::Manager::instance().getVideoManager().started) {
+        RING_WARN("Can't start local video recorder: camera is not started");
+        return "";
+    }
+
+    std::unique_ptr<ring::LocalRecorder> rec;
+    if (!audioOnly) {
+        std::shared_ptr<ring::video::VideoInput> input =
+            std::static_pointer_cast<ring::video::VideoInput>(ring::getVideoCamera());
+        rec.reset(new ring::LocalRecorder(input));
+    }
+
+    rec->setPath(filepath);
+    auto path = rec->getPath();
+
+    ring::LocalRecorderManager::instance().insertRecorder(path, std::move(rec));
+    // TODO error handling
+    ring::LocalRecorderManager::instance().getRecorderByPath(path)->startRecording();
+
+    return path;
+}
+
+void
+stopLocalRecorder(const std::string& filepath)
+{
+    ring::LocalRecorder *rec = ring::LocalRecorderManager::instance().getRecorderByPath(filepath);
+    if (!rec) {
+        RING_WARN("Couldn't stop non existing local recorder.");
+        return;
+    }
+
+    rec->stopRecording();
+    ring::LocalRecorderManager::instance().removeRecorderByPath(filepath);
 }
 
 bool
