@@ -116,7 +116,7 @@ MediaRecorder::setPath(const std::string& path)
     if (!path.empty()) {
         path_ = path;
     }
-    RING_DBG() << "Recording will be saved as '" << path_ << "'";
+    RING_DBG() << "Recording will be saved as '" << getPath() << "'";
 }
 
 void
