@@ -58,6 +58,7 @@ using random_device = dht::crypto::random_device;
 #include "audio/alsa/alsalayer.h"
 #endif
 
+#include "media/localrecordermanager.h"
 #include "audio/sound/tonelist.h"
 #include "audio/sound/dtmf.h"
 #include "audio/ringbufferpool.h"
@@ -952,7 +953,8 @@ Manager::answerCall(const std::string& call_id)
 void
 Manager::checkAudio()
 {
-    if (getCallList().empty()) {
+    // FIXME dirty, the manager should not need to be aware of local recorders
+    if (getCallList().empty() && not ring::LocalRecorderManager::instance().hasRunningRecorders()) {
         std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
         if (pimpl_->audiodriver_)
             pimpl_->audiodriver_->stopStream();
@@ -1170,11 +1172,6 @@ Manager::refuseCall(const std::string& id)
         return false;
 
     stopTone();
-
-    if (getCallList().size() <= 1) {
-        std::lock_guard<std::mutex> lock(pimpl_->audioLayerMutex_);
-        pimpl_->audiodriver_->stopStream();
-    }
 
     call->refuse();
 

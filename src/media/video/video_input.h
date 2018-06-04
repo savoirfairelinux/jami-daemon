@@ -89,7 +89,7 @@ public:
     void releaseFrame(void *frame);
 #endif
 
-    void initRecorder(std::shared_ptr<MediaRecorder>& rec);
+    void initRecorder(const std::shared_ptr<MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoInput);
