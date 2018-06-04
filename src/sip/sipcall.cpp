@@ -84,10 +84,7 @@ const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 static void
 dtmfSend(SIPCall &call, char code, const std::string &dtmf)
 {
-    if (dtmf == SIPAccount::OVERRTP_STR) {
-        RING_WARN("[call:%s] DTMF over RTP not supported yet", call.getCallId().c_str());
-        return;
-    } else if (dtmf != SIPAccount::SIPINFO_STR) {
+    if (dtmf != SIPAccount::SIPINFO_STR) {
         RING_WARN("[call:%s] Unknown DTMF type %s, defaulting to %s instead",
                   call.getCallId().c_str(), dtmf.c_str(), SIPAccount::SIPINFO_STR);
     } // else : dtmf == SIPINFO
