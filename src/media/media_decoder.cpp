@@ -515,7 +515,7 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
 }
 
 void
-MediaDecoder::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+MediaDecoder::startRecorder(const std::shared_ptr<MediaRecorder>& rec)
 {
     // recording will start once we can send an AVPacket to the recorder
     recordingStarted_ = false;
