@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%YAMLCPP_VERSION%.tar.gz %cd%
 ) else (
-    wget %YAMLCPP_URL%
+    %WGET_CMD% %YAMLCPP_URL%
 )
 
 7z -y x %YAMLCPP_VERSION%.tar.gz && 7z -y x %YAMLCPP_VERSION%.tar -o%BUILD%
@@ -17,6 +17,7 @@ rename %BUILD%\yaml-cpp-%YAMLCPP_VERSION% yaml-cpp
 
 cd %BUILD%\yaml-cpp
 
-git apply --reject --whitespace=fix %SRC%\yaml-cpp\yaml-cpp-uwp.patch
+mkdir msvc && cd msvc
+cmake .. -G "Visual Studio 15 2017 Win64"
 
 cd %SRC%

@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%JSONCPP_VERSION%.tar.gz %cd%
 ) else (
-    wget %JSONCPP_URL%
+    %WGET_CMD% %JSONCPP_URL%
 )
 
 7z -y x %JSONCPP_VERSION%.tar.gz && 7z -y x %JSONCPP_VERSION%.tar -o%BUILD%
@@ -17,6 +17,6 @@ rename %BUILD%\jsoncpp-%JSONCPP_VERSION% jsoncpp
 
 cd %BUILD%\jsoncpp
 
-git apply --reject --whitespace=fix %SRC%\jsoncpp\jsoncpp-uwp.patch
+%APPLY_CMD% %SRC%\jsoncpp\jsoncpp-vs2017.patch
 
 cd %SRC%
