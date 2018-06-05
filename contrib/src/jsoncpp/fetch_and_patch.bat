@@ -17,6 +17,6 @@ rename %BUILD%\jsoncpp-%JSONCPP_VERSION% jsoncpp
 
 cd %BUILD%\jsoncpp
 
-git apply --reject --whitespace=fix %SRC%\jsoncpp\jsoncpp-uwp.patch
+git apply --reject --whitespace=fix %SRC%\jsoncpp\jsoncpp-vs2017.patch
 
 cd %SRC%
