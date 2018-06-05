@@ -160,6 +160,12 @@ MediaEncoder::openFileOutput(const std::string& filename, std::map<std::string, 
 {
     avformat_free_context(outputCtx_);
     avformat_alloc_output_context2(&outputCtx_, nullptr, nullptr, filename.c_str());
+
+    if (!options["title"].empty())
+        av_dict_set(&outputCtx_->metadata, "title", options["title"].c_str(), 0);
+    if (!options["description"].empty())
+        av_dict_set(&outputCtx_->metadata, "description", options["description"].c_str(), 0);
+
     auto bitrate = SystemCodecInfo::DEFAULT_MAX_BITRATE;
     auto quality = SystemCodecInfo::DEFAULT_CODEC_QUALITY;
     // ensure all options retrieved later on are in options_ (insert does nothing if key exists)
