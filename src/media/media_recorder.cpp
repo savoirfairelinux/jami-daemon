@@ -312,7 +312,7 @@ MediaRecorder::setupVideoOutput()
     case 2: // overlay local video over peer video
         videoFilter_.reset(new MediaFilter);
         if (videoFilter_->initialize(buildVideoFilter(),
-                (std::vector<MediaStream>){peer, local}) < 0) {
+                std::vector<MediaStream>{peer, local}) < 0) {
             RING_ERR() << "Failed to initialize video filter";
             encoderStream.format = -1; // invalidate stream
         } else {
@@ -382,7 +382,7 @@ MediaRecorder::setupAudioOutput()
         // resample to common audio format, so any player can play the file
         aFilter << "[a:1] [a:2] amix, aresample=osr=48000:ocl=stereo:osf=s16";
         if (audioFilter_->initialize(aFilter.str(),
-                (std::vector<MediaStream>){peer, local}) < 0) {
+                std::vector<MediaStream>{peer, local}) < 0) {
             RING_ERR() << "Failed to initialize audio filter";
             encoderStream.format = -1; // invalidate stream
         } else {
