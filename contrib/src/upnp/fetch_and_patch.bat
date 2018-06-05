@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\release-%UPNP_VERSION%.tar.gz %cd%
 ) else (
-    wget %UPNP_URL%
+    %WGET_CMD% %UPNP_URL%
 )
 
 7z -y x release-%UPNP_VERSION%.tar.gz && 7z -y x release-%UPNP_VERSION%.tar -o%BUILD%
@@ -17,6 +17,7 @@ rename %BUILD%\pupnp-release-%UPNP_VERSION% libupnp
 
 cd %BUILD%\libupnp
 
-git apply --reject --whitespace=fix %SRC%\upnp\libupnp-uwp.patch
+%APPLY_CMD% %SRC%\upnp\libupnp-uwp.patch
+%APPLY_CMD% %SRC%\upnp\libupnp-vs2017.patch
 
 cd %SRC%
