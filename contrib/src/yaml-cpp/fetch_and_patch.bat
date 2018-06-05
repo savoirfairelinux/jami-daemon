@@ -17,6 +17,8 @@ rename %BUILD%\yaml-cpp-%YAMLCPP_VERSION% yaml-cpp
 
 cd %BUILD%\yaml-cpp
 
-git apply --reject --whitespace=fix %SRC%\yaml-cpp\yaml-cpp-uwp.patch
+mkdir msvc && cd msvc
+cmake .. -G "Visual Studio 15 2017 Win64"
+rem git apply --reject --whitespace=fix %SRC%\yaml-cpp\yaml-cpp-uwp.patch
 
 cd %SRC%
