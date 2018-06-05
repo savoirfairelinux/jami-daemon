@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%RESTBED_VERSION%.tar.gz %cd%
 ) else (
-    wget %RESTBED_URL%
+    %WGET_CMD% %RESTBED_URL%
 )
 
 rem ------------ restbed ------------
@@ -35,7 +35,7 @@ set ASIO_URL=https://github.com/Corvusoft/asio-dependency/archive/%ASIO_VERSION%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%ASIO_VERSION%.tar.gz %cd%
 ) else (
-    wget %ASIO_URL%
+    %WGET_CMD% %ASIO_URL%
 )
 
 7z -y x %ASIO_VERSION%.tar.gz && 7z -y x %ASIO_VERSION%.tar
@@ -54,7 +54,7 @@ set CATCH_URL=https://github.com/Corvusoft/catch-dependency/archive/%CATCH_VERSI
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%CATCH_VERSION%.tar.gz %cd%
 ) else (
-    wget %CATCH_URL%
+    %WGET_CMD% %CATCH_URL%
 )
 
 7z -y x %CATCH_VERSION%.tar.gz && 7z -y x %CATCH_VERSION%.tar
@@ -63,18 +63,22 @@ rename catch-dependency-%CATCH_VERSION% catch
 
 rem ------------ openssl ------------
 
-set OPENSSL_VERSION=c7ba244789ce9f9b6675ff88e61dd5d5e5cac53e
+set OPENSSL_VERSION=5cc1e25bc76bcf0db03bc37bd64b3290727963b6
 set OPENSSL_URL=https://github.com/Microsoft/openssl/archive/%OPENSSL_VERSION%.tar.gz
 
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%OPENSSL_VERSION%.tar.gz %cd%
 ) else (
-    wget %OPENSSL_URL%
+    %WGET_CMD% %OPENSSL_URL%
 )
 
 7z -y x %OPENSSL_VERSION%.tar.gz && 7z -y x %OPENSSL_VERSION%.tar
 del %OPENSSL_VERSION%.tar && del %OPENSSL_VERSION%.tar.gz && del pax_global_header
 rename openssl-%OPENSSL_VERSION% openssl
+
+cd openssl
+git apply --reject --whitespace=fix %SRC%\restbed\openssl-uwp.patch
+cd ..
 
 rem ------------ kashmir ------------
 
@@ -84,7 +88,7 @@ set KASHMIR_URL=https://github.com/corvusoft/kashmir-dependency/archive/%KASHMIR
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%KASHMIR_VERSION%.tar.gz %cd%
 ) else (
-    wget %KASHMIR_URL%
+    %WGET_CMD% %KASHMIR_URL%
 )
 
 7z -y x %KASHMIR_VERSION%.tar.gz && 7z -y x %KASHMIR_VERSION%.tar

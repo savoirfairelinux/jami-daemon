@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set MSGPACK_VERSION=1df97bc37b363a340c5ad06c5cbcc53310aaff80
+set MSGPACK_VERSION=cpp-2.1.5
 set MSGPACK_URL=https://github.com/msgpack/msgpack-c/archive/%MSGPACK_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -17,6 +17,8 @@ rename %BUILD%\msgpack-c-%MSGPACK_VERSION% msgpack-c
 
 cd %BUILD%\msgpack-c
 
-git apply --reject --whitespace=fix %SRC%\msgpack\msgpack-uwp.patch
+mkdir vs2017
+cd vs2017
+cmake .. -DMSGPACK_CXX11=ON -G "Visual Studio 15 2017 Win64"
 
 cd %SRC%
