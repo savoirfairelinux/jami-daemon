@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="DebugLib|Win32">
       <Configuration>DebugLib</Configuration>
@@ -45,58 +45,58 @@
   <PropertyGroup Label="Globals">
     <ProjectGuid>{79F8DE42-595D-49D9-A66F-55244FD9DCC3}</ProjectGuid>
     <RootNamespace>ringdaemon</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.16299.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
     <WindowsAppContainer>false</WindowsAppContainer>
@@ -104,14 +104,14 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v140</PlatformToolset>
+    <PlatformToolset>v141</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
@@ -205,8 +205,8 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\..\FFMPEG\FFmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x86\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsManaged>
       </CompileAsManaged>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -240,8 +240,8 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\..\FFMPEG\FFmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x86\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsManaged>
       </CompileAsManaged>
       <BufferSecurityCheck>true</BufferSecurityCheck>
@@ -283,8 +283,8 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -310,8 +310,8 @@
       <WarningLevel>TurnOffAllWarnings</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;DEBUG_FPS;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -343,8 +343,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x86\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsManaged>
       </CompileAsManaged>
       <BufferSecurityCheck />
@@ -379,7 +379,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x86\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsManaged>
       </CompileAsManaged>
@@ -421,8 +421,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x86\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <CompileAsManaged>
       </CompileAsManaged>
       <BufferSecurityCheck>
@@ -463,8 +463,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>false</SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\contrib\include;$(ProjectDir)..\contrib\include\pjlib;$(ProjectDir)..\contrib\pjproject\third_party\speex\include;$(ProjectDir)..\..\yaml-cpp\include\speex\include;$(ProjectDir)..\..\libav;$(ProjectDir)..\..\libsamplerate-0.1.8\src;$(ProjectDir)..\..\libsamplerate-0.1.8\Win32;$(ProjectDir)..\..\pjproject-2.4.5\pjlib\include;$(ProjectDir)..\..\pjproject-2.4.5\pjnath\include;$(ProjectDir)..\..\pjproject-2.4.5\pjlib-util\include;$(ProjectDir)..\..\pjproject-2.4.5\pjsip\include;$(ProjectDir)..\..\pjproject-2.4.5\pjmedia\include;$(ProjectDir)..\..\msgpack-c\include;$(ProjectDir)..\..\include;$(ProjectDir)..\..\speexdsp\include;$(ProjectDir)..\..\libsndfile-MSVC\src;$(ProjectDir)..\..\libupnp-1.6.19\upnp\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\src\inc;$(ProjectDir)..\..\libupnp-1.6.19\build\inc;$(ProjectDir)..\..\libupnp-1.6.19\ixml\inc;$(ProjectDir)..\..\pcre;$(ProjectDir)..\..\ffmpeg;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>STATICLIB;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>RING_UWP;STATICLIB;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;WIN32_NATIVE;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BasicRuntimeChecks>
@@ -501,8 +501,8 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>
       </SDLCheck>
-      <AdditionalIncludeDirectories>$(ProjectDir)..\contrib\build\FFmpegInterop\ffmpeg\Build\Windows10\x64\include;$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\iax;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\build;$(ProjectDir)..\contrib\build\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party\speex\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\boost;$(ProjectDir)..\contrib\build\cryptopp;$(ProjectDir)..\contrib\build\restbed\source;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>BOOST_SYSTEM_NO_DEPRECATED;PJ_OS_HAS_CHECK_STACK=1;STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;RING_UWP;WIN32_NATIVE;_MBCS;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>STATIC_GETOPT;_USE_MATH_DEFINES;PCRE_STATIC;_SCL_SECURE_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;NOMINMAX;HAVE_CONFIG_H;WIN32_LEAN_AND_MEAN;RING_UWP;WIN32_NATIVE;_MBCS;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <DisableSpecificWarnings>4996;4503;4180;4244;4267;</DisableSpecificWarnings>
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
@@ -533,6 +533,11 @@
       <AdditionalOptions>/ignore:4006 /ignore:4221 %(AdditionalOptions)</AdditionalOptions>
       <LinkTimeCodeGeneration>true</LinkTimeCodeGeneration>
     </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">
+    <ClCompile>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\;$(ProjectDir)..\src;$(ProjectDir)..\src\client;$(ProjectDir)..\src\config;$(ProjectDir)..\src\dring;$(ProjectDir)..\src\hooks;$(ProjectDir)..\src\im;$(ProjectDir)..\src\media;$(ProjectDir)..\src\ringdht;$(ProjectDir)..\src\security;$(ProjectDir)..\src\sip;$(ProjectDir)..\src\upnp;$(ProjectDir)..\src\ringdht\eth;$(ProjectDir)..\contrib\msvc;$(ProjectDir)..\contrib\msvc\include;$(ProjectDir)..\contrib\build\pcre\msvc;$(ProjectDir)..\contrib\build\msgpack-c\include;$(ProjectDir)..\contrib\build\jsoncpp\include;$(ProjectDir)..\contrib\build\yaml-cpp\include;$(ProjectDir)..\contrib\build\pjproject\pjlib\include;$(ProjectDir)..\contrib\build\pjproject\pjnath\include;$(ProjectDir)..\contrib\build\pjproject\pjlib-util\include;$(ProjectDir)..\contrib\build\pjproject\pjsip\include;$(ProjectDir)..\contrib\build\pjproject\third_party;$(ProjectDir)..\contrib\build\pjproject\pjmedia\include;$(ProjectDir)..\contrib\build\restbed\source;$(ProjectDir)..\contrib\build\ffmpeg\Build\Windows10\x64\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\src\account.cpp" />
@@ -568,7 +573,18 @@
     <ClCompile Include="..\src\media\audio\audiorecorder.cpp" />
     <ClCompile Include="..\src\media\audio\audio_rtp_session.cpp" />
     <ClCompile Include="..\src\media\audio\dcblocker.cpp" />
-    <ClCompile Include="..\src\media\audio\dsp.cpp" />
+    <ClCompile Include="..\src\media\audio\dsp.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">true</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="..\src\media\audio\portaudio\portaudiolayer.cpp" />
     <ClCompile Include="..\src\media\audio\resampler.cpp" />
     <ClCompile Include="..\src\media\audio\ringbuffer.cpp" />
@@ -693,7 +709,18 @@
     <ClInclude Include="..\src\media\audio\audiorecorder.h" />
     <ClInclude Include="..\src\media\audio\audio_rtp_session.h" />
     <ClInclude Include="..\src\media\audio\dcblocker.h" />
-    <ClInclude Include="..\src\media\audio\dsp.h" />
+    <ClInclude Include="..\src\media\audio\dsp.h">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='ReleaseLib|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='DebugLib|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='w32lib|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="..\src\media\audio\portaudio\portaudiolayer.h" />
     <ClInclude Include="..\src\media\audio\resampler.h" />
     <ClInclude Include="..\src\media\audio\ringbuffer.h" />
