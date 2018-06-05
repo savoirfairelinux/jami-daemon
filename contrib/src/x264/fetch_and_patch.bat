@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set X264_VERSION=78c7e3dbb6f832f8775d81acedb3793e414b4dd3
+set X264_VERSION=5fee86cae91cd7b726db7408a3ed1c4da71fb78c
 set X264_URL=https://github.com/ShiftMediaProject/x264/archive/%X264_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -17,6 +17,6 @@ rename %BUILD%\x264-%X264_VERSION% x264
 
 cd %BUILD%\x264
 
-git apply --reject --whitespace=fix %SRC%\x264\x264-uwp.patch
+rem git apply --reject --whitespace=fix %SRC%\x264\x264-uwp.patch
 
 cd %SRC%
