@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\libsamplerate-%SAMPLERATE_VERSION%.tar.gz %cd%
 ) else (
-    wget %SAMPLERATE_URL%
+    %WGET_CMD% %SAMPLERATE_URL%
 )
 
 7z -y e libsamplerate-%SAMPLERATE_VERSION%.tar.gz  && 7z -y x libsamplerate-%SAMPLERATE_VERSION%.tar -o%BUILD%
@@ -17,6 +17,6 @@ rename %BUILD%\libsamplerate-%SAMPLERATE_VERSION% libsamplerate
 
 cd %BUILD%\libsamplerate
 
-git apply --reject --whitespace=fix %SRC%\samplerate\samplerate-uwp.patch
+%APPLY_CMD% %SRC%\samplerate\samplerate-vs2017.patch
 
 cd %SRC%
