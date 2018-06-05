@@ -101,6 +101,7 @@ nbproject
 
 #UWP
 /contrib/build/
+/contrib/msvc/
 
 #iOS
 /build-ios*
