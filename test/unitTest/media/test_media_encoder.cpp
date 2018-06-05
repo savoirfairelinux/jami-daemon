@@ -150,6 +150,8 @@ MediaEncoderTest::testMultiStream()
     const constexpr int width = 320;
     const constexpr int height = 240;
     std::map<std::string, std::string> options;
+    options["title"] = "Encoder Unit Test";
+    options["description"] = "Description goes here";
     options["sample_rate"] = std::to_string(sampleRate);
     options["channels"] = std::to_string(nbChannels);
     options["width"] = std::to_string(width);
