@@ -187,6 +187,9 @@ setSipLogLevel()
         // From 0 (min) to 6 (max)
         level = std::max(0, std::min(level, 6));
     }
+#else
+    int level = 0;
+#endif
 
     pj_log_set_level(level);
     pj_log_set_log_func([](int level, const char *data, int /*len*/) {
@@ -194,9 +197,6 @@ setSipLogLevel()
         else if (level < 4) RING_WARN() << data;
         else                RING_DBG() << data;
     });
-#else
-    pj_log_set_level(0);
-#endif
 }
 
 /**
