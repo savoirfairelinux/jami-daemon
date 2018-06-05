@@ -8,15 +8,15 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\libsamplerate-%SECP256K1_VERSION%.tar.gz %cd%
 ) else (
-    wget %SECP256K1_URL%
+    %WGET_CMD% %SECP256K1_URL%
 )
 
 7z -y e %SECP256K1_VERSION%.tar.gz  && 7z -y x %SECP256K1_VERSION%.tar -o%BUILD%
-del %SECP256K1_VERSION%.tar && del %SECP256K1_VERSION%.tar.gz
+del %SECP256K1_VERSION%.tar && del %SECP256K1_VERSION%.tar.gz && del %BUILD%\pax_global_header
 rename %BUILD%\secp256k1-%SECP256K1_VERSION% secp256k1
 
 cd %BUILD%\secp256k1
 
-git apply --reject --whitespace=fix %SRC%\secp256k1\secp256k1-uwp.patch
+%APPLY_CMD% %SRC%\secp256k1\secp256k1-vs2017.patch
 
 cd %SRC%

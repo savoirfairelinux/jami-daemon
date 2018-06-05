@@ -379,6 +379,12 @@
     <ClCompile Include="..\src\security\diffie-hellman.cpp">
       <Filter>Source Files\security</Filter>
     </ClCompile>
+    <ClCompile Include="..\src\media\media_filter.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\media_recorder.cpp">
+      <Filter>Source Files\media</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\src\account.h">
@@ -782,6 +788,15 @@
     </ClInclude>
     <ClInclude Include="..\src\upnp\upnp_igd.h">
       <Filter>Source Files\upnp</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_filter.h">
+      <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_recorder.h">
+      <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\media_stream.h">
+      <Filter>Source Files\media</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
