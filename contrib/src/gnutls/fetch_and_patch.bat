@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set GNUTLS_VERSION=f2d0ade53ff644da55244aed79d05eca78d11a2f
+set GNUTLS_VERSION=018a4a655ad784b1ef4f1b311ff031aeed656090
 set GNUTLS_URL=https://github.com/ShiftMediaProject/gnutls/archive/%GNUTLS_VERSION%.tar.gz
 
 mkdir %BUILD%
