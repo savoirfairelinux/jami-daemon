@@ -1,6 +1,6 @@
 set BUILD=%SRC%..\build
 
-set GNUTLS_VERSION=f2d0ade53ff644da55244aed79d05eca78d11a2f
+set GNUTLS_VERSION=018a4a655ad784b1ef4f1b311ff031aeed656090
 set GNUTLS_URL=https://github.com/ShiftMediaProject/gnutls/archive/%GNUTLS_VERSION%.tar.gz
 
 mkdir %BUILD%
@@ -8,7 +8,7 @@ mkdir %BUILD%
 if %USE_CACHE%==1 (
     copy %CACHE_DIR%\%GNUTLS_VERSION%.tar.gz %cd%
 ) else (
-    wget %GNUTLS_URL%
+    %WGET_CMD% %GNUTLS_URL%
 )
 
 7z -y x %GNUTLS_VERSION%.tar.gz && 7z -y x %GNUTLS_VERSION%.tar -o%BUILD%
@@ -17,8 +17,8 @@ rename %BUILD%\gnutls-%GNUTLS_VERSION% gnutls
 
 cd %BUILD%\gnutls
 
-git apply --reject --whitespace=fix %SRC%\gnutls\gnutls-no-egd.patch
-git apply --reject --whitespace=fix %SRC%\gnutls\read-file-limits.h.patch
-git apply --reject --whitespace=fix %SRC%\gnutls\gnutls-uwp.patch
+%APPLY_CMD% %SRC%\gnutls\gnutls-no-egd.patch
+%APPLY_CMD% %SRC%\gnutls\read-file-limits.h.patch
+%APPLY_CMD% %SRC%\gnutls\gnutls-uwp.patch
 
 cd %SRC%
