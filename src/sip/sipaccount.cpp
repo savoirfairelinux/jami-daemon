@@ -2101,4 +2101,10 @@ SIPAccount::sendTextMessage(const std::string& to, const std::map<std::string, s
     }
 }
 
+std::string
+SIPAccount::getUserUri() const
+{
+    return getFromUri();
+}
+
 } // namespace ring

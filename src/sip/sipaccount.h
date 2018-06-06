@@ -494,6 +494,8 @@ class SIPAccount : public SIPAccountBase {
 
         void connectivityChanged() override;
 
+        std::string getUserUri() const override;
+
     private:
         void doRegister1_();
         void doRegister2_();
