@@ -3457,5 +3457,14 @@ void RingAccount::pushNotificationReceived(const std::string& from, const std::m
     dht_.pushNotificationReceived(data);
 }
 
+std::string
+RingAccount::getUserUri() const
+{
+#ifdef HAVE_RINGNS
+    if (not registeredName_.empty())
+        return RING_URI_PREFIX + registeredName_;
+#endif
+    return username_;
+}
 
 } // namespace ring

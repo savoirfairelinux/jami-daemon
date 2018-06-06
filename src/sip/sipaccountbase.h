@@ -274,6 +274,8 @@ public:
 
     void connectivityChanged() override {};
 
+    virtual std::string getUserUri() const = 0;
+
 public: // overloaded methods
     virtual void flush() override;
 

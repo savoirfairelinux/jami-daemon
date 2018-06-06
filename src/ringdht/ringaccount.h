@@ -376,6 +376,8 @@ class RingAccount : public SIPAccountBase {
          */
         void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
+        std::string getUserUri() const override;
+
     private:
         NON_COPYABLE(RingAccount);
 
