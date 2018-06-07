@@ -50,8 +50,9 @@ class MediaRecorder {
 
         void audioOnly(bool audioOnly);
 
-        // default title is: "Ring recording at %Y-%m-%d %H:%M:%S"
-        // default description is: "Recorded at %Y-%m-%d %H:%M:%S with Ring https://ring.cx"
+        // replaces %TIMESTAMP with time at start of recording
+        // default title: "Conversation at %Y-%m-%d %H:%M:%S"
+        // default description: "Recorded with Ring https://ring.cx"
         void setMetadata(const std::string& title, const std::string& desc);
 
         [[deprecated("use setPath to set full recording path")]]
