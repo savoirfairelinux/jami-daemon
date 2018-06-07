@@ -31,6 +31,7 @@ extern "C" {
 
 #include <algorithm>
 #include <iomanip>
+#include <regex>
 #include <sstream>
 #include <sys/types.h>
 #include <ctime>
@@ -191,19 +192,23 @@ MediaRecorder::initRecord()
 
     std::map<std::string, std::string> encoderOptions;
 
+    std::stringstream timestampString;
+    timestampString << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
+    static const std::regex TS_REGEX("%TIMESTAMP");
+
     if (title_.empty()) {
         std::stringstream ss;
-        ss << "Ring recording at " << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
+        ss << "Conversation at "
+            << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
         title_ = ss.str();
     }
+    title_ = std::regex_replace(title_, TS_REGEX, timestampString.str());
     encoderOptions["title"] = title_;
 
     if (description_.empty()) {
-        std::stringstream ss;
-        ss << "Recorded at " << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S")
-            << " with Ring https://ring.cx";
-        description_ = ss.str();
+        description_ = "Recorded with Ring https://ring.cx";
     }
+    description_ = std::regex_replace(description_, TS_REGEX, timestampString.str());
     encoderOptions["description"] = description_;
 
     videoFilter_.reset();
