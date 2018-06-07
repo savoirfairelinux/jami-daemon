@@ -49,8 +49,6 @@
 #pragma GCC diagnostic warning "-Wunused-but-set-variable"
 #endif
 
-using RingDBusMessage = DBus::Struct<std::string, std::map<std::string, std::string>, long unsigned int>;
-
 class DBusConfigurationManager :
     public cx::ring::Ring::ConfigurationManager_adaptor,
     public DBus::IntrospectableAdaptor,
@@ -82,7 +80,7 @@ class DBusConfigurationManager :
         void sendRegister(const std::string& accoundID, const bool& enable);
         void registerAllAccounts(void);
         uint64_t sendTextMessage(const std::string& accoundID, const std::string& to, const std::map<std::string, std::string>& payloads);
-        std::vector<RingDBusMessage> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
+        std::vector<DBus::Struct<std::string, std::map<std::string, std::string>, long unsigned int>> getLastMessages(const std::string& accountID, const uint64_t& base_timestamp);
         int getMessageStatus(const uint64_t& id);
         std::map<std::string, std::string> getTlsDefaultSettings();
         std::vector<std::string> getSupportedCiphers(const std::string& accountID);
