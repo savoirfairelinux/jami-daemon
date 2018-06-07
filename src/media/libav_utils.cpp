@@ -216,4 +216,14 @@ getError(int err)
     return ret;
 }
 
+std::string
+getDictValue(const AVDictionary* d, const std::string& key, int flags)
+{
+    auto kv = av_dict_get(d, key.c_str(), nullptr, flags);
+    if (kv)
+        return kv->value;
+    else
+        return "";
+}
+
 }} // namespace ring::libav_utils
