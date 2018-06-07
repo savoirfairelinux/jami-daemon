@@ -37,6 +37,20 @@ extern "C" {
 
 namespace ring {
 
+static std::string
+replaceAll(const std::string& str, const std::string& from, const std::string& to)
+{
+    if (from.empty())
+        return str;
+    std::string copy(str);
+    size_t startPos = 0;
+    while ((startPos = str.find(from, startPos)) != std::string::npos) {
+        copy.replace(startPos, from.length(), to);
+        startPos += to.length();
+    }
+    return copy;
+}
+
 MediaRecorder::MediaRecorder()
 {}
 
@@ -211,19 +225,22 @@ MediaRecorder::initRecord()
 
     std::map<std::string, std::string> encoderOptions;
 
+    std::stringstream timestampString;
+    timestampString << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
+
     if (title_.empty()) {
         std::stringstream ss;
-        ss << "Ring recording at " << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
+        ss << (audioOnly_ ? "Audio" : "Video") << " conversation at "
+            << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S");
         title_ = ss.str();
     }
+    title_ = replaceAll(title_, "$TIMESTAMP", timestampString.str());
     encoderOptions["title"] = title_;
 
     if (description_.empty()) {
-        std::stringstream ss;
-        ss << "Recorded at " << std::put_time(&startTime_, "%Y-%m-%d %H:%M:%S")
-            << " with Ring https://ring.cx";
-        description_ = ss.str();
+        description_ = "Recorded with Ring https://ring.cx";
     }
+    description_ = replaceAll(description_, "$TIMESTAMP", timestampString.str());
     encoderOptions["description"] = description_;
 
     videoFilter_.reset();
