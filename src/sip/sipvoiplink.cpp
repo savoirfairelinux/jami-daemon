@@ -274,15 +274,11 @@ transaction_request_cb(pjsip_rx_data *rdata)
     Manager::instance().hookPreference.runHook(rdata->msg_info.msg);
 
     bool hasVideo = false;
-    bool hasAudio = false;
     if (r_sdp) {
         auto pj_str_video = pj_str((char*) "video");
-        auto pj_str_audio = pj_str((char*) "audio");
         for (decltype(r_sdp->media_count) i=0 ; i < r_sdp->media_count; i++) {
             if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_video) == 0)
                 hasVideo = true;
-            else if (pj_strcmp(&r_sdp->media[i]->desc.media, &pj_str_audio) == 0)
-                hasAudio = true;
         }
     }
 
@@ -852,7 +848,8 @@ invite_session_state_changed_cb(pjsip_inv_session *inv, pjsip_event *ev)
                     if (inv->role != PJSIP_ROLE_UAC)
                         break;
                     // close call
-
+                    call->onClosed();
+                    break;
                 // The call terminates normally - BYE / CANCEL
                 case PJSIP_SC_OK:
                 case PJSIP_SC_REQUEST_TERMINATED:

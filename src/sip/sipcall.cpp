@@ -82,7 +82,7 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
 static void
-dtmfSend(SIPCall &call, char code, const std::string &dtmf)
+dtmfSend(SIPCall &call, char code, const std::string& /*dtmf*/)
 {
     int duration = Manager::instance().voipPreferences.getPulseLength();
     char dtmf_body[1000];
