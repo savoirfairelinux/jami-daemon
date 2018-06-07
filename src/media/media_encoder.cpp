@@ -203,9 +203,9 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
 
     encoderCtx = prepareEncoderContext(outputCodec, systemCodecInfo.mediaType == MEDIA_VIDEO);
     encoders_.push_back(encoderCtx);
-    auto maxBitrate = 1000 * atoi(av_dict_get(options_, "max_rate", nullptr, 0)->value);
+    auto maxBitrate = 1000 * std::atoi(libav_utils::getDictValue(options_, "max_rate"));
     auto bufSize = 2 * maxBitrate; // as recommended (TODO: make it customizable)
-    auto crf = atoi(av_dict_get(options_, "crf", nullptr, 0)->value);
+    auto crf = std::atoi(libav_utils::getDictValue(options_, "crf"));
 
     /* let x264 preset override our encoder settings */
     if (systemCodecInfo.avcodecId == AV_CODEC_ID_H264) {
@@ -217,7 +217,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
             crf = 30; // good value for H264-720p@30
         RING_DBG("H264 encoder setup: crf=%u, maxrate=%u, bufsize=%u", crf, maxBitrate, bufSize);
 
-        av_opt_set(encoderCtx->priv_data, "crf", av_dict_get(options_, "crf", nullptr, 0)->value, 0);
+        av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
         encoderCtx->rc_buffer_size = bufSize;
         encoderCtx->rc_max_rate = maxBitrate;
     } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_VP8) {
@@ -242,7 +242,7 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         encoderCtx->rc_buffer_size = maxBitrate;
         encoderCtx->bit_rate = maxBitrate;
         if (crf != SystemCodecInfo::DEFAULT_NO_QUALITY) {
-            av_opt_set(encoderCtx->priv_data, "crf", av_dict_get(options_, "crf", nullptr, 0)->value, 0);
+            av_opt_set_int(encoderCtx->priv_data, "crf", crf, 0);
             RING_DBG("Using quality factor %d", crf);
         } else {
             RING_DBG("Using Max bitrate %d", maxBitrate);
@@ -554,8 +554,8 @@ AVCodecContext* MediaEncoder::prepareEncoderContext(AVCodec* outputCodec, bool i
             encoderCtx->width = device_.width;
             encoderCtx->height = device_.height;
         } else {
-            encoderCtx->width = atoi(av_dict_get(options_, "width", nullptr, 0)->value);
-            encoderCtx->height = atoi(av_dict_get(options_, "height", nullptr, 0)->value);
+            encoderCtx->width = std::atoi(libav_utils::getDictValue(options_, "width").c_str());
+            encoderCtx->height = std::atoi(libav_utils::getDictValue(options_, "height").c_str());
         }
 
         // satisfy ffmpeg: denominator must be 16bit or less value
