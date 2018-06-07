@@ -156,7 +156,7 @@ class Account : public Serializable, public std::enable_shared_from_this<Account
         virtual uint64_t sendTextMessage(const std::string& to UNUSED,
                                      const std::map<std::string, std::string>& payloads UNUSED) { return 0; }
 
-        virtual std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) {
+        virtual std::vector<DRing::Message> getLastMessages(const uint64_t& /*base_timestamp*/) {
             return {};
         }
 

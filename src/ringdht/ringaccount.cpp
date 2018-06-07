@@ -278,10 +278,10 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
     , idPath_(fileutils::get_data_dir()+DIR_SEPARATOR_STR+getAccountID())
     , cachePath_(fileutils::get_cache_dir()+DIR_SEPARATOR_STR+getAccountID())
     , dataPath_(cachePath_ + DIR_SEPARATOR_STR "values")
-    , dhtPeerConnector_ {new DhtPeerConnector {*this}}
     , proxyEnabled_(false)
     , proxyServer_("")
     , deviceKey_("")
+    , dhtPeerConnector_ {new DhtPeerConnector {*this}}
 {
     // Force the SFL turn server if none provided yet
     turnServer_ = DEFAULT_TURN_SERVER;
@@ -490,7 +490,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
             });
             return false;
         });
-    }, [wCall](const std::shared_ptr<RingAccount>& sthis, bool ok){
+    }, [wCall](const std::shared_ptr<RingAccount>&, bool ok){
         if (not ok) {
             if (auto call = wCall.lock()) {
                 RING_WARN("[call:%s] no devices found", call->getCallId().c_str());
