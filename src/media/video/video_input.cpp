@@ -230,7 +230,7 @@ bool VideoInput::captureFrame()
 
         case MediaDecoder::Status::FrameFinished:
             publishFrame();
-
+            return true;
         // continue decoding
         case MediaDecoder::Status::Success:
         default:
