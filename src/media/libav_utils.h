@@ -24,6 +24,7 @@
 #include <map>
 #include <string>
 
+struct AVDictionary;
 struct AVPixFmtDescriptor;
 
 namespace ring { namespace libav_utils {
@@ -43,5 +44,7 @@ namespace ring { namespace libav_utils {
     bool is_yuv_planar(const AVPixFmtDescriptor& desc);
 
     std::string getError(int err);
+
+    const char* getDictValue(const AVDictionary* d, const std::string& key, int flags=0);
 
 }} // namespace ring::libav_utils
