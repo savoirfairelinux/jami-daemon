@@ -341,6 +341,15 @@ MediaEncoder::startIO()
 #endif
 }
 
+// seq: frame number for video, sent samples audio
+// sampleFreq: fps for video, sample rate for audio
+// clock: stream time base (packetization interval times)
+int64_t
+getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> clock)
+{
+    return (seq / (sampleFreq * clock)).real<int64_t>();
+}
+
 #ifdef RING_VIDEO
 int
 MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
@@ -354,7 +363,8 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     scaler_.scale_with_aspect(input, scaledFrame_);
 
     auto frame = scaledFrame_.pointer();
-    frame->pts = frame_number;
+    AVStream* st = outputCtx_->streams[currentStreamIdx_];
+    frame->pts = getNextTimestamp(frame_number, st->avg_frame_rate, st->time_base);
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -412,7 +422,8 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         frame->channels = buffer.channels();
         frame->sample_rate = sample_rate;
 
-        frame->pts = sent_samples;
+        AVStream* st = outputCtx_->streams[currentStreamIdx_];
+        frame->pts = getNextTimestamp(sent_samples, st->codecpar->sample_rate, st->time_base);
         sent_samples += frame->nb_samples;
 
         const auto buffer_size = \
