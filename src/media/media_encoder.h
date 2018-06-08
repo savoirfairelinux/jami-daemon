@@ -108,6 +108,11 @@ private:
     void forcePresetX264(AVCodecContext* encoderCtx);
     void extractProfileLevelID(const std::string &parameters, AVCodecContext *ctx);
 
+    // seq: frame number for video, sent samples audio
+    // sampleFreq: fps for video, sample rate for audio
+    // clock: stream time base (packetization interval times)
+    int64_t getNextTimestamp(int seq, rational<int> sampleFreq, rational<int> clock);
+
     std::vector<AVCodecContext*> encoders_;
     AVFormatContext *outputCtx_ = nullptr;
     int currentStreamIdx_ = -1;

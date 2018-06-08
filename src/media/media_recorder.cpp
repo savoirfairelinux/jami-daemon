@@ -182,12 +182,6 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     const MediaStream& ms = streams_[isVideo][fromPeer];
     // stream has to start at 0
     input->pts = input->pts - ms.firstTimestamp;
-    // convert streams to rtp timestamps if not already done by FFmpeg
-    if (isVideo && !fromPeer) {
-        input->pts = input->pts / (ms.frameRate * ms.timeBase).real();
-    } else if (!isVideo) {
-        input->pts = input->pts / (ms.timeBase * ms.sampleRate).real();
-    }
 
     if (inputName.empty()) // #nofilters
         return sendToEncoder(input, streamIdx);
@@ -228,7 +222,7 @@ MediaRecorder::initRecord()
 
     videoFilter_.reset();
     if (nbReceivedVideoStreams_ > 0) {
-        auto videoStream = setupVideoOutput();
+        const MediaStream& videoStream = setupVideoOutput();
         if (videoStream.format < 0) {
             RING_ERR() << "Could not retrieve video recorder stream properties";
             return -1;
@@ -242,7 +236,7 @@ MediaRecorder::initRecord()
 
     audioFilter_.reset();
     if (nbReceivedAudioStreams_ > 0) {
-        auto audioStream = setupAudioOutput();
+        const MediaStream& audioStream = setupAudioOutput();
         if (audioStream.format < 0) {
             RING_ERR() << "Could not retrieve audio recorder stream properties";
             return -1;
@@ -338,8 +332,8 @@ MediaRecorder::buildVideoFilter()
 {
     std::stringstream v;
 
-    const auto p = streams_[true][true];
-    const auto l = streams_[true][false];
+    const MediaStream& p = streams_[true][true];
+    const MediaStream& l = streams_[true][false];
 
     const constexpr int minHeight = 720;
     const auto newFps = std::max(p.frameRate, l.frameRate);
