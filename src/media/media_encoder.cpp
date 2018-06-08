@@ -355,6 +355,8 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 
     auto frame = scaledFrame_.pointer();
     frame->pts = frame_number;
+    MediaStream ms = MediaStream("enc", outputCtx_->streams[currentStreamIdx_], 0);
+    frame->pts *= (1 / (ms.frameRate * ms.timeBase)).real();
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -414,6 +416,8 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 
         frame->pts = sent_samples;
         sent_samples += frame->nb_samples;
+        MediaStream ms = MediaStream("enc", outputCtx_->streams[currentStreamIdx_], 0);
+        frame->pts *= (1 / (ms.frameRate * ms.timeBase)).real();
 
         const auto buffer_size = \
             av_samples_get_buffer_size(nullptr, buffer.channels(),
