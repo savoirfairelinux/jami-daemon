@@ -177,7 +177,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
+#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || defined __APPLE__
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
