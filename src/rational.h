@@ -125,8 +125,8 @@ public:
     bool operator!= (const rational& r) const { return num_ * r.den_ != den_ * r.num_; }
 
     // Comparison with integers
-    bool operator< (I i) const { return num_ < i * den_; }
-    bool operator> (I i) const { return num_ > i * den_; }
+    bool operator< (I i) const { return den_ < 0 ? (num_ > i * den_) : (num_ < i * den_); }
+    bool operator> (I i) const { return den_ < 0 ? (num_ < i * den_) : (num_ > i * den_); }
     bool operator== (I i) const { return num_ == i * den_; }
     bool operator!= (I i) const { return num_ != i * den_; }
 private:
