@@ -333,6 +333,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
 
     call->setState(Call::ConnectionState::PROGRESSING);
     call->setPeerNumber(peerNumber);
+    call->setPeerUri(account->getToUri(peerNumber));
     call->setPeerDisplayName(peerDisplayName);
     call->initRecFilename(peerNumber);
     call->getSDP().setPublishedIP(addrSdp);
