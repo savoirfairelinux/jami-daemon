@@ -393,6 +393,14 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
+#if HAVE_RINGNS
+    nameDir_.get().lookupAddress(toUri, [wCall](const std::string& result, const NameDirectory::Response& response){
+        if (response == NameDirectory::Response::found)
+            if (auto call = wCall.lock())
+                call->setPeerRegistredName(result);
+    });
+#endif
+
     // Find listening Ring devices for this account
     dht::InfoHash peer_account(toUri);
     forEachDevice(peer_account, [wCall, toUri, peer_account](const std::shared_ptr<RingAccount>& sthis, const dht::InfoHash& dev)
