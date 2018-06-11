@@ -214,6 +214,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     call->initIceMediaTransport(true);
     call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
+    call->setPeerUri(toUri);
     call->initRecFilename(to);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
