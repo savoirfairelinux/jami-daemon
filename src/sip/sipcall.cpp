@@ -1155,8 +1155,11 @@ SIPCall::toggleRecording()
     const bool startRecording = Call::toggleRecording();
     if (startRecording) {
         std::stringstream ss;
-        ss << "Ring call between " << getSIPAccount().getUserUri() << " and "
-            << (!peerRegistredName_.empty() ? peerRegistredName_ : getPeerNumber());
+        ss << "Ring call between " << getSIPAccount().getUserUri() << " and ";
+        if (!peerRegistredName_.empty())
+            ss << "ring:" << peerRegistredName_;
+        else
+            ss << peerUri_;
         recorder_->setMetadata(ss.str(), ""); // use default description
         if (avformatrtp_)
             avformatrtp_->startRecorder(recorder_);
