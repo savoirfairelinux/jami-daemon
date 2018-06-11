@@ -390,6 +390,7 @@ RingAccount::startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::
     setCertificateStatus(toUri, tls::TrustStore::PermissionStatus::ALLOWED);
 
     call->setPeerNumber(toUri + "@ring.dht");
+    call->setPeerUri(RING_URI_PREFIX + toUri);
     call->setState(Call::ConnectionState::TRYING);
     std::weak_ptr<SIPCall> wCall = call;
 
@@ -2448,12 +2449,15 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
                                    const dht::InfoHash& from_id)
 {
     auto from = from_id.toString();
+    call->setPeerUri(RING_URI_PREFIX + from);
     std::weak_ptr<SIPCall> wcall = call;
 #if HAVE_RINGNS
     nameDir_.get().lookupAddress(from, [wcall](const std::string& result, const NameDirectory::Response& response){
         if (response == NameDirectory::Response::found)
-            if (auto call = wcall.lock())
+            if (auto call = wcall.lock()) {
                 call->setPeerRegistredName(result);
+                call->setPeerUri(RING_URI_PREFIX + result);
+            }
     });
 #endif
 

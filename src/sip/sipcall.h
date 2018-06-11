@@ -209,6 +209,8 @@ public: // NOT SIP RELATED (good candidates to be moved elsewhere)
         peerRegistredName_ = name;
     }
 
+    void setPeerUri(const std::string peerUri) { RING_WARN()<<"WOLOLO "<<peerUri;peerUri_ = peerUri; }
+
     bool initIceMediaTransport(bool master, unsigned channel_num=4);
 
     bool isIceRunning() const;
@@ -294,6 +296,8 @@ private:
 
     ///< Temporary transport for media. Replace mediaTransport_ when connected with success
     std::shared_ptr<IceTransport> tmpMediaTransport_;
+
+    std::string peerUri_{};
 };
 
 // Helpers

@@ -159,13 +159,15 @@ SIPAccount::~SIPAccount()
 }
 
 std::shared_ptr<SIPCall>
-SIPAccount::newIncomingCall(const std::string& from UNUSED, const std::map<std::string, std::string>& details)
+SIPAccount::newIncomingCall(const std::string& from, const std::map<std::string, std::string>& details)
 {
     auto& manager = Manager::instance();
-    return manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
-                                                            manager.getNewCallID(),
-                                                            Call::CallType::INCOMING,
-                                                            details);
+    auto call = manager.callFactory.newCall<SIPCall, SIPAccount>(*this,
+                                                                 manager.getNewCallID(),
+                                                                 Call::CallType::INCOMING,
+                                                                 details);
+    call->setPeerUri(from);
+    return call;
 }
 
 template <>
@@ -214,6 +216,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
     call->initIceMediaTransport(true);
     call->setIPToIP(isIP2IP());
     call->setPeerNumber(toUri);
+    call->setPeerUri(toUri);
     call->initRecFilename(to);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface(), family);
