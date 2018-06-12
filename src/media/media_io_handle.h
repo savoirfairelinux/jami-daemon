@@ -28,7 +28,7 @@
 #include <vector>
 
 #ifndef AVFORMAT_AVIO_H
-class AVIOContext;
+struct AVIOContext;
 #endif
 
 typedef int(*io_readcallback)(void *opaque, uint8_t *buf, int buf_size);

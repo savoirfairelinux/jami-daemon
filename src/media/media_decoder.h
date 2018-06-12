@@ -40,17 +40,17 @@
 #include <memory>
 #include <chrono>
 
-class AVCodecContext;
-class AVStream;
-class AVDictionary;
-class AVFormatContext;
-class AVCodec;
+struct AVCodecContext;
+struct AVStream;
+struct AVDictionary;
+struct AVFormatContext;
+struct AVCodec;
 enum AVMediaType;
 
 namespace ring {
 
 struct AudioFrame;
-class AudioFormat;
+struct AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;

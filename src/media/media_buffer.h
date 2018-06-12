@@ -25,7 +25,7 @@
 #include <memory>
 #include <functional>
 
-class AVFrame;
+struct AVFrame;
 
 namespace DRing {
 struct FrameBuffer; //  from dring/videomanager_interface.h

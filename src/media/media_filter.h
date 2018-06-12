@@ -28,9 +28,9 @@
 #include <string>
 #include <vector>
 
-class AVFilterContext;
-class AVFilterGraph;
-class AVFilterInOut;
+struct AVFilterContext;
+struct AVFilterGraph;
+struct AVFilterInOut;
 
 namespace ring {
 

@@ -25,7 +25,7 @@
 #include "noncopyable.h"
 
 
-class SwsContext;
+struct SwsContext;
 
 namespace ring { namespace video {
 
