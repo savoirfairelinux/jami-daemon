@@ -59,12 +59,9 @@ class VideoDeviceMonitorImpl {
 
     private:
         NON_COPYABLE(VideoDeviceMonitorImpl);
-
-        VideoDeviceMonitor* monitor_;
 };
 
-VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor) :
-    monitor_(monitor)
+VideoDeviceMonitorImpl::VideoDeviceMonitorImpl(VideoDeviceMonitor* monitor)
 {}
 
 void VideoDeviceMonitorImpl::start()

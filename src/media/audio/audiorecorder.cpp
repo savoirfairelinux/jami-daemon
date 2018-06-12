@@ -40,7 +40,7 @@ AudioRecorder::AudioRecorder(AudioRecord* arec, RingBufferPool& rbp)
     , buffer_(new AudioBuffer(BUFFER_LENGTH, AudioFormat::NONE()))
     , arecord_(arec)
     , thread_(
-        [this] { return true; },
+        [] { return true; },
         [this] { process(); },
         [] {})
 {

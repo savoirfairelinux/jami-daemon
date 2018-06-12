@@ -105,7 +105,7 @@ public: // overridden
     bool useVideoCodec(const AccountVideoCodecInfo* codec) const override;
     std::map<std::string, std::string> getDetails() const override;
 
-    virtual bool toggleRecording(); // SIPCall needs to spread recorder to rtp sessions, so override
+    virtual bool toggleRecording() override; // SIPCall needs to spread recorder to rtp sessions, so override
 
 public: // SIP related
     /**

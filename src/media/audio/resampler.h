@@ -32,7 +32,7 @@
 
 namespace ring {
 
-struct SrcState;
+class SrcState;
 
 class Resampler {
     public:
