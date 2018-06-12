@@ -164,7 +164,6 @@ VideoDeviceImpl::getDeviceParams() const
 {
     DeviceParams params;
     std::stringstream ss1, ss2;
-    char sep;
 
     ss1 << fmt_->ring_format;
     ss1 >> params.format;
@@ -212,13 +211,13 @@ VideoDevice::getChannelList() const
 }
 
 std::vector<VideoSize>
-VideoDevice::getSizeList(const std::string& channel) const
+VideoDevice::getSizeList(const std::string& /* channel */) const
 {
     return deviceImpl_->getSizeList();
 }
 
 std::vector<FrameRate>
-VideoDevice::getRateList(const std::string& channel, VideoSize size) const
+VideoDevice::getRateList(const std::string& /* channel */, VideoSize /* size */) const
 {
     return deviceImpl_->getRateList();
 }

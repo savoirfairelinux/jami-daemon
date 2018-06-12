@@ -241,7 +241,7 @@ OpenSLLayer::engineServiceRing(bool waiting) {
 }
 
 void
-OpenSLLayer::engineServiceRec(bool waiting) {
+OpenSLLayer::engineServiceRec(bool /* waiting */) {
     playCv.notify_one();
     recCv.notify_one();
     return;

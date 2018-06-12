@@ -743,7 +743,7 @@ DhtPeerConnector::requestConnection(const std::string& peer_id,
                 });
         },
 
-        [this, peer_h, connect_cb](const std::shared_ptr<RingAccount>& account, bool found) {
+        [peer_h, connect_cb](const std::shared_ptr<RingAccount>& account, bool found) {
             if (!found) {
                 RING_WARN() << account << "[CNX] aborted, no devices for " << peer_h;
                 connect_cb(nullptr);

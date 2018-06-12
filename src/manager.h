@@ -48,7 +48,7 @@ namespace video {
 class SinkClient;
 }
 class RingBufferPool;
-class VideoManager;
+struct VideoManager;
 class Conference;
 class AudioLoop;
 class IceTransportFactory;

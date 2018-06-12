@@ -292,7 +292,7 @@ VideoInput::obtainFrame(int length)
 
     /* search for an available frame */
     for(auto& buffer : buffers_) {
-        if (buffer.length == length && buffer.status == BUFFER_AVAILABLE) {
+        if (buffer.length == static_cast<unsigned>(length) && buffer.status == BUFFER_AVAILABLE) {
             buffer.status = BUFFER_CAPTURING;
             return buffer.data;
         }

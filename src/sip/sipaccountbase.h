@@ -277,7 +277,7 @@ public:
 
     virtual std::string getUserUri() const = 0;
 
-    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) {
+    std::vector<DRing::Message> getLastMessages(const uint64_t& base_timestamp) override {
         std::lock_guard<std::mutex> lck(mutexLastMessages_);
         auto it = lastMessages_.begin();
         size_t num = lastMessages_.size();
