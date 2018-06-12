@@ -129,7 +129,7 @@ androidAvLogCb(void* ptr, int level, const char* fmt, va_list vl)
         case AV_LOG_TRACE:   android_level = ANDROID_LOG_VERBOSE; break;
         default:             android_level = ANDROID_LOG_DEFAULT; break;
     }
-    __android_log_print(android_level, "FFmpeg", line);
+    __android_log_print(android_level, "FFmpeg", "%s", line);
 }
 #endif
 

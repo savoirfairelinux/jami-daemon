@@ -1178,7 +1178,7 @@ RingAccount::loadAccountFromDHT(const std::string& archive_password, const std::
         RING_ERR("DHT already running (stopping it first).");
         dht_.join();
     }
-    dht_.setOnStatusChanged([this](dht::NodeStatus s4, dht::NodeStatus s6) {
+    dht_.setOnStatusChanged([](dht::NodeStatus s4, dht::NodeStatus s6) {
         RING_WARN("Dht status : IPv4 %s; IPv6 %s", dhtStatusStr(s4), dhtStatusStr(s6));
     });
     dht_.run((in_port_t)dhtPortUsed_, {}, true);
@@ -1754,7 +1754,7 @@ RingAccount::handlePendingCall(PendingCall& pc, bool incoming)
         /*.cert_key = */identity_.first,
         /*.dh_params = */dhParams_,
         /*.timeout = */std::chrono::duration_cast<decltype(tls::TlsParams::timeout)>(TLS_TIMEOUT),
-        /*.cert_check = */[waccount,wcall,remote_device,remote_account,incoming](unsigned status,
+        /*.cert_check = */[waccount,wcall,remote_device,remote_account](unsigned status,
                                                              const gnutls_datum_t* cert_list,
                                                              unsigned cert_num) -> pj_status_t {
             try {
@@ -3308,7 +3308,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
         std::weak_ptr<RingAccount> wshared = shared;
-        auto list_token = shared->dht_.listen<dht::ImMessage>(h, [h,wshared,token,confirm](dht::ImMessage&& msg) {
+        auto list_token = shared->dht_.listen<dht::ImMessage>(h, [wshared,token,confirm](dht::ImMessage&& msg) {
             if (auto sthis = wshared.lock()) {
                 auto& this_ = *sthis;
                 // check expected message confirmation

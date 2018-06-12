@@ -36,7 +36,7 @@ Smartools& Smartools::getInstance()
 
 // Launch process() in new thread
 Smartools::Smartools()
-: loop_([this] { return true; }, [this] { process(); }, [] {})
+: loop_([] { return true; }, [this] { process(); }, [] {})
 {}
 
 Smartools::~Smartools()

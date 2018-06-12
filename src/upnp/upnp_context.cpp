@@ -386,7 +386,7 @@ UPnPContext::addMapping(IGD* igd,
 #endif
     {
         /* success; add it to global list */
-        globalMappings->emplace(port_external, std::move(GlobalMapping{mapping}));
+        globalMappings->emplace(port_external, GlobalMapping{mapping});
 #if HAVE_LIBNATPMP
 #if HAVE_LIBUPNP
         if (not upnp)
