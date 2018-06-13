@@ -475,7 +475,7 @@ VideoInput::initFile(std::string path)
         RING_WARN("Guessing file type for %s", path.c_str());
     }
 
-    return true;
+    return false;
 }
 
 std::shared_future<DeviceParams>
@@ -520,27 +520,25 @@ VideoInput::switchInput(const std::string& resource)
 
     const auto suffix = resource.substr(pos + sep.size());
 
-    bool valid = false;
+    bool ready = false;
 
     if (prefix == DRing::Media::VideoProtocolPrefix::CAMERA) {
         /* Video4Linux2 */
-        valid = initCamera(suffix);
+        ready = initCamera(suffix);
     } else if (prefix == DRing::Media::VideoProtocolPrefix::DISPLAY) {
         /* X11 display name */
 #ifndef _WIN32
-        valid = initX11(suffix);
+        ready = initX11(suffix);
 #else
-        valid = initGdiGrab(suffix);
+        ready = initGdiGrab(suffix);
 #endif
     } else if (prefix == DRing::Media::VideoProtocolPrefix::FILE) {
         /* Pathname */
-        valid = initFile(suffix);
+        ready = initFile(suffix);
     }
 
-    // Unsupported MRL or failed initialization
-    if (not valid) {
-        RING_ERR("Failed to init input for MRL '%s'\n", resource.c_str());
-        return {};
+    if (ready) {
+        foundDecOpts(decOpts_);
     }
 
     switchPending_ = true;
