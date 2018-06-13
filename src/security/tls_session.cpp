@@ -56,7 +56,7 @@ static constexpr const char* DTLS_CERT_PRIORITY_STRING {"SECURE192:-VERS-TLS-ALL
 static constexpr const char* DTLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-VERS-TLS-ALL:+VERS-DTLS-ALL:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_CERT_PRIORITY_STRING {"SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
 static constexpr const char* TLS_FULL_PRIORITY_STRING {"SECURE192:-KX-ALL:+ANON-ECDH:+ANON-DH:+SECURE192:-RSA:%SERVER_PRECEDENCE:%SAFE_RENEGOTIATION"};
-static constexpr uint16_t INPUT_BUFFER_SIZE {16*1024}; // to be coherent with the maximum size advised in path mtu discovery
+static constexpr uint16_t RX_MAX_SIZE {64*1024}; // 64k = max size of a UDP packet
 static constexpr std::size_t INPUT_MAX_SIZE {1000}; // Maximum number of packets to store before dropping (pkt size = DTLS_MTU)
 static constexpr ssize_t FLOOD_THRESHOLD {4*1024};
 static constexpr auto FLOOD_PAUSE = std::chrono::milliseconds(100); // Time to wait after an invalid cookie packet (anti flood attack)
@@ -1118,7 +1118,7 @@ TlsSession::TlsSessionImpl::handleStateEstablished(TlsSessionState state)
     }
 
     std::array<uint8_t, 8> seq;
-    rawPktBuf_.resize(maxPayload_);
+    rawPktBuf_.resize(RX_MAX_SIZE);
     auto ret = gnutls_record_recv_seq(session_, rawPktBuf_.data(), rawPktBuf_.size(), &seq[0]);
 
     if (ret > 0) {
