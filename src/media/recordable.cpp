@@ -68,6 +68,7 @@ Recordable::stopRecording()
         return;
     if (recorder_)
         recorder_->stopRecording();
+    recording_ = false;
     recorder_.reset();
 }
 
