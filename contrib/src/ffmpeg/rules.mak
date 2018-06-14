@@ -35,7 +35,8 @@ FFMPEGCONF += \
 	--enable-parser=h263 \
 	--enable-parser=h264 \
 	--enable-parser=mpeg4video \
-	--enable-parser=vp8
+	--enable-parser=vp8 \
+	--enable-parser=vp9
 
 #encoders/decoders
 FFMPEGCONF += \
@@ -53,6 +54,7 @@ FFMPEGCONF += \
 	--enable-decoder=mpeg4 \
 	--enable-encoder=libvpx_vp8 \
 	--enable-decoder=vp8 \
+	--enable-decoder=vp9 \
 	--enable-encoder=h263 \
 	--enable-encoder=h263p \
 	--enable-decoder=h263 \
