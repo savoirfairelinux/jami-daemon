@@ -38,12 +38,17 @@ extern "C" {
 namespace ring {
 
 MediaRecorder::MediaRecorder()
+    : loop_([]{ return true;},
+            [this]{ process(); },
+            []{})
 {}
 
 MediaRecorder::~MediaRecorder()
 {
     if (isRecording_)
         flush();
+    if (loop_.isRunning())
+        loop_.join();
 }
 
 std::string
@@ -112,6 +117,15 @@ MediaRecorder::startRecording()
     ss << std::put_time(&startTime_, "%Y%m%d-%H%M%S");
     filename_ = ss.str();
 
+    if (!frames_.empty()) {
+        RING_WARN() << "Frame queue not empty at beginning of recording, frames will be lost";
+        while (!frames_.empty())
+            frames_.pop();
+    }
+
+    if (!loop_.isRunning())
+        loop_.start();
+
     encoder_.reset(new MediaEncoder);
 
     RING_DBG() << "Start recording '" << getFilename() << "'";
@@ -158,41 +172,13 @@ MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
 int
 MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
     if (!isRecording_ || !isReady_)
         return 0;
 
-    int streamIdx = (isVideo ? videoIdx_ : audioIdx_);
-    auto filter = (isVideo ? videoFilter_.get() : audioFilter_.get());
-    if (streamIdx < 0 || !filter) {
-        RING_ERR() << "Specified stream is invalid: "
-            << (fromPeer ? "remote " : "local ") << (isVideo ? "video" : "audio");
-        return -1;
-    }
-
-    // get filter input name if frame needs filtering
-    std::string inputName;
-    if (isVideo && nbReceivedVideoStreams_ == 2)
-        inputName = (fromPeer ? "v:main" : "v:overlay");
-    if (!isVideo && nbReceivedAudioStreams_ == 2)
-        inputName = (fromPeer ? "a:1" : "a:2");
-
-    // new reference because we are changing the timestamp
+    // save a copy of the frame, will be filtered/encoded in another thread
     AVFrame* input = av_frame_clone(frame);
-    const MediaStream& ms = streams_[isVideo][fromPeer];
-    // stream has to start at 0
-    input->pts = input->pts - ms.firstTimestamp;
-
-    if (inputName.empty()) // #nofilters
-        return sendToEncoder(input, streamIdx);
-
-    // empty filter graph output before sending more frames
-    emptyFilterGraph();
-
-    int err = filter->feedInput(input, inputName);
-    av_frame_unref(input);
-
-    return err;
+    frames_.emplace(input, isVideo, fromPeer);
+    return 0;
 }
 
 int
@@ -435,6 +421,57 @@ MediaRecorder::flush()
     encoder_->flush();
 
     return 0;
+}
+
+void
+MediaRecorder::process()
+{
+    std::lock_guard<std::mutex> lk(mutex_);
+    if (!isRecording_ || !isReady_)
+        return;
+
+    while (!frames_.empty()) {
+        auto f = frames_.front();
+        bool isVideo = f.isVideo;
+        bool fromPeer = f.fromPeer;
+        AVFrame* input = f.frame;
+        frames_.pop();
+
+        int streamIdx = (isVideo ? videoIdx_ : audioIdx_);
+        auto filter = (isVideo ? videoFilter_.get() : audioFilter_.get());
+        if (streamIdx < 0 || !filter) {
+            RING_ERR() << "Specified stream is invalid: "
+                << (fromPeer ? "remote " : "local ") << (isVideo ? "video" : "audio");
+            av_frame_free(&input);
+            continue;
+        }
+
+        // get filter input name if frame needs filtering
+        std::string inputName;
+        if (isVideo && nbReceivedVideoStreams_ == 2)
+            inputName = (fromPeer ? "v:main" : "v:overlay");
+        if (!isVideo && nbReceivedAudioStreams_ == 2)
+            inputName = (fromPeer ? "a:1" : "a:2");
+
+        // new reference because we are changing the timestamp
+        const MediaStream& ms = streams_[isVideo][fromPeer];
+        // stream has to start at 0
+        input->pts = input->pts - ms.firstTimestamp;
+
+        if (inputName.empty()) { // #nofilters
+            if (sendToEncoder(input, streamIdx) < 0) {
+                RING_ERR() << "Filed to encode frame";
+                av_frame_free(&input);
+                continue;
+            }
+        }
+
+        // empty filter graph output before sending more frames
+        emptyFilterGraph();
+
+        filter->feedInput(input, inputName);
+        av_frame_free(&input);
+    }
 }
 
 } // namespace ring
