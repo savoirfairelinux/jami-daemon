@@ -42,6 +42,7 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
     for (int i = 0; formats[i] != AV_PIX_FMT_NONE; ++i) {
         fallback = formats[i];
         if (formats[i] == accel->format) {
+            RING_DBG() << "'" << accel->name << "' acceleration is supported and will be used";
             return formats[i];
         }
     }
@@ -100,7 +101,7 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
             std::string deviceName = path + entry;
             if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, deviceName.c_str(), nullptr, 0)) >= 0) {
                 codecCtx->hw_device_ctx = hardwareDeviceCtx;
-                RING_DBG("Using '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
+                RING_DBG("Attempting '%s' hardware acceleration with device '%s'", accel.name.c_str(), deviceName.c_str());
                 return ret;
             }
         }
@@ -109,7 +110,7 @@ initDevice(HardwareAccel accel, AVCodecContext* codecCtx)
     // default device (nullptr) works for most cases
     if ((ret = av_hwdevice_ctx_create(&hardwareDeviceCtx, hwType, nullptr, nullptr, 0)) >= 0) {
         codecCtx->hw_device_ctx = hardwareDeviceCtx;
-        RING_DBG("Using '%s' hardware acceleration", accel.name.c_str());
+        RING_DBG("Attempting '%s' hardware acceleration", accel.name.c_str());
     }
 
     return ret;
@@ -130,6 +131,7 @@ setupHardwareDecoding(AVCodecContext* codecCtx)
         { "vaapi", AV_PIX_FMT_VAAPI, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
         { "vdpau", AV_PIX_FMT_VDPAU, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
         { "videotoolbox", AV_PIX_FMT_VIDEOTOOLBOX, { AV_CODEC_ID_H264, AV_CODEC_ID_MPEG4, AV_CODEC_ID_H263 } },
+        { "mediacodec", AV_PIX_FMT_MEDIACODEC, { AV_CODEC_ID_H264, AV_CODEC_ID_VP8, AV_CODEC_ID_MPEG4 } },
     };
 
     for (auto accel : accels) {
