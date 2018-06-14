@@ -25,10 +25,12 @@
 #include "media_filter.h"
 #include "media_stream.h"
 #include "noncopyable.h"
+#include "threadloop.h"
 
 #include <map>
 #include <memory>
 #include <mutex>
+#include <queue>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -102,6 +104,20 @@ class MediaRecorder {
         bool isRecording_ = false;
         bool isReady_ = false;
         bool audioOnly_ = false;
+
+        struct RecordFrame {
+            AVFrame* frame;
+            bool isVideo;
+            bool fromPeer;
+            RecordFrame(AVFrame* f, bool v, bool p)
+                : frame(f)
+                , isVideo(v)
+                , fromPeer(p)
+            {}
+        };
+        ThreadLoop loop_;
+        void process();
+        std::queue<RecordFrame> frames_;
 };
 
 }; // namespace ring
