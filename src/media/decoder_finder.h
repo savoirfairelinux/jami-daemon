@@ -32,9 +32,10 @@ namespace ring {
 AVCodec*
 findDecoder(const enum AVCodecID codec_id)
 {
+    // FFmpeg's MediaCodec is undergoing a huge overhaul and seems to be broken (lots of artifacts)
     const char* codec_name;
     switch (codec_id) {
-#if defined(__ANDROID__) && defined(RING_ACCEL)
+#if 0 && defined(__ANDROID__) && defined(RING_ACCEL)
     case AV_CODEC_ID_MPEG4:
         codec_name = "mpeg4_mediacodec"; break;
     case AV_CODEC_ID_H264:
