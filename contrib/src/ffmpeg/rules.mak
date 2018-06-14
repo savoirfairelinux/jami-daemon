@@ -21,7 +21,7 @@ FFMPEGCONF += \
 	--enable-swscale \
 	--enable-protocols \
 	--enable-bsfs \
-	--enable-filters \
+	--disable-filters \
 	--disable-programs \
 	--disable-postproc
 
@@ -81,6 +81,17 @@ FFMPEGCONF += \
 	--enable-decoder=bmp \
 	--enable-encoder=tiff \
 	--enable-decoder=tiff
+
+#filters
+FFMPEGCONF += \
+	--enable-filter=scale \
+	--enable-filter=overlay \
+	--enable-filter=amix \
+	--enable-filter=amerge \
+	--enable-filter=aresample \
+	--enable-filter=format \
+	--enable-filter=aformat \
+	--enable-filter=fps
 
 #platform specific options
 
