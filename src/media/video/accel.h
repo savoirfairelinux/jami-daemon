@@ -28,9 +28,10 @@
 namespace ring { namespace video {
 
 struct HardwareAccel {
-        std::string name;
-        AVPixelFormat format;
-        std::vector<AVCodecID> supportedCodecs;
+    std::string name;
+    AVPixelFormat format;
+    bool copyBack;
+    std::vector<AVCodecID> supportedCodecs;
 };
 
 const HardwareAccel setupHardwareDecoding(AVCodecContext* codecCtx);
