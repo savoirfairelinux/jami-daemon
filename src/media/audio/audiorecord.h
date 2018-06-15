@@ -48,9 +48,9 @@ class AudioRecord {
         void initFilename(const std::string &peerNumber);
 
         /**
-         * Return the filepath of the recording
+         * Return the file path of the recording
          */
-        std::string getFilename() const;
+        std::string getPath() const;
 
         /**
          * Check if no other file is opened, then create a new one

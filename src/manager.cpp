@@ -2406,7 +2406,7 @@ Manager::toggleRecordingCall(const std::string& id)
     }
 
     const bool result = rec->toggleRecording();
-    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getFilename());
+    emitSignal<DRing::CallSignal::RecordPlaybackFilepath>(id, rec->getPath());
     emitSignal<DRing::CallSignal::RecordingStateChanged>(id, result);
     return result;
 }
