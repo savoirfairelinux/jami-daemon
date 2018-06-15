@@ -52,12 +52,20 @@ MediaRecorder::~MediaRecorder()
 }
 
 std::string
-MediaRecorder::getFilename() const
+MediaRecorder::getPath() const
 {
-    if (audioOnly_)
-        return dir_ + filename_ + ".ogg";
-    else
-        return dir_ + filename_ + ".mkv";
+    if (path_.empty()) {
+        // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
+        if (audioOnly_)
+            return dir_ + filename_ + ".ogg";
+        else
+            return dir_ + filename_ + ".mkv";
+    } else {
+        if (audioOnly_)
+            return path_ + ".ogg";
+        else
+            return path_ + ".mkv";
+    }
 }
 
 void
@@ -76,6 +84,8 @@ MediaRecorder::setMetadata(const std::string& title, const std::string& desc)
 void
 MediaRecorder::setRecordingPath(const std::string& dir)
 {
+    /* FIXME deprecated. path should be passed to startRecording. */
+    RING_WARN() << "Warning, call to deprecated method setRecordingPath";
     if (!dir.empty() && fileutils::isDirectory(dir))
         dir_ = dir;
     else
@@ -109,13 +119,18 @@ MediaRecorder::toggleRecording()
 }
 
 int
-MediaRecorder::startRecording()
+MediaRecorder::startRecording(std::string path)
 {
-    std::time_t t = std::time(nullptr);
-    startTime_ = *std::localtime(&t);
-    std::stringstream ss;
-    ss << std::put_time(&startTime_, "%Y%m%d-%H%M%S");
-    filename_ = ss.str();
+    if (path.empty()) {
+        // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
+        std::time_t t = std::time(nullptr);
+        startTime_ = *std::localtime(&t);
+        std::stringstream ss;
+        ss << std::put_time(&startTime_, "%Y%m%d-%H%M%S");
+        filename_ = ss.str();
+    } else {
+        path_ = path;
+    }
 
     if (!frames_.empty()) {
         RING_WARN() << "Frame queue not empty at beginning of recording, frames will be lost";
@@ -128,7 +143,7 @@ MediaRecorder::startRecording()
 
     encoder_.reset(new MediaEncoder);
 
-    RING_DBG() << "Start recording '" << getFilename() << "'";
+    RING_DBG() << "Start recording '" << getPath() << "'";
     isRecording_ = true;
     return 0;
 }
@@ -137,7 +152,7 @@ void
 MediaRecorder::stopRecording()
 {
     if (isRecording_) {
-        RING_DBG() << "Stop recording '" << getFilename() << "'";
+        RING_DBG() << "Stop recording '" << getPath() << "'";
         flush();
     }
     isRecording_ = false;
@@ -231,7 +246,7 @@ MediaRecorder::initRecord()
         encoderOptions["channels"] = std::to_string(audioStream.nbChannels);
     }
 
-    encoder_->openFileOutput(getFilename(), encoderOptions);
+    encoder_->openFileOutput(getPath(), encoderOptions);
 
     if (nbReceivedVideoStreams_ > 0) {
         auto videoCodec = std::static_pointer_cast<ring::SystemVideoCodecInfo>(
