@@ -38,10 +38,10 @@ Recordable::initRecFilename(const std::string& /*filename*/)
 {}
 
 std::string
-Recordable::getFilename() const
+Recordable::getPath() const
 {
     if (recorder_)
-        return recorder_->getFilename();
+        return recorder_->getPath();
     else
         return "";
 }

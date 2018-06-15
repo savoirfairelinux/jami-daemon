@@ -63,7 +63,7 @@ public:
     /**
      * Return the file path for this recording
      */
-    virtual std::string getFilename() const;
+    virtual std::string getPath() const;
 
     bool isAudioOnly() const;
 
