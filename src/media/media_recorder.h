@@ -44,7 +44,9 @@ class MediaRecorder {
         MediaRecorder();
         ~MediaRecorder();
 
-        std::string getFilename() const;
+        std::string getPath() const;
+
+        void setPath(const std:string path);
 
         void audioOnly(bool audioOnly);
 
@@ -52,6 +54,7 @@ class MediaRecorder {
         // default description is: "Recorded at %Y-%m-%d %H:%M:%S with Ring https://ring.cx"
         void setMetadata(const std::string& title, const std::string& desc);
 
+        [[deprecated("use setPath to set full recording path")]]
         void setRecordingPath(const std::string& dir);
 
         // adjust nb of streams before recording
@@ -91,10 +94,15 @@ class MediaRecorder {
         std::map<bool, std::map<bool, MediaStream>> streams_;
 
         std::tm startTime_;
-        std::string dir_;
-        std::string filename_;
         std::string title_;
         std::string description_;
+
+        std::string path_;
+
+        [[deprecated]]
+        std::string dir_;
+        [[deprecated]]
+        std::string filename_;
 
         unsigned nbExpectedStreams_ = 0;
         unsigned nbReceivedVideoStreams_ = 0;
