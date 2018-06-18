@@ -28,14 +28,22 @@
 namespace ring {
 
 Recordable::Recordable()
-{}
+{
+    recorder_.reset();
+    recorder_ = std::make_shared<MediaRecorder>();
+}
 
 Recordable::~Recordable()
 {}
 
 void
-Recordable::initRecFilename(const std::string& /*filename*/)
-{}
+Recordable::initRecFilename(const std::string& path)
+{
+    std::lock_guard<std::mutex> lk {apiMutex_};
+    if(!recording_ && recorder_) {
+        recorder_->setPath(path);
+    }
+}
 
 std::string
 Recordable::getPath() const
@@ -50,9 +58,13 @@ bool
 Recordable::toggleRecording()
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
-    if (!recording_ || !recorder_) {
-        recorder_.reset();
-        recorder_ = std::make_shared<MediaRecorder>();
+    if (!recorder_) {
+        RING_WARN("Recordable::startRecording: NULL recorder");
+        return false;
+    }
+
+    if (!recording_) {
+        // FIXME uses old way of setting recording path in MediaRecorder
         recorder_->audioOnly(isAudioOnly_);
         recorder_->setRecordingPath(Manager::instance().audioPreference.getRecordPath());
     }
@@ -60,16 +72,37 @@ Recordable::toggleRecording()
     return recording_;
 }
 
+bool
+Recordable::startRecording()
+{
+    std::lock_guard<std::mutex> lk {apiMutex_};
+    if (!recorder_) {
+        RING_WARN("Recordable::startRecording: NULL recorder");
+        return false;
+    }
+
+    if (!recording_) {
+        recorder_->audioOnly(isAudioOnly_);
+        recording_ = recorder_->startRecording();
+    }
+
+    return recording_;
+}
+
 void
 Recordable::stopRecording()
 {
     std::lock_guard<std::mutex> lk {apiMutex_};
+    if (!recorder_) {
+        RING_WARN("Recordable::startRecording: NULL recorder");
+        return;
+    }
+
     if (not recording_)
         return;
-    if (recorder_)
-        recorder_->stopRecording();
+
+    recorder_->stopRecording();
     recording_ = false;
-    recorder_.reset();
 }
 
 bool
