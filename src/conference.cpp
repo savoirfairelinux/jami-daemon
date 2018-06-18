@@ -48,7 +48,6 @@ Conference::Conference()
     , videoMixer_(nullptr)
 #endif
 {
-    Recordable::initRecFilename(id_);
 }
 
 Conference::~Conference()
