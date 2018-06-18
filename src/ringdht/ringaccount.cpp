@@ -347,7 +347,6 @@ RingAccount::newOutgoingCall(const std::string& toUrl,
 
     call->setIPToIP(true);
     call->setSecure(isTlsEnabled());
-    call->initRecFilename(toUrl);
 
     try {
         const std::string toUri = parseRingUri(suffix);
@@ -519,7 +518,6 @@ RingAccount::onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, Ip
     call.initIceMediaTransport(true);
     call.setIPToIP(true);
     call.setPeerNumber(getToUri(to_id+"@"+target.toString(true).c_str()));
-    call.initRecFilename(to_id);
 
     const auto localAddress = ip_utils::getInterfaceAddr(getLocalInterface());
 
@@ -2496,7 +2494,6 @@ RingAccount::replyToIncomingIceMsg(const std::shared_ptr<SIPCall>& call,
     }
 
     call->setPeerNumber(from);
-    call->initRecFilename(from);
 
     // Let the call handled by the PendingCall handler loop
     {

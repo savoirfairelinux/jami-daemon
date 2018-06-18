@@ -56,9 +56,9 @@ public:
     void stopRecording();
 
     /**
-     * Init the recording file name according to path specified in configuration
+     * Start recording
      */
-    void initRecFilename(const std::string& filename);
+    bool startRecording(const std::string& path);
 
     /**
      * Return the file path for this recording
