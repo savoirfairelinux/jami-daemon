@@ -60,6 +60,23 @@ Recordable::toggleRecording()
     return recording_;
 }
 
+bool
+Recordable::startRecording(std::string path)
+{
+    std::lock_guard<std::mutex> lk {apiMutex_};
+    if (!recording_) {
+        if (!recorder_) {
+            recorder_.reset();
+            recorder_ = std::make_shared<MediaRecorder>();
+        }
+
+        recorder_->audioOnly(isAudioOnly_);
+        recording_ = recorder_->startRecording(path);
+    }
+
+    return recording_;
+}
+
 void
 Recordable::stopRecording()
 {
