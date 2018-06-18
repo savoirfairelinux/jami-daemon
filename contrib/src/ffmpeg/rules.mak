@@ -139,7 +139,9 @@ FFMPEGCONF += \
 	--enable-vaapi \
 	--enable-hwaccel=h264_vaapi \
 	--enable-hwaccel=mpeg4_vaapi \
-	--enable-hwaccel=h263_vaapi
+	--enable-hwaccel=h263_vaapi \
+	--enable-hwaccel=vp8_vaapi \
+	--enable-hwaccel=mjpeg_vaapi
 endif
 endif
 
