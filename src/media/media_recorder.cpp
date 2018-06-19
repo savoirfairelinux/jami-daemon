@@ -278,7 +278,7 @@ MediaRecorder::initRecord()
     }
 
     // ready to start recording if audio stream index and video stream index are valid
-    isReady_ = (nbReceivedAudioStreams_ > 0 && audioIdx_ >= 0)
+    isReady_ = (nbReceivedAudioStreams_ == 0 || (nbReceivedAudioStreams_ > 0 && audioIdx_ >= 0))
         && (audioOnly_ || (nbReceivedVideoStreams_ > 0 && videoIdx_ >= 0));
     if (isReady_) {
         std::unique_ptr<MediaIOHandle> ioHandle;
