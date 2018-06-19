@@ -45,7 +45,7 @@ public:
 
     // Define conversions to and from AVRational (equivalent)
     rational(AVRational r) : num_(r.num), den_(r.den) {};
-    operator AVRational() { return AVRational{num_, den_}; }
+    operator AVRational() const { return AVRational{num_, den_}; }
 
     // Normal copy constructors and assignment operators
 
