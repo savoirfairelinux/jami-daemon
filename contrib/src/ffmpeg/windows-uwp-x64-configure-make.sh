@@ -15,7 +15,6 @@ cd Output/Windows10/x64
 --enable-shared \
 --enable-cross-compile \
 --target-os=win32 \
---enable-debug \
 --enable-libopus \
 --enable-encoder=libopus \
 --enable-decoder=libopus \
