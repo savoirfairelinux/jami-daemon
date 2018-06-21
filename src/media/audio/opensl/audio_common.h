@@ -48,7 +48,7 @@ inline SLDataFormat_PCM convertToSLSampleFormat(const ring::AudioFormat& infos)
 
 #define SLASSERT(x) { \
         if(SL_RESULT_SUCCESS != (x))\
-            throw std::runtime_error("OpenSLES error");\
+            throw std::runtime_error("OpenSLES error " + std::to_string(x));\
     }
 
 /*
