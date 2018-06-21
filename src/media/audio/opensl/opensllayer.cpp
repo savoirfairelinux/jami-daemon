@@ -252,13 +252,22 @@ OpenSLLayer::initAudioPlayback()
 {
     using namespace std::placeholders;
     std::lock_guard<std::mutex> lck(playMtx);
-    player_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
-    player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
-    player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this, _1));
+    try  {
+        player_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+        player_->setBufQueue(&playBufQueue_, &freePlayBufQueue_);
+        player_->registerCallback(std::bind(&OpenSLLayer::engineServicePlay, this, _1));
+    } catch (const std::exception& e) {
+        RING_ERR("Error initializing audio playback: %s", e.what());
+        return;
+    }
 
-    ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
-    ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
-    ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
+    try  {
+        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+        ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
+        ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
+    } catch (const std::exception& e) {
+        RING_ERR("Error initializing ringtone playback: %s", e.what());
+    }
 }
 
 void
@@ -266,18 +275,26 @@ OpenSLLayer::initAudioCapture()
 {
     using namespace std::placeholders;
     std::lock_guard<std::mutex> lck(recMtx);
-    recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
-    recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
-    recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this, _1));
+    try  {
+        recorder_.reset(new opensl::AudioRecorder(hardwareFormat_, engineInterface_));
+        recorder_->setBufQueues(&freeRecBufQueue_, &recBufQueue_);
+        recorder_->registerCallback(std::bind(&OpenSLLayer::engineServiceRec, this, _1));
+    } catch (const std::exception& e) {
+        RING_ERR("Error initializing audio capture: %s", e.what());
+    }
 }
 
 void
 OpenSLLayer::startAudioPlayback()
 {
+    if (not player_ and not ringtone_)
+        return;
     RING_WARN("Start audio playback");
 
-    player_->start();
-    ringtone_->start();
+    if (player_)
+        player_->start();
+    if (ringtone_)
+        ringtone_->start();
     playThread = std::thread([&]() {
         std::unique_lock<std::mutex> lck(playMtx);
         while (player_ || ringtone_) {
@@ -304,6 +321,8 @@ OpenSLLayer::startAudioPlayback()
 void
 OpenSLLayer::startAudioCapture()
 {
+    if (not recorder_)
+        return;
     RING_DBG("Start audio capture");
 
     recorder_->start();
