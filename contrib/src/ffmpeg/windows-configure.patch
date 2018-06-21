@@ -1,0 +1,32 @@
+--- a/configure
++++ b/configure
+@@ -1486,7 +1486,7 @@ require_cpp_condition(){
+ require_pkg_config(){
+     log require_pkg_config "$@"
+     pkg_version="$2"
+-    check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
++    #check_pkg_config "$@" || die "ERROR: $pkg_version not found using pkg-config$pkg_config_fail_message"
+ }
+ 
+ hostcc_e(){
+@@ -6735,17 +6735,6 @@ flatten_extralibs_wrapper(){
+     eval printf \''%s'\' \""\$$list_name"\"
+ }
+ 
+-for linkunit in $LIBRARY_LIST; do
+-    unset current_extralibs
+-    eval components=\$$(toupper ${linkunit})_COMPONENTS_LIST
+-    for comp in ${components}; do
+-        enabled $comp || continue
+-        comp_extralibs="${comp}_extralibs"
+-        append current_extralibs $comp_extralibs
+-    done
+-    eval prepend ${linkunit}_extralibs $current_extralibs
+-done
+-
+ for linkunit in $LIBRARY_LIST $PROGRAM_LIST $EXTRALIBS_LIST; do
+     eval ${linkunit}_extralibs=\$\(flatten_extralibs_wrapper ${linkunit}_extralibs\)
+ done
+-- 
+2.10.2.windows.1
+
