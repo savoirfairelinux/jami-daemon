@@ -11,6 +11,8 @@ cd Output/Windows10/x64
 --disable-programs \
 --disable-d3d11va \
 --disable-dxva2 \
+--disable-debug \
+--disable-postproc \
 --arch=x86_64 \
 --enable-shared \
 --enable-cross-compile \
@@ -23,8 +25,7 @@ cd Output/Windows10/x64
 --enable-parser=h264 \
 --enable-libx264 \
 --extra-cflags="-MD -DWINAPI_FAMILY=WINAPI_FAMILY_APP -D_WIN32_WINNT=0x0A00 -I../../../../../msvc/include -I../../../../../msvc/include/opus" \
---extra-ldflags="-APPCONTAINER WindowsApp.lib libopus.lib -LIBPATH:../../../../../msvc/lib/x64" \
+--extra-ldflags="-APPCONTAINER WindowsApp.lib libopus.lib libx264.lib -LIBPATH:../../../../../msvc/lib/x64" \
 --prefix=../../../Build/Windows10/x64
-make -j8
-make install
+make -j8 install
 cd ../../..

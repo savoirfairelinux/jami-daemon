@@ -17,6 +17,6 @@ del %FFMPEG_VERSION%.tar && del %FFMPEG_VERSION%.tar.gz && del pax_global_header
 rename FFmpeg-%FFMPEG_VERSION% ffmpeg
 
 cd ffmpeg
-git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-no-pkg-config.patch
+git apply --reject --whitespace=fix %SRC%\ffmpeg\windows-configure.patch
 
 cd %SRC%
