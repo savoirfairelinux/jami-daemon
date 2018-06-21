@@ -414,10 +414,10 @@ void
 MediaRecorder::emptyFilterGraph()
 {
     AVFrame* output;
-    if (videoIdx_ >= 0)
+    if (videoIdx_ >= 0 && videoFilter_)
         while ((output = videoFilter_->readOutput()))
             sendToEncoder(output, videoIdx_);
-    if (audioIdx_ >= 0)
+    if (audioIdx_ >= 0 && audioFilter_)
         while ((output = audioFilter_->readOutput()))
             sendToEncoder(output, audioIdx_);
 }
@@ -464,7 +464,7 @@ MediaRecorder::process()
 
     int streamIdx = (recframe.isVideo ? videoIdx_ : audioIdx_);
     auto filter = (recframe.isVideo ? videoFilter_.get() : audioFilter_.get());
-    if (streamIdx < 0 || !filter) {
+    if (streamIdx < 0) {
         RING_ERR() << "Specified stream is invalid: "
             << (recframe.fromPeer ? "remote " : "local ")
             << (recframe.isVideo ? "video" : "audio");
@@ -479,18 +479,15 @@ MediaRecorder::process()
     if (!recframe.isVideo && nbReceivedAudioStreams_ == 2)
         inputName = (recframe.fromPeer ? "a:1" : "a:2");
 
-    if (inputName.empty()) { // #nofilters
+    emptyFilterGraph();
+    if (filter) {
+        filter->feedInput(input, inputName);
+    } else if (inputName.empty()) { // #nofilters
         if (sendToEncoder(input, streamIdx) < 0) {
             RING_ERR() << "Failed to encode frame";
-            av_frame_free(&input);
-            return;
         }
     }
 
-    // empty filter graph output before sending more frames
-    emptyFilterGraph();
-
-    filter->feedInput(input, inputName);
     av_frame_free(&input);
 }
 
