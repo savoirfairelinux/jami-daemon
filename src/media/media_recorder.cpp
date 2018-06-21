@@ -59,12 +59,12 @@ MediaRecorder::getPath() const
         if (audioOnly_)
             return dir_ + filename_ + ".ogg";
         else
-            return dir_ + filename_ + ".mkv";
+            return dir_ + filename_ + ".webm";
     } else {
         if (audioOnly_)
             return path_ + ".ogg";
         else
-            return path_ + ".mkv";
+            return path_ + ".webm";
     }
 }
 
