@@ -125,6 +125,7 @@ class MediaRecorder {
         };
         ThreadLoop loop_;
         void process();
+        std::mutex qLock_;
         std::queue<RecordFrame> frames_;
 };
 

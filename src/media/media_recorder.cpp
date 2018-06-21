@@ -196,7 +196,11 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
         return 0;
 
     // save a copy of the frame, will be filtered/encoded in another thread
+    const MediaStream& ms = streams_[isVideo][fromPeer];
     AVFrame* input = av_frame_clone(frame);
+    input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0
+
+    std::lock_guard<std::mutex> q(qLock_);
     frames_.emplace(input, isVideo, fromPeer);
     return 0;
 }
@@ -204,8 +208,6 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
 int
 MediaRecorder::initRecord()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
-
     // need to get encoder parameters before calling openFileOutput
     // openFileOutput needs to be called before adding any streams
 
@@ -250,6 +252,8 @@ MediaRecorder::initRecord()
         encoderOptions["sample_rate"] = std::to_string(audioStream.sampleRate);
         encoderOptions["channels"] = std::to_string(audioStream.nbChannels);
     }
+
+    std::lock_guard<std::mutex> lk(mutex_); // lock as late as possible
 
     encoder_->openFileOutput(getPath(), encoderOptions);
 
@@ -421,6 +425,7 @@ MediaRecorder::emptyFilterGraph()
 int
 MediaRecorder::sendToEncoder(AVFrame* frame, int streamIdx)
 {
+    std::lock_guard<std::mutex> lk(mutex_);
     try {
         encoder_->encode(frame, streamIdx);
     } catch (const MediaEncoderException& e) {
@@ -435,11 +440,12 @@ MediaRecorder::sendToEncoder(AVFrame* frame, int streamIdx)
 int
 MediaRecorder::flush()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
     if (!isRecording_ || encoder_->getStreamCount() <= 0)
         return 0;
 
     emptyFilterGraph();
+
+    std::lock_guard<std::mutex> lk(mutex_);
     encoder_->flush();
 
     return 0;
@@ -448,52 +454,44 @@ MediaRecorder::flush()
 void
 MediaRecorder::process()
 {
-    std::lock_guard<std::mutex> lk(mutex_);
-    if (!isRecording_ || !isReady_)
+    std::lock_guard<std::mutex> q(qLock_);
+    if (!isRecording_ || !isReady_ || frames_.empty())
         return;
 
-    while (!frames_.empty()) {
-        auto f = frames_.front();
-        bool isVideo = f.isVideo;
-        bool fromPeer = f.fromPeer;
-        AVFrame* input = f.frame;
-        frames_.pop();
+    auto recframe = frames_.front();
+    frames_.pop();
+    AVFrame* input = recframe.frame;
 
-        int streamIdx = (isVideo ? videoIdx_ : audioIdx_);
-        auto filter = (isVideo ? videoFilter_.get() : audioFilter_.get());
-        if (streamIdx < 0 || !filter) {
-            RING_ERR() << "Specified stream is invalid: "
-                << (fromPeer ? "remote " : "local ") << (isVideo ? "video" : "audio");
-            av_frame_free(&input);
-            continue;
-        }
-
-        // get filter input name if frame needs filtering
-        std::string inputName;
-        if (isVideo && nbReceivedVideoStreams_ == 2)
-            inputName = (fromPeer ? "v:main" : "v:overlay");
-        if (!isVideo && nbReceivedAudioStreams_ == 2)
-            inputName = (fromPeer ? "a:1" : "a:2");
-
-        // new reference because we are changing the timestamp
-        const MediaStream& ms = streams_[isVideo][fromPeer];
-        // stream has to start at 0
-        input->pts = input->pts - ms.firstTimestamp;
-
-        if (inputName.empty()) { // #nofilters
-            if (sendToEncoder(input, streamIdx) < 0) {
-                RING_ERR() << "Filed to encode frame";
-                av_frame_free(&input);
-                continue;
-            }
-        }
-
-        // empty filter graph output before sending more frames
-        emptyFilterGraph();
-
-        filter->feedInput(input, inputName);
+    int streamIdx = (recframe.isVideo ? videoIdx_ : audioIdx_);
+    auto filter = (recframe.isVideo ? videoFilter_.get() : audioFilter_.get());
+    if (streamIdx < 0 || !filter) {
+        RING_ERR() << "Specified stream is invalid: "
+            << (recframe.fromPeer ? "remote " : "local ")
+            << (recframe.isVideo ? "video" : "audio");
         av_frame_free(&input);
+        return;
     }
+
+    // get filter input name if frame needs filtering
+    std::string inputName;
+    if (recframe.isVideo && nbReceivedVideoStreams_ == 2)
+        inputName = (recframe.fromPeer ? "v:main" : "v:overlay");
+    if (!recframe.isVideo && nbReceivedAudioStreams_ == 2)
+        inputName = (recframe.fromPeer ? "a:1" : "a:2");
+
+    if (inputName.empty()) { // #nofilters
+        if (sendToEncoder(input, streamIdx) < 0) {
+            RING_ERR() << "Failed to encode frame";
+            av_frame_free(&input);
+            return;
+        }
+    }
+
+    // empty filter graph output before sending more frames
+    emptyFilterGraph();
+
+    filter->feedInput(input, inputName);
+    av_frame_free(&input);
 }
 
 } // namespace ring
