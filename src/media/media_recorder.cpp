@@ -144,10 +144,11 @@ MediaRecorder::toggleRecording()
 int
 MediaRecorder::startRecording()
 {
+    std::time_t t = std::time(nullptr);
+    startTime_ = *std::localtime(&t);
+
     if (path_.empty()) {
         // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
-        std::time_t t = std::time(nullptr);
-        startTime_ = *std::localtime(&t);
         std::stringstream ss;
         ss << std::put_time(&startTime_, "%Y%m%d-%H%M%S");
         filename_ = ss.str();
