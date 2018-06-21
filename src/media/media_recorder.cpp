@@ -306,17 +306,19 @@ MediaRecorder::setupVideoOutput()
     const MediaStream& peer = streams_[true][true];
     const MediaStream& local = streams_[true][false];
 
+    // vp8 supports only yuv420p
+    videoFilter_.reset(new MediaFilter);
     switch (nbReceivedVideoStreams_) {
-    case 1: // use a stream with a valid size
-        if (peer.width > 0 && peer.height > 0)
-            encoderStream = peer;
-        else if (local.width > 0 && local.height > 0)
-            encoderStream = local;
-        else
+    case 1:
+        encoderStream = (peer.width > 0 && peer.height > 0 ? peer : local);
+        if (videoFilter_->initialize("format=pix_fmts=yuv420p", encoderStream) < 0) {
+            RING_ERR() << "Failed to initialize video filter";
             encoderStream.format = -1; // invalidate stream
+        } else {
+            encoderStream = videoFilter_->getOutputParams();
+        }
         break;
     case 2: // overlay local video over peer video
-        videoFilter_.reset(new MediaFilter);
         if (videoFilter_->initialize(buildVideoFilter(),
                 std::vector<MediaStream>{peer, local}) < 0) {
             RING_ERR() << "Failed to initialize video filter";
@@ -327,8 +329,11 @@ MediaRecorder::setupVideoOutput()
         break;
     default:
         RING_ERR() << "Recording more than 2 video streams is not supported";
-        encoderStream.format = -1; // invalidate stream
+        break;
     }
+
+    if (encoderStream.format < 0)
+        return encoderStream;
 
     RING_DBG() << "Video recorder '"
         << (encoderStream.name.empty() ? "(null)" : encoderStream.name)
@@ -372,22 +377,20 @@ MediaRecorder::setupAudioOutput()
     MediaStream encoderStream;
     const MediaStream& peer = streams_[false][true];
     const MediaStream& local = streams_[false][false];
-    std::stringstream aFilter;
 
+    // resample to common audio format, so any player can play the file
+    audioFilter_.reset(new MediaFilter);
     switch (nbReceivedAudioStreams_) {
-    case 1: // use a stream with a valid sample rate and channel count
-        if (peer.sampleRate > 0 && peer.nbChannels > 0)
-            encoderStream = peer;
-        else if (local.sampleRate > 0 && local.nbChannels > 0)
-            encoderStream = local;
-        else
+    case 1:
+        encoderStream = (peer.sampleRate > 0 && peer.nbChannels > 0 ? peer : local);
+        if (audioFilter_->initialize("aresample=osr=48000:ocl=stereo:osf=s16",
+                encoderStream) < 0) {
+            RING_ERR() << "Failed to initialize audio filter";
             encoderStream.format = -1; // invalidate stream
+        }
         break;
     case 2: // mix both audio streams
-        audioFilter_.reset(new MediaFilter);
-        // resample to common audio format, so any player can play the file
-        aFilter << "[a:1] [a:2] amix, aresample=osr=48000:ocl=stereo:osf=s16";
-        if (audioFilter_->initialize(aFilter.str(),
+        if (audioFilter_->initialize("[a:1][a:2] amix,aresample=osr=48000:ocl=stereo:osf=s16",
                 std::vector<MediaStream>{peer, local}) < 0) {
             RING_ERR() << "Failed to initialize audio filter";
             encoderStream.format = -1; // invalidate stream
@@ -400,6 +403,9 @@ MediaRecorder::setupAudioOutput()
         encoderStream.format = -1; // invalidate stream
         break;
     }
+
+    if (encoderStream.format < 0)
+        return encoderStream;
 
     RING_DBG() << "Audio recorder '"
         << (encoderStream.name.empty() ? "(null)" : encoderStream.name)
@@ -473,7 +479,7 @@ MediaRecorder::process()
     }
 
     // get filter input name if frame needs filtering
-    std::string inputName;
+    std::string inputName = "default";
     if (recframe.isVideo && nbReceivedVideoStreams_ == 2)
         inputName = (recframe.fromPeer ? "v:main" : "v:overlay");
     if (!recframe.isVideo && nbReceivedAudioStreams_ == 2)
@@ -482,10 +488,6 @@ MediaRecorder::process()
     emptyFilterGraph();
     if (filter) {
         filter->feedInput(input, inputName);
-    } else if (inputName.empty()) { // #nofilters
-        if (sendToEncoder(input, streamIdx) < 0) {
-            RING_ERR() << "Failed to encode frame";
-        }
     }
 
     av_frame_free(&input);
