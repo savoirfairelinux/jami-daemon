@@ -563,10 +563,12 @@ DhtPeerConnector::Impl::onTrustedRequestMsg(PeerConnectionMsg&& request,
     }
 
     std::vector<std::string> addresses;
-    if (sendRelayV4)
-        addresses.emplace_back(turnAuthv4_->peerRelayAddr().toString(true, true));
-    if (sendRelayV6)
-        addresses.emplace_back(turnAuthv6_->peerRelayAddr().toString(true, true));
+    auto relayIpv4 = turnAuthv4_->peerRelayAddr();
+    if (sendRelayV4 && relayIpv4)
+        addresses.emplace_back(relayIpv4.toString(true, true));
+    auto relayIpv6 = turnAuthv6_->peerRelayAddr();
+    if (sendRelayV6 && relayIpv6)
+        addresses.emplace_back(relayIpv6.toString(true, true));
     if (addresses.empty()) {
         RING_DBG() << account << "[CNX] connection aborted, no family address found";
         return;
