@@ -17,22 +17,34 @@ rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
 
+echo off
+for /F "tokens=* usebackq" %%F in (`bash -c "pwd | grep /mnt/c/"`) do (
+    set NO_AUTO=%%F
+)
+if "%NO_AUTO%"=="" (
+    set ROOTPATH=/c/
+    set PROJECTSRC=""
+) else (
+    set ROOTPATH=/mnt/c/
+    set PROJECTSRC=\pjproject
+)
+set SRC=%~dp0
 set UNIXPATH=%SRC:\=/%
-set UNIXPATH=%UNIXPATH:C:=/mnt/c%
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/gnutls.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ipv6.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ice_config.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/multiple_listeners.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/pj_ice_sess.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_turn_fallback.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/fix_ioqueue_ipv6_sendto.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/add_dtls_transport.patch"
-bash -c "%PATCH_CMD% %UNIXPATH%pjproject/rfc6062.patch"
+set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/gnutls.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/ipv6.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/ice_config.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/multiple_listeners.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/pj_ice_sess.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/fix_turn_fallback.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/fix_ioqueue_ipv6_sendto.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/add_dtls_transport.patch"
+bash -c "%PATCH_CMD% %UNIXPATH%%PROJECTSRC%/rfc6062.patch"
 
-%APPLY_CMD% %SRC%\pjproject\pj_vs_gnutls.patch
-%APPLY_CMD% %SRC%\pjproject\pj_vs_config.patch
-%APPLY_CMD% %SRC%\pjproject\pj_vs2017_props.patch
+%APPLY_CMD% %SRC%%PROJECTSRC%\pj_vs_gnutls.patch
+%APPLY_CMD% %SRC%%PROJECTSRC%\pj_vs_config.patch
+%APPLY_CMD% %SRC%%PROJECTSRC%\pj_vs2017_props.patch
 
-%APPLY_CMD% %SRC%\pjproject\pj_uwp.patch
+%APPLY_CMD% %SRC%%PROJECTSRC%\pj_uwp.patch
 
 cd %SRC%
