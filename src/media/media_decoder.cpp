@@ -197,6 +197,7 @@ MediaDecoder::setupStream(AVMediaType mediaType)
         return -1;
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
+    decoderCtx_->framerate = avStream_->avg_frame_rate;
 
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
     if (mediaType == AVMEDIA_TYPE_AUDIO) {
@@ -289,9 +290,12 @@ MediaDecoder::decode(VideoFrame& result)
             }
         }
 #endif
+        if (frame->pts != AV_NOPTS_VALUE)
+            frame->pts = av_rescale_q(frame->pts, avStream_->time_base, decoderCtx_->time_base);
+
         if (auto rec = recorder_.lock()) {
             if (!recordingStarted_) {
-                auto ms = MediaStream("", avStream_, frame->pts);
+                auto ms = MediaStream("", decoderCtx_, frame->pts);
                 ms.format = frame->format; // might not match avStream_ if accel is used
                 if (rec->addStream(true, true, ms) >= 0)
                     recordingStarted_ = true;
@@ -355,9 +359,12 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     if (frameFinished) {
         av_packet_unref(&inpacket);
 
+        if (frame->pts != AV_NOPTS_VALUE)
+            frame->pts = av_rescale_q(frame->pts, avStream_->time_base, decoderCtx_->time_base);
+
         if (auto rec = recorder_.lock()) {
             if (!recordingStarted_) {
-                auto ms = MediaStream("", avStream_, frame->pts);
+                auto ms = MediaStream("", decoderCtx_, frame->pts);
                 if (rec->addStream(false, true, ms) >= 0)
                     recordingStarted_ = true;
                 else
