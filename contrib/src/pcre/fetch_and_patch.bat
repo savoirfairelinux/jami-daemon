@@ -19,6 +19,9 @@ rename %BUILD%\%PCRE_NAME%-%PCRE_VERSION% %PCRE_NAME%
 cd %BUILD%\%PCRE_NAME%
 
 mkdir msvc && cd msvc
+setlocal
+set PATH=C:\\Program Files\\CMake\\bin\\;%PATH%
 cmake .. -G "Visual Studio 15 2017 Win64"
+endlocal
 
 cd %SRC%
