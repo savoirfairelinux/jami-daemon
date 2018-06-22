@@ -825,13 +825,12 @@ class Manager {
         /**
          * Create a new outgoing call
          * @param toUrl The address to call
-         * @param preferredAccountId The IP of preferred account to use.
-         *   This is not necessary the account used.
+         * @param accountId account to use
          * @return Call*  A shared pointer on a valid call.
          * @note This function raises VoipLinkException() on errors.
          */
         std::shared_ptr<Call> newOutgoingCall(const std::string& toUrl,
-                                              const std::string& preferredAccountId,
+                                              const std::string& accountId,
                                               const std::map<std::string, std::string>& volatileCallDetails = {});
 
         CallFactory callFactory;

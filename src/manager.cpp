@@ -845,7 +845,7 @@ Manager::unregisterAccounts()
 /* Main Thread */
 
 std::string
-Manager::outgoingCall(const std::string& preferred_account_id,
+Manager::outgoingCall(const std::string& account_id,
                           const std::string& to,
                           const std::string& conf_id,
                           const std::map<std::string, std::string>& volatileCallDetails)
@@ -856,17 +856,14 @@ Manager::outgoingCall(const std::string& preferred_account_id,
     }
 
     RING_DBG() << "try outgoing call to '" << to << "'"
-               << " with preferred account '" << preferred_account_id << "'";
+               << " with account '" << account_id << "'";
 
     std::string current_call_id(getCurrentCallId());
     std::string to_cleaned = hookPreference.getNumberAddPrefix() + trim(to);
     std::shared_ptr<Call> call;
 
     try {
-        /* RING_WARN: after this call the account_id is obsolete
-         * as the factory may decide to use another account (like IP2IP).
-         */
-        call = newOutgoingCall(to_cleaned, preferred_account_id, volatileCallDetails);
+        call = newOutgoingCall(to_cleaned, account_id, volatileCallDetails);
     } catch (const std::exception &e) {
         RING_ERR("%s", e.what());
         return {};
@@ -3041,37 +3038,12 @@ Manager::getAudioDriver()
 
 std::shared_ptr<Call>
 Manager::newOutgoingCall(const std::string& toUrl,
-                         const std::string& preferredAccountId,
+                         const std::string& accountId,
                          const std::map<std::string, std::string>& volatileCallDetails)
 {
-    auto account = getAccount(preferredAccountId);
+    auto account = getAccount(accountId);
     if (account and !account->isUsable()) {
-        RING_WARN("Prefered account is not usable for calling");
-        account = nullptr;
-    }
-
-    // If no prefered or not suitable account given,
-    // find first usable account depending on url scheme.
-    if (toUrl.find("ring:") != std::string::npos) {
-        if (!account or ::strcmp(account->getAccountType(), RingAccount::ACCOUNT_TYPE)) {
-            account = findAccount<RingAccount>([] (const std::shared_ptr<RingAccount>& acc) {
-                    return acc->isUsable();
-                });
-        }
-    } else if (!account or ::strcmp(account->getAccountType(), SIPAccount::ACCOUNT_TYPE)) {
-        // For IP url restricts results on IP2IP accounts
-        auto strippedToUrl = toUrl;
-        sip_utils::stripSipUriPrefix(strippedToUrl);
-        auto only_ip = IpAddr::isValid(strippedToUrl);
-
-        account = findAccount<SIPAccount>([only_ip](const std::shared_ptr<SIPAccount>& acc) {
-                                              return acc->isUsable()
-                                                  and (!only_ip or acc->isIP2IP());
-                                          });
-    }
-
-    if (!account) {
-        RING_ERR("No suitable account to create outgoing call");
+        RING_WARN("Account is not usable for calling");
         return nullptr;
     }
 
