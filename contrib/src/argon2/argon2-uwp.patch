@@ -62,7 +62,23 @@
      <WholeProgramOptimization>true</WholeProgramOptimization>
      <CharacterSet>MultiByte</CharacterSet>
    </PropertyGroup>
-@@ -179,6 +179,7 @@
+@@ -132,6 +132,7 @@
+       <Optimization>Disabled</Optimization>
+       <SDLCheck>true</SDLCheck>
+       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include</AdditionalIncludeDirectories>
+     </ClCompile>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+@@ -140,6 +141,7 @@
+       <Optimization>Disabled</Optimization>
+       <SDLCheck>true</SDLCheck>
+       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include</AdditionalIncludeDirectories>
+     </ClCompile>
+   </ItemDefinitionGroup>
+   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+@@ -150,6 +152,7 @@
        <IntrinsicFunctions>true</IntrinsicFunctions>
        <SDLCheck>true</SDLCheck>
        <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -70,7 +86,14 @@
      </ClCompile>
      <Link>
        <EnableCOMDATFolding>true</EnableCOMDATFolding>
-\ No newline at end of file
+@@ -179,6 +182,7 @@
+       <IntrinsicFunctions>true</IntrinsicFunctions>
+       <SDLCheck>true</SDLCheck>
+       <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <AdditionalIncludeDirectories>$(ProjectDir)..\..\include</AdditionalIncludeDirectories>
+     </ClCompile>
+     <Link>
+       <EnableCOMDATFolding>true</EnableCOMDATFolding>
 -- 
 2.10.2.windows.1
 

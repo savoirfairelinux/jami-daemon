@@ -17,8 +17,18 @@ rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
 
+echo off
+for /F "tokens=* usebackq" %%F in (`bash -c "pwd | grep /mnt/c/"`) do (
+    set NO_AUTO=%%F
+)
+if "%NO_AUTO%"=="" (
+    set ROOTPATH=/c/
+) else (
+    set ROOTPATH=/mnt/c/
+)
+set SRC=%~dp0
 set UNIXPATH=%SRC:\=/%
-set UNIXPATH=%UNIXPATH:C:=/mnt/c%
+set UNIXPATH=%ROOTPATH%%UNIXPATH:C:/=%
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/gnutls.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ipv6.patch"
 bash -c "%PATCH_CMD% %UNIXPATH%pjproject/ice_config.patch"
