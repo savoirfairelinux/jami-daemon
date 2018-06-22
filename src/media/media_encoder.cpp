@@ -363,8 +363,8 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     scaler_.scale_with_aspect(input, scaledFrame_);
 
     auto frame = scaledFrame_.pointer();
-    AVStream* st = outputCtx_->streams[currentStreamIdx_];
-    frame->pts = getNextTimestamp(frame_number, st->avg_frame_rate, st->time_base);
+    AVCodecContext* enc = encoders_[currentStreamIdx_];
+    frame->pts = getNextTimestamp(frame_number, enc->framerate, enc->time_base);
 
     if (is_keyframe) {
         frame->pict_type = AV_PICTURE_TYPE_I;
@@ -422,8 +422,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         frame->channels = buffer.channels();
         frame->sample_rate = sample_rate;
 
-        AVStream* st = outputCtx_->streams[currentStreamIdx_];
-        frame->pts = getNextTimestamp(sent_samples, st->codecpar->sample_rate, st->time_base);
+        frame->pts = getNextTimestamp(sent_samples, encoderCtx->sample_rate, encoderCtx->time_base);
         sent_samples += frame->nb_samples;
 
         const auto buffer_size = \
@@ -464,7 +463,7 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     if (auto rec = recorder_.lock()) {
         bool isVideo = encoderCtx->codec_type == AVMEDIA_TYPE_VIDEO;
         if (!recordingStarted_) {
-            auto ms = MediaStream("", outputCtx_->streams[streamIdx], frame->pts);
+            auto ms = MediaStream("", encoderCtx, frame->pts);
             if (rec->addStream(isVideo, false, ms) >= 0)
                 recordingStarted_ = true;
             else

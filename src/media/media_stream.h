@@ -65,29 +65,30 @@ struct MediaStream {
         , nbChannels(channels)
     {}
 
-    MediaStream(std::string name, AVStream* st)
-        : MediaStream(name, st, 0)
+    MediaStream(std::string name, AVCodecContext* c)
+        : MediaStream(name, c, 0)
     {
     }
 
-    MediaStream(std::string name, AVStream* st, int64_t firstTimestamp)
+    MediaStream(std::string name, AVCodecContext* c, int64_t firstTimestamp)
         : name(name)
     {
-        format = st->codecpar->format;
-        timeBase = st->time_base;
+        timeBase = c->time_base;
         this->firstTimestamp = firstTimestamp;
-        switch (st->codecpar->codec_type) {
+        switch (c->codec_type) {
         case AVMEDIA_TYPE_VIDEO:
+            format = c->pix_fmt;
             isVideo = true;
-            width = st->codecpar->width;
-            height = st->codecpar->height;
-            aspectRatio = st->codecpar->sample_aspect_ratio;
-            frameRate = st->avg_frame_rate;
+            width = c->width;
+            height = c->height;
+            aspectRatio = c->sample_aspect_ratio;
+            frameRate = c->framerate;
             break;
         case AVMEDIA_TYPE_AUDIO:
+            format = c->sample_fmt;
             isVideo = false;
-            sampleRate = st->codecpar->sample_rate;
-            nbChannels = st->codecpar->channels;
+            sampleRate = c->sample_rate;
+            nbChannels = c->channels;
             break;
         default:
             break;
