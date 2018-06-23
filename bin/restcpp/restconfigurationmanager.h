@@ -66,6 +66,7 @@ class RestConfigurationManager
         void getAccountDetails(const std::shared_ptr<restbed::Session> session);
         void getVolatileAccountDetails(const std::shared_ptr<restbed::Session> session);
         void setAccountDetails(const std::shared_ptr<restbed::Session> session);
+        void registerName(const std::shared_ptr<restbed::Session> session);
         void setAccountActive(const std::shared_ptr<restbed::Session> session);
         void getAccountTemplate(const std::shared_ptr<restbed::Session> session);
         void addAccount(const std::shared_ptr<restbed::Session> session);
