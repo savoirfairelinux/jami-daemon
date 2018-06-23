@@ -30,7 +30,14 @@ class NameDirectory
 {
 public:
     enum class Response : int { found = 0, invalidName, notFound, error };
-    enum class RegistrationResponse : int { success = 0, invalidName, alreadyTaken, error };
+    enum class RegistrationResponse : int { success = 0,
+                                            invalidName,
+                                            alreadyTaken,
+                                            error,
+                                            publicKeyNotFound,
+                                            signatureNotFound,
+                                            signatureVerificationFailed
+                                        };
 
     using LookupCallback = std::function<void(const std::string& result, Response response)>;
     using RegistrationCallback = std::function<void(RegistrationResponse response)>;
@@ -47,7 +54,7 @@ public:
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
 
-    void registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb);
+    void registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey);
 
     const std::string& getServer() const {
         return serverHost_;
@@ -70,5 +77,4 @@ private:
     void saveCache();
     void loadCache();
 };
-
 }

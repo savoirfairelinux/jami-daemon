@@ -248,7 +248,7 @@ bool NameDirectory::validateName(const std::string& name) const
     return std::regex_match(name, NAME_VALIDATOR);
 }
 
-void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb)
+void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey)
 {
     try {
         std::string name {n};
@@ -257,7 +257,6 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
             return;
         }
         toLower(name);
-
         auto cacheRes = addrCache_.find(name);
         if (cacheRes != addrCache_.end()) {
             if (cacheRes->second == addr)
@@ -275,7 +274,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
         std::string body;
         {
             std::stringstream ss;
-            ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner << "\"}";
+            ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner <<
+                "\",\"signature\":\"" << signedname << "\",\"publickey\":\"" << publickey << "\"}";
+
             body = ss.str();
         }
         request->set_body(body);
@@ -286,9 +287,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
 
         RING_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
         auto ret = restbed::Http::async(request,
-                             [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
-                                                 const std::shared_ptr<restbed::Response>& reply)
-        {
+         [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
+             const std::shared_ptr<restbed::Response>& reply)
+         {
             auto code = reply->get_status_code();
             RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
             if (code >= 200 && code < 300) {
@@ -316,14 +317,52 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                     nameCache_.emplace(addr, name);
                 }
                 cb(success ? RegistrationResponse::success : RegistrationResponse::error);
-            } else if (code >= 400 && code < 500) {
+            } else if(code == 400){
+                size_t length = getContentLength(*reply);
+                if (length > MAX_RESPONSE_SIZE) {
+                    cb(RegistrationResponse::error);
+                    return;
+                }
+                restbed::Http::fetch(length, reply);
+                std::string body;
+                reply->get_body(body);
+
+                Json::Value json;
+                Json::CharReaderBuilder rbuilder;
+                auto reader = std::unique_ptr<Json::CharReader>(rbuilder.newCharReader());
+                if (!reader->parse(&body[0], &body[body.size()], &json, nullptr)) {
+                    cb(RegistrationResponse::error);
+                    return;
+                }
+                if(json.isMember("error")){
+                    auto errormsg = json["error"].asString();
+                    if(errormsg == "invalid name"){
+                        cb(RegistrationResponse::invalidName);
+                        RING_ERR("RegistrationResponse::invalidName");
+                    }
+                    else if(errormsg == "publickey not found or invalid"){
+                        cb(RegistrationResponse::publicKeyNotFound);
+                        RING_ERR("RegistrationResponse::publicKeyNotFound");
+                    }
+                    else if(errormsg == "signature not found or invalid"){
+                        cb(RegistrationResponse::signatureNotFound);
+                        RING_ERR("RegistrationResponse::signatureNotFound");
+                    }
+                    else if(errormsg == "signature verification failed"){
+                        cb(RegistrationResponse::signatureVerificationFailed);
+                        RING_ERR("RegistrationResponse::signatureVerificationFailed");
+                    }
+                    return;
+                }
+
+            } else if (code > 400 && code < 500) {
                 cb(RegistrationResponse::alreadyTaken);
             } else {
                 cb(RegistrationResponse::error);
             }
         }, params).share();
 
-        // avoid blocking on future destruction
+    // avoid blocking on future destruction
         ThreadPool::instance().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
         RING_ERR("Error when performing name registration: %s", e.what());
