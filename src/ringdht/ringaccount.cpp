@@ -32,7 +32,6 @@
 #include "accountarchive.h"
 #include "ringcontact.h"
 #include "configkeys.h"
-
 #include "thread_pool.h"
 
 #include "sip/sdp.h"
@@ -1642,11 +1641,16 @@ RingAccount::lookupAddress(const std::string& addr)
         emitSignal<DRing::ConfigurationSignal::RegisteredNameFound>(acc, (int)response, addr, result);
     });
 }
-
+using Blob = std::vector<uint8_t>;
 void
-RingAccount::registerName(const std::string& /*password*/, const std::string& name)
+RingAccount::registerName(const std::string& password, const std::string& name)
 {
+    auto privateKey = readArchive(password).id.first;
+
+    std::string signedName = base64::encode(privateKey->sign(Blob(name.begin(), name.end())));
+    auto publickey = privateKey->getPublicKey().toString();
     auto acc = getAccountID();
+
     nameDir_.get().registerName(ringAccountId_, name, ethAccount_, [acc,name,w=weak()](NameDirectory::RegistrationResponse response){
         int res = (response == NameDirectory::RegistrationResponse::success)      ? 0 : (
                   (response == NameDirectory::RegistrationResponse::invalidName)  ? 2 : (
@@ -1656,7 +1660,7 @@ RingAccount::registerName(const std::string& /*password*/, const std::string& na
                 this_->registeredName_ = name;
         }
         emitSignal<DRing::ConfigurationSignal::NameRegistrationEnded>(acc, res, name);
-    });
+    }, signedName, publickey);
 }
 #endif
 

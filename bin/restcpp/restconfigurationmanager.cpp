@@ -102,6 +102,11 @@ RestConfigurationManager::populateResources()
         std::bind(&RestConfigurationManager::setAccountDetails, this, std::placeholders::_1));
 
     resources_.push_back(std::make_shared<restbed::Resource>());
+    resources_.back()->set_path("/registerName/{accountID: [a-z0-9]*}");
+    resources_.back()->set_method_handler("POST",
+        std::bind(&RestConfigurationManager::registerName, this, std::placeholders::_1));
+
+    resources_.push_back(std::make_shared<restbed::Resource>());
     resources_.back()->set_path("/setAccountActive/{accountID: [a-z0-9]*}/{status: (true|false)}");
     resources_.back()->set_method_handler("GET",
         std::bind(&RestConfigurationManager::setAccountActive, this, std::placeholders::_1));
@@ -401,10 +406,11 @@ RestConfigurationManager::defaultRoute(const std::shared_ptr<restbed::Session> s
     body += "GET /accountDetails/{accountID: [a-z0-9]*}\r\n";
     body += "GET /volatileAccountDetails/{accountID: [a-z0-9]*}\r\n";
     body += "POST /setAccountDetails/{accountID: [a-z0-9]*}\r\n";
+    body += "POST /registerName/{accountID: [a-z0-9]*}\r\n";
     body += "GET /setAccountActive/{accountID: [a-z0-9]*}/{status: (true|false)}\r\n";
     body += "GET /accountTemplate/{type: [a-zA-Z]*}\r\n";
     body += "POST /addAccount\r\n";
-    body += "GET /removeAccount/{accountID: [a-z0-9]*}\r\n";
+    body += "GET /removeAccount/{accountID: 3a-z0-9]*}\r\n";
     body += "GET /accountList\r\n";
     body += "GET /sendRegister/{accountID: [a-z0-9]*}/{status: (true|false)}\r\n";
     body += "GET /registerAllAccounts\r\n";
@@ -555,6 +561,43 @@ RestConfigurationManager::setAccountDetails(const std::shared_ptr<restbed::Sessi
 
         session->close(restbed::OK);
     });
+}
+
+void
+RestConfigurationManager::registerName(const std::shared_ptr<restbed::Session> session)
+{
+    const auto request = session->get_request();
+    const std::string accountID = request->get_path_parameter("accountID");
+    size_t content_length = request->get_header("Content-Length", 0);
+
+    RING_INFO("[%s] POST /registerName/%s", session->get_origin().c_str(), accountID.c_str());
+    if(content_length > 0){
+        session->fetch(content_length, [this, request, accountID](const std::shared_ptr<restbed::Session> session, const restbed::Bytes & body)
+        {
+            std::string data(std::begin(body), std::end(body));
+
+            std::map<std::string, std::string> details = parsePost(data);
+            RING_DBG("Details received");
+            for(auto& it : details)
+                RING_DBG("%s : %s", it.first.c_str(), it.second.c_str());
+
+            if (details.find("password") == details.end() ){
+                session->close(400, "password parameter required");
+                return;
+            }
+            if (details.find("name") == details.end() ){
+                session->close(400, "name parameter required");
+                return;
+            }
+
+            auto response = DRing::registerName(accountID, details["password"], details["name"]);
+
+            session->close(restbed::OK, (response ? "TRUE" : "FALSE"));
+        });
+    }
+    else {
+        session->close(400, "empty request");
+    }
 }
 
 void
