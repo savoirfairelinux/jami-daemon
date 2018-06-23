@@ -15,13 +15,14 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "config.h"
 #include "namedirectory.h"
 
 #include "logger.h"
 #include "string_utils.h"
 #include "thread_pool.h"
 #include "fileutils.h"
-#include "config.h"
+#include "base64.h"
 
 #include <msgpack.hpp>
 #include <json/json.h>
@@ -249,8 +250,8 @@ bool NameDirectory::validateName(const std::string& name) const
 {
     return std::regex_match(name, NAME_VALIDATOR);
 }
-
-void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb)
+using Blob = std::vector<uint8_t>;
+void NameDirectory::registerName(const std::string& addr, const std::string& n, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey)
 {
     try {
         std::string name {n};
@@ -259,7 +260,6 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
             return;
         }
         toLower(name);
-
         auto cacheResult = addrCache(name);
         if (not cacheResult.empty()) {
             if (cacheResult == addr)
@@ -277,7 +277,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
         std::string body;
         {
             std::stringstream ss;
-            ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner << "\"}";
+            ss << "{\"addr\":\"" << addr << "\",\"owner\":\"" << owner <<
+                "\",\"signature\":\"" << signedname << "\",\"publickey\":\"" << base64::encode(ring::Blob(publickey.begin(), publickey.end()))  << "\"}";
+
             body = ss.str();
         }
         request->set_body(body);
@@ -288,9 +290,9 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
 
         RING_WARN("registerName: sending request %s %s", addr.c_str(), name.c_str());
         auto ret = restbed::Http::async(request,
-                             [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
-                                                 const std::shared_ptr<restbed::Response>& reply)
-        {
+         [this,cb,addr,name](const std::shared_ptr<restbed::Request>&,
+             const std::shared_ptr<restbed::Response>& reply)
+         {
             auto code = reply->get_status_code();
             RING_DBG("Got reply for registration of %s -> %s: code %d", name.c_str(), addr.c_str(), code);
             if (code >= 200 && code < 300) {
@@ -318,14 +320,28 @@ void NameDirectory::registerName(const std::string& addr, const std::string& n, 
                     nameCache_.emplace(addr, name);
                 }
                 cb(success ? RegistrationResponse::success : RegistrationResponse::error);
-            } else if (code >= 400 && code < 500) {
+            } else if(code == 400){
+                cb(RegistrationResponse::incompleteRequest);
+                RING_ERR("RegistrationResponse::incompleteRequest");
+            } else if(code == 401){
+                cb(RegistrationResponse::signatureVerificationFailed);
+                RING_ERR("RegistrationResponse::signatureVerificationFailed");
+            } else if (code == 403) {
                 cb(RegistrationResponse::alreadyTaken);
+                RING_ERR("RegistrationResponse::alreadyTaken");
+            } else if (code == 409) {
+                cb(RegistrationResponse::alreadyTaken);
+                RING_ERR("RegistrationResponse::alreadyTaken");
+            } else if (code > 400 && code < 500) {
+                cb(RegistrationResponse::alreadyTaken);
+                RING_ERR("RegistrationResponse::alreadyTaken");
             } else {
                 cb(RegistrationResponse::error);
+                RING_ERR("RegistrationResponse::error");
             }
         }, params).share();
 
-        // avoid blocking on future destruction
+    // avoid blocking on future destruction
         ThreadPool::instance().run([ret](){ ret.get(); });
     } catch (const std::exception& e) {
         RING_ERR("Error when performing name registration: %s", e.what());
