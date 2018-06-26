@@ -55,7 +55,6 @@ call :build build\opus\SMP\libopus.vcxproj
 
 rem * build ffmpeg *
 %MSYS2_BIN% --login -x %~dp0src/ffmpeg/windows-uwp-x64-configure-make.sh
-for /r %~dp0\qbuild\ffmpeg\Output\Windows10\x64 %%f in (*.pdb) do @copy "%%f" %~dp0\build\ffmpeg\Build\Windows10\x64\bin
 
 rem * build openssl *
 cd build\restbed\dependency\openssl
@@ -69,8 +68,11 @@ rem * build restbed w/asio *
 cd ..\..
 mkdir build
 cd build
+setlocal
+set PATH=%ProgramFiles%\\CMake\\bin\\;%PATH%
 cmake -DBUILD_SSL=ON -G "Visual Studio 15 2017 Win64" ..
 cmake --build . --target ALL_BUILD --config Release
+endlocal
 cd ..\..
 
 set DEPENDENCIES=( ^
