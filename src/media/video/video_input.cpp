@@ -229,6 +229,7 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         case MediaDecoder::Status::FrameFinished:
+            // TODO send to recorder
             publishFrame();
             return true;
         // continue decoding
@@ -585,6 +586,15 @@ VideoInput::foundDecOpts(const DeviceParams& params)
         decOptsFound_ = true;
         foundDecOpts_.set_value(params);
     }
+}
+
+void
+VideoInput::initRecorder(std::shared_ptr<MediaRecorder> rec)
+{
+    // TODO call addStream, need MediaDecoder's AVCodecContext
+    recorder_ = rec;
+    if (auto r = recorder_.lock())
+        r->incrementStreams(1);
 }
 
 }} // namespace ring::video

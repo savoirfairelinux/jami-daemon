@@ -62,7 +62,7 @@ public:
     int getPixelFormat() const;
     void triggerKeyFrameRequest();
 
-    void startRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
+    void initRecorder(std::shared_ptr<ring::MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(VideoReceiveThread);
@@ -82,6 +82,8 @@ private:
     std::shared_ptr<SinkClient> sink_;
     bool isReset_;
     uint16_t mtu_;
+
+    std::weak_ptr<MediaRecorder> recorder_;
 
     void (*requestKeyFrameCallback_)(const std::string &);
     void openDecoder();

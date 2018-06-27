@@ -42,6 +42,7 @@
 
 namespace ring {
 class MediaDecoder;
+class MediaRecorder;
 }
 
 namespace ring { namespace video {
@@ -88,6 +89,8 @@ public:
     void releaseFrame(void *frame);
 #endif
 
+    void initRecorder(std::shared_ptr<MediaRecorder> rec);
+
 private:
     NON_COPYABLE(VideoInput);
 
@@ -125,6 +128,8 @@ private:
 
     bool captureFrame();
     bool isCapturing() const noexcept;
+
+    std::weak_ptr<MediaRecorder> recorder_;
 
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     int allocateOneBuffer(struct VideoFrameBuffer& b, int length);
