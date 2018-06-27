@@ -170,6 +170,7 @@ bool VideoReceiveThread::decodeFrame()
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
+            // TODO send to recorder
             publishFrame();
             return true;
 
@@ -239,10 +240,12 @@ VideoReceiveThread::triggerKeyFrameRequest()
 }
 
 void
-VideoReceiveThread::startRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
+VideoReceiveThread::initRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
 {
-    if (videoDecoder_)
-        videoDecoder_->startRecorder(rec);
+    // TODO call addStream, need MediaDecoder's AVCodecContext
+    recorder_ = rec;
+    if (auto r = recorder_.lock())
+        r->incrementStreams(1);
 }
 
 }} // namespace ring::video

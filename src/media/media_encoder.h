@@ -50,7 +50,6 @@ class AudioBuffer;
 class MediaIOHandle;
 struct MediaDescription;
 struct AccountCodecInfo;
-class MediaRecorder;
 
 class MediaEncoderException : public std::runtime_error {
     public:
@@ -98,8 +97,6 @@ public:
 
     unsigned getStreamCount() const;
 
-    void startRecorder(std::shared_ptr<MediaRecorder>& rec);
-
 private:
     NON_COPYABLE(MediaEncoder);
     void setOptions(const MediaDescription& args);
@@ -121,9 +118,6 @@ private:
     std::vector<uint8_t> scaledFrameBuffer_;
     int scaledFrameBufferSize_ = 0;
     bool is_muted = false;
-
-    std::weak_ptr<MediaRecorder> recorder_;
-    bool recordingStarted_ = false;
 
 protected:
     AVDictionary *options_ = nullptr;

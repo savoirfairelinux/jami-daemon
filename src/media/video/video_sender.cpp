@@ -106,11 +106,4 @@ VideoSender::useCodec(const ring::AccountVideoCodecInfo* codec) const
     return videoEncoder_->useCodec(codec);
 }
 
-void
-VideoSender::startRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    if (videoEncoder_)
-        videoEncoder_->startRecorder(rec);
-}
-
 }} // namespace ring::video
