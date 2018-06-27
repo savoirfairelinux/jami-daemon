@@ -98,7 +98,7 @@ class MediaDecoder {
         void enableAccel(bool enableAccel);
 #endif
 
-        void startRecorder(std::shared_ptr<MediaRecorder>& rec);
+        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     private:
         NON_COPYABLE(MediaDecoder);
@@ -128,9 +128,6 @@ class MediaDecoder {
         video::HardwareAccel accel_;
         unsigned short accelFailures_ = 0;
 #endif
-
-        std::weak_ptr<MediaRecorder> recorder_;
-        bool recordingStarted_ = false;
 
     protected:
         AVDictionary *options_ = nullptr;

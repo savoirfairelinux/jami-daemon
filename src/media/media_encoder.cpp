@@ -50,8 +50,6 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
@@ -460,19 +458,6 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
 
-    if (auto rec = recorder_.lock()) {
-        bool isVideo = encoderCtx->codec_type == AVMEDIA_TYPE_VIDEO;
-        if (!recordingStarted_) {
-            auto ms = MediaStream("", encoderCtx, frame->pts);
-            if (rec->addStream(isVideo, false, ms) >= 0)
-                recordingStarted_ = true;
-            else
-                recorder_ = std::weak_ptr<MediaRecorder>();
-        }
-        if (recordingStarted_)
-            rec->recordData(frame, isVideo, false);
-    }
-
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)
         return -1;
@@ -714,17 +699,6 @@ MediaEncoder::getStreamCount() const
         return outputCtx_->nb_streams;
     else
         return 0;
-}
-
-void
-MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    // recording will start once we can send an AVPacket to the recorder
-    recordingStarted_ = false;
-    recorder_ = rec;
-    if (auto r = recorder_.lock()) {
-        r->incrementStreams(1);
-    }
 }
 
 } // namespace ring

@@ -60,8 +60,6 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
 #ifdef RING_ACCEL
     if (decoderCtx_ && decoderCtx_->hw_device_ctx)
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
@@ -293,19 +291,6 @@ MediaDecoder::decode(VideoFrame& result)
         if (frame->pts != AV_NOPTS_VALUE)
             frame->pts = av_rescale_q(frame->pts - avStream_->start_time, avStream_->time_base, decoderCtx_->time_base);
 
-        if (auto rec = recorder_.lock()) {
-            if (!recordingStarted_) {
-                auto ms = MediaStream("", decoderCtx_, frame->pts);
-                ms.format = frame->format; // might not match avStream_ if accel is used
-                if (rec->addStream(true, true, ms) >= 0)
-                    recordingStarted_ = true;
-                else
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-            }
-            if (recordingStarted_)
-                rec->recordData(frame, true, true);
-        }
-
         if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
@@ -361,18 +346,6 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
 
         if (frame->pts != AV_NOPTS_VALUE)
             frame->pts = av_rescale_q(frame->pts, avStream_->time_base, decoderCtx_->time_base);
-
-        if (auto rec = recorder_.lock()) {
-            if (!recordingStarted_) {
-                auto ms = MediaStream("", decoderCtx_, frame->pts);
-                if (rec->addStream(false, true, ms) >= 0)
-                    recordingStarted_ = true;
-                else
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-            }
-            if (recordingStarted_)
-                rec->recordData(frame, false, true);
-        }
 
         if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
@@ -519,17 +492,6 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
         break;
     }
     return pix_fmt;
-}
-
-void
-MediaDecoder::startRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    // recording will start once we can send an AVPacket to the recorder
-    recordingStarted_ = false;
-    recorder_ = rec;
-    if (auto r = recorder_.lock()) {
-        r->incrementStreams(1);
-    }
 }
 
 } // namespace ring

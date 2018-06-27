@@ -35,7 +35,6 @@
 namespace ring {
 class SocketPair;
 struct AccountVideoCodecInfo;
-class MediaRecorder;
 }
 
 namespace ring { namespace video {
@@ -62,8 +61,6 @@ public:
     uint16_t getLastSeqValue();
 
     bool useCodec(const AccountVideoCodecInfo* codec) const;
-
-    void startRecorder(std::shared_ptr<MediaRecorder>& rec);
 
 private:
     static constexpr int KEYFRAMES_AT_START {4}; // Number of keyframes to enforce at stream startup
