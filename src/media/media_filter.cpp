@@ -31,6 +31,7 @@ extern "C" {
 #include <functional>
 #include <memory>
 #include <sstream>
+#include <thread>
 
 namespace ring {
 
@@ -66,6 +67,8 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
 
     if (!graph_)
         return fail("Failed to allocate filter graph", AVERROR(ENOMEM));
+
+    graph_->nb_threads = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
 
     AVFilterInOut* in;
     AVFilterInOut* out;
