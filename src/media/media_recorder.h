@@ -117,13 +117,14 @@ class MediaRecorder {
             AVFrame* frame;
             bool isVideo;
             bool fromPeer;
+            RecordFrame() {}
             RecordFrame(AVFrame* f, bool v, bool p)
                 : frame(f)
                 , isVideo(v)
                 , fromPeer(p)
             {}
         };
-        ThreadLoop loop_;
+        InterruptedThreadLoop loop_;
         void process();
         std::mutex qLock_;
         std::queue<RecordFrame> frames_;
