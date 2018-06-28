@@ -290,6 +290,7 @@ MediaDecoder::decode(VideoFrame& result)
             }
         }
 #endif
+        auto emulationTimestamp = frame->pts;
         if (frame->pts != AV_NOPTS_VALUE)
             frame->pts = av_rescale_q(frame->pts - avStream_->start_time, avStream_->time_base, decoderCtx_->time_base);
 
@@ -306,8 +307,8 @@ MediaDecoder::decode(VideoFrame& result)
                 rec->recordData(frame, true, true);
         }
 
-        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+        if (emulateRate_ and emulationTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(emulationTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -359,6 +360,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     if (frameFinished) {
         av_packet_unref(&inpacket);
 
+        auto emulationTimestamp = frame->pts;
         if (frame->pts != AV_NOPTS_VALUE)
             frame->pts = av_rescale_q(frame->pts, avStream_->time_base, decoderCtx_->time_base);
 
@@ -374,8 +376,8 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
                 rec->recordData(frame, false, true);
         }
 
-        if (emulateRate_ and frame->pts != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(frame->pts - avStream_->start_time);
+        if (emulateRate_ and emulationTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(emulationTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
