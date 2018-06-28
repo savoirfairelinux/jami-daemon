@@ -37,6 +37,8 @@ extern "C" {
 
 namespace ring {
 
+static constexpr auto FRAME_DEQUEUE_INTERVAL = std::chrono::milliseconds(200);
+
 MediaRecorder::MediaRecorder()
     : loop_([]{ return true;},
             [this]{ process(); },
@@ -139,12 +141,13 @@ MediaRecorder::startRecording()
 
     if (!frames_.empty()) {
         RING_WARN() << "Frame queue not empty at beginning of recording, frames will be lost";
-        while (!frames_.empty())
+        std::lock_guard<std::mutex> q(qLock_);
+        while (!frames_.empty()) {
+            auto f = frames_.front();
+            av_frame_unref(f.frame);
             frames_.pop();
+        }
     }
-
-    if (!loop_.isRunning())
-        loop_.start();
 
     encoder_.reset(new MediaEncoder);
 
@@ -161,6 +164,11 @@ MediaRecorder::stopRecording()
         flush();
     }
     isRecording_ = false;
+    if (loop_.isRunning())
+        loop_.join();
+    videoFilter_.reset();
+    audioFilter_.reset();
+    encoder_.reset();
 }
 
 int
@@ -200,8 +208,10 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     AVFrame* input = av_frame_clone(frame);
     input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0
 
-    std::lock_guard<std::mutex> q(qLock_);
-    frames_.emplace(input, isVideo, fromPeer);
+    {
+        std::lock_guard<std::mutex> q(qLock_);
+        frames_.emplace(input, isVideo, fromPeer);
+    }
     return 0;
 }
 
@@ -253,8 +263,6 @@ MediaRecorder::initRecord()
         encoderOptions["channels"] = std::to_string(audioStream.nbChannels);
     }
 
-    std::lock_guard<std::mutex> lk(mutex_); // lock as late as possible
-
     encoder_->openFileOutput(getPath(), encoderOptions);
 
     if (nbReceivedVideoStreams_ > 0) {
@@ -283,6 +291,11 @@ MediaRecorder::initRecord()
     isReady_ = audioIsReady && videoIsReady;
 
     if (isReady_) {
+        std::lock_guard<std::mutex> lk(mutex_); // lock as late as possible
+
+        if (!loop_.isRunning())
+            loop_.start();
+
         std::unique_ptr<MediaIOHandle> ioHandle;
         try {
             encoder_->setIOContext(ioHandle);
@@ -431,8 +444,8 @@ MediaRecorder::emptyFilterGraph()
 int
 MediaRecorder::sendToEncoder(AVFrame* frame, int streamIdx)
 {
-    std::lock_guard<std::mutex> lk(mutex_);
     try {
+        std::lock_guard<std::mutex> lk(mutex_);
         encoder_->encode(frame, streamIdx);
     } catch (const MediaEncoderException& e) {
         RING_ERR() << "MediaEncoderException: " << e.what();
@@ -449,8 +462,6 @@ MediaRecorder::flush()
     if (!isRecording_ || encoder_->getStreamCount() <= 0)
         return 0;
 
-    emptyFilterGraph();
-
     std::lock_guard<std::mutex> lk(mutex_);
     encoder_->flush();
 
@@ -460,21 +471,31 @@ MediaRecorder::flush()
 void
 MediaRecorder::process()
 {
-    std::lock_guard<std::mutex> q(qLock_);
-    if (!isRecording_ || !isReady_ || frames_.empty())
+    if (!loop_.wait_for(FRAME_DEQUEUE_INTERVAL, [this]{ return !frames_.empty(); }))
         return;
 
-    auto recframe = frames_.front();
-    frames_.pop();
-    AVFrame* input = recframe.frame;
+    if (loop_.isStopping() || !isRecording_ || !isReady_)
+        return;
 
+    RecordFrame recframe;
+    {
+        std::lock_guard<std::mutex> q(qLock_);
+        if (!frames_.empty()) {
+            recframe = frames_.front();
+            frames_.pop();
+        } else {
+            return;
+        }
+    }
+
+    AVFrame* input = recframe.frame;
     int streamIdx = (recframe.isVideo ? videoIdx_ : audioIdx_);
     auto filter = (recframe.isVideo ? videoFilter_.get() : audioFilter_.get());
     if (streamIdx < 0) {
         RING_ERR() << "Specified stream is invalid: "
             << (recframe.fromPeer ? "remote " : "local ")
             << (recframe.isVideo ? "video" : "audio");
-        av_frame_free(&input);
+        av_frame_unref(input);
         return;
     }
 
