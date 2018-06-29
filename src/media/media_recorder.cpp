@@ -54,18 +54,12 @@ MediaRecorder::~MediaRecorder()
 std::string
 MediaRecorder::getPath() const
 {
-    if (path_.empty()) {
+    const constexpr char fileExtension[] = ".webm";
+    if (path_.empty())
         // FIXME deprecated code, will be removed once all clients transitioned to startRecording(path).
-        if (audioOnly_)
-            return dir_ + filename_ + ".ogg";
-        else
-            return dir_ + filename_ + ".webm";
-    } else {
-        if (audioOnly_)
-            return path_ + ".ogg";
-        else
-            return path_ + ".webm";
-    }
+        return dir_ + filename_ + fileExtension;
+    else
+        return path_ + fileExtension;
 }
 
 void
