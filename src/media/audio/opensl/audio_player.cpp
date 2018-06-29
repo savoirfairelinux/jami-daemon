@@ -113,6 +113,8 @@ AudioPlayer::AudioPlayer(ring::AudioFormat sampleFormat, SLEngineItf slEngine, S
     SLAndroidConfigurationItf playerConfig;
     result = (*playerObjectItf_)->GetInterface(playerObjectItf_, SL_IID_ANDROIDCONFIGURATION, &playerConfig);
     result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_STREAM_TYPE, &streamType, sizeof(SLint32));
+    SLint32 mode = SL_ANDROID_PERFORMANCE_LATENCY;
+    result = (*playerConfig)->SetConfiguration(playerConfig, SL_ANDROID_KEY_PERFORMANCE_MODE, &mode, sizeof(SLint32));
 
     // realize the player
     result = (*playerObjectItf_)->Realize(playerObjectItf_, SL_BOOLEAN_FALSE);

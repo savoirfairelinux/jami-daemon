@@ -204,6 +204,7 @@ OpenSLLayer::engineServicePlay(bool waiting) {
     sample_buf* buf;
     while (player_ and freePlayBufQueue_.front(&buf)) {
         const AudioBuffer& dat = getToPlay(hardwareFormat_, hardwareBuffSize_);
+        RING_WARN("engineServicePlay got %zu samples", dat.frames());
         if (dat.frames() != 0) {
             buf->size_ = dat.interleave((AudioSample*)buf->buf_) * sizeof(AudioSample);
             if (!playBufQueue_.push(buf)) {
@@ -262,7 +263,7 @@ OpenSLLayer::initAudioPlayback()
     }
 
     try  {
-        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_VOICE));
+        ringtone_.reset(new opensl::AudioPlayer(hardwareFormat_, engineInterface_, SL_ANDROID_STREAM_RING));
         ringtone_->setBufQueue(&ringBufQueue_, &freeRingBufQueue_);
         ringtone_->registerCallback(std::bind(&OpenSLLayer::engineServiceRing, this, _1));
     } catch (const std::exception& e) {
