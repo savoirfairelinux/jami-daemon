@@ -86,6 +86,11 @@ public:
 
     void stop() override;
 
+    void interrupt() noexcept
+    {
+        cv_.notify_one();
+    }
+
     template <typename Rep, typename Period>
     void
     wait_for(const std::chrono::duration<Rep, Period>& rel_time)
