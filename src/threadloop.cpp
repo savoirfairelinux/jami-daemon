@@ -142,7 +142,6 @@ void
 InterruptedThreadLoop::stop()
 {
     ThreadLoop::stop();
-    std::lock_guard<std::mutex> lk(mutex_);
     cv_.notify_one();
 }
 } // namespace ring
