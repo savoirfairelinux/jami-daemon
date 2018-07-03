@@ -1394,6 +1394,7 @@ RingAccount::migrateAccount(const std::string& pwd, dht::crypto::Identity& devic
     } catch (...) {
         RING_DBG("[Account %s] Can't load archive", getAccountID().c_str());
         Migration::setState(accountID_, Migration::State::INVALID);
+        setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
         return;
     }
 
@@ -1441,6 +1442,7 @@ RingAccount::loadAccount(const std::string& archive_password, const std::string&
                     }
                     catch (...) {
                         Migration::setState(accountID_, Migration::State::INVALID);
+                        setRegistrationState(RegistrationState::ERROR_NEED_MIGRATION);
                         return;
                     }
                     Migration::setState(accountID_, Migration::State::SUCCESS);
