@@ -84,6 +84,7 @@ class MediaRecorder {
         void emptyFilterGraph();
         int sendToEncoder(AVFrame* frame, int streamIdx);
         int flush();
+        void resetToDefaults(); // clear saved data for next recording
 
         std::unique_ptr<MediaEncoder> encoder_;
         std::unique_ptr<MediaFilter> videoFilter_;
