@@ -177,13 +177,12 @@ MediaRecorder::stopRecording()
     if (isRecording_) {
         RING_DBG() << "Stop recording '" << getPath() << "'";
         flush();
+        isRecording_ = false;
+        loop_.interrupt();
     }
-    isRecording_ = false;
     if (loop_.isRunning())
-        loop_.join();
-    videoFilter_.reset();
-    audioFilter_.reset();
-    encoder_.reset();
+        loop_.waitForCompletion();
+    resetToDefaults();
 }
 
 int
@@ -215,6 +214,7 @@ MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
 int
 MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
 {
+    // recorder may be recording, but not ready for the first frames
     if (!isRecording_ || !isReady_)
         return 0;
 
@@ -487,14 +487,33 @@ MediaRecorder::flush()
 }
 
 void
+MediaRecorder::resetToDefaults()
+{
+    streams_.clear();
+    videoIdx_ = audioIdx_ = -1;
+    nbExpectedStreams_ = 0;
+    nbReceivedVideoStreams_ = nbReceivedAudioStreams_ = 0;
+    isRecording_ = false;
+    isReady_ = false;
+    audioOnly_ = false;
+    videoFilter_.reset();
+    audioFilter_.reset();
+    encoder_.reset();
+}
+
+void
 MediaRecorder::process()
 {
-    if (!loop_.wait_for(FRAME_DEQUEUE_INTERVAL, [this]{ return !frames_.empty(); }))
-        return;
+    // wait until frames_ is not empty or until we are no longer recording
+    loop_.wait([this]{ return !frames_.empty() || !isRecording_; });
 
-    if (loop_.isStopping() || !isRecording_ || !isReady_)
+    // if we exited because we stopped recording, stop our thread
+    if (loop_.isStopping() || !isRecording_) {
+        loop_.stop();
         return;
+    }
 
+    // else encode a frame
     RecordFrame recframe;
     {
         std::lock_guard<std::mutex> q(qLock_);
