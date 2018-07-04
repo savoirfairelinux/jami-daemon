@@ -114,6 +114,17 @@ public:
         return cv_.wait_for(lk, rel_time, [this, pred]{ return isStopping() || pred(); });
     }
 
+    template <typename Pred>
+    void
+    wait(Pred&& pred)
+    {
+        if (std::this_thread::get_id() != get_id())
+            throw std::runtime_error("Can not call wait outside thread context");
+
+        std::unique_lock<std::mutex> lk(mutex_);
+        cv_.wait(lk, [this, p = std::move(pred)]{ return isStopping() || p(); });
+    }
+
 private:
     std::mutex mutex_;
     std::condition_variable cv_;
