@@ -149,7 +149,8 @@ libring_la_SOURCES = \
 		data_transfer.h \
 		ftp_server.cpp \
 		ftp_server.h \
-		generic_io.h
+		generic_io.h \
+		debug_utils.h
 
 if HAVE_WIN32
 libring_la_SOURCES += \
