@@ -110,7 +110,15 @@ ThreadLoop::join()
         thread_.join();
 }
 
-void ThreadLoop::exit()
+void
+ThreadLoop::waitForCompletion()
+{
+    if (thread_.joinable())
+        thread_.join();
+}
+
+void
+ThreadLoop::exit()
 {
     stop();
     throw ThreadLoopException();
