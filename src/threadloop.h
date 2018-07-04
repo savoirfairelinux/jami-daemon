@@ -55,6 +55,7 @@ public:
     void exit();
     virtual void stop();
     void join();
+    void waitForCompletion(); // thread will stop itself
 
     bool isRunning() const noexcept;
     bool isStopping() const noexcept;
