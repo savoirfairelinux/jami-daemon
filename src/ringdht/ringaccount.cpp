@@ -3321,7 +3321,7 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
         auto h = dht::InfoHash::get("inbox:"+dev.toString());
         std::weak_ptr<RingAccount> wshared = shared;
-        auto list_token = shared->dht_.listen<dht::ImMessage>(h, [wshared,token,confirm](dht::ImMessage&& msg) {
+        auto list_token = shared->dht_.listen<dht::ImMessage>(h, [dev,wshared,token,confirm](dht::ImMessage&& msg) {
             if (auto sthis = wshared.lock()) {
                 auto& this_ = *sthis;
                 // check expected message confirmation
@@ -3337,8 +3337,13 @@ RingAccount::sendTextMessage(const std::string& to, const std::map<std::string, 
 
                 // add treated message
                 auto res = this_.treatedMessages_.insert(msg.id);
-                if (!res.second)
+                bool intercom = dev.toString() == this_.ringDeviceId_;
+                if (!res.second && !intercom) {
                     return true;
+                } else if (intercom && this_.treatedMessages_.find(msg.id) == this_.treatedMessages_.end()) {
+                    // If intercom communication, check that the message exists.
+                    return true;
+                }
 
                 this_.saveTreatedMessages();
 
