@@ -45,7 +45,6 @@ RUN apt-get update && \
         libavdevice-dev \
         libopus-dev \
         libudev-dev \
-        libgsm1-dev \
         libjsoncpp-dev \
         libnatpmp-dev \
         libappindicator3-dev \
