@@ -541,27 +541,6 @@ CPPUNIT_MIN_VERSION=1.12
 PKG_CHECK_MODULES(CPPUNIT, cppunit >= ${CPPUNIT_MIN_VERSION}, AM_CONDITIONAL(BUILD_TEST, test 1 = 1 ), AM_CONDITIONAL(BUILD_TEST, test 0 = 1 ))
 
 
-if test "${SYS}" != "mingw32"; then
-# GSM CODEC
-# required dependency(ies): libgsm
-dnl check for libgsm1 (doesn't use pkg-config)
-dnl Check for libgsm
-AC_ARG_WITH([gsm], [AS_HELP_STRING([--without-gsm],
-            [disable support for gsm codec])], [], [with_gsm=yes])
-
-LIBGSM=
-AS_IF([test "x$with_gsm" != xno],
-        [AC_CHECK_HEADER([gsm/gsm.h], , AC_MSG_FAILURE([Unable to find the libgsm1 headers (you may need to install the dev package).  You may use --without-gsm to compile without gsm codec support.]))]
-        [AC_CHECK_LIB([gsm], [gsm_decode], [], [
-            AC_MSG_FAILURE([libgsm link test failed. You may use --without-gsm to compile without gsm codec support.])
-        ])
-    ])
-
-AC_DEFINE_UNQUOTED([HAVE_GSM], `if test "x$with_gsm" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libgsm])
-fi
-AM_CONDITIONAL(BUILD_GSM, test "x$with_gsm" = "xyes" )
-
-
 # SPEEX CODEC
 # required dependency(ies): libspeex
 dnl Check for libspeex
@@ -589,18 +568,6 @@ AS_IF([test "x$with_speexdsp" != xno], [PKG_CHECK_MODULES([SPEEXDSP], [speexdsp]
 
 AC_DEFINE_UNQUOTED([HAVE_SPEEXDSP], `if test "x$with_speexdsp" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have libspeexdsp])
 AM_CONDITIONAL(BUILD_SPEEXDSP, test "x$with_speexdsp" = "xyes" )
-
-dnl iLBC is enabled if it's installed
-AC_ARG_WITH([libilbc],
-  [AS_HELP_STRING([--with-libilbc],
-    [support ilbc audio @<:@default=check@:>@])],
-  [],
-  [with_libilbc=check])
-AS_CASE(["$with_libilbc"],
-  [yes], [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1])],
-  [no], [HAVE_LIBILBC=0],
-  [PKG_CHECK_MODULES([libilbc], [libilbc], [HAVE_LIBILBC=1], [HAVE_LIBILBC=0])])
-AM_CONDITIONAL([BUILD_ILBC], [test "$HAVE_LIBILBC" -eq 1])
 
 dnl opus is enabled if it's installed
 AC_ARG_WITH([opus],
