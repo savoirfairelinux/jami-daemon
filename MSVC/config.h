@@ -35,9 +35,6 @@ systems. This function is required for `alloca.c' support on those systems.
 /* Define to 1 if you have the <fcntl.h> header file. */
 #define HAVE_FCNTL_H 1
 
-/* Define if you have libgsm */
-#define HAVE_GSM 1
-
 /* Define if you have libiax */
 #define HAVE_IAX 0
 
@@ -52,9 +49,6 @@ systems. This function is required for `alloca.c' support on those systems.
 
 /* Define if you have jack */
 #define HAVE_JACK 0
-
-/* Define to 1 if you have the `gsm' library (-lgsm). */
-#define HAVE_LIBGSM 1
 
 /* Define to 1 if you have the <libintl.h> header file. */
 #define HAVE_LIBINTL_H 0
