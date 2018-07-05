@@ -68,7 +68,10 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=libopus \
+	--enable-libgsm \
+	--enable-encoder=libgsm \
+	--enable-decoder=libgsm
 
 #encoders/decoders for images
 FFMPEGCONF += \

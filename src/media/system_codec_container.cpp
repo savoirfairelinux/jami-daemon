@@ -111,6 +111,11 @@ SystemCodecContainer::initCodecConfig()
                                                CODEC_ENCODER_DECODER,
                                                0, 8000, 1, 110),
 
+        std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_GSM,
+                                               "GSM", "libgsm",
+                                               CODEC_ENCODER_DECODER,
+                                               0, 8000, 1, 3),
+
         std::make_shared<SystemAudioCodecInfo>(AV_CODEC_ID_PCM_ALAW,
                                                "PCMA", "pcm_alaw",
                                                CODEC_ENCODER_DECODER,
