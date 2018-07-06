@@ -68,7 +68,6 @@ endif
 	$(APPLY) $(SRC)/pjproject/notestsapps.patch
 ifdef HAVE_ANDROID
 	$(APPLY) $(SRC)/pjproject/android.patch
-	$(APPLY) $(SRC)/pjproject/if_enum_by_af-fallback-android.patch
 endif
 	$(APPLY) $(SRC)/pjproject/ipv6.patch
 	$(APPLY) $(SRC)/pjproject/ice_config.patch
