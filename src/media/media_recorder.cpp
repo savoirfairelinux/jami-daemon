@@ -200,6 +200,8 @@ MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
         ms.name = (fromPeer ? "a:1" : "a:2");
         ++nbReceivedAudioStreams_;
     }
+    // print index instead of count
+    RING_DBG() << "Recorder input #" << (nbReceivedAudioStreams_ + nbReceivedVideoStreams_ - 1) << ": " << ms;
     streams_[isVideo][fromPeer] = ms;
 
     // wait until all streams are ready before writing to the file
@@ -365,12 +367,7 @@ MediaRecorder::setupVideoOutput()
     if (encoderStream.format < 0)
         return encoderStream;
 
-    RING_DBG() << "Video recorder '"
-        << (encoderStream.name.empty() ? "(null)" : encoderStream.name)
-        << "' properties: "
-        << av_get_pix_fmt_name(static_cast<AVPixelFormat>(encoderStream.format)) << ", "
-        << encoderStream.width << "x" << encoderStream.height << ", "
-        << encoderStream.frameRate << " fps";
+    RING_DBG() << "Recorder output: " << encoderStream;
     return encoderStream;
 }
 
@@ -437,12 +434,7 @@ MediaRecorder::setupAudioOutput()
     if (encoderStream.format < 0)
         return encoderStream;
 
-    RING_DBG() << "Audio recorder '"
-        << (encoderStream.name.empty() ? "(null)" : encoderStream.name)
-        << "' properties: "
-        << av_get_sample_fmt_name(static_cast<AVSampleFormat>(encoderStream.format)) << ", "
-        << encoderStream.sampleRate << " Hz, "
-        << encoderStream.nbChannels << " channels";
+    RING_DBG() << "Recorder output: " << encoderStream;
     return encoderStream;
 }
 
