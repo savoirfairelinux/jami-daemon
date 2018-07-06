@@ -96,4 +96,22 @@ struct MediaStream {
     }
 };
 
+inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)
+{
+    if (ms.isVideo) {
+        os << (ms.name.empty() ? "(null)" : ms.name) << ": "
+            << av_get_pix_fmt_name(static_cast<AVPixelFormat>(ms.format)) << " video, "
+            << ms.width << "x" << ms.height << ", "
+            << ms.frameRate << " fps (" << ms.timeBase << ")";
+    } else {
+        os << (ms.name.empty() ? "(null)" : ms.name) << ": "
+            << av_get_sample_fmt_name(static_cast<AVSampleFormat>(ms.format)) << " audio, "
+            << ms.nbChannels << " channel(s), "
+            << ms.sampleRate << " Hz (" << ms.timeBase << ")";
+    }
+    if (ms.firstTimestamp > 0)
+        os << ", start: " << ms.firstTimestamp;
+    return os;
+}
+
 }; // namespace ring
