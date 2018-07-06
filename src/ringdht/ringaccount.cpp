@@ -1052,6 +1052,8 @@ RingAccount::addDevice(const std::string& password)
             emitSignal<DRing::ConfigurationSignal::ExportOnRingEnded>(this_->getAccountID(), 1, "");
             return;
         }
+        // now that key and loc are computed, display to user in lowercase
+        std::transform(pin_str.begin(), pin_str.end(), pin_str.begin(), ::tolower);
         try {
             this_->updateArchive(a);
             auto encrypted = dht::crypto::aesEncrypt(archiver::compress(a.serialize()), key);
