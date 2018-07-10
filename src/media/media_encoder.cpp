@@ -443,6 +443,18 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         nb_frames -= frame->nb_samples;
         offset_ptr += frame->nb_samples * buffer.channels();
 
+        if (auto rec = recorder_.lock()) {
+            if (!recordingStarted_) {
+                auto ms = MediaStream("", encoders_[currentStreamIdx_], frame->pts);
+                if (rec->addStream(false, false, ms) >= 0)
+                    recordingStarted_ = true;
+                else
+                    recorder_ = std::weak_ptr<MediaRecorder>();
+            }
+            if (recordingStarted_)
+                rec->recordData(frame, false, false);
+        }
+
         encode(frame, currentStreamIdx_);
         av_frame_free(&frame);
     }
@@ -459,19 +471,6 @@ MediaEncoder::encode(AVFrame* frame, int streamIdx)
     av_init_packet(&pkt);
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
-
-    if (auto rec = recorder_.lock()) {
-        bool isVideo = encoderCtx->codec_type == AVMEDIA_TYPE_VIDEO;
-        if (!recordingStarted_) {
-            auto ms = MediaStream("", encoderCtx, frame->pts);
-            if (rec->addStream(isVideo, false, ms) >= 0)
-                recordingStarted_ = true;
-            else
-                recorder_ = std::weak_ptr<MediaRecorder>();
-        }
-        if (recordingStarted_)
-            rec->recordData(frame, isVideo, false);
-    }
 
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)

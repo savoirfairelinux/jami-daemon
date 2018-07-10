@@ -295,16 +295,17 @@ MediaDecoder::decode(VideoFrame& result)
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 
         if (auto rec = recorder_.lock()) {
+            bool fromPeer = (inputCtx_->iformat->name == std::string("sdp"));
             if (!recordingStarted_) {
                 auto ms = MediaStream("", decoderCtx_, frame->pts);
                 ms.format = frame->format; // might not match avStream_ if accel is used
-                if (rec->addStream(true, true, ms) >= 0)
+                if (rec->addStream(true, fromPeer, ms) >= 0)
                     recordingStarted_ = true;
                 else
                     recorder_ = std::weak_ptr<MediaRecorder>();
             }
             if (recordingStarted_)
-                rec->recordData(frame, true, true);
+                rec->recordData(frame, true, fromPeer);
         }
 
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
