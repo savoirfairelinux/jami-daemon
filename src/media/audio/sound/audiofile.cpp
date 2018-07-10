@@ -27,7 +27,7 @@
 #include <vector>
 #include <climits>
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #include <sndfile.hh>
 #endif
 
@@ -62,7 +62,7 @@ AudioFile::onBufferFinish()
 AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     AudioLoop(sampleRate), filepath_(fileName), updatePlaybackScale_(0)
 {
-#ifndef RING_UWP
+#ifndef _MSC_VER
     int format;
     bool hasHeader = true;
 

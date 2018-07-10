@@ -1909,7 +1909,7 @@ Manager::incomingCall(Call &call, const std::string& accountId)
 
     if (not hasCurrentCall()) {
         call.setState(Call::ConnectionState::RINGING);
-#ifndef RING_UWP
+#ifndef _MSC_VER
         playRingtone(accountId);
 #endif
     }

@@ -28,7 +28,7 @@
 #include "fileutils.h"
 #include "manager.h"
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #include <sndfile.hh>
 #endif
 
@@ -149,7 +149,7 @@ std::string AudioRecord::getFilename() const
 bool
 AudioRecord::openFile()
 {
-#ifndef RING_UWP
+#ifndef _MSC_VER
     fileHandle_.reset(); // do it before calling fileExists()
 
     const bool doAppend = fileExists();
@@ -224,7 +224,7 @@ AudioRecord::stopRecording() const noexcept
 void
 AudioRecord::recData(AudioBuffer& buffer)
 {
-#ifndef RING_UWP
+#ifndef _MSC_VER
     if (not recordingEnabled_)
         return;
 
