@@ -65,8 +65,8 @@ class VideoDeviceImpl {
         std::vector<FrameRate> getRateList() const;
     private:
         void selectFormat();
-        VideoSize getSize(VideoSize size) const;
-        FrameRate getRate(FrameRate rate) const;
+        VideoSize getSize(const VideoSize& size) const;
+        FrameRate getRate(const FrameRate& rate) const;
 
         std::vector<int> formats_ {};
         std::vector<VideoSize> sizes_ {};
@@ -126,7 +126,7 @@ VideoDeviceImpl::VideoDeviceImpl(const std::string& path) : name(path)
 }
 
 VideoSize
-VideoDeviceImpl::getSize(VideoSize size) const
+VideoDeviceImpl::getSize(const VideoSize& size) const
 {
     for (const auto &iter : sizes_) {
         if (iter == size)
@@ -137,14 +137,14 @@ VideoDeviceImpl::getSize(VideoSize size) const
 }
 
 FrameRate
-VideoDeviceImpl::getRate(FrameRate rate) const
+VideoDeviceImpl::getRate(const FrameRate& rate) const
 {
     for (const auto &iter : rates_) {
         if (iter == rate)
             return iter;
     }
 
-    return rates_.empty() ? FrameRate{0, 0} : rates_.back();
+    return rates_.empty() ? FrameRate{} : rates_.back();
 }
 
 std::vector<VideoSize>
