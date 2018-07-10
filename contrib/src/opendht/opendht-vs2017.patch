@@ -160,7 +160,7 @@
 +      <Optimization>Disabled</Optimization>
 +      <SDLCheck>true</SDLCheck>
 +      <AdditionalIncludeDirectories>..\..\include;..\include;..\include\opendht;..\..\argon2\include;..\..\msgpack-c\include;..\..\..\msvc\include;..\..\jsoncpp\include;..\..\restbed\source</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>OPENDHT_JSONCPP;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <DisableSpecificWarnings>4804;4800;4101;4267;4244;4503;</DisableSpecificWarnings>
 +      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
 +      <SuppressStartupBanner>false</SuppressStartupBanner>
@@ -183,7 +183,7 @@
 +      <Optimization>Disabled</Optimization>
 +      <SDLCheck>true</SDLCheck>
 +      <AdditionalIncludeDirectories>..\..\include;..\include;..\include\opendht;..\..\argon2\include;..\..\msgpack-c\include;..\..\..\msvc\include;..\..\jsoncpp\include;..\..\restbed\source</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>OPENDHT_JSONCPP;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <DisableSpecificWarnings>4804;4800;4101;4267;4244;4503;</DisableSpecificWarnings>
 +      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
 +    </ClCompile>
@@ -207,7 +207,7 @@
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
 +      <SDLCheck>true</SDLCheck>
 +      <AdditionalIncludeDirectories>..\..\include;..\include;..\include\opendht;..\..\argon2\include;..\..\msgpack-c\include;..\..\..\msvc\include;..\..\jsoncpp\include;..\..\restbed\source</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>OPENDHT_JSONCPP;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <DisableSpecificWarnings>4804;4800;4101;4267;4244;4503;</DisableSpecificWarnings>
 +      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
 +      <ProgramDataBaseFileName>$(OutDir)\lib\x86\$(TargetName).pdb</ProgramDataBaseFileName>
@@ -237,7 +237,7 @@
 +      <IntrinsicFunctions>true</IntrinsicFunctions>
 +      <SDLCheck>true</SDLCheck>
 +      <AdditionalIncludeDirectories>..\..\include;..\include;..\include\opendht;..\..\argon2\include;..\..\msgpack-c\include;..\..\..\msvc\include;..\..\jsoncpp\include;..\..\restbed\source</AdditionalIncludeDirectories>
-+      <PreprocessorDefinitions>OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
++      <PreprocessorDefinitions>OPENDHT_JSONCPP;OPENDHT_PROXY_CLIENT;OPENDHT_PROXY_SERVER;OPENDHT_PUSH_NOTIFICATIONS;_CRT_SECURE_NO_WARNINGS;WIN32_NATIVE;WIN32_LEAN_AND_MEAN;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
 +      <DisableSpecificWarnings>4804;4800;4101;4267;4244;4503;4273;</DisableSpecificWarnings>
 +      <AdditionalOptions>-D_SCL_SECURE_NO_WARNINGS %(AdditionalOptions)</AdditionalOptions>
 +      <ProgramDataBaseFileName>$(OutDir)\lib\x64\$(TargetName).pdb</ProgramDataBaseFileName>
