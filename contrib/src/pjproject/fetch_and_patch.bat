@@ -17,7 +17,6 @@ rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
 
-echo off
 for /F "tokens=* usebackq" %%F in (`bash -c "pwd | grep /mnt/c/"`) do (
     set NO_AUTO=%%F
 )
@@ -42,6 +41,8 @@ bash -c "%PATCH_CMD% %UNIXPATH%pjproject/rfc6062.patch"
 %APPLY_CMD% %SRC%\pjproject\pj_vs_config.patch
 %APPLY_CMD% %SRC%\pjproject\pj_vs2017_props.patch
 
-%APPLY_CMD% %SRC%\pjproject\pj_uwp.patch
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\pjproject\pj_uwp.patch
+)
 
 cd %SRC%
