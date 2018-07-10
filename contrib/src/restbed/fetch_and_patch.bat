@@ -43,7 +43,11 @@ del %ASIO_VERSION%.tar && del %ASIO_VERSION%.tar.gz && del pax_global_header
 rename asio-dependency-%ASIO_VERSION% asio
 
 cd asio
-%APPLY_CMD% %SRC%\restbed\asio-uwp.patch
+
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\restbed\asio-uwp.patch
+)
+    
 cd ..
 
 rem ------------ catch ------------
@@ -77,7 +81,11 @@ del %OPENSSL_VERSION%.tar && del %OPENSSL_VERSION%.tar.gz && del pax_global_head
 rename openssl-%OPENSSL_VERSION% openssl
 
 cd openssl
-%APPLY_CMD% %SRC%\restbed\openssl-uwp.patch
+
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\restbed\openssl-uwp.patch
+)
+
 cd ..
 
 rem ------------ kashmir ------------

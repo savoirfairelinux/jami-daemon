@@ -79,7 +79,7 @@ void strErr();
 
 #endif /* __ANDROID__ / _WIN32 */
 
-#if defined(_WIN32) && !defined(RING_UWP)
+#if defined(_WIN32) && !defined(_MSC_VER)
 #define PRINTF_ATTRIBUTE(a, b) __attribute__((format(gnu_printf, a, b)))
 #elif defined(__GNUC__)
 #define PRINTF_ATTRIBUTE(a, b) __attribute__((format(printf, a, b)))

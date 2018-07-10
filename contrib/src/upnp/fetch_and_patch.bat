@@ -17,7 +17,7 @@ rename %BUILD%\pupnp-release-%UPNP_VERSION% libupnp
 
 cd %BUILD%\libupnp
 
-%APPLY_CMD% %SRC%\upnp\libupnp-uwp.patch
+%APPLY_CMD% %SRC%\upnp\libupnp-windows.patch
 %APPLY_CMD% %SRC%\upnp\libupnp-vs2017.patch
 
 cd %SRC%
