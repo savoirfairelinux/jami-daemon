@@ -1287,7 +1287,13 @@ std::string SIPAccount::getLoginName()
     DWORD size = UNLEN + 1;
     std::string uname;
     if (GetUserName((TCHAR*)username, &size)) {
+#ifdef _MSC_VER
+        wchar_t* tmpstr = new wchar_t[UNLEN + 1];
+        mbstowcs(tmpstr, username, UNLEN + 1);
+#else
         std::wstring wStr = username;
+#endif
+        std::wstring wStr = tmpstr;
         uname = std::string(wStr.begin(), wStr.end());
     }
     return uname;

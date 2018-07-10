@@ -17,6 +17,8 @@ rename %BUILD%\x264-%X264_VERSION% x264
 
 cd %BUILD%\x264
 
-%APPLY_CMD% %SRC%\x264\x264-uwp-api.patch
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\x264\x264-uwp.patch
+)
 
 cd %SRC%

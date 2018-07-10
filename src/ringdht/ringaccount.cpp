@@ -2121,15 +2121,15 @@ RingAccount::doRegister_()
         auto dht_log_level = Manager::instance().dhtLogLevel.load();
         if (dht_log_level > 0) {
             static auto silent = [](char const* /*m*/, va_list /*args*/) {};
-#ifndef RING_UWP
             static auto log_error = [](char const* m, va_list args) { Logger::vlog(LOG_ERR, nullptr, 0, true, m, args); };
             static auto log_warn = [](char const* m, va_list args) { Logger::vlog(LOG_WARNING, nullptr, 0, true, m, args); };
             static auto log_debug = [](char const* m, va_list args) { Logger::vlog(LOG_DEBUG, nullptr, 0, true, m, args); };
+#ifndef _MSC_VER
             dht_.setLoggers(
                 log_error,
                 (dht_log_level > 1) ? log_warn : silent,
                 (dht_log_level > 2) ? log_debug : silent);
-#else
+#elif RING_UWP
             static auto log_all = [](char const* m, va_list args) {
                 char tmp[2048];
                 vsprintf(tmp, m, args);
@@ -2137,6 +2137,14 @@ RingAccount::doRegister_()
                 ring::emitSignal<DRing::DebugSignal::MessageSend>(std::to_string(now) + " " + std::string(tmp));
             };
             dht_.setLoggers(log_all, log_all, silent);
+#else
+            if (dht_log_level > 2) {
+                dht_.setLoggers(log_error, log_warn, log_debug);
+            } else if (dht_log_level > 1) {
+                dht_.setLoggers(log_error, log_warn, silent);
+            } else {
+                dht_.setLoggers(log_error, silent, silent);
+            }
 #endif
         }
 
