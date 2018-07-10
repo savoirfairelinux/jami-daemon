@@ -224,7 +224,7 @@ AudioRecord::stopRecording() const noexcept
 void
 AudioRecord::recData(AudioBuffer& buffer)
 {
-#ifndef RING_UWP
+#ifndef _MSC_VER
     if (not recordingEnabled_)
         return;
 
