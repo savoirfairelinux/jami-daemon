@@ -17,6 +17,6 @@ rename %BUILD%\libsndfile-%SNDFILE_VERSION% sndfile
 
 cd %BUILD%\sndfile
 
-%APPLY_CMD% %SRC%\sndfile\vs2017.patch
+%APPLY_CMD% %SRC%\sndfile\sndfile-vs2017.patch
 
 cd %SRC%
