@@ -17,7 +17,6 @@ rename %BUILD%\pjproject-%PJPROJECT_VERSION% pjproject
 
 cd %BUILD%\pjproject
 
-echo off
 for /F "tokens=* usebackq" %%F in (`bash -c "pwd | grep /mnt/c/"`) do (
     set NO_AUTO=%%F
 )
