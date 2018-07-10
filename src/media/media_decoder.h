@@ -21,6 +21,8 @@
 
 #include "config.h"
 
+#include "rational.h"
+
 #ifdef RING_VIDEO
 #include "video/video_base.h"
 #include "video/video_scaler.h"
