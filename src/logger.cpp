@@ -27,7 +27,7 @@
 
 #include "client/ring_signal.h"
 
-#ifdef RING_UWP
+#ifdef _MSC_VER
 # include <sys_time.h>
 #else
 # include <sys/time.h>
@@ -98,7 +98,7 @@ static std::mutex logMutex;
 static const char*
 stripDirName(const char* path)
 {
-#ifdef RING_UWP
+#ifdef _MSC_VER
     return strrchr(path, '\\') ? strrchr(path, '\\') + 1 : path;
 #else
     return strrchr(path, '/') ? strrchr(path, '/') + 1 : path;
