@@ -39,7 +39,7 @@
 #include <string>
 #include <sstream>
 #include <cassert>
-#ifdef RING_UWP
+#ifdef _MSC_VER
 #include <io.h> // for access
 #else
 #include <unistd.h>
