@@ -59,7 +59,7 @@ class AudioSender {
         void setMuted(bool isMuted);
         uint16_t getLastSeqValue();
 
-        void startRecorder(std::shared_ptr<MediaRecorder>& rec);
+        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     private:
         NON_COPYABLE(AudioSender);
@@ -203,10 +203,10 @@ AudioSender::getLastSeqValue()
 }
 
 void
-AudioSender::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (audioEncoder_)
-        audioEncoder_->startRecorder(rec);
+        audioEncoder_->initRecorder(rec);
 }
 
 class AudioReceiveThread
@@ -220,7 +220,7 @@ class AudioReceiveThread
         void addIOContext(SocketPair &socketPair);
         void startLoop();
 
-        void startRecorder(std::shared_ptr<MediaRecorder>& rec);
+        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     private:
         NON_COPYABLE(AudioReceiveThread);
@@ -382,10 +382,10 @@ AudioReceiveThread::startLoop()
 }
 
 void
-AudioReceiveThread::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioReceiveThread::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (audioDecoder_)
-        audioDecoder_->startRecorder(rec);
+        audioDecoder_->initRecorder(rec);
 }
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
@@ -517,12 +517,12 @@ AudioRtpSession::setMuted(bool isMuted)
 }
 
 void
-AudioRtpSession::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+AudioRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     if (receiveThread_)
-        receiveThread_->startRecorder(rec);
+        receiveThread_->initRecorder(rec);
     if (sender_)
-        sender_->startRecorder(rec);
+        sender_->initRecorder(rec);
 }
 
 } // namespace ring

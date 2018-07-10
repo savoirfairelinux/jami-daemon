@@ -55,7 +55,7 @@ public:
 
     void setMtu(uint16_t mtu) { mtu_ = mtu; }
 
-    virtual void startRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
+    virtual void initRecorder(std::shared_ptr<MediaRecorder>& rec) = 0;
 
 protected:
     std::recursive_mutex mutex_;

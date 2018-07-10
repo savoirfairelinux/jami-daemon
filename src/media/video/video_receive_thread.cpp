@@ -239,10 +239,10 @@ VideoReceiveThread::triggerKeyFrameRequest()
 }
 
 void
-VideoReceiveThread::startRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
+VideoReceiveThread::initRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
 {
     if (videoDecoder_)
-        videoDecoder_->startRecorder(rec);
+        videoDecoder_->initRecorder(rec);
 }
 
 }} // namespace ring::video
