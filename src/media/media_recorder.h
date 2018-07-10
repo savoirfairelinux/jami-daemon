@@ -114,6 +114,7 @@ class MediaRecorder {
         bool isRecording_ = false;
         bool isReady_ = false;
         bool audioOnly_ = false;
+        bool debugTs_ = false;
 
         struct RecordFrame {
             AVFrame* frame;
