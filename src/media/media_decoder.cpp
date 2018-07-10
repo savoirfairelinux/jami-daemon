@@ -205,10 +205,9 @@ MediaDecoder::setupStream(AVMediaType mediaType)
         decoderCtx_->sample_rate = std::stoi(av_dict_get(options_, "sample_rate", nullptr, 0)->value);
     }
 
-    if (emulateRate_) {
+    if (emulateRate_)
         RING_DBG() << "Using framerate emulation";
-        startTime_ = av_gettime();
-    }
+    startTime_ = av_gettime(); // used to set pts after decoding, and for rate emulation
 
 #ifdef RING_ACCEL
     if (enableAccel_) {
@@ -290,9 +289,10 @@ MediaDecoder::decode(VideoFrame& result)
             }
         }
 #endif
-        auto emulationTimestamp = frame->pts;
-        if (frame->pts != AV_NOPTS_VALUE)
-            frame->pts = av_rescale_q(frame->pts - avStream_->start_time, avStream_->time_base, decoderCtx_->time_base);
+        auto packetTimestamp = frame->pts; // in stream time base
+        frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
+            AV_TIME_BASE_Q, decoderCtx_->time_base,
+            static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 
         if (auto rec = recorder_.lock()) {
             if (!recordingStarted_) {
@@ -307,8 +307,8 @@ MediaDecoder::decode(VideoFrame& result)
                 rec->recordData(frame, true, true);
         }
 
-        if (emulateRate_ and emulationTimestamp != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(emulationTimestamp - avStream_->start_time);
+        if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
@@ -360,9 +360,10 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     if (frameFinished) {
         av_packet_unref(&inpacket);
 
-        auto emulationTimestamp = frame->pts;
-        if (frame->pts != AV_NOPTS_VALUE)
-            frame->pts = av_rescale_q(frame->pts, avStream_->time_base, decoderCtx_->time_base);
+        auto packetTimestamp = frame->pts;
+        // NOTE don't use clock to rescale audio pts, it may create artifacts
+        frame->pts = av_rescale_q_rnd(frame->pts, avStream_->time_base, decoderCtx_->time_base,
+            static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
 
         if (auto rec = recorder_.lock()) {
             if (!recordingStarted_) {
@@ -376,8 +377,8 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
                 rec->recordData(frame, false, true);
         }
 
-        if (emulateRate_ and emulationTimestamp != AV_NOPTS_VALUE) {
-            auto frame_time = getTimeBase()*(emulationTimestamp - avStream_->start_time);
+        if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
+            auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
             auto target = startTime_ + static_cast<std::int64_t>(frame_time.real() * 1e6);
             auto now = av_gettime();
             if (target > now) {
