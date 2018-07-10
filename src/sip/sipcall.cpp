@@ -1159,10 +1159,10 @@ SIPCall::toggleRecording()
             << getSIPAccount().getUserUri() << " and " << peerUri_;
         recorder_->setMetadata(ss.str(), ""); // use default description
         if (avformatrtp_)
-            avformatrtp_->startRecorder(recorder_);
+            avformatrtp_->initRecorder(recorder_);
 #ifdef RING_VIDEO
         if (!isAudioOnly_ && videortp_)
-            videortp_->startRecorder(recorder_);
+            videortp_->initRecorder(recorder_);
 #endif
     }
     return startRecording;

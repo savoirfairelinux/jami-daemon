@@ -716,7 +716,7 @@ MediaEncoder::getStreamCount() const
 }
 
 void
-MediaEncoder::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+MediaEncoder::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     // recording will start once we can send an AVPacket to the recorder
     recordingStarted_ = false;

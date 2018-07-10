@@ -100,7 +100,7 @@ class MediaDecoder {
         void enableAccel(bool enableAccel);
 #endif
 
-        void startRecorder(std::shared_ptr<MediaRecorder>& rec);
+        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
     private:
         NON_COPYABLE(MediaDecoder);

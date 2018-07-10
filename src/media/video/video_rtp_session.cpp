@@ -565,14 +565,14 @@ VideoRtpSession::processPacketLoss()
 }
 
 void
-VideoRtpSession::startRecorder(std::shared_ptr<MediaRecorder>& rec)
+VideoRtpSession::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
     // video recording needs to start with keyframes
     const constexpr int keyframes = 3;
     if (receiveThread_)
-        receiveThread_->startRecorder(rec);
+        receiveThread_->initRecorder(rec);
     if (auto vidInput = std::static_pointer_cast<VideoInput>(videoLocal_))
-        vidInput->startRecorder(rec);
+        vidInput->initRecorder(rec);
     for (int i = 0; i < keyframes; ++i)
         if (receiveThread_)
             receiveThread_->triggerKeyFrameRequest();
