@@ -59,6 +59,9 @@
     <Filter Include="Source Files\dring">
       <UniqueIdentifier>{f137f8a1-8c2a-4e49-b73c-835f95507160}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\media\video\winvideo">
+      <UniqueIdentifier>{96b01e7f-7e05-480c-85a3-fa35ef5f8b87}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\src\hooks\urlhook.cpp">
@@ -384,6 +387,12 @@
     </ClCompile>
     <ClCompile Include="..\src\media\media_recorder.cpp">
       <Filter>Source Files\media</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\winvideo\video_device_impl.cpp">
+      <Filter>Source Files\media\video\winvideo</Filter>
+    </ClCompile>
+    <ClCompile Include="..\src\media\video\winvideo\video_device_monitor_impl.cpp">
+      <Filter>Source Files\media\video\winvideo</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -797,6 +806,9 @@
     </ClInclude>
     <ClInclude Include="..\src\media\media_stream.h">
       <Filter>Source Files\media</Filter>
+    </ClInclude>
+    <ClInclude Include="..\src\media\video\winvideo\capture_graph_interfaces.h">
+      <Filter>Source Files\media\video\winvideo</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

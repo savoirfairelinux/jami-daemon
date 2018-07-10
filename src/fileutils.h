@@ -27,11 +27,11 @@
 #include <mutex>
 #include <cstdio>
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #define PROTECTED_GETENV(str) ({char *envvar_ = getenv((str)); \
                                                    envvar_ ? envvar_ : "";})
 #else
-#define PROTECTED_GETENV(str) ({char *envvar_ = "" })
+#define PROTECTED_GETENV(str) ""
 #endif
 
 #define XDG_DATA_HOME           (PROTECTED_GETENV("XDG_DATA_HOME"))

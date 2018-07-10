@@ -237,7 +237,7 @@ VideoDeviceImpl::getDeviceParams() const
             auto videoInfo = (VIDEOINFOHEADER*) pmt->pbFormat;
             params.width = videoInfo->bmiHeader.biWidth;
             params.height = videoInfo->bmiHeader.biHeight;
-            params.framerate = {1e7,  videoInfo->AvgTimePerFrame};
+            params.framerate = {1e7,  (double)videoInfo->AvgTimePerFrame};
         }
     }
     return params;
