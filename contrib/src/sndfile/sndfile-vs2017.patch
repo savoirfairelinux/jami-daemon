@@ -1,6 +1,6 @@
 --- /dev/null
 +++ b/msvc/libsndfile.vcxproj
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,210 @@
 +<?xml version="1.0" encoding="utf-8"?>
 +<Project DefaultTargets="Build" ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 +  <ItemGroup Label="ProjectConfigurations">
@@ -142,8 +142,6 @@
 +    <ClCompile Include="..\src\file_io.c" />
 +    <ClCompile Include="..\src\flac.c" />
 +    <ClCompile Include="..\src\float32.c" />
-+    <ClCompile Include="..\src\g72x.c" />
-+    <ClCompile Include="..\src\gsm610.c" />
 +    <ClCompile Include="..\src\htk.c" />
 +    <ClCompile Include="..\src\id3.c" />
 +    <ClCompile Include="..\src\ima_adpcm.c" />
@@ -305,7 +303,7 @@
 +#define HAVE_GMTIME 0
 +
 +/* Define to 1 if you have the `gmtime_r' function. */
-+#define HAVE_GMTIME_R 0
++#undef HAVE_GMTIME_R
 +
 +/* Define to 1 if you have the <inttypes.h> header file. */
 +#define HAVE_INTTYPES_H 1
@@ -1223,6 +1221,89 @@
 +
 +#endif	/* SNDFILE_H */
 +
+--- a/src/wav.c
++++ b/src/wav.c
+@@ -272,14 +272,14 @@ wav_open	 (SF_PRIVATE *psf)
+ 					error = wav_w64_msadpcm_init (psf, blockalign, framesperblock) ;
+ 					break ;
+ 
+-		case SF_FORMAT_G721_32 :
++		/*case SF_FORMAT_G721_32 :
+ 					error = g72x_init (psf) ;
+-					break ;
++					break ;*/
+ 		/* Lite remove end */
+ 
+-		case SF_FORMAT_GSM610 :
++		/*case SF_FORMAT_GSM610 :
+ 					error = gsm610_init (psf) ;
+-					break ;
++					break ;*/
+ 
+ 		default : 	return SFE_UNIMPLEMENTED ;
+ 		} ;
+--- a/src/aiff.c
++++ b/src/aiff.c
+@@ -344,9 +344,9 @@ aiff_open (SF_PRIVATE *psf)
+ 				break ;
+ 		/* Lite remove end */
+ 
+-		case SF_FORMAT_GSM610 :
++		/*case SF_FORMAT_GSM610 :
+ 				error = gsm610_init (psf) ;
+-				break ;
++				break ;*/
+ 
+ 		default : return SFE_UNIMPLEMENTED ;
+ 		} ;
+--- a/src/au.c
++++ b/src/au.c
+@@ -161,7 +161,7 @@ au_open	(SF_PRIVATE *psf)
+ 				error = double64_init (psf) ;
+ 				break ;
+ 
+-		case SF_FORMAT_G721_32 :
++		/*case SF_FORMAT_G721_32 :
+ 				error = g72x_init (psf) ;
+ 				psf->sf.seekable = SF_FALSE ;
+ 				break ;
+@@ -174,7 +174,7 @@ au_open	(SF_PRIVATE *psf)
+ 		case SF_FORMAT_G723_40 :
+ 				error = g72x_init (psf) ;
+ 				psf->sf.seekable = SF_FALSE ;
+-				break ;
++				break ;*/
+ 		/* Lite remove end */
+ 
+ 		default :	break ;
+--- a/src/raw.c
++++ b/src/raw.c
+@@ -67,9 +67,9 @@ raw_open	(SF_PRIVATE *psf)
+ 				error = alaw_init (psf) ;
+ 				break ;
+ 
+-		case SF_FORMAT_GSM610 :
++		/*case SF_FORMAT_GSM610 :
+ 				error = gsm610_init (psf) ;
+-				break ;
++				break ;*/
+ 
+ 		/* Lite remove start */
+ 		case SF_FORMAT_FLOAT :
+--- a/src/w64.c
++++ b/src/w64.c
+@@ -204,9 +204,9 @@ w64_open	(SF_PRIVATE *psf)
+ 					break ;
+ 		/* Lite remove end */
+ 
+-		case SF_FORMAT_GSM610 :
++		/*case SF_FORMAT_GSM610 :
+ 					error = gsm610_init (psf) ;
+-					break ;
++					break ;*/
+ 
+ 		default : 	return SFE_UNIMPLEMENTED ;
+ 		} ;
 --- a/src/test_file_io.c
 +++ b/src/test_file_io.c
 @@ -64,7 +64,7 @@ file_open_test (const char *filename)

@@ -23,7 +23,7 @@
 #ifndef INTRIN_H_
 #define INTRIN_H_
 
-#ifdef RING_UWP
+#ifdef _MSC_VER
 #define UNUSED
 #else
 #define UNUSED __attribute__((__unused__))
