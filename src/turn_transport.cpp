@@ -337,10 +337,8 @@ TurnTransport::TurnTransport(const TurnTransportParams& params)
     // TURN allocation setup
     pj_turn_alloc_param turn_alloc_param;
 	pj_turn_alloc_param_default(&turn_alloc_param);
-#ifndef RING_UWP // RING_UWP pjsip version is too old for now (need to have > 2.7.1)
     if (params.authorized_family != 0)
         turn_alloc_param.af = params.authorized_family; // RFC 6156!!!
-#endif
 
     if (params.isPeerConnection)
         turn_alloc_param.peer_conn_type = PJ_TURN_TP_TCP; // RFC 6062!!!

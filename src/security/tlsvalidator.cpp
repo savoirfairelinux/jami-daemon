@@ -45,7 +45,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #include <libgen.h>
 #endif
 
@@ -55,14 +55,14 @@
 #include <netinet/in.h>
 #include <netdb.h>
 #else
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #define close(x) closesocket(x)
 #endif
 #endif
 #include <unistd.h>
 #include <fcntl.h>
 
-#ifdef RING_UWP
+#ifdef _MSC_VER
 #include "windirent.h"
 #endif
 
@@ -851,7 +851,7 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
     if (privateKeyPath_.empty())
        return TlsValidator::CheckResult(CheckValues::UNSUPPORTED, "");
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
     auto path = std::unique_ptr<char, decltype(free)&> (strdup(privateKeyPath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else
@@ -874,7 +874,7 @@ TlsValidator::CheckResult TlsValidator::privateKeyDirectoryPermissions()
 
 TlsValidator::CheckResult TlsValidator::publicKeyDirectoryPermissions()
 {
-#ifndef RING_UWP
+#ifndef _MSC_VER
     auto path = std::unique_ptr<char, decltype(free)&>(strdup(certificatePath_.c_str()), free);
     const char* dir = dirname(path.get());
 #else
