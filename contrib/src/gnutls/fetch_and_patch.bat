@@ -19,6 +19,11 @@ cd %BUILD%\gnutls
 
 %APPLY_CMD% %SRC%\gnutls\gnutls-no-egd.patch
 %APPLY_CMD% %SRC%\gnutls\read-file-limits.h.patch
-%APPLY_CMD% %SRC%\gnutls\gnutls-uwp.patch
+
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\gnutls\gnutls-uwp.patch
+)
+
+%APPLY_CMD% %SRC%\gnutls\gnutls-mscver.patch
 
 cd %SRC%
