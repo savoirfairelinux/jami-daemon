@@ -49,11 +49,11 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#ifndef RING_UWP
+#ifndef _MSC_VER 
 #include <libgen.h>
 #endif
 
-#ifdef RING_UWP
+#ifdef _MSC_VER
 #include "windirent.h"
 #else
 #include <dirent.h>
@@ -177,7 +177,7 @@ create_pidfile()
 std::string
 expand_path(const std::string &path)
 {
-#if defined __ANDROID__ || defined RING_UWP || defined WIN32 || defined __APPLE__
+#if defined __ANDROID__ || defined _MSC_VER || defined WIN32 || defined __APPLE__
     RING_ERR("Path expansion not implemented, returning original");
     return path;
 #else
@@ -251,7 +251,7 @@ bool isSymLink(const std::string& path)
     struct stat s;
     if (lstat(path.c_str(), &s) == 0)
         return S_ISLNK(s.st_mode);
-#elif !defined(RING_UWP)
+#elif !defined(_MSC_VER)
     DWORD attr = GetFileAttributes(ring::to_wstring(path).c_str());
     if (attr & FILE_ATTRIBUTE_REPARSE_POINT)
         return true;
@@ -278,8 +278,10 @@ writeTime(const std::string& path)
     ext_params.lpSecurityAttributes = nullptr;
     ext_params.hTemplateFile = nullptr;
     HANDLE h = CreateFile2(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, &ext_params);
+#elif _MSC_VER
+    HANDLE h = CreateFile(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #else
-    HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ,  nullptr,  OPEN_EXISTING,  FILE_ATTRIBUTE_NORMAL, nullptr);
+    HANDLE h = CreateFile(ring::to_wstring(path).c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
 #endif
     if (h == INVALID_HANDLE_VALUE)
         throw std::runtime_error("Can't open: " + path);
@@ -486,7 +488,11 @@ static std::string config_path;
 static char *program_dir = NULL;
 void set_program_dir(char *program_path)
 {
+#ifdef _MSC_VER
+    _splitpath(program_path, nullptr, program_dir, nullptr, nullptr);
+#else
     program_dir = dirname(program_path);
+#endif
 }
 #endif
 

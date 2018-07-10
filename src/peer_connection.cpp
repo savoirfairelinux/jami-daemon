@@ -44,7 +44,7 @@
 #include <sys/select.h>
 #endif
 
-#ifndef RING_UWP
+#ifndef _MSC_VER
 #include <sys/time.h>
 #endif
 
