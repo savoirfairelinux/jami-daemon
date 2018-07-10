@@ -33,11 +33,12 @@ extern "C" {
 #include <iomanip>
 #include <sstream>
 #include <sys/types.h>
+#include <cstdlib>
 #include <ctime>
 
 namespace ring {
 
-static constexpr auto FRAME_DEQUEUE_INTERVAL = std::chrono::milliseconds(200);
+static const constexpr char* RING_RECORDER_DEBUG_TS = "RING_RECORDER_DEBUG_TS";
 
 static std::string
 replaceAll(const std::string& str, const std::string& from, const std::string& to)
@@ -222,7 +223,10 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     // save a copy of the frame, will be filtered/encoded in another thread
     const MediaStream& ms = streams_[isVideo][fromPeer];
     AVFrame* input = av_frame_clone(frame);
-    input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0
+    input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0 (or close)
+
+    if (debugTs_)
+        RING_DBG() << ms.name << " (" << (fromPeer ? "peer " : "local ") << (isVideo ? "video" : "audio") << "): " << input->pts;
 
     {
         std::lock_guard<std::mutex> q(qLock_);
@@ -235,6 +239,9 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
 int
 MediaRecorder::initRecord()
 {
+    if (auto debugTs = std::getenv(RING_RECORDER_DEBUG_TS))
+        debugTs_ = (!std::string(debugTs).empty());
+
     // need to get encoder parameters before calling openFileOutput
     // openFileOutput needs to be called before adding any streams
 
