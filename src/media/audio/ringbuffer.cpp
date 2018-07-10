@@ -200,7 +200,8 @@ size_t
 RingBuffer::availableForGet(const std::string &call_id) const
 {
     // Used space
-    return getLength(call_id);
+    auto length = getLength(call_id);
+    return length;
 }
 
 size_t RingBuffer::get(AudioBuffer& buf, const std::string &call_id)
