@@ -46,7 +46,7 @@
 #include <TargetConditionals.h>
 #endif
 
-#ifdef RING_UWP
+#ifdef _MSC_VER
 #include "windirent.h"
 #else
 #include <dirent.h>

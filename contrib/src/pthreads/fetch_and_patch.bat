@@ -19,7 +19,11 @@ rename %BUILD%\%PTHREADS_VERSION2% pthreads
 cd %BUILD%\pthreads
 
 %APPLY_CMD% %SRC%\pthreads\pthreads-windows.patch
-%APPLY_CMD% %SRC%\pthreads\pthreads-uwp.patch
+
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\pthreads\pthreads-uwp.patch
+)
+
 %APPLY_CMD% %SRC%\pthreads\pthreads-vs2017.patch
 
 cd %SRC%
