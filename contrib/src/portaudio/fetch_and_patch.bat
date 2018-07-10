@@ -17,6 +17,9 @@ del pa_stable_%PA_VERSION%.tgz && del pa_stable_%PA_VERSION%.tar
 cd %BUILD%\portaudio
 
 %APPLY_CMD% %SRC%\portaudio\pa-vs2017.patch
-%APPLY_CMD% %SRC%\portaudio\pa-uwp.patch
+
+if "%1"=="uwp" (
+    %APPLY_CMD% %SRC%\portaudio\pa-uwp.patch
+)
 
 cd %SRC%
