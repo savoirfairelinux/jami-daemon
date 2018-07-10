@@ -75,7 +75,7 @@ public:
     void readFrameRates(int fd, unsigned int pixel_format);
 
     std::vector<FrameRate> getRateList() const;
-    VideoV4l2Rate getRate(FrameRate rate) const;
+    VideoV4l2Rate getRate(const FrameRate& rate) const;
 
     unsigned width;
     unsigned height;
@@ -281,11 +281,10 @@ VideoV4l2Size::readFrameRates(int fd, unsigned int pixel_format)
 }
 
 VideoV4l2Rate
-VideoV4l2Size::getRate(FrameRate rate) const
+VideoV4l2Size::getRate(const FrameRate& rate) const
 {
-    double r = rate.real();
     for (const auto& item : rates_) {
-        if (std::fabs(item.frame_rate.real() - r) < 0.0001d)
+        if (std::fabs((item.frame_rate - r).real()) < 0.0001d)
             return item;
     }
     return rates_.back();
