@@ -98,7 +98,7 @@ public:
 
     unsigned getStreamCount() const;
 
-    void startRecorder(std::shared_ptr<MediaRecorder>& rec);
+    void initRecorder(std::shared_ptr<MediaRecorder>& rec);
 
 private:
     NON_COPYABLE(MediaEncoder);
