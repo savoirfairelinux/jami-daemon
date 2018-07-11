@@ -233,6 +233,9 @@ class AudioReceiveThread
         void openDecoder();
         bool decodeFrame();
 
+        std::weak_ptr<MediaRecorder> recorder_;
+        bool recordingStarted_{false};
+
         /*-----------------------------------------------------------------*/
         /* These variables should be used in thread (i.e. process()) only! */
         /*-----------------------------------------------------------------*/
@@ -273,6 +276,8 @@ AudioReceiveThread::AudioReceiveThread(const std::string& id,
 
 AudioReceiveThread::~AudioReceiveThread()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
     loop_.join();
 }
 
@@ -309,6 +314,20 @@ AudioReceiveThread::process()
     switch (audioDecoder_->decode(decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:
+            if (auto rec = recorder_.lock()) {
+                if (!recordingStarted_) {
+                    if (rec->addStream(false, true, audioDecoder_->getStream()) >= 0) {
+                        recordingStarted_ = true;
+                    } else {
+                        recorder_ = std::weak_ptr<MediaRecorder>();
+                    }
+                }
+                if (recordingStarted_)
+                    rec->recordData(decodedFrame.pointer(), false, true);
+            } else {
+                recordingStarted_ = false;
+                recorder_ = std::weak_ptr<MediaRecorder>();
+            }
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
             // Refresh the remote audio codec in the callback SmartInfo
@@ -384,8 +403,8 @@ AudioReceiveThread::startLoop()
 void
 AudioReceiveThread::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (audioDecoder_)
-        audioDecoder_->initRecorder(rec);
+    rec->incrementStreams(1);
+    recorder_ = rec;
 }
 
 AudioRtpSession::AudioRtpSession(const std::string& id)
