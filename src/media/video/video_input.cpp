@@ -63,6 +63,8 @@ VideoInput::VideoInput()
 
 VideoInput::~VideoInput()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
 #if defined(__ANDROID__) || defined(RING_UWP) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)
     /* we need to stop the loop and notify the condition variable
      * to unblock the process loop */
@@ -206,7 +208,8 @@ bool VideoInput::captureFrame()
     if (not decoder_)
         return false;
 
-    const auto ret = decoder_->decode(getNewFrame());
+    auto& frame = getNewFrame();
+    const auto ret = decoder_->decode(frame);
     switch (ret) {
         case MediaDecoder::Status::ReadError:
             return false;
@@ -229,6 +232,20 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         case MediaDecoder::Status::FrameFinished:
+            if (auto rec = recorder_.lock()) {
+                if (!recordingStarted_) {
+                    if (rec->addStream(true, false, decoder_->getStream()) >= 0) {
+                        recordingStarted_ = true;
+                    } else {
+                        recorder_ = std::weak_ptr<MediaRecorder>();
+                    }
+                }
+                if (recordingStarted_)
+                    rec->recordData(frame.pointer(), true, false);
+            } else {
+                recordingStarted_ = false;
+                recorder_ = std::weak_ptr<MediaRecorder>();
+            }
             publishFrame();
             return true;
         // continue decoding
@@ -590,8 +607,8 @@ VideoInput::foundDecOpts(const DeviceParams& params)
 void
 VideoInput::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (decoder_)
-        decoder_->initRecorder(rec);
+    rec->incrementStreams(1);
+    recorder_ = rec;
 }
 
 }} // namespace ring::video

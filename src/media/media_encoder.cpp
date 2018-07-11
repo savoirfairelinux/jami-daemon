@@ -446,13 +446,17 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
         if (auto rec = recorder_.lock()) {
             if (!recordingStarted_) {
                 auto ms = MediaStream("", encoders_[currentStreamIdx_], frame->pts);
-                if (rec->addStream(false, false, ms) >= 0)
+                if (rec->addStream(false, false, ms) >= 0) {
                     recordingStarted_ = true;
-                else
+                } else {
                     recorder_ = std::weak_ptr<MediaRecorder>();
+                }
             }
             if (recordingStarted_)
                 rec->recordData(frame, false, false);
+        } else {
+            recordingStarted_ = false;
+            recorder_ = std::weak_ptr<MediaRecorder>();
         }
 
         encode(frame, currentStreamIdx_);

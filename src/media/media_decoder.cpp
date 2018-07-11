@@ -28,7 +28,6 @@
 #include "audio/resampler.h"
 #include "decoder_finder.h"
 #include "manager.h"
-#include "media_recorder.h"
 
 #ifdef RING_ACCEL
 #include "video/accel.h"
@@ -60,8 +59,6 @@ MediaDecoder::MediaDecoder() :
 
 MediaDecoder::~MediaDecoder()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
 #ifdef RING_ACCEL
     if (decoderCtx_ && decoderCtx_->hw_device_ctx)
         av_buffer_unref(&decoderCtx_->hw_device_ctx);
@@ -293,20 +290,7 @@ MediaDecoder::decode(VideoFrame& result)
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
             AV_TIME_BASE_Q, decoderCtx_->time_base,
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-
-        if (auto rec = recorder_.lock()) {
-            bool fromPeer = (inputCtx_->iformat->name == std::string("sdp"));
-            if (!recordingStarted_) {
-                auto ms = MediaStream("", decoderCtx_, frame->pts);
-                ms.format = frame->format; // might not match avStream_ if accel is used
-                if (rec->addStream(true, fromPeer, ms) >= 0)
-                    recordingStarted_ = true;
-                else
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-            }
-            if (recordingStarted_)
-                rec->recordData(frame, true, fromPeer);
-        }
+        lastTimestamp_ = frame->pts;
 
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
@@ -365,18 +349,7 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
         // NOTE don't use clock to rescale audio pts, it may create artifacts
         frame->pts = av_rescale_q_rnd(frame->pts, avStream_->time_base, decoderCtx_->time_base,
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
-
-        if (auto rec = recorder_.lock()) {
-            if (!recordingStarted_) {
-                auto ms = MediaStream("", decoderCtx_, frame->pts);
-                if (rec->addStream(false, true, ms) >= 0)
-                    recordingStarted_ = true;
-                else
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-            }
-            if (recordingStarted_)
-                rec->recordData(frame, false, true);
-        }
+        lastTimestamp_ = frame->pts;
 
         if (emulateRate_ and packetTimestamp != AV_NOPTS_VALUE) {
             auto frame_time = getTimeBase()*(packetTimestamp - avStream_->start_time);
@@ -525,15 +498,15 @@ MediaDecoder::correctPixFmt(int input_pix_fmt) {
     return pix_fmt;
 }
 
-void
-MediaDecoder::initRecorder(std::shared_ptr<MediaRecorder>& rec)
+MediaStream
+MediaDecoder::getStream() const
 {
-    // recording will start once we can send an AVPacket to the recorder
-    recordingStarted_ = false;
-    recorder_ = rec;
-    if (auto r = recorder_.lock()) {
-        r->incrementStreams(1);
-    }
+    auto ms = MediaStream("", decoderCtx_, lastTimestamp_);
+#ifdef RING_ACCEL
+    if (decoderCtx_->codec_type == AVMEDIA_TYPE_VIDEO && enableAccel_ && !accel_.name.empty())
+        ms.format = AV_PIX_FMT_NV12; // TODO option me!
+#endif
+    return ms;
 }
 
 } // namespace ring
