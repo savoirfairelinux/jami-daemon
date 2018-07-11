@@ -143,6 +143,9 @@ private:
     void releaseBufferCb(uint8_t* ptr);
     std::array<struct VideoFrameBuffer, 8> buffers_;
 #endif
+
+    std::weak_ptr<MediaRecorder> recorder_;
+    bool recordingStarted_{false};
 };
 
 }} // namespace ring::video
