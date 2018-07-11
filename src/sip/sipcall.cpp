@@ -643,6 +643,12 @@ void
 SIPCall::switchInput(const std::string& resource)
 {
 #ifdef RING_VIDEO
+    if (Recordable::isRecording()) {
+        // new input will have different parameters (resolution, framerate, etc)
+        // this will affect replayability of the resulting file
+        RING_WARN() << "Stopping record: switching inputs while recording is unsupported";
+        Recordable::stopRecording(); // if call stops, finish recording
+    }
     videoInput_ = resource;
     if (isWaitingForIceAndMedia_) {
         remainingRequest_ = Request::SwitchInput;
