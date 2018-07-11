@@ -256,11 +256,13 @@ public:
     using ListenerFunction = std::function<void(PeerConnection*)>;
 
     ClientConnector(Impl& parent,
+                    const DRing::DataTransferId& tid,
                     const dht::InfoHash& peer_h,
                     const std::shared_ptr<dht::crypto::Certificate>& peer_cert,
                     const std::vector<std::string>& public_addresses,
                     const ListenerFunction& connect_cb)
         : parent_ {parent}
+        , tid_ {tid}
         , peer_ {peer_h}
         , publicAddresses_ {public_addresses}
         , peerCertificate_ {peer_cert} {
@@ -296,7 +298,7 @@ public:
     }
 
     void cancel() {
-        parent_.ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_);
+        parent_.ctrl << makeMsg<CtrlMsgType::CANCEL>(peer_, tid_);
     }
 
     void onDhtResponse(PeerConnectionMsg&& response) {
@@ -321,8 +323,11 @@ private:
         Timeout<Clock> dhtMsgTimeout {DHT_MSG_TIMEOUT};
         dhtMsgTimeout.start();
         while (!responseReceived_) {
-            if (dhtMsgTimeout)
-                throw std::runtime_error("no response from DHT to E2E request");
+            if (dhtMsgTimeout) {
+                RING_ERR("no response from DHT to E2E request. Cancel transfer");
+                cancel();
+                return;
+            }
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
         }
 
@@ -370,6 +375,7 @@ private:
     }
 
     Impl& parent_;
+    const DRing::DataTransferId tid_;
     const dht::InfoHash peer_;
 
     std::vector<std::string> publicAddresses_;
@@ -609,7 +615,7 @@ DhtPeerConnector::Impl::onAddDevice(const dht::InfoHash& dev_h,
     if (iter == std::end(clients_)) {
         clients_.emplace(
             client,
-            std::make_unique<Impl::ClientConnector>(*this, dev_h, peer_cert, public_addresses, connect_cb));
+            std::make_unique<Impl::ClientConnector>(*this, tid, dev_h, peer_cert, public_addresses, connect_cb));
     } else {
         iter->second->addListener(connect_cb);
     }
