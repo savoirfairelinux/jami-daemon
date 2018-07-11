@@ -34,6 +34,7 @@
 
 #include "audio/audiobuffer.h"
 
+#include "media_stream.h"
 #include "rational.h"
 #include "noncopyable.h"
 
@@ -57,7 +58,6 @@ class RingBuffer;
 class Resampler;
 class MediaIOHandle;
 struct DeviceParams;
-class MediaRecorder;
 
 class MediaDecoder {
     public:
@@ -100,7 +100,7 @@ class MediaDecoder {
         void enableAccel(bool enableAccel);
 #endif
 
-        void initRecorder(std::shared_ptr<MediaRecorder>& rec);
+        MediaStream getStream() const;
 
     private:
         NON_COPYABLE(MediaDecoder);
@@ -115,6 +115,7 @@ class MediaDecoder {
         int streamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
+        int64_t lastTimestamp_;
 
         AudioBuffer decBuff_;
         AudioBuffer resamplingBuff_;
@@ -130,9 +131,6 @@ class MediaDecoder {
         video::HardwareAccel accel_;
         unsigned short accelFailures_ = 0;
 #endif
-
-        std::weak_ptr<MediaRecorder> recorder_;
-        bool recordingStarted_ = false;
 
     protected:
         AVDictionary *options_ = nullptr;

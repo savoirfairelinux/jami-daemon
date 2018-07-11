@@ -56,6 +56,8 @@ VideoReceiveThread::VideoReceiveThread(const std::string& id,
 
 VideoReceiveThread::~VideoReceiveThread()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
     loop_.join();
 }
 
@@ -166,10 +168,25 @@ void VideoReceiveThread::addIOContext(SocketPair& socketPair)
 
 bool VideoReceiveThread::decodeFrame()
 {
-    const auto ret = videoDecoder_->decode(getNewFrame());
+    auto& frame = getNewFrame();
+    const auto ret = videoDecoder_->decode(frame);
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
+            if (auto rec = recorder_.lock()) {
+                if (!recordingStarted_) {
+                    if (rec->addStream(true, true, videoDecoder_->getStream()) >= 0) {
+                        recordingStarted_ = true;
+                    } else {
+                        recorder_ = std::weak_ptr<MediaRecorder>();
+                    }
+                }
+                if (recordingStarted_)
+                    rec->recordData(frame.pointer(), true, true);
+            } else {
+                recordingStarted_ = false;
+                recorder_ = std::weak_ptr<MediaRecorder>();
+            }
             publishFrame();
             return true;
 
@@ -241,8 +258,8 @@ VideoReceiveThread::triggerKeyFrameRequest()
 void
 VideoReceiveThread::initRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
 {
-    if (videoDecoder_)
-        videoDecoder_->initRecorder(rec);
+    rec->incrementStreams(1);
+    recorder_ = rec;
 }
 
 }} // namespace ring::video
