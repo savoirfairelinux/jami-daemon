@@ -221,7 +221,7 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
         return 0;
 
     // save a copy of the frame, will be filtered/encoded in another thread
-    const MediaStream& ms = streams_[isVideo][fromPeer];
+    MediaStream& ms = streams_[isVideo][fromPeer];
     AVFrame* input = av_frame_clone(frame);
     input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0 (or close)
 
