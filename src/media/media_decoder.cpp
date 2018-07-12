@@ -288,7 +288,7 @@ MediaDecoder::decode(VideoFrame& result)
 #endif
         auto packetTimestamp = frame->pts; // in stream time base
         frame->pts = av_rescale_q_rnd(av_gettime() - startTime_,
-            AV_TIME_BASE_Q, decoderCtx_->time_base,
+            {1, AV_TIME_BASE}, decoderCtx_->time_base,
             static_cast<AVRounding>(AV_ROUND_NEAR_INF|AV_ROUND_PASS_MINMAX));
         lastTimestamp_ = frame->pts;
 
