@@ -24,6 +24,8 @@
 #include <cstdlib> // std::abs
 #include <iostream>
 #include <cmath> // std::fmod
+#include <functional> // std::modulus
+#include <ciso646> // and, or ...
 
 extern "C" {
 #include <libavutil/rational.h> // specify conversions for AVRational
