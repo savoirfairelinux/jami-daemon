@@ -34,6 +34,8 @@
 
 #include <ciso646> // fix windows compiler bug
 
+struct AVFrame;
+
 namespace ring {
 
 /**
@@ -258,6 +260,14 @@ class AudioBuffer {
         size_t interleave(AudioSample* out) const;
 
         /**
+         * Write non interleaved multichannel data to the out buffer (fixed-point 16-bits).
+         * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
+         *
+         * @returns Number of samples writen.
+         */
+        size_t deinterleave(AudioSample** out) const;
+
+        /**
          * Write null data (silence) to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
          *
@@ -342,6 +352,8 @@ class AudioBuffer {
          * Buffer sample number is increased if required to hold the new requested samples.
          */
         size_t copy(AudioSample* in, size_t sample_num, size_t pos_out = 0);
+
+        AVFrame* toAVFrame() /*const*/;
 
     private:
         int sampleRate_;
