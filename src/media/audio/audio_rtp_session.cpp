@@ -182,10 +182,10 @@ AudioSender::process()
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
         Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
-        if (audioEncoder_->encode_audio(resampledData_) < 0)
+        if (audioEncoder_->encode_audio(resampledData_, resampledData_.toAVFrame()) < 0)
             RING_ERR("encoding failed");
     } else {
-        if (audioEncoder_->encode_audio(micData_) < 0)
+        if (audioEncoder_->encode_audio(micData_, micData_.toAVFrame()) < 0)
             RING_ERR("encoding failed");
     }
 }

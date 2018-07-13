@@ -378,7 +378,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 }
 #endif // RING_VIDEO
 
-int MediaEncoder::encode_audio(const AudioBuffer &buffer)
+int MediaEncoder::encode_audio(const AudioBuffer &buffer, AVFrame* f)
 {
     const int needed_bytes = av_samples_get_buffer_size(nullptr, buffer.channels(),
                                                         buffer.frames(),
@@ -459,7 +459,7 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
             recorder_ = std::weak_ptr<MediaRecorder>();
         }
 
-        encode(frame, currentStreamIdx_);
+        encode(f, currentStreamIdx_);
         av_frame_free(&frame);
     }
 
@@ -469,12 +469,35 @@ int MediaEncoder::encode_audio(const AudioBuffer &buffer)
 int
 MediaEncoder::encode(AVFrame* frame, int streamIdx)
 {
+    if (streamIdx < 0) streamIdx = currentStreamIdx_;
+
     int ret = 0;
     AVCodecContext* encoderCtx = encoders_[streamIdx];
     AVPacket pkt;
     av_init_packet(&pkt);
     pkt.data = nullptr; // packet data will be allocated by the encoder
     pkt.size = 0;
+
+    if (encoderCtx->codec_type == AVMEDIA_TYPE_AUDIO) {
+        frame->pts = getNextTimestamp(sent_samples, encoderCtx->sample_rate, encoderCtx->time_base);
+        sent_samples += frame->nb_samples;
+
+        if (auto rec = recorder_.lock()) {
+            if (!recordingStarted_) {
+                auto ms = MediaStream("", encoderCtx, frame->pts);
+                if (rec->addStream(false, false, ms) >= 0) {
+                    recordingStarted_ = true;
+                } else {
+                    recorder_ = std::weak_ptr<MediaRecorder>();
+                }
+            }
+            if (recordingStarted_)
+                rec->recordData(frame, false, false);
+        } else {
+            recordingStarted_ = false;
+            recorder_ = std::weak_ptr<MediaRecorder>();
+        }
+    }
 
     ret = avcodec_send_frame(encoderCtx, frame);
     if (ret < 0)
