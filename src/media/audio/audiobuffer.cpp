@@ -18,6 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "libav_deps.h"
 #include "audiobuffer.h"
 #include "logger.h"
 #include <string.h>
@@ -287,6 +288,55 @@ size_t AudioBuffer::copy(AudioSample* in, size_t sample_num, size_t pos_out /* =
         std::copy(in, in + sample_num, samples_[i].begin() + pos_out);
 
     return sample_num;
+}
+
+AVFrame*
+AudioBuffer::toAVFrame() const
+{
+    const constexpr AVSampleFormat fmt = AV_SAMPLE_FMT_S16;
+    const int bytesReq = av_samples_get_buffer_size(nullptr, channels(), frames(), fmt, 0);
+    RING_WARN() << "WOLOLO bytes required is " << bytesReq;
+    if (bytesReq < 0) {
+        RING_ERR() << "bytesReq < 0";
+        return nullptr;
+    }
+
+    std::vector<AudioSample> samples(bytesReq / sizeof(AudioSample));
+    AudioSample* rawSamples = samples.data();
+
+    AudioSample* offsetPtr = rawSamples;
+    int nbFrames = frames();
+
+    interleave(rawSamples);
+
+    const auto layout = channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    const auto rate = getSampleRate();
+
+    AVFrame* frame = av_frame_alloc();
+    if (!frame) {
+        RING_ERR() << "No frame";
+        return nullptr;
+    }
+
+    frame->nb_samples = nbFrames;
+    frame->format = fmt;
+    frame->channel_layout = layout;
+    frame->channels = channels();
+    frame->sample_rate = rate;
+
+    const auto bufSize = av_samples_get_buffer_size(nullptr, channels(), frame->nb_samples,
+            fmt, 0);
+    if (avcodec_fill_audio_frame(frame, channels(), fmt,
+            reinterpret_cast<const uint8_t*>(offsetPtr), bufSize, 0) < 0) {
+        RING_ERR() << "Failed to fill audio frame";
+        av_frame_free(&frame);
+        return nullptr;
+    }
+
+    nbFrames -= frame->nb_samples;
+    offsetPtr += frame->nb_samples * channels();
+
+    return frame;
 }
 
 } // namespace ring
