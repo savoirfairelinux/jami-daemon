@@ -34,6 +34,8 @@
 
 #include <ciso646> // fix windows compiler bug
 
+struct AVFrame;
+
 namespace ring {
 
 /**
@@ -342,6 +344,8 @@ class AudioBuffer {
          * Buffer sample number is increased if required to hold the new requested samples.
          */
         size_t copy(AudioSample* in, size_t sample_num, size_t pos_out = 0);
+
+        AVFrame* toAVFrame() const;
 
     private:
         int sampleRate_;
