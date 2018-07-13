@@ -34,6 +34,8 @@
 
 #include <ciso646> // fix windows compiler bug
 
+struct AVFrame;
+
 namespace ring {
 
 /**

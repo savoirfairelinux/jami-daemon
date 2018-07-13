@@ -175,6 +175,13 @@ AudioSender::process()
 
     Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
 
+    if (muteState_) { // audio is muted
+        for (auto& channel : micData_.getData()) {
+            std::fill(channel.begin(), channel.end(), 0);
+        }
+    }
+
+    AudioBuffer toEncode;
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
@@ -183,12 +190,48 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
-        if (audioEncoder_->encode_audio(resampledData_) < 0)
-            RING_ERR("encoding failed");
+        toEncode = resampledData_;
     } else {
-        if (audioEncoder_->encode_audio(micData_) < 0)
-            RING_ERR("encoding failed");
+        toEncode = micData_;
     }
+
+    const constexpr AVSampleFormat fmt = AV_SAMPLE_FMT_S16;
+    const int bytesReq = av_samples_get_buffer_size(nullptr, toEncode.channels(), toEncode.frames(), fmt, 0);
+    if (bytesReq < 0) {
+        RING_ERR() << "bytesReq < 0";
+        return;
+    }
+
+    std::vector<AudioSample> samplesVec(bytesReq / sizeof(AudioSample));
+    AudioSample* rawSamples = samplesVec.data();
+    toEncode.interleave(rawSamples);
+
+    const auto layout = toEncode.channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    const auto rate = toEncode.getSampleRate();
+
+    AVFrame* frame = av_frame_alloc();
+    if (!frame) {
+        RING_ERR() << "No frame";
+        return;
+    }
+
+    frame->nb_samples = toEncode.frames();
+    frame->format = fmt;
+    frame->channel_layout = layout;
+    frame->channels = toEncode.channels();
+    frame->sample_rate = rate;
+
+    const auto bufSize = av_samples_get_buffer_size(nullptr,
+            frame->channels, frame->nb_samples, fmt, 0);
+    if (avcodec_fill_audio_frame(frame, frame->channels, fmt,
+            reinterpret_cast<const uint8_t*>(rawSamples), bufSize, 0) < 0) {
+        RING_ERR() << "Failed to fill audio frame";
+        av_frame_free(&frame);
+        return;
+    }
+
+    if (audioEncoder_->encodeAudio(frame) < 0)
+        RING_ERR("encoding failed");
 }
 void
 AudioSender::setMuted(bool isMuted)
