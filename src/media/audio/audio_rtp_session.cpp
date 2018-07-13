@@ -175,6 +175,13 @@ AudioSender::process()
 
     Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
 
+    if (muteState_) { // audio is muted
+        for (auto& channel : micData_.getData()) {
+            std::fill(channel.begin(), channel.end(), 0);
+        }
+    }
+
+    AudioBuffer buffer;
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
@@ -183,12 +190,13 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
-        if (audioEncoder_->encode_audio(resampledData_) < 0)
-            RING_ERR("encoding failed");
+        buffer = resampledData_;
     } else {
-        if (audioEncoder_->encode_audio(micData_) < 0)
-            RING_ERR("encoding failed");
+        buffer = micData_;
     }
+
+    if (audioEncoder_->encodeAudio(buffer.toAVFrame()) < 0)
+        RING_ERR("encoding failed");
 }
 void
 AudioSender::setMuted(bool isMuted)
