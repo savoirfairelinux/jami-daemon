@@ -173,6 +173,13 @@ AudioSender::process()
     auto accountAudioCodec = std::static_pointer_cast<AccountAudioCodecInfo>(args_.codec);
     micData_.setChannelNum(accountAudioCodec->audioformat.nb_channels, true);
 
+    if (muteState_) { // audio is muted
+        for (auto& channel : micData_.getData()) {
+            std::fill(channel.begin(), channel.end(), 0);
+        }
+    }
+
+    AudioBuffer toEncode;
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
@@ -181,13 +188,13 @@ AudioSender::process()
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
         resampler_->resample(micData_, resampledData_);
+        toEncode = resampledData_;
         Smartools::getInstance().setLocalAudioCodec(audioEncoder_->getEncoderName());
-        if (audioEncoder_->encode_audio(resampledData_) < 0)
-            RING_ERR("encoding failed");
     } else {
-        if (audioEncoder_->encode_audio(micData_) < 0)
-            RING_ERR("encoding failed");
+        toEncode = micData_;
     }
+    if (audioEncoder_->encodeAudio(toEncode.toAVFrame()) < 0)
+        RING_ERR("encoding failed");
 }
 void
 AudioSender::setMuted(bool isMuted)
