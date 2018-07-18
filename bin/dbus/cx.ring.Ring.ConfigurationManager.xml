@@ -93,7 +93,7 @@
             <tp:docstring>
                 Send new account parameters, or account parameters changes, to the core. The hash table is not required to be complete, only the updated parameters may be specified.
                 <tp:rationale>Account settings are written to the configuration file when ring properly quits.</tp:rationale>
-                <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
+                <tp:rationale>After calling this method, the core will emit the signal <tp:member-ref>accountDetailsChanged</tp:member-ref> with the updated data. The client must subscribe to this signal and use it to update its internal data structure.</tp:rationale>
             </tp:docstring>
             <annotation name="org.qtproject.QtDBus.QtTypeName.In1" value="MapStringString"/>
             <arg type="s" name="accountID" direction="in">
