@@ -171,66 +171,6 @@ videoFrameSize(int format, int width, int height)
                                     width, height, 1);
 }
 
-void
-yuv422_clear_to_black(VideoFrame& frame)
-{
-    const auto libav_frame = frame.pointer();
-    const auto desc = av_pix_fmt_desc_get((AVPixelFormat)libav_frame->format);
-    if (not desc)
-        return;
-
-    if (not libav_utils::is_yuv_planar(*desc)) {
-        // not planar
-        auto stride = libav_frame->linesize[0];
-        if (libav_frame->width % 2) {
-            // non-even width (16bits write x-loop)
-            for (int y = 0; y < libav_frame->height; ++y) {
-                auto src = &libav_frame->data[0][y * stride];
-                for (int x = 0; x < libav_frame->width; ++x) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-                    *((uint16_t*)src) = 0x8000;
-#else
-                    *((uint16_t*)src) = 0x0080;
-#endif
-                    src += 2;
-                }
-            }
-        } else if (libav_frame->width % 4) {
-            // non-quad width (32bits write x-loop)
-            for (int y = 0; y < libav_frame->height; ++y) {
-                auto src = &libav_frame->data[0][y * stride];
-                for (int x = 0; x < libav_frame->width / 2; ++x) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-                    *((uint32_t*)src) = 0x80008000;
-#else
-                    *((uint32_t*)src) = 0x00800080;
-#endif
-                    src += 4;
-                }
-            }
-        } else {
-            // quad width (64bits write x-loop)
-            for (int y = 0; y < libav_frame->height; ++y) {
-                auto src = &libav_frame->data[0][y * stride];
-                for (int x = 0; x < libav_frame->width / 4; ++x) {
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-                    *((uint64_t*)src) = 0x8000800080008000;
-#else
-                    *((uint64_t*)src) = 0x0080008000800080;
-#endif
-                    src += 8;
-                }
-            }
-        }
-    } else {
-        // planar
-        std::memset(libav_frame->data[0], 0, libav_frame->linesize[0] * libav_frame->height);
-        // 128 is the black level for U/V channels
-        std::memset(libav_frame->data[1], 128, libav_frame->linesize[1] * (libav_frame->height >> desc->log2_chroma_w));
-        std::memset(libav_frame->data[2], 128, libav_frame->linesize[2] * (libav_frame->height >> desc->log2_chroma_h));
-    }
-}
-
 #endif // RING_VIDEO
 
 } // namespace ring

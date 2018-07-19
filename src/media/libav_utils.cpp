@@ -226,4 +226,21 @@ getDictValue(const AVDictionary* d, const std::string& key, int flags)
         return "";
 }
 
+void
+fillWithBlack(AVFrame* frame)
+{
+    const AVPixelFormat format = static_cast<AVPixelFormat>(frame->format);
+    const int planes = av_pix_fmt_count_planes(format);
+    // workaround for casting pointers to different sizes
+    // on 64 bit machines: sizeof(ptrdiff_t) != sizeof(int)
+    ptrdiff_t linesizes[4];
+    for (int i = 0; i < planes; ++i)
+        linesizes[i] = frame->linesize[i];
+    int ret = av_image_fill_black(frame->data, linesizes, format,
+        frame->color_range, frame->width, frame->height);
+    if (ret < 0) {
+        RING_ERR() << "Failed to blacken frame";
+    }
+}
+
 }} // namespace ring::libav_utils

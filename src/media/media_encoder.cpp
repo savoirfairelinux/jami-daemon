@@ -358,7 +358,7 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
     /* Prepare a frame suitable to our encoder frame format,
      * keeping also the input aspect ratio.
      */
-    yuv422_clear_to_black(scaledFrame_); // to fill blank space left by the "keep aspect"
+    libav_utils::fillWithBlack(scaledFrame_.pointer());
 
     scaler_.scale_with_aspect(input, scaledFrame_);
 
