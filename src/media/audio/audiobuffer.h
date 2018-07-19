@@ -347,6 +347,8 @@ class AudioBuffer {
 
         AVFrame* toAVFrame() const;
 
+        int append(AVFrame* frame);
+
     private:
         int sampleRate_;
 
