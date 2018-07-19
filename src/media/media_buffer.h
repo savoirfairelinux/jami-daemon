@@ -97,7 +97,6 @@ class VideoFrame: public MediaFrame {
 
 // Some helpers
 std::size_t videoFrameSize(int format, int width, int height);
-void yuv422_clear_to_black(VideoFrame& frame);
 
 #endif // RING_VIDEO
 

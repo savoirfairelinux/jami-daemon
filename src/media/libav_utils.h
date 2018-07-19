@@ -25,6 +25,7 @@
 #include <string>
 
 struct AVDictionary;
+struct AVFrame;
 struct AVPixFmtDescriptor;
 
 namespace ring { namespace libav_utils {
@@ -46,5 +47,7 @@ namespace ring { namespace libav_utils {
     std::string getError(int err);
 
     const char* getDictValue(const AVDictionary* d, const std::string& key, int flags=0);
+
+    void fillWithBlack(AVFrame* frame);
 
 }} // namespace ring::libav_utils
