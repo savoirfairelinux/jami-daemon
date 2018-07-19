@@ -65,7 +65,6 @@ pthreads, ^
 restbed, ^
 samplerate, ^
 secp256k1, ^
-sndfile, ^
 upnp, ^
 vpx, ^
 x264, ^

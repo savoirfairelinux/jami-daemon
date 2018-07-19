@@ -115,7 +115,6 @@ build\portaudio\msvc\portaudio.vcxproj, ^
 build\yaml-cpp\msvc\yaml-cpp.vcxproj, ^
 build\pcre\msvc\pcre.vcxproj, ^
 build\libsamplerate\msvc\libsamplerate.vcxproj, ^
-build\sndfile\msvc\libsndfile.vcxproj, ^
 )
 goto startBuild
 
