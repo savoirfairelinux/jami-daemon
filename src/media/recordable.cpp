@@ -20,7 +20,6 @@
  */
 
 #include "recordable.h"
-#include "audio/audiorecord.h"
 #include "audio/ringbufferpool.h"
 #include "manager.h"
 #include "logger.h"
