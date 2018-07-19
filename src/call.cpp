@@ -26,7 +26,6 @@
 #include "audio/ringbufferpool.h"
 #include "dring/call_const.h"
 #include "client/ring_signal.h"
-#include "audio/audiorecord.h"
 #include "sip/sip_utils.h"
 #include "ip_utils.h"
 #include "array_size.h"
