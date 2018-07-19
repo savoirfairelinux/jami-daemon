@@ -25,7 +25,6 @@
 #include "manager.h"
 #include "audio/audiolayer.h"
 #include "audio/ringbufferpool.h"
-#include "audio/audiorecord.h"
 
 #ifdef RING_VIDEO
 #include "sip/sipcall.h"

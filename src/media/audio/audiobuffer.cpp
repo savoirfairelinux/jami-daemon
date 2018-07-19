@@ -332,4 +332,26 @@ AudioBuffer::toAVFrame() const
     return frame;
 }
 
+int
+AudioBuffer::append(AVFrame* frame)
+{
+    // FIXME we assume frame is s16 interleaved
+    if (channels() != static_cast<unsigned>(frame->channels)
+        || getSampleRate() != frame->sample_rate) {
+        auto newFormat = AudioFormat{(unsigned)frame->sample_rate, (unsigned)frame->channels};
+        setFormat(newFormat);
+    }
+
+    AudioBuffer toAppend(frame->nb_samples,
+        {(unsigned)frame->sample_rate, (unsigned)frame->channels});
+    toAppend.deinterleave(reinterpret_cast<const AudioSample*>(frame->extended_data[0]),
+        frame->nb_samples, frame->channels);
+
+    for (size_t c = 0; c < samples_.size(); ++c) {
+        samples_[c].insert(samples_[c].end(), toAppend.samples_[c].begin(), toAppend.samples_[c].end());
+    }
+
+    return 0;
+}
+
 } // namespace ring
