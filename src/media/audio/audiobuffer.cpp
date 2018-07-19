@@ -332,4 +332,28 @@ AudioBuffer::toAVFrame() const
     return frame;
 }
 
+int
+AudioBuffer::append(AVFrame* frame)
+{
+    // assume frame is s16 interleaved
+    if (channels() != static_cast<unsigned>(frame->channels)
+        || getSampleRate() != frame->sample_rate) {
+        auto oldFormat = AudioFormat{(unsigned)getSampleRate(), (unsigned)samples_.size()};
+        auto newFormat = AudioFormat{(unsigned)frame->sample_rate, (unsigned)frame->channels};
+        RING_WARN() << "WOLOLO changing from " << oldFormat << " to " << newFormat;
+        setFormat(newFormat);
+    }
+
+    auto toAppend = new AudioBuffer(frame->nb_samples,
+        {(unsigned)frame->sample_rate, (unsigned)frame->channels});
+    toAppend->deinterleave(reinterpret_cast<const AudioSample*>(frame->extended_data[0]),
+        frame->nb_samples, frame->channels);
+
+    for (size_t c = 0; c < samples_.size(); ++c) {
+        samples_[c].insert(samples_[c].end(), toAppend->samples_[c].begin(), toAppend->samples_[c].end());
+    }
+
+    return 0;
+}
+
 } // namespace ring
