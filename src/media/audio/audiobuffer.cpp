@@ -18,6 +18,7 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "../libav_deps.h"
 #include "audiobuffer.h"
 #include "logger.h"
 #include <string.h>
@@ -287,6 +288,50 @@ size_t AudioBuffer::copy(AudioSample* in, size_t sample_num, size_t pos_out /* =
         std::copy(in, in + sample_num, samples_[i].begin() + pos_out);
 
     return sample_num;
+}
+
+AVFrame*
+AudioBuffer::getAVFrame(bool isMuted) const
+{
+    const constexpr AVSampleFormat fmt = AV_SAMPLE_FMT_S16;
+    const int neededBytes = av_samples_get_buffer_size(nullptr,
+        channels(), frames(), fmt, 0);
+    if (neededBytes < 0) {
+        RING_ERR() << "Couldn't calculate buffer size";
+        return nullptr;
+    }
+
+    std::vector<AudioSample> samples(neededBytes / sizeof(AudioSample));
+    AudioSample* rawSamples = samples.data();
+    if (!isMuted)
+        interleave(rawSamples);
+    else
+        fillWithZero(rawSamples);
+
+    AVFrame* frame = av_frame_alloc();
+    if (!frame) {
+        RING_ERR() << "Failed to allocate frame";
+        return nullptr;
+    }
+
+    frame->format = fmt;
+    frame->nb_samples = frames();
+    frame->channel_layout = channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
+    frame->channels = channels();
+    frame->sample_rate = getSampleRate();
+
+    int ret = avcodec_fill_audio_frame(frame, channels(), fmt,
+        reinterpret_cast<const uint8_t*>(rawSamples),
+        neededBytes, 0);
+    if (ret < 0) {
+        RING_ERR() << "Failed to fill audio frame of size " << neededBytes << " with "
+            << frame->nb_samples << " samples: " << libav_utils::getError(ret);
+        av_frame_free(&frame);
+        return nullptr;
+    }
+    frame = av_frame_clone(frame); // dirty hack
+
+    return frame;
 }
 
 } // namespace ring

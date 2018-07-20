@@ -378,90 +378,28 @@ MediaEncoder::encode(VideoFrame& input, bool is_keyframe,
 }
 #endif // RING_VIDEO
 
-int MediaEncoder::encode_audio(const AudioBuffer &buffer)
+int MediaEncoder::encode_audio(AudioBuffer &buffer)
 {
-    const int needed_bytes = av_samples_get_buffer_size(nullptr, buffer.channels(),
-                                                        buffer.frames(),
-                                                        AV_SAMPLE_FMT_S16, 0);
-    if (needed_bytes < 0) {
-        RING_ERR("Couldn't calculate buffer size");
-        return -1;
-    }
+    auto frame = buffer.getAVFrame(is_muted);
 
-    std::vector<AudioSample> samples (needed_bytes / sizeof(AudioSample));
-    AudioSample* sample_data = samples.data();
-
-    AudioSample *offset_ptr = sample_data;
-    int nb_frames = buffer.frames();
-
-    AVCodecContext* encoderCtx = encoders_[currentStreamIdx_];
-
-    if (not is_muted) {
-        //only fill buffer with samples if not muted
-        buffer.interleave(sample_data);
-    } else {
-        //otherwise filll buffer with zero
-        buffer.fillWithZero(sample_data);
-    }
-    const auto layout = buffer.channels() == 2 ? AV_CH_LAYOUT_STEREO : AV_CH_LAYOUT_MONO;
-    const auto sample_rate = buffer.getSampleRate();
-
-    while (nb_frames > 0) {
-        AVFrame* frame = av_frame_alloc();
-        if (!frame)
-            return -1;
-
-        if (encoderCtx->frame_size)
-            frame->nb_samples = std::min<int>(nb_frames,
-                                              encoderCtx->frame_size);
-        else
-            frame->nb_samples = nb_frames;
-
-        frame->format = AV_SAMPLE_FMT_S16;
-        frame->channel_layout = layout;
-        frame->channels = buffer.channels();
-        frame->sample_rate = sample_rate;
-
-        frame->pts = getNextTimestamp(sent_samples, encoderCtx->sample_rate, encoderCtx->time_base);
-        sent_samples += frame->nb_samples;
-
-        const auto buffer_size = \
-            av_samples_get_buffer_size(nullptr, buffer.channels(),
-                                       frame->nb_samples, AV_SAMPLE_FMT_S16, 0);
-
-        int err = avcodec_fill_audio_frame(frame, buffer.channels(),
-                                           AV_SAMPLE_FMT_S16,
-                                           reinterpret_cast<const uint8_t *>(offset_ptr),
-                                           buffer_size, 0);
-        if (err < 0) {
-            RING_ERR() << "Failed to fill audio frame of size" << buffer_size << " with "
-                << frame->nb_samples << " samples: " << libav_utils::getError(err);
-            av_frame_free(&frame);
-            return -1;
-        }
-
-        nb_frames -= frame->nb_samples;
-        offset_ptr += frame->nb_samples * buffer.channels();
-
-        if (auto rec = recorder_.lock()) {
-            if (!recordingStarted_) {
-                auto ms = MediaStream("", encoders_[currentStreamIdx_], frame->pts);
-                if (rec->addStream(false, false, ms) >= 0) {
-                    recordingStarted_ = true;
-                } else {
-                    recorder_ = std::weak_ptr<MediaRecorder>();
-                }
+    if (auto rec = recorder_.lock()) {
+        if (!recordingStarted_) {
+            auto ms = MediaStream("", encoders_[currentStreamIdx_], frame->pts);
+            if (rec->addStream(false, false, ms) >= 0) {
+                recordingStarted_ = true;
+            } else {
+                recorder_ = std::weak_ptr<MediaRecorder>();
             }
-            if (recordingStarted_)
-                rec->recordData(frame, false, false);
-        } else {
-            recordingStarted_ = false;
-            recorder_ = std::weak_ptr<MediaRecorder>();
         }
-
-        encode(frame, currentStreamIdx_);
-        av_frame_free(&frame);
+        if (recordingStarted_)
+            rec->recordData(frame, false, false);
+    } else {
+        recordingStarted_ = false;
+        recorder_ = std::weak_ptr<MediaRecorder>();
     }
+
+    encode(frame, currentStreamIdx_);
+    av_frame_free(&frame);
 
     return 0;
 }
