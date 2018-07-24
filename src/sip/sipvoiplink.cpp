@@ -232,7 +232,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
                     Manager::instance().startVoiceMessageNotification(account_id, voicemail);
             }
         } else if (request.find("MESSAGE") != std::string::npos) {
-            // Reply 200 immediatly (RFC 3428, ch. 7)
+            // Reply 200 immediately (RFC 3428, ch. 7)
             try_respond_stateless(endpt_, rdata, PJSIP_SC_OK, nullptr, nullptr, nullptr);
             // Process message content in case of multi-part body
             auto payloads = im::parseSipMessage(rdata->msg_info.msg);
@@ -396,7 +396,7 @@ transaction_request_cb(pjsip_rx_data *rdata)
         return PJ_FALSE;
     }
 
-    // Check if call has been transfered
+    // Check if call has been transferred
     pjsip_tx_data *tdata = 0;
 
     if (pjsip_inv_initial_answer(call->inv.get(), rdata, PJSIP_SC_TRYING, NULL, NULL, &tdata) != PJ_SUCCESS) {
@@ -452,7 +452,7 @@ tp_state_callback(pjsip_transport* tp, pjsip_transport_state state,
 {
     // There is no way (at writing) to link a user data to a PJSIP transport.
     // So we obtain it from the global SIPVoIPLink instance that owns it.
-    // Be sure the broker's owner is not deleted during proccess
+    // Be sure the broker's owner is not deleted during process
     if (auto sipLink = getSIPVoIPLink()) {
         if (auto& broker = sipLink->sipTransportBroker)
             broker->transportStateChanged(tp, state, info);

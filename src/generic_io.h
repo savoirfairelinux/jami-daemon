@@ -45,7 +45,7 @@ public:
     using RecvCb = std::function<ssize_t(const ValueType* buf, std::size_t len)>;
 
     /// Close established connection
-    /// \note Terminate oustanding blocking read operations with an empty error code, but a 0 read size.
+    /// \note Terminate outstanding blocking read operations with an empty error code, but a 0 read size.
     virtual void shutdown() {}
 
     /// Set Rx callback

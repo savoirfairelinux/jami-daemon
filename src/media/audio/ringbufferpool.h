@@ -57,7 +57,7 @@ class RingBufferPool {
         void setInternalAudioFormat(AudioFormat format);
 
         /**
-         * Bind together two audio streams so taht a client will be able
+         * Bind together two audio streams so that a client will be able
          * to put and get data specifying its callid only.
          */
         void bindCallID(const std::string& call_id1,
@@ -104,7 +104,7 @@ class RingBufferPool {
         /**
          * Create a new ringbuffer with a default readoffset.
          * This class keeps a weak reference on returned pointer,
-         * so the caller is responsible of the refered instance.
+         * so the caller is responsible of the referred instance.
          */
         std::shared_ptr<RingBuffer> createRingBuffer(const std::string& id);
 

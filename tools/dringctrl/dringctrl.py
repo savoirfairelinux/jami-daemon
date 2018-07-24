@@ -33,7 +33,7 @@ except Exception as e:
     exit(1)
 
 from errors import *
-from controler import DRingCtrl
+from controller import DRingCtrl
 from tester import DRingTester
 
 if __name__ == "__main__":

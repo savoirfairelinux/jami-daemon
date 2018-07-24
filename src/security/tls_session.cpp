@@ -860,7 +860,7 @@ TlsSession::TlsSessionImpl::handleStateHandshake(TlsSessionState state)
     RING_DBG("[TLS] session established: %s", desc);
     gnutls_free(desc);
 
-    // Anonymous connection? rehandshake immediatly with certificate authentification forced
+    // Anonymous connection? rehandshake immediately with certificate authentification forced
     auto cred = gnutls_auth_get_type(session_);
     if (cred == GNUTLS_CRD_ANON) {
         RING_DBG("[TLS] renogotiate with certificate authentification");
@@ -1037,7 +1037,7 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
 ///
 /// Reorder and push received packet to upper layer
 ///
-/// \note This method must be called continously, faster than RX_OOO_TIMEOUT
+/// \note This method must be called continuously, faster than RX_OOO_TIMEOUT
 ///
 void
 TlsSession::TlsSessionImpl::flushRxQueue()
@@ -1064,7 +1064,7 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     auto item = std::begin(reorderBuffer_);
     auto next_offset = item->first;
 
-    // Wait for next continous packet until timeout
+    // Wait for next continuous packet until timeout
     if ((clock::now() - lastReadTime_) >= RX_OOO_TIMEOUT) {
         // OOO packet timeout - consider waited packets as lost
         if (auto lost = next_offset - gapOffset_)

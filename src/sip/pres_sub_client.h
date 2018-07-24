@@ -78,7 +78,7 @@ class PresSubClient {
         bool subscribe();
         /**
          * Send a SUBCRIBE to the PXB or directly to a pres_client in the IP2IP context but
-         * the 0s timeout make the dialog expire immediatly.
+         * the 0s timeout make the dialog expire immediately.
          */
         bool unsubscribe();
         /**

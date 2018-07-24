@@ -54,7 +54,7 @@ class AudioRecord {
 
         /**
          * Check if no other file is opened, then create a new one
-         * @param filename A string containing teh file (with/without extension)
+         * @param filename A string containing the file (with/without extension)
          * @param type     The sound file format (FILE_RAW, FILE_WAVE)
          * @param format   Internal sound format (INT16 / INT32)
          * @return bool    True if file was opened

@@ -3468,7 +3468,7 @@ void RingAccount::setPushNotificationToken(const std::string& token)
 }
 
 /**
- * To be called by clients with relevent data when a push notification is received.
+ * To be called by clients with relevant data when a push notification is received.
  */
 void RingAccount::pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data)
 {

@@ -145,7 +145,7 @@ class RingBuffer {
         NON_COPYABLE(RingBuffer);
 
         /**
-         * Return the smalest readoffset. Usefull to evaluate if ringbuffer is full
+         * Return the smalest readoffset. Useful to evaluate if ringbuffer is full
          */
         size_t getSmallestReadOffset() const;
 

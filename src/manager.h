@@ -185,7 +185,7 @@ class Manager {
 
         /**
          * Attended transfer
-         * @param The call id to be transfered
+         * @param The call id to be transferred
          * @param The target
          */
         bool attendedTransfer(const std::string& transferID, const std::string& targetID);
@@ -233,7 +233,7 @@ class Manager {
         bool unHoldConference(const std::string& conference_id);
 
         /**
-         * Test if this id is a conference (usefull to test current call)
+         * Test if this id is a conference (useful to test current call)
          * @param the call id
          */
         bool isConference(const std::string& call_id) const;
@@ -690,7 +690,7 @@ class Manager {
 
         /**
          * @return true is there is one or many incoming call waiting
-         * new call, not anwsered or refused
+         * new call, not answered or refused
          */
         bool incomingCallsWaiting();
 

@@ -25,7 +25,7 @@ PHONE3="14142"
 
 
 # Define function callback to emulate UA behavior on
-# recieving a call (peer hangup))
+# receiving a call (peer hangup))
 def acceptOnIncomingCall(sflphone):
 
     sflphone.Accept(sflphone.currentCallId)

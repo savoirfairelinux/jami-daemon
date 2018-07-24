@@ -32,7 +32,7 @@
                         <li>CONFIG_ACCOUNT_ENABLE:    True or False (Default: True)</li>
                         <li>CONFIG_ACCOUNT_RESOLVE_ONCE</li>
                         <li>CONFIG_ACCOUNT_TYPE: SIP or RING</li>
-                        <li>HOSTNAME: The IP adress or hostname of the registrar</li>
+                        <li>HOSTNAME: The IP address or hostname of the registrar</li>
                         <li>USERNAME: The username (or extension) of the account</li>
                         <li>PASSWORD: The password associated to the account</li>
                         <li>REALM</li>
@@ -1183,7 +1183,7 @@
            </arg>
            <arg type="b" name="success" direction="out">
                <tp:docstring>
-                   <p>True if the certificate state was succesfully set.</p>
+                   <p>True if the certificate state was successfully set.</p>
                </tp:docstring>
            </arg>
        </method>
