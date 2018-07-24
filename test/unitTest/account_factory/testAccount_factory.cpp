@@ -75,7 +75,7 @@ Account_factoryTest::tearDown()
 void
 Account_factoryTest::testAddRemoveSIPAccount()
 {
-    // verify if there is no account at the begining
+    // verify if there is no account at the beginning
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
@@ -95,7 +95,7 @@ Account_factoryTest::testAddRemoveSIPAccount()
 void
 Account_factoryTest::testAddRemoveRINGAccount()
 {
-    // verify if there is no account at the begining
+    // verify if there is no account at the beginning
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 
@@ -115,7 +115,7 @@ Account_factoryTest::testAddRemoveRINGAccount()
 void
 Account_factoryTest::testClear()
 {
-    // verify if there is no account at the begining
+    // verify if there is no account at the beginning
     CPPUNIT_ASSERT(accountFactory->empty());
     CPPUNIT_ASSERT(accountFactory->accountCount()==0);
 

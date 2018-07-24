@@ -109,7 +109,7 @@ SdesNegotiator::parse(const std::vector<std::string>& attributes)
         } else
             return cryptoAttributeVector;
 
-        // Check if the crypto suite is valid and retreive
+        // Check if the crypto suite is valid and retrieve
         // its value.
         cryptoSuitePattern->updateSubject(sdesLine.at(1));
 

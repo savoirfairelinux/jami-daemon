@@ -27,7 +27,7 @@ namespace opensl {
 
 /*
  * Called by OpenSL SimpleBufferQueue for every audio buffer played
- * directly pass thru to our handler.
+ * directly pass through to our handler.
  * The regularity of this callback from openSL/Android System affects
  * playback continuity. If it does not callback in the regular time
  * slot, you are under big pressure for audio processing[here we do

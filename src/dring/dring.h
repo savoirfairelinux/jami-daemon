@@ -52,7 +52,7 @@ bool init(enum InitFlag flags) noexcept;
 
 /**
  * Start asynchronously daemon created by init().
- * @returns true if daemon started successfuly
+ * @returns true if daemon started successfully
  */
 bool start(const std::string& config_file={}) noexcept;
 
@@ -81,7 +81,7 @@ void pollEvents() noexcept;
  * to keep compatibility over releases we don't let user directly provides
  * his callbacks as it or through a structure.
  * This way brings ABI violation if we need to change the order
- * and/or the existance of any callback type.
+ * and/or the existence of any callback type.
  * Thus the user have to pass them using following template classes
  * and functions, that wraps user-callback in a generic and ABI-compatible way.
  */

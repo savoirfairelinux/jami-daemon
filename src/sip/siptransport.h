@@ -190,7 +190,7 @@ public:
     std::shared_ptr<SipTransport> addTransport(pjsip_transport*);
 
     /**
-     * Start gracefull shutdown procedure for all transports
+     * Start graceful shutdown procedure for all transports
      */
     void shutdown();
 
@@ -214,7 +214,7 @@ private:
     std::mutex transportMapMutex_ {};
 
     /**
-     * Transports are stored in this map in order to retreive them in case
+     * Transports are stored in this map in order to retrieve them in case
      * several accounts would share the same port number.
      */
     std::map<SipTransportDescr, pjsip_transport*> udpTransports_;

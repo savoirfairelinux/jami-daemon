@@ -149,7 +149,7 @@ public:
 
     /**
      * Determine if TLS is enabled for this account. TLS provides a secured channel for
-     * SIP signalization. It is independant of the media encription (as provided by SRTP).
+     * SIP signalization. It is independent of the media encryption (as provided by SRTP).
      */
     virtual bool isTlsEnabled() const {
         return false;

@@ -24,7 +24,7 @@
 
 /**
  * @file account_schema.h
- * @brief Account specfic keys/constants that must be shared in daemon and clients.
+ * @brief Account specific keys/constants that must be shared in daemon and clients.
  */
 
 namespace ring { namespace Conf {

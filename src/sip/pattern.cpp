@@ -123,7 +123,7 @@ bool Pattern::matches()
         offset_[1] =  ovector_[1] + offset_[0];
     }
 
-    // Matching succeded but not enough space.
+    // Matching succeeded but not enough space.
     // @TODO figure out something more clever to do in this case.
     if (rc == 0)
         throw MatchError("No space to store all substrings.");

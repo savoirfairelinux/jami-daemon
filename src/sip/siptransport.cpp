@@ -450,7 +450,7 @@ SipTransportBroker::getTlsIceTransport(const std::shared_ptr<ring::IceTransport>
 
     {
         std::lock_guard<std::mutex> lock(transportMapMutex_);
-        // we do not check for key existance as we've just created it
+        // we do not check for key existence as we've just created it
         // (member of new SipIceTransport instance)
         transports_.emplace(std::make_pair(tr, sip_tr));
     }

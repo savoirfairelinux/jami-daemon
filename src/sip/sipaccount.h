@@ -241,7 +241,7 @@ class SIPAccount : public SIPAccountBase {
         }
 
         /**
-         * Get the registration stucture that is used
+         * Get the registration structure that is used
          * for PJSIP in the registration process.
          * Settings are loaded from configuration file.
          * @return pjsip_regc* A pointer to the registration structure

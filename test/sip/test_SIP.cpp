@@ -173,7 +173,7 @@ test_SIP::testSimpleOutgoingIpCall()
 void
 test_SIP::testSimpleIncomingIpCall()
 {
-    std::cout << ">>>> test simple incomming IP call <<<< " << '\n';
+    std::cout << ">>>> test simple incoming IP call <<<< " << '\n';
 
     CPPUNIT_ASSERT(Manager::instance().callFactory.empty());
 

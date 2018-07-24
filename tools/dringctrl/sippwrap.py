@@ -21,7 +21,7 @@
 import os
 
 class SippWrapper:
-    """ Wrapper taht allow for managing sipp command line easily """
+    """ Wrapper that allow for managing sipp command line easily """
 
     def __init__(self):
         self.commandLine = "./sipp"
