@@ -107,7 +107,7 @@ FileutilsTest::testCheckDir()
     CPPUNIT_ASSERT(isDirectory(NON_EXISTANT_PATH));
     CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == 0);
     CPPUNIT_ASSERT(!isDirectory(NON_EXISTANT_PATH_BASE));
-    //remove an non existant directory
+    //remove an non existent directory
     CPPUNIT_ASSERT(removeAll(NON_EXISTANT_PATH_BASE) == -1);
 }
 

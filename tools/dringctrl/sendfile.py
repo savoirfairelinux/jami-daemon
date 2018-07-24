@@ -17,14 +17,14 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 
-from controler import DRingCtrl
+from controller import DRingCtrl
 
 import argparse
 import sys
 import signal
 import os.path
 
-class Controler(DRingCtrl):
+class Controller(DRingCtrl):
     def onDataTransferEvent(self, transferId, code):
         if code == 6:
             print("transfer %u has been cancelled by host" % transferId)
@@ -39,7 +39,7 @@ parser.add_argument('--filename', help='Pathname on file to send', metavar='<fil
 parser.add_argument('--displayname', help='Name displayed to peer', metavar='<displayname>', type=str)
 
 args = parser.parse_args()
-ctrl = Controler(sys.argv[0], False)
+ctrl = Controller(sys.argv[0], False)
 
 if not args.account:
     for account in ctrl.getAllEnabledAccounts():

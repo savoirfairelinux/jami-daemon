@@ -43,8 +43,8 @@ class PresSubServer {
         PresSubServer(SIPPresence * pres, pjsip_evsub *evsub, const char *remote, pjsip_dialog *d);
         ~PresSubServer();
         /*
-         * Acces to the evsub expire variable.
-         * It was recieved in the SUBSCRIBE request.
+         * Access to the evsub expire variable.
+         * It was received in the SUBSCRIBE request.
          */
         void setExpires(int ms);
         int getExpires() const;

@@ -227,7 +227,7 @@ PresSubServer::pres_on_rx_subscribe_request(pjsip_rx_data *rdata)
         return PJ_TRUE;
     }
 
-    /*Send notify immediatly. Replace real status with fake.*/
+    /*Send notify immediately. Replace real status with fake.*/
 
     // pjsip_pres_set_status(sub, pres->getStatus()); // real status
 

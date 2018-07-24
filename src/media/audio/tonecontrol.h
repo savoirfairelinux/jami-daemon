@@ -32,7 +32,7 @@ namespace ring {
  * ToneControl is a class to handle application wide business logic
  * to control audio tones played at various application events.
  * Having an application wide instance gives a way to handle
- * complexes interactions occuring in a multi-call context.
+ * complexes interactions occurring in a multi-call context.
  */
 
 class TelephoneTone;

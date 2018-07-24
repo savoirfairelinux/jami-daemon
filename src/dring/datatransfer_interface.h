@@ -73,7 +73,7 @@ struct DataTransferInfo
     std::string peer; ///< Identifier of the remote peer (in the semantic of the associated account)
     std::string displayName; ///< Human oriented transfer name
     std::string path; ///< associated local file path if supported (empty, if not)
-    std::string mimetype; ///< MimeType of transfered data (https://www.iana.org/assignments/media-types/media-types.xhtml)
+    std::string mimetype; ///< MimeType of transferred data (https://www.iana.org/assignments/media-types/media-types.xhtml)
 };
 
 std::vector<DataTransferId> dataTransferList() noexcept;
@@ -93,7 +93,7 @@ std::vector<DataTransferId> dataTransferList() noexcept;
 ///
 /// Other fields are not used, but you must keep the default assigned value for compatibility.
 ///
-/// \param info a DataTransferInfo structure filled with information usefull for a file transfer.
+/// \param info a DataTransferInfo structure filled with information useful for a file transfer.
 /// \param[out] id data transfer identifiant if function succeed, usable with other APIs. Undefined value in case of error.
 ///
 /// \return DataTransferError::success if file is accepted for transfer, any other value in case of errors
@@ -114,7 +114,7 @@ DataTransferError sendFile(const DataTransferInfo& info, DataTransferId& id) noe
 /// \param id data transfer identification value as given by a DataTransferEvent signal.
 /// \param file_path file path going to be open in binary write mode to put incoming data.
 /// \param offset used to indicate the remote side about the number of bytes already received in
-/// a previous transfer session, usefull in transfer continuation mode.
+/// a previous transfer session, useful in transfer continuation mode.
 ///
 /// \return DataTransferError::invalid_argument if id is unknown.
 /// \note unknown \a id results to a no-op call.

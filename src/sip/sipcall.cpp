@@ -1014,7 +1014,7 @@ SIPCall::waitForIceAndStartMedia()
             if (!ice->isInitialized())
                 return true;
 
-            // Start transport on SDP data and wait for negotation
+            // Start transport on SDP data and wait for negotiation
             auto rem_ice_attrs = call->sdp_->getIceAttributes();
             if (rem_ice_attrs.ufrag.empty() or rem_ice_attrs.pwd.empty()) {
                 RING_ERR("[call:%s] Media ICE attributes empty", call->getCallId().c_str());
@@ -1033,7 +1033,7 @@ SIPCall::waitForIceAndStartMedia()
                     auto ice = call->getIceMediaTransport();
 
                     if (ice->isFailed()) {
-                        RING_ERR("[call:%s] Media ICE negotation failed", call->getCallId().c_str());
+                        RING_ERR("[call:%s] Media ICE negotiation failed", call->getCallId().c_str());
                         call->onFailure(EIO);
                         return false;
                     }
@@ -1081,7 +1081,7 @@ SIPCall::openPortsUPnP()
          * Try to open the desired ports with UPnP,
          * if they are used, use the alternative port and update the SDP session with the newly chosen port(s)
          *
-         * TODO: the inital ports were chosen from the list of available ports and were marked as used
+         * TODO: the initial ports were chosen from the list of available ports and were marked as used
          *       the newly selected port should possibly be checked against the list of used ports and marked
          *       as used, the old port should be "released"
          */

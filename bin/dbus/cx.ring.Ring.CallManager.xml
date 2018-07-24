@@ -178,7 +178,7 @@
             </tp:docstring>
             <arg type="s" name="transferID" direction="in">
               <tp:docstring>
-                The callID of the call to be transfered.
+                The callID of the call to be transferred.
               </tp:docstring>
             </arg>
             <arg type="s" name="targetID" direction="in">
@@ -271,7 +271,7 @@
             <tp:docstring>
                 Detach local participant from the conference.
                 Remote participants are placed in hold.
-                The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emited.
+                The signal <tp:member-ref>conferenceChanged</tp:member-ref> is emitted.
             </tp:docstring>
             <arg type="b" name="detachSucceeded" direction="out"/>
         </method>
@@ -279,7 +279,7 @@
         <method name="detachParticipant" tp:name-for-bindings="detachParticipant">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              Detach the given call from the conference. If only one participant is left, the conference is deleted and the signal <tp:member-ref>conferenceRemoved</tp:member-ref> is emited.
+              Detach the given call from the conference. If only one participant is left, the conference is deleted and the signal <tp:member-ref>conferenceRemoved</tp:member-ref> is emitted.
             </tp:docstring>
             <arg type="s" name="callID" direction="in">
               <tp:docstring>
@@ -342,7 +342,7 @@
         <method name="getConferenceId" tp:name-for-bindings="getConferenceId">
             <tp:added version="1.1.0"/>
             <tp:docstring>
-                If thsi call participate to a conference, return the conference id.
+                If this call participate to a conference, return the conference id.
                 Return an empty string elsewhere.
             </tp:docstring>
             <arg type="s" name="callID" direction="in">
@@ -415,7 +415,7 @@
 
         <signal name="recordPlaybackFilepath" tp:name-for-bindings="recordPlaybackFilepath">
             <tp:docstring>
-              Once after starting recording for the first time, this signal is emited to
+              Once after starting recording for the first time, this signal is emitted to
               provide the recorded file path to client application.
             </tp:docstring>
             <arg type="s" name="callID" />
@@ -650,7 +650,7 @@
         <signal name="conferenceCreated" tp:name-for-bindings="conferenceCreated">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              Emited when a new conference is created. Ring-client is reponsible for storing the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
+              Emitted when a new conference is created. Ring-client is responsible for storing the confID and call <tp:member-ref>getParticipantList</tp:member-ref> to update the display.
             </tp:docstring>
             <arg type="s" name="confID">
               <tp:docstring>
@@ -662,7 +662,7 @@
         <signal name="conferenceRemoved" tp:name-for-bindings="conferenceRemoved">
             <tp:added version="0.9.7"/>
             <tp:docstring>
-              Emited when a new conference is remove. Ring-client should have kept a list of current participant in order to display modification.
+              Emitted when a new conference is remove. Ring-client should have kept a list of current participant in order to display modification.
             </tp:docstring>
             <arg type="s" name="confID">
               <tp:docstring>
@@ -727,7 +727,7 @@
         <signal name="transferSucceeded" tp:name-for-bindings="transferSucceeded">
             <tp:docstring>
               <p>Transfer has been successfully
-              processed. Client should remove transfered
+              processed. Client should remove transferred
               call from call list as it is no longer
               accessible in Ring-daemon (dring).</p>
             </tp:docstring>

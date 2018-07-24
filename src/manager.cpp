@@ -301,7 +301,7 @@ struct Manager::ManagerPimpl
 
     std::atomic_bool autoAnswer_ {false};
 
-    /** Application wide tone controler */
+    /** Application wide tone controller */
     ToneControl toneCtrl_;
 
     /** Current Call ID */
@@ -2020,7 +2020,7 @@ Manager::peerAnsweredCall(Call& call)
     const auto call_id = call.getCallId();
     RING_DBG("[call:%s] Peer answered", call_id.c_str());
 
-    // The if statement is usefull only if we sent two calls at the same time.
+    // The if statement is useful only if we sent two calls at the same time.
     if (isCurrentCall(call))
         stopTone();
 

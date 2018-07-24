@@ -18,7 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
 #
 
-"""DRing controling class through DBUS"""
+"""DRing controlling class through DBUS"""
 
 import sys
 import os

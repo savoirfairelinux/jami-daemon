@@ -245,7 +245,7 @@ class AudioBuffer {
          * Convert fixed-point channel to float and write in the out buffer (Float 32-bits).
          * The out buffer must be at least of size capacity()*sizeof(float) bytes.
          *
-         * @returns Number of samples writen.
+         * @returns Number of samples written.
          */
         size_t channelToFloat(float* out, const int& channel) const;
 
@@ -253,7 +253,7 @@ class AudioBuffer {
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
          *
-         * @returns Number of samples writen.
+         * @returns Number of samples written.
          */
         size_t interleave(AudioSample* out) const;
 
@@ -261,7 +261,7 @@ class AudioBuffer {
          * Write null data (silence) to the out buffer (fixed-point 16-bits).
          * The out buffer must be at least of size capacity()*sizeof(AudioSample) bytes.
          *
-         * @returns Number of samples writen.
+         * @returns Number of samples written.
          */
         size_t fillWithZero(AudioSample* out) const;
 
@@ -269,7 +269,7 @@ class AudioBuffer {
          * Write interleaved multichannel data to the out buffer (fixed-point 16-bits).
          * The out buffer is resized to hold the full content of this buffer.
          *
-         * @returns Number of samples writen.
+         * @returns Number of samples written.
          */
         size_t interleave(std::vector<AudioSample>& out) const;
 
@@ -282,7 +282,7 @@ class AudioBuffer {
          * Write interleaved multichannel data to the out buffer, while samples are converted to float.
          * The out buffer must be at least of size capacity()*sizeof(float) bytes.
          *
-         * @returns Number of samples writen.
+         * @returns Number of samples written.
          */
         size_t interleaveFloat(float* out) const;
 

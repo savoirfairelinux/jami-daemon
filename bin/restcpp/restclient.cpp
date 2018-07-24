@@ -103,7 +103,7 @@ RestClient::initLib(int flags)
 
     // Configuration event handlers
 
-    // This is a short example of a callbakc using a lambda. In this case, this displays the incomming messages
+    // This is a short example of a callbakc using a lambda. In this case, this displays the incoming messages
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>([]
             (const std::string& accountID, const std::string& from, const std::map<std::string, std::string>& payloads){
