@@ -139,7 +139,7 @@ constexpr const char * const VideoPreferences::CONFIG_LABEL;
 static const char * const DECODING_ACCELERATED_KEY = "decodingAccelerated";
 #endif
 
-static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF lenght */
+static const char * const DFT_PULSE_LENGTH_STR = "250"; /** Default DTMF length */
 static const char * const ALSA_DFT_CARD    = "0";          /** Default sound card index */
 
 Preferences::Preferences() :

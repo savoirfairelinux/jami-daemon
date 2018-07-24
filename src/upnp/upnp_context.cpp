@@ -1040,7 +1040,7 @@ UPnPContext::handleUPnPEvents(Upnp_EventType event_type, const void* event)
     case UPNP_EVENT_SUBSCRIBE_COMPLETE:
         /* RING_DBG("UPnP: Control Point async subscription complete"); */
 
-        /* TODO: check if successfull */
+        /* TODO: check if successful */
 
         break;
 
@@ -1215,7 +1215,7 @@ UPnPContext::removeMappingsByLocalIPAndDescription(const UPnPIGD& igd, const std
                     /* failed to delete entry, skip it and try the next one */
                     ++entry_idx;
                 }
-                /* note: in the case that the entry deletion is successfull, we do not increment the entry
+                /* note: in the case that the entry deletion is successful, we do not increment the entry
                  *       idx as the number of entries has decreased by one */
             } else
                 ++entry_idx;

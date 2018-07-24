@@ -252,7 +252,7 @@ class DRingTester():
             if (currBitrate > self.maxBitrate):
                 currBitrate = self.minBitrate
 
-        print("**[SUCESS] VIDEO Bitrate Test")
+        print("**[SUCCESS] VIDEO Bitrate Test")
         print("**[END] VIDEO Bitrate Test")
 
 # testSimultaneousLoopCallDht
@@ -281,7 +281,7 @@ class DRingTester():
 
             count += 1
 
-        print("**[SUCESS] Simultaneous DHT call test")
+        print("**[SUCCESS] Simultaneous DHT call test")
         print("**[END] Simultaneous DHT call test")
 
 

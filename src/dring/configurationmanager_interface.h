@@ -205,7 +205,7 @@ void enableProxyClient(const std::string& accountID, bool enable);
 void setPushNotificationToken(const std::string& pushDeviceToken);
 
 /**
- * To be called by clients with relevent data when a push notification is received.
+ * To be called by clients with relevant data when a push notification is received.
  */
 void pushNotificationReceived(const std::string& from, const std::map<std::string, std::string>& data);
 
@@ -313,7 +313,7 @@ struct ConfigurationSignal {
                 using cb_type = void(const std::string& /*accountId*/, const std::string& /*device*/, int /*status*/);
         };
         /**
-         * These are special getters for Android and UWP, so the daemon can retreive
+         * These are special getters for Android and UWP, so the daemon can retrieve
          * information only accessible through their respective platform APIs
          */
 #if defined(__ANDROID__) || (defined(TARGET_OS_IOS) && TARGET_OS_IOS)

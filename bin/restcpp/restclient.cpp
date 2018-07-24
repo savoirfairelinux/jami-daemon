@@ -103,7 +103,7 @@ RestClient::initLib(int flags)
 
     // Configuration event handlers
 
-    // This is a short example of a callbakc using a lambda. In this case, this displays the incomming messages
+    // This is a short example of a callback using a lambda. In this case, this displays the incoming messages
     const std::map<std::string, SharedCallback> configEvHandlers = {
         exportable_callback<ConfigurationSignal::IncomingAccountMessage>([]
             (const std::string& accountID, const std::string& from, const std::map<std::string, std::string>& payloads){
@@ -146,7 +146,7 @@ RestClient::initResources()
     // This is the function that initiates the resources.
     // Each resources is defined by a route and a void function with a shared pointer to the session as argument
 
-    // In this case, here's an example of the default route. It will list all the managers availables
+    // In this case, here's an example of the default route. It will list all the managers available
     auto default_res = std::make_shared<restbed::Resource>();
     default_res->set_path("/");
     default_res->set_method_handler("GET", [](const std::shared_ptr<restbed::Session> session){

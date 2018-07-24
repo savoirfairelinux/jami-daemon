@@ -64,7 +64,7 @@ class SippCtrl:
         sippInstance.launch()
 
     def find_sipp_pid(self):
-        # Retreive the PID of the last
+        # Retrieve the PID of the last
         # The /proc/PID/cmdline contain the command line from
         pids = [int(x) for x in os.listdir("/proc") if x.isdigit()]
         sippPid = [pid for pid in pids if "sipp" in open("/proc/" + str(pid) + "/cmdline").readline()]

@@ -59,7 +59,7 @@ namespace ring { namespace fileutils {
     std::string get_cache_dir();
 
     /**
-     * Check directory existance and create it with given mode if it doesn't.
+     * Check directory existence and create it with given mode if it doesn't.
      * @param path to check, relative or absolute
      * @param dir last directory creation mode
      * @param parents default mode for all created directories except the last
