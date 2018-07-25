@@ -144,11 +144,8 @@ void MediaDecoder::setInterruptCallback(int (*cb)(void*), void *opaque)
 void MediaDecoder::setIOContext(MediaIOHandle *ioctx)
 { inputCtx_->pb = ioctx->getContext(); }
 
-int MediaDecoder::setupFromAudioData(const AudioFormat format)
+int MediaDecoder::setupFromAudioData()
 {
-    // Use AVDictionary to send extra arguments to setupStream, since video setup doesn't need them
-    av_dict_set_int(&options_, "nb_channels", format.nb_channels, 0);
-    av_dict_set_int(&options_, "sample_rate", format.sample_rate, 0);
     return setupStream(AVMEDIA_TYPE_AUDIO);
 }
 
@@ -197,10 +194,6 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     decoderCtx_->framerate = avStream_->avg_frame_rate;
 
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
-    if (mediaType == AVMEDIA_TYPE_AUDIO) {
-        decoderCtx_->channels = std::stoi(av_dict_get(options_, "nb_channels", nullptr, 0)->value);
-        decoderCtx_->sample_rate = std::stoi(av_dict_get(options_, "sample_rate", nullptr, 0)->value);
-    }
 
     if (emulateRate_)
         RING_DBG() << "Using framerate emulation";

@@ -304,7 +304,7 @@ AudioReceiveThread::setup()
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
 
-    EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(format_),
+    EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(),
                  "decoder IO startup failed");
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
@@ -347,7 +347,7 @@ AudioReceiveThread::process()
                 loop_.stop();
                 break;
             }
-            if (not audioDecoder_->setupFromAudioData(format_)) {
+            if (not audioDecoder_->setupFromAudioData()) {
                 RING_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
                 break;
