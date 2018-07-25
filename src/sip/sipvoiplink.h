@@ -68,10 +68,6 @@ extern decltype(getGlobalInstance<SIPVoIPLink>)& getSIPVoIPLink;
 
 class SIPVoIPLink {
     public:
-#ifdef __ANDROID__
-        static void setSipLogger();
-#endif
-
         SIPVoIPLink();
         ~SIPVoIPLink();
 
@@ -79,9 +75,6 @@ class SIPVoIPLink {
          * Event listener. Each event send by the call manager is received and handled from here
          */
         void handleEvents();
-
-        /* Returns a list of all callIDs */
-        std::vector<std::string> getCallIDs();
 
         /**
          * Register a new keepalive registration timer to this endpoint
