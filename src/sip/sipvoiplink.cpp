@@ -597,11 +597,11 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
     TRY(pjsip_replaces_init_module(endpt_));
 #undef TRY
 
-    // ready to handle events
-    // Implementation note: we don't use std::bind(xxx, this) here
-    // as handleEvents needs a valid instance to be called.
-    Manager::instance().registerEventHandler((uintptr_t)this,
-                                             [this]{ handleEvents(); });
+    sipThread_ = std::thread([this]{
+        sip_utils::register_thread();
+        while (running_)
+            handleEvents();
+    });
 
     RING_DBG("SIPVoIPLink@%p", this);
 }
@@ -609,6 +609,8 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 SIPVoIPLink::~SIPVoIPLink()
 {
     RING_DBG("~SIPVoIPLink@%p", this);
+
+    running_ = false;
 
     // Remaining calls should not happen as possible upper callbacks
     // may be called and another instance of SIPVoIPLink can be re-created!
@@ -626,16 +628,13 @@ SIPVoIPLink::~SIPVoIPLink()
         std::this_thread::sleep_for(std::chrono::seconds(1));
 
     pjsip_tpmgr_set_state_cb(pjsip_endpt_get_tpmgr(endpt_), nullptr);
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
-    try {
-        handleEvents();
-    } catch (...) {}
 
     sipTransportBroker.reset();
 
     pjsip_endpt_destroy(endpt_);
     pool_.reset();
     pj_caching_pool_destroy(&cp_);
+    sipThread_.join();
 
     RING_DBG("destroying SIPVoIPLink@%p", this);
 }
@@ -692,11 +691,8 @@ SIPVoIPLink::guessAccount(const std::string& userName,
 void
 SIPVoIPLink::handleEvents()
 {
-    sip_utils::register_thread();
-
-    static const pj_time_val timeout = {0, 0}; // polling
-    auto ret = pjsip_endpt_handle_events(endpt_, &timeout);
-    if (ret != PJ_SUCCESS)
+    const pj_time_val timeout = {10, 0};
+    if (auto ret = pjsip_endpt_handle_events(endpt_, &timeout))
         RING_ERR("pjsip_endpt_handle_events failed with error %s",
                  sip_utils::sip_strerror(ret).c_str());
 
@@ -765,12 +761,7 @@ SIPVoIPLink::dequeKeyframeRequests()
 void
 SIPVoIPLink::requestKeyframe(const std::string &callID)
 {
-    std::shared_ptr<SIPCall> call;
-    const int tries = 10;
-
-    for (int i = 0; !call and i < tries; ++i)
-        call = Manager::instance().callFactory.getCall<SIPCall>(callID); // fixme: need a try version
-
+    auto call = Manager::instance().callFactory.getCall<SIPCall>(callID);
     if (!call)
         return;
 
