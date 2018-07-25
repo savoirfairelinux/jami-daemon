@@ -101,6 +101,10 @@ class RingAccount : public SIPAccountBase {
             return std::static_pointer_cast<RingAccount const>(shared_from_this());
         }
 
+        const std::string& getPath() const {
+            return idPath_;
+        }
+
         /**
          * Constructor
          * @param accountID The account identifier
