@@ -67,6 +67,13 @@ ut_video_input_SOURCES = media/video/testVideo_input.cpp
 check_PROGRAMS += ut_media_encoder
 ut_media_encoder_SOURCES = media/test_media_encoder.cpp
 
+#
+# media_decoder
+#
+check_PROGRAMS += ut_media_decoder # no reliable way to get a file
+ut_media_decoder_SOURCES = media/test_media_decoder.cpp
+
+#
 # media_filter
 #
 check_PROGRAMS += ut_media_filter
