@@ -84,7 +84,7 @@ class MediaDecoder {
         Status flush(VideoFrame&);
  #endif // RING_VIDEO
 
-        int setupFromAudioData(const AudioFormat format);
+        int setupFromAudioData();
         Status decode(const AudioFrame&);
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
