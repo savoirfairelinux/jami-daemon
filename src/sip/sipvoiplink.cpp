@@ -494,7 +494,7 @@ SIPVoIPLink::SIPVoIPLink() : pool_(nullptr, pj_pool_release)
 } while (0)
 
     pj_caching_pool_init(&cp_, &pj_pool_factory_default_policy, 0);
-    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 4096, 4096, nullptr));
+    pool_.reset(pj_pool_create(&cp_.factory, PACKAGE, 64 * 1024, 4096, nullptr));
     if (!pool_)
         throw VoipLinkException("UserAgent: Could not initialize memory pool");
 
