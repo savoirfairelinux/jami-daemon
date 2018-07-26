@@ -781,7 +781,11 @@ SIPVoIPLink::requestKeyframe(const std::string &callID)
         "</to_encoder></vc_primitive></media_control>";
 
     RING_DBG("Sending video keyframe request via SIP INFO");
-    call->sendSIPInfo(BODY, "media_control+xml");
+    try {
+        call->sendSIPInfo(BODY, "media_control+xml");
+    } catch (const std::exception& e) {
+        RING_WARN("Error sending video keyframe request: %s", e.what());
+    }
 }
 #endif
 

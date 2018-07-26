@@ -81,22 +81,6 @@ static constexpr int ICE_VIDEO_RTCP_COMPID {3};
 
 const char* const SIPCall::LINK_TYPE = SIPAccount::ACCOUNT_TYPE;
 
-static void
-dtmfSend(SIPCall &call, char code, const std::string& /*dtmf*/)
-{
-    int duration = Manager::instance().voipPreferences.getPulseLength();
-    char dtmf_body[1000];
-
-    // handle flash code
-    if (code == '!') {
-        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
-    } else {
-        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
-    }
-
-    call.sendSIPInfo(dtmf_body, "dtmf-relay");
-}
-
 SIPCall::SIPCall(SIPAccountBase& account, const std::string& id, Call::CallType type,
                  const std::map<std::string, std::string>& details)
     : Call(account, id, type, details)
@@ -671,7 +655,17 @@ SIPCall::peerHungup()
 void
 SIPCall::carryingDTMFdigits(char code)
 {
-    dtmfSend(*this, code, getSIPAccount().getDtmfType());
+    int duration = Manager::instance().voipPreferences.getPulseLength();
+    char dtmf_body[1000];
+
+    // handle flash code
+    if (code == '!') {
+        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=16\r\nDuration=%d\r\n", duration);
+    } else {
+        snprintf(dtmf_body, sizeof dtmf_body - 1, "Signal=%c\r\nDuration=%d\r\n", code, duration);
+    }
+
+    sendSIPInfo(dtmf_body, "dtmf-relay");
 }
 
 void
