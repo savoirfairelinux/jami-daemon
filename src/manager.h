@@ -680,13 +680,13 @@ class Manager {
          * Retrieve the current telephone tone
          * @return AudioLoop*   The audio tone or 0 if no tone (init before calling this function)
          */
-        AudioLoop* getTelephoneTone();
+        std::shared_ptr<AudioLoop> getTelephoneTone();
 
         /**
          * Retrieve the current telephone file
          * @return AudioLoop* The audio file or 0 if the wav is stopped
          */
-        AudioLoop* getTelephoneFile();
+        std::shared_ptr<AudioLoop> getTelephoneFile();
 
         /**
          * @return true is there is one or many incoming call waiting

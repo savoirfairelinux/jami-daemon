@@ -44,8 +44,8 @@ class ToneControl {
         ~ToneControl();
 
         void setSampleRate(unsigned rate);
-        AudioLoop* getTelephoneTone();
-        AudioLoop* getTelephoneFile(void);
+        std::shared_ptr<AudioLoop> getTelephoneTone();
+        std::shared_ptr<AudioLoop> getTelephoneFile(void);
         bool setAudioFile(const std::string& file);
         void stopAudioFile();
         void stop();
@@ -58,7 +58,7 @@ class ToneControl {
         std::mutex mutex_; // protect access to following members
         unsigned sampleRate_;
         std::unique_ptr<TelephoneTone> telephoneTone_;
-        std::unique_ptr<AudioFile> audioFile_;
+        std::shared_ptr<AudioFile> audioFile_;
 };
 
 } // namespace ring
