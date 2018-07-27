@@ -351,10 +351,6 @@ AM_CONDITIONAL(HAVE_PORTAUDIO, test "x$with_portaudio" = "xyes")
 AC_DEFINE_UNQUOTED([HAVE_JACK], `if test "x$have_jack" = "xyes"; then echo 1; else echo 0; fi`, [Define if you have jack])
 AM_CONDITIONAL(BUILD_JACK, test "x$have_jack" = "xyes")
 
-dnl Check for the samplerate development package - name: libsamplerate0-dev
-LIBSAMPLERATE_MIN_VERSION=0.1.2
-PKG_CHECK_MODULES(SAMPLERATE, samplerate >= ${LIBSAMPLERATE_MIN_VERSION},, AC_MSG_ERROR([Missing libsamplerate development files]))
-
 dnl Coverage is default-disabled
 AC_ARG_ENABLE([coverage], AS_HELP_STRING([--enable-coverage], [Enable coverage]))
 

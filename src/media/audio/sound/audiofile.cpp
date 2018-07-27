@@ -22,7 +22,6 @@
  */
 #include <fstream>
 #include <cmath>
-#include <samplerate.h>
 #include <cstring>
 #include <vector>
 #include <climits>
