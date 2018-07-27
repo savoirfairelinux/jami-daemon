@@ -70,7 +70,7 @@ ut_media_encoder_SOURCES = media/test_media_encoder.cpp
 #
 # media_decoder
 #
-check_PROGRAMS += ut_media_decoder # no reliable way to get a file
+check_PROGRAMS += ut_media_decoder
 ut_media_decoder_SOURCES = media/test_media_decoder.cpp
 
 #
@@ -78,5 +78,11 @@ ut_media_decoder_SOURCES = media/test_media_decoder.cpp
 #
 check_PROGRAMS += ut_media_filter
 ut_media_filter_SOURCES = media/test_media_filter.cpp
+
+#
+# resampler
+#
+check_PROGRAMS += ut_resampler
+ut_resampler_SOURCES = media/audio/test_resampler.cpp
 
 TESTS = $(check_PROGRAMS)

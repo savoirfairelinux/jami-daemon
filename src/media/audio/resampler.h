@@ -19,20 +19,18 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _SAMPLE_RATE_H
-#define _SAMPLE_RATE_H
+#pragma once
 
-#include <cmath>
-#include <cstring>
 #include <memory>
 
 #include "audiobuffer.h"
-#include "ring_types.h"
 #include "noncopyable.h"
+#include "ring_types.h"
 
 namespace ring {
 
-class SrcState;
+class MediaFilter;
+struct MediaStream;
 
 class Resampler {
     public:
@@ -43,8 +41,8 @@ class Resampler {
         * internal buffer size. Resampler must be reinitialized
         * every time these parameters change
         */
-        Resampler(AudioFormat outFormat, bool quality = false);
-        Resampler(unsigned sample_rate, unsigned channels=1, bool quality = false);
+        Resampler(AudioFormat outFormat);
+        Resampler(unsigned sample_rate, unsigned channels=1);
         // empty dtor, needed for unique_ptr
         ~Resampler();
 
@@ -52,31 +50,22 @@ class Resampler {
          * Change the converter sample rate and channel number.
          * Internal state is lost.
          */
-        void setFormat(AudioFormat format, bool quality = false);
+        void setFormat(AudioFormat format);
 
         /**
          * resample from the samplerate1 to the samplerate2
-         * @param dataIn  Input buffer
+         * @param dataIn Input buffer
          * @param dataOut Output buffer
-         * @param nbSamples	  The number of samples to process
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
     private:
         NON_COPYABLE(Resampler);
 
-        /* temporary buffers */
-        std::vector<float> floatBufferIn_;
-        std::vector<float> floatBufferOut_;
-        std::vector<AudioSample> scratchBuffer_;
+        void reinitFilter(const MediaStream& inputParams);
 
-        size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
-        bool high_quality_;
-
-        std::unique_ptr<SrcState> src_state_;
+        std::unique_ptr<MediaFilter> filter_;
 };
 
 } // namespace ring
-
-#endif //_SAMPLE_RATE_H
