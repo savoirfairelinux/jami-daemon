@@ -103,8 +103,8 @@ void JackLayer::fillWithVoice(AudioBuffer &buffer, size_t samplesAvail)
 void JackLayer::fillWithToneOrRingtone(AudioBuffer &buffer)
 {
     buffer.resize(hardwareBufferSize_);
-    AudioLoop *tone = Manager::instance().getTelephoneTone();
-    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
+    auto tone = Manager::instance().getTelephoneTone();
+    auto file_tone = Manager::instance().getTelephoneFile();
 
     // In case of a dtmf, the pointers will be set to nullptr once the dtmf length is
     // reached. For this reason we need to fill audio buffer with zeros if pointer is nullptr

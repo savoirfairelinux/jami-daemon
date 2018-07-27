@@ -49,7 +49,7 @@ class TelephoneTone {
 
         void setCurrentTone(Tone::TONEID toneId);
         void setSampleRate(unsigned int sampleRate);
-        Tone* getCurrentTone();
+        std::shared_ptr<Tone> getCurrentTone();
 
     private:
         NON_COPYABLE(TelephoneTone);
@@ -59,7 +59,7 @@ class TelephoneTone {
         void buildTones(unsigned int sampleRate);
 
         COUNTRYID countryId_;
-        std::array<Tone, Tone::TONE_NULL> tones_;
+        std::array<std::shared_ptr<Tone>, Tone::TONE_NULL> tones_;
         Tone::TONEID currentTone_;
 };
 
