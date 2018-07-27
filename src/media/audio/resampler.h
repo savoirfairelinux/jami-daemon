@@ -33,6 +33,7 @@
 namespace ring {
 
 class SrcState;
+class MediaFilter;
 
 class Resampler {
     public:
@@ -56,25 +57,17 @@ class Resampler {
 
         /**
          * resample from the samplerate1 to the samplerate2
-         * @param dataIn  Input buffer
+         * @param dataIn Input buffer
          * @param dataOut Output buffer
-         * @param nbSamples	  The number of samples to process
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
     private:
         NON_COPYABLE(Resampler);
 
-        /* temporary buffers */
-        std::vector<float> floatBufferIn_;
-        std::vector<float> floatBufferOut_;
-        std::vector<AudioSample> scratchBuffer_;
-
-        size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
-        bool high_quality_;
-
-        std::unique_ptr<SrcState> src_state_;
+        std::unique_ptr<MediaFilter> filter_;
+        int64_t layout_;
 };
 
 } // namespace ring

@@ -19,44 +19,21 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "resampler.h"
 #include "logger.h"
+#include "media_filter.h"
+#include "resampler.h"
 #include "ring_types.h"
-
-#include <samplerate.h>
 
 namespace ring {
 
-class SrcState {
-    public:
-        SrcState(int nb_channels, bool high_quality = false)
-        {
-            int err;
-            state_ = src_new(high_quality ? SRC_SINC_BEST_QUALITY : SRC_LINEAR, nb_channels, &err);
-        }
-
-        ~SrcState()
-        {
-            src_delete(state_);
-        }
-
-        void process(SRC_DATA *src_data)
-        {
-            src_process(state_, src_data);
-        }
-
-    private:
-        SRC_STATE *state_ {nullptr};
-};
-
-Resampler::Resampler(AudioFormat format, bool quality) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(format), high_quality_(quality), src_state_()
+Resampler::Resampler(AudioFormat format, bool quality)
+    : format_(format)
 {
     setFormat(format, quality);
 }
 
-Resampler::Resampler(unsigned sample_rate, unsigned channels, bool quality) : floatBufferIn_(),
-    floatBufferOut_(), scratchBuffer_(), samples_(0), format_(sample_rate, channels), high_quality_(quality), src_state_()
+Resampler::Resampler(unsigned sample_rate, unsigned channels, bool quality)
+    : format_(sample_rate, channels)
 {
     setFormat(format_, quality);
 }
@@ -64,64 +41,45 @@ Resampler::Resampler(unsigned sample_rate, unsigned channels, bool quality) : fl
 Resampler::~Resampler() = default;
 
 void
-Resampler::setFormat(AudioFormat format, bool quality)
+Resampler::setFormat(AudioFormat format, bool /* quality */)
 {
     format_ = format;
-    samples_ = (format.nb_channels * format.sample_rate * 20) / 1000; // start with 20 ms buffers
-    floatBufferIn_.resize(samples_);
-    floatBufferOut_.resize(samples_);
-    scratchBuffer_.resize(samples_);
-
-    src_state_.reset(new SrcState(format.nb_channels, quality));
+    layout_ = av_get_default_channel_layout(format_.nb_channels);
 }
 
-void Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
+void
+Resampler::resample(const AudioBuffer &dataIn, AudioBuffer &dataOut)
 {
-    const double inputFreq = dataIn.getSampleRate();
-    const double outputFreq = dataOut.getSampleRate();
-    const double sampleFactor = outputFreq / inputFreq;
+    // TODO don't reinit filter unless needed
+    filter_.reset(new MediaFilter());
 
-    if (sampleFactor == 1.0)
+    std::stringstream aformat;
+    aformat << "aformat=sample_fmts=s16:channel_layouts=" << layout_
+        << ":sample_rates=" << format.sample_rate;
+    MediaStream ms = MediaStream("resampler", AV_SAMPLE_FMT_S16,
+        0, format_.sample_rate, format_.nb_channels);
+    if (filter_->initialize(aformat.str(), ms) < 0) {
+        RING_ERR() << "Failed to initialize resampler";
         return;
-
-    const size_t nbFrames = dataIn.frames();
-    const size_t nbChans = dataIn.channels();
-
-    if (nbChans != format_.nb_channels) {
-        // change channel num if needed
-        src_state_.reset(new SrcState(nbChans, high_quality_));
-        format_.nb_channels = nbChans;
-        RING_DBG("SRC channel number changed.");
-    }
-    if (nbChans != dataOut.channels()) {
-        RING_DBG("Output buffer had the wrong number of channels (in: %zu, out: %u).", nbChans, dataOut.channels());
-        dataOut.setChannelNum(nbChans);
     }
 
-    size_t inSamples = nbChans * nbFrames;
-    size_t outSamples = inSamples * sampleFactor;
+    auto input = dataIn.toAVFrame();
+    auto frame = filter_->apply(input);
+    av_frame_free(&input);
+    if (!frame) {
+        RING_ERR() << "Resampling failed, this may produce a glitch in the audio";
+        return;
+    }
 
-    // grow buffer if needed
-    floatBufferIn_.resize(inSamples);
-    floatBufferOut_.resize(outSamples);
-    scratchBuffer_.resize(outSamples);
-
-    SRC_DATA src_data;
-    src_data.data_in = floatBufferIn_.data();
-    src_data.data_out = floatBufferOut_.data();
-    src_data.input_frames = nbFrames;
-    src_data.output_frames = nbFrames * sampleFactor;
-    src_data.src_ratio = sampleFactor;
-    src_data.end_of_input = 0; // More data will come
-
-    dataIn.interleaveFloat(floatBufferIn_.data());
-
-    src_state_->process(&src_data);
-    /*
-    TODO: one-shot deinterleave and float-to-short conversion
-    */
-    src_float_to_short_array(floatBufferOut_.data(), scratchBuffer_.data(), outSamples);
-    dataOut.deinterleave(scratchBuffer_.data(), src_data.output_frames, nbChans);
+    dataOut.setFormat(format_);
+    dataOut.resize(frame->nb_samples);
+    if (frame->format == AV_SAMPLE_FMT_FLTP)
+        dataOut.convertFloatPlanarToSigned16(frame->extended_data,
+            frame->nb_samples, frame->channels);
+    else if (frame->format == AV_SAMPLE_FMT_S16)
+        dataOut.deinterleave(reinterpret_cast<const AudioSample*>(frame->extended_data[0]),
+            frame->nb_samples, frame->channels);
+    av_frame_free(&frame);
 }
 
 } // namespace ring
