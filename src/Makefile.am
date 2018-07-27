@@ -111,6 +111,11 @@ libring_la_SOURCES = \
 		utf8_utils.cpp \
 		ice_transport.cpp \
 		ice_transport.h \
+		plugin_manager.cpp \
+		plugin_loader_dl.cpp \
+		ring_plugin.h \
+		plugin_loader.h \
+		plugin_manager.h \
 		threadloop.h \
 		thread_pool.h \
 		conference.h \
