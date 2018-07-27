@@ -19,20 +19,20 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#ifndef _SAMPLE_RATE_H
-#define _SAMPLE_RATE_H
+#pragma once
 
 #include <cmath>
 #include <cstring>
 #include <memory>
 
 #include "audiobuffer.h"
-#include "ring_types.h"
+#include "media_stream.h"
 #include "noncopyable.h"
+#include "ring_types.h"
 
 namespace ring {
 
-class SrcState;
+class MediaFilter;
 
 class Resampler {
     public:
@@ -56,27 +56,18 @@ class Resampler {
 
         /**
          * resample from the samplerate1 to the samplerate2
-         * @param dataIn  Input buffer
+         * @param dataIn Input buffer
          * @param dataOut Output buffer
-         * @param nbSamples	  The number of samples to process
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
     private:
         NON_COPYABLE(Resampler);
 
-        /* temporary buffers */
-        std::vector<float> floatBufferIn_;
-        std::vector<float> floatBufferOut_;
-        std::vector<AudioSample> scratchBuffer_;
+        void reinitFilter(const MediaStream& inputParams);
 
-        size_t samples_; // size in samples of temporary buffers
         AudioFormat format_; // number of channels and max output frequency
-        bool high_quality_;
-
-        std::unique_ptr<SrcState> src_state_;
+        std::unique_ptr<MediaFilter> filter_;
 };
 
 } // namespace ring
-
-#endif //_SAMPLE_RATE_H
