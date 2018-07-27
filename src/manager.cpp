@@ -2208,13 +2208,13 @@ Manager::playRingtone(const std::string& accountID)
         ringback();
 }
 
-AudioLoop*
+std::shared_ptr<AudioLoop>
 Manager::getTelephoneTone()
 {
     return pimpl_->toneCtrl_.getTelephoneTone();
 }
 
-AudioLoop*
+std::shared_ptr<AudioLoop>
 Manager::getTelephoneFile()
 {
     return pimpl_->toneCtrl_.getTelephoneFile();

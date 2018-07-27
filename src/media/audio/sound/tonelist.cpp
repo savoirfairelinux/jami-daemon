@@ -114,22 +114,22 @@ TelephoneTone::setSampleRate(unsigned int sampleRate)
     buildTones(sampleRate);
 }
 
-Tone*
+std::shared_ptr<Tone>
 TelephoneTone::getCurrentTone()
 {
     if (currentTone_ < Tone::TONE_DIALTONE or currentTone_ >= Tone::TONE_NULL)
         return nullptr;
 
-    return &tones_[currentTone_];
+    return tones_[currentTone_];
 }
 
 void
 TelephoneTone::buildTones(unsigned int sampleRate)
 {
-    tones_[Tone::TONE_DIALTONE] = Tone(toneZone[countryId_][Tone::TONE_DIALTONE], sampleRate);
-    tones_[Tone::TONE_BUSY] = Tone(toneZone[countryId_][Tone::TONE_BUSY], sampleRate);
-    tones_[Tone::TONE_RINGTONE] = Tone(toneZone[countryId_][Tone::TONE_RINGTONE], sampleRate);
-    tones_[Tone::TONE_CONGESTION] = Tone(toneZone[countryId_][Tone::TONE_CONGESTION], sampleRate);
+    tones_[Tone::TONE_DIALTONE] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_DIALTONE], sampleRate);
+    tones_[Tone::TONE_BUSY] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_BUSY], sampleRate);
+    tones_[Tone::TONE_RINGTONE] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_RINGTONE], sampleRate);
+    tones_[Tone::TONE_CONGESTION] = std::make_shared<Tone>(toneZone[countryId_][Tone::TONE_CONGESTION], sampleRate);
 }
 
 } // namespace ring

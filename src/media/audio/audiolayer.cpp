@@ -122,7 +122,7 @@ void AudioLayer::notifyIncomingCall()
 const AudioBuffer& AudioLayer::getToRing(AudioFormat format, size_t writableSamples)
 {
     ringtoneBuffer_.resize(0);
-    AudioLoop *fileToPlay = Manager::instance().getTelephoneFile();
+    auto fileToPlay = Manager::instance().getTelephoneFile();
     if (fileToPlay) {
         auto fileformat = fileToPlay->getFormat();
         bool resample = format.sample_rate != fileformat.sample_rate;
@@ -169,7 +169,7 @@ const AudioBuffer& AudioLayer::getToPlay(AudioFormat format, size_t writableSamp
 
     // FIXME: not thread safe! we only lock the mutex when we get the
     // pointer, we have no guarantee that it will stay safe to use
-    if (AudioLoop* toneToPlay = Manager::instance().getTelephoneTone()) {
+    if (auto toneToPlay = Manager::instance().getTelephoneTone()) {
         playbackBuffer_.setFormat(format);
         playbackBuffer_.resize(writableSamples);
         toneToPlay->getNext(playbackBuffer_, playbackGain_); // retrive only n_channels
