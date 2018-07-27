@@ -756,7 +756,7 @@ void AlsaLayer::ringtone()
     if (!ringtoneHandle_)
         return;
 
-    AudioLoop *file_tone = Manager::instance().getTelephoneFile();
+    auto file_tone = Manager::instance().getTelephoneFile();
     int ringtoneAvailFrames = 0;
 
     if (not safeUpdate(ringtoneHandle_, ringtoneAvailFrames))

@@ -51,7 +51,7 @@ ToneControl::setSampleRate(unsigned rate)
         telephoneTone_->setSampleRate(rate);
 }
 
-AudioLoop*
+std::shared_ptr<AudioLoop>
 ToneControl::getTelephoneTone()
 {
     std::lock_guard<std::mutex> lk(mutex_);
@@ -60,11 +60,11 @@ ToneControl::getTelephoneTone()
     return nullptr;
 }
 
-AudioLoop*
+std::shared_ptr<AudioLoop>
 ToneControl::getTelephoneFile(void)
 {
     std::lock_guard<std::mutex> lk(mutex_);
-    return audioFile_.get();
+    return audioFile_;
 }
 
 bool
