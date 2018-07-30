@@ -140,8 +140,7 @@ MediaFilterTest::testSimpleVideoFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_) >= 0);
-    frame_ = filter_->readOutput();
+    frame_ = filter_->apply(frame_);
     CPPUNIT_ASSERT(frame_);
 
     // check if the filter worked
@@ -178,8 +177,7 @@ MediaFilterTest::testSimpleAudioFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_) >= 0);
-    frame_ = filter_->readOutput();
+    frame_ = filter_->apply(frame_);
     CPPUNIT_ASSERT(frame_);
 
     // check if the filter worked

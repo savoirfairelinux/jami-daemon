@@ -213,6 +213,19 @@ MediaFilter::readOutput()
     return nullptr;
 }
 
+AVFrame*
+MediaFilter::apply(AVFrame* frame)
+{
+    if (inputs_.size() != 1) {
+        RING_ERR() << "Cannot use apply(AVFrame*) shortcut with a complex filter";
+        return nullptr;
+    }
+
+    if (feedInput(frame) < 0)
+        return nullptr;
+    return readOutput();
+}
+
 int
 MediaFilter::initOutputFilter(AVFilterInOut* out)
 {

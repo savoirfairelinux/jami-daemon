@@ -109,6 +109,16 @@ class MediaFilter {
          */
         AVFrame* readOutput();
 
+        /**
+         * Passes a frame through a simple filter (1 input, 1 output).
+         *
+         * This is a shortcut for feedInput(AVFrame*)+readOutput().
+         *
+         * NOTE Returns nullptr if the filter graph has multiple inputs/outputs.
+         * NOTE Caller is responsible for freeing the input and output frames.
+         */
+        AVFrame* apply(AVFrame* frame);
+
     private:
         NON_COPYABLE(MediaFilter);
 
