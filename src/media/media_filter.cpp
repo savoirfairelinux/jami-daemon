@@ -125,7 +125,21 @@ MediaFilter::initialize(const std::string& filterDesc, std::vector<MediaStream> 
 }
 
 MediaStream
-MediaFilter::getOutputParams()
+MediaFilter::getInputParams() const
+{
+    return getInputParams("default");
+}
+
+MediaStream
+MediaFilter::getInputParams(const std::string& inputName) const
+{
+    for (auto ms : inputParams_)
+        if (ms.name == inputName)
+            return ms;
+}
+
+MediaStream
+MediaFilter::getOutputParams() const
 {
     MediaStream output;
     if (!output_ || !initialized_) {
@@ -174,7 +188,7 @@ MediaFilter::feedInput(AVFrame* frame, std::string inputName)
 
     for (size_t i = 0; i < inputs_.size(); ++i) {
         auto filterCtx = inputs_[i];
-        if (inputNames_[i] != inputName)
+        if (inputParams_[i].name != inputName)
             continue;
 
         int flags = AV_BUFFERSRC_FLAG_PUSH | AV_BUFFERSRC_FLAG_KEEP_REF;
@@ -211,6 +225,19 @@ MediaFilter::readOutput()
     }
     av_frame_free(&frame);
     return nullptr;
+}
+
+AVFrame*
+MediaFilter::apply(AVFrame* frame)
+{
+    if (inputs_.size() != 1) {
+        RING_ERR() << "Cannot use apply(AVFrame*) shortcut with a complex filter";
+        return nullptr;
+    }
+
+    if (feedInput(frame) < 0)
+        return nullptr;
+    return readOutput();
 }
 
 int
@@ -291,14 +318,15 @@ MediaFilter::initInputFilter(AVFilterInOut* in, MediaStream msp, bool simple)
 
     inputs_.push_back(buffersrcCtx);
     if (simple)
-        inputNames_.push_back("default");
+        msp.name = "default";
     else
-        inputNames_.push_back(in->name);
+        msp.name = in->name;
+    inputParams_.push_back(msp);
     return ret;
 }
 
 int
-MediaFilter::fail(std::string msg, int err)
+MediaFilter::fail(std::string msg, int err) const
 {
     if (!msg.empty())
         RING_ERR() << msg << ": " << libav_utils::getError(err);
