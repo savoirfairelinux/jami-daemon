@@ -79,11 +79,23 @@ class MediaFilter {
         int initialize(const std::string& filterDesc, std::vector<MediaStream> msps);
 
         /**
+         * Returns a MediaStream object describing the input.
+         *
+         * NOTE This is a shortcut for simple filters and will fail when called on a complex filter.
+         */
+        MediaStream getInputParams() const;
+
+        /**
+         * Returns a MediaStream object describing the input specified by @inputName.
+         */
+        MediaStream getInputParams(const std::string& inputName) const;
+
+        /**
          * Returns a MediaStream struct describing the frames that will be output.
          *
          * When called in an invalid state, the returned format will be invalid (less than 0).
          */
-        MediaStream getOutputParams();
+        MediaStream getOutputParams() const;
 
         /**
          * Give the filter graph an input frame. Caller is responsible for freeing the frame.
@@ -109,6 +121,16 @@ class MediaFilter {
          */
         AVFrame* readOutput();
 
+        /**
+         * Passes a frame through a simple filter (1 input, 1 output).
+         *
+         * This is a shortcut for feedInput(AVFrame*)+readOutput().
+         *
+         * NOTE Returns nullptr if the filter graph has multiple inputs/outputs.
+         * NOTE Caller is responsible for freeing the input and output frames.
+         */
+        AVFrame* apply(AVFrame* frame);
+
     private:
         NON_COPYABLE(MediaFilter);
 
@@ -127,7 +149,7 @@ class MediaFilter {
          *
          * NOTE @msg should not be null.
          */
-        int fail(std::string msg, int err);
+        int fail(std::string msg, int err) const;
 
         /**
          * Frees resources used by MediaFilter.
@@ -150,9 +172,9 @@ class MediaFilter {
         std::vector<AVFilterContext*> inputs_;
 
         /**
-         * List of filter graph input names. Same order as @inputs_.
+         * List of filter graph input parameters. Same order as @inputs_.
          */
-        std::vector<std::string> inputNames_;
+        std::vector<MediaStream> inputParams_;
 
         /**
          * Filter graph string.

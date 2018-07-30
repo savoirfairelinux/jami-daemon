@@ -140,8 +140,7 @@ MediaFilterTest::testSimpleVideoFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_) >= 0);
-    frame_ = filter_->readOutput();
+    frame_ = filter_->apply(frame_);
     CPPUNIT_ASSERT(frame_);
 
     // check if the filter worked
@@ -178,8 +177,7 @@ MediaFilterTest::testSimpleAudioFilter()
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
 
     // apply filter
-    CPPUNIT_ASSERT(filter_->feedInput(frame_) >= 0);
-    frame_ = filter_->readOutput();
+    frame_ = filter_->apply(frame_);
     CPPUNIT_ASSERT(frame_);
 
     // check if the filter worked
@@ -259,17 +257,19 @@ MediaFilterTest::testSimpleFilterParams()
     // prepare filter
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, params) >= 0);
 
+    // check input params
+    auto msin = filter_->getInputParams();
+    CPPUNIT_ASSERT(msin.format == format && msin.width == width && msin.height == height);
+
     // output params should now be valid
-    auto ms = filter_->getOutputParams();
-    CPPUNIT_ASSERT(ms.format >= 0 && ms.width > 0 && ms.height > 0);
+    auto msout = filter_->getOutputParams();
+    CPPUNIT_ASSERT(msout.format >= 0 && msout.width > 0 && msout.height > 0);
 }
 
 void
 MediaFilterTest::testComplexFilterParams()
 {
     std::string filterSpec = "[main] [top] overlay=main_w-overlay_w-10:main_h-overlay_h-10";
-    std::string main = "main";
-    std::string top = "top";
 
     // constants
     const constexpr int width1 = 320;
@@ -291,6 +291,12 @@ MediaFilterTest::testComplexFilterParams()
     vec.push_back(params2); // order does not matter, as long as names match
     vec.push_back(params1);
     CPPUNIT_ASSERT(filter_->initialize(filterSpec, vec) >= 0);
+
+    // check input params
+    auto main = filter_->getInputParams("main");
+    CPPUNIT_ASSERT(main.format == format && main.width == width1 && main.height == height1);
+    auto top = filter_->getInputParams("top");
+    CPPUNIT_ASSERT(top.format == format && top.width == width2 && top.height == height2);
 
     // output params should now be valid
     auto ms = filter_->getOutputParams();
