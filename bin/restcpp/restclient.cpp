@@ -101,6 +101,25 @@ RestClient::initLib(int flags)
 #endif
 
     // Configuration event handlers
+    auto registeredNameFoundCb = exportable_callback<ConfigurationSignal::RegisteredNameFound>([&]
+        (const std::string& account_id, int state, const std::string& address, const std::string& name){
+            auto remainingSessions = configurationManager_->getPendingNameResolutions(name);
+
+            for(auto session: remainingSessions){
+                const auto request = session->get_request();
+                std::string body = address;
+                const std::multimap<std::string, std::string> headers
+                {
+                    {"Content-Type", "text/html"},
+                    {"Content-Length", std::to_string(body.length())}
+                };
+                if(address.size() > 0)
+                    session->close(restbed::OK, body, headers);
+                else
+                    session->close(404);
+            }
+        });
+
 
     // This is a short example of a callback using a lambda. In this case, this displays the incoming messages
     const std::map<std::string, SharedCallback> configEvHandlers = {
@@ -113,6 +132,7 @@ RestClient::initLib(int flags)
                     RING_INFO("%s : %s", it.first.c_str(), it.second.c_str());
 
             }),
+            registeredNameFoundCb,
     };
 
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
