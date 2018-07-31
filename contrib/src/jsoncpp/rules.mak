@@ -22,6 +22,6 @@ jsoncpp: jsoncpp-$(JSONCPP_VERSION).tar.gz .sum-jsoncpp
 	$(MOVE)
 
 .jsoncpp: jsoncpp toolchain.cmake
-	cd $< && $(HOSTVARS) $(CMAKE) . ${JSONCPP_CMAKECONF}
+	cd $< && $(HOSTVARS) $(CMAKE) ${JSONCPP_CMAKECONF}
 	cd $< && $(MAKE) install
 	touch $@
