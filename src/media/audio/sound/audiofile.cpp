@@ -70,32 +70,22 @@ AudioFile::AudioFile(const std::string &fileName, unsigned int sampleRate) :
     if (decoder->setupFromAudioData() < 0)
         throw AudioFileException("Decoder setup failed: " + fileName);
 
-    const auto& ms = decoder->getStream();
-
-    auto filter = std::make_unique<MediaFilter>();
-    // aformat=sample_fmts=s16:channel_layouts=stereo
-    if (filter->initialize("aformat=sample_fmts=s16:channel_layouts=stereo|mono:sample_rates="
-        + std::to_string(getFormat().sample_rate), ms) < 0)
-        throw AudioFileException("Failed to create resampler");
-
+    auto resampler = std::make_unique<Resampler>();
     auto buf = std::make_unique<AudioBuffer>(0, getFormat());
     bool done = false;
     while (!done) {
-        AudioFrame frame;
-        AVFrame* resampled;
-        switch (decoder->decode(frame)) {
+        AudioFrame input;
+        AudioFrame output;
+        auto resampled = output.pointer();
+        switch (decoder->decode(input)) {
         case MediaDecoder::Status::FrameFinished:
-            // TODO move this code to Resampler class with conditional resampling
-            if (filter->feedInput(frame.pointer()) < 0)
+            resampled->sample_rate = getFormat().sample_rate;
+            resampled->channel_layout = av_get_default_channel_layout(getFormat().nb_channels);
+            resampled->format = AV_SAMPLE_FMT_S16;
+            if (resampler->resample(input.pointer(), resampled) < 0)
                 throw AudioFileException("Frame could not be resampled");
-            if (!(resampled = filter->readOutput()))
-                throw AudioFileException("Frame could not be resampled");
-            if (buf->append(resampled) < 0) {
-                av_frame_free(&resampled);
+            if (buf->append(resampled) < 0)
                 throw AudioFileException("Error while decoding: " + fileName);
-            } else {
-                av_frame_free(&resampled);
-            }
             break;
         case MediaDecoder::Status::DecodeError:
         case MediaDecoder::Status::ReadError:
