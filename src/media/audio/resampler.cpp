@@ -19,82 +19,81 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
+#include "libav_deps.h"
 #include "logger.h"
+#include "media_buffer.h"
 #include "media_filter.h"
 #include "media_stream.h"
 #include "resampler.h"
 #include "ring_types.h"
 
+extern "C" {
+#include <libswresample/swresample.h>
+}
+
 namespace ring {
 
-Resampler::Resampler(AudioFormat format)
-    : format_(format)
-{
-    setFormat(format);
-}
+Resampler::Resampler()
+    : swrCtx_(swr_alloc())
+{}
 
-Resampler::Resampler(unsigned sample_rate, unsigned channels)
-    : format_(sample_rate, channels)
+Resampler::~Resampler()
 {
-    setFormat(format_);
+    swr_free(&swrCtx_);
 }
-
-Resampler::~Resampler() = default;
 
 void
-Resampler::reinitFilter(const MediaStream& inputParams)
+Resampler::reinit(const AudioFormat& in, const int inSampleFmt,
+                  const AudioFormat& out, const int outSampleFmt)
 {
-    filter_.reset(new MediaFilter());
-    std::stringstream aformat;
-    aformat << "aformat=sample_fmts=s16:channel_layouts="
-        << av_get_default_channel_layout(format_.nb_channels)
-        << ":sample_rates=" << format_.sample_rate;
-    if (filter_->initialize(aformat.str(), inputParams) < 0) {
-        RING_ERR() << "Failed to initialize resampler";
-        filter_.reset();
+    av_opt_set_int(swrCtx_, "ich", 0, 0);
+    av_opt_set_int(swrCtx_, "icl", av_get_default_channel_layout(in.nb_channels), 0);
+    av_opt_set_int(swrCtx_, "isr", in.sample_rate, 0);
+    av_opt_set_sample_fmt(swrCtx_, "isf", static_cast<AVSampleFormat>(inSampleFmt), 0);
+
+    av_opt_set_int(swrCtx_, "och", 0, 0);
+    av_opt_set_int(swrCtx_, "ocl", av_get_default_channel_layout(out.nb_channels), 0);
+    av_opt_set_int(swrCtx_, "osr", out.sample_rate, 0);
+    av_opt_set_sample_fmt(swrCtx_, "osf", static_cast<AVSampleFormat>(outSampleFmt), 0);
+
+    swr_init(swrCtx_);
+}
+
+int
+Resampler::resample(const AVFrame* input, AVFrame* output)
+{
+    int ret = swr_convert_frame(swrCtx_, output, input);
+    if (ret & AVERROR_INPUT_CHANGED || ret & AVERROR_OUTPUT_CHANGED) {
+        reinit(AudioFormat{(unsigned)input->sample_rate, (unsigned)input->channels}, input->format,
+               AudioFormat{(unsigned)output->sample_rate, (unsigned)output->channels}, output->format);
+        return resample(input, output);
+    } else if (ret < 0) {
+        RING_ERR() << "Failed to resample frame";
+        return -1;
     }
-}
 
-void
-Resampler::setFormat(AudioFormat format)
-{
-    format_ = format;
-    if (filter_)
-        reinitFilter(filter_->getInputParams());
+    return 0;
 }
 
 void
 Resampler::resample(const AudioBuffer& dataIn, AudioBuffer& dataOut)
 {
     auto input = dataIn.toAVFrame();
-    MediaStream currentParams("resampler", static_cast<AVSampleFormat>(input->format),
-        0, input->sample_rate, input->channels);
-    if (filter_) {
-        const auto& ms = filter_->getInputParams();
-        if (ms.sampleRate != input->sample_rate || ms.nbChannels != input->channels) {
-            RING_WARN() << "Resampler settings changed, reinitializing";
-            reinitFilter(currentParams);
-        }
-    } else {
-        reinitFilter(currentParams);
-    }
+    AudioFrame resampled;
+    auto output = resampled.pointer();
+    output->sample_rate = dataOut.getSampleRate();
+    output->channel_layout = av_get_default_channel_layout(dataOut.channels());
+    output->format = AV_SAMPLE_FMT_S16;
 
-    auto frame = filter_->apply(input);
-    av_frame_free(&input);
-    if (!frame) {
-        RING_ERR() << "Resampling failed, this may produce a glitch in the audio";
+    if (resample(input, output) < 0) {
+        av_frame_free(&input);
         return;
     }
 
-    dataOut.setFormat(format_);
-    dataOut.resize(frame->nb_samples);
-    if (static_cast<AVSampleFormat>(frame->format) == AV_SAMPLE_FMT_FLTP)
-        dataOut.convertFloatPlanarToSigned16(frame->extended_data,
-            frame->nb_samples, frame->channels);
-    else if (static_cast<AVSampleFormat>(frame->format) == AV_SAMPLE_FMT_S16)
-        dataOut.deinterleave(reinterpret_cast<const AudioSample*>(frame->extended_data[0]),
-            frame->nb_samples, frame->channels);
-    av_frame_free(&frame);
+    dataOut.resize(output->nb_samples);
+    dataOut.deinterleave(reinterpret_cast<const AudioSample*>(output->extended_data[0]),
+        output->nb_samples, output->channels);
+    av_frame_free(&input);
 }
 
 } // namespace ring
