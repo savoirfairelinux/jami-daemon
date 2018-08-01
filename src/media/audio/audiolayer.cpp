@@ -41,8 +41,8 @@ AudioLayer::AudioLayer(const AudioPreference &pref)
     , audioFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , audioInputFormat_(Manager::instance().getRingBufferPool().getInternalAudioFormat())
     , urgentRingBuffer_("urgentRingBuffer_id", SIZEBUF, audioFormat_)
-    , resampler_(new Resampler{audioFormat_.sample_rate})
-    , inputResampler_(new Resampler{audioInputFormat_.sample_rate})
+    , resampler_(new Resampler)
+    , inputResampler_(new Resampler)
     , lastNotificationTime_()
 {
     urgentRingBuffer_.createReadOffset(RingBufferPool::DEFAULT_ID);
@@ -57,13 +57,11 @@ void AudioLayer::hardwareFormatAvailable(AudioFormat playback)
     RING_DBG("Hardware audio format available : %s", playback.toString().c_str());
     audioFormat_ = Manager::instance().hardwareAudioFormatChanged(playback);
     urgentRingBuffer_.setFormat(audioFormat_);
-    resampler_->setFormat(audioFormat_);
 }
 
 void AudioLayer::hardwareInputFormatAvailable(AudioFormat capture)
 {
     RING_DBG("Hardware input audio format available : %s", capture.toString().c_str());
-    inputResampler_->setFormat(capture);
 }
 
 void AudioLayer::devicesChanged()

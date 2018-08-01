@@ -179,7 +179,7 @@ AudioSender::process()
     if (mainBuffFormat.sample_rate != accountAudioCodec->audioformat.sample_rate) {
         if (not resampler_) {
             RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler(accountAudioCodec->audioformat));
+            resampler_.reset(new Resampler);
         }
         resampledData_.setFormat(accountAudioCodec->audioformat);
         resampledData_.resize(samplesToGet);
