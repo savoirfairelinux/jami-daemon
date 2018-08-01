@@ -18,7 +18,7 @@
 #pragma once
 
 #include "noncopyable.h"
-
+#include "opendht/crypto.h"
 #include <functional>
 #include <map>
 #include <string>
@@ -29,7 +29,7 @@ namespace ring {
 class NameDirectory
 {
 public:
-    enum class Response : int { found = 0, invalidName, notFound, error };
+    enum class Response : int { found = 0, invalidResponse, notFound, error };
     enum class RegistrationResponse : int { success = 0,
                                             invalidName,
                                             alreadyTaken,
@@ -52,6 +52,8 @@ public:
 
     void lookupAddress(const std::string& addr, LookupCallback cb);
     void lookupName(const std::string& name, LookupCallback cb);
+    bool verify(const std::string& name, const std::string& publickey, const std::string& signature);
+    std::string getAddrFromPublickey(const std::string& publickey);
 
     void registerName(const std::string& addr, const std::string& name, const std::string& owner, RegistrationCallback cb, const std::string& signedname, const std::string& publickey);
 

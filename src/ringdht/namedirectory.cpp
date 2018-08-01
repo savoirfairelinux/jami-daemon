@@ -65,7 +65,7 @@ NameDirectory::lookupUri(const std::string& uri, const std::string& default_serv
         }
     }
     RING_ERR("Can't parse URI: %s", uri.c_str());
-    cb("", Response::invalidName);
+    cb("", Response::invalidResponse);
 }
 
 NameDirectory::NameDirectory(const std::string& s)
@@ -167,13 +167,28 @@ void NameDirectory::lookupAddress(const std::string& addr, LookupCallback cb)
 }
 
 static const std::string HEX_PREFIX {"0x"};
+using Blob = std::vector<uint8_t>;
+std::string NameDirectory::getAddrFromPublickey(const std::string& publickey){
+    auto pk = dht::crypto::PublicKey(base64::decode(publickey));
+    auto id = pk.getId();
+
+    return id.toString();
+}
+
+bool NameDirectory::verify(const std::string& name, const std::string& publickey, const std::string& signature){
+    auto pk = dht::crypto::PublicKey(base64::decode(publickey));
+    bool verify = pk.checkSignature(Blob(name.begin(), name.end()), base64::decode(signature));
+
+    return verify;
+}
+
 
 void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
 {
     try {
         std::string name {n};
         if (not validateName(name)) {
-            cb(name, Response::invalidName);
+            cb(name, Response::invalidResponse);
             return;
         }
         toLower(name);
@@ -215,17 +230,29 @@ void NameDirectory::lookupName(const std::string& n, LookupCallback cb)
                     return;
                 }
                 auto addr = json["addr"].asString();
+                auto publickey = json["publickey"].asString();
+                auto signature = json["signature"].asString();
+
                 if (!addr.compare(0, HEX_PREFIX.size(), HEX_PREFIX))
                     addr = addr.substr(HEX_PREFIX.size());
-                if (not addr.empty()) {
-                    RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
-                    {
-                        std::lock_guard<std::mutex> l(lock_);
-                        addrCache_.emplace(name, addr);
-                        nameCache_.emplace(addr, name);
+
+                if (not addr.empty() && not publickey.empty() && not signature.empty()) {
+                    if(getAddrFromPublickey(publickey) == addr){
+                        if(verify(name, publickey, signature)){
+                            RING_DBG("Found address for %s: %s", name.c_str(), addr.c_str());
+                            {
+                                std::lock_guard<std::mutex> l(lock_);
+                                addrCache_.emplace(name, addr);
+                                nameCache_.emplace(addr, name);
+                            }
+                            cb(addr, Response::found);
+                            saveCache();
+                        }
+                        else
+                            cb("", Response::invalidResponse);
                     }
-                    cb(addr, Response::found);
-                    saveCache();
+                    else
+                        cb("", Response::invalidResponse);
                 } else {
                     cb("", Response::notFound);
                 }
