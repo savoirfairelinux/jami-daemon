@@ -21,51 +21,48 @@
 
 #pragma once
 
-#include <memory>
-
 #include "audiobuffer.h"
 #include "noncopyable.h"
 #include "ring_types.h"
 
+struct AVFrame;
+struct SwrContext;
+
 namespace ring {
 
-class MediaFilter;
-struct MediaStream;
-
+/**
+ * Wrapper class for libswresample
+ */
 class Resampler {
     public:
-        /**
-         * Resampler is used for several situations:
-        * streaming conversion (RTP, IAX), audiolayer conversion,
-        * audio files conversion. Parameters are used to compute
-        * internal buffer size. Resampler must be reinitialized
-        * every time these parameters change
-        */
-        Resampler(AudioFormat outFormat);
-        Resampler(unsigned sample_rate, unsigned channels=1);
-        // empty dtor, needed for unique_ptr
+        Resampler();
         ~Resampler();
 
         /**
-         * Change the converter sample rate and channel number.
-         * Internal state is lost.
+         * Resample from @input format to @output format.
+         * NOTE: sample_rate, channel_layout, and format should be set on @output
          */
-        void setFormat(AudioFormat format);
+        int resample(const AVFrame* input, AVFrame* output);
 
         /**
-         * resample from the samplerate1 to the samplerate2
-         * @param dataIn Input buffer
-         * @param dataOut Output buffer
+         * Resample from @dataIn format to @dataOut format.
+         *
+         * NOTE: This is a wrapper for resample(AVFrame*, AVFrame*)
          */
         void resample(const AudioBuffer& dataIn, AudioBuffer& dataOut);
 
     private:
         NON_COPYABLE(Resampler);
 
-        void reinitFilter(const MediaStream& inputParams);
+        /**
+         * Reinitializes the resampler when new settings are detected. As long as both input and
+         * output buffers always have the same formats, will never be called, as the first
+         * initialization is done in swr_convert_frame.
+         */
+        void reinit(const AudioFormat& in, const int inSampleFmt,
+                    const AudioFormat& out, const int outSampleFmt);
 
-        AudioFormat format_; // number of channels and max output frequency
-        std::unique_ptr<MediaFilter> filter_;
+        SwrContext* swrCtx_; // incomplete type, cannot be a unique_ptr
 };
 
 } // namespace ring

@@ -463,7 +463,7 @@ MediaDecoder::writeToRingBuffer(const AudioFrame& decodedFrame,
     if ((unsigned)libav_frame->sample_rate != outFormat.sample_rate) {
         if (!resampler_) {
             RING_DBG("Creating audio resampler");
-            resampler_.reset(new Resampler(outFormat));
+            resampler_.reset(new Resampler);
         }
         resamplingBuff_.setFormat({(unsigned) outFormat.sample_rate, (unsigned) decoderCtx_->channels});
         resamplingBuff_.resize(libav_frame->nb_samples);
