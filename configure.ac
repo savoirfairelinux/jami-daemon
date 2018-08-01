@@ -446,6 +446,8 @@ PKG_CHECK_MODULES(LIBAVFILTER, libavfilter >= 5.40.101,, AC_MSG_ERROR([Missing l
 
 PKG_CHECK_MODULES(LIBSWSCALE, libswscale >= 3.1.101,, AC_MSG_ERROR([Missing libswscale development files]))
 
+PKG_CHECK_MODULES(LIBSWRESAMPLE, libswresample >= 1.2.101,, AC_MSG_ERROR([Missing libswresample development files]))
+
 dnl Video is default-enabled
 AC_ARG_ENABLE([video], AS_HELP_STRING([--disable-video], [Disable video]))
 
