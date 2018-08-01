@@ -338,6 +338,10 @@ MediaDecoder::decode(const AudioFrame& decodedFrame)
     if (frameFinished) {
         av_packet_unref(&inpacket);
 
+        // channel layout is needed if frame will be resampled
+        if (!frame->channel_layout)
+            frame->channel_layout = av_get_default_channel_layout(frame->channels);
+
         auto packetTimestamp = frame->pts;
         // NOTE don't use clock to rescale audio pts, it may create artifacts
         frame->pts = av_rescale_q_rnd(frame->pts, avStream_->time_base, decoderCtx_->time_base,
