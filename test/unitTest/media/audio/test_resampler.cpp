@@ -44,8 +44,6 @@ private:
     CPPUNIT_TEST(testResample);
     CPPUNIT_TEST_SUITE_END();
 
-    void writeWav(); // writes a minimal wav file to test decoding
-
     std::unique_ptr<Resampler> resampler_;
 };
 
@@ -71,12 +69,10 @@ ResamplerTest::testResample()
     const constexpr AudioFormat infmt(44100, 1);
     const constexpr AudioFormat outfmt(48000, 2);
 
-    resampler_.reset(new Resampler(none));
-
-    resampler_->setFormat(outfmt);
+    resampler_.reset(new Resampler);
 
     AudioBuffer inbuf(1024, infmt);
-    AudioBuffer outbuf;
+    AudioBuffer outbuf(0, outfmt);
 
     resampler_->resample(inbuf, outbuf);
     CPPUNIT_ASSERT(outbuf.getFormat().sample_rate == 48000);
