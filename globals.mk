@@ -6,14 +6,6 @@ ringlibdir=$(DESTDIR)$(libdir)/ring
 ASTYLERC="$(top_srcdir)/../astylerc"
 indent="/usr/bin/astyle"
 
-if BUILD_SPEEX
-SPEEXCODEC=-DHAVE_SPEEX_CODEC
-endif
-
-if BUILD_OPUS
-OPUSCODEC=-DHAVE_OPUS
-endif
-
 RING_DIRTY_REPO ?= $(shell git diff-index --quiet HEAD 2>/dev/null || echo dirty)
 RING_REVISION ?= $(shell git log -1 --format="%h" --abbrev=10 2>/dev/null)
 
@@ -31,10 +23,7 @@ AM_CPPFLAGS = \
 	-DRING_REVISION=\"$(RING_REVISION)\" \
 	-DRING_DIRTY_REPO=\"$(RING_DIRTY_REPO)\" \
 	-DPJSIP_MAX_PKT_LEN=8000 \
-	-DPJ_AUTOCONF=1 \
-	$(SPEEXCODEC) \
-	$(OPUSCODEC)
-
+	-DPJ_AUTOCONF=1
 
 indent:
 	@echo "Indenting code:"
