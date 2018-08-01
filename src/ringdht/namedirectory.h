@@ -18,7 +18,7 @@
 #pragma once
 
 #include "noncopyable.h"
-
+#include "opendht/crypto.h"
 #include <functional>
 #include <map>
 #include <string>
@@ -29,7 +29,7 @@ namespace ring {
 class NameDirectory
 {
 public:
-    enum class Response : int { found = 0, invalidName, notFound, error };
+    enum class Response : int { found = 0, invalidResponse, notFound, error };
     enum class RegistrationResponse : int { success = 0,
                                             invalidName,
                                             alreadyTaken,
@@ -72,6 +72,7 @@ private:
     std::mutex lock_ {};
 
     bool validateName(const std::string& name) const;
+    static bool verify(const std::string& name, const dht::crypto::PublicKey& publickey, const std::string& signature);
 
     void saveCache();
     void loadCache();
