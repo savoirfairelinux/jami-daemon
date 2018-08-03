@@ -37,7 +37,6 @@ pjproject, ^
 portaudio, ^
 pthreads, ^
 restbed, ^
-samplerate, ^
 secp256k1, ^
 upnp, ^
 x264, ^
@@ -63,7 +62,6 @@ pjproject, ^
 portaudio, ^
 pthreads, ^
 restbed, ^
-samplerate, ^
 secp256k1, ^
 upnp, ^
 vpx, ^

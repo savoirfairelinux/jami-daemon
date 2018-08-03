@@ -80,7 +80,6 @@ build\secp256k1\MSVC\secp256k1.vcxproj, ^
 build\portaudio\msvc\uwp\portaudio.vcxproj, ^
 build\yaml-cpp\msvc\yaml-cpp.vcxproj, ^
 build\pcre\msvc\pcre.vcxproj, ^
-build\libsamplerate\msvc\libsamplerate.vcxproj, ^
 )
 goto startBuild
 
@@ -114,7 +113,6 @@ build\secp256k1\MSVC\secp256k1.vcxproj, ^
 build\portaudio\msvc\portaudio.vcxproj, ^
 build\yaml-cpp\msvc\yaml-cpp.vcxproj, ^
 build\pcre\msvc\pcre.vcxproj, ^
-build\libsamplerate\msvc\libsamplerate.vcxproj, ^
 )
 goto startBuild
 
