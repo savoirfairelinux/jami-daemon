@@ -31,6 +31,7 @@
 #include "certstore.h"
 #include "array_size.h"
 #include "diffie-hellman.h"
+#include "scheduled_executor.h"
 
 #include <gnutls/gnutls.h>
 #include <gnutls/dtls.h>
@@ -249,6 +250,8 @@ public:
     void process();
     void cleanup();
 
+    ScheduledExecutor scheduler_;
+
     // Path mtu discovery
     std::array<int, 3> MTUS_;
     int mtuProbe_;
@@ -288,8 +291,6 @@ TlsSession::TlsSessionImpl::TlsSessionImpl(SocketType& transport,
             });
     }
 
-    Manager::instance().registerEventHandler((uintptr_t)this, [this]{ flushRxQueue(); });
-
     // Run FSM into dedicated thread
     thread_.start();
 }
@@ -299,7 +300,6 @@ TlsSession::TlsSessionImpl::~TlsSessionImpl()
     thread_.join();
     if (not transport_.isReliable())
         transport_.setOnRecv(nullptr);
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
 }
 
 const char*
@@ -1032,6 +1032,7 @@ TlsSession::TlsSessionImpl::handleDataPacket(std::vector<ValueType>&& buf, uint6
 
     // Try to flush right now as a new packet is available
     flushRxQueue();
+    scheduler_.scheduleIn([this]{ flushRxQueue(); }, RX_OOO_TIMEOUT);
 }
 
 ///
@@ -1061,11 +1062,13 @@ TlsSession::TlsSessionImpl::flushRxQueue()
 
     GuardedBoolSwap swap_flush_processing {flushProcessing_};
 
+    auto now = clock::now();
+
     auto item = std::begin(reorderBuffer_);
     auto next_offset = item->first;
 
     // Wait for next continuous packet until timeout
-    if ((clock::now() - lastReadTime_) >= RX_OOO_TIMEOUT) {
+    if ((now - lastReadTime_) >= RX_OOO_TIMEOUT) {
         // OOO packet timeout - consider waited packets as lost
         if (auto lost = next_offset - gapOffset_)
             RING_WARN("[TLS] %lu lost since 0x%lx", lost, gapOffset_);
@@ -1091,7 +1094,7 @@ TlsSession::TlsSessionImpl::flushRxQueue()
     }
 
     gapOffset_ = std::max(gapOffset_, next_offset);
-    lastReadTime_ = clock::now();
+    lastReadTime_ = now;
 }
 
 TlsSessionState
