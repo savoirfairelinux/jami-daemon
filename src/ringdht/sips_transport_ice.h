@@ -24,6 +24,7 @@
 #include "security/tls_session.h"
 #include "ip_utils.h"
 #include "noncopyable.h"
+#include "scheduled_executor.h"
 
 #include <pjsip.h>
 #include <pj/pool.h>
@@ -123,6 +124,8 @@ private:
 
     std::mutex rxMtx_;
     std::list<std::vector<uint8_t>> rxPending_;
+    
+    ScheduledExecutor scheduler_;
 
     pj_status_t send(pjsip_tx_data*, const pj_sockaddr_t*, int, void*, pjsip_transport_callback);
     void handleEvents();
