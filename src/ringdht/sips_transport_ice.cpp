@@ -249,8 +249,6 @@ SipsIceTransport::SipsIceTransport(pjsip_endpoint* endpt,
 
     if (pjsip_transport_register(base.tpmgr, &base) != PJ_SUCCESS)
         throw std::runtime_error("Can't register PJSIP transport.");
-
-    Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
 }
 
 SipsIceTransport::~SipsIceTransport()
@@ -266,7 +264,6 @@ SipsIceTransport::~SipsIceTransport()
     }
 
     auto base = getTransportBase();
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
 
     // Stop low-level transport first
     tls_.reset();
@@ -394,6 +391,7 @@ SipsIceTransport::pushChangeStateEvent(ChangeStateEventData&& ev)
 {
     std::lock_guard<std::mutex> lk{stateChangeEventsMutex_};
     stateChangeEvents_.emplace_back(std::move(ev));
+    scheduler_.run([this]{ handleEvents(); });
 }
 
 // - DO NOT BLOCK - (Called in TlsSession thread)
@@ -412,6 +410,7 @@ SipsIceTransport::onRxData(std::vector<uint8_t>&& buf)
 {
     std::lock_guard<std::mutex> l(rxMtx_);
     rxPending_.emplace_back(std::move(buf));
+    scheduler_.run([this]{ handleEvents(); });
 }
 
 /* Update local & remote certificates info. This function should be
@@ -698,6 +697,7 @@ SipsIceTransport::send(pjsip_tx_data* tdata, const pj_sockaddr_t* rem_addr,
     tdata->op_key.token = token;
     tdata->op_key.callback = callback;
     txQueue_.push_back(tdata);
+    scheduler_.run([this]{ handleEvents(); });
     return PJ_EPENDING;
 }
 
