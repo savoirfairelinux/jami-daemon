@@ -234,6 +234,7 @@ bool VideoInput::captureFrame()
         case MediaDecoder::Status::FrameFinished:
             if (auto rec = recorder_.lock()) {
                 if (!recordingStarted_) {
+                    RING_WARN() << "Starting record with fps: " << decoder_->getStream().frameRate;
                     if (rec->addStream(true, false, decoder_->getStream()) >= 0) {
                         recordingStarted_ = true;
                     } else {

@@ -106,6 +106,7 @@ VideoDeviceImpl::getDeviceParams() const
     auto frameRate = (AVFrameRateRange*)
                     [format.videoSupportedFrameRateRanges objectAtIndex:0];
     params.framerate = frameRate.maxFrameRate;
+    RING_WARN() << "Get device params with fps: " << params.framerate;
     return params;
 }
 
@@ -115,6 +116,7 @@ VideoDeviceImpl::setDeviceParams(const DeviceParams& params)
 //TODO: add framerate
 //    rate_ = size_.getRate(settings["rate"]);
     current_size_ = extractSize({params.width, params.height});
+    RING_WARN() << "Set device params with fps: " << params.framerate;
 }
 
 std::vector<VideoSize>
