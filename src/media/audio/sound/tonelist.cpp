@@ -102,9 +102,6 @@ TelephoneTone::TelephoneTone(const std::string& countryName, unsigned int sample
 void
 TelephoneTone::setCurrentTone(Tone::TONEID toneId)
 {
-    if (toneId != Tone::TONE_NULL && currentTone_ != toneId)
-        tones_[toneId].reset();
-
     currentTone_ = toneId;
 }
 
