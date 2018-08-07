@@ -1,0 +1,23 @@
+From 1a7d3f78e007021e2b5efe92db9cc126339dccd9 Mon Sep 17 00:00:00 2001
+From: philippegorley <philippe.gorley@savoirfairelinux.com>
+Date: Tue, 7 Aug 2018 10:42:19 -0400
+Subject: [PATCH] rtp: gsm muxing support
+
+---
+ libavformat/rtpenc.c | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/libavformat/rtpenc.c b/libavformat/rtpenc.c
+index 63047be..02cf28b 100644
+--- a/libavformat/rtpenc.c
++++ b/libavformat/rtpenc.c
+@@ -84,6 +84,7 @@ static int is_supported(enum AVCodecID id)
+     case AV_CODEC_ID_MJPEG:
+     case AV_CODEC_ID_SPEEX:
+     case AV_CODEC_ID_OPUS:
++    case AV_CODEC_ID_GSM:
+         return 1;
+     default:
+         return 0;
+--
+2.7.4

@@ -258,6 +258,8 @@ MediaEncoder::addStream(const SystemCodecInfo& systemCodecInfo, std::string para
         encoderCtx->bit_rate = encoderCtx->rc_max_rate =  maxBitrate;
         encoderCtx->rc_buffer_size = maxBitrate;
         RING_DBG("Using Max bitrate %d", maxBitrate);
+    } else if (systemCodecInfo.avcodecId == AV_CODEC_ID_GSM) {
+        encoderCtx->bit_rate = maxBitrate;
     }
 
     // add video stream to outputformat context
