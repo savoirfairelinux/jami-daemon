@@ -7,7 +7,7 @@ ifeq ($(call need_pkg,"libavutil >= 55.75.100 libavcodec >= 57.106.101 libavform
 PKGS_FOUND += ffmpeg
 endif
 
-DEPS_ffmpeg = iconv zlib vpx opus speex
+DEPS_ffmpeg = iconv zlib vpx opus speex gsm
 
 FFMPEGCONF = \
 	--cc="$(CC)" \
@@ -68,7 +68,10 @@ FFMPEGCONF += \
 	--enable-encoder=libspeex \
 	--enable-decoder=libspeex \
 	--enable-encoder=libopus \
-	--enable-decoder=libopus
+	--enable-decoder=libopus \
+	--enable-libgsm \
+	--enable-encoder=libgsm \
+	--enable-decoder=libgsm
 
 # decoders for ringtones and audio streaming
 FFMPEGCONF += \
@@ -250,6 +253,7 @@ ffmpeg: ffmpeg-$(FFMPEG_HASH).tar.gz
 	rm -Rf $@ $@-$(FFMPEG_HASH)
 	mkdir -p $@-$(FFMPEG_HASH)
 	(cd $@-$(FFMPEG_HASH) && tar x $(if ${BATCH_MODE},,-v) --strip-components=1 -f ../$<)
+	$(APPLY) $(SRC)/ffmpeg/rtp-gsm-support.patch
 	$(UPDATE_AUTOCONFIG)
 	$(MOVE)
 
