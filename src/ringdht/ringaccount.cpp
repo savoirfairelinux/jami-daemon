@@ -126,8 +126,8 @@ struct RingAccount::BuddyInfo
     /* the presence timestamps */
     std::map<dht::InfoHash, std::chrono::steady_clock::time_point> devicesTimestamps;
 
-    /* The callable object to update buddy info */
-    std::function<void()> updateInfo {};
+    /* The disposable object to update buddy info */
+    std::shared_ptr<RepeatedTask> updateTask;
 
     BuddyInfo(dht::InfoHash id) : id(id) {}
 };
@@ -1966,25 +1966,13 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
     auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
     if (buddy_infop.second) {
         auto& buddy_info = buddy_infop.first->second;
-        buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
+        buddy_info.updateTask = Manager::instance().scheduler().scheduleAtFixedRate([h,weak_this] {
             if (auto shared_this = weak_this.lock()) {
                 /* ::forEachDevice call will update buddy info accordingly. */
-                shared_this->forEachDevice(h, {}, [h] (const std::shared_ptr<RingAccount>& shared_this, bool /* ok */) {
-                    std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
-                    auto buddy_info_it = shared_this->trackedBuddies_.find(h);
-                    if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
-
-                    auto& buddy_info = buddy_info_it->second;
-                    if (buddy_info.updateInfo) {
-                        auto cb = buddy_info.updateInfo;
-                        Manager::instance().scheduleTask(
-                            std::move(cb),
-                            std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
-                        );
-                    }
-                });
+                shared_this->forEachDevice(h, {}, [] (const std::shared_ptr<RingAccount>&, bool /* ok */) {});
             }
-        }, std::chrono::steady_clock::now())->cb;
+            return true;
+        }, DeviceAnnouncement::TYPE.expiration);
         RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
     }
 }
