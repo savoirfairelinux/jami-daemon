@@ -247,7 +247,7 @@ SIPAccount::newOutgoingCall(const std::string& toUrl,
 
     if (created) {
         std::weak_ptr<SIPCall> weak_call = call;
-        manager.addTask([this, weak_call] {
+        manager.scheduler().run([this, weak_call] {
             if (auto call = weak_call.lock()) {
                 if (not SIPStartCall(call)) {
                     RING_ERR("Could not send outgoing INVITE request for new call");
