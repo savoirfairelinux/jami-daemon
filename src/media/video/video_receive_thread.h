@@ -28,6 +28,7 @@
 #include "media_device.h"
 #include "threadloop.h"
 #include "noncopyable.h"
+#include "media/filters/media_processor.h"
 
 #include <map>
 #include <string>
@@ -72,6 +73,8 @@ private:
     /*-------------------------------------------------------------*/
     /* These variables should be used in thread (i.e. run()) only! */
     /*-------------------------------------------------------------*/
+
+    MediaProcessor mediaProcessor_;
     std::unique_ptr<MediaDecoder> videoDecoder_;
     int dstWidth_;
     int dstHeight_;
