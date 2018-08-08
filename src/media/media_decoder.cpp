@@ -298,6 +298,13 @@ MediaDecoder::decode(VideoFrame& result)
 
     return Status::Success;
 }
+
+void
+MediaDecoder::setVideoFilter(MediaFilter&& filter)
+{
+    videoFilter_ = filter;
+}
+
 #endif // RING_VIDEO
 
 MediaDecoder::Status

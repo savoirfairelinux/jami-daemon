@@ -78,7 +78,11 @@ class MediaDecoder {
         int openInput(const DeviceParams&);
 
         void setIOContext(MediaIOHandle *ioctx);
+
+        using MediaFilter = std::function<void(AVFrame*)>;
+
 #ifdef RING_VIDEO
+        void setVideoFilter(MediaFilter&& filter);
         int setupFromVideoData();
         Status decode(VideoFrame&);
         Status flush(VideoFrame&);
@@ -130,6 +134,9 @@ class MediaDecoder {
         bool enableAccel_ = true;
         video::HardwareAccel accel_;
         unsigned short accelFailures_ = 0;
+#endif
+#ifdef RING_VIDEO
+        MediaFilter videoFilter_;
 #endif
 
     protected:
