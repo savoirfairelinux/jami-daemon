@@ -35,6 +35,7 @@
 #include "ip_utils.h"
 #include "ring_types.h" // enable_if_base_of
 #include "security/certstore.h"
+#include "scheduled_executor.h"
 
 #include <opendht/dhtrunner.h>
 #include <opendht/default_types.h>
@@ -665,6 +666,8 @@ class RingAccount : public SIPAccountBase {
         void registerDhtAddress(IceTransport&);
 
         std::unique_ptr<DhtPeerConnector> dhtPeerConnector_;
+
+        std::shared_ptr<RepeatedTask> eventHandler {};
 };
 
 static inline std::ostream& operator<< (std::ostream& os, const RingAccount& acc)
