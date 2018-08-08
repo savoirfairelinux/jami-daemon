@@ -55,6 +55,7 @@ enum VideoPixelFormat {
     VIDEO_PIXFMT_YUYV422 = -3,
     VIDEO_PIXFMT_RGBA = -4,
     VIDEO_PIXFMT_NV21 = -5,
+    VIDEO_PIXFMT_RGB = -6,
 };
 
 template <typename T> class Observer;
