@@ -34,6 +34,7 @@
 #include "call_factory.h"
 #include "preferences.h"
 #include "audio/audiolayer.h"
+#include "scheduled_executor.h"
 
 #include <string>
 #include <vector>
@@ -835,31 +836,12 @@ class Manager {
 
         CallFactory callFactory;
 
-        using EventHandler = std::function<void()>;
-
-        /**
-         * Install an event handler called periodically by pollEvents().
-         * @param handlerId an unique identifier for the handler.
-         * @param handler the event handler function.
-         */
-        void registerEventHandler(uintptr_t handlerId, EventHandler handler);
-
-        /**
-         * Remove a previously registered event handler.
-         * @param handlerId id of handler to remove.
-         */
-        void unregisterEventHandler(uintptr_t handlerId);
-
         IceTransportFactory& getIceTransportFactory();
 
-        void addTask(std::function<bool()>&& task);
+        ScheduledExecutor& scheduler();
 
-        struct Runnable {
-            std::function<void()> cb;
-            Runnable(const std::function<void()>&& t) : cb(std::move(t)) {}
-        };
-        std::shared_ptr<Runnable> scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when);
-        void scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when);
+        void addTask(std::function<bool()>&& task);
+        std::shared_ptr<Task> scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when);
 
 #ifdef RING_VIDEO
         /**
@@ -905,9 +887,8 @@ private:
 // Helper to install a callback to be called once by the main event loop
 template<typename Callback>
 static void runOnMainThread(Callback&& cb) {
-    Manager::instance().addTask([=]() mutable {
+    Manager::instance().scheduler().run([cb = std::move(cb)]() mutable {
         cb();
-        return false;
     });
 }
 

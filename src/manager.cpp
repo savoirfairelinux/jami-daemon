@@ -299,6 +299,9 @@ struct Manager::ManagerPimpl
 
     Manager& base_; // pimpl back-pointer
 
+    /** Main scheduler */
+    ScheduledExecutor scheduler_;
+
     std::atomic_bool autoAnswer_ {false};
 
     /** Application wide tone controller */
@@ -352,14 +355,6 @@ struct Manager::ManagerPimpl
      *
      */
     std::unique_ptr<RingBufferPool> ringbufferpool_;
-
-    std::map<uintptr_t, Manager::EventHandler> eventHandlerMap_;
-
-    decltype(eventHandlerMap_)::iterator nextEventHandler_;
-
-    std::list<std::function<bool()>> pendingTaskList_;
-    std::multimap<std::chrono::steady_clock::time_point, std::shared_ptr<Manager::Runnable>> scheduledTasks_;
-    std::mutex scheduledTasksMutex_;
 
     // Map containing conference pointers
     ConferenceMap conferenceMap_;
@@ -795,9 +790,7 @@ Manager::finish() noexcept
         pimpl_->ice_tf_.reset();
 
         // Flush remaining tasks (free lambda' with capture)
-        pimpl_->pendingTaskList_.clear();
-        pimpl_->scheduledTasks_.clear();
-        pimpl_->eventHandlerMap_.clear();
+        pimpl_->scheduler_.stop();
 
         pj_shutdown();
         ThreadPool::instance().join();
@@ -1658,117 +1651,27 @@ Manager::removeAudio(Call& call)
     getRingBufferPool().unBindAll(call_id);
 }
 
-// Not thread-safe, SHOULD be called in same thread that run pollEvents()
-void
-Manager::registerEventHandler(uintptr_t handlerId, EventHandler handler)
+ScheduledExecutor&
+Manager::scheduler()
 {
-    pimpl_->eventHandlerMap_[handlerId] = handler;
-}
-
-// Not thread-safe, SHOULD be called in same thread that run pollEvents()
-void
-Manager::unregisterEventHandler(uintptr_t handlerId)
-{
-    auto iter = pimpl_->eventHandlerMap_.find(handlerId);
-    if (iter != pimpl_->eventHandlerMap_.end()) {
-        if (iter == pimpl_->nextEventHandler_)
-            pimpl_->nextEventHandler_ = pimpl_->eventHandlerMap_.erase(iter);
-        else
-            pimpl_->eventHandlerMap_.erase(iter);
-    }
+    return pimpl_->scheduler_;
 }
 
 void
 Manager::addTask(std::function<bool()>&& task)
 {
-    std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
-    pimpl_->pendingTaskList_.emplace_back(std::move(task));
+    pimpl_->scheduler_.scheduleAtFixedRate(std::move(task), std::chrono::milliseconds(30));
 }
 
-std::shared_ptr<Manager::Runnable>
-Manager::scheduleTask(const std::function<void()>&& task, std::chrono::steady_clock::time_point when)
+std::shared_ptr<Task>
+Manager::scheduleTask(std::function<void()>&& task, std::chrono::steady_clock::time_point when)
 {
-    auto runnable = std::make_shared<Runnable>(std::move(task));
-    scheduleTask(runnable, when);
-    return runnable;
-}
-
-void
-Manager::scheduleTask(const std::shared_ptr<Runnable>& task, std::chrono::steady_clock::time_point when)
-{
-    std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
-    pimpl_->scheduledTasks_.emplace(when, task);
+    return pimpl_->scheduler_.schedule(std::move(task), when);
 }
 
 // Must be invoked periodically by a timer from the main event loop
 void Manager::pollEvents()
 {
-    //-- Handlers
-    {
-        auto iter = pimpl_->eventHandlerMap_.begin();
-        while (iter != pimpl_->eventHandlerMap_.end()) {
-            if (pimpl_->finished_)
-                return;
-
-            // WARN: following callback can do anything and typically
-            // calls (un)registerEventHandler.
-            // Think twice before modify this code.
-
-            pimpl_->nextEventHandler_ = std::next(iter);
-            try {
-                iter->second();
-            } catch (const std::exception& e) {
-                RING_ERR("MainLoop exception (handler): %s", e.what());
-            }
-            iter = pimpl_->nextEventHandler_;
-        }
-    }
-
-    //-- Scheduled tasks
-    {
-        auto now = std::chrono::steady_clock::now();
-        std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
-        while (not pimpl_->scheduledTasks_.empty() && pimpl_->scheduledTasks_.begin()->first <= now) {
-            auto f = pimpl_->scheduledTasks_.begin();
-            auto task = std::move(f->second->cb);
-            if (task)
-                pimpl_->pendingTaskList_.emplace_back([task](){
-                    task();
-                    return false;
-                });
-            pimpl_->scheduledTasks_.erase(f);
-        }
-    }
-
-    //-- Tasks
-    {
-        decltype(pimpl_->pendingTaskList_) tmpList;
-        {
-            std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
-            std::swap(pimpl_->pendingTaskList_, tmpList);
-        }
-        auto iter = std::begin(tmpList);
-        while (iter != tmpList.cend()) {
-            if (pimpl_->finished_)
-                return;
-
-            auto next = std::next(iter);
-            bool result;
-            try {
-                result = (*iter)();
-            } catch (const std::exception& e) {
-                RING_ERR("MainLoop exception (task): %s", e.what());
-                result = false;
-            }
-            if (not result)
-                tmpList.erase(iter);
-            iter = next;
-        }
-        {
-            std::lock_guard<std::mutex> lock(pimpl_->scheduledTasksMutex_);
-            pimpl_->pendingTaskList_.splice(std::end(pimpl_->pendingTaskList_), tmpList);
-        }
-    }
 }
 
 //THREAD=Main
