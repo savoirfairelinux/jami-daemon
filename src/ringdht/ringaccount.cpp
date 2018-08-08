@@ -128,8 +128,8 @@ struct RingAccount::BuddyInfo
     /* the presence timestamps */
     std::map<dht::InfoHash, std::chrono::steady_clock::time_point> devicesTimestamps;
 
-    /* The callable object to update buddy info */
-    std::function<void()> updateInfo {};
+    /* The disposable object to update buddy info */
+    std::shared_ptr<RepeatedTask> updateTask;
 
     BuddyInfo(dht::InfoHash id) : id(id) {}
 };
@@ -295,7 +295,10 @@ RingAccount::RingAccount(const std::string& accountID, bool /* presenceEnabled *
 
 RingAccount::~RingAccount()
 {
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
+    if (eventHandler) {
+        eventHandler->cancel();
+        eventHandler.reset();
+    }
     dht_.join();
 }
 
@@ -1956,25 +1959,13 @@ RingAccount::trackBuddyPresence(const std::string& buddy_id)
     auto buddy_infop = trackedBuddies_.emplace(h, decltype(trackedBuddies_)::mapped_type {h});
     if (buddy_infop.second) {
         auto& buddy_info = buddy_infop.first->second;
-        buddy_info.updateInfo = Manager::instance().scheduleTask([h,weak_this]() {
+        buddy_info.updateTask = Manager::instance().scheduler().scheduleAtFixedRate([h,weak_this] {
             if (auto shared_this = weak_this.lock()) {
                 /* ::forEachDevice call will update buddy info accordingly. */
-                shared_this->forEachDevice(h, {}, [h] (const std::shared_ptr<RingAccount>& shared_this, bool /* ok */) {
-                    std::lock_guard<std::recursive_mutex> lock(shared_this->buddyInfoMtx);
-                    auto buddy_info_it = shared_this->trackedBuddies_.find(h);
-                    if (buddy_info_it == shared_this->trackedBuddies_.end()) return;
-
-                    auto& buddy_info = buddy_info_it->second;
-                    if (buddy_info.updateInfo) {
-                        auto cb = buddy_info.updateInfo;
-                        Manager::instance().scheduleTask(
-                            std::move(cb),
-                            std::chrono::steady_clock::now() + DeviceAnnouncement::TYPE.expiration
-                        );
-                    }
-                });
+                shared_this->forEachDevice(h, {}, [] (const std::shared_ptr<RingAccount>&, bool /* ok */) {});
             }
-        }, std::chrono::steady_clock::now())->cb;
+            return true;
+        }, DeviceAnnouncement::TYPE.expiration);
         RING_DBG("[Account %s] tracking buddy %s", getAccountID().c_str(), h.to_c_str());
     }
 }
@@ -2035,6 +2026,12 @@ RingAccount::doRegister_()
 
         auto shared = std::static_pointer_cast<RingAccount>(shared_from_this());
         std::weak_ptr<RingAccount> w {shared};
+
+        eventHandler = Manager::instance().scheduler().scheduleAtFixedRate([w]{
+            if (auto this_ = w.lock())
+                this_->handlePendingCallList();
+            return true;
+        }, std::chrono::milliseconds(50));
 
 #if HAVE_RINGNS
         // Look for registered name on the blockchain
@@ -2140,7 +2137,6 @@ RingAccount::doRegister_()
 
         dht_.importValues(loadValues());
 
-        Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
         setRegistrationState(RegistrationState::TRYING);
 
         dht_.bootstrap(loadNodes());
@@ -2537,7 +2533,11 @@ RingAccount::doUnregister(std::function<void(bool)> released_cb)
         upnp_->removeMappings();
     }
 
-    Manager::instance().unregisterEventHandler((uintptr_t)this);
+    if (eventHandler) {
+        eventHandler->cancel();
+        eventHandler.reset();
+    }
+
     saveNodes(dht_.exportNodes());
     saveValues(dht_.exportValues());
     dht_.join();
