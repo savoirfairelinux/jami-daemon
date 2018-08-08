@@ -34,6 +34,7 @@
 
 #include "audio/audiobuffer.h"
 
+#include "media_device.h"
 #include "media_stream.h"
 #include "rational.h"
 #include "noncopyable.h"
@@ -57,7 +58,6 @@ struct AudioFormat;
 class RingBuffer;
 class Resampler;
 class MediaIOHandle;
-struct DeviceParams;
 
 class MediaDecoder {
     public:
@@ -120,6 +120,8 @@ class MediaDecoder {
         bool emulateRate_ = false;
         int64_t startTime_;
         int64_t lastTimestamp_;
+
+        DeviceParams inputParams_;
 
         AudioBuffer decBuff_;
         AudioBuffer resamplingBuff_;
