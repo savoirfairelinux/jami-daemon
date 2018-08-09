@@ -30,6 +30,10 @@
 #include <string>
 #include <cstddef> // for size_t
 
+extern "C" {
+#include <libavutil/samplefmt.h>
+}
+
 #include "ring_types.h"
 
 #include <ciso646> // fix windows compiler bug
@@ -44,11 +48,18 @@ namespace ring {
 struct AudioFormat {
     unsigned sample_rate;
     unsigned nb_channels;
+    AVSampleFormat sampleFormat;
 
-    constexpr AudioFormat(unsigned sr, unsigned c) : sample_rate(sr), nb_channels(c) {}
+    constexpr AudioFormat(unsigned sr, unsigned c)
+        : sample_rate(sr)
+        , nb_channels(c)
+        , sampleFormat(AV_SAMPLE_FMT_S16)
+    {}
 
     inline bool operator == (const AudioFormat &b) const {
-        return ( (b.sample_rate == sample_rate) && (b.nb_channels == nb_channels) );
+        return ( (b.sample_rate == sample_rate) &&
+                 (b.nb_channels == nb_channels) &&
+                 (b.sampleFormat == sampleFormat) );
     }
 
     inline bool operator != (const AudioFormat &b) const {
@@ -57,7 +68,8 @@ struct AudioFormat {
 
     inline std::string toString() const {
         std::stringstream ss;
-        ss << "{" << nb_channels << " channels, " << sample_rate << "Hz}";
+        ss << "{" << av_get_sample_fmt_name(sampleFormat) << ", "
+            << nb_channels << " channels, " << sample_rate << "Hz}";
         return ss.str();
     }
 
