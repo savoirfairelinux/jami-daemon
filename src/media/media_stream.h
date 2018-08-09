@@ -21,6 +21,7 @@
 #pragma once
 
 #include "config.h"
+#include "audio/audiobuffer.h"
 #include "libav_deps.h"
 #include "rational.h"
 
@@ -63,6 +64,15 @@ struct MediaStream {
         , timeBase(tb)
         , sampleRate(sr)
         , nbChannels(channels)
+    {}
+
+    MediaStream(std::string name, AudioFormat fmt)
+        : name(name)
+        , format(fmt.sampleFormat)
+        , isVideo(false)
+        , timeBase(1, fmt.sample_rate)
+        , sampleRate(fmt.sample_rate)
+        , nbChannels(fmt.nb_channels)
     {}
 
     MediaStream(std::string name, AVCodecContext* c)
