@@ -21,11 +21,13 @@
  *  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301 USA.
  */
 
-#include "ringaccount.h"
-
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
+
+#include "ringaccount.h"
+
+#include "logger.h"
 
 #include "accountarchive.h"
 #include "ringcontact.h"
@@ -52,7 +54,6 @@
 #include "system_codec_container.h"
 
 #include "account_schema.h"
-#include "logger.h"
 #include "manager.h"
 #include "utf8_utils.h"
 
