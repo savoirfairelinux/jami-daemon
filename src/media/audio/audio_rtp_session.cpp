@@ -31,6 +31,7 @@
 #endif //RING_VIDEO
 
 #include "socket_pair.h"
+#include "media_recorder.h"
 #include "media_encoder.h"
 #include "media_decoder.h"
 #include "media_io_handle.h"
@@ -73,6 +74,10 @@ class AudioSender {
         std::unique_ptr<MediaIOHandle> muxContext_;
         std::unique_ptr<Resampler> resampler_;
 
+        std::weak_ptr<MediaRecorder> recorder_;
+        bool recordingStarted_ = false;
+        unsigned sent_samples = 0;
+
         AudioBuffer micData_;
         AudioBuffer resampledData_;
         const uint16_t seqVal_;
@@ -109,6 +114,8 @@ AudioSender::AudioSender(const std::string& id,
 
 AudioSender::~AudioSender()
 {
+    if (auto rec = recorder_.lock())
+        rec->stopRecording();
     loop_.join();
 }
 
@@ -145,6 +152,16 @@ AudioSender::cleanup()
     muxContext_.reset();
     micData_.clear();
     resampledData_.clear();
+}
+
+// seq: frame number for video, sent samples audio
+// sampleFreq: fps for video, sample rate for audio
+// clock: stream time base (packetization interval times)
+// FIXME duplicate code from media_encoder
+static int64_t
+getNextTimestamp(int64_t seq, rational<int64_t> sampleFreq, rational<int64_t> clock)
+{
+    return (seq / (sampleFreq * clock)).real<int64_t>();
 }
 
 void
@@ -192,7 +209,26 @@ AudioSender::process()
     if (muteState_) // audio is muted, set samples to 0
         buffer.reset();
 
-    if (audioEncoder_->encodeAudio(buffer.toAVFrame()) < 0)
+    AVFrame* frame = buffer.toAVFrame();
+    auto ms = MediaStream("audio", buffer.getFormat());
+    frame->pts = getNextTimestamp(sent_samples, ms.sampleRate, static_cast<rational<long int>>(ms.timeBase));
+    sent_samples += frame->nb_samples;
+
+    {
+        auto rec = recorder_.lock();
+        if (rec && !recordingStarted_ && rec->addStream(false, false, ms) >= 0) {
+                recordingStarted_ = true;
+        }
+
+        if (rec && recordingStarted_) {
+            rec->recordData(frame, false, false);
+        } else {
+            recordingStarted_ = false;
+            recorder_ = std::weak_ptr<MediaRecorder>();
+        }
+    }
+
+    if (audioEncoder_->encodeAudio(frame) < 0)
         RING_ERR("encoding failed");
 }
 void
@@ -211,8 +247,11 @@ AudioSender::getLastSeqValue()
 void
 AudioSender::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    if (audioEncoder_)
-        audioEncoder_->initRecorder(rec);
+    recordingStarted_ = false;
+    recorder_ = rec;
+    if (auto r = recorder_.lock()) {
+        r->incrementStreams(1);
+    }
 }
 
 class AudioReceiveThread
