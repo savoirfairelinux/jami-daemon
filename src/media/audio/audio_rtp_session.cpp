@@ -195,6 +195,7 @@ AudioSender::process()
     if (audioEncoder_->encodeAudio(buffer.toAVFrame()) < 0)
         RING_ERR("encoding failed");
 }
+
 void
 AudioSender::setMuted(bool isMuted)
 {
