@@ -86,6 +86,12 @@ const char * const Account::HAS_CUSTOM_USER_AGENT_KEY     = "hasCustomUserAgent"
 const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabled";
 const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
 
+#ifdef __ANDROID__
+constexpr char * const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.wav";
+#else
+constexpr char * const DEFAULT_RINGTONE_PATH = "/usr/share/ring/ringtones/default.wav";
+#endif
+
 Account::Account(const std::string &accountID)
     : accountID_(accountID)
     , username_()
@@ -109,11 +115,7 @@ Account::Account(const std::string &accountID)
 
     // Initialize the codec order, used when creating a new account
     loadDefaultCodecs();
-    #ifdef __ANDROID__
-        ringtonePath_ = "/data/data/cx.ring/files/ringtones/default.wav";
-    #else
-        ringtonePath_ = "/usr/share/ring/ringtones/default.wav";
-    #endif
+    ringtonePath_ = DEFAULT_RINGTONE_PATH;
 }
 
 Account::~Account()
@@ -254,6 +256,9 @@ Account::unserialize(const YAML::Node& node)
     parseValue(node, USER_AGENT_KEY, userAgent_);
     parseValue(node, RINGTONE_PATH_KEY, ringtonePath_);
     parseValue(node, RINGTONE_ENABLED_KEY, ringtoneEnabled_);
+    if (ringtonePath_.empty()) {
+        ringtonePath_ = DEFAULT_RINGTONE_PATH;
+    }
 
     bool enabled;
     parseValue(node, UPNP_ENABLED_KEY, enabled);
@@ -274,6 +279,9 @@ Account::setAccountDetails(const std::map<std::string, std::string> &details)
     parseInt(details, DRing::Account::ConfProperties::ACTIVE_CALL_LIMIT, activeCallLimit_);
     parseBool(details, Conf::CONFIG_RINGTONE_ENABLED, ringtoneEnabled_);
     parseString(details, Conf::CONFIG_RINGTONE_PATH, ringtonePath_);
+    if (ringtonePath_.empty()) {
+        ringtonePath_ = DEFAULT_RINGTONE_PATH;
+    }
     parseBool(details, Conf::CONFIG_ACCOUNT_HAS_CUSTOM_USERAGENT, hasCustomUserAgent_);
     if (hasCustomUserAgent_)
         parseString(details, Conf::CONFIG_ACCOUNT_USERAGENT, userAgent_);
