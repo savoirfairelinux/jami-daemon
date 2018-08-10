@@ -28,6 +28,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <queue>
 
 #include "noncopyable.h"
 
@@ -77,6 +78,20 @@ public:
     }
 private:
     RepeatedJob job_;
+};
+
+class CancellableBag {
+    ~CancellableBag() {
+        while (not cancellables_.empty()) {
+            cancellables_.front()->cancel();
+            cancellables_.pop();
+        }
+    }
+    void add(std::shared_ptr<Task> t) {
+        cancellables_.push(std::move(t));
+    };
+private:
+    std::queue<std::shared_ptr<Task>> cancellables_;
 };
 
 class ScheduledExecutor {
