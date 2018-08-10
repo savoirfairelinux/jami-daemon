@@ -39,6 +39,7 @@ endif
 
 libaudio_la_SOURCES = \
 		audiobuffer.cpp \
+		audio_input.cpp \
 		audioloop.cpp \
 		ringbuffer.cpp \
 		ringbufferpool.cpp \
@@ -59,13 +60,14 @@ endif
 
 noinst_HEADERS = \
 		audiobuffer.h \
+		audio_input.h \
 		audioloop.h \
 		ringbuffer.h \
 		ringbufferpool.h \
 		audiolayer.h \
+		resampler.h \
 		$(RING_SPEEXDSP_HEAD) \
 		dcblocker.h \
-		resampler.h \
 		audio_rtp_session.h \
 		tonecontrol.h
 
