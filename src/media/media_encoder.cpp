@@ -24,7 +24,6 @@
 #include "media_encoder.h"
 #include "media_buffer.h"
 #include "media_io_handle.h"
-#include "media_recorder.h"
 
 #include "audio/audiobuffer.h"
 #include "string_utils.h"
@@ -50,8 +49,6 @@ MediaEncoder::MediaEncoder()
 
 MediaEncoder::~MediaEncoder()
 {
-    if (auto rec = recorder_.lock())
-        rec->stopRecording();
     if (outputCtx_) {
         if (outputCtx_->priv_data)
             av_write_trailer(outputCtx_);
@@ -383,25 +380,8 @@ int MediaEncoder::encodeAudio(AVFrame* frame)
     auto enc = encoders_[currentStreamIdx_];
     frame->pts = getNextTimestamp(sent_samples, enc->sample_rate, enc->time_base);
     sent_samples += frame->nb_samples;
-    if (auto rec = recorder_.lock()) {
-        if (!recordingStarted_) {
-            auto ms = MediaStream("", encoders_[currentStreamIdx_], frame->pts);
-            if (rec->addStream(false, false, ms) >= 0) {
-                recordingStarted_ = true;
-            } else {
-                recorder_ = std::weak_ptr<MediaRecorder>();
-            }
-        }
-        if (recordingStarted_)
-            rec->recordData(frame, false, false);
-    } else {
-        recordingStarted_ = false;
-        recorder_ = std::weak_ptr<MediaRecorder>();
-    }
-
     encode(frame, currentStreamIdx_);
     av_frame_free(&frame);
-
     return 0;
 }
 
@@ -656,17 +636,6 @@ MediaEncoder::getStreamCount() const
         return outputCtx_->nb_streams;
     else
         return 0;
-}
-
-void
-MediaEncoder::initRecorder(std::shared_ptr<MediaRecorder>& rec)
-{
-    // recording will start once we can send an AVPacket to the recorder
-    recordingStarted_ = false;
-    recorder_ = rec;
-    if (auto r = recorder_.lock()) {
-        r->incrementStreams(1);
-    }
 }
 
 } // namespace ring
