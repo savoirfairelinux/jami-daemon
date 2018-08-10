@@ -80,6 +80,7 @@
 #include <memory>
 #include <sstream>
 #include <cctype>
+#include <cinttypes>
 #include <cstdarg>
 #include <string>
 #include <system_error>
