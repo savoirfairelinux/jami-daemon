@@ -222,6 +222,7 @@ AudioSender::process()
     if (audioEncoder_->encodeAudio(frame) < 0)
         RING_ERR("encoding failed");
 }
+
 void
 AudioSender::setMuted(bool isMuted)
 {
