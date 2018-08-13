@@ -33,6 +33,7 @@
 
 namespace DRing {
 
+[[deprecated("Replaced by registerSignalHandlers")]]
 void registerCallHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Call related methods */

@@ -40,14 +40,15 @@
 
 namespace DRing {
 
+[[deprecated("Replaced by registerSignalHandlers")]]
+void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
 struct Message
 {
     std::string from;
     std::map<std::string, std::string> payloads;
     uint64_t received;
 };
-
-void registerConfHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 std::map<std::string, std::string> getAccountDetails(const std::string& accountID);
 std::map<std::string, std::string> getVolatileAccountDetails(const std::string& accountID);
