@@ -293,11 +293,11 @@ void init(ConfigurationCallback* confM, Callback* callM, PresenceCallback* presM
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
-    registerCallHandlers(callEvHandlers);
-    registerConfHandlers(configEvHandlers);
-    registerPresHandlers(presenceEvHandlers);
-    registerDataXferHandlers(dataTransferEvHandlers);
-    registerVideoHandlers(videoEvHandlers);
+    registerSignalHandlers(callEvHandlers);
+    registerSignalHandlers(configEvHandlers);
+    registerSignalHandlers(presenceEvHandlers);
+    registerSignalHandlers(dataTransferEvHandlers);
+    registerSignalHandlers(videoEvHandlers);
 
     DRing::start();
 }

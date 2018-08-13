@@ -172,7 +172,7 @@ run()
     callHandlers.insert(DRing::exportable_callback<DRing::CallSignal::IncomingCall>
         (std::bind(&IncomingCall, _1, _2, _3)));
 
-    registerCallHandlers(callHandlers);
+    registerSignalHandlers(callHandlers);
 
     if (!DRing::start())
         return -1;
