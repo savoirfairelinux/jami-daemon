@@ -39,23 +39,6 @@
 
 namespace DRing {
 
-void
-registerVideoHandlers(const std::map<std::string,
-                      std::shared_ptr<CallbackWrapperBase>>& handlers)
-{
-    auto& handlers_ = ring::getSignalHandlers();
-    for (auto& item : handlers) {
-        auto iter = handlers_.find(item.first);
-        if (iter == handlers_.end()) {
-            RING_ERR("Signal %s not supported", item.first.c_str());
-            continue;
-        }
-
-        iter->second = std::move(item.second);
-    }
-}
-
-
 std::vector<std::string>
 getDeviceList()
 {
