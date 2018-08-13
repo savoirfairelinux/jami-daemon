@@ -156,8 +156,8 @@ void init(const v8::Handle<v8::Value> &funcMap){
     if (!DRing::init(static_cast<DRing::InitFlag>(DRing::DRING_FLAG_DEBUG)))
         return;
 
-    registerConfHandlers(configEvHandlers);
-    registerCallHandlers(callEvHandlers);
+    registerSignalHandlers(configEvHandlers);
+    registerSignalHandlers(callEvHandlers);
 
     DRing::start();
 }
