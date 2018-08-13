@@ -202,6 +202,11 @@ MediaRecorder::addStream(bool isVideo, bool fromPeer, MediaStream ms)
         ms.name = (fromPeer ? "a:1" : "a:2");
         ++nbReceivedAudioStreams_;
     }
+    if (isVideo) {
+        ms.firstTimestamp = av_gettime();
+        ms.frameRate = 0;
+        ms.timeBase = rational<int>(1, AV_TIME_BASE);
+    }
     // print index instead of count
     RING_DBG() << "Recorder input #" << (nbReceivedAudioStreams_ + nbReceivedVideoStreams_ - 1) << ": " << ms;
     streams_[isVideo][fromPeer] = ms;
@@ -225,6 +230,8 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
     MediaStream& ms = streams_[isVideo][fromPeer];
     AVFrame* input = av_frame_clone(frame);
     input->pts = input->pts - ms.firstTimestamp; // stream has to start at 0
+    if (isVideo)
+        input->pts = av_gettime() - ms.firstTimestamp;
 
     {
         std::lock_guard<std::mutex> q(qLock_);
@@ -382,17 +389,16 @@ MediaRecorder::buildVideoFilter()
     const MediaStream& l = streams_[true][false];
 
     const constexpr int minHeight = 720;
-    const auto newFps = std::max(p.frameRate, l.frameRate);
     const bool needScale = (p.height < minHeight);
     const int newHeight = (needScale ? minHeight : p.height);
 
     // NOTE -2 means preserve aspect ratio and have the new number be even
     if (needScale)
-        v << "[v:main] fps=" << newFps << ", scale=-2:" << newHeight << " [v:m]; ";
+        v << "[v:main] scale=-2:" << newHeight << " [v:m]; ";
     else
-        v << "[v:main] fps=" << newFps << " [v:m]; ";
+        v << "[v:main] copy [v:m]; ";
 
-    v << "[v:overlay] fps=" << newFps << ", scale=-2:" << newHeight / 5 << " [v:o]; ";
+    v << "[v:overlay] scale=-2:" << newHeight / 5 << " [v:o]; ";
 
     v << "[v:m] [v:o] overlay=main_w-overlay_w-10:main_h-overlay_h-10"
         << ", format=pix_fmts=yuv420p";
