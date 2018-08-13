@@ -223,13 +223,13 @@ DBusClient::initLibrary(int flags)
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
 
-    registerCallHandlers(callEvHandlers);
-    registerConfHandlers(configEvHandlers);
-    registerPresHandlers(presEvHandlers);
-    registerPresHandlers(audioEvHandlers);
-    registerDataXferHandlers(dataXferEvHandlers);
+    registerSignalHandlers(callEvHandlers);
+    registerSignalHandlers(configEvHandlers);
+    registerSignalHandlers(presEvHandlers);
+    registerSignalHandlers(audioEvHandlers);
+    registerSignalHandlers(dataXferEvHandlers);
 #ifdef RING_VIDEO
-    registerVideoHandlers(videoEvHandlers);
+    registerSignalHandlers(videoEvHandlers);
 #endif
 
     if (!DRing::start())

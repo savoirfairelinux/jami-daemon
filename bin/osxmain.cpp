@@ -151,12 +151,8 @@ osxTests()
 
     DRing::init(static_cast<DRing::InitFlag>(ringFlags));
 
-    registerCallHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-    registerConfHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-    registerPresHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-#ifdef RING_VIDEO
-    registerVideoHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-#endif
+    registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+
     if (!DRing::start())
             return -1;
 

@@ -37,6 +37,9 @@
 
 namespace DRing {
 
+[[deprecated("Replaced by registerSignalHandlers")]]
+void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
 /* FrameBuffer is a generic video frame container */
 struct FrameBuffer {
     uint8_t* ptr {nullptr};     // data as a plain raw pointer
@@ -54,8 +57,6 @@ struct SinkTarget {
 };
 
 using VideoCapabilities = std::map<std::string, std::map<std::string, std::vector<std::string>>>;
-
-void registerVideoHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 std::vector<std::string> getDeviceList();
 VideoCapabilities getCapabilities(const std::string& name);

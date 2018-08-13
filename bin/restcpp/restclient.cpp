@@ -119,13 +119,13 @@ RestClient::initLib(int flags)
     if (!DRing::init(static_cast<DRing::InitFlag>(flags)))
         return -1;
 
-    registerConfHandlers(configEvHandlers);
+    registerSignalHandlers(configEvHandlers);
 
     // Dummy callbacks are registered for the other managers
-    registerCallHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
-    registerPresHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
 #ifdef RING_VIDEO
-    registerVideoHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
+    registerSignalHandlers(std::map<std::string, std::shared_ptr<DRing::CallbackWrapperBase>>());
 #endif
 
     if (!DRing::start())

@@ -150,6 +150,8 @@ exportable_callback(std::function<typename Ts::cb_type>&& func) {
                           (std::forward<std::function<typename Ts::cb_type>>(func)));
 }
 
+void registerSignalHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
 } // namespace DRing
 
 #endif /* DRING_H */

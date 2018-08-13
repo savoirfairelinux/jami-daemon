@@ -31,6 +31,7 @@
 
 namespace DRing {
 
+[[deprecated("Replaced by registerSignalHandlers")]]
 void registerPresHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 /* Presence subscription/Notification. */
