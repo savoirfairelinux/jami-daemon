@@ -193,9 +193,14 @@ MediaDecoder::setupStream(AVMediaType mediaType)
     }
     avcodec_parameters_to_context(decoderCtx_, avStream_->codecpar);
     decoderCtx_->framerate = avStream_->avg_frame_rate;
-    // in case FFmpeg could not find a framerate, fall back to the ones found in openInput
-    if (mediaType == AVMEDIA_TYPE_VIDEO && (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0))
-        decoderCtx_->framerate = inputParams_.framerate;
+    if (mediaType == AVMEDIA_TYPE_VIDEO) {
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = inputParams_.framerate;
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = av_inv_q(decoderCtx_->time_base);
+        if (decoderCtx_->framerate.num == 0 || decoderCtx_->framerate.den == 0)
+            decoderCtx_->framerate = {30, 1};
+    }
 
     decoderCtx_->thread_count = std::max(1u, std::min(8u, std::thread::hardware_concurrency()/2));
 
