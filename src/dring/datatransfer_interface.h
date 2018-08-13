@@ -31,6 +31,9 @@
 
 namespace DRing {
 
+[[deprecated("Replaced by registerSignalHandlers")]]
+void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
+
 using DataTransferId = uint64_t;
 
 enum class DataTransferEventCode : uint32_t
@@ -157,9 +160,6 @@ DataTransferError dataTransferInfo(const DataTransferId& id, DataTransferInfo& i
 ///
 DataTransferError dataTransferBytesProgress(const DataTransferId& id, int64_t& total,
                                             int64_t& progress) noexcept;
-
-// Signal handlers registration
-void registerDataXferHandlers(const std::map<std::string, std::shared_ptr<CallbackWrapperBase>>&);
 
 // Signals
 struct DataTransferSignal
