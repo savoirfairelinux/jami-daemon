@@ -115,7 +115,7 @@ MessageEngine::retrySend()
     }
     // avoid locking while calling callback
     for (auto& p : pending) {
-        RING_DBG("[message %" PRIx64 "] retrying sending", p.token);
+        RING_DBG() << "[message " << p.token << "] Retry sending";
         emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(
             account_.getAccountID(),
             p.token,
@@ -136,14 +136,14 @@ MessageEngine::getStatus(MessageToken t) const
 void
 MessageEngine::onMessageSent(MessageToken token, bool ok)
 {
-    RING_DBG("[message %" PRIx64 "] message sent: %s", token, ok ? "success" : "failure");
+    RING_DBG() << "[message " << token << "] Message sent: " << (ok ? "success" : "failure");
     std::lock_guard<std::mutex> lock(messagesMutex_);
     auto f = messages_.find(token);
     if (f != messages_.end()) {
         if (f->second.status == MessageStatus::SENDING) {
             if (ok) {
                 f->second.status = MessageStatus::SENT;
-                RING_DBG("[message %" PRIx64 "] status changed to SENT", token);
+                RING_DBG() << "[message " << token << "] Status changed to SENT";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
@@ -151,7 +151,7 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                 save_();
             } else if (f->second.retried >= MAX_RETRIES) {
                 f->second.status = MessageStatus::FAILURE;
-                RING_WARN("[message %" PRIx64 "] status changed to FAILURE", token);
+                RING_DBG() << "[message " << token << "] Status changed to FAILURE";
                 emitSignal<DRing::ConfigurationSignal::AccountMessageStatusChanged>(account_.getAccountID(),
                                                                              token,
                                                                              f->second.to,
@@ -159,16 +159,14 @@ MessageEngine::onMessageSent(MessageToken token, bool ok)
                 save_();
             } else {
                 f->second.status = MessageStatus::IDLE;
-                RING_DBG("[message %" PRIx64 "] status changed to IDLE", token);
+                RING_DBG() << "[message " << token << "] Status changed to IDLE";
                 reschedule();
             }
+        } else {
+           RING_DBG() << "[message " << token << "] State is not SENDING";
         }
-        else {
-           RING_DBG("[message %" PRIx64 "] state is not SENDING", token);
-        }
-    }
-    else {
-        RING_DBG("[message %" PRIx64 "] can't find message", token);
+    } else {
+        RING_DBG() << "[message " << token << "] Can't find message";
     }
 }
 
