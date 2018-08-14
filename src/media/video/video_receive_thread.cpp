@@ -94,12 +94,18 @@ bool VideoReceiveThread::setup()
         // We need it to use ICE transport.
         args_.sdp_flags = "custom_io";
 
-        EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+        if (stream_.str().empty()) {
+            RING_ERR("No SDP loaded");
+            return false;
+        }
+
         videoDecoder_->setIOContext(&sdpContext_);
     }
 
-    EXIT_IF_FAIL(!videoDecoder_->openInput(args_),
-                 "Could not open input \"%s\"", args_.input.c_str());
+    if (videoDecoder_->openInput(args_)) {
+        RING_ERR("Could not open input \"%s\"", args_.input.c_str());
+        return false;
+    }
 
     if (args_.input == SDP_FILENAME) {
         // Now replace our custom AVIOContext with one that will read packets
@@ -109,8 +115,10 @@ bool VideoReceiveThread::setup()
     if (requestKeyFrameCallback_)
         requestKeyFrameCallback_(id_);
 
-    EXIT_IF_FAIL(!videoDecoder_->setupFromVideoData(),
-                 "decoder IO startup failed");
+    if (videoDecoder_->setupFromVideoData()) {
+        RING_ERR("decoder IO startup failed");
+        return false;
+    }
 
     // Default size from input video
     if (dstWidth_ == 0 and dstHeight_ == 0) {
@@ -118,7 +126,10 @@ bool VideoReceiveThread::setup()
         dstHeight_ = videoDecoder_->getHeight();
     }
 
-    EXIT_IF_FAIL(sink_->start(), "RX: sink startup failed");
+    if (not sink_->start()) {
+        RING_ERR("RX: sink startup failed");
+        return false;
+    }
 
     auto conf = Manager::instance().getConferenceFromCallID(id_);
     if (!conf)

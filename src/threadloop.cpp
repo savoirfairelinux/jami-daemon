@@ -45,6 +45,7 @@ ThreadLoop::mainloop(std::thread::id& tid,
     } catch (const std::exception& e) {
         RING_ERR("[threadloop:%p] Unwaited exception: %s", this, e.what());
     }
+    stop();
 }
 
 ThreadLoop::ThreadLoop(const std::function<bool()>& setup,

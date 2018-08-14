@@ -333,19 +333,29 @@ AudioReceiveThread::setup()
 {
     audioDecoder_.reset(new MediaDecoder());
     audioDecoder_->setInterruptCallback(interruptCb, this);
+
     // custom_io so the SDP demuxer will not open any UDP connections
     args_.input = SDP_FILENAME;
     args_.format = "sdp";
     args_.sdp_flags = "custom_io";
-    EXIT_IF_FAIL(not stream_.str().empty(), "No SDP loaded");
+
+    if (stream_.str().empty()) {
+        RING_ERR("No SDP loaded");
+        return false;
+    }
+
     audioDecoder_->setIOContext(sdpContext_.get());
-    EXIT_IF_FAIL(not audioDecoder_->openInput(args_),
-        "Could not open input \"%s\"", SDP_FILENAME);
+    if (audioDecoder_->openInput(args_)) {
+        RING_ERR("Could not open input \"%s\"", SDP_FILENAME);
+        return false;
+    }
+
     // Now replace our custom AVIOContext with one that will read packets
     audioDecoder_->setIOContext(demuxContext_.get());
-
-    EXIT_IF_FAIL(not audioDecoder_->setupFromAudioData(),
-                 "decoder IO startup failed");
+    if (audioDecoder_->setupFromAudioData()) {
+        RING_ERR("decoder IO startup failed");
+        return false;
+    }
 
     ringbuffer_ = Manager::instance().getRingBufferPool().getRingBuffer(id_);
     return true;
