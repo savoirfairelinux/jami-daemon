@@ -87,9 +87,9 @@ const char * const Account::PRESENCE_MODULE_ENABLED_KEY   = "presenceModuleEnabl
 const char * const Account::UPNP_ENABLED_KEY              = "upnpEnabled";
 
 #ifdef __ANDROID__
-constexpr char * const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.wav";
+constexpr char * const DEFAULT_RINGTONE_PATH = "/data/data/cx.ring/files/ringtones/default.opus";
 #else
-constexpr char * const DEFAULT_RINGTONE_PATH = "/usr/share/ring/ringtones/default.wav";
+constexpr char * const DEFAULT_RINGTONE_PATH = "/usr/share/ring/ringtones/default.opus";
 #endif
 
 Account::Account(const std::string &accountID)
