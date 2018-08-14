@@ -76,7 +76,7 @@ class AudioSender {
 
         std::weak_ptr<MediaRecorder> recorder_;
         bool recordingStarted_ = false;
-        unsigned sent_samples = 0;
+        uint64_t sent_samples = 0;
 
         AudioBuffer micData_;
         AudioBuffer resampledData_;
@@ -84,8 +84,7 @@ class AudioSender {
         bool muteState_ = false;
         uint16_t mtu_;
 
-        using seconds = std::chrono::duration<double, std::ratio<1>>;
-        const seconds secondsPerPacket_ {0.02}; // 20 ms
+        const std::chrono::milliseconds msPerPacket_ {20};
 
         ThreadLoop loop_;
         void process();
@@ -171,11 +170,10 @@ AudioSender::process()
     auto mainBuffFormat = mainBuffer.getInternalAudioFormat();
 
     // compute nb of byte to get corresponding to 1 audio frame
-    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(mainBuffFormat.sample_rate * secondsPerPacket_).count();
+    const std::size_t samplesToGet = std::chrono::duration_cast<std::chrono::seconds>(msPerPacket_ * mainBuffFormat.sample_rate).count();
 
-    if (mainBuffer.availableForGet(id_) < samplesToGet) {
-        const auto wait_time = std::chrono::duration_cast<std::chrono::milliseconds>(secondsPerPacket_);
-        if (not mainBuffer.waitForDataAvailable(id_, samplesToGet, wait_time))
+    if (mainBuffer.availableForGet(id_) < samplesToGet
+        && not mainBuffer.waitForDataAvailable(id_, samplesToGet, msPerPacket_)) {
             return;
     }
 
@@ -369,19 +367,18 @@ AudioReceiveThread::process()
     switch (audioDecoder_->decode(decodedFrame)) {
 
         case MediaDecoder::Status::FrameFinished:
-            if (auto rec = recorder_.lock()) {
-                if (!recordingStarted_) {
-                    if (rec->addStream(false, true, audioDecoder_->getStream()) >= 0) {
+            {
+                auto rec = recorder_.lock();
+                if (rec && !recordingStarted_ && rec->addStream(false, true, audioDecoder_->getStream()) >= 0) {
                         recordingStarted_ = true;
-                    } else {
-                        recorder_ = std::weak_ptr<MediaRecorder>();
-                    }
                 }
-                if (recordingStarted_)
+
+                if (rec && recordingStarted_) {
                     rec->recordData(decodedFrame.pointer(), false, true);
-            } else {
-                recordingStarted_ = false;
-                recorder_ = std::weak_ptr<MediaRecorder>();
+                } else {
+                    recordingStarted_ = false;
+                    recorder_ = std::weak_ptr<MediaRecorder>();
+                }
             }
             audioDecoder_->writeToRingBuffer(decodedFrame, *ringbuffer_,
                                              mainBuffFormat);
@@ -394,12 +391,9 @@ AudioReceiveThread::process()
             if (not setup()) {
                 RING_ERR("fatal error, rx thread re-setup failed");
                 loop_.stop();
-                break;
-            }
-            if (not audioDecoder_->setupFromAudioData()) {
+            } else if (not audioDecoder_->setupFromAudioData()) {
                 RING_ERR("fatal error, a-decoder setup failed");
                 loop_.stop();
-                break;
             }
             break;
 
@@ -429,10 +423,7 @@ AudioReceiveThread::readFunction(void* opaque, uint8_t* buf, int buf_size)
     is.read(reinterpret_cast<char*>(buf), buf_size);
 
     auto count = is.gcount();
-    if (count != 0)
-        return count;
-    else
-        return AVERROR_EOF;
+    return count ? count : AVERROR_EOF;
 }
 
 // This callback is used by libav internally to break out of blocking calls
@@ -489,7 +480,6 @@ AudioRtpSession::startSender()
 
     if (sender_)
         RING_WARN("Restarting audio sender");
-
 
     // be sure to not send any packets before saving last RTP seq value
     socketPair_->stopSendOp();
