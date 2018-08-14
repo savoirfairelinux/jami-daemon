@@ -42,16 +42,19 @@ public:
     void tearDown();
 
 private:
+    void testMultistream();
     void testAudioFile();
 
     CPPUNIT_TEST_SUITE(MediaDecoderTest);
+    CPPUNIT_TEST(testMultistream);
     CPPUNIT_TEST(testAudioFile);
     CPPUNIT_TEST_SUITE_END();
 
     void writeWav(); // writes a minimal wav file to test decoding
 
     std::unique_ptr<MediaDecoder> decoder_;
-    std::string filename_ = "test.wav";
+    std::string webmFilename_ = "sample.webm";
+    std::string wavFilename_ = "test.wav";
 };
 
 CPPUNIT_TEST_SUITE_NAMED_REGISTRATION(MediaDecoderTest, MediaDecoderTest::name());
@@ -67,8 +70,50 @@ MediaDecoderTest::setUp()
 void
 MediaDecoderTest::tearDown()
 {
-    fileutils::remove(filename_);
+    fileutils::remove(wavFilename_);
     DRing::fini();
+}
+
+void
+MediaDecoderTest::testMultistream()
+{
+    DeviceParams dev;
+    dev.input = webmFilename_;
+    CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
+    CPPUNIT_ASSERT(decoder_->setupFromVideoData() >= 0);
+    CPPUNIT_ASSERT(decoder_->setupFromAudioData() >= 0);
+
+    bool done = false;
+    while (!done) {
+        int streamIdx = -1;
+        MediaStream ms;
+        AVFrame* frame = av_frame_alloc();
+        switch (decoder_->decode(frame, streamIdx)) {
+        case MediaDecoder::Status::FrameFinished:
+            ms = decoder_->getStream(streamIdx);
+            if (frame->width > 0 && frame->height > 0) { // video
+                CPPUNIT_ASSERT(frame->width == ms.width);
+                CPPUNIT_ASSERT(frame->height == ms.height);
+            } else if (frame->channels > 0) { // audio
+                CPPUNIT_ASSERT(frame->sample_rate == ms.sampleRate);
+                CPPUNIT_ASSERT(frame->channels == ms.nbChannels);
+            }
+            break;
+        case MediaDecoder::Status::DecodeError:
+        case MediaDecoder::Status::ReadError:
+            CPPUNIT_ASSERT_MESSAGE("Decode error", false);
+            done = true;
+            break;
+        case MediaDecoder::Status::EOFError:
+            done = true;
+            break;
+        case MediaDecoder::Status::Success:
+        default:
+            break;
+        }
+        av_frame_free(&frame);
+    }
+    CPPUNIT_ASSERT(done);
 }
 
 void
@@ -81,7 +126,7 @@ MediaDecoderTest::testAudioFile()
     writeWav();
 
     DeviceParams dev;
-    dev.input = filename_;
+    dev.input = wavFilename_;
     CPPUNIT_ASSERT(decoder_->openInput(dev) >= 0);
     CPPUNIT_ASSERT(decoder_->setupFromAudioData() >= 0);
 
@@ -133,7 +178,7 @@ static std::ostream& write(std::ostream& os, Word value, unsigned size)
 void
 MediaDecoderTest::writeWav()
 {
-    auto f = std::ofstream(filename_, std::ios::binary);
+    auto f = std::ofstream(wavFilename_, std::ios::binary);
     f << "RIFF----WAVEfmt ";
     write(f, 16, 4); // no extension data
     write(f, 1, 2); // PCM integer samples
