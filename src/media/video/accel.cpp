@@ -56,16 +56,15 @@ getFormatCb(AVCodecContext* codecCtx, const AVPixelFormat* formats)
 }
 
 int
-transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame& frame)
+transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, AVFrame* frame)
 {
     if (accel.name.empty())
         return -1;
 
-    auto input = frame.pointer();
-    if (input->format != accel.format) {
+    if (frame->format != accel.format) {
         RING_ERR("Frame format mismatch: expected %s, got %s",
                  av_get_pix_fmt_name(static_cast<AVPixelFormat>(accel.format)),
-                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(input->format)));
+                 av_get_pix_fmt_name(static_cast<AVPixelFormat>(frame->format)));
         return -1;
     }
 
@@ -73,16 +72,16 @@ transferFrameData(HardwareAccel accel, AVCodecContext* /*codecCtx*/, VideoFrame&
     auto container = std::unique_ptr<VideoFrame>(new VideoFrame());
     auto output = container->pointer();
 
-    auto pts = input->pts;
+    auto pts = frame->pts;
     // most hardware accelerations output NV12, so skip extra conversions
     output->format = AV_PIX_FMT_NV12;
-    int ret = av_hwframe_transfer_data(output, input, 0);
+    int ret = av_hwframe_transfer_data(output, frame, 0);
     output->pts = pts;
 
-    // move output into input so the caller receives extracted image data
-    // but we have to delete input's data first
-    av_frame_unref(input);
-    av_frame_move_ref(input, output);
+    // move output into frame so the caller receives extracted image data
+    // but we have to delete frame's data first
+    av_frame_unref(frame);
+    av_frame_move_ref(frame, output);
 
     return ret;
 }

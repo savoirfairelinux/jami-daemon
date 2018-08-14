@@ -86,10 +86,17 @@ class MediaDecoder {
         int setupFromVideoData();
         Status decode(VideoFrame&);
         Status flush(VideoFrame&);
- #endif // RING_VIDEO
+#endif // RING_VIDEO
 
         int setupFromAudioData();
         Status decode(const AudioFrame&);
+
+        /**
+         * Decode the next frame from the specified stream @streamIdx
+         * If streamIdx is < 0, decode the next frame and set streamIdx accordingly
+         */
+        Status decode(AVFrame* frame, int& streamIdx);
+
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
         int getWidth() const;
@@ -104,24 +111,24 @@ class MediaDecoder {
         void enableAccel(bool enableAccel);
 #endif
 
-        MediaStream getStream(std::string name = "") const;
+        MediaStream getStream(std::string name, int idx = -1) const;
+        int getStreamCount() const;
 
     private:
         NON_COPYABLE(MediaDecoder);
 
         rational<unsigned> getTimeBase() const;
 
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
+        std::vector<AVCodecContext*> decoders_;
         AVFormatContext *inputCtx_ = nullptr;
-        AVStream *avStream_ = nullptr;
         std::unique_ptr<Resampler> resampler_;
-        int streamIndex_ = -1;
+        int currentStreamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
         int64_t lastTimestamp_;
 
         DeviceParams inputParams_;
+        bool foundInfo_{false};
 
         AudioBuffer decBuff_;
         AudioBuffer resamplingBuff_;
