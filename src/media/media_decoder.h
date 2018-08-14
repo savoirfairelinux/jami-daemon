@@ -86,6 +86,9 @@ class MediaDecoder {
 
         int setupFromAudioData();
         Status decode(const AudioFrame&);
+
+        Status decode(AVFrame* frame, int streamIdx);
+
         void writeToRingBuffer(const AudioFrame&, RingBuffer&, const AudioFormat);
 
         int getWidth() const;
@@ -107,12 +110,10 @@ class MediaDecoder {
 
         rational<unsigned> getTimeBase() const;
 
-        AVCodec *inputDecoder_ = nullptr;
-        AVCodecContext *decoderCtx_ = nullptr;
+        std::vector<AVCodecContext*> decoders_;
         AVFormatContext *inputCtx_ = nullptr;
-        AVStream *avStream_ = nullptr;
         std::unique_ptr<Resampler> resampler_;
-        int streamIndex_ = -1;
+        int currentStreamIndex_ = -1;
         bool emulateRate_ = false;
         int64_t startTime_;
         int64_t lastTimestamp_;
