@@ -265,7 +265,7 @@ Logger::vlog(const int level, const char* file, int line, bool linefeed,
         SetConsoleTextAttribute(hConsole, color_header);
 #endif
         fputs(contextHeader(file, line).c_str(), stderr);
-#ifdef RING_UWP
+#ifdef _MSC_VER
         std::array<char, 4096> tmp;
         vsnprintf(tmp.data(), tmp.size(), format, ap);
         ring::emitSignal<DRing::DebugSignal::MessageSend>(contextHeader(file, line) + tmp.data());
