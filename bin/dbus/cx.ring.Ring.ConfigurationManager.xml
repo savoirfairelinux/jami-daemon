@@ -1533,5 +1533,17 @@
                </tp:docstring>
            </arg>
        </signal>
+
+       <signal name="debugMessageReceived" tp:name-for-bindings="debugMessageReceived">
+           <tp:added version="5.2.0"/>
+           <tp:docstring>
+               Notify clients when debug is outputted.
+           </tp:docstring>
+           <arg type="s" name="message">
+               <tp:docstring>
+                   The formatted message to be output.
+               </tp:docstring>
+           </arg>
+       </signal>
    </interface>
 </node>
