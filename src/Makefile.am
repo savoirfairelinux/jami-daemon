@@ -146,7 +146,9 @@ libring_la_SOURCES = \
 		data_transfer.h \
 		ftp_server.cpp \
 		ftp_server.h \
-		generic_io.h
+		generic_io.h \
+		scheduled_executor.h \
+		scheduled_executor.cpp
 
 if HAVE_WIN32
 libring_la_SOURCES += \
