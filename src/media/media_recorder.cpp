@@ -161,7 +161,7 @@ MediaRecorder::startRecording()
         while (!frames_.empty()) {
             auto f = frames_.front();
             av_frame_unref(f.frame);
-            frames_.pop();
+            frames_.pop_front();
         }
     }
 
@@ -228,7 +228,7 @@ MediaRecorder::recordData(AVFrame* frame, bool isVideo, bool fromPeer)
 
     {
         std::lock_guard<std::mutex> q(qLock_);
-        frames_.emplace(input, isVideo, fromPeer);
+        frames_.emplace_back(input, isVideo, fromPeer);
     }
     loop_.interrupt();
     return 0;
@@ -510,7 +510,7 @@ MediaRecorder::process()
         std::lock_guard<std::mutex> q(qLock_);
         if (!frames_.empty()) {
             recframe = frames_.front();
-            frames_.pop();
+            frames_.pop_front();
         } else {
             return;
         }

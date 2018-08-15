@@ -129,7 +129,7 @@ class MediaRecorder {
         InterruptedThreadLoop loop_;
         void process();
         std::mutex qLock_;
-        std::queue<RecordFrame> frames_;
+        std::deque<RecordFrame> frames_;
 };
 
 }; // namespace ring
