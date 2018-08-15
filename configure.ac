@@ -639,7 +639,7 @@ AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, ad
 
 AS_IF([test "x$enable_debug" = "xyes"],
       [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"],
-      [CXXFLAGS="${CXXFLAGS} -DNDEBUG=1"])
+      [CXXFLAGS="${CXXFLAGS} -DNDEBUG=1 -O3"])
 
 dnl What Makefiles to generate
 
