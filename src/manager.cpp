@@ -1792,7 +1792,20 @@ Manager::saveConfig()
         out << YAML::Value << YAML::BeginSeq;
 
         for (const auto& account : accountFactory.getAllAccounts()) {
-            account->serialize(out);
+            if (auto ringAccount = std::dynamic_pointer_cast<RingAccount>(account)) {
+                try {
+                    YAML::Emitter accountOut;
+                    ringAccount->serialize(accountOut);
+                    auto accountConfig = ringAccount->getPath() + DIR_SEPARATOR_STR + "config.yml";
+                    std::ofstream fout(accountConfig);
+                    fout << accountOut.c_str();
+                    RING_DBG("Exported Ring account to %s", accountConfig.c_str());
+                } catch (const std::exception& e) {
+                    RING_ERR("Error exporting Ring account: %s", e.what());
+                }
+            } else {
+                account->serialize(out);
+            }
         }
         out << YAML::EndSeq;
 
@@ -2837,6 +2850,30 @@ Manager::loadAccountMap(const YAML::Node& node)
 
     for (auto &a : accountList) {
         pimpl_->loadAccount(a, errorCount, accountOrder);
+    }
+
+    auto accountBaseDir = fileutils::get_data_dir();
+    auto dirs = fileutils::readDirectory(accountBaseDir);
+    for (const auto& dir : dirs) {
+        if (accountFactory.hasAccount<RingAccount>(dir)) {
+            continue;
+        }
+        auto configFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "config.yml";
+        if (fileutils::isFile(configFile)) {
+            try {
+                if (auto a = accountFactory.createAccount(RingAccount::ACCOUNT_TYPE, dir)) {
+                    YAML::Node parsedConfig = YAML::LoadFile(configFile);
+                    a->unserialize(parsedConfig);
+                }
+            } catch (const std::exception& e) {
+                RING_ERR("Can't import Ring account %s: %s", dir.c_str(), e.what());
+            }
+            continue;
+        }
+        auto exportFile = accountBaseDir + DIR_SEPARATOR_STR + dir + DIR_SEPARATOR_STR + "export.gz";
+        if (fileutils::isFile(exportFile)) {
+            RING_WARN("Found abandonned Ring account: %s", exportFile.c_str());
+        }
     }
 
     return errorCount;
