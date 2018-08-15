@@ -1627,16 +1627,6 @@ RingAccount::registerName(const std::string& /*password*/, const std::string& na
 #endif
 
 void
-RingAccount::handleEvents()
-{
-    // Process DHT events
-    dht_.loop();
-
-    // Call msg in "callto:"
-    handlePendingCallList();
-}
-
-void
 RingAccount::handlePendingCallList()
 {
     // Process pending call into a local list to not block threads depending on this list,
@@ -1648,11 +1638,9 @@ RingAccount::handlePendingCallList()
         pendingCalls_.clear();
     }
 
-    static const dht::InfoHash invalid_hash; // Invariant
-
     auto pc_iter = std::begin(pending_calls);
     while (pc_iter != std::end(pending_calls)) {
-        bool incoming = pc_iter->call_key == invalid_hash; // do it now, handlePendingCall may invalidate pc data
+        bool incoming = !pc_iter->call_key; // do it now, handlePendingCall may invalidate pc data
         bool handled;
 
         try {
@@ -2101,7 +2089,7 @@ RingAccount::doRegister_()
         config.dht_config.id = identity_;
         config.proxy_server = proxyEnabled_ ? proxyServer_ : std::string();
         config.push_node_id = getAccountID();
-        config.threaded = false;
+        config.threaded = true;
         if (not config.proxy_server.empty())
             RING_WARN("[Account %s] using proxy server %s", getAccountID().c_str(), config.proxy_server.c_str());
 
@@ -2152,7 +2140,7 @@ RingAccount::doRegister_()
 
         dht_.importValues(loadValues());
 
-        Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handleEvents(); });
+        Manager::instance().registerEventHandler((uintptr_t)this, [this]{ handlePendingCallList(); });
         setRegistrationState(RegistrationState::TRYING);
 
         dht_.bootstrap(loadNodes());
