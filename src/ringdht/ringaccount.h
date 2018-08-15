@@ -436,8 +436,6 @@ class RingAccount : public SIPAccountBase {
 
         const dht::ValueType USER_PROFILE_TYPE = {9, "User profile", std::chrono::hours(24 * 7)};
 
-        void handleEvents();
-
         void startOutgoingCall(const std::shared_ptr<SIPCall>& call, const std::string toUri);
 
         void onConnectedOutgoingCall(SIPCall& call, const std::string& to_id, IpAddr target);
