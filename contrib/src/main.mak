@@ -198,9 +198,9 @@ endif
 EXTRA_CXXFLAGS += -std=c++14
 
 ifdef ENABLE_DEBUG
-EXTRA_CFLAGS += -g -fno-omit-frame-pointer
+EXTRA_COMMON += -g -fno-omit-frame-pointer
 else
-EXTRA_CFLAGS += -DNDEBUG=1
+EXTRA_COMMON += -DNDEBUG=1 -O3
 endif
 
 cppcheck = $(shell $(CC) $(CFLAGS) -E -dM - < /dev/null | grep -E $(1))
