@@ -60,7 +60,7 @@ class MediaRecorder {
 
         // adjust nb of streams before recording
         // used to know when all streams are set up
-        void incrementStreams(int n);
+        void expectStreams(int n);
 
         bool isRecording() const;
 
@@ -70,17 +70,17 @@ class MediaRecorder {
 
         void stopRecording();
 
-        int addStream(bool isVideo, bool fromPeer, MediaStream ms);
-
-        int recordData(AVFrame* frame, bool isVideo, bool fromPeer);
+        int recordData(AVFrame* frame, const MediaStream& ms);
 
     private:
         NON_COPYABLE(MediaRecorder);
 
+        int addStream(const MediaStream& ms);
         int initRecord();
         MediaStream setupVideoOutput();
-        std::string buildVideoFilter();
+        std::string buildVideoFilter(const MediaStream& p, const MediaStream& l);
         MediaStream setupAudioOutput();
+        std::string buildAudioFilter(const MediaStream& p, const MediaStream& l);
         void emptyFilterGraph();
         int sendToEncoder(AVFrame* frame, int streamIdx);
         int flush();
@@ -92,8 +92,7 @@ class MediaRecorder {
 
         std::mutex mutex_; // protect against concurrent file writes
 
-        // isVideo is first key, fromPeer is second
-        std::map<bool, std::map<bool, MediaStream>> streams_;
+        std::map<std::string, const MediaStream> streams_;
 
         std::tm startTime_;
         std::string title_;

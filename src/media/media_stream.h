@@ -77,8 +77,7 @@ struct MediaStream {
 
     MediaStream(std::string name, AVCodecContext* c)
         : MediaStream(name, c, 0)
-    {
-    }
+    {}
 
     MediaStream(std::string name, AVCodecContext* c, int64_t firstTimestamp)
         : name(name)
@@ -104,6 +103,20 @@ struct MediaStream {
             break;
         }
     }
+
+    MediaStream(const MediaStream& other)
+        : name(other.name)
+        , format(other.format)
+        , isVideo(other.isVideo)
+        , timeBase(other.timeBase)
+        , firstTimestamp(other.firstTimestamp)
+        , width(other.width)
+        , height(other.height)
+        , aspectRatio(other.aspectRatio)
+        , frameRate(other.frameRate)
+        , sampleRate(other.sampleRate)
+        , nbChannels(other.nbChannels)
+    {}
 };
 
 inline std::ostream& operator<<(std::ostream& os, const MediaStream& ms)

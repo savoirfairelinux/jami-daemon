@@ -145,7 +145,6 @@ private:
 #endif
 
     std::weak_ptr<MediaRecorder> recorder_;
-    bool recordingStarted_{false};
 };
 
 }} // namespace ring::video
