@@ -21,6 +21,16 @@ AC_CONFIG_HEADERS([config.h])
 # Silent build by default. Use make V=1 to increase verbosity
 m4_ifdef([AM_SILENT_RULES],[AM_SILENT_RULES([yes])])
 
+dnl debug mode is default-disabled
+AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
+AS_IF([test "x$enable_debug" = "xyes"], [
+    CFLAGS="${CFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
+    CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"
+], [
+    CFLAGS="${CFLAGS} -DNDEBUG=1 -O3"
+    CXXFLAGS="${CXXFLAGS} -DNDEBUG=1 -O3"
+])
+
 dnl Check for programs
 AC_PROG_CC
 AC_PROG_CXX
@@ -633,18 +643,6 @@ AC_DEFUN([BB_ENABLE_DOXYGEN],
 # Actually perform the doxygen check
 BB_ENABLE_DOXYGEN
 
-
-dnl debug mode is default-disabled
-AC_ARG_ENABLE([debug], AS_HELP_STRING([--enable-debug], [Build in debug mode, adds stricter warnings, disables optimization]))
-
-AS_IF([test "x$enable_debug" = "xyes"],
-      [CXXFLAGS="${CXXFLAGS} -g -fno-omit-frame-pointer -Wall -Wextra -Wnon-virtual-dtor -Wno-unknown-pragmas -Wformat=2 -O0"],
-      [CXXFLAGS="${CXXFLAGS} -DNDEBUG=1 -O3"])
-
-dnl What Makefiles to generate
-
-
-#TODO: split this list across where the relevant check is performed
 AC_CONFIG_FILES([Makefile \
                  bin/Makefile \
                  src/Makefile \
