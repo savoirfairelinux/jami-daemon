@@ -184,19 +184,10 @@ bool VideoReceiveThread::decodeFrame()
 
     switch (ret) {
         case MediaDecoder::Status::FrameFinished:
-            if (auto rec = recorder_.lock()) {
-                if (!recordingStarted_) {
-                    if (rec->addStream(true, true, videoDecoder_->getStream()) >= 0) {
-                        recordingStarted_ = true;
-                    } else {
-                        recorder_ = std::weak_ptr<MediaRecorder>();
-                    }
-                }
-                if (recordingStarted_)
-                    rec->recordData(frame.pointer(), true, true);
-            } else {
-                recordingStarted_ = false;
-                recorder_ = std::weak_ptr<MediaRecorder>();
+            {
+                auto rec = recorder_.lock();
+                if (rec && rec->isRecording())
+                    rec->recordData(frame.pointer(), videoDecoder_->getStream("v:remote"));
             }
             publishFrame();
             return true;
@@ -269,8 +260,8 @@ VideoReceiveThread::triggerKeyFrameRequest()
 void
 VideoReceiveThread::initRecorder(std::shared_ptr<ring::MediaRecorder>& rec)
 {
-    rec->incrementStreams(1);
     recorder_ = rec;
+    rec->incrementExpectedStreams(1);
 }
 
 }} // namespace ring::video

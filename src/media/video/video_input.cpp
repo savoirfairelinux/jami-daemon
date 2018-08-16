@@ -232,19 +232,10 @@ bool VideoInput::captureFrame()
             return static_cast<bool>(decoder_);
 
         case MediaDecoder::Status::FrameFinished:
-            if (auto rec = recorder_.lock()) {
-                if (!recordingStarted_) {
-                    if (rec->addStream(true, false, decoder_->getStream()) >= 0) {
-                        recordingStarted_ = true;
-                    } else {
-                        recorder_ = std::weak_ptr<MediaRecorder>();
-                    }
-                }
-                if (recordingStarted_)
-                    rec->recordData(frame.pointer(), true, false);
-            } else {
-                recordingStarted_ = false;
-                recorder_ = std::weak_ptr<MediaRecorder>();
+            {
+                auto rec = recorder_.lock();
+                if (rec && rec->isRecording())
+                    rec->recordData(frame.pointer(), decoder_->getStream("v:local"));
             }
             publishFrame();
             return true;
@@ -607,8 +598,8 @@ VideoInput::foundDecOpts(const DeviceParams& params)
 void
 VideoInput::initRecorder(std::shared_ptr<MediaRecorder>& rec)
 {
-    rec->incrementStreams(1);
     recorder_ = rec;
+    rec->incrementExpectedStreams(1);
 }
 
 }} // namespace ring::video
